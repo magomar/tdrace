@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1b3f1b">
+    <title>TDRace - 2D Retro Arcade Racing</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #121820;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            touch-action: none;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #182218;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            outline: none;
+            touch-action: none;
+        }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1e2c38 0%, #0d1218 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            z-index: 100;
+            transition: opacity 0.4s ease-out;
+        }
+
+        .spinner {
+            width: 64px;
+            height: 64px;
+            border: 6px solid rgba(255, 255, 255, 0.15);
+            border-top: 6px solid #38bdf8;
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+            margin-bottom: 24px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #fbbf24;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 18px;
+        }
+
+        #status-text {
+            font-size: 15px;
+            font-weight: 500;
+            color: #38bdf8;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="glcanvas" tabindex="1"></canvas>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h1>TDRACE</h1>
+        <p class="subtitle">Top-Down Retro Arcade Racing</p>
+        <div id="status-text">Loading WebAssembly simulation engine...</div>
+    </div>
+
+    <!-- Macroquad Web JS Bindings -->
+    <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
+    <script>
+        // Prevent default touch behaviors (pinch zooming, pull-to-refresh)
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) { e.preventDefault(); }
+        }, { passive: false });
+
+        // Auto-focus canvas on tap
+        const canvas = document.getElementById("glcanvas");
+        window.addEventListener("touchstart", function() {
+            canvas.focus();
+        }, { passive: true });
+
+        // Load WASM module
+        load("tdrace_app.wasm");
+
+        // Hide loading screen once execution starts
+        function onWasmLoaded() {
+            const overlay = document.getElementById("loading-overlay");
+            if (overlay) {
+                overlay.style.opacity = "0";
+                setTimeout(() => overlay.remove(), 500);
+            }
+        }
+
+        window.addEventListener("load", function() {
+            setTimeout(onWasmLoaded, 800);
+        });
+    </script>
+</body>
+</html>
