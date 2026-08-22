@@ -1,0 +1,19 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "tdrace"
+version = "0.1.0"
+description = "Fast deterministic 2D top-down racing engine & Gymnasium environments"
+requires-python = ">=3.10"
+dependencies = [
+    "gymnasium>=1.0.0",
+    "numpy>=1.24.0",
+]
+
+[tool.maturin]
+manifest-path = "crates/tdrace-py/Cargo.toml"
+python-source = "python"
+module-name = "tdrace._tdrace"
+features = ["pyo3/extension-module"]
