@@ -41,7 +41,7 @@ impl Palette {
 
     // FX Colors
     pub const SKIDMARK: Color = Color::new(0.08, 0.08, 0.10, 0.60);
-    pub const TIRE_SMOKE: Color = Color::new(0.90, 0.90, 0.92, 0.55);
+    pub const TIRE_SMOKE: Color = Color::new(0.90, 0.90, 0.92, 0.28);
     pub const DIRT_PARTICLE: Color = Color::new(0.55, 0.45, 0.25, 0.80);
     pub const SPARK: Color = Color::new(1.0, 0.78, 0.15, 1.0);
     pub const SPARK_WHITE: Color = Color::new(1.0, 0.95, 0.70, 1.0);

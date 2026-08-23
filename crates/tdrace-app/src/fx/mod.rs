@@ -65,7 +65,7 @@ impl EffectsManager {
 
                 // Tire smoke on asphalt/curb
                 if (surf == SurfaceType::Asphalt || surf == SurfaceType::Curb)
-                    && telemetry.skid_intensity > 0.20
+                    && telemetry.skid_intensity > 0.25
                     && car.state.speed > 3.0
                 {
                     self.particles
