@@ -201,6 +201,9 @@ impl RaceSession {
         // Reset ghost active lap samples
         self.ghost_recorder.on_lap_invalidated();
 
+        // Reset input filter smoothing state
+        self.input.reset();
+
         // Start new replay recording
         self.replay_recorder = Some(ReplayRecorder::new(
             self.track_choice,
@@ -226,7 +229,7 @@ impl RaceSession {
         self.touch.update_from_macroquad(sw, sh, frame_dt);
 
         // Toggle touch overlay on desktop (F6 or Z key)
-        if is_key_pressed(KeyCode::F6) || is_key_pressed(KeyCode::Z) {
+        if is_key_pressed(KeyCode::F6) {
             self.touch.enabled = !self.touch.enabled;
         }
 
@@ -310,27 +313,27 @@ impl RaceSession {
 
     /// Menu input navigation.
     fn update_menu(&mut self) {
-        // Track selection cursor
-        if is_key_pressed(KeyCode::Up) {
+        // Track selection cursor (Up/Down or W/S)
+        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
             if self.menu_track_idx == 0 {
                 self.menu_track_idx = TrackChoice::ALL.len() - 1;
             } else {
                 self.menu_track_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Down) {
+        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
             self.menu_track_idx = (self.menu_track_idx + 1) % TrackChoice::ALL.len();
         }
 
-        // Car selection cursor
-        if is_key_pressed(KeyCode::Left) {
+        // Car selection cursor (Left/Right or A/D)
+        if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
             if self.menu_car_idx == 0 {
                 self.menu_car_idx = CarChoice::ALL.len() - 1;
             } else {
                 self.menu_car_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Right) {
+        if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
             self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
         }
 
@@ -359,9 +362,10 @@ impl RaceSession {
             return;
         }
 
-        // 1. Gather driver controls (Player keyboard + Touch combined, and AI bots)
+        // 1. Gather driver controls (Player keyboard with smoothing + Touch combined, and AI bots)
         let mut controls_all = Vec::with_capacity(n_cars);
-        let kb_ctrl = self.input.poll_player_controls();
+        let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+        let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
         let touch_ctrl = self.touch.poll_controls();
         let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
         controls_all.push(player_ctrl);

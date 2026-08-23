@@ -1,3 +1,4 @@
+pub mod filter;
 pub mod touch;
 
 use macroquad::color::Color;
@@ -12,6 +13,7 @@ use tdrace_core::track::Track;
 
 use crate::ai::BotAiDriver;
 use crate::render::color::Palette;
+pub use filter::{DigitalInputConfig, DigitalInputFilter};
 pub use touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 
 /// Active debug overlay visibility flags.
@@ -29,6 +31,7 @@ pub struct DebugOverlays {
 pub struct InputController {
     pub debug: DebugOverlays,
     pub lidar_scanner: LidarScanner,
+    pub filter: DigitalInputFilter,
 }
 
 impl Default for InputController {
@@ -42,49 +45,70 @@ impl InputController {
         Self {
             debug: DebugOverlays::default(),
             lidar_scanner: LidarScanner::new(LidarConfig::surround_32()),
+            filter: DigitalInputFilter::default(),
         }
     }
 
-    /// Polls player driving controls (Keyboard / Gamepad).
-    pub fn poll_player_controls(&self) -> CarControls {
-        let mut steer = 0.0f32;
-        let mut throttle = 0.0f32;
-        let mut brake = 0.0f32;
-        let mut reverse = false;
+    /// Resets smoothed input filter state (e.g. on race start / restart).
+    pub fn reset(&mut self) {
+        self.filter.reset();
+    }
 
-        // Steering: O = Steer Left (-1.0), P = Steer Right (+1.0)
-        if is_key_down(KeyCode::O) || is_key_down(KeyCode::Left) {
-            steer -= 1.0;
-        }
-        if is_key_down(KeyCode::P) || is_key_down(KeyCode::Right) {
-            steer += 1.0;
-        }
+    /// Polls player driving controls (Keyboard with digital smoothing & speed-sensitive scaling).
+    pub fn poll_player_controls(&mut self, dt: f32, current_speed_fwd: f32) -> CarControls {
+        let mut raw_steer = 0.0f32;
+        let mut raw_throttle = 0.0f32;
+        let mut raw_brake = 0.0f32;
+        let mut raw_reverse = false;
 
-        // Throttle: Q
-        if is_key_down(KeyCode::Q) || is_key_down(KeyCode::Up) {
-            throttle = 1.0;
-        }
+        // Steering: A / Left / O = Steer Left (-1.0), D / Right / P = Steer Right (+1.0)
+        let is_left = is_key_down(KeyCode::A) || is_key_down(KeyCode::Left) || is_key_down(KeyCode::O);
+        let is_right = is_key_down(KeyCode::D) || is_key_down(KeyCode::Right) || is_key_down(KeyCode::P);
 
-        // Brake: A
-        if is_key_down(KeyCode::A) || is_key_down(KeyCode::Down) {
-            brake = 1.0;
+        if is_left {
+            raw_steer -= 1.0;
+        }
+        if is_right {
+            raw_steer += 1.0;
         }
 
-        // Reverse: Z
-        if is_key_down(KeyCode::Z) {
-            throttle = 1.0;
-            reverse = true;
+        // Throttle: W / Up / Q
+        let is_up = is_key_down(KeyCode::W) || is_key_down(KeyCode::Up) || is_key_down(KeyCode::Q);
+        if is_up {
+            raw_throttle = 1.0;
+        }
+
+        // Service Brake & Intuitive Reverse: S / Down / Z
+        let is_down = is_key_down(KeyCode::S) || is_key_down(KeyCode::Down);
+        let is_z = is_key_down(KeyCode::Z);
+
+        if is_down {
+            if current_speed_fwd > 0.6 {
+                // Moving forward: Apply service brake
+                raw_brake = 1.0;
+            } else {
+                // Stopped or rolling backwards: Apply reverse torque
+                raw_throttle = 1.0;
+                raw_reverse = true;
+            }
+        } else if is_z {
+            raw_throttle = 1.0;
+            raw_reverse = true;
         }
 
         // Handbrake: Space
         let handbrake = is_key_down(KeyCode::Space);
+
+        // Apply digital input smoothing, progressive ramps & speed-sensitive attenuation
+        let speed_abs = current_speed_fwd.abs();
+        let (steer, throttle, brake) = self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
 
         CarControls {
             throttle,
             steer,
             brake,
             handbrake,
-            reverse,
+            reverse: raw_reverse,
         }
     }
 

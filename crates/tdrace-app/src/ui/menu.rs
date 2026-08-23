@@ -125,7 +125,7 @@ pub fn render_track_select_menu(
     let col_w = sw * 0.36;
     let mut curr_y = 135.0;
 
-    draw_text("SELECT CIRCUIT [Up/Down]", col1_x, curr_y, 22.0, Color::new(0.3, 0.9, 1.0, 1.0));
+    draw_text("SELECT CIRCUIT [W/S or Up/Down]", col1_x, curr_y, 22.0, Color::new(0.3, 0.9, 1.0, 1.0));
     curr_y += 30.0;
 
     for (i, track_opt) in TrackChoice::ALL.iter().enumerate() {
@@ -156,7 +156,7 @@ pub fn render_track_select_menu(
     let col2_x = sw * 0.52;
     let mut c2_y = 135.0;
 
-    draw_text("SELECT VEHICLE [Left/Right]", col2_x, c2_y, 22.0, Color::new(0.3, 0.9, 1.0, 1.0));
+    draw_text("SELECT VEHICLE [A/D or Left/Right]", col2_x, c2_y, 22.0, Color::new(0.3, 0.9, 1.0, 1.0));
     c2_y += 30.0;
 
     for (i, car_opt) in CarChoice::ALL.iter().enumerate() {
@@ -212,8 +212,8 @@ pub fn render_pause_menu() {
     // Dark semi-transparent dim
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.65));
 
-    let box_w = 360.0;
-    let box_h = 240.0;
+    let box_w = 400.0;
+    let box_h = 280.0;
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
@@ -221,20 +221,22 @@ pub fn render_pause_menu() {
     draw_rectangle_lines(x, y, box_w, box_h, 2.5, Color::new(0.3, 0.6, 0.9, 0.9));
 
     let title = "RACE PAUSED";
-    let tm = measure_text(title, None, 32, 1.0);
-    draw_text(title, x + (box_w - tm.width) * 0.5, y + 45.0, 32.0, Palette::WHITE);
+    let tm = measure_text(title, None, 30, 1.0);
+    draw_text(title, x + (box_w - tm.width) * 0.5, y + 40.0, 30.0, Palette::WHITE);
 
     let items = [
         "ESC / P : Resume Race",
         "R : Restart Race",
         "M : Main Menu / Track Select",
         "TAB : Toggle Follow / Overview Camera",
+        "WASD / Arrows : Drive & Steer",
+        "SPACE : Handbrake (Power Drift)",
     ];
 
-    let mut item_y = y + 90.0;
+    let mut item_y = y + 78.0;
     for item in &items {
-        draw_text(item, x + 25.0, item_y, 18.0, Color::new(0.85, 0.90, 0.95, 1.0));
-        item_y += 32.0;
+        draw_text(item, x + 25.0, item_y, 16.0, Color::new(0.85, 0.90, 0.95, 1.0));
+        item_y += 28.0;
     }
 }
 
