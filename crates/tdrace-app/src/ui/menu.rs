@@ -98,6 +98,7 @@ pub struct RaceResultEntry {
     pub delta_to_leader: f32,
 }
 
+use crate::audio::AudioSettings;
 use tdrace_core::physics::config::AssistProfile;
 
 /// Renders the Track & Setup Selection Menu.
@@ -107,6 +108,7 @@ pub fn render_track_select_menu(
     num_bots: usize,
     is_time_attack: bool,
     assist_profile: AssistProfile,
+    audio_settings: &AudioSettings,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -213,6 +215,17 @@ pub fn render_track_select_menu(
     draw_text(&assist_str, col2_x + 15.0, c2_y + 24.0, 16.0, assist_col);
     draw_text(assist_profile.description(), col2_x + 15.0, c2_y + 46.0, 12.0, Color::new(0.7, 0.75, 0.8, 1.0));
 
+    // Audio Status & Quick Controls
+    c2_y += 68.0;
+    draw_rectangle(col2_x, c2_y, col_w, 48.0, Color::new(0.10, 0.12, 0.18, 0.88));
+    draw_rectangle_lines(col2_x, c2_y, col_w, 48.0, 1.5, Color::new(0.45, 0.35, 0.75, 0.8));
+
+    let mute_text = if audio_settings.is_muted { "MUTED" } else { "ACTIVE" };
+    let mute_col = if audio_settings.is_muted { Color::new(1.0, 0.4, 0.4, 1.0) } else { Color::new(0.4, 0.9, 0.5, 1.0) };
+    let vol_pct = (audio_settings.master_volume * 100.0).round() as i32;
+    draw_text(&format!("AUDIO: [M] Mute [{}] | Vol: [ [ / ] ] {}%", mute_text, vol_pct), col2_x + 15.0, c2_y + 22.0, 15.0, mute_col);
+    draw_text("Nightcall Synthwave Soundtrack & Dynamic SFX Engine", col2_x + 15.0, c2_y + 40.0, 11.0, Color::new(0.65, 0.70, 0.80, 1.0));
+
     // Footer Launch prompt
     let start_prompt = "PRESS [SPACE] OR [ENTER] TO START RACE";
     let pm = measure_text(start_prompt, None, 26, 1.0);
@@ -221,16 +234,16 @@ pub fn render_track_select_menu(
     draw_text(start_prompt, (sw - pm.width) * 0.5, p_y, 26.0, Palette::WHITE);
 }
 
-/// Renders the Pause overlay with Assist Profile selection.
-pub fn render_pause_menu(assist_profile: AssistProfile) {
+/// Renders the Pause overlay with Assist Profile selection and Audio status.
+pub fn render_pause_menu(assist_profile: AssistProfile, audio_settings: &AudioSettings) {
     let sw = screen_width();
     let sh = screen_height();
 
     // Dark semi-transparent dim
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.65));
 
-    let box_w = 420.0;
-    let box_h = 310.0;
+    let box_w = 440.0;
+    let box_h = 340.0;
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
@@ -242,20 +255,25 @@ pub fn render_pause_menu(assist_profile: AssistProfile) {
     draw_text(title, x + (box_w - tm.width) * 0.5, y + 38.0, 30.0, Palette::WHITE);
 
     let assist_item = format!("H : Toggle Assists [{}]", assist_profile.short_name());
+    let mute_text = if audio_settings.is_muted { "MUTED" } else { "ACTIVE" };
+    let vol_pct = (audio_settings.master_volume * 100.0).round() as i32;
+    let audio_item = format!("M : Toggle Audio [{}] | [ / ] : Vol {}%", mute_text, vol_pct);
+
     let items = [
         "ESC / P : Resume Race".to_string(),
         "R : Restart Race".to_string(),
         "M : Main Menu / Track Select".to_string(),
         assist_item,
+        audio_item,
         "TAB : Toggle Follow / Overview Camera".to_string(),
         "Q/A/O/P or Arrows : Drive & Steer".to_string(),
         "SPACE : Handbrake | Z : Reverse".to_string(),
     ];
 
-    let mut item_y = y + 74.0;
+    let mut item_y = y + 72.0;
     for item in &items {
-        draw_text(item, x + 25.0, item_y, 16.0, Color::new(0.85, 0.90, 0.95, 1.0));
-        item_y += 28.0;
+        draw_text(item, x + 25.0, item_y, 15.0, Color::new(0.85, 0.90, 0.95, 1.0));
+        item_y += 26.0;
     }
 }
 

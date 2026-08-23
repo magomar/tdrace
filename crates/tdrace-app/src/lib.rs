@@ -1,4 +1,5 @@
 pub mod ai;
+pub mod audio;
 pub mod camera;
 pub mod fx;
 pub mod game;
@@ -8,6 +9,7 @@ pub mod replay;
 pub mod ui;
 
 pub use ai::{BotAiDriver, BotProfile};
+pub use audio::{AudioManager, AudioSettings, MusicTrack, SfxType};
 pub use camera::{CameraMode, RaceCamera};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{GameState, RaceSession};

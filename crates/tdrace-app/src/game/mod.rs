@@ -13,6 +13,7 @@ use tdrace_core::track::Track;
 use tdrace_core::CarConfig;
 
 use crate::ai::{BotAiDriver, BotProfile};
+use crate::audio::{AudioManager, MusicTrack, SfxType};
 use crate::camera::RaceCamera;
 use crate::fx::EffectsManager;
 use crate::input::touch::TouchController;
@@ -74,8 +75,84 @@ pub struct RaceSession {
     pub menu_car_idx: usize,
     pub assist_profile: AssistProfile,
 
+    // Audio System
+    pub audio: AudioManager,
+    pub engine_rpm: EngineRpmModel,
+    prev_countdown_sec: i32,
+    prev_player_sector: usize,
+    curb_sound_cooldown: f32,
+    offroad_sound_cooldown: f32,
+
     // Internal trackers
     prev_player_lap: u32,
+}
+
+/// Dynamic vehicle transmission gear and engine RPM simulation model.
+#[derive(Debug, Clone)]
+pub struct EngineRpmModel {
+    pub current_rpm: f32,
+    pub current_gear: usize,
+    pub shift_cooldown: f32,
+}
+
+impl Default for EngineRpmModel {
+    fn default() -> Self {
+        Self {
+            current_rpm: 1100.0,
+            current_gear: 1,
+            shift_cooldown: 0.0,
+        }
+    }
+}
+
+impl EngineRpmModel {
+    pub fn update(&mut self, forward_speed: f32, throttle: f32, max_slip: f32, dt: f32) -> (f32, bool) {
+        self.shift_cooldown = (self.shift_cooldown - dt).max(0.0);
+        let speed_abs = forward_speed.abs();
+        let is_reverse = forward_speed < -0.5 && throttle < 0.0;
+
+        let (new_gear, target_rpm) = if is_reverse {
+            let rpm = (1100.0 + (speed_abs / 12.0) * 5500.0).clamp(1100.0, 7200.0);
+            (0, rpm)
+        } else if speed_abs < 1.0 {
+            // Stationary launch revs / idle
+            let throttle_revs = if throttle > 0.05 {
+                1100.0 + throttle * 5500.0
+            } else {
+                1100.0
+            };
+            (1, throttle_revs)
+        } else {
+            // 5-speed forward sequential transmission
+            let (gear, base_rpm) = if speed_abs < 12.5 {
+                (1, 1200.0 + (speed_abs / 12.5) * 5800.0)
+            } else if speed_abs < 23.5 {
+                (2, 3800.0 + ((speed_abs - 12.5) / 11.0) * 3400.0)
+            } else if speed_abs < 35.5 {
+                (3, 4200.0 + ((speed_abs - 23.5) / 12.0) * 3000.0)
+            } else if speed_abs < 47.5 {
+                (4, 4600.0 + ((speed_abs - 35.5) / 12.0) * 2600.0)
+            } else {
+                (5, 5000.0 + ((speed_abs - 47.5) / 16.0) * 2500.0)
+            };
+
+            // Wheelspin rev-flare (power drift / burnout)
+            let slip_flare = if max_slip > 0.3 { (max_slip - 0.3) * 2500.0 } else { 0.0 };
+            (gear, (base_rpm + slip_flare).clamp(1100.0, 7800.0))
+        };
+
+        let is_upshift = new_gear > self.current_gear && self.current_gear > 0 && self.shift_cooldown <= 0.0;
+        if is_upshift {
+            self.shift_cooldown = 0.22;
+        }
+        self.current_gear = new_gear;
+
+        // Smooth RPM interpolation with realistic engine inertia
+        let responsiveness = if target_rpm > self.current_rpm { 16.0 } else { 10.0 };
+        self.current_rpm += (target_rpm - self.current_rpm) * (dt * responsiveness).min(1.0);
+
+        (self.current_rpm, is_upshift)
+    }
 }
 
 impl Default for RaceSession {
@@ -120,12 +197,24 @@ impl RaceSession {
 
             menu_track_idx: 0,
             menu_car_idx: 0,
+            audio: AudioManager::new(),
+            engine_rpm: EngineRpmModel::default(),
+            prev_countdown_sec: 4,
+            prev_player_sector: 0,
+            curb_sound_cooldown: 0.0,
+            offroad_sound_cooldown: 0.0,
             prev_player_lap: 1,
         };
 
         session.init_race();
         session.state = GameState::Menu; // Start in main menu
         session
+    }
+
+    /// Asynchronously initializes audio banks and plays the synthwave menu theme.
+    pub async fn init_audio(&mut self) {
+        self.audio.init_async().await;
+        self.audio.play_music(MusicTrack::NeonMenu);
     }
 
     /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
@@ -217,6 +306,14 @@ impl RaceSession {
             Self::FIXED_DT,
         ));
 
+        // Audio initialization for new race
+        self.prev_countdown_sec = 4;
+        self.prev_player_sector = 0;
+        self.curb_sound_cooldown = 0.0;
+        self.offroad_sound_cooldown = 0.0;
+        self.audio.stop_all_loops();
+        self.audio.stop_music(); // In-game music muted
+
         // Start with countdown
         self.state = GameState::Countdown(3.5);
     }
@@ -232,6 +329,21 @@ impl RaceSession {
 
         // Handle touch controls update
         self.touch.update_from_macroquad(sw, sh, frame_dt);
+
+        // Toggle audio mute (M key)
+        if is_key_pressed(KeyCode::M) {
+            self.audio.toggle_mute();
+        }
+
+        // Adjust Master Volume (LeftBracket / RightBracket)
+        if is_key_pressed(KeyCode::LeftBracket) {
+            let v = (self.audio.settings.master_volume - 0.1).clamp(0.0, 1.0);
+            self.audio.set_master_volume(v);
+        }
+        if is_key_pressed(KeyCode::RightBracket) {
+            let v = (self.audio.settings.master_volume + 0.1).clamp(0.0, 1.0);
+            self.audio.set_master_volume(v);
+        }
 
         // Toggle touch overlay on desktop (F6 or Z key)
         if is_key_pressed(KeyCode::F6) {
@@ -269,22 +381,45 @@ impl RaceSession {
 
         match self.state {
             GameState::Menu => {
+                self.audio.play_music(MusicTrack::NeonMenu);
                 self.update_menu();
             }
             GameState::Countdown(ref mut remaining) => {
                 *remaining -= frame_dt;
+
+                // Player launch throttle / revs on grid
+                let kb_ctrl = self.input.poll_player_controls(frame_dt, 0.0);
+                let touch_ctrl = self.touch.poll_controls();
+                let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+                let (rpm, is_shift) = self.engine_rpm.update(0.0, player_ctrl.throttle, 0.0, frame_dt);
+                self.audio.update_engine_rpm(rpm, player_ctrl.throttle, is_shift);
+
+                // Countdown audio beeps (3, 2, 1)
+                if *remaining <= 3.0 && self.prev_countdown_sec > 3 {
+                    self.audio.play_sfx(SfxType::CountdownLow);
+                    self.prev_countdown_sec = 3;
+                } else if *remaining <= 2.0 && self.prev_countdown_sec > 2 {
+                    self.audio.play_sfx(SfxType::CountdownLow);
+                    self.prev_countdown_sec = 2;
+                } else if *remaining <= 1.0 && self.prev_countdown_sec > 1 {
+                    self.audio.play_sfx(SfxType::CountdownLow);
+                    self.prev_countdown_sec = 1;
+                }
+
                 // Camera follows player during countdown
                 if let Some(player_car) = self.cars.first() {
                     self.camera.update(player_car, frame_dt);
                 }
 
                 if *remaining <= 0.0 {
+                    self.audio.play_sfx(SfxType::CountdownHigh);
                     self.state = GameState::Racing;
                 }
             }
             GameState::Racing => {
                 // Pause trigger (Escape / Pause key)
                 if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) {
+                    self.audio.stop_all_loops();
                     self.state = GameState::Paused;
                     return;
                 }
@@ -311,19 +446,26 @@ impl RaceSession {
                 self.check_race_finish();
             }
             GameState::Paused => {
+                self.audio.stop_all_loops();
                 if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) {
                     self.state = GameState::Racing;
                 }
                 if is_key_pressed(KeyCode::M) {
+                    self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Menu;
+                    self.audio.play_music(MusicTrack::NeonMenu);
                 }
             }
             GameState::Finished => {
+                self.audio.stop_all_loops();
                 if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) {
+                    self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
                 }
                 if is_key_pressed(KeyCode::M) {
+                    self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Menu;
+                    self.audio.play_music(MusicTrack::NeonMenu);
                 }
             }
         }
@@ -333,6 +475,7 @@ impl RaceSession {
     fn update_menu(&mut self) {
         // Track selection cursor (Up/Down)
         if is_key_pressed(KeyCode::Up) {
+            self.audio.play_sfx(SfxType::UiMove);
             if self.menu_track_idx == 0 {
                 self.menu_track_idx = TrackChoice::ALL.len() - 1;
             } else {
@@ -340,11 +483,13 @@ impl RaceSession {
             }
         }
         if is_key_pressed(KeyCode::Down) {
+            self.audio.play_sfx(SfxType::UiMove);
             self.menu_track_idx = (self.menu_track_idx + 1) % TrackChoice::ALL.len();
         }
 
         // Car selection cursor (Left/Right)
         if is_key_pressed(KeyCode::Left) {
+            self.audio.play_sfx(SfxType::UiMove);
             if self.menu_car_idx == 0 {
                 self.menu_car_idx = CarChoice::ALL.len() - 1;
             } else {
@@ -352,26 +497,31 @@ impl RaceSession {
             }
         }
         if is_key_pressed(KeyCode::Right) {
+            self.audio.play_sfx(SfxType::UiMove);
             self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
         }
 
         // Toggle Mode (Time Attack vs Race vs AI)
         if is_key_pressed(KeyCode::T) {
+            self.audio.play_sfx(SfxType::UiMove);
             self.is_time_attack = !self.is_time_attack;
         }
 
         // Change bot count
         if is_key_pressed(KeyCode::B) {
+            self.audio.play_sfx(SfxType::UiMove);
             self.num_bots = (self.num_bots % 7) + 1;
         }
 
         // Toggle Driver Assists Profile
         if is_key_pressed(KeyCode::H) {
+            self.audio.play_sfx(SfxType::UiMove);
             self.assist_profile = self.assist_profile.next();
         }
 
         // Start race
         if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) {
+            self.audio.play_sfx(SfxType::UiSelect);
             self.track_choice = TrackChoice::ALL[self.menu_track_idx];
             self.car_choice = CarChoice::ALL[self.menu_car_idx];
             self.init_race();
@@ -444,16 +594,39 @@ impl RaceSession {
             wall_collision_events.extend(wall_events);
         }
 
-        // Camera screen shake on player impact
+        // Camera screen shake and audio on player impacts
         for wev in &wall_collision_events {
             if wev.impact_speed > 3.0 {
                 self.camera.add_trauma(wev.impact_speed * 0.08);
             }
+            if wev.impact_speed > 2.2 {
+                let gain = (wev.impact_speed / 16.0).clamp(0.3, 0.9);
+                self.audio.play_sfx_with_gain(SfxType::WallCrash, gain);
+            }
         }
         for cev in &car_collision_events {
-            if (cev.car_a_idx == 0 || cev.car_b_idx == 0) && cev.closing_speed > 3.0 {
-                self.camera.add_trauma(cev.closing_speed * 0.06);
+            if cev.car_a_idx == 0 || cev.car_b_idx == 0 {
+                if cev.closing_speed > 3.0 {
+                    self.camera.add_trauma(cev.closing_speed * 0.06);
+                }
+                if cev.closing_speed > 2.0 {
+                    let gain = (cev.closing_speed / 14.0).clamp(0.25, 0.85);
+                    self.audio.play_sfx_with_gain(SfxType::CarHit, gain);
+                }
             }
+        }
+
+        // Dynamic Arcade Tire Skid / Drift Chirps & Accelerating Engine Audio
+        if let Some(player_car) = self.cars.first() {
+            let max_slip_angle = player_car.state.wheels.iter().map(|w| w.slip_angle.abs()).fold(0.0f32, f32::max);
+            let max_slip_ratio = player_car.state.wheels.iter().map(|w| w.slip_ratio.abs()).fold(0.0f32, f32::max);
+            let slip_intensity = (max_slip_angle * 1.5).max(max_slip_ratio);
+            self.audio.update_skid_chirp(slip_intensity, dt);
+
+            let forward_speed = player_car.state.local_velocity.x;
+            let throttle = player_ctrl.throttle - player_ctrl.brake;
+            let (rpm, is_shift) = self.engine_rpm.update(forward_speed, throttle, slip_intensity, dt);
+            self.audio.update_engine_rpm(rpm, throttle, is_shift);
         }
 
         // 6. Update race progression, lap tracking, sector splits, anti-cheat
@@ -464,6 +637,19 @@ impl RaceSession {
                 &self.track.checkpoints,
                 dt,
             );
+        }
+
+        // Lap and sector split audio feedback
+        if let Some(tracker) = self.trackers.first() {
+            if tracker.current_sector != self.prev_player_sector {
+                if tracker.current_sector > 0 {
+                    self.audio.play_sfx(SfxType::SectorPing);
+                }
+                self.prev_player_sector = tracker.current_sector;
+            }
+            if tracker.current_lap > self.prev_player_lap {
+                self.audio.play_sfx(SfxType::LapChime);
+            }
         }
 
         // 7. Ghost lap telemetry recording (Time Attack)
@@ -511,6 +697,8 @@ impl RaceSession {
         if player_done && !self.is_time_attack {
             self.build_results();
             self.state = GameState::Finished;
+            self.audio.stop_all_loops();
+            self.audio.play_sfx(SfxType::RaceFinish);
         }
     }
 
@@ -574,6 +762,7 @@ impl RaceSession {
                     self.num_bots,
                     self.is_time_attack,
                     self.assist_profile,
+                    &self.audio.settings,
                 );
             }
             GameState::Countdown(remaining) => {
@@ -587,7 +776,7 @@ impl RaceSession {
             GameState::Paused => {
                 self.render_world();
                 self.render_screen(None);
-                render_pause_menu(self.assist_profile);
+                render_pause_menu(self.assist_profile, &self.audio.settings);
             }
             GameState::Finished => {
                 self.render_world();

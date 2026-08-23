@@ -17,6 +17,7 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut session = RaceSession::new();
+    session.init_audio().await;
 
     loop {
         // Clear background with rich GeneRally grass color
