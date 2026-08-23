@@ -242,47 +242,41 @@ pub fn generate_race_finish(sample_rate: u32) -> Vec<u8> {
 
 /// Generates an integer-cycle seamless looping engine harmonic sound for a specific RPM band frequency.
 pub fn generate_engine_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
-    // Exact integer cycles for seamless zero-crossing loop
-    let target_duration = 0.35;
-    let num_cycles = (target_duration * base_hz).round().max(1.0);
-    let duration = num_cycles / base_hz;
+    // Integer crank cycles so every oscillator multiple (0.5x, 1x, 2x, 3x) loops seamlessly
+    let crank_hz = base_hz * 0.5;
+    let target_duration = 0.5;
+    let num_cycles = (target_duration * crank_hz).round().max(1.0);
+    let duration = num_cycles / crank_hz;
     let total_samples = (duration * sample_rate as f32).round() as usize;
-    let mut samples = vec![0.0f32; total_samples];
 
-    let mut filter = BiquadLowPass::new(sample_rate, (base_hz * 6.0).clamp(450.0, 3200.0), 1.1);
+    // Low-pass opens with RPM: muffled idle, bright redline scream
+    let cutoff = (base_hz * 6.0).clamp(300.0, 6000.0);
+    let mut filter = BiquadLowPass::new(sample_rate, cutoff, 0.95);
 
-    for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
+    // Pre-roll settles the stateful filter into steady state so the loop wraps cleanly
+    let pre_roll = (0.05 * sample_rate as f32).round() as usize;
+    let gen_len = pre_roll + total_samples;
+
+    let mut samples = vec![0.0f32; gen_len];
+    for (i, sample) in samples.iter_mut().enumerate() {
         let t = i as f32 / sample_rate as f32;
         let phase = t * base_hz;
 
-        // Sub-octave 4-stroke cycle pulse (0.5x)
-        let sub = Oscillator::sine(phase * 0.5) * 0.35;
-        // Cylinder firing fundamental (1.0x)
-        let h1 = Oscillator::saw(phase) * 0.50;
-        // 2nd manifold harmonic (2.0x)
-        let h2 = Oscillator::triangle(phase * 2.0) * 0.30;
-        // 3rd valve intake harmonic (3.0x)
-        let h3 = Oscillator::saw(phase * 3.0) * 0.20;
-        // 4th harmonic mechanical whine (4.0x)
-        let h4 = Oscillator::sine(phase * 4.0) * 0.10;
+        // Sub-octave crank rotation (0.5x): deep lumpy idle rumble
+        let sub =
+            Oscillator::sine(phase * 0.5) * 0.32 + Oscillator::square(phase * 0.5, 0.5) * 0.10;
 
-        let raw = sub + h1 + h2 + h3 + h4;
-        let filtered = filter.process(raw);
-        *sample = soft_saturate(filtered, 1.25) * 0.75;
+        // Firing frequency (1x): rich saw body plus 2nd-order intake harmonic
+        let fire = Oscillator::saw(phase) * 0.62 + Oscillator::sine(phase * 2.0) * 0.28;
+
+        // 3rd-order exhaust bark for top-end aggression
+        let bark = Oscillator::saw(phase * 3.0) * 0.22;
+
+        let raw = sub + fire + bark;
+        *sample = soft_saturate(filter.process(raw), 1.2) * 0.85;
     }
 
-    // Micro 3ms crossfade loop boundaries for zero clicks
-    let fade_samples = (0.003 * sample_rate as f32).round() as usize;
-    for i in 0..fade_samples {
-        let frac = i as f32 / fade_samples as f32;
-        let end_idx = total_samples - fade_samples + i;
-        let orig_start = samples[i];
-        let orig_end = samples[end_idx];
-        samples[i] = orig_start * frac + orig_end * (1.0 - frac);
-        samples[end_idx] = orig_end * frac + orig_start * (1.0 - frac);
-    }
-
-    encode_wav_16bit_mono(&samples, sample_rate)
+    encode_wav_16bit_mono(&samples[pre_roll..], sample_rate)
 }
 
 /// Generates a gear upshift exhaust backfire pop & turbo blow-off (~0.05s).
@@ -353,6 +347,68 @@ mod tests {
             assert_eq!(&wav[0..4], b"RIFF", "SFX {} invalid RIFF header", name);
             assert_eq!(&wav[8..12], b"WAVE", "SFX {} invalid WAVE header", name);
             assert!(wav.len() > 44, "SFX {} has no payload", name);
+        }
+    }
+
+    /// Decodes the PCM payload of a mono 16-bit WAV into normalized f32 samples.
+    fn decode_mono_pcm(wav: &[u8]) -> Vec<f32> {
+        wav[44..]
+            .chunks_exact(2)
+            .map(|b| i16::from_le_bytes([b[0], b[1]]) as f32 / 32768.0)
+            .collect()
+    }
+
+    /// Goertzel magnitude of `freq` over the sample buffer (dependency-free spectral probe).
+    fn goertzel(samples: &[f32], sample_rate: u32, freq: f32) -> f32 {
+        let omega = 2.0 * std::f32::consts::PI * freq / sample_rate as f32;
+        let coeff = 2.0 * omega.cos();
+        let (mut s1, mut s2) = (0.0f32, 0.0f32);
+        for &x in samples {
+            let s = x + coeff * s1 - s2;
+            s2 = s1;
+            s1 = s;
+        }
+        (s1 * s1 + s2 * s2 - coeff * s1 * s2).sqrt()
+    }
+
+    /// Regression: engine bands must be real pitched tones, not the DC-clipped
+    /// garbage caused by unwrapped triangle phases (historically dc=+0.78).
+    #[test]
+    fn test_engine_rpm_band_is_pitched_tone_not_dc() {
+        for &base_hz in &[42.5f32, 150.0, 465.0] {
+            let x = decode_mono_pcm(&generate_engine_rpm_band(DEFAULT_SAMPLE_RATE, base_hz));
+
+            // No DC offset / saturation clipping
+            let mean: f32 = x.iter().sum::<f32>() / x.len() as f32;
+            assert!(
+                mean.abs() < 0.05,
+                "band {base_hz} Hz has DC offset {mean} - oscillator phase bug"
+            );
+
+            // Audible level
+            let rms = (x.iter().map(|s| s * s).sum::<f32>() / x.len() as f32).sqrt();
+            assert!(
+                (0.15..0.85).contains(&rms),
+                "band {base_hz} Hz RMS {rms} out of audible range"
+            );
+
+            // Pitch must sit at the firing frequency, not at a detuned bin
+            let fire_power = goertzel(&x, DEFAULT_SAMPLE_RATE, base_hz);
+            let off_power = goertzel(&x, DEFAULT_SAMPLE_RATE, base_hz * 1.37);
+            assert!(
+                fire_power > off_power * 3.0,
+                "band {base_hz} Hz lacks firing-frequency energy (fire={fire_power}, off={off_power})"
+            );
+        }
+    }
+
+    /// Engine band loops must wrap seamlessly: last and first samples nearly equal.
+    #[test]
+    fn test_engine_rpm_band_loop_is_seamless() {
+        for &base_hz in &[42.5f32, 305.0] {
+            let x = decode_mono_pcm(&generate_engine_rpm_band(DEFAULT_SAMPLE_RATE, base_hz));
+            let seam = (x[x.len() - 1] - x[0]).abs();
+            assert!(seam < 0.08, "band {base_hz} Hz loop seam click {seam}");
         }
     }
 }

@@ -259,7 +259,7 @@ impl CarConfig {
 
             max_engine_force: 6800.0,
             max_reverse_force: 3200.0,
-            max_brake_force: 9500.0,
+            max_brake_force: 11500.0,
             handbrake_force: 7500.0,
             brake_bias: 0.60,
             drive_bias: 0.0, // RWD arcade feel
@@ -313,7 +313,7 @@ impl CarConfig {
 
             max_engine_force: 2200.0,
             max_reverse_force: 800.0,
-            max_brake_force: 3000.0,
+            max_brake_force: 3600.0,
             handbrake_force: 2400.0,
             brake_bias: 0.50,
             drive_bias: 0.0,

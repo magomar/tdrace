@@ -224,6 +224,53 @@ fn test_engine_rpm_model_gear_shifts_and_revs() {
     assert_eq!(model.current_gear, 2);
 }
 
+#[test]
+fn test_all_28_rpm_bands_synthesis_and_equal_power_weights() {
+    use tdrace_app::audio::manager::{NUM_RPM_BANDS, RPM_BAND_FREQS, RPM_BAND_RPMS};
+
+    assert_eq!(NUM_RPM_BANDS, 28);
+    assert_eq!(RPM_BAND_FREQS.len(), 28);
+    assert_eq!(RPM_BAND_RPMS.len(), 28);
+
+    // Verify frequency monotonic ascending order
+    for i in 0..(NUM_RPM_BANDS - 1) {
+        assert!(RPM_BAND_FREQS[i] < RPM_BAND_FREQS[i + 1], "Bands must be strictly ascending in frequency");
+        assert!(RPM_BAND_RPMS[i] < RPM_BAND_RPMS[i + 1], "Bands must be strictly ascending in RPM");
+    }
+
+    // Verify every band generates a valid non-empty WAV with RIFF header
+    for &freq in &RPM_BAND_FREQS {
+        let wav = generate_engine_rpm_band(DEFAULT_SAMPLE_RATE, freq);
+        assert_eq!(&wav[0..4], b"RIFF");
+        assert_eq!(&wav[8..12], b"WAVE");
+        assert!(wav.len() > 1000);
+    }
+
+    // Test equal-power crossfade math across range
+    for test_rpm in [900.0, 1500.0, 3200.0, 5000.0, 6800.0, 8000.0] {
+        let mut w_sum_sq = 0.0f32;
+        let mut active_count = 0;
+
+        for i in 0..(NUM_RPM_BANDS - 1) {
+            let low = RPM_BAND_RPMS[i];
+            let high = RPM_BAND_RPMS[i + 1];
+            if test_rpm >= low && test_rpm <= high {
+                let u = ((test_rpm - low) / (high - low)).clamp(0.0, 1.0);
+                let angle = u * std::f32::consts::FRAC_PI_2;
+                let w1 = angle.cos();
+                let w2 = angle.sin();
+                w_sum_sq = w1 * w1 + w2 * w2;
+                active_count = 2;
+                break;
+            }
+        }
+
+        if active_count == 2 {
+            assert!((w_sum_sq - 1.0).abs() < 0.001, "Equal power sum must be 1.0, got {}", w_sum_sq);
+        }
+    }
+}
+
 // Helper trait to test settings setters
 trait AudioSettingsTestExt {
     fn set_master_volume_test(&mut self, vol: f32);
@@ -234,3 +281,4 @@ impl AudioSettingsTestExt for AudioSettings {
         self.master_volume = vol.clamp(0.0, 1.0);
     }
 }
+

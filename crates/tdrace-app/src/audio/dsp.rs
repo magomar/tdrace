@@ -133,10 +133,15 @@ impl Oscillator {
         2.0 * (phase - (phase + 0.5).floor())
     }
 
-    /// Triangle wave in `[-1.0, 1.0]`.
+    /// Triangle wave in `[-1.0, 1.0]`. Wraps phase so arbitrary
+    /// (unwrapped) phase inputs fold correctly into `[0.0, 1.0)`.
     #[inline(always)]
     pub fn triangle(phase: f32) -> f32 {
-        4.0 * (phase - 0.5).abs() - 1.0
+        let mut p = phase.fract();
+        if p < 0.0 {
+            p += 1.0;
+        }
+        4.0 * (p - 0.5).abs() - 1.0
     }
 
     /// Square wave with pulse width modulation (PWM) parameter `[0.01, 0.99]`.

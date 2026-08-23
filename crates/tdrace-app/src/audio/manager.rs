@@ -16,9 +16,25 @@ use crate::audio::sfx::{
 use crate::audio::synthwave::{generate_menu_theme, generate_nightcall_race_theme};
 use crate::audio::dsp::DEFAULT_SAMPLE_RATE;
 
-/// Engine RPM frequency bands (Hz) and corresponding engine RPM values.
-pub const RPM_BAND_FREQS: [f32; 6] = [55.0, 95.0, 150.0, 220.0, 310.0, 420.0];
-pub const RPM_BAND_RPMS: [f32; 6] = [1000.0, 2200.0, 3500.0, 4800.0, 6200.0, 7800.0];
+/// Number of discrete RPM harmonic frequency bands for fine microtonal engine simulation.
+pub const NUM_RPM_BANDS: usize = 28;
+
+/// Engine RPM band center values from 850 RPM (idle) to 9,300 RPM (redline).
+pub const RPM_BAND_RPMS: [f32; NUM_RPM_BANDS] = [
+    850.0, 1000.0, 1150.0, 1350.0, 1550.0, 1800.0, 2050.0, 2350.0,
+    2650.0, 3000.0, 3350.0, 3700.0, 4100.0, 4500.0, 4900.0, 5300.0,
+    5700.0, 6100.0, 6500.0, 6850.0, 7200.0, 7500.0, 7800.0, 8100.0,
+    8400.0, 8700.0, 9000.0, 9300.0,
+];
+
+/// Engine cylinder firing fundamental frequencies (Hz) corresponding to RPM bands.
+/// For a 6-cylinder 4-stroke engine: Freq (Hz) = RPM * 3 / 60 = RPM / 20.
+pub const RPM_BAND_FREQS: [f32; NUM_RPM_BANDS] = [
+    42.5, 50.0, 57.5, 67.5, 77.5, 90.0, 102.5, 117.5,
+    132.5, 150.0, 167.5, 185.0, 205.0, 225.0, 245.0, 265.0,
+    285.0, 305.0, 325.0, 342.5, 360.0, 375.0, 390.0, 405.0,
+    420.0, 435.0, 450.0, 465.0,
+];
 
 /// Audio Volume & Mute Settings.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -94,7 +110,7 @@ pub enum SfxType {
 pub struct SoundBank {
     pub music_nightcall: Option<Sound>,
     pub music_menu: Option<Sound>,
-    pub engine_rpm_bands: [Option<Sound>; 6],
+    pub engine_rpm_bands: [Option<Sound>; NUM_RPM_BANDS],
     pub sfx_shift_pop: Option<Sound>,
     pub sfx_engine: Option<Sound>,
     pub sfx_skid: Option<Sound>,
@@ -116,7 +132,7 @@ impl SoundBank {
         Self {
             music_nightcall: None,
             music_menu: None,
-            engine_rpm_bands: [None, None, None, None, None, None],
+            engine_rpm_bands: [const { None }; NUM_RPM_BANDS],
             sfx_shift_pop: None,
             sfx_engine: None,
             sfx_skid: None,
@@ -141,8 +157,8 @@ impl SoundBank {
         let nightcall_wav = generate_nightcall_race_theme(sample_rate);
         let menu_wav = generate_menu_theme(sample_rate);
 
-        // Pre-generate 6 harmonic RPM frequency bands for continuous pitch crossfading
-        let mut rpm_bands = [None, None, None, None, None, None];
+        // Pre-generate 28 harmonic RPM frequency bands for continuous pitch crossfading
+        let mut rpm_bands = [const { None }; NUM_RPM_BANDS];
         for (idx, &freq) in RPM_BAND_FREQS.iter().enumerate() {
             let wav = generate_engine_rpm_band(sample_rate, freq);
             rpm_bands[idx] = load_sound_from_bytes(&wav).await.ok();
@@ -211,8 +227,9 @@ pub struct AudioManager {
     pub current_music: Option<MusicTrack>,
     pub is_engine_active: bool,
     pub is_skid_active: bool,
-    pub engine_active_bands: [bool; 6],
+    pub engine_active_bands: [bool; NUM_RPM_BANDS],
     prev_skid_vol: f32,
+    limiter_timer: f32,
 }
 
 impl Default for AudioManager {
@@ -229,8 +246,9 @@ impl AudioManager {
             current_music: None,
             is_engine_active: false,
             is_skid_active: false,
-            engine_active_bands: [false; 6],
+            engine_active_bands: [false; NUM_RPM_BANDS],
             prev_skid_vol: 0.0,
+            limiter_timer: 0.0,
         }
     }
 
@@ -358,7 +376,7 @@ impl AudioManager {
         }
     }
 
-    /// Dynamically crossfades multi-harmonic engine RPM sound bands and triggers shift pops.
+    /// Dynamically crossfades multi-harmonic engine RPM sound bands, reflects throttle load, and triggers shift pops.
     pub fn update_engine_rpm(&mut self, rpm: f32, throttle: f32, is_shift: bool) {
         if self.settings.is_muted {
             self.stop_all_loops();
@@ -366,40 +384,53 @@ impl AudioManager {
         }
 
         if is_shift {
-            self.play_sfx_with_gain(SfxType::ShiftPop, 0.90);
+            self.play_sfx_with_gain(SfxType::ShiftPop, 0.95);
         }
 
-        // Clamp RPM to defined bands
-        let clamped_rpm = rpm.clamp(1000.0, 7800.0);
+        let min_rpm = RPM_BAND_RPMS[0];
+        let max_rpm = RPM_BAND_RPMS[NUM_RPM_BANDS - 1];
+        let clamped_rpm = rpm.clamp(min_rpm, max_rpm);
 
-        // Compute 6 piecewise linear crossfade weights across RPM bands
-        let mut weights = [0.0f32; 6];
-        if clamped_rpm <= RPM_BAND_RPMS[0] {
+        // Equal-power crossfade across fine microtonal RPM bands
+        let mut weights = [0.0f32; NUM_RPM_BANDS];
+        if clamped_rpm <= min_rpm {
             weights[0] = 1.0;
-        } else if clamped_rpm >= RPM_BAND_RPMS[5] {
-            weights[5] = 1.0;
+        } else if clamped_rpm >= max_rpm {
+            weights[NUM_RPM_BANDS - 1] = 1.0;
         } else {
-            for i in 0..5 {
+            for i in 0..(NUM_RPM_BANDS - 1) {
                 let low_rpm = RPM_BAND_RPMS[i];
                 let high_rpm = RPM_BAND_RPMS[i + 1];
                 if clamped_rpm >= low_rpm && clamped_rpm <= high_rpm {
-                    let u = (clamped_rpm - low_rpm) / (high_rpm - low_rpm);
-                    weights[i] = 1.0 - u;
-                    weights[i + 1] = u;
+                    let u = ((clamped_rpm - low_rpm) / (high_rpm - low_rpm)).clamp(0.0, 1.0);
+                    // Equal-power crossfade maintaining constant acoustic energy
+                    let angle = u * std::f32::consts::FRAC_PI_2;
+                    weights[i] = angle.cos();
+                    weights[i + 1] = angle.sin();
                     break;
                 }
             }
         }
 
-        // Overall engine volume: base mechanical presence + throttle intake load
-        let base_gain = 0.35 + 0.50 * throttle.abs();
-        let total_vol = self.settings.effective_sfx_volume(base_gain);
+        // Engine volume reflecting throttle demand: wide-open intake roar vs engine braking overrun
+        let load_factor = throttle.max(0.0);
+        let base_gain = 0.42 + 0.58 * load_factor;
+
+        // Rev limiter bounce stutter at redline with high throttle
+        let limiter_mod = if clamped_rpm >= 7700.0 && throttle > 0.5 {
+            self.limiter_timer = (self.limiter_timer + 0.12).fract();
+            if self.limiter_timer < 0.5 { 1.0 } else { 0.60 }
+        } else {
+            1.0
+        };
+
+        let total_vol = self.settings.effective_sfx_volume(base_gain * limiter_mod);
 
         for (idx, sound_opt) in self.bank.engine_rpm_bands.iter().enumerate() {
             if let Some(sound) = sound_opt {
                 let band_vol = total_vol * weights[idx];
-                if !self.engine_active_bands[idx] {
-                    if band_vol > 0.001 {
+                if band_vol > 0.001 {
+                    if !self.engine_active_bands[idx] {
                         play_sound(
                             sound,
                             PlaySoundParams {
@@ -408,9 +439,12 @@ impl AudioManager {
                             },
                         );
                         self.engine_active_bands[idx] = true;
+                    } else {
+                        set_sound_volume(sound, band_vol);
                     }
-                } else {
-                    set_sound_volume(sound, band_vol);
+                } else if self.engine_active_bands[idx] {
+                    stop_sound(sound);
+                    self.engine_active_bands[idx] = false;
                 }
             }
         }

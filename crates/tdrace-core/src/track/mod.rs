@@ -36,28 +36,31 @@ impl Track {
     /// Samples the exact surface type at any arbitrary 2D world coordinate.
     ///
     /// Surface resolution hierarchy:
-    /// 1. Specific geometric surface zones (hazard areas, sand traps, oil slicks, asphalt runoff).
-    /// 2. Track spline projection:
+    /// 1. Track spline projection:
     ///    - Main drivable track ribbon (`SurfaceType::Asphalt` or segment override).
     ///    - Apex / exit curbs (`SurfaceType::Curb`).
+    /// 2. Specific geometric surface zones (hazard areas, sand traps, oil slicks, asphalt runoff).
+    ///    Only reachable when off-track: zones are rendered beneath the track ribbon.
     /// 3. Default off-track terrain (`SurfaceType::Grass`).
     pub fn sample_surface(&self, point: Vec2) -> SurfaceType {
-        // 1. Check explicit surface zones (sand traps, oil slicks, runoff)
+        // 1. Project onto spline: drivable ribbon and curbs always win
+        let proj = self.spline.project_point(point);
+        if proj.is_on_track {
+            return proj.base_surface;
+        }
+        if proj.is_on_curb {
+            return SurfaceType::Curb;
+        }
+
+        // 2. Check explicit off-track surface zones (sand traps, oil slicks, runoff)
         for zone in &self.geometry.surface_zones {
             if zone.contains(point) {
                 return zone.surface;
             }
         }
 
-        // 2. Project onto spline
-        let proj = self.spline.project_point(point);
-        if proj.is_on_track {
-            proj.base_surface
-        } else if proj.is_on_curb {
-            SurfaceType::Curb
-        } else {
-            self.default_surface
-        }
+        // 3. Default terrain
+        self.default_surface
     }
 
     /// Samples surface types underneath all 4 wheels of a car [FL, FR, RL, RR] for split-mu physics.
@@ -121,6 +124,11 @@ mod tests {
         // Sample inside sand trap
         let surf_sand = track.sample_surface(Vec2::new(220.0, 330.0));
         assert_eq!(surf_sand, SurfaceType::Sand);
+
+        // Regression: sand trap AABB overlaps the hairpin ribbon (centerline y=310,
+        // half-width 6, zone starts at y=315). On-track points must stay Asphalt.
+        let surf_overlap = track.sample_surface(Vec2::new(200.0, 313.0));
+        assert_eq!(surf_overlap, SurfaceType::Asphalt);
 
         // Test sample_car_surfaces
         let car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
