@@ -300,9 +300,9 @@ fn render_speedometer(cx: f32, cy: f32, car: &Car) {
     }
 }
 
-/// Small keyboard controls tooltip in lower left corner.
+/// Small keyboard and gamepad controls tooltip in lower left corner.
 fn render_controls_guide(x: f32, y: f32) {
-    let guide = "Q/Up: Gas | A/Down: Brake | O/P or Left/Right: Steer | Space: Drift | H: Assists | Esc: Pause";
+    let guide = "Q/Up/RT: Gas | A/Down/LT: Brake | O/P/Stick: Steer | Space/B: Handbrake | H/R3: Assists | Esc/Start: Pause";
     draw_text(guide, x, y, 14.0, Color::new(0.9, 0.9, 0.95, 0.80));
 }
 

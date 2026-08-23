@@ -227,11 +227,11 @@ pub fn render_track_select_menu(
     draw_text("Nightcall Synthwave Soundtrack & Dynamic SFX Engine", col2_x + 15.0, c2_y + 40.0, 11.0, Color::new(0.65, 0.70, 0.80, 1.0));
 
     // Footer Launch prompt
-    let start_prompt = "PRESS [SPACE] OR [ENTER] TO START RACE";
-    let pm = measure_text(start_prompt, None, 26, 1.0);
+    let start_prompt = "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE";
+    let pm = measure_text(start_prompt, None, 24, 1.0);
     let p_y = sh - 35.0;
-    draw_rectangle((sw - pm.width) * 0.5 - 20.0, p_y - 28.0, pm.width + 40.0, 40.0, Color::new(0.1, 0.6, 0.25, 0.9));
-    draw_text(start_prompt, (sw - pm.width) * 0.5, p_y, 26.0, Palette::WHITE);
+    draw_rectangle((sw - pm.width) * 0.5 - 20.0, p_y - 26.0, pm.width + 40.0, 38.0, Color::new(0.1, 0.6, 0.25, 0.9));
+    draw_text(start_prompt, (sw - pm.width) * 0.5, p_y, 24.0, Palette::WHITE);
 }
 
 /// Renders the Pause overlay with Assist Profile selection and Audio status.
@@ -242,8 +242,8 @@ pub fn render_pause_menu(assist_profile: AssistProfile, audio_settings: &AudioSe
     // Dark semi-transparent dim
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.65));
 
-    let box_w = 440.0;
-    let box_h = 340.0;
+    let box_w = 460.0;
+    let box_h = 350.0;
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
@@ -254,26 +254,26 @@ pub fn render_pause_menu(assist_profile: AssistProfile, audio_settings: &AudioSe
     let tm = measure_text(title, None, 30, 1.0);
     draw_text(title, x + (box_w - tm.width) * 0.5, y + 38.0, 30.0, Palette::WHITE);
 
-    let assist_item = format!("H : Toggle Assists [{}]", assist_profile.short_name());
+    let assist_item = format!("H / R3 : Toggle Assists [{}]", assist_profile.short_name());
     let mute_text = if audio_settings.is_muted { "MUTED" } else { "ACTIVE" };
     let vol_pct = (audio_settings.master_volume * 100.0).round() as i32;
     let audio_item = format!("M : Toggle Audio [{}] | [ / ] : Vol {}%", mute_text, vol_pct);
 
     let items = [
-        "ESC / P : Resume Race".to_string(),
-        "R : Restart Race".to_string(),
-        "M : Main Menu / Track Select".to_string(),
+        "ESC / START / A : Resume Race".to_string(),
+        "R / Y : Restart Race".to_string(),
+        "M / B : Main Menu / Track Select".to_string(),
         assist_item,
         audio_item,
-        "TAB : Toggle Follow / Overview Camera".to_string(),
-        "Q/A/O/P or Arrows : Drive & Steer".to_string(),
-        "SPACE : Handbrake | Z : Reverse".to_string(),
+        "TAB / Left Stick Click : Camera View".to_string(),
+        "Q/A/O/P / Arrows / Stick & Triggers : Drive".to_string(),
+        "SPACE / B : Handbrake | Z / LB : Reverse".to_string(),
     ];
 
-    let mut item_y = y + 72.0;
+    let mut item_y = y + 70.0;
     for item in &items {
-        draw_text(item, x + 25.0, item_y, 15.0, Color::new(0.85, 0.90, 0.95, 1.0));
-        item_y += 26.0;
+        draw_text(item, x + 25.0, item_y, 14.5, Color::new(0.85, 0.90, 0.95, 1.0));
+        item_y += 25.0;
     }
 }
 

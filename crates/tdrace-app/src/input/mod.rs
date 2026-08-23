@@ -1,4 +1,5 @@
 pub mod filter;
+pub mod gamepad;
 pub mod touch;
 
 use macroquad::color::Color;
@@ -14,6 +15,7 @@ use tdrace_core::track::Track;
 use crate::ai::BotAiDriver;
 use crate::render::color::Palette;
 pub use filter::{DigitalInputConfig, DigitalInputFilter};
+pub use gamepad::{GamepadConfig, GamepadController, GamepadSnapshot};
 pub use touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 
 /// Active debug overlay visibility flags.
@@ -27,11 +29,11 @@ pub struct DebugOverlays {
 }
 
 /// Unified Input and Debug Overlay Controller.
-#[derive(Debug, Clone)]
 pub struct InputController {
     pub debug: DebugOverlays,
     pub lidar_scanner: LidarScanner,
     pub filter: DigitalInputFilter,
+    pub gamepad: GamepadController,
 }
 
 impl Default for InputController {
@@ -46,6 +48,7 @@ impl InputController {
             debug: DebugOverlays::default(),
             lidar_scanner: LidarScanner::new(LidarConfig::surround_32()),
             filter: DigitalInputFilter::default(),
+            gamepad: GamepadController::new(),
         }
     }
 
@@ -54,8 +57,12 @@ impl InputController {
         self.filter.reset();
     }
 
-    /// Polls player driving controls (Keyboard with digital smoothing & speed-sensitive scaling).
+    /// Polls player driving controls (Keyboard + Gamepad with progressive smoothing & analog precision).
     pub fn poll_player_controls(&mut self, dt: f32, current_speed_fwd: f32) -> CarControls {
+        // 1. Update Gamepad inputs & events
+        self.gamepad.update();
+
+        // 2. Poll keyboard raw inputs
         let mut raw_steer = 0.0f32;
         let mut raw_throttle = 0.0f32;
         let mut raw_brake = 0.0f32;
@@ -86,18 +93,42 @@ impl InputController {
         }
 
         // Handbrake: Space
-        let handbrake = is_key_down(KeyCode::Space);
+        let kb_handbrake = is_key_down(KeyCode::Space);
 
-        // Apply digital input smoothing, progressive ramps & speed-sensitive attenuation
+        self.process_inputs((raw_steer, raw_throttle, raw_brake, kb_handbrake, raw_reverse), dt, current_speed_fwd)
+    }
+
+    /// Pure input processing & blending pipeline between keyboard digital ramps and gamepad analog axes.
+    pub fn process_inputs(
+        &mut self,
+        raw_kb: (f32, f32, f32, bool, bool),
+        dt: f32,
+        current_speed_fwd: f32,
+    ) -> CarControls {
+        let (raw_steer, raw_throttle, raw_brake, kb_handbrake, raw_reverse) = raw_kb;
+
+        // Apply digital input smoothing, progressive ramps & speed-sensitive attenuation to keyboard
         let speed_abs = current_speed_fwd.abs();
-        let (steer, throttle, brake) = self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
+        let (kb_steer, kb_throttle, kb_brake) = self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
+
+        // Blend Keyboard and Analog Gamepad controls seamlessly
+        let gp = &self.gamepad.snapshot;
+        let steer = if gp.steer.abs() > 0.001 {
+            (kb_steer + gp.steer).clamp(-1.0, 1.0)
+        } else {
+            kb_steer
+        };
+        let throttle = kb_throttle.max(gp.throttle).clamp(0.0, 1.0);
+        let brake = kb_brake.max(gp.brake).clamp(0.0, 1.0);
+        let handbrake = kb_handbrake || gp.handbrake;
+        let reverse = raw_reverse || gp.reverse;
 
         CarControls {
             throttle,
             steer,
             brake,
             handbrake,
-            reverse: raw_reverse,
+            reverse,
         }
     }
 

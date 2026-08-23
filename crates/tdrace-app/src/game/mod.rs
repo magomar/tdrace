@@ -324,6 +324,9 @@ impl RaceSession {
         let sw = screen_width();
         let sh = screen_height();
 
+        // Handle gamepad input updates
+        self.input.gamepad.update();
+
         // Handle debug toggles
         self.input.update_debug_toggles();
 
@@ -355,13 +358,13 @@ impl RaceSession {
             self.touch.toggle_layout();
         }
 
-        // Handle camera toggle (Tab or C key)
-        if is_key_pressed(KeyCode::Tab) || is_key_pressed(KeyCode::C) {
+        // Handle camera toggle (Tab, C key, or Gamepad Left Stick Click / Y)
+        if is_key_pressed(KeyCode::Tab) || is_key_pressed(KeyCode::C) || self.input.gamepad.snapshot.btn_cam_toggle_pressed {
             self.camera.toggle_mode();
         }
 
-        // Cycle Driver Assists Profile (H key)
-        if is_key_pressed(KeyCode::H) {
+        // Cycle Driver Assists Profile (H key or Gamepad Right Stick Click / Select)
+        if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
             self.assist_profile = self.assist_profile.next();
             if let Some(player_car) = self.cars.first_mut() {
                 player_car.config.assists = self.assist_profile.to_config();
@@ -417,8 +420,8 @@ impl RaceSession {
                 }
             }
             GameState::Racing => {
-                // Pause trigger (Escape / Pause key)
-                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) {
+                // Pause trigger (Escape / Pause key or Gamepad Start)
+                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed {
                     self.audio.stop_all_loops();
                     self.state = GameState::Paused;
                     return;
@@ -447,10 +450,10 @@ impl RaceSession {
             }
             GameState::Paused => {
                 self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) {
+                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed || self.input.gamepad.snapshot.btn_a_pressed {
                     self.state = GameState::Racing;
                 }
-                if is_key_pressed(KeyCode::M) {
+                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_b_pressed || self.input.gamepad.snapshot.btn_back_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Menu;
                     self.audio.play_music(MusicTrack::NeonMenu);
@@ -458,11 +461,11 @@ impl RaceSession {
             }
             GameState::Finished => {
                 self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) {
+                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_a_pressed || self.input.gamepad.snapshot.btn_start_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
                 }
-                if is_key_pressed(KeyCode::M) {
+                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_b_pressed || self.input.gamepad.snapshot.btn_back_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Menu;
                     self.audio.play_music(MusicTrack::NeonMenu);
@@ -471,10 +474,10 @@ impl RaceSession {
         }
     }
 
-    /// Menu input navigation.
+    /// Menu input navigation (Keyboard + Gamepad D-pad/buttons).
     fn update_menu(&mut self) {
-        // Track selection cursor (Up/Down)
-        if is_key_pressed(KeyCode::Up) {
+        // Track selection cursor (Up/Down or D-pad Up/Down)
+        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.dpad_up_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             if self.menu_track_idx == 0 {
                 self.menu_track_idx = TrackChoice::ALL.len() - 1;
@@ -482,13 +485,13 @@ impl RaceSession {
                 self.menu_track_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Down) {
+        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.dpad_down_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_track_idx = (self.menu_track_idx + 1) % TrackChoice::ALL.len();
         }
 
-        // Car selection cursor (Left/Right)
-        if is_key_pressed(KeyCode::Left) {
+        // Car selection cursor (Left/Right or D-pad Left/Right)
+        if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.dpad_left_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             if self.menu_car_idx == 0 {
                 self.menu_car_idx = CarChoice::ALL.len() - 1;
@@ -496,31 +499,31 @@ impl RaceSession {
                 self.menu_car_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Right) {
+        if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.dpad_right_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
         }
 
-        // Toggle Mode (Time Attack vs Race vs AI)
-        if is_key_pressed(KeyCode::T) {
+        // Toggle Mode (Time Attack vs Race vs AI - T key or Gamepad X)
+        if is_key_pressed(KeyCode::T) || self.input.gamepad.snapshot.btn_x_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             self.is_time_attack = !self.is_time_attack;
         }
 
-        // Change bot count
-        if is_key_pressed(KeyCode::B) {
+        // Change bot count (B key or Gamepad Y)
+        if is_key_pressed(KeyCode::B) || self.input.gamepad.snapshot.btn_y_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             self.num_bots = (self.num_bots % 7) + 1;
         }
 
-        // Toggle Driver Assists Profile
-        if is_key_pressed(KeyCode::H) {
+        // Toggle Driver Assists Profile (H key or Gamepad Right Stick Click / Select)
+        if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             self.assist_profile = self.assist_profile.next();
         }
 
-        // Start race
-        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) {
+        // Start race (Space, Enter, or Gamepad A / Start)
+        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_a_pressed || self.input.gamepad.snapshot.btn_start_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
             self.track_choice = TrackChoice::ALL[self.menu_track_idx];
             self.car_choice = CarChoice::ALL[self.menu_car_idx];
