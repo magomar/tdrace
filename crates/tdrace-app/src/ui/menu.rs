@@ -98,12 +98,15 @@ pub struct RaceResultEntry {
     pub delta_to_leader: f32,
 }
 
+use tdrace_core::physics::config::AssistProfile;
+
 /// Renders the Track & Setup Selection Menu.
 pub fn render_track_select_menu(
     selected_track_idx: usize,
     selected_car_idx: usize,
     num_bots: usize,
     is_time_attack: bool,
+    assist_profile: AssistProfile,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -161,7 +164,7 @@ pub fn render_track_select_menu(
 
     for (i, car_opt) in CarChoice::ALL.iter().enumerate() {
         let is_sel = i == selected_car_idx;
-        let box_h = 55.0;
+        let box_h = 52.0;
         let bg_col = if is_sel {
             Color::new(0.35, 0.25, 0.50, 0.9)
         } else {
@@ -177,43 +180,57 @@ pub fn render_track_select_menu(
         draw_rectangle_lines(col2_x, c2_y, col_w, box_h, 2.0, border_col);
 
         let title_col = if is_sel { Palette::WHITE } else { Color::new(0.8, 0.85, 0.9, 1.0) };
-        draw_text(car_opt.title(), col2_x + 15.0, c2_y + 24.0, 19.0, title_col);
-        draw_text(car_opt.description(), col2_x + 15.0, c2_y + 44.0, 12.0, Color::new(0.7, 0.75, 0.8, 1.0));
+        draw_text(car_opt.title(), col2_x + 15.0, c2_y + 22.0, 18.0, title_col);
+        draw_text(car_opt.description(), col2_x + 15.0, c2_y + 42.0, 12.0, Color::new(0.7, 0.75, 0.8, 1.0));
 
-        c2_y += box_h + 10.0;
+        c2_y += box_h + 8.0;
     }
 
     // Mode Setting & Bot Count
-    c2_y += 10.0;
-    draw_rectangle(col2_x, c2_y, col_w, 75.0, Color::new(0.10, 0.12, 0.18, 0.88));
-    draw_rectangle_lines(col2_x, c2_y, col_w, 75.0, 1.5, Color::new(0.3, 0.4, 0.6, 0.7));
+    c2_y += 4.0;
+    draw_rectangle(col2_x, c2_y, col_w, 58.0, Color::new(0.10, 0.12, 0.18, 0.88));
+    draw_rectangle_lines(col2_x, c2_y, col_w, 58.0, 1.5, Color::new(0.3, 0.4, 0.6, 0.7));
 
     let mode_str = if is_time_attack {
         "GAME MODE: [T] Time Attack (Solo Hotlap)".to_string()
     } else {
         format!("GAME MODE: [T] Race vs AI ({} Bots, [B] to toggle)", num_bots)
     };
-    draw_text(&mode_str, col2_x + 15.0, c2_y + 30.0, 17.0, Color::new(0.95, 0.85, 0.2, 1.0));
-    draw_text("Controls: [T] Toggle Mode | [B] Change Bot Count (1-7)", col2_x + 15.0, c2_y + 55.0, 13.0, Color::new(0.7, 0.75, 0.8, 1.0));
+    draw_text(&mode_str, col2_x + 15.0, c2_y + 24.0, 16.0, Color::new(0.95, 0.85, 0.2, 1.0));
+    draw_text("Controls: [T] Toggle Mode | [B] Change Bot Count (1-7)", col2_x + 15.0, c2_y + 46.0, 12.0, Color::new(0.7, 0.75, 0.8, 1.0));
+
+    // Driver Assists Profile Setting
+    c2_y += 66.0;
+    draw_rectangle(col2_x, c2_y, col_w, 60.0, Color::new(0.10, 0.12, 0.18, 0.88));
+    draw_rectangle_lines(col2_x, c2_y, col_w, 60.0, 1.5, Color::new(0.2, 0.7, 0.9, 0.8));
+
+    let assist_str = format!("DRIVE ASSISTS: [H] {}", assist_profile.title());
+    let assist_col = match assist_profile {
+        AssistProfile::Arcade => Color::new(0.3, 0.9, 1.0, 1.0),
+        AssistProfile::Sport => Color::new(1.0, 0.75, 0.2, 1.0),
+        AssistProfile::Pro => Color::new(1.0, 0.4, 0.4, 1.0),
+    };
+    draw_text(&assist_str, col2_x + 15.0, c2_y + 24.0, 16.0, assist_col);
+    draw_text(assist_profile.description(), col2_x + 15.0, c2_y + 46.0, 12.0, Color::new(0.7, 0.75, 0.8, 1.0));
 
     // Footer Launch prompt
     let start_prompt = "PRESS [SPACE] OR [ENTER] TO START RACE";
     let pm = measure_text(start_prompt, None, 26, 1.0);
-    let p_y = sh - 45.0;
+    let p_y = sh - 35.0;
     draw_rectangle((sw - pm.width) * 0.5 - 20.0, p_y - 28.0, pm.width + 40.0, 40.0, Color::new(0.1, 0.6, 0.25, 0.9));
     draw_text(start_prompt, (sw - pm.width) * 0.5, p_y, 26.0, Palette::WHITE);
 }
 
-/// Renders the Pause overlay.
-pub fn render_pause_menu() {
+/// Renders the Pause overlay with Assist Profile selection.
+pub fn render_pause_menu(assist_profile: AssistProfile) {
     let sw = screen_width();
     let sh = screen_height();
 
     // Dark semi-transparent dim
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.65));
 
-    let box_w = 400.0;
-    let box_h = 280.0;
+    let box_w = 420.0;
+    let box_h = 310.0;
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
@@ -222,18 +239,20 @@ pub fn render_pause_menu() {
 
     let title = "RACE PAUSED";
     let tm = measure_text(title, None, 30, 1.0);
-    draw_text(title, x + (box_w - tm.width) * 0.5, y + 40.0, 30.0, Palette::WHITE);
+    draw_text(title, x + (box_w - tm.width) * 0.5, y + 38.0, 30.0, Palette::WHITE);
 
+    let assist_item = format!("H : Toggle Assists [{}]", assist_profile.short_name());
     let items = [
-        "ESC / P : Resume Race",
-        "R : Restart Race",
-        "M : Main Menu / Track Select",
-        "TAB : Toggle Follow / Overview Camera",
-        "Q/A/O/P or Arrows : Drive & Steer",
-        "SPACE : Handbrake | Z : Reverse",
+        "ESC / P : Resume Race".to_string(),
+        "R : Restart Race".to_string(),
+        "M : Main Menu / Track Select".to_string(),
+        assist_item,
+        "TAB : Toggle Follow / Overview Camera".to_string(),
+        "Q/A/O/P or Arrows : Drive & Steer".to_string(),
+        "SPACE : Handbrake | Z : Reverse".to_string(),
     ];
 
-    let mut item_y = y + 78.0;
+    let mut item_y = y + 74.0;
     for item in &items {
         draw_text(item, x + 25.0, item_y, 16.0, Color::new(0.85, 0.90, 0.95, 1.0));
         item_y += 28.0;

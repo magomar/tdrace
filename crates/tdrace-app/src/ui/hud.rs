@@ -250,6 +250,38 @@ fn render_speedometer(cx: f32, cy: f32, car: &Car) {
     draw_text(&speed_str, cx - measure.width * 0.5, cy + 8.0, 28.0, Palette::WHITE);
     draw_text("KM/H", cx - 16.0, cy + 26.0, 13.0, Color::new(0.65, 0.70, 0.80, 1.0));
 
+    // Assist Profile Badge & Intervention Indicators (Top left of speedometer)
+    let badge_x = cx - radius;
+    let badge_y = cy - radius - 26.0;
+
+    let (prof_text, prof_col) = if car.config.assists.esc_enabled {
+        if car.config.assists.tcs_strength > 0.5 {
+            ("ARCADE", Color::new(0.3, 0.9, 1.0, 0.95))
+        } else {
+            ("SPORT", Color::new(1.0, 0.75, 0.2, 0.95))
+        }
+    } else {
+        ("PRO", Color::new(1.0, 0.4, 0.4, 0.85))
+    };
+
+    draw_rectangle(badge_x, badge_y, 58.0, 20.0, Color::new(0.08, 0.10, 0.14, 0.88));
+    draw_rectangle_lines(badge_x, badge_y, 58.0, 20.0, 1.2, prof_col);
+    draw_text(prof_text, badge_x + 6.0, badge_y + 14.0, 12.0, prof_col);
+
+    // Active TCS indicator
+    if car.state.tcs_active {
+        let tcs_x = badge_x + 62.0;
+        draw_rectangle(tcs_x, badge_y, 28.0, 20.0, Color::new(1.0, 0.6, 0.0, 0.95));
+        draw_text("TCS", tcs_x + 3.0, badge_y + 14.0, 11.0, Palette::BLACK);
+    }
+
+    // Active ESC indicator
+    if car.state.esc_active {
+        let esc_x = badge_x + 94.0;
+        draw_rectangle(esc_x, badge_y, 28.0, 20.0, Color::new(0.2, 0.8, 1.0, 0.95));
+        draw_text("ESC", esc_x + 3.0, badge_y + 14.0, 11.0, Palette::BLACK);
+    }
+
     // Drift Score Meter Bar (if drifting)
     if car.state.is_drifting || car.state.drift_score > 0.0 {
         let bar_w = 120.0;
@@ -270,8 +302,8 @@ fn render_speedometer(cx: f32, cy: f32, car: &Car) {
 
 /// Small keyboard controls tooltip in lower left corner.
 fn render_controls_guide(x: f32, y: f32) {
-    let guide = "Q: Gas | A: Brake | Z: Reverse | O/P: Steer | Space: Drift | Tab: Cam | R: Reset | Esc: Pause";
-    draw_text(guide, x, y, 14.0, Color::new(0.9, 0.9, 0.95, 0.75));
+    let guide = "Q/Up: Gas | A/Down: Brake | O/P or Left/Right: Steer | Space: Drift | H: Assists | Esc: Pause";
+    draw_text(guide, x, y, 14.0, Color::new(0.9, 0.9, 0.95, 0.80));
 }
 
 /// Warning banners for Wrong Way and Off Track.

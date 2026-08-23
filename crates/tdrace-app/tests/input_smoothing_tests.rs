@@ -43,21 +43,21 @@ fn test_speed_sensitive_steering_scaling() {
     let (steer_0, _, _) = filter.update(1.0, 0.0, 0.0, 0.0, dt);
     assert_eq!(steer_0, 1.0, "Standstill steering must have full 1.0 lock");
 
-    // Saturated steering at 30 m/s (~108 km/h) -> scale should be ~0.60
+    // Saturated steering at 30 m/s (~108 km/h) -> scale is responsive (~0.87)
     let mut filter_med = DigitalInputFilter::default();
     for _ in 0..40 {
         filter_med.update(1.0, 0.0, 0.0, 30.0, dt);
     }
     let (steer_med, _, _) = filter_med.update(1.0, 0.0, 0.0, 30.0, dt);
-    assert!(steer_med < 0.70 && steer_med > 0.50, "Medium speed steer was {steer_med}");
+    assert!(steer_med < 0.95 && steer_med > 0.80, "Medium speed steer was {steer_med}");
 
-    // Saturated steering at 60 m/s (~216 km/h) -> scale should clamp above min_speed_steer_limit (0.30)
+    // Saturated steering at 60 m/s (~216 km/h) -> scale maintains high turning authority (~0.77)
     let mut filter_high = DigitalInputFilter::default();
     for _ in 0..40 {
         filter_high.update(1.0, 0.0, 0.0, 60.0, dt);
     }
     let (steer_high, _, _) = filter_high.update(1.0, 0.0, 0.0, 60.0, dt);
-    assert!((0.30..0.50).contains(&steer_high), "High speed steer was {steer_high}");
+    assert!(steer_high < 0.85 && steer_high >= 0.65, "High speed steer was {steer_high}");
 }
 
 

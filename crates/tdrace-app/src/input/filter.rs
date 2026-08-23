@@ -23,13 +23,13 @@ pub struct DigitalInputConfig {
 impl Default for DigitalInputConfig {
     fn default() -> Self {
         Self {
-            steer_rise_rate: 4.8,
-            steer_return_rate: 11.0,
-            steer_exponent: 1.35,
-            speed_sensitive_factor: 0.022,
-            min_speed_steer_limit: 0.30,
-            throttle_rise_rate: 8.5,
-            brake_rise_rate: 14.0,
+            steer_rise_rate: 7.2,
+            steer_return_rate: 13.5,
+            steer_exponent: 1.05,
+            speed_sensitive_factor: 0.005,
+            min_speed_steer_limit: 0.65,
+            throttle_rise_rate: 9.5,
+            brake_rise_rate: 16.0,
         }
     }
 }
@@ -159,11 +159,11 @@ mod tests {
         let (steer_low_speed, _, _) = filter.update(1.0, 0.0, 0.0, 0.0, dt);
         assert_eq!(steer_low_speed, 1.0);
 
-        // At 50 m/s (~180 km/h), steering should be significantly attenuated
+        // At 50 m/s (~180 km/h), steering should be moderately attenuated
         let (steer_high_speed, _, _) = filter.update(1.0, 0.0, 0.0, 50.0, dt);
         assert!(
-            steer_high_speed < 0.55 && steer_high_speed >= 0.30,
-            "High speed steer should be attenuated, got {steer_high_speed}"
+            steer_high_speed < 0.90 && steer_high_speed >= 0.65,
+            "High speed steer should be moderately attenuated, got {steer_high_speed}"
         );
     }
 

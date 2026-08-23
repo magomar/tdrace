@@ -120,6 +120,61 @@ impl DriverAssistsConfig {
     }
 }
 
+/// Standard driver assist difficulty profiles of varied difficulty.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AssistProfile {
+    /// Arcade / Beginner: Full TCS, ESC yaw stabilization, and counter-steer assist. Easiest handling.
+    Arcade,
+    /// Sport / Intermediate: Mild TCS, relaxed ESC, responsive power slides and agile rotation.
+    Sport,
+    /// Pro / Expert: All electronic aids OFF. Pure simulation physics.
+    Pro,
+}
+
+impl AssistProfile {
+    pub const ALL: [Self; 3] = [Self::Arcade, Self::Sport, Self::Pro];
+
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::Arcade => "Arcade (Assists: Full)",
+            Self::Sport => "Sport (Assists: Mild)",
+            Self::Pro => "Pro (Assists: OFF)",
+        }
+    }
+
+    pub fn short_name(&self) -> &'static str {
+        match self {
+            Self::Arcade => "ARCADE",
+            Self::Sport => "SPORT",
+            Self::Pro => "PRO",
+        }
+    }
+
+    pub fn description(&self) -> &'static str {
+        match self {
+            Self::Arcade => "Full TCS + ESC + Counter-steer. Highly stable, zero snap spinouts.",
+            Self::Sport => "Mild TCS + Relaxed ESC. Allows responsive power slides & tight turns.",
+            Self::Pro => "Electronic aids disabled. Pure raw vehicle physics simulation.",
+        }
+    }
+
+    pub fn to_config(&self) -> DriverAssistsConfig {
+        match self {
+            Self::Arcade => DriverAssistsConfig::arcade(),
+            Self::Sport => DriverAssistsConfig::sport(),
+            Self::Pro => DriverAssistsConfig::raw(),
+        }
+    }
+
+    pub fn next(&self) -> Self {
+        match self {
+            Self::Arcade => Self::Sport,
+            Self::Sport => Self::Pro,
+            Self::Pro => Self::Arcade,
+        }
+    }
+}
+
 /// Vehicle physical dimensions, mass properties, powertrain parameters, and steering geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct CarConfig {
@@ -210,11 +265,11 @@ impl CarConfig {
             drive_bias: 0.0, // RWD arcade feel
             top_speed_mps: 58.0, // ~208 km/h
 
-            max_steer_angle: 0.58, // ~33.2 deg
-            steer_speed: 4.5,
-            steer_return_speed: 5.5,
+            max_steer_angle: 0.68, // ~39 deg responsive turning lock
+            steer_speed: 5.5,
+            steer_return_speed: 7.0,
             counter_steer_assist: 1.3,
-            speed_sensitive_steer_factor: 0.008,
+            speed_sensitive_steer_factor: 0.003,
 
             air_drag_coefficient: 0.42,
             lateral_drag_coefficient: 1.20,
@@ -235,8 +290,9 @@ impl CarConfig {
         cfg.mass = 980.0;
         cfg.inertia = 1250.0;
         cfg.max_engine_force = 8200.0;
-        cfg.max_steer_angle = 0.68; // ~39 deg lock
+        cfg.max_steer_angle = 0.78; // ~45 deg wide drift lock
         cfg.counter_steer_assist = 1.6;
+        cfg.speed_sensitive_steer_factor = 0.002;
         cfg.tire.drift_slide_friction = 0.92;
         cfg.tire.handbrake_lateral_friction_multiplier = 0.30;
         cfg.drive_bias = 0.0;
@@ -263,11 +319,11 @@ impl CarConfig {
             drive_bias: 0.0,
             top_speed_mps: 32.0, // ~115 km/h
 
-            max_steer_angle: 0.48,
-            steer_speed: 8.0,
-            steer_return_speed: 10.0,
+            max_steer_angle: 0.58, // ~33 deg agile direct lock
+            steer_speed: 9.0,
+            steer_return_speed: 12.0,
             counter_steer_assist: 1.2,
-            speed_sensitive_steer_factor: 0.004,
+            speed_sensitive_steer_factor: 0.001,
 
             air_drag_coefficient: 0.35,
             lateral_drag_coefficient: 1.00,

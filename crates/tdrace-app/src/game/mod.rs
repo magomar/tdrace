@@ -1,9 +1,11 @@
 use glam::Vec2;
+use macroquad::color::Color;
 use macroquad::input::{is_key_pressed, KeyCode};
 use macroquad::prelude::{get_frame_time, screen_height, screen_width};
 use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
 use tdrace_core::collision::wall::resolve_all_wall_collisions;
 use tdrace_core::physics::car::Car;
+use tdrace_core::physics::config::AssistProfile;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
@@ -70,6 +72,7 @@ pub struct RaceSession {
     // Menu selection cursor state
     pub menu_track_idx: usize,
     pub menu_car_idx: usize,
+    pub assist_profile: AssistProfile,
 
     // Internal trackers
     prev_player_lap: u32,
@@ -91,6 +94,7 @@ impl RaceSession {
             track,
             track_choice: TrackChoice::ClassicGrandPrix,
             car_choice: CarChoice::SportsCar,
+            assist_profile: AssistProfile::Arcade,
             is_time_attack: false,
             num_bots: 3,
             total_laps: 3,
@@ -138,12 +142,13 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
 
         // 3. Player car configuration
-        let base_config = match self.car_choice {
+        let mut base_config = match self.car_choice {
             CarChoice::SportsCar => CarConfig::sports_car(),
             CarChoice::DriftCar => CarConfig::drift_car(),
             CarChoice::Kart => CarConfig::kart(),
             CarChoice::RallyCar => CarConfig::rally_car(),
         };
+        base_config.assists = self.assist_profile.to_config();
 
         // 4. Determine total participant count
         let total_cars = if self.is_time_attack {
@@ -241,6 +246,19 @@ impl RaceSession {
         // Handle camera toggle (Tab or C key)
         if is_key_pressed(KeyCode::Tab) || is_key_pressed(KeyCode::C) {
             self.camera.toggle_mode();
+        }
+
+        // Cycle Driver Assists Profile (H key)
+        if is_key_pressed(KeyCode::H) {
+            self.assist_profile = self.assist_profile.next();
+            if let Some(player_car) = self.cars.first_mut() {
+                player_car.config.assists = self.assist_profile.to_config();
+                self.fx.drift_popups.spawn_text(
+                    player_car.state.position,
+                    &format!("ASSISTS: {}", self.assist_profile.short_name()),
+                    Color::new(0.3, 0.9, 1.0, 1.0),
+                );
+            }
         }
 
         // Global restart shortcut (R key)
@@ -345,6 +363,11 @@ impl RaceSession {
         // Change bot count
         if is_key_pressed(KeyCode::B) {
             self.num_bots = (self.num_bots % 7) + 1;
+        }
+
+        // Toggle Driver Assists Profile
+        if is_key_pressed(KeyCode::H) {
+            self.assist_profile = self.assist_profile.next();
         }
 
         // Start race
@@ -550,6 +573,7 @@ impl RaceSession {
                     self.menu_car_idx,
                     self.num_bots,
                     self.is_time_attack,
+                    self.assist_profile,
                 );
             }
             GameState::Countdown(remaining) => {
@@ -563,7 +587,7 @@ impl RaceSession {
             GameState::Paused => {
                 self.render_world();
                 self.render_screen(None);
-                render_pause_menu();
+                render_pause_menu(self.assist_profile);
             }
             GameState::Finished => {
                 self.render_world();

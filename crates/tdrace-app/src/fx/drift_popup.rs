@@ -65,6 +65,22 @@ impl DriftPopupManager {
         });
     }
 
+    /// Spawns a custom floating notification text popup.
+    pub fn spawn_text(&mut self, pos: Vec2, text: &str, color: Color) {
+        if self.popups.len() >= self.max_popups {
+            self.popups.remove(0);
+        }
+
+        self.popups.push(DriftPopup {
+            world_pos: pos + Vec2::new(0.0, -1.2),
+            text: text.to_string(),
+            color,
+            lifetime: 1.4,
+            remaining_life: 1.4,
+            float_speed: 1.8,
+        });
+    }
+
     pub fn update(&mut self, dt: f32) {
         let mut i = 0;
         while i < self.popups.len() {
