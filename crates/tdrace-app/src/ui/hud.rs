@@ -24,17 +24,17 @@ pub fn format_lap_time(time_sec: f32) -> String {
 /// Mini-map, Position Counter, Warnings, and Countdown).
 #[allow(clippy::too_many_arguments)]
 pub fn render_hud(
-    player_car: &Car,
+    track: &Track,
     all_cars: &[Car],
     color_schemes: &[CarColorScheme],
-    track: &Track,
+    player_car: &Car,
     player_progress: &TrackProgressTracker,
-    _all_progress: &[TrackProgressTracker],
     position: usize,
     total_racers: usize,
     total_laps: u32,
     is_time_attack: bool,
     countdown_timer: Option<f32>,
+    gamepad_connected: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -49,7 +49,7 @@ pub fn render_hud(
     render_minimap(sw - 190.0, 18.0, 170.0, 140.0, track, all_cars, color_schemes);
 
     // 4. Speedometer & Drift Meter (Bottom Right)
-    render_speedometer(sw - 160.0, sh - 140.0, player_car);
+    render_speedometer(sw - 160.0, sh - 140.0, player_car, gamepad_connected);
 
     // 5. Controls help tooltip (Bottom Left)
     render_controls_guide(18.0, sh - 35.0);
@@ -205,8 +205,8 @@ fn render_minimap(
     }
 }
 
-/// Draws analog + digital speedometer and drift meter.
-fn render_speedometer(cx: f32, cy: f32, car: &Car) {
+/// Draws analog + digital speedometer, drift meter, and controller & assist badges.
+fn render_speedometer(cx: f32, cy: f32, car: &Car, gamepad_connected: bool) {
     let radius = 60.0;
 
     // Background dial
@@ -268,14 +268,23 @@ fn render_speedometer(cx: f32, cy: f32, car: &Car) {
     draw_rectangle_lines(badge_x, badge_y, 58.0, 20.0, 1.2, prof_col);
     draw_text(prof_text, badge_x + 6.0, badge_y + 14.0, 12.0, prof_col);
 
-    // Active TCS indicator
+    // Active Gamepad Connected Indicator
+    if gamepad_connected {
+        let pad_x = badge_x;
+        let pad_y = badge_y - 20.0;
+        draw_rectangle(pad_x, pad_y, 46.0, 16.0, Color::new(0.08, 0.12, 0.10, 0.90));
+        draw_rectangle_lines(pad_x, pad_y, 46.0, 16.0, 1.2, Color::new(0.3, 0.9, 0.5, 0.95));
+        draw_text("🎮 PAD", pad_x + 4.0, pad_y + 12.0, 10.5, Color::new(0.3, 0.9, 0.5, 1.0));
+    }
+
+    // Active TCS indicator (Flashes gold/orange when intervening)
     if car.state.tcs_active {
         let tcs_x = badge_x + 62.0;
         draw_rectangle(tcs_x, badge_y, 28.0, 20.0, Color::new(1.0, 0.6, 0.0, 0.95));
         draw_text("TCS", tcs_x + 3.0, badge_y + 14.0, 11.0, Palette::BLACK);
     }
 
-    // Active ESC indicator
+    // Active ESC indicator (Flashes bright cyan when yaw stabilizing)
     if car.state.esc_active {
         let esc_x = badge_x + 94.0;
         draw_rectangle(esc_x, badge_y, 28.0, 20.0, Color::new(0.2, 0.8, 1.0, 0.95));

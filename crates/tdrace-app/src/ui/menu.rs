@@ -352,3 +352,127 @@ pub fn render_results_screen(
     let pm = measure_text(prompt, None, 18, 1.0);
     draw_text(prompt, x + (box_w - pm.width) * 0.5, y + box_h - 25.0, 18.0, Palette::WHITE);
 }
+
+/// Renders the full-screen Controls, Gamepad Mappings, and Assist Settings screen.
+pub fn render_controls_screen(
+    assist_profile: AssistProfile,
+    gamepad_connected: bool,
+    gamepad_name: &str,
+) {
+    let sw = screen_width();
+    let sh = screen_height();
+
+    // Background backdrop
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.06, 0.08, 0.12, 0.96));
+
+    // Header Title
+    let title = "CONTROLS & DRIVING ASSISTS";
+    let tm = measure_text(title, None, 36, 1.0);
+    draw_text(title, (sw - tm.width) * 0.5, 48.0, 36.0, Color::new(0.95, 0.85, 0.15, 1.0));
+
+    let subtitle = "Keyboard & Gamepad Mappings | Electronic Vehicle Dynamics Configuration";
+    let sm = measure_text(subtitle, None, 16, 1.0);
+    draw_text(subtitle, (sw - sm.width) * 0.5, 74.0, 16.0, Color::new(0.70, 0.75, 0.85, 1.0));
+
+    // Controller Status Banner
+    let banner_w = sw * 0.80;
+    let banner_x = (sw - banner_w) * 0.5;
+    let banner_y = 92.0;
+    let banner_h = 36.0;
+
+    if gamepad_connected {
+        draw_rectangle(banner_x, banner_y, banner_w, banner_h, Color::new(0.10, 0.25, 0.18, 0.90));
+        draw_rectangle_lines(banner_x, banner_y, banner_w, banner_h, 1.5, Color::new(0.3, 0.9, 0.5, 1.0));
+        let text = format!("🎮 ACTIVE GAMEPAD CONNECTED: {}", gamepad_name);
+        draw_text(&text, banner_x + 18.0, banner_y + 24.0, 16.0, Color::new(0.3, 0.9, 0.5, 1.0));
+    } else {
+        draw_rectangle(banner_x, banner_y, banner_w, banner_h, Color::new(0.12, 0.14, 0.20, 0.90));
+        draw_rectangle_lines(banner_x, banner_y, banner_w, banner_h, 1.5, Color::new(0.4, 0.5, 0.65, 0.8));
+        let text = "🎮 NO GAMEPAD DETECTED — KEYBOARD & TOUCH ACTIVE (PLUG & PLAY READY)";
+        draw_text(text, banner_x + 18.0, banner_y + 24.0, 15.0, Color::new(0.7, 0.75, 0.85, 1.0));
+    }
+
+    // Left Column: Keyboard Controls
+    let col1_x = sw * 0.10;
+    let col_w = sw * 0.38;
+    let col_y = 142.0;
+    let col_h = sh * 0.52;
+
+    draw_rectangle(col1_x, col_y, col_w, col_h, Color::new(0.09, 0.11, 0.16, 0.92));
+    draw_rectangle_lines(col1_x, col_y, col_w, col_h, 2.0, Color::new(0.3, 0.7, 0.9, 0.9));
+
+    draw_text("KEYBOARD CONTROLS", col1_x + 16.0, col_y + 28.0, 20.0, Color::new(0.3, 0.9, 1.0, 1.0));
+
+    let kb_rows = [
+        ("Accelerate / Gas", "Q / Up Arrow"),
+        ("Brake / Decelerate", "A / Down Arrow"),
+        ("Steer Left / Right", "O / P or Left / Right"),
+        ("Handbrake & Drift", "Spacebar"),
+        ("Reverse Gear", "Z"),
+        ("Cycle Assist Profile", "H"),
+        ("Camera View Toggle", "Tab / C"),
+        ("Instant Session Reset", "R"),
+        ("Pause / Resume", "Escape / Pause"),
+        ("Audio Mute / Volume", "M / [ and ]"),
+        ("Debug Overlays", "F1 - F5"),
+    ];
+
+    let mut row_y = col_y + 56.0;
+    for (action, key) in &kb_rows {
+        draw_text(action, col1_x + 18.0, row_y, 14.0, Color::new(0.80, 0.85, 0.92, 1.0));
+        let km = measure_text(key, None, 14, 1.0);
+        draw_text(key, col1_x + col_w - km.width - 18.0, row_y, 14.0, Color::new(0.95, 0.85, 0.2, 1.0));
+        row_y += 22.0;
+    }
+
+    // Right Column: Gamepad Controls
+    let col2_x = sw * 0.52;
+    draw_rectangle(col2_x, col_y, col_w, col_h, Color::new(0.09, 0.11, 0.16, 0.92));
+    draw_rectangle_lines(col2_x, col_y, col_w, col_h, 2.0, Color::new(0.85, 0.45, 0.95, 0.9));
+
+    draw_text("GAMEPAD CONTROLS", col2_x + 16.0, col_y + 28.0, 20.0, Color::new(0.90, 0.45, 1.0, 1.0));
+
+    let gp_rows = [
+        ("Proportional Steering", "Left Analog Stick / D-Pad"),
+        ("Analog Progressive Throttle", "Right Trigger (RT / R2) or A"),
+        ("Analog Progressive Brake", "Left Trigger (LT / L2) or X"),
+        ("Handbrake & Slide Initiation", "B / Circle or Right Bumper (RB)"),
+        ("Reverse Gear", "Y / Triangle or Left Bumper (LB)"),
+        ("Cycle Assist Profile", "Right Stick Click (R3) / Select"),
+        ("Camera View Mode", "Left Stick Click (L3)"),
+        ("Pause / Resume Menu", "Start / Menu Button"),
+        ("Menu Navigation", "D-Pad / Left Stick"),
+        ("Confirm / Start Race", "A / Cross Button"),
+        ("Back / Cancel", "B / Circle Button"),
+    ];
+
+    let mut gp_row_y = col_y + 56.0;
+    for (action, button) in &gp_rows {
+        draw_text(action, col2_x + 18.0, gp_row_y, 14.0, Color::new(0.80, 0.85, 0.92, 1.0));
+        let bm = measure_text(button, None, 14, 1.0);
+        draw_text(button, col2_x + col_w - bm.width - 18.0, gp_row_y, 14.0, Color::new(0.4, 0.9, 0.6, 1.0));
+        gp_row_y += 22.0;
+    }
+
+    // Bottom Panel: Active Drive Assists Profile
+    let bot_y = col_y + col_h + 14.0;
+    let bot_h = 90.0;
+    draw_rectangle(col1_x, bot_y, banner_w, bot_h, Color::new(0.10, 0.12, 0.18, 0.95));
+    draw_rectangle_lines(col1_x, bot_y, banner_w, bot_h, 2.0, Color::new(0.3, 0.7, 0.9, 0.8));
+
+    let assist_title = format!("ACTIVE DRIVE ASSIST PROFILE: [H / R3] {}", assist_profile.title());
+    let assist_col = match assist_profile {
+        AssistProfile::Arcade => Color::new(0.3, 0.9, 1.0, 1.0),
+        AssistProfile::Sport => Color::new(1.0, 0.75, 0.2, 1.0),
+        AssistProfile::Pro => Color::new(1.0, 0.4, 0.4, 1.0),
+    };
+    draw_text(&assist_title, col1_x + 20.0, bot_y + 28.0, 18.0, assist_col);
+    draw_text(assist_profile.description(), col1_x + 20.0, bot_y + 52.0, 14.0, Color::new(0.80, 0.85, 0.92, 1.0));
+    draw_text("Press [H] on keyboard or [R3 / Select] on Gamepad to switch assist difficulty profile anytime!", col1_x + 20.0, bot_y + 74.0, 13.0, Color::new(0.65, 0.70, 0.80, 1.0));
+
+    // Footer Return Prompt
+    let back_prompt = "PRESS [ESC], [C], [SPACE] OR GAMEPAD [B / A] TO RETURN";
+    let bpm = measure_text(back_prompt, None, 20, 1.0);
+    let bp_y = sh - 22.0;
+    draw_text(back_prompt, (sw - bpm.width) * 0.5, bp_y, 20.0, Palette::WHITE);
+}

@@ -24,8 +24,8 @@ use crate::render::{render_barriers_and_obstacles, render_car, render_track};
 use crate::replay::{ReplayPlayer, ReplayRecorder};
 use crate::ui::hud::render_hud;
 use crate::ui::menu::{
-    render_pause_menu, render_results_screen, render_track_select_menu, CarChoice,
-    RaceResultEntry, TrackChoice,
+    render_controls_screen, render_pause_menu, render_results_screen, render_track_select_menu,
+    CarChoice, RaceResultEntry, TrackChoice,
 };
 
 /// High-level game flow state machine.
@@ -36,6 +36,7 @@ pub enum GameState {
     Racing,
     Paused,
     Finished,
+    ControlsHelp(bool),
 }
 
 /// Main Racing Session and Simulation Coordinator.
@@ -458,6 +459,10 @@ impl RaceSession {
                     self.state = GameState::Menu;
                     self.audio.play_music(MusicTrack::NeonMenu);
                 }
+                if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::ControlsHelp(true);
+                }
             }
             GameState::Finished => {
                 self.audio.stop_all_loops();
@@ -471,11 +476,44 @@ impl RaceSession {
                     self.audio.play_music(MusicTrack::NeonMenu);
                 }
             }
+            GameState::ControlsHelp(from_paused) => {
+                if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.assist_profile = self.assist_profile.next();
+                    if let Some(player_car) = self.cars.first_mut() {
+                        player_car.config.assists = self.assist_profile.to_config();
+                    }
+                }
+
+                if is_key_pressed(KeyCode::Escape)
+                    || is_key_pressed(KeyCode::C)
+                    || is_key_pressed(KeyCode::K)
+                    || is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::Enter)
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                    || self.input.gamepad.snapshot.btn_start_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if from_paused {
+                        self.state = GameState::Paused;
+                    } else {
+                        self.state = GameState::Menu;
+                    }
+                }
+            }
         }
     }
 
     /// Menu input navigation (Keyboard + Gamepad D-pad/buttons).
     fn update_menu(&mut self) {
+        // Open Controls & Gamepad Screen (C / K key or Gamepad Select)
+        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.state = GameState::ControlsHelp(false);
+            return;
+        }
+
         // Track selection cursor (Up/Down or D-pad Up/Down)
         if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.dpad_up_pressed {
             self.audio.play_sfx(SfxType::UiMove);
@@ -785,6 +823,16 @@ impl RaceSession {
                 self.render_world();
                 render_results_screen(&self.track.name, &self.results, self.is_time_attack);
             }
+            GameState::ControlsHelp(from_paused) => {
+                if from_paused {
+                    self.render_world();
+                }
+                render_controls_screen(
+                    self.assist_profile,
+                    self.input.gamepad.snapshot.is_connected,
+                    &self.input.gamepad.snapshot.gamepad_name,
+                );
+            }
         }
     }
 
@@ -851,17 +899,17 @@ impl RaceSession {
             let player_pos = standings.iter().position(|&idx| idx == 0).unwrap_or(0) + 1;
 
             render_hud(
-                player_car,
+                &self.track,
                 &self.cars,
                 &self.color_schemes,
-                &self.track,
+                player_car,
                 player_tracker,
-                &self.trackers,
                 player_pos,
                 self.cars.len(),
                 self.total_laps,
                 self.is_time_attack,
                 countdown,
+                self.input.gamepad.snapshot.is_connected,
             );
 
             // F5: Telemetry Panel
