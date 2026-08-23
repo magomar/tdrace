@@ -90,3 +90,68 @@ fn test_gamepad_frame_button_event_clearing() {
     assert!(!gp.snapshot.btn_start_pressed);
     assert!(!gp.snapshot.dpad_up_pressed);
 }
+
+#[test]
+fn test_deadzone_processing_linear_and_power_curve() {
+    let deadzone = 0.12;
+    let exponent = 1.15;
+
+    // Inside deadzone -> 0.0
+    assert_eq!(GamepadController::process_axis_deadzone(0.05, deadzone, exponent), 0.0);
+    assert_eq!(GamepadController::process_axis_deadzone(-0.11, deadzone, exponent), 0.0);
+    assert_eq!(GamepadController::process_axis_deadzone(0.12, deadzone, exponent), 0.0);
+
+    // Full deflection -> 1.0 / -1.0
+    let full_pos = GamepadController::process_axis_deadzone(1.0, deadzone, exponent);
+    let full_neg = GamepadController::process_axis_deadzone(-1.0, deadzone, exponent);
+    assert!((full_pos - 1.0).abs() < 1e-5);
+    assert!((full_neg - (-1.0)).abs() < 1e-5);
+
+    // Half deflection (~0.56) -> strictly positive and < 0.56 due to gentle center exponent
+    let half = GamepadController::process_axis_deadzone(0.56, deadzone, exponent);
+    assert!(half > 0.35 && half < 0.55, "Gentle center precision response: {half}");
+}
+
+#[test]
+fn test_trigger_deadzone_and_clamping() {
+    let deadzone = 0.05;
+
+    // Below trigger deadzone
+    assert_eq!(GamepadController::process_trigger_deadzone(0.02, deadzone), 0.0);
+    assert_eq!(GamepadController::process_trigger_deadzone(-0.50, deadzone), 0.0);
+
+    // Full trigger
+    assert_eq!(GamepadController::process_trigger_deadzone(1.0, deadzone), 1.0);
+    assert_eq!(GamepadController::process_trigger_deadzone(1.2, deadzone), 1.0);
+
+    // Mid trigger
+    let mid = GamepadController::process_trigger_deadzone(0.525, deadzone);
+    assert!((mid - 0.50).abs() < 1e-4);
+}
+
+#[test]
+fn test_tri_modal_seamless_input_transition_keyboard_gamepad_touch() {
+    let mut input = InputController::new();
+    let dt = 1.0 / 60.0;
+
+    // 1. Keyboard only
+    let kb_ctrl = input.process_inputs((1.0, 1.0, 0.0, false, false), dt, 0.0);
+    let touch_empty = tdrace_app::input::touch::TouchController::new().poll_controls();
+    let combined_1 = InputController::combine_controls(kb_ctrl, touch_empty);
+    assert!(combined_1.throttle > 0.0);
+
+    // 2. Seamless transition to Gamepad
+    input.gamepad.inject_snapshot(GamepadSnapshot {
+        is_connected: true,
+        gamepad_name: "Switch Pro Controller".to_string(),
+        steer: -0.75,
+        throttle: 0.90,
+        brake: 0.0,
+        ..Default::default()
+    });
+
+    let gp_ctrl = input.process_inputs((0.0, 0.0, 0.0, false, false), dt, 0.0);
+    let combined_2 = InputController::combine_controls(gp_ctrl, touch_empty);
+    assert_eq!(combined_2.steer, -0.75);
+    assert_eq!(combined_2.throttle, 0.90);
+}
