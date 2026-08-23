@@ -313,27 +313,27 @@ impl RaceSession {
 
     /// Menu input navigation.
     fn update_menu(&mut self) {
-        // Track selection cursor (Up/Down or W/S)
-        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
+        // Track selection cursor (Up/Down)
+        if is_key_pressed(KeyCode::Up) {
             if self.menu_track_idx == 0 {
                 self.menu_track_idx = TrackChoice::ALL.len() - 1;
             } else {
                 self.menu_track_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
+        if is_key_pressed(KeyCode::Down) {
             self.menu_track_idx = (self.menu_track_idx + 1) % TrackChoice::ALL.len();
         }
 
-        // Car selection cursor (Left/Right or A/D)
-        if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
+        // Car selection cursor (Left/Right)
+        if is_key_pressed(KeyCode::Left) {
             if self.menu_car_idx == 0 {
                 self.menu_car_idx = CarChoice::ALL.len() - 1;
             } else {
                 self.menu_car_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
+        if is_key_pressed(KeyCode::Right) {
             self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
         }
 

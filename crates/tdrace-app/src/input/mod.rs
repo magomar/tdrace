@@ -61,37 +61,26 @@ impl InputController {
         let mut raw_brake = 0.0f32;
         let mut raw_reverse = false;
 
-        // Steering: A / Left / O = Steer Left (-1.0), D / Right / P = Steer Right (+1.0)
-        let is_left = is_key_down(KeyCode::A) || is_key_down(KeyCode::Left) || is_key_down(KeyCode::O);
-        let is_right = is_key_down(KeyCode::D) || is_key_down(KeyCode::Right) || is_key_down(KeyCode::P);
-
-        if is_left {
+        // Steering: O / Left = Steer Left (-1.0), P / Right = Steer Right (+1.0)
+        if is_key_down(KeyCode::O) || is_key_down(KeyCode::Left) {
             raw_steer -= 1.0;
         }
-        if is_right {
+        if is_key_down(KeyCode::P) || is_key_down(KeyCode::Right) {
             raw_steer += 1.0;
         }
 
-        // Throttle: W / Up / Q
-        let is_up = is_key_down(KeyCode::W) || is_key_down(KeyCode::Up) || is_key_down(KeyCode::Q);
-        if is_up {
+        // Throttle: Q / Up
+        if is_key_down(KeyCode::Q) || is_key_down(KeyCode::Up) {
             raw_throttle = 1.0;
         }
 
-        // Service Brake & Intuitive Reverse: S / Down / Z
-        let is_down = is_key_down(KeyCode::S) || is_key_down(KeyCode::Down);
-        let is_z = is_key_down(KeyCode::Z);
+        // Brake: A / Down
+        if is_key_down(KeyCode::A) || is_key_down(KeyCode::Down) {
+            raw_brake = 1.0;
+        }
 
-        if is_down {
-            if current_speed_fwd > 0.6 {
-                // Moving forward: Apply service brake
-                raw_brake = 1.0;
-            } else {
-                // Stopped or rolling backwards: Apply reverse torque
-                raw_throttle = 1.0;
-                raw_reverse = true;
-            }
-        } else if is_z {
+        // Reverse: Z
+        if is_key_down(KeyCode::Z) {
             raw_throttle = 1.0;
             raw_reverse = true;
         }

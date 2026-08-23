@@ -57,8 +57,9 @@ fn test_speed_sensitive_steering_scaling() {
         filter_high.update(1.0, 0.0, 0.0, 60.0, dt);
     }
     let (steer_high, _, _) = filter_high.update(1.0, 0.0, 0.0, 60.0, dt);
-    assert!(steer_high >= 0.30 && steer_high < 0.50, "High speed steer was {steer_high}");
+    assert!((0.30..0.50).contains(&steer_high), "High speed steer was {steer_high}");
 }
+
 
 #[test]
 fn test_non_linear_center_micro_corrections() {

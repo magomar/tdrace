@@ -125,7 +125,7 @@ pub fn render_track_select_menu(
     let col_w = sw * 0.36;
     let mut curr_y = 135.0;
 
-    draw_text("SELECT CIRCUIT [W/S or Up/Down]", col1_x, curr_y, 22.0, Color::new(0.3, 0.9, 1.0, 1.0));
+    draw_text("SELECT CIRCUIT [Up/Down]", col1_x, curr_y, 22.0, Color::new(0.3, 0.9, 1.0, 1.0));
     curr_y += 30.0;
 
     for (i, track_opt) in TrackChoice::ALL.iter().enumerate() {
@@ -156,7 +156,7 @@ pub fn render_track_select_menu(
     let col2_x = sw * 0.52;
     let mut c2_y = 135.0;
 
-    draw_text("SELECT VEHICLE [A/D or Left/Right]", col2_x, c2_y, 22.0, Color::new(0.3, 0.9, 1.0, 1.0));
+    draw_text("SELECT VEHICLE [Left/Right]", col2_x, c2_y, 22.0, Color::new(0.3, 0.9, 1.0, 1.0));
     c2_y += 30.0;
 
     for (i, car_opt) in CarChoice::ALL.iter().enumerate() {
@@ -229,8 +229,8 @@ pub fn render_pause_menu() {
         "R : Restart Race",
         "M : Main Menu / Track Select",
         "TAB : Toggle Follow / Overview Camera",
-        "WASD / Arrows : Drive & Steer",
-        "SPACE : Handbrake (Power Drift)",
+        "Q/A/O/P or Arrows : Drive & Steer",
+        "SPACE : Handbrake | Z : Reverse",
     ];
 
     let mut item_y = y + 78.0;
