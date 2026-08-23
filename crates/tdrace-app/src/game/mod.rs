@@ -459,10 +459,10 @@ impl RaceSession {
             }
             GameState::Paused => {
                 self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed || self.input.gamepad.snapshot.btn_a_pressed {
+                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed || self.input.gamepad.snapshot.btn_confirm_pressed {
                     self.state = GameState::Racing;
                 }
-                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_b_pressed || self.input.gamepad.snapshot.btn_back_pressed {
+                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_back_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Menu;
                     self.audio.play_music(MusicTrack::NeonMenu);
@@ -474,11 +474,11 @@ impl RaceSession {
             }
             GameState::Finished => {
                 self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_a_pressed || self.input.gamepad.snapshot.btn_start_pressed {
+                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
                 }
-                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_b_pressed || self.input.gamepad.snapshot.btn_back_pressed {
+                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_back_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Menu;
                     self.audio.play_music(MusicTrack::NeonMenu);
@@ -498,9 +498,8 @@ impl RaceSession {
                     || is_key_pressed(KeyCode::K)
                     || is_key_pressed(KeyCode::Space)
                     || is_key_pressed(KeyCode::Enter)
-                    || self.input.gamepad.snapshot.btn_a_pressed
-                    || self.input.gamepad.snapshot.btn_b_pressed
-                    || self.input.gamepad.snapshot.btn_start_pressed
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_cancel_pressed
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
                     if from_paused {
@@ -513,17 +512,17 @@ impl RaceSession {
         }
     }
 
-    /// Menu input navigation (Keyboard + Gamepad D-pad/buttons).
+    /// Menu input navigation (Keyboard + Gamepad D-pad/Analog Sticks/buttons).
     fn update_menu(&mut self) {
         // Open Controls & Gamepad Screen (C / K key or Gamepad Select)
-        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) || self.input.gamepad.snapshot.btn_back_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::ControlsHelp(false);
             return;
         }
 
-        // Track selection cursor (Up/Down or D-pad Up/Down)
-        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.dpad_up_pressed {
+        // Track selection cursor (Up/Down: Arrows / W/S / D-pad / Left Stick Y)
+        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
             self.audio.play_sfx(SfxType::UiMove);
             if self.menu_track_idx == 0 {
                 self.menu_track_idx = TrackChoice::ALL.len() - 1;
@@ -531,13 +530,13 @@ impl RaceSession {
                 self.menu_track_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.dpad_down_pressed {
+        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_track_idx = (self.menu_track_idx + 1) % TrackChoice::ALL.len();
         }
 
-        // Car selection cursor (Left/Right or D-pad Left/Right)
-        if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.dpad_left_pressed {
+        // Car selection cursor (Left/Right: Arrows / A/D / D-pad / Left Stick X)
+        if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
             self.audio.play_sfx(SfxType::UiMove);
             if self.menu_car_idx == 0 {
                 self.menu_car_idx = CarChoice::ALL.len() - 1;
@@ -545,7 +544,7 @@ impl RaceSession {
                 self.menu_car_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.dpad_right_pressed {
+        if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
         }
@@ -568,8 +567,8 @@ impl RaceSession {
             self.assist_profile = self.assist_profile.next();
         }
 
-        // Start race (Space, Enter, or Gamepad A / Start)
-        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_a_pressed || self.input.gamepad.snapshot.btn_start_pressed {
+        // Start race (Space, Enter, or Gamepad Confirm [A / B / Start])
+        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
             self.track_choice = TrackChoice::ALL[self.menu_track_idx];
             self.car_choice = CarChoice::ALL[self.menu_car_idx];

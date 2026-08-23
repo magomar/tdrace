@@ -155,3 +155,31 @@ fn test_tri_modal_seamless_input_transition_keyboard_gamepad_touch() {
     assert_eq!(combined_2.steer, -0.75);
     assert_eq!(combined_2.throttle, 0.90);
 }
+
+#[test]
+fn test_stick_navigation_and_confirm_events() {
+    let mut gp = GamepadController::new();
+
+    // Inject confirm and stick navigation snapshot
+    gp.inject_snapshot(GamepadSnapshot {
+        is_connected: true,
+        gamepad_name: "Test Controller".to_string(),
+        nav_up: true,
+        nav_down: false,
+        nav_left: false,
+        nav_right: true,
+        btn_confirm_pressed: true,
+        btn_cancel_pressed: false,
+        ..Default::default()
+    });
+
+    assert!(gp.snapshot.nav_up);
+    assert!(gp.snapshot.nav_right);
+    assert!(gp.snapshot.btn_confirm_pressed);
+
+    gp.clear_frame_events();
+
+    assert!(!gp.snapshot.nav_up);
+    assert!(!gp.snapshot.nav_right);
+    assert!(!gp.snapshot.btn_confirm_pressed);
+}

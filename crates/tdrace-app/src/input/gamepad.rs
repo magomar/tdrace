@@ -56,6 +56,14 @@ pub struct GamepadSnapshot {
     pub dpad_right_pressed: bool,
     pub btn_assist_toggle_pressed: bool, // Right Stick Click or Select
     pub btn_cam_toggle_pressed: bool,    // Left Stick Click or Y
+
+    // Navigational triggers (D-Pad OR Analog Stick flicks)
+    pub nav_up: bool,
+    pub nav_down: bool,
+    pub nav_left: bool,
+    pub nav_right: bool,
+    pub btn_confirm_pressed: bool, // Universal Confirm (South / East / Start)
+    pub btn_cancel_pressed: bool,  // Universal Cancel (East / South / Back)
 }
 
 /// Cross-platform Gamepad Manager supporting hot-plugging, analog axes, and button events.
@@ -64,6 +72,20 @@ pub struct GamepadController {
     pub config: GamepadConfig,
     pub active_gamepad: Option<GamepadId>,
     pub snapshot: GamepadSnapshot,
+    prev_stick_x: f32,
+    prev_stick_y: f32,
+    prev_south: bool,
+    prev_east: bool,
+    prev_west: bool,
+    prev_north: bool,
+    prev_start: bool,
+    prev_select: bool,
+    prev_dpad_up: bool,
+    prev_dpad_down: bool,
+    prev_dpad_left: bool,
+    prev_dpad_right: bool,
+    prev_thumb_r: bool,
+    prev_thumb_l: bool,
 }
 
 impl Default for GamepadController {
@@ -100,6 +122,20 @@ impl GamepadController {
             config: GamepadConfig::default(),
             active_gamepad,
             snapshot,
+            prev_stick_x: 0.0,
+            prev_stick_y: 0.0,
+            prev_south: false,
+            prev_east: false,
+            prev_west: false,
+            prev_north: false,
+            prev_start: false,
+            prev_select: false,
+            prev_dpad_up: false,
+            prev_dpad_down: false,
+            prev_dpad_left: false,
+            prev_dpad_right: false,
+            prev_thumb_r: false,
+            prev_thumb_l: false,
         }
     }
 
@@ -117,6 +153,12 @@ impl GamepadController {
         self.snapshot.dpad_right_pressed = false;
         self.snapshot.btn_assist_toggle_pressed = false;
         self.snapshot.btn_cam_toggle_pressed = false;
+        self.snapshot.nav_up = false;
+        self.snapshot.nav_down = false;
+        self.snapshot.nav_left = false;
+        self.snapshot.nav_right = false;
+        self.snapshot.btn_confirm_pressed = false;
+        self.snapshot.btn_cancel_pressed = false;
     }
 
     /// Polls and updates gamepad state, draining all hardware events.
@@ -126,6 +168,19 @@ impl GamepadController {
         let Some(ref mut gilrs) = self.gilrs else {
             return;
         };
+
+        let mut btn_start = false;
+        let mut btn_select = false;
+        let mut btn_south = false;
+        let mut btn_east = false;
+        let mut btn_west = false;
+        let mut btn_north = false;
+        let mut dpad_u = false;
+        let mut dpad_d = false;
+        let mut dpad_l = false;
+        let mut dpad_r = false;
+        let mut thumb_r = false;
+        let mut thumb_l = false;
 
         // Drain pending hardware events
         while let Some(Event { id, event, .. }) = gilrs.next_event() {
@@ -153,29 +208,36 @@ impl GamepadController {
                         println!("[Gamepad] Disconnected: ID {:?}", id);
                     }
                 }
-                EventType::ButtonPressed(btn, _) => {
-                    match btn {
-                        Button::Start => self.snapshot.btn_start_pressed = true,
-                        Button::Select => {
-                            self.snapshot.btn_back_pressed = true;
-                            self.snapshot.btn_assist_toggle_pressed = true;
-                        }
-                        Button::South => self.snapshot.btn_a_pressed = true,
-                        Button::East => self.snapshot.btn_b_pressed = true,
-                        Button::West => self.snapshot.btn_x_pressed = true,
-                        Button::North => {
-                            self.snapshot.btn_y_pressed = true;
-                            self.snapshot.btn_cam_toggle_pressed = true;
-                        }
-                        Button::DPadUp => self.snapshot.dpad_up_pressed = true,
-                        Button::DPadDown => self.snapshot.dpad_down_pressed = true,
-                        Button::DPadLeft => self.snapshot.dpad_left_pressed = true,
-                        Button::DPadRight => self.snapshot.dpad_right_pressed = true,
-                        Button::RightThumb => self.snapshot.btn_assist_toggle_pressed = true,
-                        Button::LeftThumb => self.snapshot.btn_cam_toggle_pressed = true,
-                        _ => {}
-                    }
-                }
+                EventType::ButtonPressed(btn, _) => match btn {
+                    Button::Start => btn_start = true,
+                    Button::Select | Button::Mode => btn_select = true,
+                    Button::South => btn_south = true,
+                    Button::East => btn_east = true,
+                    Button::West => btn_west = true,
+                    Button::North => btn_north = true,
+                    Button::DPadUp => dpad_u = true,
+                    Button::DPadDown => dpad_d = true,
+                    Button::DPadLeft => dpad_l = true,
+                    Button::DPadRight => dpad_r = true,
+                    Button::RightThumb => thumb_r = true,
+                    Button::LeftThumb => thumb_l = true,
+                    _ => {}
+                },
+                EventType::ButtonChanged(btn, val, _) if val > 0.5 => match btn {
+                    Button::Start => btn_start = true,
+                    Button::Select | Button::Mode => btn_select = true,
+                    Button::South => btn_south = true,
+                    Button::East => btn_east = true,
+                    Button::West => btn_west = true,
+                    Button::North => btn_north = true,
+                    Button::DPadUp => dpad_u = true,
+                    Button::DPadDown => dpad_d = true,
+                    Button::DPadLeft => dpad_l = true,
+                    Button::DPadRight => dpad_r = true,
+                    Button::RightThumb => thumb_r = true,
+                    Button::LeftThumb => thumb_l = true,
+                    _ => {}
+                },
                 _ => {}
             }
         }
@@ -188,11 +250,62 @@ impl GamepadController {
                 let name = gp.name().to_string();
                 let is_conn = true;
 
-                // 1. Left Analog Stick (Steering)
+                // State polling for continuous state
+                let curr_south = gp.is_pressed(Button::South);
+                let curr_east = gp.is_pressed(Button::East);
+                let curr_west = gp.is_pressed(Button::West);
+                let curr_north = gp.is_pressed(Button::North);
+                let curr_start = gp.is_pressed(Button::Start);
+                let curr_select = gp.is_pressed(Button::Select) || gp.is_pressed(Button::Mode);
+                let curr_dpad_u = gp.is_pressed(Button::DPadUp);
+                let curr_dpad_d = gp.is_pressed(Button::DPadDown);
+                let curr_dpad_l = gp.is_pressed(Button::DPadLeft);
+                let curr_dpad_r = gp.is_pressed(Button::DPadRight);
+                let curr_thumb_r = gp.is_pressed(Button::RightThumb);
+                let curr_thumb_l = gp.is_pressed(Button::LeftThumb);
+
+                // Edge-triggered fallback detection (guarantees detection across all driver types)
+                if curr_south && !self.prev_south { btn_south = true; }
+                if curr_east && !self.prev_east { btn_east = true; }
+                if curr_west && !self.prev_west { btn_west = true; }
+                if curr_north && !self.prev_north { btn_north = true; }
+                if curr_start && !self.prev_start { btn_start = true; }
+                if curr_select && !self.prev_select { btn_select = true; }
+                if curr_dpad_u && !self.prev_dpad_up { dpad_u = true; }
+                if curr_dpad_d && !self.prev_dpad_down { dpad_d = true; }
+                if curr_dpad_l && !self.prev_dpad_left { dpad_l = true; }
+                if curr_dpad_r && !self.prev_dpad_right { dpad_r = true; }
+                if curr_thumb_r && !self.prev_thumb_r { thumb_r = true; }
+                if curr_thumb_l && !self.prev_thumb_l { thumb_l = true; }
+
+                self.prev_south = curr_south;
+                self.prev_east = curr_east;
+                self.prev_west = curr_west;
+                self.prev_north = curr_north;
+                self.prev_start = curr_start;
+                self.prev_select = curr_select;
+                self.prev_dpad_up = curr_dpad_u;
+                self.prev_dpad_down = curr_dpad_d;
+                self.prev_dpad_left = curr_dpad_l;
+                self.prev_dpad_right = curr_dpad_r;
+                self.prev_thumb_r = curr_thumb_r;
+                self.prev_thumb_l = curr_thumb_l;
+
+                // 1. Left Analog Stick (Steering + Menu Flick Navigation)
                 let raw_stick_x = gp.axis_data(Axis::LeftStickX).map(|d| d.value()).unwrap_or(0.0);
-                let raw_dpad_x = if gp.is_pressed(Button::DPadRight) {
+                let raw_stick_y = gp.axis_data(Axis::LeftStickY).map(|d| d.value()).unwrap_or(0.0);
+
+                let stick_up = (raw_stick_y > 0.45 && self.prev_stick_y <= 0.45) || (raw_stick_y < -0.45 && self.prev_stick_y >= -0.45 && false);
+                let stick_down = raw_stick_y < -0.45 && self.prev_stick_y >= -0.45;
+                let stick_left = raw_stick_x < -0.45 && self.prev_stick_x >= -0.45;
+                let stick_right = raw_stick_x > 0.45 && self.prev_stick_x <= 0.45;
+
+                self.prev_stick_x = raw_stick_x;
+                self.prev_stick_y = raw_stick_y;
+
+                let raw_dpad_x = if curr_dpad_r {
                     1.0
-                } else if gp.is_pressed(Button::DPadLeft) {
+                } else if curr_dpad_l {
                     -1.0
                 } else {
                     0.0
@@ -204,20 +317,20 @@ impl GamepadController {
                 // 2. Right Trigger RT / Button A (Throttle)
                 let raw_rt = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
                 let rt_throttle = Self::process_trigger_deadzone(raw_rt, config.trigger_deadzone);
-                let btn_throttle = if gp.is_pressed(Button::South) { 1.0 } else { 0.0 };
+                let btn_throttle = if curr_south { 1.0 } else { 0.0 };
                 let throttle = rt_throttle.max(btn_throttle).clamp(0.0, 1.0);
 
                 // 3. Left Trigger LT / Button X (Brake)
                 let raw_lt = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
                 let lt_brake = Self::process_trigger_deadzone(raw_lt, config.trigger_deadzone);
-                let btn_brake = if gp.is_pressed(Button::West) { 1.0 } else { 0.0 };
+                let btn_brake = if curr_west { 1.0 } else { 0.0 };
                 let brake = lt_brake.max(btn_brake).clamp(0.0, 1.0);
 
                 // 4. Handbrake (Button B / East or Right Bumper RB)
-                let handbrake = gp.is_pressed(Button::East) || gp.is_pressed(Button::RightTrigger);
+                let handbrake = curr_east || gp.is_pressed(Button::RightTrigger);
 
                 // 5. Reverse (Button Y / North or Left Bumper LB)
-                let reverse = gp.is_pressed(Button::North) || gp.is_pressed(Button::LeftTrigger);
+                let reverse = curr_north || gp.is_pressed(Button::LeftTrigger);
 
                 self.snapshot.is_connected = is_conn;
                 self.snapshot.gamepad_name = name;
@@ -226,6 +339,26 @@ impl GamepadController {
                 self.snapshot.brake = brake;
                 self.snapshot.handbrake = handbrake;
                 self.snapshot.reverse = reverse;
+
+                self.snapshot.btn_start_pressed = btn_start;
+                self.snapshot.btn_back_pressed = btn_select;
+                self.snapshot.btn_a_pressed = btn_south;
+                self.snapshot.btn_b_pressed = btn_east;
+                self.snapshot.btn_x_pressed = btn_west;
+                self.snapshot.btn_y_pressed = btn_north;
+                self.snapshot.dpad_up_pressed = dpad_u;
+                self.snapshot.dpad_down_pressed = dpad_d;
+                self.snapshot.dpad_left_pressed = dpad_l;
+                self.snapshot.dpad_right_pressed = dpad_r;
+                self.snapshot.btn_assist_toggle_pressed = thumb_r || btn_select;
+                self.snapshot.btn_cam_toggle_pressed = thumb_l;
+
+                self.snapshot.nav_up = dpad_u || stick_up;
+                self.snapshot.nav_down = dpad_d || stick_down;
+                self.snapshot.nav_left = dpad_l || stick_left;
+                self.snapshot.nav_right = dpad_r || stick_right;
+                self.snapshot.btn_confirm_pressed = btn_south || btn_east || btn_start;
+                self.snapshot.btn_cancel_pressed = btn_east || btn_select;
             }
         }
     }
