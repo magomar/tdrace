@@ -147,6 +147,10 @@ pub struct CarState {
     pub is_drifting: bool,
     /// Cumulative drift score accumulated during slide.
     pub drift_score: f32,
+    /// Whether Traction Control System (TCS) is actively intervening / cutting engine torque.
+    pub tcs_active: bool,
+    /// Whether Electronic Stability Control (ESC) is actively applying stabilizing yaw torque.
+    pub esc_active: bool,
 }
 
 impl Default for CarState {
@@ -168,6 +172,8 @@ impl Default for CarState {
             sideslip_angle: 0.0,
             is_drifting: false,
             drift_score: 0.0,
+            tcs_active: false,
+            esc_active: false,
         }
     }
 }
@@ -323,10 +329,24 @@ impl Car {
         // steer > 0 is steering right (clockwise, -steer_angle in Cartesian coords)
         // steer < 0 is steering left (counter-clockwise, +steer_angle in Cartesian coords)
         let speed_factor = 1.0 + self.state.speed * self.config.speed_sensitive_steer_factor;
-        let target_steer = (-clamped_ctrl.steer * self.config.max_steer_angle) / speed_factor;
+        let mut target_steer = (-clamped_ctrl.steer * self.config.max_steer_angle) / speed_factor;
 
         // Check if player is counter-steering against a drift (opposite to lateral velocity / yaw)
         let is_counter_steering = (clamped_ctrl.steer * v_lat) < -0.05;
+
+        // Counter-steer / self-aligning drift recovery assist
+        if self.config.assists.counter_steer_assist_enabled
+            && !clamped_ctrl.handbrake
+            && self.state.speed > 2.0
+            && self.state.sideslip_angle.abs() > 0.04
+        {
+            let align_angle = -self.state.sideslip_angle * self.config.assists.counter_steer_assist_strength;
+            if clamped_ctrl.steer.abs() < 0.35 {
+                let blend = 1.0 - (clamped_ctrl.steer.abs() / 0.35);
+                target_steer += align_angle * blend;
+            }
+        }
+
         let steer_rate = if clamped_ctrl.steer.abs() < 1e-3 {
             self.config.steer_return_speed
         } else if is_counter_steering {
@@ -397,7 +417,7 @@ impl Car {
 
         let omega = self.state.angular_velocity;
 
-        // Drive / Brake torque requests with top-speed governor
+        // Drive / Brake torque requests with top-speed governor and TCS
         let top_speed = self.config.top_speed_mps;
         let speed_ratio = v_long / top_speed;
         let engine_taper = if speed_ratio < 0.90 {
@@ -406,10 +426,31 @@ impl Car {
             (1.0 - (speed_ratio - 0.90) / 0.10).clamp(0.0, 1.0)
         };
 
+        let mut tcs_active = false;
+        let mut drive_torque_multiplier = 1.0f32;
+
+        if self.config.assists.tcs_enabled
+            && clamped_ctrl.throttle > 0.0
+            && !clamped_ctrl.reverse
+            && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake)
+        {
+            let rear_slip_lat = self.state.wheels[2].slip_angle.abs().max(self.state.wheels[3].slip_angle.abs());
+            let is_cornering = self.state.steer_angle.abs() > 0.02 || self.state.sideslip_angle.abs() > 0.03 || rear_slip_lat > 0.08;
+
+            let thresh = self.config.assists.tcs_slip_threshold;
+            if is_cornering && rear_slip_lat > thresh {
+                let excess_lat = (rear_slip_lat - thresh).max(0.0) / thresh;
+                let cut = (excess_lat * self.config.assists.tcs_strength).clamp(0.0, 0.75);
+                drive_torque_multiplier = 1.0 - cut;
+                tcs_active = true;
+            }
+        }
+        self.state.tcs_active = tcs_active;
+
         let total_drive_force = if clamped_ctrl.reverse {
             -clamped_ctrl.throttle * self.config.max_reverse_force
         } else if clamped_ctrl.throttle > 0.0 {
-            clamped_ctrl.throttle * self.config.max_engine_force * engine_taper
+            clamped_ctrl.throttle * self.config.max_engine_force * engine_taper * drive_torque_multiplier
         } else {
             0.0
         };
@@ -539,13 +580,43 @@ impl Car {
             };
         }
 
-        // 5. Aerodynamic drag & yaw damping
+        // 5. Aerodynamic drag, yaw damping, and ESC
         let avg_surface_drag: f32 = surfaces.iter().map(|s| s.surface_drag_multiplier()).sum::<f32>() / 4.0;
         let drag_fwd = -self.config.air_drag_coefficient * v_long * v_long.abs() * avg_surface_drag;
         let drag_lat = -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
         let drag_world = fwd * drag_fwd + right * drag_lat;
 
-        let yaw_damping_torque = -self.config.angular_damping * omega;
+        let base_yaw_damping = -self.config.angular_damping * omega;
+
+        let mut esc_torque = 0.0f32;
+        let mut esc_active = false;
+
+        if self.config.assists.esc_enabled
+            && self.state.speed > 2.5
+            && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake)
+        {
+            let wheelbase = self.config.wheelbase;
+            let target_yaw_rate = (v_long / wheelbase) * self.state.steer_angle.tan();
+
+            // ESC targets oversteer (rotating faster into turn than commanded or spinning out)
+            let is_oversteering = (omega.signum() == target_yaw_rate.signum() && omega.abs() > (target_yaw_rate.abs() + 0.10))
+                || (omega.abs() > 0.35 && target_yaw_rate.abs() < 0.1)
+                || (omega.signum() != target_yaw_rate.signum() && omega.abs() > 0.25);
+
+            if is_oversteering {
+                let yaw_error = omega - target_yaw_rate;
+                let yaw_thresh = self.config.assists.esc_yaw_threshold;
+                if yaw_error.abs() > yaw_thresh {
+                    let excess_yaw = (yaw_error.abs() - yaw_thresh) * yaw_error.signum();
+                    let esc_gain = self.config.inertia * 5.0 * self.config.assists.esc_strength;
+                    esc_torque = -excess_yaw * esc_gain;
+                    esc_active = true;
+                }
+            }
+        }
+        self.state.esc_active = esc_active;
+
+        let yaw_damping_torque = base_yaw_damping + esc_torque;
 
         // 6. Net world forces & accelerations
         let net_force_world = total_wheel_force_world + drag_world;

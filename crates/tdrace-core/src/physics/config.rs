@@ -37,6 +37,89 @@ impl Default for TireConfig {
     }
 }
 
+/// Configuration for electronic driver assists (TCS, ESC, Counter-Steer Drift Recovery).
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct DriverAssistsConfig {
+    /// Traction Control System (TCS) enabled.
+    /// Prevents excessive drive wheel slip under acceleration to eliminate snap power-oversteer.
+    pub tcs_enabled: bool,
+    /// TCS sensitivity / slip threshold: wheel slip ratio above which drive torque is modulated.
+    pub tcs_slip_threshold: f32,
+    /// TCS torque reduction strength [0.0 = none, 1.0 = full cut down to grip limit].
+    pub tcs_strength: f32,
+
+    /// Electronic Stability Control (ESC) enabled.
+    /// Applies corrective stabilizing yaw moment when unintended sideslip/yaw rate occurs.
+    pub esc_enabled: bool,
+    /// ESC yaw rate error threshold (rad/s) before intervention starts.
+    pub esc_yaw_threshold: f32,
+    /// ESC stabilizing damping strength.
+    pub esc_strength: f32,
+
+    /// Counter-steer / Self-aligning drift recovery assist enabled.
+    /// Helps digital and gamepad players catch slides and self-align when counter-steering.
+    pub counter_steer_assist_enabled: bool,
+    /// Strength of self-aligning steering torque assistance.
+    pub counter_steer_assist_strength: f32,
+
+    /// Handbrake bypass: whether holding the handbrake temporarily disengages TCS and relaxes ESC
+    /// so intentional handbrake power-drifts are 100% responsive and uninhibited.
+    pub handbrake_bypass: bool,
+}
+
+impl Default for DriverAssistsConfig {
+    fn default() -> Self {
+        Self::arcade()
+    }
+}
+
+impl DriverAssistsConfig {
+    /// Arcade preset: full assists active for forgiving, accessible keyboard and controller driving.
+    pub const fn arcade() -> Self {
+        Self {
+            tcs_enabled: true,
+            tcs_slip_threshold: 0.18,
+            tcs_strength: 0.75,
+            esc_enabled: true,
+            esc_yaw_threshold: 0.25,
+            esc_strength: 0.65,
+            counter_steer_assist_enabled: true,
+            counter_steer_assist_strength: 0.55,
+            handbrake_bypass: true,
+        }
+    }
+
+    /// Sport preset: mild assists allowing moderate slip angles and aggressive powerslides.
+    pub const fn sport() -> Self {
+        Self {
+            tcs_enabled: true,
+            tcs_slip_threshold: 0.30,
+            tcs_strength: 0.40,
+            esc_enabled: true,
+            esc_yaw_threshold: 0.50,
+            esc_strength: 0.35,
+            counter_steer_assist_enabled: true,
+            counter_steer_assist_strength: 0.35,
+            handbrake_bypass: true,
+        }
+    }
+
+    /// Pro / Raw preset: all electronic assists completely off for pure simulation physics.
+    pub const fn raw() -> Self {
+        Self {
+            tcs_enabled: false,
+            tcs_slip_threshold: 0.50,
+            tcs_strength: 0.0,
+            esc_enabled: false,
+            esc_yaw_threshold: 1.0,
+            esc_strength: 0.0,
+            counter_steer_assist_enabled: false,
+            counter_steer_assist_strength: 0.0,
+            handbrake_bypass: true,
+        }
+    }
+}
+
 /// Vehicle physical dimensions, mass properties, powertrain parameters, and steering geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct CarConfig {
@@ -97,6 +180,8 @@ pub struct CarConfig {
 
     /// Tire friction and slip parameters.
     pub tire: TireConfig,
+    /// Driver electronic stability and traction assistance settings.
+    pub assists: DriverAssistsConfig,
 }
 
 impl Default for CarConfig {
@@ -140,6 +225,7 @@ impl CarConfig {
             weight_transfer_lateral: 1.0,
 
             tire: TireConfig::default(),
+            assists: DriverAssistsConfig::arcade(),
         }
     }
 
@@ -154,6 +240,7 @@ impl CarConfig {
         cfg.tire.drift_slide_friction = 0.92;
         cfg.tire.handbrake_lateral_friction_multiplier = 0.30;
         cfg.drive_bias = 0.0;
+        cfg.assists = DriverAssistsConfig::sport();
         cfg
     }
 
@@ -200,6 +287,7 @@ impl CarConfig {
                 skid_threshold: 0.08,
                 skid_full_threshold: 0.28,
             },
+            assists: DriverAssistsConfig::arcade(),
         }
     }
 
