@@ -359,9 +359,17 @@ impl RaceSession {
             self.touch.toggle_layout();
         }
 
-        // Handle camera toggle (Tab, C key, or Gamepad Left Stick Click / Y)
-        if is_key_pressed(KeyCode::Tab) || is_key_pressed(KeyCode::C) || self.input.gamepad.snapshot.btn_cam_toggle_pressed {
+        // Handle camera toggle (Tab key or Gamepad Left Stick Click)
+        if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_cam_toggle_pressed {
             self.camera.toggle_mode();
+        }
+
+        // Open Controls & Driving Assists Screen (C or K key)
+        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let from_paused = matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_));
+            self.state = GameState::ControlsHelp(from_paused);
+            return;
         }
 
         // Cycle Driver Assists Profile (H key or Gamepad Right Stick Click / Select)

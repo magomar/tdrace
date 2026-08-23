@@ -243,7 +243,7 @@ pub fn render_pause_menu(assist_profile: AssistProfile, audio_settings: &AudioSe
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.65));
 
     let box_w = 460.0;
-    let box_h = 350.0;
+    let box_h = 375.0;
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
@@ -261,6 +261,7 @@ pub fn render_pause_menu(assist_profile: AssistProfile, audio_settings: &AudioSe
 
     let items = [
         "ESC / START / A : Resume Race".to_string(),
+        "C / K : Controls & Gamepad Guide".to_string(),
         "R / Y : Restart Race".to_string(),
         "M / B : Main Menu / Track Select".to_string(),
         assist_item,
@@ -273,7 +274,7 @@ pub fn render_pause_menu(assist_profile: AssistProfile, audio_settings: &AudioSe
     let mut item_y = y + 70.0;
     for item in &items {
         draw_text(item, x + 25.0, item_y, 14.5, Color::new(0.85, 0.90, 0.95, 1.0));
-        item_y += 25.0;
+        item_y += 24.0;
     }
 }
 
@@ -410,7 +411,8 @@ pub fn render_controls_screen(
         ("Handbrake & Drift", "Spacebar"),
         ("Reverse Gear", "Z"),
         ("Cycle Assist Profile", "H"),
-        ("Camera View Toggle", "Tab / C"),
+        ("Controls & Assists Guide", "C / K"),
+        ("Camera View Toggle", "Tab"),
         ("Instant Session Reset", "R"),
         ("Pause / Resume", "Escape / Pause"),
         ("Audio Mute / Volume", "M / [ and ]"),
