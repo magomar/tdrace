@@ -392,6 +392,116 @@ impl TrackSpline {
             base_surface: s0.surface,
         }
     }
+
+    /// Projects a 2D world position onto the spline centerline with continuity constraint around `prev_progress`.
+    /// Restricts candidate segments to within `max_dist_delta` of `prev_progress` to avoid snapping
+    /// to adjacent opposing track ribbons in close turns/chicanes.
+    pub fn project_point_continuity(
+        &self,
+        pos: Vec2,
+        prev_progress: f32,
+        max_dist_delta: f32,
+    ) -> SplineProjection {
+        if self.samples.len() < 2 {
+            return self.project_point(pos);
+        }
+
+        let total_len = self.total_length.max(1.0);
+        let mut best_dist_sq = f32::INFINITY;
+        let mut best_point = Vec2::ZERO;
+        let mut best_progress = 0.0f32;
+        let mut best_sample_idx = 0;
+        let mut best_t = 0.0f32;
+        let mut found_candidate = false;
+
+        for i in 0..self.samples.len() - 1 {
+            let seg_dist = self.samples[i].distance;
+            let delta = if self.closed {
+                let d = (seg_dist - prev_progress).abs();
+                d.min(total_len - d)
+            } else {
+                (seg_dist - prev_progress).abs()
+            };
+
+            if delta > max_dist_delta {
+                continue;
+            }
+
+            let p0 = self.samples[i].point;
+            let p1 = self.samples[i + 1].point;
+            let ab = p1 - p0;
+            let len_sq = ab.length_squared();
+            let t = if len_sq > 1e-6 {
+                ((pos - p0).dot(ab) / len_sq).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            let proj_pt = p0 + ab * t;
+            let d_sq = (pos - proj_pt).length_squared();
+
+            if d_sq < best_dist_sq {
+                best_dist_sq = d_sq;
+                best_point = proj_pt;
+                best_sample_idx = i;
+                best_t = t;
+                let sub_dist = (self.samples[i + 1].distance - self.samples[i].distance) * t;
+                best_progress = self.samples[i].distance + sub_dist;
+                found_candidate = true;
+            }
+        }
+
+        if !found_candidate {
+            return self.project_point(pos);
+        }
+
+        let s0 = &self.samples[best_sample_idx];
+        let s1 = &self.samples[(best_sample_idx + 1).min(self.samples.len() - 1)];
+
+        let tangent = s0.tangent.lerp(s1.tangent, best_t).normalize_or_zero();
+        let normal = Vec2::new(-tangent.y, tangent.x);
+        let right_vector = Vec2::new(tangent.y, -tangent.x);
+
+        let to_pos = pos - best_point;
+        let lateral_offset = to_pos.dot(right_vector);
+        let distance_to_spline = best_dist_sq.sqrt();
+
+        let track_width = s0.width + (s1.width - s0.width) * best_t;
+        let left_curb = if best_t < 0.5 { s0.left_curb } else { s1.left_curb };
+        let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
+
+        let half_w = track_width * 0.5;
+        let is_on_track = lateral_offset.abs() <= half_w;
+
+        let is_on_left_curb = left_curb
+            && lateral_offset < -half_w
+            && lateral_offset >= -half_w - Self::DEFAULT_CURB_WIDTH;
+        let is_on_right_curb = right_curb
+            && lateral_offset > half_w
+            && lateral_offset <= half_w + Self::DEFAULT_CURB_WIDTH;
+        let is_on_curb = is_on_left_curb || is_on_right_curb;
+
+        let normalized_progress = if self.total_length > 1e-4 {
+            (best_progress / self.total_length).clamp(0.0, 0.999999)
+        } else {
+            0.0
+        };
+
+        SplineProjection {
+            closest_point: best_point,
+            distance_to_spline,
+            lateral_offset,
+            progress_distance: best_progress,
+            normalized_progress,
+            tangent,
+            normal,
+            track_width,
+            left_curb,
+            right_curb,
+            is_on_track,
+            is_on_curb,
+            base_surface: s0.surface,
+        }
+    }
 }
 
 /// 2D Catmull-Rom interpolation for points p0, p1, p2, p3 at parameter t in [0, 1].

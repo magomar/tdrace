@@ -226,3 +226,67 @@ fn test_all_track_presets_grid_positions_valid() {
     }
 }
 
+#[test]
+fn test_track_walls_do_not_block_drivable_track_and_do_not_self_intersect() {
+    use tdrace_core::track::presets::{classic_grand_prix, oval_speedway, drift_park, kart_arena};
+    use tdrace_core::physics::{Car, CarConfig};
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+
+    let tracks = [
+        ("Classic Grand Prix", classic_grand_prix()),
+        ("Oval Speedway", oval_speedway()),
+        ("Drift Park", drift_park()),
+        ("Kart Arena", kart_arena()),
+    ];
+
+    for (name, track) in &tracks {
+        let total_len = track.spline.total_length();
+        let num_steps = (total_len / 0.5) as usize;
+
+        // 1. Check car driving along centerline
+        let mut collisions = 0;
+        for i in 0..num_steps {
+            let dist = i as f32 * 0.5;
+            let sample = track.spline.sample_at_distance(dist);
+            let heading = sample.tangent.y.atan2(sample.tangent.x);
+            let mut car = Car::new(CarConfig::sports_car()).with_pose(sample.point, heading);
+
+            let initial_pos = car.state.position;
+            let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
+            let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
+
+            let displacement = (car.state.position - initial_pos).length();
+            if !hit_inner.is_empty() || !hit_outer.is_empty() || displacement > 0.01 {
+                println!(
+                    "[{}] Collision on centerline at dist={:.1}m / {:.1}m: pos=({:.1}, {:.1}), disp={:.3}m",
+                    name, dist, total_len, sample.point.x, sample.point.y, displacement
+                );
+                collisions += 1;
+            }
+        }
+
+        // 2. Check for wall segment self-intersections
+        for (wall_side, walls) in [("inner", &track.geometry.inner_walls), ("outer", &track.geometry.outer_walls)] {
+            for i in 0..walls.len() {
+                for j in (i + 1)..walls.len() {
+                    // Skip adjacent segments
+                    if (j == i + 1) || (i == 0 && j == walls.len() - 1) {
+                        continue;
+                    }
+                    let seg1 = &walls[i].segment;
+                    let seg2 = &walls[j].segment;
+                    if let Some(pt) = seg1.intersect_segment(seg2) {
+                        println!(
+                            "[{}] {} wall self-intersection between seg {} ({:?} -> {:?}) and seg {} ({:?} -> {:?}) at {:?}",
+                            name, wall_side, i, seg1.start, seg1.end, j, seg2.start, seg2.end, pt
+                        );
+                    }
+                }
+            }
+        }
+
+        assert_eq!(collisions, 0, "Track {} has {} centerline collisions with walls!", name, collisions);
+    }
+}
+
+

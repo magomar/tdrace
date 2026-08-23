@@ -206,8 +206,12 @@ impl TrackProgressTracker {
         }
         self.total_distance_travelled += car.state.speed * dt;
 
-        // 2. Project onto spline centerline
-        let proj = spline.project_point(car_pos);
+        // 2. Project onto spline centerline with continuity constraint
+        let proj = if self.last_position.is_some() && self.total_distance_travelled > 0.0 {
+            spline.project_point_continuity(car_pos, self.progress_distance, 50.0)
+        } else {
+            spline.project_point(car_pos)
+        };
         self.progress_distance = proj.progress_distance;
         self.normalized_progress = proj.normalized_progress;
 

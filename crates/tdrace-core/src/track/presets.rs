@@ -9,6 +9,76 @@ use super::spline::{TrackSpline, TrackWaypoint};
 use super::Track;
 use crate::physics::surface::SurfaceType;
 
+/// Trims local self-intersecting loops (swallowtail singularities) from an offset boundary polyline.
+pub fn untangle_polyline(pts: &mut Vec<Vec2>, closed: bool) {
+    let mut changed = true;
+    let mut passes = 0;
+    // Local swallowtail singularities on sharp corners only span a small number of consecutive samples (~3-10).
+    let max_loop_span = 10;
+
+    while changed && passes < 16 {
+        changed = false;
+        passes += 1;
+        let n = pts.len();
+        if n < 4 {
+            break;
+        }
+
+        'outer: for i in 0..n {
+            let p0 = pts[i];
+            let next_i = (i + 1) % n;
+            let p1 = pts[next_i];
+            let seg_a = LineSegment::new(p0, p1);
+
+            let max_span = max_loop_span.min(n / 2);
+            for span in 2..=max_span {
+                let j = (i + span) % n;
+                if !closed && i + span >= n {
+                    break;
+                }
+                let next_j = (j + 1) % n;
+                if !closed && j + 1 >= n {
+                    break;
+                }
+                if next_j == i || next_i == j {
+                    continue;
+                }
+
+                let p2 = pts[j];
+                let p3 = pts[next_j];
+                let seg_b = LineSegment::new(p2, p3);
+
+                if let Some(hit) = seg_a.intersect_segment(&seg_b) {
+                    // Local loop between i and j (span samples)
+                    if j > i {
+                        let mut new_pts = Vec::with_capacity(n);
+                        for k in 0..=i {
+                            new_pts.push(pts[k]);
+                        }
+                        new_pts.push(hit);
+                        for k in (j + 1)..n {
+                            new_pts.push(pts[k]);
+                        }
+                        *pts = new_pts;
+                        changed = true;
+                        break 'outer;
+                    } else if closed {
+                        // Loop wraps around the array boundary (j < i)
+                        let mut new_pts = Vec::with_capacity(n);
+                        new_pts.push(hit);
+                        for k in (j + 1)..=i {
+                            new_pts.push(pts[k]);
+                        }
+                        *pts = new_pts;
+                        changed = true;
+                        break 'outer;
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Builds boundary wall barriers along the track edges given a spline and barrier offset.
 pub fn generate_walls_from_spline(
     spline: &TrackSpline,
@@ -29,13 +99,21 @@ pub fn generate_walls_from_spline(
         right_pts.push(s.point - s.normal * half_w);
     }
 
+    untangle_polyline(&mut left_pts, spline.closed);
+    untangle_polyline(&mut right_pts, spline.closed);
+
     let mut left_walls = Vec::new();
     let mut right_walls = Vec::new();
 
-    let seg_count = if spline.closed { n } else { n - 1 };
-    for i in 0..seg_count {
-        let next_i = (i + 1) % n;
+    let seg_count_left = if spline.closed { left_pts.len() } else { left_pts.len().saturating_sub(1) };
+    for i in 0..seg_count_left {
+        let next_i = (i + 1) % left_pts.len();
         left_walls.push(WallBarrier::new(left_pts[i], left_pts[next_i], barrier_type));
+    }
+
+    let seg_count_right = if spline.closed { right_pts.len() } else { right_pts.len().saturating_sub(1) };
+    for i in 0..seg_count_right {
+        let next_i = (i + 1) % right_pts.len();
         right_walls.push(WallBarrier::new(
             right_pts[i],
             right_pts[next_i],
@@ -279,11 +357,15 @@ pub fn drift_park() -> Track {
         TrackWaypoint::new(Vec2::new(-80.0, 160.0), 15.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(-120.0, 130.0), 15.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(-90.0, 70.0), 14.0).with_curbs(true, false),
-        // Donut / Carousel Section
-        TrackWaypoint::new(Vec2::new(-40.0, 45.0), 16.0).with_curbs(true, true),
-        TrackWaypoint::new(Vec2::new(-90.0, 25.0), 15.0).with_curbs(false, true),
-        // Final Corner onto Launch Straight (Run-in for Starting Grid)
-        TrackWaypoint::new(Vec2::new(-60.0, 0.0), 14.0),
+        // Carousel / Donut Section (Wide, sweeping multi-apex drift corner)
+        TrackWaypoint::new(Vec2::new(-45.0, 60.0), 14.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-15.0, 40.0), 15.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(-20.0, 15.0), 15.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(-65.0, 15.0), 14.5).with_curbs(false, true),
+        // Switchback & Final Corner onto Launch Straight
+        TrackWaypoint::new(Vec2::new(-105.0, -5.0), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-80.0, -25.0), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-30.0, -15.0), 14.0).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -309,10 +391,10 @@ pub fn drift_park() -> Track {
         "Drift Sand Trap 2",
     ));
 
-
     let obstacles = vec![
         Obstacle::circle(1, Vec2::new(100.0, 50.0), 1.5, "Drift Clipping Zone 1"),
         Obstacle::circle(2, Vec2::new(-80.0, 115.0), 1.5, "Drift Clipping Zone 2"),
+        Obstacle::circle(3, Vec2::new(-28.0, 35.0), 1.5, "Drift Clipping Zone 3"),
     ];
 
     let checkpoints = generate_checkpoints(&spline, 10, 3);

@@ -128,8 +128,12 @@ impl BotAiDriver {
         let car_fwd = car.forward_vector();
         let car_right = car.right_vector();
 
-        // 1. Project onto spline to find current track distance
-        let proj = spline.project_point(car_pos);
+        // 1. Project onto spline to find current track distance with continuity constraint
+        let proj = if self.last_pos.is_some() {
+            spline.project_point_continuity(car_pos, self.current_target_dist, 50.0)
+        } else {
+            spline.project_point(car_pos)
+        };
         let curr_dist = proj.progress_distance;
 
         // 2. Dynamic lookahead based on speed and profile
