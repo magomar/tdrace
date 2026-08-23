@@ -172,3 +172,57 @@ fn test_per_wheel_split_mu_sampling() {
         surfaces[3]
     );
 }
+
+#[test]
+fn test_all_track_presets_grid_positions_valid() {
+    use tdrace_core::track::presets::{classic_grand_prix, oval_speedway, drift_park, kart_arena};
+    use tdrace_core::physics::{Car, CarConfig};
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+
+    let tracks = [
+        ("Classic Grand Prix", classic_grand_prix()),
+        ("Oval Speedway", oval_speedway()),
+        ("Drift Park", drift_park()),
+        ("Kart Arena", kart_arena()),
+    ];
+
+    for (name, track) in &tracks {
+        println!("Checking track: {} (length: {:.1}m)", name, track.spline.total_length());
+        for (i, gp) in track.grid_positions.iter().enumerate() {
+            let mut car = Car::new(CarConfig::sports_car()).with_pose(gp.position, gp.angle);
+            let surfaces = track.sample_car_surfaces(&car);
+            assert!(
+                surfaces.iter().all(|s| *s == SurfaceType::Asphalt || *s == SurfaceType::Curb),
+                "Track {} Grid {} spawned on invalid surface: {:?}",
+                name, i, surfaces
+            );
+
+            // Verify car is not colliding with inner/outer walls or obstacles at spawn
+            let initial_pos = car.state.position;
+            let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &track.geometry.obstacles);
+            let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
+
+            let displacement = (car.state.position - initial_pos).length();
+            println!(
+                "  Slot {}: pos=({:.1}, {:.1}), angle={:.2} rad, hit_inner={}, hit_outer={}, disp={:.3}m",
+                i, gp.position.x, gp.position.y, gp.angle, !hit_inner.is_empty(), !hit_outer.is_empty(), displacement
+            );
+
+            assert!(hit_inner.is_empty() && hit_outer.is_empty(), "Track {} Slot {} spawned in collision with walls! (disp={:.2}m)", name, i, displacement);
+            assert!(displacement < 1e-4, "Track {} Slot {} was displaced by collision resolution!", name, i);
+        }
+
+        for obs in &track.geometry.obstacles {
+            let center = match &obs.shape {
+                tdrace_core::track::geometry::ObstacleShape::Circle { center, .. } => *center,
+                tdrace_core::track::geometry::ObstacleShape::Box { center, .. } => *center,
+            };
+            let proj = track.spline.project_point(center);
+            println!(
+                "  Obstacle '{}' at {:?}: dist_to_spline={:.2}m, track_half_w={:.2}m, is_on_track={}",
+                obs.name, center, proj.distance_to_spline, proj.track_width * 0.5, proj.is_on_track
+            );
+        }
+    }
+}
+

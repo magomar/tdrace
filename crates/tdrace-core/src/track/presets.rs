@@ -139,16 +139,8 @@ pub fn classic_grand_prix() -> Track {
     ];
 
     let spline = TrackSpline::new(waypoints, true);
-    let (left_walls, mut right_walls, left_poly, right_poly) =
+    let (left_walls, right_walls, left_poly, right_poly) =
         generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
-
-    // Pit lane parallel to main straight (x: -10 to 140, y: -12.0)
-    let pit_wall = WallBarrier::new(
-        Vec2::new(-10.0, -7.0),
-        Vec2::new(130.0, -7.0),
-        BarrierType::Concrete,
-    );
-    right_walls.push(pit_wall);
 
     let mut surface_zones = Vec::new();
     // Sand trap outside the hairpin (around x: 200..290, y: 315..360)
@@ -273,7 +265,7 @@ pub fn oval_speedway() -> Track {
 /// Technical hairpin turns, wide sliding transitions, sand traps, clipping point curbs.
 pub fn drift_park() -> Track {
     let waypoints = vec![
-        // Launch Straight
+        // Launch Straight & Start/Finish
         TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
         TrackWaypoint::new(Vec2::new(80.0, 0.0), 14.0),
         // Hairpin 1 (Right Hand 180)
@@ -287,9 +279,11 @@ pub fn drift_park() -> Track {
         TrackWaypoint::new(Vec2::new(-80.0, 160.0), 15.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(-120.0, 130.0), 15.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(-90.0, 70.0), 14.0).with_curbs(true, false),
-        // Donut / Roundabout Section
-        TrackWaypoint::new(Vec2::new(-20.0, 30.0), 16.0).with_curbs(true, true),
-        TrackWaypoint::new(Vec2::new(-10.0, -20.0), 14.0).with_curbs(true, false),
+        // Donut / Carousel Section
+        TrackWaypoint::new(Vec2::new(-40.0, 45.0), 16.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(-90.0, 25.0), 15.0).with_curbs(false, true),
+        // Final Corner onto Launch Straight (Run-in for Starting Grid)
+        TrackWaypoint::new(Vec2::new(-60.0, 0.0), 14.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -297,10 +291,10 @@ pub fn drift_park() -> Track {
         generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
 
     let mut surface_zones = Vec::new();
-    // Sand traps outside hairpin 1 & 2
+    // Sand traps outside hairpin 1 & 2 runoffs (outside track boundaries)
     surface_zones.push(SurfaceZone::new(
         SurfaceShape::Aabb {
-            min: Vec2::new(135.0, 10.0),
+            min: Vec2::new(140.0, 10.0),
             max: Vec2::new(180.0, 95.0),
         },
         SurfaceType::Sand,
@@ -309,11 +303,12 @@ pub fn drift_park() -> Track {
     surface_zones.push(SurfaceZone::new(
         SurfaceShape::Aabb {
             min: Vec2::new(-170.0, 90.0),
-            max: Vec2::new(-125.0, 180.0),
+            max: Vec2::new(-130.0, 180.0),
         },
         SurfaceType::Sand,
         "Drift Sand Trap 2",
     ));
+
 
     let obstacles = vec![
         Obstacle::circle(1, Vec2::new(100.0, 50.0), 1.5, "Drift Clipping Zone 1"),
@@ -321,7 +316,7 @@ pub fn drift_park() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 10, 3);
-    let grid_positions = generate_grid_positions(&spline, 6, 9.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 6, 8.0, 2.5);
 
     Track {
         name: "Drift Park".to_string(),
