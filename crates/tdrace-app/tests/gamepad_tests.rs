@@ -235,4 +235,49 @@ fn test_gamepad_x_reverse_and_a_confirm_b_cancel() {
     assert!(gp.snapshot.btn_cancel_pressed, "B button should trigger cancel/back");
 }
 
+#[test]
+fn test_gamepad_profile_candidate_paths_and_reload() {
+    let paths = GamepadController::candidate_profile_paths();
+    assert!(!paths.is_empty(), "Candidate profile paths must not be empty");
+    assert!(paths.iter().any(|p| p.to_string_lossy().contains("gamepad_profile.json")));
+
+    let mut gp = GamepadController::new();
+    // Verify check_and_reload_profile runs without panicking
+    gp.check_and_reload_profile();
+}
+
+#[test]
+fn test_custom_profile_raw_code_button_mappings() {
+    use tdrace_app::input::gamepad::{CustomGamepadProfile, CustomButtonBinding};
+
+    let mut gp = GamepadController::new();
+    // Simulate a custom profile where Button A was mapped to raw code "Btn_BUTTON(3)"
+    gp.custom_profile = Some(CustomGamepadProfile {
+        device_name: "Twin USB Joystick".to_string(),
+        handbrake: Some(CustomButtonBinding {
+            code: "Btn_BUTTON(3)".to_string(),
+            alternate: None,
+        }),
+        btn_south: Some(CustomButtonBinding {
+            code: "Btn_BUTTON(3)".to_string(),
+            alternate: None,
+        }),
+        btn_west: Some(CustomButtonBinding {
+            code: "Btn_BUTTON(0)".to_string(),
+            alternate: None,
+        }),
+        ..Default::default()
+    });
+
+    // Simulate pressing raw code Btn_BUTTON(3)
+    gp.raw_buttons_held.push("Btn_BUTTON(3)".to_string());
+    // Run update to process transitions
+    gp.update();
+
+    assert!(gp.snapshot.btn_confirm_pressed, "Custom raw button code should trigger btn_confirm_pressed");
+    assert!(gp.snapshot.btn_a_pressed, "Custom raw button code should trigger btn_a_pressed");
+}
+
+
+
 

@@ -659,14 +659,14 @@ pub fn render_controls_screen(
         ("Proportional Steering", "Left Analog Stick / D-Pad"),
         ("Analog Progressive Throttle", "Right Trigger (RT / R2)"),
         ("Analog Progressive Brake", "Left Trigger (LT / L2)"),
-        ("Handbrake & Slide Initiation", "A / Cross or Right Bumper (RB)"),
-        ("Reverse Gear", "X / Square or Left Bumper (LB)"),
+        ("Handbrake & Slide Initiation", "A / Cross Button (or RB)"),
+        ("Reverse Gear", "X / Square Button (or LB)"),
         ("Cycle Assist Profile", "Right Stick Click (R3) / Select"),
         ("Camera View Mode", "Left Stick Click (L3)"),
         ("Pause / Resume Menu", "Start / Menu Button"),
         ("Menu Navigation", "D-Pad / Left Stick"),
-        ("Confirm / Start Race", "A / Cross Button"),
-        ("Back / Cancel", "B / Circle Button"),
+        ("Confirm / Start Race", "A / Cross Button (Enter)"),
+        ("Back / Cancel", "B / Circle Button (Escape)"),
     ];
 
     let mut gp_row_y = col_y + scaler.s(52.0);
