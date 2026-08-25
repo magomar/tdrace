@@ -66,12 +66,62 @@ pub struct GamepadSnapshot {
     pub btn_cancel_pressed: bool,  // Universal Cancel (East / South / Back)
 }
 
+/// Optional loaded gamepad profile mapping from `gamepad-mapper`.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct CustomGamepadProfile {
+    #[serde(default)]
+    pub device_name: String,
+    #[serde(default)]
+    pub steering: Option<CustomAxisBinding>,
+    #[serde(default)]
+    pub throttle: Option<CustomTriggerBinding>,
+    #[serde(default)]
+    pub brake: Option<CustomTriggerBinding>,
+    #[serde(default)]
+    pub handbrake: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub reverse: Option<CustomButtonBinding>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct CustomAxisBinding {
+    #[serde(default)]
+    pub axis_name: String,
+    #[serde(default)]
+    pub inverted: bool,
+    #[serde(default)]
+    pub deadzone: f32,
+    #[serde(default)]
+    pub scale: f32,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct CustomTriggerBinding {
+    #[serde(default)]
+    pub primary_code: String,
+    #[serde(default)]
+    pub is_axis: bool,
+    #[serde(default)]
+    pub inverted: bool,
+    #[serde(default)]
+    pub deadzone: f32,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct CustomButtonBinding {
+    #[serde(default)]
+    pub code: String,
+    #[serde(default)]
+    pub alternate: Option<String>,
+}
+
 /// Cross-platform Gamepad Manager supporting hot-plugging, analog axes, and button events.
 pub struct GamepadController {
     gilrs: Option<Gilrs>,
     pub config: GamepadConfig,
     pub active_gamepad: Option<GamepadId>,
     pub snapshot: GamepadSnapshot,
+    pub custom_profile: Option<CustomGamepadProfile>,
     prev_stick_x: f32,
     prev_stick_y: f32,
     prev_south: bool,
@@ -121,11 +171,30 @@ impl GamepadController {
         snapshot.is_connected = is_connected;
         snapshot.gamepad_name = gamepad_name;
 
+        let custom_profile = Self::try_load_custom_profile();
+        let mut config = GamepadConfig::default();
+        if let Some(ref prof) = custom_profile {
+            if let Some(ref st) = prof.steering {
+                if st.deadzone > 0.0 {
+                    config.stick_deadzone = st.deadzone;
+                }
+                if st.scale > 0.0 {
+                    config.steer_scale = st.scale;
+                }
+            }
+            if let Some(ref th) = prof.throttle {
+                if th.deadzone > 0.0 {
+                    config.trigger_deadzone = th.deadzone;
+                }
+            }
+        }
+
         Self {
             gilrs,
-            config: GamepadConfig::default(),
+            config,
             active_gamepad,
             snapshot,
+            custom_profile,
             prev_stick_x: 0.0,
             prev_stick_y: 0.0,
             prev_south: false,
@@ -141,6 +210,37 @@ impl GamepadController {
             prev_thumb_r: false,
             prev_thumb_l: false,
         }
+    }
+
+    /// Attempts to load custom mapping profile exported by `gamepad-mapper`.
+    pub fn try_load_custom_profile() -> Option<CustomGamepadProfile> {
+        // 1. Check local working directory profile
+        let local = std::path::Path::new("gamepad_profile.json");
+        if local.exists() {
+            if let Ok(content) = std::fs::read_to_string(local) {
+                if let Ok(profile) = serde_json::from_str::<CustomGamepadProfile>(&content) {
+                    println!("[Gamepad] Loaded custom mapping profile from {:?}", local);
+                    return Some(profile);
+                }
+            }
+        }
+
+        // 2. Check global ~/.config/tdrace/gamepad_profile.json
+        if let Some(home) = std::env::var_os("HOME") {
+            let mut p = std::path::PathBuf::from(home);
+            p.push(".config");
+            p.push("tdrace");
+            p.push("gamepad_profile.json");
+            if p.exists() {
+                if let Ok(content) = std::fs::read_to_string(&p) {
+                    if let Ok(profile) = serde_json::from_str::<CustomGamepadProfile>(&content) {
+                        println!("[Gamepad] Loaded custom mapping profile from {:?}", p);
+                        return Some(profile);
+                    }
+                }
+            }
+        }
+        None
     }
 
     /// Clears per-frame button press events.
@@ -378,25 +478,63 @@ impl GamepadController {
                     Self::process_axis_deadzone(raw_stick_x, config.stick_deadzone, config.steer_exponent);
                 let steer = (stick_steer * config.steer_scale + raw_dpad_x).clamp(-1.0, 1.0);
 
-                // 2. Right Trigger RT (Throttle)
-                let raw_rt_btn = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
-                let is_rt_pressed = if gp.is_pressed(Button::RightTrigger2) { 1.0 } else { 0.0 };
-                let raw_rt = raw_rt_btn.max(is_rt_pressed);
+                // 2. Throttle (Right Trigger or Custom Profile Binding)
+                let raw_rt = if let Some(ref prof) = self.custom_profile {
+                    if let Some(ref th) = prof.throttle {
+                        sample_input_value(&gp, &th.primary_code)
+                    } else {
+                        let raw_rt_btn = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
+                        let is_rt_pressed = if gp.is_pressed(Button::RightTrigger2) { 1.0 } else { 0.0 };
+                        raw_rt_btn.max(is_rt_pressed)
+                    }
+                } else {
+                    let raw_rt_btn = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
+                    let is_rt_pressed = if gp.is_pressed(Button::RightTrigger2) { 1.0 } else { 0.0 };
+                    raw_rt_btn.max(is_rt_pressed)
+                };
                 let throttle =
                     Self::process_trigger_deadzone(raw_rt, config.trigger_deadzone).clamp(0.0, 1.0);
 
-                // 3. Left Trigger LT (Brake)
-                let raw_lt_btn = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
-                let is_lt_pressed = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
-                let raw_lt = raw_lt_btn.max(is_lt_pressed);
+                // 3. Brake (Left Trigger or Custom Profile Binding)
+                let raw_lt = if let Some(ref prof) = self.custom_profile {
+                    if let Some(ref br) = prof.brake {
+                        sample_input_value(&gp, &br.primary_code)
+                    } else {
+                        let raw_lt_btn = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
+                        let is_lt_pressed = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
+                        raw_lt_btn.max(is_lt_pressed)
+                    }
+                } else {
+                    let raw_lt_btn = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
+                    let is_lt_pressed = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
+                    raw_lt_btn.max(is_lt_pressed)
+                };
                 let brake =
                     Self::process_trigger_deadzone(raw_lt, config.trigger_deadzone).clamp(0.0, 1.0);
 
-                // 4. Handbrake (Button A / South / East or Right Bumper RB)
-                let handbrake = curr_south || curr_east || gp.is_pressed(Button::RightTrigger);
+                // 4. Handbrake (Button A / South / East / RB or Custom Profile Binding)
+                let handbrake = if let Some(ref prof) = self.custom_profile {
+                    if let Some(ref hb) = prof.handbrake {
+                        sample_input_value(&gp, &hb.code) > 0.5
+                            || hb.alternate.as_ref().map_or(false, |alt| sample_input_value(&gp, alt) > 0.5)
+                    } else {
+                        curr_south || curr_east || gp.is_pressed(Button::RightTrigger)
+                    }
+                } else {
+                    curr_south || curr_east || gp.is_pressed(Button::RightTrigger)
+                };
 
-                // 5. Reverse (Button Y / North / West or Left Bumper LB)
-                let reverse = curr_north || curr_west || gp.is_pressed(Button::LeftTrigger);
+                // 5. Reverse (Button Y / North / West / LB or Custom Profile Binding)
+                let reverse = if let Some(ref prof) = self.custom_profile {
+                    if let Some(ref rev) = prof.reverse {
+                        sample_input_value(&gp, &rev.code) > 0.5
+                            || rev.alternate.as_ref().map_or(false, |alt| sample_input_value(&gp, alt) > 0.5)
+                    } else {
+                        curr_north || curr_west || gp.is_pressed(Button::LeftTrigger)
+                    }
+                } else {
+                    curr_north || curr_west || gp.is_pressed(Button::LeftTrigger)
+                };
 
                 self.snapshot.is_connected = is_conn;
                 self.snapshot.gamepad_name = name;
@@ -455,3 +593,37 @@ impl GamepadController {
         self.snapshot = snapshot;
     }
 }
+
+/// Helper function to sample named axis or button value from Gilrs gamepad.
+fn sample_input_value(gp: &gilrs::Gamepad, code: &str) -> f32 {
+    match code {
+        "RightTrigger2" => {
+            let btn_val = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
+            let is_p = if gp.is_pressed(Button::RightTrigger2) { 1.0 } else { 0.0 };
+            btn_val.max(is_p)
+        }
+        "LeftTrigger2" => {
+            let btn_val = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
+            let is_p = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
+            btn_val.max(is_p)
+        }
+        "RightTrigger" => if gp.is_pressed(Button::RightTrigger) { 1.0 } else { 0.0 },
+        "LeftTrigger" => if gp.is_pressed(Button::LeftTrigger) { 1.0 } else { 0.0 },
+        "South" => if gp.is_pressed(Button::South) { 1.0 } else { 0.0 },
+        "East" => if gp.is_pressed(Button::East) { 1.0 } else { 0.0 },
+        "West" => if gp.is_pressed(Button::West) { 1.0 } else { 0.0 },
+        "North" => if gp.is_pressed(Button::North) { 1.0 } else { 0.0 },
+        "LeftStickX" => gp.axis_data(Axis::LeftStickX).map(|d| d.value()).unwrap_or(0.0),
+        "LeftStickY" => gp.axis_data(Axis::LeftStickY).map(|d| d.value()).unwrap_or(0.0),
+        "RightStickX" => gp.axis_data(Axis::RightStickX).map(|d| d.value()).unwrap_or(0.0),
+        "RightStickY" => gp.axis_data(Axis::RightStickY).map(|d| d.value()).unwrap_or(0.0),
+        "DPadUp" => if gp.is_pressed(Button::DPadUp) { 1.0 } else { 0.0 },
+        "DPadDown" => if gp.is_pressed(Button::DPadDown) { 1.0 } else { 0.0 },
+        "DPadLeft" => if gp.is_pressed(Button::DPadLeft) { 1.0 } else { 0.0 },
+        "DPadRight" => if gp.is_pressed(Button::DPadRight) { 1.0 } else { 0.0 },
+        "Start" => if gp.is_pressed(Button::Start) { 1.0 } else { 0.0 },
+        "Select" => if gp.is_pressed(Button::Select) { 1.0 } else { 0.0 },
+        _ => 0.0,
+    }
+}
+
