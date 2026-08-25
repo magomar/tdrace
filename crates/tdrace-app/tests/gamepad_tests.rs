@@ -208,3 +208,31 @@ fn test_gamepad_rt_throttle_lt_brake_a_handbrake_mapping() {
     assert!(ctrl.handbrake, "A button should engage handbrake");
 }
 
+#[test]
+fn test_gamepad_x_reverse_and_a_confirm_b_cancel() {
+    let mut gp = GamepadController::new();
+    let snapshot = GamepadSnapshot {
+        is_connected: true,
+        gamepad_name: "Xbox Wireless Controller".to_string(),
+        reverse: true, // From X button
+        btn_confirm_pressed: true, // From A button / Enter
+        btn_cancel_pressed: false,
+        ..Default::default()
+    };
+    gp.inject_snapshot(snapshot);
+    assert!(gp.snapshot.reverse, "X button should trigger reverse");
+    assert!(gp.snapshot.btn_confirm_pressed, "A button should confirm/start race in menu");
+
+    let cancel_snapshot = GamepadSnapshot {
+        is_connected: true,
+        gamepad_name: "Xbox Wireless Controller".to_string(),
+        reverse: false,
+        btn_confirm_pressed: false,
+        btn_cancel_pressed: true, // From B button / Escape
+        ..Default::default()
+    };
+    gp.inject_snapshot(cancel_snapshot);
+    assert!(gp.snapshot.btn_cancel_pressed, "B button should trigger cancel/back");
+}
+
+

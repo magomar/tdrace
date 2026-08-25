@@ -83,13 +83,12 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
 *(Arrow keys `Up`/`Down`/`Left`/`Right` are also supported as secondary driving controls).*
 
 ### Gamepad
-| Button / Input | Action | Description |
-| :---: | :---: | :--- |
 | **`RT`** | **Throttle** | Progressive analog throttle |
 | **`LT`** | **Brake** | Progressive analog brake |
-| **`A` / `RB`** | **Handbrake** | Rear-wheel lock for power sliding and drifting |
+| **`A` / `RB`** | **Handbrake** | Rear-wheel lock for power sliding and drifting (Enter in menu) |
 | **`Left Stick` / `D-Pad`** | **Steer** | Proportional analog steering |
-| **`Y` / `LB`** | **Reverse** | Reverse gear throttle |
+| **`X` / `LB`** | **Reverse** | Reverse gear throttle |
+| **`B`** | **Back / Cancel** | Back / Escape navigation in menus and pause |
 | **`Start`** | **Pause** | Pause/resume session |
 | **`R3` / `Select`** | **Assists** | Cycle driving assist profile (Arcade, Sport, Pro) |
 | **`L3`** | **Camera** | Toggle follow and overview camera |

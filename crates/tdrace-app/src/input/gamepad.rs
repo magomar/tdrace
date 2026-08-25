@@ -512,28 +512,28 @@ impl GamepadController {
                 let brake =
                     Self::process_trigger_deadzone(raw_lt, config.trigger_deadzone).clamp(0.0, 1.0);
 
-                // 4. Handbrake (Button A / South / East / RB or Custom Profile Binding)
+                // 4. Handbrake (Button A / South / RB or Custom Profile Binding)
                 let handbrake = if let Some(ref prof) = self.custom_profile {
                     if let Some(ref hb) = prof.handbrake {
                         sample_input_value(&gp, &hb.code) > 0.5
                             || hb.alternate.as_ref().map_or(false, |alt| sample_input_value(&gp, alt) > 0.5)
                     } else {
-                        curr_south || curr_east || gp.is_pressed(Button::RightTrigger)
+                        curr_south || gp.is_pressed(Button::RightTrigger)
                     }
                 } else {
-                    curr_south || curr_east || gp.is_pressed(Button::RightTrigger)
+                    curr_south || gp.is_pressed(Button::RightTrigger)
                 };
 
-                // 5. Reverse (Button Y / North / West / LB or Custom Profile Binding)
+                // 5. Reverse (Button X / West / LB or Custom Profile Binding)
                 let reverse = if let Some(ref prof) = self.custom_profile {
                     if let Some(ref rev) = prof.reverse {
                         sample_input_value(&gp, &rev.code) > 0.5
                             || rev.alternate.as_ref().map_or(false, |alt| sample_input_value(&gp, alt) > 0.5)
                     } else {
-                        curr_north || curr_west || gp.is_pressed(Button::LeftTrigger)
+                        curr_west || gp.is_pressed(Button::LeftTrigger)
                     }
                 } else {
-                    curr_north || curr_west || gp.is_pressed(Button::LeftTrigger)
+                    curr_west || gp.is_pressed(Button::LeftTrigger)
                 };
 
                 self.snapshot.is_connected = is_conn;
@@ -561,7 +561,7 @@ impl GamepadController {
                 self.snapshot.nav_down = dpad_d || stick_down;
                 self.snapshot.nav_left = dpad_l || stick_left;
                 self.snapshot.nav_right = dpad_r || stick_right;
-                self.snapshot.btn_confirm_pressed = btn_south || btn_east || btn_start;
+                self.snapshot.btn_confirm_pressed = btn_south || btn_start;
                 self.snapshot.btn_cancel_pressed = btn_east || btn_select;
             }
         }
