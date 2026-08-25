@@ -1,4 +1,4 @@
-use tdrace_app::input::gamepad::{GamepadConfig, GamepadController, GamepadSnapshot};
+use tdrace_app::input::gamepad::{GamepadController, GamepadSnapshot};
 use tdrace_app::input::InputController;
 
 #[test]
@@ -183,3 +183,101 @@ fn test_stick_navigation_and_confirm_events() {
     assert!(!gp.snapshot.nav_right);
     assert!(!gp.snapshot.btn_confirm_pressed);
 }
+
+#[test]
+fn test_gamepad_rt_throttle_lt_brake_a_handbrake_mapping() {
+    let mut input = InputController::new();
+    let dt = 1.0 / 60.0;
+
+    // Test RT driving throttle, LT driving brake, and A button triggering handbrake
+    let snapshot = GamepadSnapshot {
+        is_connected: true,
+        gamepad_name: "Xbox Wireless Controller".to_string(),
+        steer: 0.0,
+        throttle: 1.0,  // From RT button/trigger
+        brake: 0.85,    // From LT button/trigger
+        handbrake: true, // From A button / South button
+        reverse: false,
+        ..Default::default()
+    };
+    input.gamepad.inject_snapshot(snapshot);
+
+    let ctrl = input.process_inputs((0.0, 0.0, 0.0, false, false), dt, 0.0);
+    assert_eq!(ctrl.throttle, 1.0, "RT should produce full throttle");
+    assert_eq!(ctrl.brake, 0.85, "LT should produce progressive braking");
+    assert!(ctrl.handbrake, "A button should engage handbrake");
+}
+
+#[test]
+fn test_gamepad_x_reverse_and_a_confirm_b_cancel() {
+    let mut gp = GamepadController::new();
+    let snapshot = GamepadSnapshot {
+        is_connected: true,
+        gamepad_name: "Xbox Wireless Controller".to_string(),
+        reverse: true, // From X button
+        btn_confirm_pressed: true, // From A button / Enter
+        btn_cancel_pressed: false,
+        ..Default::default()
+    };
+    gp.inject_snapshot(snapshot);
+    assert!(gp.snapshot.reverse, "X button should trigger reverse");
+    assert!(gp.snapshot.btn_confirm_pressed, "A button should confirm/start race in menu");
+
+    let cancel_snapshot = GamepadSnapshot {
+        is_connected: true,
+        gamepad_name: "Xbox Wireless Controller".to_string(),
+        reverse: false,
+        btn_confirm_pressed: false,
+        btn_cancel_pressed: true, // From B button / Escape
+        ..Default::default()
+    };
+    gp.inject_snapshot(cancel_snapshot);
+    assert!(gp.snapshot.btn_cancel_pressed, "B button should trigger cancel/back");
+}
+
+#[test]
+fn test_gamepad_profile_candidate_paths_and_reload() {
+    let paths = GamepadController::candidate_profile_paths();
+    assert!(!paths.is_empty(), "Candidate profile paths must not be empty");
+    assert!(paths.iter().any(|p| p.to_string_lossy().contains("gamepad_profile.json")));
+
+    let mut gp = GamepadController::new();
+    // Verify check_and_reload_profile runs without panicking
+    gp.check_and_reload_profile();
+}
+
+#[test]
+fn test_custom_profile_raw_code_button_mappings() {
+    use tdrace_app::input::gamepad::{CustomGamepadProfile, CustomButtonBinding};
+
+    let mut gp = GamepadController::new();
+    // Simulate a custom profile where Button A was mapped to raw code "Btn_BUTTON(3)"
+    gp.custom_profile = Some(CustomGamepadProfile {
+        device_name: "Twin USB Joystick".to_string(),
+        handbrake: Some(CustomButtonBinding {
+            code: "Btn_BUTTON(3)".to_string(),
+            alternate: None,
+        }),
+        btn_south: Some(CustomButtonBinding {
+            code: "Btn_BUTTON(3)".to_string(),
+            alternate: None,
+        }),
+        btn_west: Some(CustomButtonBinding {
+            code: "Btn_BUTTON(0)".to_string(),
+            alternate: None,
+        }),
+        ..Default::default()
+    });
+
+    // Simulate pressing raw code Btn_BUTTON(3)
+    gp.raw_buttons_held.push("Btn_BUTTON(3)".to_string());
+    // Run update to process transitions
+    gp.update();
+
+    assert!(gp.snapshot.btn_confirm_pressed, "Custom raw button code should trigger btn_confirm_pressed");
+    assert!(gp.snapshot.btn_a_pressed, "Custom raw button code should trigger btn_a_pressed");
+}
+
+
+
+

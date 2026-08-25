@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "device_name": "Standard Gamepad",
+  "last_calibrated": "Default Predefined Profile",
+  "left_stick_x": {
+    "axis_name": "LeftStickX",
+    "inverted": false,
+    "deadzone": 0.12,
+    "scale": 1.0,
+    "fallback_btn_pos": "DPadRight",
+    "fallback_btn_neg": "DPadLeft"
+  },
+  "left_stick_y": {
+    "axis_name": "LeftStickY",
+    "inverted": false,
+    "deadzone": 0.12,
+    "scale": 1.0,
+    "fallback_btn_pos": "DPadUp",
+    "fallback_btn_neg": "DPadDown"
+  },
+  "right_stick_x": {
+    "axis_name": "RightStickX",
+    "inverted": false,
+    "deadzone": 0.12,
+    "scale": 1.0,
+    "fallback_btn_pos": null,
+    "fallback_btn_neg": null
+  },
+  "right_stick_y": {
+    "axis_name": "RightStickY",
+    "inverted": false,
+    "deadzone": 0.12,
+    "scale": 1.0,
+    "fallback_btn_pos": null,
+    "fallback_btn_neg": null
+  },
+  "left_trigger": {
+    "primary_code": "LeftTrigger2",
+    "is_axis": false,
+    "inverted": false,
+    "deadzone": 0.05,
+    "alternate_code": null
+  },
+  "right_trigger": {
+    "primary_code": "RightTrigger2",
+    "is_axis": false,
+    "inverted": false,
+    "deadzone": 0.05,
+    "alternate_code": null
+  },
+  "bumper_left": {
+    "code": "LeftTrigger",
+    "alternate": null
+  },
+  "bumper_right": {
+    "code": "RightTrigger",
+    "alternate": null
+  },
+  "btn_south": {
+    "code": "South",
+    "alternate": null
+  },
+  "btn_east": {
+    "code": "East",
+    "alternate": null
+  },
+  "btn_west": {
+    "code": "West",
+    "alternate": null
+  },
+  "btn_north": {
+    "code": "North",
+    "alternate": null
+  },
+  "dpad_up": {
+    "code": "DPadUp",
+    "alternate": null
+  },
+  "dpad_down": {
+    "code": "DPadDown",
+    "alternate": null
+  },
+  "dpad_left": {
+    "code": "DPadLeft",
+    "alternate": null
+  },
+  "dpad_right": {
+    "code": "DPadRight",
+    "alternate": null
+  },
+  "btn_start": {
+    "code": "Start",
+    "alternate": null
+  },
+  "btn_select": {
+    "code": "Select",
+    "alternate": null
+  },
+  "stick_l3": {
+    "code": "LeftThumb",
+    "alternate": null
+  },
+  "stick_r3": {
+    "code": "RightThumb",
+    "alternate": null
+  }
+}

@@ -459,10 +459,10 @@ impl RaceSession {
             }
             GameState::Paused => {
                 self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed || self.input.gamepad.snapshot.btn_confirm_pressed {
+                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed || self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed {
                     self.state = GameState::Racing;
                 }
-                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_back_pressed {
+                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_back_pressed || self.input.gamepad.snapshot.btn_b_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Menu;
                     self.audio.play_music(MusicTrack::NeonMenu);
@@ -474,11 +474,11 @@ impl RaceSession {
             }
             GameState::Finished => {
                 self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed {
+                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
                 }
-                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_back_pressed {
+                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_back_pressed || self.input.gamepad.snapshot.btn_b_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Menu;
                     self.audio.play_music(MusicTrack::NeonMenu);
@@ -499,7 +499,9 @@ impl RaceSession {
                     || is_key_pressed(KeyCode::Space)
                     || is_key_pressed(KeyCode::Enter)
                     || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
                     || self.input.gamepad.snapshot.btn_cancel_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
                     if from_paused {
@@ -514,6 +516,9 @@ impl RaceSession {
 
     /// Menu input navigation (Keyboard + Gamepad D-pad/Analog Sticks/buttons).
     fn update_menu(&mut self) {
+        // Check for gamepad mapping changes on disk when in/reloading the main menu
+        self.input.gamepad.check_and_reload_profile();
+
         // Open Controls & Gamepad Screen (C / K key or Gamepad Select)
         if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) || self.input.gamepad.snapshot.btn_back_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -567,8 +572,8 @@ impl RaceSession {
             self.assist_profile = self.assist_profile.next();
         }
 
-        // Start race (Space, Enter, or Gamepad Confirm [A / B / Start])
-        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed {
+        // Start race (Space, Enter, or Gamepad Confirm [A / South / Start])
+        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
             self.track_choice = TrackChoice::ALL[self.menu_track_idx];
             self.car_choice = CarChoice::ALL[self.menu_car_idx];

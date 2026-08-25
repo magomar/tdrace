@@ -65,6 +65,7 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
 
 ## 🕹️ Controls
 
+### Keyboard
 | Key | Action | Description |
 | :---: | :---: | :--- |
 | **`Q`** | **Throttle** | Accelerate forward |
@@ -80,6 +81,17 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
 | **`F1`–`F5`** | **Debug** | Toggle LIDAR beams, Checkpoints, OBBs, AI Paths, and Telemetry |
 
 *(Arrow keys `Up`/`Down`/`Left`/`Right` are also supported as secondary driving controls).*
+
+### Gamepad
+| **`RT`** | **Throttle** | Progressive analog throttle |
+| **`LT`** | **Brake** | Progressive analog brake |
+| **`A`** | **Handbrake** | Rear-wheel lock for power sliding and drifting (Enter in menu) |
+| **`Left Stick` / `D-Pad`** | **Steer** | Proportional analog steering |
+| **`X`** | **Reverse** | Reverse gear throttle |
+| **`B`** | **Back / Cancel** | Back / Escape navigation in menus and pause |
+| **`Start`** | **Pause** | Pause/resume session |
+| **`R3` / `Select`** | **Assists** | Cycle driving assist profile (Arcade, Sport, Pro) |
+| **`L3`** | **Camera** | Toggle follow and overview camera |
 
 ---
 
