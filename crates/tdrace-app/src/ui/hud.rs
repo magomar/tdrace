@@ -1,12 +1,13 @@
+use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::prelude::{screen_height, screen_width};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
-use macroquad::text::{draw_text, measure_text};
-use glam::Vec2;
 use tdrace_core::physics::car::Car;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::Track;
 
+use super::font::Fonts;
+use super::scaler::UiScaler;
 use crate::render::color::{CarColorScheme, Palette};
 
 /// Formats seconds into mm:ss.xx time string.
@@ -20,10 +21,10 @@ pub fn format_lap_time(time_sec: f32) -> String {
     format!("{:02}:{:02}.{:02}", minutes, seconds, millis)
 }
 
-/// Renders the complete arcade racing HUD (Speedometer, Lap Timer, Split Delta,
-/// Mini-map, Position Counter, Warnings, and Countdown).
+/// Renders the complete modern arcade racing HUD with responsive scaling and vector typography.
 #[allow(clippy::too_many_arguments)]
 pub fn render_hud(
+    fonts: &Fonts,
     track: &Track,
     all_cars: &[Car],
     color_schemes: &[CarColorScheme],
@@ -38,33 +39,67 @@ pub fn render_hud(
 ) {
     let sw = screen_width();
     let sh = screen_height();
+    let scaler = UiScaler::new(sw, sh);
 
     // 1. Position Counter & Lap Counter (Top Left)
-    render_position_and_lap(18.0, 18.0, position, total_racers, player_progress.current_lap, total_laps, is_time_attack);
+    render_position_and_lap(
+        fonts,
+        &scaler,
+        scaler.safe_pad_x,
+        scaler.safe_pad_y,
+        position,
+        total_racers,
+        player_progress.current_lap,
+        total_laps,
+        is_time_attack,
+    );
 
     // 2. Lap Timing & Sector Splits (Top Center)
-    render_lap_timer(sw * 0.5, 18.0, player_progress);
+    render_lap_timer(
+        fonts,
+        &scaler,
+        sw * 0.5,
+        scaler.safe_pad_y,
+        player_progress,
+    );
 
-    // 3. Mini-Map (Top Right)
-    render_minimap(sw - 190.0, 18.0, 170.0, 140.0, track, all_cars, color_schemes);
+    // 3. Mini-Map Radar (Top Right)
+    let map_w = scaler.s(175.0);
+    let map_h = scaler.s(145.0);
+    render_minimap(
+        fonts,
+        &scaler,
+        sw - map_w - scaler.safe_pad_x,
+        scaler.safe_pad_y,
+        map_w,
+        map_h,
+        track,
+        all_cars,
+        color_schemes,
+    );
 
-    // 4. Speedometer & Drift Meter (Bottom Right)
-    render_speedometer(sw - 160.0, sh - 140.0, player_car, gamepad_connected);
+    // 4. Speedometer & Cluster (Bottom Right)
+    let speedo_cx = sw - scaler.s(110.0) - scaler.safe_pad_x;
+    let speedo_cy = sh - scaler.s(110.0) - scaler.safe_pad_y;
+    render_speedometer(fonts, &scaler, speedo_cx, speedo_cy, player_car, gamepad_connected);
 
-    // 5. Controls help tooltip (Bottom Left)
-    render_controls_guide(18.0, sh - 35.0);
+    // 5. Controls tooltip (Bottom Left)
+    render_controls_guide(fonts, &scaler, scaler.safe_pad_x, sh - scaler.s(22.0) - scaler.safe_pad_y * 0.5);
 
     // 6. Warnings & Alerts (Wrong Way, Off Track)
-    render_warning_alerts(sw, sh, player_progress);
+    render_warning_alerts(fonts, &scaler, sw, sh, player_progress);
 
     // 7. Race Countdown Animation ("3", "2", "1", "GO!")
     if let Some(cd) = countdown_timer {
-        render_countdown(sw, sh, cd);
+        render_countdown(fonts, &scaler, sw, sh, cd);
     }
 }
 
-/// Draws Position Counter (e.g. "P1 / 8") and Lap Counter.
+/// Draws Position Counter (e.g. "POS 1 / 8") and Lap Progress Badge.
+#[allow(clippy::too_many_arguments)]
 fn render_position_and_lap(
+    fonts: &Fonts,
+    scaler: &UiScaler,
     x: f32,
     y: f32,
     pos: usize,
@@ -73,60 +108,135 @@ fn render_position_and_lap(
     total_laps: u32,
     is_time_attack: bool,
 ) {
-    let box_w = 170.0;
-    let box_h = 75.0;
+    let box_w = scaler.s(180.0);
+    let box_h = scaler.s(80.0);
 
-    draw_rectangle(x, y, box_w, box_h, Color::new(0.06, 0.08, 0.12, 0.88));
-    draw_rectangle_lines(x, y, box_w, box_h, 2.0, Color::new(0.25, 0.35, 0.50, 0.9));
+    // Modern glassmorphism card
+    scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.8);
 
     if is_time_attack {
-        draw_text("TIME ATTACK", x + 12.0, y + 26.0, 18.0, Color::new(0.3, 0.9, 1.0, 1.0));
+        // Mode badge
+        let badge_w = scaler.s(110.0);
+        let badge_h = scaler.s(20.0);
+        draw_rectangle(x + scaler.s(12.0), y + scaler.s(12.0), badge_w, badge_h, Color::new(0.1, 0.35, 0.45, 0.85));
+        draw_rectangle_lines(x + scaler.s(12.0), y + scaler.s(12.0), badge_w, badge_h, 1.2, Palette::NEON_CYAN);
+        fonts.draw_ui_bold(
+            "TIME ATTACK",
+            x + scaler.s(18.0),
+            y + scaler.s(26.0),
+            scaler.font_s(13.0),
+            Palette::NEON_CYAN,
+        );
+
         let lap_str = format!("LAP {}", lap);
-        draw_text(&lap_str, x + 12.0, y + 58.0, 26.0, Palette::WHITE);
+        fonts.draw_display(
+            &lap_str,
+            x + scaler.s(14.0),
+            y + scaler.s(65.0),
+            scaler.font_s(32.0),
+            Palette::WHITE,
+        );
     } else {
-        // Position P1, P2...
-        let pos_str = format!("P{}", pos);
+        // Position Accent Pill
         let pos_color = match pos {
-            1 => Color::new(1.0, 0.85, 0.1, 1.0), // Gold
-            2 => Color::new(0.85, 0.88, 0.92, 1.0), // Silver
-            3 => Color::new(0.85, 0.55, 0.25, 1.0), // Bronze
+            1 => Palette::NEON_GOLD,
+            2 => Color::new(0.88, 0.92, 0.98, 1.0), // Silver
+            3 => Color::new(0.92, 0.60, 0.30, 1.0), // Bronze
             _ => Palette::WHITE,
         };
-        draw_text(&pos_str, x + 12.0, y + 42.0, 36.0, pos_color);
+
+        // Header label
+        fonts.draw_ui_regular(
+            "POSITION",
+            x + scaler.s(14.0),
+            y + scaler.s(22.0),
+            scaler.font_s(12.0),
+            Palette::UI_TEXT_MUTED,
+        );
+
+        // Position Big Display: e.g. "P1" or "1"
+        let pos_str = format!("P{}", pos);
+        fonts.draw_display(
+            &pos_str,
+            x + scaler.s(14.0),
+            y + scaler.s(55.0),
+            scaler.font_s(36.0),
+            pos_color,
+        );
 
         let total_str = format!("/ {}", total);
-        draw_text(&total_str, x + 70.0, y + 36.0, 20.0, Color::new(0.7, 0.7, 0.75, 1.0));
+        fonts.draw_ui_bold(
+            &total_str,
+            x + scaler.s(68.0),
+            y + scaler.s(50.0),
+            scaler.font_s(18.0),
+            Palette::UI_TEXT_MUTED,
+        );
 
-        let lap_str = format!("LAP {}/{}", lap.min(total_laps), total_laps);
-        draw_text(&lap_str, x + 12.0, y + 66.0, 18.0, Color::new(0.8, 0.85, 0.9, 1.0));
+        // Lap Sub-Badge
+        let lap_str = format!("LAP {} / {}", lap.min(total_laps), total_laps);
+        fonts.draw_ui_bold(
+            &lap_str,
+            x + scaler.s(14.0),
+            y + scaler.s(73.0),
+            scaler.font_s(14.0),
+            Palette::NEON_CYAN,
+        );
     }
 }
 
-/// Draws current lap time, best lap time, and last lap time.
-fn render_lap_timer(center_x: f32, y: f32, progress: &TrackProgressTracker) {
-    let box_w = 260.0;
-    let box_h = 80.0;
+/// Draws current lap time, best lap time, and last lap time with high-visibility styling.
+fn render_lap_timer(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    center_x: f32,
+    y: f32,
+    progress: &TrackProgressTracker,
+) {
+    let box_w = scaler.s(260.0);
+    let box_h = scaler.s(82.0);
     let x = center_x - box_w * 0.5;
 
-    draw_rectangle(x, y, box_w, box_h, Color::new(0.06, 0.08, 0.12, 0.88));
-    draw_rectangle_lines(x, y, box_w, box_h, 2.0, Color::new(0.25, 0.35, 0.50, 0.9));
+    scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.8);
 
-    // Current lap timer (large font)
+    // Current lap timer (large display font)
     let current_str = format_lap_time(progress.lap_time);
-    let measure = measure_text(&current_str, None, 30, 1.0);
-    let text_x = center_x - measure.width * 0.5;
-    draw_text(&current_str, text_x, y + 34.0, 30.0, Palette::WHITE);
+    fonts.draw_display_centered_with_shadow(
+        &current_str,
+        center_x,
+        y + scaler.s(38.0),
+        scaler.font_s(34.0),
+        Palette::WHITE,
+        Color::new(0.0, 0.0, 0.0, 0.5),
+        scaler.s(1.5),
+    );
 
-    // Best lap & Last lap
+    // Best lap & Last lap badges
     let best_str = format!("BEST: {}", format_lap_time(progress.best_lap_time.unwrap_or(0.0)));
     let last_str = format!("LAST: {}", format_lap_time(progress.last_lap_time.unwrap_or(0.0)));
 
-    draw_text(&best_str, x + 10.0, y + 68.0, 14.0, Color::new(1.0, 0.85, 0.15, 1.0));
-    draw_text(&last_str, x + 135.0, y + 68.0, 14.0, Color::new(0.75, 0.80, 0.85, 1.0));
+    fonts.draw_ui_bold(
+        &best_str,
+        x + scaler.s(14.0),
+        y + scaler.s(68.0),
+        scaler.font_s(13.5),
+        Palette::NEON_GOLD,
+    );
+
+    fonts.draw_ui_bold(
+        &last_str,
+        x + scaler.s(140.0),
+        y + scaler.s(68.0),
+        scaler.font_s(13.5),
+        Palette::UI_TEXT_MUTED,
+    );
 }
 
-/// Draws the mini-map radar in the top right corner.
+/// Draws the modern mini-map radar with clean track trace and directional cones.
+#[allow(clippy::too_many_arguments)]
 fn render_minimap(
+    _fonts: &Fonts,
+    scaler: &UiScaler,
     x: f32,
     y: f32,
     w: f32,
@@ -135,8 +245,7 @@ fn render_minimap(
     cars: &[Car],
     color_schemes: &[CarColorScheme],
 ) {
-    draw_rectangle(x, y, w, h, Color::new(0.06, 0.08, 0.12, 0.85));
-    draw_rectangle_lines(x, y, w, h, 2.0, Color::new(0.25, 0.35, 0.50, 0.9));
+    scaler.draw_glass_card(x, y, w, h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.8);
 
     if track.spline.samples.is_empty() {
         return;
@@ -158,7 +267,7 @@ fn render_minimap(
     let track_w = (max_x - min_x).max(10.0);
     let track_h = (max_y - min_y).max(10.0);
 
-    let pad = 14.0;
+    let pad = scaler.s(14.0);
     let map_w = w - pad * 2.0;
     let map_h = h - pad * 2.0;
     let scale = (map_w / track_w).min(map_h / track_h);
@@ -174,12 +283,15 @@ fn render_minimap(
         Vec2::new(map_cx + rx, map_cy + ry)
     };
 
-    // Draw track circuit outline
+    // Draw track circuit outline with clean modern anti-aliased trace
     let samples = &track.spline.samples;
     for i in 0..samples.len() {
         let p0 = to_map_pt(samples[i].point);
         let p1 = to_map_pt(samples[(i + 1) % samples.len()].point);
-        draw_line(p0.x, p0.y, p1.x, p1.y, 2.5, Color::new(0.40, 0.45, 0.55, 0.9));
+        // Outer glow
+        draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(3.5), Color::new(0.2, 0.4, 0.6, 0.4));
+        // Core track line
+        draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(2.0), Color::new(0.5, 0.65, 0.85, 0.95));
     }
 
     // Draw cars on mini-map
@@ -187,31 +299,39 @@ fn render_minimap(
         let pt = to_map_pt(car.state.position);
         let is_player = i == 0;
         let col = if is_player {
-            Color::new(1.0, 0.95, 0.1, 1.0) // Bright yellow for player
+            Palette::NEON_GOLD
         } else {
             color_schemes.get(i).map(|c| c.primary).unwrap_or(Palette::WHITE)
         };
 
-        let radius = if is_player { 4.5 } else { 3.2 };
+        let radius = if is_player { scaler.s(5.0) } else { scaler.s(3.5) };
         draw_circle(pt.x, pt.y, radius, col);
-        draw_circle_lines(pt.x, pt.y, radius, 1.0, Palette::BLACK);
+        draw_circle_lines(pt.x, pt.y, radius, 1.2, Palette::BLACK);
 
-        // Player heading pointer
+        // Player heading pointer cone
         if is_player {
             let fwd = car.forward_vector();
-            let tip = pt + Vec2::new(fwd.x, -fwd.y) * 6.5;
-            draw_line(pt.x, pt.y, tip.x, tip.y, 1.8, Palette::WHITE);
+            let tip = pt + Vec2::new(fwd.x, -fwd.y) * scaler.s(8.0);
+            draw_line(pt.x, pt.y, tip.x, tip.y, scaler.s(2.0), Palette::WHITE);
         }
     }
 }
 
-/// Draws analog + digital speedometer, drift meter, and controller & assist badges.
-fn render_speedometer(cx: f32, cy: f32, car: &Car, gamepad_connected: bool) {
-    let radius = 60.0;
+/// Draws modern hybrid digital-analog speedometer cluster, assist badges, and drift meter.
+fn render_speedometer(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    cx: f32,
+    cy: f32,
+    car: &Car,
+    gamepad_connected: bool,
+) {
+    let radius = scaler.s(58.0);
 
-    // Background dial
-    draw_circle(cx, cy, radius, Color::new(0.06, 0.08, 0.12, 0.88));
-    draw_circle_lines(cx, cy, radius, 2.0, Color::new(0.25, 0.35, 0.50, 0.9));
+    // Background dial with drop shadow
+    draw_circle(cx + scaler.s(2.0), cy + scaler.s(3.0), radius, Color::new(0.0, 0.0, 0.0, 0.4));
+    draw_circle(cx, cy, radius, Palette::UI_CARD_BG);
+    draw_circle_lines(cx, cy, radius, scaler.s(2.0), Palette::UI_CARD_BORDER);
 
     let speed_kmh = car.speed_kmh();
     let top_kmh = car.config.top_speed_mps * 3.6;
@@ -221,7 +341,7 @@ fn render_speedometer(cx: f32, cy: f32, car: &Car, gamepad_connected: bool) {
     let start_angle = std::f32::consts::PI * 0.75;
     let sweep = std::f32::consts::PI * 1.5;
 
-    let arc_steps = 24;
+    let arc_steps = 28;
     for i in 0..arc_steps {
         let t0 = i as f32 / arc_steps as f32;
         let t1 = (i + 1) as f32 / arc_steps as f32;
@@ -231,125 +351,203 @@ fn render_speedometer(cx: f32, cy: f32, car: &Car, gamepad_connected: bool) {
         let a0 = start_angle + sweep * t0;
         let a1 = start_angle + sweep * t1.min(ratio);
 
-        let p0 = Vec2::new(cx + a0.cos() * (radius - 8.0), cy + a0.sin() * (radius - 8.0));
-        let p1 = Vec2::new(cx + a1.cos() * (radius - 8.0), cy + a1.sin() * (radius - 8.0));
+        let p0 = Vec2::new(cx + a0.cos() * (radius - scaler.s(8.0)), cy + a0.sin() * (radius - scaler.s(8.0)));
+        let p1 = Vec2::new(cx + a1.cos() * (radius - scaler.s(8.0)), cy + a1.sin() * (radius - scaler.s(8.0)));
 
-        let arc_col = if t0 > 0.8 {
-            Color::new(1.0, 0.2, 0.2, 0.9)
-        } else if t0 > 0.5 {
-            Color::new(1.0, 0.8, 0.1, 0.9)
+        let arc_col = if t0 > 0.82 {
+            Palette::RED
+        } else if t0 > 0.55 {
+            Palette::NEON_GOLD
         } else {
-            Color::new(0.2, 0.7, 1.0, 0.9)
+            Palette::NEON_CYAN
         };
-        draw_line(p0.x, p0.y, p1.x, p1.y, 4.0, arc_col);
+        draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(4.5), arc_col);
     }
 
     // Digital speed display
     let speed_str = format!("{:.0}", speed_kmh);
-    let measure = measure_text(&speed_str, None, 28, 1.0);
-    draw_text(&speed_str, cx - measure.width * 0.5, cy + 8.0, 28.0, Palette::WHITE);
-    draw_text("KM/H", cx - 16.0, cy + 26.0, 13.0, Color::new(0.65, 0.70, 0.80, 1.0));
+    fonts.draw_display_centered_with_shadow(
+        &speed_str,
+        cx,
+        cy + scaler.s(8.0),
+        scaler.font_s(32.0),
+        Palette::WHITE,
+        Color::new(0.0, 0.0, 0.0, 0.5),
+        scaler.s(1.5),
+    );
 
-    // Assist Profile Badge & Intervention Indicators (Top left of speedometer)
+    fonts.draw_ui_bold_centered(
+        "KM/H",
+        cx,
+        cy + scaler.s(26.0),
+        scaler.font_s(12.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    // Assist Profile Badge & Intervention Indicators (Top of speedometer)
+    let badge_w = scaler.s(60.0);
+    let badge_h = scaler.s(20.0);
     let badge_x = cx - radius;
-    let badge_y = cy - radius - 26.0;
+    let badge_y = cy - radius - scaler.s(26.0);
 
     let (prof_text, prof_col) = if car.config.assists.esc_enabled {
         if car.config.assists.tcs_strength > 0.5 {
-            ("ARCADE", Color::new(0.3, 0.9, 1.0, 0.95))
+            ("ARCADE", Palette::NEON_CYAN)
         } else {
-            ("SPORT", Color::new(1.0, 0.75, 0.2, 0.95))
+            ("SPORT", Palette::NEON_GOLD)
         }
     } else {
-        ("PRO", Color::new(1.0, 0.4, 0.4, 0.85))
+        ("PRO", Palette::RED)
     };
 
-    draw_rectangle(badge_x, badge_y, 58.0, 20.0, Color::new(0.08, 0.10, 0.14, 0.88));
-    draw_rectangle_lines(badge_x, badge_y, 58.0, 20.0, 1.2, prof_col);
-    draw_text(prof_text, badge_x + 6.0, badge_y + 14.0, 12.0, prof_col);
+    draw_rectangle(badge_x, badge_y, badge_w, badge_h, Palette::UI_PILL_BG);
+    draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, 1.2, prof_col);
+    fonts.draw_ui_bold(
+        prof_text,
+        badge_x + scaler.s(6.0),
+        badge_y + scaler.s(14.0),
+        scaler.font_s(12.0),
+        prof_col,
+    );
 
     // Active Gamepad Connected Indicator
     if gamepad_connected {
+        let pad_w = scaler.s(52.0);
+        let pad_h = scaler.s(18.0);
         let pad_x = badge_x;
-        let pad_y = badge_y - 20.0;
-        draw_rectangle(pad_x, pad_y, 46.0, 16.0, Color::new(0.08, 0.12, 0.10, 0.90));
-        draw_rectangle_lines(pad_x, pad_y, 46.0, 16.0, 1.2, Color::new(0.3, 0.9, 0.5, 0.95));
-        draw_text("🎮 PAD", pad_x + 4.0, pad_y + 12.0, 10.5, Color::new(0.3, 0.9, 0.5, 1.0));
+        let pad_y = badge_y - scaler.s(22.0);
+        draw_rectangle(pad_x, pad_y, pad_w, pad_h, Color::new(0.08, 0.16, 0.12, 0.90));
+        draw_rectangle_lines(pad_x, pad_y, pad_w, pad_h, 1.2, Palette::NEON_GREEN);
+        fonts.draw_ui_bold(
+            "🎮 PAD",
+            pad_x + scaler.s(6.0),
+            pad_y + scaler.s(13.0),
+            scaler.font_s(11.0),
+            Palette::NEON_GREEN,
+        );
     }
 
-    // Active TCS indicator (Flashes gold/orange when intervening)
+    // Active TCS indicator (Flashes gold when intervening)
     if car.state.tcs_active {
-        let tcs_x = badge_x + 62.0;
-        draw_rectangle(tcs_x, badge_y, 28.0, 20.0, Color::new(1.0, 0.6, 0.0, 0.95));
-        draw_text("TCS", tcs_x + 3.0, badge_y + 14.0, 11.0, Palette::BLACK);
+        let tcs_x = badge_x + scaler.s(64.0);
+        let tcs_w = scaler.s(32.0);
+        draw_rectangle(tcs_x, badge_y, tcs_w, badge_h, Palette::NEON_GOLD);
+        fonts.draw_ui_bold(
+            "TCS",
+            tcs_x + scaler.s(5.0),
+            badge_y + scaler.s(14.0),
+            scaler.font_s(11.0),
+            Palette::BLACK,
+        );
     }
 
     // Active ESC indicator (Flashes bright cyan when yaw stabilizing)
     if car.state.esc_active {
-        let esc_x = badge_x + 94.0;
-        draw_rectangle(esc_x, badge_y, 28.0, 20.0, Color::new(0.2, 0.8, 1.0, 0.95));
-        draw_text("ESC", esc_x + 3.0, badge_y + 14.0, 11.0, Palette::BLACK);
+        let esc_x = badge_x + scaler.s(98.0);
+        let esc_w = scaler.s(32.0);
+        draw_rectangle(esc_x, badge_y, esc_w, badge_h, Palette::NEON_CYAN);
+        fonts.draw_ui_bold(
+            "ESC",
+            esc_x + scaler.s(5.0),
+            badge_y + scaler.s(14.0),
+            scaler.font_s(11.0),
+            Palette::BLACK,
+        );
     }
 
-    // Drift Score Meter Bar (if drifting)
+    // Drift Score Meter Bar
     if car.state.is_drifting || car.state.drift_score > 0.0 {
-        let bar_w = 120.0;
-        let bar_h = 10.0;
+        let bar_w = scaler.s(130.0);
+        let bar_h = scaler.s(12.0);
         let bar_x = cx - bar_w * 0.5;
-        let bar_y = cy + radius + 12.0;
+        let bar_y = cy + radius + scaler.s(12.0);
 
-        draw_rectangle(bar_x, bar_y, bar_w, bar_h, Color::new(0.1, 0.1, 0.15, 0.8));
-        draw_rectangle_lines(bar_x, bar_y, bar_w, bar_h, 1.2, Color::new(1.0, 0.3, 0.8, 0.9));
+        draw_rectangle(bar_x, bar_y, bar_w, bar_h, Color::new(0.1, 0.1, 0.15, 0.85));
+        draw_rectangle_lines(bar_x, bar_y, bar_w, bar_h, 1.2, Palette::NEON_MAGENTA);
 
         let fill_ratio = (car.state.drift_score / 1000.0).clamp(0.0, 1.0);
-        draw_rectangle(bar_x + 1.0, bar_y + 1.0, (bar_w - 2.0) * fill_ratio, bar_h - 2.0, Color::new(1.0, 0.3, 0.8, 0.95));
+        draw_rectangle(
+            bar_x + 1.0,
+            bar_y + 1.0,
+            (bar_w - 2.0) * fill_ratio,
+            bar_h - 2.0,
+            Palette::NEON_MAGENTA,
+        );
 
         let drift_label = format!("DRIFT: {:.0}", car.state.drift_score);
-        draw_text(&drift_label, bar_x, bar_y - 3.0, 13.0, Color::new(1.0, 0.4, 0.9, 1.0));
+        fonts.draw_ui_bold(
+            &drift_label,
+            bar_x,
+            bar_y - scaler.s(3.0),
+            scaler.font_s(12.5),
+            Palette::NEON_MAGENTA,
+        );
     }
 }
 
 /// Small keyboard and gamepad controls tooltip in lower left corner.
-fn render_controls_guide(x: f32, y: f32) {
+fn render_controls_guide(fonts: &Fonts, scaler: &UiScaler, x: f32, y: f32) {
     let guide = "Q/Up: Gas | A/Down: Brake | O/P: Steer | Space: Handbrake | H: Assists | C: Controls | Tab: Cam | Esc: Pause";
-    draw_text(guide, x, y, 14.0, Color::new(0.9, 0.9, 0.95, 0.80));
+    fonts.draw_ui_regular(
+        guide,
+        x,
+        y,
+        scaler.font_s(13.0),
+        Color::new(0.85, 0.88, 0.95, 0.85),
+    );
 }
 
-/// Warning banners for Wrong Way and Off Track.
-fn render_warning_alerts(sw: f32, sh: f32, progress: &TrackProgressTracker) {
+/// High-visibility caution banner for Wrong Way alert.
+fn render_warning_alerts(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    progress: &TrackProgressTracker,
+) {
     if progress.is_wrong_way {
-        let banner_w = 340.0;
-        let banner_h = 50.0;
+        let banner_w = scaler.s(360.0);
+        let banner_h = scaler.s(55.0);
         let x = (sw - banner_w) * 0.5;
         let y = sh * 0.28;
 
-        draw_rectangle(x, y, banner_w, banner_h, Color::new(0.85, 0.10, 0.10, 0.90));
-        draw_rectangle_lines(x, y, banner_w, banner_h, 2.0, Palette::WHITE);
+        draw_rectangle(x, y, banner_w, banner_h, Color::new(0.90, 0.12, 0.15, 0.95));
+        draw_rectangle_lines(x, y, banner_w, banner_h, 2.5, Palette::WHITE);
 
-        let text = "WRONG WAY!";
-        let m = measure_text(text, None, 28, 1.0);
-        draw_text(text, x + (banner_w - m.width) * 0.5, y + 35.0, 28.0, Palette::WHITE);
+        fonts.draw_display_centered_with_shadow(
+            "WRONG WAY!",
+            sw * 0.5,
+            y + scaler.s(40.0),
+            scaler.font_s(36.0),
+            Palette::WHITE,
+            Color::new(0.0, 0.0, 0.0, 0.6),
+            scaler.s(2.0),
+        );
     }
 }
 
 /// Start countdown overlay (3, 2, 1, GO!).
-fn render_countdown(sw: f32, sh: f32, time_remaining: f32) {
+fn render_countdown(fonts: &Fonts, scaler: &UiScaler, sw: f32, sh: f32, time_remaining: f32) {
     let (text, color) = if time_remaining > 2.0 {
-        ("3", Color::new(1.0, 0.2, 0.2, 1.0))
+        ("3", Palette::RED)
     } else if time_remaining > 1.0 {
-        ("2", Color::new(1.0, 0.75, 0.1, 1.0))
+        ("2", Palette::NEON_GOLD)
     } else if time_remaining > 0.0 {
-        ("1", Color::new(0.2, 0.95, 0.2, 1.0))
+        ("1", Palette::NEON_CYAN)
     } else {
-        ("GO!", Color::new(0.1, 1.0, 0.4, 1.0))
+        ("GO!", Palette::NEON_GREEN)
     };
 
-    let font_size = 80;
-    let m = measure_text(text, None, font_size, 1.0);
-    let x = (sw - m.width) * 0.5;
-    let y = sh * 0.45;
+    let font_size = scaler.font_s(85.0);
+    let center_y = sh * 0.45;
 
-    // Shadow & glow
-    draw_text(text, x + 4.0, y + 4.0, font_size as f32, Color::new(0.0, 0.0, 0.0, 0.6));
-    draw_text(text, x, y, font_size as f32, color);
+    fonts.draw_display_centered_with_shadow(
+        text,
+        sw * 0.5,
+        center_y,
+        font_size,
+        color,
+        Color::new(0.0, 0.0, 0.0, 0.7),
+        scaler.s(4.0),
+    );
 }

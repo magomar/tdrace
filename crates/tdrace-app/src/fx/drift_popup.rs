@@ -1,6 +1,6 @@
+use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::text::draw_text;
-use glam::Vec2;
 
 /// Floating animated drift score notification popup.
 #[derive(Debug, Clone)]
@@ -44,11 +44,11 @@ impl DriftPopupManager {
         };
 
         let color = if score > 800.0 {
-            Color::new(1.0, 0.2, 0.8, 1.0) // Magenta for huge drift
+            Color::new(1.0, 0.25, 0.80, 1.0) // Neon Magenta
         } else if score > 400.0 {
-            Color::new(1.0, 0.85, 0.1, 1.0) // Gold
+            Color::new(1.0, 0.82, 0.15, 1.0) // Neon Gold
         } else {
-            Color::new(0.2, 0.95, 0.95, 1.0) // Cyan
+            Color::new(0.20, 0.90, 1.0, 1.0) // Neon Cyan
         };
 
         if self.popups.len() >= self.max_popups {
@@ -96,13 +96,17 @@ impl DriftPopupManager {
         }
     }
 
-    /// Renders drift popups in world coordinates (when inside camera view).
+    /// Renders drift popups in world coordinates with high-contrast drop shadow.
     pub fn render_in_world(&self) {
         for p in &self.popups {
             let alpha = (p.remaining_life / p.lifetime).clamp(0.0, 1.0);
-            let col = Color::new(p.color.r, p.color.g, p.color.b, alpha);
-            // World space text rendering (font size ~ 1.2m)
-            draw_text(&p.text, p.world_pos.x - 2.0, p.world_pos.y, 1.2, col);
+            let shadow_col = Color::new(0.0, 0.0, 0.0, alpha * 0.65);
+            let text_col = Color::new(p.color.r, p.color.g, p.color.b, alpha);
+
+            // Drop shadow
+            draw_text(&p.text, p.world_pos.x - 1.95, p.world_pos.y + 0.05, 1.2, shadow_col);
+            // Text foreground
+            draw_text(&p.text, p.world_pos.x - 2.0, p.world_pos.y, 1.2, text_col);
         }
     }
 

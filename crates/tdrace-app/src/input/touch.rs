@@ -2,9 +2,10 @@ use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::input::{is_mouse_button_down, mouse_position, touches, MouseButton, TouchPhase};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
-use macroquad::text::{draw_text, measure_text};
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::car::CarControls;
+
+use crate::ui::font::Fonts;
 
 /// Layout modes for touch steering controls.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -89,7 +90,7 @@ impl Default for VirtualJoystickState {
 /// - Split Left/Right steering buttons mode.
 /// - Dedicated Gas (accelerator), Brake (service brake + reverse), and Handbrake buttons.
 /// - Automatic touch / mobile detection with fallback and manual overrides.
-/// - Customizable UI opacity and haptic-style visual pulse feedback.
+/// - Modern translucent glassmorphism styling and glowing feedback.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TouchController {
     /// Active layout style.
@@ -127,7 +128,7 @@ impl TouchController {
             layout: TouchLayout::VirtualJoystick,
             enabled: false,
             auto_detect: true,
-            opacity: 0.70,
+            opacity: 0.75,
 
             joystick: VirtualJoystickState::default(),
             btn_steer_left: TouchButtonState::default(),
@@ -502,8 +503,8 @@ impl TouchController {
         (gas_rect, brake_rect, handbrake_rect, layout_toggle_rect)
     }
 
-    /// Renders the touch control interface with glowing feedback and haptic visuals.
-    pub fn render(&self, sw: f32, sh: f32) {
+    /// Renders the touch control interface with glowing feedback and modern vector typography.
+    pub fn render(&self, fonts: &Fonts, sw: f32, sh: f32) {
         if !self.enabled {
             return;
         }
@@ -512,7 +513,7 @@ impl TouchController {
         let (gas_rect, brake_rect, handbrake_rect, layout_rect) = self.compute_pedal_rects(sw, sh);
 
         // 1. Layout Toggle Button (Top Left)
-        self.render_layout_toggle_btn(layout_rect, alpha);
+        self.render_layout_toggle_btn(fonts, layout_rect, alpha);
 
         // 2. Left Side Steering (Joystick vs Split Buttons)
         match self.layout {
@@ -521,18 +522,18 @@ impl TouchController {
             }
             TouchLayout::SplitButtons => {
                 let (left_rect, right_rect) = self.compute_steer_rects(sw, sh);
-                self.render_steer_button(left_rect, "◀", self.btn_steer_left, alpha);
-                self.render_steer_button(right_rect, "▶", self.btn_steer_right, alpha);
+                self.render_steer_button(fonts, left_rect, "◀", self.btn_steer_left, alpha);
+                self.render_steer_button(fonts, right_rect, "▶", self.btn_steer_right, alpha);
             }
         }
 
         // 3. Right Side Pedals (Gas, Brake, Handbrake)
-        self.render_gas_pedal(gas_rect, alpha);
-        self.render_brake_pedal(brake_rect, alpha);
-        self.render_handbrake_btn(handbrake_rect, alpha);
+        self.render_gas_pedal(fonts, gas_rect, alpha);
+        self.render_brake_pedal(fonts, brake_rect, alpha);
+        self.render_handbrake_btn(fonts, handbrake_rect, alpha);
     }
 
-    fn render_layout_toggle_btn(&self, r: Rect, alpha: f32) {
+    fn render_layout_toggle_btn(&self, fonts: &Fonts, r: Rect, alpha: f32) {
         let is_pressed = self.btn_toggle_layout.press_anim > 0.05;
         let bg_col = if is_pressed {
             Color::new(0.2, 0.5, 0.9, alpha * 0.9)
@@ -548,12 +549,11 @@ impl TouchController {
             TouchLayout::VirtualJoystick => "STICK 🕹️",
             TouchLayout::SplitButtons => "BUTTONS ◀▶",
         };
-        let m = measure_text(label, None, 14, 1.0);
-        draw_text(
+        fonts.draw_ui_bold_centered(
             label,
-            r.x + (r.w - m.width) * 0.5,
+            r.x + r.w * 0.5,
             r.y + (r.h + 8.0) * 0.5,
-            14.0,
+            13.0,
             Color::new(1.0, 1.0, 1.0, alpha),
         );
     }
@@ -565,7 +565,7 @@ impl TouchController {
         let knob_pos = self.joystick.current_knob_pos;
         let is_active = self.joystick.is_active;
 
-        // Outer base ring
+        // Outer base ring with glassmorphic tint
         let base_bg = Color::new(0.06, 0.08, 0.12, alpha * 0.65);
         let base_border = if is_active {
             Color::new(0.2, 0.85, 1.0, alpha * 0.95)
@@ -597,7 +597,7 @@ impl TouchController {
         draw_circle(knob_pos.x, knob_pos.y, 4.0, Color::new(1.0, 1.0, 1.0, alpha));
     }
 
-    fn render_steer_button(&self, r: Rect, icon: &str, state: TouchButtonState, alpha: f32) {
+    fn render_steer_button(&self, fonts: &Fonts, r: Rect, icon: &str, state: TouchButtonState, alpha: f32) {
         let is_down = state.is_pressed;
         let bg_col = if is_down {
             Color::new(0.15, 0.65, 1.0, alpha * 0.95)
@@ -613,17 +613,16 @@ impl TouchController {
         draw_rectangle(r.x, r.y, r.w, r.h, bg_col);
         draw_rectangle_lines(r.x, r.y, r.w, r.h, 2.0, border_col);
 
-        let m = measure_text(icon, None, 36, 1.0);
-        draw_text(
+        fonts.draw_display_centered(
             icon,
-            r.x + (r.w - m.width) * 0.5,
+            r.x + r.w * 0.5,
             r.y + (r.h + 20.0) * 0.5,
-            36.0,
+            34.0,
             Color::new(1.0, 1.0, 1.0, alpha),
         );
     }
 
-    fn render_gas_pedal(&self, r: Rect, alpha: f32) {
+    fn render_gas_pedal(&self, fonts: &Fonts, r: Rect, alpha: f32) {
         let is_down = self.btn_gas.is_pressed;
         let bg_col = if is_down {
             Color::new(0.1, 0.85, 0.35, alpha * 0.95)
@@ -647,17 +646,16 @@ impl TouchController {
             draw_line(r.x + 12.0, ry, r.x + r.w - 12.0, ry, 2.0, Color::new(1.0, 1.0, 1.0, alpha * 0.5));
         }
 
-        let m = measure_text("GAS", None, 18, 1.0);
-        draw_text(
+        fonts.draw_ui_bold_centered(
             "GAS",
-            r.x + (r.w - m.width) * 0.5,
+            r.x + r.w * 0.5,
             r.y + r.h - 14.0,
-            18.0,
+            16.0,
             Color::new(1.0, 1.0, 1.0, alpha),
         );
     }
 
-    fn render_brake_pedal(&self, r: Rect, alpha: f32) {
+    fn render_brake_pedal(&self, fonts: &Fonts, r: Rect, alpha: f32) {
         let is_down = self.btn_brake.is_pressed;
         let bg_col = if is_down {
             Color::new(0.9, 0.15, 0.15, alpha * 0.95)
@@ -681,17 +679,16 @@ impl TouchController {
             draw_line(r.x + 10.0, ry, r.x + r.w - 10.0, ry, 2.0, Color::new(1.0, 1.0, 1.0, alpha * 0.5));
         }
 
-        let m = measure_text("BRAKE", None, 16, 1.0);
-        draw_text(
+        fonts.draw_ui_bold_centered(
             "BRAKE",
-            r.x + (r.w - m.width) * 0.5,
+            r.x + r.w * 0.5,
             r.y + r.h - 12.0,
-            16.0,
+            15.0,
             Color::new(1.0, 1.0, 1.0, alpha),
         );
     }
 
-    fn render_handbrake_btn(&self, r: Rect, alpha: f32) {
+    fn render_handbrake_btn(&self, fonts: &Fonts, r: Rect, alpha: f32) {
         let is_down = self.btn_handbrake.is_pressed;
         let bg_col = if is_down {
             Color::new(1.0, 0.6, 0.1, alpha * 0.95)
@@ -708,10 +705,9 @@ impl TouchController {
         draw_rectangle_lines(r.x, r.y, r.w, r.h, 2.0, border_col);
 
         let label = "DRIFT / E-BRAKE";
-        let m = measure_text(label, None, 13, 1.0);
-        draw_text(
+        fonts.draw_ui_bold_centered(
             label,
-            r.x + (r.w - m.width) * 0.5,
+            r.x + r.w * 0.5,
             r.y + (r.h + 8.0) * 0.5,
             13.0,
             Color::new(1.0, 1.0, 1.0, alpha),

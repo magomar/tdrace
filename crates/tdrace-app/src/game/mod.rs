@@ -22,6 +22,7 @@ use crate::render::color::CarColorScheme;
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{render_barriers_and_obstacles, render_car, render_track};
 use crate::replay::{ReplayPlayer, ReplayRecorder};
+use crate::ui::font::Fonts;
 use crate::ui::hud::render_hud;
 use crate::ui::menu::{
     render_controls_screen, render_pause_menu, render_results_screen, render_track_select_menu,
@@ -58,6 +59,7 @@ pub struct RaceSession {
     pub camera: RaceCamera,
     pub input: InputController,
     pub touch: TouchController,
+    pub fonts: Fonts,
 
     // Ghost vehicle recording and playback (Time Attack)
     pub ghost_recorder: GhostRecorder,
@@ -186,6 +188,7 @@ impl RaceSession {
             camera: RaceCamera::new(),
             input: InputController::new(),
             touch: TouchController::new(),
+            fonts: Fonts::load_embedded(),
 
             ghost_recorder: GhostRecorder::new(),
             replay_recorder: None,
@@ -805,6 +808,7 @@ impl RaceSession {
         match self.state {
             GameState::Menu => {
                 render_track_select_menu(
+                    &self.fonts,
                     self.menu_track_idx,
                     self.menu_car_idx,
                     self.num_bots,
@@ -824,17 +828,18 @@ impl RaceSession {
             GameState::Paused => {
                 self.render_world();
                 self.render_screen(None);
-                render_pause_menu(self.assist_profile, &self.audio.settings);
+                render_pause_menu(&self.fonts, self.assist_profile, &self.audio.settings);
             }
             GameState::Finished => {
                 self.render_world();
-                render_results_screen(&self.track.name, &self.results, self.is_time_attack);
+                render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack);
             }
             GameState::ControlsHelp(from_paused) => {
                 if from_paused {
                     self.render_world();
                 }
                 render_controls_screen(
+                    &self.fonts,
                     self.assist_profile,
                     self.input.gamepad.snapshot.is_connected,
                     &self.input.gamepad.snapshot.gamepad_name,
@@ -906,6 +911,7 @@ impl RaceSession {
             let player_pos = standings.iter().position(|&idx| idx == 0).unwrap_or(0) + 1;
 
             render_hud(
+                &self.fonts,
                 &self.track,
                 &self.cars,
                 &self.color_schemes,
@@ -923,7 +929,7 @@ impl RaceSession {
             self.input.render_screen_debug(player_car);
 
             // Mobile Touch Controls Overlay (Virtual Joystick / Buttons + Pedals)
-            self.touch.render(sw, sh);
+            self.touch.render(&self.fonts, sw, sh);
         }
     }
 }

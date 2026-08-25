@@ -1,19 +1,18 @@
+use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line};
-use glam::Vec2;
 use tdrace_core::physics::car::Car;
 
 use super::color::{CarColorScheme, Palette};
 use super::track::draw_quad;
 
-/// Renders a vehicle with GeneRally 2.5D arcade aesthetics:
-/// - Drop shadow beneath chassis (accounting for body roll & pitch)
-/// - Steered front wheels with visible rubber treads & rims
-/// - Main chassis body in primary color with secondary racing stripes
-/// - Windshield / cockpit canopy with specular highlight
-/// - Driver helmet with visor inside cockpit
-/// - Dynamic 2.5D body roll depth and dive/squat
-/// - Functional brake lights and headlights
+/// Renders a vehicle with modern 2.5D motorsport arcade aesthetics:
+/// - Smooth 2.5D drop shadow beneath chassis (accounting for body roll & pitch)
+/// - Steered front wheels with visible alloy rims & brake calipers
+/// - Streamlined chassis body with metallic specular highlights & aero contours
+/// - Windshield / cockpit canopy with dynamic specular glass reflection
+/// - Driver helmet with tinted visor inside cockpit
+/// - High-visibility glowing LED projector headlights and illuminated LED taillights/brake lights
 pub fn render_car(car: &Car, color_scheme: &CarColorScheme, is_braking: bool) {
     let pos = car.state.position;
     let angle = car.state.angle;
@@ -75,7 +74,7 @@ fn render_chassis_shadow(
     draw_quad(p_fl, p_fr, p_rr, p_rl, Palette::SHADOW);
 }
 
-/// Draws an individual wheel with rubber tread and center hub.
+/// Draws an individual wheel with rubber tread and center alloy hub.
 fn render_wheel(pos: Vec2, angle: f32) {
     let tire_fwd = Vec2::new(angle.cos(), angle.sin());
     let tire_right = Vec2::new(angle.sin(), -angle.cos());
@@ -93,11 +92,11 @@ fn render_wheel(pos: Vec2, angle: f32) {
     draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
 
     // Tire rubber
-    draw_quad(p0, p1, p2, p3, Color::new(0.12, 0.12, 0.14, 1.0));
+    draw_quad(p0, p1, p2, p3, Color::new(0.10, 0.10, 0.12, 1.0));
 
-    // Silver rim center
-    let hub_len = 0.15;
-    let hub_w = 0.05;
+    // Silver / Alloy rim center
+    let hub_len = 0.16;
+    let hub_w = 0.06;
     let h0 = pos + tire_fwd * hub_len - tire_right * hub_w;
     let h1 = pos + tire_fwd * hub_len + tire_right * hub_w;
     let h2 = pos - tire_fwd * hub_len + tire_right * hub_w;
@@ -132,8 +131,15 @@ fn render_chassis_body(
     draw_quad(p_side_fl, p_side_fr, p_side_rr, p_side_rl, color_scheme.primary);
     draw_quad(p_side_rl, p_side_rr, p_tail_r, p_tail_l, color_scheme.primary);
 
+    // Modern metallic / specular top reflection
+    let spec_l = pos + fwd * (half_len * 0.8) - right * (half_w * 0.3);
+    let spec_r = pos + fwd * (half_len * 0.8) + right * (half_w * 0.1);
+    let spec_rr = pos - fwd * (half_len * 0.4) + right * (half_w * 0.1);
+    let spec_rl = pos - fwd * (half_len * 0.4) - right * (half_w * 0.3);
+    draw_quad(spec_l, spec_r, spec_rr, spec_rl, Color::new(1.0, 1.0, 1.0, 0.18));
+
     // Racing stripe down the center (secondary color)
-    let stripe_w = half_w * 0.28;
+    let stripe_w = half_w * 0.26;
     let s_nose_l = pos + fwd * half_len - right * stripe_w;
     let s_nose_r = pos + fwd * half_len + right * stripe_w;
     let s_tail_r = pos - fwd * half_len + right * stripe_w;
@@ -141,7 +147,7 @@ fn render_chassis_body(
     draw_quad(s_nose_l, s_nose_r, s_tail_r, s_tail_l, color_scheme.secondary);
 
     // Chassis edge highlights / outlines
-    let outline_col = Color::new(0.05, 0.05, 0.06, 0.45);
+    let outline_col = Color::new(0.04, 0.04, 0.06, 0.50);
     let th = 0.08;
     draw_line(p_nose_l.x, p_nose_l.y, p_nose_r.x, p_nose_r.y, th, outline_col);
     draw_line(p_nose_l.x, p_nose_l.y, p_side_fl.x, p_side_fl.y, th, outline_col);
@@ -169,7 +175,7 @@ fn render_cockpit(
     let g_rl = cockpit_center - fwd * glass_half_len - right * glass_rear_w;
 
     // Tinted cockpit glass
-    let glass_color = Color::new(0.12, 0.18, 0.24, 0.88);
+    let glass_color = Color::new(0.10, 0.14, 0.20, 0.90);
     draw_quad(g_fl, g_fr, g_rr, g_rl, glass_color);
 
     // Windshield specular highlight
@@ -179,7 +185,7 @@ fn render_cockpit(
     let spec_rl = g_fl - fwd * 0.2;
     draw_quad(spec_fl, spec_fr, spec_rr, spec_rl, Color::new(1.0, 1.0, 1.0, 0.35));
 
-    // Driver Helmet (GeneRally signature visual!)
+    // Driver Helmet
     let helmet_pos = cockpit_center - fwd * 0.05;
     let helmet_radius = 0.24;
 
@@ -198,11 +204,11 @@ fn render_cockpit(
         visor_pos + visor_fwd + visor_right,
         visor_pos - visor_fwd + visor_right,
         visor_pos - visor_fwd - visor_right,
-        Color::new(0.1, 0.1, 0.12, 0.95),
+        Color::new(0.08, 0.08, 0.10, 0.95),
     );
 }
 
-/// Renders headlights, brake lights, and rear spoiler.
+/// Renders modern LED headlights, glowing taillights / brake lights, and rear carbon aero wing.
 fn render_car_details(
     pos: Vec2,
     fwd: Vec2,
@@ -211,28 +217,35 @@ fn render_car_details(
     half_w: f32,
     is_braking: bool,
 ) {
-    // Headlights
+    // Projector LED Headlights with soft glow
     let light_w = half_w * 0.55;
     let head_l = pos + fwd * (half_len - 0.05) - right * light_w;
     let head_r = pos + fwd * (half_len - 0.05) + right * light_w;
 
-    draw_circle(head_l.x, head_l.y, 0.12, Color::new(1.0, 0.98, 0.75, 0.9));
-    draw_circle(head_r.x, head_r.y, 0.12, Color::new(1.0, 0.98, 0.75, 0.9));
+    // Headlight outer glow
+    draw_circle(head_l.x, head_l.y, 0.20, Color::new(0.95, 0.98, 1.0, 0.35));
+    draw_circle(head_r.x, head_r.y, 0.20, Color::new(0.95, 0.98, 1.0, 0.35));
+    // Headlight core
+    draw_circle(head_l.x, head_l.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
+    draw_circle(head_r.x, head_r.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
 
-    // Tail / Brake Lights
+    // Tail / LED Brake Lights with glow halo
     let tail_l = pos - fwd * (half_len - 0.05) - right * (half_w * 0.65);
     let tail_r = pos - fwd * (half_len - 0.05) + right * (half_w * 0.65);
 
-    let (brake_col, brake_size) = if is_braking {
-        (Color::new(1.0, 0.10, 0.10, 1.0), 0.18)
+    if is_braking {
+        // High-intensity brake light bloom
+        draw_circle(tail_l.x, tail_l.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
+        draw_circle(tail_r.x, tail_r.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
+        draw_circle(tail_l.x, tail_l.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
+        draw_circle(tail_r.x, tail_r.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
     } else {
-        (Color::new(0.55, 0.08, 0.08, 0.8), 0.11)
-    };
+        // Subtle ambient running LEDs
+        draw_circle(tail_l.x, tail_l.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+        draw_circle(tail_r.x, tail_r.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+    }
 
-    draw_circle(tail_l.x, tail_l.y, brake_size, brake_col);
-    draw_circle(tail_r.x, tail_r.y, brake_size, brake_col);
-
-    // Rear Spoiler
+    // Modern Carbon Aero Wing
     let wing_pos = pos - fwd * (half_len + 0.05);
     let wing_half_w = half_w * 0.95;
     let wing_thick = 0.12;
@@ -242,5 +255,5 @@ fn render_car_details(
     let w2 = wing_pos - fwd * wing_thick + right * wing_half_w;
     let w3 = wing_pos - fwd * wing_thick - right * wing_half_w;
 
-    draw_quad(w0, w1, w2, w3, Color::new(0.15, 0.15, 0.18, 0.95));
+    draw_quad(w0, w1, w2, w3, Color::new(0.12, 0.12, 0.15, 0.98));
 }
