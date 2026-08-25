@@ -1,4 +1,4 @@
-use tdrace_app::input::gamepad::{GamepadConfig, GamepadController, GamepadSnapshot};
+use tdrace_app::input::gamepad::{GamepadController, GamepadSnapshot};
 use tdrace_app::input::InputController;
 
 #[test]
@@ -183,3 +183,28 @@ fn test_stick_navigation_and_confirm_events() {
     assert!(!gp.snapshot.nav_right);
     assert!(!gp.snapshot.btn_confirm_pressed);
 }
+
+#[test]
+fn test_gamepad_rt_throttle_lt_brake_a_handbrake_mapping() {
+    let mut input = InputController::new();
+    let dt = 1.0 / 60.0;
+
+    // Test RT driving throttle, LT driving brake, and A button triggering handbrake
+    let snapshot = GamepadSnapshot {
+        is_connected: true,
+        gamepad_name: "Xbox Wireless Controller".to_string(),
+        steer: 0.0,
+        throttle: 1.0,  // From RT button/trigger
+        brake: 0.85,    // From LT button/trigger
+        handbrake: true, // From A button / South button
+        reverse: false,
+        ..Default::default()
+    };
+    input.gamepad.inject_snapshot(snapshot);
+
+    let ctrl = input.process_inputs((0.0, 0.0, 0.0, false, false), dt, 0.0);
+    assert_eq!(ctrl.throttle, 1.0, "RT should produce full throttle");
+    assert_eq!(ctrl.brake, 0.85, "LT should produce progressive braking");
+    assert!(ctrl.handbrake, "A button should engage handbrake");
+}
+

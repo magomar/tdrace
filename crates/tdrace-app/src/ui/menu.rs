@@ -436,9 +436,9 @@ pub fn render_controls_screen(
 
     let gp_rows = [
         ("Proportional Steering", "Left Analog Stick / D-Pad"),
-        ("Analog Progressive Throttle", "Right Trigger (RT / R2) or A"),
-        ("Analog Progressive Brake", "Left Trigger (LT / L2) or X"),
-        ("Handbrake & Slide Initiation", "B / Circle or Right Bumper (RB)"),
+        ("Analog Progressive Throttle", "Right Trigger (RT / R2)"),
+        ("Analog Progressive Brake", "Left Trigger (LT / L2)"),
+        ("Handbrake & Slide Initiation", "A / Cross or Right Bumper (RB)"),
         ("Reverse Gear", "Y / Triangle or Left Bumper (LB)"),
         ("Cycle Assist Profile", "Right Stick Click (R3) / Select"),
         ("Camera View Mode", "Left Stick Click (L3)"),

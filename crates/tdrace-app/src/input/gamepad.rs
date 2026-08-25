@@ -38,7 +38,7 @@ pub struct GamepadSnapshot {
     pub throttle: f32,
     /// Proportional analog brake [0.0 = release, 1.0 = full brake].
     pub brake: f32,
-    /// Handbrake button pressed (B / East or Right Bumper).
+    /// Handbrake button pressed (A / South or Right Bumper).
     pub handbrake: bool,
     /// Reverse button pressed (Y / North or Left Bumper).
     pub reverse: bool,
@@ -46,10 +46,10 @@ pub struct GamepadSnapshot {
     // Button trigger events (pressed this frame)
     pub btn_start_pressed: bool,
     pub btn_back_pressed: bool,
-    pub btn_a_pressed: bool,      // South (Confirm / Throttle / Select)
-    pub btn_b_pressed: bool,      // East (Back / Handbrake)
-    pub btn_x_pressed: bool,      // West (Brake / Mode toggle)
-    pub btn_y_pressed: bool,      // North (Cam / Reset)
+    pub btn_a_pressed: bool,      // South (Confirm / Handbrake / Select)
+    pub btn_b_pressed: bool,      // East (Cancel / Back)
+    pub btn_x_pressed: bool,      // West (Mode toggle)
+    pub btn_y_pressed: bool,      // North (Bot count / Cam)
     pub dpad_up_pressed: bool,
     pub dpad_down_pressed: bool,
     pub dpad_left_pressed: bool,
@@ -99,7 +99,11 @@ impl GamepadController {
     pub fn new() -> Self {
         let (gilrs, active_gamepad, gamepad_name, is_connected) = match Gilrs::new() {
             Ok(g) => {
-                let first_gamepad = g.gamepads().next().map(|(id, gp)| (id, gp.name().to_string()));
+                let first_gamepad = g
+                    .gamepads()
+                    .find(|(_, gp)| gp.is_connected())
+                    .or_else(|| g.gamepads().next())
+                    .map(|(id, gp)| (id, gp.name().to_string()));
                 let (active, name, connected) = if let Some((id, name)) = first_gamepad {
                     (Some(id), name, true)
                 } else {
@@ -169,6 +173,27 @@ impl GamepadController {
             return;
         };
 
+        // Auto-detect active connected gamepad if none is currently selected
+        if self.active_gamepad.is_none()
+            || self
+                .active_gamepad
+                .map_or(true, |id| gilrs.connected_gamepad(id).is_none())
+        {
+            if let Some((id, gp)) = gilrs
+                .gamepads()
+                .find(|(_, gp)| gp.is_connected())
+                .or_else(|| gilrs.gamepads().next())
+            {
+                self.active_gamepad = Some(id);
+                self.snapshot.gamepad_name = gp.name().to_string();
+                self.snapshot.is_connected = true;
+            } else {
+                self.active_gamepad = None;
+                self.snapshot.is_connected = false;
+                self.snapshot.gamepad_name = "No Gamepad Connected".to_string();
+            }
+        }
+
         let mut btn_start = false;
         let mut btn_select = false;
         let mut btn_south = false;
@@ -184,18 +209,24 @@ impl GamepadController {
 
         // Drain pending hardware events
         while let Some(Event { id, event, .. }) = gilrs.next_event() {
+            self.active_gamepad = Some(id);
+            self.snapshot.is_connected = true;
+            if let Some(gp) = gilrs.connected_gamepad(id) {
+                self.snapshot.gamepad_name = gp.name().to_string();
+            }
+
             match event {
                 EventType::Connected => {
-                    self.active_gamepad = Some(id);
                     if let Some(gp) = gilrs.connected_gamepad(id) {
-                        self.snapshot.gamepad_name = gp.name().to_string();
-                        self.snapshot.is_connected = true;
                         println!("[Gamepad] Connected: {} (ID {:?})", gp.name(), id);
                     }
                 }
                 EventType::Disconnected => {
                     if self.active_gamepad == Some(id) {
-                        self.active_gamepad = gilrs.gamepads().next().map(|(next_id, _)| next_id);
+                        self.active_gamepad = gilrs
+                            .gamepads()
+                            .find(|(_, gp)| gp.is_connected())
+                            .map(|(next_id, _)| next_id);
                         if let Some(active_id) = self.active_gamepad {
                             if let Some(gp) = gilrs.connected_gamepad(active_id) {
                                 self.snapshot.gamepad_name = gp.name().to_string();
@@ -210,7 +241,7 @@ impl GamepadController {
                 }
                 EventType::ButtonPressed(btn, _) => match btn {
                     Button::Start => btn_start = true,
-                    Button::Select | Button::Mode => btn_select = true,
+                    Button::Select => btn_select = true,
                     Button::South => btn_south = true,
                     Button::East => btn_east = true,
                     Button::West => btn_west = true,
@@ -225,7 +256,7 @@ impl GamepadController {
                 },
                 EventType::ButtonChanged(btn, val, _) if val > 0.5 => match btn {
                     Button::Start => btn_start = true,
-                    Button::Select | Button::Mode => btn_select = true,
+                    Button::Select => btn_select = true,
                     Button::South => btn_south = true,
                     Button::East => btn_east = true,
                     Button::West => btn_west = true,
@@ -246,7 +277,11 @@ impl GamepadController {
 
         // Sample continuous analog axes and button states from active gamepad
         if let Some(id) = self.active_gamepad {
-            if let Some(gp) = gilrs.connected_gamepad(id) {
+            let maybe_gp = gilrs.connected_gamepad(id).or_else(|| {
+                gilrs.gamepads().find(|(gid, _)| *gid == id).map(|(_, gp)| gp)
+            });
+
+            if let Some(gp) = maybe_gp {
                 let name = gp.name().to_string();
                 let is_conn = true;
 
@@ -256,27 +291,53 @@ impl GamepadController {
                 let curr_west = gp.is_pressed(Button::West);
                 let curr_north = gp.is_pressed(Button::North);
                 let curr_start = gp.is_pressed(Button::Start);
-                let curr_select = gp.is_pressed(Button::Select) || gp.is_pressed(Button::Mode);
-                let curr_dpad_u = gp.is_pressed(Button::DPadUp);
-                let curr_dpad_d = gp.is_pressed(Button::DPadDown);
-                let curr_dpad_l = gp.is_pressed(Button::DPadLeft);
-                let curr_dpad_r = gp.is_pressed(Button::DPadRight);
+                let curr_select = gp.is_pressed(Button::Select);
+                let dpad_y_axis = gp.axis_data(Axis::DPadY).map(|d| d.value()).unwrap_or(0.0);
+                let dpad_x_axis = gp.axis_data(Axis::DPadX).map(|d| d.value()).unwrap_or(0.0);
+                let curr_dpad_u = gp.is_pressed(Button::DPadUp) || dpad_y_axis > 0.5;
+                let curr_dpad_d = gp.is_pressed(Button::DPadDown) || dpad_y_axis < -0.5;
+                let curr_dpad_l = gp.is_pressed(Button::DPadLeft) || dpad_x_axis < -0.5;
+                let curr_dpad_r = gp.is_pressed(Button::DPadRight) || dpad_x_axis > 0.5;
                 let curr_thumb_r = gp.is_pressed(Button::RightThumb);
                 let curr_thumb_l = gp.is_pressed(Button::LeftThumb);
 
                 // Edge-triggered fallback detection (guarantees detection across all driver types)
-                if curr_south && !self.prev_south { btn_south = true; }
-                if curr_east && !self.prev_east { btn_east = true; }
-                if curr_west && !self.prev_west { btn_west = true; }
-                if curr_north && !self.prev_north { btn_north = true; }
-                if curr_start && !self.prev_start { btn_start = true; }
-                if curr_select && !self.prev_select { btn_select = true; }
-                if curr_dpad_u && !self.prev_dpad_up { dpad_u = true; }
-                if curr_dpad_d && !self.prev_dpad_down { dpad_d = true; }
-                if curr_dpad_l && !self.prev_dpad_left { dpad_l = true; }
-                if curr_dpad_r && !self.prev_dpad_right { dpad_r = true; }
-                if curr_thumb_r && !self.prev_thumb_r { thumb_r = true; }
-                if curr_thumb_l && !self.prev_thumb_l { thumb_l = true; }
+                if curr_south && !self.prev_south {
+                    btn_south = true;
+                }
+                if curr_east && !self.prev_east {
+                    btn_east = true;
+                }
+                if curr_west && !self.prev_west {
+                    btn_west = true;
+                }
+                if curr_north && !self.prev_north {
+                    btn_north = true;
+                }
+                if curr_start && !self.prev_start {
+                    btn_start = true;
+                }
+                if curr_select && !self.prev_select {
+                    btn_select = true;
+                }
+                if curr_dpad_u && !self.prev_dpad_up {
+                    dpad_u = true;
+                }
+                if curr_dpad_d && !self.prev_dpad_down {
+                    dpad_d = true;
+                }
+                if curr_dpad_l && !self.prev_dpad_left {
+                    dpad_l = true;
+                }
+                if curr_dpad_r && !self.prev_dpad_right {
+                    dpad_r = true;
+                }
+                if curr_thumb_r && !self.prev_thumb_r {
+                    thumb_r = true;
+                }
+                if curr_thumb_l && !self.prev_thumb_l {
+                    thumb_l = true;
+                }
 
                 self.prev_south = curr_south;
                 self.prev_east = curr_east;
@@ -295,7 +356,7 @@ impl GamepadController {
                 let raw_stick_x = gp.axis_data(Axis::LeftStickX).map(|d| d.value()).unwrap_or(0.0);
                 let raw_stick_y = gp.axis_data(Axis::LeftStickY).map(|d| d.value()).unwrap_or(0.0);
 
-                let stick_up = (raw_stick_y > 0.45 && self.prev_stick_y <= 0.45) || (raw_stick_y < -0.45 && self.prev_stick_y >= -0.45 && false);
+                let stick_up = raw_stick_y > 0.45 && self.prev_stick_y <= 0.45;
                 let stick_down = raw_stick_y < -0.45 && self.prev_stick_y >= -0.45;
                 let stick_left = raw_stick_x < -0.45 && self.prev_stick_x >= -0.45;
                 let stick_right = raw_stick_x > 0.45 && self.prev_stick_x <= 0.45;
@@ -307,30 +368,35 @@ impl GamepadController {
                     1.0
                 } else if curr_dpad_l {
                     -1.0
+                } else if dpad_x_axis.abs() > 0.2 {
+                    dpad_x_axis.signum()
                 } else {
                     0.0
                 };
 
-                let stick_steer = Self::process_axis_deadzone(raw_stick_x, config.stick_deadzone, config.steer_exponent);
+                let stick_steer =
+                    Self::process_axis_deadzone(raw_stick_x, config.stick_deadzone, config.steer_exponent);
                 let steer = (stick_steer * config.steer_scale + raw_dpad_x).clamp(-1.0, 1.0);
 
-                // 2. Right Trigger RT / Button A (Throttle)
-                let raw_rt = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
-                let rt_throttle = Self::process_trigger_deadzone(raw_rt, config.trigger_deadzone);
-                let btn_throttle = if curr_south { 1.0 } else { 0.0 };
-                let throttle = rt_throttle.max(btn_throttle).clamp(0.0, 1.0);
+                // 2. Right Trigger RT (Throttle)
+                let raw_rt_btn = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
+                let is_rt_pressed = if gp.is_pressed(Button::RightTrigger2) { 1.0 } else { 0.0 };
+                let raw_rt = raw_rt_btn.max(is_rt_pressed);
+                let throttle =
+                    Self::process_trigger_deadzone(raw_rt, config.trigger_deadzone).clamp(0.0, 1.0);
 
-                // 3. Left Trigger LT / Button X (Brake)
-                let raw_lt = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
-                let lt_brake = Self::process_trigger_deadzone(raw_lt, config.trigger_deadzone);
-                let btn_brake = if curr_west { 1.0 } else { 0.0 };
-                let brake = lt_brake.max(btn_brake).clamp(0.0, 1.0);
+                // 3. Left Trigger LT (Brake)
+                let raw_lt_btn = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
+                let is_lt_pressed = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
+                let raw_lt = raw_lt_btn.max(is_lt_pressed);
+                let brake =
+                    Self::process_trigger_deadzone(raw_lt, config.trigger_deadzone).clamp(0.0, 1.0);
 
-                // 4. Handbrake (Button B / East or Right Bumper RB)
-                let handbrake = curr_east || gp.is_pressed(Button::RightTrigger);
+                // 4. Handbrake (Button A / South / East or Right Bumper RB)
+                let handbrake = curr_south || curr_east || gp.is_pressed(Button::RightTrigger);
 
-                // 5. Reverse (Button Y / North or Left Bumper LB)
-                let reverse = curr_north || gp.is_pressed(Button::LeftTrigger);
+                // 5. Reverse (Button Y / North / West or Left Bumper LB)
+                let reverse = curr_north || curr_west || gp.is_pressed(Button::LeftTrigger);
 
                 self.snapshot.is_connected = is_conn;
                 self.snapshot.gamepad_name = name;
