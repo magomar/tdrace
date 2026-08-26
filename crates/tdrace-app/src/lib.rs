@@ -16,7 +16,7 @@ pub use camera::{CameraMode, RaceCamera};
 pub use config::{AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, ZoomLevelConfig};
 pub use db::{HallOfFameDb, HallOfFameEntry};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
-pub use game::{GameState, RaceSession};
+pub use game::{DriverCardsOrigin, GameState, RaceSession};
 
 pub use input::touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 pub use input::{DebugOverlays, InputController};
@@ -25,3 +25,5 @@ pub use render::ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, Ghos
 pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer, ReplayRecorder};
 pub use ui::hud::render_hud;
 pub use ui::menu::{CarChoice, GameModeChoice, RaceResultEntry, TrackChoice};
+pub use ui::starting_grid::render_starting_grid_screen;
+

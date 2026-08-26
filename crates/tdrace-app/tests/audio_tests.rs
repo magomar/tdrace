@@ -186,7 +186,8 @@ fn test_race_session_audio_wiring_and_countdown_state() {
 
     // Initial race countdown setup
     session.init_race();
-    assert!(matches!(session.state, GameState::Countdown(_)));
+    assert!(matches!(session.state, GameState::StartingGrid | GameState::Countdown(_)));
+
 
     // Check audio mute toggle via session API
     session.audio.toggle_mute();

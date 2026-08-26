@@ -11,10 +11,12 @@ use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
 use tdrace_core::track::Track;
 
-use crate::ai::{BotAiDriver, BotProfile};
+use crate::ai::{BotAiDriver, DriverCharacter};
+
 use crate::audio::{AudioManager, MusicTrack, SfxType};
 use crate::camera::RaceCamera;
 use crate::config::GameConfig;
+use crate::db::{HallOfFameDb, HallOfFameEntry};
 use crate::fx::EffectsManager;
 use crate::input::touch::TouchController;
 use crate::input::InputController;
@@ -22,7 +24,7 @@ use crate::render::color::CarColorScheme;
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{render_barriers_and_obstacles, render_car, render_track};
 use crate::replay::{ReplayPlayer, ReplayRecorder};
-use crate::db::{HallOfFameDb, HallOfFameEntry};
+use crate::ui::driver_card::render_driver_cards_screen;
 use crate::ui::font::Fonts;
 use crate::ui::hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal};
 use crate::ui::hud::render_hud;
@@ -30,11 +32,21 @@ use crate::ui::menu::{
     render_controls_screen, render_pause_menu, render_results_screen, render_track_select_menu,
     CarChoice, RaceResultEntry, TrackChoice,
 };
+use crate::ui::starting_grid::render_starting_grid_screen;
+
+/// Source screen that launched the DriverCards dossier view.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DriverCardsOrigin {
+    Menu,
+    StartingGrid,
+    Paused,
+}
 
 /// High-level game flow state machine.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameState {
     Menu,
+    StartingGrid,
     Countdown(f32),
     Racing,
     Paused,
@@ -46,7 +58,9 @@ pub enum GameState {
     },
     Finished,
     ControlsHelp(bool),
+    DriverCards(DriverCardsOrigin),
 }
+
 
 /// Root controller orchestrating track geometry, cars, physics, UI, and audio.
 pub struct RaceSession {
@@ -63,6 +77,8 @@ pub struct RaceSession {
     pub color_schemes: Vec<CarColorScheme>,
     pub trackers: Vec<TrackProgressTracker>,
     pub ai_drivers: Vec<BotAiDriver>,
+    pub opponent_drivers: Vec<DriverCharacter>,
+    pub driver_cards_idx: usize,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -104,6 +120,7 @@ pub struct RaceSession {
     // Internal trackers
     pub prev_player_lap: u32,
 }
+
 
 
 /// Dynamic vehicle transmission gear and engine RPM simulation model.
@@ -244,6 +261,8 @@ impl RaceSession {
             color_schemes: Vec::new(),
             trackers: Vec::new(),
             ai_drivers: Vec::new(),
+            opponent_drivers: Vec::new(),
+            driver_cards_idx: 0,
 
             fx: EffectsManager::new(8000, 1500),
             camera,
@@ -326,7 +345,6 @@ impl RaceSession {
         // 2. Setup camera
         self.camera.setup_for_track(&self.track);
 
-
         // 3. Player car configuration
         let mut base_config = self.config.get_car_config(self.car_choice);
         base_config.assists = self.assist_profile.to_config();
@@ -342,6 +360,7 @@ impl RaceSession {
         self.color_schemes.clear();
         self.trackers.clear();
         self.ai_drivers.clear();
+        self.opponent_drivers.clear();
         self.fx.clear();
         self.results.clear();
         self.session_time = 0.0;
@@ -351,41 +370,59 @@ impl RaceSession {
         let num_cps = self.track.checkpoints.len();
         let num_sectors = 3;
 
-        let bot_profiles = [
-            BotProfile::pro(),
-            BotProfile::aggressive(),
-            BotProfile::balanced(),
-            BotProfile::rookie(),
-            BotProfile::pro(),
-            BotProfile::aggressive(),
-            BotProfile::balanced(),
-        ];
+        // Sample distinct opponents from the 8 predefined driver characters
+        let seed = (std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(42))
+            .wrapping_add(self.session_time.to_bits() as u64);
 
-        for i in 0..total_cars {
+        if !self.is_time_attack && total_cars > 1 {
+            self.opponent_drivers = DriverCharacter::sample_opponents(total_cars - 1, seed);
+        }
+
+        // Spawn Player car at grid slot 0
+        let grid_pose_0 = self
+            .track
+            .grid_positions
+            .first()
+            .copied()
+            .unwrap_or(SpawnPose {
+                position: Vec2::ZERO,
+                angle: 0.0,
+                grid_slot: 0,
+            });
+        let player_car = Car::new(base_config).with_pose(grid_pose_0.position, grid_pose_0.angle);
+        self.cars.push(player_car);
+        self.color_schemes.push(CarColorScheme::from_index(0));
+        self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
+
+        // Spawn AI bots with their customized character profiles, liveries, and vehicle configs
+        for (bot_idx, character) in self.opponent_drivers.iter().enumerate() {
+            let car_idx = bot_idx + 1;
             let grid_pose = self
                 .track
                 .grid_positions
-                .get(i)
+                .get(car_idx)
                 .copied()
                 .unwrap_or(SpawnPose {
                     position: Vec2::ZERO,
                     angle: 0.0,
-                    grid_slot: i,
+                    grid_slot: car_idx,
                 });
-            let car = Car::new(base_config).with_pose(grid_pose.position, grid_pose.angle);
 
-            self.cars.push(car);
-            self.color_schemes.push(CarColorScheme::from_index(i));
+            let bot_config = self.config.get_car_config(character.preferred_car);
+            let bot_car = Car::new(bot_config).with_pose(grid_pose.position, grid_pose.angle);
+
+            self.cars.push(bot_car);
+            self.color_schemes.push(character.color_scheme);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
-
-            if i > 0 {
-                let prof = bot_profiles[(i - 1) % bot_profiles.len()];
-                self.ai_drivers.push(BotAiDriver::new(prof));
-            }
+            self.ai_drivers.push(BotAiDriver::new(character.profile));
         }
 
         // Reset ghost active lap samples
         self.ghost_recorder.on_lap_invalidated();
+
 
         // Reset input filter smoothing state
         self.input.reset();
@@ -406,8 +443,12 @@ impl RaceSession {
         self.audio.stop_all_loops();
         self.audio.stop_music(); // In-game music muted
 
-        // Start with countdown
-        self.state = GameState::Countdown(3.5);
+        // Show Starting Grid with selected race participants (or directly countdown if time attack)
+        if !self.is_time_attack && total_cars > 1 {
+            self.state = GameState::StartingGrid;
+        } else {
+            self.state = GameState::Countdown(3.5);
+        }
     }
 
     /// Master update tick called once per frame.
@@ -473,6 +514,19 @@ impl RaceSession {
             return;
         }
 
+        // Open Driver Cards Dossier Screen (D key)
+        if is_key_pressed(KeyCode::D) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let origin = match self.state {
+                GameState::StartingGrid => DriverCardsOrigin::StartingGrid,
+                GameState::Racing | GameState::Paused | GameState::Countdown(_) => DriverCardsOrigin::Paused,
+                _ => DriverCardsOrigin::Menu,
+            };
+            self.state = GameState::DriverCards(origin);
+            return;
+        }
+
+
         // Cycle Driver Assists Profile (H key or Gamepad Right Stick Click / Select)
         if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
             self.assist_profile = self.assist_profile.next();
@@ -492,12 +546,43 @@ impl RaceSession {
             return;
         }
 
+
         match self.state {
             GameState::Menu => {
                 self.audio.play_music(MusicTrack::NeonMenu);
                 self.update_menu();
             }
+            GameState::StartingGrid => {
+                // Launch race countdown (Space, Enter, Gamepad Confirm [A / South / Start])
+                if is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::Enter)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::Countdown(3.5);
+                }
+
+                // View Driver Dossiers (D key or Gamepad Y)
+                if is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.btn_y_pressed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::DriverCards(DriverCardsOrigin::StartingGrid);
+                }
+
+                // Return to Main Menu (Escape, M, or Gamepad Cancel [B / East / Back])
+                if is_key_pressed(KeyCode::Escape)
+                    || is_key_pressed(KeyCode::M)
+                    || self.input.gamepad.snapshot.btn_cancel_pressed
+                    || self.input.gamepad.snapshot.btn_back_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::Menu;
+                    self.audio.play_music(MusicTrack::NeonMenu);
+                }
+            }
             GameState::Countdown(ref mut remaining) => {
+
                 *remaining -= frame_dt;
 
                 // Player launch throttle / revs on grid
@@ -679,8 +764,43 @@ impl RaceSession {
                     }
                 }
             }
+
+            GameState::DriverCards(origin) => {
+                let roster_len = DriverCharacter::all().len();
+                if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if self.driver_cards_idx == 0 {
+                        self.driver_cards_idx = roster_len - 1;
+                    } else {
+                        self.driver_cards_idx -= 1;
+                    }
+                }
+                if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.driver_cards_idx = (self.driver_cards_idx + 1) % roster_len;
+                }
+
+                if is_key_pressed(KeyCode::Escape)
+                    || is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::C)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                    || self.input.gamepad.snapshot.btn_cancel_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    match origin {
+                        DriverCardsOrigin::StartingGrid => self.state = GameState::StartingGrid,
+                        DriverCardsOrigin::Paused => self.state = GameState::Paused,
+                        DriverCardsOrigin::Menu => self.state = GameState::Menu,
+                    }
+                }
+            }
+
         }
     }
+
 
     /// Menu input navigation (Keyboard + Gamepad D-pad/Analog Sticks/buttons).
     fn update_menu(&mut self) {
@@ -982,8 +1102,10 @@ impl RaceSession {
             let is_player = car_idx == 0;
             let car_name = if is_player {
                 "Player 1 (You)".to_string()
+            } else if let Some(character) = self.opponent_drivers.get(car_idx - 1) {
+                character.alias.to_string()
             } else {
-                format!("AI Driver {}", car_idx)
+                format!("Driver {}", car_idx)
             };
 
             let tracker = &self.trackers[car_idx];
@@ -1018,7 +1140,21 @@ impl RaceSession {
                     &self.audio.settings,
                 );
             }
+            GameState::StartingGrid => {
+                self.render_world();
+                render_starting_grid_screen(
+                    &self.fonts,
+                    &self.track,
+                    self.car_choice.title(),
+                    self.color_schemes[0],
+                    &self.opponent_drivers,
+                    self.total_laps,
+                    self.is_time_attack,
+                    self.input.gamepad.snapshot.is_connected,
+                );
+            }
             GameState::Countdown(remaining) => {
+
                 self.render_world();
                 self.render_screen(Some(remaining));
             }
@@ -1071,8 +1207,12 @@ impl RaceSession {
                     &self.input.gamepad.snapshot.gamepad_name,
                 );
             }
+            GameState::DriverCards(_) => {
+                render_driver_cards_screen(&self.fonts, self.driver_cards_idx);
+            }
         }
     }
+
 
 
     /// Renders world-space entities under active camera.

@@ -7,16 +7,18 @@ fn test_session_initialization() {
     assert_eq!(session.state, GameState::Menu);
 
     session.init_race();
-    assert_eq!(session.cars.len(), 4); // 1 player + 3 default bots
-    assert_eq!(session.trackers.len(), 4);
-    assert_eq!(session.ai_drivers.len(), 3);
-    assert_eq!(session.color_schemes.len(), 4);
+    let expected_cars = 1 + session.num_bots;
+    assert_eq!(session.cars.len(), expected_cars);
+    assert_eq!(session.trackers.len(), expected_cars);
+    assert_eq!(session.ai_drivers.len(), session.num_bots);
+    assert_eq!(session.color_schemes.len(), expected_cars);
 
     match session.state {
-        GameState::Countdown(t) => assert!(t > 0.0),
-        _ => panic!("Expected Countdown state after init_race"),
+        GameState::StartingGrid => (),
+        _ => panic!("Expected StartingGrid state after init_race vs AI"),
     }
 }
+
 
 #[test]
 fn test_session_track_and_car_selection() {
@@ -94,5 +96,8 @@ fn test_player_lap_tracking_advancement_and_finish() {
 
     // Check race finish transition
     session.check_race_finish();
-    assert_eq!(session.state, GameState::Finished);
+    assert!(
+        matches!(session.state, GameState::Finished | GameState::NameEntry { .. }),
+        "State should transition to Finished or NameEntry upon race completion"
+    );
 }

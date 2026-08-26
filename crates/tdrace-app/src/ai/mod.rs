@@ -1,6 +1,11 @@
+pub mod driver;
+
+pub use driver::{DriverCharacter, DriverStats};
+
 use glam::Vec2;
 use tdrace_core::physics::car::{normalize_angle, Car, CarControls};
 use tdrace_core::track::Track;
+
 
 /// Personality and tuning settings for an AI bot driver.
 #[derive(Debug, Clone, Copy, PartialEq)]

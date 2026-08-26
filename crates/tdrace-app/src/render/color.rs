@@ -62,7 +62,7 @@ impl Palette {
     pub const SPARK_WHITE: Color = Color::new(1.0, 0.98, 0.75, 1.0);
 
     // Modern Car Presets (Primary, Secondary, Helmet)
-    pub const CAR_COLORS: &[(Color, Color, Color)] = &[
+    pub const CAR_COLORS: [(Color, Color, Color); 8] = [
         // 0: Player - Hyper Racing Red with Gloss White Stripe & Neon Gold Visor
         (
             Color::new(0.95, 0.12, 0.15, 1.0),
@@ -137,7 +137,7 @@ impl CarColorScheme {
         }
     }
 
-    pub fn from_index(index: usize) -> Self {
+    pub const fn from_index(index: usize) -> Self {
         let n = Palette::CAR_COLORS.len();
         let (p, s, h) = Palette::CAR_COLORS[index % n];
         Self {
@@ -147,3 +147,4 @@ impl CarColorScheme {
         }
     }
 }
+

@@ -313,12 +313,13 @@ pub fn render_track_select_menu(
         Palette::NEON_GOLD,
     );
     fonts.draw_ui_regular(
-        "Toggle mode with [T] | Change bot count (1-7) with [B]",
+        "Mode: [T] | Bots: [B] | [D] Driver Dossier & Roster",
         col2_x + scaler.s(14.0),
         c2_y + scaler.s(42.0),
         scaler.font_s(12.0),
         Palette::UI_TEXT_MUTED,
     );
+
 
     // Driver Assists Profile Setting Card
     c2_y += mode_h + scaler.s(8.0);
@@ -440,6 +441,7 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
 
     let items = [
         "ESC / START / A : Resume Race".to_string(),
+        "D : Driver Cards & Opponents Dossier".to_string(),
         "C / K : Controls & Gamepad Guide".to_string(),
         "R / Y : Restart Race".to_string(),
         "M / B : Main Menu / Track Select".to_string(),
@@ -449,6 +451,7 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         "Q/A/O/P / Arrows / Stick & Triggers : Drive".to_string(),
         "SPACE / B : Handbrake | Z / LB : Reverse".to_string(),
     ];
+
 
     let mut item_y = y + scaler.s(76.0);
     for item in &items {

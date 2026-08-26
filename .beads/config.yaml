@@ -1,4 +1,5 @@
 # Beads Project Configuration
-# issue_prefix: tdrace
-# default_priority: 2
-# default_type: task
+issue_prefix: tdrace
+default_priority: 2
+default_type: task
+

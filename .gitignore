@@ -18,3 +18,14 @@ build/
 .coverage
 htmlcov/
 *.so
+
+# Database
+*.db
+*.db-*
+*.db-journal
+*.sqlite
+*.sqlite3
+.beads/*.db
+.beads/*.db-*
+
+
