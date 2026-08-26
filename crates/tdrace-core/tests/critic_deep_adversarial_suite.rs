@@ -18,12 +18,14 @@ fn test_adversarial_track_anti_cheat_scenarios() {
     let mut car = Car::new(CarConfig::sports_car());
 
     let dt = 0.016;
+    let cp0 = &track.checkpoints[0];
+    let mid0 = (cp0.gate.start + cp0.gate.end) * 0.5;
 
     // Scenario A: Reverse crossing of the finish line at race start
-    // Car moves from +5.0 to -5.0 (backwards across CP0)
-    car.state.position = Vec2::new(5.0, 0.0);
+    // Car moves backwards across CP0
+    car.state.position = mid0 + cp0.direction * 5.0;
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
-    car.state.position = Vec2::new(-5.0, 0.0);
+    car.state.position = mid0 - cp0.direction * 5.0;
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
 
     assert!(tracker.is_wrong_way, "Reversing across finish line must trigger wrong-way flag");
@@ -35,9 +37,9 @@ fn test_adversarial_track_anti_cheat_scenarios() {
     tracker.reset();
 
     // Cross CP0
-    car.state.position = Vec2::new(-2.0, 0.0);
+    car.state.position = mid0 - cp0.direction * 2.0;
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
-    car.state.position = Vec2::new(2.0, 0.0);
+    car.state.position = mid0 + cp0.direction * 2.0;
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
     assert_eq!(tracker.last_checkpoint_idx, 0);
 
@@ -51,9 +53,9 @@ fn test_adversarial_track_anti_cheat_scenarios() {
     assert_eq!(tracker.last_checkpoint_idx, 1);
 
     // CUT TRACK: Skip CPs 2..7 and try to cross CP0
-    car.state.position = Vec2::new(-2.0, 0.0);
+    car.state.position = mid0 - cp0.direction * 2.0;
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
-    car.state.position = Vec2::new(2.0, 0.0);
+    car.state.position = mid0 + cp0.direction * 2.0;
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
 
     // Anti-cheat verification: Lap must NOT count because checkpoints_passed < 70%

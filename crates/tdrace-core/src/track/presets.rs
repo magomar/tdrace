@@ -195,7 +195,7 @@ pub fn generate_grid_positions(
 pub fn classic_grand_prix() -> Track {
     let waypoints = vec![
         // Main Straight & Start/Finish
-        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
+        TrackWaypoint::new(Vec2::new(70.0, 0.0), 14.0),
         TrackWaypoint::new(Vec2::new(120.0, 0.0), 14.0),
         // Turn 1 & 2 High-Speed Chicane
         TrackWaypoint::new(Vec2::new(180.0, 30.0), 13.0).with_curbs(true, false),
@@ -214,6 +214,7 @@ pub fn classic_grand_prix() -> Track {
         // Final Corner onto Main Straight
         TrackWaypoint::new(Vec2::new(-30.0, 100.0), 13.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(-20.0, 20.0), 14.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -248,6 +249,7 @@ pub fn classic_grand_prix() -> Track {
 
     let mut checkpoints = generate_checkpoints(&spline, 12, 3);
     // Add Pit Entry / Exit checkpoints
+    let pit_entry_proj = spline.project_point(Vec2::new(-25.0, 0.0));
     let mut pit_entry = Checkpoint::new(
         100,
         LineSegment::new(Vec2::new(-25.0, -5.0), Vec2::new(-25.0, -18.0)),
@@ -256,8 +258,9 @@ pub fn classic_grand_prix() -> Track {
         false,
     )
     .with_pit_flags(true, false);
-    pit_entry.target_distance = spline.total_length() - 30.0;
+    pit_entry.target_distance = pit_entry_proj.progress_distance;
 
+    let pit_exit_proj = spline.project_point(Vec2::new(135.0, 0.0));
     let mut pit_exit = Checkpoint::new(
         101,
         LineSegment::new(Vec2::new(135.0, -5.0), Vec2::new(135.0, -18.0)),
@@ -266,7 +269,7 @@ pub fn classic_grand_prix() -> Track {
         false,
     )
     .with_pit_flags(false, true);
-    pit_exit.target_distance = 135.0;
+    pit_exit.target_distance = pit_exit_proj.progress_distance;
 
     checkpoints.push(pit_entry);
     checkpoints.push(pit_exit);
