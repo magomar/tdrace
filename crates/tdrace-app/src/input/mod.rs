@@ -68,32 +68,34 @@ impl InputController {
         let mut raw_brake = 0.0f32;
         let mut raw_reverse = false;
 
+        let is_down = |k| std::panic::catch_unwind(|| is_key_down(k)).unwrap_or(false);
+
         // Steering: O / Left = Steer Left (-1.0), P / Right = Steer Right (+1.0)
-        if is_key_down(KeyCode::O) || is_key_down(KeyCode::Left) {
+        if is_down(KeyCode::O) || is_down(KeyCode::Left) {
             raw_steer -= 1.0;
         }
-        if is_key_down(KeyCode::P) || is_key_down(KeyCode::Right) {
+        if is_down(KeyCode::P) || is_down(KeyCode::Right) {
             raw_steer += 1.0;
         }
 
         // Throttle: Q / Up
-        if is_key_down(KeyCode::Q) || is_key_down(KeyCode::Up) {
+        if is_down(KeyCode::Q) || is_down(KeyCode::Up) {
             raw_throttle = 1.0;
         }
 
         // Brake: A / Down
-        if is_key_down(KeyCode::A) || is_key_down(KeyCode::Down) {
+        if is_down(KeyCode::A) || is_down(KeyCode::Down) {
             raw_brake = 1.0;
         }
 
         // Reverse: Z
-        if is_key_down(KeyCode::Z) {
+        if is_down(KeyCode::Z) {
             raw_throttle = 1.0;
             raw_reverse = true;
         }
 
         // Handbrake: Space
-        let kb_handbrake = is_key_down(KeyCode::Space);
+        let kb_handbrake = is_down(KeyCode::Space);
 
         self.process_inputs((raw_steer, raw_throttle, raw_brake, kb_handbrake, raw_reverse), dt, current_speed_fwd)
     }

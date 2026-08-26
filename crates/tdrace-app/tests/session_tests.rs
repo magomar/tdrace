@@ -64,3 +64,35 @@ fn test_session_standings_computation() {
     assert_eq!(standings[1], 0); // Car 0 is P2
     assert_eq!(standings[2], 1); // Car 1 is P3
 }
+
+#[test]
+fn test_player_lap_tracking_advancement_and_finish() {
+    let mut session = RaceSession::new();
+    session.init_race();
+
+    assert_eq!(session.prev_player_lap, 1);
+    assert_eq!(session.trackers[0].current_lap, 1);
+
+    // Simulate crossing start/finish line for lap 2
+    session.trackers[0].current_lap = 2;
+
+    // Run physics step
+    session.physics_step(1.0 / 60.0);
+
+    // prev_player_lap must be synchronized to lap 2 so sound triggers only once
+    assert_eq!(session.prev_player_lap, 2);
+
+    // Subsequent steps must remain synchronized
+    session.physics_step(1.0 / 60.0);
+    assert_eq!(session.prev_player_lap, 2);
+    assert_eq!(session.trackers[0].current_lap, 2);
+
+    // Complete all laps (e.g., total_laps + 1)
+    session.trackers[0].current_lap = session.total_laps + 1;
+    session.physics_step(1.0 / 60.0);
+    assert_eq!(session.prev_player_lap, session.total_laps + 1);
+
+    // Check race finish transition
+    session.check_race_finish();
+    assert_eq!(session.state, GameState::Finished);
+}

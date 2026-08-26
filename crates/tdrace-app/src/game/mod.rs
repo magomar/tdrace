@@ -87,7 +87,7 @@ pub struct RaceSession {
     offroad_sound_cooldown: f32,
 
     // Internal trackers
-    prev_player_lap: u32,
+    pub prev_player_lap: u32,
 }
 
 /// Dynamic vehicle transmission gear and engine RPM simulation model.
@@ -585,7 +585,7 @@ impl RaceSession {
     }
 
     /// High-performance deterministic fixed physics simulation step.
-    fn physics_step(&mut self, dt: f32) {
+    pub fn physics_step(&mut self, dt: f32) {
         let n_cars = self.cars.len();
         if n_cars == 0 {
             return;
@@ -697,32 +697,37 @@ impl RaceSession {
 
         // Lap and sector split audio feedback
         if let Some(tracker) = self.trackers.first() {
+            let lap_changed = tracker.current_lap > self.prev_player_lap;
+
             if tracker.current_sector != self.prev_player_sector {
                 if tracker.current_sector > 0 {
                     self.audio.play_sfx(SfxType::SectorPing);
                 }
                 self.prev_player_sector = tracker.current_sector;
             }
-            if tracker.current_lap > self.prev_player_lap {
+            if lap_changed && (self.is_time_attack || tracker.current_lap <= self.total_laps) {
                 self.audio.play_sfx(SfxType::LapChime);
             }
-        }
 
-        // 7. Ghost lap telemetry recording (Time Attack)
-        if self.is_time_attack {
-            if let (Some(player_car), Some(tracker)) = (self.cars.first(), self.trackers.first()) {
-                self.ghost_recorder.record_frame(tracker.lap_time, player_car, dt);
+            // 7. Ghost lap telemetry recording (Time Attack)
+            if self.is_time_attack {
+                if let Some(player_car) = self.cars.first() {
+                    self.ghost_recorder.record_frame(tracker.lap_time, player_car, dt);
 
-                if tracker.current_lap > self.prev_player_lap {
-                    if let Some(last_lap_time) = tracker.last_lap_time {
-                        self.ghost_recorder.on_lap_completed(
-                            last_lap_time,
-                            self.track_choice,
-                            self.car_choice,
-                        );
+                    if lap_changed {
+                        if let Some(last_lap_time) = tracker.last_lap_time {
+                            self.ghost_recorder.on_lap_completed(
+                                last_lap_time,
+                                self.track_choice,
+                                self.car_choice,
+                            );
+                        }
                     }
-                    self.prev_player_lap = tracker.current_lap;
                 }
+            }
+
+            if lap_changed {
+                self.prev_player_lap = tracker.current_lap;
             }
         }
 
@@ -744,7 +749,7 @@ impl RaceSession {
     }
 
     /// Evaluates current positions and checks for checkered flag completion.
-    fn check_race_finish(&mut self) {
+    pub fn check_race_finish(&mut self) {
         let player_done = self
             .trackers
             .first()
