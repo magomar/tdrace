@@ -3,6 +3,7 @@ use macroquad::prelude::{screen_height, screen_width};
 use glam::Vec2;
 use tdrace_core::physics::car::Car;
 use tdrace_core::track::Track;
+use crate::config::{CameraConfig, ZoomLevelConfig};
 
 /// Camera mode setting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,7 +14,7 @@ pub enum CameraMode {
     StaticOverview,
 }
 
-/// Advanced 2D arcade race camera system.
+/// Advanced 2D arcade race camera system supporting multi-level zoom perspectives.
 #[derive(Debug, Clone)]
 pub struct RaceCamera {
     pub mode: CameraMode,
@@ -33,6 +34,10 @@ pub struct RaceCamera {
     pub overview_center: Vec2,
     pub overview_zoom: f32,
 
+    // Multi-level zoom management
+    pub levels: Vec<ZoomLevelConfig>,
+    pub current_level_idx: usize,
+
     // Trauma-based screen shake
     pub trauma: f32,
     pub trauma_decay: f32,
@@ -48,27 +53,84 @@ impl Default for RaceCamera {
 
 impl RaceCamera {
     pub fn new() -> Self {
+        Self::from_config(&CameraConfig::default())
+    }
+
+    /// Constructs camera instance from a `CameraConfig`.
+    pub fn from_config(config: &CameraConfig) -> Self {
+        let levels = if config.levels.is_empty() {
+            CameraConfig::default().levels
+        } else {
+            config.levels.clone()
+        };
+
+        let initial_idx = config.default_level_index.min(levels.len().saturating_sub(1));
+        let active_level = &levels[initial_idx];
+        let mode = if active_level.is_overview() {
+            CameraMode::StaticOverview
+        } else {
+            CameraMode::SmoothFollow
+        };
+
         Self {
-            mode: CameraMode::SmoothFollow,
+            mode,
             target_pos: Vec2::ZERO,
             current_pos: Vec2::ZERO,
-            current_zoom: 18.0,
-            target_zoom: 18.0,
+            current_zoom: active_level.max_zoom,
+            target_zoom: active_level.max_zoom,
 
-            position_smoothing: 8.5,
-            zoom_smoothing: 4.0,
-            velocity_lookahead_time: 0.40,
-            min_zoom_scale: 13.5, // pixels per meter at top speed (~200 km/h)
-            max_zoom_scale: 22.0, // pixels per meter at 0 km/h
+            position_smoothing: config.position_smoothing,
+            zoom_smoothing: config.zoom_smoothing,
+            velocity_lookahead_time: config.velocity_lookahead_time,
+            min_zoom_scale: active_level.min_zoom,
+            max_zoom_scale: active_level.max_zoom,
 
             overview_center: Vec2::ZERO,
             overview_zoom: 3.5,
 
+            levels,
+            current_level_idx: initial_idx,
+
             trauma: 0.0,
-            trauma_decay: 2.2,
-            max_shake_offset: 1.5,
+            trauma_decay: config.trauma_decay,
+            max_shake_offset: config.max_shake_offset,
             shake_seed: 0.0,
         }
+    }
+
+    /// Returns the currently active zoom level configuration.
+    pub fn current_zoom_level(&self) -> &ZoomLevelConfig {
+        &self.levels[self.current_level_idx]
+    }
+
+    /// Explicitly activates a zoom level by index and returns its configuration.
+    pub fn set_zoom_level(&mut self, idx: usize) -> ZoomLevelConfig {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        self.current_level_idx = idx % self.levels.len();
+        let lvl = self.levels[self.current_level_idx].clone();
+
+        if lvl.is_overview() {
+            self.mode = CameraMode::StaticOverview;
+            self.min_zoom_scale = lvl.min_zoom;
+            self.max_zoom_scale = lvl.max_zoom;
+        } else {
+            self.mode = CameraMode::SmoothFollow;
+            self.min_zoom_scale = lvl.min_zoom;
+            self.max_zoom_scale = lvl.max_zoom;
+        }
+
+        lvl
+    }
+
+    /// Cycles to the next zoom level in sequence and returns its configuration.
+    pub fn cycle_zoom_level(&mut self) -> ZoomLevelConfig {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        let next_idx = (self.current_level_idx + 1) % self.levels.len();
+        self.set_zoom_level(next_idx)
     }
 
     /// Safely gets screen dimensions without panicking if running outside macroquad loop.
@@ -122,10 +184,24 @@ impl RaceCamera {
 
     /// Toggles between smooth follow and full-track overview modes.
     pub fn toggle_mode(&mut self) {
-        self.mode = match self.mode {
-            CameraMode::SmoothFollow => CameraMode::StaticOverview,
-            CameraMode::StaticOverview => CameraMode::SmoothFollow,
-        };
+        match self.mode {
+            CameraMode::SmoothFollow => {
+                // Find first overview level, or switch directly
+                if let Some(idx) = self.levels.iter().position(|l| l.is_overview()) {
+                    self.set_zoom_level(idx);
+                } else {
+                    self.mode = CameraMode::StaticOverview;
+                }
+            }
+            CameraMode::StaticOverview => {
+                // Find first follow level, or switch directly
+                if let Some(idx) = self.levels.iter().position(|l| !l.is_overview()) {
+                    self.set_zoom_level(idx);
+                } else {
+                    self.mode = CameraMode::SmoothFollow;
+                }
+            }
+        }
     }
 
     /// Adds screen shake trauma from collision impact (clamped to [0.0, 1.0]).

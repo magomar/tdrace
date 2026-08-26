@@ -238,6 +238,27 @@ impl Default for AudioManager {
     }
 }
 
+/// Safe wrapper around macroquad play_sound that handles uninitialized headless contexts.
+fn safe_play_sound(sound: &Sound, params: PlaySoundParams) {
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        play_sound(sound, params);
+    }));
+}
+
+/// Safe wrapper around macroquad set_sound_volume.
+fn safe_set_sound_volume(sound: &Sound, volume: f32) {
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        set_sound_volume(sound, volume);
+    }));
+}
+
+/// Safe wrapper around macroquad stop_sound.
+fn safe_stop_sound(sound: &Sound) {
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        stop_sound(sound);
+    }));
+}
+
 impl AudioManager {
     pub fn new() -> Self {
         Self {
@@ -262,7 +283,7 @@ impl AudioManager {
                 MusicTrack::NeonMenu => self.bank.music_menu.as_ref(),
             };
             if let Some(s) = sound {
-                play_sound(
+                safe_play_sound(
                     s,
                     PlaySoundParams {
                         looped: true,
@@ -315,7 +336,7 @@ impl AudioManager {
         };
 
         if let Some(s) = sound {
-            play_sound(
+            safe_play_sound(
                 s,
                 PlaySoundParams {
                     looped: true,
@@ -334,7 +355,7 @@ impl AudioManager {
                 MusicTrack::NeonMenu => self.bank.music_menu.as_ref(),
             };
             if let Some(s) = sound {
-                set_sound_volume(s, vol);
+                safe_set_sound_volume(s, vol);
             }
         }
     }
@@ -347,7 +368,7 @@ impl AudioManager {
                 MusicTrack::NeonMenu => self.bank.music_menu.as_ref(),
             };
             if let Some(s) = sound {
-                stop_sound(s);
+                safe_stop_sound(s);
             }
             self.current_music = None;
         }
@@ -366,7 +387,7 @@ impl AudioManager {
         }
 
         if let Some(sound) = self.bank.get_sound(sfx) {
-            play_sound(
+            safe_play_sound(
                 sound,
                 PlaySoundParams {
                     looped: false,
@@ -431,7 +452,7 @@ impl AudioManager {
                 let band_vol = total_vol * weights[idx];
                 if band_vol > 0.001 {
                     if !self.engine_active_bands[idx] {
-                        play_sound(
+                        safe_play_sound(
                             sound,
                             PlaySoundParams {
                                 looped: true,
@@ -440,10 +461,10 @@ impl AudioManager {
                         );
                         self.engine_active_bands[idx] = true;
                     } else {
-                        set_sound_volume(sound, band_vol);
+                        safe_set_sound_volume(sound, band_vol);
                     }
                 } else if self.engine_active_bands[idx] {
-                    stop_sound(sound);
+                    safe_stop_sound(sound);
                     self.engine_active_bands[idx] = false;
                 }
             }
@@ -470,8 +491,8 @@ impl AudioManager {
         for (idx, sound_opt) in self.bank.engine_rpm_bands.iter().enumerate() {
             if let Some(sound) = sound_opt {
                 if self.engine_active_bands[idx] {
-                    set_sound_volume(sound, 0.0);
-                    stop_sound(sound);
+                    safe_set_sound_volume(sound, 0.0);
+                    safe_stop_sound(sound);
                     self.engine_active_bands[idx] = false;
                 }
             }

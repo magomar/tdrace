@@ -10,11 +10,11 @@ use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
 use tdrace_core::track::Track;
-use tdrace_core::CarConfig;
 
 use crate::ai::{BotAiDriver, BotProfile};
 use crate::audio::{AudioManager, MusicTrack, SfxType};
 use crate::camera::RaceCamera;
+use crate::config::GameConfig;
 use crate::fx::EffectsManager;
 use crate::input::touch::TouchController;
 use crate::input::InputController;
@@ -22,7 +22,9 @@ use crate::render::color::CarColorScheme;
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{render_barriers_and_obstacles, render_car, render_track};
 use crate::replay::{ReplayPlayer, ReplayRecorder};
+use crate::db::{HallOfFameDb, HallOfFameEntry};
 use crate::ui::font::Fonts;
+use crate::ui::hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal};
 use crate::ui::hud::render_hud;
 use crate::ui::menu::{
     render_controls_screen, render_pause_menu, render_results_screen, render_track_select_menu,
@@ -30,17 +32,23 @@ use crate::ui::menu::{
 };
 
 /// High-level game flow state machine.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum GameState {
     Menu,
     Countdown(f32),
     Racing,
     Paused,
+    NameEntry {
+        player_time: f32,
+        best_lap: Option<f32>,
+        input_name: String,
+        cursor_timer: f32,
+    },
     Finished,
     ControlsHelp(bool),
 }
 
-/// Main Racing Session and Simulation Coordinator.
+/// Root controller orchestrating track geometry, cars, physics, UI, and audio.
 pub struct RaceSession {
     pub state: GameState,
     pub track: Track,
@@ -49,6 +57,7 @@ pub struct RaceSession {
     pub is_time_attack: bool,
     pub num_bots: usize,
     pub total_laps: u32,
+    pub config: GameConfig,
 
     pub cars: Vec<Car>,
     pub color_schemes: Vec<CarColorScheme>,
@@ -73,6 +82,12 @@ pub struct RaceSession {
     pub accumulator: f32,
     pub results: Vec<RaceResultEntry>,
 
+    // Hall of Fame
+    pub hof_db: Option<HallOfFameDb>,
+    pub hof_entries: Vec<HallOfFameEntry>,
+    pub recent_hof_id: Option<i64>,
+    pub show_hall_of_fame: bool,
+
     // Menu selection cursor state
     pub menu_track_idx: usize,
     pub menu_car_idx: usize,
@@ -89,6 +104,7 @@ pub struct RaceSession {
     // Internal trackers
     pub prev_player_lap: u32,
 }
+
 
 /// Dynamic vehicle transmission gear and engine RPM simulation model.
 #[derive(Debug, Clone)]
@@ -168,16 +184,61 @@ impl RaceSession {
     pub const FIXED_DT: f32 = 1.0 / 120.0;
 
     pub fn new() -> Self {
-        let track = classic_grand_prix();
+        Self::new_with_config(GameConfig::load_or_default())
+    }
+
+    pub fn new_with_config(config: GameConfig) -> Self {
+        let track_choice = match config.gameplay.default_track.as_str() {
+            "oval_speedway" => TrackChoice::OvalSpeedway,
+            "drift_park" => TrackChoice::DriftPark,
+            "kart_arena" => TrackChoice::KartArena,
+            _ => TrackChoice::ClassicGrandPrix,
+        };
+        let car_choice = match config.gameplay.default_car.as_str() {
+            "drift_car" => CarChoice::DriftCar,
+            "kart" => CarChoice::Kart,
+            "rally_car" => CarChoice::RallyCar,
+            _ => CarChoice::SportsCar,
+        };
+        let assist_profile = match config.gameplay.default_assist_profile.to_lowercase().as_str() {
+            "sport" => AssistProfile::Sport,
+            "pro" => AssistProfile::Pro,
+            _ => AssistProfile::Arcade,
+        };
+
+        let track = match track_choice {
+            TrackChoice::ClassicGrandPrix => classic_grand_prix(),
+            TrackChoice::OvalSpeedway => oval_speedway(),
+            TrackChoice::DriftPark => drift_park(),
+            TrackChoice::KartArena => kart_arena(),
+        };
+
+        let mut audio = AudioManager::new();
+        audio.settings.master_volume = config.audio.master_volume;
+        audio.settings.sfx_volume = config.audio.sfx_volume;
+        audio.settings.music_volume = config.audio.music_volume;
+
+        let mut input = InputController::new();
+        input.filter.config.steer_rise_rate = config.input.steer_rise_rate;
+        input.filter.config.steer_return_rate = config.input.steer_return_rate;
+        input.filter.config.steer_exponent = config.input.steer_exponent;
+        input.filter.config.speed_sensitive_factor = config.input.speed_sensitive_factor;
+        input.filter.config.min_speed_steer_limit = config.input.min_speed_steer_limit;
+        input.filter.config.throttle_rise_rate = config.input.throttle_rise_rate;
+        input.filter.config.brake_rise_rate = config.input.brake_rise_rate;
+
+        let camera = RaceCamera::from_config(&config.camera);
+
         let mut session = Self {
             state: GameState::Menu,
             track,
-            track_choice: TrackChoice::ClassicGrandPrix,
-            car_choice: CarChoice::SportsCar,
-            assist_profile: AssistProfile::Arcade,
+            track_choice,
+            car_choice,
+            assist_profile,
             is_time_attack: false,
-            num_bots: 3,
-            total_laps: 3,
+            num_bots: config.gameplay.default_num_bots,
+            total_laps: config.gameplay.default_laps,
+            config,
 
             cars: Vec::new(),
             color_schemes: Vec::new(),
@@ -185,8 +246,8 @@ impl RaceSession {
             ai_drivers: Vec::new(),
 
             fx: EffectsManager::new(8000, 1500),
-            camera: RaceCamera::new(),
-            input: InputController::new(),
+            camera,
+            input,
             touch: TouchController::new(),
             fonts: Fonts::load_embedded(),
 
@@ -199,9 +260,14 @@ impl RaceSession {
             accumulator: 0.0,
             results: Vec::new(),
 
+            hof_db: HallOfFameDb::open_default().ok(),
+            hof_entries: Vec::new(),
+            recent_hof_id: None,
+            show_hall_of_fame: true,
+
             menu_track_idx: 0,
             menu_car_idx: 0,
-            audio: AudioManager::new(),
+            audio,
             engine_rpm: EngineRpmModel::default(),
             prev_countdown_sec: 4,
             prev_player_sector: 0,
@@ -210,9 +276,31 @@ impl RaceSession {
             prev_player_lap: 1,
         };
 
+        session.refresh_hof_entries();
         session.init_race();
         session.state = GameState::Menu; // Start in main menu
         session
+    }
+
+    /// Track identifier string used for Hall of Fame records.
+    pub fn track_choice_id(&self) -> &'static str {
+        match self.track_choice {
+            TrackChoice::ClassicGrandPrix => "classic_grand_prix",
+            TrackChoice::OvalSpeedway => "oval_speedway",
+            TrackChoice::DriftPark => "drift_park",
+            TrackChoice::KartArena => "kart_arena",
+        }
+    }
+
+    /// Refreshes the cached Top 10 Hall of Fame list for the current track.
+    pub fn refresh_hof_entries(&mut self) {
+        let track_id = self.track_choice_id();
+        if let Some(db) = &self.hof_db {
+            let _ = db.seed_defaults_if_empty(track_id);
+            if let Ok(entries) = db.get_top_10(track_id) {
+                self.hof_entries = entries;
+            }
+        }
     }
 
     /// Asynchronously initializes audio banks and plays the synthwave menu theme.
@@ -223,6 +311,10 @@ impl RaceSession {
 
     /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
     pub fn init_race(&mut self) {
+        self.recent_hof_id = None;
+        self.show_hall_of_fame = true;
+        self.refresh_hof_entries();
+
         // 1. Build selected track
         self.track = match self.track_choice {
             TrackChoice::ClassicGrandPrix => classic_grand_prix(),
@@ -234,13 +326,9 @@ impl RaceSession {
         // 2. Setup camera
         self.camera.setup_for_track(&self.track);
 
+
         // 3. Player car configuration
-        let mut base_config = match self.car_choice {
-            CarChoice::SportsCar => CarConfig::sports_car(),
-            CarChoice::DriftCar => CarConfig::drift_car(),
-            CarChoice::Kart => CarConfig::kart(),
-            CarChoice::RallyCar => CarConfig::rally_car(),
-        };
+        let mut base_config = self.config.get_car_config(self.car_choice);
         base_config.assists = self.assist_profile.to_config();
 
         // 4. Determine total participant count
@@ -362,9 +450,19 @@ impl RaceSession {
             self.touch.toggle_layout();
         }
 
-        // Handle camera toggle (Tab key or Gamepad Left Stick Click)
+        // Handle camera toggle / zoom cycle (Tab key or Gamepad Left Stick Click)
         if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_cam_toggle_pressed {
-            self.camera.toggle_mode();
+            let lvl = self.camera.cycle_zoom_level().clone();
+            self.audio.play_sfx(SfxType::UiMove);
+            if let Some(player_car) = self.cars.first() {
+                let lvl_idx = self.camera.current_level_idx + 1;
+                let total_lvls = self.camera.levels.len();
+                self.fx.drift_popups.spawn_text(
+                    player_car.state.position,
+                    &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
+                    Color::new(0.3, 0.9, 1.0, 1.0),
+                );
+            }
         }
 
         // Open Controls & Driving Assists Screen (C or K key)
@@ -475,8 +573,74 @@ impl RaceSession {
                     self.state = GameState::ControlsHelp(true);
                 }
             }
+            GameState::NameEntry {
+                player_time,
+                best_lap,
+                ref mut input_name,
+                ref mut cursor_timer,
+            } => {
+                *cursor_timer += frame_dt;
+
+                // Character typing
+                while let Some(c) = macroquad::input::get_char_pressed() {
+                    if (c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_') && input_name.len() < 12 {
+                        input_name.push(c.to_ascii_uppercase());
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                }
+
+                // Backspace
+                if is_key_pressed(KeyCode::Backspace) && !input_name.is_empty() {
+                    input_name.pop();
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+
+                // Submit or skip
+                let is_submit = is_key_pressed(KeyCode::Enter)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed;
+
+                let is_skip = is_key_pressed(KeyCode::Escape)
+                    || self.input.gamepad.snapshot.btn_cancel_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed;
+
+                if is_submit || is_skip {
+                    let final_name = if input_name.trim().is_empty() {
+                        "PLAYER 1".to_string()
+                    } else {
+                        input_name.trim().to_string()
+                    };
+
+                    let track_id = self.track_choice_id();
+                    let entry = HallOfFameEntry {
+                        id: None,
+                        track_id: track_id.to_string(),
+                        player_name: final_name,
+                        car_name: self.car_choice.title().to_string(),
+                        total_time: player_time,
+                        best_lap,
+                        laps: self.total_laps,
+                        created_at: String::new(),
+                    };
+
+                    if let Some(db) = &self.hof_db {
+                        if let Ok(new_id) = db.insert_entry(&entry) {
+                            self.recent_hof_id = Some(new_id);
+                        }
+                    }
+
+                    self.refresh_hof_entries();
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.show_hall_of_fame = true;
+                    self.state = GameState::Finished;
+                }
+            }
             GameState::Finished => {
                 self.audio.stop_all_loops();
+                if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_x_pressed {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.show_hall_of_fame = !self.show_hall_of_fame;
+                }
                 if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
@@ -487,6 +651,7 @@ impl RaceSession {
                     self.audio.play_music(MusicTrack::NeonMenu);
                 }
             }
+
             GameState::ControlsHelp(from_paused) => {
                 if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
                     self.audio.play_sfx(SfxType::UiMove);
@@ -757,9 +922,35 @@ impl RaceSession {
 
         if player_done && !self.is_time_attack {
             self.build_results();
-            self.state = GameState::Finished;
             self.audio.stop_all_loops();
             self.audio.play_sfx(SfxType::RaceFinish);
+
+            let track_id = self.track_choice_id();
+            let player_time = self.session_time;
+            let best_lap = self.trackers.first().and_then(|t| t.best_lap_time);
+
+            if let Some(db) = &self.hof_db {
+                let _ = db.seed_defaults_if_empty(track_id);
+            }
+
+            let is_top = self
+                .hof_db
+                .as_ref()
+                .and_then(|db| db.is_top_10(track_id, player_time).ok())
+                .unwrap_or(false);
+
+            if is_top {
+                self.state = GameState::NameEntry {
+                    player_time,
+                    best_lap,
+                    input_name: String::new(),
+                    cursor_timer: 0.0,
+                };
+            } else {
+                self.refresh_hof_entries();
+                self.show_hall_of_fame = true;
+                self.state = GameState::Finished;
+            }
         }
     }
 
@@ -840,9 +1031,34 @@ impl RaceSession {
                 self.render_screen(None);
                 render_pause_menu(&self.fonts, self.assist_profile, &self.audio.settings);
             }
+            GameState::NameEntry {
+                player_time,
+                best_lap,
+                ref input_name,
+                cursor_timer,
+            } => {
+                self.render_world();
+                render_name_input_modal(
+                    &self.fonts,
+                    &self.track.name,
+                    input_name,
+                    player_time,
+                    best_lap,
+                    cursor_timer,
+                );
+            }
             GameState::Finished => {
                 self.render_world();
-                render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack);
+                if self.show_hall_of_fame {
+                    render_hall_of_fame_screen(
+                        &self.fonts,
+                        &self.track.name,
+                        &self.hof_entries,
+                        self.recent_hof_id,
+                    );
+                } else {
+                    render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack);
+                }
             }
             GameState::ControlsHelp(from_paused) => {
                 if from_paused {
@@ -857,6 +1073,7 @@ impl RaceSession {
             }
         }
     }
+
 
     /// Renders world-space entities under active camera.
     fn render_world(&self) {

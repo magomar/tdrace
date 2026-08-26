@@ -81,3 +81,42 @@ fn test_camera_coordinate_conversions() {
     assert!((world_pt.x - roundtrip_world.x).abs() < 1e-3);
     assert!((world_pt.y - roundtrip_world.y).abs() < 1e-3);
 }
+
+#[test]
+fn test_multi_level_zoom_cycling() {
+    let mut camera = RaceCamera::new();
+    assert_eq!(camera.levels.len(), 4);
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(camera.current_zoom_level().name, "Close");
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+
+    // Intermediate 1: Medium
+    let lvl1_name = camera.cycle_zoom_level().name.clone();
+    assert_eq!(camera.current_level_idx, 1);
+    assert_eq!(lvl1_name, "Medium");
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.min_zoom_scale, 10.0);
+    assert_eq!(camera.max_zoom_scale, 16.5);
+
+    // Intermediate 2: Far
+    let lvl2_name = camera.cycle_zoom_level().name.clone();
+    assert_eq!(camera.current_level_idx, 2);
+    assert_eq!(lvl2_name, "Far");
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.min_zoom_scale, 7.0);
+    assert_eq!(camera.max_zoom_scale, 11.5);
+
+    // Overview (Zoomed out)
+    let lvl3_name = camera.cycle_zoom_level().name.clone();
+    assert_eq!(camera.current_level_idx, 3);
+    assert_eq!(lvl3_name, "Overview");
+    assert_eq!(camera.mode, CameraMode::StaticOverview);
+
+    // Wraparound to Close
+    let lvl0_name = camera.cycle_zoom_level().name.clone();
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(lvl0_name, "Close");
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.min_zoom_scale, 13.5);
+    assert_eq!(camera.max_zoom_scale, 22.0);
+}
