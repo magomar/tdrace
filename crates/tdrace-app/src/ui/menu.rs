@@ -820,3 +820,193 @@ pub fn render_controls_screen(
         Palette::WHITE,
     );
 }
+
+use crate::tournament::ChampionshipSession;
+
+/// Renders the Motorsport Grand Hub Module Selection Menu.
+pub fn render_module_select_menu(
+    fonts: &Fonts,
+    selected_idx: usize,
+    modules: &[(&str, &str, &str, &str, Color)], // (id, title, tag, description, color)
+) {
+    let sw = screen_width();
+    let sh = screen_height();
+    let scaler = UiScaler::new(sw, sh);
+
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
+
+    // Header
+    fonts.draw_display_centered_with_shadow(
+        "TDRACE MOTORSPORT GRAND HUB",
+        sw * 0.5,
+        scaler.s(45.0),
+        scaler.font_s(36.0),
+        Palette::NEON_GOLD,
+        Color::new(0.0, 0.0, 0.0, 0.6),
+        scaler.s(2.0),
+    );
+
+    fonts.draw_ui_regular_centered(
+        "Select a Motorsport Championship Category or Circuit Studio Workshop",
+        sw * 0.5,
+        scaler.s(68.0),
+        scaler.font_s(14.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    let card_w = (sw * 0.72).clamp(scaler.s(480.0), scaler.s(720.0));
+    let card_h = scaler.s(90.0);
+    let card_x = (sw - card_w) * 0.5;
+    let mut curr_y = scaler.s(95.0);
+
+    for (i, (_id, title, tag, desc, accent_col)) in modules.iter().enumerate() {
+        let is_sel = i == selected_idx;
+        let bg_col = if is_sel {
+            Palette::UI_CARD_BG_HOVER
+        } else {
+            Palette::UI_CARD_BG
+        };
+        let border_col = if is_sel {
+            *accent_col
+        } else {
+            Palette::UI_CARD_BORDER
+        };
+
+        scaler.draw_glass_card(card_x, curr_y, card_w, card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.2 });
+
+        // Left accent bar
+        if is_sel {
+            draw_rectangle(card_x, curr_y, scaler.s(6.0), card_h, *accent_col);
+        }
+
+        // Tag
+        fonts.draw_ui_bold(
+            tag,
+            card_x + scaler.s(20.0),
+            curr_y + scaler.s(22.0),
+            scaler.font_s(11.0),
+            if is_sel { *accent_col } else { Palette::UI_TEXT_MUTED },
+        );
+
+        // Title
+        fonts.draw_display(
+            title,
+            card_x + scaler.s(20.0),
+            curr_y + scaler.s(48.0),
+            scaler.font_s(20.0),
+            if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+        );
+
+        // Description
+        fonts.draw_ui_regular(
+            desc,
+            card_x + scaler.s(20.0),
+            curr_y + scaler.s(72.0),
+            scaler.font_s(12.5),
+            if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
+        );
+
+        curr_y += card_h + scaler.s(14.0);
+    }
+
+    // Footer prompt
+    let prompt = "USE [UP/DOWN] TO NAVIGATE | [ENTER/SPACE] LAUNCH MOTORSPORT | [ESC] BACK";
+    fonts.draw_ui_bold_centered(
+        prompt,
+        sw * 0.5,
+        sh - scaler.s(24.0),
+        scaler.font_s(14.0),
+        Palette::NEON_CYAN,
+    );
+}
+
+/// Renders the Championship Standings table and round victory screen.
+pub fn render_championship_standings_screen(
+    fonts: &Fonts,
+    champ: &ChampionshipSession,
+) {
+    let sw = screen_width();
+    let sh = screen_height();
+    let scaler = UiScaler::new(sw, sh);
+
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
+
+    // Header
+    let title = format!("🏆 {}", champ.name.to_uppercase());
+    fonts.draw_display_centered_with_shadow(
+        &title,
+        sw * 0.5,
+        scaler.s(45.0),
+        scaler.font_s(32.0),
+        Palette::NEON_GOLD,
+        Color::new(0.0, 0.0, 0.0, 0.6),
+        scaler.s(2.0),
+    );
+
+    let subtitle = if champ.is_completed {
+        "SEASON FINALE — CHAMPIONSHIP DECIDED!".to_string()
+    } else {
+        format!("ROUND {} OF {} COMPLETED — DRIVER STANDINGS", champ.current_round, champ.total_rounds())
+    };
+    fonts.draw_ui_bold_centered(
+        &subtitle,
+        sw * 0.5,
+        scaler.s(70.0),
+        scaler.font_s(14.0),
+        if champ.is_completed { Palette::NEON_GREEN } else { Palette::NEON_CYAN },
+    );
+
+    // Standings Table Card
+    let table_w = (sw * 0.80).clamp(scaler.s(520.0), scaler.s(850.0));
+    let table_x = (sw - table_w) * 0.5;
+    let table_y = scaler.s(90.0);
+    let table_h = scaler.s(420.0);
+
+    scaler.draw_glass_card(table_x, table_y, table_w, table_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
+
+    // Table Header Row
+    let mut row_y = table_y + scaler.s(28.0);
+    fonts.draw_ui_bold("POS", table_x + scaler.s(20.0), row_y, scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_bold("DRIVER", table_x + scaler.s(70.0), row_y, scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_bold("TEAM / CAR", table_x + scaler.s(280.0), row_y, scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_bold("WINS", table_x + table_w - scaler.s(160.0), row_y, scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_bold("POINTS", table_x + table_w - scaler.s(75.0), row_y, scaler.font_s(13.0), Palette::NEON_GOLD);
+
+    draw_rectangle(table_x + scaler.s(15.0), row_y + scaler.s(8.0), table_w - scaler.s(30.0), 1.0, Palette::UI_CARD_BORDER);
+    row_y += scaler.s(24.0);
+
+    // Table Rows
+    for (i, entry) in champ.standings.iter().enumerate().take(10) {
+        let pos_str = format!("#{}", i + 1);
+        let pos_col = match i {
+            0 => Palette::NEON_GOLD,
+            1 => Palette::WHITE,
+            2 => Palette::NEON_MAGENTA,
+            _ => Palette::UI_TEXT_MUTED,
+        };
+
+        fonts.draw_ui_bold(&pos_str, table_x + scaler.s(20.0), row_y, scaler.font_s(14.0), pos_col);
+        fonts.draw_ui_bold(&entry.driver_name, table_x + scaler.s(70.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+        fonts.draw_ui_regular(&entry.team_name, table_x + scaler.s(280.0), row_y, scaler.font_s(13.0), Color::new(0.75, 0.80, 0.88, 1.0));
+        fonts.draw_ui_bold(&entry.wins.to_string(), table_x + table_w - scaler.s(150.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+        fonts.draw_display(&format!("{} PTS", entry.points), table_x + table_w - scaler.s(85.0), row_y, scaler.font_s(15.0), Palette::NEON_GOLD);
+
+        row_y += scaler.s(28.0);
+    }
+
+    // Bottom Action Prompt
+    let next_prompt = if champ.is_completed {
+        "SEASON COMPLETE! PRESS [ENTER/SPACE] OR GAMEPAD [A] TO RETURN TO MENU"
+    } else {
+        "PRESS [ENTER/SPACE] OR GAMEPAD [A] TO START NEXT ROUND | [ESC] EXIT"
+    };
+
+    fonts.draw_ui_bold_centered(
+        next_prompt,
+        sw * 0.5,
+        sh - scaler.s(26.0),
+        scaler.font_s(15.0),
+        Palette::NEON_GREEN,
+    );
+}
+

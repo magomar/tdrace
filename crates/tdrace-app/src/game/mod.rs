@@ -75,23 +75,29 @@ use crate::db::{HallOfFameDb, HallOfFameEntry};
 use crate::fx::EffectsManager;
 use crate::input::touch::TouchController;
 use crate::input::InputController;
+use crate::module::{
+    F1GameModule, GameModule, KartGameModule, RallyGameModule, VehicleVisualType,
+};
 use crate::profile::{CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+use crate::render::car::render_car_with_visual_type;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
     render_editor_grid, render_editor_gizmos, render_editor_ui, EditorAction, EditorCamera,
     EditorModal, EditorState, EditorToolType, ToolSettings,
 };
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
-use crate::render::{render_barriers_and_obstacles, render_car, render_track};
+use crate::render::{render_barriers_and_obstacles, render_track};
 use crate::replay::{ReplayPlayer, ReplayRecorder};
+use crate::tournament::{ChampionshipSession, PointSystem, RoundDriverResult};
 use crate::track_manager::TrackManager;
 use crate::ui::driver_card::render_driver_cards_screen;
 use crate::ui::font::Fonts;
 use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
 use crate::ui::hud::render_hud;
 use crate::ui::menu::{
-    render_controls_screen, render_pause_menu, render_results_screen, render_track_select_menu,
-    CarChoice, RaceResultEntry, TrackChoice,
+    render_championship_standings_screen, render_controls_screen, render_module_select_menu,
+    render_pause_menu, render_results_screen, render_track_select_menu, CarChoice, RaceResultEntry,
+    TrackChoice,
 };
 use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
 use crate::ui::starting_grid::render_starting_grid_screen;
@@ -112,6 +118,10 @@ pub enum DriverCardsOrigin {
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameState {
     Menu,
+    ModuleSelect {
+        selected_idx: usize,
+    },
+    ChampionshipStandings,
     StartingGrid,
     Countdown(f32),
     Racing,
@@ -153,6 +163,10 @@ pub struct RaceSession {
     pub num_bots: usize,
     pub total_laps: u32,
     pub config: GameConfig,
+
+    pub active_module_id: &'static str,
+    pub championship_session: Option<ChampionshipSession>,
+    pub current_visual_type: VehicleVisualType,
 
     pub cars: Vec<Car>,
     pub color_schemes: Vec<CarColorScheme>,
@@ -358,6 +372,14 @@ impl RaceSession {
             total_laps: config.gameplay.default_laps,
             config,
 
+            active_module_id: "classic",
+            championship_session: None,
+            current_visual_type: VehicleVisualType::TouringGT {
+                widebody: true,
+                gt_wing: true,
+                diffuser: true,
+            },
+
             cars: Vec::new(),
             color_schemes: Vec::new(),
             trackers: Vec::new(),
@@ -488,6 +510,130 @@ impl RaceSession {
         }
     }
 
+    /// Switches the active motorsport game module (f1, rally, kart, classic).
+    pub fn switch_to_module(&mut self, mod_id: &str) {
+        match mod_id {
+            "f1" => self.switch_to_f1(),
+            "rally" => self.switch_to_rally(),
+            "kart" => self.switch_to_kart(),
+            _ => self.switch_to_classic(),
+        }
+    }
+
+    /// Activates the Formula 1 Grand Prix module.
+    pub fn switch_to_f1(&mut self) {
+        self.active_module_id = "f1";
+        self.current_visual_type = VehicleVisualType::OpenWheel {
+            front_wing_span: 1.80,
+            rear_wing_height: 0.85,
+            halo: true,
+        };
+        self.track = F1GameModule::track_monza();
+        self.track_choice = TrackChoice::ClassicGrandPrix;
+        self.car_choice = CarChoice::SportsCar;
+        self.total_laps = 5;
+        self.num_bots = 7;
+        self.camera.setup_for_track(&self.track);
+        self.rebuild_roster_participants();
+        self.state = GameState::Menu;
+    }
+
+    /// Activates the World Rally Championship module.
+    pub fn switch_to_rally(&mut self) {
+        self.active_module_id = "rally";
+        self.current_visual_type = VehicleVisualType::RallyHatch {
+            roof_scoop: true,
+            mudflaps: true,
+            large_wing: true,
+        };
+        self.track_choice = TrackChoice::OasisRally;
+        self.track = tdrace_core::track::presets::oasis_rally();
+        self.car_choice = CarChoice::RallyCar;
+        self.total_laps = 3;
+        self.num_bots = 5;
+        self.camera.setup_for_track(&self.track);
+        self.rebuild_roster_participants();
+        self.state = GameState::Menu;
+    }
+
+    /// Activates the Sprint Karting Cup module.
+    pub fn switch_to_kart(&mut self) {
+        self.active_module_id = "kart";
+        self.current_visual_type = VehicleVisualType::GoKart {
+            exposed_driver: true,
+            side_bumpers: true,
+        };
+        self.track_choice = TrackChoice::KartArena;
+        self.track = tdrace_core::track::presets::kart_arena();
+        self.car_choice = CarChoice::Kart;
+        self.total_laps = 4;
+        self.num_bots = 7;
+        self.camera.setup_for_track(&self.track);
+        self.rebuild_roster_participants();
+        self.state = GameState::Menu;
+    }
+
+    /// Activates the Classic Arcade Motorsport module.
+    pub fn switch_to_classic(&mut self) {
+        self.active_module_id = "classic";
+        self.current_visual_type = VehicleVisualType::TouringGT {
+            widebody: true,
+            gt_wing: true,
+            diffuser: true,
+        };
+        self.track_choice = TrackChoice::ClassicGrandPrix;
+        self.track = tdrace_core::track::presets::classic_grand_prix();
+        self.car_choice = CarChoice::SportsCar;
+        self.total_laps = 3;
+        self.num_bots = 3;
+        self.camera.setup_for_track(&self.track);
+        self.rebuild_roster_participants();
+        self.state = GameState::Menu;
+    }
+
+    /// Starts a full Formula 1 World Championship Season.
+    pub fn start_f1_championship(&mut self) {
+        let champ = ChampionshipSession::new(
+            "FIA Formula 1 World Championship 2026",
+            PointSystem::F1Standard { fastest_lap_bonus: true },
+            vec!["monza".to_string(), "spa".to_string(), "silverstone".to_string(), "classic_grand_prix".to_string()],
+            5,
+            &[
+                ("player", "Player", "Apex GP"),
+                ("max_hunter", "Max Hunter", "Red Bull"),
+                ("charles_laurent", "Charles Laurent", "Ferrari"),
+                ("lewis_vance", "Lewis Vance", "Ferrari"),
+                ("fernando_toro", "Fernando Toro", "Aston Martin"),
+                ("bot_5", "George Speed", "Mercedes-AMG"),
+                ("bot_6", "Lando Vance", "McLaren"),
+                ("bot_7", "Oscar Rocket", "McLaren"),
+            ],
+        );
+        self.switch_to_f1();
+        self.championship_session = Some(champ);
+        self.init_race();
+    }
+
+    /// Advances to the next round in an active championship season.
+    pub fn advance_championship_round(&mut self) {
+        if let Some(champ) = &self.championship_session {
+            if let Some(track_id) = champ.current_track_id() {
+                match track_id {
+                    "monza" => self.track = F1GameModule::track_monza(),
+                    "spa" => self.track = F1GameModule::track_spa(),
+                    "silverstone" => self.track = F1GameModule::track_silverstone(),
+                    _ => self.track = tdrace_core::track::presets::classic_grand_prix(),
+                }
+                self.init_race();
+            } else {
+                self.championship_session = None;
+                self.state = GameState::Menu;
+            }
+        } else {
+            self.state = GameState::Menu;
+        }
+    }
+
     /// Reconstructs participant cars, trackers, and AI drivers for the active roster.
     pub fn rebuild_roster_participants(&mut self) {
         let total_cars = if self.is_time_attack {
@@ -512,11 +658,76 @@ impl RaceSession {
             .wrapping_add((self.num_bots as u64) * 101);
 
         if !self.is_time_attack && total_cars > 1 {
-            self.opponent_drivers = DriverCharacter::sample_opponents(total_cars - 1, seed);
+            match self.active_module_id {
+                "f1" => {
+                    let drivers = F1GameModule::new().drivers();
+                    self.opponent_drivers = drivers.into_iter().take(total_cars - 1).collect();
+                }
+                "rally" => {
+                    let drivers = RallyGameModule::new().drivers();
+                    self.opponent_drivers = drivers.into_iter().take(total_cars - 1).collect();
+                }
+                "kart" => {
+                    let drivers = KartGameModule::new().drivers();
+                    self.opponent_drivers = drivers.into_iter().take(total_cars - 1).collect();
+                }
+                _ => {
+                    self.opponent_drivers = DriverCharacter::sample_opponents(total_cars - 1, seed);
+                }
+            }
         }
 
         let player_car_choice = self.active_player_car_choice();
-        let mut base_config = self.config.get_car_config(player_car_choice);
+        let mut base_config = match self.active_module_id {
+            "f1" => {
+                self.current_visual_type = VehicleVisualType::OpenWheel {
+                    front_wing_span: 1.80,
+                    rear_wing_height: 0.85,
+                    halo: true,
+                };
+                F1GameModule::car_f1_hybrid()
+            }
+            "rally" => {
+                self.current_visual_type = VehicleVisualType::RallyHatch {
+                    roof_scoop: true,
+                    mudflaps: true,
+                    large_wing: true,
+                };
+                RallyGameModule::car_wrc_rally()
+            }
+            "kart" => {
+                self.current_visual_type = VehicleVisualType::GoKart {
+                    exposed_driver: true,
+                    side_bumpers: true,
+                };
+                KartGameModule::car_shifter_kart()
+            }
+            _ => {
+                match player_car_choice {
+                    CarChoice::Kart => {
+                        self.current_visual_type = VehicleVisualType::GoKart {
+                            exposed_driver: true,
+                            side_bumpers: true,
+                        };
+                    }
+                    CarChoice::RallyCar => {
+                        self.current_visual_type = VehicleVisualType::RallyHatch {
+                            roof_scoop: true,
+                            mudflaps: true,
+                            large_wing: true,
+                        };
+                    }
+                    _ => {
+                        self.current_visual_type = VehicleVisualType::TouringGT {
+                            widebody: true,
+                            gt_wing: true,
+                            diffuser: true,
+                        };
+                    }
+                }
+                self.config.get_car_config(player_car_choice)
+            }
+        };
         base_config.assists = self.assist_profile.to_config();
 
         let grid_pose_0 = self
@@ -547,12 +758,19 @@ impl RaceSession {
                     grid_slot: car_idx,
                 });
 
-            let bot_car_choice = if self.free_car_selection {
-                character.preferred_car
-            } else {
-                player_car_choice
+            let bot_config = match self.active_module_id {
+                "f1" => F1GameModule::car_f1_hybrid(),
+                "rally" => RallyGameModule::car_wrc_rally(),
+                "kart" => KartGameModule::car_shifter_kart(),
+                _ => {
+                    let bot_car_choice = if self.free_car_selection {
+                        character.preferred_car
+                    } else {
+                        player_car_choice
+                    };
+                    self.config.get_car_config(bot_car_choice)
+                }
             };
-            let bot_config = self.config.get_car_config(bot_car_choice);
             let bot_car = Car::new(bot_config).with_pose(grid_pose.position, grid_pose.angle);
 
             self.cars.push(bot_car);
@@ -794,6 +1012,55 @@ impl RaceSession {
             GameState::Menu => {
                 self.audio.play_music(MusicTrack::NeonMenu);
                 self.update_menu();
+            }
+            GameState::ModuleSelect { ref mut selected_idx } => {
+                let num_modules = 4;
+                if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if *selected_idx == 0 {
+                        *selected_idx = num_modules - 1;
+                    } else {
+                        *selected_idx -= 1;
+                    }
+                }
+                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    *selected_idx = (*selected_idx + 1) % num_modules;
+                }
+                if is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    match *selected_idx {
+                        0 => self.switch_to_f1(),
+                        1 => self.switch_to_rally(),
+                        2 => self.switch_to_kart(),
+                        _ => self.switch_to_classic(),
+                    }
+                }
+                if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::Menu;
+                }
+            }
+            GameState::ChampionshipStandings => {
+                if is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.advance_championship_round();
+                }
+                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.championship_session = None;
+                    self.state = GameState::Menu;
+                }
             }
             GameState::StartingGrid => {
                 // 1. Toggle Free Car Selection (F or C key, or Gamepad X)
@@ -1378,6 +1645,26 @@ impl RaceSession {
         if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) || self.input.gamepad.snapshot.btn_back_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::ControlsHelp(false);
+            return;
+        }
+
+        // Open Motorsport Grand Hub Module Selector (G key or Tab)
+        if is_key_pressed(KeyCode::G) || is_key_pressed(KeyCode::Tab) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let cur_mod_idx = match self.active_module_id {
+                "f1" => 0,
+                "rally" => 1,
+                "kart" => 2,
+                _ => 3,
+            };
+            self.state = GameState::ModuleSelect { selected_idx: cur_mod_idx };
+            return;
+        }
+
+        // Quick Championship trigger for Formula 1 (F key)
+        if self.active_module_id == "f1" && is_key_pressed(KeyCode::F) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.start_f1_championship();
             return;
         }
 
@@ -2120,6 +2407,33 @@ impl RaceSession {
                 None
             };
 
+            // If an active championship season is underway, submit round results and show standings
+            if let Some(champ) = &mut self.championship_session {
+                let mut round_results = Vec::new();
+                for (pos, res) in self.results.iter().enumerate() {
+                    let driver_id = if res.is_player {
+                        "player".to_string()
+                    } else if let Some(character) = self.opponent_drivers.get(pos.saturating_sub(1)) {
+                        character.id.to_string()
+                    } else {
+                        format!("bot_{}", pos)
+                    };
+                    round_results.push(RoundDriverResult {
+                        driver_id,
+                        driver_name: res.car_name.clone(),
+                        team_name: "Motorsport Team".to_string(),
+                        finish_position: pos + 1,
+                        total_time: res.total_time,
+                        best_lap: res.best_lap,
+                        points_awarded: 0,
+                        has_fastest_lap: pos == 0,
+                    });
+                }
+                champ.submit_round_results(&self.track.name, round_results);
+                self.state = GameState::ChampionshipStandings;
+                return;
+            }
+
             self.show_hall_of_fame = true;
             self.state = GameState::Finished;
         }
@@ -2192,6 +2506,22 @@ impl RaceSession {
                     &self.active_profile,
                     &self.active_profile_stats,
                 );
+            }
+            GameState::ModuleSelect { selected_idx } => {
+                let modules_data = [
+                    ("f1", "Formula 1 Grand Prix", "FIA WORLD CHAMPIONSHIP", "High-downforce 1050 BHP hybrid open-wheelers on Monza, Spa, and Silverstone.", Palette::RED),
+                    ("rally", "World Rally Championship", "WRC LOOSE SURFACE AWD", "AWD stage time trials and Scandinavian flicks on desert sand & mountain passes.", Palette::NEON_GOLD),
+                    ("kart", "Sprint Karting Cup", "125CC SHIFTER KARTS", "Direct 1:1 steering, 3.5G cornering bites, and elimination tournament heats.", Palette::NEON_GREEN),
+                    ("classic", "Classic Arcade Motorsport", "ALL-IN-ONE ARCADE & STUDIO", "GT Coupe, Drift Spec, Shifter Kart, Rally Car & CAD Circuit Studio Workshop.", Palette::NEON_CYAN),
+                ];
+                render_module_select_menu(&self.fonts, selected_idx, &modules_data);
+            }
+            GameState::ChampionshipStandings => {
+                if let Some(champ) = &self.championship_session {
+                    render_championship_standings_screen(&self.fonts, champ);
+                } else {
+                    self.state = GameState::Menu;
+                }
             }
             GameState::StartingGrid => {
                 self.render_world();
@@ -2768,7 +3098,7 @@ impl RaceSession {
             // 4. Test Car
             let is_braking = car.state.local_velocity.x > 1.0 && car.state.wheels[2].slip_ratio < -0.15;
             let scheme = CarColorScheme::default();
-            render_car(car, &scheme, is_braking);
+            render_car_with_visual_type(car, &scheme, is_braking, self.current_visual_type);
 
             self.camera.reset_to_screen();
 
@@ -2853,7 +3183,7 @@ impl RaceSession {
             let scheme = &self.color_schemes[i];
             let is_braking =
                 car.state.local_velocity.x > 1.0 && car.state.wheels[2].slip_ratio < -0.15;
-            render_car(car, scheme, is_braking);
+            render_car_with_visual_type(car, scheme, is_braking, self.current_visual_type);
         }
 
         // 6. Airborne Particles (Smoke, Dirt roost, Sparks, Drift text)
