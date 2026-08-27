@@ -128,7 +128,11 @@ pub struct RaceResultEntry {
     pub delta_to_leader: f32,
 }
 
+use crate::profile::{PlayerProfile, ProfileCareerStats};
+use super::profile_ui::render_profile_badge;
+
 /// Renders the modern Track & Setup Selection Menu with glass cards and vector typography.
+#[allow(clippy::too_many_arguments)]
 pub fn render_track_select_menu(
     fonts: &Fonts,
     selected_track_idx: usize,
@@ -137,6 +141,8 @@ pub fn render_track_select_menu(
     is_time_attack: bool,
     assist_profile: AssistProfile,
     audio_settings: &AudioSettings,
+    active_profile: &PlayerProfile,
+    active_stats: &ProfileCareerStats,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -150,8 +156,8 @@ pub fn render_track_select_menu(
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
-        scaler.s(48.0),
-        scaler.font_s(42.0),
+        scaler.s(34.0),
+        scaler.font_s(34.0),
         Palette::NEON_GOLD,
         Color::new(0.0, 0.0, 0.0, 0.6),
         scaler.s(2.0),
@@ -161,28 +167,41 @@ pub fn render_track_select_menu(
     fonts.draw_ui_regular_centered(
         subtitle,
         sw * 0.5,
-        scaler.s(74.0),
-        scaler.font_s(16.0),
+        scaler.s(52.0),
+        scaler.font_s(13.0),
         Palette::UI_TEXT_MUTED,
     );
 
-    // Left Column: Track Selection Cards
+    // Columns geometry
     let col_w = (sw * 0.40).clamp(scaler.s(320.0), scaler.s(480.0));
     let col1_x = (sw * 0.5 - col_w - scaler.s(16.0)).max(scaler.safe_pad_x);
-    let mut curr_y = scaler.s(105.0);
+    let col2_x = (sw * 0.5 + scaler.s(16.0)).min(sw - col_w - scaler.safe_pad_x);
+
+    // Active Profile Badge Banner
+    let badge_w = col_w * 2.0 + scaler.s(32.0);
+    let badge_x = col1_x;
+    let badge_y = scaler.s(62.0);
+    let badge_h = scaler.s(48.0);
+    render_profile_badge(fonts, &scaler, badge_x, badge_y, badge_w, badge_h, active_profile, active_stats);
+
+    // Explicit spacing between Profile Panel and Track / Car selection columns
+    let menu_content_y = badge_y + badge_h + scaler.s(18.0);
+
+    // Left Column: Track Selection Cards
+    let mut curr_y = menu_content_y;
 
     fonts.draw_ui_bold(
         "SELECT CIRCUIT [Up/Down]",
         col1_x,
-        curr_y,
-        scaler.font_s(18.0),
+        curr_y + scaler.s(13.0),
+        scaler.font_s(16.0),
         Palette::NEON_CYAN,
     );
     curr_y += scaler.s(22.0);
 
     for (i, track_opt) in TrackChoice::ALL.iter().enumerate() {
         let is_sel = i == selected_track_idx;
-        let box_h = scaler.s(64.0);
+        let box_h = scaler.s(60.0);
         let bg_col = if is_sel {
             Palette::UI_CARD_BG_HOVER
         } else {
@@ -201,7 +220,7 @@ pub fn render_track_select_menu(
         fonts.draw_ui_bold(
             track_opt.tag(),
             col1_x + scaler.s(14.0),
-            curr_y + scaler.s(18.0),
+            curr_y + scaler.s(17.0),
             scaler.font_s(11.0),
             tag_col,
         );
@@ -211,8 +230,8 @@ pub fn render_track_select_menu(
         fonts.draw_ui_bold(
             track_opt.title(),
             col1_x + scaler.s(14.0),
-            curr_y + scaler.s(38.0),
-            scaler.font_s(18.0),
+            curr_y + scaler.s(36.0),
+            scaler.font_s(17.0),
             title_col,
         );
 
@@ -220,23 +239,22 @@ pub fn render_track_select_menu(
         fonts.draw_ui_regular(
             track_opt.description(),
             col1_x + scaler.s(14.0),
-            curr_y + scaler.s(54.0),
-            scaler.font_s(12.0),
+            curr_y + scaler.s(51.0),
+            scaler.font_s(11.5),
             Palette::UI_TEXT_MUTED,
         );
 
-        curr_y += box_h + scaler.s(10.0);
+        curr_y += box_h + scaler.s(8.0);
     }
 
     // Right Column: Vehicle & Dynamics Settings
-    let col2_x = (sw * 0.5 + scaler.s(16.0)).min(sw - col_w - scaler.safe_pad_x);
-    let mut c2_y = scaler.s(105.0);
+    let mut c2_y = menu_content_y;
 
     fonts.draw_ui_bold(
         "SELECT VEHICLE [Left/Right]",
         col2_x,
-        c2_y,
-        scaler.font_s(18.0),
+        c2_y + scaler.s(13.0),
+        scaler.font_s(16.0),
         Palette::NEON_MAGENTA,
     );
     c2_y += scaler.s(22.0);

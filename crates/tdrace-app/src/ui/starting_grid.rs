@@ -6,6 +6,7 @@ use tdrace_core::track::Track;
 use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::ai::DriverCharacter;
+use crate::profile::{draw_country_banner, PlayerProfile};
 use crate::render::color::{CarColorScheme, Palette};
 
 /// Renders the starting grid and participants showcase screen before race launch.
@@ -14,7 +15,7 @@ pub fn render_starting_grid_screen(
     fonts: &Fonts,
     track: &Track,
     player_car_title: &str,
-    player_scheme: CarColorScheme,
+    player_profile: &PlayerProfile,
     opponents: &[DriverCharacter],
     total_laps: u32,
     _is_time_attack: bool,
@@ -58,7 +59,7 @@ pub fn render_starting_grid_screen(
     );
 
     // Grid Container Box - narrower and sleek
-    let card_w = (sw * 0.70).clamp(scaler.s(480.0), scaler.s(720.0));
+    let card_w = (sw * 0.72).clamp(scaler.s(520.0), scaler.s(780.0));
     let num_rows = total_racers;
     let row_h = scaler.s(52.0);
     let row_gap = scaler.s(6.0);
@@ -76,6 +77,7 @@ pub fn render_starting_grid_screen(
     let row_x = x + scaler.s(10.0);
 
     // 1. Slot 1 (Pole Position - Player)
+    let player_desc = format!("{} (You)  •  Pole Position", player_profile.name);
     render_participant_row(
         fonts,
         &scaler,
@@ -84,11 +86,12 @@ pub fn render_starting_grid_screen(
         row_w,
         row_h,
         1,
-        "Player 1 (You)",
-        "Human Driver",
+        &player_profile.name,
+        &player_profile.alias,
+        player_profile.country.as_deref(),
         player_car_title,
-        player_scheme,
-        "User Controlled  •  Pole Position",
+        player_profile.color_scheme,
+        &player_desc,
         true,
     );
     row_y += row_h + row_gap;
@@ -113,6 +116,7 @@ pub fn render_starting_grid_screen(
             slot,
             character.name,
             character.alias,
+            None,
             character.preferred_car.title(),
             character.color_scheme,
             &stats_desc,
@@ -148,6 +152,7 @@ fn render_participant_row(
     pos: usize,
     name: &str,
     alias: &str,
+    country: Option<&str>,
     car_name: &str,
     scheme: CarColorScheme,
     profile_line: &str,
@@ -194,6 +199,15 @@ fn render_participant_row(
         badge_text_col,
     );
 
+    // Country Banner if present
+    let mut text_start_x = badge_x + badge_w + scaler.s(10.0);
+    if country.is_some() || is_player {
+        let flag_w = scaler.s(34.0);
+        let flag_h = scaler.s(18.0);
+        draw_country_banner(country, text_start_x, y + scaler.s(7.0), flag_w, flag_h, None, scaler);
+        text_start_x += flag_w + scaler.s(8.0);
+    }
+
     // Right Column: Car Model & Livery Swatches
     let car_col_w = scaler.s(185.0);
     let car_x = x + w - car_col_w;
@@ -221,10 +235,8 @@ fn render_participant_row(
     fonts.draw_ui_regular("Team Livery", car_x + scaler.s(60.0), s_y + scaler.s(9.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
 
     // Middle Column: Driver Name & Profile / Style
-    let name_x = badge_x + badge_w + scaler.s(10.0);
-
     let driver_label = if is_player {
-        name.to_string()
+        format!("{}  (\"{}\")", name, alias)
     } else {
         format!("{}  (\"{}\")", name, alias)
     };
@@ -233,8 +245,8 @@ fn render_participant_row(
     let stats_color = if is_player { Palette::NEON_GOLD } else { Color::new(0.60, 0.85, 0.95, 1.0) };
 
     // Line 1: Driver Name & Alias
-    fonts.draw_ui_bold(&driver_label, name_x, y + scaler.s(21.0), scaler.font_s(14.0), name_color);
+    fonts.draw_ui_bold(&driver_label, text_start_x, y + scaler.s(21.0), scaler.font_s(14.0), name_color);
 
     // Line 2: Profile / Style stats
-    fonts.draw_ui_regular(profile_line, name_x, y + scaler.s(38.0), scaler.font_s(11.0), stats_color);
+    fonts.draw_ui_regular(profile_line, text_start_x, y + scaler.s(38.0), scaler.font_s(11.0), stats_color);
 }

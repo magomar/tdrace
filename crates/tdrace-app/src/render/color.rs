@@ -114,6 +114,37 @@ impl Palette {
     ];
 }
 
+/// Converts a macroquad Color into an 8-character hex string (#RRGGBBAA).
+pub fn color_to_hex(c: Color) -> String {
+    let r = (c.r.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let g = (c.g.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let b = (c.b.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let a = (c.a.clamp(0.0, 1.0) * 255.0).round() as u8;
+    format!("#{:02X}{:02X}{:02X}{:02X}", r, g, b, a)
+}
+
+/// Parses a hex string (#RRGGBB or #RRGGBBAA) into a macroquad Color.
+pub fn hex_to_color(hex: &str) -> Color {
+    let clean = hex.trim().trim_start_matches('#');
+    if clean.len() == 6 {
+        if let Ok(v) = u32::from_str_radix(clean, 16) {
+            let r = ((v >> 16) & 0xFF) as f32 / 255.0;
+            let g = ((v >> 8) & 0xFF) as f32 / 255.0;
+            let b = (v & 0xFF) as f32 / 255.0;
+            return Color::new(r, g, b, 1.0);
+        }
+    } else if clean.len() == 8 {
+        if let Ok(v) = u32::from_str_radix(clean, 16) {
+            let r = ((v >> 24) & 0xFF) as f32 / 255.0;
+            let g = ((v >> 16) & 0xFF) as f32 / 255.0;
+            let b = ((v >> 8) & 0xFF) as f32 / 255.0;
+            let a = (v & 0xFF) as f32 / 255.0;
+            return Color::new(r, g, b, a);
+        }
+    }
+    Palette::WHITE
+}
+
 /// Car visual color scheme.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CarColorScheme {
@@ -145,6 +176,42 @@ impl CarColorScheme {
             secondary: s,
             helmet: h,
         }
+    }
+
+    pub fn to_hex_strings(&self) -> (String, String, String) {
+        (
+            color_to_hex(self.primary),
+            color_to_hex(self.secondary),
+            color_to_hex(self.helmet),
+        )
+    }
+
+    pub fn from_hex_strings(primary: &str, secondary: &str, helmet: &str) -> Self {
+        Self {
+            primary: hex_to_color(primary),
+            secondary: hex_to_color(secondary),
+            helmet: hex_to_color(helmet),
+        }
+    }
+}
+
+impl serde::Serialize for CarColorScheme {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let hex = self.to_hex_strings();
+        hex.serialize(serializer)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for CarColorScheme {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let (p, s, h) = <(String, String, String)>::deserialize(deserializer)?;
+        Ok(Self::from_hex_strings(&p, &s, &h))
     }
 }
 

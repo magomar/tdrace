@@ -114,29 +114,32 @@ pub fn render_name_input_modal(
     draw_rectangle(input_x, input_y, input_w, input_h, Color::new(0.06, 0.08, 0.12, 0.98));
     draw_rectangle_lines(input_x, input_y, input_w, input_h, 2.0, Palette::NEON_CYAN);
 
-    // Blinking cursor
+    // Text rendering & blinking cursor (without altering text positioning)
+    let font_size = scaler.font_s(22.0);
+    let text_y = input_y + scaler.s(32.0);
     let show_cursor = (cursor_timer * 2.5).fract() < 0.5;
-    let display_text = if input_name.is_empty() {
-        if show_cursor { "_" } else { "" }
-    } else if show_cursor {
-        &format!("{}_", input_name)
-    } else {
-        input_name
-    };
 
-    let text_col = if input_name.is_empty() {
-        Palette::UI_TEXT_MUTED
+    if input_name.is_empty() {
+        if show_cursor {
+            let cursor_w = scaler.s(2.0);
+            let cursor_h = scaler.s(24.0);
+            let cursor_x = sw * 0.5 - cursor_w * 0.5;
+            let cursor_y = input_y + (input_h - cursor_h) * 0.5;
+            draw_rectangle(cursor_x, cursor_y, cursor_w, cursor_h, Palette::NEON_CYAN);
+        }
     } else {
-        Palette::NEON_CYAN
-    };
+        let dim = fonts.measure_ui_bold(input_name, font_size);
+        let text_x = sw * 0.5 - dim.width * 0.5;
+        fonts.draw_ui_bold(input_name, text_x, text_y, font_size, Palette::NEON_CYAN);
 
-    fonts.draw_ui_bold_centered(
-        display_text,
-        sw * 0.5,
-        input_y + scaler.s(32.0),
-        scaler.font_s(22.0),
-        text_col,
-    );
+        if show_cursor {
+            let cursor_w = scaler.s(2.0);
+            let cursor_h = scaler.s(24.0);
+            let cursor_x = text_x + dim.width + scaler.s(3.0);
+            let cursor_y = input_y + (input_h - cursor_h) * 0.5;
+            draw_rectangle(cursor_x, cursor_y, cursor_w, cursor_h, Palette::NEON_CYAN);
+        }
+    }
 
     // Max length indicator
     let chars_count = format!("{}/12", input_name.len());

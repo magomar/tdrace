@@ -6,6 +6,7 @@ pub mod db;
 pub mod fx;
 pub mod game;
 pub mod input;
+pub mod profile;
 pub mod render;
 pub mod replay;
 pub mod ui;
@@ -20,10 +21,12 @@ pub use game::{DriverCardsOrigin, GameState, RaceSession};
 
 pub use input::touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 pub use input::{DebugOverlays, InputController};
+pub use profile::{draw_country_banner, CountryInfo, CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 pub use render::color::{CarColorScheme, Palette};
 pub use render::ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
 pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer, ReplayRecorder};
 pub use ui::hud::render_hud;
 pub use ui::menu::{CarChoice, GameModeChoice, RaceResultEntry, TrackChoice};
+pub use ui::profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use ui::starting_grid::render_starting_grid_screen;
 
