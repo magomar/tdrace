@@ -26,8 +26,8 @@ impl Default for DigitalInputConfig {
             steer_rise_rate: 7.2,
             steer_return_rate: 13.5,
             steer_exponent: 1.05,
-            speed_sensitive_factor: 0.005,
-            min_speed_steer_limit: 0.65,
+            speed_sensitive_factor: 0.0025,
+            min_speed_steer_limit: 0.70,
             throttle_rise_rate: 9.5,
             brake_rise_rate: 16.0,
         }
@@ -162,7 +162,7 @@ mod tests {
         // At 50 m/s (~180 km/h), steering should be moderately attenuated
         let (steer_high_speed, _, _) = filter.update(1.0, 0.0, 0.0, 50.0, dt);
         assert!(
-            steer_high_speed < 0.90 && steer_high_speed >= 0.65,
+            steer_high_speed < 0.95 && steer_high_speed >= 0.70,
             "High speed steer should be moderately attenuated, got {steer_high_speed}"
         );
     }

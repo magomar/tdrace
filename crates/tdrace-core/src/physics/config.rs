@@ -62,6 +62,14 @@ pub struct DriverAssistsConfig {
     /// Strength of self-aligning steering torque assistance.
     pub counter_steer_assist_strength: f32,
 
+    /// Anti-lock Braking System (ABS) enabled.
+    /// Prevents excessive brake lockup to preserve lateral steering grip during braking.
+    pub abs_enabled: bool,
+    /// ABS target lateral grip retention factor [0.0 = none, 1.0 = full lateral priority].
+    pub abs_slip_threshold: f32,
+    /// ABS modulation strength [0.0 = disabled, 1.0 = full pressure modulation].
+    pub abs_strength: f32,
+
     /// Handbrake bypass: whether holding the handbrake temporarily disengages TCS and relaxes ESC
     /// so intentional handbrake power-drifts are 100% responsive and uninhibited.
     pub handbrake_bypass: bool,
@@ -84,7 +92,10 @@ impl DriverAssistsConfig {
             esc_yaw_threshold: 0.25,
             esc_strength: 0.65,
             counter_steer_assist_enabled: true,
-            counter_steer_assist_strength: 0.55,
+            counter_steer_assist_strength: 0.65,
+            abs_enabled: true,
+            abs_slip_threshold: 0.15,
+            abs_strength: 0.85,
             handbrake_bypass: true,
         }
     }
@@ -99,7 +110,10 @@ impl DriverAssistsConfig {
             esc_yaw_threshold: 0.50,
             esc_strength: 0.35,
             counter_steer_assist_enabled: true,
-            counter_steer_assist_strength: 0.35,
+            counter_steer_assist_strength: 0.55,
+            abs_enabled: true,
+            abs_slip_threshold: 0.22,
+            abs_strength: 0.50,
             handbrake_bypass: true,
         }
     }
@@ -115,6 +129,9 @@ impl DriverAssistsConfig {
             esc_strength: 0.0,
             counter_steer_assist_enabled: false,
             counter_steer_assist_strength: 0.0,
+            abs_enabled: false,
+            abs_slip_threshold: 0.50,
+            abs_strength: 0.0,
             handbrake_bypass: true,
         }
     }
@@ -233,6 +250,11 @@ pub struct CarConfig {
     /// Lateral weight transfer scaling factor (cornering body roll).
     pub weight_transfer_lateral: f32,
 
+    /// Engine braking retarding coefficient on throttle release [0.0 = none, 0.15 = strong].
+    pub engine_braking_coefficient: f32,
+    /// Aerodynamic downforce coefficient (0.5 * Cl * A * air_density) scaling vertical load with V^2.
+    pub downforce_coefficient: f32,
+
     /// Tire friction and slip parameters.
     pub tire: TireConfig,
     /// Driver electronic stability and traction assistance settings.
@@ -269,7 +291,7 @@ impl CarConfig {
             steer_speed: 5.5,
             steer_return_speed: 7.0,
             counter_steer_assist: 1.3,
-            speed_sensitive_steer_factor: 0.003,
+            speed_sensitive_steer_factor: 0.002,
 
             air_drag_coefficient: 0.42,
             lateral_drag_coefficient: 1.20,
@@ -278,6 +300,9 @@ impl CarConfig {
 
             weight_transfer_longitudinal: 1.0,
             weight_transfer_lateral: 1.0,
+
+            engine_braking_coefficient: 0.12,
+            downforce_coefficient: 0.65,
 
             tire: TireConfig::default(),
             assists: DriverAssistsConfig::arcade(),
@@ -292,7 +317,9 @@ impl CarConfig {
         cfg.max_engine_force = 8200.0;
         cfg.max_steer_angle = 0.78; // ~45 deg wide drift lock
         cfg.counter_steer_assist = 1.6;
-        cfg.speed_sensitive_steer_factor = 0.002;
+        cfg.speed_sensitive_steer_factor = 0.0015;
+        cfg.engine_braking_coefficient = 0.10;
+        cfg.downforce_coefficient = 0.45;
         cfg.tire.drift_slide_friction = 0.92;
         cfg.tire.handbrake_lateral_friction_multiplier = 0.30;
         cfg.drive_bias = 0.0;
@@ -313,8 +340,8 @@ impl CarConfig {
 
             max_engine_force: 2200.0,
             max_reverse_force: 800.0,
-            max_brake_force: 3600.0,
-            handbrake_force: 2400.0,
+            max_brake_force: 2400.0,
+            handbrake_force: 1800.0,
             brake_bias: 0.50,
             drive_bias: 0.0,
             top_speed_mps: 32.0, // ~115 km/h
@@ -332,6 +359,9 @@ impl CarConfig {
 
             weight_transfer_longitudinal: 0.8,
             weight_transfer_lateral: 0.8,
+
+            engine_braking_coefficient: 0.18,
+            downforce_coefficient: 0.10,
 
             tire: TireConfig {
                 stiffness_b: 12.0,
@@ -353,6 +383,8 @@ impl CarConfig {
         cfg.drive_bias = 0.5; // AWD
         cfg.cg_height = 0.42;
         cfg.max_engine_force = 7500.0;
+        cfg.engine_braking_coefficient = 0.14;
+        cfg.downforce_coefficient = 0.70;
         cfg.tire.stiffness_b = 8.0;
         cfg.tire.drift_slide_friction = 0.90;
         cfg

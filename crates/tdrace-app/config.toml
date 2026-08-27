@@ -70,23 +70,25 @@ max_steer_angle = 0.7799999713897705
 steer_speed = 5.5
 steer_return_speed = 7.0
 counter_steer_assist = 1.600000023841858
-speed_sensitive_steer_factor = 0.0020000000949949026
+speed_sensitive_steer_factor = 0.001500000013038516
 air_drag_coefficient = 0.41999998688697815
 lateral_drag_coefficient = 1.2000000476837158
 rolling_resistance_coefficient = 0.014999999664723873
 angular_damping = 160.0
 weight_transfer_longitudinal = 1.0
 weight_transfer_lateral = 1.0
+engine_braking_coefficient = 0.10000000149011612
+downforce_coefficient = 0.44999998807907104
 
 [cars.drift_car.tire]
 stiffness_b = 9.5
-shape_c = 1.4500000476837158
+shape_c = 1.649999976158142
 peak_d = 1.0
-curvature_e = -0.15000000596046448
+curvature_e = -0.30000001192092896
 drift_slide_friction = 0.9200000166893005
 handbrake_lateral_friction_multiplier = 0.30000001192092896
-skid_threshold = 0.10000000149011612
-skid_full_threshold = 0.3499999940395355
+skid_threshold = 0.07999999821186066
+skid_full_threshold = 0.25
 
 [cars.drift_car.assists]
 tcs_enabled = true
@@ -96,7 +98,10 @@ esc_enabled = true
 esc_yaw_threshold = 0.5
 esc_strength = 0.3499999940395355
 counter_steer_assist_enabled = true
-counter_steer_assist_strength = 0.3499999940395355
+counter_steer_assist_strength = 0.550000011920929
+abs_enabled = true
+abs_slip_threshold = 0.2199999988079071
+abs_strength = 0.5
 handbrake_bypass = true
 
 [cars.kart]
@@ -109,8 +114,8 @@ cg_to_rear = 0.550000011920929
 cg_height = 0.18000000715255737
 max_engine_force = 2200.0
 max_reverse_force = 800.0
-max_brake_force = 3600.0
-handbrake_force = 2400.0
+max_brake_force = 2400.0
+handbrake_force = 1800.0
 brake_bias = 0.5
 drive_bias = 0.0
 top_speed_mps = 32.0
@@ -125,6 +130,8 @@ rolling_resistance_coefficient = 0.017999999225139618
 angular_damping = 60.0
 weight_transfer_longitudinal = 0.800000011920929
 weight_transfer_lateral = 0.800000011920929
+engine_braking_coefficient = 0.18000000715255737
+downforce_coefficient = 0.10000000149011612
 
 [cars.kart.tire]
 stiffness_b = 12.0
@@ -144,7 +151,10 @@ esc_enabled = true
 esc_yaw_threshold = 0.25
 esc_strength = 0.6499999761581421
 counter_steer_assist_enabled = true
-counter_steer_assist_strength = 0.550000011920929
+counter_steer_assist_strength = 0.6499999761581421
+abs_enabled = true
+abs_slip_threshold = 0.15000000596046448
+abs_strength = 0.8500000238418579
 handbrake_bypass = true
 
 [cars.rally_car]
@@ -166,23 +176,25 @@ max_steer_angle = 0.6800000071525574
 steer_speed = 5.5
 steer_return_speed = 7.0
 counter_steer_assist = 1.2999999523162842
-speed_sensitive_steer_factor = 0.003000000026077032
+speed_sensitive_steer_factor = 0.0020000000949949026
 air_drag_coefficient = 0.41999998688697815
 lateral_drag_coefficient = 1.2000000476837158
 rolling_resistance_coefficient = 0.014999999664723873
 angular_damping = 160.0
 weight_transfer_longitudinal = 1.0
 weight_transfer_lateral = 1.0
+engine_braking_coefficient = 0.14000000059604645
+downforce_coefficient = 0.699999988079071
 
 [cars.rally_car.tire]
 stiffness_b = 8.0
-shape_c = 1.4500000476837158
+shape_c = 1.649999976158142
 peak_d = 1.0
-curvature_e = -0.15000000596046448
+curvature_e = -0.30000001192092896
 drift_slide_friction = 0.8999999761581421
-handbrake_lateral_friction_multiplier = 0.3799999952316284
-skid_threshold = 0.10000000149011612
-skid_full_threshold = 0.3499999940395355
+handbrake_lateral_friction_multiplier = 0.3499999940395355
+skid_threshold = 0.07999999821186066
+skid_full_threshold = 0.25
 
 [cars.rally_car.assists]
 tcs_enabled = true
@@ -192,7 +204,10 @@ esc_enabled = true
 esc_yaw_threshold = 0.25
 esc_strength = 0.6499999761581421
 counter_steer_assist_enabled = true
-counter_steer_assist_strength = 0.550000011920929
+counter_steer_assist_strength = 0.6499999761581421
+abs_enabled = true
+abs_slip_threshold = 0.15000000596046448
+abs_strength = 0.8500000238418579
 handbrake_bypass = true
 
 [cars.sports_car]
@@ -214,23 +229,25 @@ max_steer_angle = 0.6800000071525574
 steer_speed = 5.5
 steer_return_speed = 7.0
 counter_steer_assist = 1.2999999523162842
-speed_sensitive_steer_factor = 0.003000000026077032
+speed_sensitive_steer_factor = 0.0020000000949949026
 air_drag_coefficient = 0.41999998688697815
 lateral_drag_coefficient = 1.2000000476837158
 rolling_resistance_coefficient = 0.014999999664723873
 angular_damping = 160.0
 weight_transfer_longitudinal = 1.0
 weight_transfer_lateral = 1.0
+engine_braking_coefficient = 0.11999999731779099
+downforce_coefficient = 0.6499999761581421
 
 [cars.sports_car.tire]
 stiffness_b = 9.5
-shape_c = 1.4500000476837158
+shape_c = 1.649999976158142
 peak_d = 1.0
-curvature_e = -0.15000000596046448
+curvature_e = -0.30000001192092896
 drift_slide_friction = 0.8799999952316284
-handbrake_lateral_friction_multiplier = 0.3799999952316284
-skid_threshold = 0.10000000149011612
-skid_full_threshold = 0.3499999940395355
+handbrake_lateral_friction_multiplier = 0.3499999940395355
+skid_threshold = 0.07999999821186066
+skid_full_threshold = 0.25
 
 [cars.sports_car.assists]
 tcs_enabled = true
@@ -240,5 +257,8 @@ esc_enabled = true
 esc_yaw_threshold = 0.25
 esc_strength = 0.6499999761581421
 counter_steer_assist_enabled = true
-counter_steer_assist_strength = 0.550000011920929
+counter_steer_assist_strength = 0.6499999761581421
+abs_enabled = true
+abs_slip_threshold = 0.15000000596046448
+abs_strength = 0.8500000238418579
 handbrake_bypass = true

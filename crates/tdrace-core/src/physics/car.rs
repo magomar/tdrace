@@ -151,6 +151,8 @@ pub struct CarState {
     pub tcs_active: bool,
     /// Whether Electronic Stability Control (ESC) is actively applying stabilizing yaw torque.
     pub esc_active: bool,
+    /// Whether Anti-lock Braking System (ABS) is actively modulating brake force.
+    pub abs_active: bool,
 }
 
 impl Default for CarState {
@@ -174,6 +176,7 @@ impl Default for CarState {
             drift_score: 0.0,
             tcs_active: false,
             esc_active: false,
+            abs_active: false,
         }
     }
 }
@@ -403,12 +406,18 @@ impl Car {
         let min_load_f = static_front_load * 0.05 * 0.5;
         let min_load_r = static_rear_load * 0.05 * 0.5;
 
+        // Aerodynamic downforce scaling with speed squared
+        let speed_sq = self.state.speed * self.state.speed;
+        let total_downforce = self.config.downforce_coefficient * speed_sq;
+        let downforce_front = total_downforce * (lr / wheelbase) * 0.5;
+        let downforce_rear = total_downforce * (lf / wheelbase) * 0.5;
+
         // Wheel 0 = FL (left), Wheel 1 = FR (right), Wheel 2 = RL (left), Wheel 3 = RR (right)
         let normal_loads = [
-            ((static_front_load - delta_fz_long) * 0.5 + delta_fz_lat_f * 0.5).max(min_load_f), // FL (left)
-            ((static_front_load - delta_fz_long) * 0.5 - delta_fz_lat_f * 0.5).max(min_load_f), // FR (right)
-            ((static_rear_load + delta_fz_long) * 0.5 + delta_fz_lat_r * 0.5).max(min_load_r),  // RL (left)
-            ((static_rear_load + delta_fz_long) * 0.5 - delta_fz_lat_r * 0.5).max(min_load_r),  // RR (right)
+            ((static_front_load - delta_fz_long) * 0.5 + delta_fz_lat_f * 0.5 + downforce_front).max(min_load_f), // FL (left)
+            ((static_front_load - delta_fz_long) * 0.5 - delta_fz_lat_f * 0.5 + downforce_front).max(min_load_f), // FR (right)
+            ((static_rear_load + delta_fz_long) * 0.5 + delta_fz_lat_r * 0.5 + downforce_rear).max(min_load_r),  // RL (left)
+            ((static_rear_load + delta_fz_long) * 0.5 - delta_fz_lat_r * 0.5 + downforce_rear).max(min_load_r),  // RR (right)
         ];
 
         // 4. Force calculation per wheel
@@ -451,12 +460,16 @@ impl Car {
             -clamped_ctrl.throttle * self.config.max_reverse_force
         } else if clamped_ctrl.throttle > 0.0 {
             clamped_ctrl.throttle * self.config.max_engine_force * engine_taper * drive_torque_multiplier
+        } else if self.config.engine_braking_coefficient > 0.0 && v_long.abs() > 0.05 {
+            // Engine braking opposes motion on throttle release, creating realistic coast-down and turn-in pitch
+            -self.config.engine_braking_coefficient * total_weight * (v_long / 1.5).tanh()
         } else {
             0.0
         };
 
         // Brake force opposing motion
         let total_brake_force = clamped_ctrl.brake * self.config.max_brake_force;
+        let mut abs_active = false;
 
         for i in 0..4 {
             let wheel_id = WheelId::ALL[i];
@@ -507,7 +520,26 @@ impl Car {
                 } else {
                     -v_long.signum()
                 };
-                fx_demand += total_brake_force * brake_share * brake_dir;
+                let mut wheel_brake_force = total_brake_force * brake_share;
+
+                // ABS (Anti-lock Braking System): modulate brake force to preserve steering authority and avoid lockup
+                if self.config.assists.abs_enabled && w_v_long.abs() > 0.5 {
+                    let is_steering_wheel = wheel_steer_angles[i].abs() > 0.01 || clamped_ctrl.steer.abs() > 0.02;
+                    let target_lat_reserve: f32 = if is_steering_wheel {
+                        0.70 // Reserve 70% friction circle radius for lateral cornering
+                    } else {
+                        0.20 // Reserve 20% for directional stability
+                    };
+
+                    let max_fx_abs = max_friction * (1.0f32 - target_lat_reserve * target_lat_reserve).sqrt();
+                    if wheel_brake_force > max_fx_abs {
+                        let excess = wheel_brake_force - max_fx_abs;
+                        wheel_brake_force = wheel_brake_force - excess * self.config.assists.abs_strength;
+                        abs_active = true;
+                    }
+                }
+
+                fx_demand += wheel_brake_force * brake_dir;
             }
 
             // Handbrake applies directly to rear wheels
@@ -579,9 +611,11 @@ impl Car {
                 surface: surf,
             };
         }
+        self.state.abs_active = abs_active;
 
         // 5. Aerodynamic drag, yaw damping, and ESC
         let avg_surface_drag: f32 = surfaces.iter().map(|s| s.surface_drag_multiplier()).sum::<f32>() / 4.0;
+        let avg_surface_mu: f32 = surfaces.iter().map(|s| s.friction_coefficient()).sum::<f32>() / 4.0;
         let drag_fwd = -self.config.air_drag_coefficient * v_long * v_long.abs() * avg_surface_drag;
         let drag_lat = -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
         let drag_world = fwd * drag_fwd + right * drag_lat;
@@ -596,7 +630,10 @@ impl Car {
             && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake)
         {
             let wheelbase = self.config.wheelbase;
-            let target_yaw_rate = (v_long / wheelbase) * self.state.steer_angle.tan();
+            let kinematic_yaw_rate = (v_long / wheelbase) * self.state.steer_angle.tan();
+            // Max physical yaw rate governed by tire grip: omega_max = (mu * g) / V
+            let max_physical_yaw_rate = ((avg_surface_mu * g) / v_long.abs().max(2.0)).max(0.40);
+            let target_yaw_rate = kinematic_yaw_rate.clamp(-max_physical_yaw_rate, max_physical_yaw_rate);
 
             // ESC targets oversteer (rotating faster into turn than commanded or spinning out)
             let is_oversteering = (omega.signum() == target_yaw_rate.signum() && omega.abs() > (target_yaw_rate.abs() + 0.10))
