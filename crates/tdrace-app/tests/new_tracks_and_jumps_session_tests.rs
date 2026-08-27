@@ -6,9 +6,9 @@ use tdrace_core::physics::surface::SurfaceType;
 fn test_all_seven_track_choices_selectable_and_initializable() {
     assert_eq!(TrackChoice::ALL.len(), 7);
 
-    for &choice in &TrackChoice::ALL {
+    for choice in &TrackChoice::ALL {
         let mut session = RaceSession::new();
-        session.track_choice = choice;
+        session.track_choice = choice.clone();
         session.num_bots = 3;
         session.init_race();
 
@@ -24,6 +24,7 @@ fn test_all_seven_track_choices_selectable_and_initializable() {
             TrackChoice::RampRaceway => "ramp_raceway",
             TrackChoice::OasisRally => "oasis_rally",
             TrackChoice::OutlawPass => "outlaw_pass",
+            TrackChoice::Custom { id, .. } => id.as_str(),
         });
     }
 }

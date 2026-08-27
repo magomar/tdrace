@@ -247,7 +247,7 @@ fn test_5000_step_fuzzed_replay_determinism_all_tracks_and_cars() {
             let init_pose = track.grid_positions[0];
             let mut car = Car::new(*config).with_pose(init_pose.position, init_pose.angle);
             let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
-            let mut recorder = ReplayRecorder::new(*t_choice, *c_choice, 42, dt);
+            let mut recorder = ReplayRecorder::new(t_choice.clone(), *c_choice, 42, dt);
 
             // Pseudo-random deterministic fuzzer (LCG)
             let mut rng_state: u64 = 0xDEADBEEF;

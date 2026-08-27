@@ -3,12 +3,14 @@ pub mod audio;
 pub mod camera;
 pub mod config;
 pub mod db;
+pub mod editor;
 pub mod fx;
 pub mod game;
 pub mod input;
 pub mod profile;
 pub mod render;
 pub mod replay;
+pub mod track_manager;
 pub mod ui;
 
 pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverStats};
@@ -18,6 +20,7 @@ pub use config::{AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputCon
 pub use db::{HallOfFameDb, HallOfFameEntry};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{DriverCardsOrigin, GameState, RaceSession};
+pub use track_manager::{CustomTrackInfo, TrackManager};
 
 pub use input::touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 pub use input::{DebugOverlays, InputController};

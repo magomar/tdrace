@@ -315,7 +315,7 @@ impl ReplayPlayer {
     ///
     /// Returns `Ok(max_error_distance)` if determinism passes, or `Err(diagnostic)` if mismatch occurs.
     pub fn verify_determinism(&self) -> Result<f32, String> {
-        let track = match self.replay.header.track_choice {
+        let track = match &self.replay.header.track_choice {
             TrackChoice::ClassicGrandPrix => classic_grand_prix(),
             TrackChoice::OvalSpeedway => oval_speedway(),
             TrackChoice::DriftPark => drift_park(),
@@ -323,6 +323,9 @@ impl ReplayPlayer {
             TrackChoice::RampRaceway => ramp_raceway(),
             TrackChoice::OasisRally => oasis_rally(),
             TrackChoice::OutlawPass => outlaw_pass(),
+            TrackChoice::Custom { path, .. } => {
+                tdrace_core::track::Track::load_from_file(path).unwrap_or_else(|_| classic_grand_prix())
+            }
         };
 
         let config = match self.replay.header.car_choice {

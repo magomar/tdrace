@@ -11,7 +11,7 @@ use crate::render::color::Palette;
 use tdrace_core::physics::config::AssistProfile;
 
 /// Available track options in track selection menu.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TrackChoice {
     ClassicGrandPrix,
     OvalSpeedway,
@@ -20,6 +20,7 @@ pub enum TrackChoice {
     RampRaceway,
     OasisRally,
     OutlawPass,
+    Custom { id: String, title: String, path: String },
 }
 
 impl TrackChoice {
@@ -33,7 +34,7 @@ impl TrackChoice {
         Self::OutlawPass,
     ];
 
-    pub fn title(&self) -> &'static str {
+    pub fn title(&self) -> &str {
         match self {
             Self::ClassicGrandPrix => "Classic Grand Prix",
             Self::OvalSpeedway => "Oval Speedway",
@@ -42,10 +43,11 @@ impl TrackChoice {
             Self::RampRaceway => "Ramp Raceway",
             Self::OasisRally => "Oasis Rally",
             Self::OutlawPass => "Outlaw Pass",
+            Self::Custom { title, .. } => title.as_str(),
         }
     }
 
-    pub fn tag(&self) -> &'static str {
+    pub fn tag(&self) -> &str {
         match self {
             Self::ClassicGrandPrix => "FIA GP CIRCUIT",
             Self::OvalSpeedway => "SUPERSPEEDWAY",
@@ -54,10 +56,11 @@ impl TrackChoice {
             Self::RampRaceway => "STUNT RAMPS & JUMPS",
             Self::OasisRally => "DESERT DIRT RALLY",
             Self::OutlawPass => "NARROW MOUNTAIN PASS",
+            Self::Custom { .. } => "CUSTOM CIRCUIT",
         }
     }
 
-    pub fn description(&self) -> &'static str {
+    pub fn description(&self) -> &str {
         match self {
             Self::ClassicGrandPrix => "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
             Self::OvalSpeedway => "Full-throttle banked superspeedway surrounded by concrete barriers.",
@@ -66,9 +69,26 @@ impl TrackChoice {
             Self::RampRaceway => "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.",
             Self::OasisRally => "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
             Self::OutlawPass => "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.",
+            Self::Custom { .. } => "User-created custom racing circuit.",
         }
     }
 
+    pub fn track_id(&self) -> &str {
+        match self {
+            Self::ClassicGrandPrix => "classic_grand_prix",
+            Self::OvalSpeedway => "oval_speedway",
+            Self::DriftPark => "drift_park",
+            Self::KartArena => "kart_arena",
+            Self::RampRaceway => "ramp_raceway",
+            Self::OasisRally => "oasis_rally",
+            Self::OutlawPass => "outlaw_pass",
+            Self::Custom { id, .. } => id.as_str(),
+        }
+    }
+
+    pub fn is_custom(&self) -> bool {
+        matches!(self, Self::Custom { .. })
+    }
 }
 
 /// Available vehicle model options.
@@ -151,6 +171,7 @@ use super::profile_ui::render_profile_badge;
 #[allow(clippy::too_many_arguments)]
 pub fn render_track_select_menu(
     fonts: &Fonts,
+    available_tracks: &[TrackChoice],
     selected_track_idx: usize,
     selected_car_idx: usize,
     num_bots: usize,
@@ -207,7 +228,7 @@ pub fn render_track_select_menu(
     let mut curr_y = menu_content_y;
 
     fonts.draw_ui_bold(
-        "SELECT CIRCUIT [Up/Down]",
+        "SELECT CIRCUIT [Up/Down] | [E] Track Editor",
         col1_x,
         curr_y + scaler.s(13.0),
         scaler.font_s(16.0),
@@ -215,7 +236,19 @@ pub fn render_track_select_menu(
     );
     curr_y += scaler.s(22.0);
 
-    for (i, track_opt) in TrackChoice::ALL.iter().enumerate() {
+    let total_tracks = available_tracks.len();
+    let max_visible = 7;
+    let start_idx = if total_tracks <= max_visible {
+        0
+    } else {
+        selected_track_idx
+            .saturating_sub(max_visible / 2)
+            .min(total_tracks - max_visible)
+    };
+    let end_idx = (start_idx + max_visible).min(total_tracks);
+
+    for i in start_idx..end_idx {
+        let track_opt = &available_tracks[i];
         let is_sel = i == selected_track_idx;
         let box_h = scaler.s(60.0);
         let bg_col = if is_sel {

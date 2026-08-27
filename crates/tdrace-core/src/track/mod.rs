@@ -2,6 +2,7 @@ pub mod checkpoint;
 pub mod geometry;
 pub mod presets;
 pub mod spline;
+pub mod validation;
 
 pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
 pub use geometry::{
@@ -14,12 +15,36 @@ pub use presets::{
     sahara_dunes,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
+pub use validation::{validate_track, TrackValidationError, ValidationSeverity};
 
+use std::fmt;
+use std::fs;
+use std::path::Path;
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use crate::physics::car::Car;
 use crate::physics::surface::SurfaceType;
+
+/// Error type for track parsing, serialization, and file I/O operations.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TrackError {
+    Io(String),
+    Json(String),
+    Validation(String),
+}
+
+impl fmt::Display for TrackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Io(msg) => write!(f, "Track IO error: {}", msg),
+            Self::Json(msg) => write!(f, "Track JSON error: {}", msg),
+            Self::Validation(msg) => write!(f, "Track validation error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for TrackError {}
 
 /// Complete racing circuit specification including spline, boundaries, surfaces, obstacles, and checkpoints.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -93,6 +118,74 @@ impl Track {
             false
         }
     }
+
+    /// Deserializes a `Track` from a JSON string.
+    pub fn from_json(json_str: &str) -> Result<Self, TrackError> {
+        serde_json::from_str(json_str).map_err(|e| TrackError::Json(e.to_string()))
+    }
+
+    /// Serializes this `Track` to a compact JSON string.
+    pub fn to_json(&self) -> Result<String, TrackError> {
+        serde_json::to_string(self).map_err(|e| TrackError::Json(e.to_string()))
+    }
+
+    /// Serializes this `Track` to a pretty-printed JSON string.
+    pub fn to_json_pretty(&self) -> Result<String, TrackError> {
+        serde_json::to_string_pretty(self).map_err(|e| TrackError::Json(e.to_string()))
+    }
+
+    /// Loads and deserializes a track file from the local filesystem.
+    pub fn load_from_file(path: impl AsRef<Path>) -> Result<Self, TrackError> {
+        let content = fs::read_to_string(path.as_ref())
+            .map_err(|e| TrackError::Io(format!("{}: {}", path.as_ref().display(), e)))?;
+        Self::from_json(&content)
+    }
+
+    /// Saves and serializes this track to a file on the local filesystem.
+    pub fn save_to_file(&self, path: impl AsRef<Path>) -> Result<(), TrackError> {
+        let json_str = self.to_json_pretty()?;
+        if let Some(parent) = path.as_ref().parent() {
+            if !parent.as_os_str().is_empty() {
+                fs::create_dir_all(parent)
+                    .map_err(|e| TrackError::Io(format!("{}: {}", parent.display(), e)))?;
+            }
+        }
+        fs::write(path.as_ref(), json_str)
+            .map_err(|e| TrackError::Io(format!("{}: {}", path.as_ref().display(), e)))?;
+        Ok(())
+    }
+
+    /// Performs validation on the track geometry and gameplay rules.
+    pub fn validate(&self) -> Vec<TrackValidationError> {
+        validate_track(self)
+    }
+
+    /// Rebuilds spline samples, boundary polylines, and wall barriers from the spline waypoints.
+    pub fn rebuild_geometry(&mut self, barrier_offset: f32, barrier_type: BarrierType) {
+        if self.spline.waypoints.len() >= 3 {
+            self.spline = TrackSpline::new(self.spline.waypoints.clone(), self.spline.closed);
+            let (left_walls, right_walls, left_poly, right_poly) =
+                generate_walls_from_spline(&self.spline, barrier_offset, barrier_type);
+            self.geometry.inner_walls = left_walls;
+            self.geometry.outer_walls = right_walls;
+            self.geometry.left_boundary_polyline = left_poly;
+            self.geometry.right_boundary_polyline = right_poly;
+        }
+    }
+
+    /// Regenerates checkpoints evenly spaced along the spline.
+    pub fn auto_generate_checkpoints(&mut self, count: usize, num_sectors: usize) {
+        if self.spline.samples.len() >= 2 {
+            self.checkpoints = generate_checkpoints(&self.spline, count, num_sectors);
+        }
+    }
+
+    /// Regenerates starting grid positions on the straight before start line.
+    pub fn auto_generate_grid(&mut self, num_slots: usize, spacing: f32, stagger: f32) {
+        if self.spline.samples.len() >= 2 {
+            self.grid_positions = generate_grid_positions(&self.spline, num_slots, spacing, stagger);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -117,6 +210,41 @@ mod tests {
 
         let kart = kart_arena();
         assert_eq!(kart.name, "Kart Arena");
+    }
+
+    #[test]
+    fn test_track_json_serialization_roundtrip() {
+        let presets = [
+            classic_grand_prix(),
+            oval_speedway(),
+            drift_park(),
+            kart_arena(),
+            ramp_raceway(),
+            oasis_rally(),
+            outlaw_pass(),
+        ];
+
+        for track in &presets {
+            let json = track.to_json_pretty().expect("Must serialize to JSON");
+            assert!(!json.is_empty());
+            let deserialized = Track::from_json(&json).expect("Must deserialize from JSON");
+            assert_eq!(track.name, deserialized.name);
+            assert_eq!(track.spline.waypoints.len(), deserialized.spline.waypoints.len());
+            assert_eq!(track.checkpoints.len(), deserialized.checkpoints.len());
+            assert_eq!(track.grid_positions.len(), deserialized.grid_positions.len());
+            assert_eq!(track.geometry.surface_zones.len(), deserialized.geometry.surface_zones.len());
+            assert_eq!(track.geometry.jump_ramps.len(), deserialized.geometry.jump_ramps.len());
+            assert_eq!(track.geometry.obstacles.len(), deserialized.geometry.obstacles.len());
+        }
+    }
+
+    #[test]
+    fn test_track_rebuild_geometry() {
+        let mut track = classic_grand_prix();
+        track.rebuild_geometry(5.0, BarrierType::Concrete);
+        assert!(!track.geometry.inner_walls.is_empty());
+        assert_eq!(track.geometry.inner_walls.first().unwrap().barrier_type, BarrierType::Concrete);
+        assert!(!track.geometry.outer_walls.is_empty());
     }
 
     #[test]
