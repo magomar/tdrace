@@ -77,7 +77,19 @@ pub fn render_driver_cards_screen(fonts: &Fonts, selected_idx: usize) {
     left_y += scaler.s(22.0);
 
     // Bio text
-    fonts.draw_ui_regular(driver.bio, col1_x + scaler.s(16.0), left_y, scaler.font_s(13.0), Color::new(0.85, 0.90, 0.96, 1.0));
+    let bio_font_size = scaler.font_s(13.0);
+    let bio_max_w = col_w - scaler.s(32.0);
+    let bio_lines = fonts.wrap_text(driver.bio, bio_font_size, bio_max_w);
+    let line_height = scaler.s(16.0);
+    for (i, line) in bio_lines.iter().enumerate() {
+        fonts.draw_ui_regular(
+            line,
+            col1_x + scaler.s(16.0),
+            left_y + (i as f32 * line_height),
+            bio_font_size,
+            Color::new(0.85, 0.90, 0.96, 1.0),
+        );
+    }
     left_y += scaler.s(60.0);
 
     // Preferred Car Section

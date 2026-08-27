@@ -181,4 +181,53 @@ impl Fonts {
             offset_y: size * 0.8,
         })
     }
+
+    /// Wraps text into multiple lines so that each line's rendered width does not exceed `max_width`.
+    pub fn wrap_text(&self, text: &str, font_size: f32, max_width: f32) -> Vec<String> {
+        let words = text.split_whitespace().collect::<Vec<_>>();
+        if words.is_empty() {
+            return Vec::new();
+        }
+
+        let mut lines = Vec::new();
+        let mut current_line = String::new();
+
+        for word in words {
+            if current_line.is_empty() {
+                current_line.push_str(word);
+            } else {
+                let candidate = format!("{} {}", current_line, word);
+                if self.measure_ui_regular(&candidate, font_size).width <= max_width {
+                    current_line = candidate;
+                } else {
+                    lines.push(current_line);
+                    current_line = word.to_string();
+                }
+            }
+        }
+
+        if !current_line.is_empty() {
+            lines.push(current_line);
+        }
+
+        lines
+    }
+
+    /// Renders multi-line text with regular UI font, wrapping automatically to `max_width`.
+    pub fn draw_ui_regular_multiline(
+        &self,
+        text: &str,
+        x: f32,
+        start_y: f32,
+        font_size: f32,
+        line_height: f32,
+        max_width: f32,
+        color: Color,
+    ) -> usize {
+        let lines = self.wrap_text(text, font_size, max_width);
+        for (i, line) in lines.iter().enumerate() {
+            self.draw_ui_regular(line, x, start_y + (i as f32 * line_height), font_size, color);
+        }
+        lines.len()
+    }
 }

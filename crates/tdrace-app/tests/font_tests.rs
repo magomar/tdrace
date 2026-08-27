@@ -45,3 +45,42 @@ fn test_format_lap_time_precision() {
     assert_eq!(format_lap_time(12.05), "00:12.05");
     assert_eq!(format_lap_time(184.99), "03:04.99");
 }
+
+#[test]
+fn test_font_text_wrapping_multiline() {
+    let fonts = Fonts::load_embedded();
+
+    // 1. Empty string returns empty
+    let empty_lines = fonts.wrap_text("", 12.0, 300.0);
+    assert!(empty_lines.is_empty());
+
+    // 2. Short string fits on single line
+    let short_text = "Apex Tanaka";
+    let short_lines = fonts.wrap_text(short_text, 12.0, 300.0);
+    assert_eq!(short_lines.len(), 1);
+    assert_eq!(short_lines[0], short_text);
+
+    // 3. Long driver bio wraps across multiple lines
+    let bio = "Former open-wheel champion whose surgical precision and textbook racing lines carve through chicanes like a scalpel.";
+    let max_width = 250.0;
+    let font_size = 11.0;
+    let bio_lines = fonts.wrap_text(bio, font_size, max_width);
+
+    assert!(bio_lines.len() >= 2, "Long bio should wrap into multiple lines, got {}", bio_lines.len());
+
+    // Verify all words are preserved
+    let joined = bio_lines.join(" ");
+    assert_eq!(joined, bio);
+
+    // Verify no line exceeds max_width (with small tolerance for single long words if any)
+    for line in &bio_lines {
+        let dim = fonts.measure_ui_regular(line, font_size);
+        assert!(
+            dim.width <= max_width + 10.0,
+            "Line '{}' width {} exceeded max_width {}",
+            line,
+            dim.width,
+            max_width
+        );
+    }
+}

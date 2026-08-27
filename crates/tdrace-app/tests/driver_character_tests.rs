@@ -140,3 +140,39 @@ fn test_starting_grid_flow_and_roster_presentation() {
     assert_eq!(session.state, GameState::DriverCards(DriverCardsOrigin::StartingGrid));
 }
 
+#[test]
+fn test_all_roster_bios_wrap_within_dossier_width() {
+    let fonts = tdrace_app::ui::font::Fonts::load_embedded();
+    let max_text_w = 380.0;
+    let font_size = 13.0;
+
+    for driver in DriverCharacter::all() {
+        let lines = fonts.wrap_text(driver.bio, font_size, max_text_w);
+        assert!(
+            lines.len() >= 2,
+            "Driver '{}' bio should wrap into multiple lines in dossier card, got {}",
+            driver.name,
+            lines.len()
+        );
+        assert!(
+            lines.len() <= 4,
+            "Driver '{}' bio should fit cleanly within 2-4 lines in dossier card, got {}",
+            driver.name,
+            lines.len()
+        );
+
+        // Every line should respect max width constraint
+        for line in &lines {
+            let dim = fonts.measure_ui_regular(line, font_size);
+            assert!(
+                dim.width <= max_text_w + 10.0,
+                "Driver '{}' line '{}' width {} exceeded max_text_w {}",
+                driver.name,
+                line,
+                dim.width,
+                max_text_w
+            );
+        }
+    }
+}
+
