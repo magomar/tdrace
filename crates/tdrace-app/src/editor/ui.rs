@@ -61,48 +61,10 @@ pub fn render_editor_ui(
     let mouse_pos = Vec2::new(mx, my);
     let mouse_clicked = is_mouse_button_pressed(MouseButton::Left);
 
+    let is_modal_open = *active_modal != EditorModal::None;
+    let bg_mouse_clicked = mouse_clicked && !is_modal_open;
+
     let mut dispatched_action = EditorAction::None;
-
-    // Handle Modal Overlay if active
-    if *active_modal != EditorModal::None {
-        draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.70));
-        match active_modal {
-            EditorModal::Templates => {
-                if let Some(action) = render_template_modal(fonts, &scaler, sw, sh, mouse_pos, mouse_clicked) {
-                    dispatched_action = action;
-                    *active_modal = EditorModal::None;
-                }
-            }
-            EditorModal::SaveAs { input_name } => {
-                if let Some(action) = render_save_modal(fonts, &scaler, sw, sh, input_name, mouse_pos, mouse_clicked) {
-                    dispatched_action = action;
-                    *active_modal = EditorModal::None;
-                }
-            }
-            EditorModal::OpenTrack => {
-                if let Some(action) = render_open_modal(fonts, &scaler, sw, sh, track_manager, mouse_pos, mouse_clicked) {
-                    dispatched_action = action;
-                    *active_modal = EditorModal::None;
-                }
-            }
-            EditorModal::Diagnostics => {
-                if render_diagnostics_modal(fonts, &scaler, sw, sh, state, mouse_pos, mouse_clicked) {
-                    *active_modal = EditorModal::None;
-                }
-            }
-            EditorModal::Help => {
-                if render_help_modal(fonts, &scaler, sw, sh, mouse_pos, mouse_clicked) {
-                    *active_modal = EditorModal::None;
-                }
-            }
-            EditorModal::None => {}
-        }
-
-        if is_key_pressed(KeyCode::Escape) {
-            *active_modal = EditorModal::None;
-        }
-        return dispatched_action;
-    }
 
     // 1. TOP TOOLBAR
     let top_h = scaler.s(46.0);
@@ -130,32 +92,32 @@ pub fn render_editor_ui(
     tb_x += scaler.s(180.0);
 
     // Top action buttons
-    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "NEW", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "NEW", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, bg_mouse_clicked) {
         *active_modal = EditorModal::Templates;
     }
     tb_x += scaler.s(72.0);
 
-    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "OPEN", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "OPEN", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, bg_mouse_clicked) {
         let _ = track_manager.scan_custom_tracks();
         *active_modal = EditorModal::OpenTrack;
     }
     tb_x += scaler.s(72.0);
 
-    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "SAVE", Palette::UI_CARD_BG, Palette::NEON_GREEN, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "SAVE", Palette::UI_CARD_BG, Palette::NEON_GREEN, mouse_pos, bg_mouse_clicked) {
         *active_modal = EditorModal::SaveAs {
             input_name: state.track.name.clone(),
         };
     }
     tb_x += scaler.s(72.0);
 
-    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(80.0), scaler.s(30.0), "VALIDATE", Palette::UI_CARD_BG, Palette::YELLOW, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(80.0), scaler.s(30.0), "VALIDATE", Palette::UI_CARD_BG, Palette::YELLOW, mouse_pos, bg_mouse_clicked) {
         *active_modal = EditorModal::Diagnostics;
     }
     tb_x += scaler.s(88.0);
 
     // Snap Setting Selector
     let snap_str = state.grid_snap.label();
-    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(90.0), scaler.s(30.0), snap_str, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(90.0), scaler.s(30.0), snap_str, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, bg_mouse_clicked) {
         state.grid_snap = state.grid_snap.next();
     }
     tb_x += scaler.s(98.0);
@@ -163,7 +125,7 @@ pub fn render_editor_ui(
     // Zoom Level Selector
     let zoom_str = format!("ZOOM: {}", camera.current_zoom_level().name.to_uppercase());
     let zoom_w = scaler.s(105.0);
-    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), zoom_w, scaler.s(30.0), &zoom_str, Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), zoom_w, scaler.s(30.0), &zoom_str, Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, bg_mouse_clicked) {
         let mut min = Vec2::splat(f32::MAX);
         let mut max = Vec2::splat(f32::MIN);
         for wp in &state.track.spline.waypoints {
@@ -180,7 +142,7 @@ pub fn render_editor_ui(
     }
     tb_x += zoom_w + scaler.s(8.0);
 
-    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "FOCUS [F]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "FOCUS [F]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, bg_mouse_clicked) {
         let mut min = Vec2::splat(f32::MAX);
         let mut max = Vec2::splat(f32::MIN);
         for wp in &state.track.spline.waypoints {
@@ -195,7 +157,7 @@ pub fn render_editor_ui(
     }
     tb_x += scaler.s(72.0);
 
-    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(55.0), scaler.s(30.0), "HELP [?]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(55.0), scaler.s(30.0), "HELP [?]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, bg_mouse_clicked) {
         *active_modal = EditorModal::Help;
     }
 
@@ -204,11 +166,11 @@ pub fn render_editor_ui(
     let exit_w = scaler.s(70.0);
     let td_x = sw - test_drive_w - exit_w - scaler.s(24.0);
 
-    if draw_ui_btn(fonts, &scaler, td_x, scaler.s(8.0), test_drive_w, scaler.s(30.0), "TEST DRIVE [Space]", Color::new(0.12, 0.65, 0.32, 0.95), Palette::NEON_GREEN, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, td_x, scaler.s(8.0), test_drive_w, scaler.s(30.0), "TEST DRIVE [Space]", Color::new(0.12, 0.65, 0.32, 0.95), Palette::NEON_GREEN, mouse_pos, bg_mouse_clicked) {
         dispatched_action = EditorAction::StartTestDrive;
     }
 
-    if draw_ui_btn(fonts, &scaler, sw - exit_w - scaler.s(12.0), scaler.s(8.0), exit_w, scaler.s(30.0), "EXIT", Palette::UI_CARD_BG, Palette::RED, mouse_pos, mouse_clicked) {
+    if draw_ui_btn(fonts, &scaler, sw - exit_w - scaler.s(12.0), scaler.s(8.0), exit_w, scaler.s(30.0), "EXIT", Palette::UI_CARD_BG, Palette::RED, mouse_pos, bg_mouse_clicked) {
         dispatched_action = EditorAction::ExitToMenu;
     }
 
@@ -243,7 +205,7 @@ pub fn render_editor_ui(
         let bg_col = if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG };
         let border_col = if is_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
 
-        if draw_ui_btn(fonts, &scaler, scaler.s(20.0), item_y, tool_w - scaler.s(16.0), scaler.s(38.0), label, bg_col, border_col, mouse_pos, mouse_clicked) {
+        if draw_ui_btn(fonts, &scaler, scaler.s(20.0), item_y, tool_w - scaler.s(16.0), scaler.s(38.0), label, bg_col, border_col, mouse_pos, bg_mouse_clicked) {
             tools.active_tool = tool_type;
         }
         item_y += scaler.s(44.0);
@@ -257,7 +219,7 @@ pub fn render_editor_ui(
 
     scaler.draw_glass_card(insp_x, insp_y, insp_w, insp_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
-    render_inspector(fonts, &scaler, insp_x, insp_y, insp_w, insp_h, state, tools, mouse_pos, mouse_clicked);
+    render_inspector(fonts, &scaler, insp_x, insp_y, insp_w, insp_h, state, tools, mouse_pos, bg_mouse_clicked);
 
     // 4. BOTTOM STATUS BAR
     let bot_h = scaler.s(32.0);
@@ -303,6 +265,46 @@ pub fn render_editor_ui(
         scaler.font_s(12.0),
         Palette::UI_TEXT_MUTED,
     );
+
+    // 5. MODAL OVERLAYS (rendered on top of all toolbars, panels, and track)
+    if *active_modal != EditorModal::None {
+        draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
+        match active_modal {
+            EditorModal::Templates => {
+                if let Some(action) = render_template_modal(fonts, &scaler, sw, sh, mouse_pos, mouse_clicked) {
+                    dispatched_action = action;
+                    *active_modal = EditorModal::None;
+                }
+            }
+            EditorModal::SaveAs { input_name } => {
+                if let Some(action) = render_save_modal(fonts, &scaler, sw, sh, input_name, mouse_pos, mouse_clicked) {
+                    dispatched_action = action;
+                    *active_modal = EditorModal::None;
+                }
+            }
+            EditorModal::OpenTrack => {
+                if let Some(action) = render_open_modal(fonts, &scaler, sw, sh, track_manager, mouse_pos, mouse_clicked) {
+                    dispatched_action = action;
+                    *active_modal = EditorModal::None;
+                }
+            }
+            EditorModal::Diagnostics => {
+                if render_diagnostics_modal(fonts, &scaler, sw, sh, state, mouse_pos, mouse_clicked) {
+                    *active_modal = EditorModal::None;
+                }
+            }
+            EditorModal::Help => {
+                if render_help_modal(fonts, &scaler, sw, sh, mouse_pos, mouse_clicked) {
+                    *active_modal = EditorModal::None;
+                }
+            }
+            EditorModal::None => {}
+        }
+
+        if is_key_pressed(KeyCode::Escape) {
+            *active_modal = EditorModal::None;
+        }
+    }
 
     dispatched_action
 }

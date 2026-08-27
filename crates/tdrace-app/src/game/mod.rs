@@ -205,6 +205,8 @@ pub struct RaceSession {
     pub test_drive_car: Option<Car>,
     pub test_drive_tracker: Option<TrackProgressTracker>,
     pub test_drive_time: f32,
+    pub editor_save_toast_timer: f32,
+    pub editor_save_toast_msg: String,
 
     // Audio System
     pub audio: AudioManager,
@@ -398,6 +400,8 @@ impl RaceSession {
             test_drive_car: None,
             test_drive_tracker: None,
             test_drive_time: 0.0,
+            editor_save_toast_timer: 0.0,
+            editor_save_toast_msg: String::new(),
             audio,
             engine_rpm: EngineRpmModel::default(),
             prev_countdown_sec: 4,
@@ -2172,7 +2176,7 @@ impl RaceSession {
     }
 
     /// Renders current UI state, HUD, or pause screen.
-    pub fn render(&self) {
+    pub fn render(&mut self) {
         match self.state {
             GameState::Menu => {
                 let available_tracks = self.track_manager.main_track_choices();
@@ -2457,20 +2461,14 @@ impl RaceSession {
             }
         }
 
-        // Action dispatching from UI
-        let mut dispatched = EditorAction::None;
-        if let Some(state) = &mut self.editor_state {
-            dispatched = render_editor_ui(
-                &self.fonts,
-                state,
-                &mut self.editor_tools,
-                &mut self.editor_camera,
-                &mut self.track_manager,
-                &mut self.editor_modal,
-            );
+        if self.editor_save_toast_timer > 0.0 {
+            self.editor_save_toast_timer = (self.editor_save_toast_timer - dt).max(0.0);
         }
+    }
 
-        match dispatched {
+    /// Dispatches action events triggered from Editor UI interactions.
+    pub fn handle_editor_action(&mut self, action: EditorAction) {
+        match action {
             EditorAction::StartTestDrive => {
                 self.start_editor_test_drive();
             }
@@ -2504,7 +2502,18 @@ impl RaceSession {
             EditorAction::SaveTrack(name) => {
                 if let Some(state) = &mut self.editor_state {
                     state.track.name = name;
-                    let _ = self.track_manager.save_custom_track(&state.track, None);
+                    let result = self.track_manager.save_custom_track(&state.track, None);
+                    match result {
+                        Ok(path) => {
+                            self.editor_save_toast_timer = 2.5;
+                            self.editor_save_toast_msg = format!("Track saved: {}", path);
+                            self.audio.play_sfx(SfxType::UiSelect);
+                        }
+                        Err(err) => {
+                            self.editor_save_toast_timer = 3.5;
+                            self.editor_save_toast_msg = format!("Save error: {}", err);
+                        }
+                    }
                 }
             }
             _ => {}
@@ -2586,8 +2595,8 @@ impl RaceSession {
     }
 
     /// Renders the Track Studio viewport pass.
-    pub fn render_track_editor(&self) {
-        if let Some(state) = &self.editor_state {
+    pub fn render_track_editor(&mut self) {
+        if let Some(state) = &mut self.editor_state {
             let sw = screen_width_safe();
             let sh = screen_height_safe();
 
@@ -2607,6 +2616,51 @@ impl RaceSession {
             render_editor_gizmos(state, &self.editor_tools, &self.editor_camera);
 
             self.editor_camera.reset_to_screen();
+
+            // 2. Screen Pass: Render Editor UI (toolbars, palettes, inspector, status bar, and modals) ON TOP of the track!
+            let dispatched = render_editor_ui(
+                &self.fonts,
+                state,
+                &mut self.editor_tools,
+                &mut self.editor_camera,
+                &mut self.track_manager,
+                &mut self.editor_modal,
+            );
+
+            // 3. Render floating Save Confirmation Toast if active
+            if self.editor_save_toast_timer > 0.0 {
+                let scaler = UiScaler::new(sw, sh);
+                let toast_w = scaler.s(360.0);
+                let toast_h = scaler.s(36.0);
+                let toast_x = (sw - toast_w) * 0.5;
+                let toast_y = scaler.s(52.0);
+
+                let alpha = (self.editor_save_toast_timer / 0.4).min(1.0);
+                macroquad::shapes::draw_rectangle(
+                    toast_x,
+                    toast_y,
+                    toast_w,
+                    toast_h,
+                    Color::new(0.04, 0.16, 0.10, 0.95 * alpha),
+                );
+                macroquad::shapes::draw_rectangle_lines(
+                    toast_x,
+                    toast_y,
+                    toast_w,
+                    toast_h,
+                    1.5,
+                    Color::new(0.25, 0.95, 0.45, 0.98 * alpha),
+                );
+                self.fonts.draw_ui_bold(
+                    &self.editor_save_toast_msg,
+                    toast_x + scaler.s(16.0),
+                    toast_y + scaler.s(22.0),
+                    scaler.font_s(13.0),
+                    Color::new(0.3, 0.98, 0.55, alpha),
+                );
+            }
+
+            self.handle_editor_action(dispatched);
         }
     }
 
