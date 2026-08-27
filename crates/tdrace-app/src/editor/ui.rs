@@ -699,7 +699,7 @@ fn render_help_modal(
     clicked: bool,
 ) -> bool {
     let mw = scaler.s(580.0);
-    let mh = scaler.s(450.0);
+    let mh = scaler.s(490.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
@@ -710,21 +710,23 @@ fn render_help_modal(
     let shortcuts = [
         ("Tools 1-8", "Switch between Select, Spline, Surface, Ramp, Obstacle, Checkpoint, Grid, Pit"),
         ("Left Click", "Place entity / Select / Drag handles / Draw surface boxes"),
+        ("Arrow Keys / WASD", "Pan camera across circuit canvas (+Shift for fast pan)"),
         ("Middle / Right Drag", "Pan editor camera across the circuit canvas"),
         ("Mouse Scroll Wheel", "Zoom in / Zoom out centered on cursor position"),
         ("Tab Key", "Cycle zoom levels (Close, Medium, Far, Overview)"),
         ("Space / Enter", "Instant Test Drive (Race car directly from starting grid)"),
+        ("Ctrl + D", "Duplicate selected obstacle, surface zone, or jump ramp"),
         ("Ctrl + Z / Ctrl + Y", "Undo / Redo state modifications"),
         ("Delete / Backspace", "Delete selected waypoint, surface zone, ramp, or prop"),
         ("F Key", "Focus and frame the entire circuit bounds within viewport"),
         ("G Key", "Cycle CAD metric grid snap (Off, 1m, 2.5m, 5m, 10m)"),
     ];
 
-    let mut sy = my + scaler.s(68.0);
+    let mut sy = my + scaler.s(64.0);
     for (key, desc) in shortcuts {
-        fonts.draw_ui_bold(key, mx + scaler.s(24.0), sy, scaler.font_s(13.0), Palette::NEON_CYAN);
-        fonts.draw_ui_regular(desc, mx + scaler.s(180.0), sy, scaler.font_s(12.5), Palette::WHITE);
-        sy += scaler.s(28.0);
+        fonts.draw_ui_bold(key, mx + scaler.s(24.0), sy, scaler.font_s(12.5), Palette::NEON_CYAN);
+        fonts.draw_ui_regular(desc, mx + scaler.s(180.0), sy, scaler.font_s(12.0), Palette::WHITE);
+        sy += scaler.s(26.0);
     }
 
     draw_ui_btn(fonts, scaler, mx + (mw - scaler.s(160.0)) * 0.5, my + mh - scaler.s(48.0), scaler.s(160.0), scaler.s(34.0), "CLOSE [Esc]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked)

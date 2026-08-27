@@ -2461,6 +2461,48 @@ impl RaceSession {
             }
         }
 
+        // Arrow Keys (and WASD / Gamepad) Camera Navigation
+        if self.editor_modal == EditorModal::None {
+            let ctrl_down = is_key_down(KeyCode::LeftControl)
+                || is_key_down(KeyCode::RightControl)
+                || is_key_down(KeyCode::LeftSuper);
+
+            let mut pan_dir = Vec2::ZERO;
+            if is_key_down(KeyCode::Up) || (!ctrl_down && is_key_down(KeyCode::W)) {
+                pan_dir.y += 1.0;
+            }
+            if is_key_down(KeyCode::Down) || (!ctrl_down && is_key_down(KeyCode::S)) {
+                pan_dir.y -= 1.0;
+            }
+            if is_key_down(KeyCode::Left) || (!ctrl_down && is_key_down(KeyCode::A)) {
+                pan_dir.x -= 1.0;
+            }
+            if is_key_down(KeyCode::Right) || (!ctrl_down && is_key_down(KeyCode::D)) {
+                pan_dir.x += 1.0;
+            }
+
+            // Gamepad navigation support
+            let gp = &self.input.gamepad.snapshot;
+            if gp.is_connected {
+                if gp.nav_up || gp.dpad_up_pressed { pan_dir.y += 1.0; }
+                if gp.nav_down || gp.dpad_down_pressed { pan_dir.y -= 1.0; }
+                if gp.nav_left || gp.dpad_left_pressed { pan_dir.x -= 1.0; }
+                if gp.nav_right || gp.dpad_right_pressed { pan_dir.x += 1.0; }
+                if gp.steer.abs() > 0.15 { pan_dir.x += gp.steer; }
+                if gp.throttle > 0.15 { pan_dir.y += gp.throttle; }
+                if gp.brake > 0.15 { pan_dir.y -= gp.brake; }
+            }
+
+            if pan_dir.length_squared() > 0.0 {
+                let speed_mult = if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
+                    2.5
+                } else {
+                    1.0
+                };
+                self.editor_camera.pan_direction(pan_dir, speed_mult, dt);
+            }
+        }
+
         if self.editor_save_toast_timer > 0.0 {
             self.editor_save_toast_timer = (self.editor_save_toast_timer - dt).max(0.0);
         }

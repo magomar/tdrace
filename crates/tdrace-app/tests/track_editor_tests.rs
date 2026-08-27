@@ -373,3 +373,29 @@ fn test_polygon_obstacle_tool_vertex_placement() {
     }
 }
 
+#[test]
+fn test_editor_camera_arrow_panning_and_speed_scaling() {
+    let mut camera = EditorCamera::new();
+    camera.target_center = Vec2::new(100.0, 100.0);
+    camera.center = Vec2::new(100.0, 100.0);
+    camera.zoom = 20.0;
+    camera.target_zoom = 20.0;
+
+    // 1. Pan Up (+Y)
+    camera.pan_direction(Vec2::new(0.0, 1.0), 1.0, 0.1);
+    assert!(camera.target_center.y > 100.0);
+    assert_eq!(camera.target_center.x, 100.0);
+
+    // 2. Pan Right (+X) with 2.5x Shift boost
+    let prev_y = camera.target_center.y;
+    camera.pan_direction(Vec2::new(1.0, 0.0), 2.5, 0.1);
+    assert!(camera.target_center.x > 100.0);
+    assert_eq!(camera.target_center.y, prev_y);
+
+    // 3. Smooth update interpolates center towards target_center
+    camera.update(0.1);
+    assert!(camera.center.x > 100.0);
+    assert!(camera.center.y > 100.0);
+}
+
+

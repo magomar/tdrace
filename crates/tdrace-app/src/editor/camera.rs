@@ -239,4 +239,16 @@ impl EditorCamera {
             self.current_level_idx = idx;
         }
     }
+
+    /// Smoothly pans the camera in the specified normalized world direction.
+    /// Pan speed scales dynamically with current zoom level so movement feels natural across all zoom scales.
+    pub fn pan_direction(&mut self, dir: Vec2, speed_multiplier: f32, dt: f32) {
+        if dir.length_squared() > 1e-4 {
+            let norm_dir = dir.normalize();
+            let base_speed = (600.0 / self.zoom.max(0.5)).clamp(30.0, 400.0);
+            let speed = base_speed * speed_multiplier;
+            self.target_center += norm_dir * speed * dt;
+        }
+    }
 }
+
