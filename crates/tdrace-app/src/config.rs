@@ -144,7 +144,7 @@ pub struct GameplayConfig {
     pub default_car: String,
     /// Default number of laps for circuit races.
     pub default_laps: u32,
-    /// Default number of AI opponents.
+    /// Default number of AI opponents (7 AI bots for an 8-pilot race grid).
     pub default_num_bots: usize,
     /// Default driver assist profile: "arcade", "sport", "pro".
     pub default_assist_profile: String,
@@ -156,7 +156,7 @@ impl Default for GameplayConfig {
             default_track: "classic_grand_prix".to_string(),
             default_car: "sports_car".to_string(),
             default_laps: 3,
-            default_num_bots: 5,
+            default_num_bots: 7,
             default_assist_profile: "arcade".to_string(),
         }
     }

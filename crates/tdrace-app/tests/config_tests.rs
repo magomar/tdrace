@@ -96,6 +96,7 @@ fn test_custom_camera_zoom_levels_configuration() {
 #[test]
 fn test_session_initialization_with_custom_config() {
     let mut config = GameConfig::default();
+    config.gameplay.default_track = "kart_arena".to_string();
     config.gameplay.default_laps = 5;
     config.gameplay.default_num_bots = 7;
     config.audio.master_volume = 0.42;
@@ -138,4 +139,37 @@ fn test_config_load_invalid_toml_fallback() {
     assert!(res.is_err());
 
     let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_default_gameplay_pilot_count_and_toml_override() {
+    // 1. Default config must specify 7 bots (yielding an 8-pilot race grid with 1 player)
+    let default_cfg = GameConfig::default();
+    assert_eq!(
+        default_cfg.gameplay.default_num_bots, 7,
+        "Default config must configure 7 bots for 8 pilots total"
+    );
+
+    let mut session = RaceSession::new_with_config(default_cfg);
+    assert_eq!(session.num_bots, 7);
+    session.init_race();
+    assert_eq!(session.cars.len(), 8, "Must spawn 8 cars (1 player + 7 AI opponents)");
+    assert_eq!(session.opponent_drivers.len(), 7);
+
+    // 2. Custom TOML configuring bot count
+    let custom_toml = r#"
+[gameplay]
+default_track = "oval_speedway"
+default_car = "drift_car"
+default_laps = 4
+default_num_bots = 3
+default_assist_profile = "sport"
+"#;
+    let loaded: GameConfig = toml::from_str(custom_toml).expect("Custom gameplay TOML parse");
+    assert_eq!(loaded.gameplay.default_num_bots, 3);
+
+    let mut custom_session = RaceSession::new_with_config(loaded);
+    assert_eq!(custom_session.num_bots, 3);
+    custom_session.init_race();
+    assert_eq!(custom_session.cars.len(), 4, "Must spawn 4 cars (1 player + 3 AI opponents)");
 }

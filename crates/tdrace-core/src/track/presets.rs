@@ -295,6 +295,8 @@ pub fn classic_grand_prix() -> Track {
             min: Vec2::new(30.0, -16.0),
             max: Vec2::new(70.0, -8.0),
         }),
+        default_laps: 3,
+        predefined_car: Some("sports_car".to_string()),
     }
 }
 
@@ -341,6 +343,8 @@ pub fn oval_speedway() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
+        default_laps: 5,
+        predefined_car: Some("sports_car".to_string()),
     }
 }
 
@@ -403,7 +407,7 @@ pub fn drift_park() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 10, 3);
-    let grid_positions = generate_grid_positions(&spline, 6, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
 
     Track {
         name: "Drift Park".to_string(),
@@ -421,6 +425,8 @@ pub fn drift_park() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
+        default_laps: 3,
+        predefined_car: Some("drift_car".to_string()),
     }
 }
 
@@ -451,7 +457,7 @@ pub fn kart_arena() -> Track {
         generate_walls_from_spline(&spline, 2.0, BarrierType::TireWall);
 
     let checkpoints = generate_checkpoints(&spline, 8, 2);
-    let grid_positions = generate_grid_positions(&spline, 6, 5.5, 1.8);
+    let grid_positions = generate_grid_positions(&spline, 8, 5.5, 1.8);
 
     Track {
         name: "Kart Arena".to_string(),
@@ -469,6 +475,8 @@ pub fn kart_arena() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
+        default_laps: 5,
+        predefined_car: Some("kart".to_string()),
     }
 }
 
@@ -594,6 +602,8 @@ pub fn ramp_raceway() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
+        default_laps: 3,
+        predefined_car: Some("sports_car".to_string()),
     }
 }
 
@@ -699,6 +709,8 @@ pub fn oasis_rally() -> Track {
         grid_positions,
         default_surface: SurfaceType::Sand,
         pit_box_area: None,
+        default_laps: 3,
+        predefined_car: Some("rally_car".to_string()),
     }
 }
 
@@ -768,6 +780,8 @@ pub fn outlaw_pass() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
+        default_laps: 3,
+        predefined_car: Some("sports_car".to_string()),
     }
 }
 

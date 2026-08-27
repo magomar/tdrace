@@ -140,6 +140,7 @@ pub struct RaceSession {
     pub track_choice: TrackChoice,
     pub track_manager: TrackManager,
     pub car_choice: CarChoice,
+    pub free_car_selection: bool,
     pub is_time_attack: bool,
     pub num_bots: usize,
     pub total_laps: u32,
@@ -339,6 +340,7 @@ impl RaceSession {
             track_choice,
             track_manager,
             car_choice,
+            free_car_selection: false,
             assist_profile,
             is_time_attack: false,
             num_bots: config.gameplay.default_num_bots,
@@ -454,27 +456,27 @@ impl RaceSession {
         self.audio.play_music(MusicTrack::NeonMenu);
     }
 
-    /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
-    pub fn init_race(&mut self) {
-        self.recent_hof_id = None;
-        self.recent_congrats = None;
-        self.show_hall_of_fame = true;
-        self.refresh_hof_entries();
+    /// Resolves the track's predefined vehicle model as a `CarChoice`.
+    pub fn resolve_predefined_car(&self) -> CarChoice {
+        match self.track.predefined_car.as_deref() {
+            Some("drift_car") => CarChoice::DriftCar,
+            Some("kart") => CarChoice::Kart,
+            Some("rally_car") => CarChoice::RallyCar,
+            Some("sports_car") | None | _ => CarChoice::SportsCar,
+        }
+    }
 
-        // 1. Build selected track
-        self.track = self
-            .track_manager
-            .load_track(&self.track_choice)
-            .unwrap_or_else(|_| classic_grand_prix());
+    /// Returns the active vehicle model for the player, respecting track enforcement or free selection.
+    pub fn active_player_car_choice(&self) -> CarChoice {
+        if self.free_car_selection {
+            self.car_choice
+        } else {
+            self.resolve_predefined_car()
+        }
+    }
 
-        // 2. Setup camera
-        self.camera.setup_for_track(&self.track);
-
-        // 3. Player car configuration
-        let mut base_config = self.config.get_car_config(self.car_choice);
-        base_config.assists = self.assist_profile.to_config();
-
-        // 4. Determine total participant count
+    /// Reconstructs participant cars, trackers, and AI drivers for the active roster.
+    pub fn rebuild_roster_participants(&mut self) {
         let total_cars = if self.is_time_attack {
             1
         } else {
@@ -486,27 +488,24 @@ impl RaceSession {
         self.trackers.clear();
         self.ai_drivers.clear();
         self.opponent_drivers.clear();
-        self.fx.clear();
-        self.results.clear();
-        self.session_time = 0.0;
-        self.accumulator = 0.0;
-        self.prev_player_lap = 1;
 
         let num_cps = self.track.checkpoints.len();
         let num_sectors = 3;
 
-        // Sample distinct opponents from the 8 predefined driver characters
         let seed = (std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_nanos() as u64)
             .unwrap_or(42))
-            .wrapping_add(self.session_time.to_bits() as u64);
+            .wrapping_add((self.num_bots as u64) * 101);
 
         if !self.is_time_attack && total_cars > 1 {
             self.opponent_drivers = DriverCharacter::sample_opponents(total_cars - 1, seed);
         }
 
-        // Spawn Player car at grid slot 0 with active profile livery
+        let player_car_choice = self.active_player_car_choice();
+        let mut base_config = self.config.get_car_config(player_car_choice);
+        base_config.assists = self.assist_profile.to_config();
+
         let grid_pose_0 = self
             .track
             .grid_positions
@@ -522,7 +521,6 @@ impl RaceSession {
         self.color_schemes.push(self.active_profile.color_scheme);
         self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
 
-        // Spawn AI bots with their customized character profiles, liveries, and vehicle configs
         for (bot_idx, character) in self.opponent_drivers.iter().enumerate() {
             let car_idx = bot_idx + 1;
             let grid_pose = self
@@ -536,7 +534,12 @@ impl RaceSession {
                     grid_slot: car_idx,
                 });
 
-            let bot_config = self.config.get_car_config(character.preferred_car);
+            let bot_car_choice = if self.free_car_selection {
+                character.preferred_car
+            } else {
+                player_car_choice
+            };
+            let bot_config = self.config.get_car_config(bot_car_choice);
             let bot_car = Car::new(bot_config).with_pose(grid_pose.position, grid_pose.angle);
 
             self.cars.push(bot_car);
@@ -544,18 +547,47 @@ impl RaceSession {
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
             self.ai_drivers.push(BotAiDriver::new(character.profile));
         }
+    }
+
+    /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
+    pub fn init_race(&mut self) {
+        self.recent_hof_id = None;
+        self.recent_congrats = None;
+        self.show_hall_of_fame = true;
+        self.refresh_hof_entries();
+
+        // 1. Build selected track
+        self.track = self
+            .track_manager
+            .load_track(&self.track_choice)
+            .unwrap_or_else(|_| classic_grand_prix());
+
+        // Predefined balanced lap count from track
+        self.total_laps = self.track.default_laps;
+
+        // 2. Setup camera
+        self.camera.setup_for_track(&self.track);
+
+        // 3. Build participants & cars
+        self.rebuild_roster_participants();
+
+        self.fx.clear();
+        self.results.clear();
+        self.session_time = 0.0;
+        self.accumulator = 0.0;
+        self.prev_player_lap = 1;
 
         // Reset ghost active lap samples
         self.ghost_recorder.on_lap_invalidated();
-
 
         // Reset input filter smoothing state
         self.input.reset();
 
         // Start new replay recording
+        let active_car = self.active_player_car_choice();
         self.replay_recorder = Some(ReplayRecorder::new(
             self.track_choice.clone(),
-            self.car_choice,
+            active_car,
             42,
             Self::FIXED_DT,
         ));
@@ -569,6 +601,7 @@ impl RaceSession {
         self.audio.stop_music(); // In-game music muted
 
         // Show Starting Grid with selected race participants (or directly countdown if time attack)
+        let total_cars = self.cars.len();
         if !self.is_time_attack && total_cars > 1 {
             self.state = GameState::StartingGrid;
         } else {
@@ -718,6 +751,82 @@ impl RaceSession {
                 self.update_menu();
             }
             GameState::StartingGrid => {
+                // 1. Toggle Free Car Selection (F or C key, or Gamepad X)
+                if is_key_pressed(KeyCode::F)
+                    || is_key_pressed(KeyCode::C)
+                    || self.input.gamepad.snapshot.btn_x_pressed
+                {
+                    self.free_car_selection = !self.free_car_selection;
+                    self.rebuild_roster_participants();
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+
+                // 2. Cycle Selected Car (when free car selection is active)
+                if self.free_car_selection {
+                    if is_key_pressed(KeyCode::Left)
+                        || self.input.gamepad.snapshot.dpad_left_pressed
+                        || self.input.gamepad.snapshot.nav_left
+                        || is_key_pressed(KeyCode::LeftBracket)
+                    {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        if self.menu_car_idx == 0 {
+                            self.menu_car_idx = CarChoice::ALL.len() - 1;
+                        } else {
+                            self.menu_car_idx -= 1;
+                        }
+                        self.car_choice = CarChoice::ALL[self.menu_car_idx];
+                        self.rebuild_roster_participants();
+                    }
+                    if is_key_pressed(KeyCode::Right)
+                        || self.input.gamepad.snapshot.dpad_right_pressed
+                        || self.input.gamepad.snapshot.nav_right
+                        || is_key_pressed(KeyCode::RightBracket)
+                    {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
+                        self.car_choice = CarChoice::ALL[self.menu_car_idx];
+                        self.rebuild_roster_participants();
+                    }
+                }
+
+                // 3. Modify Driver Count (B, N, Up/Down, Gamepad D-Pad Up/Down)
+                let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+
+                // Cycle next driver count (B / N)
+                if is_key_pressed(KeyCode::B)
+                    || is_key_pressed(KeyCode::N)
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.num_bots = (self.num_bots % max_bots) + 1;
+                    self.rebuild_roster_participants();
+                }
+
+                // Increase driver count (Up / Equal / Gamepad D-pad Up)
+                if is_key_pressed(KeyCode::Up)
+                    || is_key_pressed(KeyCode::Equal)
+                    || self.input.gamepad.snapshot.dpad_up_pressed
+                    || (self.input.gamepad.snapshot.nav_up && !self.free_car_selection)
+                {
+                    if self.num_bots < max_bots {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.num_bots += 1;
+                        self.rebuild_roster_participants();
+                    }
+                }
+
+                // Decrease driver count (Down / Minus / Gamepad D-pad Down)
+                if is_key_pressed(KeyCode::Down)
+                    || is_key_pressed(KeyCode::Minus)
+                    || self.input.gamepad.snapshot.dpad_down_pressed
+                    || (self.input.gamepad.snapshot.nav_down && !self.free_car_selection)
+                {
+                    if self.num_bots > 1 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.num_bots -= 1;
+                        self.rebuild_roster_participants();
+                    }
+                }
+
                 // Launch race countdown (Space, Enter, Gamepad Confirm [A / South / Start])
                 if is_key_pressed(KeyCode::Space)
                     || is_key_pressed(KeyCode::Enter)
@@ -1545,12 +1654,13 @@ impl RaceSession {
 
             // 2. Log player race result to persistent history
             let player_pos = self.results.iter().position(|r| r.is_player).map(|p| p + 1).unwrap_or(1);
+            let active_player_car = self.active_player_car_choice();
             if let Some(pid) = self.active_profile.id {
                 let history_record = RaceHistoryEntry {
                     id: None,
                     profile_id: pid,
                     track_id: track_id.clone(),
-                    car_name: self.car_choice.title().to_string(),
+                    car_name: active_player_car.title().to_string(),
                     position: player_pos,
                     total_cars: self.cars.len(),
                     total_time: player_time,
@@ -1572,11 +1682,16 @@ impl RaceSession {
                 for (rank, &car_idx) in standings.iter().enumerate() {
                     let is_player = car_idx == 0;
                     let (driver_name, vehicle_name) = if is_player {
-                        (self.active_profile.alias.clone(), self.car_choice.title().to_string())
+                        (self.active_profile.alias.clone(), active_player_car.title().to_string())
                     } else if let Some(character) = self.opponent_drivers.get(car_idx - 1) {
-                        (character.alias.to_string(), character.preferred_car.title().to_string())
+                        let bot_car = if self.free_car_selection {
+                            character.preferred_car.title().to_string()
+                        } else {
+                            active_player_car.title().to_string()
+                        };
+                        (character.alias.to_string(), bot_car)
                     } else {
-                        (format!("Driver {}", car_idx), self.car_choice.title().to_string())
+                        (format!("Driver {}", car_idx), active_player_car.title().to_string())
                     };
 
                     let tracker = &self.trackers[car_idx];
@@ -1669,24 +1784,22 @@ impl RaceSession {
             };
 
             let tracker = &self.trackers[car_idx];
-            let best_lap = tracker.best_lap_time;
-            let total_time = self.session_time + (rank as f32 * 0.65); // Simulated finish gap
-            let delta = if rank == 0 { 0.0 } else { rank as f32 * 0.65 };
+            let total_time = self.session_time + (rank as f32 * 0.65);
+            let leader_time = self.session_time;
+            let delta = if rank == 0 { 0.0 } else { total_time - leader_time };
 
             self.results.push(RaceResultEntry {
                 position: rank + 1,
                 car_name,
                 is_player,
                 total_time,
-                best_lap,
+                best_lap: tracker.best_lap_time,
                 delta_to_leader: delta,
             });
         }
     }
 
-    /// Master render pipeline:
-    /// 1. World pass (Track, Skidmarks, Walls, Ghost Car, Cars, Sparks/Smoke, Debug)
-    /// 2. Screen pass (HUD, Mini-map, Touch Controls, Popups, Menus)
+    /// Renders current UI state, HUD, or pause screen.
     pub fn render(&self) {
         match self.state {
             GameState::Menu => {
@@ -1706,15 +1819,22 @@ impl RaceSession {
             }
             GameState::StartingGrid => {
                 self.render_world();
+                let player_car_title = self.active_player_car_choice().title();
+                let predefined_car_title = self.resolve_predefined_car().title();
+                let max_grid_size = self.track.grid_positions.len().min(8);
                 render_starting_grid_screen(
                     &self.fonts,
                     &self.track,
-                    self.car_choice.title(),
+                    player_car_title,
                     &self.active_profile,
                     &self.opponent_drivers,
                     self.total_laps,
                     self.is_time_attack,
                     self.input.gamepad.snapshot.is_connected,
+                    self.free_car_selection,
+                    predefined_car_title,
+                    self.cars.len(),
+                    max_grid_size,
                 );
             }
             GameState::Countdown(remaining) => {

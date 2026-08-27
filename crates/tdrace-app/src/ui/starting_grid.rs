@@ -20,6 +20,10 @@ pub fn render_starting_grid_screen(
     total_laps: u32,
     _is_time_attack: bool,
     gamepad_connected: bool,
+    free_car_selection: bool,
+    predefined_car_title: &str,
+    num_drivers: usize,
+    max_grid_size: usize,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -33,48 +37,104 @@ pub fn render_starting_grid_screen(
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
-        scaler.s(38.0),
-        scaler.font_s(28.0),
+        scaler.s(32.0),
+        scaler.font_s(26.0),
         Palette::NEON_GOLD,
         Color::new(0.0, 0.0, 0.0, 0.6),
         scaler.s(2.0),
     );
 
     // Subtitle / Track details
-    let total_racers = 1 + opponents.len();
     let track_len_m = track.spline.total_length().round() as i32;
     let subtitle = format!(
-        "Circuit: {}  •  Length: {}m  •  Distance: {} Laps  •  Grid Size: {} Racers",
+        "Circuit: {}  •  Length: {}m  •  Distance: {} Laps",
         track.name.to_uppercase(),
         track_len_m,
         total_laps,
-        total_racers
     );
     fonts.draw_ui_regular_centered(
         &subtitle,
         sw * 0.5,
-        scaler.s(62.0),
-        scaler.font_s(13.5),
+        scaler.s(52.0),
+        scaler.font_s(13.0),
         Palette::UI_TEXT_MUTED,
     );
 
-    // Grid Container Box - narrower and sleek
-    let card_w = (sw * 0.72).clamp(scaler.s(520.0), scaler.s(780.0));
-    let num_rows = total_racers;
-    let row_h = scaler.s(52.0);
-    let row_gap = scaler.s(6.0);
-    let list_h = (num_rows as f32 * (row_h + row_gap)) + scaler.s(20.0);
-    let y = scaler.s(90.0);
-    let max_box_h = (sh - y - scaler.s(45.0)).max(scaler.s(200.0));
-    let box_h = list_h.clamp(scaler.s(200.0), max_box_h);
+    // Top Controls Bar (Car Spec mode + Driver count)
+    let card_w = (sw * 0.74).clamp(scaler.s(540.0), scaler.s(820.0));
     let x = (sw - card_w) * 0.5;
+    let ctrl_y = scaler.s(60.0);
+    let ctrl_h = scaler.s(38.0);
+    let half_w = (card_w - scaler.s(10.0)) * 0.5;
 
-    scaler.draw_glass_card(x, y, card_w, box_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
+    // Card 1: Car Specification Mode
+    let car_card_border = if free_car_selection { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+    scaler.draw_glass_card(x, ctrl_y, half_w, ctrl_h, Palette::UI_CARD_BG, car_card_border, 1.4);
+    if free_car_selection {
+        fonts.draw_ui_bold(
+            "🔓 CAR SPEC: FREE SELECTION [F]",
+            x + scaler.s(12.0),
+            ctrl_y + scaler.s(15.0),
+            scaler.font_s(11.0),
+            Palette::NEON_GOLD,
+        );
+        fonts.draw_ui_bold(
+            &format!("[ < / > ]  {}", player_car_title),
+            x + scaler.s(12.0),
+            ctrl_y + scaler.s(29.0),
+            scaler.font_s(13.0),
+            Palette::WHITE,
+        );
+    } else {
+        fonts.draw_ui_bold(
+            "🔒 CAR SPEC: ENFORCED [F to unlock]",
+            x + scaler.s(12.0),
+            ctrl_y + scaler.s(15.0),
+            scaler.font_s(11.0),
+            Palette::NEON_CYAN,
+        );
+        fonts.draw_ui_bold(
+            predefined_car_title,
+            x + scaler.s(12.0),
+            ctrl_y + scaler.s(29.0),
+            scaler.font_s(13.0),
+            Palette::WHITE,
+        );
+    }
+
+    // Card 2: Driver Count Modifier
+    let drv_x = x + half_w + scaler.s(10.0);
+    scaler.draw_glass_card(drv_x, ctrl_y, half_w, ctrl_h, Palette::UI_CARD_BG, Palette::NEON_GREEN, 1.4);
+    fonts.draw_ui_bold(
+        "👥 DRIVER GRID: [B / N to cycle] [Up/Down]",
+        drv_x + scaler.s(12.0),
+        ctrl_y + scaler.s(15.0),
+        scaler.font_s(11.0),
+        Palette::NEON_GREEN,
+    );
+    fonts.draw_ui_bold(
+        &format!("{} Racers ({} AI Bots) / Max {}", num_drivers, num_drivers.saturating_sub(1), max_grid_size),
+        drv_x + scaler.s(12.0),
+        ctrl_y + scaler.s(29.0),
+        scaler.font_s(13.0),
+        Palette::WHITE,
+    );
+
+    // Grid Container Box
+    let num_rows = num_drivers;
+    let row_h = scaler.s(48.0);
+    let row_gap = scaler.s(5.0);
+    let list_h = (num_rows as f32 * (row_h + row_gap)) + scaler.s(16.0);
+    let grid_y = ctrl_y + ctrl_h + scaler.s(10.0);
+    let max_box_h = (sh - grid_y - scaler.s(42.0)).max(scaler.s(180.0));
+    let box_h = list_h.clamp(scaler.s(180.0), max_box_h);
+
+    scaler.draw_glass_card(x, grid_y, card_w, box_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
 
     // Draw Participant Rows
-    let mut row_y = y + scaler.s(10.0);
-    let row_w = card_w - scaler.s(20.0);
-    let row_x = x + scaler.s(10.0);
+    let mut row_y = grid_y + scaler.s(8.0);
+    let row_w = card_w - scaler.s(16.0);
+    let row_x = x + scaler.s(8.0);
 
     // 1. Slot 1 (Pole Position - Player)
     let player_desc = format!("{} (You)  •  Pole Position", player_profile.name);
@@ -106,6 +166,12 @@ pub fn render_starting_grid_screen(
             character.stats.precision * 100.0
         );
 
+        let bot_car_title = if free_car_selection {
+            character.preferred_car.title()
+        } else {
+            predefined_car_title
+        };
+
         render_participant_row(
             fonts,
             &scaler,
@@ -117,7 +183,7 @@ pub fn render_starting_grid_screen(
             character.name,
             character.alias,
             None,
-            character.preferred_car.title(),
+            bot_car_title,
             character.color_scheme,
             &stats_desc,
             false,
@@ -127,16 +193,16 @@ pub fn render_starting_grid_screen(
 
     // Footer Prompts
     let prompt = if gamepad_connected {
-        "🎮 [A / START] Launch Race Countdown  |  [Y / D] Driver Dossier  |  [B / ESC] Back to Menu"
+        "🎮 [A/START] Start Race  |  [X/LB] Free Car Spec [Left/Right]  |  [RB/D-Pad] Drivers  |  [Y/D] Dossier  |  [B/ESC] Menu"
     } else {
-        "▶ PRESS [SPACE / ENTER] TO START RACE  |  [D] View Driver Dossiers  |  [ESC] Back to Menu"
+        "▶ [SPACE/ENTER] Start Race  |  [F] Toggle Free Car Spec [Left/Right]  |  [B/N/Up/Down] Drivers  |  [D] Dossiers  |  [ESC] Menu"
     };
 
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
-        sh - scaler.s(22.0),
-        scaler.font_s(15.0),
+        sh - scaler.s(18.0),
+        scaler.font_s(14.5),
         Palette::WHITE,
     );
 }

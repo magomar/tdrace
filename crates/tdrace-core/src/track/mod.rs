@@ -46,6 +46,10 @@ impl fmt::Display for TrackError {
 
 impl std::error::Error for TrackError {}
 
+fn default_laps_fallback() -> u32 {
+    3
+}
+
 /// Complete racing circuit specification including spline, boundaries, surfaces, obstacles, and checkpoints.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Track {
@@ -56,6 +60,10 @@ pub struct Track {
     pub grid_positions: Vec<SpawnPose>,
     pub default_surface: SurfaceType,
     pub pit_box_area: Option<SurfaceShape>,
+    #[serde(default = "default_laps_fallback")]
+    pub default_laps: u32,
+    #[serde(default)]
+    pub predefined_car: Option<String>,
 }
 
 impl Track {

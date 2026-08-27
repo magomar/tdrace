@@ -48,7 +48,7 @@ music_volume = 0.699999988079071
 default_track = "classic_grand_prix"
 default_car = "sports_car"
 default_laps = 3
-default_num_bots = 5
+default_num_bots = 7
 default_assist_profile = "arcade"
 
 [cars.drift_car]
