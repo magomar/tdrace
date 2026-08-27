@@ -20,7 +20,7 @@ pub enum TrackChoice {
     RampRaceway,
     OasisRally,
     OutlawPass,
-    Custom { id: String, title: String, path: String },
+    Custom { id: String, title: String, description: String, path: String },
 }
 
 impl TrackChoice {
@@ -69,7 +69,13 @@ impl TrackChoice {
             Self::RampRaceway => "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.",
             Self::OasisRally => "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
             Self::OutlawPass => "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.",
-            Self::Custom { .. } => "User-created custom racing circuit.",
+            Self::Custom { description, .. } => {
+                if description.trim().is_empty() {
+                    "User-created custom racing circuit."
+                } else {
+                    description.as_str()
+                }
+            }
         }
     }
 
@@ -228,72 +234,114 @@ pub fn render_track_select_menu(
     let mut curr_y = menu_content_y;
 
     fonts.draw_ui_bold(
-        "SELECT CIRCUIT [Up/Down] | [E] Track Editor",
+        "SELECT CIRCUIT [Up/Down] | [M] Track Manager | [E] Studio",
         col1_x,
         curr_y + scaler.s(13.0),
-        scaler.font_s(16.0),
+        scaler.font_s(15.0),
         Palette::NEON_CYAN,
     );
     curr_y += scaler.s(22.0);
 
     let total_tracks = available_tracks.len();
+    let total_items = total_tracks + 1; // +1 for the dedicated Track Manager entry
     let max_visible = 7;
-    let start_idx = if total_tracks <= max_visible {
+    let start_idx = if total_items <= max_visible {
         0
     } else {
         selected_track_idx
             .saturating_sub(max_visible / 2)
-            .min(total_tracks - max_visible)
+            .min(total_items - max_visible)
     };
-    let end_idx = (start_idx + max_visible).min(total_tracks);
+    let end_idx = (start_idx + max_visible).min(total_items);
 
     for i in start_idx..end_idx {
-        let track_opt = &available_tracks[i];
         let is_sel = i == selected_track_idx;
-        let box_h = scaler.s(60.0);
-        let bg_col = if is_sel {
-            Palette::UI_CARD_BG_HOVER
+        let box_h = scaler.s(58.0);
+
+        if i < total_tracks {
+            let track_opt = &available_tracks[i];
+            let bg_col = if is_sel {
+                Palette::UI_CARD_BG_HOVER
+            } else {
+                Palette::UI_CARD_BG
+            };
+            let border_col = if is_sel {
+                Palette::NEON_CYAN
+            } else {
+                Palette::UI_CARD_BORDER
+            };
+
+            scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
+
+            // Tag pill
+            let tag_col = if is_sel { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+            fonts.draw_ui_bold(
+                track_opt.tag(),
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(16.0),
+                scaler.font_s(10.5),
+                tag_col,
+            );
+
+            // Track title
+            let title_col = if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) };
+            fonts.draw_ui_bold(
+                track_opt.title(),
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(34.0),
+                scaler.font_s(16.0),
+                title_col,
+            );
+
+            // Description
+            fonts.draw_ui_regular(
+                track_opt.description(),
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(49.0),
+                scaler.font_s(11.0),
+                Palette::UI_TEXT_MUTED,
+            );
         } else {
-            Palette::UI_CARD_BG
-        };
-        let border_col = if is_sel {
-            Palette::NEON_CYAN
-        } else {
-            Palette::UI_CARD_BORDER
-        };
+            // Dedicated Track Manager Card with distinct background color
+            let tm_bg = if is_sel {
+                Color::new(0.32, 0.12, 0.52, 0.95)
+            } else {
+                Color::new(0.18, 0.08, 0.30, 0.88)
+            };
+            let tm_border = if is_sel {
+                Palette::NEON_GOLD
+            } else {
+                Palette::NEON_MAGENTA
+            };
 
-        scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
+            scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, tm_bg, tm_border, if is_sel { 2.4 } else { 1.5 });
 
-        // Tag pill
-        let tag_col = if is_sel { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
-        fonts.draw_ui_bold(
-            track_opt.tag(),
-            col1_x + scaler.s(14.0),
-            curr_y + scaler.s(17.0),
-            scaler.font_s(11.0),
-            tag_col,
-        );
+            fonts.draw_ui_bold(
+                "CIRCUIT HUB & WORKSHOP [M]",
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(16.0),
+                scaler.font_s(10.5),
+                if is_sel { Palette::NEON_GOLD } else { Palette::NEON_MAGENTA },
+            );
 
-        // Track title
-        let title_col = if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) };
-        fonts.draw_ui_bold(
-            track_opt.title(),
-            col1_x + scaler.s(14.0),
-            curr_y + scaler.s(36.0),
-            scaler.font_s(17.0),
-            title_col,
-        );
+            fonts.draw_ui_bold(
+                "📁 Track Manager",
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(34.0),
+                scaler.font_s(16.0),
+                Palette::WHITE,
+            );
 
-        // Description
-        fonts.draw_ui_regular(
-            track_opt.description(),
-            col1_x + scaler.s(14.0),
-            curr_y + scaler.s(51.0),
-            scaler.font_s(11.5),
-            Palette::UI_TEXT_MUTED,
-        );
+            fonts.draw_ui_regular(
+                "Manage approved tracks, promote drafts & edit circuit info.",
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(49.0),
+                scaler.font_s(11.0),
+                if is_sel { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+            );
+        }
 
-        curr_y += box_h + scaler.s(8.0);
+        curr_y += box_h + scaler.s(6.0);
     }
 
     // Right Column: Vehicle & Dynamics Settings

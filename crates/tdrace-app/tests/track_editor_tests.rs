@@ -129,6 +129,7 @@ fn test_track_editor_custom_circuit_lifecycle_and_io() {
     let choice = TrackChoice::Custom {
         id: "test_ring_raceway".to_string(),
         title: "Test Ring Raceway".to_string(),
+        description: "Test description".to_string(),
         path: saved_path,
     };
     let loaded = manager.load_track(&choice).expect("Failed to load saved track");
@@ -296,3 +297,79 @@ fn test_editor_camera_overview_with_bounds_framing() {
     assert_eq!(camera.current_level_idx, 3);
     assert_eq!(camera.current_zoom_level().name, "Overview");
 }
+
+#[test]
+fn test_obstacle_duplication_and_undo() {
+    use tdrace_app::editor::{Selection, ToolSettings};
+
+    let mut state = EditorState::new(classic_grand_prix());
+    let initial_obs_count = state.track.geometry.obstacles.len();
+    assert!(initial_obs_count > 0);
+
+    // Select obstacle 0
+    state.selection = Selection::Obstacle(0);
+    let original_center = state.track.geometry.obstacles[0].center();
+
+    let mut tools = ToolSettings::default();
+    let dup_success = tools.duplicate_selected(&mut state);
+    assert!(dup_success, "Duplication should succeed for selected obstacle");
+
+    // Check new obstacle count and selection
+    assert_eq!(state.track.geometry.obstacles.len(), initial_obs_count + 1);
+    assert_eq!(state.selection, Selection::Obstacle(initial_obs_count));
+    let dup_center = state.track.geometry.obstacles[initial_obs_count].center();
+    assert_eq!(dup_center, original_center + Vec2::new(4.0, 4.0));
+
+    // Test Undo
+    assert!(state.undo());
+    assert_eq!(state.track.geometry.obstacles.len(), initial_obs_count);
+
+    // Test Redo
+    assert!(state.redo());
+    assert_eq!(state.track.geometry.obstacles.len(), initial_obs_count + 1);
+}
+
+#[test]
+fn test_polygon_obstacle_tool_vertex_placement() {
+    use tdrace_app::editor::{EditorToolType, ObstacleShapeType, Selection, ToolSettings};
+    use tdrace_core::track::geometry::ObstacleShape;
+
+    let mut state = EditorState::new(classic_grand_prix());
+    let mut tools = ToolSettings::default();
+    tools.active_tool = EditorToolType::Obstacle;
+    tools.active_obstacle_shape = ObstacleShapeType::Polygon;
+
+    let initial_obs_count = state.track.geometry.obstacles.len();
+
+    // 1. Add vertex 1
+    tools.handle_mouse_down(&mut state, Vec2::new(10.0, 10.0));
+    assert_eq!(tools.active_polygon_vertices.len(), 1);
+
+    // 2. Add vertex 2
+    tools.handle_mouse_down(&mut state, Vec2::new(20.0, 10.0));
+    assert_eq!(tools.active_polygon_vertices.len(), 2);
+
+    // 3. Add vertex 3
+    tools.handle_mouse_down(&mut state, Vec2::new(15.0, 20.0));
+    assert_eq!(tools.active_polygon_vertices.len(), 3);
+
+    // 4. Click close near vertex 1 (within 1.5m radius)
+    tools.handle_mouse_down(&mut state, Vec2::new(10.5, 10.5));
+
+    // Should close polygon and create obstacle!
+    assert!(tools.active_polygon_vertices.is_empty());
+    assert_eq!(state.track.geometry.obstacles.len(), initial_obs_count + 1);
+    assert_eq!(state.selection, Selection::Obstacle(initial_obs_count));
+
+    let created_obs = &state.track.geometry.obstacles[initial_obs_count];
+    match &created_obs.shape {
+        ObstacleShape::Polygon { vertices } => {
+            assert_eq!(vertices.len(), 3);
+            assert_eq!(vertices[0], Vec2::new(10.0, 10.0));
+            assert_eq!(vertices[1], Vec2::new(20.0, 10.0));
+            assert_eq!(vertices[2], Vec2::new(15.0, 20.0));
+        }
+        _ => panic!("Expected Polygon obstacle shape!"),
+    }
+}
+

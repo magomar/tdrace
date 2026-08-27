@@ -321,6 +321,16 @@ impl FastRasterizer {
                     Self::draw_screen_triangle(p0, p1, p2, [220, 90, 30], width, height, buffer);
                     Self::draw_screen_triangle(p0, p2, p3, [220, 90, 30], width, height, buffer);
                 }
+                ObstacleShape::Polygon { vertices } => {
+                    if vertices.len() >= 3 {
+                        let p0 = world_to_screen(vertices[0]);
+                        for i in 1..vertices.len() - 1 {
+                            let p1 = world_to_screen(vertices[i]);
+                            let p2 = world_to_screen(vertices[i + 1]);
+                            Self::draw_screen_triangle(p0, p1, p2, [220, 90, 30], width, height, buffer);
+                        }
+                    }
+                }
             }
         }
 

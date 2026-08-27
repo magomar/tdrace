@@ -6,6 +6,7 @@ pub mod menu;
 pub mod profile_ui;
 pub mod scaler;
 pub mod starting_grid;
+pub mod track_manager_ui;
 
 pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
@@ -18,6 +19,9 @@ pub use menu::{
 pub use profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use scaler::UiScaler;
 pub use starting_grid::render_starting_grid_screen;
+pub use track_manager_ui::{
+    render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,
+};
 
 
 

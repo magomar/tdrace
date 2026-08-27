@@ -68,6 +68,8 @@ pub struct ToolSettings {
     pub active_tool: EditorToolType,
     pub active_surface: SurfaceType,
     pub active_surface_shape: SurfaceShapeType,
+    pub active_obstacle_shape: ObstacleShapeType,
+    pub active_polygon_vertices: Vec<Vec2>,
     pub new_waypoint_width: f32,
     pub new_waypoint_left_curb: bool,
     pub new_waypoint_right_curb: bool,
@@ -86,12 +88,21 @@ pub enum SurfaceShapeType {
     OrientedBox,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ObstacleShapeType {
+    Circle,
+    Box,
+    Polygon,
+}
+
 impl Default for ToolSettings {
     fn default() -> Self {
         Self {
             active_tool: EditorToolType::Select,
             active_surface: SurfaceType::Sand,
             active_surface_shape: SurfaceShapeType::Aabb,
+            active_obstacle_shape: ObstacleShapeType::Circle,
+            active_polygon_vertices: Vec::new(),
             new_waypoint_width: 14.0,
             new_waypoint_left_curb: false,
             new_waypoint_right_curb: false,
@@ -100,6 +111,56 @@ impl Default for ToolSettings {
             drag_current_world: Vec2::ZERO,
             drag_initial_entity_pos: Vec2::ZERO,
         }
+    }
+}
+
+impl ToolSettings {
+    /// Duplicates currently selected obstacle or surface zone.
+    pub fn duplicate_selected(&mut self, state: &mut EditorState) -> bool {
+        match state.selection {
+            Selection::Obstacle(idx) => {
+                if let Some(obs) = state.track.geometry.obstacles.get(idx).cloned() {
+                    state.record_undo();
+                    let new_id = state.track.geometry.obstacles.len() + 1;
+                    let mut copy = obs.clone();
+                    copy.id = new_id;
+                    copy.name = format!("{} (Copy)", obs.name);
+                    let old_center = copy.center();
+                    copy.set_center(old_center + Vec2::new(4.0, 4.0));
+                    state.track.geometry.obstacles.push(copy);
+                    state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
+                    return true;
+                }
+            }
+            Selection::SurfaceZone(idx) => {
+                if let Some(zone) = state.track.geometry.surface_zones.get(idx).cloned() {
+                    state.record_undo();
+                    let mut copy = zone.clone();
+                    copy.name = format!("{} (Copy)", zone.name);
+                    let old_center = get_surface_shape_center(&copy.shape);
+                    set_surface_zone_position(&mut copy, old_center + Vec2::new(4.0, 4.0));
+                    state.track.geometry.surface_zones.push(copy);
+                    state.selection = Selection::SurfaceZone(state.track.geometry.surface_zones.len() - 1);
+                    return true;
+                }
+            }
+            Selection::JumpRamp(idx) => {
+                if let Some(ramp) = state.track.geometry.jump_ramps.get(idx).cloned() {
+                    state.record_undo();
+                    let new_id = state.track.geometry.jump_ramps.len() + 1;
+                    let mut copy = ramp.clone();
+                    copy.id = new_id;
+                    copy.name = format!("{} (Copy)", ramp.name);
+                    let old_center = get_surface_shape_center(&copy.shape);
+                    set_jump_ramp_position(&mut copy, old_center + Vec2::new(4.0, 4.0));
+                    state.track.geometry.jump_ramps.push(copy);
+                    state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
+                    return true;
+                }
+            }
+            _ => {}
+        }
+        false
     }
 }
 
@@ -152,12 +213,37 @@ impl ToolSettings {
                 self.drag_current_world = snapped_mouse;
             }
             EditorToolType::Obstacle => {
-                state.record_undo();
-                let obs_id = state.track.geometry.obstacles.len() + 1;
-                let new_obs = Obstacle::circle(obs_id, snapped_mouse, 1.2, format!("Tire Stack {}", obs_id));
-                state.track.geometry.obstacles.push(new_obs);
-                state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
-                state.revalidate();
+                match self.active_obstacle_shape {
+                    ObstacleShapeType::Circle => {
+                        state.record_undo();
+                        let obs_id = state.track.geometry.obstacles.len() + 1;
+                        let new_obs = Obstacle::circle(obs_id, snapped_mouse, 1.2, format!("Tire Stack {}", obs_id));
+                        state.track.geometry.obstacles.push(new_obs);
+                        state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
+                        state.revalidate();
+                    }
+                    ObstacleShapeType::Box => {
+                        self.is_dragging = true;
+                        self.drag_start_world = snapped_mouse;
+                        self.drag_current_world = snapped_mouse;
+                    }
+                    ObstacleShapeType::Polygon => {
+                        // If clicked near first vertex and we have at least 3 vertices, close the polygon!
+                        if self.active_polygon_vertices.len() >= 3
+                            && (self.active_polygon_vertices[0] - snapped_mouse).length() < 1.5
+                        {
+                            state.record_undo();
+                            let obs_id = state.track.geometry.obstacles.len() + 1;
+                            let vertices = std::mem::take(&mut self.active_polygon_vertices);
+                            let new_obs = Obstacle::polygon(obs_id, vertices, format!("Polygon Obstacle {}", obs_id));
+                            state.track.geometry.obstacles.push(new_obs);
+                            state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
+                            state.revalidate();
+                        } else {
+                            self.active_polygon_vertices.push(snapped_mouse);
+                        }
+                    }
+                }
             }
             EditorToolType::Checkpoint => {
                 self.is_dragging = true;
@@ -678,6 +764,19 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                     0.6,
                     Palette::NEON_GOLD,
                 );
+            }
+            EditorToolType::Obstacle => {
+                let min = Vec2::new(
+                    tools.drag_start_world.x.min(tools.drag_current_world.x),
+                    tools.drag_start_world.y.min(tools.drag_current_world.y),
+                );
+                let max = Vec2::new(
+                    tools.drag_start_world.x.max(tools.drag_current_world.x),
+                    tools.drag_start_world.y.max(tools.drag_current_world.y),
+                );
+                let w = max.x - min.x;
+                let h = max.y - min.y;
+                draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_MAGENTA);
             }
             _ => {}
         }

@@ -95,6 +95,9 @@ use crate::ui::menu::{
 };
 use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
 use crate::ui::starting_grid::render_starting_grid_screen;
+use crate::ui::track_manager_ui::{
+    render_track_manager_screen, TrackManagerModal, TrackManagerTab,
+};
 use crate::ui::UiScaler;
 
 /// Source screen that launched the DriverCards dossier view.
@@ -127,6 +130,11 @@ pub enum GameState {
         country_idx: usize,
         livery_idx: usize,
         cursor_timer: f32,
+    },
+    TrackManager {
+        active_tab: TrackManagerTab,
+        selected_idx: usize,
+        modal: TrackManagerModal,
     },
     TrackEditor,
     EditorTestDrive,
@@ -764,6 +772,20 @@ impl RaceSession {
             }
         }
 
+        if matches!(self.state, GameState::TrackManager { .. }) {
+            if let GameState::TrackManager {
+                active_tab,
+                selected_idx,
+                modal,
+            } = std::mem::replace(
+                &mut self.state,
+                GameState::Menu,
+            ) {
+                self.update_track_manager(active_tab, selected_idx, modal, frame_dt);
+                return;
+            }
+        }
+
         match self.state {
             GameState::Menu => {
                 self.audio.play_music(MusicTrack::NeonMenu);
@@ -1046,6 +1068,7 @@ impl RaceSession {
 
             GameState::ProfileManager { .. }
             | GameState::ProfileCreate { .. }
+            | GameState::TrackManager { .. }
             | GameState::TrackEditor
             | GameState::EditorTestDrive => {}
 
@@ -1354,6 +1377,17 @@ impl RaceSession {
             return;
         }
 
+        // Open Track Manager (M key)
+        if is_key_pressed(KeyCode::M) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.state = GameState::TrackManager {
+                active_tab: TrackManagerTab::Main,
+                selected_idx: 0,
+                modal: TrackManagerModal::None,
+            };
+            return;
+        }
+
         // Open Player Profile & Career History Screen (P key or Gamepad Y)
         if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -1369,8 +1403,9 @@ impl RaceSession {
             return;
         }
 
-        let available_tracks = self.track_manager.all_track_choices();
-        if self.menu_track_idx >= available_tracks.len() {
+        let available_tracks = self.track_manager.main_track_choices();
+        let total_items = available_tracks.len() + 1; // +1 for the dedicated Track Manager entry
+        if self.menu_track_idx >= total_items {
             self.menu_track_idx = 0;
         }
 
@@ -1378,14 +1413,14 @@ impl RaceSession {
         if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
             self.audio.play_sfx(SfxType::UiMove);
             if self.menu_track_idx == 0 {
-                self.menu_track_idx = available_tracks.len().saturating_sub(1);
+                self.menu_track_idx = total_items.saturating_sub(1);
             } else {
                 self.menu_track_idx -= 1;
             }
         }
         if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
             self.audio.play_sfx(SfxType::UiMove);
-            self.menu_track_idx = (self.menu_track_idx + 1) % available_tracks.len();
+            self.menu_track_idx = (self.menu_track_idx + 1) % total_items;
         }
 
         // Car selection cursor (Left/Right: Arrows / A/D / D-pad / Left Stick X)
@@ -1423,20 +1458,26 @@ impl RaceSession {
         // Open Track Editor (E key)
         if is_key_pressed(KeyCode::E) {
             self.audio.play_sfx(SfxType::UiSelect);
-            let available_tracks = self.track_manager.all_track_choices();
-            let chosen = available_tracks
-                .get(self.menu_track_idx)
-                .cloned()
-                .unwrap_or(TrackChoice::ClassicGrandPrix);
-            let track = self
-                .track_manager
-                .load_track(&chosen)
-                .unwrap_or_else(|_| classic_grand_prix());
-            self.enter_track_editor(track);
+            let available_tracks = self.track_manager.main_track_choices();
+            if self.menu_track_idx < available_tracks.len() {
+                let chosen = available_tracks[self.menu_track_idx].clone();
+                let track = self
+                    .track_manager
+                    .load_track(&chosen)
+                    .unwrap_or_else(|_| classic_grand_prix());
+                self.enter_track_editor(track);
+            } else {
+                // If cursor is on the Track Manager entry, open Track Manager
+                self.state = GameState::TrackManager {
+                    active_tab: TrackManagerTab::Main,
+                    selected_idx: 0,
+                    modal: TrackManagerModal::None,
+                };
+            }
             return;
         }
 
-        // Start race (Space, Enter, or Gamepad Confirm [A / South / Start])
+        // Start race or open Track Manager (Space, Enter, or Gamepad Confirm [A / South / Start])
         if is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
@@ -1444,14 +1485,322 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_a_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            let available_tracks = self.track_manager.all_track_choices();
-            self.track_choice = available_tracks
-                .get(self.menu_track_idx)
-                .cloned()
-                .unwrap_or(TrackChoice::ClassicGrandPrix);
-            self.car_choice = CarChoice::ALL[self.menu_car_idx];
-            self.init_race();
+            let available_tracks = self.track_manager.main_track_choices();
+            if self.menu_track_idx < available_tracks.len() {
+                self.track_choice = available_tracks[self.menu_track_idx].clone();
+                self.car_choice = CarChoice::ALL[self.menu_car_idx];
+                self.init_race();
+            } else {
+                // User pressed Confirm on the dedicated "Track Manager" entry!
+                self.state = GameState::TrackManager {
+                    active_tab: TrackManagerTab::Main,
+                    selected_idx: 0,
+                    modal: TrackManagerModal::None,
+                };
+            }
         }
+    }
+
+    /// Handles input and actions for the dedicated Track Manager screen.
+    fn update_track_manager(
+        &mut self,
+        mut active_tab: TrackManagerTab,
+        mut selected_idx: usize,
+        mut modal: TrackManagerModal,
+        dt: f32,
+    ) {
+        match modal {
+            TrackManagerModal::EditMetadata {
+                ref track_id,
+                ref mut name_input,
+                ref mut desc_input,
+                ref mut active_field,
+                ref mut cursor_timer,
+            } => {
+                *cursor_timer += dt;
+
+                while let Some(c) = get_char_pressed() {
+                    if !c.is_control() {
+                        if *active_field == 0 {
+                            if name_input.len() < 32 {
+                                name_input.push(c);
+                            }
+                        } else if desc_input.len() < 140 {
+                            desc_input.push(c);
+                        }
+                    }
+                }
+
+                if is_key_pressed(KeyCode::Backspace) {
+                    if *active_field == 0 {
+                        name_input.pop();
+                    } else {
+                        desc_input.pop();
+                    }
+                }
+
+                if is_key_pressed(KeyCode::Tab)
+                    || is_key_pressed(KeyCode::Up)
+                    || is_key_pressed(KeyCode::Down)
+                {
+                    *active_field = 1 - *active_field;
+                    *cursor_timer = 0.0;
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+
+                if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
+                    let tid = track_id.clone();
+                    let new_n = name_input.trim().to_string();
+                    let new_d = desc_input.trim().to_string();
+                    if !new_n.is_empty() {
+                        let _ = self.track_manager.update_track_metadata(&tid, new_n, new_d);
+                    }
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                if is_key_pressed(KeyCode::Escape) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                self.state = GameState::TrackManager {
+                    active_tab,
+                    selected_idx,
+                    modal,
+                };
+                return;
+            }
+            TrackManagerModal::ConfirmDelete {
+                ref track_id,
+                ..
+            } => {
+                if is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Y)
+                {
+                    let tid = track_id.clone();
+                    let _ = self.track_manager.delete_custom_track(&tid);
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let list_len = match active_tab {
+                        TrackManagerTab::Main => self.track_manager.main_track_choices().len(),
+                        TrackManagerTab::Drafts => self.track_manager.draft_track_choices().len(),
+                    };
+                    if selected_idx >= list_len && list_len > 0 {
+                        selected_idx = list_len - 1;
+                    }
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::N) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                self.state = GameState::TrackManager {
+                    active_tab,
+                    selected_idx,
+                    modal,
+                };
+                return;
+            }
+            TrackManagerModal::None => {}
+        }
+
+        // --- NON-MODAL NAVIGATION AND ACTIONS ---
+        // 1. Switch Tabs (Key 1 / 2, Left / Right, Tab, D-pad)
+        if is_key_pressed(KeyCode::Key1) {
+            if active_tab != TrackManagerTab::Main {
+                self.audio.play_sfx(SfxType::UiMove);
+                active_tab = TrackManagerTab::Main;
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::Key2) {
+            if active_tab != TrackManagerTab::Drafts {
+                self.audio.play_sfx(SfxType::UiMove);
+                active_tab = TrackManagerTab::Drafts;
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::Tab)
+            || is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::Right)
+            || self.input.gamepad.snapshot.nav_left
+            || self.input.gamepad.snapshot.nav_right
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            active_tab = match active_tab {
+                TrackManagerTab::Main => TrackManagerTab::Drafts,
+                TrackManagerTab::Drafts => TrackManagerTab::Main,
+            };
+            selected_idx = 0;
+        }
+
+        // Re-evaluate list after potential tab switch
+        let current_list = match active_tab {
+            TrackManagerTab::Main => self.track_manager.main_track_choices(),
+            TrackManagerTab::Drafts => self.track_manager.draft_track_choices(),
+        };
+        let list_len = current_list.len();
+
+        if list_len > 0 && selected_idx >= list_len {
+            selected_idx = list_len.saturating_sub(1);
+        }
+
+        // 2. Up/Down Track Selection
+        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+            self.audio.play_sfx(SfxType::UiMove);
+            if selected_idx == 0 {
+                selected_idx = list_len.saturating_sub(1);
+            } else {
+                selected_idx -= 1;
+            }
+        }
+        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+            self.audio.play_sfx(SfxType::UiMove);
+            if list_len > 0 {
+                selected_idx = (selected_idx + 1) % list_len;
+            }
+        }
+
+        // 3. Race Track (Enter / Space / Gamepad A / Confirm)
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
+            || is_key_pressed(KeyCode::Space)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            if let Some(track_choice) = current_list.get(selected_idx).cloned() {
+                self.audio.play_sfx(SfxType::UiSelect);
+                self.track_choice = track_choice;
+                self.init_race();
+                return;
+            }
+        }
+
+        // 4. Edit in Track Studio (E key / Gamepad X)
+        if is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_x_pressed {
+            if let Some(track_choice) = current_list.get(selected_idx) {
+                self.audio.play_sfx(SfxType::UiSelect);
+                let track = self
+                    .track_manager
+                    .load_track(track_choice)
+                    .unwrap_or_else(|_| classic_grand_prix());
+                self.enter_track_editor(track);
+                return;
+            }
+        }
+
+        // 5. Promote / Demote Track (P key / Gamepad Y)
+        if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
+            if let Some(track_choice) = current_list.get(selected_idx) {
+                if track_choice.is_custom() {
+                    let tid = track_choice.track_id().to_string();
+                    match active_tab {
+                        TrackManagerTab::Drafts => {
+                            let _ = self.track_manager.promote_track(&tid);
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            let new_len = self.track_manager.draft_track_choices().len();
+                            if selected_idx >= new_len && new_len > 0 {
+                                selected_idx = new_len - 1;
+                            }
+                        }
+                        TrackManagerTab::Main => {
+                            let _ = self.track_manager.demote_track(&tid);
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            let new_len = self.track_manager.main_track_choices().len();
+                            if selected_idx >= new_len && new_len > 0 {
+                                selected_idx = new_len - 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6. Edit Metadata (N key)
+        if is_key_pressed(KeyCode::N) {
+            if let Some(track_choice) = current_list.get(selected_idx) {
+                if track_choice.is_custom() {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        selected_idx,
+                        modal: TrackManagerModal::EditMetadata {
+                            track_id: track_choice.track_id().to_string(),
+                            name_input: track_choice.title().to_string(),
+                            desc_input: track_choice.description().to_string(),
+                            active_field: 0,
+                            cursor_timer: 0.0,
+                        },
+                    };
+                    return;
+                }
+            }
+        }
+
+        // 7. Create New Draft Track (C key)
+        if is_key_pressed(KeyCode::C) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let count = self.track_manager.draft_track_choices().len() + 1;
+            let name = format!("Draft Track {}", count);
+            let desc = "Experimental draft circuit layout under testing.".to_string();
+            let _ = self.track_manager.create_new_draft_track(&name, &desc);
+            active_tab = TrackManagerTab::Drafts;
+            selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
+        }
+
+        // 8. Delete Custom Track (Delete / Backspace / X key)
+        if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::X) {
+            if let Some(track_choice) = current_list.get(selected_idx) {
+                if track_choice.is_custom() {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        selected_idx,
+                        modal: TrackManagerModal::ConfirmDelete {
+                            track_id: track_choice.track_id().to_string(),
+                            track_title: track_choice.title().to_string(),
+                        },
+                    };
+                    return;
+                }
+            }
+        }
+
+        // 9. Back to Main Menu (Escape / Gamepad Back)
+        if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_back_pressed {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.state = GameState::Menu;
+            return;
+        }
+
+        self.state = GameState::TrackManager {
+            active_tab,
+            selected_idx,
+            modal,
+        };
     }
 
     /// High-performance deterministic fixed physics simulation step.
@@ -1826,7 +2175,7 @@ impl RaceSession {
     pub fn render(&self) {
         match self.state {
             GameState::Menu => {
-                let available_tracks = self.track_manager.all_track_choices();
+                let available_tracks = self.track_manager.main_track_choices();
                 render_track_select_menu(
                     &self.fonts,
                     &available_tracks,
@@ -1929,6 +2278,19 @@ impl RaceSession {
                     livery_idx,
                     cursor_timer,
                     editing_id.is_some(),
+                );
+            }
+            GameState::TrackManager {
+                active_tab,
+                selected_idx,
+                ref modal,
+            } => {
+                render_track_manager_screen(
+                    &self.fonts,
+                    &self.track_manager,
+                    active_tab,
+                    selected_idx,
+                    modal,
                 );
             }
             GameState::TrackEditor => {
@@ -2132,6 +2494,7 @@ impl RaceSession {
                 let choice = TrackChoice::Custom {
                     id: slug.clone(),
                     title: slug.clone(),
+                    description: String::new(),
                     path: format!("tracks/{}.json", slug),
                 };
                 if let Ok(track) = self.track_manager.load_track(&choice) {

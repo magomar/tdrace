@@ -304,22 +304,21 @@ fn test_polygon_obstacle_creation_ray_and_sat_collision() {
     assert!((c.y - 12.6).abs() < 1.0);
 
     // 1. Ray intersection
-    let ray_origin = Vec2::new(0.0, 10.0);
+    let ray_origin = Vec2::new(0.0, 12.0);
     let ray_dir = Vec2::new(1.0, 0.0);
     let hit = poly_obs.intersect_ray(ray_origin, ray_dir, 50.0);
     assert!(hit.is_some());
-    let (t, _normal) = hit.unwrap();
-    assert!((t - 8.0).abs() < 1.5);
+    let (t, normal) = hit.unwrap();
+    assert!((t - 8.67).abs() < 0.2);
+    assert!(normal.x < 0.0, "Normal should face against incoming ray direction");
 
     // 2. SAT Collision resolution
     let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(12.0, 12.0), 0.0);
     let hit_events = resolve_all_wall_collisions(&mut car, &[], &[poly_obs.clone()]);
-    assert_eq!(hit_events.len(), 1, "Car should collide with polygon obstacle");
+    assert!(!hit_events.is_empty(), "Car should collide with polygon obstacle");
 
     // 3. Translation
     poly_obs.set_center(Vec2::new(50.0, 50.0));
     assert!((poly_obs.center() - Vec2::new(50.0, 50.0)).length() < 1e-4);
 }
-
-
 

@@ -6,7 +6,7 @@ use super::geometry::{
     TrackGeometry, WallBarrier,
 };
 use super::spline::{TrackSpline, TrackWaypoint};
-use super::Track;
+use super::{Track, TrackCategory};
 use crate::physics::surface::SurfaceType;
 
 /// Trims local self-intersecting loops (swallowtail singularities) from an offset boundary polyline.
@@ -278,6 +278,8 @@ pub fn classic_grand_prix() -> Track {
 
     Track {
         name: "Classic Grand Prix".to_string(),
+        description: "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.".to_string(),
+        category: TrackCategory::Main,
         spline,
         geometry: TrackGeometry {
             inner_walls: left_walls,
@@ -329,6 +331,8 @@ pub fn oval_speedway() -> Track {
 
     Track {
         name: "Oval Speedway".to_string(),
+        description: "Full-throttle banked superspeedway surrounded by concrete barriers.".to_string(),
+        category: TrackCategory::Main,
         spline,
         geometry: TrackGeometry {
             inner_walls: left_walls,
@@ -411,6 +415,8 @@ pub fn drift_park() -> Track {
 
     Track {
         name: "Drift Park".to_string(),
+        description: "Tight technical drift arena with sweeping corners and generous asphalt runoff.".to_string(),
+        category: TrackCategory::Main,
         spline,
         geometry: TrackGeometry {
             inner_walls: left_walls,
@@ -461,6 +467,8 @@ pub fn kart_arena() -> Track {
 
     Track {
         name: "Kart Arena".to_string(),
+        description: "Short, high-density karting circuit with fast transitions and chicanes.".to_string(),
+        category: TrackCategory::Main,
         spline,
         geometry: TrackGeometry {
             inner_walls: left_walls,
@@ -553,6 +561,8 @@ pub fn ramp_raceway() -> Track {
 
     Track {
         name: "Ramp Raceway".to_string(),
+        description: "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.".to_string(),
+        category: TrackCategory::Main,
         spline,
         geometry: TrackGeometry {
             inner_walls: left_walls,
@@ -660,6 +670,8 @@ pub fn oasis_rally() -> Track {
 
     Track {
         name: "Oasis Rally".to_string(),
+        description: "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.".to_string(),
+        category: TrackCategory::Main,
         spline,
         geometry: TrackGeometry {
             inner_walls: left_walls,
@@ -731,6 +743,8 @@ pub fn outlaw_pass() -> Track {
 
     Track {
         name: "Outlaw Pass".to_string(),
+        description: "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.".to_string(),
+        category: TrackCategory::Main,
         spline,
         geometry: TrackGeometry {
             inner_walls: left_walls,
