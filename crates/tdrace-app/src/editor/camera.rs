@@ -220,6 +220,35 @@ impl EditorCamera {
         self.center += shift;
     }
 
+    /// Smoothly zooms in or out progressively at a continuous rate centered at a screen coordinate.
+    /// A positive `zoom_dir` zooms in (+), while a negative `zoom_dir` zooms out (-).
+    pub fn zoom_progressive(
+        &mut self,
+        screen_pos: Vec2,
+        zoom_dir: f32,
+        speed_multiplier: f32,
+        dt: f32,
+        sw: f32,
+        sh: f32,
+    ) {
+        if zoom_dir.abs() < 1e-4 {
+            return;
+        }
+        let base_rate = 2.5f32;
+        let exponent = zoom_dir * speed_multiplier * dt;
+        let factor = base_rate.powf(exponent);
+
+        let world_before = self.screen_to_world(screen_pos, sw, sh);
+        let new_zoom = (self.target_zoom * factor).clamp(self.min_zoom, self.max_zoom);
+        self.target_zoom = new_zoom;
+        self.zoom = (self.zoom * factor).clamp(self.min_zoom, self.max_zoom);
+
+        let world_after = self.screen_to_world(screen_pos, sw, sh);
+        let shift = world_before - world_after;
+        self.target_center += shift;
+        self.center += shift;
+    }
+
     /// Automatically frames the given bounding box into the viewport with padding.
     pub fn focus_bounds(&mut self, min: Vec2, max: Vec2, sw: f32, sh: f32) {
         let size = max - min;

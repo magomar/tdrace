@@ -99,7 +99,7 @@ impl Default for ToolSettings {
     fn default() -> Self {
         Self {
             active_tool: EditorToolType::Select,
-            active_surface: SurfaceType::Sand,
+            active_surface: SurfaceType::Asphalt,
             active_surface_shape: SurfaceShapeType::Aabb,
             active_obstacle_shape: ObstacleShapeType::Circle,
             active_polygon_vertices: Vec::new(),
@@ -115,7 +115,7 @@ impl Default for ToolSettings {
 }
 
 impl ToolSettings {
-    /// Duplicates currently selected obstacle or surface zone.
+    /// Duplicates currently selected obstacle, surface zone, jump ramp, waypoint, checkpoint, or grid slot.
     pub fn duplicate_selected(&mut self, state: &mut EditorState) -> bool {
         match state.selection {
             Selection::Obstacle(idx) => {
@@ -129,6 +129,7 @@ impl ToolSettings {
                     copy.set_center(old_center + Vec2::new(4.0, 4.0));
                     state.track.geometry.obstacles.push(copy);
                     state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
+                    state.revalidate();
                     return true;
                 }
             }
@@ -141,6 +142,7 @@ impl ToolSettings {
                     set_surface_zone_position(&mut copy, old_center + Vec2::new(4.0, 4.0));
                     state.track.geometry.surface_zones.push(copy);
                     state.selection = Selection::SurfaceZone(state.track.geometry.surface_zones.len() - 1);
+                    state.revalidate();
                     return true;
                 }
             }
@@ -155,6 +157,7 @@ impl ToolSettings {
                     set_jump_ramp_position(&mut copy, old_center + Vec2::new(4.0, 4.0));
                     state.track.geometry.jump_ramps.push(copy);
                     state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
+                    state.revalidate();
                     return true;
                 }
             }
@@ -171,6 +174,45 @@ impl ToolSettings {
                     }
                     state.rebuild_geometry();
                     state.select(Selection::Waypoint(insert_idx));
+                    if let Some(wp) = state.track.spline.waypoints.get(insert_idx) {
+                        self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
+                        self.new_waypoint_width = wp.width;
+                        self.new_waypoint_left_curb = wp.left_curb;
+                        self.new_waypoint_right_curb = wp.right_curb;
+                    }
+                    return true;
+                }
+            }
+            Selection::Checkpoint(idx) => {
+                if idx < state.track.checkpoints.len() {
+                    state.record_undo();
+                    let mut copy = state.track.checkpoints[idx].clone();
+                    let offset = Vec2::new(4.0, 4.0);
+                    copy.gate.start += offset;
+                    copy.gate.end += offset;
+                    copy.is_finish_line = false;
+                    state.track.checkpoints.push(copy);
+                    for (new_id, cp) in state.track.checkpoints.iter_mut().enumerate() {
+                        cp.id = new_id;
+                    }
+                    let new_idx = state.track.checkpoints.len() - 1;
+                    state.selection = Selection::Checkpoint(new_idx);
+                    state.revalidate();
+                    return true;
+                }
+            }
+            Selection::GridSlot(idx) => {
+                if idx < state.track.grid_positions.len() {
+                    state.record_undo();
+                    let mut copy = state.track.grid_positions[idx].clone();
+                    copy.position += Vec2::new(4.0, 4.0);
+                    state.track.grid_positions.push(copy);
+                    for (new_id, slot) in state.track.grid_positions.iter_mut().enumerate() {
+                        slot.grid_slot = new_id;
+                    }
+                    let new_idx = state.track.grid_positions.len() - 1;
+                    state.selection = Selection::GridSlot(new_idx);
+                    state.revalidate();
                     return true;
                 }
             }
@@ -190,6 +232,14 @@ impl ToolSettings {
                 // Find closest selectable entity
                 if let Some(sel) = find_closest_entity(state, mouse_world) {
                     state.select(sel);
+                    if let Selection::Waypoint(idx) = sel {
+                        if let Some(wp) = state.track.spline.waypoints.get(idx) {
+                            self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
+                            self.new_waypoint_width = wp.width;
+                            self.new_waypoint_left_curb = wp.left_curb;
+                            self.new_waypoint_right_curb = wp.right_curb;
+                        }
+                    }
                     self.is_dragging = true;
                     self.drag_start_world = snapped_mouse;
                     self.drag_current_world = snapped_mouse;
@@ -202,6 +252,12 @@ impl ToolSettings {
                 // If clicked near an existing waypoint, select it
                 if let Some(wp_idx) = find_closest_waypoint(state, mouse_world, 8.0) {
                     state.select(Selection::Waypoint(wp_idx));
+                    if let Some(wp) = state.track.spline.waypoints.get(wp_idx) {
+                        self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
+                        self.new_waypoint_width = wp.width;
+                        self.new_waypoint_left_curb = wp.left_curb;
+                        self.new_waypoint_right_curb = wp.right_curb;
+                    }
                     self.is_dragging = true;
                     self.drag_start_world = snapped_mouse;
                     self.drag_current_world = snapped_mouse;
@@ -209,7 +265,17 @@ impl ToolSettings {
                 } else {
                     // Insert new waypoint in relation to current/last selected waypoint
                     state.record_undo();
+
+                    let inherited_surface = match state
+                        .current_or_last_waypoint_idx()
+                        .and_then(|idx| state.track.spline.waypoints.get(idx))
+                    {
+                        Some(prev_wp) => prev_wp.surface.unwrap_or(self.active_surface),
+                        None => self.active_surface,
+                    };
+
                     let mut wp = TrackWaypoint::new(snapped_mouse, self.new_waypoint_width);
+                    wp.surface = Some(inherited_surface);
                     wp.left_curb = self.new_waypoint_left_curb;
                     wp.right_curb = self.new_waypoint_right_curb;
 
@@ -226,6 +292,7 @@ impl ToolSettings {
 
                     state.rebuild_geometry();
                     state.select(Selection::Waypoint(insert_idx));
+                    self.active_surface = inherited_surface;
                 }
             }
             EditorToolType::SurfaceZone => {
@@ -952,5 +1019,42 @@ mod tests {
         assert_eq!(state.track.spline.waypoints.len(), initial_count);
         assert_eq!(state.selection, Selection::None);
         assert_eq!(state.last_selected_waypoint, Some(1));
+    }
+
+    #[test]
+    fn test_road_spline_surface_inheritance_and_switching() {
+        use tdrace_core::track::presets::oasis_rally;
+
+        let track = oasis_rally();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+        tools.active_tool = EditorToolType::RoadSpline;
+
+        // 1. Select waypoint 2 (which is Dirt in Oasis Rally)
+        state.select(Selection::Waypoint(2));
+        assert_eq!(state.track.spline.waypoints[2].surface, Some(SurfaceType::Dirt));
+
+        // Click to add a new waypoint -> should inherit Dirt surface
+        let new_pos = Vec2::new(170.0, 30.0);
+        tools.handle_mouse_down(&mut state, new_pos);
+        tools.handle_mouse_up(&mut state, new_pos);
+
+        assert_eq!(state.selection, Selection::Waypoint(3));
+        assert_eq!(state.track.spline.waypoints[3].surface, Some(SurfaceType::Dirt));
+        assert_eq!(tools.active_surface, SurfaceType::Dirt);
+
+        // 2. Change waypoint 3 surface to Sand
+        state.track.spline.waypoints[3].surface = Some(SurfaceType::Sand);
+        tools.active_surface = SurfaceType::Sand;
+        state.rebuild_geometry();
+
+        // 3. Click to add another waypoint -> should inherit Sand surface from waypoint 3
+        let new_pos2 = Vec2::new(180.0, 40.0);
+        tools.handle_mouse_down(&mut state, new_pos2);
+        tools.handle_mouse_up(&mut state, new_pos2);
+
+        assert_eq!(state.selection, Selection::Waypoint(4));
+        assert_eq!(state.track.spline.waypoints[4].surface, Some(SurfaceType::Sand));
+        assert_eq!(tools.active_surface, SurfaceType::Sand);
     }
 }

@@ -257,41 +257,72 @@ fn render_track_ribbon(spline: &TrackSpline) {
         let left1 = s1.point + s1.normal * hw1;
         let right1 = s1.point - s1.normal * hw1;
 
-        if s0.surface == SurfaceType::Dirt {
-            // Draw playable dirt track segment
-            draw_quad(left0, left1, right1, right0, Palette::DIRT);
+        match s0.surface {
+            SurfaceType::Dirt => {
+                // Draw playable dirt track segment
+                draw_quad(left0, left1, right1, right0, Palette::DIRT);
 
-            // Earthen/dusty track edge boundary lines
-            draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
-            draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
+                // Earthen/dusty track edge boundary lines
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
 
-            // Subtle packed dirt tire groove lines along left & right wheel paths
-            let groove_l0 = s0.point + s0.normal * (hw0 * 0.45);
-            let groove_l1 = s1.point + s1.normal * (hw1 * 0.45);
-            let groove_r0 = s0.point - s0.normal * (hw0 * 0.45);
-            let groove_r1 = s1.point - s1.normal * (hw1 * 0.45);
+                // Subtle packed dirt tire groove lines along left & right wheel paths
+                let groove_l0 = s0.point + s0.normal * (hw0 * 0.45);
+                let groove_l1 = s1.point + s1.normal * (hw1 * 0.45);
+                let groove_r0 = s0.point - s0.normal * (hw0 * 0.45);
+                let groove_r1 = s1.point - s1.normal * (hw1 * 0.45);
 
-            draw_line(groove_l0.x, groove_l0.y, groove_l1.x, groove_l1.y, 0.22, Palette::DIRT_DARK);
-            draw_line(groove_r0.x, groove_r0.y, groove_r1.x, groove_r1.y, 0.22, Palette::DIRT_DARK);
-        } else {
-            // Draw asphalt segment
-            draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
+                draw_line(groove_l0.x, groove_l0.y, groove_l1.x, groove_l1.y, 0.22, Palette::DIRT_DARK);
+                draw_line(groove_r0.x, groove_r0.y, groove_r1.x, groove_r1.y, 0.22, Palette::DIRT_DARK);
+            }
+            SurfaceType::Sand => {
+                draw_quad(left0, left1, right1, right0, Palette::SAND);
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::SAND_DARK);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::SAND_DARK);
+            }
+            SurfaceType::Grass => {
+                draw_quad(left0, left1, right1, right0, Palette::GRASS_DARK);
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::GRASS);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::GRASS);
+            }
+            SurfaceType::Ice => {
+                draw_quad(left0, left1, right1, right0, Color::new(0.85, 0.92, 0.98, 0.95));
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Color::new(0.65, 0.82, 0.95, 0.8));
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Color::new(0.65, 0.82, 0.95, 0.8));
+            }
+            SurfaceType::Water => {
+                draw_quad(left0, left1, right1, right0, Palette::WATER);
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::WATER_BORDER);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::WATER_BORDER);
+            }
+            SurfaceType::Oil => {
+                draw_quad(left0, left1, right1, right0, Color::new(0.12, 0.12, 0.15, 0.95));
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Color::new(0.35, 0.25, 0.40, 0.85));
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Color::new(0.35, 0.25, 0.40, 0.85));
+            }
+            SurfaceType::Curb => {
+                draw_quad(left0, left1, right1, right0, Palette::CURB_RED);
+            }
+            SurfaceType::Asphalt => {
+                // Draw asphalt segment
+                draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
 
-            // White track edge boundary lines
-            draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
-            draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+                // White track edge boundary lines
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
 
-            // Subtle center dashed line (every 4m)
-            let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
-            if center_stripe {
-                draw_line(
-                    s0.point.x,
-                    s0.point.y,
-                    s1.point.x,
-                    s1.point.y,
-                    0.16,
-                    Color::new(0.95, 0.95, 0.95, 0.35),
-                );
+                // Subtle center dashed line (every 4m)
+                let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
+                if center_stripe {
+                    draw_line(
+                        s0.point.x,
+                        s0.point.y,
+                        s1.point.x,
+                        s1.point.y,
+                        0.16,
+                        Color::new(0.95, 0.95, 0.95, 0.35),
+                    );
+                }
             }
         }
     }

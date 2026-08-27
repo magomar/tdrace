@@ -440,5 +440,148 @@ fn test_road_spline_add_relative_to_current_or_last_point() {
     assert_eq!(state.last_selected_waypoint, Some(6));
 }
 
+#[test]
+fn test_all_entity_duplications_and_undo() {
+    use tdrace_app::editor::{Selection, ToolSettings};
+    use tdrace_core::track::geometry::{JumpRamp, SurfaceShape, SurfaceZone};
+    use tdrace_core::physics::surface::SurfaceType;
 
+    let mut state = EditorState::new(classic_grand_prix());
+    let mut tools = ToolSettings::default();
+
+    // 1. Surface Zone Duplication
+    state.track.geometry.surface_zones.push(SurfaceZone {
+        name: "Gravel Trap".to_string(),
+        surface: SurfaceType::Dirt,
+        shape: SurfaceShape::Circle { center: Vec2::new(100.0, 100.0), radius: 15.0 },
+    });
+    let zone_idx = state.track.geometry.surface_zones.len() - 1;
+    state.selection = Selection::SurfaceZone(zone_idx);
+    assert!(tools.duplicate_selected(&mut state));
+    assert_eq!(state.track.geometry.surface_zones.len(), zone_idx + 2);
+    assert_eq!(state.selection, Selection::SurfaceZone(zone_idx + 1));
+    assert_eq!(state.track.geometry.surface_zones[zone_idx + 1].name, "Gravel Trap (Copy)");
+    assert!(state.undo());
+    assert_eq!(state.track.geometry.surface_zones.len(), zone_idx + 1);
+
+    // 2. Jump Ramp Duplication
+    state.track.geometry.jump_ramps.push(JumpRamp {
+        id: 10,
+        name: "Big Air Ramp".to_string(),
+        shape: SurfaceShape::OrientedBox {
+            center: Vec2::new(50.0, 50.0),
+            half_extents: Vec2::new(10.0, 5.0),
+            angle: 0.0,
+        },
+        direction: Vec2::new(1.0, 0.0),
+        launch_speed: 25.0,
+        height: 2.5,
+        ramp_angle_deg: 18.0,
+    });
+    let ramp_idx = state.track.geometry.jump_ramps.len() - 1;
+    state.selection = Selection::JumpRamp(ramp_idx);
+    assert!(tools.duplicate_selected(&mut state));
+    assert_eq!(state.track.geometry.jump_ramps.len(), ramp_idx + 2);
+    assert_eq!(state.selection, Selection::JumpRamp(ramp_idx + 1));
+    assert_eq!(state.track.geometry.jump_ramps[ramp_idx + 1].name, "Big Air Ramp (Copy)");
+    assert!(state.undo());
+    assert_eq!(state.track.geometry.jump_ramps.len(), ramp_idx + 1);
+
+    // 3. Waypoint Duplication
+    let wp_count = state.track.spline.waypoints.len();
+    state.selection = Selection::Waypoint(2);
+    assert!(tools.duplicate_selected(&mut state));
+    assert_eq!(state.track.spline.waypoints.len(), wp_count + 1);
+    assert_eq!(state.selection, Selection::Waypoint(3));
+    assert!(state.undo());
+    assert_eq!(state.track.spline.waypoints.len(), wp_count);
+
+    // 4. Checkpoint Duplication
+    let cp_count = state.track.checkpoints.len();
+    state.selection = Selection::Checkpoint(0);
+    assert!(tools.duplicate_selected(&mut state));
+    assert_eq!(state.track.checkpoints.len(), cp_count + 1);
+    assert_eq!(state.selection, Selection::Checkpoint(cp_count));
+    assert!(state.undo());
+    assert_eq!(state.track.checkpoints.len(), cp_count);
+
+    // 5. Grid Slot Duplication
+    let grid_count = state.track.grid_positions.len();
+    state.selection = Selection::GridSlot(0);
+    assert!(tools.duplicate_selected(&mut state));
+    assert_eq!(state.track.grid_positions.len(), grid_count + 1);
+    assert_eq!(state.selection, Selection::GridSlot(grid_count));
+    assert!(state.undo());
+    assert_eq!(state.track.grid_positions.len(), grid_count);
+}
+
+#[test]
+fn test_track_editor_spline_surface_inheritance_and_switching() {
+    use tdrace_app::editor::{EditorToolType, Selection, ToolSettings};
+
+    let track = oasis_rally();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+    tools.active_tool = EditorToolType::RoadSpline;
+
+    let initial_count = state.track.spline.waypoints.len();
+
+    // 1. Select a dirt waypoint (all waypoints in Oasis Rally are Dirt)
+    state.select(Selection::Waypoint(3));
+    assert_eq!(state.track.spline.waypoints[3].surface, Some(SurfaceType::Dirt));
+
+    // 2. Add a new spline point after waypoint 3
+    let new_pos = Vec2::new(170.0, 30.0);
+    tools.handle_mouse_down(&mut state, new_pos);
+    tools.handle_mouse_up(&mut state, new_pos);
+
+    // It should be inserted at index 4 and inherit SurfaceType::Dirt (not tarmac/asphalt!)
+    assert_eq!(state.track.spline.waypoints.len(), initial_count + 1);
+    assert_eq!(state.selection, Selection::Waypoint(4));
+    assert_eq!(state.track.spline.waypoints[4].surface, Some(SurfaceType::Dirt));
+
+    // 3. User switches surface of waypoint 4 to Sand
+    state.track.spline.waypoints[4].surface = Some(SurfaceType::Sand);
+    tools.active_surface = SurfaceType::Sand;
+    state.rebuild_geometry();
+
+    // 4. Add another point after waypoint 4
+    let new_pos2 = Vec2::new(180.0, 45.0);
+    tools.handle_mouse_down(&mut state, new_pos2);
+    tools.handle_mouse_up(&mut state, new_pos2);
+
+    // It should be inserted at index 5 and inherit SurfaceType::Sand
+    assert_eq!(state.track.spline.waypoints.len(), initial_count + 2);
+    assert_eq!(state.selection, Selection::Waypoint(5));
+    assert_eq!(state.track.spline.waypoints[5].surface, Some(SurfaceType::Sand));
+}
+
+#[test]
+fn test_editor_camera_progressive_zoom_in_out() {
+    let mut camera = EditorCamera::new();
+    camera.target_zoom = 10.0;
+    camera.zoom = 10.0;
+
+    let center_screen = Vec2::new(640.0, 360.0);
+
+    // Zoom In (+1.0 dir) for 0.5s at 1.0x speed multiplier
+    camera.zoom_progressive(center_screen, 1.0, 1.0, 0.5, 1280.0, 720.0);
+    assert!(camera.target_zoom > 10.0);
+    assert!(camera.zoom > 10.0);
+    let zoomed_in = camera.zoom;
+
+    // Zoom Out (-1.0 dir) for 0.5s at 1.0x speed multiplier
+    camera.zoom_progressive(center_screen, -1.0, 1.0, 0.5, 1280.0, 720.0);
+    assert!(camera.zoom < zoomed_in);
+    assert!((camera.zoom - 10.0).abs() < 0.1);
+
+    // Progressive zoom clamping bounds
+    camera.zoom_progressive(center_screen, -1.0, 10.0, 10.0, 1280.0, 720.0);
+    assert_eq!(camera.zoom, camera.min_zoom);
+    assert_eq!(camera.target_zoom, camera.min_zoom);
+
+    camera.zoom_progressive(center_screen, 1.0, 10.0, 10.0, 1280.0, 720.0);
+    assert_eq!(camera.zoom, camera.max_zoom);
+    assert_eq!(camera.target_zoom, camera.max_zoom);
+}
 

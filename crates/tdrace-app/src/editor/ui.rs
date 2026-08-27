@@ -347,12 +347,101 @@ fn render_inspector(
                 if draw_ui_btn(fonts, scaler, x + scaler.s(120.0), curr_y, scaler.s(45.0), scaler.s(22.0), "-1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
                     state.record_undo();
                     state.track.spline.waypoints[idx].width = (road_w - 1.0).max(4.0);
-                    state.track.rebuild_geometry(2.5, tdrace_core::track::geometry::BarrierType::Armco);
+                    tools.new_waypoint_width = state.track.spline.waypoints[idx].width;
+                    state.rebuild_geometry();
                 }
                 if draw_ui_btn(fonts, scaler, x + scaler.s(170.0), curr_y, scaler.s(45.0), scaler.s(22.0), "+1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
                     state.record_undo();
                     state.track.spline.waypoints[idx].width = (road_w + 1.0).min(30.0);
-                    state.track.rebuild_geometry(2.5, tdrace_core::track::geometry::BarrierType::Armco);
+                    tools.new_waypoint_width = state.track.spline.waypoints[idx].width;
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(28.0);
+
+                // Curbs toggles
+                let lc = state.track.spline.waypoints[idx].left_curb;
+                let rc = state.track.spline.waypoints[idx].right_curb;
+                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+                let lc_lbl = if lc { "[✓] L Curb" } else { "[ ] L Curb" };
+                let rc_lbl = if rc { "[✓] R Curb" } else { "[ ] R Curb" };
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), lc_lbl, if lc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if lc { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].left_curb = !lc;
+                    tools.new_waypoint_left_curb = !lc;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0) + half_btn_w + scaler.s(6.0), curr_y, half_btn_w, scaler.s(22.0), rc_lbl, if rc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if rc { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].right_curb = !rc;
+                    tools.new_waypoint_right_curb = !rc;
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(28.0);
+
+                // Surface selector
+                let current_surf = state.track.spline.waypoints[idx].surface.unwrap_or(SurfaceType::Asphalt);
+                fonts.draw_ui_bold(&format!("Surface: {}", current_surf.name()), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(20.0);
+
+                let surfaces = [
+                    (SurfaceType::Asphalt, "Asphalt"),
+                    (SurfaceType::Dirt, "Dirt"),
+                    (SurfaceType::Sand, "Sand"),
+                    (SurfaceType::Grass, "Grass"),
+                    (SurfaceType::Ice, "Ice"),
+                    (SurfaceType::Water, "Water"),
+                ];
+
+                for chunk in surfaces.chunks(2) {
+                    let (st1, label1) = chunk[0];
+                    let is_active1 = current_surf == st1;
+                    if draw_ui_btn(
+                        fonts,
+                        scaler,
+                        x + scaler.s(12.0),
+                        curr_y,
+                        half_btn_w,
+                        scaler.s(22.0),
+                        label1,
+                        if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                        if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                        mouse_pos,
+                        clicked,
+                    ) {
+                        state.record_undo();
+                        state.track.spline.waypoints[idx].surface = Some(st1);
+                        tools.active_surface = st1;
+                        state.rebuild_geometry();
+                    }
+
+                    if chunk.len() > 1 {
+                        let (st2, label2) = chunk[1];
+                        let is_active2 = current_surf == st2;
+                        if draw_ui_btn(
+                            fonts,
+                            scaler,
+                            x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                            curr_y,
+                            half_btn_w,
+                            scaler.s(22.0),
+                            label2,
+                            if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                            if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                            mouse_pos,
+                            clicked,
+                        ) {
+                            state.record_undo();
+                            state.track.spline.waypoints[idx].surface = Some(st2);
+                            tools.active_surface = st2;
+                            state.rebuild_geometry();
+                        }
+                    }
+                    curr_y += scaler.s(26.0);
+                }
+                curr_y += scaler.s(6.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE WAYPOINT [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    tools.duplicate_selected(state);
                 }
                 curr_y += scaler.s(32.0);
 
@@ -386,7 +475,12 @@ fn render_inspector(
                     curr_y += scaler.s(28.0);
                 }
 
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y + scaler.s(10.0), w - scaler.s(24.0), scaler.s(28.0), "DELETE ZONE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y + scaler.s(6.0), w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE ZONE [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    tools.duplicate_selected(state);
+                }
+                curr_y += scaler.s(36.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE ZONE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
                     tools.delete_selected(state);
                 }
             }
@@ -398,6 +492,11 @@ fn render_inspector(
 
                 let obs = &state.track.geometry.obstacles[idx];
                 fonts.draw_ui_regular(&format!("Label: {}", obs.name), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
+                curr_y += scaler.s(32.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE OBSTACLE [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    tools.duplicate_selected(state);
+                }
                 curr_y += scaler.s(32.0);
 
                 if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE OBSTACLE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
@@ -412,6 +511,11 @@ fn render_inspector(
 
                 let ramp = &state.track.geometry.jump_ramps[idx];
                 fonts.draw_ui_regular(&format!("Height: {:.1}m | Angle: {:.0}°", ramp.height, ramp.ramp_angle_deg), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_GOLD);
+                curr_y += scaler.s(32.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE RAMP [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    tools.duplicate_selected(state);
+                }
                 curr_y += scaler.s(32.0);
 
                 if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE RAMP [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
@@ -434,12 +538,22 @@ fn render_inspector(
             }
             curr_y += scaler.s(32.0);
 
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE GATE [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                tools.duplicate_selected(state);
+            }
+            curr_y += scaler.s(32.0);
+
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE GATE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
                 tools.delete_selected(state);
             }
         }
         Selection::GridSlot(slot) => {
             fonts.draw_ui_bold(&format!("Starting Grid Slot #{}", slot), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
+            curr_y += scaler.s(32.0);
+
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE SLOT [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                tools.duplicate_selected(state);
+            }
             curr_y += scaler.s(32.0);
 
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE SLOT [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
@@ -459,6 +573,66 @@ fn render_inspector(
             }
         }
         Selection::None => {
+            if tools.active_tool == EditorToolType::RoadSpline {
+                fonts.draw_ui_bold("Road Spline Tool", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
+                curr_y += scaler.s(24.0);
+
+                fonts.draw_ui_bold(&format!("Next Surface: {}", tools.active_surface.name()), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(20.0);
+
+                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+                let surfaces = [
+                    (SurfaceType::Asphalt, "Asphalt"),
+                    (SurfaceType::Dirt, "Dirt"),
+                    (SurfaceType::Sand, "Sand"),
+                    (SurfaceType::Grass, "Grass"),
+                    (SurfaceType::Ice, "Ice"),
+                    (SurfaceType::Water, "Water"),
+                ];
+
+                for chunk in surfaces.chunks(2) {
+                    let (st1, label1) = chunk[0];
+                    let is_active1 = tools.active_surface == st1;
+                    if draw_ui_btn(
+                        fonts,
+                        scaler,
+                        x + scaler.s(12.0),
+                        curr_y,
+                        half_btn_w,
+                        scaler.s(22.0),
+                        label1,
+                        if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                        if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                        mouse_pos,
+                        clicked,
+                    ) {
+                        tools.active_surface = st1;
+                    }
+
+                    if chunk.len() > 1 {
+                        let (st2, label2) = chunk[1];
+                        let is_active2 = tools.active_surface == st2;
+                        if draw_ui_btn(
+                            fonts,
+                            scaler,
+                            x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                            curr_y,
+                            half_btn_w,
+                            scaler.s(22.0),
+                            label2,
+                            if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                            if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                            mouse_pos,
+                            clicked,
+                        ) {
+                            tools.active_surface = st2;
+                        }
+                    }
+                    curr_y += scaler.s(26.0);
+                }
+                curr_y += scaler.s(8.0);
+            }
+
             fonts.draw_ui_bold("Circuit Overview", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
             curr_y += scaler.s(26.0);
 
@@ -479,7 +653,7 @@ fn render_inspector(
 
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), "Rebuild Geometry", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
                 state.record_undo();
-                state.track.rebuild_geometry(2.5, tdrace_core::track::geometry::BarrierType::Armco);
+                state.rebuild_geometry();
             }
         }
     }
@@ -699,7 +873,7 @@ fn render_help_modal(
     clicked: bool,
 ) -> bool {
     let mw = scaler.s(580.0);
-    let mh = scaler.s(490.0);
+    let mh = scaler.s(510.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
@@ -712,10 +886,11 @@ fn render_help_modal(
         ("Left Click", "Place entity / Select / Drag handles / Draw surface boxes"),
         ("Arrow Keys / WASD", "Pan camera across circuit canvas (+Shift for fast pan)"),
         ("Middle / Right Drag", "Pan editor camera across the circuit canvas"),
+        ("+ / - Keys", "Progressive zoom in / zoom out (+Shift for fast zoom)"),
         ("Mouse Scroll Wheel", "Zoom in / Zoom out centered on cursor position"),
         ("Tab Key", "Cycle zoom levels (Close, Medium, Far, Overview)"),
         ("Space / Enter", "Instant Test Drive (Race car directly from starting grid)"),
-        ("Ctrl + D", "Duplicate selected obstacle, surface zone, or jump ramp"),
+        ("Ctrl + D", "Duplicate selected entity (obstacle, zone, ramp, waypoint, etc.)"),
         ("Ctrl + Z / Ctrl + Y", "Undo / Redo state modifications"),
         ("Delete / Backspace", "Delete selected waypoint, surface zone, ramp, or prop"),
         ("F Key", "Focus and frame the entire circuit bounds within viewport"),

@@ -695,14 +695,6 @@ impl RaceSession {
             }
         }
 
-        // Open Controls & Driving Assists Screen (C or K key)
-        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
-            self.audio.play_sfx(SfxType::UiSelect);
-            let from_paused = matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_));
-            self.state = GameState::ControlsHelp(from_paused);
-            return;
-        }
-
         if self.state == GameState::TrackEditor {
             self.update_track_editor(frame_dt);
             return;
@@ -710,6 +702,14 @@ impl RaceSession {
 
         if self.state == GameState::EditorTestDrive {
             self.update_editor_test_drive(frame_dt);
+            return;
+        }
+
+        // Open Controls & Driving Assists Screen (C or K key)
+        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let from_paused = matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_));
+            self.state = GameState::ControlsHelp(from_paused);
             return;
         }
 
@@ -2413,14 +2413,20 @@ impl RaceSession {
         if is_key_pressed(KeyCode::Key7) { self.editor_tools.active_tool = EditorToolType::StartingGrid; }
         if is_key_pressed(KeyCode::Key8) { self.editor_tools.active_tool = EditorToolType::PitLane; }
 
-        if (is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl) || is_key_down(KeyCode::LeftSuper))
+        if (is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper))
             && is_key_pressed(KeyCode::Z)
         {
             if let Some(state) = &mut self.editor_state {
                 state.undo();
             }
         }
-        if (is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl) || is_key_down(KeyCode::LeftSuper))
+        if (is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper))
             && is_key_pressed(KeyCode::Y)
         {
             if let Some(state) = &mut self.editor_state {
@@ -2428,9 +2434,24 @@ impl RaceSession {
             }
         }
 
+        if (is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper))
+            && is_key_pressed(KeyCode::D)
+        {
+            if let Some(state) = &mut self.editor_state {
+                if self.editor_tools.duplicate_selected(state) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+            }
+        }
+
         if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) {
             if let Some(state) = &mut self.editor_state {
-                self.editor_tools.delete_selected(state);
+                if self.editor_tools.delete_selected(state) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
             }
         }
 
@@ -2465,7 +2486,8 @@ impl RaceSession {
         if self.editor_modal == EditorModal::None {
             let ctrl_down = is_key_down(KeyCode::LeftControl)
                 || is_key_down(KeyCode::RightControl)
-                || is_key_down(KeyCode::LeftSuper);
+                || is_key_down(KeyCode::LeftSuper)
+                || is_key_down(KeyCode::RightSuper);
 
             let mut pan_dir = Vec2::ZERO;
             if is_key_down(KeyCode::Up) || (!ctrl_down && is_key_down(KeyCode::W)) {
@@ -2500,6 +2522,29 @@ impl RaceSession {
                     1.0
                 };
                 self.editor_camera.pan_direction(pan_dir, speed_mult, dt);
+            }
+
+            // Progressive Zoom (+ / - keys)
+            let mut zoom_dir = 0.0f32;
+            if is_key_down(KeyCode::Equal) || is_key_down(KeyCode::KpAdd) {
+                zoom_dir += 1.0;
+            }
+            if is_key_down(KeyCode::Minus) || is_key_down(KeyCode::KpSubtract) {
+                zoom_dir -= 1.0;
+            }
+
+            if zoom_dir != 0.0 {
+                let zoom_speed_mult = if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
+                    2.0
+                } else {
+                    1.0
+                };
+                let zoom_center = if mouse_pos.x >= 0.0 && mouse_pos.x <= sw && mouse_pos.y >= 0.0 && mouse_pos.y <= sh {
+                    mouse_pos
+                } else {
+                    Vec2::new(sw * 0.5, sh * 0.5)
+                };
+                self.editor_camera.zoom_progressive(zoom_center, zoom_dir, zoom_speed_mult, dt, sw, sh);
             }
         }
 
