@@ -158,6 +158,22 @@ impl ToolSettings {
                     return true;
                 }
             }
+            Selection::Waypoint(idx) => {
+                if idx < state.track.spline.waypoints.len() {
+                    state.record_undo();
+                    let mut copy = state.track.spline.waypoints[idx].clone();
+                    copy.point += Vec2::new(4.0, 4.0);
+                    let insert_idx = idx + 1;
+                    if insert_idx < state.track.spline.waypoints.len() {
+                        state.track.spline.waypoints.insert(insert_idx, copy);
+                    } else {
+                        state.track.spline.waypoints.push(copy);
+                    }
+                    state.rebuild_geometry();
+                    state.select(Selection::Waypoint(insert_idx));
+                    return true;
+                }
+            }
             _ => {}
         }
         false
@@ -173,7 +189,7 @@ impl ToolSettings {
             EditorToolType::Select => {
                 // Find closest selectable entity
                 if let Some(sel) = find_closest_entity(state, mouse_world) {
-                    state.selection = sel;
+                    state.select(sel);
                     self.is_dragging = true;
                     self.drag_start_world = snapped_mouse;
                     self.drag_current_world = snapped_mouse;
@@ -185,21 +201,31 @@ impl ToolSettings {
             EditorToolType::RoadSpline => {
                 // If clicked near an existing waypoint, select it
                 if let Some(wp_idx) = find_closest_waypoint(state, mouse_world, 8.0) {
-                    state.selection = Selection::Waypoint(wp_idx);
+                    state.select(Selection::Waypoint(wp_idx));
                     self.is_dragging = true;
                     self.drag_start_world = snapped_mouse;
                     self.drag_current_world = snapped_mouse;
                     self.drag_initial_entity_pos = state.track.spline.waypoints[wp_idx].point;
                 } else {
-                    // Append new waypoint at snapped mouse coordinate
+                    // Insert new waypoint in relation to current/last selected waypoint
                     state.record_undo();
                     let mut wp = TrackWaypoint::new(snapped_mouse, self.new_waypoint_width);
                     wp.left_curb = self.new_waypoint_left_curb;
                     wp.right_curb = self.new_waypoint_right_curb;
-                    state.track.spline.waypoints.push(wp);
-                    let new_idx = state.track.spline.waypoints.len() - 1;
+
+                    let insert_idx = match state.current_or_last_waypoint_idx() {
+                        Some(idx) => (idx + 1).min(state.track.spline.waypoints.len()),
+                        None => state.track.spline.waypoints.len(),
+                    };
+
+                    if insert_idx < state.track.spline.waypoints.len() {
+                        state.track.spline.waypoints.insert(insert_idx, wp);
+                    } else {
+                        state.track.spline.waypoints.push(wp);
+                    }
+
                     state.rebuild_geometry();
-                    state.selection = Selection::Waypoint(new_idx);
+                    state.select(Selection::Waypoint(insert_idx));
                 }
             }
             EditorToolType::SurfaceZone => {
@@ -432,6 +458,19 @@ impl ToolSettings {
                     state.track.spline.waypoints.remove(idx);
                     state.rebuild_geometry();
                     state.selection = Selection::None;
+                    if let Some(last) = state.last_selected_waypoint {
+                        if last == idx {
+                            state.last_selected_waypoint = if idx > 0 {
+                                Some(idx - 1)
+                            } else if !state.track.spline.waypoints.is_empty() {
+                                Some(0)
+                            } else {
+                                None
+                            };
+                        } else if last > idx {
+                            state.last_selected_waypoint = Some(last - 1);
+                        }
+                    }
                     return true;
                 }
             }
@@ -830,5 +869,88 @@ mod tests {
         assert!(tools.delete_selected(&mut state));
         assert_eq!(state.track.geometry.surface_zones.len(), initial_zones - 1);
         assert_eq!(state.selection, Selection::None);
+    }
+
+    #[test]
+    fn test_road_spline_tool_insert_relative_to_selection() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+        tools.active_tool = EditorToolType::RoadSpline;
+
+        let initial_count = state.track.spline.waypoints.len();
+        let orig_wp2 = state.track.spline.waypoints[2].clone();
+        let orig_wp3 = state.track.spline.waypoints[3].clone();
+
+        // 1. Select waypoint 2
+        state.select(Selection::Waypoint(2));
+        assert_eq!(state.current_or_last_waypoint_idx(), Some(2));
+
+        // 2. Click to add a new waypoint -> should be placed at index 3 (right after waypoint 2)
+        let new_pt1 = Vec2::new(210.0, 15.0);
+        tools.handle_mouse_down(&mut state, new_pt1);
+        tools.handle_mouse_up(&mut state, new_pt1);
+
+        assert_eq!(state.track.spline.waypoints.len(), initial_count + 1);
+        assert_eq!(state.selection, Selection::Waypoint(3));
+        assert_eq!(state.last_selected_waypoint, Some(3));
+        assert_eq!(state.track.spline.waypoints[2].point, orig_wp2.point);
+        assert_eq!(state.track.spline.waypoints[3].point, new_pt1);
+        assert_eq!(state.track.spline.waypoints[4].point, orig_wp3.point);
+
+        // 3. Click again to add another waypoint -> should be placed at index 4 (right after waypoint 3)
+        let new_pt2 = Vec2::new(220.0, 20.0);
+        tools.handle_mouse_down(&mut state, new_pt2);
+        tools.handle_mouse_up(&mut state, new_pt2);
+
+        assert_eq!(state.track.spline.waypoints.len(), initial_count + 2);
+        assert_eq!(state.selection, Selection::Waypoint(4));
+        assert_eq!(state.track.spline.waypoints[4].point, new_pt2);
+
+        // 4. Deselect active entity, but remember last selected waypoint (which was 4)
+        state.deselect();
+        assert_eq!(state.selection, Selection::None);
+        assert_eq!(state.current_or_last_waypoint_idx(), Some(4));
+
+        // 5. Click to add another waypoint -> should still insert at index 5 (after last selected waypoint 4)
+        let new_pt3 = Vec2::new(230.0, 25.0);
+        tools.handle_mouse_down(&mut state, new_pt3);
+        tools.handle_mouse_up(&mut state, new_pt3);
+
+        assert_eq!(state.track.spline.waypoints.len(), initial_count + 3);
+        assert_eq!(state.selection, Selection::Waypoint(5));
+        assert_eq!(state.track.spline.waypoints[5].point, new_pt3);
+
+        // 6. Select waypoint 0 -> click to insert -> should be placed at index 1
+        state.select(Selection::Waypoint(0));
+        let new_pt0 = Vec2::new(35.0, -10.0);
+        tools.handle_mouse_down(&mut state, new_pt0);
+        tools.handle_mouse_up(&mut state, new_pt0);
+
+        assert_eq!(state.selection, Selection::Waypoint(1));
+        assert_eq!(state.track.spline.waypoints[1].point, new_pt0);
+    }
+
+    #[test]
+    fn test_waypoint_duplication_and_delete() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+
+        let initial_count = state.track.spline.waypoints.len();
+        state.select(Selection::Waypoint(1));
+        let orig_pos = state.track.spline.waypoints[1].point;
+
+        // Duplicate waypoint 1
+        assert!(tools.duplicate_selected(&mut state));
+        assert_eq!(state.track.spline.waypoints.len(), initial_count + 1);
+        assert_eq!(state.selection, Selection::Waypoint(2));
+        assert_eq!(state.track.spline.waypoints[2].point, orig_pos + Vec2::new(4.0, 4.0));
+
+        // Delete duplicated waypoint 2
+        assert!(tools.delete_selected(&mut state));
+        assert_eq!(state.track.spline.waypoints.len(), initial_count);
+        assert_eq!(state.selection, Selection::None);
+        assert_eq!(state.last_selected_waypoint, Some(1));
     }
 }

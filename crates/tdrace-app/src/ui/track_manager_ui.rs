@@ -218,7 +218,7 @@ pub fn render_track_manager_screen(
             // Tag Pill
             let tag_text = match track_choice {
                 TrackChoice::Custom { .. } => {
-                    if is_main_active { "PROMOTED MAIN" } else { "TESTING DRAFT" }
+                    if is_main_active { "OFFICIAL PRESET" } else { "TESTING DRAFT" }
                 }
                 _ => "OFFICIAL PRESET",
             };
@@ -270,7 +270,7 @@ pub fn render_track_manager_screen(
         let (badge_str, badge_col) = match selected_track {
             TrackChoice::Custom { .. } => {
                 if is_main_active {
-                    ("⭐ PROMOTED TO MAIN (Menu Active)", Palette::NEON_GREEN)
+                    ("⭐ OFFICIAL PRESET (Menu Active)", Palette::NEON_GREEN)
                 } else {
                     ("🧪 DRAFT / TESTING (Hidden from Menu)", Palette::NEON_GOLD)
                 }
@@ -379,12 +379,12 @@ pub fn render_track_manager_screen(
 
         let expl_text = if is_main_active {
             if selected_track.is_custom() {
-                "⭐ This custom track is PROMOTED. It appears as an approved circuit in the Main Menu."
+                "⭐ This track is an OFFICIAL PRESET. It appears as an approved circuit in the Main Menu."
             } else {
                 "🏆 Built-in official preset circuit. Always available in the Main Menu."
             }
         } else {
-            "🧪 This track is in DRAFT mode. Test and refine it here, then press [P] to promote to Main Menu."
+            "🧪 This track is in DRAFT mode. Test and refine it here, then press [P] to promote to Official Preset."
         };
         fonts.draw_ui_regular(
             expl_text,
@@ -400,7 +400,7 @@ pub fn render_track_manager_screen(
     let action_str = if is_main_active {
         "[Enter] RACE | [E] EDIT IN STUDIO | [P] DEMOTE TO DRAFT | [N] EDIT INFO | [C] NEW DRAFT | [Del] DELETE | [Esc] BACK"
     } else {
-        "[Enter] RACE | [E] EDIT IN STUDIO | [P] PROMOTE TO MAIN | [N] EDIT INFO | [C] NEW DRAFT | [Del] DELETE | [Esc] BACK"
+        "[Enter] RACE | [E] EDIT IN STUDIO | [P] PROMOTE TO OFFICIAL PRESET | [N] EDIT INFO | [C] NEW DRAFT | [Del] DELETE | [Esc] BACK"
     };
     fonts.draw_ui_bold_centered(
         action_str,

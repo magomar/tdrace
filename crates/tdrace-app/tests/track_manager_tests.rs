@@ -62,6 +62,18 @@ fn test_draft_creation_and_isolation_from_main_menu() {
     assert_eq!(loaded.description, draft_desc);
     assert_eq!(loaded.category, TrackCategory::Draft);
 
+    // 4. Save a track that originally had TrackCategory::Main (e.g. preset clone)
+    let mut main_preset_copy = classic_grand_prix();
+    main_preset_copy.name = "My Modified GP".to_string();
+    assert_eq!(main_preset_copy.category, TrackCategory::Main);
+    manager.save_custom_track(&main_preset_copy, Some("my_modified_gp")).expect("Save preset copy");
+
+    // Must still land in drafts by default!
+    let draft_tracks_after = manager.draft_track_choices();
+    assert_eq!(draft_tracks_after.len(), 2, "Saved custom track must land in Drafts");
+    let loaded_modified = manager.load_track(&draft_tracks_after.iter().find(|t| t.title() == "My Modified GP").unwrap()).unwrap();
+    assert_eq!(loaded_modified.category, TrackCategory::Draft, "Saved track must have Draft category");
+
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
@@ -129,9 +141,16 @@ fn test_metadata_editing() {
         )
         .expect("Update metadata");
 
-    let loaded = manager.load_track(&manager.main_track_choices()[7]).expect("Load");
+    let loaded = manager.load_track(&manager.draft_track_choices()[0]).expect("Load");
     assert_eq!(loaded.name, "Apex Super Circuit");
     assert_eq!(loaded.description, "Ultra high grip asphalt with high G curves.");
+    assert_eq!(loaded.category, TrackCategory::Draft);
+
+    // Promote to Official Preset and verify
+    manager.promote_track(track_id).expect("Promote");
+    let loaded_promoted = manager.load_track(&manager.main_track_choices()[7]).expect("Load");
+    assert_eq!(loaded_promoted.name, "Apex Super Circuit");
+    assert_eq!(loaded_promoted.category, TrackCategory::Main);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

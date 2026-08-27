@@ -154,12 +154,15 @@ impl TrackManager {
         }
     }
 
-    /// Saves a track to disk in the tracks directory.
+    /// Saves a track to disk in the tracks directory. Newly saved tracks always start in the Draft category.
     pub fn save_custom_track(&mut self, track: &Track, slug: Option<&str>) -> Result<String, String> {
+        let mut track_to_save = track.clone();
+        track_to_save.category = TrackCategory::Draft;
+
         let file_slug = if let Some(s) = slug {
             s.to_string()
         } else {
-            let sanitized = track
+            let sanitized = track_to_save
                 .name
                 .to_lowercase()
                 .replace(|c: char| !c.is_alphanumeric() && c != '_', "_");
@@ -173,7 +176,7 @@ impl TrackManager {
         let file_name = format!("{}.json", file_slug);
         let path = self.tracks_dir.join(file_name);
 
-        track
+        track_to_save
             .save_to_file(&path)
             .map_err(|e| format!("Failed to save custom track: {}", e))?;
 

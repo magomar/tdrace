@@ -639,30 +639,15 @@ pub fn oasis_rally() -> Track {
             SurfaceType::Sand,
             "Western Sand Trap 2",
         ),
-        // Oasis Water Pond 1: Northern Oasis Lagoon (circular hazard in chicane infield)
+        // Oasis Water Pond: Northern Oasis Lagoon (circular hazard in chicane infield)
         SurfaceZone::new(
             SurfaceShape::Circle {
-                center: Vec2::new(45.0, 195.0),
+                center: Vec2::new(25.0, 190.0),
                 radius: 12.0,
             },
             SurfaceType::Water,
             "Northern Oasis Lagoon",
         ),
-        // Oasis Water Pond 2: Southern Desert Spring (circular hazard in the middle of the southern track)
-        SurfaceZone::new(
-            SurfaceShape::Circle {
-                center: Vec2::new(-65.0, -2.5),
-                radius: 9.5,
-            },
-            SurfaceType::Water,
-            "Southern Desert Spring",
-        ),
-    ];
-
-    let obstacles = vec![
-        Obstacle::circle(1, Vec2::new(75.0, 175.0), 2.2, "Oasis Rock Formation"),
-        Obstacle::circle(2, Vec2::new(180.0, 90.0), 2.0, "Canyon Monolith"),
-        Obstacle::circle(3, Vec2::new(-60.0, 90.0), 2.5, "Desert Outcrop"),
     ];
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
@@ -676,7 +661,7 @@ pub fn oasis_rally() -> Track {
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
-            obstacles,
+            obstacles: Vec::new(),
             surface_zones,
             jump_ramps: Vec::new(),
             left_boundary_polyline: left_poly,

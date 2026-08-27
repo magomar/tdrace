@@ -105,8 +105,8 @@ fn test_oasis_rally_preset() {
     let track = oasis_rally();
     assert_eq!(track.name, "Oasis Rally");
     assert_eq!(track.default_surface, SurfaceType::Sand, "Must be desert sand off-track");
-    assert!(track.geometry.surface_zones.len() >= 4);
-    assert!(track.geometry.obstacles.len() >= 3);
+    assert_eq!(track.geometry.surface_zones.len(), 3);
+    assert_eq!(track.geometry.obstacles.len(), 0);
     assert!(track.spline.total_length() > 900.0, "Track must be extended and longer");
 
     // Verify pure dirt circuit: NO red-white curbs anywhere on the track
@@ -120,43 +120,30 @@ fn test_oasis_rally_preset() {
         "Oasis Rally must be a pure dirt circuit without any asphalt rumble curbs"
     );
 
-    // Verify both water hazards are circular and separated across different sectors
+    // Verify Northern Oasis Lagoon water hazard is circular
     let water_zones: Vec<_> = track
         .geometry
         .surface_zones
         .iter()
         .filter(|z| z.surface == SurfaceType::Water)
         .collect();
-    assert_eq!(water_zones.len(), 2, "Must have exactly two water hazard zones");
+    assert_eq!(water_zones.len(), 1, "Must have exactly one Northern Oasis Lagoon water hazard");
 
-    let mut centers = Vec::new();
-    for zone in &water_zones {
-        match &zone.shape {
-            SurfaceShape::Circle { center, radius } => {
-                assert!(*radius > 0.0);
-                centers.push(*center);
-            }
-            other => panic!("All water hazards must be circular, found: {:?}", other),
+    match &water_zones[0].shape {
+        SurfaceShape::Circle { center, radius } => {
+            assert!(*radius > 0.0);
+            assert_eq!(*center, Vec2::new(25.0, 190.0));
         }
+        other => panic!("Water hazard must be circular, found: {:?}", other),
     }
-    let separation_dist = (centers[0] - centers[1]).length();
-    assert!(
-        separation_dist > 80.0,
-        "The two water patches must be separated into distinct sectors (dist={:.1}m)",
-        separation_dist
-    );
 
     // Surface sampling on track ribbon: Dirt
     let start_surf = track.sample_surface(Vec2::new(0.0, 0.0));
     assert_eq!(start_surf, SurfaceType::Dirt, "Track ribbon must be playable Dirt");
 
     // Surface sampling in Northern Oasis Lagoon
-    let water_surf1 = track.sample_surface(Vec2::new(45.0, 195.0));
+    let water_surf1 = track.sample_surface(Vec2::new(25.0, 190.0));
     assert_eq!(water_surf1, SurfaceType::Water, "Northern Oasis Lagoon must sample Water");
-
-    // Surface sampling in Southern Desert Spring (in the middle of the track)
-    let water_surf2 = track.sample_surface(Vec2::new(-65.0, -2.5));
-    assert_eq!(water_surf2, SurfaceType::Water, "Southern Desert Spring must sample Water in the middle of track");
 
     // Surface sampling off-track: deep sand terrain
     let off_track_surf = track.sample_surface(Vec2::new(500.0, 500.0));
@@ -209,8 +196,8 @@ fn test_sand_under_track_does_not_override_dirt_ribbon() {
         "Car off track in sand trap must sample Sand"
     );
 
-    // On-track water hazards (like the Northern Oasis Lagoon at 45, 195) MUST override the track ribbon
-    let on_track_water = Vec2::new(45.0, 195.0);
+    // On-track water hazards (like the Northern Oasis Lagoon at 25, 190) MUST override the track ribbon
+    let on_track_water = Vec2::new(25.0, 190.0);
     assert_eq!(
         track.sample_surface(on_track_water),
         SurfaceType::Water,

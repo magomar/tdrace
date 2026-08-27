@@ -398,4 +398,47 @@ fn test_editor_camera_arrow_panning_and_speed_scaling() {
     assert!(camera.center.y > 100.0);
 }
 
+#[test]
+fn test_road_spline_add_relative_to_current_or_last_point() {
+    use tdrace_app::editor::{EditorToolType, Selection, ToolSettings};
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+    tools.active_tool = EditorToolType::RoadSpline;
+
+    let initial_count = state.track.spline.waypoints.len();
+
+    // Select waypoint 4
+    state.select(Selection::Waypoint(4));
+    let wp4_pt = state.track.spline.waypoints[4].point;
+
+    // Add a new spline point at (350.0, 85.0)
+    let new_pos = Vec2::new(350.0, 85.0);
+    tools.handle_mouse_down(&mut state, new_pos);
+    tools.handle_mouse_up(&mut state, new_pos);
+
+    // It should be inserted at index 5 (right after waypoint 4)
+    assert_eq!(state.track.spline.waypoints.len(), initial_count + 1);
+    assert_eq!(state.selection, Selection::Waypoint(5));
+    assert_eq!(state.track.spline.waypoints[4].point, wp4_pt);
+    assert_eq!(state.track.spline.waypoints[5].point, new_pos);
+    assert_eq!(state.last_selected_waypoint, Some(5));
+
+    // Clear selection, but remember last selected point 5
+    state.deselect();
+    assert_eq!(state.selection, Selection::None);
+
+    // Add another point at (360.0, 100.0) -> should be placed at index 6 (after last selected point 5)
+    let new_pos2 = Vec2::new(360.0, 100.0);
+    tools.handle_mouse_down(&mut state, new_pos2);
+    tools.handle_mouse_up(&mut state, new_pos2);
+
+    assert_eq!(state.track.spline.waypoints.len(), initial_count + 2);
+    assert_eq!(state.selection, Selection::Waypoint(6));
+    assert_eq!(state.track.spline.waypoints[6].point, new_pos2);
+    assert_eq!(state.last_selected_waypoint, Some(6));
+}
+
+
 

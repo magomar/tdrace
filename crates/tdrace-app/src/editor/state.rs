@@ -160,6 +160,7 @@ pub struct EditorState {
     pub track: Track,
     pub history: HistoryStack,
     pub selection: Selection,
+    pub last_selected_waypoint: Option<usize>,
     pub grid_snap: GridSnapSetting,
     pub show_grid: bool,
     pub show_diagnostics_overlay: bool,
@@ -179,6 +180,7 @@ impl EditorState {
             track,
             history: HistoryStack::default(),
             selection: Selection::None,
+            last_selected_waypoint: None,
             grid_snap: GridSnapSetting::Snap2_5m,
             show_grid: true,
             show_diagnostics_overlay: true,
@@ -229,9 +231,32 @@ impl EditorState {
         self.revalidate();
     }
 
-    /// Deselects any active entity.
+    /// Updates current selection and records last selected waypoint if applicable.
+    pub fn select(&mut self, selection: Selection) {
+        if let Selection::Waypoint(idx) = selection {
+            self.last_selected_waypoint = Some(idx);
+        }
+        self.selection = selection;
+    }
+
+    /// Deselects any active entity without losing last selected waypoint index.
     pub fn deselect(&mut self) {
         self.selection = Selection::None;
+    }
+
+    /// Returns the index of the currently or last selected waypoint, if valid.
+    pub fn current_or_last_waypoint_idx(&self) -> Option<usize> {
+        if let Selection::Waypoint(idx) = self.selection {
+            if idx < self.track.spline.waypoints.len() {
+                return Some(idx);
+            }
+        }
+        if let Some(idx) = self.last_selected_waypoint {
+            if idx < self.track.spline.waypoints.len() {
+                return Some(idx);
+            }
+        }
+        None
     }
 
     /// Computes track bounding box (min, max) for camera framing.
@@ -322,5 +347,37 @@ mod tests {
         // Redo edit 1
         assert!(editor.redo());
         assert_eq!(editor.track.name, "Modified Track");
+    }
+
+    #[test]
+    fn test_waypoint_selection_and_last_selected_tracking() {
+        let track = classic_grand_prix();
+        let mut editor = EditorState::new(track);
+
+        assert_eq!(editor.selection, Selection::None);
+        assert_eq!(editor.last_selected_waypoint, None);
+        assert_eq!(editor.current_or_last_waypoint_idx(), None);
+
+        // Select waypoint 2
+        editor.select(Selection::Waypoint(2));
+        assert_eq!(editor.selection, Selection::Waypoint(2));
+        assert_eq!(editor.last_selected_waypoint, Some(2));
+        assert_eq!(editor.current_or_last_waypoint_idx(), Some(2));
+
+        // Deselect -> selection is None, but last_selected_waypoint is still Some(2)
+        editor.deselect();
+        assert_eq!(editor.selection, Selection::None);
+        assert_eq!(editor.last_selected_waypoint, Some(2));
+        assert_eq!(editor.current_or_last_waypoint_idx(), Some(2));
+
+        // Select an obstacle -> selection is Obstacle(0), last_selected_waypoint is still Some(2)
+        editor.select(Selection::Obstacle(0));
+        assert_eq!(editor.selection, Selection::Obstacle(0));
+        assert_eq!(editor.last_selected_waypoint, Some(2));
+        assert_eq!(editor.current_or_last_waypoint_idx(), Some(2));
+
+        // Select waypoint 5
+        editor.select(Selection::Waypoint(5));
+        assert_eq!(editor.current_or_last_waypoint_idx(), Some(5));
     }
 }
