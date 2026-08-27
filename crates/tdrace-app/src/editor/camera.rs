@@ -1,6 +1,7 @@
 use glam::Vec2;
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::prelude::{screen_height, screen_width};
+use crate::config::{CameraConfig, ZoomLevelConfig};
 
 /// Dedicated CAD-style pan, zoom, and framing camera for the track editor.
 #[derive(Debug, Clone)]
@@ -17,6 +18,10 @@ pub struct EditorCamera {
     pub is_panning: bool,
     pub pan_start_mouse: Vec2,
     pub pan_start_center: Vec2,
+
+    // Multi-level zoom management
+    pub levels: Vec<ZoomLevelConfig>,
+    pub current_level_idx: usize,
 }
 
 impl Default for EditorCamera {
@@ -27,11 +32,30 @@ impl Default for EditorCamera {
 
 impl EditorCamera {
     pub fn new() -> Self {
+        Self::from_config(&CameraConfig::default())
+    }
+
+    /// Constructs camera instance from a `CameraConfig`.
+    pub fn from_config(config: &CameraConfig) -> Self {
+        let levels = if config.levels.is_empty() {
+            CameraConfig::default().levels
+        } else {
+            config.levels.clone()
+        };
+
+        let initial_idx = config.default_level_index.min(levels.len().saturating_sub(1));
+        let active_level = &levels[initial_idx];
+        let initial_zoom = if active_level.is_overview() {
+            active_level.min_zoom
+        } else {
+            active_level.max_zoom
+        };
+
         Self {
             center: Vec2::new(100.0, 100.0),
             target_center: Vec2::new(100.0, 100.0),
-            zoom: 6.0,
-            target_zoom: 6.0,
+            zoom: initial_zoom,
+            target_zoom: initial_zoom,
             min_zoom: 0.5,
             max_zoom: 60.0,
             pan_smoothing: 18.0,
@@ -39,7 +63,71 @@ impl EditorCamera {
             is_panning: false,
             pan_start_mouse: Vec2::ZERO,
             pan_start_center: Vec2::ZERO,
+            levels,
+            current_level_idx: initial_idx,
         }
+    }
+
+    /// Returns the currently active zoom level configuration.
+    pub fn current_zoom_level(&self) -> &ZoomLevelConfig {
+        &self.levels[self.current_level_idx]
+    }
+
+    /// Explicitly activates a zoom level by index without explicit bounds.
+    pub fn set_zoom_level(&mut self, idx: usize) -> ZoomLevelConfig {
+        let (sw, sh) = Self::get_screen_dimensions();
+        self.set_zoom_level_with_bounds(idx, None, sw, sh)
+    }
+
+    /// Explicitly activates a zoom level by index with optional track bounding box for overview framing.
+    pub fn set_zoom_level_with_bounds(
+        &mut self,
+        idx: usize,
+        bounds: Option<(Vec2, Vec2)>,
+        sw: f32,
+        sh: f32,
+    ) -> ZoomLevelConfig {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        self.current_level_idx = idx % self.levels.len();
+        let lvl = self.levels[self.current_level_idx].clone();
+
+        if lvl.is_overview() {
+            if let Some((min, max)) = bounds {
+                if min.x <= max.x {
+                    self.focus_bounds(min, max, sw, sh);
+                } else {
+                    self.target_zoom = lvl.min_zoom;
+                }
+            } else {
+                self.target_zoom = lvl.min_zoom;
+            }
+        } else {
+            self.target_zoom = lvl.max_zoom;
+        }
+
+        lvl
+    }
+
+    /// Cycles to the next zoom level in sequence without explicit bounds.
+    pub fn cycle_zoom_level(&mut self) -> ZoomLevelConfig {
+        let (sw, sh) = Self::get_screen_dimensions();
+        self.cycle_zoom_level_with_bounds(None, sw, sh)
+    }
+
+    /// Cycles to the next zoom level in sequence with optional track bounds.
+    pub fn cycle_zoom_level_with_bounds(
+        &mut self,
+        bounds: Option<(Vec2, Vec2)>,
+        sw: f32,
+        sh: f32,
+    ) -> ZoomLevelConfig {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        let next_idx = (self.current_level_idx + 1) % self.levels.len();
+        self.set_zoom_level_with_bounds(next_idx, bounds, sw, sh)
     }
 
     /// Safely gets screen dimensions without panicking.
@@ -145,5 +233,10 @@ impl EditorCamera {
 
         self.target_center = center;
         self.target_zoom = best_zoom;
+
+        // Synchronize active level index to overview if available
+        if let Some(idx) = self.levels.iter().position(|l| l.is_overview()) {
+            self.current_level_idx = idx;
+        }
     }
 }

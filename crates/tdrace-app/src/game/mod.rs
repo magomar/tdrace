@@ -333,6 +333,7 @@ impl RaceSession {
         input.filter.config.brake_rise_rate = config.input.brake_rise_rate;
 
         let camera = RaceCamera::from_config(&config.camera);
+        let editor_camera = EditorCamera::from_config(&config.camera);
 
         let mut session = Self {
             state: GameState::Menu,
@@ -383,7 +384,7 @@ impl RaceSession {
             menu_track_idx: 0,
             menu_car_idx: 0,
             editor_state: None,
-            editor_camera: EditorCamera::new(),
+            editor_camera,
             editor_tools: ToolSettings::default(),
             editor_modal: EditorModal::None,
             test_drive_car: None,
@@ -651,16 +652,34 @@ impl RaceSession {
 
         // Handle camera toggle / zoom cycle (Tab key or Gamepad Left Stick Click)
         if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_cam_toggle_pressed {
-            let lvl = self.camera.cycle_zoom_level().clone();
-            self.audio.play_sfx(SfxType::UiMove);
-            if let Some(player_car) = self.cars.first() {
-                let lvl_idx = self.camera.current_level_idx + 1;
-                let total_lvls = self.camera.levels.len();
-                self.fx.drift_popups.spawn_text(
-                    player_car.state.position,
-                    &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
-                    Color::new(0.3, 0.9, 1.0, 1.0),
-                );
+            if self.state == GameState::TrackEditor {
+                let bounds = self.editor_state.as_ref().and_then(|s| {
+                    let mut min = Vec2::splat(f32::MAX);
+                    let mut max = Vec2::splat(f32::MIN);
+                    for wp in &s.track.spline.waypoints {
+                        min = min.min(wp.point);
+                        max = max.max(wp.point);
+                    }
+                    if min.x <= max.x {
+                        Some((min, max))
+                    } else {
+                        None
+                    }
+                });
+                self.editor_camera.cycle_zoom_level_with_bounds(bounds, sw, sh);
+                self.audio.play_sfx(SfxType::UiMove);
+            } else {
+                let lvl = self.camera.cycle_zoom_level().clone();
+                self.audio.play_sfx(SfxType::UiMove);
+                if let Some(player_car) = self.cars.first() {
+                    let lvl_idx = self.camera.current_level_idx + 1;
+                    let total_lvls = self.camera.levels.len();
+                    self.fx.drift_popups.spawn_text(
+                        player_car.state.position,
+                        &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
+                        Color::new(0.3, 0.9, 1.0, 1.0),
+                    );
+                }
             }
         }
 

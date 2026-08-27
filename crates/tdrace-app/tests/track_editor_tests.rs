@@ -1,5 +1,6 @@
 use glam::Vec2;
-use tdrace_app::editor::EditorState;
+use tdrace_app::config::{CameraConfig, ZoomLevelConfig};
+use tdrace_app::editor::{EditorCamera, EditorState};
 use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::track_manager::TrackManager;
 use tdrace_app::ui::menu::TrackChoice;
@@ -215,4 +216,83 @@ fn test_race_session_instant_test_drive_flow() {
     session.state = GameState::TrackEditor;
     assert_eq!(session.state, GameState::TrackEditor);
     assert!(session.editor_state.is_some());
+}
+
+#[test]
+fn test_editor_camera_zoom_levels_cycling_and_parity() {
+    let mut camera = EditorCamera::new();
+    assert_eq!(camera.levels.len(), 4);
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(camera.current_zoom_level().name, "Close");
+    assert_eq!(camera.target_zoom, 22.0);
+
+    // 1. Cycle to Medium
+    let lvl1 = camera.cycle_zoom_level();
+    assert_eq!(camera.current_level_idx, 1);
+    assert_eq!(lvl1.name, "Medium");
+    assert_eq!(camera.target_zoom, 16.5);
+
+    // 2. Cycle to Far
+    let lvl2 = camera.cycle_zoom_level();
+    assert_eq!(camera.current_level_idx, 2);
+    assert_eq!(lvl2.name, "Far");
+    assert_eq!(camera.target_zoom, 11.5);
+
+    // 3. Cycle to Overview (without bounds)
+    let lvl3 = camera.cycle_zoom_level();
+    assert_eq!(camera.current_level_idx, 3);
+    assert_eq!(lvl3.name, "Overview");
+    assert_eq!(camera.target_zoom, 3.5);
+
+    // 4. Cycle wraps around to Close
+    let lvl0 = camera.cycle_zoom_level();
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(lvl0.name, "Close");
+    assert_eq!(camera.target_zoom, 22.0);
+
+    // Custom CameraConfig instantiation parity
+    let mut custom_config = CameraConfig::default();
+    custom_config.levels = vec![
+        ZoomLevelConfig {
+            name: "Tight".to_string(),
+            mode: "follow".to_string(),
+            min_zoom: 18.0,
+            max_zoom: 28.0,
+        },
+        ZoomLevelConfig {
+            name: "Wide".to_string(),
+            mode: "overview".to_string(),
+            min_zoom: 4.0,
+            max_zoom: 4.0,
+        },
+    ];
+    custom_config.default_level_index = 1;
+
+    let custom_cam = EditorCamera::from_config(&custom_config);
+    assert_eq!(custom_cam.levels.len(), 2);
+    assert_eq!(custom_cam.current_level_idx, 1);
+    assert_eq!(custom_cam.current_zoom_level().name, "Wide");
+    assert_eq!(custom_cam.target_zoom, 4.0);
+}
+
+#[test]
+fn test_editor_camera_overview_with_bounds_framing() {
+    let mut camera = EditorCamera::new();
+    let min_pt = Vec2::new(0.0, 0.0);
+    let max_pt = Vec2::new(200.0, 100.0);
+    let bounds = Some((min_pt, max_pt));
+
+    // Jump to Overview level (index 3) with track bounds
+    let lvl = camera.set_zoom_level_with_bounds(3, bounds, 1280.0, 720.0);
+    assert_eq!(lvl.name, "Overview");
+    assert_eq!(camera.current_level_idx, 3);
+    assert_eq!(camera.target_center, Vec2::new(100.0, 50.0));
+    assert!(camera.target_zoom > 0.5 && camera.target_zoom < 20.0);
+
+    // focus_bounds explicitly sets level index to Overview
+    camera.set_zoom_level(0); // Switch to Close
+    assert_eq!(camera.current_level_idx, 0);
+    camera.focus_bounds(min_pt, max_pt, 1280.0, 720.0);
+    assert_eq!(camera.current_level_idx, 3);
+    assert_eq!(camera.current_zoom_level().name, "Overview");
 }

@@ -34,6 +34,7 @@ pub enum EditorAction {
     None,
     SetTool(EditorToolType),
     SetSnap(GridSnapSetting),
+    CycleZoom,
     NewFromTemplate(String),
     SaveTrack(String),
     OpenTrack(String),
@@ -159,6 +160,26 @@ pub fn render_editor_ui(
     }
     tb_x += scaler.s(98.0);
 
+    // Zoom Level Selector
+    let zoom_str = format!("ZOOM: {}", camera.current_zoom_level().name.to_uppercase());
+    let zoom_w = scaler.s(105.0);
+    if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), zoom_w, scaler.s(30.0), &zoom_str, Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, mouse_clicked) {
+        let mut min = Vec2::splat(f32::MAX);
+        let mut max = Vec2::splat(f32::MIN);
+        for wp in &state.track.spline.waypoints {
+            min = min.min(wp.point);
+            max = max.max(wp.point);
+        }
+        let bounds = if min.x <= max.x {
+            Some((min, max))
+        } else {
+            None
+        };
+        camera.cycle_zoom_level_with_bounds(bounds, sw, sh);
+        dispatched_action = EditorAction::CycleZoom;
+    }
+    tb_x += zoom_w + scaler.s(8.0);
+
     if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "FOCUS [F]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, mouse_clicked) {
         let mut min = Vec2::splat(f32::MAX);
         let mut max = Vec2::splat(f32::MIN);
@@ -263,12 +284,13 @@ pub fn render_editor_ui(
     );
 
     let info_str = format!(
-        "Length: {:.0}m | Waypoints: {} | Checkpoints: {} | Pos: ({:.1}m, {:.1}m) | Zoom: {:.1}x | Undo: {} / Redo: {}",
+        "Length: {:.0}m | Waypoints: {} | Checkpoints: {} | Pos: ({:.1}m, {:.1}m) | Zoom: {} ({:.1}x) | Undo: {} / Redo: {}",
         total_len,
         state.track.spline.waypoints.len(),
         state.track.checkpoints.len(),
         world_mouse.x,
         world_mouse.y,
+        camera.current_zoom_level().name,
         camera.zoom,
         state.history.undo_count(),
         state.history.redo_count(),
@@ -675,7 +697,7 @@ fn render_help_modal(
     clicked: bool,
 ) -> bool {
     let mw = scaler.s(580.0);
-    let mh = scaler.s(420.0);
+    let mh = scaler.s(450.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
@@ -688,6 +710,7 @@ fn render_help_modal(
         ("Left Click", "Place entity / Select / Drag handles / Draw surface boxes"),
         ("Middle / Right Drag", "Pan editor camera across the circuit canvas"),
         ("Mouse Scroll Wheel", "Zoom in / Zoom out centered on cursor position"),
+        ("Tab Key", "Cycle zoom levels (Close, Medium, Far, Overview)"),
         ("Space / Enter", "Instant Test Drive (Race car directly from starting grid)"),
         ("Ctrl + Z / Ctrl + Y", "Undo / Redo state modifications"),
         ("Delete / Backspace", "Delete selected waypoint, surface zone, ramp, or prop"),
