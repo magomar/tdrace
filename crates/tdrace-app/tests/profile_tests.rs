@@ -234,10 +234,9 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
         assert_eq!(stats.wins, 1);
     }
 
-    // Verify NameEntry prefilled with active profile alias
-    if let GameState::NameEntry { input_name, .. } = &session.state {
-        assert_eq!(input_name, "Hammer Time");
-    }
+    // Verify automatic transition to Finished and HOF populated with active profile alias
+    assert_eq!(session.state, GameState::Finished);
+    assert_eq!(session.hof_entries[0].player_name, "Hammer Time");
 }
 
 #[test]

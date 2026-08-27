@@ -96,9 +96,10 @@ fn test_player_lap_tracking_advancement_and_finish() {
 
     // Check race finish transition
     session.check_race_finish();
-    assert!(
-        matches!(session.state, GameState::Finished | GameState::NameEntry { .. }),
-        "State should transition to Finished or NameEntry upon race completion"
+    assert_eq!(
+        session.state,
+        GameState::Finished,
+        "State should transition to Finished upon race completion"
     );
 }
 

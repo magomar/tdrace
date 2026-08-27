@@ -95,15 +95,9 @@ fn test_race_session_driver_spawning_and_names() {
     let standings = session.compute_standings();
     assert_eq!(standings.len(), 4);
 
-    // Enter name / finish race simulation
-    session.state = GameState::NameEntry {
-        player_time: 65.0,
-        best_lap: Some(21.5),
-        input_name: "CHAMPION".to_string(),
-        cursor_timer: 0.0,
-    };
-
-    assert!(matches!(session.state, GameState::NameEntry { .. }));
+    // Finish race simulation
+    session.check_race_finish();
+    assert_eq!(session.state, GameState::Finished);
 }
 
 #[test]

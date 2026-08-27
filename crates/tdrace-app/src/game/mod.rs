@@ -33,7 +33,10 @@ use tdrace_core::physics::car::Car;
 use tdrace_core::physics::config::AssistProfile;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::SpawnPose;
-use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
+use tdrace_core::track::presets::{
+    classic_grand_prix, drift_park, kart_arena, outlaw_pass, oval_speedway, ramp_raceway,
+    sahara_dunes,
+};
 use tdrace_core::track::Track;
 
 use crate::ai::{BotAiDriver, DriverCharacter};
@@ -51,7 +54,7 @@ use crate::render::{render_barriers_and_obstacles, render_car, render_track};
 use crate::replay::{ReplayPlayer, ReplayRecorder};
 use crate::ui::driver_card::render_driver_cards_screen;
 use crate::ui::font::Fonts;
-use crate::ui::hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal};
+use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
 use crate::ui::hud::render_hud;
 use crate::ui::menu::{
     render_controls_screen, render_pause_menu, render_results_screen, render_track_select_menu,
@@ -76,12 +79,6 @@ pub enum GameState {
     Countdown(f32),
     Racing,
     Paused,
-    NameEntry {
-        player_time: f32,
-        best_lap: Option<f32>,
-        input_name: String,
-        cursor_timer: f32,
-    },
     Finished,
     ControlsHelp(bool),
     DriverCards(DriverCardsOrigin),
@@ -146,6 +143,7 @@ pub struct RaceSession {
     pub hof_db: Option<HallOfFameDb>,
     pub hof_entries: Vec<HallOfFameEntry>,
     pub recent_hof_id: Option<i64>,
+    pub recent_congrats: Option<PlayerCongrats>,
     pub show_hall_of_fame: bool,
 
     // Menu selection cursor state
@@ -253,6 +251,9 @@ impl RaceSession {
             "oval_speedway" => TrackChoice::OvalSpeedway,
             "drift_park" => TrackChoice::DriftPark,
             "kart_arena" => TrackChoice::KartArena,
+            "ramp_raceway" => TrackChoice::RampRaceway,
+            "sahara_dunes" => TrackChoice::SaharaDunes,
+            "outlaw_pass" => TrackChoice::OutlawPass,
             _ => TrackChoice::ClassicGrandPrix,
         };
         let car_choice = match config.gameplay.default_car.as_str() {
@@ -272,6 +273,9 @@ impl RaceSession {
             TrackChoice::OvalSpeedway => oval_speedway(),
             TrackChoice::DriftPark => drift_park(),
             TrackChoice::KartArena => kart_arena(),
+            TrackChoice::RampRaceway => ramp_raceway(),
+            TrackChoice::SaharaDunes => sahara_dunes(),
+            TrackChoice::OutlawPass => outlaw_pass(),
         };
 
         let mut audio = AudioManager::new();
@@ -331,6 +335,7 @@ impl RaceSession {
             hof_db: HallOfFameDb::open_default().ok(),
             hof_entries: Vec::new(),
             recent_hof_id: None,
+            recent_congrats: None,
             show_hall_of_fame: true,
 
             menu_track_idx: 0,
@@ -387,6 +392,9 @@ impl RaceSession {
             TrackChoice::OvalSpeedway => "oval_speedway",
             TrackChoice::DriftPark => "drift_park",
             TrackChoice::KartArena => "kart_arena",
+            TrackChoice::RampRaceway => "ramp_raceway",
+            TrackChoice::SaharaDunes => "sahara_dunes",
+            TrackChoice::OutlawPass => "outlaw_pass",
         }
     }
 
@@ -410,6 +418,7 @@ impl RaceSession {
     /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
     pub fn init_race(&mut self) {
         self.recent_hof_id = None;
+        self.recent_congrats = None;
         self.show_hall_of_fame = true;
         self.refresh_hof_entries();
 
@@ -419,6 +428,9 @@ impl RaceSession {
             TrackChoice::OvalSpeedway => oval_speedway(),
             TrackChoice::DriftPark => drift_park(),
             TrackChoice::KartArena => kart_arena(),
+            TrackChoice::RampRaceway => ramp_raceway(),
+            TrackChoice::SaharaDunes => sahara_dunes(),
+            TrackChoice::OutlawPass => outlaw_pass(),
         };
 
         // 2. Setup camera
@@ -773,69 +785,6 @@ impl RaceSession {
                 if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::ControlsHelp(true);
-                }
-            }
-            GameState::NameEntry {
-                player_time,
-                best_lap,
-                ref mut input_name,
-                ref mut cursor_timer,
-            } => {
-                *cursor_timer += frame_dt;
-
-                // Character typing
-                while let Some(c) = get_char_pressed() {
-                    if (c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_') && input_name.len() < 12 {
-                        input_name.push(c.to_ascii_uppercase());
-                        self.audio.play_sfx(SfxType::UiMove);
-                    }
-                }
-
-                // Backspace
-                if is_key_pressed(KeyCode::Backspace) && !input_name.is_empty() {
-                    input_name.pop();
-                    self.audio.play_sfx(SfxType::UiMove);
-                }
-
-                // Submit or skip
-                let is_submit = is_key_pressed(KeyCode::Enter)
-                    || is_key_pressed(KeyCode::KpEnter)
-                    || self.input.gamepad.snapshot.btn_confirm_pressed
-                    || self.input.gamepad.snapshot.btn_a_pressed;
-
-                let is_skip = is_key_pressed(KeyCode::Escape)
-                    || self.input.gamepad.snapshot.btn_cancel_pressed
-                    || self.input.gamepad.snapshot.btn_b_pressed;
-
-                if is_submit || is_skip {
-                    let final_name = if input_name.trim().is_empty() {
-                        "PLAYER 1".to_string()
-                    } else {
-                        input_name.trim().to_string()
-                    };
-
-                    let track_id = self.track_choice_id();
-                    let entry = HallOfFameEntry {
-                        id: None,
-                        track_id: track_id.to_string(),
-                        player_name: final_name,
-                        car_name: self.car_choice.title().to_string(),
-                        total_time: player_time,
-                        best_lap,
-                        laps: self.total_laps,
-                        created_at: String::new(),
-                    };
-
-                    if let Some(db) = &self.hof_db {
-                        if let Ok(new_id) = db.insert_entry(&entry) {
-                            self.recent_hof_id = Some(new_id);
-                        }
-                    }
-
-                    self.refresh_hof_entries();
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.show_hall_of_fame = true;
-                    self.state = GameState::Finished;
                 }
             }
             GameState::Finished => {
@@ -1483,9 +1432,13 @@ impl RaceSession {
 
             let track_id = self.track_choice_id();
             let player_time = self.session_time;
-            let best_lap = self.trackers.first().and_then(|t| t.best_lap_time);
+            let player_best_lap = self.trackers.first().and_then(|t| t.best_lap_time);
 
-            // Log player race result to persistent history
+            // 1. Check personal best lap against active profile stats before updating
+            let prev_best_lap = self.active_profile_stats.best_times.get(track_id).copied();
+            let is_pb = player_best_lap.is_some_and(|lap| prev_best_lap.map_or(true, |prev| lap < prev));
+
+            // 2. Log player race result to persistent history
             let player_pos = self.results.iter().position(|r| r.is_player).map(|p| p + 1).unwrap_or(1);
             if let Some(pid) = self.active_profile.id {
                 let history_record = RaceHistoryEntry {
@@ -1496,7 +1449,7 @@ impl RaceSession {
                     position: player_pos,
                     total_cars: self.cars.len(),
                     total_time: player_time,
-                    best_lap,
+                    best_lap: player_best_lap,
                     laps: self.total_laps,
                     is_time_attack: self.is_time_attack,
                     created_at: String::new(),
@@ -1507,28 +1460,72 @@ impl RaceSession {
                 self.refresh_profiles_and_stats();
             }
 
+            // 3. Automatically record all race finishers (player + bots) into the Hall of Fame
+            let mut player_hof_id: Option<i64> = None;
             if let Some(db) = &self.hof_db {
-                let _ = db.seed_defaults_if_empty(track_id);
+                let standings = self.compute_standings();
+                for (rank, &car_idx) in standings.iter().enumerate() {
+                    let is_player = car_idx == 0;
+                    let (driver_name, vehicle_name) = if is_player {
+                        (self.active_profile.alias.clone(), self.car_choice.title().to_string())
+                    } else if let Some(character) = self.opponent_drivers.get(car_idx - 1) {
+                        (character.alias.to_string(), character.preferred_car.title().to_string())
+                    } else {
+                        (format!("Driver {}", car_idx), self.car_choice.title().to_string())
+                    };
+
+                    let tracker = &self.trackers[car_idx];
+                    let total_time = self.session_time + (rank as f32 * 0.65);
+                    let entry = HallOfFameEntry {
+                        id: None,
+                        track_id: track_id.to_string(),
+                        player_name: driver_name,
+                        car_name: vehicle_name,
+                        total_time,
+                        best_lap: tracker.best_lap_time,
+                        laps: self.total_laps,
+                        created_at: String::new(),
+                    };
+
+                    if let Ok(inserted_id) = db.insert_entry(&entry) {
+                        if is_player {
+                            player_hof_id = Some(inserted_id);
+                        }
+                    }
+                }
             }
 
-            let is_top = self
-                .hof_db
-                .as_ref()
-                .and_then(|db| db.is_top_10(track_id, player_time).ok())
-                .unwrap_or(false);
+            self.refresh_hof_entries();
 
-            if is_top {
-                self.state = GameState::NameEntry {
-                    player_time,
-                    best_lap,
-                    input_name: self.active_profile.alias.clone(),
-                    cursor_timer: 0.0,
-                };
+            // 4. Determine player rank in Top 10 Hall of Fame
+            let hof_rank = player_hof_id.and_then(|id| {
+                self.hof_entries.iter().position(|e| e.id == Some(id)).map(|p| p + 1)
+            });
+
+            if hof_rank.is_some() {
+                self.recent_hof_id = player_hof_id;
             } else {
-                self.refresh_hof_entries();
-                self.show_hall_of_fame = true;
-                self.state = GameState::Finished;
+                self.recent_hof_id = None;
             }
+
+            // 5. Determine podium finish (top 3 in race)
+            let race_position = if player_pos <= 3 { Some(player_pos) } else { None };
+
+            // 6. Build congratulations metadata
+            let congrats = PlayerCongrats {
+                is_personal_best: is_pb,
+                personal_best_lap: player_best_lap,
+                hof_rank,
+                race_position,
+            };
+            self.recent_congrats = if congrats.has_achievements() {
+                Some(congrats)
+            } else {
+                None
+            };
+
+            self.show_hall_of_fame = true;
+            self.state = GameState::Finished;
         }
     }
 
@@ -1627,22 +1624,6 @@ impl RaceSession {
                 self.render_screen(None);
                 render_pause_menu(&self.fonts, self.assist_profile, &self.audio.settings);
             }
-            GameState::NameEntry {
-                player_time,
-                best_lap,
-                ref input_name,
-                cursor_timer,
-            } => {
-                self.render_world();
-                render_name_input_modal(
-                    &self.fonts,
-                    &self.track.name,
-                    input_name,
-                    player_time,
-                    best_lap,
-                    cursor_timer,
-                );
-            }
             GameState::Finished => {
                 self.render_world();
                 if self.show_hall_of_fame {
@@ -1651,6 +1632,7 @@ impl RaceSession {
                         &self.track.name,
                         &self.hof_entries,
                         self.recent_hof_id,
+                        self.recent_congrats.as_ref(),
                     );
                 } else {
                     render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack);

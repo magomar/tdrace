@@ -486,48 +486,16 @@ impl HallOfFameDb {
         Ok(self.conn.last_insert_rowid())
     }
 
-    /// Seeds benchmark AI driver records if a track currently has no historical entries.
-    pub fn seed_defaults_if_empty(&self, track_id: &str) -> Result<()> {
-        let count: i64 = self.conn.query_row(
-            "SELECT COUNT(*) FROM hall_of_fame WHERE track_id = ?1",
-            params![track_id],
-            |row| row.get(0),
-        )?;
+    /// Clears all entries from the Hall of Fame table.
+    pub fn clear_hall_of_fame(&self) -> Result<()> {
+        self.conn.execute("DELETE FROM hall_of_fame", [])?;
+        Ok(())
+    }
 
-        if count == 0 {
-            let now = Utc::now().format("%Y-%m-%d %H:%M").to_string();
-            let (base_total, base_lap) = match track_id {
-                "classic_grand_prix" => (75.0, 24.5),
-                "oval_speedway" => (42.0, 13.8),
-                "drift_park" => (68.0, 22.0),
-                "kart_arena" => (52.0, 17.0),
-                _ => (70.0, 23.0),
-            };
-
-            let benchmarks = [
-                ("Apex Tanaka", "GT Sports Coupe", base_total * 0.96, base_lap * 0.96),
-                ("Thunder Rossi", "AWD Turbo Rally", base_total * 0.98, base_lap * 0.98),
-                ("Phoenix Lin", "GT Sports Coupe", base_total * 1.00, base_lap * 1.00),
-                ("Drift King Kenji", "Tuned Drift Spec", base_total * 1.02, base_lap * 1.02),
-                ("Viper Frost", "GT Sports Coupe", base_total * 1.04, base_lap * 1.04),
-                ("Oversteer Reed", "AWD Turbo Rally", base_total * 1.06, base_lap * 1.05),
-                ("Pocket Rocket Leo", "125cc Shifter Kart", base_total * 1.08, base_lap * 1.07),
-                ("The Wall Sterling", "GT Sports Coupe", base_total * 1.11, base_lap * 1.10),
-            ];
-
-            for (name, car, total, lap) in benchmarks {
-                self.insert_entry(&HallOfFameEntry {
-                    id: None,
-                    track_id: track_id.to_string(),
-                    player_name: name.to_string(),
-                    car_name: car.to_string(),
-                    total_time: total,
-                    best_lap: Some(lap),
-                    laps: 3,
-                    created_at: now.clone(),
-                })?;
-            }
-        }
+    /// Seeds default records if needed (currently a clean no-op, preserving real race records).
+    pub fn seed_defaults_if_empty(&self, _track_id: &str) -> Result<()> {
+        // Real race results are logged dynamically on session completion.
         Ok(())
     }
 }
+

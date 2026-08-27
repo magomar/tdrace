@@ -131,23 +131,34 @@ fn test_hall_of_fame_track_isolation() {
 }
 
 #[test]
-fn test_hall_of_fame_seed_defaults() {
+fn test_hall_of_fame_clean_start_and_clear() {
     let db = HallOfFameDb::open_in_memory().expect("In-memory SQLite should initialize");
 
     db.seed_defaults_if_empty("classic_grand_prix").unwrap();
-    let seeded = db.get_top_10("classic_grand_prix").unwrap();
-    assert!(!seeded.is_empty());
-    assert_eq!(seeded[0].player_name, "Apex Tanaka");
+    let initial = db.get_top_10("classic_grand_prix").unwrap();
+    assert!(initial.is_empty(), "Hall of Fame should start clean with no fake benchmark entries");
 
+    // Insert an actual race entry
+    let entry = HallOfFameEntry {
+        id: None,
+        track_id: "classic_grand_prix".to_string(),
+        player_name: "Real Racer".to_string(),
+        car_name: "GT Sports Coupe".to_string(),
+        total_time: 74.5,
+        best_lap: Some(24.8),
+        laps: 3,
+        created_at: "2026-08-27 12:00".to_string(),
+    };
+    db.insert_entry(&entry).unwrap();
+    assert_eq!(db.get_top_10("classic_grand_prix").unwrap().len(), 1);
 
-    // Idempotency: seeding again does not duplicate
-    db.seed_defaults_if_empty("classic_grand_prix").unwrap();
-    let seeded_again = db.get_top_10("classic_grand_prix").unwrap();
-    assert_eq!(seeded.len(), seeded_again.len());
+    // Clear hall of fame
+    db.clear_hall_of_fame().unwrap();
+    assert!(db.get_top_10("classic_grand_prix").unwrap().is_empty());
 }
 
 #[test]
-fn test_race_session_hof_integration_and_qualification() {
+fn test_race_session_hof_automatic_logging_and_congratulations() {
     let mut session = RaceSession::new();
     // Swap DB to in-memory for testing
     let mem_db = HallOfFameDb::open_in_memory().unwrap();
@@ -156,42 +167,33 @@ fn test_race_session_hof_integration_and_qualification() {
     session.init_race();
 
     assert_eq!(session.track_choice_id(), "classic_grand_prix");
-    assert!(!session.hof_entries.is_empty(), "Defaults should be seeded");
+    assert!(session.hof_entries.is_empty(), "Hall of Fame should start empty");
 
-    // Simulate qualifying total time
-    let player_time = 45.0; // Very fast time, easily qualifies for #1
-    let best_lap = Some(15.0);
+    // Simulate player completing race in 1st place with a personal best
+    session.session_time = 45.0;
+    session.trackers[0].current_lap = session.total_laps + 1;
+    session.trackers[0].best_lap_time = Some(15.0);
 
-    let is_top = session.hof_db.as_ref().unwrap().is_top_10("classic_grand_prix", player_time).unwrap();
-    assert!(is_top);
+    // Check race finish transition
+    session.check_race_finish();
 
-    // Enter name state simulation
-    session.state = GameState::NameEntry {
-        player_time,
-        best_lap,
-        input_name: "TEST_RACER".to_string(),
-        cursor_timer: 0.0,
-    };
-
-    if let GameState::NameEntry { player_time, best_lap, input_name, .. } = &session.state {
-        let entry = HallOfFameEntry {
-            id: None,
-            track_id: session.track_choice_id().to_string(),
-            player_name: input_name.clone(),
-            car_name: session.car_choice.title().to_string(),
-            total_time: *player_time,
-            best_lap: *best_lap,
-            laps: session.total_laps,
-            created_at: String::new(),
-        };
-        let row_id = session.hof_db.as_ref().unwrap().insert_entry(&entry).unwrap();
-        session.recent_hof_id = Some(row_id);
-        session.refresh_hof_entries();
-        session.state = GameState::Finished;
-    }
-
+    // Verify automatic transition to Finished state without manual name entry
     assert_eq!(session.state, GameState::Finished);
-    assert_eq!(session.hof_entries[0].player_name, "TEST_RACER");
+    assert!(session.show_hall_of_fame);
+
+    // Verify Hall of Fame table was populated with the actual race result
+    assert!(!session.hof_entries.is_empty());
+    assert_eq!(session.hof_entries[0].player_name, session.active_profile.alias);
     assert_eq!(session.hof_entries[0].total_time, 45.0);
+    assert_eq!(session.hof_entries[0].best_lap, Some(15.0));
     assert!(session.recent_hof_id.is_some());
+
+    // Verify congratulations metadata was computed
+    let congrats = session.recent_congrats.as_ref().expect("Congratulations should be present");
+    assert!(congrats.is_personal_best);
+    assert_eq!(congrats.personal_best_lap, Some(15.0));
+    assert_eq!(congrats.hof_rank, Some(1));
+    assert_eq!(congrats.race_position, Some(1));
+    assert!(congrats.has_achievements());
 }
+
