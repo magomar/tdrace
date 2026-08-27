@@ -72,12 +72,17 @@ impl EffectsManager {
                         .emit_tire_smoke(pos, car.state.velocity, telemetry.skid_intensity);
                 }
 
-                // Off-track roost on grass/sand
-                if (surf == SurfaceType::Grass || surf == SurfaceType::Sand)
-                    && (telemetry.skid_intensity > 0.10 || telemetry.slip_ratio.abs() > 0.20)
+                // Off-track & dirt track roost
+                if (surf == SurfaceType::Grass || surf == SurfaceType::Sand || surf == SurfaceType::Dirt)
+                    && (telemetry.skid_intensity > 0.10 || telemetry.slip_ratio.abs() > 0.15)
                     && car.state.speed > 2.0
                 {
                     self.particles.emit_dirt_roost(pos, surf, car.state.velocity);
+                }
+
+                // Water splash on puddles / water hazard
+                if surf == SurfaceType::Water && car.state.speed > 1.5 {
+                    self.particles.emit_water_splash(pos, car.state.velocity, car.state.speed);
                 }
             }
 

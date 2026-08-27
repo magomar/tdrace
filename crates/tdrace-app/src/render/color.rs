@@ -33,8 +33,13 @@ impl Palette {
     pub const ASPHALT: Color = Color::new(0.16, 0.17, 0.20, 1.0);
     pub const ASPHALT_LIGHT: Color = Color::new(0.22, 0.23, 0.27, 1.0);
     pub const RUNOFF_ASPHALT: Color = Color::new(0.20, 0.22, 0.25, 1.0);
+    pub const DIRT: Color = Color::new(0.48, 0.35, 0.22, 1.0);
+    pub const DIRT_DARK: Color = Color::new(0.38, 0.26, 0.16, 1.0);
+    pub const DIRT_EDGE: Color = Color::new(0.60, 0.46, 0.28, 0.85);
     pub const SAND: Color = Color::new(0.85, 0.74, 0.48, 1.0);
     pub const SAND_DARK: Color = Color::new(0.75, 0.64, 0.38, 1.0);
+    pub const WATER: Color = Color::new(0.18, 0.58, 0.88, 0.80);
+    pub const WATER_BORDER: Color = Color::new(0.40, 0.82, 1.0, 0.90);
     pub const PIT_LANE: Color = Color::new(0.15, 0.16, 0.19, 1.0);
 
     // Modern Track Markings & Curbs

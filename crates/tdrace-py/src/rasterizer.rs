@@ -41,10 +41,12 @@ impl FastRasterizer {
         // 1. Tessellate track spline ribbon into quads/triangles
         Self::tessellate_spline(&track.spline, &mut track_triangles);
 
-        // 2. Tessellate surface zones (sand traps, oil slicks)
+        // 2. Tessellate surface zones (sand traps, oil slicks, water puddles, dirt areas)
         for zone in &track.geometry.surface_zones {
             let color = match zone.surface {
                 tdrace_core::physics::surface::SurfaceType::Sand => [218, 204, 150],
+                tdrace_core::physics::surface::SurfaceType::Dirt => [122, 89, 56],
+                tdrace_core::physics::surface::SurfaceType::Water => [46, 148, 224],
                 tdrace_core::physics::surface::SurfaceType::Oil => [40, 35, 45],
                 tdrace_core::physics::surface::SurfaceType::Curb => [220, 50, 50],
                 tdrace_core::physics::surface::SurfaceType::Ice => [200, 220, 240],
@@ -83,6 +85,7 @@ impl FastRasterizer {
         let ds = total_len / num_steps as f32;
 
         let asphalt_color = [60, 60, 65];
+        let dirt_color = [122, 89, 56];
         let curb_red = [220, 45, 45];
         let curb_white = [240, 240, 240];
         let line_white = [255, 255, 255];
@@ -124,9 +127,15 @@ impl FastRasterizer {
             let l_curb1 = p1 - n1 * (w1 + c1);
             let r_curb1 = p1 + n1 * (w1 + c1);
 
-            // 1. Asphalt road quad (2 triangles)
-            out.push(WorldTriangle { v0: l_track0, v1: r_track0, v2: l_track1, color: asphalt_color });
-            out.push(WorldTriangle { v0: r_track0, v1: r_track1, v2: l_track1, color: asphalt_color });
+            let road_color = if samp0.surface == tdrace_core::physics::surface::SurfaceType::Dirt {
+                dirt_color
+            } else {
+                asphalt_color
+            };
+
+            // 1. Road quad (2 triangles)
+            out.push(WorldTriangle { v0: l_track0, v1: r_track0, v2: l_track1, color: road_color });
+            out.push(WorldTriangle { v0: r_track0, v1: r_track1, v2: l_track1, color: road_color });
 
             // 2. Curbs (alternating red/white stripes)
             let curb_color = if (i / 2) % 2 == 0 { curb_red } else { curb_white };
@@ -143,8 +152,8 @@ impl FastRasterizer {
                 }
             }
 
-            // 3. Center dashed line (every other segment)
-            if i % 3 == 0 {
+            // 3. Center dashed line (every other segment on asphalt)
+            if samp0.surface != tdrace_core::physics::surface::SurfaceType::Dirt && i % 3 == 0 {
                 let lw0 = 0.15;
                 let c_l0 = p0 - n0 * lw0;
                 let c_r0 = p0 + n0 * lw0;

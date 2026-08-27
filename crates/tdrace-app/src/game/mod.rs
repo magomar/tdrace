@@ -31,11 +31,12 @@ use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
 use tdrace_core::collision::wall::resolve_all_wall_collisions;
 use tdrace_core::physics::car::Car;
 use tdrace_core::physics::config::AssistProfile;
+use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, outlaw_pass, oval_speedway, ramp_raceway,
-    sahara_dunes,
+    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
+    ramp_raceway,
 };
 use tdrace_core::track::Track;
 
@@ -252,7 +253,7 @@ impl RaceSession {
             "drift_park" => TrackChoice::DriftPark,
             "kart_arena" => TrackChoice::KartArena,
             "ramp_raceway" => TrackChoice::RampRaceway,
-            "sahara_dunes" => TrackChoice::SaharaDunes,
+            "oasis_rally" | "oasis" | "dune_raid" | "sahara_dunes" => TrackChoice::OasisRally,
             "outlaw_pass" => TrackChoice::OutlawPass,
             _ => TrackChoice::ClassicGrandPrix,
         };
@@ -274,7 +275,7 @@ impl RaceSession {
             TrackChoice::DriftPark => drift_park(),
             TrackChoice::KartArena => kart_arena(),
             TrackChoice::RampRaceway => ramp_raceway(),
-            TrackChoice::SaharaDunes => sahara_dunes(),
+            TrackChoice::OasisRally => oasis_rally(),
             TrackChoice::OutlawPass => outlaw_pass(),
         };
 
@@ -393,7 +394,7 @@ impl RaceSession {
             TrackChoice::DriftPark => "drift_park",
             TrackChoice::KartArena => "kart_arena",
             TrackChoice::RampRaceway => "ramp_raceway",
-            TrackChoice::SaharaDunes => "sahara_dunes",
+            TrackChoice::OasisRally => "oasis_rally",
             TrackChoice::OutlawPass => "outlaw_pass",
         }
     }
@@ -429,7 +430,7 @@ impl RaceSession {
             TrackChoice::DriftPark => drift_park(),
             TrackChoice::KartArena => kart_arena(),
             TrackChoice::RampRaceway => ramp_raceway(),
-            TrackChoice::SaharaDunes => sahara_dunes(),
+            TrackChoice::OasisRally => oasis_rally(),
             TrackChoice::OutlawPass => outlaw_pass(),
         };
 
@@ -1297,6 +1298,39 @@ impl RaceSession {
         // 3. Step individual vehicle dynamics
         for i in 0..n_cars {
             self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
+        }
+
+        // Trigger Jump Ramps & Landing SFX/FX
+        for (i, car) in self.cars.iter_mut().enumerate() {
+            for ramp in &self.track.geometry.jump_ramps {
+                if car.try_trigger_jump_ramp(ramp) {
+                    if i == 0 {
+                        self.audio.play_sfx(SfxType::JumpLaunch);
+                    }
+                    break;
+                }
+            }
+            if car.state.just_landed {
+                if i == 0 {
+                    self.audio.play_sfx(SfxType::Landing);
+                    self.camera.add_trauma(0.25);
+                }
+                let surf = wheel_surfaces.get(i).map(|s| s[0]).unwrap_or(SurfaceType::Asphalt);
+                self.fx.particles.emit_landing_dust(car.state.position, car.state.speed, surf);
+            }
+        }
+
+        // Water splash sound effect on player car
+        if let Some(player_surfaces) = wheel_surfaces.first() {
+            let in_water = player_surfaces.iter().any(|&s| s == SurfaceType::Water);
+            if in_water {
+                if let Some(player_car) = self.cars.first() {
+                    if player_car.state.speed > 3.0 && self.session_time.fract() < dt * 4.0 {
+                        let gain = (player_car.state.speed / 18.0).clamp(0.35, 0.85);
+                        self.audio.play_sfx_with_gain(SfxType::WaterSplash, gain);
+                    }
+                }
+            }
         }
 
         // 4. Resolve Car-to-Car collisions with momentum exchange and penetration pushback

@@ -9,9 +9,9 @@ use tdrace_core::track::Track;
 use super::color::Palette;
 
 /// Renders the complete track geometry including asphalt ribbon, rumble curbs,
-/// sand traps, pit lanes, grid boxes, and start/finish line checkerboard.
+/// sand traps, jump ramps, pit lanes, grid boxes, and start/finish line checkerboard.
 pub fn render_track(track: &Track) {
-    // 1. Render geometric surface zones (sand traps, asphalt runoff, hazard zones)
+    // 1. Render base off-track surface zones (sand traps, asphalt runoff, dirt areas)
     render_surface_zones(track);
 
     // 2. Render pit box area if defined
@@ -19,21 +19,44 @@ pub fn render_track(track: &Track) {
         render_surface_shape(pit_area, Palette::PIT_LANE, Some(Palette::WHITE_LINE));
     }
 
-    // 3. Render the asphalt track ribbon and rumble curbs
+    // 3. Render the asphalt/dirt track ribbon and rumble curbs
     render_track_ribbon(&track.spline);
 
-    // 4. Render starting grid slots
+    // 4. Render on-top surface hazard patches (water puddles, oil slicks) so they visibly overlay the track
+    render_on_track_hazard_zones(track);
+
+    // 5. Render 2.5D jump ramps
+    render_jump_ramps(track);
+
+    // 6. Render starting grid slots
     render_starting_grid(track);
 
-    // 5. Render start/finish line checkerboard
+    // 7. Render start/finish line checkerboard
     render_finish_line(track);
 }
 
-/// Draws all custom surface zones (e.g. sand traps outside hairpins).
+/// Draws dynamic on-track hazard overlays like shimmering water puddles or oil slicks.
+fn render_on_track_hazard_zones(track: &Track) {
+    for zone in &track.geometry.surface_zones {
+        if matches!(zone.surface, SurfaceType::Water | SurfaceType::Oil | SurfaceType::Ice) {
+            let (fill_col, border_col) = match zone.surface {
+                SurfaceType::Water => (Palette::WATER, Some(Palette::WATER_BORDER)),
+                SurfaceType::Ice => (Color::new(0.85, 0.92, 0.98, 0.8), None),
+                SurfaceType::Oil => (Color::new(0.12, 0.12, 0.15, 0.85), None),
+                _ => continue,
+            };
+            render_surface_shape(&zone.shape, fill_col, border_col);
+        }
+    }
+}
+
+/// Draws all custom surface zones (e.g. sand traps, dirt areas, water hazards).
 fn render_surface_zones(track: &Track) {
     for zone in &track.geometry.surface_zones {
         let (fill_col, border_col) = match zone.surface {
             SurfaceType::Sand => (Palette::SAND, Some(Palette::SAND_DARK)),
+            SurfaceType::Dirt => (Palette::DIRT, Some(Palette::DIRT_DARK)),
+            SurfaceType::Water => (Palette::WATER, Some(Palette::WATER_BORDER)),
             SurfaceType::Asphalt => (Palette::RUNOFF_ASPHALT, Some(Palette::WHITE_LINE)),
             SurfaceType::Grass => (Palette::GRASS_DARK, None),
             SurfaceType::Curb => (Palette::CURB_RED, None),
@@ -41,6 +64,62 @@ fn render_surface_zones(track: &Track) {
             SurfaceType::Oil => (Color::new(0.12, 0.12, 0.15, 0.85), None),
         };
         render_surface_shape(&zone.shape, fill_col, border_col);
+    }
+}
+pub fn render_jump_ramps(track: &Track) {
+    for ramp in &track.geometry.jump_ramps {
+        match &ramp.shape {
+            SurfaceShape::OrientedBox {
+                center,
+                half_extents,
+                angle,
+            } => {
+                let fwd = Vec2::new(angle.cos(), angle.sin()) * half_extents.x;
+                let right = Vec2::new(-angle.sin(), angle.cos()) * half_extents.y;
+                let p0 = *center - fwd - right;
+                let p1 = *center + fwd - right;
+                let p2 = *center + fwd + right;
+                let p3 = *center - fwd + right;
+
+                // 1. Drop shadow beneath ramp platform
+                let s_off = Vec2::new(0.40, 0.55);
+                draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
+
+                // 2. Base metallic ramp quad
+                let ramp_base_col = Color::new(0.24, 0.26, 0.30, 1.0);
+                draw_quad(p0, p1, p2, p3, ramp_base_col);
+
+                // 3. Directional hazard chevron stripes (yellow / black)
+                let num_stripes = 4;
+                for s in 0..num_stripes {
+                    let t0 = s as f32 / num_stripes as f32;
+                    let t1 = (s as f32 + 0.5) / num_stripes as f32;
+                    let s_p0 = p0.lerp(p1, t0);
+                    let s_p1 = p0.lerp(p1, t1);
+                    let s_p2 = p3.lerp(p2, t1);
+                    let s_p3 = p3.lerp(p2, t0);
+
+                    let stripe_col = if s % 2 == 0 {
+                        Color::new(0.98, 0.82, 0.12, 0.95) // Neon caution yellow
+                    } else {
+                        Color::new(0.12, 0.12, 0.15, 0.95) // Dark charcoal
+                    };
+                    draw_quad(s_p0, s_p1, s_p2, s_p3, stripe_col);
+                }
+
+                // 4. Elevated launch lip line at exit edge (bright cyan glow)
+                let launch_edge_col = Color::new(0.30, 0.95, 1.0, 1.0);
+                draw_line(p1.x, p1.y, p2.x, p2.y, 0.45, launch_edge_col);
+
+                // 5. Ramp side border rails
+                draw_line(p0.x, p0.y, p1.x, p1.y, 0.30, Color::new(0.85, 0.85, 0.90, 1.0));
+                draw_line(p3.x, p3.y, p2.x, p2.y, 0.30, Color::new(0.85, 0.85, 0.90, 1.0));
+                draw_line(p0.x, p0.y, p3.x, p3.y, 0.30, Color::new(0.60, 0.60, 0.65, 1.0));
+            }
+            _ => {
+                render_surface_shape(&ramp.shape, Color::new(0.95, 0.80, 0.10, 0.85), Some(Palette::WHITE_LINE));
+            }
+        }
     }
 }
 
@@ -165,7 +244,7 @@ fn render_track_ribbon(spline: &TrackSpline) {
         }
     }
 
-    // --- Pass 2: Asphalt Track Surface Quads ---
+    // --- Pass 2: Track Surface Quads (Asphalt or Dirt) ---
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
@@ -178,24 +257,42 @@ fn render_track_ribbon(spline: &TrackSpline) {
         let left1 = s1.point + s1.normal * hw1;
         let right1 = s1.point - s1.normal * hw1;
 
-        // Draw asphalt segment
-        draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
+        if s0.surface == SurfaceType::Dirt {
+            // Draw playable dirt track segment
+            draw_quad(left0, left1, right1, right0, Palette::DIRT);
 
-        // White track edge boundary lines
-        draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
-        draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+            // Earthen/dusty track edge boundary lines
+            draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
+            draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
 
-        // Subtle center dashed line (every 4m)
-        let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
-        if center_stripe {
-            draw_line(
-                s0.point.x,
-                s0.point.y,
-                s1.point.x,
-                s1.point.y,
-                0.16,
-                Color::new(0.95, 0.95, 0.95, 0.35),
-            );
+            // Subtle packed dirt tire groove lines along left & right wheel paths
+            let groove_l0 = s0.point + s0.normal * (hw0 * 0.45);
+            let groove_l1 = s1.point + s1.normal * (hw1 * 0.45);
+            let groove_r0 = s0.point - s0.normal * (hw0 * 0.45);
+            let groove_r1 = s1.point - s1.normal * (hw1 * 0.45);
+
+            draw_line(groove_l0.x, groove_l0.y, groove_l1.x, groove_l1.y, 0.22, Palette::DIRT_DARK);
+            draw_line(groove_r0.x, groove_r0.y, groove_r1.x, groove_r1.y, 0.22, Palette::DIRT_DARK);
+        } else {
+            // Draw asphalt segment
+            draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
+
+            // White track edge boundary lines
+            draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+            draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+
+            // Subtle center dashed line (every 4m)
+            let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
+            if center_stripe {
+                draw_line(
+                    s0.point.x,
+                    s0.point.y,
+                    s1.point.x,
+                    s1.point.y,
+                    0.16,
+                    Color::new(0.95, 0.95, 0.95, 0.35),
+                );
+            }
         }
     }
 }

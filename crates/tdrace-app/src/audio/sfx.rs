@@ -317,6 +317,81 @@ pub fn generate_offroad_sound(sample_rate: u32) -> Vec<u8> {
     encode_wav_16bit_mono(&samples, sample_rate)
 }
 
+/// Generates an arcade jump launch aerodynamic whoosh and pitch rise (~0.18s).
+pub fn generate_jump_launch_sound(sample_rate: u32) -> Vec<u8> {
+    let duration = 0.18;
+    let total_samples = (duration * sample_rate as f32).round() as usize;
+    let mut samples = vec![0.0f32; total_samples];
+    let mut filter = BiquadLowPass::new(sample_rate, 1800.0, 1.1);
+
+    for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
+        let t = i as f32 / sample_rate as f32;
+        let env = if t < 0.02 {
+            t / 0.02
+        } else {
+            (1.0 - (t - 0.02) / (duration - 0.02)).max(0.0).powi(2)
+        };
+
+        let pitch = 180.0 + (t / duration).powi(2) * 320.0;
+        let tone = Oscillator::sine(t * pitch) * 0.60 + Oscillator::saw(t * (pitch * 0.5)) * 0.40;
+        let filtered = filter.process(tone);
+
+        *sample = soft_saturate(filtered * env, 1.2) * 0.80;
+    }
+
+    encode_wav_16bit_mono(&samples, sample_rate)
+}
+
+/// Generates a solid suspension compression landing impact thud (~0.20s).
+pub fn generate_landing_sound(sample_rate: u32) -> Vec<u8> {
+    let duration = 0.20;
+    let total_samples = (duration * sample_rate as f32).round() as usize;
+    let mut samples = vec![0.0f32; total_samples];
+    let mut filter = BiquadLowPass::new(sample_rate, 450.0, 1.3);
+
+    for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
+        let t = i as f32 / sample_rate as f32;
+        let env = (1.0 - t / duration).max(0.0).powi(3);
+
+        let pitch = 95.0 * (-t * 22.0).exp() + 30.0;
+        let thump = Oscillator::sine(t * pitch) * 0.80 + Oscillator::triangle(t * (pitch * 0.5)) * 0.30;
+        let filtered = filter.process(thump);
+
+        *sample = soft_saturate(filtered * env, 1.3) * 0.90;
+    }
+
+    encode_wav_16bit_mono(&samples, sample_rate)
+}
+
+/// Generates a viscous water splash and aquaplaning spray sound (~0.24s).
+pub fn generate_water_splash_sound(sample_rate: u32) -> Vec<u8> {
+    let duration = 0.24;
+    let total_samples = (duration * sample_rate as f32).round() as usize;
+    let mut samples = vec![0.0f32; total_samples];
+    let mut filter = BiquadLowPass::new(sample_rate, 2200.0, 1.2);
+    let mut rng_state = 987654321u64;
+
+    for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
+        let t = i as f32 / sample_rate as f32;
+        let env = (1.0 - t / duration).max(0.0).powi(2);
+
+        // Pseudo-random white noise for fluid water spray hiss
+        rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        let noise = ((rng_state >> 32) as i32 as f32) / 2147483648.0;
+
+        // Sub-bass water displacement plunge
+        let sub_pitch = 110.0 * (-t * 18.0).exp() + 35.0;
+        let sub_thump = Oscillator::sine(t * sub_pitch) * 0.70;
+
+        let raw = noise * 0.65 + sub_thump;
+        let filtered = filter.process(raw);
+
+        *sample = soft_saturate(filtered * env, 1.2) * 0.85;
+    }
+
+    encode_wav_16bit_mono(&samples, sample_rate)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

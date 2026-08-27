@@ -252,8 +252,11 @@ impl TrackProgressTracker {
                                 self.in_pit_lane = false;
                             } else if idx == self.next_checkpoint_idx {
                                 self.handle_forward_checkpoint_pass(idx, cp, checkpoints.len());
-                            } else if (idx + checkpoints.len() - self.next_checkpoint_idx) % checkpoints.len() <= 2 {
-                                // Close enough in sequence (in case of fast motion across adjacent gates)
+                            } else if idx > self.next_checkpoint_idx && (idx - self.next_checkpoint_idx) <= 3 {
+                                // Forward sequence jump within current lap (allowing fast motion or shortcuts)
+                                self.handle_forward_checkpoint_pass(idx, cp, checkpoints.len());
+                            } else if idx == 0 && self.next_checkpoint_idx >= checkpoints.len().saturating_sub(2) {
+                                // Final sector crossing to finish line
                                 self.handle_forward_checkpoint_pass(idx, cp, checkpoints.len());
                             }
                         }

@@ -82,6 +82,8 @@ impl SkidmarkBuffer {
                             let (base_col, alpha_mult) = match surface {
                                 SurfaceType::Grass => (Color::new(0.18, 0.38, 0.16, 1.0), 0.70),
                                 SurfaceType::Sand => (Color::new(0.70, 0.60, 0.35, 1.0), 0.75),
+                                SurfaceType::Dirt => (Palette::DIRT_DARK, 0.70),
+                                SurfaceType::Water => (Color::new(0.30, 0.70, 0.95, 0.40), 0.30),
                                 _ => (Palette::SKIDMARK, 0.85),
                             };
 

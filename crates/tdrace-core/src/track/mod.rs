@@ -5,12 +5,13 @@ pub mod spline;
 
 pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
 pub use geometry::{
-    BarrierType, LineSegment, Obstacle, ObstacleShape, SpawnPose, SurfaceShape, SurfaceZone,
-    TrackGeometry, WallBarrier,
+    BarrierType, JumpRamp, LineSegment, Obstacle, ObstacleShape, SpawnPose, SurfaceShape,
+    SurfaceZone, TrackGeometry, WallBarrier,
 };
 pub use presets::{
-    classic_grand_prix, drift_park, generate_checkpoints, generate_grid_positions,
-    generate_walls_from_spline, kart_arena, oval_speedway,
+    classic_grand_prix, drift_park, dune_raid, generate_checkpoints, generate_grid_positions,
+    generate_walls_from_spline, kart_arena, oasis_rally, outlaw_pass, oval_speedway, ramp_raceway,
+    sahara_dunes,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 
@@ -36,14 +37,23 @@ impl Track {
     /// Samples the exact surface type at any arbitrary 2D world coordinate.
     ///
     /// Surface resolution hierarchy:
-    /// 1. Track spline projection:
-    ///    - Main drivable track ribbon (`SurfaceType::Asphalt` or segment override).
+    /// 1. On-track hazard overlays (`SurfaceType::Water`, `SurfaceType::Oil`, `SurfaceType::Ice`):
+    ///    Sitting on top of the road, these affect the vehicle both on and off track.
+    /// 2. Track spline projection:
+    ///    - Main drivable track ribbon (`SurfaceType::Dirt`, `SurfaceType::Asphalt`).
     ///    - Apex / exit curbs (`SurfaceType::Curb`).
-    /// 2. Specific geometric surface zones (hazard areas, sand traps, oil slicks, asphalt runoff).
-    ///    Only reachable when off-track: zones are rendered beneath the track ribbon.
-    /// 3. Default off-track terrain (`SurfaceType::Grass`).
+    /// 3. Off-track surface zones (e.g. `SurfaceType::Sand` traps, runoff areas):
+    ///    Located underneath the track ribbon, only affecting the vehicle when running off track.
+    /// 4. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::Sand`).
     pub fn sample_surface(&self, point: Vec2) -> SurfaceType {
-        // 1. Project onto spline: drivable ribbon and curbs always win
+        // 1. Check on-top hazard overlays first (water puddles, oil slicks, ice)
+        for zone in &self.geometry.surface_zones {
+            if zone.surface.is_on_track_hazard() && zone.contains(point) {
+                return zone.surface;
+            }
+        }
+
+        // 2. Project onto spline: drivable ribbon (Dirt / Asphalt) and curbs take precedence over underlying ground
         let proj = self.spline.project_point(point);
         if proj.is_on_track {
             return proj.base_surface;
@@ -52,14 +62,14 @@ impl Track {
             return SurfaceType::Curb;
         }
 
-        // 2. Check explicit off-track surface zones (sand traps, oil slicks, runoff)
+        // 3. Check off-track ground zones (e.g. Sand traps, asphalt runoff)
         for zone in &self.geometry.surface_zones {
             if zone.contains(point) {
                 return zone.surface;
             }
         }
 
-        // 3. Default terrain
+        // 4. Default terrain (e.g. Grass or Sand)
         self.default_surface
     }
 

@@ -13,7 +13,8 @@ use tdrace_core::physics::config::CarConfig;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::WallBarrier;
 use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, oval_speedway,
+    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
+    ramp_raceway,
 };
 use tdrace_core::track::Track;
 
@@ -61,9 +62,9 @@ pub struct PyEngine {
     rng_state: u64,
     collision_restitution: f32,
     collision_friction: f32,
+    lap_limit: u32,
     terminate_on_off_track: bool,
     terminate_on_wall_crash: bool,
-    lap_limit: u32,
     obs_buffer: Vec<f32>,
     ray_hits_buffer: Vec<LidarHit>,
 }
@@ -100,6 +101,11 @@ impl PyEngine {
             "drift" | "drift_park" => drift_park(),
             "oval" | "oval_speedway" => oval_speedway(),
             "kart" | "kart_arena" => kart_arena(),
+            "ramp" | "ramp_raceway" => ramp_raceway(),
+            "oasis" | "oasis_rally" | "dune" | "dune_raid" | "sahara" | "sahara_dunes" | "sand" => {
+                oasis_rally()
+            }
+            "outlaw" | "outlaw_pass" | "shortcut" => outlaw_pass(),
             _ => classic_grand_prix(),
         };
 

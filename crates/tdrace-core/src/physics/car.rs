@@ -153,6 +153,18 @@ pub struct CarState {
     pub esc_active: bool,
     /// Whether Anti-lock Braking System (ABS) is actively modulating brake force.
     pub abs_active: bool,
+    /// Elevation / vertical altitude above ground in meters (z >= 0.0).
+    pub elevation: f32,
+    /// Vertical velocity in m/s (positive = ascending, negative = falling).
+    pub vertical_velocity: f32,
+    /// Whether the car is currently airborne (off the ground).
+    pub is_airborne: bool,
+    /// Time spent in the air during the current jump in seconds.
+    pub air_time: f32,
+    /// Cumulative count of jumps completed.
+    pub jump_count: u32,
+    /// Flag indicating the vehicle touched down on the ground during this physics tick.
+    pub just_landed: bool,
 }
 
 impl Default for CarState {
@@ -177,6 +189,12 @@ impl Default for CarState {
             tcs_active: false,
             esc_active: false,
             abs_active: false,
+            elevation: 0.0,
+            vertical_velocity: 0.0,
+            is_airborne: false,
+            air_time: 0.0,
+            jump_count: 0,
+            just_landed: false,
         }
     }
 }
@@ -318,6 +336,29 @@ impl Car {
         surfaces: [SurfaceType; 4],
         dt: f32,
     ) {
+        // 0. Update vertical elevation dynamics
+        self.state.just_landed = false;
+        if self.state.elevation > 0.0 || self.state.vertical_velocity.abs() > 1e-4 {
+            let gravity_z = 13.5f32; // snappy arcade gravity
+            self.state.vertical_velocity -= gravity_z * dt;
+            self.state.elevation += self.state.vertical_velocity * dt;
+            if self.state.elevation <= 0.0 {
+                self.state.elevation = 0.0;
+                self.state.vertical_velocity = 0.0;
+                self.state.is_airborne = false;
+                self.state.air_time = 0.0;
+                self.state.just_landed = true;
+            } else {
+                self.state.is_airborne = true;
+                self.state.air_time += dt;
+            }
+        } else {
+            self.state.elevation = 0.0;
+            self.state.vertical_velocity = 0.0;
+            self.state.is_airborne = false;
+            self.state.air_time = 0.0;
+        }
+
         let clamped_ctrl = controls.clamped();
         let fwd = self.forward_vector();
         let right = self.right_vector();
@@ -412,12 +453,19 @@ impl Car {
         let downforce_front = total_downforce * (lr / wheelbase) * 0.5;
         let downforce_rear = total_downforce * (lf / wheelbase) * 0.5;
 
+        // Ground contact scaling when airborne
+        let ground_contact = if self.state.elevation > 0.0 {
+            (1.0 - (self.state.elevation / 0.35)).clamp(0.0, 1.0)
+        } else {
+            1.0
+        };
+
         // Wheel 0 = FL (left), Wheel 1 = FR (right), Wheel 2 = RL (left), Wheel 3 = RR (right)
         let normal_loads = [
-            ((static_front_load - delta_fz_long) * 0.5 + delta_fz_lat_f * 0.5 + downforce_front).max(min_load_f), // FL (left)
-            ((static_front_load - delta_fz_long) * 0.5 - delta_fz_lat_f * 0.5 + downforce_front).max(min_load_f), // FR (right)
-            ((static_rear_load + delta_fz_long) * 0.5 + delta_fz_lat_r * 0.5 + downforce_rear).max(min_load_r),  // RL (left)
-            ((static_rear_load + delta_fz_long) * 0.5 - delta_fz_lat_r * 0.5 + downforce_rear).max(min_load_r),  // RR (right)
+            (((static_front_load - delta_fz_long) * 0.5 + delta_fz_lat_f * 0.5 + downforce_front).max(min_load_f)) * ground_contact, // FL (left)
+            (((static_front_load - delta_fz_long) * 0.5 - delta_fz_lat_f * 0.5 + downforce_front).max(min_load_f)) * ground_contact, // FR (right)
+            (((static_rear_load + delta_fz_long) * 0.5 + delta_fz_lat_r * 0.5 + downforce_rear).max(min_load_r)) * ground_contact,  // RL (left)
+            (((static_rear_load + delta_fz_long) * 0.5 - delta_fz_lat_r * 0.5 + downforce_rear).max(min_load_r)) * ground_contact,  // RR (right)
         ];
 
         // 4. Force calculation per wheel
@@ -577,15 +625,19 @@ impl Car {
                 0.0
             };
 
-            // Skid telemetry
-            let (skid_intensity, is_skidding) = compute_skid_telemetry(
-                slip_angle,
-                slip_ratio,
-                wheel_v_world.length(),
-                is_handbraking_wheel,
-                &self.config.tire,
-                surf,
-            );
+            // Skid telemetry (suppressed in mid-air)
+            let (skid_intensity, is_skidding) = if self.state.elevation > 0.08 {
+                (0.0, false)
+            } else {
+                compute_skid_telemetry(
+                    slip_angle,
+                    slip_ratio,
+                    wheel_v_world.length(),
+                    is_handbraking_wheel,
+                    &self.config.tire,
+                    surf,
+                )
+            };
 
             // Transform wheel forces to world frame
             let wheel_force_world = wheel_fwd * fx + wheel_right * fy;
@@ -706,6 +758,31 @@ impl Car {
         if is_drifting {
             self.state.drift_score += self.state.sideslip_angle.abs() * self.state.speed * dt;
         }
+    }
+
+    /// Initiates a ballistic jump launch with given launch direction, speed, and ramp angle.
+    pub fn launch_jump(&mut self, direction: Vec2, launch_speed: f32, ramp_angle_deg: f32) {
+        let dir = direction.normalize_or_zero();
+        let speed_along_dir = self.state.velocity.dot(dir).max(0.0);
+        let angle_rad = ramp_angle_deg.to_radians();
+        let v_z = speed_along_dir * angle_rad.sin() * 0.75 + launch_speed;
+        self.state.vertical_velocity = v_z.max(3.0);
+        self.state.elevation = 0.05;
+        self.state.is_airborne = true;
+        self.state.air_time = 0.0;
+        self.state.jump_count += 1;
+    }
+
+    /// Checks if car can launch off the given jump ramp.
+    pub fn try_trigger_jump_ramp(&mut self, ramp: &crate::track::geometry::JumpRamp) -> bool {
+        if self.state.elevation <= 0.1 && ramp.contains(self.state.position) {
+            let speed_along_dir = self.state.velocity.dot(ramp.direction);
+            if speed_along_dir > 3.5 {
+                self.launch_jump(ramp.direction, ramp.launch_speed, ramp.ramp_angle_deg);
+                return true;
+            }
+        }
+        false
     }
 }
 

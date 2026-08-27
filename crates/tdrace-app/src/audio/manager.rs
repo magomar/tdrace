@@ -9,9 +9,10 @@ use serde::{Deserialize, Serialize};
 use crate::audio::sfx::{
     generate_car_hit_sound, generate_countdown_high, generate_countdown_low,
     generate_curb_rumble_sound, generate_engine_rpm_band, generate_engine_sound,
-    generate_gear_shift_pop, generate_lap_chime, generate_offroad_sound,
-    generate_race_finish, generate_sector_ping, generate_skid_sound,
-    generate_ui_move, generate_ui_select, generate_wall_crash_sound,
+    generate_gear_shift_pop, generate_jump_launch_sound, generate_landing_sound,
+    generate_lap_chime, generate_offroad_sound, generate_race_finish, generate_sector_ping,
+    generate_skid_sound, generate_ui_move, generate_ui_select, generate_wall_crash_sound,
+    generate_water_splash_sound,
 };
 use crate::audio::synthwave::{generate_menu_theme, generate_nightcall_race_theme};
 use crate::audio::dsp::DEFAULT_SAMPLE_RATE;
@@ -104,6 +105,9 @@ pub enum SfxType {
     UiSelect,
     UiMove,
     RaceFinish,
+    JumpLaunch,
+    Landing,
+    WaterSplash,
 }
 
 /// Loaded Sound Handles Cache.
@@ -125,6 +129,9 @@ pub struct SoundBank {
     pub sfx_ui_select: Option<Sound>,
     pub sfx_ui_move: Option<Sound>,
     pub sfx_finish: Option<Sound>,
+    pub sfx_jump_launch: Option<Sound>,
+    pub sfx_landing: Option<Sound>,
+    pub sfx_water_splash: Option<Sound>,
 }
 
 impl SoundBank {
@@ -147,6 +154,9 @@ impl SoundBank {
             sfx_ui_select: None,
             sfx_ui_move: None,
             sfx_finish: None,
+            sfx_jump_launch: None,
+            sfx_landing: None,
+            sfx_water_splash: None,
         }
     }
 
@@ -178,6 +188,9 @@ impl SoundBank {
         let ui_sel_wav = generate_ui_select(sample_rate);
         let ui_mov_wav = generate_ui_move(sample_rate);
         let finish_wav = generate_race_finish(sample_rate);
+        let jump_wav = generate_jump_launch_sound(sample_rate);
+        let land_wav = generate_landing_sound(sample_rate);
+        let water_wav = generate_water_splash_sound(sample_rate);
 
         Self {
             music_nightcall: load_sound_from_bytes(&nightcall_wav).await.ok(),
@@ -197,6 +210,9 @@ impl SoundBank {
             sfx_ui_select: load_sound_from_bytes(&ui_sel_wav).await.ok(),
             sfx_ui_move: load_sound_from_bytes(&ui_mov_wav).await.ok(),
             sfx_finish: load_sound_from_bytes(&finish_wav).await.ok(),
+            sfx_jump_launch: load_sound_from_bytes(&jump_wav).await.ok(),
+            sfx_landing: load_sound_from_bytes(&land_wav).await.ok(),
+            sfx_water_splash: load_sound_from_bytes(&water_wav).await.ok(),
         }
     }
 
@@ -216,6 +232,9 @@ impl SoundBank {
             SfxType::UiSelect => self.sfx_ui_select.as_ref(),
             SfxType::UiMove => self.sfx_ui_move.as_ref(),
             SfxType::RaceFinish => self.sfx_finish.as_ref(),
+            SfxType::JumpLaunch => self.sfx_jump_launch.as_ref(),
+            SfxType::Landing => self.sfx_landing.as_ref(),
+            SfxType::WaterSplash => self.sfx_water_splash.as_ref(),
         }
     }
 }

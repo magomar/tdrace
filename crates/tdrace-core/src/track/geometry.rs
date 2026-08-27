@@ -458,13 +458,52 @@ impl SpawnPose {
     }
 }
 
-/// Collection of boundaries, walls, surface zones, and static obstacles comprising track geometry.
+/// A track jump ramp launching vehicles into the air.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct JumpRamp {
+    pub id: usize,
+    pub shape: SurfaceShape,
+    pub direction: Vec2,
+    pub launch_speed: f32,
+    pub ramp_angle_deg: f32,
+    pub height: f32,
+    pub name: String,
+}
+
+impl JumpRamp {
+    pub fn new(
+        id: usize,
+        shape: SurfaceShape,
+        direction: Vec2,
+        launch_speed: f32,
+        ramp_angle_deg: f32,
+        height: f32,
+        name: impl Into<String>,
+    ) -> Self {
+        Self {
+            id,
+            shape,
+            direction: direction.normalize_or_zero(),
+            launch_speed,
+            ramp_angle_deg,
+            height,
+            name: name.into(),
+        }
+    }
+
+    pub fn contains(&self, p: Vec2) -> bool {
+        self.shape.contains(p)
+    }
+}
+
+/// Collection of boundaries, walls, surface zones, static obstacles, and jump ramps comprising track geometry.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct TrackGeometry {
     pub inner_walls: Vec<WallBarrier>,
     pub outer_walls: Vec<WallBarrier>,
     pub obstacles: Vec<Obstacle>,
     pub surface_zones: Vec<SurfaceZone>,
+    pub jump_ramps: Vec<JumpRamp>,
     pub left_boundary_polyline: Vec<Vec2>,
     pub right_boundary_polyline: Vec<Vec2>,
 }

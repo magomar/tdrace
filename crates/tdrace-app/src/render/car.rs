@@ -18,29 +18,40 @@ pub fn render_car(car: &Car, color_scheme: &CarColorScheme, is_braking: bool) {
     let angle = car.state.angle;
     let fwd = car.forward_vector();
     let right = car.right_vector();
+    let z = car.state.elevation.max(0.0);
 
     // Body roll and squat/dive offsets from local accelerations
     let roll_offset_lat = (-car.state.acceleration_local.y * 0.015).clamp(-0.18, 0.18);
     let pitch_offset_long = (car.state.acceleration_local.x * 0.012).clamp(-0.15, 0.15);
 
-    let chassis_center = pos + right * roll_offset_lat + fwd * pitch_offset_long;
+    // 2.5D Elevation: airborne car rises along -Y screen projection and scales up slightly
+    let elevation_lift = Vec2::new(0.0, -z * 1.6);
+    let air_scale = 1.0 + (z * 0.07).min(0.35);
+
+    let chassis_center = pos + right * roll_offset_lat + fwd * pitch_offset_long + elevation_lift;
 
     // Dimensions from car config
-    let half_w = car.config.track_width * 0.5;
-    let lf = car.config.cg_to_front;
-    let lr = car.config.cg_to_rear;
-    let total_len = lf + lr + 0.50; // include overhangs
+    let half_w = (car.config.track_width * 0.5) * air_scale;
+    let lf = car.config.cg_to_front * air_scale;
+    let lr = car.config.cg_to_rear * air_scale;
+    let total_len = lf + lr + 0.50 * air_scale; // include overhangs
     let body_half_len = total_len * 0.5;
-    let body_half_w = half_w + 0.12;
+    let body_half_w = half_w + 0.12 * air_scale;
 
-    // 1. --- 2.5D Drop Shadow ---
-    let shadow_pos = pos + Vec2::new(0.30, 0.40);
-    render_chassis_shadow(shadow_pos, fwd, right, body_half_len, body_half_w);
+    // 1. --- 2.5D Drop Shadow (anchored to ground at z=0, expanding and offsetting with elevation) ---
+    let shadow_pos = pos + Vec2::new(0.30 + z * 0.35, 0.40 + z * 0.45);
+    let shadow_scale = 1.0 + (z * 0.15).min(0.60);
+    render_chassis_shadow(shadow_pos, fwd, right, body_half_len * shadow_scale, body_half_w * shadow_scale);
 
     // 2. --- 4 Wheels (Tires & Rims) with Steered Front Wheels ---
     let (steer_fl, steer_fr) = car.compute_ackermann_angles(car.state.steer_angle);
     let wheel_steers = [steer_fl, steer_fr, 0.0, 0.0];
-    let wheel_positions = car.wheel_positions_world();
+    let wheel_positions = [
+        chassis_center + fwd * lf - right * half_w,
+        chassis_center + fwd * lf + right * half_w,
+        chassis_center - fwd * lr - right * half_w,
+        chassis_center - fwd * lr + right * half_w,
+    ];
 
     for i in 0..4 {
         let w_pos = wheel_positions[i];

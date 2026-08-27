@@ -27,6 +27,9 @@ pub fn resolve_car_wall_collision(
     car: &mut Car,
     wall: &WallBarrier,
 ) -> Option<WallCollisionEvent> {
+    if car.state.elevation > 1.2 {
+        return None;
+    }
     let obb = OrientedBox::from_car(car);
     let corners = obb.corners();
 
@@ -189,6 +192,9 @@ pub fn resolve_car_obstacle_collision(
     car: &mut Car,
     obstacle: &Obstacle,
 ) -> Option<WallCollisionEvent> {
+    if car.state.elevation > 1.0 {
+        return None;
+    }
     let obb = OrientedBox::from_car(car);
 
     let manifold = match &obstacle.shape {

@@ -5,7 +5,10 @@ use std::io::{Read, Write};
 use std::path::Path;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
+use tdrace_core::track::presets::{
+    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
+    ramp_raceway,
+};
 use tdrace_core::CarConfig;
 
 use crate::ui::menu::{CarChoice, TrackChoice};
@@ -317,6 +320,9 @@ impl ReplayPlayer {
             TrackChoice::OvalSpeedway => oval_speedway(),
             TrackChoice::DriftPark => drift_park(),
             TrackChoice::KartArena => kart_arena(),
+            TrackChoice::RampRaceway => ramp_raceway(),
+            TrackChoice::OasisRally => oasis_rally(),
+            TrackChoice::OutlawPass => outlaw_pass(),
         };
 
         let config = match self.replay.header.car_choice {

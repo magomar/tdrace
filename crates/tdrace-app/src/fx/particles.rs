@@ -105,6 +105,7 @@ impl ParticleSystem {
         }
 
         let (base_col, col_var) = match surface {
+            SurfaceType::Dirt => (Palette::DIRT, Palette::DIRT_DARK),
             SurfaceType::Grass => (Palette::GRASS_DARK, Color::new(0.35, 0.25, 0.12, 0.9)),
             SurfaceType::Sand => (Palette::SAND, Palette::SAND_DARK),
             _ => return,
@@ -139,6 +140,49 @@ impl ParticleSystem {
                 lifetime: life,
                 remaining_life: life,
                 drag: 2.8,
+                is_spark: false,
+            });
+        }
+    }
+
+    /// Emits dynamic water splash droplet plumes and white foam when wheels drive through water patches.
+    pub fn emit_water_splash(&mut self, pos: Vec2, wheel_vel: Vec2, speed: f32) {
+        if self.particles.len() >= self.max_particles {
+            return;
+        }
+
+        let count = ((speed * 0.45).ceil() as usize).clamp(2, 6);
+        for _ in 0..count {
+            if self.particles.len() >= self.max_particles {
+                break;
+            }
+
+            let splash_dir = -wheel_vel.normalize_or_zero();
+            let spread = Vec2::new(-splash_dir.y, splash_dir.x) * self.rand_signed() * 1.1;
+            let p_vel = (splash_dir + spread).normalize_or_zero() * (2.5 + self.rand_f32() * 7.0 + speed * 0.2);
+
+            let p_pos = pos + Vec2::new(self.rand_signed(), self.rand_signed()) * 0.25;
+            let life = 0.25 + self.rand_f32() * 0.25;
+            let size = 0.10 + self.rand_f32() * 0.10;
+
+            let is_foam = self.rand_f32() > 0.4;
+            let col = if is_foam {
+                Color::new(0.92, 0.96, 1.0, 0.85) // Frosted white spray
+            } else {
+                Color::new(0.35, 0.78, 1.0, 0.70) // Aqua droplet
+            };
+            let col_end = Color::new(col.r, col.g, col.b, 0.0);
+
+            self.particles.push(Particle {
+                pos: p_pos,
+                vel: p_vel,
+                size_start: size,
+                size_end: size * 1.6,
+                color_start: col,
+                color_end: col_end,
+                lifetime: life,
+                remaining_life: life,
+                drag: 3.2,
                 is_spark: false,
             });
         }
@@ -184,6 +228,55 @@ impl ParticleSystem {
                 remaining_life: life,
                 drag: 4.5,
                 is_spark: true,
+            });
+        }
+    }
+
+    /// Emits 360-degree landing dust / smoke burst when car touches down from a jump.
+    pub fn emit_landing_dust(&mut self, pos: Vec2, impact_speed: f32, surface: SurfaceType) {
+        if self.particles.len() >= self.max_particles {
+            return;
+        }
+
+        let (base_col, col_var) = match surface {
+            SurfaceType::Sand => (Palette::SAND, Palette::SAND_DARK),
+            SurfaceType::Dirt => (Palette::DIRT, Palette::DIRT_DARK),
+            SurfaceType::Water => (Palette::WATER_BORDER, Palette::WATER),
+            SurfaceType::Grass => (Palette::GRASS_DARK, Palette::CURB_RED),
+            SurfaceType::Asphalt => (Palette::TIRE_SMOKE, Color::new(0.70, 0.70, 0.75, 0.35)),
+            _ => (Palette::TIRE_SMOKE, Color::new(0.70, 0.70, 0.75, 0.35)),
+        };
+
+        let count = ((impact_speed * 1.5).ceil() as usize).clamp(8, 20);
+        for _ in 0..count {
+            if self.particles.len() >= self.max_particles {
+                break;
+            }
+
+            let angle = self.rand_f32() * std::f32::consts::TAU;
+            let dir = Vec2::new(angle.cos(), angle.sin());
+            let speed = 2.0 + self.rand_f32() * 5.0 + impact_speed * 0.25;
+            let p_vel = dir * speed;
+
+            let life = 0.30 + self.rand_f32() * 0.35;
+            let size = 0.14 + self.rand_f32() * 0.12;
+
+            let use_secondary = self.rand_f32() > 0.5;
+            let col = if use_secondary { col_var } else { base_col };
+            let col_end = Color::new(col.r, col.g, col.b, 0.0);
+            let p_pos = pos + dir * (self.rand_f32() * 0.4);
+
+            self.particles.push(Particle {
+                pos: p_pos,
+                vel: p_vel,
+                size_start: size,
+                size_end: size * 1.8,
+                color_start: col,
+                color_end: col_end,
+                lifetime: life,
+                remaining_life: life,
+                drag: 3.5,
+                is_spark: false,
             });
         }
     }

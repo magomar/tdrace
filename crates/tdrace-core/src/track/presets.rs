@@ -2,8 +2,8 @@ use glam::Vec2;
 
 use super::checkpoint::Checkpoint;
 use super::geometry::{
-    BarrierType, LineSegment, Obstacle, SpawnPose, SurfaceShape, SurfaceZone, TrackGeometry,
-    WallBarrier,
+    BarrierType, JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceShape, SurfaceZone,
+    TrackGeometry, WallBarrier,
 };
 use super::spline::{TrackSpline, TrackWaypoint};
 use super::Track;
@@ -284,6 +284,7 @@ pub fn classic_grand_prix() -> Track {
             outer_walls: right_walls,
             obstacles,
             surface_zones,
+            jump_ramps: Vec::new(),
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
         },
@@ -332,6 +333,7 @@ pub fn oval_speedway() -> Track {
             outer_walls: right_walls,
             obstacles: Vec::new(),
             surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
         },
@@ -411,6 +413,7 @@ pub fn drift_park() -> Track {
             outer_walls: right_walls,
             obstacles,
             surface_zones,
+            jump_ramps: Vec::new(),
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
         },
@@ -458,6 +461,7 @@ pub fn kart_arena() -> Track {
             outer_walls: right_walls,
             obstacles: Vec::new(),
             surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
         },
@@ -467,3 +471,303 @@ pub fn kart_arena() -> Track {
         pit_box_area: None,
     }
 }
+
+/// Preset 5: Ramp Raceway
+/// Multi-elevation stadium circuit with high-speed launch ramps, gap jumps over hazard pits, and banked curves.
+pub fn ramp_raceway() -> Track {
+    let waypoints = vec![
+        // Launch Straight & Start/Finish
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
+        TrackWaypoint::new(Vec2::new(80.0, 0.0), 14.0),
+        // Turn 1 High-Speed Sweeper
+        TrackWaypoint::new(Vec2::new(140.0, 20.0), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(180.0, 60.0), 14.0).with_curbs(false, true),
+        // Back Straight with Tabletop Jump Ramp
+        TrackWaypoint::new(Vec2::new(180.0, 120.0), 14.0),
+        TrackWaypoint::new(Vec2::new(170.0, 180.0), 14.0).with_curbs(true, false),
+        // Stadium Hairpin Turn
+        TrackWaypoint::new(Vec2::new(130.0, 230.0), 13.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(70.0, 240.0), 13.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(20.0, 210.0), 13.0).with_curbs(true, true),
+        // Infield Straight with Stadium Gap Jump over Hazard Canyon
+        TrackWaypoint::new(Vec2::new(0.0, 150.0), 13.5),
+        TrackWaypoint::new(Vec2::new(-20.0, 90.0), 14.0),
+        // Banked Outer Carousel
+        TrackWaypoint::new(Vec2::new(-60.0, 50.0), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-80.0, 10.0), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-50.0, -30.0), 14.0).with_curbs(false, true),
+        // Final Launch Ramp onto Front Straight
+        TrackWaypoint::new(Vec2::new(-20.0, -20.0), 14.0).with_curbs(true, false),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
+
+    let jump_ramps = vec![
+        // Ramp 1: Back Straight Tabletop Jump
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(178.0, 135.0),
+                half_extents: Vec2::new(5.0, 6.0),
+                angle: 1.73,
+            },
+            Vec2::new(-0.16, 0.98),
+            4.5,
+            18.0,
+            2.5,
+            "Back Straight Tabletop Ramp",
+        ),
+        // Ramp 2: Infield Stadium Gap Leap
+        JumpRamp::new(
+            2,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(-8.0, 130.0),
+                half_extents: Vec2::new(5.0, 6.0),
+                angle: -1.88,
+            },
+            Vec2::new(-0.31, -0.95),
+            5.0,
+            20.0,
+            3.0,
+            "Stadium Gap Jump Ramp",
+        ),
+        // Ramp 3: Home Stretch Launch Ramp
+        JumpRamp::new(
+            3,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(-35.0, -25.0),
+                half_extents: Vec2::new(4.5, 6.0),
+                angle: 0.55,
+            },
+            Vec2::new(0.85, 0.52),
+            4.0,
+            16.0,
+            2.0,
+            "Home Stretch Launch Ramp",
+        ),
+    ];
+
+    let surface_zones = vec![
+        // Hazard Sand Pit beneath the Stadium Gap Jump
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(-30.0, 95.0),
+                max: Vec2::new(12.0, 125.0),
+            },
+            SurfaceType::Sand,
+            "Gap Jump Sand Hazard",
+        ),
+        // Infield Water Puddle Hazard
+        SurfaceZone::new(
+            SurfaceShape::Circle {
+                center: Vec2::new(45.0, 70.0),
+                radius: 6.5,
+            },
+            SurfaceType::Water,
+            "Infield Water Puddle Hazard",
+        ),
+    ];
+
+    let obstacles = vec![
+        Obstacle::circle(1, Vec2::new(100.0, 210.0), 1.5, "Stadium Apex Pylon"),
+        Obstacle::circle(2, Vec2::new(-45.0, 20.0), 1.5, "Carousel Apex Pylon"),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 12, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+
+    Track {
+        name: "Ramp Raceway".to_string(),
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles,
+            surface_zones,
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+    }
+}
+
+/// Preset 6: Oasis Rally
+/// Desert rally circuit featuring a pure compacted Dirt ribbon, perilous off-track Sand traps, and Oasis Water hazards.
+pub fn oasis_rally() -> Track {
+    let waypoints = vec![
+        // Main Desert Dirt Straight & Start/Finish
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 15.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(70.0, 0.0), 15.5).with_surface(SurfaceType::Dirt),
+        // Canyon Sweeping Right Entry
+        TrackWaypoint::new(Vec2::new(140.0, 15.0), 16.0).with_surface(SurfaceType::Dirt),
+        // Canyon Sweeping Right
+        TrackWaypoint::new(Vec2::new(200.0, 50.0), 15.0).with_surface(SurfaceType::Dirt),
+        // Canyon Ridge Climb
+        TrackWaypoint::new(Vec2::new(245.0, 110.0), 15.5).with_surface(SurfaceType::Dirt),
+        // Desert Basin High Hairpin
+        TrackWaypoint::new(Vec2::new(255.0, 175.0), 16.0).with_surface(SurfaceType::Dirt),
+        // Hairpin Exit to North Ridge
+        TrackWaypoint::new(Vec2::new(215.0, 230.0), 15.0).with_surface(SurfaceType::Dirt),
+        // North Ridge Straight
+        TrackWaypoint::new(Vec2::new(145.0, 245.0), 15.0).with_surface(SurfaceType::Dirt),
+        // Northern Oasis Approach Chicane
+        TrackWaypoint::new(Vec2::new(75.0, 230.0), 14.5).with_surface(SurfaceType::Dirt),
+        // Oasis Lake Sweeper
+        TrackWaypoint::new(Vec2::new(15.0, 185.0), 14.0).with_surface(SurfaceType::Dirt),
+        // Oasis Chicane Exit
+        TrackWaypoint::new(Vec2::new(-45.0, 160.0), 15.0).with_surface(SurfaceType::Dirt),
+        // Western Desert Flat Sweeper
+        TrackWaypoint::new(Vec2::new(-100.0, 125.0), 16.0).with_surface(SurfaceType::Dirt),
+        // Desert Ridge Switchback
+        TrackWaypoint::new(Vec2::new(-120.0, 60.0), 15.5).with_surface(SurfaceType::Dirt),
+        // Southern Desert Spring Chicane
+        TrackWaypoint::new(Vec2::new(-85.0, 5.0), 15.0).with_surface(SurfaceType::Dirt),
+        // Home Stretch Entry
+        TrackWaypoint::new(Vec2::new(-40.0, -10.0), 15.0).with_surface(SurfaceType::Dirt),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 4.5, BarrierType::TireWall);
+
+    let surface_zones = vec![
+        // Deep off-track Sand traps along critical runoffs
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(230.0, 130.0),
+                max: Vec2::new(290.0, 210.0),
+            },
+            SurfaceType::Sand,
+            "Canyon Sand Trap 1",
+        ),
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(-160.0, 30.0),
+                max: Vec2::new(-95.0, 110.0),
+            },
+            SurfaceType::Sand,
+            "Western Sand Trap 2",
+        ),
+        // Oasis Water Pond 1: Northern Oasis Lagoon (circular hazard in chicane infield)
+        SurfaceZone::new(
+            SurfaceShape::Circle {
+                center: Vec2::new(45.0, 195.0),
+                radius: 12.0,
+            },
+            SurfaceType::Water,
+            "Northern Oasis Lagoon",
+        ),
+        // Oasis Water Pond 2: Southern Desert Spring (circular hazard in the middle of the southern track)
+        SurfaceZone::new(
+            SurfaceShape::Circle {
+                center: Vec2::new(-65.0, -2.5),
+                radius: 9.5,
+            },
+            SurfaceType::Water,
+            "Southern Desert Spring",
+        ),
+    ];
+
+    let obstacles = vec![
+        Obstacle::circle(1, Vec2::new(75.0, 175.0), 2.2, "Oasis Rock Formation"),
+        Obstacle::circle(2, Vec2::new(180.0, 90.0), 2.0, "Canyon Monolith"),
+        Obstacle::circle(3, Vec2::new(-60.0, 90.0), 2.5, "Desert Outcrop"),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 14, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Oasis Rally".to_string(),
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles,
+            surface_zones,
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Sand,
+        pit_box_area: None,
+    }
+}
+
+/// Backwards compatibility alias for `oasis_rally`.
+pub fn dune_raid() -> Track {
+    oasis_rally()
+}
+
+/// Backwards compatibility alias for `oasis_rally`.
+pub fn sahara_dunes() -> Track {
+    oasis_rally()
+}
+
+/// Preset 7: Outlaw Pass
+/// Perilous mountain circuit carving through a dramatic, narrow mountain pass ("The Pass")
+/// with towering cliff rock faces, tight technical switchbacks, and high-speed mountain descents.
+pub fn outlaw_pass() -> Track {
+    let waypoints = vec![
+        // Sector 1: Start Straight & High-Speed Sweeper
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.0),
+        TrackWaypoint::new(Vec2::new(80.0, 0.0), 13.0),
+        TrackWaypoint::new(Vec2::new(130.0, -20.0), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(170.0, 10.0), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(180.0, 60.0), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(150.0, 100.0), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(100.0, 90.0), 12.0).with_curbs(true, false),
+        // Sector 2: The Outlaw Pass (Tight, dramatic mountain gorge narrowing down to 7.0m)
+        TrackWaypoint::new(Vec2::new(55.0, 120.0), 8.5).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(20.0, 160.0), 7.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-20.0, 170.0), 7.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-60.0, 140.0), 7.0).with_curbs(true, false),
+        // Sector 3: Canyon Descent & Return Straight
+        TrackWaypoint::new(Vec2::new(-100.0, 100.0), 9.5).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-110.0, 40.0), 13.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-80.0, -10.0), 13.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-30.0, -15.0), 13.0).with_curbs(false, true),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 2.8, BarrierType::Armco);
+
+    // Obstacles: Towering natural mountain cliff monoliths and rock formations framing the pass
+    let obstacles = vec![
+        Obstacle::circle(1, Vec2::new(30.0, 170.0), 2.5, "Canyon Rock Wall East"),
+        Obstacle::circle(2, Vec2::new(-25.0, 185.0), 3.0, "North Pass Monolith"),
+        Obstacle::circle(3, Vec2::new(-75.0, 145.0), 2.5, "Gorge Cliff Face"),
+        Obstacle::circle(4, Vec2::new(85.0, 45.0), 3.5, "Central Peak Rock Formation"),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 12, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+
+    Track {
+        name: "Outlaw Pass".to_string(),
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles,
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+    }
+}
+

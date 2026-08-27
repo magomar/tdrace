@@ -17,14 +17,20 @@ pub enum TrackChoice {
     OvalSpeedway,
     DriftPark,
     KartArena,
+    RampRaceway,
+    OasisRally,
+    OutlawPass,
 }
 
 impl TrackChoice {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 7] = [
         Self::ClassicGrandPrix,
         Self::OvalSpeedway,
         Self::DriftPark,
         Self::KartArena,
+        Self::RampRaceway,
+        Self::OasisRally,
+        Self::OutlawPass,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -33,6 +39,9 @@ impl TrackChoice {
             Self::OvalSpeedway => "Oval Speedway",
             Self::DriftPark => "Drift Park",
             Self::KartArena => "Kart Arena",
+            Self::RampRaceway => "Ramp Raceway",
+            Self::OasisRally => "Oasis Rally",
+            Self::OutlawPass => "Outlaw Pass",
         }
     }
 
@@ -42,6 +51,9 @@ impl TrackChoice {
             Self::OvalSpeedway => "SUPERSPEEDWAY",
             Self::DriftPark => "TECHNICAL DRIFT",
             Self::KartArena => "AGILE SPRINT",
+            Self::RampRaceway => "STUNT RAMPS & JUMPS",
+            Self::OasisRally => "DESERT DIRT RALLY",
+            Self::OutlawPass => "NARROW MOUNTAIN PASS",
         }
     }
 
@@ -51,8 +63,12 @@ impl TrackChoice {
             Self::OvalSpeedway => "Full-throttle banked superspeedway surrounded by concrete barriers.",
             Self::DriftPark => "Technical hairpin slides, wide transitions & dynamic apex clipping zones.",
             Self::KartArena => "Tight 90-degree corners, rapid switchbacks & aggressive rumble curbs.",
+            Self::RampRaceway => "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.",
+            Self::OasisRally => "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
+            Self::OutlawPass => "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.",
         }
     }
+
 }
 
 /// Available vehicle model options.
