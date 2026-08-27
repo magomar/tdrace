@@ -151,17 +151,14 @@ impl BotAiDriver {
 
         // Obstacle clearance: shift target point away from track obstacles (apex tire stacks)
         for obs in &track.geometry.obstacles {
-            let obs_center = match &obs.shape {
-                tdrace_core::track::geometry::ObstacleShape::Circle { center, .. } => *center,
-                tdrace_core::track::geometry::ObstacleShape::Box { center, .. } => *center,
-            };
+            let obs_center = obs.center();
             let to_obs = obs_center - car_pos;
             let dist = to_obs.length();
             if dist < 10.0 {
                 let obs_lat = to_obs.dot(car_right);
                 if obs_lat.abs() < 3.5 {
-                    let push_dir = if obs_lat > 0.0 { 1.0 } else { -1.0 };
-                    let urgency = (1.0 - (dist / 10.0)).clamp(0.0, 1.0);
+                    let push_dir: f32 = if obs_lat > 0.0 { 1.0 } else { -1.0 };
+                    let urgency: f32 = (1.0f32 - (dist / 10.0)).clamp(0.0f32, 1.0f32);
                     target_point += target_sample.normal * (push_dir * urgency * 3.5);
                 }
             }

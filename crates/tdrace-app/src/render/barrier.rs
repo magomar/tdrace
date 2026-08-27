@@ -1,5 +1,5 @@
 use macroquad::color::Color;
-use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line};
+use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_triangle};
 use glam::Vec2;
 use tdrace_core::track::geometry::{BarrierType, Obstacle, ObstacleShape, WallBarrier};
 use tdrace_core::track::Track;
@@ -142,6 +142,21 @@ fn render_obstacle_shadow(obs: &Obstacle) {
                 Palette::SHADOW,
             );
         }
+        ObstacleShape::Polygon { vertices } => {
+            if vertices.len() >= 3 {
+                let v0 = vertices[0] + SHADOW_OFFSET;
+                for i in 1..vertices.len() - 1 {
+                    let v1 = vertices[i] + SHADOW_OFFSET;
+                    let v2 = vertices[i + 1] + SHADOW_OFFSET;
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(v0.x, v0.y),
+                        macroquad::prelude::Vec2::new(v1.x, v1.y),
+                        macroquad::prelude::Vec2::new(v2.x, v2.y),
+                        Palette::SHADOW,
+                    );
+                }
+            }
+        }
     }
 }
 
@@ -164,6 +179,26 @@ fn render_obstacle_body(obs: &Obstacle) {
                 *center - fwd + right,
                 Palette::CONCRETE_WALL,
             );
+        }
+        ObstacleShape::Polygon { vertices } => {
+            if vertices.len() >= 3 {
+                let v0 = vertices[0];
+                for i in 1..vertices.len() - 1 {
+                    let v1 = vertices[i];
+                    let v2 = vertices[i + 1];
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(v0.x, v0.y),
+                        macroquad::prelude::Vec2::new(v1.x, v1.y),
+                        macroquad::prelude::Vec2::new(v2.x, v2.y),
+                        Palette::CONCRETE_WALL,
+                    );
+                }
+                for i in 0..vertices.len() {
+                    let v1 = vertices[i];
+                    let v2 = vertices[(i + 1) % vertices.len()];
+                    draw_line(v1.x, v1.y, v2.x, v2.y, 0.25, Color::new(0.95, 0.85, 0.1, 1.0));
+                }
+            }
         }
     }
 }

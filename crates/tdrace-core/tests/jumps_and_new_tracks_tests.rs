@@ -91,12 +91,12 @@ fn test_jump_over_low_wall_no_collision() {
 fn test_ramp_raceway_preset() {
     let track = ramp_raceway();
     assert_eq!(track.name, "Ramp Raceway");
-    assert_eq!(track.geometry.jump_ramps.len(), 3, "Must have 3 jump ramps");
-    assert!(track.checkpoints.len() >= 10);
+    assert_eq!(track.geometry.jump_ramps.len(), 1, "Must have 1 jump ramp");
+    assert!(track.checkpoints.len() >= 8);
     assert!(track.grid_positions.len() >= 6);
 
-    // Verify sample surface
-    let surf = track.sample_surface(Vec2::new(0.0, 0.0));
+    // Verify sample surface on track
+    let surf = track.sample_surface(Vec2::new(82.5, 50.0));
     assert_eq!(surf, SurfaceType::Asphalt);
 }
 

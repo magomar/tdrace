@@ -213,10 +213,7 @@ fn test_all_track_presets_grid_positions_valid() {
         }
 
         for obs in &track.geometry.obstacles {
-            let center = match &obs.shape {
-                tdrace_core::track::geometry::ObstacleShape::Circle { center, .. } => *center,
-                tdrace_core::track::geometry::ObstacleShape::Box { center, .. } => *center,
-            };
+            let center = obs.center();
             let proj = track.spline.project_point(center);
             println!(
                 "  Obstacle '{}' at {:?}: dist_to_spline={:.2}m, track_half_w={:.2}m, is_on_track={}",
@@ -288,5 +285,41 @@ fn test_track_walls_do_not_block_drivable_track_and_do_not_self_intersect() {
         assert_eq!(collisions, 0, "Track {} has {} centerline collisions with walls!", name, collisions);
     }
 }
+
+#[test]
+fn test_polygon_obstacle_creation_ray_and_sat_collision() {
+    use tdrace_core::track::geometry::Obstacle;
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+
+    let vertices = vec![
+        Vec2::new(10.0, 10.0),
+        Vec2::new(14.0, 10.0),
+        Vec2::new(16.0, 14.0),
+        Vec2::new(12.0, 16.0),
+        Vec2::new(8.0, 13.0),
+    ];
+    let mut poly_obs = Obstacle::polygon(1, vertices, "Test Polygon");
+    let c = poly_obs.center();
+    assert!((c.x - 12.0).abs() < 1.0);
+    assert!((c.y - 12.6).abs() < 1.0);
+
+    // 1. Ray intersection
+    let ray_origin = Vec2::new(0.0, 10.0);
+    let ray_dir = Vec2::new(1.0, 0.0);
+    let hit = poly_obs.intersect_ray(ray_origin, ray_dir, 50.0);
+    assert!(hit.is_some());
+    let (t, _normal) = hit.unwrap();
+    assert!((t - 8.0).abs() < 1.5);
+
+    // 2. SAT Collision resolution
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(12.0, 12.0), 0.0);
+    let hit_events = resolve_all_wall_collisions(&mut car, &[], &[poly_obs.clone()]);
+    assert_eq!(hit_events.len(), 1, "Car should collide with polygon obstacle");
+
+    // 3. Translation
+    poly_obs.set_center(Vec2::new(50.0, 50.0));
+    assert!((poly_obs.center() - Vec2::new(50.0, 50.0)).length() < 1e-4);
+}
+
 
 

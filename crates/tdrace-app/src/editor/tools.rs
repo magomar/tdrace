@@ -449,6 +449,13 @@ fn find_closest_entity(state: &EditorState, point: Vec2) -> Option<Selection> {
                     return Some(Selection::Obstacle(idx));
                 }
             }
+            tdrace_core::track::ObstacleShape::Polygon { vertices } => {
+                let c = obs.center();
+                let max_r = vertices.iter().map(|v| (*v - c).length()).fold(0.0f32, f32::max);
+                if (c - point).length() < max_r + pick_dist {
+                    return Some(Selection::Obstacle(idx));
+                }
+            }
         }
     }
 
@@ -494,10 +501,7 @@ fn get_selection_position(state: &EditorState, sel: Selection) -> Option<Vec2> {
     match sel {
         Selection::Waypoint(idx) => state.track.spline.waypoints.get(idx).map(|w| w.point),
         Selection::SurfaceZone(idx) => state.track.geometry.surface_zones.get(idx).map(|z| get_surface_shape_center(&z.shape)),
-        Selection::Obstacle(idx) => state.track.geometry.obstacles.get(idx).map(|o| match &o.shape {
-            tdrace_core::track::ObstacleShape::Circle { center, .. } => *center,
-            tdrace_core::track::ObstacleShape::Box { center, .. } => *center,
-        }),
+        Selection::Obstacle(idx) => state.track.geometry.obstacles.get(idx).map(|o| o.center()),
         Selection::JumpRamp(idx) => state.track.geometry.jump_ramps.get(idx).map(|r| get_surface_shape_center(&r.shape)),
         Selection::Checkpoint(idx) => state.track.checkpoints.get(idx).map(|c| (c.gate.start + c.gate.end) * 0.5),
         Selection::GridSlot(idx) => state.track.grid_positions.get(idx).map(|g| g.position),
@@ -542,10 +546,7 @@ fn set_surface_zone_position(zone: &mut SurfaceZone, new_center: Vec2) {
 }
 
 fn set_obstacle_position(obs: &mut Obstacle, new_center: Vec2) {
-    match &mut obs.shape {
-        tdrace_core::track::ObstacleShape::Circle { center, .. } => *center = new_center,
-        tdrace_core::track::ObstacleShape::Box { center, .. } => *center = new_center,
-    }
+    obs.set_center(new_center);
 }
 
 fn set_jump_ramp_position(ramp: &mut JumpRamp, new_center: Vec2) {

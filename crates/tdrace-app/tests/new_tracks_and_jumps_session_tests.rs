@@ -36,7 +36,7 @@ fn test_ramp_raceway_session_features() {
     session.init_race();
 
     assert_eq!(session.track.name, "Ramp Raceway");
-    assert_eq!(session.track.geometry.jump_ramps.len(), 3);
+    assert_eq!(session.track.geometry.jump_ramps.len(), 1);
 }
 
 #[test]
@@ -80,5 +80,3 @@ fn test_outlaw_pass_session_features() {
     let has_narrow_pass = session.track.spline.samples.iter().any(|s| s.width <= 7.5);
     assert!(has_narrow_pass, "Outlaw Pass must feature a dedicated narrow pass section (width <= 7.5m)");
 }
-
-

@@ -290,6 +290,7 @@ impl SurfaceZone {
 pub enum ObstacleShape {
     Circle { center: Vec2, radius: f32 },
     Box { center: Vec2, half_extents: Vec2, angle: f32 },
+    Polygon { vertices: Vec<Vec2> },
 }
 
 /// A static track obstacle (bollard, tire bundle, trackside post).
@@ -330,6 +331,48 @@ impl Obstacle {
             restitution: 0.4,
             friction: 0.4,
             name: name.into(),
+        }
+    }
+
+    pub fn polygon(id: usize, vertices: Vec<Vec2>, name: impl Into<String>) -> Self {
+        Self {
+            id,
+            shape: ObstacleShape::Polygon { vertices },
+            restitution: 0.4,
+            friction: 0.4,
+            name: name.into(),
+        }
+    }
+
+    pub fn center(&self) -> Vec2 {
+        match &self.shape {
+            ObstacleShape::Circle { center, .. } => *center,
+            ObstacleShape::Box { center, .. } => *center,
+            ObstacleShape::Polygon { vertices } => {
+                if vertices.is_empty() {
+                    Vec2::ZERO
+                } else {
+                    let sum: Vec2 = vertices.iter().copied().sum();
+                    sum / (vertices.len() as f32)
+                }
+            }
+        }
+    }
+
+    pub fn set_center(&mut self, new_center: Vec2) {
+        match &mut self.shape {
+            ObstacleShape::Circle { center, .. } => *center = new_center,
+            ObstacleShape::Box { center, .. } => *center = new_center,
+            ObstacleShape::Polygon { vertices } => {
+                if !vertices.is_empty() {
+                    let sum: Vec2 = vertices.iter().copied().sum();
+                    let current = sum / (vertices.len() as f32);
+                    let delta = new_center - current;
+                    for v in vertices {
+                        *v += delta;
+                    }
+                }
+            }
         }
     }
 
@@ -435,6 +478,24 @@ impl Obstacle {
                 } else {
                     None
                 }
+            }
+            ObstacleShape::Polygon { vertices } => {
+                let n = vertices.len();
+                if n < 3 {
+                    return None;
+                }
+                let mut closest_hit: Option<(f32, Vec2)> = None;
+                for i in 0..n {
+                    let seg = LineSegment::new(vertices[i], vertices[(i + 1) % n]);
+                    if let Some((t, normal)) = seg.intersect_ray(origin, dir, max_range) {
+                        match closest_hit {
+                            Some((best_t, _)) if t < best_t => closest_hit = Some((t, normal)),
+                            None => closest_hit = Some((t, normal)),
+                            _ => {}
+                        }
+                    }
+                }
+                closest_hit
             }
         }
     }

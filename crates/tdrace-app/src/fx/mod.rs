@@ -55,34 +55,37 @@ impl EffectsManager {
         }
 
         for (i, car) in cars.iter().enumerate() {
-            let wheel_pos = car.wheel_positions_world();
-            let car_surfaces = surfaces.get(i).copied().unwrap_or([SurfaceType::Asphalt; 4]);
+            // Suppress ground wheel particles while car is airborne / jumping
+            if !car.state.is_airborne && car.state.elevation <= 0.0 {
+                let wheel_pos = car.wheel_positions_world();
+                let car_surfaces = surfaces.get(i).copied().unwrap_or([SurfaceType::Asphalt; 4]);
 
-            for w in 0..4 {
-                let telemetry = &car.state.wheels[w];
-                let pos = wheel_pos[w];
-                let surf = car_surfaces[w];
+                for w in 0..4 {
+                    let telemetry = &car.state.wheels[w];
+                    let pos = wheel_pos[w];
+                    let surf = car_surfaces[w];
 
-                // Tire smoke on asphalt/curb
-                if (surf == SurfaceType::Asphalt || surf == SurfaceType::Curb)
-                    && telemetry.skid_intensity > 0.25
-                    && car.state.speed > 3.0
-                {
-                    self.particles
-                        .emit_tire_smoke(pos, car.state.velocity, telemetry.skid_intensity);
-                }
+                    // Tire smoke on asphalt/curb
+                    if (surf == SurfaceType::Asphalt || surf == SurfaceType::Curb)
+                        && telemetry.skid_intensity > 0.25
+                        && car.state.speed > 3.0
+                    {
+                        self.particles
+                            .emit_tire_smoke(pos, car.state.velocity, telemetry.skid_intensity);
+                    }
 
-                // Off-track & dirt track roost
-                if (surf == SurfaceType::Grass || surf == SurfaceType::Sand || surf == SurfaceType::Dirt)
-                    && (telemetry.skid_intensity > 0.10 || telemetry.slip_ratio.abs() > 0.15)
-                    && car.state.speed > 2.0
-                {
-                    self.particles.emit_dirt_roost(pos, surf, car.state.velocity);
-                }
+                    // Off-track & dirt track roost
+                    if (surf == SurfaceType::Grass || surf == SurfaceType::Sand || surf == SurfaceType::Dirt)
+                        && (telemetry.skid_intensity > 0.10 || telemetry.slip_ratio.abs() > 0.15)
+                        && car.state.speed > 2.0
+                    {
+                        self.particles.emit_dirt_roost(pos, surf, car.state.velocity);
+                    }
 
-                // Water splash on puddles / water hazard
-                if surf == SurfaceType::Water && car.state.speed > 1.5 {
-                    self.particles.emit_water_splash(pos, car.state.velocity, car.state.speed);
+                    // Water splash on puddles / water hazard
+                    if surf == SurfaceType::Water && car.state.speed > 1.5 {
+                        self.particles.emit_water_splash(pos, car.state.velocity, car.state.speed);
+                    }
                 }
             }
 

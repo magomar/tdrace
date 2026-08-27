@@ -626,7 +626,7 @@ impl Car {
             };
 
             // Skid telemetry (suppressed in mid-air)
-            let (skid_intensity, is_skidding) = if self.state.elevation > 0.08 {
+            let (skid_intensity, is_skidding) = if self.state.is_airborne || self.state.elevation > 0.0 {
                 (0.0, false)
             } else {
                 compute_skid_telemetry(
@@ -750,7 +750,9 @@ impl Car {
         self.state.sideslip_angle = updated_v_lat.atan2(updated_v_long.abs().max(0.1));
 
         let is_any_rear_skidding = self.state.wheels[2].is_skidding || self.state.wheels[3].is_skidding;
-        let is_drifting = self.state.sideslip_angle.abs() > 0.16
+        let is_drifting = !self.state.is_airborne
+            && self.state.elevation <= 0.0
+            && self.state.sideslip_angle.abs() > 0.16
             && self.state.speed > 4.0
             && is_any_rear_skidding;
 

@@ -209,6 +209,9 @@ pub fn resolve_car_obstacle_collision(
             let obs_box = OrientedBox::new(*center, *half_extents, *angle);
             super::sat::collide_obb_obb(&obb, &obs_box)
         }
+        ObstacleShape::Polygon { vertices } => {
+            super::sat::collide_obb_polygon(&obb, vertices)
+        }
     }?;
 
     if !manifold.colliding || manifold.penetration <= 1e-5 {

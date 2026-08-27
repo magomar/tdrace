@@ -269,6 +269,109 @@ pub fn collide_obb_circle(
     }
 }
 
+fn project_points_on_axis(points: &[Vec2], axis: Vec2) -> (f32, f32) {
+    if points.is_empty() {
+        return (0.0, 0.0);
+    }
+    let mut min = points[0].dot(axis);
+    let mut max = min;
+    for &p in &points[1..] {
+        let proj = p.dot(axis);
+        if proj < min {
+            min = proj;
+        }
+        if proj > max {
+            max = proj;
+        }
+    }
+    (min, max)
+}
+
+/// Tests collision between an OBB and a 2D polygon using Separating Axis Theorem (SAT).
+pub fn collide_obb_polygon(
+    obb: &OrientedBox,
+    vertices: &[Vec2],
+) -> Option<ContactManifold> {
+    let n = vertices.len();
+    if n < 3 {
+        return None;
+    }
+
+    let obb_corners = obb.corners();
+    let mut min_penetration = f32::MAX;
+    let mut best_axis = Vec2::ZERO;
+
+    // 1. Test OBB axes (2 axes)
+    let obb_axes = [obb.forward(), obb.left()];
+    for axis in obb_axes {
+        let (min_a, max_a) = project_points_on_axis(&obb_corners, axis);
+        let (min_b, max_b) = project_points_on_axis(vertices, axis);
+
+        if max_a < min_b || max_b < min_a {
+            return None; // Separating axis found
+        }
+
+        let overlap = (max_a.min(max_b) - min_a.max(min_b)).max(0.0);
+        if overlap < min_penetration {
+            min_penetration = overlap;
+            best_axis = axis;
+        }
+    }
+
+    // 2. Test Polygon edge normal axes
+    for i in 0..n {
+        let v1 = vertices[i];
+        let v2 = vertices[(i + 1) % n];
+        let edge = v2 - v1;
+        let axis = Vec2::new(-edge.y, edge.x).normalize_or_zero();
+        if axis.length_squared() < 1e-4 {
+            continue;
+        }
+
+        let (min_a, max_a) = project_points_on_axis(&obb_corners, axis);
+        let (min_b, max_b) = project_points_on_axis(vertices, axis);
+
+        if max_a < min_b || max_b < min_a {
+            return None; // Separating axis found
+        }
+
+        let overlap = (max_a.min(max_b) - min_a.max(min_b)).max(0.0);
+        if overlap < min_penetration {
+            min_penetration = overlap;
+            best_axis = axis;
+        }
+    }
+
+    if min_penetration <= 1e-5 {
+        return None;
+    }
+
+    // Centroid of polygon
+    let centroid: Vec2 = vertices.iter().copied().sum::<Vec2>() / (n as f32);
+    // Orient normal pointing from OBB towards polygon
+    if (centroid - obb.center).dot(best_axis) < 0.0 {
+        best_axis = -best_axis;
+    }
+
+    // Contact point: vertex of OBB deepest along normal
+    let mut deepest_pt = obb_corners[0];
+    let mut max_depth = f32::MIN;
+    for &pt in &obb_corners {
+        let depth = (pt - obb.center).dot(best_axis);
+        if depth > max_depth {
+            max_depth = depth;
+            deepest_pt = pt;
+        }
+    }
+
+    Some(ContactManifold {
+        colliding: true,
+        penetration: min_penetration,
+        normal: best_axis,
+        contact_points: vec![deepest_pt],
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

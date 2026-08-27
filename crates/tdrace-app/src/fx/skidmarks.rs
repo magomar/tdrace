@@ -58,6 +58,13 @@ impl SkidmarkBuffer {
         }
 
         for (car_idx, car) in cars.iter().enumerate() {
+            if car.state.is_airborne || car.state.elevation > 0.0 {
+                for wheel_id in 0..4 {
+                    self.prev_wheel_positions[car_idx][wheel_id] = None;
+                }
+                continue;
+            }
+
             let wheel_positions = car.wheel_positions_world();
             let car_right = car.right_vector();
             let half_tire_w = 0.12;

@@ -1524,7 +1524,11 @@ impl RaceSession {
             let in_water = player_surfaces.iter().any(|&s| s == SurfaceType::Water);
             if in_water {
                 if let Some(player_car) = self.cars.first() {
-                    if player_car.state.speed > 3.0 && self.session_time.fract() < dt * 4.0 {
+                    if !player_car.state.is_airborne
+                        && player_car.state.elevation <= 0.0
+                        && player_car.state.speed > 3.0
+                        && self.session_time.fract() < dt * 4.0
+                    {
                         let gain = (player_car.state.speed / 18.0).clamp(0.35, 0.85);
                         self.audio.play_sfx_with_gain(SfxType::WaterSplash, gain);
                     }

@@ -50,10 +50,28 @@ fn default_laps_fallback() -> u32 {
     3
 }
 
+/// Category of a racing circuit: tested & approved Main track, or experimental Draft track.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TrackCategory {
+    Main,
+    Draft,
+}
+
+impl Default for TrackCategory {
+    fn default() -> Self {
+        Self::Main
+    }
+}
+
 /// Complete racing circuit specification including spline, boundaries, surfaces, obstacles, and checkpoints.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Track {
     pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub category: TrackCategory,
     pub spline: TrackSpline,
     pub geometry: TrackGeometry,
     pub checkpoints: Vec<Checkpoint>,

@@ -119,3 +119,51 @@ fn test_effects_manager_integration() {
     fx.update(&cars2, &surfaces, &[], &[], 0.016);
     assert_eq!(fx.drift_popups.active_popups().len(), 1);
 }
+
+#[test]
+fn test_no_particles_while_car_is_on_the_air() {
+    let mut fx = EffectsManager::new(500, 500);
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.speed = 30.0;
+    car.state.velocity = Vec2::new(30.0, 0.0);
+    car.state.is_airborne = true;
+    car.state.elevation = 1.5;
+
+    // Simulate car skidding over grass / water / dirt while jumping
+    for w in 0..4 {
+        car.state.wheels[w].skid_intensity = 0.9;
+        car.state.wheels[w].slip_ratio = 0.5;
+    }
+
+    let cars = vec![car.clone()];
+    let surfaces_grass = vec![[SurfaceType::Grass; 4]];
+    let surfaces_water = vec![[SurfaceType::Water; 4]];
+    let surfaces_dirt = vec![[SurfaceType::Dirt; 4]];
+    let surfaces_asphalt = vec![[SurfaceType::Asphalt; 4]];
+
+    // 1. In air over grass
+    fx.update(&cars, &surfaces_grass, &[], &[], 0.016);
+    assert_eq!(fx.particles.count(), 0, "No particles should emit over grass while airborne");
+    assert_eq!(fx.skidmarks.count(), 0, "No skidmarks should be laid down while airborne");
+
+    // 2. In air over water
+    fx.update(&cars, &surfaces_water, &[], &[], 0.016);
+    assert_eq!(fx.particles.count(), 0, "No particles should emit over water while airborne");
+    assert_eq!(fx.skidmarks.count(), 0, "No skidmarks should be laid down while airborne");
+
+    // 3. In air over dirt
+    fx.update(&cars, &surfaces_dirt, &[], &[], 0.016);
+    assert_eq!(fx.particles.count(), 0, "No particles should emit over dirt while airborne");
+
+    // 4. In air over asphalt
+    fx.update(&cars, &surfaces_asphalt, &[], &[], 0.016);
+    assert_eq!(fx.particles.count(), 0, "No particles should emit over asphalt while airborne");
+
+    // 5. When car lands on the ground (is_airborne = false, elevation = 0.0), skid particles emit normally
+    car.state.is_airborne = false;
+    car.state.elevation = 0.0;
+    let grounded_cars = vec![car];
+    fx.update(&grounded_cars, &surfaces_asphalt, &[], &[], 0.016);
+    assert!(fx.particles.count() > 0, "Grounded car with skid intensity should emit tire smoke");
+}

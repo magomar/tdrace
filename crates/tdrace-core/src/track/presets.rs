@@ -485,10 +485,10 @@ pub fn kart_arena() -> Track {
 pub fn ramp_raceway() -> Track {
     let waypoints = vec![
         // Launch Straight & Start/Finish
-        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
-        TrackWaypoint::new(Vec2::new(80.0, 0.0), 14.0),
+        TrackWaypoint::new(Vec2::new(82.5, 50.0), 14.0),
+        TrackWaypoint::new(Vec2::new(117.5, 15.0), 14.0),
         // Turn 1 High-Speed Sweeper
-        TrackWaypoint::new(Vec2::new(140.0, 20.0), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(160.0, 25.0), 14.0).with_curbs(false, true),
         TrackWaypoint::new(Vec2::new(180.0, 60.0), 14.0).with_curbs(false, true),
         // Back Straight with Tabletop Jump Ramp
         TrackWaypoint::new(Vec2::new(180.0, 120.0), 14.0),
@@ -497,13 +497,13 @@ pub fn ramp_raceway() -> Track {
         TrackWaypoint::new(Vec2::new(130.0, 230.0), 13.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(70.0, 240.0), 13.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(20.0, 210.0), 13.0).with_curbs(true, true),
-        // Infield Straight with Stadium Gap Jump over Hazard Canyon
+        // Infield Straight
         TrackWaypoint::new(Vec2::new(0.0, 150.0), 13.5),
-        TrackWaypoint::new(Vec2::new(-20.0, 90.0), 14.0),
+        TrackWaypoint::new(Vec2::new(-32.5, 92.5), 14.0),
         // Banked Outer Carousel
-        TrackWaypoint::new(Vec2::new(-60.0, 50.0), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-80.0, 10.0), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-50.0, -30.0), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-85.0, 57.5), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-95.0, 12.5), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-67.5, -22.5), 14.0).with_curbs(false, true),
         // Final Launch Ramp onto Front Straight
         TrackWaypoint::new(Vec2::new(-20.0, -20.0), 14.0).with_curbs(true, false),
     ];
@@ -517,73 +517,38 @@ pub fn ramp_raceway() -> Track {
         JumpRamp::new(
             1,
             SurfaceShape::OrientedBox {
-                center: Vec2::new(178.0, 135.0),
+                center: Vec2::new(180.5, 95.0),
                 half_extents: Vec2::new(5.0, 6.0),
                 angle: 1.73,
             },
-            Vec2::new(-0.16, 0.98),
+            Vec2::new(-0.16113189, 0.9869329),
             4.5,
             18.0,
             2.5,
             "Back Straight Tabletop Ramp",
         ),
-        // Ramp 2: Infield Stadium Gap Leap
-        JumpRamp::new(
-            2,
-            SurfaceShape::OrientedBox {
-                center: Vec2::new(-8.0, 130.0),
-                half_extents: Vec2::new(5.0, 6.0),
-                angle: -1.88,
-            },
-            Vec2::new(-0.31, -0.95),
-            5.0,
-            20.0,
-            3.0,
-            "Stadium Gap Jump Ramp",
-        ),
-        // Ramp 3: Home Stretch Launch Ramp
-        JumpRamp::new(
-            3,
-            SurfaceShape::OrientedBox {
-                center: Vec2::new(-35.0, -25.0),
-                half_extents: Vec2::new(4.5, 6.0),
-                angle: 0.55,
-            },
-            Vec2::new(0.85, 0.52),
-            4.0,
-            16.0,
-            2.0,
-            "Home Stretch Launch Ramp",
-        ),
     ];
 
     let surface_zones = vec![
-        // Hazard Sand Pit beneath the Stadium Gap Jump
         SurfaceZone::new(
             SurfaceShape::Aabb {
-                min: Vec2::new(-30.0, 95.0),
-                max: Vec2::new(12.0, 125.0),
-            },
-            SurfaceType::Sand,
-            "Gap Jump Sand Hazard",
-        ),
-        // Infield Water Puddle Hazard
-        SurfaceZone::new(
-            SurfaceShape::Circle {
-                center: Vec2::new(45.0, 70.0),
-                radius: 6.5,
+                min: Vec2::new(157.5, 105.0),
+                max: Vec2::new(199.5, 135.0),
             },
             SurfaceType::Water,
-            "Infield Water Puddle Hazard",
+            "Gap Jump Sand Hazard",
         ),
     ];
 
     let obstacles = vec![
         Obstacle::circle(1, Vec2::new(100.0, 210.0), 1.5, "Stadium Apex Pylon"),
         Obstacle::circle(2, Vec2::new(-45.0, 20.0), 1.5, "Carousel Apex Pylon"),
+        Obstacle::circle(3, Vec2::new(-50.0, -30.0), 1.2, "Tire Stack 3"),
+        Obstacle::circle(4, Vec2::new(-50.0, -30.0), 1.2, "Tire Stack 4"),
+        Obstacle::circle(5, Vec2::new(-50.0, -30.0), 1.2, "Tire Stack 5"),
     ];
 
-    let checkpoints = generate_checkpoints(&spline, 12, 3);
+    let checkpoints = generate_checkpoints(&spline, 8, 3);
     let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
 
     Track {
