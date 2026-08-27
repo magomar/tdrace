@@ -101,3 +101,46 @@ fn test_player_lap_tracking_advancement_and_finish() {
         "State should transition to Finished or NameEntry upon race completion"
     );
 }
+
+#[test]
+fn test_session_update_state_preservation_and_race_start() {
+    let mut session = RaceSession::new();
+    assert_eq!(session.state, GameState::Menu);
+
+    // 1. Initializing race puts state into StartingGrid
+    session.init_race();
+    assert_eq!(session.state, GameState::StartingGrid);
+
+    // 2. update() MUST NOT overwrite StartingGrid back to Menu
+    session.update();
+    assert_eq!(session.state, GameState::StartingGrid);
+
+    // 3. Countdown state must be preserved during update()
+    session.state = GameState::Countdown(3.0);
+    session.update();
+    match session.state {
+        GameState::Countdown(rem) => assert!(rem < 3.0, "Countdown should progress with frame dt"),
+        _ => panic!("Expected Countdown state to be preserved across update()"),
+    }
+
+    // 4. Racing state must be preserved during update()
+    session.state = GameState::Racing;
+    session.update();
+    assert_eq!(session.state, GameState::Racing);
+
+    // 5. Paused state must be preserved during update()
+    session.state = GameState::Paused;
+    session.update();
+    assert_eq!(session.state, GameState::Paused);
+
+    // 6. Finished state must be preserved during update()
+    session.state = GameState::Finished;
+    session.update();
+    assert_eq!(session.state, GameState::Finished);
+
+    // 7. ControlsHelp state must be preserved during update()
+    session.state = GameState::ControlsHelp(false);
+    session.update();
+    assert_eq!(session.state, GameState::ControlsHelp(false));
+}
+

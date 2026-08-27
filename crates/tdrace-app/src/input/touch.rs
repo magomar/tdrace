@@ -1,6 +1,21 @@
 use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::input::{is_mouse_button_down, mouse_position, touches, MouseButton, TouchPhase};
+
+#[inline]
+fn touches_safe() -> Vec<macroquad::input::Touch> {
+    std::panic::catch_unwind(touches).unwrap_or_default()
+}
+
+#[inline]
+fn mouse_position_safe() -> (f32, f32) {
+    std::panic::catch_unwind(mouse_position).unwrap_or((0.0, 0.0))
+}
+
+#[inline]
+fn is_mouse_button_down_safe(btn: MouseButton) -> bool {
+    std::panic::catch_unwind(|| is_mouse_button_down(btn)).unwrap_or(false)
+}
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::car::CarControls;
@@ -173,7 +188,7 @@ impl TouchController {
         self.last_screen_size = Vec2::new(screen_w, screen_h);
         self.update_press_animations(dt);
 
-        let real_touches = touches();
+        let real_touches = touches_safe();
         if !real_touches.is_empty() {
             if self.auto_detect && !self.enabled {
                 self.enabled = true;
@@ -200,9 +215,9 @@ impl TouchController {
 
         // Fallback desktop mouse touch simulation (for testing on desktop)
         if self.simulated_mouse_enabled && self.enabled {
-            let (mx, my) = mouse_position();
+            let (mx, my) = mouse_position_safe();
             let mouse_pos = Vec2::new(mx, my);
-            let mouse_down = is_mouse_button_down(MouseButton::Left);
+            let mouse_down = is_mouse_button_down_safe(MouseButton::Left);
 
             let mouse_touch_id = 999999;
             if mouse_down {

@@ -1,7 +1,32 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use macroquad::input::{is_key_pressed, KeyCode};
+use macroquad::input::KeyCode;
 use macroquad::prelude::{get_frame_time, screen_height, screen_width};
+
+#[inline]
+fn is_key_pressed(k: KeyCode) -> bool {
+    std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)).unwrap_or(false)
+}
+
+#[inline]
+fn get_char_pressed() -> Option<char> {
+    std::panic::catch_unwind(macroquad::input::get_char_pressed).unwrap_or(None)
+}
+
+#[inline]
+fn get_frame_time_safe() -> f32 {
+    std::panic::catch_unwind(get_frame_time).unwrap_or(1.0 / 60.0)
+}
+
+#[inline]
+fn screen_width_safe() -> f32 {
+    std::panic::catch_unwind(screen_width).unwrap_or(1280.0)
+}
+
+#[inline]
+fn screen_height_safe() -> f32 {
+    std::panic::catch_unwind(screen_height).unwrap_or(720.0)
+}
 use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
 use tdrace_core::collision::wall::resolve_all_wall_collisions;
 use tdrace_core::physics::car::Car;
@@ -507,9 +532,9 @@ impl RaceSession {
 
     /// Master update tick called once per frame.
     pub fn update(&mut self) {
-        let frame_dt = get_frame_time().min(0.1);
-        let sw = screen_width();
-        let sh = screen_height();
+        let frame_dt = get_frame_time_safe().min(0.1);
+        let sw = screen_width_safe();
+        let sh = screen_height_safe();
 
         // Handle gamepad input updates
         self.input.gamepad.update();
@@ -606,17 +631,8 @@ impl RaceSession {
             return;
         }
 
-        if let GameState::ProfileCreate {
-            editing_id,
-            field_idx,
-            input_name,
-            input_alias,
-            country_idx,
-            livery_idx,
-            cursor_timer,
-        } = std::mem::replace(&mut self.state, GameState::Menu)
-        {
-            self.update_profile_create(
+        if matches!(self.state, GameState::ProfileCreate { .. }) {
+            if let GameState::ProfileCreate {
                 editing_id,
                 field_idx,
                 input_name,
@@ -624,9 +640,20 @@ impl RaceSession {
                 country_idx,
                 livery_idx,
                 cursor_timer,
-                frame_dt,
-            );
-            return;
+            } = std::mem::replace(&mut self.state, GameState::Menu)
+            {
+                self.update_profile_create(
+                    editing_id,
+                    field_idx,
+                    input_name,
+                    input_alias,
+                    country_idx,
+                    livery_idx,
+                    cursor_timer,
+                    frame_dt,
+                );
+                return;
+            }
         }
 
         match self.state {
@@ -638,6 +665,7 @@ impl RaceSession {
                 // Launch race countdown (Space, Enter, Gamepad Confirm [A / South / Start])
                 if is_key_pressed(KeyCode::Space)
                     || is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
                     || self.input.gamepad.snapshot.btn_confirm_pressed
                     || self.input.gamepad.snapshot.btn_a_pressed
                 {
@@ -727,7 +755,14 @@ impl RaceSession {
             }
             GameState::Paused => {
                 self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed || self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed {
+                if is_key_pressed(KeyCode::Escape)
+                    || is_key_pressed(KeyCode::Pause)
+                    || is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || self.input.gamepad.snapshot.btn_start_pressed
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
                     self.state = GameState::Racing;
                 }
                 if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_back_pressed || self.input.gamepad.snapshot.btn_b_pressed {
@@ -749,7 +784,7 @@ impl RaceSession {
                 *cursor_timer += frame_dt;
 
                 // Character typing
-                while let Some(c) = macroquad::input::get_char_pressed() {
+                while let Some(c) = get_char_pressed() {
                     if (c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_') && input_name.len() < 12 {
                         input_name.push(c.to_ascii_uppercase());
                         self.audio.play_sfx(SfxType::UiMove);
@@ -764,6 +799,7 @@ impl RaceSession {
 
                 // Submit or skip
                 let is_submit = is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
                     || self.input.gamepad.snapshot.btn_confirm_pressed
                     || self.input.gamepad.snapshot.btn_a_pressed;
 
@@ -808,7 +844,12 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.show_hall_of_fame = !self.show_hall_of_fame;
                 }
-                if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed {
+                if is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
                 }
@@ -833,6 +874,7 @@ impl RaceSession {
                     || is_key_pressed(KeyCode::K)
                     || is_key_pressed(KeyCode::Space)
                     || is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
                     || self.input.gamepad.snapshot.btn_confirm_pressed
                     || self.input.gamepad.snapshot.btn_a_pressed
                     || self.input.gamepad.snapshot.btn_cancel_pressed
@@ -865,6 +907,7 @@ impl RaceSession {
                 if is_key_pressed(KeyCode::Escape)
                     || is_key_pressed(KeyCode::Space)
                     || is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
                     || is_key_pressed(KeyCode::C)
                     || self.input.gamepad.snapshot.btn_confirm_pressed
                     || self.input.gamepad.snapshot.btn_a_pressed
@@ -927,6 +970,7 @@ impl RaceSession {
 
         // Set Active profile (Enter / Space / Gamepad A / Confirm)
         if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
             || is_key_pressed(KeyCode::Space)
             || self.input.gamepad.snapshot.btn_confirm_pressed
             || self.input.gamepad.snapshot.btn_a_pressed
@@ -1043,7 +1087,7 @@ impl RaceSession {
 
         // Text typing for fields 0 (Name) and 1 (Alias)
         if field_idx == 0 {
-            while let Some(c) = macroquad::input::get_char_pressed() {
+            while let Some(c) = get_char_pressed() {
                 if (c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_') && input_name.len() < 16 {
                     input_name.push(c);
                     self.audio.play_sfx(SfxType::UiMove);
@@ -1054,7 +1098,7 @@ impl RaceSession {
                 self.audio.play_sfx(SfxType::UiMove);
             }
         } else if field_idx == 1 {
-            while let Some(c) = macroquad::input::get_char_pressed() {
+            while let Some(c) = get_char_pressed() {
                 if (c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_') && input_alias.len() < 16 {
                     input_alias.push(c);
                     self.audio.play_sfx(SfxType::UiMove);
@@ -1102,6 +1146,7 @@ impl RaceSession {
 
         // Confirm & Save Profile
         if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
             || self.input.gamepad.snapshot.btn_confirm_pressed
             || self.input.gamepad.snapshot.btn_a_pressed
         {
@@ -1247,7 +1292,12 @@ impl RaceSession {
         }
 
         // Start race (Space, Enter, or Gamepad Confirm [A / South / Start])
-        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::Enter) || self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed {
+        if is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
             self.audio.play_sfx(SfxType::UiSelect);
             self.track_choice = TrackChoice::ALL[self.menu_track_idx];
             self.car_choice = CarChoice::ALL[self.menu_car_idx];

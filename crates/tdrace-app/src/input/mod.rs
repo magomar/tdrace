@@ -3,7 +3,17 @@ pub mod gamepad;
 pub mod touch;
 
 use macroquad::color::Color;
-use macroquad::input::{is_key_down, is_key_pressed, KeyCode};
+use macroquad::input::KeyCode;
+
+#[inline]
+fn is_key_pressed(k: KeyCode) -> bool {
+    std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)).unwrap_or(false)
+}
+
+#[inline]
+fn is_key_down(k: KeyCode) -> bool {
+    std::panic::catch_unwind(|| macroquad::input::is_key_down(k)).unwrap_or(false)
+}
 use macroquad::shapes::{draw_circle, draw_line, draw_rectangle, draw_rectangle_lines};
 use macroquad::text::draw_text;
 use tdrace_core::collision::sat::OrientedBox;
@@ -68,7 +78,7 @@ impl InputController {
         let mut raw_brake = 0.0f32;
         let mut raw_reverse = false;
 
-        let is_down = |k| std::panic::catch_unwind(|| is_key_down(k)).unwrap_or(false);
+        let is_down = is_key_down;
 
         // Steering: O / Left = Steer Left (-1.0), P / Right = Steer Right (+1.0)
         if is_down(KeyCode::O) || is_down(KeyCode::Left) {
