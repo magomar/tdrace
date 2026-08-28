@@ -947,7 +947,15 @@ impl RaceSession {
         self.touch.update_from_macroquad(sw, sh, frame_dt);
 
         // Toggle audio mute (M key)
-        if is_key_pressed(KeyCode::M) {
+        let is_typing = matches!(
+            self.state,
+            GameState::ProfileCreate { .. }
+                | GameState::TrackManager {
+                    modal: TrackManagerModal::EditMetadata { .. },
+                    ..
+                }
+        );
+        if !is_typing && is_key_pressed(KeyCode::M) {
             self.audio.toggle_mute();
         }
 
@@ -1798,8 +1806,8 @@ impl RaceSession {
             return;
         }
 
-        // Open Track Manager (M key)
-        if is_key_pressed(KeyCode::M) {
+        // Open Track Manager (T key)
+        if is_key_pressed(KeyCode::T) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::TrackManager {
                 active_tab: TrackManagerTab::Main,
@@ -1883,8 +1891,8 @@ impl RaceSession {
             }
         }
 
-        // Toggle Mode (Time Attack vs Race vs AI - T key or Gamepad X)
-        if is_key_pressed(KeyCode::T) || self.input.gamepad.snapshot.btn_x_pressed {
+        // Toggle Mode (Time Attack vs Race vs AI - X key or Gamepad X)
+        if is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             self.is_time_attack = !self.is_time_attack;
         }

@@ -238,7 +238,7 @@ pub fn render_track_select_menu(
     let mut curr_y = menu_content_y;
 
     fonts.draw_ui_bold(
-        "SELECT CIRCUIT [Up/Down] | [M] Track Manager | [E] Studio",
+        "SELECT CIRCUIT [Up/Down] | [T] Track Manager | [E] Studio",
         col1_x,
         curr_y + scaler.s(13.0),
         scaler.font_s(15.0),
@@ -321,7 +321,7 @@ pub fn render_track_select_menu(
             scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, tm_bg, tm_border, if is_sel { 2.4 } else { 1.5 });
 
             fonts.draw_ui_bold(
-                "CIRCUIT HUB & WORKSHOP [M]",
+                "CIRCUIT HUB & WORKSHOP [T]",
                 col1_x + scaler.s(14.0),
                 curr_y + scaler.s(16.0),
                 scaler.font_s(10.5),
@@ -432,9 +432,9 @@ pub fn render_track_select_menu(
     scaler.draw_glass_card(col2_x, c2_y, col_w, mode_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
 
     let mode_str = if is_time_attack {
-        "GAME MODE: [T] Time Attack (Solo Hotlap)".to_string()
+        "GAME MODE: [X] Time Attack (Solo Hotlap)".to_string()
     } else {
-        format!("GAME MODE: [T] Race vs AI ({} Bots, [B] to toggle)", num_bots)
+        format!("GAME MODE: [X] Race vs AI ({} Bots, [B] to toggle)", num_bots)
     };
     fonts.draw_ui_bold(
         &mode_str,
@@ -444,7 +444,7 @@ pub fn render_track_select_menu(
         Palette::NEON_GOLD,
     );
     fonts.draw_ui_regular(
-        "Mode: [T] | Bots: [B] | [D] Driver Dossier & Roster",
+        "Mode: [X] | Bots: [B] | [D] Driver Dossier & Roster",
         col2_x + scaler.s(14.0),
         c2_y + scaler.s(38.0),
         scaler.font_s(11.5),
