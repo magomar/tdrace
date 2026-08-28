@@ -224,3 +224,37 @@ fn test_race_session_with_track_manager_flow() {
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_track_manager_confirm_delete_modal() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_confirm_del_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::default();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    session
+        .track_manager
+        .create_new_draft_track("Track To Delete", "Test delete modal")
+        .expect("Create draft");
+
+    assert_eq!(session.track_manager.draft_track_choices().len(), 1);
+    let track_id = session.track_manager.draft_track_choices()[0].track_id().to_string();
+
+    session.state = GameState::TrackManager {
+        active_tab: TrackManagerTab::Drafts,
+        selected_idx: 0,
+        modal: TrackManagerModal::ConfirmDelete {
+            track_id: track_id.clone(),
+            track_title: "Track To Delete".to_string(),
+        },
+    };
+
+    // Simulate modal deletion
+    let deleted = session.track_manager.delete_custom_track(&track_id).unwrap();
+    assert!(deleted);
+    assert_eq!(session.track_manager.draft_track_choices().len(), 0);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+

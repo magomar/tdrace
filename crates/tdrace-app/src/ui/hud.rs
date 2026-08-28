@@ -419,8 +419,8 @@ fn render_speedometer(
         draw_rectangle(pad_x, pad_y, pad_w, pad_h, Color::new(0.08, 0.16, 0.12, 0.90));
         draw_rectangle_lines(pad_x, pad_y, pad_w, pad_h, 1.2, Palette::NEON_GREEN);
         fonts.draw_ui_bold(
-            "🎮 PAD",
-            pad_x + scaler.s(6.0),
+            "PAD",
+            pad_x + scaler.s(14.0),
             pad_y + scaler.s(13.0),
             scaler.font_s(11.0),
             Palette::NEON_GREEN,

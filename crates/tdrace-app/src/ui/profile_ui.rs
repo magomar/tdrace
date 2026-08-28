@@ -92,7 +92,7 @@ pub fn render_profile_manager_screen(
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
 
     // Header Title
-    let title = "👤 DRIVER PROFILES & CAREER HISTORY";
+    let title = "DRIVER PROFILES & CAREER HISTORY";
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
@@ -115,8 +115,8 @@ pub fn render_profile_manager_screen(
     let sel_profile = profiles.get(selected_idx).or_else(|| profiles.first());
 
     // Main Card Dimensions
-    let box_w = (sw * 0.92).clamp(scaler.s(640.0), scaler.s(1040.0));
-    let box_h = (sh * 0.78).clamp(scaler.s(420.0), scaler.s(620.0));
+    let box_w = (sw * 0.90).clamp(scaler.s(680.0), scaler.s(1040.0));
+    let box_h = (sh * 0.76).clamp(scaler.s(440.0), scaler.s(620.0));
     let x = (sw - box_w) * 0.5;
     let y = scaler.s(74.0);
 
@@ -160,7 +160,7 @@ pub fn render_profile_manager_screen(
         draw_rectangle_lines(col1_x + scaler.s(8.0), list_y, col1_w - scaler.s(16.0), item_h, if is_sel { 2.0 } else { 1.0 }, item_border);
 
         // Active indicator / index badge
-        let badge_text = if is_active { "★ ACTIVE" } else { "IDLE" };
+        let badge_text = if is_active { "ACTIVE" } else { "IDLE" };
         let badge_col = if is_active { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED };
         fonts.draw_ui_bold(badge_text, col1_x + scaler.s(14.0), list_y + scaler.s(16.0), scaler.font_s(10.0), badge_col);
 
@@ -281,9 +281,9 @@ pub fn render_profile_manager_screen(
                 draw_rectangle(table_x, r_y, table_w, row_h, row_bg);
 
                 let pos_str = match entry.position {
-                    1 => "🥇 P1".to_string(),
-                    2 => "🥈 P2".to_string(),
-                    3 => "🥉 P3".to_string(),
+                    1 => "P1".to_string(),
+                    2 => "P2".to_string(),
+                    3 => "P3".to_string(),
                     _ => format!("P{}", entry.position),
                 };
                 let pos_col = match entry.position {
@@ -313,7 +313,7 @@ pub fn render_profile_manager_screen(
     }
 
     // Footer Navigation & Actions
-    let action_prompt = "🎮 [ENTER / A] Set Active  |  [E] Edit Profile  |  [N / X] New Profile  |  [DEL / Y] Delete Profile  |  [ESC / B] Main Menu";
+    let action_prompt = "[ENTER / A] Set Active  |  [E] Edit Profile  |  [N / X] New Profile  |  [DEL / Y] Delete Profile  |  [ESC / B] Main Menu";
     fonts.draw_ui_bold_centered(
         action_prompt,
         sw * 0.5,
@@ -369,9 +369,9 @@ pub fn render_profile_create_screen(
 
     // Modal Header
     let title = if is_editing {
-        "✏️ EDIT DRIVER PROFILE"
+        "EDIT DRIVER PROFILE"
     } else {
-        "✨ CREATE NEW DRIVER PROFILE"
+        "CREATE NEW DRIVER PROFILE"
     };
     fonts.draw_display_centered_with_shadow(
         title,
@@ -461,7 +461,7 @@ pub fn render_profile_create_screen(
     draw_country_banner(c_code, field_x + scaler.s(16.0), field_y + scaler.s(10.0), cb_w, cb_h, Some(fonts), &scaler);
 
     fonts.draw_ui_bold(&country_title, field_x + cb_w + scaler.s(28.0), field_y + scaler.s(28.0), scaler.font_s(14.0), Palette::WHITE);
-    fonts.draw_ui_regular("← [Left / Right] →", field_x + field_w - scaler.s(110.0), field_y + scaler.s(28.0), scaler.font_s(12.0), Palette::NEON_GOLD);
+    fonts.draw_ui_regular("[Left / Right]", field_x + field_w - scaler.s(90.0), field_y + scaler.s(28.0), scaler.font_s(12.0), Palette::NEON_GOLD);
 
     field_y += field_h + scaler.s(22.0);
 
@@ -490,13 +490,13 @@ pub fn render_profile_create_screen(
 
     let livery_name = format!("Livery Theme #{}", (livery_idx % Palette::CAR_COLORS.len()) + 1);
     fonts.draw_ui_bold(&livery_name, sw_x + (sw_w + scaler.s(6.0)) * 3.0 + scaler.s(10.0), field_y + scaler.s(28.0), scaler.font_s(14.0), Palette::WHITE);
-    fonts.draw_ui_regular("← [Left / Right] →", field_x + field_w - scaler.s(110.0), field_y + scaler.s(28.0), scaler.font_s(12.0), Palette::NEON_MAGENTA);
+    fonts.draw_ui_regular("[Left / Right]", field_x + field_w - scaler.s(90.0), field_y + scaler.s(28.0), scaler.font_s(12.0), Palette::NEON_MAGENTA);
 
     // Footer Prompts
     let help_line = if is_editing {
-        "🎮 [TAB / UP / DOWN] Next Field  |  [ENTER / A] Save Changes  |  [ESC / B] Cancel"
+        "[TAB / UP / DOWN] Next Field  |  [ENTER / A] Save Changes  |  [ESC / B] Cancel"
     } else {
-        "🎮 [TAB / UP / DOWN] Next Field  |  [ENTER / A] Save & Activate  |  [ESC / B] Cancel"
+        "[TAB / UP / DOWN] Next Field  |  [ENTER / A] Save & Activate  |  [ESC / B] Cancel"
     };
     fonts.draw_ui_bold_centered(
         help_line,

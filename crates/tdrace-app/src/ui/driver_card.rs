@@ -20,7 +20,7 @@ pub fn render_driver_cards_screen(fonts: &Fonts, selected_idx: usize) {
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
 
     // Header Title
-    let title = "🏎️ MOTORSPORT DRIVER DOSSIER & ROSTER";
+    let title = "MOTORSPORT DRIVER DOSSIER & ROSTER";
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
@@ -165,7 +165,7 @@ pub fn render_driver_cards_screen(fonts: &Fonts, selected_idx: usize) {
     fonts.draw_ui_regular(&p4, col2_x + param_box_w * 0.5 + scaler.s(10.0), right_y + scaler.s(40.0), scaler.font_s(12.0), Color::new(0.85, 0.90, 0.96, 1.0));
 
     // Footer Navigation Controls
-    let nav_prompt = "← [LEFT / A] Previous Driver | [RIGHT / D] Next Driver → | [ESC / SPACE] Close Dossier";
+    let nav_prompt = "[LEFT / A] Previous Driver | [RIGHT / D] Next Driver | [ESC / SPACE] Close Dossier";
     fonts.draw_ui_bold_centered(
         nav_prompt,
         sw * 0.5,

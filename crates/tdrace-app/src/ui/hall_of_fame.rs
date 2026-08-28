@@ -48,7 +48,7 @@ pub fn render_name_input_modal(
     scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 2.5);
 
     // Modal Header
-    let trophy_title = "🏆 NEW RECORD! TOP 10 QUALIFIED! 🏆";
+    let trophy_title = "NEW RECORD! TOP 10 QUALIFIED!";
     fonts.draw_display_centered_with_shadow(
         trophy_title,
         sw * 0.5,
@@ -205,7 +205,7 @@ pub fn render_hall_of_fame_screen(
     scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, card_border, 2.5);
 
     // Header Title
-    let title = "🏛️ HALL OF FAME — TOP 10 HISTORICAL BEST";
+    let title = "HALL OF FAME — TOP 10 HISTORICAL BEST";
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
@@ -255,32 +255,32 @@ pub fn render_hall_of_fame_screen(
 
             if let Some(pos) = c.race_position {
                 match pos {
-                    1 => badges.push("🥇 1ST PLACE VICTORY!".to_string()),
-                    2 => badges.push("🥈 2ND PLACE PODIUM".to_string()),
-                    3 => badges.push("🥉 3RD PLACE PODIUM".to_string()),
+                    1 => badges.push("1ST PLACE VICTORY!".to_string()),
+                    2 => badges.push("2ND PLACE PODIUM".to_string()),
+                    3 => badges.push("3RD PLACE PODIUM".to_string()),
                     _ => {}
                 }
             }
 
             if let Some(rank) = c.hof_rank {
                 if rank == 1 {
-                    badges.push("🏆 ALL-TIME TRACK RECORD (#1)!".to_string());
+                    badges.push("ALL-TIME TRACK RECORD (#1)!".to_string());
                 } else if rank <= 3 {
-                    badges.push(format!("🏆 HALL OF FAME PODIUM (RANK #{})", rank));
+                    badges.push(format!("HALL OF FAME PODIUM (RANK #{})", rank));
                 } else {
-                    badges.push(format!("🏆 TOP 10 QUALIFIED (RANK #{})", rank));
+                    badges.push(format!("TOP 10 QUALIFIED (RANK #{})", rank));
                 }
             }
 
             if c.is_personal_best {
                 if let Some(best_lap) = c.personal_best_lap {
-                    badges.push(format!("⚡ PERSONAL BEST ({})", format_lap_time(best_lap)));
+                    badges.push(format!("PERSONAL BEST ({})", format_lap_time(best_lap)));
                 } else {
-                    badges.push("⚡ NEW PERSONAL BEST!".to_string());
+                    badges.push("NEW PERSONAL BEST!".to_string());
                 }
             }
 
-            let full_text = format!("🎉 CONGRATULATIONS!  {}", badges.join("  ★  "));
+            let full_text = format!("CONGRATULATIONS!  {}", badges.join("  •  "));
             fonts.draw_ui_bold_centered(
                 &full_text,
                 sw * 0.5,
@@ -395,9 +395,9 @@ pub fn render_hall_of_fame_screen(
         }
 
         let pos_str = match rank {
-            1 => "🥇 P1".to_string(),
-            2 => "🥈 P2".to_string(),
-            3 => "🥉 P3".to_string(),
+            1 => "P1".to_string(),
+            2 => "P2".to_string(),
+            3 => "P3".to_string(),
             _ => format!("P{}", rank),
         };
 
@@ -418,7 +418,7 @@ pub fn render_hall_of_fame_screen(
 
         if let Some(e) = entry {
             let driver_display = if is_highlighted {
-                format!("★ {} (You)", e.player_name)
+                format!("{} (You)", e.player_name)
             } else {
                 e.player_name.clone()
             };

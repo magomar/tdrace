@@ -638,14 +638,24 @@ fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
     assert_eq!(verify_track.name, "Updated Circuit");
     assert_eq!(verify_track.description, "Updated circuit description with high speed turns.");
 
-    // 5. User chooses "Save as Copy" (overwrite: false)
-    let copy_path = manager
-        .save_custom_track_with_options(&editor_state.track, slug.as_deref(), false)
-        .expect("Save as copy must succeed");
-    assert_ne!(copy_path, initial_path);
-    assert!(copy_path.contains("original_circuit_1.json"));
-    assert!(std::path::Path::new(&initial_path).exists());
-    assert!(std::path::Path::new(&copy_path).exists());
+    // 6. User chooses "Save as Copy" with custom specified filename
+    let custom_filename_path = manager
+        .save_custom_track_with_options(&editor_state.track, Some("my_custom_filename"), false)
+        .expect("Save with custom filename must succeed");
+    assert!(custom_filename_path.ends_with("my_custom_filename.json"));
+    assert!(std::path::Path::new(&custom_filename_path).exists());
+    let custom_saved_track = Track::load_from_file(&custom_filename_path).expect("Load custom filename file");
+    assert_eq!(custom_saved_track.name, "Updated Circuit");
+
+    // 7. Verify preset overwrite and disk loading
+    let preset_path = manager
+        .save_custom_track_with_options(&editor_state.track, Some("classic_grand_prix"), true)
+        .expect("Save preset to disk must succeed");
+    assert!(preset_path.ends_with("classic_grand_prix.json"));
+    let loaded_preset_choice = manager
+        .load_track(&TrackChoice::ClassicGrandPrix)
+        .expect("Load preset must load from disk file when present");
+    assert_eq!(loaded_preset_choice.name, "Updated Circuit");
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }

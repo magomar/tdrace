@@ -585,14 +585,10 @@ impl RaceSession {
             TrackChoice::Custom { id, .. } if id == "spa" => F1GameModule::track_spa(),
             TrackChoice::Custom { id, .. } if id == "silverstone" => F1GameModule::track_silverstone(),
             TrackChoice::Custom { id, .. } if id == "sahara" => tdrace_core::track::presets::sahara_dunes(),
-            TrackChoice::OasisRally => tdrace_core::track::presets::oasis_rally(),
-            TrackChoice::OutlawPass => tdrace_core::track::presets::outlaw_pass(),
-            TrackChoice::KartArena => tdrace_core::track::presets::kart_arena(),
-            TrackChoice::DriftPark => tdrace_core::track::presets::drift_park(),
-            TrackChoice::ClassicGrandPrix => tdrace_core::track::presets::classic_grand_prix(),
-            TrackChoice::OvalSpeedway => tdrace_core::track::presets::oval_speedway(),
-            TrackChoice::RampRaceway => tdrace_core::track::presets::ramp_raceway(),
-            _ => self.track_manager.load_track(choice).unwrap_or_else(|_| classic_grand_prix()),
+            TrackChoice::Custom { path, .. } => {
+                Track::load_from_file(path).unwrap_or_else(|_| classic_grand_prix())
+            }
+            preset => self.track_manager.load_track(preset).unwrap_or_else(|_| classic_grand_prix()),
         }
     }
 
@@ -1929,7 +1925,14 @@ impl RaceSession {
                 let chosen = available_tracks[self.menu_track_idx].clone();
                 let file_path = match &chosen {
                     TrackChoice::Custom { path, .. } => Some(path.clone()),
-                    _ => None,
+                    preset => {
+                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                        if candidate.exists() {
+                            Some(candidate.to_string_lossy().to_string())
+                        } else {
+                            None
+                        }
+                    }
                 };
                 let track = self.load_track_for_session(&chosen);
                 self.enter_track_editor_with_path(track, file_path);
@@ -2176,7 +2179,14 @@ impl RaceSession {
                 self.audio.play_sfx(SfxType::UiSelect);
                 let file_path = match track_choice {
                     TrackChoice::Custom { path, .. } => Some(path.clone()),
-                    _ => None,
+                    preset => {
+                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                        if candidate.exists() {
+                            Some(candidate.to_string_lossy().to_string())
+                        } else {
+                            None
+                        }
+                    }
                 };
                 let track = self
                     .track_manager
@@ -2247,7 +2257,7 @@ impl RaceSession {
         }
 
         // 8. Delete Custom Track (Delete / Backspace / X key)
-        if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::X) {
+        if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) || is_key_pressed(KeyCode::X) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 if track_choice.is_custom() {
                     self.audio.play_sfx(SfxType::UiSelect);
@@ -3114,27 +3124,44 @@ impl RaceSession {
                 if let Ok(track) = self.track_manager.load_track(&choice) {
                     let file_path = match &choice {
                         TrackChoice::Custom { path, .. } => Some(path.clone()),
-                        _ => None,
+                        preset => {
+                            let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                            if candidate.exists() {
+                                Some(candidate.to_string_lossy().to_string())
+                            } else {
+                                None
+                            }
+                        }
                     };
                     self.enter_track_editor_with_path(track, file_path);
                 }
             }
-            EditorAction::SaveTrack { name, description, overwrite } => {
+            EditorAction::SaveTrack { name, filename, description, overwrite } => {
                 if let Some(state) = &mut self.editor_state {
                     state.track.name = name;
                     state.track.description = description;
-                    let slug = match &state.current_file_path {
-                        Some(p) if overwrite => {
+                    state.rebuild_geometry();
+
+                    let target_slug = if overwrite {
+                        if let Some(ref p) = state.current_file_path {
                             std::path::Path::new(p)
                                 .file_stem()
                                 .and_then(|s| s.to_str())
                                 .map(|s| s.to_string())
+                        } else if !filename.trim().is_empty() {
+                            Some(TrackManager::sanitize_slug(&filename))
+                        } else {
+                            Some(TrackManager::sanitize_slug(&state.track.name))
                         }
-                        _ => None,
+                    } else if !filename.trim().is_empty() {
+                        Some(TrackManager::sanitize_slug(&filename))
+                    } else {
+                        Some(TrackManager::sanitize_slug(&state.track.name))
                     };
+
                     let result = self.track_manager.save_custom_track_with_options(
                         &state.track,
-                        slug.as_deref(),
+                        target_slug.as_deref(),
                         overwrite,
                     );
                     match result {
@@ -3148,6 +3175,9 @@ impl RaceSession {
                                 self.editor_save_toast_msg = format!("Track saved: {}", path);
                             }
                             self.audio.play_sfx(SfxType::UiSelect);
+
+                            // Rescan custom tracks
+                            let _ = self.track_manager.scan_custom_tracks();
                         }
                         Err(err) => {
                             self.editor_save_toast_timer = 3.5;

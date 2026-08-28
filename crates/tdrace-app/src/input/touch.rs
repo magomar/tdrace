@@ -537,8 +537,8 @@ impl TouchController {
             }
             TouchLayout::SplitButtons => {
                 let (left_rect, right_rect) = self.compute_steer_rects(sw, sh);
-                self.render_steer_button(fonts, left_rect, "◀", self.btn_steer_left, alpha);
-                self.render_steer_button(fonts, right_rect, "▶", self.btn_steer_right, alpha);
+                self.render_steer_button(fonts, left_rect, "<", self.btn_steer_left, alpha);
+                self.render_steer_button(fonts, right_rect, ">", self.btn_steer_right, alpha);
             }
         }
 
@@ -561,8 +561,8 @@ impl TouchController {
         draw_rectangle_lines(r.x, r.y, r.w, r.h, 1.5, border_col);
 
         let label = match self.layout {
-            TouchLayout::VirtualJoystick => "STICK 🕹️",
-            TouchLayout::SplitButtons => "BUTTONS ◀▶",
+            TouchLayout::VirtualJoystick => "JOYSTICK",
+            TouchLayout::SplitButtons => "BUTTONS < >",
         };
         fonts.draw_ui_bold_centered(
             label,

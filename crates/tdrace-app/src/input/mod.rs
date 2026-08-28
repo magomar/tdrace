@@ -353,7 +353,7 @@ impl InputController {
             format!("Sideslip (Drift): {:.1} deg", car.state.sideslip_angle.to_degrees()),
             format!("Is Drifting: {}", if car.state.is_drifting { "YES" } else { "NO" }),
             format!("Drift Score: {:.0}", car.state.drift_score),
-            format!("Local Accel: X={:.1} Y={:.1} m/s²", car.state.acceleration_local.x, car.state.acceleration_local.y),
+            format!("Local Accel: X={:.1} Y={:.1} m/s^2", car.state.acceleration_local.x, car.state.acceleration_local.y),
             format!("FL Skid: {:.0}% | FR Skid: {:.0}%", car.state.wheels[0].skid_intensity * 100.0, car.state.wheels[1].skid_intensity * 100.0),
             format!("RL Skid: {:.0}% | RR Skid: {:.0}%", car.state.wheels[2].skid_intensity * 100.0, car.state.wheels[3].skid_intensity * 100.0),
         ];

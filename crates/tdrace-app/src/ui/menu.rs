@@ -374,7 +374,7 @@ pub fn render_track_select_menu(
             );
 
             fonts.draw_ui_bold(
-                "📁 Track Manager",
+                "Track Manager",
                 col1_x + scaler.s(14.0),
                 curr_y + scaler.s(34.0),
                 scaler.font_s(16.0),
@@ -708,9 +708,9 @@ pub fn render_results_screen(
 
         // Position medal icon or text
         let pos_str = match res.position {
-            1 => "🥇 P1".to_string(),
-            2 => "🥈 P2".to_string(),
-            3 => "🥉 P3".to_string(),
+            1 => "P1".to_string(),
+            2 => "P2".to_string(),
+            3 => "P3".to_string(),
             _ => format!("P{}", res.position),
         };
         fonts.draw_ui_bold(&pos_str, x + scaler.s(28.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
@@ -787,12 +787,12 @@ pub fn render_controls_screen(
     if gamepad_connected {
         draw_rectangle(banner_x, banner_y, banner_w, banner_h, Color::new(0.08, 0.22, 0.15, 0.90));
         draw_rectangle_lines(banner_x, banner_y, banner_w, banner_h, 1.5, Palette::NEON_GREEN);
-        let text = format!("🎮 ACTIVE GAMEPAD DETECTED: {}", gamepad_name);
+        let text = format!("ACTIVE GAMEPAD DETECTED: {}", gamepad_name);
         fonts.draw_ui_bold(&text, banner_x + scaler.s(16.0), banner_y + scaler.s(22.0), scaler.font_s(14.0), Palette::NEON_GREEN);
     } else {
         draw_rectangle(banner_x, banner_y, banner_w, banner_h, Color::new(0.10, 0.12, 0.18, 0.90));
         draw_rectangle_lines(banner_x, banner_y, banner_w, banner_h, 1.5, Palette::UI_CARD_BORDER);
-        let text = "🎮 NO GAMEPAD DETECTED — KEYBOARD & TOUCH ACTIVE (PLUG & PLAY READY)";
+        let text = "NO GAMEPAD DETECTED — KEYBOARD & TOUCH ACTIVE (PLUG & PLAY READY)";
         fonts.draw_ui_bold(text, banner_x + scaler.s(16.0), banner_y + scaler.s(22.0), scaler.font_s(14.0), Palette::UI_TEXT_MUTED);
     }
 
@@ -992,7 +992,7 @@ pub fn render_championship_standings_screen(
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
 
     // Header
-    let title = format!("🏆 {}", champ.name.to_uppercase());
+    let title = champ.name.to_uppercase();
     fonts.draw_display_centered_with_shadow(
         &title,
         sw * 0.5,
@@ -1087,7 +1087,7 @@ pub fn render_exit_confirm_modal(fonts: &Fonts) {
     scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::RED, 2.2);
 
     fonts.draw_ui_bold(
-        "⚠️ QUIT TDRACE",
+        "QUIT TDRACE",
         mx + scaler.s(24.0),
         my + scaler.s(36.0),
         scaler.font_s(20.0),

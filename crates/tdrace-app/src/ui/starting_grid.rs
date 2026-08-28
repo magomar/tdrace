@@ -33,7 +33,7 @@ pub fn render_starting_grid_screen(
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.06, 0.10, 0.88));
 
     // Header Title
-    let title = "🏁 STARTING GRID & RACE PARTICIPANTS";
+    let title = "STARTING GRID & RACE PARTICIPANTS";
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
@@ -72,7 +72,7 @@ pub fn render_starting_grid_screen(
     scaler.draw_glass_card(x, ctrl_y, half_w, ctrl_h, Palette::UI_CARD_BG, car_card_border, 1.4);
     if free_car_selection {
         fonts.draw_ui_bold(
-            "🔓 CAR SPEC: FREE SELECTION [F]",
+            "CAR SPEC: FREE SELECTION [F]",
             x + scaler.s(12.0),
             ctrl_y + scaler.s(15.0),
             scaler.font_s(11.0),
@@ -87,7 +87,7 @@ pub fn render_starting_grid_screen(
         );
     } else {
         fonts.draw_ui_bold(
-            "🔒 CAR SPEC: ENFORCED [F to unlock]",
+            "CAR SPEC: ENFORCED [F to unlock]",
             x + scaler.s(12.0),
             ctrl_y + scaler.s(15.0),
             scaler.font_s(11.0),
@@ -106,7 +106,7 @@ pub fn render_starting_grid_screen(
     let drv_x = x + half_w + scaler.s(10.0);
     scaler.draw_glass_card(drv_x, ctrl_y, half_w, ctrl_h, Palette::UI_CARD_BG, Palette::NEON_GREEN, 1.4);
     fonts.draw_ui_bold(
-        "👥 DRIVER GRID: [B / N to cycle] [Up/Down]",
+        "DRIVER GRID: [B / N to cycle] [Up/Down]",
         drv_x + scaler.s(12.0),
         ctrl_y + scaler.s(15.0),
         scaler.font_s(11.0),
@@ -193,9 +193,9 @@ pub fn render_starting_grid_screen(
 
     // Footer Prompts
     let prompt = if gamepad_connected {
-        "🎮 [A/START] Start Race  |  [X/LB] Free Car Spec [Left/Right]  |  [RB/D-Pad] Drivers  |  [Y/D] Dossier  |  [B/ESC] Menu"
+        "[A/START] Start Race  |  [X/LB] Free Car Spec [Left/Right]  |  [RB/D-Pad] Drivers  |  [Y/D] Dossier  |  [B/ESC] Menu"
     } else {
-        "▶ [SPACE/ENTER] Start Race  |  [F] Toggle Free Car Spec [Left/Right]  |  [B/N/Up/Down] Drivers  |  [D] Dossiers  |  [ESC] Menu"
+        "[SPACE/ENTER] Start Race  |  [F] Toggle Free Car Spec [Left/Right]  |  [B/N/Up/Down] Drivers  |  [D] Dossiers  |  [ESC] Menu"
     };
 
     fonts.draw_ui_bold_centered(
