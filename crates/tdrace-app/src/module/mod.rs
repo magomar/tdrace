@@ -96,9 +96,12 @@ impl Default for ModuleTheme {
     }
 }
 
+use crate::audio::EngineSoundType;
+
 /// Modular audio synthesis profile for vehicle engines.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EngineAudioProfile {
+    pub sound_type: EngineSoundType,
     pub idle_rpm: f32,
     pub max_rpm: f32,
     pub base_pitch: f32,
@@ -111,6 +114,7 @@ pub struct EngineAudioProfile {
 impl Default for EngineAudioProfile {
     fn default() -> Self {
         Self {
+            sound_type: EngineSoundType::Generic,
             idle_rpm: 1100.0,
             max_rpm: 7500.0,
             base_pitch: 65.0,
@@ -125,6 +129,7 @@ impl Default for EngineAudioProfile {
 impl EngineAudioProfile {
     pub fn f1_v6_turbo_hybrid() -> Self {
         Self {
+            sound_type: EngineSoundType::F1V6Turbo,
             idle_rpm: 4200.0,
             max_rpm: 15000.0,
             base_pitch: 140.0,
@@ -137,6 +142,7 @@ impl EngineAudioProfile {
 
     pub fn kart_2stroke() -> Self {
         Self {
+            sound_type: EngineSoundType::Kart125cc,
             idle_rpm: 2500.0,
             max_rpm: 14000.0,
             base_pitch: 160.0,
@@ -149,6 +155,7 @@ impl EngineAudioProfile {
 
     pub fn rally_turbo_antilag() -> Self {
         Self {
+            sound_type: EngineSoundType::RallyTurbo,
             idle_rpm: 1200.0,
             max_rpm: 8500.0,
             base_pitch: 75.0,
@@ -161,6 +168,7 @@ impl EngineAudioProfile {
 
     pub fn gt_v8() -> Self {
         Self {
+            sound_type: EngineSoundType::SportGT,
             idle_rpm: 950.0,
             max_rpm: 8200.0,
             base_pitch: 55.0,

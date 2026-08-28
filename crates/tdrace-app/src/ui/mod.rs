@@ -7,6 +7,7 @@ pub mod profile_ui;
 pub mod scaler;
 pub mod starting_grid;
 pub mod track_manager_ui;
+pub mod track_preview;
 
 pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
@@ -22,6 +23,7 @@ pub use starting_grid::render_starting_grid_screen;
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,
 };
+pub use track_preview::{render_track_detailed_preview, render_track_thumbnail};
 
 
 

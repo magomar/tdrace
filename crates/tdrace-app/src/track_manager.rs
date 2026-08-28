@@ -22,6 +22,7 @@ pub struct CustomTrackInfo {
     pub jump_ramp_count: usize,
     pub obstacle_count: usize,
     pub default_surface: SurfaceType,
+    pub surface_summary: String,
     pub default_laps: u32,
 }
 
@@ -72,19 +73,30 @@ impl TrackManager {
                                 .unwrap_or("custom_track")
                                 .to_string();
 
+                            let surface_summary = track.surface_summary_string();
+                            let length_m = track.spline.total_length();
+                            let waypoint_count = track.spline.waypoints.len();
+                            let checkpoint_count = track.checkpoints.len();
+                            let jump_ramp_count = track.geometry.jump_ramps.len();
+                            let obstacle_count = track.geometry.obstacles.len();
+                            let default_surface = track.default_surface;
+                            let default_laps = track.default_laps;
+                            let category = track.category;
+
                             self.custom_tracks.push(CustomTrackInfo {
                                 id: stem,
                                 title: track.name,
                                 description: track.description,
-                                category: track.category,
+                                category,
                                 file_path: path.to_string_lossy().to_string(),
-                                length_m: track.spline.total_length(),
-                                waypoint_count: track.spline.waypoints.len(),
-                                checkpoint_count: track.checkpoints.len(),
-                                jump_ramp_count: track.geometry.jump_ramps.len(),
-                                obstacle_count: track.geometry.obstacles.len(),
-                                default_surface: track.default_surface,
-                                default_laps: track.default_laps,
+                                length_m,
+                                waypoint_count,
+                                checkpoint_count,
+                                jump_ramp_count,
+                                obstacle_count,
+                                default_surface,
+                                surface_summary,
+                                default_laps,
                             });
                         }
                     }
@@ -149,28 +161,76 @@ impl TrackManager {
             TrackChoice::RampRaceway => Ok(ramp_raceway()),
             TrackChoice::OasisRally => Ok(oasis_rally()),
             TrackChoice::OutlawPass => Ok(outlaw_pass()),
-            TrackChoice::Custom { path, .. } => Track::load_from_file(path)
-                .map_err(|e| format!("Failed to load custom track from {}: {}", path, e)),
+            TrackChoice::Custom { id, path, .. } => {
+                if id == "monza" {
+                    return Ok(crate::module::f1::F1GameModule::track_monza());
+                }
+                if id == "spa" {
+                    return Ok(crate::module::f1::F1GameModule::track_spa());
+                }
+                if id == "silverstone" {
+                    return Ok(crate::module::f1::F1GameModule::track_silverstone());
+                }
+                if id == "sahara" {
+                    return Ok(tdrace_core::track::presets::sahara_dunes());
+                }
+                Track::load_from_file(path)
+                    .map_err(|e| format!("Failed to load custom track from {}: {}", path, e))
+            }
         }
     }
 
-    /// Saves a track to disk in the tracks directory. Newly saved tracks always start in the Draft category.
-    pub fn save_custom_track(&mut self, track: &Track, slug: Option<&str>) -> Result<String, String> {
+    /// Converts a track name into a valid file slug.
+    pub fn sanitize_slug(name: &str) -> String {
+        let sanitized = name
+            .to_lowercase()
+            .replace(|c: char| !c.is_alphanumeric() && c != '_', "_");
+        let trimmed = sanitized.trim_matches('_');
+        if trimmed.is_empty() {
+            "custom_track".to_string()
+        } else {
+            trimmed.to_string()
+        }
+    }
+
+    /// Checks if a custom track file with the given slug already exists on disk.
+    pub fn track_file_exists(&self, slug: &str) -> bool {
+        let file_name = format!("{}.json", slug);
+        self.tracks_dir.join(file_name).exists()
+    }
+
+    /// Resolves the destination path for a given slug.
+    pub fn track_path_for_slug(&self, slug: &str) -> PathBuf {
+        self.tracks_dir.join(format!("{}.json", slug))
+    }
+
+    /// Saves a track to disk with overwrite control.
+    /// If `overwrite` is false and a file with `slug` exists, appends numbers (`_1`, `_2`, etc.) to find an unused file path.
+    pub fn save_custom_track_with_options(
+        &mut self,
+        track: &Track,
+        slug: Option<&str>,
+        overwrite: bool,
+    ) -> Result<String, String> {
         let mut track_to_save = track.clone();
         track_to_save.category = TrackCategory::Draft;
 
-        let file_slug = if let Some(s) = slug {
-            s.to_string()
+        let base_slug = if let Some(s) = slug {
+            Self::sanitize_slug(s)
         } else {
-            let sanitized = track_to_save
-                .name
-                .to_lowercase()
-                .replace(|c: char| !c.is_alphanumeric() && c != '_', "_");
-            if sanitized.trim().is_empty() {
-                "custom_track".to_string()
-            } else {
-                sanitized
+            Self::sanitize_slug(&track_to_save.name)
+        };
+
+        let file_slug = if overwrite {
+            base_slug
+        } else {
+            let mut candidate = base_slug.clone();
+            let mut counter = 1;
+            while self.tracks_dir.join(format!("{}.json", candidate)).exists() {
+                candidate = format!("{}_{}", base_slug, counter);
+                counter += 1;
             }
+            candidate
         };
 
         let file_name = format!("{}.json", file_slug);
@@ -182,6 +242,11 @@ impl TrackManager {
 
         let _ = self.scan_custom_tracks();
         Ok(path.to_string_lossy().to_string())
+    }
+
+    /// Saves a track to disk in the tracks directory. Overwrites by default.
+    pub fn save_custom_track(&mut self, track: &Track, slug: Option<&str>) -> Result<String, String> {
+        self.save_custom_track_with_options(track, slug, true)
     }
 
     /// Promotes a track from Draft to Main category (Approved circuit).
@@ -326,5 +391,57 @@ mod tests {
         assert_eq!(manager.main_track_choices().len(), 7);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_track_manager_overwrite_options() {
+        let temp_dir = std::env::temp_dir().join("tdrace_test_tracks_overwrite");
+        let _ = fs::remove_dir_all(&temp_dir);
+
+        let mut manager = TrackManager::new(&temp_dir);
+
+        let mut track = classic_grand_prix();
+        track.name = "Awesome Track".to_string();
+
+        // 1. Initial save
+        let path1 = manager
+            .save_custom_track_with_options(&track, Some("awesome_track"), true)
+            .expect("First save should succeed");
+        assert!(Path::new(&path1).exists());
+        assert!(manager.track_file_exists("awesome_track"));
+
+        // 2. Save again with overwrite: false -> should generate awesome_track_1.json
+        let path2 = manager
+            .save_custom_track_with_options(&track, Some("awesome_track"), false)
+            .expect("Second save with overwrite: false should create copy");
+        assert!(path2.ends_with("awesome_track_1.json"));
+        assert!(Path::new(&path2).exists());
+
+        // 3. Save again with overwrite: false -> should generate awesome_track_2.json
+        let path3 = manager
+            .save_custom_track_with_options(&track, Some("awesome_track"), false)
+            .expect("Third save with overwrite: false should create copy");
+        assert!(path3.ends_with("awesome_track_2.json"));
+        assert!(Path::new(&path3).exists());
+
+        // 4. Save with overwrite: true -> should overwrite awesome_track.json without error
+        track.name = "Awesome Track v2".to_string();
+        let path_overwrite = manager
+            .save_custom_track_with_options(&track, Some("awesome_track"), true)
+            .expect("Overwrite save should succeed");
+        assert!(path_overwrite.ends_with("awesome_track.json"));
+
+        let loaded = Track::load_from_file(&path_overwrite).expect("Should load overwritten track");
+        assert_eq!(loaded.name, "Awesome Track v2");
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_sanitize_slug_and_file_existence() {
+        assert_eq!(TrackManager::sanitize_slug("My Super Track!"), "my_super_track");
+        assert_eq!(TrackManager::sanitize_slug("   __Track--123__  "), "track__123");
+        assert_eq!(TrackManager::sanitize_slug(""), "custom_track");
+        assert_eq!(TrackManager::sanitize_slug("!!!"), "custom_track");
     }
 }

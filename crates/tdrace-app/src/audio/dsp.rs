@@ -155,6 +155,42 @@ impl Oscillator {
             -1.0
         }
     }
+
+    /// Asymmetric internal combustion pressure pulse with physical compression lobe & expansion tail.
+    /// Produces a zero-mean periodic waveform rich in engine-like odd and even harmonics.
+    #[inline(always)]
+    pub fn combustion_pulse(phase: f32, asymmetry: f32) -> f32 {
+        let mut p = phase.fract();
+        if p < 0.0 {
+            p += 1.0;
+        }
+        let rad = p * 2.0 * PI;
+        let fund = rad.sin();
+        let harm2 = (rad * 2.0 - 0.35).sin() * (0.42 + asymmetry * 0.20);
+        let harm3 = (rad * 3.0 - 0.70).sin() * (0.22 + asymmetry * 0.10);
+        let harm4 = (rad * 4.0 - 1.05).sin() * 0.12;
+
+        let raw = fund + harm2 + harm3 + harm4;
+        raw * 0.65
+    }
+
+    /// Sharp expansion pressure wave pulse for 2-stroke or high-compression racing engines.
+    /// Uses Fourier harmonic series with staggered phase alignment for zero DC offset.
+    #[inline(always)]
+    pub fn cylinder_pulse(phase: f32, sharpness: f32) -> f32 {
+        let mut p = phase.fract();
+        if p < 0.0 {
+            p += 1.0;
+        }
+        let rad = p * 2.0 * PI;
+        let s = sharpness.clamp(1.0, 4.0);
+        let h1 = rad.sin();
+        let h2 = (rad * 2.0 - 0.40).sin() * (0.50 * s * 0.45);
+        let h3 = (rad * 3.0 - 0.80).sin() * (0.30 * s * 0.45);
+        let h4 = (rad * 4.0 - 1.20).sin() * 0.18;
+        let h5 = (rad * 5.0 - 1.60).sin() * 0.10;
+        (h1 + h2 + h3 + h4 + h5) * 0.65
+    }
 }
 
 /// Attack-Decay-Sustain-Release (ADSR) Volume / Modulation Envelope.
@@ -328,6 +364,75 @@ impl StereoDelay {
     }
 }
 
+/// Resonant 2-pole Biquad Band-Pass Filter (Constant 0 dB Peak Gain).
+#[derive(Debug, Clone)]
+pub struct BiquadBandPass {
+    b0: f32,
+    b1: f32,
+    b2: f32,
+    a1: f32,
+    a2: f32,
+    x1: f32,
+    x2: f32,
+    y1: f32,
+    y2: f32,
+}
+
+impl BiquadBandPass {
+    pub fn new(sample_rate: u32, center_hz: f32, q: f32) -> Self {
+        let mut filter = Self {
+            b0: 0.0,
+            b1: 0.0,
+            b2: 0.0,
+            a1: 0.0,
+            a2: 0.0,
+            x1: 0.0,
+            x2: 0.0,
+            y1: 0.0,
+            y2: 0.0,
+        };
+        filter.update_coefficients(sample_rate, center_hz, q);
+        filter
+    }
+
+    pub fn update_coefficients(&mut self, sample_rate: u32, center_hz: f32, q: f32) {
+        let nyquist = sample_rate as f32 * 0.5;
+        let safe_center = center_hz.clamp(20.0, nyquist * 0.95);
+        let safe_q = q.clamp(0.1, 30.0);
+
+        let omega = 2.0 * PI * (safe_center / sample_rate as f32);
+        let sin_omega = omega.sin();
+        let cos_omega = omega.cos();
+        let alpha = sin_omega / (2.0 * safe_q);
+
+        let a0 = 1.0 + alpha;
+        self.b0 = alpha / a0;
+        self.b1 = 0.0;
+        self.b2 = -alpha / a0;
+        self.a1 = (-2.0 * cos_omega) / a0;
+        self.a2 = (1.0 - alpha) / a0;
+    }
+
+    #[inline]
+    pub fn process(&mut self, x: f32) -> f32 {
+        let y = self.b0 * x + self.b1 * self.x1 + self.b2 * self.x2 - self.a1 * self.y1 - self.a2 * self.y2;
+        self.x2 = self.x1;
+        self.x1 = x;
+        self.y2 = self.y1;
+        self.y1 = y;
+        y
+    }
+}
+
+/// Specialized zero-mean wave-shaper for physical internal combustion engine acoustics.
+/// Blends odd-symmetric quadratic compression with cubic saturation.
+#[inline]
+pub fn waveshape_engine(sample: f32, drive: f32, even_harmonics: f32) -> f32 {
+    let x = (sample * drive).clamp(-3.0, 3.0);
+    let shaped = x + even_harmonics * 0.25 * x * x.abs();
+    soft_saturate(shaped, 1.0)
+}
+
 /// Soft-saturation distortion for vintage analog warmth.
 #[inline]
 pub fn soft_saturate(sample: f32, drive: f32) -> f32 {
@@ -388,5 +493,51 @@ mod tests {
             assert!(out.is_finite());
             assert!(out.abs() <= 2.0);
         }
+    }
+
+    #[test]
+    fn test_biquad_bandpass_filtering_and_stability() {
+        let mut filter = BiquadBandPass::new(44100, 1000.0, 2.0);
+        // Feed 1000 Hz sine -> should pass with high amplitude
+        let mut peak_pass = 0.0f32;
+        for i in 0..500 {
+            let t = i as f32 / 44100.0;
+            let sample = (t * 1000.0 * 2.0 * PI).sin();
+            let y = filter.process(sample);
+            assert!(y.is_finite());
+            peak_pass = peak_pass.max(y.abs());
+        }
+        assert!(peak_pass > 0.6, "1kHz should pass through 1kHz BPF, got {peak_pass}");
+
+        // Feed 100 Hz sine -> should be attenuated
+        let mut filter_low = BiquadBandPass::new(44100, 1000.0, 2.0);
+        let mut peak_atten = 0.0f32;
+        for i in 0..500 {
+            let t = i as f32 / 44100.0;
+            let sample = (t * 100.0 * 2.0 * PI).sin();
+            let y = filter_low.process(sample);
+            if i > 100 {
+                peak_atten = peak_atten.max(y.abs());
+            }
+        }
+        assert!(peak_atten < 0.35, "100Hz should be attenuated by 1kHz BPF, got {peak_atten}");
+    }
+
+    #[test]
+    fn test_combustion_and_cylinder_oscillators() {
+        for i in 0..100 {
+            let phase = i as f32 / 100.0;
+            let comb = Oscillator::combustion_pulse(phase, 0.5);
+            let cyl = Oscillator::cylinder_pulse(phase, 2.0);
+            assert!(comb.is_finite() && comb.abs() <= 2.5);
+            assert!(cyl.is_finite() && cyl.abs() <= 2.5);
+        }
+    }
+
+    #[test]
+    fn test_waveshape_engine() {
+        assert_eq!(waveshape_engine(0.0, 1.0, 0.5), 0.0);
+        let saturated = waveshape_engine(2.0, 1.5, 0.3);
+        assert!(saturated > 0.0 && saturated <= 1.0);
     }
 }

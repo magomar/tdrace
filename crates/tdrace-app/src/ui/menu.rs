@@ -97,6 +97,34 @@ impl TrackChoice {
     }
 }
 
+/// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
+pub fn resolve_track_for_menu(choice: &TrackChoice) -> Option<tdrace_core::track::Track> {
+    match choice {
+        TrackChoice::ClassicGrandPrix => Some(tdrace_core::track::presets::classic_grand_prix()),
+        TrackChoice::OvalSpeedway => Some(tdrace_core::track::presets::oval_speedway()),
+        TrackChoice::DriftPark => Some(tdrace_core::track::presets::drift_park()),
+        TrackChoice::KartArena => Some(tdrace_core::track::presets::kart_arena()),
+        TrackChoice::RampRaceway => Some(tdrace_core::track::presets::ramp_raceway()),
+        TrackChoice::OasisRally => Some(tdrace_core::track::presets::oasis_rally()),
+        TrackChoice::OutlawPass => Some(tdrace_core::track::presets::outlaw_pass()),
+        TrackChoice::Custom { id, path, .. } => {
+            if id == "monza" {
+                return Some(crate::module::f1::F1GameModule::track_monza());
+            }
+            if id == "spa" {
+                return Some(crate::module::f1::F1GameModule::track_spa());
+            }
+            if id == "silverstone" {
+                return Some(crate::module::f1::F1GameModule::track_silverstone());
+            }
+            if id == "sahara" {
+                return Some(tdrace_core::track::presets::sahara_dunes());
+            }
+            tdrace_core::track::Track::load_from_file(path).ok()
+        }
+    }
+}
+
 /// Available vehicle model options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CarChoice {
@@ -264,6 +292,8 @@ pub fn render_track_select_menu(
 
         if i < total_tracks {
             let track_opt = &available_tracks[i];
+            let loaded_track = resolve_track_for_menu(track_opt);
+
             let bg_col = if is_sel {
                 Palette::UI_CARD_BG_HOVER
             } else {
@@ -277,13 +307,28 @@ pub fn render_track_select_menu(
 
             scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
 
-            // Tag pill
+            // Small Track Vector Thumbnail on right side of card
+            let thumb_w = scaler.s(58.0);
+            let thumb_h = scaler.s(44.0);
+            let thumb_x = col1_x + col_w - thumb_w - scaler.s(8.0);
+            let thumb_y = curr_y + scaler.s(7.0);
+
+            if let Some(ref tr) = loaded_track {
+                super::track_preview::render_track_thumbnail(&scaler, thumb_x, thumb_y, thumb_w, thumb_h, tr, is_sel);
+            }
+
+            // Tag pill & metrics badge (Length + Surface breakdown)
             let tag_col = if is_sel { module_accent } else { Palette::UI_TEXT_MUTED };
+            let tag_label = if let Some(ref tr) = loaded_track {
+                format!("{} • {:.0}m • {}", track_opt.tag(), tr.total_length_m(), tr.surface_summary_string())
+            } else {
+                track_opt.tag().to_string()
+            };
             fonts.draw_ui_bold(
-                track_opt.tag(),
+                &tag_label,
                 col1_x + scaler.s(14.0),
                 curr_y + scaler.s(16.0),
-                scaler.font_s(10.5),
+                scaler.font_s(10.0),
                 tag_col,
             );
 
@@ -293,7 +338,7 @@ pub fn render_track_select_menu(
                 track_opt.title(),
                 col1_x + scaler.s(14.0),
                 curr_y + scaler.s(34.0),
-                scaler.font_s(16.0),
+                scaler.font_s(15.5),
                 title_col,
             );
 
@@ -302,7 +347,7 @@ pub fn render_track_select_menu(
                 track_opt.description(),
                 col1_x + scaler.s(14.0),
                 curr_y + scaler.s(49.0),
-                scaler.font_s(11.0),
+                scaler.font_s(10.5),
                 Palette::UI_TEXT_MUTED,
             );
         } else {

@@ -178,7 +178,7 @@ pub fn render_track_manager_screen(
 
     let list_pad_y = scaler.s(8.0);
     let mut item_y = content_y + list_pad_y;
-    let item_h = scaler.s(56.0);
+    let item_h = scaler.s(60.0);
 
     if tracks_list.is_empty() {
         fonts.draw_ui_regular(
@@ -201,6 +201,7 @@ pub fn render_track_manager_screen(
         for i in start_idx..end_idx {
             let track_choice = &tracks_list[i];
             let is_sel = i == selected_idx;
+            let loaded_track = track_manager.load_track(track_choice).ok();
 
             let item_bg = if is_sel {
                 Palette::UI_CARD_BG_HOVER
@@ -214,6 +215,16 @@ pub fn render_track_manager_screen(
             };
 
             scaler.draw_glass_card(col1_x + scaler.s(6.0), item_y, col1_w - scaler.s(12.0), item_h, item_bg, item_border, if is_sel { 1.8 } else { 1.0 });
+
+            // Small Track Vector Thumbnail on right side of card
+            let thumb_w = scaler.s(56.0);
+            let thumb_h = scaler.s(44.0);
+            let thumb_x = col1_x + col1_w - scaler.s(12.0) - thumb_w - scaler.s(6.0);
+            let thumb_y = item_y + scaler.s(8.0);
+
+            if let Some(ref tr) = loaded_track {
+                super::track_preview::render_track_thumbnail(&scaler, thumb_x, thumb_y, thumb_w, thumb_h, tr, is_sel);
+            }
 
             // Tag Pill
             let tag_text = match track_choice {
@@ -230,7 +241,7 @@ pub fn render_track_manager_screen(
             };
             fonts.draw_ui_bold(
                 tag_text,
-                col1_x + scaler.s(16.0),
+                col1_x + scaler.s(14.0),
                 item_y + scaler.s(16.0),
                 scaler.font_s(10.0),
                 tag_col,
@@ -239,23 +250,27 @@ pub fn render_track_manager_screen(
             // Title
             fonts.draw_ui_bold(
                 track_choice.title(),
-                col1_x + scaler.s(16.0),
+                col1_x + scaler.s(14.0),
                 item_y + scaler.s(34.0),
-                scaler.font_s(15.0),
+                scaler.font_s(14.5),
                 if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
             );
 
-            // Short metric info
-            let metric_str = format!("ID: {}", track_choice.track_id());
+            // Short metric info: Length & Surface breakdown
+            let metric_str = if let Some(ref tr) = loaded_track {
+                format!("{:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
+            } else {
+                format!("ID: {}", track_choice.track_id())
+            };
             fonts.draw_ui_regular(
                 &metric_str,
-                col1_x + scaler.s(16.0),
-                item_y + scaler.s(48.0),
+                col1_x + scaler.s(14.0),
+                item_y + scaler.s(50.0),
                 scaler.font_s(11.0),
                 Palette::UI_TEXT_MUTED,
             );
 
-            item_y += item_h + scaler.s(6.0);
+            item_y += item_h + scaler.s(5.0);
         }
     }
 
@@ -263,8 +278,9 @@ pub fn render_track_manager_screen(
     scaler.draw_glass_card(col2_x, content_y, col2_w, content_h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.2);
 
     if let Some(selected_track) = tracks_list.get(selected_idx) {
+        let loaded_track = track_manager.load_track(selected_track).ok();
         let pad_x = col2_x + scaler.s(18.0);
-        let mut d_y = content_y + scaler.s(22.0);
+        let mut d_y = content_y + scaler.s(18.0);
 
         // Header: Category Pill & Title
         let (badge_str, badge_col) = match selected_track {
@@ -278,91 +294,107 @@ pub fn render_track_manager_screen(
             _ => ("🏆 OFFICIAL PRESET CIRCUIT", Palette::NEON_CYAN),
         };
 
-        fonts.draw_ui_bold(badge_str, pad_x, d_y, scaler.font_s(12.0), badge_col);
-        d_y += scaler.s(24.0);
+        fonts.draw_ui_bold(badge_str, pad_x, d_y, scaler.font_s(11.5), badge_col);
+        d_y += scaler.s(20.0);
 
         fonts.draw_display(
             selected_track.title(),
             pad_x,
             d_y,
-            scaler.font_s(22.0),
+            scaler.font_s(21.0),
             Palette::WHITE,
         );
-        d_y += scaler.s(14.0);
+        d_y += scaler.s(12.0);
 
         // Description Box
-        let desc_h = scaler.s(62.0);
+        let desc_h = scaler.s(44.0);
         let desc_w = col2_w - scaler.s(36.0);
         scaler.draw_glass_card(pad_x, d_y, desc_w, desc_h, Color::new(0.08, 0.10, 0.15, 0.70), Palette::UI_CARD_BORDER, 1.0);
 
         fonts.draw_ui_regular(
             "CIRCUIT DESCRIPTION [Edit with N]:",
-            pad_x + scaler.s(10.0),
-            d_y + scaler.s(16.0),
-            scaler.font_s(11.0),
+            pad_x + scaler.s(8.0),
+            d_y + scaler.s(13.0),
+            scaler.font_s(10.0),
             Palette::NEON_CYAN,
         );
         fonts.draw_ui_regular(
             selected_track.description(),
-            pad_x + scaler.s(10.0),
-            d_y + scaler.s(34.0),
-            scaler.font_s(12.5),
+            pad_x + scaler.s(8.0),
+            d_y + scaler.s(28.0),
+            scaler.font_s(11.5),
             Palette::WHITE,
         );
-        d_y += desc_h + scaler.s(16.0);
+        d_y += desc_h + scaler.s(10.0);
+
+        // Detailed Track Vector Preview Card
+        let preview_h = scaler.s(130.0);
+        let preview_w = desc_w;
+        if let Some(ref tr) = loaded_track {
+            super::track_preview::render_track_detailed_preview(fonts, &scaler, pad_x, d_y, preview_w, preview_h, tr);
+            d_y += preview_h + scaler.s(10.0);
+        }
 
         // Circuit Metrics Grid
         let custom_info = track_manager.custom_tracks.iter().find(|t| t.id == selected_track.track_id());
 
-        fonts.draw_ui_bold("CIRCUIT SPECIFICATIONS & GEOMETRY:", pad_x, d_y, scaler.font_s(13.0), Palette::NEON_GOLD);
-        d_y += scaler.s(14.0);
+        fonts.draw_ui_bold("CIRCUIT SPECIFICATIONS & GEOMETRY:", pad_x, d_y, scaler.font_s(12.0), Palette::NEON_GOLD);
+        d_y += scaler.s(12.0);
 
         let grid_y = d_y;
         let card_w = (desc_w - scaler.s(12.0)) * 0.5;
-        let card_h = scaler.s(42.0);
+        let card_h = scaler.s(38.0);
 
         // Metric Card 1: Track Length & Waypoints
         scaler.draw_glass_card(pad_x, grid_y, card_w, card_h, Color::new(0.07, 0.09, 0.14, 0.70), Palette::UI_CARD_BORDER, 1.0);
-        let len_str = if let Some(info) = custom_info {
+        let len_str = if let Some(ref tr) = loaded_track {
+            format!("{:.0}m Length ({} WPs)", tr.total_length_m(), tr.spline.waypoints.len())
+        } else if let Some(info) = custom_info {
             format!("{:.0}m Length ({} WPs)", info.length_m, info.waypoint_count)
         } else {
             "Standard Circuit Spline".to_string()
         };
-        fonts.draw_ui_regular("LENGTH & NODES", pad_x + scaler.s(8.0), grid_y + scaler.s(14.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
-        fonts.draw_ui_bold(&len_str, pad_x + scaler.s(8.0), grid_y + scaler.s(30.0), scaler.font_s(13.0), Palette::WHITE);
+        fonts.draw_ui_regular("LENGTH & NODES", pad_x + scaler.s(8.0), grid_y + scaler.s(12.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(&len_str, pad_x + scaler.s(8.0), grid_y + scaler.s(27.0), scaler.font_s(12.5), Palette::WHITE);
 
-        // Metric Card 2: Checkpoints / Timing Gates
+        // Metric Card 2: Surface Composition & Breakdown
         scaler.draw_glass_card(pad_x + card_w + scaler.s(12.0), grid_y, card_w, card_h, Color::new(0.07, 0.09, 0.14, 0.70), Palette::UI_CARD_BORDER, 1.0);
-        let cp_str = if let Some(info) = custom_info {
-            format!("{} Timing Gates", info.checkpoint_count)
+        let surf_str = if let Some(ref tr) = loaded_track {
+            tr.surface_summary_string()
+        } else if let Some(info) = custom_info {
+            info.surface_summary.clone()
         } else {
-            "Multi-Sector Timing".to_string()
+            "100% Asphalt".to_string()
         };
-        fonts.draw_ui_regular("CHECKPOINTS", pad_x + card_w + scaler.s(20.0), grid_y + scaler.s(14.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
-        fonts.draw_ui_bold(&cp_str, pad_x + card_w + scaler.s(20.0), grid_y + scaler.s(30.0), scaler.font_s(13.0), Palette::WHITE);
+        fonts.draw_ui_regular("SURFACE COMPOSITION", pad_x + card_w + scaler.s(20.0), grid_y + scaler.s(12.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(&surf_str, pad_x + card_w + scaler.s(20.0), grid_y + scaler.s(27.0), scaler.font_s(12.0), Palette::NEON_CYAN);
 
         // Metric Card 3: Jump Ramps & Obstacles
-        let grid_y2 = grid_y + card_h + scaler.s(8.0);
+        let grid_y2 = grid_y + card_h + scaler.s(6.0);
         scaler.draw_glass_card(pad_x, grid_y2, card_w, card_h, Color::new(0.07, 0.09, 0.14, 0.70), Palette::UI_CARD_BORDER, 1.0);
-        let obs_str = if let Some(info) = custom_info {
+        let obs_str = if let Some(ref tr) = loaded_track {
+            format!("{} Ramps • {} Hazards", tr.geometry.jump_ramps.len(), tr.geometry.obstacles.len() + tr.geometry.surface_zones.len())
+        } else if let Some(info) = custom_info {
             format!("{} Ramps • {} Obstacles", info.jump_ramp_count, info.obstacle_count)
         } else {
             "Track Hazards Configured".to_string()
         };
-        fonts.draw_ui_regular("RAMPS & OBSTACLES", pad_x + scaler.s(8.0), grid_y2 + scaler.s(14.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
-        fonts.draw_ui_bold(&obs_str, pad_x + scaler.s(8.0), grid_y2 + scaler.s(30.0), scaler.font_s(13.0), Palette::WHITE);
+        fonts.draw_ui_regular("RAMPS & HAZARDS", pad_x + scaler.s(8.0), grid_y2 + scaler.s(12.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(&obs_str, pad_x + scaler.s(8.0), grid_y2 + scaler.s(27.0), scaler.font_s(12.5), Palette::WHITE);
 
-        // Metric Card 4: Surface & Laps
+        // Metric Card 4: Checkpoints / Timing Gates & Default Laps
         scaler.draw_glass_card(pad_x + card_w + scaler.s(12.0), grid_y2, card_w, card_h, Color::new(0.07, 0.09, 0.14, 0.70), Palette::UI_CARD_BORDER, 1.0);
-        let surf_str = if let Some(info) = custom_info {
-            format!("{:?} • {} Laps", info.default_surface, info.default_laps)
+        let cp_str = if let Some(ref tr) = loaded_track {
+            format!("{} Gates • {} Laps", tr.checkpoints.len(), tr.default_laps)
+        } else if let Some(info) = custom_info {
+            format!("{} Gates • {} Laps", info.checkpoint_count, info.default_laps)
         } else {
-            "Asphalt / Dirt Surface".to_string()
+            "Multi-Sector Timing • 3 Laps".to_string()
         };
-        fonts.draw_ui_regular("SURFACE & DEFAULT LAPS", pad_x + card_w + scaler.s(20.0), grid_y2 + scaler.s(14.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
-        fonts.draw_ui_bold(&surf_str, pad_x + card_w + scaler.s(20.0), grid_y2 + scaler.s(30.0), scaler.font_s(13.0), Palette::WHITE);
+        fonts.draw_ui_regular("CHECKPOINTS & LAPS", pad_x + card_w + scaler.s(20.0), grid_y2 + scaler.s(12.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(&cp_str, pad_x + card_w + scaler.s(20.0), grid_y2 + scaler.s(27.0), scaler.font_s(12.5), Palette::WHITE);
 
-        d_y = grid_y2 + card_h + scaler.s(18.0);
+        d_y = grid_y2 + card_h + scaler.s(12.0);
 
         // Category Status Explanation Box
         let expl_bg = if is_main_active {
@@ -375,7 +407,7 @@ pub fn render_track_manager_screen(
         } else {
             Palette::NEON_GOLD
         };
-        scaler.draw_glass_card(pad_x, d_y, desc_w, scaler.s(44.0), expl_bg, expl_border, 1.2);
+        scaler.draw_glass_card(pad_x, d_y, desc_w, scaler.s(38.0), expl_bg, expl_border, 1.2);
 
         let expl_text = if is_main_active {
             if selected_track.is_custom() {
@@ -389,8 +421,8 @@ pub fn render_track_manager_screen(
         fonts.draw_ui_regular(
             expl_text,
             pad_x + scaler.s(10.0),
-            d_y + scaler.s(26.0),
-            scaler.font_s(12.0),
+            d_y + scaler.s(23.0),
+            scaler.font_s(11.5),
             Palette::WHITE,
         );
     }

@@ -16,7 +16,7 @@ pub mod track_manager;
 pub mod ui;
 
 pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverStats};
-pub use audio::{AudioManager, AudioSettings, MusicTrack, SfxType};
+pub use audio::{AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType};
 pub use camera::{CameraMode, RaceCamera};
 pub use config::{AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, ZoomLevelConfig};
 pub use db::{HallOfFameDb, HallOfFameEntry};

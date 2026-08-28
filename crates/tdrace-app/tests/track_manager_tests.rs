@@ -8,7 +8,7 @@ use tdrace_core::track::TrackCategory;
 
 #[test]
 fn test_track_categories_initial_presets() {
-    let temp_dir = std::env::temp_dir().join("tdrace_test_tm_presets");
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_presets_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
     let _ = fs::remove_dir_all(&temp_dir);
 
     let manager = TrackManager::new(&temp_dir);
@@ -30,7 +30,7 @@ fn test_track_categories_initial_presets() {
 
 #[test]
 fn test_draft_creation_and_isolation_from_main_menu() {
-    let temp_dir = std::env::temp_dir().join("tdrace_test_tm_drafts");
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_drafts_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
     let _ = fs::remove_dir_all(&temp_dir);
 
     let mut manager = TrackManager::new(&temp_dir);
@@ -79,7 +79,7 @@ fn test_draft_creation_and_isolation_from_main_menu() {
 
 #[test]
 fn test_promotion_and_demotion_lifecycle() {
-    let temp_dir = std::env::temp_dir().join("tdrace_test_tm_lifecycle");
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_lifecycle_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
     let _ = fs::remove_dir_all(&temp_dir);
 
     let mut manager = TrackManager::new(&temp_dir);
@@ -120,7 +120,7 @@ fn test_promotion_and_demotion_lifecycle() {
 
 #[test]
 fn test_metadata_editing() {
-    let temp_dir = std::env::temp_dir().join("tdrace_test_tm_meta");
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_meta_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
     let _ = fs::remove_dir_all(&temp_dir);
 
     let mut manager = TrackManager::new(&temp_dir);
@@ -157,7 +157,7 @@ fn test_metadata_editing() {
 
 #[test]
 fn test_track_deletion() {
-    let temp_dir = std::env::temp_dir().join("tdrace_test_tm_delete");
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_delete_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
     let _ = fs::remove_dir_all(&temp_dir);
 
     let mut manager = TrackManager::new(&temp_dir);
@@ -179,7 +179,7 @@ fn test_track_deletion() {
 
 #[test]
 fn test_race_session_with_track_manager_flow() {
-    let temp_dir = std::env::temp_dir().join("tdrace_test_tm_session");
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_session_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
     let _ = fs::remove_dir_all(&temp_dir);
 
     let mut session = RaceSession::default();

@@ -8,14 +8,37 @@ use serde::{Deserialize, Serialize};
 
 use crate::audio::sfx::{
     generate_car_hit_sound, generate_countdown_high, generate_countdown_low,
-    generate_curb_rumble_sound, generate_engine_rpm_band, generate_engine_sound,
-    generate_gear_shift_pop, generate_jump_launch_sound, generate_landing_sound,
-    generate_lap_chime, generate_offroad_sound, generate_race_finish, generate_sector_ping,
-    generate_skid_sound, generate_ui_move, generate_ui_select, generate_wall_crash_sound,
+    generate_curb_rumble_sound, generate_engine_sound,
+    generate_f1_v6_rpm_band, generate_gear_shift_pop, generate_generic_engine_rpm_band,
+    generate_jump_launch_sound, generate_kart_125cc_rpm_band, generate_landing_sound,
+    generate_lap_chime, generate_offroad_sound, generate_race_finish,
+    generate_rally_turbo_rpm_band, generate_sector_ping, generate_skid_sound,
+    generate_sport_gt_rpm_band, generate_ui_move, generate_ui_select, generate_wall_crash_sound,
     generate_water_splash_sound,
 };
 use crate::audio::synthwave::{generate_menu_theme, generate_nightcall_race_theme};
 use crate::audio::dsp::DEFAULT_SAMPLE_RATE;
+
+/// Vehicle engine audio synthesis archetype.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum EngineSoundType {
+    /// Generic / Standard Sport engine sound (fallback default, 4-stroke 6-cyl balanced sport)
+    Generic,
+    /// High-displacement V8 / Touring GT (deep crossplane rumble, low-end torque growl, heavy block)
+    SportGT,
+    /// 125cc 2-Stroke Single-Cylinder Kart (screaming 2-stroke ring-a-ding buzz, expansion chamber resonance)
+    Kart125cc,
+    /// High-revving Formula 1 V6 Turbo Hybrid (screaming top end, aggressive turbo whine, sharp metallic pitch)
+    F1V6Turbo,
+    /// 4-Cylinder Rally Turbo (anti-lag pops, wastegate flutter, gravel-chewing mid-range rasp)
+    RallyTurbo,
+}
+
+impl Default for EngineSoundType {
+    fn default() -> Self {
+        Self::Generic
+    }
+}
 
 /// Number of discrete RPM harmonic frequency bands for fine microtonal engine simulation.
 pub const NUM_RPM_BANDS: usize = 28;
@@ -115,6 +138,11 @@ pub struct SoundBank {
     pub music_nightcall: Option<Sound>,
     pub music_menu: Option<Sound>,
     pub engine_rpm_bands: [Option<Sound>; NUM_RPM_BANDS],
+    pub engine_generic: [Option<Sound>; NUM_RPM_BANDS],
+    pub engine_sport_gt: [Option<Sound>; NUM_RPM_BANDS],
+    pub engine_kart: [Option<Sound>; NUM_RPM_BANDS],
+    pub engine_f1: [Option<Sound>; NUM_RPM_BANDS],
+    pub engine_rally: [Option<Sound>; NUM_RPM_BANDS],
     pub sfx_shift_pop: Option<Sound>,
     pub sfx_engine: Option<Sound>,
     pub sfx_skid: Option<Sound>,
@@ -140,6 +168,11 @@ impl SoundBank {
             music_nightcall: None,
             music_menu: None,
             engine_rpm_bands: [const { None }; NUM_RPM_BANDS],
+            engine_generic: [const { None }; NUM_RPM_BANDS],
+            engine_sport_gt: [const { None }; NUM_RPM_BANDS],
+            engine_kart: [const { None }; NUM_RPM_BANDS],
+            engine_f1: [const { None }; NUM_RPM_BANDS],
+            engine_rally: [const { None }; NUM_RPM_BANDS],
             sfx_shift_pop: None,
             sfx_engine: None,
             sfx_skid: None,
@@ -167,11 +200,28 @@ impl SoundBank {
         let nightcall_wav = generate_nightcall_race_theme(sample_rate);
         let menu_wav = generate_menu_theme(sample_rate);
 
-        // Pre-generate 28 harmonic RPM frequency bands for continuous pitch crossfading
-        let mut rpm_bands = [const { None }; NUM_RPM_BANDS];
+        // Pre-generate 28 harmonic RPM frequency bands for each engine sound archetype
+        let mut generic_bands = [const { None }; NUM_RPM_BANDS];
+        let mut sport_gt_bands = [const { None }; NUM_RPM_BANDS];
+        let mut kart_bands = [const { None }; NUM_RPM_BANDS];
+        let mut f1_bands = [const { None }; NUM_RPM_BANDS];
+        let mut rally_bands = [const { None }; NUM_RPM_BANDS];
+
         for (idx, &freq) in RPM_BAND_FREQS.iter().enumerate() {
-            let wav = generate_engine_rpm_band(sample_rate, freq);
-            rpm_bands[idx] = load_sound_from_bytes(&wav).await.ok();
+            let gen_wav = generate_generic_engine_rpm_band(sample_rate, freq);
+            generic_bands[idx] = load_sound_from_bytes(&gen_wav).await.ok();
+
+            let gt_wav = generate_sport_gt_rpm_band(sample_rate, freq);
+            sport_gt_bands[idx] = load_sound_from_bytes(&gt_wav).await.ok();
+
+            let kart_wav = generate_kart_125cc_rpm_band(sample_rate, freq);
+            kart_bands[idx] = load_sound_from_bytes(&kart_wav).await.ok();
+
+            let f1_wav = generate_f1_v6_rpm_band(sample_rate, freq);
+            f1_bands[idx] = load_sound_from_bytes(&f1_wav).await.ok();
+
+            let rally_wav = generate_rally_turbo_rpm_band(sample_rate, freq);
+            rally_bands[idx] = load_sound_from_bytes(&rally_wav).await.ok();
         }
 
         let shift_pop_wav = generate_gear_shift_pop(sample_rate);
@@ -195,7 +245,12 @@ impl SoundBank {
         Self {
             music_nightcall: load_sound_from_bytes(&nightcall_wav).await.ok(),
             music_menu: load_sound_from_bytes(&menu_wav).await.ok(),
-            engine_rpm_bands: rpm_bands,
+            engine_rpm_bands: generic_bands.clone(),
+            engine_generic: generic_bands,
+            engine_sport_gt: sport_gt_bands,
+            engine_kart: kart_bands,
+            engine_f1: f1_bands,
+            engine_rally: rally_bands,
             sfx_shift_pop: load_sound_from_bytes(&shift_pop_wav).await.ok(),
             sfx_engine: load_sound_from_bytes(&engine_wav).await.ok(),
             sfx_skid: load_sound_from_bytes(&skid_wav).await.ok(),
@@ -214,6 +269,26 @@ impl SoundBank {
             sfx_landing: load_sound_from_bytes(&land_wav).await.ok(),
             sfx_water_splash: load_sound_from_bytes(&water_wav).await.ok(),
         }
+    }
+
+    /// Retrieves an engine RPM band sound handle for the given engine type,
+    /// falling back automatically to the Generic default sound bank if unavailable.
+    pub fn get_engine_band(&self, engine_type: EngineSoundType, idx: usize) -> Option<&Sound> {
+        if idx >= NUM_RPM_BANDS {
+            return None;
+        }
+
+        let specific = match engine_type {
+            EngineSoundType::Generic => self.engine_generic[idx].as_ref(),
+            EngineSoundType::SportGT => self.engine_sport_gt[idx].as_ref(),
+            EngineSoundType::Kart125cc => self.engine_kart[idx].as_ref(),
+            EngineSoundType::F1V6Turbo => self.engine_f1[idx].as_ref(),
+            EngineSoundType::RallyTurbo => self.engine_rally[idx].as_ref(),
+        };
+
+        specific
+            .or_else(|| self.engine_generic[idx].as_ref())
+            .or_else(|| self.engine_rpm_bands[idx].as_ref())
     }
 
     pub fn get_sound(&self, sfx: SfxType) -> Option<&Sound> {
@@ -244,10 +319,11 @@ pub struct AudioManager {
     pub settings: AudioSettings,
     pub bank: SoundBank,
     pub current_music: Option<MusicTrack>,
+    pub active_engine_type: EngineSoundType,
     pub is_engine_active: bool,
     pub is_skid_active: bool,
     pub engine_active_bands: [bool; NUM_RPM_BANDS],
-    prev_skid_vol: f32,
+    pub shift_gap_timer: f32,
     limiter_timer: f32,
 }
 
@@ -284,11 +360,20 @@ impl AudioManager {
             settings: AudioSettings::default(),
             bank: SoundBank::empty(),
             current_music: None,
+            active_engine_type: EngineSoundType::Generic,
             is_engine_active: false,
             is_skid_active: false,
             engine_active_bands: [false; NUM_RPM_BANDS],
-            prev_skid_vol: 0.0,
+            shift_gap_timer: 0.0,
             limiter_timer: 0.0,
+        }
+    }
+
+    /// Sets the active vehicle engine sound archetype, stopping prior engine loops if switching.
+    pub fn set_engine_type(&mut self, engine_type: EngineSoundType) {
+        if self.active_engine_type != engine_type {
+            self.stop_all_loops();
+            self.active_engine_type = engine_type;
         }
     }
 
@@ -416,7 +501,7 @@ impl AudioManager {
         }
     }
 
-    /// Dynamically crossfades multi-harmonic engine RPM sound bands, reflects throttle load, and triggers shift pops.
+    /// Dynamically crossfades multi-harmonic engine RPM sound bands, reflects throttle load, clutch shift gap, and triggers shift pops.
     pub fn update_engine_rpm(&mut self, rpm: f32, throttle: f32, is_shift: bool) {
         if self.settings.is_muted {
             self.stop_all_loops();
@@ -425,6 +510,9 @@ impl AudioManager {
 
         if is_shift {
             self.play_sfx_with_gain(SfxType::ShiftPop, 0.95);
+            self.shift_gap_timer = 0.075; // 75ms clutch disengagement gap
+        } else if self.shift_gap_timer > 0.0 {
+            self.shift_gap_timer = (self.shift_gap_timer - 0.016).max(0.0);
         }
 
         let min_rpm = RPM_BAND_RPMS[0];
@@ -443,7 +531,6 @@ impl AudioManager {
                 let high_rpm = RPM_BAND_RPMS[i + 1];
                 if clamped_rpm >= low_rpm && clamped_rpm <= high_rpm {
                     let u = ((clamped_rpm - low_rpm) / (high_rpm - low_rpm)).clamp(0.0, 1.0);
-                    // Equal-power crossfade maintaining constant acoustic energy
                     let angle = u * std::f32::consts::FRAC_PI_2;
                     weights[i] = angle.cos();
                     weights[i + 1] = angle.sin();
@@ -452,23 +539,40 @@ impl AudioManager {
             }
         }
 
+        // Clutch shift-gap: Choke throttle load to 0 during upshift gap (50-75ms)
+        let effective_throttle = if self.shift_gap_timer > 0.0 {
+            0.0
+        } else {
+            throttle
+        };
+
         // Engine volume reflecting throttle demand: wide-open intake roar vs engine braking overrun
-        let load_factor = throttle.max(0.0);
+        let load_factor = effective_throttle.max(0.0);
         let base_gain = 0.42 + 0.58 * load_factor;
 
-        // Rev limiter bounce stutter at redline with high throttle
-        let limiter_mod = if clamped_rpm >= 7700.0 && throttle > 0.5 {
-            self.limiter_timer = (self.limiter_timer + 0.12).fract();
-            if self.limiter_timer < 0.5 { 1.0 } else { 0.60 }
+        // Rev limiter bounce stutter at redline with high throttle (16 Hz ignition cut oscillation)
+        let limiter_mod = if clamped_rpm >= max_rpm - 350.0 && effective_throttle > 0.4 {
+            self.limiter_timer = (self.limiter_timer + 0.16).fract();
+            if self.limiter_timer < 0.5 { 1.0 } else { 0.45 }
         } else {
             1.0
         };
 
-        let total_vol = self.settings.effective_sfx_volume(base_gain * limiter_mod);
+        // Overrun deceleration burble: subtle modulation when off-throttle at high RPM
+        let overrun_mod = if effective_throttle < 0.05 && clamped_rpm > min_rpm + 1500.0 {
+            let wobble = (clamped_rpm * 0.05).sin() * 0.08;
+            1.0 + wobble
+        } else {
+            1.0
+        };
 
-        for (idx, sound_opt) in self.bank.engine_rpm_bands.iter().enumerate() {
+        let total_vol = self.settings.effective_sfx_volume(base_gain * limiter_mod * overrun_mod);
+
+        for idx in 0..NUM_RPM_BANDS {
+            let band_vol = total_vol * weights[idx];
+            let sound_opt = self.bank.get_engine_band(self.active_engine_type, idx);
+
             if let Some(sound) = sound_opt {
-                let band_vol = total_vol * weights[idx];
                 if band_vol > 0.001 {
                     if !self.engine_active_bands[idx] {
                         safe_play_sound(
@@ -491,31 +595,28 @@ impl AudioManager {
         self.is_engine_active = true;
     }
 
-    /// Triggers crisp arcade tire drift chirp when breaking traction.
-    pub fn update_skid_chirp(&mut self, slip_intensity: f32, dt: f32) {
-        if self.settings.is_muted {
-            return;
-        }
-
-        self.prev_skid_vol = (self.prev_skid_vol - dt).max(0.0);
-        if slip_intensity > 0.35 && self.prev_skid_vol <= 0.0 {
-            let gain = (slip_intensity * 0.8).clamp(0.3, 0.85);
-            self.play_sfx_with_gain(SfxType::Skid, gain);
-            self.prev_skid_vol = 0.18; // Cooldown between chirps
-        }
+    /// Triggers tire drift sounds when breaking traction (disabled to keep pure engine audio).
+    pub fn update_skid_chirp(&mut self, _slip_intensity: f32, _dt: f32) {
+        // Disabled: Keep pure internal combustion engine audio without synthetic chirp overlays
     }
 
-    /// Stops all continuous loops (engine bands).
+    /// Stops all continuous loops across all engine bands.
     pub fn stop_all_loops(&mut self) {
-        for (idx, sound_opt) in self.bank.engine_rpm_bands.iter().enumerate() {
-            if let Some(sound) = sound_opt {
-                if self.engine_active_bands[idx] {
+        for engine_type in [
+            EngineSoundType::Generic,
+            EngineSoundType::SportGT,
+            EngineSoundType::Kart125cc,
+            EngineSoundType::F1V6Turbo,
+            EngineSoundType::RallyTurbo,
+        ] {
+            for idx in 0..NUM_RPM_BANDS {
+                if let Some(sound) = self.bank.get_engine_band(engine_type, idx) {
                     safe_set_sound_volume(sound, 0.0);
                     safe_stop_sound(sound);
-                    self.engine_active_bands[idx] = false;
                 }
             }
         }
+        self.engine_active_bands = [false; NUM_RPM_BANDS];
         self.is_engine_active = false;
         self.is_skid_active = false;
     }

@@ -22,7 +22,12 @@ use crate::ui::scaler::UiScaler;
 pub enum EditorModal {
     None,
     Templates,
-    SaveAs { input_name: String },
+    SaveAs {
+        input_name: String,
+        input_description: String,
+        active_field: usize,
+        overwrite: bool,
+    },
     OpenTrack,
     Diagnostics,
     Help,
@@ -36,8 +41,12 @@ pub enum EditorAction {
     SetSnap(GridSnapSetting),
     CycleZoom,
     NewFromTemplate(String),
-    SaveTrack(String),
-    OpenTrack(String),
+    SaveTrack {
+        name: String,
+        description: String,
+        overwrite: bool,
+    },
+    OpenTrack(crate::ui::menu::TrackChoice),
     Validate,
     StartTestDrive,
     FocusCamera,
@@ -81,15 +90,24 @@ pub fn render_editor_ui(
     );
     tb_x += scaler.s(160.0);
 
-    // Track Name label
+    // Track Name & Loaded Source File label
+    let file_tag = if let Some(path) = &state.current_file_path {
+        let filename = std::path::Path::new(path)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or(path.as_str());
+        format!("Track: {} [{}]", state.track.name, filename)
+    } else {
+        format!("Track: {}", state.track.name)
+    };
     fonts.draw_ui_bold(
-        &format!("Track: {}", state.track.name),
+        &file_tag,
         tb_x,
         scaler.s(26.0),
         scaler.font_s(14.0),
         Palette::WHITE,
     );
-    tb_x += scaler.s(180.0);
+    tb_x += scaler.s(200.0);
 
     // Top action buttons
     if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "NEW", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, bg_mouse_clicked) {
@@ -104,8 +122,12 @@ pub fn render_editor_ui(
     tb_x += scaler.s(72.0);
 
     if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "SAVE", Palette::UI_CARD_BG, Palette::NEON_GREEN, mouse_pos, bg_mouse_clicked) {
+        let is_existing = state.current_file_path.is_some();
         *active_modal = EditorModal::SaveAs {
             input_name: state.track.name.clone(),
+            input_description: state.track.description.clone(),
+            active_field: 0,
+            overwrite: is_existing,
         };
     }
     tb_x += scaler.s(72.0);
@@ -276,8 +298,21 @@ pub fn render_editor_ui(
                     *active_modal = EditorModal::None;
                 }
             }
-            EditorModal::SaveAs { input_name } => {
-                if let Some(action) = render_save_modal(fonts, &scaler, sw, sh, input_name, mouse_pos, mouse_clicked) {
+            EditorModal::SaveAs { input_name, input_description, active_field, overwrite } => {
+                if let Some(action) = render_save_modal(
+                    fonts,
+                    &scaler,
+                    sw,
+                    sh,
+                    input_name,
+                    input_description,
+                    active_field,
+                    overwrite,
+                    state.current_file_path.as_deref(),
+                    track_manager,
+                    mouse_pos,
+                    mouse_clicked,
+                ) {
                     dispatched_action = action;
                     *active_modal = EditorModal::None;
                 }
@@ -707,71 +742,323 @@ fn render_template_modal(
     None
 }
 
-/// Renders Save As modal overlay with text input.
+/// Renders Save As modal overlay with name and description text inputs and overwrite options.
 fn render_save_modal(
     fonts: &Fonts,
     scaler: &UiScaler,
     sw: f32,
     sh: f32,
     input_name: &mut String,
+    input_description: &mut String,
+    active_field: &mut usize,
+    overwrite: &mut bool,
+    current_file_path: Option<&str>,
+    track_manager: &TrackManager,
     mouse_pos: Vec2,
     clicked: bool,
 ) -> Option<EditorAction> {
-    let mw = scaler.s(440.0);
-    let mh = scaler.s(220.0);
+    let mw = scaler.s(520.0);
+    let mh = scaler.s(380.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
     scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GREEN, 2.0);
 
-    fonts.draw_display_centered("SAVE CIRCUIT", sw * 0.5, my + scaler.s(32.0), scaler.font_s(22.0), Palette::NEON_GOLD);
+    fonts.draw_display_centered("SAVE CIRCUIT", sw * 0.5, my + scaler.s(26.0), scaler.font_s(22.0), Palette::NEON_GOLD);
+
+    // Current loaded file context
+    if let Some(loaded_path) = current_file_path {
+        let fname = std::path::Path::new(loaded_path)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or(loaded_path);
+        fonts.draw_ui_regular_centered(
+            &format!("Loaded from: {} • [Tab] switch fields", fname),
+            sw * 0.5,
+            my + scaler.s(45.0),
+            scaler.font_s(11.5),
+            Palette::NEON_CYAN,
+        );
+    } else {
+        fonts.draw_ui_regular_centered(
+            "Save circuit to tracks directory • [Tab] switch fields",
+            sw * 0.5,
+            my + scaler.s(45.0),
+            scaler.font_s(11.5),
+            Palette::UI_TEXT_MUTED,
+        );
+    }
+
+    // Keyboard navigation between fields
+    if is_key_pressed(KeyCode::Tab) {
+        *active_field = if *active_field == 0 { 1 } else { 0 };
+    }
+    if is_key_pressed(KeyCode::Down) && *active_field == 0 {
+        *active_field = 1;
+    }
+    if is_key_pressed(KeyCode::Up) && *active_field == 1 {
+        *active_field = 0;
+    }
 
     // Typing input handling
     while let Some(c) = get_char_pressed() {
-        if !c.is_control() && input_name.len() < 32 {
-            input_name.push(c);
+        if !c.is_control() {
+            if *active_field == 0 && input_name.len() < 32 {
+                input_name.push(c);
+            } else if *active_field == 1 && input_description.len() < 120 {
+                input_description.push(c);
+            }
         }
     }
     if is_key_pressed(KeyCode::Backspace) {
-        input_name.pop();
+        if *active_field == 0 {
+            input_name.pop();
+        } else if *active_field == 1 {
+            input_description.pop();
+        }
     }
 
-    // Input box
     let inp_w = mw - scaler.s(40.0);
-    let inp_h = scaler.s(40.0);
     let inp_x = mx + scaler.s(20.0);
-    let inp_y = my + scaler.s(60.0);
 
-    draw_rectangle(inp_x, inp_y, inp_w, inp_h, Color::new(0.04, 0.05, 0.08, 0.95));
-    draw_rectangle_lines(inp_x, inp_y, inp_w, inp_h, 1.5, Palette::NEON_CYAN);
+    // Field 1: Track Name
+    let f1_y = my + scaler.s(60.0);
+    let f1_h = scaler.s(36.0);
+    let is_f1_active = *active_field == 0;
 
     fonts.draw_ui_bold(
-        &format!("{}_", input_name),
-        inp_x + scaler.s(12.0),
-        inp_y + scaler.s(26.0),
-        scaler.font_s(16.0),
+        "TRACK NAME:",
+        inp_x,
+        f1_y + scaler.s(10.0),
+        scaler.font_s(11.0),
+        if is_f1_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
+    );
+
+    let f1_box_y = f1_y + scaler.s(14.0);
+    let f1_hover = mouse_pos.x >= inp_x && mouse_pos.x <= inp_x + inp_w && mouse_pos.y >= f1_box_y && mouse_pos.y <= f1_box_y + f1_h;
+    if f1_hover && clicked {
+        *active_field = 0;
+    }
+
+    draw_rectangle(inp_x, f1_box_y, inp_w, f1_h, Color::new(0.04, 0.05, 0.08, 0.95));
+    draw_rectangle_lines(
+        inp_x,
+        f1_box_y,
+        inp_w,
+        f1_h,
+        if is_f1_active { 1.8 } else { 1.0 },
+        if is_f1_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+    );
+
+    let name_text = if is_f1_active {
+        format!("{}_", input_name)
+    } else {
+        input_name.clone()
+    };
+    fonts.draw_ui_bold(
+        &name_text,
+        inp_x + scaler.s(10.0),
+        f1_box_y + scaler.s(23.0),
+        scaler.font_s(14.0),
         Palette::WHITE,
     );
 
-    let save_clicked = draw_ui_btn(
+    // Field 2: Track Description
+    let f2_y = f1_box_y + f1_h + scaler.s(8.0);
+    let f2_h = scaler.s(36.0);
+    let is_f2_active = *active_field == 1;
+
+    fonts.draw_ui_bold(
+        "TRACK DESCRIPTION:",
+        inp_x,
+        f2_y + scaler.s(10.0),
+        scaler.font_s(11.0),
+        if is_f2_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
+    );
+
+    let f2_box_y = f2_y + scaler.s(14.0);
+    let f2_hover = mouse_pos.x >= inp_x && mouse_pos.x <= inp_x + inp_w && mouse_pos.y >= f2_box_y && mouse_pos.y <= f2_box_y + f2_h;
+    if f2_hover && clicked {
+        *active_field = 1;
+    }
+
+    draw_rectangle(inp_x, f2_box_y, inp_w, f2_h, Color::new(0.04, 0.05, 0.08, 0.95));
+    draw_rectangle_lines(
+        inp_x,
+        f2_box_y,
+        inp_w,
+        f2_h,
+        if is_f2_active { 1.8 } else { 1.0 },
+        if is_f2_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+    );
+
+    if is_f2_active {
+        fonts.draw_ui_regular(
+            &format!("{}_", input_description),
+            inp_x + scaler.s(10.0),
+            f2_box_y + scaler.s(23.0),
+            scaler.font_s(12.5),
+            Palette::WHITE,
+        );
+    } else if input_description.is_empty() {
+        fonts.draw_ui_regular(
+            "Optional circuit description...",
+            inp_x + scaler.s(10.0),
+            f2_box_y + scaler.s(23.0),
+            scaler.font_s(12.0),
+            Palette::UI_TEXT_MUTED,
+        );
+    } else {
+        fonts.draw_ui_regular(
+            input_description,
+            inp_x + scaler.s(10.0),
+            f2_box_y + scaler.s(23.0),
+            scaler.font_s(12.5),
+            Palette::WHITE,
+        );
+    }
+
+    // Check slug and file existence
+    let slug = TrackManager::sanitize_slug(input_name);
+    let target_exists = track_manager.track_file_exists(&slug) || current_file_path.is_some();
+
+    let info_y = f2_box_y + f2_h + scaler.s(14.0);
+    if target_exists {
+        fonts.draw_ui_bold(
+            &format!("Target: tracks/{}.json (Existing file)", slug),
+            inp_x,
+            info_y,
+            scaler.font_s(11.5),
+            Palette::YELLOW,
+        );
+    } else {
+        fonts.draw_ui_regular(
+            &format!("Target: tracks/{}.json (New file)", slug),
+            inp_x,
+            info_y,
+            scaler.font_s(11.5),
+            Palette::NEON_GREEN,
+        );
+    }
+
+    // Overwrite checkbox / toggle button
+    let toggle_y = info_y + scaler.s(10.0);
+    let toggle_lbl = if *overwrite {
+        "[✓] OVERWRITE EXISTING TRACK"
+    } else {
+        "[ ] SAVE AS NEW COPY (Auto-number if file exists)"
+    };
+    let toggle_bg = if *overwrite {
+        Color::new(0.35, 0.25, 0.05, 0.9)
+    } else {
+        Palette::UI_CARD_BG
+    };
+    let toggle_border = if *overwrite {
+        Palette::YELLOW
+    } else {
+        Palette::UI_CARD_BORDER
+    };
+
+    if draw_ui_btn(
         fonts,
         scaler,
         inp_x,
-        my + scaler.s(130.0),
+        toggle_y,
         inp_w,
-        scaler.s(42.0),
-        "SAVE TO DISK [Enter]",
-        Color::new(0.12, 0.65, 0.32, 0.95),
-        Palette::NEON_GREEN,
+        scaler.s(26.0),
+        toggle_lbl,
+        toggle_bg,
+        toggle_border,
         mouse_pos,
         clicked,
-    );
-
-    if save_clicked || is_key_pressed(KeyCode::Enter) {
-        return Some(EditorAction::SaveTrack(input_name.clone()));
+    ) {
+        *overwrite = !*overwrite;
     }
 
-    None
+    // Bottom Action Buttons:
+    let btn_y = my + mh - scaler.s(50.0);
+    let btn_h = scaler.s(38.0);
+
+    let mut action_to_dispatch = None;
+
+    if current_file_path.is_some() || target_exists {
+        let half_w = (inp_w - scaler.s(10.0)) * 0.5;
+
+        // Button 1: Overwrite Existing
+        if draw_ui_btn(
+            fonts,
+            scaler,
+            inp_x,
+            btn_y,
+            half_w,
+            btn_h,
+            "OVERWRITE [Enter]",
+            Color::new(0.45, 0.28, 0.08, 0.95),
+            Palette::NEON_GOLD,
+            mouse_pos,
+            clicked,
+        ) {
+            action_to_dispatch = Some(EditorAction::SaveTrack {
+                name: input_name.clone(),
+                description: input_description.clone(),
+                overwrite: true,
+            });
+        }
+
+        // Button 2: Save as New Copy
+        if draw_ui_btn(
+            fonts,
+            scaler,
+            inp_x + half_w + scaler.s(10.0),
+            btn_y,
+            half_w,
+            btn_h,
+            "SAVE AS COPY",
+            Color::new(0.08, 0.40, 0.35, 0.95),
+            Palette::NEON_CYAN,
+            mouse_pos,
+            clicked,
+        ) {
+            action_to_dispatch = Some(EditorAction::SaveTrack {
+                name: input_name.clone(),
+                description: input_description.clone(),
+                overwrite: false,
+            });
+        }
+    } else {
+        // Single Save button for brand new track
+        let save_clicked = draw_ui_btn(
+            fonts,
+            scaler,
+            inp_x,
+            btn_y,
+            inp_w,
+            btn_h,
+            "SAVE TO DISK [Enter]",
+            Color::new(0.12, 0.65, 0.32, 0.95),
+            Palette::NEON_GREEN,
+            mouse_pos,
+            clicked,
+        );
+
+        if save_clicked {
+            action_to_dispatch = Some(EditorAction::SaveTrack {
+                name: input_name.clone(),
+                description: input_description.clone(),
+                overwrite: *overwrite,
+            });
+        }
+    }
+
+    if is_key_pressed(KeyCode::Enter) && action_to_dispatch.is_none() {
+        action_to_dispatch = Some(EditorAction::SaveTrack {
+            name: input_name.clone(),
+            description: input_description.clone(),
+            overwrite: *overwrite,
+        });
+    }
+
+    action_to_dispatch
 }
 
 /// Renders open track modal.
@@ -784,8 +1071,8 @@ fn render_open_modal(
     mouse_pos: Vec2,
     clicked: bool,
 ) -> Option<EditorAction> {
-    let mw = scaler.s(520.0);
-    let mh = scaler.s(400.0);
+    let mw = scaler.s(540.0);
+    let mh = scaler.s(440.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
@@ -794,9 +1081,19 @@ fn render_open_modal(
     fonts.draw_display_centered("OPEN CIRCUIT", sw * 0.5, my + scaler.s(32.0), scaler.font_s(22.0), Palette::NEON_GOLD);
 
     let mut ty = my + scaler.s(60.0);
-    let choices = track_manager.all_track_choices();
 
-    for choice in choices.iter().take(6) {
+    let mut choices: Vec<crate::ui::menu::TrackChoice> = Vec::new();
+    for custom in &track_manager.custom_tracks {
+        choices.push(crate::ui::menu::TrackChoice::Custom {
+            id: custom.id.clone(),
+            title: custom.title.clone(),
+            description: custom.description.clone(),
+            path: custom.file_path.clone(),
+        });
+    }
+    choices.extend(crate::ui::menu::TrackChoice::ALL);
+
+    for choice in choices.iter().take(7) {
         let btn_w = mw - scaler.s(40.0);
         let btn_h = scaler.s(46.0);
         let bx = mx + scaler.s(20.0);
@@ -809,9 +1106,9 @@ fn render_open_modal(
         fonts.draw_ui_regular(choice.tag(), bx + scaler.s(16.0), ty + scaler.s(36.0), scaler.font_s(11.0), Palette::NEON_CYAN);
 
         if is_hover && clicked {
-            return Some(EditorAction::OpenTrack(choice.track_id().to_string()));
+            return Some(EditorAction::OpenTrack(choice.clone()));
         }
-        ty += scaler.s(52.0);
+        ty += scaler.s(50.0);
     }
 
     None
@@ -957,9 +1254,15 @@ mod tests {
 
         modal = EditorModal::SaveAs {
             input_name: "My Custom Circuit".to_string(),
+            input_description: "A fast flow circuit.".to_string(),
+            active_field: 0,
+            overwrite: true,
         };
-        if let EditorModal::SaveAs { input_name } = &modal {
+        if let EditorModal::SaveAs { input_name, input_description, active_field, overwrite } = &modal {
             assert_eq!(input_name, "My Custom Circuit");
+            assert_eq!(input_description, "A fast flow circuit.");
+            assert_eq!(*active_field, 0);
+            assert!(overwrite);
         } else {
             panic!("Expected SaveAs modal");
         }
@@ -979,7 +1282,24 @@ mod tests {
         let act_snap = EditorAction::SetSnap(GridSnapSetting::Snap5m);
         assert_eq!(act_snap, EditorAction::SetSnap(GridSnapSetting::Snap5m));
 
-        let act_save = EditorAction::SaveTrack("monaco_gp".to_string());
-        assert_eq!(act_save, EditorAction::SaveTrack("monaco_gp".to_string()));
+        let act_save = EditorAction::SaveTrack {
+            name: "monaco_gp".to_string(),
+            description: "Street circuit in Monte Carlo.".to_string(),
+            overwrite: true,
+        };
+        assert_eq!(
+            act_save,
+            EditorAction::SaveTrack {
+                name: "monaco_gp".to_string(),
+                description: "Street circuit in Monte Carlo.".to_string(),
+                overwrite: true,
+            }
+        );
+
+        let act_open = EditorAction::OpenTrack(crate::ui::menu::TrackChoice::ClassicGrandPrix);
+        assert_eq!(
+            act_open,
+            EditorAction::OpenTrack(crate::ui::menu::TrackChoice::ClassicGrandPrix)
+        );
     }
 }

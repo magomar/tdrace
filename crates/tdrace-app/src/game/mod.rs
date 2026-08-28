@@ -68,7 +68,7 @@ use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::Track;
 
 use crate::ai::{BotAiDriver, DriverCharacter};
-use crate::audio::{AudioManager, MusicTrack, SfxType};
+use crate::audio::{AudioManager, EngineSoundType, MusicTrack, SfxType};
 use crate::camera::RaceCamera;
 use crate::config::GameConfig;
 use crate::db::{HallOfFameDb, HallOfFameEntry};
@@ -921,6 +921,19 @@ impl RaceSession {
         self.offroad_sound_cooldown = 0.0;
         self.audio.stop_all_loops();
         self.audio.stop_music(); // In-game music muted
+
+        let sound_type = match self.active_module_id {
+            "f1" => EngineSoundType::F1V6Turbo,
+            "rally" => EngineSoundType::RallyTurbo,
+            "kart" => EngineSoundType::Kart125cc,
+            "classic" => match active_car {
+                CarChoice::Kart => EngineSoundType::Kart125cc,
+                CarChoice::RallyCar => EngineSoundType::RallyTurbo,
+                CarChoice::SportsCar | CarChoice::DriftCar => EngineSoundType::SportGT,
+            },
+            _ => EngineSoundType::Generic,
+        };
+        self.audio.set_engine_type(sound_type);
 
         // Show Starting Grid with selected race participants (or directly countdown if time attack)
         let total_cars = self.cars.len();
@@ -1914,8 +1927,12 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiSelect);
             if self.menu_track_idx < available_tracks.len() {
                 let chosen = available_tracks[self.menu_track_idx].clone();
+                let file_path = match &chosen {
+                    TrackChoice::Custom { path, .. } => Some(path.clone()),
+                    _ => None,
+                };
                 let track = self.load_track_for_session(&chosen);
-                self.enter_track_editor(track);
+                self.enter_track_editor_with_path(track, file_path);
             } else {
                 // If cursor is on the Track Manager entry, open Track Manager
                 self.state = GameState::TrackManager {
@@ -2157,11 +2174,15 @@ impl RaceSession {
         if is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_x_pressed {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
+                let file_path = match track_choice {
+                    TrackChoice::Custom { path, .. } => Some(path.clone()),
+                    _ => None,
+                };
                 let track = self
                     .track_manager
                     .load_track(track_choice)
                     .unwrap_or_else(|_| classic_grand_prix());
-                self.enter_track_editor(track);
+                self.enter_track_editor_with_path(track, file_path);
                 return;
             }
         }
@@ -2382,12 +2403,11 @@ impl RaceSession {
             }
         }
 
-        // Dynamic Arcade Tire Skid / Drift Chirps & Accelerating Engine Audio
+        // Dynamic Accelerating Engine Audio (motor sound only)
         if let Some(player_car) = self.cars.first() {
             let max_slip_angle = player_car.state.wheels.iter().map(|w| w.slip_angle.abs()).fold(0.0f32, f32::max);
             let max_slip_ratio = player_car.state.wheels.iter().map(|w| w.slip_ratio.abs()).fold(0.0f32, f32::max);
             let slip_intensity = (max_slip_angle * 1.5).max(max_slip_ratio);
-            self.audio.update_skid_chirp(slip_intensity, dt);
 
             let forward_speed = player_car.state.local_velocity.x;
             let throttle = player_ctrl.throttle - player_ctrl.brake;
@@ -2816,6 +2836,11 @@ impl RaceSession {
 
     /// Transitions cleanly into the in-game Track Studio editor with specified circuit.
     pub fn enter_track_editor(&mut self, track: Track) {
+        self.enter_track_editor_with_path(track, None);
+    }
+
+    /// Transitions into Track Studio editor with specified circuit and track source file path.
+    pub fn enter_track_editor_with_path(&mut self, track: Track, file_path: Option<String>) {
         let sw = screen_width_safe();
         let sh = screen_height_safe();
         let mut min = Vec2::splat(f32::MAX);
@@ -2829,7 +2854,9 @@ impl RaceSession {
             max = Vec2::new(100.0, 100.0);
         }
         self.editor_camera.focus_bounds(min, max, sw, sh);
-        self.editor_state = Some(EditorState::new(track));
+        let mut state = EditorState::new(track);
+        state.current_file_path = file_path;
+        self.editor_state = Some(state);
         self.editor_tools = ToolSettings::default();
         self.editor_modal = EditorModal::None;
         self.state = GameState::TrackEditor;
@@ -3081,27 +3108,45 @@ impl RaceSession {
                         blank
                     }
                 };
-                self.enter_track_editor(track);
+                self.enter_track_editor_with_path(track, None);
             }
-            EditorAction::OpenTrack(slug) => {
-                let choice = TrackChoice::Custom {
-                    id: slug.clone(),
-                    title: slug.clone(),
-                    description: String::new(),
-                    path: format!("tracks/{}.json", slug),
-                };
+            EditorAction::OpenTrack(choice) => {
                 if let Ok(track) = self.track_manager.load_track(&choice) {
-                    self.enter_track_editor(track);
+                    let file_path = match &choice {
+                        TrackChoice::Custom { path, .. } => Some(path.clone()),
+                        _ => None,
+                    };
+                    self.enter_track_editor_with_path(track, file_path);
                 }
             }
-            EditorAction::SaveTrack(name) => {
+            EditorAction::SaveTrack { name, description, overwrite } => {
                 if let Some(state) = &mut self.editor_state {
                     state.track.name = name;
-                    let result = self.track_manager.save_custom_track(&state.track, None);
+                    state.track.description = description;
+                    let slug = match &state.current_file_path {
+                        Some(p) if overwrite => {
+                            std::path::Path::new(p)
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .map(|s| s.to_string())
+                        }
+                        _ => None,
+                    };
+                    let result = self.track_manager.save_custom_track_with_options(
+                        &state.track,
+                        slug.as_deref(),
+                        overwrite,
+                    );
                     match result {
                         Ok(path) => {
+                            state.current_file_path = Some(path.clone());
+                            state.is_dirty = false;
                             self.editor_save_toast_timer = 2.5;
-                            self.editor_save_toast_msg = format!("Track saved: {}", path);
+                            if overwrite {
+                                self.editor_save_toast_msg = format!("Track overwritten: {}", path);
+                            } else {
+                                self.editor_save_toast_msg = format!("Track saved: {}", path);
+                            }
                             self.audio.play_sfx(SfxType::UiSelect);
                         }
                         Err(err) => {

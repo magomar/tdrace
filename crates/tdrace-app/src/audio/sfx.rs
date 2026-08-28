@@ -8,8 +8,8 @@
 //! - Snappy UI navigation clicks
 
 use crate::audio::dsp::{
-    encode_wav_16bit_mono, encode_wav_16bit_stereo, soft_saturate, BiquadLowPass,
-    Oscillator,
+    encode_wav_16bit_mono, encode_wav_16bit_stereo, soft_saturate, waveshape_engine,
+    BiquadBandPass, BiquadLowPass, NoiseGenerator, Oscillator,
 };
 
 /// Generates a short, crisp arcade tire chirp/squeak (~0.09s).
@@ -240,61 +240,290 @@ pub fn generate_race_finish(sample_rate: u32) -> Vec<u8> {
     encode_wav_16bit_stereo(&frames, sample_rate)
 }
 
-/// Generates an integer-cycle seamless looping engine harmonic sound for a specific RPM band frequency.
-pub fn generate_engine_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
-    // Integer crank cycles so every oscillator multiple (0.5x, 1x, 2x, 3x) loops seamlessly
-    let crank_hz = base_hz * 0.5;
+/// Physical configuration parameters for procedural engine synthesis.
+#[derive(Debug, Clone, Copy)]
+pub struct EngineSoundConfig {
+    /// Number of engine cylinders (e.g. 1 for Kart, 4 for Rally, 6 for F1, 8 for GT V8)
+    pub cylinder_count: usize,
+    /// Whether the engine operates on a 2-stroke cycle (true for Kart) vs 4-stroke cycle
+    pub is_two_stroke: bool,
+    /// Crankshaft sub-harmonic / imbalance intensity (e.g. high for crossplane V8 rumble)
+    pub crank_lumpiness: f32,
+    /// Combustion pulse asymmetry / shape parameter [0.0..1.0]
+    pub combustion_asymmetry: f32,
+    /// Intake air rush & induction roar intensity [0.0..1.0]
+    pub intake_growl_intensity: f32,
+    /// Turbocharger compressor spool whine intensity [0.0..1.0]
+    pub turbo_whine_level: f32,
+    /// Valvetrain & mechanical friction chatter intensity [0.0..1.0]
+    pub mechanical_buzz: f32,
+    /// Primary exhaust pipe chamber resonance frequency (Hz)
+    pub formant_f1_hz: f32,
+    /// Secondary metallic exhaust tailpipe rasp resonance frequency (Hz)
+    pub formant_f2_hz: f32,
+    /// Resonance Q-factor for exhaust formants
+    pub formant_q: f32,
+    /// Soft-saturation drive
+    pub saturation_drive: f32,
+}
+
+impl Default for EngineSoundConfig {
+    fn default() -> Self {
+        Self::generic()
+    }
+}
+
+impl EngineSoundConfig {
+    /// Generic / Balanced 6-Cylinder 4-Stroke Sports Engine (Fallback Default)
+    pub const fn generic() -> Self {
+        Self {
+            cylinder_count: 6,
+            is_two_stroke: false,
+            crank_lumpiness: 0.28,
+            combustion_asymmetry: 0.40,
+            intake_growl_intensity: 0.22,
+            turbo_whine_level: 0.0,
+            mechanical_buzz: 0.14,
+            formant_f1_hz: 200.0,
+            formant_f2_hz: 1800.0,
+            formant_q: 1.8,
+            saturation_drive: 1.20,
+        }
+    }
+
+    /// High-Displacement Crossplane V8 Touring GT Muscle Engine
+    pub const fn sport_gt() -> Self {
+        Self {
+            cylinder_count: 8,
+            is_two_stroke: false,
+            crank_lumpiness: 0.46, // Heavy crossplane V8 idle lumping
+            combustion_asymmetry: 0.55,
+            intake_growl_intensity: 0.35, // Throaty widebody induction roar
+            turbo_whine_level: 0.0,
+            mechanical_buzz: 0.16,
+            formant_f1_hz: 140.0, // Deep sub-bass chamber
+            formant_f2_hz: 1450.0, // Low-pitch exhaust growl
+            formant_q: 2.2,
+            saturation_drive: 1.35,
+        }
+    }
+
+    /// Screaming 125cc 2-Stroke Sprint Go-Kart Engine
+    pub const fn kart_125cc() -> Self {
+        Self {
+            cylinder_count: 1,
+            is_two_stroke: true, // 2-Stroke: fires every single crank revolution
+            crank_lumpiness: 0.08,
+            combustion_asymmetry: 0.65,
+            intake_growl_intensity: 0.18,
+            turbo_whine_level: 0.0,
+            mechanical_buzz: 0.42, // Prominent metallic ring-a-ding buzz
+            formant_f1_hz: 750.0, // Tuned expansion chamber pipe ring
+            formant_f2_hz: 2600.0, // Sharp 2-stroke bite
+            formant_q: 2.8,
+            saturation_drive: 1.38,
+        }
+    }
+
+    /// High-Revving Formula 1 V6 Turbo Hybrid Power Unit
+    pub const fn f1_v6_turbo() -> Self {
+        Self {
+            cylinder_count: 6,
+            is_two_stroke: false,
+            crank_lumpiness: 0.18, // High-RPM racing balance
+            combustion_asymmetry: 0.50,
+            intake_growl_intensity: 0.28,
+            turbo_whine_level: 0.15, // Subtle compressor spool whistle
+            mechanical_buzz: 0.22,
+            formant_f1_hz: 300.0,
+            formant_f2_hz: 2400.0, // Metallic high-pitch scream
+            formant_q: 2.4,
+            saturation_drive: 1.35,
+        }
+    }
+
+    /// 4-Cylinder WRC Turbo Anti-Lag Rally Engine
+    pub const fn rally_turbo() -> Self {
+        Self {
+            cylinder_count: 4,
+            is_two_stroke: false,
+            crank_lumpiness: 0.32,
+            combustion_asymmetry: 0.50,
+            intake_growl_intensity: 0.38, // Aggressive induction gulp
+            turbo_whine_level: 0.24, // Wastegate / spool
+            mechanical_buzz: 0.20,
+            formant_f1_hz: 180.0,
+            formant_f2_hz: 2000.0, // Snappy 4-cyl exhaust rasp
+            formant_q: 2.0,
+            saturation_drive: 1.30,
+        }
+    }
+}
+
+/// Generates an integer-cycle seamless looping engine harmonic sound for a specific configuration and RPM frequency.
+pub fn generate_custom_engine_rpm_band(sample_rate: u32, base_hz: f32, config: &EngineSoundConfig) -> Vec<u8> {
+    // base_hz represents 6-cylinder reference (RPM / 20).
+    // Effective RPM = base_hz * 20.0.
+    let rpm = (base_hz * 20.0).max(500.0);
+    let crank_hz = rpm / 60.0;
+    let cycle_hz = if config.is_two_stroke {
+        crank_hz
+    } else {
+        crank_hz * 0.5
+    };
+    let firing_hz = if config.is_two_stroke {
+        (rpm * config.cylinder_count as f32) / 60.0
+    } else {
+        (rpm * config.cylinder_count as f32) / 120.0
+    };
+
+    // Calculate integer cycle duration for seamless click-free looping
     let target_duration = 0.5;
-    let num_cycles = (target_duration * crank_hz).round().max(1.0);
-    let duration = num_cycles / crank_hz;
+    let num_cycles = (target_duration * cycle_hz).round().max(1.0);
+    let duration = num_cycles / cycle_hz;
     let total_samples = (duration * sample_rate as f32).round() as usize;
 
-    // Low-pass opens with RPM: muffled idle, bright redline scream
-    let cutoff = (base_hz * 6.0).clamp(300.0, 6000.0);
-    let mut filter = BiquadLowPass::new(sample_rate, cutoff, 0.95);
+    // Filters: Master low-pass + exhaust pipe formants + intake noise filter
+    let cutoff = (firing_hz * 6.0).clamp(400.0, 7500.0);
+    let mut lp_filter = BiquadLowPass::new(sample_rate, cutoff, 0.95);
+    let mut bp_formant1 = BiquadBandPass::new(sample_rate, config.formant_f1_hz, config.formant_q);
+    let mut bp_formant2 = BiquadBandPass::new(sample_rate, config.formant_f2_hz, config.formant_q);
+    let mut bp_intake = BiquadBandPass::new(sample_rate, (600.0 + firing_hz * 1.5).clamp(300.0, 3500.0), 1.4);
 
-    // Pre-roll settles the stateful filter into steady state so the loop wraps cleanly
+    let mut noise_gen = NoiseGenerator::new(0x4d595f454e47494e);
+
+    // Overlap tail length for seamless crossfading
+    let xfade_len = 256.min(total_samples / 4);
+
+    // Pre-roll settles stateful biquad filters into steady-state periodic regime
     let pre_roll = (0.05 * sample_rate as f32).round() as usize;
-    let gen_len = pre_roll + total_samples;
+    let gen_len = pre_roll + total_samples + xfade_len;
 
     let mut samples = vec![0.0f32; gen_len];
     for (i, sample) in samples.iter_mut().enumerate() {
         let t = i as f32 / sample_rate as f32;
-        let phase = t * base_hz;
 
-        // Sub-octave crank rotation (0.5x): deep lumpy idle rumble
-        let sub =
-            Oscillator::sine(phase * 0.5) * 0.32 + Oscillator::square(phase * 0.5, 0.5) * 0.10;
+        // 1. Physical Cylinder Combustion Pressure Pulses across engine cycle (staggered at 1/N cycle offsets)
+        let mut combustion = 0.0f32;
+        for c in 0..config.cylinder_count {
+            let phase_offset = c as f32 / config.cylinder_count as f32;
+            let cyl_phase = t * cycle_hz + phase_offset;
+            if config.is_two_stroke {
+                combustion += Oscillator::cylinder_pulse(cyl_phase, 2.0);
+            } else {
+                combustion += Oscillator::combustion_pulse(cyl_phase, config.combustion_asymmetry);
+            }
+        }
 
-        // Firing frequency (1x): rich saw body plus 2nd-order intake harmonic
-        let fire = Oscillator::saw(phase) * 0.62 + Oscillator::sine(phase * 2.0) * 0.28;
+        // 2. Crankshaft Sub-Harmonic & Imbalance (Mechanical Body & Idle Lumping)
+        let crank_phase = t * crank_hz;
+        let sub = (Oscillator::sine(crank_phase * 0.5) * 0.70 + Oscillator::saw(crank_phase) * 0.30)
+            * config.crank_lumpiness;
 
-        // 3rd-order exhaust bark for top-end aggression
-        let bark = Oscillator::saw(phase * 3.0) * 0.22;
+        // 3. Intake Induction Air Rush (Noise modulated at firing rate)
+        let intake_noise = bp_intake.process(noise_gen.next_sample());
+        let intake_mod = (Oscillator::saw(t * firing_hz) * 0.5 + 0.5) * intake_noise * config.intake_growl_intensity;
 
-        let raw = sub + fire + bark;
-        *sample = soft_saturate(filter.process(raw), 1.2) * 0.85;
+        // 4. Turbo Spool Whine (Smooth subtle harmonic whine if equipped)
+        let turbo = if config.turbo_whine_level > 0.001 {
+            let turbo_freq = (crank_hz * 6.0).clamp(600.0, 4500.0);
+            Oscillator::sine(t * turbo_freq) * config.turbo_whine_level * 0.08
+        } else {
+            0.0
+        };
+
+        // 5. Valvetrain & Mechanical Harmonics (Natural Sawtooth harmonics)
+        let valvetrain = if config.mechanical_buzz > 0.001 {
+            Oscillator::saw(t * (firing_hz * 2.0)) * config.mechanical_buzz * 0.12
+        } else {
+            0.0
+        };
+
+        // Raw engine acoustic mixture
+        let raw = combustion + sub + intake_mod + turbo + valvetrain;
+
+        // 6. Dual-Stage Exhaust Formant Acoustic Resonators
+        let form1 = bp_formant1.process(raw);
+        let form2 = bp_formant2.process(raw);
+        let shaped_exhaust = raw * 0.70 + form1 * 0.35 + form2 * 0.25;
+
+        // 7. Master Low-Pass & Non-Linear Wave-Shaping
+        let filtered = lp_filter.process(shaped_exhaust);
+        let saturated = waveshape_engine(filtered, config.saturation_drive, 0.30);
+
+        *sample = soft_saturate(saturated * 2.6, 1.0) * 0.90;
     }
 
-    encode_wav_16bit_mono(&samples[pre_roll..], sample_rate)
+    // Extract steady-state loop buffer and continuous overlap tail
+    let mut pcm_samples = samples[pre_roll..(pre_roll + total_samples)].to_vec();
+    let overlap_tail = &samples[(pre_roll + total_samples)..(pre_roll + total_samples + xfade_len)];
+
+    // Crossfade overlap tail into start of loop for continuous seamless wrapping
+    for k in 0..xfade_len {
+        let w = k as f32 / xfade_len as f32;
+        pcm_samples[k] = pcm_samples[k] * w + overlap_tail[k] * (1.0 - w);
+    }
+
+    // DC-blocking / zero-mean centering for clean audio hardware playback
+    let mean: f32 = pcm_samples.iter().sum::<f32>() / pcm_samples.len().max(1) as f32;
+    for s in &mut pcm_samples {
+        *s -= mean;
+    }
+
+    encode_wav_16bit_mono(&pcm_samples, sample_rate)
 }
 
-/// Generates a gear upshift exhaust backfire pop & turbo blow-off (~0.05s).
+/// Generates generic balanced engine sound loop band (fallback default).
+pub fn generate_generic_engine_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
+    generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::generic())
+}
+
+/// Generates deep crossplane V8 touring GT engine sound loop band.
+pub fn generate_sport_gt_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
+    generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::sport_gt())
+}
+
+/// Generates high-pitch 125cc 2-stroke kart engine sound loop band.
+pub fn generate_kart_125cc_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
+    generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::kart_125cc())
+}
+
+/// Generates screaming Formula 1 V6 turbo hybrid engine sound loop band.
+pub fn generate_f1_v6_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
+    generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::f1_v6_turbo())
+}
+
+/// Generates aggressive 4-cylinder WRC turbo rally engine sound loop band.
+pub fn generate_rally_turbo_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
+    generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::rally_turbo())
+}
+
+/// Legacy / Standard engine RPM band generator (aliases to generic procedural engine band).
+pub fn generate_engine_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
+    generate_generic_engine_rpm_band(sample_rate, base_hz)
+}
+
+/// Generates a gear upshift exhaust backfire pop & turbo blow-off (~0.06s).
 pub fn generate_gear_shift_pop(sample_rate: u32) -> Vec<u8> {
-    let duration = 0.05;
+    let duration = 0.06;
     let total_samples = (duration * sample_rate as f32).round() as usize;
     let mut samples = vec![0.0f32; total_samples];
-    let mut filter = BiquadLowPass::new(sample_rate, 1200.0, 1.4);
+    let mut lp_filter = BiquadLowPass::new(sample_rate, 1400.0, 1.4);
+    let mut bp_filter = BiquadBandPass::new(sample_rate, 320.0, 2.5);
+    let mut noise_gen = NoiseGenerator::new(0xdeadbeef12345678);
 
     for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
         let t = i as f32 / sample_rate as f32;
         let env = (1.0 - t / duration).max(0.0).powi(3);
 
-        let pitch = 180.0 * (-t * 45.0).exp() + 45.0;
-        let crack = Oscillator::square(t * pitch, 0.35) * 0.65 + Oscillator::sine(t * pitch) * 0.35;
-        let filtered = filter.process(crack);
+        // Sharp transient crack + resonant exhaust chamber echo + sub-thud
+        let pitch = 220.0 * (-t * 50.0).exp() + 45.0;
+        let crack = Oscillator::square(t * pitch, 0.35) * 0.50 + Oscillator::sine(t * pitch) * 0.30;
+        let pop_noise = noise_gen.next_sample() * (-t * 70.0).exp() * 0.45;
+        let resonant = bp_filter.process(crack + pop_noise);
+        let filtered = lp_filter.process(crack + resonant * 0.60 + pop_noise * 0.40);
 
-        *sample = soft_saturate(filtered * env, 1.4) * 0.85;
+        *sample = soft_saturate(filtered * env, 1.5) * 0.90;
     }
 
     encode_wav_16bit_mono(&samples, sample_rate)
@@ -484,6 +713,30 @@ mod tests {
             let x = decode_mono_pcm(&generate_engine_rpm_band(DEFAULT_SAMPLE_RATE, base_hz));
             let seam = (x[x.len() - 1] - x[0]).abs();
             assert!(seam < 0.08, "band {base_hz} Hz loop seam click {seam}");
+        }
+    }
+
+    #[test]
+    fn test_all_engine_presets_produce_valid_audio() {
+        let base_hz = 150.0;
+        let presets = [
+            ("generic", generate_generic_engine_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
+            ("sport_gt", generate_sport_gt_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
+            ("kart", generate_kart_125cc_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
+            ("f1", generate_f1_v6_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
+            ("rally", generate_rally_turbo_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
+        ];
+
+        for (name, wav) in presets {
+            assert_eq!(&wav[0..4], b"RIFF", "Preset {name} missing RIFF");
+            assert_eq!(&wav[8..12], b"WAVE", "Preset {name} missing WAVE");
+            let x = decode_mono_pcm(&wav);
+            let mean: f32 = x.iter().sum::<f32>() / x.len() as f32;
+            assert!(mean.abs() < 0.05, "Preset {name} has DC offset {mean}");
+            let rms = (x.iter().map(|s| s * s).sum::<f32>() / x.len() as f32).sqrt();
+            assert!((0.15..0.90).contains(&rms), "Preset {name} RMS {rms} out of range");
+            let seam = (x[x.len() - 1] - x[0]).abs();
+            assert!(seam < 0.08, "Preset {name} seam click {seam}");
         }
     }
 }

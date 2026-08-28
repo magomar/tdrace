@@ -212,6 +212,56 @@ impl Track {
             self.grid_positions = generate_grid_positions(&self.spline, num_slots, spacing, stagger);
         }
     }
+
+    /// Returns total centerline track length in meters.
+    #[inline]
+    pub fn total_length_m(&self) -> f32 {
+        self.spline.total_length()
+    }
+
+    /// Computes the breakdown of drivable surface types along the circuit as percentages (0.0 to 100.0).
+    pub fn surface_breakdown(&self) -> Vec<(SurfaceType, f32)> {
+        let samples = &self.spline.samples;
+        if samples.len() < 2 {
+            return vec![(self.default_surface, 100.0)];
+        }
+        let mut surface_lengths: std::collections::HashMap<SurfaceType, f32> = std::collections::HashMap::new();
+        let mut total_len = 0.0;
+        let n = if self.spline.closed { samples.len() } else { samples.len().saturating_sub(1) };
+        for i in 0..n {
+            let next_i = (i + 1) % samples.len();
+            let seg_len = (samples[next_i].point - samples[i].point).length();
+            let surf = samples[i].surface;
+            *surface_lengths.entry(surf).or_insert(0.0) += seg_len;
+            total_len += seg_len;
+        }
+        if total_len <= 1e-4 {
+            return vec![(self.default_surface, 100.0)];
+        }
+        let mut breakdown: Vec<(SurfaceType, f32)> = surface_lengths
+            .into_iter()
+            .map(|(surf, len)| (surf, (len / total_len) * 100.0))
+            .collect();
+        // Sort descending by percentage
+        breakdown.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        breakdown
+    }
+
+    /// Formats the surface breakdown as a human-readable summary string (e.g. "80% Asphalt, 20% Dirt" or "100% Dirt").
+    pub fn surface_summary_string(&self) -> String {
+        let breakdown = self.surface_breakdown();
+        if breakdown.is_empty() {
+            return "Asphalt".to_string();
+        }
+        if breakdown.len() == 1 {
+            return format!("100% {}", breakdown[0].0.name());
+        }
+        breakdown
+            .iter()
+            .map(|(surf, pct)| format!("{:.0}% {}", pct.round(), surf.name()))
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
 }
 
 #[cfg(test)]
@@ -298,5 +348,35 @@ mod tests {
         let car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
         let wheel_surfs = track.sample_car_surfaces(&car);
         assert_eq!(wheel_surfs, [SurfaceType::Asphalt; 4]);
+    }
+
+    #[test]
+    fn test_track_surface_breakdown() {
+        let gp = classic_grand_prix();
+        let gp_breakdown = gp.surface_breakdown();
+        assert_eq!(gp_breakdown.len(), 1);
+        assert_eq!(gp_breakdown[0].0, SurfaceType::Asphalt);
+        assert!((gp_breakdown[0].1 - 100.0).abs() < 1e-3);
+        assert_eq!(gp.surface_summary_string(), "100% Asphalt");
+        assert!(gp.total_length_m() > 400.0);
+
+        let rally = oasis_rally();
+        let rally_breakdown = rally.surface_breakdown();
+        assert_eq!(rally_breakdown.len(), 1);
+        assert_eq!(rally_breakdown[0].0, SurfaceType::Dirt);
+        assert!((rally_breakdown[0].1 - 100.0).abs() < 1e-3);
+        assert_eq!(rally.surface_summary_string(), "100% Dirt");
+
+        // Custom mixed-surface spline
+        let mut mixed = classic_grand_prix();
+        let n = mixed.spline.waypoints.len();
+        for i in 0..n / 2 {
+            mixed.spline.waypoints[i].surface = Some(SurfaceType::Dirt);
+        }
+        mixed.rebuild_geometry(5.0, BarrierType::Concrete);
+        let mixed_breakdown = mixed.surface_breakdown();
+        assert_eq!(mixed_breakdown.len(), 2);
+        let summary = mixed.surface_summary_string();
+        assert!(summary.contains("Dirt") && summary.contains("Asphalt"));
     }
 }

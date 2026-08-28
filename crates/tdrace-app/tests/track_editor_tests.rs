@@ -585,3 +585,68 @@ fn test_editor_camera_progressive_zoom_in_out() {
     assert_eq!(camera.target_zoom, camera.max_zoom);
 }
 
+#[test]
+fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_editor_overwrite_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let mut manager = TrackManager::new(temp_dir.clone());
+
+    // 1. Initial track creation and save
+    let mut track = classic_grand_prix();
+    track.name = "Original Circuit".to_string();
+    let initial_path = manager
+        .save_custom_track_with_options(&track, Some("original_circuit"), true)
+        .expect("Initial save must succeed");
+
+    // 2. Simulate loading track into editor state
+    let choice = TrackChoice::Custom {
+        id: "original_circuit".to_string(),
+        title: "Original Circuit".to_string(),
+        description: "Desc".to_string(),
+        path: initial_path.clone(),
+    };
+    let loaded_track = manager.load_track(&choice).expect("Must load track");
+    let mut editor_state = EditorState::new(loaded_track);
+    editor_state.current_file_path = Some(initial_path.clone());
+
+    assert_eq!(editor_state.current_file_path, Some(initial_path.clone()));
+
+    // 3. User modifies the track name and description
+    editor_state.record_undo();
+    editor_state.track.name = "Updated Circuit".to_string();
+    editor_state.track.description = "Updated circuit description with high speed turns.".to_string();
+
+    // 4. Overwrite existing track
+    let slug = std::path::Path::new(editor_state.current_file_path.as_ref().unwrap())
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .map(|s| s.to_string());
+    assert_eq!(slug, Some("original_circuit".to_string()));
+
+    let overwritten_path = manager
+        .save_custom_track_with_options(&editor_state.track, slug.as_deref(), true)
+        .expect("Overwrite save must succeed");
+    assert_eq!(overwritten_path, initial_path);
+
+    // Verify overwritten content
+    let verify_track = Track::load_from_file(&overwritten_path).expect("Must load overwritten file");
+    assert_eq!(verify_track.name, "Updated Circuit");
+    assert_eq!(verify_track.description, "Updated circuit description with high speed turns.");
+
+    // 5. User chooses "Save as Copy" (overwrite: false)
+    let copy_path = manager
+        .save_custom_track_with_options(&editor_state.track, slug.as_deref(), false)
+        .expect("Save as copy must succeed");
+    assert_ne!(copy_path, initial_path);
+    assert!(copy_path.contains("original_circuit_1.json"));
+    assert!(std::path::Path::new(&initial_path).exists());
+    assert!(std::path::Path::new(&copy_path).exists());
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
