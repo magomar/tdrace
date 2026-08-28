@@ -177,7 +177,12 @@ use super::profile_ui::render_profile_badge;
 #[allow(clippy::too_many_arguments)]
 pub fn render_track_select_menu(
     fonts: &Fonts,
+    active_module_id: &str,
+    module_title: &str,
+    module_subtitle: &str,
+    module_accent: Color,
     available_tracks: &[TrackChoice],
+    available_vehicles: &[(&str, &str, &str, (f32, f32, f32, f32))],
     selected_track_idx: usize,
     selected_car_idx: usize,
     num_bots: usize,
@@ -195,20 +200,19 @@ pub fn render_track_select_menu(
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.05, 0.06, 0.09, 0.98));
 
     // Header Title
-    let title = "TDRACE ARCADE RACING";
     fonts.draw_display_centered_with_shadow(
-        title,
+        module_title,
         sw * 0.5,
-        scaler.s(34.0),
-        scaler.font_s(34.0),
-        Palette::NEON_GOLD,
+        scaler.s(32.0),
+        scaler.font_s(32.0),
+        module_accent,
         Color::new(0.0, 0.0, 0.0, 0.6),
         scaler.s(2.0),
     );
 
-    let subtitle = "Modern Cross-Platform 2D Motorsport Simulation & Visuals";
+    let sub_str = format!("{} • [G / TAB] Switch Motorsport Hub", module_subtitle);
     fonts.draw_ui_regular_centered(
-        subtitle,
+        &sub_str,
         sw * 0.5,
         scaler.s(52.0),
         scaler.font_s(13.0),
@@ -238,7 +242,7 @@ pub fn render_track_select_menu(
         col1_x,
         curr_y + scaler.s(13.0),
         scaler.font_s(15.0),
-        Palette::NEON_CYAN,
+        module_accent,
     );
     curr_y += scaler.s(22.0);
 
@@ -266,7 +270,7 @@ pub fn render_track_select_menu(
                 Palette::UI_CARD_BG
             };
             let border_col = if is_sel {
-                Palette::NEON_CYAN
+                module_accent
             } else {
                 Palette::UI_CARD_BORDER
             };
@@ -274,7 +278,7 @@ pub fn render_track_select_menu(
             scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
 
             // Tag pill
-            let tag_col = if is_sel { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+            let tag_col = if is_sel { module_accent } else { Palette::UI_TEXT_MUTED };
             fonts.draw_ui_bold(
                 track_opt.tag(),
                 col1_x + scaler.s(14.0),
@@ -352,11 +356,11 @@ pub fn render_track_select_menu(
         col2_x,
         c2_y + scaler.s(13.0),
         scaler.font_s(16.0),
-        Palette::NEON_MAGENTA,
+        module_accent,
     );
     c2_y += scaler.s(22.0);
 
-    for (i, car_opt) in CarChoice::ALL.iter().enumerate() {
+    for (i, &(v_title, v_tag, v_desc, (spd, acc, grip, drift))) in available_vehicles.iter().enumerate() {
         let is_sel = i == selected_car_idx;
         let box_h = scaler.s(58.0);
         let bg_col = if is_sel {
@@ -365,7 +369,7 @@ pub fn render_track_select_menu(
             Palette::UI_CARD_BG
         };
         let border_col = if is_sel {
-            Palette::NEON_MAGENTA
+            module_accent
         } else {
             Palette::UI_CARD_BORDER
         };
@@ -373,9 +377,9 @@ pub fn render_track_select_menu(
         scaler.draw_glass_card(col2_x, c2_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
 
         // Tag pill
-        let tag_col = if is_sel { Palette::NEON_MAGENTA } else { Palette::UI_TEXT_MUTED };
+        let tag_col = if is_sel { module_accent } else { Palette::UI_TEXT_MUTED };
         fonts.draw_ui_bold(
-            car_opt.tag(),
+            v_tag,
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(16.0),
             scaler.font_s(11.0),
@@ -384,7 +388,7 @@ pub fn render_track_select_menu(
 
         let title_col = if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) };
         fonts.draw_ui_bold(
-            car_opt.title(),
+            v_title,
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(34.0),
             scaler.font_s(17.0),
@@ -392,7 +396,6 @@ pub fn render_track_select_menu(
         );
 
         // Stats mini-bars on right of card
-        let (spd, acc, grip, drift) = car_opt.stats();
         let stat_x = col2_x + col_w - scaler.s(120.0);
         render_stat_bar(scaler, fonts, stat_x, c2_y + scaler.s(12.0), "SPD", spd, Palette::NEON_CYAN);
         render_stat_bar(scaler, fonts, stat_x, c2_y + scaler.s(24.0), "ACC", acc, Palette::NEON_GOLD);
@@ -400,7 +403,7 @@ pub fn render_track_select_menu(
         render_stat_bar(scaler, fonts, stat_x, c2_y + scaler.s(48.0), "DFT", drift, Palette::NEON_MAGENTA);
 
         fonts.draw_ui_regular(
-            car_opt.description(),
+            v_desc,
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(49.0),
             scaler.font_s(11.5),
@@ -410,9 +413,22 @@ pub fn render_track_select_menu(
         c2_y += box_h + scaler.s(8.0);
     }
 
+    // Championship / Season Action Banner
+    let (champ_title, champ_sub, champ_col) = match active_module_id {
+        "f1" => ("[F] START FIA FORMULA 1 WORLD CHAMPIONSHIP (4 ROUNDS)", "Official Season • Qualifying • Standings • 25pt Matrix", Palette::RED),
+        "rally" => ("[F] START WRC STAGE RALLY TIME TRIAL", "Timed Stages • Split Sectors • Time Penalties", Palette::NEON_GOLD),
+        "kart" => ("[F] START SPRINT ELIMINATION CUP", "Knockout Heats • Last Place Elimination", Palette::NEON_GREEN),
+        _ => ("[G / TAB] MOTORSPORT GRAND HUB", "Switch between F1, Rally, Karting & Classic Arcade", Palette::NEON_CYAN),
+    };
+    c2_y += scaler.s(2.0);
+    let champ_h = scaler.s(48.0);
+    scaler.draw_glass_card(col2_x, c2_y, col_w, champ_h, Palette::UI_CARD_BG, champ_col, 1.8);
+    fonts.draw_ui_bold(champ_title, col2_x + scaler.s(14.0), c2_y + scaler.s(20.0), scaler.font_s(13.5), champ_col);
+    fonts.draw_ui_regular(champ_sub, col2_x + scaler.s(14.0), c2_y + scaler.s(38.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
+    c2_y += champ_h + scaler.s(8.0);
+
     // Mode Setting & Bot Count Card
-    c2_y += scaler.s(4.0);
-    let mode_h = scaler.s(56.0);
+    let mode_h = scaler.s(52.0);
     scaler.draw_glass_card(col2_x, c2_y, col_w, mode_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
 
     let mode_str = if is_time_attack {
@@ -423,22 +439,21 @@ pub fn render_track_select_menu(
     fonts.draw_ui_bold(
         &mode_str,
         col2_x + scaler.s(14.0),
-        c2_y + scaler.s(22.0),
-        scaler.font_s(15.0),
+        c2_y + scaler.s(20.0),
+        scaler.font_s(14.5),
         Palette::NEON_GOLD,
     );
     fonts.draw_ui_regular(
         "Mode: [T] | Bots: [B] | [D] Driver Dossier & Roster",
         col2_x + scaler.s(14.0),
-        c2_y + scaler.s(42.0),
-        scaler.font_s(12.0),
+        c2_y + scaler.s(38.0),
+        scaler.font_s(11.5),
         Palette::UI_TEXT_MUTED,
     );
 
-
     // Driver Assists Profile Setting Card
     c2_y += mode_h + scaler.s(8.0);
-    let assist_h = scaler.s(56.0);
+    let assist_h = scaler.s(52.0);
     scaler.draw_glass_card(col2_x, c2_y, col_w, assist_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
 
     let assist_str = format!("DRIVE ASSISTS: [H] {}", assist_profile.title());
@@ -450,15 +465,15 @@ pub fn render_track_select_menu(
     fonts.draw_ui_bold(
         &assist_str,
         col2_x + scaler.s(14.0),
-        c2_y + scaler.s(22.0),
-        scaler.font_s(15.0),
+        c2_y + scaler.s(20.0),
+        scaler.font_s(14.5),
         assist_col,
     );
     fonts.draw_ui_regular(
         assist_profile.description(),
         col2_x + scaler.s(14.0),
-        c2_y + scaler.s(42.0),
-        scaler.font_s(12.0),
+        c2_y + scaler.s(38.0),
+        scaler.font_s(11.5),
         Palette::UI_TEXT_MUTED,
     );
 

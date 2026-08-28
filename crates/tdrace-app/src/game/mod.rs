@@ -510,6 +510,90 @@ impl RaceSession {
         }
     }
 
+    /// Returns available circuits for the active motorsport game module.
+    pub fn active_module_tracks(&self) -> Vec<TrackChoice> {
+        match self.active_module_id {
+            "f1" => vec![
+                TrackChoice::Custom {
+                    id: "monza".to_string(),
+                    title: "Monza Autodromo Nazionale".to_string(),
+                    description: "High-speed Italian GP circuit with Rettifilo, Roggia & Ascari chicanes.".to_string(),
+                    path: "f1/monza".to_string(),
+                },
+                TrackChoice::Custom {
+                    id: "spa".to_string(),
+                    title: "Circuit de Spa-Francorchamps".to_string(),
+                    description: "Belgian GP circuit with Eau Rouge & Kemmel Straight.".to_string(),
+                    path: "f1/spa".to_string(),
+                },
+                TrackChoice::Custom {
+                    id: "silverstone".to_string(),
+                    title: "Silverstone Grand Prix Circuit".to_string(),
+                    description: "British GP high-speed sweeping Maggotts-Becketts curves.".to_string(),
+                    path: "f1/silverstone".to_string(),
+                },
+                TrackChoice::ClassicGrandPrix,
+            ],
+            "rally" => vec![
+                TrackChoice::OasisRally,
+                TrackChoice::OutlawPass,
+                TrackChoice::Custom {
+                    id: "sahara".to_string(),
+                    title: "Sahara Dunes Stage".to_string(),
+                    description: "Fast undulating desert sand dunes and high-drift crests.".to_string(),
+                    path: "rally/sahara".to_string(),
+                },
+            ],
+            "kart" => vec![
+                TrackChoice::KartArena,
+                TrackChoice::DriftPark,
+            ],
+            _ => self.track_manager.main_track_choices(),
+        }
+    }
+
+    /// Returns available vehicles for the active motorsport game module.
+    pub fn active_module_vehicles(&self) -> Vec<(&'static str, &'static str, &'static str, (f32, f32, f32, f32))> {
+        match self.active_module_id {
+            "f1" => vec![
+                ("1050 BHP Hybrid F1 Turbo", "OPEN-WHEEL HYBRID", "346 km/h top speed, massive downforce (Cl=3.4), carbon brakes.", (0.99, 0.99, 0.99, 0.30)),
+                ("Monza Low-Drag Aero Spec", "LOW DRAG VMAX", "Reduced wing angle for 354 km/h straight-line top speed.", (1.00, 0.96, 0.90, 0.35)),
+            ],
+            "rally" => vec![
+                ("AWD Turbo Rally Spec", "WRC AWD DIRT", "All-wheel-drive with 50/50 torque split and long-travel suspension.", (0.85, 0.92, 0.88, 0.90)),
+                ("Group B Turbo Monster", "GROUP B LEGEND", "520 BHP 1980s twin-charge monster with flame-spitting anti-lag.", (0.95, 0.98, 0.75, 0.98)),
+            ],
+            "kart" => vec![
+                ("125cc Shifter Kart Super Sprint", "125cc 2-STROKE", "Lightweight 180kg tubular chassis, direct 1:1 steering, 3.5g apex grip.", (0.70, 0.98, 0.98, 0.40)),
+                ("100cc Direct Drive Sprint", "100cc CLUTCHLESS", "High-revving direct-drive kart with ultra sharp throttle response.", (0.65, 0.95, 0.99, 0.45)),
+            ],
+            _ => vec![
+                (CarChoice::SportsCar.title(), CarChoice::SportsCar.tag(), CarChoice::SportsCar.description(), CarChoice::SportsCar.stats()),
+                (CarChoice::DriftCar.title(), CarChoice::DriftCar.tag(), CarChoice::DriftCar.description(), CarChoice::DriftCar.stats()),
+                (CarChoice::Kart.title(), CarChoice::Kart.tag(), CarChoice::Kart.description(), CarChoice::Kart.stats()),
+                (CarChoice::RallyCar.title(), CarChoice::RallyCar.tag(), CarChoice::RallyCar.description(), CarChoice::RallyCar.stats()),
+            ],
+        }
+    }
+
+    /// Loads the track corresponding to a TrackChoice respecting specialized modules.
+    pub fn load_track_for_session(&self, choice: &TrackChoice) -> Track {
+        match choice {
+            TrackChoice::Custom { id, .. } if id == "monza" => F1GameModule::track_monza(),
+            TrackChoice::Custom { id, .. } if id == "spa" => F1GameModule::track_spa(),
+            TrackChoice::Custom { id, .. } if id == "silverstone" => F1GameModule::track_silverstone(),
+            TrackChoice::Custom { id, .. } if id == "sahara" => tdrace_core::track::presets::sahara_dunes(),
+            TrackChoice::OasisRally => tdrace_core::track::presets::oasis_rally(),
+            TrackChoice::OutlawPass => tdrace_core::track::presets::outlaw_pass(),
+            TrackChoice::KartArena => tdrace_core::track::presets::kart_arena(),
+            TrackChoice::DriftPark => tdrace_core::track::presets::drift_park(),
+            TrackChoice::ClassicGrandPrix => tdrace_core::track::presets::classic_grand_prix(),
+            TrackChoice::OvalSpeedway => tdrace_core::track::presets::oval_speedway(),
+            TrackChoice::RampRaceway => tdrace_core::track::presets::ramp_raceway(),
+            _ => self.track_manager.load_track(choice).unwrap_or_else(|_| classic_grand_prix()),
+        }
+    }
+
     /// Switches the active motorsport game module (f1, rally, kart, classic).
     pub fn switch_to_module(&mut self, mod_id: &str) {
         match mod_id {
@@ -523,13 +607,15 @@ impl RaceSession {
     /// Activates the Formula 1 Grand Prix module.
     pub fn switch_to_f1(&mut self) {
         self.active_module_id = "f1";
+        self.menu_track_idx = 0;
+        self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::OpenWheel {
             front_wing_span: 1.80,
             rear_wing_height: 0.85,
             halo: true,
         };
-        self.track = F1GameModule::track_monza();
-        self.track_choice = TrackChoice::ClassicGrandPrix;
+        self.track_choice = self.active_module_tracks()[0].clone();
+        self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::SportsCar;
         self.total_laps = 5;
         self.num_bots = 7;
@@ -541,13 +627,15 @@ impl RaceSession {
     /// Activates the World Rally Championship module.
     pub fn switch_to_rally(&mut self) {
         self.active_module_id = "rally";
+        self.menu_track_idx = 0;
+        self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::RallyHatch {
             roof_scoop: true,
             mudflaps: true,
             large_wing: true,
         };
-        self.track_choice = TrackChoice::OasisRally;
-        self.track = tdrace_core::track::presets::oasis_rally();
+        self.track_choice = self.active_module_tracks()[0].clone();
+        self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::RallyCar;
         self.total_laps = 3;
         self.num_bots = 5;
@@ -559,12 +647,14 @@ impl RaceSession {
     /// Activates the Sprint Karting Cup module.
     pub fn switch_to_kart(&mut self) {
         self.active_module_id = "kart";
+        self.menu_track_idx = 0;
+        self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::GoKart {
             exposed_driver: true,
             side_bumpers: true,
         };
-        self.track_choice = TrackChoice::KartArena;
-        self.track = tdrace_core::track::presets::kart_arena();
+        self.track_choice = self.active_module_tracks()[0].clone();
+        self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::Kart;
         self.total_laps = 4;
         self.num_bots = 7;
@@ -576,6 +666,8 @@ impl RaceSession {
     /// Activates the Classic Arcade Motorsport module.
     pub fn switch_to_classic(&mut self) {
         self.active_module_id = "classic";
+        self.menu_track_idx = 0;
+        self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::TouringGT {
             widebody: true,
             gt_wing: true,
@@ -788,10 +880,7 @@ impl RaceSession {
         self.refresh_hof_entries();
 
         // 1. Build selected track
-        self.track = self
-            .track_manager
-            .load_track(&self.track_choice)
-            .unwrap_or_else(|_| classic_grand_prix());
+        self.track = self.load_track_for_session(&self.track_choice);
 
         // Predefined balanced lap count from track
         self.total_laps = self.track.default_laps;
@@ -1694,8 +1783,13 @@ impl RaceSession {
             return;
         }
 
-        let available_tracks = self.track_manager.main_track_choices();
-        let total_items = available_tracks.len() + 1; // +1 for the dedicated Track Manager entry
+        let available_tracks = self.active_module_tracks();
+        let available_vehicles = self.active_module_vehicles();
+        let total_items = if self.active_module_id == "classic" {
+            available_tracks.len() + 1 // +1 for the dedicated Track Manager entry
+        } else {
+            available_tracks.len()
+        };
         if self.menu_track_idx >= total_items {
             self.menu_track_idx = 0;
         }
@@ -1718,14 +1812,34 @@ impl RaceSession {
         if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
             self.audio.play_sfx(SfxType::UiMove);
             if self.menu_car_idx == 0 {
-                self.menu_car_idx = CarChoice::ALL.len() - 1;
+                self.menu_car_idx = available_vehicles.len().saturating_sub(1);
             } else {
                 self.menu_car_idx -= 1;
             }
         }
         if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
             self.audio.play_sfx(SfxType::UiMove);
-            self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
+            self.menu_car_idx = (self.menu_car_idx + 1) % available_vehicles.len();
+        }
+
+        // Launch Championship / Tournament (F key)
+        if is_key_pressed(KeyCode::F) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            match self.active_module_id {
+                "f1" => {
+                    self.start_f1_championship();
+                    return;
+                }
+                "rally" => {
+                    self.init_race();
+                    return;
+                }
+                "kart" => {
+                    self.init_race();
+                    return;
+                }
+                _ => {}
+            }
         }
 
         // Toggle Mode (Time Attack vs Race vs AI - T key or Gamepad X)
@@ -1749,13 +1863,9 @@ impl RaceSession {
         // Open Track Editor (E key)
         if is_key_pressed(KeyCode::E) {
             self.audio.play_sfx(SfxType::UiSelect);
-            let available_tracks = self.track_manager.main_track_choices();
             if self.menu_track_idx < available_tracks.len() {
                 let chosen = available_tracks[self.menu_track_idx].clone();
-                let track = self
-                    .track_manager
-                    .load_track(&chosen)
-                    .unwrap_or_else(|_| classic_grand_prix());
+                let track = self.load_track_for_session(&chosen);
                 self.enter_track_editor(track);
             } else {
                 // If cursor is on the Track Manager entry, open Track Manager
@@ -1776,10 +1886,14 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_a_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            let available_tracks = self.track_manager.main_track_choices();
             if self.menu_track_idx < available_tracks.len() {
                 self.track_choice = available_tracks[self.menu_track_idx].clone();
-                self.car_choice = CarChoice::ALL[self.menu_car_idx];
+                self.car_choice = match self.active_module_id {
+                    "f1" => CarChoice::SportsCar,
+                    "rally" => CarChoice::RallyCar,
+                    "kart" => CarChoice::Kart,
+                    _ => CarChoice::ALL[self.menu_car_idx.min(CarChoice::ALL.len() - 1)],
+                };
                 self.init_race();
             } else {
                 // User pressed Confirm on the dedicated "Track Manager" entry!
@@ -2493,10 +2607,22 @@ impl RaceSession {
     pub fn render(&mut self) {
         match self.state {
             GameState::Menu => {
-                let available_tracks = self.track_manager.main_track_choices();
+                let available_tracks = self.active_module_tracks();
+                let available_vehicles = self.active_module_vehicles();
+                let (mod_title, mod_sub, mod_accent) = match self.active_module_id {
+                    "f1" => ("FORMULA 1 GRAND PRIX", "FIA Hybrid Turbo Championship", Palette::RED),
+                    "rally" => ("WORLD RALLY CHAMPIONSHIP", "WRC AWD Dirt & Gravel Stages", Palette::NEON_GOLD),
+                    "kart" => ("SPRINT KARTING CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
+                    _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
+                };
                 render_track_select_menu(
                     &self.fonts,
+                    self.active_module_id,
+                    mod_title,
+                    mod_sub,
+                    mod_accent,
                     &available_tracks,
+                    &available_vehicles,
                     self.menu_track_idx,
                     self.menu_car_idx,
                     self.num_bots,
