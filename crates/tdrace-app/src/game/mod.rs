@@ -95,9 +95,9 @@ use crate::ui::font::Fonts;
 use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
 use crate::ui::hud::render_hud;
 use crate::ui::menu::{
-    render_championship_standings_screen, render_controls_screen, render_module_select_menu,
-    render_pause_menu, render_results_screen, render_track_select_menu, CarChoice, RaceResultEntry,
-    TrackChoice,
+    render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
+    render_module_select_menu, render_pause_menu, render_results_screen, render_track_select_menu,
+    CarChoice, RaceResultEntry, TrackChoice,
 };
 use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
 use crate::ui::starting_grid::render_starting_grid_screen;
@@ -210,6 +210,7 @@ pub struct RaceSession {
     pub menu_track_idx: usize,
     pub menu_car_idx: usize,
     pub assist_profile: AssistProfile,
+    pub show_exit_confirm: bool,
 
     // Track Editor & Test Drive state
     pub editor_state: Option<EditorState>,
@@ -415,6 +416,7 @@ impl RaceSession {
 
             menu_track_idx: 0,
             menu_car_idx: 0,
+            show_exit_confirm: false,
             editor_state: None,
             editor_camera,
             editor_tools: ToolSettings::default(),
@@ -1730,8 +1732,47 @@ impl RaceSession {
         // Check for gamepad mapping changes on disk when in/reloading the main menu
         self.input.gamepad.check_and_reload_profile();
 
-        // Open Controls & Gamepad Screen (C / K key or Gamepad Select)
-        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) || self.input.gamepad.snapshot.btn_back_pressed {
+        // If exit confirmation modal is currently open:
+        if self.show_exit_confirm {
+            // Confirm Exit: Enter, KpEnter, Space, Y, or Gamepad Confirm (A / Start)
+            if is_key_pressed(KeyCode::Enter)
+                || is_key_pressed(KeyCode::KpEnter)
+                || is_key_pressed(KeyCode::Space)
+                || is_key_pressed(KeyCode::Y)
+                || self.input.gamepad.snapshot.btn_confirm_pressed
+                || self.input.gamepad.snapshot.btn_a_pressed
+                || self.input.gamepad.snapshot.btn_start_pressed
+            {
+                std::process::exit(0);
+            }
+
+            // Cancel / Dismiss Exit Dialog: Escape, N, or Gamepad Cancel (B / Back / Select)
+            if is_key_pressed(KeyCode::Escape)
+                || is_key_pressed(KeyCode::N)
+                || self.input.gamepad.snapshot.btn_cancel_pressed
+                || self.input.gamepad.snapshot.btn_b_pressed
+                || self.input.gamepad.snapshot.btn_back_pressed
+            {
+                self.audio.play_sfx(SfxType::UiSelect);
+                self.show_exit_confirm = false;
+            }
+
+            return;
+        }
+
+        // Open Exit Confirmation modal (Escape key or Gamepad B / Cancel / Back)
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_cancel_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.show_exit_confirm = true;
+            return;
+        }
+
+        // Open Controls & Gamepad Screen (C / K key)
+        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::ControlsHelp(false);
             return;
@@ -2632,6 +2673,9 @@ impl RaceSession {
                     &self.active_profile,
                     &self.active_profile_stats,
                 );
+                if self.show_exit_confirm {
+                    render_exit_confirm_modal(&self.fonts);
+                }
             }
             GameState::ModuleSelect { selected_idx } => {
                 let modules_data = [

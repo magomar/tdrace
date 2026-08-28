@@ -145,3 +145,20 @@ fn test_session_update_state_preservation_and_race_start() {
     assert_eq!(session.state, GameState::ControlsHelp(false));
 }
 
+#[test]
+fn test_main_menu_exit_confirmation_state() {
+    let mut session = RaceSession::new();
+    assert_eq!(session.state, GameState::Menu);
+    assert!(!session.show_exit_confirm);
+
+    // Triggering exit confirmation modal
+    session.show_exit_confirm = true;
+    assert!(session.show_exit_confirm, "show_exit_confirm should be true when exit modal is open");
+    assert_eq!(session.state, GameState::Menu, "State should remain GameState::Menu");
+
+    // Dismissing exit confirmation modal
+    session.show_exit_confirm = false;
+    assert!(!session.show_exit_confirm, "show_exit_confirm should be false after dismissal");
+    assert_eq!(session.state, GameState::Menu, "State should remain GameState::Menu");
+}
+

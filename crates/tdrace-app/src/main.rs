@@ -22,19 +22,20 @@ async fn main() {
     // Parse CLI arguments for direct motorsport module or championship launch
     let args: Vec<String> = std::env::args().collect();
     for (i, arg) in args.iter().enumerate() {
-        if arg == "--module" || arg == "-m" {
+        let clean_arg = arg.trim_start_matches('-');
+        if arg == "--module" || arg == "-m" || clean_arg == "module" {
             if let Some(mod_name) = args.get(i + 1) {
-                session.switch_to_module(mod_name);
+                session.switch_to_module(mod_name.trim_start_matches('-'));
             }
-        } else if arg == "--f1" {
+        } else if clean_arg == "f1" {
             session.switch_to_f1();
-        } else if arg == "--rally" {
+        } else if clean_arg == "rally" {
             session.switch_to_rally();
-        } else if arg == "--kart" {
+        } else if clean_arg == "kart" {
             session.switch_to_kart();
-        } else if arg == "--classic" {
+        } else if clean_arg == "classic" {
             session.switch_to_classic();
-        } else if arg == "--championship" || arg == "--f1-championship" {
+        } else if clean_arg == "championship" || clean_arg == "f1-championship" {
             session.start_f1_championship();
         }
     }
