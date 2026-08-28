@@ -1444,7 +1444,7 @@ fn render_diagnostics_modal(
     fonts.draw_display_centered("CIRCUIT DIAGNOSTICS", sw * 0.5, my + scaler.s(32.0), scaler.font_s(22.0), Palette::NEON_GOLD);
 
     let status_str = if is_valid {
-        "✓ All checks passed! Circuit is 100% race ready."
+        "[OK] All checks passed! Circuit is 100% race ready."
     } else {
         "! Issues found that prevent championship race qualification."
     };
