@@ -82,6 +82,8 @@ pub struct Track {
     pub default_laps: u32,
     #[serde(default)]
     pub predefined_car: Option<String>,
+    #[serde(default)]
+    pub module_id: Option<String>,
 }
 
 impl Track {

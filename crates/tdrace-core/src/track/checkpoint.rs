@@ -33,6 +33,9 @@ pub struct Checkpoint {
     pub is_pit_exit: bool,
     /// Arc-length distance along the spline in meters.
     pub target_distance: f32,
+    /// Track surface elevation at this checkpoint in meters (default: 0.0).
+    #[serde(default)]
+    pub elevation: f32,
 }
 
 impl Checkpoint {
@@ -52,6 +55,7 @@ impl Checkpoint {
             is_pit_entry: false,
             is_pit_exit: false,
             target_distance: 0.0,
+            elevation: 0.0,
         }
     }
 
@@ -63,6 +67,11 @@ impl Checkpoint {
 
     pub fn with_target_distance(mut self, distance: f32) -> Self {
         self.target_distance = distance;
+        self
+    }
+
+    pub fn with_elevation(mut self, elevation: f32) -> Self {
+        self.elevation = elevation;
         self
     }
 

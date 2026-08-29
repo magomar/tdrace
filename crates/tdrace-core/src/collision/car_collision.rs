@@ -23,7 +23,7 @@ pub fn resolve_car_car_collision(
     restitution: f32,
     friction: f32,
 ) -> Option<CarCarCollisionEvent> {
-    if (car_a.state.elevation - car_b.state.elevation).abs() > 1.2 {
+    if (car_a.total_elevation() - car_b.total_elevation()).abs() > 1.2 {
         return None;
     }
     let obb_a = OrientedBox::from_car(car_a);

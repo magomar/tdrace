@@ -153,7 +153,10 @@ pub struct CarState {
     pub esc_active: bool,
     /// Whether Anti-lock Braking System (ABS) is actively modulating brake force.
     pub abs_active: bool,
-    /// Elevation / vertical altitude above ground in meters (z >= 0.0).
+    /// Road surface elevation underneath the vehicle in meters (z >= 0.0).
+    #[serde(default)]
+    pub road_elevation: f32,
+    /// Elevation / vertical jump altitude above road in meters (z >= 0.0).
     pub elevation: f32,
     /// Vertical velocity in m/s (positive = ascending, negative = falling).
     pub vertical_velocity: f32,
@@ -189,6 +192,7 @@ impl Default for CarState {
             tcs_active: false,
             esc_active: false,
             abs_active: false,
+            road_elevation: 0.0,
             elevation: 0.0,
             vertical_velocity: 0.0,
             is_airborne: false,
@@ -220,6 +224,12 @@ impl Car {
         self.state.position = position;
         self.state.angle = normalize_angle(angle);
         self
+    }
+
+    /// Returns total vehicle vertical altitude above ground (road elevation + jump height).
+    #[inline]
+    pub fn total_elevation(&self) -> f32 {
+        self.state.road_elevation + self.state.elevation
     }
 
     /// Gets an immutable reference to the car's current state.

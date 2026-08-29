@@ -94,7 +94,13 @@ pub fn generate_walls_from_spline(
     let mut right_pts = Vec::with_capacity(n);
 
     for s in &spline.samples {
-        let half_w = s.width * 0.5 + barrier_offset;
+        // Taper barrier offset down to touch the track/curbs on elevated bridge sections
+        let elev_factor = (s.elevation / 2.5).clamp(0.0, 1.0);
+        let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.0 };
+        let bridge_offset = curb_extra + 0.15;
+        let offset = barrier_offset * (1.0 - elev_factor) + bridge_offset * elev_factor;
+
+        let half_w = s.width * 0.5 + offset;
         left_pts.push(s.point + s.normal * half_w);
         right_pts.push(s.point - s.normal * half_w);
     }
@@ -108,16 +114,19 @@ pub fn generate_walls_from_spline(
     let seg_count_left = if spline.closed { left_pts.len() } else { left_pts.len().saturating_sub(1) };
     for i in 0..seg_count_left {
         let next_i = (i + 1) % left_pts.len();
-        left_walls.push(WallBarrier::new(left_pts[i], left_pts[next_i], barrier_type));
+        let elev = (spline.samples[i % n].elevation + spline.samples[next_i % n].elevation) * 0.5;
+        left_walls.push(WallBarrier::with_elevation(left_pts[i], left_pts[next_i], barrier_type, elev));
     }
 
     let seg_count_right = if spline.closed { right_pts.len() } else { right_pts.len().saturating_sub(1) };
     for i in 0..seg_count_right {
         let next_i = (i + 1) % right_pts.len();
-        right_walls.push(WallBarrier::new(
+        let elev = (spline.samples[i % n].elevation + spline.samples[next_i % n].elevation) * 0.5;
+        right_walls.push(WallBarrier::with_elevation(
             right_pts[i],
             right_pts[next_i],
             barrier_type,
+            elev,
         ));
     }
 
@@ -153,6 +162,7 @@ pub fn generate_checkpoints(
             is_finish,
         );
         cp.target_distance = dist;
+        cp.elevation = sample.elevation;
         checkpoints.push(cp);
     }
 
@@ -299,6 +309,7 @@ pub fn classic_grand_prix() -> Track {
         }),
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
+        module_id: Some("classic".to_string()),
     }
 }
 
@@ -349,64 +360,60 @@ pub fn oval_speedway() -> Track {
         pit_box_area: None,
         default_laps: 5,
         predefined_car: Some("sports_car".to_string()),
+        module_id: Some("classic".to_string()),
     }
 }
 
 /// Preset 3: Drift Park
-/// Technical hairpin turns, wide sliding transitions, sand traps, clipping point curbs.
+/// High drift circuit with sweeping corners, asphalt runoff, tire stacks and clipping cones.
 pub fn drift_park() -> Track {
     let waypoints = vec![
-        // Launch Straight & Start/Finish
-        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
-        TrackWaypoint::new(Vec2::new(80.0, 0.0), 14.0),
-        // Hairpin 1 (Right Hand 180)
-        TrackWaypoint::new(Vec2::new(130.0, 25.0), 15.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(130.0, 75.0), 15.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(70.0, 90.0), 15.0).with_curbs(false, true),
-        // Transition S-Turn
-        TrackWaypoint::new(Vec2::new(10.0, 70.0), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-40.0, 110.0), 15.0).with_curbs(false, true),
-        // Hairpin 2 (Left Hand 180)
-        TrackWaypoint::new(Vec2::new(-80.0, 160.0), 15.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-120.0, 130.0), 15.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-90.0, 70.0), 14.0).with_curbs(true, false),
-        // Carousel / Donut Section (Wide, sweeping multi-apex drift corner)
-        TrackWaypoint::new(Vec2::new(-45.0, 60.0), 14.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-15.0, 40.0), 15.0).with_curbs(true, true),
-        TrackWaypoint::new(Vec2::new(-20.0, 15.0), 15.0).with_curbs(true, true),
-        TrackWaypoint::new(Vec2::new(-65.0, 15.0), 14.5).with_curbs(false, true),
-        // Switchback & Final Corner onto Launch Straight
-        TrackWaypoint::new(Vec2::new(-105.0, -5.0), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-80.0, -25.0), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-30.0, -15.0), 14.0).with_curbs(false, true),
+        // Start straight
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
+        TrackWaypoint::new(Vec2::new(70.0, 0.0), 12.0),
+        // Turn 1 Sweeper Right
+        TrackWaypoint::new(Vec2::new(120.0, 20.0), 14.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(140.0, 60.0), 14.0).with_curbs(true, true),
+        // Turn 2 Left
+        TrackWaypoint::new(Vec2::new(110.0, 100.0), 14.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(70.0, 110.0), 14.0).with_curbs(true, true),
+        // Turn 3 Hairpin Left
+        TrackWaypoint::new(Vec2::new(20.0, 90.0), 12.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(0.0, 60.0), 12.0).with_curbs(true, true),
+        // Turn 4 S-Bend Right
+        TrackWaypoint::new(Vec2::new(-30.0, 40.0), 13.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(-60.0, 20.0), 13.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(-40.0, -10.0), 12.0).with_curbs(true, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
     let (left_walls, right_walls, left_poly, right_poly) =
-        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+        generate_walls_from_spline(&spline, 3.0, BarrierType::TireWall);
 
-    let mut surface_zones = Vec::new();
-    // Sand traps outside hairpin 1 & 2 runoffs (outside track boundaries)
-    surface_zones.push(SurfaceZone::new(
-        SurfaceShape::Aabb {
-            min: Vec2::new(140.0, 10.0),
-            max: Vec2::new(180.0, 95.0),
-        },
-        SurfaceType::Sand,
-        "Drift Sand Trap 1",
-    ));
-    surface_zones.push(SurfaceZone::new(
-        SurfaceShape::Aabb {
-            min: Vec2::new(-170.0, 90.0),
-            max: Vec2::new(-130.0, 180.0),
-        },
-        SurfaceType::Sand,
-        "Drift Sand Trap 2",
-    ));
+    let surface_zones = vec![
+        // Generous asphalt runoff on Turn 1 outer edge
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(130.0, 10.0),
+                max: Vec2::new(165.0, 75.0),
+            },
+            SurfaceType::Asphalt,
+            "Turn 1 Asphalt Runoff",
+        ),
+        // Asphalt runoff on Turn 3 Hairpin outer edge
+        SurfaceZone::new(
+            SurfaceShape::Circle {
+                center: Vec2::new(-5.0, 95.0),
+                radius: 18.0,
+            },
+            SurfaceType::Asphalt,
+            "Turn 3 Runoff Area",
+        ),
+    ];
 
     let obstacles = vec![
-        Obstacle::circle(1, Vec2::new(100.0, 50.0), 1.5, "Drift Clipping Zone 1"),
-        Obstacle::circle(2, Vec2::new(-80.0, 115.0), 1.5, "Drift Clipping Zone 2"),
+        Obstacle::circle(1, Vec2::new(125.0, 45.0), 1.5, "Drift Clipping Zone 1"),
+        Obstacle::circle(2, Vec2::new(80.0, 95.0), 1.5, "Drift Clipping Zone 2"),
         Obstacle::circle(3, Vec2::new(-28.0, 35.0), 1.5, "Drift Clipping Zone 3"),
     ];
 
@@ -433,6 +440,7 @@ pub fn drift_park() -> Track {
         pit_box_area: None,
         default_laps: 3,
         predefined_car: Some("drift_car".to_string()),
+        module_id: Some("kart".to_string()),
     }
 }
 
@@ -485,6 +493,7 @@ pub fn kart_arena() -> Track {
         pit_box_area: None,
         default_laps: 5,
         predefined_car: Some("kart".to_string()),
+        module_id: Some("kart".to_string()),
     }
 }
 
@@ -579,6 +588,7 @@ pub fn ramp_raceway() -> Track {
         pit_box_area: None,
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
+        module_id: Some("classic".to_string()),
     }
 }
 
@@ -673,6 +683,7 @@ pub fn oasis_rally() -> Track {
         pit_box_area: None,
         default_laps: 3,
         predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
     }
 }
 
@@ -746,6 +757,7 @@ pub fn outlaw_pass() -> Track {
         pit_box_area: None,
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
+        module_id: Some("rally".to_string()),
     }
 }
 

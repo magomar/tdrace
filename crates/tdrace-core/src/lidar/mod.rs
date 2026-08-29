@@ -180,20 +180,25 @@ impl LidarScanner {
 
         let max_range = self.config.max_range;
         let max_r_sq = (max_range + 6.0) * (max_range + 6.0);
+        let car_elev = car.total_elevation();
 
-        // Pre-filter candidate walls within sensor range to avoid testing far away segments
+        // Pre-filter candidate walls within sensor range and vertical elevation proximity
         let candidate_walls: Vec<&crate::track::geometry::WallBarrier> = track
             .geometry
             .all_walls()
             .filter(|w| {
+                if (car_elev - w.elevation).abs() > 2.0 {
+                    return false;
+                }
                 let mid = (w.segment.start + w.segment.end) * 0.5;
                 mid.distance_squared(sensor_pos) < max_r_sq
             })
             .collect();
 
-        // Precompute opponent bounding boxes and velocities
+        // Precompute opponent bounding boxes and velocities (filtered by elevation)
         let opponent_obbs: Vec<(OrientedBox, Vec2)> = opponents
             .iter()
+            .filter(|opp| (car_elev - opp.total_elevation()).abs() <= 2.0)
             .map(|opp| (OrientedBox::from_car(opp), opp.state.velocity))
             .collect();
 

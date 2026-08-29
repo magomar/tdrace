@@ -183,6 +183,8 @@ pub struct WallBarrier {
     pub restitution: f32,
     pub friction: f32,
     pub barrier_type: BarrierType,
+    #[serde(default)]
+    pub elevation: f32,
 }
 
 impl WallBarrier {
@@ -192,6 +194,22 @@ impl WallBarrier {
             restitution: barrier_type.default_restitution(),
             friction: barrier_type.default_friction(),
             barrier_type,
+            elevation: 0.0,
+        }
+    }
+
+    pub fn with_elevation(
+        start: Vec2,
+        end: Vec2,
+        barrier_type: BarrierType,
+        elevation: f32,
+    ) -> Self {
+        Self {
+            segment: LineSegment::new(start, end),
+            restitution: barrier_type.default_restitution(),
+            friction: barrier_type.default_friction(),
+            barrier_type,
+            elevation,
         }
     }
 
@@ -207,6 +225,7 @@ impl WallBarrier {
             restitution,
             friction,
             barrier_type,
+            elevation: 0.0,
         }
     }
 }
@@ -301,6 +320,8 @@ pub struct Obstacle {
     pub restitution: f32,
     pub friction: f32,
     pub name: String,
+    #[serde(default)]
+    pub elevation: f32,
 }
 
 impl Obstacle {
@@ -311,6 +332,7 @@ impl Obstacle {
             restitution: 0.3,
             friction: 0.5,
             name: name.into(),
+            elevation: 0.0,
         }
     }
 
@@ -331,6 +353,7 @@ impl Obstacle {
             restitution: 0.4,
             friction: 0.4,
             name: name.into(),
+            elevation: 0.0,
         }
     }
 
@@ -341,7 +364,13 @@ impl Obstacle {
             restitution: 0.4,
             friction: 0.4,
             name: name.into(),
+            elevation: 0.0,
         }
+    }
+
+    pub fn with_elevation(mut self, elevation: f32) -> Self {
+        self.elevation = elevation;
+        self
     }
 
     pub fn center(&self) -> Vec2 {

@@ -16,6 +16,9 @@ pub struct TrackWaypoint {
     pub right_curb: bool,
     /// Optional surface type override (defaults to Asphalt if None).
     pub surface: Option<SurfaceType>,
+    /// Elevation / vertical altitude above ground in meters (default: 0.0).
+    #[serde(default)]
+    pub elevation: f32,
 }
 
 impl TrackWaypoint {
@@ -26,6 +29,7 @@ impl TrackWaypoint {
             left_curb: false,
             right_curb: false,
             surface: None,
+            elevation: 0.0,
         }
     }
 
@@ -37,6 +41,11 @@ impl TrackWaypoint {
 
     pub const fn with_surface(mut self, surface: SurfaceType) -> Self {
         self.surface = Some(surface);
+        self
+    }
+
+    pub const fn with_elevation(mut self, elevation: f32) -> Self {
+        self.elevation = elevation;
         self
     }
 }
@@ -52,6 +61,8 @@ pub struct SplineSample {
     pub left_curb: bool,
     pub right_curb: bool,
     pub surface: SurfaceType,
+    #[serde(default)]
+    pub elevation: f32,
 }
 
 /// Result of projecting a 2D world coordinate onto the track spline.
@@ -83,6 +94,8 @@ pub struct SplineProjection {
     pub is_on_curb: bool,
     /// Surface type at the projected center.
     pub base_surface: SurfaceType,
+    /// Road surface elevation at the projected point in meters.
+    pub elevation: f32,
 }
 
 /// Smooth Catmull-Rom spline representation of the racing circuit centerline.
@@ -113,6 +126,7 @@ impl TrackSpline {
         let mut raw_left_curbs = Vec::new();
         let mut raw_right_curbs = Vec::new();
         let mut raw_surfaces = Vec::new();
+        let mut raw_elevations = Vec::new();
 
         for i in 0..segments {
             let p0 = if closed {
@@ -132,12 +146,30 @@ impl TrackSpline {
                 waypoints[num_wp - 1].point
             };
 
+            let e0 = if closed {
+                waypoints[(i + num_wp - 1) % num_wp].elevation
+            } else if i == 0 {
+                waypoints[0].elevation
+            } else {
+                waypoints[i - 1].elevation
+            };
+            let e1 = waypoints[i % num_wp].elevation;
+            let e2 = waypoints[(i + 1) % num_wp].elevation;
+            let e3 = if closed {
+                waypoints[(i + 2) % num_wp].elevation
+            } else if i + 2 < num_wp {
+                waypoints[i + 2].elevation
+            } else {
+                waypoints[num_wp - 1].elevation
+            };
+
             let wp1 = &waypoints[i % num_wp];
             let wp2 = &waypoints[(i + 1) % num_wp];
 
             for s in 0..steps_per_segment {
                 let t = s as f32 / steps_per_segment as f32;
                 let pt = catmull_rom_2d(p0, p1, p2, p3, t);
+                let elev = catmull_rom_1d(e0, e1, e2, e3, t).max(0.0);
                 let w = wp1.width + (wp2.width - wp1.width) * t;
                 let lc = if t < 0.5 { wp1.left_curb } else { wp2.left_curb };
                 let rc = if t < 0.5 { wp1.right_curb } else { wp2.right_curb };
@@ -148,6 +180,7 @@ impl TrackSpline {
                 raw_left_curbs.push(lc);
                 raw_right_curbs.push(rc);
                 raw_surfaces.push(surf);
+                raw_elevations.push(elev);
             }
         }
 
@@ -158,6 +191,7 @@ impl TrackSpline {
             raw_left_curbs.push(raw_left_curbs[0]);
             raw_right_curbs.push(raw_right_curbs[0]);
             raw_surfaces.push(raw_surfaces[0]);
+            raw_elevations.push(raw_elevations[0]);
         } else {
             let last = waypoints.last().unwrap();
             raw_points.push(last.point);
@@ -165,6 +199,7 @@ impl TrackSpline {
             raw_left_curbs.push(last.left_curb);
             raw_right_curbs.push(last.right_curb);
             raw_surfaces.push(last.surface.unwrap_or(SurfaceType::Asphalt));
+            raw_elevations.push(last.elevation);
         }
 
         // 2. Compute cumulative arc-length distances and orientations
@@ -200,6 +235,7 @@ impl TrackSpline {
                 left_curb: raw_left_curbs[i],
                 right_curb: raw_right_curbs[i],
                 surface: raw_surfaces[i],
+                elevation: raw_elevations[i],
             });
         }
 
@@ -238,6 +274,7 @@ impl TrackSpline {
                 left_curb: false,
                 right_curb: false,
                 surface: SurfaceType::Asphalt,
+                elevation: 0.0,
             };
         }
 
@@ -281,6 +318,7 @@ impl TrackSpline {
         let tangent = s0.tangent.lerp(s1.tangent, t).normalize_or_zero();
         let normal = Vec2::new(-tangent.y, tangent.x);
         let width = s0.width + (s1.width - s0.width) * t;
+        let elevation = (s0.elevation + (s1.elevation - s0.elevation) * t).max(0.0);
 
         SplineSample {
             point,
@@ -291,6 +329,7 @@ impl TrackSpline {
             left_curb: if t < 0.5 { s0.left_curb } else { s1.left_curb },
             right_curb: if t < 0.5 { s0.right_curb } else { s1.right_curb },
             surface: s0.surface,
+            elevation,
         }
     }
 
@@ -311,6 +350,7 @@ impl TrackSpline {
                 is_on_track: true,
                 is_on_curb: false,
                 base_surface: SurfaceType::Asphalt,
+                elevation: 0.0,
             };
         }
 
@@ -357,6 +397,7 @@ impl TrackSpline {
         let track_width = s0.width + (s1.width - s0.width) * best_t;
         let left_curb = if best_t < 0.5 { s0.left_curb } else { s1.left_curb };
         let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
+        let elevation = (s0.elevation + (s1.elevation - s0.elevation) * best_t).max(0.0);
 
         let half_w = track_width * 0.5;
         let is_on_track = lateral_offset.abs() <= half_w;
@@ -390,6 +431,7 @@ impl TrackSpline {
             is_on_track,
             is_on_curb,
             base_surface: s0.surface,
+            elevation,
         }
     }
 
@@ -468,6 +510,7 @@ impl TrackSpline {
         let track_width = s0.width + (s1.width - s0.width) * best_t;
         let left_curb = if best_t < 0.5 { s0.left_curb } else { s1.left_curb };
         let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
+        let elevation = (s0.elevation + (s1.elevation - s0.elevation) * best_t).max(0.0);
 
         let half_w = track_width * 0.5;
         let is_on_track = lateral_offset.abs() <= half_w;
@@ -500,6 +543,7 @@ impl TrackSpline {
             is_on_track,
             is_on_curb,
             base_surface: s0.surface,
+            elevation,
         }
     }
 }
@@ -507,6 +551,20 @@ impl TrackSpline {
 /// 2D Catmull-Rom interpolation for points p0, p1, p2, p3 at parameter t in [0, 1].
 #[inline]
 fn catmull_rom_2d(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, t: f32) -> Vec2 {
+    let t2 = t * t;
+    let t3 = t2 * t;
+
+    let f0 = -0.5 * t3 + t2 - 0.5 * t;
+    let f1 = 1.5 * t3 - 2.5 * t2 + 1.0;
+    let f2 = -1.5 * t3 + 2.0 * t2 + 0.5 * t;
+    let f3 = 0.5 * t3 - 0.5 * t2;
+
+    p0 * f0 + p1 * f1 + p2 * f2 + p3 * f3
+}
+
+/// 1D Catmull-Rom interpolation for scalar values p0, p1, p2, p3 at parameter t in [0, 1].
+#[inline]
+fn catmull_rom_1d(p0: f32, p1: f32, p2: f32, p3: f32, t: f32) -> f32 {
     let t2 = t * t;
     let t3 = t2 * t;
 
