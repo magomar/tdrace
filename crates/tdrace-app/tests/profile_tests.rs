@@ -152,6 +152,10 @@ fn test_race_history_logging_and_career_stats() {
     assert_eq!(stats.best_times.get("oval_speedway"), Some(&13.8));
     assert_eq!(stats.best_times.get("drift_park"), Some(&22.1));
     assert_eq!(stats.best_times.get("kart_arena"), Some(&17.5));
+    assert_eq!(stats.best_circuit_times.get("classic_grand_prix"), Some(&74.2));
+    assert_eq!(stats.best_circuit_times.get("oval_speedway"), Some(&42.1));
+    assert_eq!(stats.best_circuit_times.get("drift_park"), Some(&68.0));
+    assert_eq!(stats.best_circuit_times.get("kart_arena"), Some(&56.4));
 }
 
 #[test]

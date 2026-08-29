@@ -1,0 +1,13 @@
+# Formula 1 Grand Prix Module Configuration
+# Specific overrides here prevail over the general config.toml
+
+[gameplay]
+default_track = "monza"
+default_laps = 5
+default_num_bots = 7
+default_assist_profile = "pro"
+
+[camera]
+velocity_lookahead_time = 0.50
+position_smoothing = 9.5
+zoom_smoothing = 4.5

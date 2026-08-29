@@ -115,6 +115,7 @@ pub struct ProfileCareerStats {
     pub win_rate: f32,
     pub podium_rate: f32,
     pub best_times: BTreeMap<String, f32>,
+    pub best_circuit_times: BTreeMap<String, f32>,
 }
 
 impl ProfileCareerStats {
@@ -124,6 +125,7 @@ impl ProfileCareerStats {
         let mut podiums = 0u32;
         let mut total_laps = 0u32;
         let mut best_times: BTreeMap<String, f32> = BTreeMap::new();
+        let mut best_circuit_times: BTreeMap<String, f32> = BTreeMap::new();
 
         for race in races {
             total_races += 1;
@@ -140,6 +142,15 @@ impl ProfileCareerStats {
                 let current_best = best_times.entry(race.track_id.clone()).or_insert(lap);
                 if lap < *current_best {
                     *current_best = lap;
+                }
+            }
+
+            if race.total_time > 0.0 {
+                let current_best_total = best_circuit_times
+                    .entry(race.track_id.clone())
+                    .or_insert(race.total_time);
+                if race.total_time < *current_best_total {
+                    *current_best_total = race.total_time;
                 }
             }
         }
@@ -164,6 +175,7 @@ impl ProfileCareerStats {
             win_rate,
             podium_rate,
             best_times,
+            best_circuit_times,
         }
     }
 }

@@ -1,0 +1,12 @@
+# Sprint Karting Cup Module Configuration
+# Specific overrides here prevail over the general config.toml
+
+[gameplay]
+default_track = "kart_arena"
+default_laps = 6
+default_num_bots = 7
+default_assist_profile = "arcade"
+
+[input]
+steer_rise_rate = 8.5
+steer_return_rate = 14.0

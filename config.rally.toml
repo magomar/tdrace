@@ -1,0 +1,13 @@
+# World Rally Championship Module Configuration
+# Specific overrides here prevail over the general config.toml
+
+[gameplay]
+default_track = "oasis_rally"
+default_laps = 3
+default_num_bots = 7
+default_assist_profile = "sport"
+
+[camera]
+trauma_decay = 1.8
+max_shake_offset = 2.0
+position_smoothing = 8.0

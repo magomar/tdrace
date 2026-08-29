@@ -2,7 +2,7 @@ use std::io::Write;
 use tdrace_app::config::{GameConfig, ZoomLevelConfig};
 use tdrace_app::game::RaceSession;
 use tdrace_app::ui::menu::CarChoice;
-use tdrace_core::physics::CarConfig;
+use tdrace_core::physics::config::{AssistProfile, CarConfig};
 
 #[test]
 fn test_default_config_roundtrip_toml() {
@@ -173,3 +173,200 @@ default_assist_profile = "sport"
     custom_session.init_race();
     assert_eq!(custom_session.cars.len(), 4, "Must spawn 4 cars (1 player + 3 AI opponents)");
 }
+
+#[test]
+fn test_in_file_module_override_merging() {
+    let toml_str = r#"
+[audio]
+master_volume = 0.85
+sfx_volume = 0.90
+music_volume = 0.70
+
+[gameplay]
+default_track = "classic_grand_prix"
+default_laps = 3
+default_num_bots = 7
+
+[camera]
+trauma_decay = 2.2
+
+# F1 Module overrides
+[modules.f1.audio]
+master_volume = 0.50
+
+[modules.f1.gameplay]
+default_track = "monza"
+default_laps = 15
+default_assist_profile = "pro"
+
+[modules.f1.camera]
+velocity_lookahead_time = 0.65
+
+# Rally Module overrides
+[modules.rally.gameplay]
+default_track = "oasis_rally"
+default_assist_profile = "sport"
+
+[modules.rally.camera]
+trauma_decay = 1.2
+"#;
+
+    let base_cfg: GameConfig = toml::from_str(toml_str).expect("Parse base config with modules");
+
+    // 1. Classic module (inherits general settings directly)
+    let classic_cfg = base_cfg.for_module_table_only("classic");
+    assert!((classic_cfg.audio.master_volume - 0.85).abs() < 1e-4);
+    assert_eq!(classic_cfg.gameplay.default_track, "classic_grand_prix");
+    assert_eq!(classic_cfg.gameplay.default_laps, 3);
+    assert_eq!(classic_cfg.gameplay.default_assist_profile, "arcade");
+    assert!((classic_cfg.camera.trauma_decay - 2.2).abs() < 1e-4);
+
+    // 2. F1 module (specific overrides prevail, unmentioned fields inherit general)
+    let f1_cfg = base_cfg.for_module_table_only("f1");
+    assert!((f1_cfg.audio.master_volume - 0.50).abs() < 1e-4, "F1 specific audio override");
+    assert!((f1_cfg.audio.sfx_volume - 0.90).abs() < 1e-4, "F1 inherits general sfx volume");
+    assert_eq!(f1_cfg.gameplay.default_track, "monza", "F1 specific track override");
+    assert_eq!(f1_cfg.gameplay.default_laps, 15, "F1 specific laps override");
+    assert_eq!(f1_cfg.gameplay.default_assist_profile, "pro", "F1 specific assist override");
+    assert_eq!(f1_cfg.gameplay.default_num_bots, 7, "F1 inherits general bot count");
+    assert!((f1_cfg.camera.velocity_lookahead_time - 0.65).abs() < 1e-4, "F1 specific camera lookahead");
+    assert!((f1_cfg.camera.trauma_decay - 2.2).abs() < 1e-4, "F1 inherits general trauma decay");
+
+    // 3. Rally module
+    let rally_cfg = base_cfg.for_module_table_only("rally");
+    assert!((rally_cfg.audio.master_volume - 0.85).abs() < 1e-4, "Rally inherits general master volume");
+    assert_eq!(rally_cfg.gameplay.default_track, "oasis_rally");
+    assert_eq!(rally_cfg.gameplay.default_assist_profile, "sport");
+    assert!((rally_cfg.camera.trauma_decay - 1.2).abs() < 1e-4, "Rally specific trauma decay");
+}
+
+#[test]
+fn test_deep_merge_toml_partial_overrides() {
+    use tdrace_app::config::deep_merge_toml;
+
+    let mut base = toml::from_str::<toml::Value>(r#"
+[camera]
+position_smoothing = 8.5
+trauma_decay = 2.2
+
+[audio]
+master_volume = 0.8
+"#).unwrap();
+
+    let overrides = toml::from_str::<toml::Value>(r#"
+[camera]
+trauma_decay = 1.0
+
+[gameplay]
+default_laps = 10
+"#).unwrap();
+
+    deep_merge_toml(&mut base, &overrides);
+
+    assert_eq!(
+        base.get("camera").unwrap().get("position_smoothing").unwrap().as_float().unwrap(),
+        8.5
+    );
+    assert_eq!(
+        base.get("camera").unwrap().get("trauma_decay").unwrap().as_float().unwrap(),
+        1.0
+    );
+    assert_eq!(
+        base.get("audio").unwrap().get("master_volume").unwrap().as_float().unwrap(),
+        0.8
+    );
+    assert_eq!(
+        base.get("gameplay").unwrap().get("default_laps").unwrap().as_integer().unwrap(),
+        10
+    );
+}
+
+#[test]
+fn test_session_module_switching_applies_effective_config() {
+    let toml_str = r#"
+[audio]
+master_volume = 0.80
+
+[gameplay]
+default_track = "classic_grand_prix"
+default_laps = 3
+default_num_bots = 7
+"#;
+
+    let base_cfg: GameConfig = toml::from_str(toml_str).unwrap();
+    let mut session = RaceSession::new_with_config(base_cfg);
+
+    // Initial state (classic)
+    assert_eq!(session.active_module_id, "classic");
+    assert!((session.audio.settings.master_volume - 0.80).abs() < 1e-4);
+    assert_eq!(session.assist_profile, AssistProfile::Arcade);
+
+    // Switch to F1 (loads config.f1.toml overrides)
+    session.switch_to_f1();
+    assert_eq!(session.active_module_id, "f1");
+    assert_eq!(session.total_laps, 5, "F1 specific laps configured in config.f1.toml");
+    assert_eq!(session.assist_profile, AssistProfile::Pro, "F1 specific assist configured");
+    assert!((session.camera.velocity_lookahead_time - 0.50).abs() < 1e-4, "F1 specific camera lookahead configured");
+
+    // Switch to Rally (loads config.rally.toml overrides)
+    session.switch_to_rally();
+    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.assist_profile, AssistProfile::Sport, "Rally specific assist profile configured");
+    assert!((session.camera.trauma_decay - 1.8).abs() < 1e-4, "Rally specific trauma decay configured");
+    assert!((session.audio.settings.master_volume - 0.80).abs() < 1e-4, "Rally inherits general master volume");
+
+    // Switch back to Classic
+    session.switch_to_classic();
+    assert_eq!(session.active_module_id, "classic");
+    assert!((session.audio.settings.master_volume - 0.80).abs() < 1e-4);
+    assert_eq!(session.assist_profile, AssistProfile::Arcade);
+}
+
+#[test]
+fn test_external_module_files_and_hierarchy_precedence() {
+    let base_cfg = GameConfig::default();
+
+    // 1. F1 Module loads config.f1.toml overrides
+    let f1_cfg = base_cfg.for_module("f1");
+    assert_eq!(f1_cfg.gameplay.default_track, "monza");
+    assert_eq!(f1_cfg.gameplay.default_laps, 5);
+    assert_eq!(f1_cfg.gameplay.default_assist_profile, "pro");
+    assert!((f1_cfg.camera.velocity_lookahead_time - 0.50).abs() < 1e-4);
+    assert!((f1_cfg.camera.position_smoothing - 9.5).abs() < 1e-4);
+
+    // 2. Rally Module loads config.rally.toml overrides
+    let rally_cfg = base_cfg.for_module("rally");
+    assert_eq!(rally_cfg.gameplay.default_track, "oasis_rally");
+    assert_eq!(rally_cfg.gameplay.default_assist_profile, "sport");
+    assert!((rally_cfg.camera.trauma_decay - 1.8).abs() < 1e-4);
+    assert!((rally_cfg.camera.max_shake_offset - 2.0).abs() < 1e-4);
+
+    // 3. Kart Module loads config.kart.toml overrides
+    let kart_cfg = base_cfg.for_module("kart");
+    assert_eq!(kart_cfg.gameplay.default_track, "kart_arena");
+    assert_eq!(kart_cfg.gameplay.default_laps, 6);
+    assert!((kart_cfg.input.steer_rise_rate - 8.5).abs() < 1e-4);
+
+    // 4. Precedence: Custom in-file override vs external merge override
+    let mut custom_base = GameConfig::default();
+    custom_base.gameplay.default_laps = 2; // general
+    custom_base.modules.insert(
+        "custom_mod".to_string(),
+        toml::from_str(r#"
+[gameplay]
+default_laps = 8
+"#).unwrap(),
+    );
+
+    let resolved_mod = custom_base.for_module("custom_mod");
+    assert_eq!(resolved_mod.gameplay.default_laps, 8, "In-file module table overrides general config");
+
+    let higher_override = toml::from_str(r#"
+[gameplay]
+default_laps = 20
+"#).unwrap();
+    let final_cfg = resolved_mod.merge_override(&higher_override);
+    assert_eq!(final_cfg.gameplay.default_laps, 20, "Specific higher-level override prevails");
+}
+
+
