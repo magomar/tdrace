@@ -8,9 +8,14 @@ use tdrace_core::track::Track;
 
 use super::color::Palette;
 
-/// Renders the complete track geometry including asphalt ribbon, rumble curbs,
-/// sand traps, jump ramps, pit lanes, grid boxes, and start/finish line checkerboard.
+/// Renders the complete track geometry (ground layer followed by elevated bridges).
 pub fn render_track(track: &Track) {
+    render_ground_track(track);
+    render_elevated_track(track);
+}
+
+/// Renders base ground environment, surface zones, ground track ribbon, hazard zones, and timing lines.
+pub fn render_ground_track(track: &Track) {
     // 1. Render base off-track surface zones (sand traps, asphalt runoff, dirt areas)
     render_surface_zones(track);
 
@@ -19,10 +24,11 @@ pub fn render_track(track: &Track) {
         render_surface_shape(pit_area, Palette::PIT_LANE, Some(Palette::WHITE_LINE));
     }
 
-    // 3. Render the asphalt/dirt track ribbon and rumble curbs
-    render_track_ribbon(&track.spline);
+    // 3. Render ground curbs and ground surface quads
+    render_curbs_pass(&track.spline, false);
+    render_surface_pass(&track.spline, false);
 
-    // 4. Render on-top surface hazard patches (water puddles, oil slicks) so they visibly overlay the track
+    // 4. Render on-top surface hazard patches (water puddles, oil slicks)
     render_on_track_hazard_zones(track);
 
     // 5. Render 2.5D jump ramps
@@ -33,6 +39,16 @@ pub fn render_track(track: &Track) {
 
     // 7. Render start/finish line checkerboard
     render_finish_line(track);
+}
+
+/// Renders elevated overpass bridges: drop shadows, solid concrete deck slab, curbs, and asphalt ribbon.
+pub fn render_elevated_track(track: &Track) {
+    let has_elevated = track.spline.samples.iter().any(|s| s.elevation >= 0.6);
+    if has_elevated {
+        render_bridge_structure_pass(&track.spline);
+        render_curbs_pass(&track.spline, true);
+        render_surface_pass(&track.spline, true);
+    }
 }
 
 /// Draws dynamic on-track hazard overlays like shimmering water puddles or oil slicks.
@@ -196,21 +212,80 @@ pub fn render_surface_shape(shape: &SurfaceShape, fill_col: Color, border_col: O
     }
 }
 
-/// Renders the continuous asphalt spline ribbon with boundary lines and curbs.
-fn render_track_ribbon(spline: &TrackSpline) {
+/// Draws drop shadows and structural concrete slab deck for elevated bridge sections.
+fn render_bridge_structure_pass(spline: &TrackSpline) {
     let samples = &spline.samples;
     let n = samples.len();
-    if n < 2 {
-        return;
-    }
-
-    let curb_extra_width = 1.35;
     let seg_count = if spline.closed { n } else { n - 1 };
 
-    // --- Pass 1: Curbs (rendered slightly underneath/adjacent to track edge) ---
+    // Pass A: Bridge drop shadow on the ground / underpass beneath
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
+        let avg_elev = (s0.elevation + s1.elevation) * 0.5;
+        if avg_elev < 0.6 {
+            continue;
+        }
+
+        let s_off = Vec2::new(0.35, 0.55) * (avg_elev * 0.45 + 1.0);
+        let hw0 = s0.width * 0.5 + 0.6;
+        let hw1 = s1.width * 0.5 + 0.6;
+        let left0 = s0.point + s0.normal * hw0 + s_off;
+        let right0 = s0.point - s0.normal * hw0 + s_off;
+        let left1 = s1.point + s1.normal * hw1 + s_off;
+        let right1 = s1.point - s1.normal * hw1 + s_off;
+
+        draw_quad(left0, left1, right1, right0, Palette::SHADOW);
+    }
+
+    // Pass B: Solid opaque concrete bridge deck undertray and side support beams
+    for i in 0..seg_count {
+        let s0 = &samples[i];
+        let s1 = &samples[(i + 1) % n];
+        let avg_elev = (s0.elevation + s1.elevation) * 0.5;
+        if avg_elev < 0.6 {
+            continue;
+        }
+
+        // Bridge deck covers the entire track ribbon plus curbs and barrier mount width
+        let deck_extra = 1.6;
+        let hw0 = s0.width * 0.5 + deck_extra;
+        let hw1 = s1.width * 0.5 + deck_extra;
+        let left0 = s0.point + s0.normal * hw0;
+        let right0 = s0.point - s0.normal * hw0;
+        let left1 = s1.point + s1.normal * hw1;
+        let right1 = s1.point - s1.normal * hw1;
+
+        let deck_col = Color::new(0.13, 0.14, 0.17, 1.0);
+        draw_quad(left0, left1, right1, right0, deck_col);
+
+        // Deck outer border girder lines
+        draw_line(left0.x, left0.y, left1.x, left1.y, 0.40, Color::new(0.32, 0.34, 0.38, 1.0));
+        draw_line(right0.x, right0.y, right1.x, right1.y, 0.40, Color::new(0.32, 0.34, 0.38, 1.0));
+
+        // Draw bridge expansion joint line at transition points
+        if s0.elevation < 0.6 && s1.elevation >= 0.6 {
+            draw_line(left0.x, left0.y, right0.x, right0.y, 0.50, Color::new(0.08, 0.08, 0.10, 1.0));
+        } else if s0.elevation >= 0.6 && s1.elevation < 0.6 {
+            draw_line(left1.x, left1.y, right1.x, right1.y, 0.50, Color::new(0.08, 0.08, 0.10, 1.0));
+        }
+    }
+}
+
+/// Draws curb rumble strips for either ground or elevated bridge segments.
+fn render_curbs_pass(spline: &TrackSpline, elevated: bool) {
+    let samples = &spline.samples;
+    let n = samples.len();
+    let curb_extra_width = 1.35;
+    let seg_count = if spline.closed { n } else { n - 1 };
+
+    for i in 0..seg_count {
+        let s0 = &samples[i];
+        let s1 = &samples[(i + 1) % n];
+        let is_seg_elevated = (s0.elevation + s1.elevation) * 0.5 >= 0.6;
+        if is_seg_elevated != elevated {
+            continue;
+        }
 
         let stripe_idx = (s0.distance / 1.5).floor() as usize;
         let curb_color = if stripe_idx.is_multiple_of(2) {
@@ -243,11 +318,21 @@ fn render_track_ribbon(spline: &TrackSpline) {
             draw_quad(p0_inner, p1_inner, p1_outer, p0_outer, curb_color);
         }
     }
+}
 
-    // --- Pass 2: Track Surface Quads (Asphalt or Dirt) ---
+/// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments.
+fn render_surface_pass(spline: &TrackSpline, elevated: bool) {
+    let samples = &spline.samples;
+    let n = samples.len();
+    let seg_count = if spline.closed { n } else { n - 1 };
+
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
+        let is_seg_elevated = (s0.elevation + s1.elevation) * 0.5 >= 0.6;
+        if is_seg_elevated != elevated {
+            continue;
+        }
 
         let hw0 = s0.width * 0.5;
         let hw1 = s1.width * 0.5;
@@ -259,14 +344,10 @@ fn render_track_ribbon(spline: &TrackSpline) {
 
         match s0.surface {
             SurfaceType::Dirt => {
-                // Draw playable dirt track segment
                 draw_quad(left0, left1, right1, right0, Palette::DIRT);
-
-                // Earthen/dusty track edge boundary lines
                 draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
                 draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
 
-                // Subtle packed dirt tire groove lines along left & right wheel paths
                 let groove_l0 = s0.point + s0.normal * (hw0 * 0.45);
                 let groove_l1 = s1.point + s1.normal * (hw1 * 0.45);
                 let groove_r0 = s0.point - s0.normal * (hw0 * 0.45);
@@ -304,14 +385,10 @@ fn render_track_ribbon(spline: &TrackSpline) {
                 draw_quad(left0, left1, right1, right0, Palette::CURB_RED);
             }
             SurfaceType::Asphalt => {
-                // Draw asphalt segment
                 draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
-
-                // White track edge boundary lines
                 draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
                 draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
 
-                // Subtle center dashed line (every 4m)
                 let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
                 if center_stripe {
                     draw_line(

@@ -4,8 +4,11 @@ pub mod color;
 pub mod ghost;
 pub mod track;
 
-pub use barrier::render_barriers_and_obstacles;
+pub use barrier::{
+    render_barriers_and_obstacles, render_elevated_barriers_and_obstacles,
+    render_ground_barriers_and_obstacles,
+};
 pub use car::render_car;
 pub use color::{CarColorScheme, Palette};
 pub use ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
-pub use track::render_track;
+pub use track::{render_elevated_track, render_ground_track, render_track};

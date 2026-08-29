@@ -84,6 +84,7 @@ impl F1GameModule {
             pit_box_area: None,
             default_laps: 5,
             predefined_car: None,
+            module_id: Some("f1".to_string()),
         }
     }
 
@@ -148,6 +149,7 @@ impl F1GameModule {
             pit_box_area: None,
             default_laps: 5,
             predefined_car: None,
+            module_id: Some("f1".to_string()),
         }
     }
 
@@ -179,11 +181,13 @@ impl F1GameModule {
             TrackWaypoint::new(Vec2::new(240.0, 460.0), 13.0).with_curbs(false, true),
             TrackWaypoint::new(Vec2::new(290.0, 430.0), 13.0).with_curbs(true, false),
             TrackWaypoint::new(Vec2::new(320.0, 360.0), 14.0).with_curbs(false, true),
-            // Hangar Straight
-            TrackWaypoint::new(Vec2::new(280.0, 240.0), 15.0),
-            TrackWaypoint::new(Vec2::new(230.0, 100.0), 15.0),
-            // Stowe Corner
-            TrackWaypoint::new(Vec2::new(170.0, -40.0), 13.0).with_curbs(false, true),
+            // Hangar Straight Overpass Bridge (Passes elevated over Abbey & Farm Curve)
+            TrackWaypoint::new(Vec2::new(280.0, 240.0), 15.0).with_elevation(2.5),
+            TrackWaypoint::new(Vec2::new(230.0, 100.0), 15.0).with_elevation(5.0),
+            // Stowe Corner Descent Ramp
+            TrackWaypoint::new(Vec2::new(170.0, -40.0), 13.0)
+                .with_curbs(false, true)
+                .with_elevation(2.0),
             // Vale & Club Corner onto Main Straight
             TrackWaypoint::new(Vec2::new(80.0, -80.0), 12.0).with_curbs(true, false),
             TrackWaypoint::new(Vec2::new(-30.0, -60.0), 13.0).with_curbs(false, true),
@@ -216,6 +220,7 @@ impl F1GameModule {
             pit_box_area: None,
             default_laps: 5,
             predefined_car: None,
+            module_id: Some("f1".to_string()),
         }
     }
 
@@ -496,6 +501,78 @@ impl GameModule for F1GameModule {
                     aggression: 0.98,
                     precision: 0.95,
                     defense: 1.00,
+                },
+            },
+            DriverCharacter {
+                id: "george_speed",
+                name: "George Speed",
+                alias: "The Silver Bullet",
+                bio: "Methodical British racer with blistering speed and unyielding qualifying pace for the Silver Arrows.",
+                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                color_scheme: CarColorScheme::from_index(7),
+                profile: BotProfile {
+                    name: "George Speed",
+                    lookahead_time: 0.41,
+                    speed_factor: 1.02,
+                    steering_kp: 2.6,
+                    steering_kd: 0.08,
+                    brake_margin: 1.01,
+                    aggression: 0.82,
+                    avoidance_distance: 6.0,
+                },
+                stats: DriverStats {
+                    speed: 0.96,
+                    aggression: 0.84,
+                    precision: 0.96,
+                    defense: 0.90,
+                },
+            },
+            DriverCharacter {
+                id: "lando_vance",
+                name: "Lando Vance",
+                alias: "Papaya Prodigy",
+                bio: "High-octane fan favorite who excels in dynamic mixed conditions with aggressive late-braking passes.",
+                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                color_scheme: CarColorScheme::from_index(4),
+                profile: BotProfile {
+                    name: "Lando Vance",
+                    lookahead_time: 0.39,
+                    speed_factor: 1.03,
+                    steering_kp: 2.7,
+                    steering_kd: 0.07,
+                    brake_margin: 0.99,
+                    aggression: 0.86,
+                    avoidance_distance: 5.8,
+                },
+                stats: DriverStats {
+                    speed: 0.97,
+                    aggression: 0.87,
+                    precision: 0.95,
+                    defense: 0.88,
+                },
+            },
+            DriverCharacter {
+                id: "oscar_rocket",
+                name: "Oscar Rocket",
+                alias: "Melbourne Missile",
+                bio: "Ultra-composed Australian rookie sensation known for ice-cold nerve and textbook race craft on high-speed circuits.",
+                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                color_scheme: CarColorScheme::from_index(5),
+                profile: BotProfile {
+                    name: "Oscar Rocket",
+                    lookahead_time: 0.40,
+                    speed_factor: 1.02,
+                    steering_kp: 2.5,
+                    steering_kd: 0.08,
+                    brake_margin: 1.02,
+                    aggression: 0.80,
+                    avoidance_distance: 6.2,
+                },
+                stats: DriverStats {
+                    speed: 0.95,
+                    aggression: 0.82,
+                    precision: 0.97,
+                    defense: 0.92,
                 },
             },
         ]

@@ -10,28 +10,49 @@ use super::track::draw_quad;
 /// Global 2.5D visual light / shadow offset in meters.
 pub const SHADOW_OFFSET: Vec2 = Vec2::new(0.35, 0.45);
 
-/// Renders all boundary wall barriers and static obstacles with 2.5D drop shadows.
+/// Renders all boundary wall barriers and static obstacles with 2.5D drop shadows in elevation layers.
 pub fn render_barriers_and_obstacles(track: &Track) {
-    // Pass 1: Draw all 2.5D drop shadows
-    for wall in &track.geometry.inner_walls {
-        render_wall_shadow(wall);
-    }
-    for wall in &track.geometry.outer_walls {
-        render_wall_shadow(wall);
-    }
-    for obs in &track.geometry.obstacles {
-        render_obstacle_shadow(obs);
-    }
+    render_ground_barriers_and_obstacles(track);
+    render_elevated_barriers_and_obstacles(track);
+}
 
-    // Pass 2: Draw barrier and obstacle geometry
-    for wall in &track.geometry.inner_walls {
-        render_wall_body(wall);
+/// Draws ground barrier drop shadows, obstacles, and wall bodies (elevation < 0.6m).
+pub fn render_ground_barriers_and_obstacles(track: &Track) {
+    for wall in track.geometry.all_walls().filter(|w| w.elevation < 0.6) {
+        render_wall_shadow(wall);
     }
-    for wall in &track.geometry.outer_walls {
+    for obs in &track.geometry.obstacles {
+        if obs.elevation < 0.6 {
+            render_obstacle_shadow(obs);
+        }
+    }
+    for wall in track.geometry.all_walls().filter(|w| w.elevation < 0.6) {
         render_wall_body(wall);
     }
     for obs in &track.geometry.obstacles {
-        render_obstacle_body(obs);
+        if obs.elevation < 0.6 {
+            render_obstacle_body(obs);
+        }
+    }
+}
+
+/// Draws elevated bridge barrier drop shadows, obstacles, and guardrails on top of the bridge deck (elevation >= 0.6m).
+pub fn render_elevated_barriers_and_obstacles(track: &Track) {
+    for wall in track.geometry.all_walls().filter(|w| w.elevation >= 0.6) {
+        render_wall_shadow(wall);
+    }
+    for obs in &track.geometry.obstacles {
+        if obs.elevation >= 0.6 {
+            render_obstacle_shadow(obs);
+        }
+    }
+    for wall in track.geometry.all_walls().filter(|w| w.elevation >= 0.6) {
+        render_wall_body(wall);
+    }
+    for obs in &track.geometry.obstacles {
+        if obs.elevation >= 0.6 {
+            render_obstacle_body(obs);
+        }
     }
 }
 
@@ -39,8 +60,9 @@ pub fn render_barriers_and_obstacles(track: &Track) {
 fn render_wall_shadow(wall: &WallBarrier) {
     let p0 = wall.segment.start;
     let p1 = wall.segment.end;
-    let s0 = p0 + SHADOW_OFFSET;
-    let s1 = p1 + SHADOW_OFFSET;
+    let s_off = SHADOW_OFFSET * (1.0 + wall.elevation * 0.45);
+    let s0 = p0 + s_off;
+    let s1 = p1 + s_off;
 
     let thickness = match wall.barrier_type {
         BarrierType::Concrete => 0.70,

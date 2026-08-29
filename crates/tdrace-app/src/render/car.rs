@@ -32,15 +32,17 @@ pub fn render_car_with_visual_type(
     let angle = car.state.angle;
     let fwd = car.forward_vector();
     let right = car.right_vector();
-    let z = car.state.elevation.max(0.0);
+    let z_jump = car.state.elevation.max(0.0);
+    let z_road = car.state.road_elevation.max(0.0);
+    let z_total = z_jump + z_road;
 
     // Body roll and squat/dive offsets from local accelerations
     let roll_offset_lat = (-car.state.acceleration_local.y * 0.015).clamp(-0.18, 0.18);
     let pitch_offset_long = (car.state.acceleration_local.x * 0.012).clamp(-0.15, 0.15);
 
     // 2.5D Elevation: airborne car rises along -Y screen projection and scales up slightly
-    let elevation_lift = Vec2::new(0.0, -z * 1.6);
-    let air_scale = 1.0 + (z * 0.07).min(0.35);
+    let elevation_lift = Vec2::new(0.0, -z_jump * 1.6);
+    let air_scale = 1.0 + (z_jump * 0.07).min(0.35);
 
     let chassis_center = pos + right * roll_offset_lat + fwd * pitch_offset_long + elevation_lift;
 
@@ -53,8 +55,8 @@ pub fn render_car_with_visual_type(
     let body_half_w = half_w + 0.12 * air_scale;
 
     // 1. --- 2.5D Drop Shadow ---
-    let shadow_pos = pos + Vec2::new(0.30 + z * 0.35, 0.40 + z * 0.45);
-    let shadow_scale = 1.0 + (z * 0.15).min(0.60);
+    let shadow_pos = pos + Vec2::new(0.30 + z_total * 0.25, 0.40 + z_total * 0.35);
+    let shadow_scale = 1.0 + (z_total * 0.08).min(0.60);
     render_chassis_shadow(shadow_pos, fwd, right, body_half_len * shadow_scale, body_half_w * shadow_scale);
 
     // 2. --- 4 Wheels & Steering ---
