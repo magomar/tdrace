@@ -204,7 +204,7 @@ impl GameModule for ClassicGameModule {
         vec![
             TournamentFormat::QuickRace {
                 default_laps: 3,
-                default_bots: 3,
+                default_bots: 7,
             },
             TournamentFormat::TimeAttack,
             TournamentFormat::Championship {

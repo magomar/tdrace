@@ -4,9 +4,10 @@ use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use tdrace_core::track::Track;
 
 use super::font::Fonts;
+use super::hud::format_lap_time;
 use super::scaler::UiScaler;
-use crate::ai::DriverCharacter;
-use crate::profile::{draw_country_banner, PlayerProfile};
+use crate::game::GridParticipant;
+use crate::profile::draw_country_banner;
 use crate::render::color::{CarColorScheme, Palette};
 
 /// Renders the starting grid and participants showcase screen before race launch.
@@ -15,8 +16,7 @@ pub fn render_starting_grid_screen(
     fonts: &Fonts,
     track: &Track,
     player_car_title: &str,
-    player_profile: &PlayerProfile,
-    opponents: &[DriverCharacter],
+    grid_participants: &[GridParticipant],
     total_laps: u32,
     _is_time_attack: bool,
     gamepad_connected: bool,
@@ -136,40 +136,35 @@ pub fn render_starting_grid_screen(
     let row_w = card_w - scaler.s(16.0);
     let row_x = x + scaler.s(8.0);
 
-    // 1. Slot 1 (Pole Position - Player)
-    let player_desc = format!("{} (You)  •  Pole Position", player_profile.name);
-    render_participant_row(
-        fonts,
-        &scaler,
-        row_x,
-        row_y,
-        row_w,
-        row_h,
-        1,
-        &player_profile.name,
-        &player_profile.alias,
-        player_profile.country.as_deref(),
-        player_car_title,
-        player_profile.color_scheme,
-        &player_desc,
-        true,
-    );
-    row_y += row_h + row_gap;
+    for (i, participant) in grid_participants.iter().enumerate() {
+        let slot = i + 1;
+        let desc = match (participant.best_lap, participant.best_circuit_time) {
+            (Some(lap), Some(circ)) => {
+                format!(
+                    "Best Lap: {}  •  Circuit: {}",
+                    format_lap_time(lap),
+                    format_lap_time(circ)
+                )
+            }
+            (Some(lap), None) => {
+                format!("Best Lap: {}", format_lap_time(lap))
+            }
+            (None, Some(circ)) => {
+                format!("Circuit: {}", format_lap_time(circ))
+            }
+            (None, None) => {
+                if participant.is_player {
+                    "No Prior Record  •  Random Draw".to_string()
+                } else {
+                    "No Prior Record  •  Rookie Draw".to_string()
+                }
+            }
+        };
 
-    // 2. Slots 2..N (AI Opponent Characters)
-    for (i, character) in opponents.iter().enumerate() {
-        let slot = i + 2;
-        let stats_desc = format!(
-            "Pace: {:.0}%  •  Aggr: {:.0}%  •  Precision: {:.0}%",
-            character.stats.speed * 100.0,
-            character.stats.aggression * 100.0,
-            character.stats.precision * 100.0
-        );
-
-        let bot_car_title = if free_car_selection {
-            character.preferred_car.title()
+        let display_name = if participant.is_player {
+            format!("{} (You)", participant.name)
         } else {
-            predefined_car_title
+            participant.name.clone()
         };
 
         render_participant_row(
@@ -180,13 +175,13 @@ pub fn render_starting_grid_screen(
             row_w,
             row_h,
             slot,
-            character.name,
-            character.alias,
-            None,
-            bot_car_title,
-            character.color_scheme,
-            &stats_desc,
-            false,
+            &display_name,
+            &participant.alias,
+            participant.country.as_deref(),
+            &participant.car_title,
+            participant.color_scheme,
+            &desc,
+            participant.is_player,
         );
         row_y += row_h + row_gap;
     }

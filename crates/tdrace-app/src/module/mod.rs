@@ -229,7 +229,7 @@ mod tests {
         assert!(f1.vehicles().len() >= 2);
         assert!(!f1.tracks().is_empty());
         assert!(f1.tracks().len() >= 3);
-        assert_eq!(f1.drivers().len(), 4);
+        assert_eq!(f1.drivers().len(), 7);
         assert!(!f1.supported_game_modes().is_empty());
 
         let monza = F1GameModule::track_monza();
@@ -249,7 +249,7 @@ mod tests {
         assert!(!rally.vehicles().is_empty());
         assert!(rally.vehicles().len() >= 2);
         assert!(!rally.tracks().is_empty());
-        assert!(rally.drivers().len() >= 2);
+        assert_eq!(rally.drivers().len(), 7);
 
         let rally_car = RallyGameModule::car_wrc_rally();
         assert_eq!(rally_car.drive_bias, 0.5);
@@ -263,7 +263,7 @@ mod tests {
         assert!(!kart.vehicles().is_empty());
         assert!(kart.vehicles().len() >= 1);
         assert!(!kart.tracks().is_empty());
-        assert!(kart.drivers().len() >= 2);
+        assert_eq!(kart.drivers().len(), 7);
 
         let kart_car = KartGameModule::car_shifter_kart();
         assert!(kart_car.mass < 250.0);

@@ -830,7 +830,7 @@ fn render_save_modal(
         );
     }
 
-    let is_overwrite_locked = *overwrite && current_file_path.is_some();
+    let is_overwrite_locked = *overwrite;
 
     // Keyboard navigation between fields
     if is_key_pressed(KeyCode::Tab) {
@@ -939,7 +939,7 @@ fn render_save_modal(
     // Field 1: Filename (.json)
     let f2_y = f1_box_y + f1_h + scaler.s(6.0);
     let f2_h = scaler.s(32.0);
-    let is_f2_active = *active_field == 1;
+    let is_f2_active = *active_field == 1 && !is_overwrite_locked;
 
     let f2_box_y = f2_y + scaler.s(14.0);
     let f2_hover = mouse_pos.x >= inp_x && mouse_pos.x <= inp_x + inp_w && mouse_pos.y >= f2_box_y && mouse_pos.y <= f2_box_y + f2_h;
@@ -948,7 +948,7 @@ fn render_save_modal(
         let loaded_stem = current_file_path
             .and_then(|p| std::path::Path::new(p).file_stem())
             .and_then(|s| s.to_str())
-            .unwrap_or("track");
+            .unwrap_or(if input_filename.is_empty() { "custom_track" } else { input_filename.as_str() });
 
         fonts.draw_ui_bold(
             "FILENAME (.json): [LOCKED ON OVERWRITE]",
@@ -1083,30 +1083,45 @@ fn render_save_modal(
         TrackManager::sanitize_slug(input_name)
     };
 
-    let target_exists = track_manager.track_file_exists(&slug) || (current_file_path.is_some() && *overwrite);
+    let is_filename_conflict = !*overwrite && track_manager.track_file_exists(&slug);
 
-    let info_y = f3_box_y + f3_h + scaler.s(12.0);
-    if target_exists {
-        if *overwrite {
-            fonts.draw_ui_bold(
-                &format!("Target: tracks/{}.json (Will overwrite existing file)", slug),
-                inp_x,
-                info_y,
-                scaler.font_s(11.5),
-                Palette::YELLOW,
-            );
+    let target_display_path = if *overwrite {
+        let p = track_manager.track_path_for_slug(&slug);
+        if let Ok(cwd) = std::env::current_dir() {
+            let cwd_str = cwd.to_string_lossy();
+            let p_str = p.to_string_lossy();
+            if p_str.starts_with(cwd_str.as_ref()) {
+                p_str.strip_prefix(cwd_str.as_ref()).unwrap_or(&p_str).trim_start_matches('/').to_string()
+            } else {
+                p_str.to_string()
+            }
         } else {
-            fonts.draw_ui_bold(
-                &format!("Target: tracks/{}.json (File exists -> will auto-number copy)", slug),
-                inp_x,
-                info_y,
-                scaler.font_s(11.5),
-                Palette::NEON_CYAN,
-            );
+            p.to_string_lossy().to_string()
         }
     } else {
+        format!("tracks/drafts/{}.json", slug)
+    };
+
+    let info_y = f3_box_y + f3_h + scaler.s(12.0);
+    if *overwrite {
+        fonts.draw_ui_bold(
+            &format!("Target: {} (Will overwrite existing file)", target_display_path),
+            inp_x,
+            info_y,
+            scaler.font_s(11.5),
+            Palette::YELLOW,
+        );
+    } else if is_filename_conflict {
+        fonts.draw_ui_bold(
+            &format!("❌ {} already exists! Change filename to Save As.", target_display_path),
+            inp_x,
+            info_y,
+            scaler.font_s(11.5),
+            Palette::RED,
+        );
+    } else {
         fonts.draw_ui_regular(
-            &format!("Target: tracks/{}.json (New file)", slug),
+            &format!("✓ Target: {} (New unique file)", target_display_path),
             inp_x,
             info_y,
             scaler.font_s(11.5),
@@ -1114,12 +1129,12 @@ fn render_save_modal(
         );
     }
 
-    // Overwrite checkbox / toggle button
+    // Overwrite checkbox / toggle button (always labeled "Overwrite")
     let toggle_y = info_y + scaler.s(10.0);
     let toggle_lbl = if *overwrite {
-        "[X] OVERWRITE EXISTING TRACK"
+        "[X] Overwrite"
     } else {
-        "[ ] SAVE AS NEW COPY (Specify filename above)"
+        "[ ] Overwrite"
     };
     let toggle_bg = if *overwrite {
         Color::new(0.35, 0.25, 0.05, 0.9)
@@ -1146,8 +1161,18 @@ fn render_save_modal(
         clicked,
     ) {
         *overwrite = !*overwrite;
-        if *overwrite && current_file_path.is_some() && *active_field == 1 {
-            *active_field = 0;
+        if *overwrite {
+            if let Some(loaded_path) = current_file_path {
+                if let Some(stem) = std::path::Path::new(loaded_path).file_stem().and_then(|s| s.to_str()) {
+                    *input_filename = stem.to_string();
+                }
+            }
+            if *active_field == 1 {
+                *active_field = 0;
+            }
+        } else {
+            *active_field = 1;
+            *custom_filename_edited = true;
         }
     }
 
@@ -1161,21 +1186,22 @@ fn render_save_modal(
             Color::new(0.45, 0.28, 0.08, 0.95),
             Palette::NEON_GOLD,
         )
-    } else if current_file_path.is_some() {
+    } else if is_filename_conflict {
         (
-            "SAVE AS COPY [Enter]",
-            Color::new(0.12, 0.65, 0.32, 0.95),
-            Palette::NEON_GREEN,
+            "CHANGE FILENAME TO SAVE AS",
+            Color::new(0.35, 0.08, 0.08, 0.95),
+            Palette::RED,
         )
     } else {
         (
-            "SAVE TO DISK [Enter]",
+            "SAVE AS [Enter]",
             Color::new(0.12, 0.65, 0.32, 0.95),
             Palette::NEON_GREEN,
         )
     };
 
     let mut action_to_dispatch = None;
+    let can_submit = *overwrite || !is_filename_conflict;
 
     let save_clicked = draw_ui_btn(
         fonts,
@@ -1188,10 +1214,10 @@ fn render_save_modal(
         btn_color,
         btn_border,
         mouse_pos,
-        clicked,
+        clicked && can_submit,
     );
 
-    if save_clicked {
+    if save_clicked && can_submit {
         action_to_dispatch = Some(EditorAction::SaveTrack {
             name: input_name.clone(),
             filename: input_filename.clone(),
@@ -1200,7 +1226,7 @@ fn render_save_modal(
         });
     }
 
-    if is_key_pressed(KeyCode::Enter) && action_to_dispatch.is_none() {
+    if is_key_pressed(KeyCode::Enter) && action_to_dispatch.is_none() && can_submit {
         action_to_dispatch = Some(EditorAction::SaveTrack {
             name: input_name.clone(),
             filename: input_filename.clone(),

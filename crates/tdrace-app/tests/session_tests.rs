@@ -162,3 +162,179 @@ fn test_main_menu_exit_confirmation_state() {
     assert_eq!(session.state, GameState::Menu, "State should remain GameState::Menu");
 }
 
+#[test]
+fn test_all_races_and_modules_default_to_eight_riders() {
+    // 1. Default initialization
+    let mut session = RaceSession::new();
+    assert_eq!(session.num_bots, 7);
+    session.init_race();
+    assert_eq!(session.cars.len(), 8, "Default session should have 8 riders (1 player + 7 bots)");
+    assert_eq!(session.ai_drivers.len(), 7, "Default session should have 7 AI bots");
+    assert_eq!(session.opponent_drivers.len(), 7);
+
+    // 2. Switch to F1
+    session.switch_to_f1();
+    assert_eq!(session.num_bots, 7);
+    session.init_race();
+    assert_eq!(session.cars.len(), 8, "F1 module should have 8 riders");
+    assert_eq!(session.ai_drivers.len(), 7);
+
+    // 3. Switch to Rally
+    session.switch_to_rally();
+    assert_eq!(session.num_bots, 7);
+    session.init_race();
+    assert_eq!(session.cars.len(), 8, "Rally module should have 8 riders");
+    assert_eq!(session.ai_drivers.len(), 7);
+
+    // 4. Switch to Kart
+    session.switch_to_kart();
+    assert_eq!(session.num_bots, 7);
+    session.init_race();
+    assert_eq!(session.cars.len(), 8, "Kart module should have 8 riders");
+    assert_eq!(session.ai_drivers.len(), 7);
+
+    // 5. Switch to Classic
+    session.switch_to_classic();
+    assert_eq!(session.num_bots, 7);
+    session.init_race();
+    assert_eq!(session.cars.len(), 8, "Classic module should have 8 riders");
+    assert_eq!(session.ai_drivers.len(), 7);
+
+    // 6. Test all preset tracks in classic mode
+    for track_choice in [
+        TrackChoice::ClassicGrandPrix,
+        TrackChoice::OvalSpeedway,
+        TrackChoice::DriftPark,
+        TrackChoice::KartArena,
+        TrackChoice::RampRaceway,
+        TrackChoice::OasisRally,
+        TrackChoice::OutlawPass,
+    ] {
+        session.track_choice = track_choice;
+        session.init_race();
+        assert_eq!(
+            session.cars.len(),
+            8,
+            "Track {:?} should have 8 riders by default",
+            session.track_choice
+        );
+        assert_eq!(session.ai_drivers.len(), 7);
+        assert_eq!(session.opponent_drivers.len(), 7);
+    }
+}
+
+#[test]
+fn test_grid_positioning_fast_lap_earns_pole() {
+    let mut session = RaceSession::new();
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+    // Set a fast player personal best on this track
+    session.active_profile_stats.best_times.insert("classic_grand_prix".to_string(), 18.2);
+    session.active_profile_stats.best_circuit_times.insert("classic_grand_prix".to_string(), 55.0);
+
+    session.init_race();
+
+    // Player should be at grid slot 0 (Pole Position)
+    let player_slot = session.grid_participants.iter().position(|p| p.is_player).unwrap();
+    assert_eq!(player_slot, 0, "Player with fastest lap time should start on Pole (slot 0)");
+
+    // Verify car 0 is spawned at grid_positions[0]
+    let player_car = &session.cars[0];
+    let grid_pose_0 = &session.track.grid_positions[0];
+    assert!((player_car.state.position.x - grid_pose_0.position.x).abs() < 1e-3);
+    assert!((player_car.state.position.y - grid_pose_0.position.y).abs() < 1e-3);
+}
+
+#[test]
+fn test_grid_positioning_slower_lap_placed_behind() {
+    use tdrace_app::db::HallOfFameEntry;
+
+    let mut session = RaceSession::new();
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+    // Opponent with 20.0s in HoF
+    session.hof_entries = vec![
+        HallOfFameEntry {
+            id: Some(1),
+            track_id: "classic_grand_prix".to_string(),
+            player_name: "Silvia Tanaka".to_string(),
+            car_name: "GT Sports Coupe".to_string(),
+            total_time: 60.0,
+            best_lap: Some(20.0),
+            laps: 3,
+            created_at: "2026-08-27 10:00".to_string(),
+        },
+    ];
+    // Player has slower lap time 25.0s
+    session.active_profile_stats.best_times.insert("classic_grand_prix".to_string(), 25.0);
+    session.active_profile_stats.best_circuit_times.insert("classic_grand_prix".to_string(), 75.0);
+
+    // Rebuild grid
+    session.rebuild_roster_participants();
+
+    let player_slot = session.grid_participants.iter().position(|p| p.is_player).unwrap();
+    let silvia_slot = session.grid_participants.iter().position(|p| p.name == "Silvia Tanaka").unwrap();
+
+    assert_eq!(silvia_slot, 0, "Silvia with 20.0s should be ahead of player with 25.0s");
+    assert_eq!(player_slot, 1, "Player with 25.0s should be at slot 1 (P2)");
+}
+
+#[test]
+fn test_grid_positioning_tie_broken_by_circuit_time() {
+    use tdrace_app::db::HallOfFameEntry;
+
+    let mut session = RaceSession::new();
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+
+    // Silvia has 22.0s lap and 68.0s circuit time
+    session.hof_entries = vec![
+        HallOfFameEntry {
+            id: Some(1),
+            track_id: "classic_grand_prix".to_string(),
+            player_name: "Silvia Tanaka".to_string(),
+            car_name: "GT Sports Coupe".to_string(),
+            total_time: 68.0,
+            best_lap: Some(22.0),
+            laps: 3,
+            created_at: "2026-08-27 10:00".to_string(),
+        },
+    ];
+
+    // Player has identical best lap (22.0s), but FASTER circuit time (64.0s)
+    session.active_profile_stats.best_times.insert("classic_grand_prix".to_string(), 22.0);
+    session.active_profile_stats.best_circuit_times.insert("classic_grand_prix".to_string(), 64.0);
+
+    session.rebuild_roster_participants();
+
+    let player_slot = session.grid_participants.iter().position(|p| p.is_player).unwrap();
+    let silvia_slot = session.grid_participants.iter().position(|p| p.name == "Silvia Tanaka").unwrap();
+
+    assert_eq!(player_slot, 0, "Player with faster circuit time on tied lap should earn P1");
+    assert_eq!(silvia_slot, 1, "Silvia with slower circuit time on tied lap should be P2");
+}
+
+#[test]
+fn test_grid_positioning_all_slots_unique_and_valid() {
+    let mut session = RaceSession::new();
+    session.init_race();
+
+    assert_eq!(session.grid_participants.len(), 8);
+    // Ensure all cars are placed at valid unique positions
+    let mut positions = Vec::new();
+    for (i, p) in session.grid_participants.iter().enumerate() {
+        let car_pose = if p.is_player {
+            session.cars[0].state.position
+        } else {
+            let bot_idx = p.bot_index.unwrap();
+            session.cars[bot_idx + 1].state.position
+        };
+        let expected_slot_pose = session.track.grid_positions[i].position;
+        assert!((car_pose.x - expected_slot_pose.x).abs() < 1e-3);
+        assert!((car_pose.y - expected_slot_pose.y).abs() < 1e-3);
+        positions.push((car_pose.x.to_bits(), car_pose.y.to_bits()));
+    }
+    // Verify all 8 car positions are unique
+    positions.sort();
+    positions.dedup();
+    assert_eq!(positions.len(), 8, "All 8 cars must spawn in distinct grid positions");
+}
+
+

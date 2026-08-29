@@ -15,6 +15,7 @@ pub struct CustomTrackInfo {
     pub title: String,
     pub description: String,
     pub category: TrackCategory,
+    pub module_id: Option<String>,
     pub file_path: String,
     pub length_m: f32,
     pub waypoint_count: usize,
@@ -24,6 +25,17 @@ pub struct CustomTrackInfo {
     pub default_surface: SurfaceType,
     pub surface_summary: String,
     pub default_laps: u32,
+}
+
+impl CustomTrackInfo {
+    pub fn module_name(&self) -> &'static str {
+        match self.module_id.as_deref() {
+            Some("f1") => "Formula 1",
+            Some("rally") => "Rally Cross",
+            Some("kart") => "Karting",
+            _ => "Classic",
+        }
+    }
 }
 
 /// Manages discovery, loading, saving, and cataloging of custom and preset tracks.
@@ -49,60 +61,99 @@ impl TrackManager {
         manager
     }
 
-    /// Scans the tracks directory for `.json` and `.tdtrack` files.
+    /// Scans the tracks directory and its subdirectories (drafts, classic, f1, rally, kart, etc.) for `.json` and `.tdtrack` files.
     pub fn scan_custom_tracks(&mut self) -> Result<usize, String> {
         self.custom_tracks.clear();
 
         if !self.tracks_dir.exists() {
             let _ = fs::create_dir_all(&self.tracks_dir);
+            let _ = fs::create_dir_all(self.tracks_dir.join("drafts"));
             return Ok(0);
         }
 
-        let entries = fs::read_dir(&self.tracks_dir)
-            .map_err(|e| format!("Failed to read tracks directory: {}", e))?;
+        let mut files_to_scan = Vec::new();
 
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_file() {
-                if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
-                    if ext.eq_ignore_ascii_case("json") || ext.eq_ignore_ascii_case("tdtrack") {
-                        if let Ok(track) = Track::load_from_file(&path) {
-                            let stem = path
-                                .file_stem()
-                                .and_then(|s| s.to_str())
-                                .unwrap_or("custom_track")
-                                .to_string();
-
-                            let surface_summary = track.surface_summary_string();
-                            let length_m = track.spline.total_length();
-                            let waypoint_count = track.spline.waypoints.len();
-                            let checkpoint_count = track.checkpoints.len();
-                            let jump_ramp_count = track.geometry.jump_ramps.len();
-                            let obstacle_count = track.geometry.obstacles.len();
-                            let default_surface = track.default_surface;
-                            let default_laps = track.default_laps;
-                            let category = track.category;
-
-                            self.custom_tracks.push(CustomTrackInfo {
-                                id: stem,
-                                title: track.name,
-                                description: track.description,
-                                category,
-                                file_path: path.to_string_lossy().to_string(),
-                                length_m,
-                                waypoint_count,
-                                checkpoint_count,
-                                jump_ramp_count,
-                                obstacle_count,
-                                default_surface,
-                                surface_summary,
-                                default_laps,
-                            });
+        // 1. Scan root tracks_dir and immediate subdirectories
+        if let Ok(entries) = fs::read_dir(&self.tracks_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    files_to_scan.push((path, None));
+                } else if path.is_dir() {
+                    let subdir_name = path
+                        .file_name()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("")
+                        .to_string();
+                    if let Ok(sub_entries) = fs::read_dir(&path) {
+                        for sub_entry in sub_entries.flatten() {
+                            let sub_path = sub_entry.path();
+                            if sub_path.is_file() {
+                                files_to_scan.push((sub_path, Some(subdir_name.clone())));
+                            }
                         }
                     }
                 }
             }
         }
+
+        for (path, subdir) in files_to_scan {
+            if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                if ext.eq_ignore_ascii_case("json") || ext.eq_ignore_ascii_case("tdtrack") {
+                    if let Ok(mut track) = Track::load_from_file(&path) {
+                        let stem = path
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("custom_track")
+                            .to_string();
+
+                        // Infer category and module_id from subdirectory if applicable
+                        if let Some(ref dir) = subdir {
+                            if dir == "drafts" {
+                                track.category = TrackCategory::Draft;
+                            } else {
+                                track.category = TrackCategory::Main;
+                                if track.module_id.is_none() {
+                                    track.module_id = Some(dir.clone());
+                                }
+                            }
+                        }
+
+                        let surface_summary = track.surface_summary_string();
+                        let length_m = track.spline.total_length();
+                        let waypoint_count = track.spline.waypoints.len();
+                        let checkpoint_count = track.checkpoints.len();
+                        let jump_ramp_count = track.geometry.jump_ramps.len();
+                        let obstacle_count = track.geometry.obstacles.len();
+                        let default_surface = track.default_surface;
+                        let default_laps = track.default_laps;
+                        let category = track.category;
+                        let module_id = track.module_id.clone();
+
+                        self.custom_tracks.push(CustomTrackInfo {
+                            id: stem,
+                            title: track.name,
+                            description: track.description,
+                            category,
+                            module_id,
+                            file_path: path.to_string_lossy().to_string(),
+                            length_m,
+                            waypoint_count,
+                            checkpoint_count,
+                            jump_ramp_count,
+                            obstacle_count,
+                            default_surface,
+                            surface_summary,
+                            default_laps,
+                        });
+                    }
+                }
+            }
+        }
+
+        // Deduplicate in case a file was scanned twice
+        self.custom_tracks.sort_by(|a, b| a.id.cmp(&b.id));
+        self.custom_tracks.dedup_by(|a, b| a.file_path == b.file_path);
 
         // Sort alphabetically by title
         self.custom_tracks.sort_by(|a, b| a.title.cmp(&b.title));
@@ -300,7 +351,7 @@ impl TrackManager {
     pub fn load_track(&self, choice: &TrackChoice) -> Result<Track, String> {
         match choice {
             TrackChoice::ClassicGrandPrix => {
-                let p = self.tracks_dir.join("classic_grand_prix.json");
+                let p = self.track_path_for_slug("classic_grand_prix");
                 if p.exists() {
                     Track::load_from_file(&p).or_else(|_| Ok(classic_grand_prix()))
                 } else {
@@ -308,7 +359,7 @@ impl TrackManager {
                 }
             }
             TrackChoice::OvalSpeedway => {
-                let p = self.tracks_dir.join("oval_speedway.json");
+                let p = self.track_path_for_slug("oval_speedway");
                 if p.exists() {
                     Track::load_from_file(&p).or_else(|_| Ok(oval_speedway()))
                 } else {
@@ -316,7 +367,7 @@ impl TrackManager {
                 }
             }
             TrackChoice::DriftPark => {
-                let p = self.tracks_dir.join("drift_park.json");
+                let p = self.track_path_for_slug("drift_park");
                 if p.exists() {
                     Track::load_from_file(&p).or_else(|_| Ok(drift_park()))
                 } else {
@@ -324,7 +375,7 @@ impl TrackManager {
                 }
             }
             TrackChoice::KartArena => {
-                let p = self.tracks_dir.join("kart_arena.json");
+                let p = self.track_path_for_slug("kart_arena");
                 if p.exists() {
                     Track::load_from_file(&p).or_else(|_| Ok(kart_arena()))
                 } else {
@@ -332,7 +383,7 @@ impl TrackManager {
                 }
             }
             TrackChoice::RampRaceway => {
-                let p = self.tracks_dir.join("ramp_raceway.json");
+                let p = self.track_path_for_slug("ramp_raceway");
                 if p.exists() {
                     Track::load_from_file(&p).or_else(|_| Ok(ramp_raceway()))
                 } else {
@@ -340,7 +391,7 @@ impl TrackManager {
                 }
             }
             TrackChoice::OasisRally => {
-                let p = self.tracks_dir.join("oasis_rally.json");
+                let p = self.track_path_for_slug("oasis_rally");
                 if p.exists() {
                     Track::load_from_file(&p).or_else(|_| Ok(oasis_rally()))
                 } else {
@@ -348,7 +399,7 @@ impl TrackManager {
                 }
             }
             TrackChoice::OutlawPass => {
-                let p = self.tracks_dir.join("outlaw_pass.json");
+                let p = self.track_path_for_slug("outlaw_pass");
                 if p.exists() {
                     Track::load_from_file(&p).or_else(|_| Ok(outlaw_pass()))
                 } else {
@@ -357,35 +408,46 @@ impl TrackManager {
             }
             TrackChoice::Custom { id, path, .. } => {
                 if id == "monza" {
-                    let p = self.tracks_dir.join("monza.json");
+                    let p = self.track_path_for_slug("monza");
                     if p.exists() {
                         return Track::load_from_file(&p).or_else(|_| Ok(crate::module::f1::F1GameModule::track_monza()));
                     }
                     return Ok(crate::module::f1::F1GameModule::track_monza());
                 }
                 if id == "spa" {
-                    let p = self.tracks_dir.join("spa.json");
+                    let p = self.track_path_for_slug("spa");
                     if p.exists() {
                         return Track::load_from_file(&p).or_else(|_| Ok(crate::module::f1::F1GameModule::track_spa()));
                     }
                     return Ok(crate::module::f1::F1GameModule::track_spa());
                 }
                 if id == "silverstone" {
-                    let p = self.tracks_dir.join("silverstone.json");
+                    let p = self.track_path_for_slug("silverstone");
                     if p.exists() {
                         return Track::load_from_file(&p).or_else(|_| Ok(crate::module::f1::F1GameModule::track_silverstone()));
                     }
                     return Ok(crate::module::f1::F1GameModule::track_silverstone());
                 }
                 if id == "sahara" {
-                    let p = self.tracks_dir.join("sahara.json");
+                    let p = self.track_path_for_slug("sahara");
                     if p.exists() {
                         return Track::load_from_file(&p).or_else(|_| Ok(tdrace_core::track::presets::sahara_dunes()));
                     }
                     return Ok(tdrace_core::track::presets::sahara_dunes());
                 }
-                Track::load_from_file(path)
-                    .map_err(|e| format!("Failed to load custom track from {}: {}", path, e))
+                let file_path = Path::new(path);
+                if file_path.exists() {
+                    Track::load_from_file(file_path)
+                        .map_err(|e| format!("Failed to load custom track from {}: {}", path, e))
+                } else {
+                    let alt_path = self.track_path_for_slug(id);
+                    if alt_path.exists() {
+                        Track::load_from_file(&alt_path)
+                            .map_err(|e| format!("Failed to load custom track from {}: {}", alt_path.display(), e))
+                    } else {
+                        Err(format!("Track file not found: {}", path))
+                    }
+                }
             }
         }
     }
@@ -403,18 +465,48 @@ impl TrackManager {
         }
     }
 
-    /// Checks if a custom track file with the given slug already exists on disk.
+    /// Returns the target subdirectory for a track based on its category and module assignment.
+    pub fn target_dir_for_track(&self, category: TrackCategory, module_id: Option<&str>) -> PathBuf {
+        match category {
+            TrackCategory::Draft => self.tracks_dir.join("drafts"),
+            TrackCategory::Main => {
+                let mod_name = module_id.unwrap_or("classic");
+                self.tracks_dir.join(mod_name)
+            }
+        }
+    }
+
+    /// Checks if a custom track file with the given slug already exists on disk in any directory.
     pub fn track_file_exists(&self, slug: &str) -> bool {
         let file_name = format!("{}.json", slug);
-        self.tracks_dir.join(file_name).exists()
+        self.tracks_dir.join(&file_name).exists()
+            || self.tracks_dir.join("drafts").join(&file_name).exists()
+            || self.tracks_dir.join("classic").join(&file_name).exists()
+            || self.tracks_dir.join("f1").join(&file_name).exists()
+            || self.tracks_dir.join("rally").join(&file_name).exists()
+            || self.tracks_dir.join("kart").join(&file_name).exists()
     }
 
-    /// Resolves the destination path for a given slug.
+    /// Resolves the destination path for a given slug, checking existing files first.
     pub fn track_path_for_slug(&self, slug: &str) -> PathBuf {
-        self.tracks_dir.join(format!("{}.json", slug))
+        let file_name = format!("{}.json", slug);
+        let candidates = [
+            self.tracks_dir.join("drafts").join(&file_name),
+            self.tracks_dir.join("classic").join(&file_name),
+            self.tracks_dir.join("f1").join(&file_name),
+            self.tracks_dir.join("rally").join(&file_name),
+            self.tracks_dir.join("kart").join(&file_name),
+            self.tracks_dir.join(&file_name),
+        ];
+        for cand in &candidates {
+            if cand.exists() {
+                return cand.clone();
+            }
+        }
+        self.tracks_dir.join("drafts").join(file_name)
     }
 
-    /// Saves a track to disk with overwrite control.
+    /// Saves a track to disk with overwrite control in the appropriate category/module subdirectory.
     /// If `overwrite` is false and a file with `slug` exists, appends numbers (`_1`, `_2`, etc.) to find an unused file path.
     pub fn save_custom_track_with_options(
         &mut self,
@@ -430,12 +522,31 @@ impl TrackManager {
             Self::sanitize_slug(&track_to_save.name)
         };
 
+        // If file already exists and was Main category, keep its category and module when overwriting.
+        // Otherwise, newly created custom tracks land in Drafts by default.
+        let existing_path = self.track_path_for_slug(&base_slug);
+        if overwrite && existing_path.exists() {
+            if let Ok(existing) = Track::load_from_file(&existing_path) {
+                track_to_save.category = existing.category;
+                track_to_save.module_id = existing.module_id;
+            }
+        } else {
+            track_to_save.category = TrackCategory::Draft;
+            track_to_save.module_id = None;
+        }
+
+        // Determine target directory
+        let target_dir = self.target_dir_for_track(track_to_save.category, track_to_save.module_id.as_deref());
+        let _ = fs::create_dir_all(&target_dir);
+
         let file_slug = if overwrite {
             base_slug
         } else {
             let mut candidate = base_slug.clone();
             let mut counter = 1;
-            while self.tracks_dir.join(format!("{}.json", candidate)).exists() {
+            while target_dir.join(format!("{}.json", candidate)).exists()
+                || self.tracks_dir.join(format!("{}.json", candidate)).exists()
+            {
                 candidate = format!("{}_{}", base_slug, counter);
                 counter += 1;
             }
@@ -443,15 +554,7 @@ impl TrackManager {
         };
 
         let file_name = format!("{}.json", file_slug);
-        let path = self.tracks_dir.join(file_name);
-
-        // If file already exists and was Main category, keep its category when overwriting.
-        // Otherwise, newly created tracks land in Drafts by default.
-        if !overwrite || !path.exists() {
-            track_to_save.category = TrackCategory::Draft;
-        } else if let Ok(existing) = Track::load_from_file(&path) {
-            track_to_save.category = existing.category;
-        }
+        let path = target_dir.join(file_name);
 
         track_to_save
             .save_to_file(&path)
@@ -466,16 +569,48 @@ impl TrackManager {
         self.save_custom_track_with_options(track, slug, true)
     }
 
-    /// Promotes a track from Draft to Main category (Approved circuit).
-    pub fn promote_track(&mut self, id: &str) -> Result<(), String> {
+    /// Returns custom tracks promoted to a specific module.
+    pub fn module_custom_tracks(&self, module_id: &str) -> Vec<TrackChoice> {
+        let mut choices = Vec::new();
+        for custom in &self.custom_tracks {
+            if custom.category == TrackCategory::Main {
+                let target = custom.module_id.as_deref().unwrap_or("classic");
+                if target == module_id {
+                    choices.push(TrackChoice::Custom {
+                        id: custom.id.clone(),
+                        title: custom.title.clone(),
+                        description: custom.description.clone(),
+                        path: custom.file_path.clone(),
+                    });
+                }
+            }
+        }
+        choices
+    }
+
+    /// Promotes a track from Draft to Main category (Approved circuit) assigned to a specific module,
+    /// moving the file from `drafts/` to `<module_id>/`.
+    pub fn promote_track_to_module(&mut self, id: &str, module_id: &str) -> Result<(), String> {
         if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
-            let path_str = self.custom_tracks[pos].file_path.clone();
-            let mut track = Track::load_from_file(&path_str)
+            let old_path_str = self.custom_tracks[pos].file_path.clone();
+            let old_path = PathBuf::from(&old_path_str);
+            let mut track = Track::load_from_file(&old_path)
                 .map_err(|e| format!("Failed to load track to promote: {}", e))?;
             track.category = TrackCategory::Main;
+            track.module_id = Some(module_id.to_string());
+
+            let target_dir = self.tracks_dir.join(module_id);
+            let _ = fs::create_dir_all(&target_dir);
+            let target_path = target_dir.join(format!("{}.json", id));
+
             track
-                .save_to_file(&path_str)
+                .save_to_file(&target_path)
                 .map_err(|e| format!("Failed to save promoted track: {}", e))?;
+
+            if old_path != target_path && old_path.exists() {
+                let _ = fs::remove_file(&old_path);
+            }
+
             let _ = self.scan_custom_tracks();
             Ok(())
         } else {
@@ -483,16 +618,32 @@ impl TrackManager {
         }
     }
 
-    /// Demotes a track from Main category back to Draft / Testing.
+    /// Promotes a track from Draft to Main category with default "classic" module.
+    pub fn promote_track(&mut self, id: &str) -> Result<(), String> {
+        self.promote_track_to_module(id, "classic")
+    }
+
+    /// Demotes a track from Main category back to Draft / Testing, moving the file back to `drafts/`.
     pub fn demote_track(&mut self, id: &str) -> Result<(), String> {
         if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
-            let path_str = self.custom_tracks[pos].file_path.clone();
-            let mut track = Track::load_from_file(&path_str)
+            let old_path_str = self.custom_tracks[pos].file_path.clone();
+            let old_path = PathBuf::from(&old_path_str);
+            let mut track = Track::load_from_file(&old_path)
                 .map_err(|e| format!("Failed to load track to demote: {}", e))?;
             track.category = TrackCategory::Draft;
+
+            let target_dir = self.tracks_dir.join("drafts");
+            let _ = fs::create_dir_all(&target_dir);
+            let target_path = target_dir.join(format!("{}.json", id));
+
             track
-                .save_to_file(&path_str)
+                .save_to_file(&target_path)
                 .map_err(|e| format!("Failed to save demoted track: {}", e))?;
+
+            if old_path != target_path && old_path.exists() {
+                let _ = fs::remove_file(&old_path);
+            }
+
             let _ = self.scan_custom_tracks();
             Ok(())
         } else {
@@ -612,7 +763,13 @@ mod tests {
 
     #[test]
     fn test_track_manager_overwrite_options() {
-        let temp_dir = std::env::temp_dir().join("tdrace_test_tracks_overwrite");
+        let temp_dir = std::env::temp_dir().join(format!(
+            "tdrace_test_tracks_overwrite_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = fs::remove_dir_all(&temp_dir);
 
         let mut manager = TrackManager::new(&temp_dir);

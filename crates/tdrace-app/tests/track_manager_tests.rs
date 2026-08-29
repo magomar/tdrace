@@ -95,8 +95,8 @@ fn test_promotion_and_demotion_lifecycle() {
     assert_eq!(manager.main_track_choices().len(), 7);
     assert_eq!(manager.draft_track_choices().len(), 1);
 
-    // Promote to Main (Approved circuit)
-    manager.promote_track(track_id).expect("Must promote to Main");
+    // Promote to F1 Module
+    manager.promote_track_to_module(track_id, "f1").expect("Must promote to F1");
 
     assert_eq!(manager.main_track_choices().len(), 8, "Promoted track must appear in Main");
     assert_eq!(manager.draft_track_choices().len(), 0, "Promoted track must be removed from Drafts");
@@ -105,15 +105,30 @@ fn test_promotion_and_demotion_lifecycle() {
     assert_eq!(promoted_choice.title(), "Proto Circuit");
     let loaded_promoted = manager.load_track(promoted_choice).expect("Must load promoted");
     assert_eq!(loaded_promoted.category, TrackCategory::Main);
+    assert_eq!(loaded_promoted.module_id, Some("f1".to_string()));
+
+    // Verify module_custom_tracks
+    let f1_customs = manager.module_custom_tracks("f1");
+    assert_eq!(f1_customs.len(), 1);
+    assert_eq!(f1_customs[0].title(), "Proto Circuit");
+
+    let rally_customs = manager.module_custom_tracks("rally");
+    assert_eq!(rally_customs.len(), 0);
 
     // Demote back to Draft (Under testing)
     manager.demote_track(track_id).expect("Must demote to Draft");
 
     assert_eq!(manager.main_track_choices().len(), 7, "Demoted track must be removed from Main");
     assert_eq!(manager.draft_track_choices().len(), 1, "Demoted track must reappear in Drafts");
+    assert_eq!(manager.module_custom_tracks("f1").len(), 0);
 
     let loaded_demoted = manager.load_track(&manager.draft_track_choices()[0]).expect("Must load demoted");
     assert_eq!(loaded_demoted.category, TrackCategory::Draft);
+
+    // Re-promote to Rally Module
+    manager.promote_track_to_module(track_id, "rally").expect("Must promote to Rally");
+    assert_eq!(manager.module_custom_tracks("rally").len(), 1);
+    assert_eq!(manager.module_custom_tracks("f1").len(), 0);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -254,6 +269,47 @@ fn test_track_manager_confirm_delete_modal() {
     let deleted = session.track_manager.delete_custom_track(&track_id).unwrap();
     assert!(deleted);
     assert_eq!(session.track_manager.draft_track_choices().len(), 0);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_module_subdirectories_and_file_movement() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_subdirs_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // 1. Create a draft track -> should land in temp_dir/drafts/my_circuit.json
+    let mut track = classic_grand_prix();
+    track.name = "My Circuit".to_string();
+    track.category = TrackCategory::Draft;
+    let saved_path = manager.save_custom_track(&track, Some("my_circuit")).expect("Save draft");
+    let draft_file = temp_dir.join("drafts").join("my_circuit.json");
+    assert!(draft_file.exists(), "Draft file must be saved in drafts/ subdirectory");
+    assert_eq!(Path::new(&saved_path), draft_file);
+
+    // 2. Promote to F1 -> should move file to temp_dir/f1/my_circuit.json and remove from drafts/
+    manager.promote_track_to_module("my_circuit", "f1").expect("Promote to F1");
+    let f1_file = temp_dir.join("f1").join("my_circuit.json");
+    assert!(f1_file.exists(), "Promoted file must exist in f1/ subdirectory");
+    assert!(!draft_file.exists(), "Old draft file must be removed after promotion");
+
+    // 3. Demote back to Draft -> should move file back to temp_dir/drafts/my_circuit.json
+    manager.demote_track("my_circuit").expect("Demote to Draft");
+    assert!(draft_file.exists(), "Demoted file must exist back in drafts/ subdirectory");
+    assert!(!f1_file.exists(), "Old f1 file must be removed after demotion");
+
+    // 4. Promote to Rally -> should move file to temp_dir/rally/my_circuit.json
+    manager.promote_track_to_module("my_circuit", "rally").expect("Promote to Rally");
+    let rally_file = temp_dir.join("rally").join("my_circuit.json");
+    assert!(rally_file.exists(), "Promoted file must exist in rally/ subdirectory");
+    assert!(!draft_file.exists(), "Old draft file must be removed");
+
+    // 5. Test multi-directory scanner on fresh TrackManager instance
+    let new_scanner = TrackManager::new(&temp_dir);
+    assert_eq!(new_scanner.main_track_choices().len(), 8); // 7 presets + 1 custom
+    assert_eq!(new_scanner.module_custom_tracks("rally").len(), 1);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

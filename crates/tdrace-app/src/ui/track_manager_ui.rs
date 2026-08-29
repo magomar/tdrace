@@ -30,7 +30,20 @@ pub enum TrackManagerModal {
         track_id: String,
         track_title: String,
     },
+    SelectModulePromotion {
+        track_id: String,
+        track_title: String,
+        selected_module_idx: usize,
+    },
 }
+
+/// Available motorsport modules for circuit promotion.
+pub const PROMOTION_MODULES: [(&str, &str, &str, macroquad::color::Color); 4] = [
+    ("classic", "Classic Motorsport", "Standard arcade & sports car circuits", Palette::NEON_CYAN),
+    ("f1", "Formula Grand Prix", "High-speed DRS circuits & chicanes", Palette::RED),
+    ("rally", "Rally Cross Championship", "Dirt tracks, dunes & rugged mountain stages", Palette::NEON_GOLD),
+    ("kart", "Karting Cup", "Tight technical hairpins & indoor arenas", Palette::NEON_MAGENTA),
+];
 
 /// Action dispatched from Track Manager interactions.
 #[derive(Debug, Clone, PartialEq)]
@@ -229,7 +242,20 @@ pub fn render_track_manager_screen(
             // Tag Pill
             let tag_text = match track_choice {
                 TrackChoice::Custom { .. } => {
-                    if is_main_active { "OFFICIAL PRESET" } else { "TESTING DRAFT" }
+                    if is_main_active {
+                        if let Some(info) = track_manager.custom_tracks.iter().find(|t| t.id == track_choice.track_id()) {
+                            match info.module_id.as_deref() {
+                                Some("f1") => "OFFICIAL PRESET • F1",
+                                Some("rally") => "OFFICIAL PRESET • RALLY",
+                                Some("kart") => "OFFICIAL PRESET • KART",
+                                _ => "OFFICIAL PRESET • CLASSIC",
+                            }
+                        } else {
+                            "OFFICIAL PRESET"
+                        }
+                    } else {
+                        "TESTING DRAFT"
+                    }
                 }
                 _ => "OFFICIAL PRESET",
             };
@@ -283,18 +309,20 @@ pub fn render_track_manager_screen(
         let mut d_y = content_y + scaler.s(18.0);
 
         // Header: Category Pill & Title
+        let custom_info = track_manager.custom_tracks.iter().find(|t| t.id == selected_track.track_id());
         let (badge_str, badge_col) = match selected_track {
             TrackChoice::Custom { .. } => {
                 if is_main_active {
-                    ("OFFICIAL PRESET (Menu Active)", Palette::NEON_GREEN)
+                    let mod_name = custom_info.map(|i| i.module_name()).unwrap_or("Classic");
+                    (format!("OFFICIAL PRESET ({})", mod_name), Palette::NEON_GREEN)
                 } else {
-                    ("DRAFT / TESTING (Hidden from Menu)", Palette::NEON_GOLD)
+                    ("DRAFT / TESTING (Hidden from Menu)".to_string(), Palette::NEON_GOLD)
                 }
             }
-            _ => ("OFFICIAL PRESET CIRCUIT", Palette::NEON_CYAN),
+            _ => ("OFFICIAL PRESET CIRCUIT".to_string(), Palette::NEON_CYAN),
         };
 
-        fonts.draw_ui_bold(badge_str, pad_x, d_y, scaler.font_s(11.5), badge_col);
+        fonts.draw_ui_bold(&badge_str, pad_x, d_y, scaler.font_s(11.5), badge_col);
         d_y += scaler.s(20.0);
 
         fonts.draw_display(
@@ -304,7 +332,43 @@ pub fn render_track_manager_screen(
             scaler.font_s(21.0),
             Palette::WHITE,
         );
-        d_y += scaler.s(12.0);
+        d_y += scaler.s(16.0);
+
+        // File Path
+        let file_path_str = match selected_track {
+            TrackChoice::Custom { path, .. } => {
+                if let Ok(cwd) = std::env::current_dir() {
+                    let cwd_str = cwd.to_string_lossy();
+                    if path.starts_with(cwd_str.as_ref()) {
+                        path.strip_prefix(cwd_str.as_ref())
+                            .unwrap_or(path)
+                            .trim_start_matches('/')
+                            .to_string()
+                    } else {
+                        path.clone()
+                    }
+                } else {
+                    path.clone()
+                }
+            }
+            preset => {
+                let candidate = track_manager.track_path_for_slug(preset.track_id());
+                if candidate.exists() {
+                    format!("tracks/{}.json", preset.track_id())
+                } else {
+                    format!("Built-in Asset ({}.json)", preset.track_id())
+                }
+            }
+        };
+
+        fonts.draw_ui_regular(
+            &format!("FILE: {}", file_path_str),
+            pad_x,
+            d_y,
+            scaler.font_s(11.0),
+            Palette::NEON_CYAN,
+        );
+        d_y += scaler.s(14.0);
 
         // Description Box
         let desc_h = scaler.s(44.0);
@@ -456,6 +520,9 @@ pub fn render_track_manager_screen(
         TrackManagerModal::ConfirmDelete { track_title, .. } => {
             render_delete_modal(fonts, &scaler, sw, sh, track_title);
         }
+        TrackManagerModal::SelectModulePromotion { track_title, selected_module_idx, .. } => {
+            render_promotion_modal(fonts, &scaler, sw, sh, track_title, *selected_module_idx);
+        }
         TrackManagerModal::None => {}
     }
 }
@@ -586,4 +653,104 @@ fn render_delete_modal(
     let btn_y = my + mh - scaler.s(28.0);
     fonts.draw_ui_bold("[Enter / Y] YES, DELETE", mx + scaler.s(20.0), btn_y, scaler.font_s(14.0), Palette::RED);
     fonts.draw_ui_bold("[Esc / N] CANCEL", mx + mw - scaler.s(130.0), btn_y, scaler.font_s(14.0), Palette::NEON_CYAN);
+}
+
+fn render_promotion_modal(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    track_title: &str,
+    selected_module_idx: usize,
+) {
+    // Backdrop dimming
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
+
+    let mw = scaler.s(520.0);
+    let mh = scaler.s(310.0);
+    let mx = (sw - mw) * 0.5;
+    let my = (sh - mh) * 0.5;
+
+    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GREEN, 2.2);
+
+    fonts.draw_ui_bold(
+        "PROMOTE TRACK TO MOTORSPORT MODULE",
+        mx + scaler.s(20.0),
+        my + scaler.s(32.0),
+        scaler.font_s(17.0),
+        Palette::NEON_GREEN,
+    );
+
+    let prompt_msg = format!("Select target category for \"{}\":", track_title);
+    fonts.draw_ui_regular(
+        &prompt_msg,
+        mx + scaler.s(20.0),
+        my + scaler.s(52.0),
+        scaler.font_s(13.0),
+        Palette::WHITE,
+    );
+
+    let list_y = my + scaler.s(68.0);
+    let item_h = scaler.s(45.0);
+    let item_w = mw - scaler.s(40.0);
+
+    for (idx, (_mod_id, title, desc, accent)) in PROMOTION_MODULES.iter().enumerate() {
+        let is_sel = idx == selected_module_idx;
+        let iy = list_y + idx as f32 * (item_h + scaler.s(6.0));
+
+        let bg_col = if is_sel {
+            Color::new(accent.r * 0.25, accent.g * 0.25, accent.b * 0.25, 0.95)
+        } else {
+            Color::new(0.07, 0.09, 0.14, 0.70)
+        };
+        let border_col = if is_sel {
+            *accent
+        } else {
+            Palette::UI_CARD_BORDER
+        };
+
+        scaler.draw_glass_card(mx + scaler.s(20.0), iy, item_w, item_h, bg_col, border_col, if is_sel { 2.0 } else { 1.0 });
+
+        // Key shortcut pill [1] .. [4]
+        let num_str = format!("[{}]", idx + 1);
+        fonts.draw_ui_bold(
+            &num_str,
+            mx + scaler.s(32.0),
+            iy + scaler.s(27.0),
+            scaler.font_s(14.0),
+            if is_sel { *accent } else { Palette::UI_TEXT_MUTED },
+        );
+
+        // Title
+        fonts.draw_ui_bold(
+            title,
+            mx + scaler.s(65.0),
+            iy + scaler.s(20.0),
+            scaler.font_s(14.0),
+            if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+        );
+
+        // Subtitle
+        fonts.draw_ui_regular(
+            desc,
+            mx + scaler.s(65.0),
+            iy + scaler.s(36.0),
+            scaler.font_s(10.5),
+            Palette::UI_TEXT_MUTED,
+        );
+
+        if is_sel {
+            fonts.draw_ui_bold(
+                "SELECT",
+                mx + item_w - scaler.s(35.0),
+                iy + scaler.s(27.0),
+                scaler.font_s(12.0),
+                *accent,
+            );
+        }
+    }
+
+    let btn_y = my + mh - scaler.s(20.0);
+    fonts.draw_ui_bold("[Enter / A] CONFIRM PROMOTION", mx + scaler.s(20.0), btn_y, scaler.font_s(13.0), Palette::NEON_GREEN);
+    fonts.draw_ui_bold("[Esc / B] CANCEL", mx + mw - scaler.s(120.0), btn_y, scaler.font_s(13.0), Palette::NEON_CYAN);
 }

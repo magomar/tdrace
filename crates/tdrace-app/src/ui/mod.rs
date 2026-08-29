@@ -14,8 +14,9 @@ pub use font::Fonts;
 pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, PlayerCongrats};
 pub use hud::{format_lap_time, render_hud};
 pub use menu::{
-    render_controls_screen, render_pause_menu, render_results_screen, render_track_select_menu,
-    CarChoice, GameModeChoice, RaceResultEntry, TrackChoice,
+    pause_menu_layout, render_controls_screen, render_pause_menu, render_results_screen,
+    render_track_select_menu, CarChoice, GameModeChoice, PauseMenuButtonLayout, RaceResultEntry,
+    TrackChoice,
 };
 pub use profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use scaler::UiScaler;

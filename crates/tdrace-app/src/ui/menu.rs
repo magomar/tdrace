@@ -582,7 +582,43 @@ fn render_stat_bar(
     draw_rectangle(bar_x, y, bar_w * val.clamp(0.0, 1.0), bar_h, color);
 }
 
-/// Renders the modern Pause overlay with Assist Profile selection and Audio status.
+/// Bounding rectangles for interactive Pause Menu action buttons.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PauseMenuButtonLayout {
+    pub resume_rect: (f32, f32, f32, f32),
+    pub exit_rect: (f32, f32, f32, f32),
+}
+
+/// Calculates the layout dimensions and button rectangles for the pause menu overlay.
+pub fn pause_menu_layout(sw: f32, sh: f32) -> (f32, f32, f32, f32, PauseMenuButtonLayout) {
+    let scaler = UiScaler::new(sw, sh);
+    let box_w = scaler.s(500.0);
+    let box_h = scaler.s(345.0);
+    let box_x = (sw - box_w) * 0.5;
+    let box_y = (sh - box_h) * 0.5;
+
+    let pad_x = scaler.s(22.0);
+    let gap = scaler.s(16.0);
+    let btn_w = (box_w - pad_x * 2.0 - gap) * 0.5;
+    let btn_h = scaler.s(48.0);
+    let btn_y = box_y + scaler.s(58.0);
+
+    let resume_rect = (box_x + pad_x, btn_y, btn_w, btn_h);
+    let exit_rect = (box_x + pad_x + btn_w + gap, btn_y, btn_w, btn_h);
+
+    (
+        box_x,
+        box_y,
+        box_w,
+        box_h,
+        PauseMenuButtonLayout {
+            resume_rect,
+            exit_rect,
+        },
+    )
+}
+
+/// Renders the modern Pause overlay with Assist Profile selection, Audio status, and Resume/Exit buttons.
 pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_settings: &AudioSettings) {
     let sw = screen_width();
     let sh = screen_height();
@@ -591,22 +627,105 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     // Dark semi-transparent dim
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.70));
 
-    let box_w = scaler.s(480.0);
-    let box_h = scaler.s(380.0);
-    let x = (sw - box_w) * 0.5;
-    let y = (sh - box_h) * 0.5;
+    let (box_x, box_y, box_w, box_h, btn_layout) = pause_menu_layout(sw, sh);
 
-    scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.2);
+    scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.2);
 
     let title = "RACE PAUSED";
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
-        y + scaler.s(40.0),
-        scaler.font_s(32.0),
+        box_y + scaler.s(38.0),
+        scaler.font_s(30.0),
         Palette::WHITE,
         Color::new(0.0, 0.0, 0.0, 0.6),
         scaler.s(2.0),
+    );
+
+    let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
+
+    // Resume button
+    let (rx, ry, rw, rh) = btn_layout.resume_rect;
+    let is_resume_hovered = mx >= rx && mx <= rx + rw && my >= ry && my <= ry + rh;
+    let resume_bg = if is_resume_hovered {
+        Color::new(0.12, 0.52, 0.28, 0.95)
+    } else {
+        Color::new(0.08, 0.36, 0.20, 0.90)
+    };
+    let resume_border = if is_resume_hovered {
+        Palette::NEON_GREEN
+    } else {
+        Color::new(0.20, 0.75, 0.40, 0.85)
+    };
+    draw_rectangle(rx, ry, rw, rh, resume_bg);
+    draw_rectangle_lines(
+        rx,
+        ry,
+        rw,
+        rh,
+        if is_resume_hovered { 2.4 * scaler.scale } else { 1.8 * scaler.scale },
+        resume_border,
+    );
+    fonts.draw_ui_bold_centered(
+        "[ESC] RESUME RACE",
+        rx + rw * 0.5,
+        ry + scaler.s(21.0),
+        scaler.font_s(14.5),
+        Palette::WHITE,
+    );
+    fonts.draw_ui_regular_centered(
+        "Continue | Gamepad Start / A",
+        rx + rw * 0.5,
+        ry + scaler.s(37.0),
+        scaler.font_s(11.0),
+        Color::new(0.75, 0.95, 0.80, 0.90),
+    );
+
+    // Exit button
+    let (ex, ey, ew, eh) = btn_layout.exit_rect;
+    let is_exit_hovered = mx >= ex && mx <= ex + ew && my >= ey && my <= ey + eh;
+    let exit_bg = if is_exit_hovered {
+        Color::new(0.55, 0.12, 0.16, 0.95)
+    } else {
+        Color::new(0.38, 0.08, 0.12, 0.90)
+    };
+    let exit_border = if is_exit_hovered {
+        Palette::RED
+    } else {
+        Color::new(0.85, 0.25, 0.28, 0.85)
+    };
+    draw_rectangle(ex, ey, ew, eh, exit_bg);
+    draw_rectangle_lines(
+        ex,
+        ey,
+        ew,
+        eh,
+        if is_exit_hovered { 2.4 * scaler.scale } else { 1.8 * scaler.scale },
+        exit_border,
+    );
+    fonts.draw_ui_bold_centered(
+        "[E] EXIT RACE",
+        ex + ew * 0.5,
+        ey + scaler.s(21.0),
+        scaler.font_s(14.5),
+        Palette::WHITE,
+    );
+    fonts.draw_ui_regular_centered(
+        "Main Menu | Gamepad B",
+        ex + ew * 0.5,
+        ey + scaler.s(37.0),
+        scaler.font_s(11.0),
+        Color::new(0.95, 0.75, 0.75, 0.90),
+    );
+
+    // Divider line
+    let div_y = ry + rh + scaler.s(14.0);
+    draw_rectangle(
+        box_x + scaler.s(20.0),
+        div_y,
+        box_w - scaler.s(40.0),
+        scaler.s(1.0),
+        Color::new(0.2, 0.3, 0.45, 0.5),
     );
 
     let assist_item = format!("H / R3 : Toggle Assists [{}]", assist_profile.short_name());
@@ -615,29 +734,26 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     let audio_item = format!("M : Toggle Audio [{}] | [ / ] : Vol {}%", mute_text, vol_pct);
 
     let items = [
-        "ESC / START / A : Resume Race".to_string(),
+        assist_item,
+        audio_item,
         "D : Driver Cards & Opponents Dossier".to_string(),
         "C / K : Controls & Gamepad Guide".to_string(),
         "R / Y : Restart Race".to_string(),
-        "M / B : Main Menu / Track Select".to_string(),
-        assist_item,
-        audio_item,
         "TAB / Left Stick Click : Camera View".to_string(),
         "Q/A/O/P / Arrows / Stick & Triggers : Drive".to_string(),
         "SPACE / B : Handbrake | Z / LB : Reverse".to_string(),
     ];
 
-
-    let mut item_y = y + scaler.s(76.0);
+    let mut item_y = div_y + scaler.s(22.0);
     for item in &items {
         fonts.draw_ui_bold(
             item,
-            x + scaler.s(26.0),
+            box_x + scaler.s(24.0),
             item_y,
-            scaler.font_s(14.5),
+            scaler.font_s(13.5),
             Color::new(0.85, 0.90, 0.98, 1.0),
         );
-        item_y += scaler.s(25.0);
+        item_y += scaler.s(22.5);
     }
 }
 
