@@ -51,3 +51,31 @@ fn test_car_body_roll_and_geometry() {
     let wheels = car.wheel_positions_world();
     assert_eq!(wheels.len(), 4);
 }
+
+#[test]
+fn test_track_backdrop_colors() {
+    use tdrace_app::render::get_track_backdrop_color;
+    use tdrace_core::physics::surface::SurfaceType;
+
+    let col_grass = get_track_backdrop_color(SurfaceType::Grass);
+    let col_sand = get_track_backdrop_color(SurfaceType::Sand);
+    let col_dirt = get_track_backdrop_color(SurfaceType::Dirt);
+    let col_asphalt = get_track_backdrop_color(SurfaceType::Asphalt);
+
+    // Ensure all backdrop colors are opaque and distinct
+    assert_eq!(col_grass.a, 1.0);
+    assert_eq!(col_sand.a, 1.0);
+    assert_eq!(col_dirt.a, 1.0);
+    assert_eq!(col_asphalt.a, 1.0);
+
+    assert_ne!(col_grass, col_sand);
+    assert_ne!(col_grass, col_dirt);
+    assert_ne!(col_grass, col_asphalt);
+    assert_ne!(col_sand, col_dirt);
+    assert_ne!(col_sand, col_asphalt);
+    assert_ne!(col_dirt, col_asphalt);
+
+    // Fallback for non-offtrack types
+    let col_fallback = get_track_backdrop_color(SurfaceType::Water);
+    assert_eq!(col_fallback, Palette::BACKDROP_GRASS);
+}

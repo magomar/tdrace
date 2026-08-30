@@ -886,11 +886,58 @@ fn render_inspector(
                 curr_y += scaler.s(8.0);
             }
 
-            fonts.draw_ui_bold("Circuit Overview", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-            curr_y += scaler.s(26.0);
+            fonts.draw_ui_bold("Global Off-Track Surface", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_CYAN);
+            curr_y += scaler.s(22.0);
 
-            fonts.draw_ui_regular(&format!("Surface: {:?}", state.track.default_surface), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
-            curr_y += scaler.s(26.0);
+            let offtrack_surfaces = [
+                (SurfaceType::Grass, "Grass"),
+                (SurfaceType::Sand, "Sand"),
+                (SurfaceType::Dirt, "Dirt"),
+                (SurfaceType::Asphalt, "Asphalt"),
+            ];
+
+            let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+            for chunk in offtrack_surfaces.chunks(2) {
+                let (st1, label1) = chunk[0];
+                let is_active1 = state.track.default_surface == st1;
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    half_btn_w,
+                    scaler.s(22.0),
+                    label1,
+                    if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    tools.set_track_default_surface(state, st1);
+                }
+
+                if chunk.len() > 1 {
+                    let (st2, label2) = chunk[1];
+                    let is_active2 = state.track.default_surface == st2;
+                    if draw_ui_btn(
+                        fonts,
+                        scaler,
+                        x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                        curr_y,
+                        half_btn_w,
+                        scaler.s(22.0),
+                        label2,
+                        if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                        if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                        mouse_pos,
+                        clicked,
+                    ) {
+                        tools.set_track_default_surface(state, st2);
+                    }
+                }
+                curr_y += scaler.s(26.0);
+            }
+            curr_y += scaler.s(6.0);
 
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), "Auto Checkpoints", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                 state.record_undo();

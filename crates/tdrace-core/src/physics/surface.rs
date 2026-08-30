@@ -98,6 +98,20 @@ impl SurfaceType {
         matches!(self, Self::Water | Self::Oil | Self::Ice)
     }
 
+    /// All valid global off-track terrain types that can be selected as a track's default surface.
+    pub const OFF_TRACK_TYPES: [SurfaceType; 4] = [
+        SurfaceType::Grass,
+        SurfaceType::Sand,
+        SurfaceType::Dirt,
+        SurfaceType::Asphalt,
+    ];
+
+    /// Whether this surface can serve as a global off-track default terrain.
+    #[inline]
+    pub const fn is_valid_off_track(self) -> bool {
+        matches!(self, Self::Grass | Self::Sand | Self::Dirt | Self::Asphalt)
+    }
+
     /// Display name of the surface type.
     pub const fn name(self) -> &'static str {
         match self {

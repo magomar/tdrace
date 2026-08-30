@@ -11,4 +11,4 @@ pub use barrier::{
 pub use car::render_car;
 pub use color::{CarColorScheme, Palette};
 pub use ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
-pub use track::{render_elevated_track, render_ground_track, render_track};
+pub use track::{get_track_backdrop_color, render_elevated_track, render_ground_track, render_track};

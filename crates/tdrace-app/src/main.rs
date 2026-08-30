@@ -1,6 +1,5 @@
 use macroquad::prelude::*;
 use tdrace_app::game::RaceSession;
-use tdrace_app::render::color::Palette;
 
 fn window_conf() -> Conf {
     Conf {
@@ -41,8 +40,8 @@ async fn main() {
     }
 
     loop {
-        // Clear background with rich GeneRally grass color
-        clear_background(Palette::GRASS);
+        // Clear background with active track's pallid backdrop color
+        clear_background(session.active_backdrop_color());
 
         // Update race simulation / input / AI / physics
         session.update();

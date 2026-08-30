@@ -292,6 +292,33 @@ impl ToolSettings {
         false
     }
 
+    /// Sets the track's default off-track surface type.
+    pub fn set_track_default_surface(&mut self, state: &mut EditorState, surface: SurfaceType) -> bool {
+        if !surface.is_valid_off_track() {
+            return false;
+        }
+        if state.track.default_surface != surface {
+            state.record_undo();
+            state.track.default_surface = surface;
+            state.is_dirty = true;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Cycles the track's default off-track surface type between Grass, Sand, Dirt, and Asphalt.
+    pub fn cycle_track_default_surface(&mut self, state: &mut EditorState) -> SurfaceType {
+        let current = state.track.default_surface;
+        let idx = SurfaceType::OFF_TRACK_TYPES
+            .iter()
+            .position(|&s| s == current)
+            .unwrap_or(0);
+        let next = SurfaceType::OFF_TRACK_TYPES[(idx + 1) % SurfaceType::OFF_TRACK_TYPES.len()];
+        self.set_track_default_surface(state, next);
+        next
+    }
+
     /// Batch modifies track width for all selected waypoints.
     pub fn batch_set_width(&mut self, state: &mut EditorState, width: f32) -> bool {
         let indices = state.selection.selected_waypoint_indices();

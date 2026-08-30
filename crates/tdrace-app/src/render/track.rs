@@ -65,6 +65,17 @@ pub fn get_surface_zone_colors(surface: SurfaceType) -> (Color, Option<Color>) {
     }
 }
 
+/// Helper returning the background/backdrop clear color for a given track off-track default surface.
+pub fn get_track_backdrop_color(surface: SurfaceType) -> Color {
+    match surface {
+        SurfaceType::Grass => Palette::BACKDROP_GRASS,
+        SurfaceType::Dirt => Palette::BACKDROP_DIRT,
+        SurfaceType::Sand => Palette::BACKDROP_SAND,
+        SurfaceType::Asphalt => Palette::BACKDROP_ASPHALT,
+        _ => Palette::BACKDROP_GRASS,
+    }
+}
+
 /// Draws custom surface zones for a specific layer pass (BelowTrack or AboveTrack).
 pub fn render_surface_zones_layer(track: &Track, layer: SurfaceLayer) {
     for zone in &track.geometry.surface_zones {

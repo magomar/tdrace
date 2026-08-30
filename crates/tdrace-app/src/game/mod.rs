@@ -3162,6 +3162,29 @@ impl RaceSession {
         }
     }
 
+    /// Returns the active backdrop clear color based on the current track or editor state.
+    pub fn active_backdrop_color(&self) -> Color {
+        match self.state {
+            GameState::TrackEditor => {
+                if let Some(ref editor) = self.editor_state {
+                    crate::render::get_track_backdrop_color(editor.track.default_surface)
+                } else {
+                    crate::render::get_track_backdrop_color(self.track.default_surface)
+                }
+            }
+            GameState::EditorTestDrive => {
+                if let Some(ref editor) = self.editor_state {
+                    crate::render::get_track_backdrop_color(editor.track.default_surface)
+                } else {
+                    crate::render::get_track_backdrop_color(self.track.default_surface)
+                }
+            }
+            _ => {
+                crate::render::get_track_backdrop_color(self.track.default_surface)
+            }
+        }
+    }
+
     /// Renders current UI state, HUD, or pause screen.
     pub fn render(&mut self) {
         match self.state {

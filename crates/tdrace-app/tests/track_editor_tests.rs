@@ -995,3 +995,54 @@ fn test_track_editor_multi_segment_batch_operations_e2e() {
     assert_eq!(state.track.spline.waypoints.len(), initial_count);
 }
 
+#[test]
+fn test_track_editor_default_offtrack_surface_mutation_and_cycling() {
+    use tdrace_app::editor::{EditorState, ToolSettings};
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::presets::classic_grand_prix;
+    use tdrace_core::track::Track;
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    assert_eq!(state.track.default_surface, SurfaceType::Grass);
+    assert!(!state.is_dirty);
+
+    // 1. Set to Sand
+    assert!(tools.set_track_default_surface(&mut state, SurfaceType::Sand));
+    assert_eq!(state.track.default_surface, SurfaceType::Sand);
+    assert!(state.is_dirty);
+
+    // Setting to same surface returns false
+    assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Sand));
+
+    // 2. Reject non-offtrack surface types (e.g. Ice, Water, Oil, Curb)
+    assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Ice));
+    assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Water));
+    assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Oil));
+    assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Curb));
+    assert_eq!(state.track.default_surface, SurfaceType::Sand);
+
+    // 3. Undo restores previous Grass surface
+    assert!(state.undo());
+    assert_eq!(state.track.default_surface, SurfaceType::Grass);
+
+    // 4. Redo restores Sand
+    assert!(state.redo());
+    assert_eq!(state.track.default_surface, SurfaceType::Sand);
+
+    // 5. Test cycling off-track types: Grass -> Sand -> Dirt -> Asphalt -> Grass
+    tools.set_track_default_surface(&mut state, SurfaceType::Grass);
+    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Sand);
+    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Dirt);
+    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Asphalt);
+    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Grass);
+
+    // 6. JSON serialization roundtrip preserves default_surface
+    tools.set_track_default_surface(&mut state, SurfaceType::Dirt);
+    let json_str = state.track.to_json().expect("Failed to serialize track");
+    let deserialized = Track::from_json(&json_str).expect("Failed to deserialize track");
+    assert_eq!(deserialized.default_surface, SurfaceType::Dirt);
+}
+

@@ -72,6 +72,12 @@ pub fn render_track_thumbnail(
     };
 
     draw_rectangle(x, y, w, h, bg_col);
+
+    // Subtle backdrop terrain tint based on default_surface
+    let backdrop_tint = crate::render::get_track_backdrop_color(track.default_surface);
+    let backdrop_card_tint = Color::new(backdrop_tint.r, backdrop_tint.g, backdrop_tint.b, 0.16);
+    draw_rectangle(x + 1.0, y + 1.0, w - 2.0, h - 2.0, backdrop_card_tint);
+
     draw_rectangle_lines(x, y, w, h, if is_selected { 1.5 } else { 1.0 }, border_col);
 
     let (min, max) = compute_track_bounds(track);
@@ -146,6 +152,11 @@ pub fn render_track_detailed_preview(
     // Glass card background
     scaler.draw_glass_card(x, y, w, h, Color::new(0.05, 0.07, 0.11, 0.92), Palette::UI_CARD_BORDER, 1.2);
 
+    // Subtle backdrop terrain tint based on default_surface
+    let backdrop_tint = crate::render::get_track_backdrop_color(track.default_surface);
+    let backdrop_card_tint = Color::new(backdrop_tint.r, backdrop_tint.g, backdrop_tint.b, 0.12);
+    draw_rectangle(x + 1.0, y + 1.0, w - 2.0, h - 2.0, backdrop_card_tint);
+
     // Subtle background motorsport grid lines
     let grid_spacing = scaler.s(28.0);
     let mut gx = x + grid_spacing;
@@ -190,10 +201,10 @@ pub fn render_track_detailed_preview(
         Palette::NEON_GOLD,
     );
 
-    let len_badge = format!("{:.0}m Total Length", track.total_length_m());
+    let len_badge = format!("{:.0}m | Off-Track: {}", track.total_length_m(), track.default_surface.name());
     fonts.draw_ui_bold(
         &len_badge,
-        x + w - scaler.s(120.0),
+        x + w - scaler.s(190.0),
         y + scaler.s(14.0),
         scaler.font_s(10.5),
         Palette::NEON_CYAN,

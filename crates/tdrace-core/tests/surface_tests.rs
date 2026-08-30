@@ -154,3 +154,32 @@ fn test_per_wheel_surface_split_mu() {
         "Split-mu braking must induce yaw moment due to asymmetrical grip"
     );
 }
+
+#[test]
+fn test_off_track_surface_types_and_track_sampling() {
+    use glam::Vec2;
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    // 1. Verify valid and invalid off-track types
+    for surf in SurfaceType::OFF_TRACK_TYPES {
+        assert!(surf.is_valid_off_track(), "{:?} must be a valid off-track type", surf);
+    }
+    assert!(!SurfaceType::Curb.is_valid_off_track());
+    assert!(!SurfaceType::Water.is_valid_off_track());
+    assert!(!SurfaceType::Oil.is_valid_off_track());
+    assert!(!SurfaceType::Ice.is_valid_off_track());
+
+    // 2. Verify Track::sample_surface returns the configured default_surface when far off-track
+    let mut track = classic_grand_prix();
+    let far_off_track_point = Vec2::new(1000.0, 1000.0);
+
+    for &surf in &SurfaceType::OFF_TRACK_TYPES {
+        track.default_surface = surf;
+        assert_eq!(
+            track.sample_surface(far_off_track_point),
+            surf,
+            "Track must sample configured default_surface {:?} when off-track",
+            surf
+        );
+    }
+}
