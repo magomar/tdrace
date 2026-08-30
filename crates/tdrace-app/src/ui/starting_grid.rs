@@ -7,37 +7,39 @@ use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::game::GridParticipant;
-use crate::profile::draw_country_banner;
+use crate::profile::{draw_country_banner, PlayerProfile};
 use crate::render::color::{CarColorScheme, Palette};
+use crate::ui::menu::{CarChoice, GameMode};
 
-/// Renders the starting grid and participants showcase screen before race launch.
+/// Renders the 2-panel starting grid and participants showcase screen before race launch.
 #[allow(clippy::too_many_arguments)]
 pub fn render_starting_grid_screen(
     fonts: &Fonts,
     track: &Track,
-    player_car_title: &str,
+    player_profile: &PlayerProfile,
+    game_mode: GameMode,
+    active_car: CarChoice,
+    _predefined_car: CarChoice,
     grid_participants: &[GridParticipant],
     total_laps: u32,
-    _is_time_attack: bool,
-    gamepad_connected: bool,
-    free_car_selection: bool,
-    predefined_car_title: &str,
+    best_lap_time: Option<f32>,
     num_drivers: usize,
     max_grid_size: usize,
+    gamepad_connected: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
 
     // Dark glass backdrop overlay
-    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.06, 0.10, 0.88));
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.06, 0.10, 0.90));
 
     // Header Title
-    let title = "STARTING GRID & RACE PARTICIPANTS";
+    let title = "STARTING GRID & ROSTER SETUP";
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
-        scaler.s(32.0),
+        scaler.s(28.0),
         scaler.font_s(26.0),
         Palette::NEON_GOLD,
         Color::new(0.0, 0.0, 0.0, 0.6),
@@ -47,159 +49,488 @@ pub fn render_starting_grid_screen(
     // Subtitle / Track details
     let track_len_m = track.spline.total_length().round() as i32;
     let subtitle = format!(
-        "Circuit: {}  •  Length: {}m  •  Distance: {} Laps",
+        "Circuit: {}  •  Mode: {}  •  Distance: {} Laps",
         track.name.to_uppercase(),
-        track_len_m,
+        game_mode.title().to_uppercase(),
         total_laps,
     );
     fonts.draw_ui_regular_centered(
         &subtitle,
         sw * 0.5,
-        scaler.s(52.0),
+        scaler.s(48.0),
         scaler.font_s(13.0),
         Palette::UI_TEXT_MUTED,
     );
 
-    // Top Controls Bar (Car Spec mode + Driver count)
-    let card_w = (sw * 0.74).clamp(scaler.s(540.0), scaler.s(820.0));
-    let x = (sw - card_w) * 0.5;
-    let ctrl_y = scaler.s(60.0);
-    let ctrl_h = scaler.s(38.0);
-    let half_w = (card_w - scaler.s(10.0)) * 0.5;
+    // Two Columns Geometry
+    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
+    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let col2_x = (sw * 0.5 + scaler.s(12.0)).min(sw - col_w - scaler.safe_pad_x);
+    let panel_y = scaler.s(60.0);
+    let bottom_prompt_y = sh - scaler.s(24.0);
 
-    // Card 1: Car Specification Mode
-    let car_card_border = if free_car_selection { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
-    scaler.draw_glass_card(x, ctrl_y, half_w, ctrl_h, Palette::UI_CARD_BG, car_card_border, 1.4);
-    if free_car_selection {
-        fonts.draw_ui_bold(
-            "CAR SPEC: FREE SELECTION [F]",
-            x + scaler.s(12.0),
-            ctrl_y + scaler.s(15.0),
-            scaler.font_s(11.0),
-            Palette::NEON_GOLD,
-        );
-        fonts.draw_ui_bold(
-            &format!("[ < / > ]  {}", player_car_title),
-            x + scaler.s(12.0),
-            ctrl_y + scaler.s(29.0),
-            scaler.font_s(13.0),
-            Palette::WHITE,
-        );
-    } else {
-        fonts.draw_ui_bold(
-            "CAR SPEC: ENFORCED [F to unlock]",
-            x + scaler.s(12.0),
-            ctrl_y + scaler.s(15.0),
-            scaler.font_s(11.0),
-            Palette::NEON_CYAN,
-        );
-        fonts.draw_ui_bold(
-            predefined_car_title,
-            x + scaler.s(12.0),
-            ctrl_y + scaler.s(29.0),
-            scaler.font_s(13.0),
-            Palette::WHITE,
-        );
-    }
+    // =========================================================================
+    // LEFT PANEL: Player Details, Track Details, Game Mode, Car Specs
+    // =========================================================================
+    let mut curr_y = panel_y;
 
-    // Card 2: Driver Count Modifier
-    let drv_x = x + half_w + scaler.s(10.0);
-    scaler.draw_glass_card(drv_x, ctrl_y, half_w, ctrl_h, Palette::UI_CARD_BG, Palette::NEON_GREEN, 1.4);
-    fonts.draw_ui_bold(
-        "DRIVER GRID: [B / N to cycle] [Up/Down]",
-        drv_x + scaler.s(12.0),
-        ctrl_y + scaler.s(15.0),
-        scaler.font_s(11.0),
-        Palette::NEON_GREEN,
+    // Card 1: Player Profile & Circuit Dossier Card
+    let p1_h = scaler.s(88.0);
+    scaler.draw_glass_card(col1_x, curr_y, col_w, p1_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.2);
+
+    // Line 1: Player Profile info
+    let flag_w = scaler.s(32.0);
+    let flag_h = scaler.s(18.0);
+    draw_country_banner(
+        player_profile.country.as_deref(),
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(10.0),
+        flag_w,
+        flag_h,
+        None,
+        &scaler,
     );
+
+    let p_name_str = format!("{}  (\"{}\")", player_profile.name, player_profile.alias);
     fonts.draw_ui_bold(
-        &format!("{} Racers ({} AI Bots) / Max {}", num_drivers, num_drivers.saturating_sub(1), max_grid_size),
-        drv_x + scaler.s(12.0),
-        ctrl_y + scaler.s(29.0),
-        scaler.font_s(13.0),
+        &p_name_str,
+        col1_x + scaler.s(52.0),
+        curr_y + scaler.s(23.0),
+        scaler.font_s(14.0),
         Palette::WHITE,
     );
 
-    // Grid Container Box
-    let num_rows = num_drivers;
-    let row_h = scaler.s(48.0);
-    let row_gap = scaler.s(5.0);
-    let list_h = (num_rows as f32 * (row_h + row_gap)) + scaler.s(16.0);
-    let grid_y = ctrl_y + ctrl_h + scaler.s(10.0);
-    let max_box_h = (sh - grid_y - scaler.s(42.0)).max(scaler.s(180.0));
-    let box_h = list_h.clamp(scaler.s(180.0), max_box_h);
+    // Team Livery Swatches on right of player row
+    let swatch_w = scaler.s(13.0);
+    let swatch_h = scaler.s(10.0);
+    let swatch_x = col1_x + col_w - scaler.s(58.0);
+    let swatch_y = curr_y + scaler.s(12.0);
+    draw_rectangle(swatch_x, swatch_y, swatch_w, swatch_h, player_profile.color_scheme.primary);
+    draw_rectangle_lines(swatch_x, swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
+    draw_rectangle(swatch_x + swatch_w + scaler.s(2.0), swatch_y, swatch_w, swatch_h, player_profile.color_scheme.secondary);
+    draw_rectangle_lines(swatch_x + swatch_w + scaler.s(2.0), swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
+    draw_rectangle(swatch_x + (swatch_w + scaler.s(2.0)) * 2.0, swatch_y, swatch_w, swatch_h, player_profile.color_scheme.helmet);
+    draw_rectangle_lines(swatch_x + (swatch_w + scaler.s(2.0)) * 2.0, swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
 
-    scaler.draw_glass_card(x, grid_y, card_w, box_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
+    // Divider Line
+    draw_rectangle(col1_x + scaler.s(12.0), curr_y + scaler.s(38.0), col_w - scaler.s(24.0), 1.0, Color::new(0.20, 0.30, 0.45, 0.40));
 
-    // Draw Participant Rows
-    let mut row_y = grid_y + scaler.s(8.0);
-    let row_w = card_w - scaler.s(16.0);
-    let row_x = x + scaler.s(8.0);
+    // Line 2: Track Information
+    fonts.draw_ui_bold(
+        &format!("CIRCUIT: {}", track.name.to_uppercase()),
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(56.0),
+        scaler.font_s(12.5),
+        Palette::NEON_GOLD,
+    );
+    fonts.draw_ui_regular(
+        &format!("{}m Length  •  {} Laps  •  {}", track_len_m, total_laps, track.surface_summary_string()),
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(74.0),
+        scaler.font_s(11.0),
+        Palette::UI_TEXT_MUTED,
+    );
 
-    for (i, participant) in grid_participants.iter().enumerate() {
-        let slot = i + 1;
-        let desc = match (participant.best_lap, participant.best_circuit_time) {
-            (Some(lap), Some(circ)) => {
-                format!(
-                    "Best Lap: {}  •  Circuit: {}",
-                    format_lap_time(lap),
-                    format_lap_time(circ)
-                )
-            }
-            (Some(lap), None) => {
-                format!("Best Lap: {}", format_lap_time(lap))
-            }
-            (None, Some(circ)) => {
-                format!("Circuit: {}", format_lap_time(circ))
-            }
-            (None, None) => {
-                if participant.is_player {
-                    "No Prior Record  •  Random Draw".to_string()
-                } else {
-                    "No Prior Record  •  Rookie Draw".to_string()
-                }
-            }
-        };
+    curr_y += p1_h + scaler.s(8.0);
 
-        let display_name = if participant.is_player {
-            format!("{} (You)", participant.name)
-        } else {
-            participant.name.clone()
-        };
+    // Card 2: Game Mode Selector Card
+    let mode_h = scaler.s(72.0);
+    scaler.draw_glass_card(col1_x, curr_y, col_w, mode_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.4);
 
-        render_participant_row(
-            fonts,
-            &scaler,
-            row_x,
-            row_y,
-            row_w,
-            row_h,
-            slot,
-            &display_name,
-            &participant.alias,
-            participant.country.as_deref(),
-            &participant.car_title,
-            participant.color_scheme,
-            &desc,
-            participant.is_player,
+    fonts.draw_ui_bold(
+        "GAME MODE: [M / Tab to cycle] or Gamepad [X]",
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(16.0),
+        scaler.font_s(11.0),
+        Palette::NEON_GOLD,
+    );
+    fonts.draw_ui_bold(
+        game_mode.tag(),
+        col1_x + col_w - scaler.s(180.0),
+        curr_y + scaler.s(16.0),
+        scaler.font_s(9.5),
+        Palette::NEON_CYAN,
+    );
+
+    fonts.draw_ui_bold(
+        game_mode.title(),
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(36.0),
+        scaler.font_s(16.0),
+        Palette::WHITE,
+    );
+    fonts.draw_ui_regular(
+        game_mode.description(),
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(54.0),
+        scaler.font_s(11.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    curr_y += mode_h + scaler.s(8.0);
+
+    // Card 3: Vehicle Selection & Specs Card
+    let car_card_h = scaler.s(214.0);
+    let car_border_col = if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER };
+    scaler.draw_glass_card(col1_x, curr_y, col_w, car_card_h, Palette::UI_CARD_BG, car_border_col, 1.4);
+
+    let car_header_title = if game_mode.allows_car_change() {
+        "CAR SELECTION: [ < / > ] [Left/Right]"
+    } else {
+        "CAR SPEC: ENFORCED PREDEFINED [Locked]"
+    };
+    let car_header_col = if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::NEON_CYAN };
+    fonts.draw_ui_bold(
+        car_header_title,
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(16.0),
+        scaler.font_s(11.0),
+        car_header_col,
+    );
+    fonts.draw_ui_bold(
+        active_car.tag(),
+        col1_x + col_w - scaler.s(160.0),
+        curr_y + scaler.s(16.0),
+        scaler.font_s(10.0),
+        Palette::NEON_GOLD,
+    );
+
+    fonts.draw_ui_bold(
+        active_car.title(),
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(34.0),
+        scaler.font_s(16.5),
+        Palette::WHITE,
+    );
+    fonts.draw_ui_regular(
+        active_car.description(),
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(49.0),
+        scaler.font_s(11.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    // 4 Performance Stat Bars
+    let (spd, acc, grip, drift) = active_car.stats();
+    let stat_bar_w = col_w - scaler.s(24.0);
+    let stat_base_x = col1_x + scaler.s(12.0);
+
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(64.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(79.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(94.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(109.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
+
+    // 4 Engineering / Dynamic Specs Chips
+    let (spec1, spec2, spec3, spec4) = active_car.specs();
+    let spec_chip_w = (col_w - scaler.s(32.0)) * 0.5;
+    let spec_chip_h = scaler.s(22.0);
+    let chip_y1 = curr_y + scaler.s(134.0);
+    let chip_y2 = curr_y + scaler.s(160.0);
+
+    scaler.draw_glass_card(stat_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+    fonts.draw_ui_bold(spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+
+    scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+    fonts.draw_ui_bold(spec2, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::WHITE);
+
+    scaler.draw_glass_card(stat_base_x, chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+    fonts.draw_ui_bold(spec3, stat_base_x + scaler.s(8.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GOLD);
+
+    scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+    fonts.draw_ui_bold(spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
+
+    curr_y += car_card_h + scaler.s(8.0);
+
+    // Card 4: Grid Configuration / Session Status Card
+    let grid_h = scaler.s(48.0);
+    scaler.draw_glass_card(col1_x, curr_y, col_w, grid_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+    if game_mode.has_bots() {
+        fonts.draw_ui_bold(
+            "GRID CONFIG: [B / N to cycle bots] [Up/Down]",
+            col1_x + scaler.s(12.0),
+            curr_y + scaler.s(16.0),
+            scaler.font_s(10.5),
+            Palette::NEON_CYAN,
         );
-        row_y += row_h + row_gap;
+        fonts.draw_ui_bold(
+            &format!("{} Racers ({} AI Opponents) • Max {} Slots", num_drivers, num_drivers.saturating_sub(1), max_grid_size),
+            col1_x + scaler.s(12.0),
+            curr_y + scaler.s(34.0),
+            scaler.font_s(12.5),
+            Palette::WHITE,
+        );
+    } else {
+        fonts.draw_ui_bold(
+            "SESSION STATUS: SOLO TRACK TIME",
+            col1_x + scaler.s(12.0),
+            curr_y + scaler.s(16.0),
+            scaler.font_s(10.5),
+            Palette::NEON_CYAN,
+        );
+        let status_str = match game_mode {
+            GameMode::TimeTrial => {
+                format!("Personal Best: {} • Shadow Car Active", best_lap_time.map(format_lap_time).unwrap_or_else(|| "No Record".to_string()))
+            }
+            GameMode::FreeRide => "Open Practice Session • Unlimited Laps • Zero Traffic".to_string(),
+            _ => "Solo Practice".to_string(),
+        };
+        fonts.draw_ui_bold(
+            &status_str,
+            col1_x + scaler.s(12.0),
+            curr_y + scaler.s(34.0),
+            scaler.font_s(12.0),
+            Palette::WHITE,
+        );
     }
 
-    // Footer Prompts
+    // =========================================================================
+    // RIGHT PANEL: Starting Grid & Roster
+    // =========================================================================
+    let roster_header = match game_mode {
+        GameMode::TimeTrial => "TIME TRIAL • ROSTER & SHADOW CAR",
+        GameMode::FreeRide => "FREE RIDE • PRACTICE ROSTER",
+        GameMode::StandardRace | GameMode::ExperimentalRace => "STARTING GRID & ROSTER [D for Dossiers]",
+    };
+    fonts.draw_ui_bold(
+        roster_header,
+        col2_x,
+        panel_y + scaler.s(13.0),
+        scaler.font_s(14.5),
+        Palette::NEON_GOLD,
+    );
+
+    let roster_card_y = panel_y + scaler.s(22.0);
+    let roster_card_h = (bottom_prompt_y - roster_card_y - scaler.s(8.0)).max(scaler.s(240.0));
+    scaler.draw_glass_card(col2_x, roster_card_y, col_w, roster_card_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.8);
+
+    let row_w = col_w - scaler.s(16.0);
+    let row_x = col2_x + scaler.s(8.0);
+    let mut row_y = roster_card_y + scaler.s(8.0);
+    let row_h = scaler.s(46.0);
+    let row_gap = scaler.s(5.0);
+
+    match game_mode {
+        GameMode::TimeTrial => {
+            // Row 1: Player (P1)
+            let pb_desc = best_lap_time.map(format_lap_time).unwrap_or_else(|| "No Prior Record".to_string());
+            let p_line = format!("Personal Best: {}  •  Live Driver Telemetry", pb_desc);
+            render_participant_row(
+                fonts,
+                &scaler,
+                row_x,
+                row_y,
+                row_w,
+                row_h,
+                1,
+                &player_profile.name,
+                &player_profile.alias,
+                player_profile.country.as_deref(),
+                active_car.title(),
+                player_profile.color_scheme,
+                &p_line,
+                true,
+            );
+            row_y += row_h + row_gap;
+
+            // Row 2: Shadow / Ghost Car
+            let ghost_lap_str = best_lap_time.map(|t| format!("Ghost Target: {}  •  Live Telemetry Replay", format_lap_time(t))).unwrap_or_else(|| "No prior lap recorded  •  Recording live ghost".to_string());
+            render_ghost_participant_row(
+                fonts,
+                &scaler,
+                row_x,
+                row_y,
+                row_w,
+                row_h,
+                active_car.title(),
+                &ghost_lap_str,
+            );
+            row_y += row_h + scaler.s(14.0);
+
+            // Explanatory info box for Time Trial mode
+            let info_h = scaler.s(160.0);
+            scaler.draw_glass_card(row_x, row_y, row_w, info_h, Color::new(0.05, 0.08, 0.13, 0.8), Palette::UI_CARD_BORDER, 1.0);
+            fonts.draw_ui_bold("TIME TRIAL SHADOW CAR TELEMETRY", row_x + scaler.s(12.0), row_y + scaler.s(18.0), scaler.font_s(12.5), Palette::NEON_CYAN);
+            let tips = [
+                "• The shadow car renders semi-transparently using your all-time best lap",
+                "• Accurately compare cornering lines, braking markers, and exit speeds",
+                "• Setting a new fastest lap automatically updates the active shadow benchmark",
+                "• Press [SPACE / ENTER] to initiate the 3-2-1 launch countdown",
+            ];
+            let mut tip_y = row_y + scaler.s(42.0);
+            for tip in &tips {
+                fonts.draw_ui_regular(tip, row_x + scaler.s(12.0), tip_y, scaler.font_s(11.0), Palette::WHITE);
+                tip_y += scaler.s(24.0);
+            }
+        }
+        GameMode::FreeRide => {
+            // Row 1: Player (P1)
+            let p_line = "Open Practice Session  •  Unlimited Free Laps".to_string();
+            render_participant_row(
+                fonts,
+                &scaler,
+                row_x,
+                row_y,
+                row_w,
+                row_h,
+                1,
+                &player_profile.name,
+                &player_profile.alias,
+                player_profile.country.as_deref(),
+                active_car.title(),
+                player_profile.color_scheme,
+                &p_line,
+                true,
+            );
+            row_y += row_h + scaler.s(14.0);
+
+            // Explanatory info box for Free Ride mode
+            let info_h = scaler.s(160.0);
+            scaler.draw_glass_card(row_x, row_y, row_w, info_h, Color::new(0.05, 0.08, 0.13, 0.8), Palette::UI_CARD_BORDER, 1.0);
+            fonts.draw_ui_bold("FREE RIDE PRACTICE & CIRCUIT TUNING", row_x + scaler.s(12.0), row_y + scaler.s(18.0), scaler.font_s(12.5), Palette::NEON_GREEN);
+            let tips = [
+                "• Unrestricted circuit testing with zero lap limits or opponent traffic",
+                "• Freely test vehicle weight transfer, slip angles, and slide recovery",
+                "• Practice apex clipping zones, curb riding, and throttle control",
+                "• Press [SPACE / ENTER] to launch practice session on the starting grid",
+            ];
+            let mut tip_y = row_y + scaler.s(42.0);
+            for tip in &tips {
+                fonts.draw_ui_regular(tip, row_x + scaler.s(12.0), tip_y, scaler.font_s(11.0), Palette::WHITE);
+                tip_y += scaler.s(24.0);
+            }
+        }
+        GameMode::StandardRace | GameMode::ExperimentalRace => {
+            for (i, participant) in grid_participants.iter().enumerate() {
+                let slot = i + 1;
+                let desc = match (participant.best_lap, participant.best_circuit_time) {
+                    (Some(lap), Some(circ)) => {
+                        format!("Best Lap: {}  •  Circuit: {}", format_lap_time(lap), format_lap_time(circ))
+                    }
+                    (Some(lap), None) => format!("Best Lap: {}", format_lap_time(lap)),
+                    (None, Some(circ)) => format!("Circuit: {}", format_lap_time(circ)),
+                    (None, None) => {
+                        if participant.is_player {
+                            "No Prior Record  •  Grid Draw".to_string()
+                        } else {
+                            "No Prior Record  •  Rookie Draw".to_string()
+                        }
+                    }
+                };
+
+                let display_name = if participant.is_player {
+                    format!("{} (You)", participant.name)
+                } else {
+                    participant.name.clone()
+                };
+
+                render_participant_row(
+                    fonts,
+                    &scaler,
+                    row_x,
+                    row_y,
+                    row_w,
+                    row_h,
+                    slot,
+                    &display_name,
+                    &participant.alias,
+                    participant.country.as_deref(),
+                    &participant.car_title,
+                    participant.color_scheme,
+                    &desc,
+                    participant.is_player,
+                );
+                row_y += row_h + row_gap;
+            }
+        }
+    }
+
+    // =========================================================================
+    // FOOTER PROMPTS
+    // =========================================================================
     let prompt = if gamepad_connected {
-        "[A/START] Start Race  |  [X/LB] Free Car Spec [Left/Right]  |  [RB/D-Pad] Drivers  |  [Y/D] Dossier  |  [B/ESC] Menu"
+        "[A/START] Launch Race  |  [X] Game Mode  |  [D-Pad L/R] Select Car  |  [RB/Up/Down] Bots  |  [Y] Dossier  |  [B] Menu"
     } else {
-        "[SPACE/ENTER] Start Race  |  [F] Toggle Free Car Spec [Left/Right]  |  [B/N/Up/Down] Drivers  |  [D] Dossiers  |  [ESC] Menu"
+        "[SPACE/ENTER] Launch Race  |  [M/TAB] Game Mode  |  [ < / > ] Select Car  |  [B/N/Up/Down] Bots  |  [D] Dossiers  |  [ESC] Menu"
     };
 
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
-        sh - scaler.s(18.0),
-        scaler.font_s(14.5),
+        bottom_prompt_y + scaler.s(6.0),
+        scaler.font_s(14.0),
         Palette::WHITE,
     );
+}
+
+fn render_grid_stat_bar(
+    scaler: &UiScaler,
+    fonts: &Fonts,
+    x: f32,
+    y: f32,
+    w: f32,
+    label: &str,
+    val: f32,
+    color: Color,
+) {
+    fonts.draw_ui_bold(label, x, y + scaler.s(7.0), scaler.font_s(9.0), Palette::UI_TEXT_MUTED);
+    let bar_x = x + scaler.s(40.0);
+    let bar_w = (w - scaler.s(76.0)).max(30.0);
+    let bar_h = scaler.s(6.0);
+
+    draw_rectangle(bar_x, y, bar_w, bar_h, Color::new(0.1, 0.12, 0.16, 0.9));
+    draw_rectangle(bar_x, y, bar_w * val.clamp(0.0, 1.0), bar_h, color);
+
+    let pct_str = format!("{:.0}%", (val * 100.0).clamp(0.0, 100.0));
+    fonts.draw_ui_bold(&pct_str, bar_x + bar_w + scaler.s(6.0), y + scaler.s(7.0), scaler.font_s(9.0), color);
+}
+
+fn render_ghost_participant_row(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    car_name: &str,
+    best_lap_str: &str,
+) {
+    let bg_color = Color::new(0.06, 0.14, 0.22, 0.90);
+    let border_color = Palette::NEON_CYAN;
+
+    draw_rectangle(x, y, w, h, bg_color);
+    draw_rectangle_lines(x, y, w, h, 1.4, border_color);
+
+    // Ghost Badge
+    let badge_w = scaler.s(48.0);
+    let badge_h = h - scaler.s(10.0);
+    let badge_x = x + scaler.s(6.0);
+    let badge_y = y + scaler.s(5.0);
+
+    draw_rectangle(badge_x, badge_y, badge_w, badge_h, Palette::NEON_CYAN);
+    fonts.draw_ui_bold_centered(
+        "GHOST",
+        badge_x + badge_w * 0.5,
+        badge_y + badge_h * 0.5 + scaler.s(4.5),
+        scaler.font_s(11.0),
+        Palette::BLACK,
+    );
+
+    let text_start_x = badge_x + badge_w + scaler.s(10.0);
+
+    // Car column on right
+    let car_col_w = scaler.s(170.0);
+    let car_x = x + w - car_col_w;
+
+    let sep_x = car_x - scaler.s(8.0);
+    draw_rectangle(sep_x, y + scaler.s(6.0), 1.0, h - scaler.s(12.0), Color::new(0.25, 0.35, 0.45, 0.40));
+
+    fonts.draw_ui_bold(car_name, car_x, y + scaler.s(21.0), scaler.font_s(12.5), Palette::WHITE);
+    fonts.draw_ui_regular("Shadow Car", car_x, y + scaler.s(36.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+
+    // Title & Info
+    fonts.draw_ui_bold("Personal Best Benchmark", text_start_x, y + scaler.s(21.0), scaler.font_s(13.5), Palette::NEON_CYAN);
+    fonts.draw_ui_regular(best_lap_str, text_start_x, y + scaler.s(37.0), scaler.font_s(11.0), Color::new(0.80, 0.95, 1.0, 0.9));
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -270,7 +601,7 @@ fn render_participant_row(
     }
 
     // Right Column: Car Model & Livery Swatches
-    let car_col_w = scaler.s(185.0);
+    let car_col_w = scaler.s(175.0);
     let car_x = x + w - car_col_w;
 
     // Subtle vertical separator line between driver profile and vehicle column
@@ -278,10 +609,10 @@ fn render_participant_row(
     draw_rectangle(sep_x, y + scaler.s(6.0), 1.0, h - scaler.s(12.0), Color::new(0.25, 0.35, 0.45, 0.40));
 
     // Car title & Swatches
-    fonts.draw_ui_bold(car_name, car_x, y + scaler.s(21.0), scaler.font_s(13.0), Palette::WHITE);
+    fonts.draw_ui_bold(car_name, car_x, y + scaler.s(21.0), scaler.font_s(12.5), Palette::WHITE);
 
-    let swatch_w = scaler.s(15.0);
-    let swatch_h = scaler.s(11.0);
+    let swatch_w = scaler.s(14.0);
+    let swatch_h = scaler.s(10.0);
     let s_y = y + scaler.s(28.0);
 
     draw_rectangle(car_x, s_y, swatch_w, swatch_h, scheme.primary);
@@ -293,7 +624,7 @@ fn render_participant_row(
     draw_rectangle(car_x + (swatch_w + scaler.s(3.0)) * 2.0, s_y, swatch_w, swatch_h, scheme.helmet);
     draw_rectangle_lines(car_x + (swatch_w + scaler.s(3.0)) * 2.0, s_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
 
-    fonts.draw_ui_regular("Team Livery", car_x + scaler.s(60.0), s_y + scaler.s(9.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_regular("Team Livery", car_x + scaler.s(58.0), s_y + scaler.s(8.5), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
 
     // Middle Column: Driver Name & Profile / Style
     let driver_label = if is_player {
@@ -306,8 +637,9 @@ fn render_participant_row(
     let stats_color = if is_player { Palette::NEON_GOLD } else { Color::new(0.60, 0.85, 0.95, 1.0) };
 
     // Line 1: Driver Name & Alias
-    fonts.draw_ui_bold(&driver_label, text_start_x, y + scaler.s(21.0), scaler.font_s(14.0), name_color);
+    fonts.draw_ui_bold(&driver_label, text_start_x, y + scaler.s(21.0), scaler.font_s(13.5), name_color);
 
     // Line 2: Profile / Style stats
-    fonts.draw_ui_regular(profile_line, text_start_x, y + scaler.s(38.0), scaler.font_s(11.0), stats_color);
+    fonts.draw_ui_regular(profile_line, text_start_x, y + scaler.s(37.0), scaler.font_s(10.5), stats_color);
 }
+

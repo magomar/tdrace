@@ -265,13 +265,128 @@ impl CarChoice {
             Self::F1Car => (0.99, 0.99, 0.99, 0.30),
         }
     }
+
+    /// Returns key engineering and dynamic specifications: (Drivetrain, Mass, Top Speed, Aero/Handling)
+    pub fn specs(&self) -> (&'static str, &'static str, &'static str, &'static str) {
+        match self {
+            Self::SportsCar => ("RWD Drivetrain", "1,180 kg Mass", "208 km/h Top Speed", "Cl 0.65 Downforce"),
+            Self::DriftCar => ("RWD Drift Spec", "980 kg Mass", "45° Wide Drift Lock", "High-Slip Balance"),
+            Self::Kart => ("Direct Rear Axle", "180 kg Mass", "115 km/h Top Speed", "1:1 Direct Rack"),
+            Self::RallyCar => ("AWD 50:50 Split", "1,240 kg Mass", "Long-Travel Setup", "Cl 0.70 Downforce"),
+            Self::F1Car => ("Hybrid V6 Turbo", "798 kg Mass", "346 km/h Top Speed", "Cl 3.40 Downforce"),
+        }
+    }
 }
 
-/// Racing game modes.
+/// Resolves the predefined vehicle model for a given track and active module.
+pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track>, module_id: &str) -> CarChoice {
+    if let Some(tr) = track {
+        match tr.predefined_car.as_deref() {
+            Some("f1" | "f1_car" | "f1_hybrid_26" | "open_wheel") => CarChoice::F1Car,
+            Some("drift_car") => CarChoice::DriftCar,
+            Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
+            Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
+            Some("sports_car") => CarChoice::SportsCar,
+            _ => match tr.module_id.as_deref().unwrap_or(module_id) {
+                "f1" => CarChoice::F1Car,
+                "rally" => CarChoice::RallyCar,
+                "kart" => CarChoice::Kart,
+                _ => CarChoice::SportsCar,
+            },
+        }
+    } else {
+        match module_id {
+            "f1" => CarChoice::F1Car,
+            "rally" => CarChoice::RallyCar,
+            "kart" => CarChoice::Kart,
+            _ => CarChoice::SportsCar,
+        }
+    }
+}
+
+/// Racing game modes supported across single-player practice, time trial, and grid racing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum GameModeChoice {
-    SinglePlayerTimeAttack,
-    RaceVsAiBots { num_bots: usize, total_laps: u32 },
+pub enum GameMode {
+    /// Time Trial: race against your personal best time, shown as a shadow / ghost car. Allows changing car.
+    TimeTrial,
+    /// Free Ride: solo practice to test the circuit or/and the car. Allows changing car.
+    FreeRide,
+    /// Standard Race: all drivers use the circuit's predefined car.
+    StandardRace,
+    /// Experimental Race: all drivers use the car model specified by the user. Allows changing car.
+    ExperimentalRace,
+}
+
+pub type GameModeChoice = GameMode;
+
+impl GameMode {
+    pub const ALL: [Self; 4] = [
+        Self::StandardRace,
+        Self::ExperimentalRace,
+        Self::TimeTrial,
+        Self::FreeRide,
+    ];
+
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::StandardRace => "Standard Race",
+            Self::ExperimentalRace => "Experimental Race",
+            Self::TimeTrial => "Time Trial",
+            Self::FreeRide => "Free Ride",
+        }
+    }
+
+    pub fn tag(&self) -> &'static str {
+        match self {
+            Self::StandardRace => "PREDEFINED CAR • GRID",
+            Self::ExperimentalRace => "CUSTOM CAR SPEC • MULTI-CAR",
+            Self::TimeTrial => "VS GHOST SHADOW CAR",
+            Self::FreeRide => "SOLO PRACTICE & TUNING",
+        }
+    }
+
+    pub fn description(&self) -> &'static str {
+        match self {
+            Self::StandardRace => "All drivers compete using the circuit's official predefined car.",
+            Self::ExperimentalRace => "All drivers compete using the car model specified by the player.",
+            Self::TimeTrial => "Race against your personal best time shown as a shadow car.",
+            Self::FreeRide => "Solo open practice to freely test the circuit and vehicle handling.",
+        }
+    }
+
+    pub fn allows_car_change(&self) -> bool {
+        match self {
+            Self::StandardRace => false,
+            Self::ExperimentalRace | Self::TimeTrial | Self::FreeRide => true,
+        }
+    }
+
+    pub fn has_bots(&self) -> bool {
+        match self {
+            Self::StandardRace | Self::ExperimentalRace => true,
+            Self::TimeTrial | Self::FreeRide => false,
+        }
+    }
+
+    pub fn is_time_attack(&self) -> bool {
+        match self {
+            Self::TimeTrial | Self::FreeRide => true,
+            Self::StandardRace | Self::ExperimentalRace => false,
+        }
+    }
+
+    pub fn has_ghost(&self) -> bool {
+        matches!(self, Self::TimeTrial)
+    }
+
+    pub fn next(&self) -> Self {
+        match self {
+            Self::StandardRace => Self::ExperimentalRace,
+            Self::ExperimentalRace => Self::TimeTrial,
+            Self::TimeTrial => Self::FreeRide,
+            Self::FreeRide => Self::StandardRace,
+        }
+    }
 }
 
 /// Standings entry for results screen.
@@ -297,13 +412,7 @@ pub fn render_track_select_menu(
     module_subtitle: &str,
     module_accent: Color,
     available_tracks: &[TrackChoice],
-    available_vehicles: &[(&str, &str, &str, (f32, f32, f32, f32))],
     selected_track_idx: usize,
-    selected_car_idx: usize,
-    num_bots: usize,
-    is_time_attack: bool,
-    assist_profile: AssistProfile,
-    audio_settings: &AudioSettings,
     active_profile: &PlayerProfile,
     active_stats: &ProfileCareerStats,
 ) {
@@ -480,157 +589,256 @@ pub fn render_track_select_menu(
         curr_y += box_h + scaler.s(6.0);
     }
 
-    // Right Column: Vehicle & Dynamics Settings
+    // Right Column: Circuit Dossier & Predefined Vehicle Specs
     let mut c2_y = menu_content_y;
 
-    fonts.draw_ui_bold(
-        "SELECT VEHICLE [Left/Right]",
-        col2_x,
-        c2_y + scaler.s(13.0),
-        scaler.font_s(16.0),
-        module_accent,
-    );
-    c2_y += scaler.s(22.0);
+    if selected_track_idx < total_tracks {
+        let track_opt = &available_tracks[selected_track_idx];
+        let loaded_track = resolve_track_for_menu(track_opt);
+        let predefined_car = resolve_predefined_car_for_track(loaded_track.as_ref(), active_module_id);
+        let tr_ref = loaded_track.as_ref();
 
-    for (i, &(v_title, v_tag, v_desc, (spd, acc, grip, drift))) in available_vehicles.iter().enumerate() {
-        let is_sel = i == selected_car_idx;
-        let box_h = scaler.s(58.0);
-        let bg_col = if is_sel {
-            Palette::UI_CARD_BG_HOVER
-        } else {
-            Palette::UI_CARD_BG
-        };
-        let border_col = if is_sel {
-            module_accent
-        } else {
-            Palette::UI_CARD_BORDER
-        };
-
-        scaler.draw_glass_card(col2_x, c2_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
-
-        // Tag pill
-        let tag_col = if is_sel { module_accent } else { Palette::UI_TEXT_MUTED };
+        // Section 1 Header: Circuit Dossier & Vector Telemetry
         fonts.draw_ui_bold(
-            v_tag,
+            "CIRCUIT DOSSIER & TELEMETRY",
+            col2_x,
+            c2_y + scaler.s(13.0),
+            scaler.font_s(15.0),
+            module_accent,
+        );
+        c2_y += scaler.s(22.0);
+
+        // Detailed Vector Map Preview Card
+        let preview_h = scaler.s(145.0);
+        if let Some(tr) = tr_ref {
+            super::track_preview::render_track_detailed_preview(fonts, &scaler, col2_x, c2_y, col_w, preview_h, tr);
+        } else {
+            scaler.draw_glass_card(col2_x, c2_y, col_w, preview_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+            fonts.draw_ui_bold_centered(
+                "Circuit telemetry loading...",
+                col2_x + col_w * 0.5,
+                c2_y + preview_h * 0.5,
+                scaler.font_s(14.0),
+                Palette::UI_TEXT_MUTED,
+            );
+        }
+        c2_y += preview_h + scaler.s(8.0);
+
+        // Circuit Specs & Metrics Glass Card
+        let metrics_h = scaler.s(66.0);
+        scaler.draw_glass_card(col2_x, c2_y, col_w, metrics_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+        // Circuit Name & Tag
+        fonts.draw_ui_bold(
+            track_opt.title(),
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(16.0),
-            scaler.font_s(11.0),
-            tag_col,
+            scaler.font_s(15.0),
+            Palette::WHITE,
         );
-
-        let title_col = if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) };
         fonts.draw_ui_bold(
-            v_title,
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(34.0),
-            scaler.font_s(17.0),
-            title_col,
+            track_opt.tag(),
+            col2_x + col_w - scaler.s(135.0),
+            c2_y + scaler.s(16.0),
+            scaler.font_s(10.0),
+            module_accent,
         );
 
-        // Stats mini-bars on right of card
-        let stat_x = col2_x + col_w - scaler.s(120.0);
-        render_stat_bar(scaler, fonts, stat_x, c2_y + scaler.s(12.0), "SPD", spd, Palette::NEON_CYAN);
-        render_stat_bar(scaler, fonts, stat_x, c2_y + scaler.s(24.0), "ACC", acc, Palette::NEON_GOLD);
-        render_stat_bar(scaler, fonts, stat_x, c2_y + scaler.s(36.0), "GRP", grip, Palette::NEON_GREEN);
-        render_stat_bar(scaler, fonts, stat_x, c2_y + scaler.s(48.0), "DFT", drift, Palette::NEON_MAGENTA);
-
+        // Circuit Description
         fonts.draw_ui_regular(
-            v_desc,
+            track_opt.description(),
             col2_x + scaler.s(14.0),
-            c2_y + scaler.s(49.0),
-            scaler.font_s(11.5),
+            c2_y + scaler.s(32.0),
+            scaler.font_s(10.5),
             Palette::UI_TEXT_MUTED,
         );
 
-        c2_y += box_h + scaler.s(8.0);
-    }
+        // Circuit Metrics Summary Row
+        let len_str = if let Some(tr) = tr_ref {
+            format!("{:.0}m", tr.total_length_m())
+        } else {
+            "N/A".to_string()
+        };
+        let laps_str = if let Some(tr) = tr_ref {
+            format!("{} Laps", tr.default_laps)
+        } else {
+            "3 Laps".to_string()
+        };
+        let cps_str = if let Some(tr) = tr_ref {
+            format!("{} Checkpoints", tr.checkpoints.len())
+        } else {
+            "Checkpoints".to_string()
+        };
+        let grid_str = if let Some(tr) = tr_ref {
+            format!("{} Grid Slots", tr.grid_positions.len().min(8))
+        } else {
+            "8 Slots".to_string()
+        };
 
-    // Championship / Season Action Banner
-    let (champ_title, champ_sub, champ_col) = match active_module_id {
-        "f1" => ("[F] START FIA FORMULA 1 WORLD CHAMPIONSHIP (4 ROUNDS)", "Official Season • Qualifying • Standings • 25pt Matrix", Palette::RED),
-        "rally" => ("[F] START WRC STAGE RALLY TIME TRIAL", "Timed Stages • Split Sectors • Time Penalties", Palette::NEON_GOLD),
-        "kart" => ("[F] START SPRINT ELIMINATION CUP", "Knockout Heats • Last Place Elimination", Palette::NEON_GREEN),
-        _ => ("[G / TAB] MOTORSPORT GRAND HUB", "Switch between F1, Rally, Karting & Classic Arcade", Palette::NEON_CYAN),
-    };
-    c2_y += scaler.s(2.0);
-    let champ_h = scaler.s(48.0);
-    scaler.draw_glass_card(col2_x, c2_y, col_w, champ_h, Palette::UI_CARD_BG, champ_col, 1.8);
-    fonts.draw_ui_bold(champ_title, col2_x + scaler.s(14.0), c2_y + scaler.s(20.0), scaler.font_s(13.5), champ_col);
-    fonts.draw_ui_regular(champ_sub, col2_x + scaler.s(14.0), c2_y + scaler.s(38.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
-    c2_y += champ_h + scaler.s(8.0);
+        let metrics_summary = format!("{} • {} • {} • {}", len_str, laps_str, cps_str, grid_str);
+        fonts.draw_ui_bold(
+            &metrics_summary,
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(53.0),
+            scaler.font_s(11.0),
+            Palette::NEON_CYAN,
+        );
 
-    // Mode Setting & Bot Count Card
-    let mode_h = scaler.s(52.0);
-    scaler.draw_glass_card(col2_x, c2_y, col_w, mode_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
+        c2_y += metrics_h + scaler.s(12.0);
 
-    let mode_str = if is_time_attack {
-        "GAME MODE: [X] Time Attack (Solo Hotlap)".to_string()
+        // Section 2 Header: Predefined Vehicle Specification
+        fonts.draw_ui_bold(
+            "PREDEFINED VEHICLE & SPECIFICATIONS",
+            col2_x,
+            c2_y + scaler.s(13.0),
+            scaler.font_s(15.0),
+            Palette::NEON_GOLD,
+        );
+        c2_y += scaler.s(22.0);
+
+        // Predefined Car Glass Card
+        let car_card_h = scaler.s(182.0);
+        scaler.draw_glass_card(col2_x, c2_y, col_w, car_card_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.4);
+
+        // Car Tag & Title
+        fonts.draw_ui_bold(
+            predefined_car.tag(),
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(16.0),
+            scaler.font_s(10.5),
+            Palette::NEON_GOLD,
+        );
+        fonts.draw_ui_bold(
+            predefined_car.title(),
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(34.0),
+            scaler.font_s(16.5),
+            Palette::WHITE,
+        );
+        fonts.draw_ui_regular(
+            predefined_car.description(),
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(49.0),
+            scaler.font_s(11.0),
+            Palette::UI_TEXT_MUTED,
+        );
+
+        // Performance Stat Bars (Speed, Acceleration, Grip, Drift)
+        let (spd, acc, grip, drift) = predefined_car.stats();
+        let stat_bar_w = col_w - scaler.s(28.0);
+        let stat_base_x = col2_x + scaler.s(14.0);
+
+        render_stat_bar_full(scaler, fonts, stat_base_x, c2_y + scaler.s(64.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
+        render_stat_bar_full(scaler, fonts, stat_base_x, c2_y + scaler.s(79.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
+        render_stat_bar_full(scaler, fonts, stat_base_x, c2_y + scaler.s(94.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
+        render_stat_bar_full(scaler, fonts, stat_base_x, c2_y + scaler.s(109.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
+
+        // Telemetry / Engineering Specs Badges
+        let (spec1, spec2, spec3, spec4) = predefined_car.specs();
+        let spec_chip_w = (col_w - scaler.s(36.0)) * 0.5;
+        let spec_chip_h = scaler.s(22.0);
+        let chip_y1 = c2_y + scaler.s(128.0);
+        let chip_y2 = c2_y + scaler.s(153.0);
+
+        // Chip 1 (Drivetrain)
+        scaler.draw_glass_card(stat_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold(spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+
+        // Chip 2 (Mass)
+        scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold(spec2, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::WHITE);
+
+        // Chip 3 (Top Speed)
+        scaler.draw_glass_card(stat_base_x, chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold(spec3, stat_base_x + scaler.s(8.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GOLD);
+
+        // Chip 4 (Aero / Dynamics)
+        scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold(spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
     } else {
-        format!("GAME MODE: [X] Race vs AI ({} Bots, [B] to toggle)", num_bots)
-    };
-    fonts.draw_ui_bold(
-        &mode_str,
-        col2_x + scaler.s(14.0),
-        c2_y + scaler.s(20.0),
-        scaler.font_s(14.5),
-        Palette::NEON_GOLD,
-    );
-    fonts.draw_ui_regular(
-        "Mode: [X] | Bots: [B] | [D] Driver Dossier & Roster",
-        col2_x + scaler.s(14.0),
-        c2_y + scaler.s(38.0),
-        scaler.font_s(11.5),
-        Palette::UI_TEXT_MUTED,
-    );
+        // Dedicated Track Manager / Studio view on right panel
+        fonts.draw_ui_bold(
+            "CIRCUIT STUDIO & WORKSHOP [T]",
+            col2_x,
+            c2_y + scaler.s(13.0),
+            scaler.font_s(15.0),
+            Palette::NEON_MAGENTA,
+        );
+        c2_y += scaler.s(22.0);
 
-    // Driver Assists Profile Setting Card
-    c2_y += mode_h + scaler.s(8.0);
-    let assist_h = scaler.s(52.0);
-    scaler.draw_glass_card(col2_x, c2_y, col_w, assist_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
+        let studio_h = scaler.s(220.0);
+        scaler.draw_glass_card(col2_x, c2_y, col_w, studio_h, Palette::UI_CARD_BG, Palette::NEON_MAGENTA, 1.5);
 
-    let assist_str = format!("DRIVE ASSISTS: [H] {}", assist_profile.title());
-    let assist_col = match assist_profile {
-        AssistProfile::Arcade => Palette::NEON_CYAN,
-        AssistProfile::Sport => Palette::NEON_GOLD,
-        AssistProfile::Pro => Palette::RED,
-    };
-    fonts.draw_ui_bold(
-        &assist_str,
-        col2_x + scaler.s(14.0),
-        c2_y + scaler.s(20.0),
-        scaler.font_s(14.5),
-        assist_col,
-    );
-    fonts.draw_ui_regular(
-        assist_profile.description(),
-        col2_x + scaler.s(14.0),
-        c2_y + scaler.s(38.0),
-        scaler.font_s(11.5),
-        Palette::UI_TEXT_MUTED,
-    );
+        fonts.draw_ui_bold(
+            "TRACK MANAGER & CAD DESIGNER",
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(20.0),
+            scaler.font_s(15.0),
+            Palette::NEON_GOLD,
+        );
+        fonts.draw_ui_regular(
+            "Create, edit, validate and test custom racing circuits with spline geometry, surface zoning, jump ramps, obstacles and predefined car classes.",
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(40.0),
+            scaler.font_s(11.5),
+            Palette::WHITE,
+        );
 
-    // Audio Status Card
-    c2_y += assist_h + scaler.s(8.0);
-    let audio_h = scaler.s(46.0);
-    scaler.draw_glass_card(col2_x, c2_y, col_w, audio_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
+        let features = [
+            "• Spline CAD editor with elevation & banking bridges",
+            "• Multi-surface painting (Asphalt, Dirt, Sand, Water, Ice)",
+            "• Jump ramps, obstacles & custom checkpoint gates",
+            "• Predefined car assignment & lap balancing",
+        ];
+        let mut feat_y = c2_y + scaler.s(86.0);
+        for feat in &features {
+            fonts.draw_ui_regular(feat, col2_x + scaler.s(14.0), feat_y, scaler.font_s(11.0), Palette::NEON_CYAN);
+            feat_y += scaler.s(18.0);
+        }
 
-    let mute_text = if audio_settings.is_muted { "MUTED" } else { "ACTIVE" };
-    let mute_col = if audio_settings.is_muted { Palette::RED } else { Palette::NEON_GREEN };
-    let vol_pct = (audio_settings.master_volume * 100.0).round() as i32;
-    fonts.draw_ui_bold(
-        &format!("AUDIO: [M] Mute [{}] | Volume: [ [ / ] ] {}%", mute_text, vol_pct),
-        col2_x + scaler.s(14.0),
-        c2_y + scaler.s(20.0),
-        scaler.font_s(14.0),
-        mute_col,
-    );
-    fonts.draw_ui_regular(
-        "Nightcall Synthwave Soundtrack & Dynamic SFX Engine",
-        col2_x + scaler.s(14.0),
-        c2_y + scaler.s(36.0),
-        scaler.font_s(11.0),
-        Palette::UI_TEXT_MUTED,
-    );
+        c2_y += studio_h + scaler.s(14.0);
+
+        fonts.draw_ui_bold(
+            "VEHICLE CLASS COMPATIBILITY",
+            col2_x,
+            c2_y + scaler.s(13.0),
+            scaler.font_s(15.0),
+            Palette::NEON_GOLD,
+        );
+        c2_y += scaler.s(22.0);
+
+        let compat_h = scaler.s(170.0);
+        scaler.draw_glass_card(col2_x, c2_y, col_w, compat_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.3);
+
+        fonts.draw_ui_bold(
+            "Multi-Class Support",
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(20.0),
+            scaler.font_s(15.0),
+            Palette::WHITE,
+        );
+        fonts.draw_ui_regular(
+            "Custom circuits fully support all vehicle types with tailored physics, tire curves, downforce models, and custom roster assignments:",
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(38.0),
+            scaler.font_s(11.0),
+            Palette::UI_TEXT_MUTED,
+        );
+
+        let classes = [
+            ("F1 HYBRID", "1050 BHP open-wheeler with high downforce"),
+            ("WRC RALLY", "AWD dirt & mixed terrain rally machine"),
+            ("125CC KART", "Direct steering 1:1 lightweight shifter kart"),
+            ("GT COUPE", "Balanced RWD arcade sports car dynamics"),
+            ("DRIFT SPEC", "High-angle slide machine with quick rack"),
+        ];
+        let mut cl_y = c2_y + scaler.s(70.0);
+        for (tag, desc) in &classes {
+            fonts.draw_ui_bold(tag, col2_x + scaler.s(14.0), cl_y, scaler.font_s(10.0), Palette::NEON_CYAN);
+            fonts.draw_ui_regular(desc, col2_x + scaler.s(90.0), cl_y, scaler.font_s(10.0), Palette::WHITE);
+            cl_y += scaler.s(18.0);
+        }
+    }
 
     // Footer Launch prompt button
     let start_prompt = "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE";
@@ -651,22 +859,26 @@ pub fn render_track_select_menu(
     );
 }
 
-fn render_stat_bar(
+fn render_stat_bar_full(
     scaler: UiScaler,
     fonts: &Fonts,
     x: f32,
     y: f32,
+    w: f32,
     label: &str,
     val: f32,
     color: Color,
 ) {
-    fonts.draw_ui_bold(label, x, y + scaler.s(7.0), scaler.font_s(9.0), Palette::UI_TEXT_MUTED);
-    let bar_x = x + scaler.s(24.0);
-    let bar_w = scaler.s(80.0);
+    fonts.draw_ui_bold(label, x, y + scaler.s(7.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
+    let bar_x = x + scaler.s(44.0);
+    let bar_w = (w - scaler.s(84.0)).max(30.0);
     let bar_h = scaler.s(6.0);
 
     draw_rectangle(bar_x, y, bar_w, bar_h, Color::new(0.1, 0.12, 0.16, 0.9));
     draw_rectangle(bar_x, y, bar_w * val.clamp(0.0, 1.0), bar_h, color);
+
+    let pct_str = format!("{:.0}%", (val * 100.0).clamp(0.0, 100.0));
+    fonts.draw_ui_bold(&pct_str, bar_x + bar_w + scaler.s(8.0), y + scaler.s(7.0), scaler.font_s(9.5), color);
 }
 
 /// Bounding rectangles for interactive Pause Menu action buttons.

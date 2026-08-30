@@ -54,6 +54,12 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
   - `TDRace-MultiAgent-v0` (Multi-car grid racing)
 
 ### 🎮 Arcade Application & Visuals (`crates/tdrace-app`)
+- **4 Distinct Game Modes**:
+  1. *Standard Race*: Official competitive grid race where all drivers use the circuit's predefined car model.
+  2. *Experimental Race*: Multi-car grid race where all drivers use the vehicle model specified by the player.
+  3. *Time Trial*: Solo hotlap racing against your personal best lap time rendered as a dynamic semi-transparent shadow car.
+  4. *Free Ride*: Solo open practice session with zero opponent traffic to test circuits and vehicle dynamics.
+- **Two-Panel Pre-Race Setup & Roster Studio**: Left panel displays player profile, vector track telemetry, game mode selector, and car specs with percentage stat bars; Right panel displays the live starting grid roster and shadow car benchmark.
 - **2.5D Visual Styling**: Drop shadows, rumble curbs, driver helmets, and steerable articulated wheels.
 - **Particle & Skidmark System**: Ring-buffered skidmarks, tire smoke, gravel roost, and collision sparks.
 - **Smooth Predictive Camera**: Dynamic speed-zoom, velocity lookahead, screen shake trauma, and static track overview toggle.
@@ -248,6 +254,12 @@ make test-rust
 # Run Python Gymnasium compliance tests (54 tests)
 make test-python
 ```
+
+---
+
+## 📚 Documentation
+
+- [Screen Architecture & Navigation Schema](docs/screens_and_navigation.md) — Comprehensive guide to all platform screens, state machine navigation flow, visual diagrams, and machine-readable registry schemas.
 
 ---
 
