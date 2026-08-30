@@ -4,7 +4,7 @@ use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 #[test]
 fn test_session_initialization() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
 
     session.init_race();
     let expected_cars = 1 + session.num_bots;
@@ -18,7 +18,6 @@ fn test_session_initialization() {
         _ => panic!("Expected StartingGrid state after init_race vs AI"),
     }
 }
-
 
 #[test]
 fn test_session_track_and_car_selection() {
@@ -106,7 +105,7 @@ fn test_player_lap_tracking_advancement_and_finish() {
 #[test]
 fn test_session_update_state_preservation_and_race_start() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
 
     // 1. Initializing race puts state into StartingGrid
     session.init_race();
@@ -148,18 +147,18 @@ fn test_session_update_state_preservation_and_race_start() {
 #[test]
 fn test_main_menu_exit_confirmation_state() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
     assert!(!session.show_exit_confirm);
 
     // Triggering exit confirmation modal
     session.show_exit_confirm = true;
     assert!(session.show_exit_confirm, "show_exit_confirm should be true when exit modal is open");
-    assert_eq!(session.state, GameState::Menu, "State should remain GameState::Menu");
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 }, "State should remain GameState::ModuleSelect");
 
     // Dismissing exit confirmation modal
     session.show_exit_confirm = false;
     assert!(!session.show_exit_confirm, "show_exit_confirm should be false after dismissal");
-    assert_eq!(session.state, GameState::Menu, "State should remain GameState::Menu");
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 }, "State should remain GameState::ModuleSelect");
 }
 
 #[test]

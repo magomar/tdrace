@@ -84,9 +84,24 @@ pub struct Track {
     pub predefined_car: Option<String>,
     #[serde(default)]
     pub module_id: Option<String>,
+    #[serde(default)]
+    pub modules: Vec<String>,
 }
 
 impl Track {
+    /// Returns true if this track belongs to the specified motorsport module ID.
+    pub fn belongs_to_module(&self, mod_id: &str) -> bool {
+        if self.modules.iter().any(|m| m.eq_ignore_ascii_case(mod_id)) {
+            return true;
+        }
+        if let Some(ref m) = self.module_id {
+            if m.eq_ignore_ascii_case(mod_id) {
+                return true;
+            }
+        }
+        false
+    }
+
     /// Samples the exact surface type at any arbitrary 2D world coordinate.
     ///
     /// Surface resolution hierarchy:

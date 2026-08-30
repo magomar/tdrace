@@ -144,6 +144,7 @@ fn test_lidar_elevation_filtering() {
         default_laps: 3,
         predefined_car: None,
         module_id: None,
+        modules: Vec::new(),
     };
 
     let scanner = LidarScanner::new(LidarConfig::forward_cone_16());

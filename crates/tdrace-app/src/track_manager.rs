@@ -8,6 +8,76 @@ use tdrace_core::track::{Track, TrackCategory};
 
 use crate::ui::menu::TrackChoice;
 
+/// Filter for selecting tracks by motorsport module in the Track Manager.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ModuleFilter {
+    #[default]
+    All,
+    Classic,
+    F1,
+    Rally,
+    Kart,
+}
+
+impl ModuleFilter {
+    pub const ALL: [Self; 5] = [
+        Self::All,
+        Self::Classic,
+        Self::Rally,
+        Self::Kart,
+        Self::F1,
+    ];
+
+    pub fn id(&self) -> Option<&'static str> {
+        match self {
+            Self::All => None,
+            Self::Classic => Some("classic"),
+            Self::Rally => Some("rally"),
+            Self::Kart => Some("kart"),
+            Self::F1 => Some("f1"),
+        }
+    }
+
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::All => "ALL MODULES",
+            Self::Classic => "CLASSIC",
+            Self::Rally => "RALLY",
+            Self::Kart => "KARTING",
+            Self::F1 => "FORMULA 1",
+        }
+    }
+
+    pub fn next(&self) -> Self {
+        match self {
+            Self::All => Self::Classic,
+            Self::Classic => Self::Rally,
+            Self::Rally => Self::Kart,
+            Self::Kart => Self::F1,
+            Self::F1 => Self::All,
+        }
+    }
+
+    pub fn prev(&self) -> Self {
+        match self {
+            Self::All => Self::F1,
+            Self::Classic => Self::All,
+            Self::Rally => Self::Classic,
+            Self::Kart => Self::Rally,
+            Self::F1 => Self::Kart,
+        }
+    }
+
+    pub fn for_module(mod_id: &str) -> Self {
+        match mod_id {
+            "f1" => Self::F1,
+            "rally" => Self::Rally,
+            "kart" => Self::Kart,
+            _ => Self::Classic,
+        }
+    }
+}
+
 /// Metadata for a custom user-created track stored on disk or in memory.
 #[derive(Debug, Clone, PartialEq)]
 pub struct CustomTrackInfo {
@@ -16,6 +86,7 @@ pub struct CustomTrackInfo {
     pub description: String,
     pub category: TrackCategory,
     pub module_id: Option<String>,
+    pub modules: Vec<String>,
     pub file_path: String,
     pub length_m: f32,
     pub waypoint_count: usize,
@@ -28,12 +99,27 @@ pub struct CustomTrackInfo {
 }
 
 impl CustomTrackInfo {
+    pub fn belongs_to_module(&self, mod_id: &str) -> bool {
+        if self.modules.iter().any(|m| m.eq_ignore_ascii_case(mod_id)) {
+            return true;
+        }
+        if let Some(ref m) = self.module_id {
+            if m.eq_ignore_ascii_case(mod_id) {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn module_name(&self) -> &'static str {
-        match self.module_id.as_deref() {
-            Some("f1") => "Formula 1",
-            Some("rally") => "Rally Cross",
-            Some("kart") => "Karting",
-            _ => "Classic",
+        if self.belongs_to_module("f1") {
+            "Formula 1"
+        } else if self.belongs_to_module("rally") {
+            "Rally Cross"
+        } else if self.belongs_to_module("kart") {
+            "Karting"
+        } else {
+            "Classic"
         }
     }
 }
@@ -107,16 +193,27 @@ impl TrackManager {
                             .unwrap_or("custom_track")
                             .to_string();
 
+                        let mut modules = track.modules.clone();
                         // Infer category and module_id from subdirectory if applicable
                         if let Some(ref dir) = subdir {
                             if dir == "drafts" {
                                 track.category = TrackCategory::Draft;
+                                track.module_id = None;
+                                modules.clear();
                             } else {
                                 track.category = TrackCategory::Main;
-                                if track.module_id.is_none() {
-                                    track.module_id = Some(dir.clone());
-                                }
+                                track.module_id = Some(dir.clone());
+                                modules = vec![dir.clone()];
                             }
+                        } else if track.category == TrackCategory::Main {
+                            let mod_id = track.module_id.clone().unwrap_or_else(|| "classic".to_string());
+                            track.module_id = Some(mod_id.clone());
+                            if modules.is_empty() {
+                                modules = vec![mod_id];
+                            }
+                        } else {
+                            // Draft track in root
+                            modules.clear();
                         }
 
                         let surface_summary = track.surface_summary_string();
@@ -128,7 +225,11 @@ impl TrackManager {
                         let default_surface = track.default_surface;
                         let default_laps = track.default_laps;
                         let category = track.category;
-                        let module_id = track.module_id.clone();
+                        let module_id = if category == TrackCategory::Main && track.module_id.is_none() {
+                            Some("classic".to_string())
+                        } else {
+                            track.module_id.clone()
+                        };
 
                         self.custom_tracks.push(CustomTrackInfo {
                             id: stem,
@@ -136,6 +237,7 @@ impl TrackManager {
                             description: track.description,
                             category,
                             module_id,
+                            modules,
                             file_path: path.to_string_lossy().to_string(),
                             length_m,
                             waypoint_count,
@@ -160,23 +262,20 @@ impl TrackManager {
         Ok(self.custom_tracks.len())
     }
 
-    /// Returns Main category tracks: Tested & approved built-in presets + promoted custom tracks.
+    /// Returns Main category tracks: Tested & approved built-in presets + promoted custom tracks across all modules.
     pub fn main_track_choices(&self) -> Vec<TrackChoice> {
-        let mut choices = Vec::with_capacity(TrackChoice::ALL.len() + self.custom_tracks.len());
-        choices.extend(TrackChoice::ALL);
+        self.module_catalog_tracks("all")
+    }
 
-        for custom in &self.custom_tracks {
-            if custom.category == TrackCategory::Main {
-                choices.push(TrackChoice::Custom {
-                    id: custom.id.clone(),
-                    title: custom.title.clone(),
-                    description: custom.description.clone(),
-                    path: custom.file_path.clone(),
-                });
-            }
+    /// Returns Main category tracks filtered by a specific ModuleFilter.
+    pub fn filtered_main_track_choices(&self, filter: ModuleFilter) -> Vec<TrackChoice> {
+        match filter {
+            ModuleFilter::All => self.main_track_choices(),
+            ModuleFilter::Classic => self.module_catalog_tracks("classic"),
+            ModuleFilter::F1 => self.module_catalog_tracks("f1"),
+            ModuleFilter::Rally => self.module_catalog_tracks("rally"),
+            ModuleFilter::Kart => self.module_catalog_tracks("kart"),
         }
-
-        choices
     }
 
     /// Returns Draft / Testing category tracks: Work in progress and experimental prototypes.
@@ -225,15 +324,71 @@ impl TrackManager {
                         description: "High-speed sweeping Maggotts, Becketts & Chapel apex complex.".to_string(),
                         path: "f1/silverstone".to_string(),
                     },
+                    TrackChoice::Custom {
+                        id: "monaco".to_string(),
+                        title: "Circuit de Monaco".to_string(),
+                        description: "Prestigious Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.".to_string(),
+                        path: "f1/monaco".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "suzuka".to_string(),
+                        title: "Suzuka International Racing Course".to_string(),
+                        description: "Technical Japanese figure-8 circuit with Esses, Degner, crossover bridge, and 130R.".to_string(),
+                        path: "f1/suzuka".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "interlagos".to_string(),
+                        title: "Autodromo Jose Carlos Pace (Interlagos)".to_string(),
+                        description: "Anti-clockwise Brazilian thriller featuring Senna 'S', Curva do Sol, and Juncao.".to_string(),
+                        path: "f1/interlagos".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "montreal".to_string(),
+                        title: "Circuit Gilles Villeneuve (Montreal)".to_string(),
+                        description: "Canadian island circuit with Virage Senna, L'Epingle hairpin, and Wall of Champions.".to_string(),
+                        path: "f1/montreal".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "red_bull_ring".to_string(),
+                        title: "Red Bull Ring (Spielberg)".to_string(),
+                        description: "Undulating Austrian alpine sprint circuit with steep climbs and heavy braking into Remus.".to_string(),
+                        path: "f1/red_bull_ring".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "catalunya".to_string(),
+                        title: "Circuit de Barcelona-Catalunya".to_string(),
+                        description: "Premier aerodynamic benchmark testing high-speed downforce and technical precision.".to_string(),
+                        path: "f1/catalunya".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "zandvoort".to_string(),
+                        title: "Circuit Zandvoort".to_string(),
+                        description: "Seaside rollercoaster featuring high-banked Hugenholtz and Arie Luyendyk curves.".to_string(),
+                        path: "f1/zandvoort".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "bahrain".to_string(),
+                        title: "Bahrain International Circuit (Sakhir)".to_string(),
+                        description: "Sakhir desert circuit with heavy Turn 1 braking and technical off-camber Turns 9-10.".to_string(),
+                        path: "f1/bahrain".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "marina_bay".to_string(),
+                        title: "Marina Bay Street Circuit (Singapore)".to_string(),
+                        description: "Spectacular floodlit street race navigating tight harbor chicanes and city avenues.".to_string(),
+                        path: "f1/marina_bay".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "cota".to_string(),
+                        title: "Circuit of the Americas (COTA)".to_string(),
+                        description: "Grand Prix venue featuring steep uphill Turn 1 blind crest and high-speed Esses.".to_string(),
+                        path: "f1/cota".to_string(),
+                    },
+                    TrackChoice::ClassicGrandPrix,
                 ];
-                for custom in &self.custom_tracks {
-                    if custom.id.starts_with("f1_") || custom.title.to_lowercase().contains("f1") {
-                        list.push(TrackChoice::Custom {
-                            id: custom.id.clone(),
-                            title: custom.title.clone(),
-                            description: custom.description.clone(),
-                            path: custom.file_path.clone(),
-                        });
+                for custom in self.module_custom_tracks("f1") {
+                    if !list.iter().any(|c| c.track_id() == custom.track_id()) {
+                        list.push(custom);
                     }
                 }
                 list
@@ -244,19 +399,14 @@ impl TrackManager {
                     TrackChoice::OutlawPass,
                     TrackChoice::Custom {
                         id: "sahara".to_string(),
-                        title: "Sahara Dunes Extreme".to_string(),
+                        title: "Sahara Dunes Stage".to_string(),
                         description: "Fast undulating desert sand dunes and high-drift crests.".to_string(),
                         path: "rally/sahara".to_string(),
                     },
                 ];
-                for custom in &self.custom_tracks {
-                    if custom.id.starts_with("rally_") || custom.title.to_lowercase().contains("rally") {
-                        list.push(TrackChoice::Custom {
-                            id: custom.id.clone(),
-                            title: custom.title.clone(),
-                            description: custom.description.clone(),
-                            path: custom.file_path.clone(),
-                        });
+                for custom in self.module_custom_tracks("rally") {
+                    if !list.iter().any(|c| c.track_id() == custom.track_id()) {
+                        list.push(custom);
                     }
                 }
                 list
@@ -266,44 +416,23 @@ impl TrackManager {
                     TrackChoice::KartArena,
                     TrackChoice::DriftPark,
                 ];
-                for custom in &self.custom_tracks {
-                    if custom.id.starts_with("kart_") || custom.title.to_lowercase().contains("kart") {
-                        list.push(TrackChoice::Custom {
-                            id: custom.id.clone(),
-                            title: custom.title.clone(),
-                            description: custom.description.clone(),
-                            path: custom.file_path.clone(),
-                        });
+                for custom in self.module_custom_tracks("kart") {
+                    if !list.iter().any(|c| c.track_id() == custom.track_id()) {
+                        list.push(custom);
                     }
                 }
                 list
             }
             "classic" => {
                 let mut list = Vec::from(TrackChoice::ALL);
-                for custom in &self.custom_tracks {
-                    if custom.category == TrackCategory::Main {
-                        list.push(TrackChoice::Custom {
-                            id: custom.id.clone(),
-                            title: custom.title.clone(),
-                            description: custom.description.clone(),
-                            path: custom.file_path.clone(),
-                        });
+                for custom in self.module_custom_tracks("classic") {
+                    if !list.iter().any(|c| c.track_id() == custom.track_id()) {
+                        list.push(custom);
                     }
                 }
                 list
             }
-            "drafts" => {
-                let mut list = Vec::new();
-                for custom in &self.custom_tracks {
-                    list.push(TrackChoice::Custom {
-                        id: custom.id.clone(),
-                        title: custom.title.clone(),
-                        description: custom.description.clone(),
-                        path: custom.file_path.clone(),
-                    });
-                }
-                list
-            }
+            "drafts" => self.draft_track_choices(),
             _ => {
                 // "all"
                 let mut list = Vec::new();
@@ -327,13 +456,73 @@ impl TrackManager {
                     path: "f1/silverstone".to_string(),
                 });
                 list.push(TrackChoice::Custom {
+                    id: "monaco".to_string(),
+                    title: "Circuit de Monaco".to_string(),
+                    description: "Prestigious Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.".to_string(),
+                    path: "f1/monaco".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "suzuka".to_string(),
+                    title: "Suzuka International Racing Course".to_string(),
+                    description: "Technical Japanese figure-8 circuit with Esses, Degner, crossover bridge, and 130R.".to_string(),
+                    path: "f1/suzuka".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "interlagos".to_string(),
+                    title: "Autodromo Jose Carlos Pace (Interlagos)".to_string(),
+                    description: "Anti-clockwise Brazilian thriller featuring Senna 'S', Curva do Sol, and Juncao.".to_string(),
+                    path: "f1/interlagos".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "montreal".to_string(),
+                    title: "Circuit Gilles Villeneuve (Montreal)".to_string(),
+                    description: "Canadian island circuit with Virage Senna, L'Epingle hairpin, and Wall of Champions.".to_string(),
+                    path: "f1/montreal".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "red_bull_ring".to_string(),
+                    title: "Red Bull Ring (Spielberg)".to_string(),
+                    description: "Undulating Austrian alpine sprint circuit with steep climbs and heavy braking into Remus.".to_string(),
+                    path: "f1/red_bull_ring".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "catalunya".to_string(),
+                    title: "Circuit de Barcelona-Catalunya".to_string(),
+                    description: "Premier aerodynamic benchmark testing high-speed downforce and technical precision.".to_string(),
+                    path: "f1/catalunya".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "zandvoort".to_string(),
+                    title: "Circuit Zandvoort".to_string(),
+                    description: "Seaside rollercoaster featuring high-banked Hugenholtz and Arie Luyendyk curves.".to_string(),
+                    path: "f1/zandvoort".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "bahrain".to_string(),
+                    title: "Bahrain International Circuit (Sakhir)".to_string(),
+                    description: "Sakhir desert circuit with heavy Turn 1 braking and technical off-camber Turns 9-10.".to_string(),
+                    path: "f1/bahrain".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "marina_bay".to_string(),
+                    title: "Marina Bay Street Circuit (Singapore)".to_string(),
+                    description: "Spectacular floodlit street race navigating tight harbor chicanes and city avenues.".to_string(),
+                    path: "f1/marina_bay".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "cota".to_string(),
+                    title: "Circuit of the Americas (COTA)".to_string(),
+                    description: "Grand Prix venue featuring steep uphill Turn 1 blind crest and high-speed Esses.".to_string(),
+                    path: "f1/cota".to_string(),
+                });
+                list.push(TrackChoice::Custom {
                     id: "sahara".to_string(),
-                    title: "Sahara Dunes Extreme".to_string(),
+                    title: "Sahara Dunes Stage".to_string(),
                     description: "Fast undulating desert sand dunes and high-drift crests.".to_string(),
                     path: "rally/sahara".to_string(),
                 });
                 for custom in &self.custom_tracks {
-                    if !list.iter().any(|c| c.track_id() == custom.id) {
+                    if custom.category == TrackCategory::Main && !list.iter().any(|c| c.track_id() == custom.id) {
                         list.push(TrackChoice::Custom {
                             id: custom.id.clone(),
                             title: custom.title.clone(),
@@ -407,46 +596,34 @@ impl TrackManager {
                 }
             }
             TrackChoice::Custom { id, path, .. } => {
-                if id == "monza" {
-                    let p = self.track_path_for_slug("monza");
-                    if p.exists() {
-                        return Track::load_from_file(&p).or_else(|_| Ok(crate::module::f1::F1GameModule::track_monza()));
-                    }
-                    return Ok(crate::module::f1::F1GameModule::track_monza());
-                }
-                if id == "spa" {
-                    let p = self.track_path_for_slug("spa");
-                    if p.exists() {
-                        return Track::load_from_file(&p).or_else(|_| Ok(crate::module::f1::F1GameModule::track_spa()));
-                    }
-                    return Ok(crate::module::f1::F1GameModule::track_spa());
-                }
-                if id == "silverstone" {
-                    let p = self.track_path_for_slug("silverstone");
-                    if p.exists() {
-                        return Track::load_from_file(&p).or_else(|_| Ok(crate::module::f1::F1GameModule::track_silverstone()));
-                    }
-                    return Ok(crate::module::f1::F1GameModule::track_silverstone());
-                }
-                if id == "sahara" {
-                    let p = self.track_path_for_slug("sahara");
-                    if p.exists() {
-                        return Track::load_from_file(&p).or_else(|_| Ok(tdrace_core::track::presets::sahara_dunes()));
-                    }
-                    return Ok(tdrace_core::track::presets::sahara_dunes());
-                }
                 let file_path = Path::new(path);
                 if file_path.exists() {
-                    Track::load_from_file(file_path)
-                        .map_err(|e| format!("Failed to load custom track from {}: {}", path, e))
-                } else {
-                    let alt_path = self.track_path_for_slug(id);
-                    if alt_path.exists() {
-                        Track::load_from_file(&alt_path)
-                            .map_err(|e| format!("Failed to load custom track from {}: {}", alt_path.display(), e))
-                    } else {
-                        Err(format!("Track file not found: {}", path))
+                    if let Ok(t) = Track::load_from_file(file_path) {
+                        return Ok(t);
                     }
+                }
+                let alt_path = self.track_path_for_slug(id);
+                if alt_path.exists() {
+                    if let Ok(t) = Track::load_from_file(&alt_path) {
+                        return Ok(t);
+                    }
+                }
+                match id.as_str() {
+                    "monza" => Ok(crate::module::f1::F1GameModule::track_monza()),
+                    "spa" => Ok(crate::module::f1::F1GameModule::track_spa()),
+                    "silverstone" => Ok(crate::module::f1::F1GameModule::track_silverstone()),
+                    "monaco" => Ok(crate::module::f1::F1GameModule::track_monaco()),
+                    "suzuka" => Ok(crate::module::f1::F1GameModule::track_suzuka()),
+                    "interlagos" => Ok(crate::module::f1::F1GameModule::track_interlagos()),
+                    "montreal" => Ok(crate::module::f1::F1GameModule::track_montreal()),
+                    "red_bull_ring" => Ok(crate::module::f1::F1GameModule::track_red_bull_ring()),
+                    "catalunya" => Ok(crate::module::f1::F1GameModule::track_catalunya()),
+                    "zandvoort" => Ok(crate::module::f1::F1GameModule::track_zandvoort()),
+                    "bahrain" => Ok(crate::module::f1::F1GameModule::track_bahrain()),
+                    "marina_bay" => Ok(crate::module::f1::F1GameModule::track_marina_bay()),
+                    "cota" => Ok(crate::module::f1::F1GameModule::track_cota()),
+                    "sahara" => Ok(tdrace_core::track::presets::sahara_dunes()),
+                    _ => Err(format!("Track file not found: {}", path)),
                 }
             }
         }
@@ -529,10 +706,12 @@ impl TrackManager {
             if let Ok(existing) = Track::load_from_file(&existing_path) {
                 track_to_save.category = existing.category;
                 track_to_save.module_id = existing.module_id;
+                track_to_save.modules = existing.modules;
             }
         } else {
             track_to_save.category = TrackCategory::Draft;
             track_to_save.module_id = None;
+            track_to_save.modules.clear();
         }
 
         // Determine target directory
@@ -573,16 +752,13 @@ impl TrackManager {
     pub fn module_custom_tracks(&self, module_id: &str) -> Vec<TrackChoice> {
         let mut choices = Vec::new();
         for custom in &self.custom_tracks {
-            if custom.category == TrackCategory::Main {
-                let target = custom.module_id.as_deref().unwrap_or("classic");
-                if target == module_id {
-                    choices.push(TrackChoice::Custom {
-                        id: custom.id.clone(),
-                        title: custom.title.clone(),
-                        description: custom.description.clone(),
-                        path: custom.file_path.clone(),
-                    });
-                }
+            if custom.category == TrackCategory::Main && custom.belongs_to_module(module_id) {
+                choices.push(TrackChoice::Custom {
+                    id: custom.id.clone(),
+                    title: custom.title.clone(),
+                    description: custom.description.clone(),
+                    path: custom.file_path.clone(),
+                });
             }
         }
         choices
@@ -598,6 +774,7 @@ impl TrackManager {
                 .map_err(|e| format!("Failed to load track to promote: {}", e))?;
             track.category = TrackCategory::Main;
             track.module_id = Some(module_id.to_string());
+            track.modules = vec![module_id.to_string()];
 
             let target_dir = self.tracks_dir.join(module_id);
             let _ = fs::create_dir_all(&target_dir);
@@ -631,6 +808,8 @@ impl TrackManager {
             let mut track = Track::load_from_file(&old_path)
                 .map_err(|e| format!("Failed to load track to demote: {}", e))?;
             track.category = TrackCategory::Draft;
+            track.module_id = None;
+            track.modules.clear();
 
             let target_dir = self.tracks_dir.join("drafts");
             let _ = fs::create_dir_all(&target_dir);
@@ -651,22 +830,20 @@ impl TrackManager {
         }
     }
 
-    /// Updates track metadata (name and description) on disk.
-    pub fn update_track_metadata(
-        &mut self,
-        id: &str,
-        new_name: String,
-        new_description: String,
-    ) -> Result<(), String> {
+    /// Updates the display name and description of a custom track and writes changes to disk.
+    pub fn update_track_metadata(&mut self, id: &str, new_title: String, new_description: String) -> Result<(), String> {
         if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let path_str = self.custom_tracks[pos].file_path.clone();
-            let mut track = Track::load_from_file(&path_str)
-                .map_err(|e| format!("Failed to load track to update: {}", e))?;
-            track.name = new_name;
+            let path = PathBuf::from(&path_str);
+            let mut track = Track::load_from_file(&path)
+                .map_err(|e| format!("Failed to load track for metadata update: {}", e))?;
+            track.name = new_title;
             track.description = new_description;
+
             track
-                .save_to_file(&path_str)
-                .map_err(|e| format!("Failed to save updated track: {}", e))?;
+                .save_to_file(&path)
+                .map_err(|e| format!("Failed to save updated track metadata: {}", e))?;
+
             let _ = self.scan_custom_tracks();
             Ok(())
         } else {
@@ -688,12 +865,15 @@ impl TrackManager {
         self.save_custom_track(&track, None)
     }
 
-    /// Deletes a custom track by ID.
+    /// Deletes a custom track file from disk.
     pub fn delete_custom_track(&mut self, id: &str) -> Result<bool, String> {
         if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let path_str = self.custom_tracks[pos].file_path.clone();
-            let _ = fs::remove_file(&path_str);
-            self.custom_tracks.remove(pos);
+            let path = PathBuf::from(&path_str);
+            if path.exists() {
+                fs::remove_file(&path).map_err(|e| format!("Failed to delete track file: {}", e))?;
+            }
+            let _ = self.scan_custom_tracks();
             Ok(true)
         } else {
             Ok(false)
@@ -707,12 +887,18 @@ mod tests {
 
     #[test]
     fn test_track_manager_presets_and_custom_save() {
-        let temp_dir = std::env::temp_dir().join("tdrace_test_tracks_mgr");
+        let temp_dir = std::env::temp_dir().join(format!(
+            "tdrace_test_tracks_mgr_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = fs::remove_dir_all(&temp_dir);
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 7); // 7 presets initially
+        assert_eq!(choices.len(), 21); // 7 classic + 13 f1 + 1 rally unique
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();
@@ -724,8 +910,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 7, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 7);
+        // Since gp was saved as Draft, main choices is still 21, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 21);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -734,7 +920,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 8);
+        assert_eq!(manager.main_track_choices().len(), 22);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -745,18 +931,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[7]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[21]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 7);
+        assert_eq!(manager.main_track_choices().len(), 21);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 7);
+        assert_eq!(manager.main_track_choices().len(), 21);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -836,7 +1022,7 @@ mod tests {
 
         // F1 tracks
         let f1_tracks = manager.module_catalog_tracks("f1");
-        assert_eq!(f1_tracks.len(), 3);
+        assert_eq!(f1_tracks.len(), 14);
         assert!(f1_tracks.iter().any(|t| t.title().contains("Monza")));
         assert!(f1_tracks.iter().any(|t| t.title().contains("Spa")));
         assert!(f1_tracks.iter().any(|t| t.title().contains("Silverstone")));
@@ -844,6 +1030,7 @@ mod tests {
         // Rally tracks
         let rally_tracks = manager.module_catalog_tracks("rally");
         assert_eq!(rally_tracks.len(), 3);
+        assert!(rally_tracks.iter().any(|t| t.title().contains("Sahara")));
 
         // Kart tracks
         let kart_tracks = manager.module_catalog_tracks("kart");
@@ -851,7 +1038,7 @@ mod tests {
 
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert!(all_tracks.len() >= 11);
+        assert_eq!(all_tracks.len(), 21);
 
         // Save a draft
         let mut draft = classic_grand_prix();

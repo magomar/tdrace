@@ -310,6 +310,7 @@ pub fn classic_grand_prix() -> Track {
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
         module_id: Some("classic".to_string()),
+        modules: vec!["classic".to_string(), "f1".to_string()],
     }
 }
 
@@ -361,6 +362,7 @@ pub fn oval_speedway() -> Track {
         default_laps: 5,
         predefined_car: Some("sports_car".to_string()),
         module_id: Some("classic".to_string()),
+        modules: vec!["classic".to_string()],
     }
 }
 
@@ -440,7 +442,8 @@ pub fn drift_park() -> Track {
         pit_box_area: None,
         default_laps: 3,
         predefined_car: Some("drift_car".to_string()),
-        module_id: Some("kart".to_string()),
+        module_id: Some("classic".to_string()),
+        modules: vec!["classic".to_string(), "kart".to_string()],
     }
 }
 
@@ -493,7 +496,8 @@ pub fn kart_arena() -> Track {
         pit_box_area: None,
         default_laps: 5,
         predefined_car: Some("kart".to_string()),
-        module_id: Some("kart".to_string()),
+        module_id: Some("classic".to_string()),
+        modules: vec!["classic".to_string(), "kart".to_string()],
     }
 }
 
@@ -589,6 +593,7 @@ pub fn ramp_raceway() -> Track {
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
         module_id: Some("classic".to_string()),
+        modules: vec!["classic".to_string()],
     }
 }
 
@@ -683,7 +688,8 @@ pub fn oasis_rally() -> Track {
         pit_box_area: None,
         default_laps: 3,
         predefined_car: Some("rally_car".to_string()),
-        module_id: Some("rally".to_string()),
+        module_id: Some("classic".to_string()),
+        modules: vec!["classic".to_string(), "rally".to_string()],
     }
 }
 
@@ -757,7 +763,8 @@ pub fn outlaw_pass() -> Track {
         pit_box_area: None,
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
-        module_id: Some("rally".to_string()),
+        module_id: Some("classic".to_string()),
+        modules: vec!["classic".to_string(), "rally".to_string()],
     }
 }
 

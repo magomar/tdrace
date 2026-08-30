@@ -105,7 +105,7 @@ use crate::ui::menu::{
 use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
 use crate::ui::starting_grid::render_starting_grid_screen;
 use crate::ui::track_manager_ui::{
-    render_track_manager_screen, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
+    render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
 use crate::ui::UiScaler;
 
@@ -146,6 +146,7 @@ pub enum GameState {
     },
     TrackManager {
         active_tab: TrackManagerTab,
+        module_filter: ModuleFilter,
         selected_idx: usize,
         modal: TrackManagerModal,
     },
@@ -426,7 +427,7 @@ impl RaceSession {
         let editor_camera = EditorCamera::from_config(&config.camera);
 
         let mut session = Self {
-            state: GameState::Menu,
+            state: GameState::ModuleSelect { selected_idx: 0 },
             track,
             track_choice,
             track_manager,
@@ -505,7 +506,7 @@ impl RaceSession {
         session.refresh_profiles_and_stats();
         session.refresh_hof_entries();
         session.init_race();
-        session.state = GameState::Menu; // Start in main menu
+        session.state = GameState::ModuleSelect { selected_idx: 0 }; // Start in Grand Hub module select screen
         session
     }
 
@@ -581,68 +582,7 @@ impl RaceSession {
 
     /// Returns available circuits for the active motorsport game module.
     pub fn active_module_tracks(&self) -> Vec<TrackChoice> {
-        match self.active_module_id {
-            "f1" => {
-                let mut tracks = vec![
-                    TrackChoice::Custom {
-                        id: "monza".to_string(),
-                        title: "Monza Autodromo Nazionale".to_string(),
-                        description: "High-speed Italian GP circuit with Rettifilo, Roggia & Ascari chicanes.".to_string(),
-                        path: "f1/monza".to_string(),
-                    },
-                    TrackChoice::Custom {
-                        id: "spa".to_string(),
-                        title: "Circuit de Spa-Francorchamps".to_string(),
-                        description: "Belgian GP circuit with Eau Rouge & Kemmel Straight.".to_string(),
-                        path: "f1/spa".to_string(),
-                    },
-                    TrackChoice::Custom {
-                        id: "silverstone".to_string(),
-                        title: "Silverstone Grand Prix Circuit".to_string(),
-                        description: "British GP high-speed sweeping Maggotts-Becketts curves.".to_string(),
-                        path: "f1/silverstone".to_string(),
-                    },
-                    TrackChoice::ClassicGrandPrix,
-                ];
-                for custom in self.track_manager.module_custom_tracks("f1") {
-                    tracks.push(custom);
-                }
-                tracks
-            }
-            "rally" => {
-                let mut tracks = vec![
-                    TrackChoice::OasisRally,
-                    TrackChoice::OutlawPass,
-                    TrackChoice::Custom {
-                        id: "sahara".to_string(),
-                        title: "Sahara Dunes Stage".to_string(),
-                        description: "Fast undulating desert sand dunes and high-drift crests.".to_string(),
-                        path: "rally/sahara".to_string(),
-                    },
-                ];
-                for custom in self.track_manager.module_custom_tracks("rally") {
-                    tracks.push(custom);
-                }
-                tracks
-            }
-            "kart" => {
-                let mut tracks = vec![
-                    TrackChoice::KartArena,
-                    TrackChoice::DriftPark,
-                ];
-                for custom in self.track_manager.module_custom_tracks("kart") {
-                    tracks.push(custom);
-                }
-                tracks
-            }
-            _ => {
-                let mut tracks = Vec::from(TrackChoice::ALL);
-                for custom in self.track_manager.module_custom_tracks("classic") {
-                    tracks.push(custom);
-                }
-                tracks
-            }
-        }
+        self.track_manager.module_catalog_tracks(self.active_module_id)
     }
 
     /// Returns available vehicles for the active motorsport game module.
@@ -671,16 +611,7 @@ impl RaceSession {
 
     /// Loads the track corresponding to a TrackChoice respecting specialized modules.
     pub fn load_track_for_session(&self, choice: &TrackChoice) -> Track {
-        match choice {
-            TrackChoice::Custom { id, .. } if id == "monza" => F1GameModule::track_monza(),
-            TrackChoice::Custom { id, .. } if id == "spa" => F1GameModule::track_spa(),
-            TrackChoice::Custom { id, .. } if id == "silverstone" => F1GameModule::track_silverstone(),
-            TrackChoice::Custom { id, .. } if id == "sahara" => tdrace_core::track::presets::sahara_dunes(),
-            TrackChoice::Custom { path, .. } => {
-                Track::load_from_file(path).unwrap_or_else(|_| classic_grand_prix())
-            }
-            preset => self.track_manager.load_track(preset).unwrap_or_else(|_| classic_grand_prix()),
-        }
+        self.track_manager.load_track(choice).unwrap_or_else(|_| classic_grand_prix())
     }
 
     /// Resolves and applies the effective configuration for the given module ID
@@ -852,6 +783,16 @@ impl RaceSession {
                     "monza" => self.track = F1GameModule::track_monza(),
                     "spa" => self.track = F1GameModule::track_spa(),
                     "silverstone" => self.track = F1GameModule::track_silverstone(),
+                    "monaco" => self.track = F1GameModule::track_monaco(),
+                    "suzuka" => self.track = F1GameModule::track_suzuka(),
+                    "interlagos" => self.track = F1GameModule::track_interlagos(),
+                    "montreal" => self.track = F1GameModule::track_montreal(),
+                    "red_bull_ring" => self.track = F1GameModule::track_red_bull_ring(),
+                    "catalunya" => self.track = F1GameModule::track_catalunya(),
+                    "zandvoort" => self.track = F1GameModule::track_zandvoort(),
+                    "bahrain" => self.track = F1GameModule::track_bahrain(),
+                    "marina_bay" => self.track = F1GameModule::track_marina_bay(),
+                    "cota" => self.track = F1GameModule::track_cota(),
                     _ => self.track = tdrace_core::track::presets::classic_grand_prix(),
                 }
                 self.init_race();
@@ -1187,16 +1128,13 @@ impl RaceSession {
         // Handle touch controls update
         self.touch.update_from_macroquad(sw, sh, frame_dt);
 
-        // Toggle audio mute (M key)
-        let is_typing = matches!(
+        // Toggle audio mute (M key) - only when not typing and not in Track Manager
+        let is_typing_or_tm = matches!(
             self.state,
             GameState::ProfileCreate { .. }
-                | GameState::TrackManager {
-                    modal: TrackManagerModal::EditMetadata { .. },
-                    ..
-                }
+                | GameState::TrackManager { .. }
         );
-        if !is_typing && is_key_pressed(KeyCode::M) {
+        if !is_typing_or_tm && is_key_pressed(KeyCode::M) {
             self.audio.toggle_mute();
         }
 
@@ -1395,13 +1333,14 @@ impl RaceSession {
         if matches!(self.state, GameState::TrackManager { .. }) {
             if let GameState::TrackManager {
                 active_tab,
+                module_filter,
                 selected_idx,
                 modal,
             } = std::mem::replace(
                 &mut self.state,
                 GameState::Menu,
             ) {
-                self.update_track_manager(active_tab, selected_idx, modal, frame_dt);
+                self.update_track_manager(active_tab, module_filter, selected_idx, modal, frame_dt);
                 return;
             }
         }
@@ -1412,6 +1351,34 @@ impl RaceSession {
                 self.update_menu();
             }
             GameState::ModuleSelect { ref mut selected_idx } => {
+                // If exit confirmation modal is currently open:
+                if self.show_exit_confirm {
+                    // Confirm Exit: Enter, KpEnter, Space, Y, or Gamepad Confirm (A / Start)
+                    if is_key_pressed(KeyCode::Enter)
+                        || is_key_pressed(KeyCode::KpEnter)
+                        || is_key_pressed(KeyCode::Space)
+                        || is_key_pressed(KeyCode::Y)
+                        || self.input.gamepad.snapshot.btn_confirm_pressed
+                        || self.input.gamepad.snapshot.btn_a_pressed
+                        || self.input.gamepad.snapshot.btn_start_pressed
+                    {
+                        std::process::exit(0);
+                    }
+
+                    // Cancel / Dismiss Exit Dialog: Escape, N, or Gamepad Cancel (B / Back / Select)
+                    if is_key_pressed(KeyCode::Escape)
+                        || is_key_pressed(KeyCode::N)
+                        || self.input.gamepad.snapshot.btn_cancel_pressed
+                        || self.input.gamepad.snapshot.btn_b_pressed
+                        || self.input.gamepad.snapshot.btn_back_pressed
+                    {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.show_exit_confirm = false;
+                    }
+
+                    return;
+                }
+
                 let num_modules = 4;
                 if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
                     self.audio.play_sfx(SfxType::UiMove);
@@ -1433,15 +1400,59 @@ impl RaceSession {
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
                     match *selected_idx {
-                        0 => self.switch_to_f1(),
+                        0 => self.switch_to_classic(),
                         1 => self.switch_to_rally(),
                         2 => self.switch_to_kart(),
-                        _ => self.switch_to_classic(),
+                        _ => self.switch_to_f1(),
                     }
                 }
-                if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
+
+                // Profile Manager (P key or Gamepad Y)
+                if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.state = GameState::Menu;
+                    self.refresh_profiles_and_stats();
+                    let current_idx = self
+                        .profile_list
+                        .iter()
+                        .position(|p| p.id == self.active_profile.id)
+                        .unwrap_or(0);
+                    self.state = GameState::ProfileManager {
+                        selected_idx: current_idx,
+                    };
+                    return;
+                }
+
+                // New Profile (N key or Gamepad X)
+                if is_key_pressed(KeyCode::N) || self.input.gamepad.snapshot.btn_x_pressed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let next_livery = self.profile_list.len() % Palette::CAR_COLORS.len();
+                    self.state = GameState::ProfileCreate {
+                        editing_id: None,
+                        field_idx: 0,
+                        input_name: String::new(),
+                        input_alias: String::new(),
+                        country_idx: 1, // Spain default
+                        livery_idx: next_livery,
+                        cursor_timer: 0.0,
+                    };
+                    return;
+                }
+
+                // Controls Help (C / K key)
+                if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::ControlsHelp(false);
+                    return;
+                }
+
+                // Escape / Gamepad B / Back to trigger exit dialog
+                if is_key_pressed(KeyCode::Escape)
+                    || self.input.gamepad.snapshot.btn_cancel_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                    || self.input.gamepad.snapshot.btn_back_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.show_exit_confirm = true;
                 }
             }
             GameState::ChampionshipStandings => {
@@ -2091,14 +2102,22 @@ impl RaceSession {
             return;
         }
 
-        // Open Exit Confirmation modal (Escape key or Gamepad B / Cancel / Back)
+        // Return to Grand Hub Module Selection Screen (Escape key or Gamepad B / Cancel / Back / G / Tab)
         if is_key_pressed(KeyCode::Escape)
+            || is_key_pressed(KeyCode::G)
+            || is_key_pressed(KeyCode::Tab)
             || self.input.gamepad.snapshot.btn_cancel_pressed
             || self.input.gamepad.snapshot.btn_b_pressed
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.show_exit_confirm = true;
+            let cur_mod_idx = match self.active_module_id {
+                "classic" => 0,
+                "rally" => 1,
+                "kart" => 2,
+                _ => 3,
+            };
+            self.state = GameState::ModuleSelect { selected_idx: cur_mod_idx };
             return;
         }
 
@@ -2106,19 +2125,6 @@ impl RaceSession {
         if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::ControlsHelp(false);
-            return;
-        }
-
-        // Open Motorsport Grand Hub Module Selector (G key or Tab)
-        if is_key_pressed(KeyCode::G) || is_key_pressed(KeyCode::Tab) {
-            self.audio.play_sfx(SfxType::UiSelect);
-            let cur_mod_idx = match self.active_module_id {
-                "f1" => 0,
-                "rally" => 1,
-                "kart" => 2,
-                _ => 3,
-            };
-            self.state = GameState::ModuleSelect { selected_idx: cur_mod_idx };
             return;
         }
 
@@ -2134,6 +2140,7 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::TrackManager {
                 active_tab: TrackManagerTab::Main,
+                module_filter: ModuleFilter::for_module(self.active_module_id),
                 selected_idx: 0,
                 modal: TrackManagerModal::None,
             };
@@ -2157,11 +2164,7 @@ impl RaceSession {
 
         let available_tracks = self.active_module_tracks();
         let available_vehicles = self.active_module_vehicles();
-        let total_items = if self.active_module_id == "classic" {
-            available_tracks.len() + 1 // +1 for the dedicated Track Manager entry
-        } else {
-            available_tracks.len()
-        };
+        let total_items = available_tracks.len() + 1; // +1 for the dedicated Track Manager entry
         if self.menu_track_idx >= total_items {
             self.menu_track_idx = 0;
         }
@@ -2216,23 +2219,29 @@ impl RaceSession {
 
         // Toggle Mode (Time Attack vs Race vs AI - X key or Gamepad X)
         if is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
-            self.audio.play_sfx(SfxType::UiMove);
             self.is_time_attack = !self.is_time_attack;
+            self.audio.play_sfx(SfxType::UiSelect);
         }
 
-        // Change bot count (B key or Gamepad Y)
-        if is_key_pressed(KeyCode::B) || self.input.gamepad.snapshot.btn_y_pressed {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.num_bots = (self.num_bots % 7) + 1;
-        }
-
-        // Toggle Driver Assists Profile (H key or Gamepad Right Stick Click / Select)
-        if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
-            self.audio.play_sfx(SfxType::UiMove);
+        // Cycle Driving Assists Profile (H key)
+        if is_key_pressed(KeyCode::H) {
             self.assist_profile = self.assist_profile.next();
+            self.audio.play_sfx(SfxType::UiSelect);
         }
 
-        // Open Track Editor (E key)
+        // Cycle Audio Volume (V key)
+        if is_key_pressed(KeyCode::V) {
+            let mut vol = self.audio.settings.master_volume + 0.25;
+            if vol > 1.05 {
+                vol = 0.0;
+            }
+            self.audio.settings.master_volume = vol;
+            self.audio.settings.sfx_volume = vol;
+            self.audio.settings.music_volume = vol;
+            self.audio.play_sfx(SfxType::UiSelect);
+        }
+
+        // Quick Track Editor Launcher (E key)
         if is_key_pressed(KeyCode::E) {
             self.audio.play_sfx(SfxType::UiSelect);
             if self.menu_track_idx < available_tracks.len() {
@@ -2254,6 +2263,7 @@ impl RaceSession {
                 // If cursor is on the Track Manager entry, open Track Manager
                 self.state = GameState::TrackManager {
                     active_tab: TrackManagerTab::Main,
+                    module_filter: ModuleFilter::for_module(self.active_module_id),
                     selected_idx: 0,
                     modal: TrackManagerModal::None,
                 };
@@ -2282,6 +2292,7 @@ impl RaceSession {
                 // User pressed Confirm on the dedicated "Track Manager" entry!
                 self.state = GameState::TrackManager {
                     active_tab: TrackManagerTab::Main,
+                    module_filter: ModuleFilter::for_module(self.active_module_id),
                     selected_idx: 0,
                     modal: TrackManagerModal::None,
                 };
@@ -2293,6 +2304,7 @@ impl RaceSession {
     fn update_track_manager(
         &mut self,
         mut active_tab: TrackManagerTab,
+        mut module_filter: ModuleFilter,
         mut selected_idx: usize,
         mut modal: TrackManagerModal,
         dt: f32,
@@ -2346,6 +2358,7 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::TrackManager {
                         active_tab,
+                        module_filter,
                         selected_idx,
                         modal: TrackManagerModal::None,
                     };
@@ -2356,6 +2369,7 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.state = GameState::TrackManager {
                         active_tab,
+                        module_filter,
                         selected_idx,
                         modal: TrackManagerModal::None,
                     };
@@ -2364,6 +2378,7 @@ impl RaceSession {
 
                 self.state = GameState::TrackManager {
                     active_tab,
+                    module_filter,
                     selected_idx,
                     modal,
                 };
@@ -2381,7 +2396,7 @@ impl RaceSession {
                     let _ = self.track_manager.delete_custom_track(&tid);
                     self.audio.play_sfx(SfxType::UiSelect);
                     let list_len = match active_tab {
-                        TrackManagerTab::Main => self.track_manager.main_track_choices().len(),
+                        TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter).len(),
                         TrackManagerTab::Drafts => self.track_manager.draft_track_choices().len(),
                     };
                     if selected_idx >= list_len && list_len > 0 {
@@ -2389,6 +2404,7 @@ impl RaceSession {
                     }
                     self.state = GameState::TrackManager {
                         active_tab,
+                        module_filter,
                         selected_idx,
                         modal: TrackManagerModal::None,
                     };
@@ -2399,6 +2415,7 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.state = GameState::TrackManager {
                         active_tab,
+                        module_filter,
                         selected_idx,
                         modal: TrackManagerModal::None,
                     };
@@ -2407,6 +2424,7 @@ impl RaceSession {
 
                 self.state = GameState::TrackManager {
                     active_tab,
+                    module_filter,
                     selected_idx,
                     modal,
                 };
@@ -2460,6 +2478,7 @@ impl RaceSession {
                     }
                     self.state = GameState::TrackManager {
                         active_tab,
+                        module_filter,
                         selected_idx,
                         modal: TrackManagerModal::None,
                     };
@@ -2470,6 +2489,7 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.state = GameState::TrackManager {
                         active_tab,
+                        module_filter,
                         selected_idx,
                         modal: TrackManagerModal::None,
                     };
@@ -2478,6 +2498,7 @@ impl RaceSession {
 
                 self.state = GameState::TrackManager {
                     active_tab,
+                    module_filter,
                     selected_idx,
                     modal: TrackManagerModal::SelectModulePromotion {
                         track_id: track_id.clone(),
@@ -2491,7 +2512,7 @@ impl RaceSession {
         }
 
         // --- NON-MODAL NAVIGATION AND ACTIONS ---
-        // 1. Switch Tabs (Key 1 / 2, Left / Right, Tab, D-pad)
+        // 1. Switch Tabs between Promoted tracks and Drafts (Tab key, Key 1 / 2)
         if is_key_pressed(KeyCode::Key1) {
             if active_tab != TrackManagerTab::Main {
                 self.audio.play_sfx(SfxType::UiMove);
@@ -2506,12 +2527,7 @@ impl RaceSession {
                 selected_idx = 0;
             }
         }
-        if is_key_pressed(KeyCode::Tab)
-            || is_key_pressed(KeyCode::Left)
-            || is_key_pressed(KeyCode::Right)
-            || self.input.gamepad.snapshot.nav_left
-            || self.input.gamepad.snapshot.nav_right
-        {
+        if is_key_pressed(KeyCode::Tab) {
             self.audio.play_sfx(SfxType::UiMove);
             active_tab = match active_tab {
                 TrackManagerTab::Main => TrackManagerTab::Drafts,
@@ -2520,9 +2536,36 @@ impl RaceSession {
             selected_idx = 0;
         }
 
-        // Re-evaluate list after potential tab switch
+        // 2. Switch Module Filter on Main/Promoted Tab (Left / Right arrows, A / D, M key, Gamepad Left/Right)
+        if is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
+            || self.input.gamepad.snapshot.nav_left
+        {
+            if active_tab == TrackManagerTab::Main {
+                self.audio.play_sfx(SfxType::UiMove);
+                module_filter = module_filter.prev();
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::D)
+            || self.input.gamepad.snapshot.nav_right
+        {
+            if active_tab == TrackManagerTab::Main {
+                self.audio.play_sfx(SfxType::UiMove);
+                module_filter = module_filter.next();
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::M) && active_tab == TrackManagerTab::Main {
+            self.audio.play_sfx(SfxType::UiMove);
+            module_filter = module_filter.next();
+            selected_idx = 0;
+        }
+
+        // Re-evaluate list after potential tab/filter switch
         let current_list = match active_tab {
-            TrackManagerTab::Main => self.track_manager.main_track_choices(),
+            TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter),
             TrackManagerTab::Drafts => self.track_manager.draft_track_choices(),
         };
         let list_len = current_list.len();
@@ -2531,7 +2574,7 @@ impl RaceSession {
             selected_idx = list_len.saturating_sub(1);
         }
 
-        // 2. Up/Down Track Selection
+        // 3. Up/Down Track Selection
         if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
             self.audio.play_sfx(SfxType::UiMove);
             if selected_idx == 0 {
@@ -2547,7 +2590,7 @@ impl RaceSession {
             }
         }
 
-        // 3. Race Track (Enter / Space / Gamepad A / Confirm)
+        // 4. Race Track (Enter / Space / Gamepad A / Confirm)
         if is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
             || is_key_pressed(KeyCode::Space)
@@ -2562,10 +2605,11 @@ impl RaceSession {
             }
         }
 
-        // 4. Edit in Track Studio (E key / Gamepad X)
+        // 5. Edit in Track Editor (E key / Gamepad X)
         if is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_x_pressed {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
+                self.track_choice = track_choice.clone();
                 let file_path = match track_choice {
                     TrackChoice::Custom { path, .. } => Some(path.clone()),
                     preset => {
@@ -2581,12 +2625,13 @@ impl RaceSession {
                     .track_manager
                     .load_track(track_choice)
                     .unwrap_or_else(|_| classic_grand_prix());
+                self.track = track.clone();
                 self.enter_track_editor_with_path(track, file_path);
                 return;
             }
         }
 
-        // 5. Promote / Demote Track (P key / Gamepad Y)
+        // 6. Promote / Demote Track (P key / Gamepad Y)
         if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 if track_choice.is_custom() {
@@ -2594,13 +2639,20 @@ impl RaceSession {
                     match active_tab {
                         TrackManagerTab::Drafts => {
                             self.audio.play_sfx(SfxType::UiSelect);
+                            let default_mod_idx = match self.active_module_id {
+                                "classic" => 0,
+                                "rally" => 1,
+                                "kart" => 2,
+                                _ => 3,
+                            };
                             self.state = GameState::TrackManager {
                                 active_tab,
+                                module_filter,
                                 selected_idx,
                                 modal: TrackManagerModal::SelectModulePromotion {
                                     track_id: tid,
                                     track_title: track_choice.title().to_string(),
-                                    selected_module_idx: 0,
+                                    selected_module_idx: default_mod_idx,
                                 },
                             };
                             return;
@@ -2608,7 +2660,7 @@ impl RaceSession {
                         TrackManagerTab::Main => {
                             let _ = self.track_manager.demote_track(&tid);
                             self.audio.play_sfx(SfxType::UiSelect);
-                            let new_len = self.track_manager.main_track_choices().len();
+                            let new_len = self.track_manager.filtered_main_track_choices(module_filter).len();
                             if selected_idx >= new_len && new_len > 0 {
                                 selected_idx = new_len - 1;
                             }
@@ -2618,13 +2670,14 @@ impl RaceSession {
             }
         }
 
-        // 6. Edit Metadata (N key)
+        // 7. Edit Metadata (N key)
         if is_key_pressed(KeyCode::N) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 if track_choice.is_custom() {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::TrackManager {
                         active_tab,
+                        module_filter,
                         selected_idx,
                         modal: TrackManagerModal::EditMetadata {
                             track_id: track_choice.track_id().to_string(),
@@ -2639,7 +2692,7 @@ impl RaceSession {
             }
         }
 
-        // 7. Create New Draft Track (C key)
+        // 8. Create New Draft Track (C key)
         if is_key_pressed(KeyCode::C) {
             self.audio.play_sfx(SfxType::UiSelect);
             let count = self.track_manager.draft_track_choices().len() + 1;
@@ -2650,13 +2703,14 @@ impl RaceSession {
             selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
         }
 
-        // 8. Delete Custom Track (Delete / Backspace / X key)
+        // 9. Delete Custom Track (Delete / Backspace / X key)
         if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) || is_key_pressed(KeyCode::X) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 if track_choice.is_custom() {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::TrackManager {
                         active_tab,
+                        module_filter,
                         selected_idx,
                         modal: TrackManagerModal::ConfirmDelete {
                             track_id: track_choice.track_id().to_string(),
@@ -2668,7 +2722,7 @@ impl RaceSession {
             }
         }
 
-        // 9. Back to Main Menu (Escape / Gamepad Back)
+        // 10. Back to Main Menu (Escape / Gamepad Back)
         if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_back_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             self.state = GameState::Menu;
@@ -2677,6 +2731,7 @@ impl RaceSession {
 
         self.state = GameState::TrackManager {
             active_tab,
+            module_filter,
             selected_idx,
             modal,
         };
@@ -3114,12 +3169,21 @@ impl RaceSession {
             }
             GameState::ModuleSelect { selected_idx } => {
                 let modules_data = [
-                    ("f1", "Formula 1 Grand Prix", "FIA WORLD CHAMPIONSHIP", "High-downforce 1050 BHP hybrid open-wheelers on Monza, Spa, and Silverstone.", Palette::RED),
+                    ("classic", "Classic Arcade Motorsport", "ALL-IN-ONE ARCADE & STUDIO", "GT Coupe, Drift Spec, Shifter Kart, Rally Car & CAD Circuit Studio Workshop.", Palette::NEON_CYAN),
                     ("rally", "World Rally Championship", "WRC LOOSE SURFACE AWD", "AWD stage time trials and Scandinavian flicks on desert sand & mountain passes.", Palette::NEON_GOLD),
                     ("kart", "Sprint Karting Cup", "125CC SHIFTER KARTS", "Direct 1:1 steering, 3.5G cornering bites, and elimination tournament heats.", Palette::NEON_GREEN),
-                    ("classic", "Classic Arcade Motorsport", "ALL-IN-ONE ARCADE & STUDIO", "GT Coupe, Drift Spec, Shifter Kart, Rally Car & CAD Circuit Studio Workshop.", Palette::NEON_CYAN),
+                    ("f1", "Formula 1 Grand Prix", "FIA WORLD CHAMPIONSHIP", "High-downforce 1050 BHP hybrid open-wheelers on Monza, Spa, and Silverstone.", Palette::RED),
                 ];
-                render_module_select_menu(&self.fonts, selected_idx, &modules_data);
+                render_module_select_menu(
+                    &self.fonts,
+                    selected_idx,
+                    &modules_data,
+                    &self.active_profile,
+                    &self.active_profile_stats,
+                );
+                if self.show_exit_confirm {
+                    render_exit_confirm_modal(&self.fonts);
+                }
             }
             GameState::ChampionshipStandings => {
                 if let Some(champ) = &self.championship_session {
@@ -3220,6 +3284,7 @@ impl RaceSession {
             }
             GameState::TrackManager {
                 active_tab,
+                module_filter,
                 selected_idx,
                 ref modal,
             } => {
@@ -3227,6 +3292,7 @@ impl RaceSession {
                     &self.fonts,
                     &self.track_manager,
                     active_tab,
+                    module_filter,
                     selected_idx,
                     modal,
                 );
@@ -3532,7 +3598,7 @@ impl RaceSession {
                     self.enter_track_editor_with_path(track, file_path);
                 }
             }
-            EditorAction::SaveTrack { name, filename, description, overwrite } => {
+            EditorAction::SaveTrack { name, filename, description, overwrite, exit_after } => {
                 if let Some(state) = &mut self.editor_state {
                     state.track.name = name;
                     state.track.description = description;
@@ -3574,6 +3640,10 @@ impl RaceSession {
 
                             // Rescan custom tracks
                             let _ = self.track_manager.scan_custom_tracks();
+
+                            if exit_after {
+                                self.state = GameState::Menu;
+                            }
                         }
                         Err(err) => {
                             self.editor_save_toast_timer = 3.5;

@@ -228,7 +228,7 @@ mod tests {
         assert!(!f1.vehicles().is_empty());
         assert!(f1.vehicles().len() >= 2);
         assert!(!f1.tracks().is_empty());
-        assert!(f1.tracks().len() >= 3);
+        assert_eq!(f1.tracks().len(), 14); // 13 F1 circuits + 1 FIA test track
         assert_eq!(f1.drivers().len(), 7);
         assert!(!f1.supported_game_modes().is_empty());
 
@@ -239,6 +239,28 @@ mod tests {
         let car = F1GameModule::car_f1_hybrid();
         assert!(car.downforce_coefficient > 3.0);
         assert!(car.top_speed_mps * 3.6 > 340.0);
+
+        // Verify that every single F1 track definition generates a valid track with 0 validation errors
+        for track_def in f1.tracks() {
+            let track = (track_def.generator)();
+            assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
+            assert!(track.spline.total_length() > 300.0, "Track length too short for {}", track_def.id);
+            assert!(track.checkpoints.len() >= 10, "Checkpoints too few for {}", track_def.id);
+            assert_eq!(track.grid_positions.len(), 20.min(track.grid_positions.len()), "Grid slots check for {}", track_def.id);
+
+            let diagnostics = tdrace_core::track::validation::validate_track(&track);
+            let errors: Vec<_> = diagnostics
+                .into_iter()
+                .filter(|d| d.severity == tdrace_core::track::validation::ValidationSeverity::Error)
+                .collect();
+            assert!(
+                errors.is_empty(),
+                "Track '{}' ({}) had validation errors: {:?}",
+                track.name,
+                track_def.id,
+                errors
+            );
+        }
     }
 
     #[test]

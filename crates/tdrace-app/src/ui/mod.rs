@@ -24,7 +24,7 @@ pub use starting_grid::render_starting_grid_screen;
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,
 };
-pub use track_preview::{render_track_detailed_preview, render_track_thumbnail};
+pub use track_preview::{compute_track_bounds, render_track_detailed_preview, render_track_thumbnail};
 
 
 

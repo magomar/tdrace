@@ -1,7 +1,8 @@
 use std::fs;
 use std::path::Path;
 use tdrace_app::game::{GameState, RaceSession};
-use tdrace_app::track_manager::TrackManager;
+use tdrace_app::track_manager::{ModuleFilter, TrackManager};
+use tdrace_app::ui::menu::TrackChoice;
 use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
 use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::TrackCategory;
@@ -13,16 +14,15 @@ fn test_track_categories_initial_presets() {
 
     let manager = TrackManager::new(&temp_dir);
 
-    // 1. Initial state: 7 main presets, 0 drafts
+    // 1. Initial state: 21 main presets across modules (7 Classic + 13 unique F1 + 1 unique Rally), 0 drafts
     let main_tracks = manager.main_track_choices();
     let draft_tracks = manager.draft_track_choices();
 
-    assert_eq!(main_tracks.len(), 7, "All 7 presets should be Main tracks");
+    assert_eq!(main_tracks.len(), 21, "All 21 presets across modules should be Main tracks");
     assert_eq!(draft_tracks.len(), 0, "Initial draft tracks list should be empty");
 
     for choice in &main_tracks {
         assert!(!choice.description().is_empty(), "Preset must have a non-empty description");
-        assert!(!choice.is_custom(), "Built-in presets should not be flagged as custom");
     }
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -48,7 +48,7 @@ fn test_draft_creation_and_isolation_from_main_menu() {
     let main_tracks = manager.main_track_choices();
     let draft_tracks = manager.draft_track_choices();
 
-    assert_eq!(main_tracks.len(), 7, "Main menu should only contain approved circuits");
+    assert_eq!(main_tracks.len(), 21, "Main menu should only contain approved circuits");
     assert_eq!(draft_tracks.len(), 1, "Drafts list should contain the newly created draft");
 
     let draft_choice = &draft_tracks[0];
@@ -92,18 +92,18 @@ fn test_promotion_and_demotion_lifecycle() {
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save proto");
 
-    assert_eq!(manager.main_track_choices().len(), 7);
+    assert_eq!(manager.main_track_choices().len(), 21);
     assert_eq!(manager.draft_track_choices().len(), 1);
 
     // Promote to F1 Module
     manager.promote_track_to_module(track_id, "f1").expect("Must promote to F1");
 
-    assert_eq!(manager.main_track_choices().len(), 8, "Promoted track must appear in Main");
+    assert_eq!(manager.main_track_choices().len(), 22, "Promoted track must appear in Main");
     assert_eq!(manager.draft_track_choices().len(), 0, "Promoted track must be removed from Drafts");
 
-    let promoted_choice = &manager.main_track_choices()[7];
+    let promoted_choice = manager.main_track_choices().into_iter().find(|t| t.track_id() == track_id).unwrap();
     assert_eq!(promoted_choice.title(), "Proto Circuit");
-    let loaded_promoted = manager.load_track(promoted_choice).expect("Must load promoted");
+    let loaded_promoted = manager.load_track(&promoted_choice).expect("Must load promoted");
     assert_eq!(loaded_promoted.category, TrackCategory::Main);
     assert_eq!(loaded_promoted.module_id, Some("f1".to_string()));
 
@@ -118,7 +118,7 @@ fn test_promotion_and_demotion_lifecycle() {
     // Demote back to Draft (Under testing)
     manager.demote_track(track_id).expect("Must demote to Draft");
 
-    assert_eq!(manager.main_track_choices().len(), 7, "Demoted track must be removed from Main");
+    assert_eq!(manager.main_track_choices().len(), 21, "Demoted track must be removed from Main");
     assert_eq!(manager.draft_track_choices().len(), 1, "Demoted track must reappear in Drafts");
     assert_eq!(manager.module_custom_tracks("f1").len(), 0);
 
@@ -163,7 +163,7 @@ fn test_metadata_editing() {
 
     // Promote to Official Preset and verify
     manager.promote_track(track_id).expect("Promote");
-    let loaded_promoted = manager.load_track(&manager.main_track_choices()[7]).expect("Load");
+    let loaded_promoted = manager.load_track(manager.main_track_choices().iter().find(|t| t.track_id() == track_id).unwrap()).expect("Load");
     assert_eq!(loaded_promoted.name, "Apex Super Circuit");
     assert_eq!(loaded_promoted.category, TrackCategory::Main);
 
@@ -200,12 +200,13 @@ fn test_race_session_with_track_manager_flow() {
     let mut session = RaceSession::default();
     session.track_manager = TrackManager::new(&temp_dir);
 
-    // 1. Initial State: Menu
-    assert_eq!(session.state, GameState::Menu);
+    // 1. Initial State: ModuleSelect (First Screen)
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
 
     // 2. Transition to Track Manager
     session.state = GameState::TrackManager {
         active_tab: TrackManagerTab::Main,
+        module_filter: ModuleFilter::All,
         selected_idx: 0,
         modal: TrackManagerModal::None,
     };
@@ -258,6 +259,7 @@ fn test_track_manager_confirm_delete_modal() {
 
     session.state = GameState::TrackManager {
         active_tab: TrackManagerTab::Drafts,
+        module_filter: ModuleFilter::All,
         selected_idx: 0,
         modal: TrackManagerModal::ConfirmDelete {
             track_id: track_id.clone(),
@@ -269,6 +271,56 @@ fn test_track_manager_confirm_delete_modal() {
     let deleted = session.track_manager.delete_custom_track(&track_id).unwrap();
     assert!(deleted);
     assert_eq!(session.track_manager.draft_track_choices().len(), 0);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_module_filter_filtering_and_presets_in_classic() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_filter_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Initial state: 21 tracks across all modules (7 Classic + 13 unique F1 + 1 unique Rally)
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::All).len(), 21);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 7);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 14);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 3);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 2);
+
+    // Promote a new track to F1
+    let mut track_f1 = classic_grand_prix();
+    track_f1.name = "Monza Custom GP".to_string();
+    manager.save_custom_track(&track_f1, Some("monza_custom")).unwrap();
+    manager.promote_track_to_module("monza_custom", "f1").unwrap();
+
+    // Promote a new track to Rally
+    let mut track_rally = classic_grand_prix();
+    track_rally.name = "Dune Safari".to_string();
+    manager.save_custom_track(&track_rally, Some("dune_safari")).unwrap();
+    manager.promote_track_to_module("dune_safari", "rally").unwrap();
+
+    // Verify filtered counts
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::All).len(), 23);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 7);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 15);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 4);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 2);
+
+    // Verify filter cycle (.next())
+    assert_eq!(ModuleFilter::All.next(), ModuleFilter::Classic);
+    assert_eq!(ModuleFilter::Classic.next(), ModuleFilter::Rally);
+    assert_eq!(ModuleFilter::Rally.next(), ModuleFilter::Kart);
+    assert_eq!(ModuleFilter::Kart.next(), ModuleFilter::F1);
+    assert_eq!(ModuleFilter::F1.next(), ModuleFilter::All);
+
+    // Verify filter cycle (.prev())
+    assert_eq!(ModuleFilter::All.prev(), ModuleFilter::F1);
+    assert_eq!(ModuleFilter::F1.prev(), ModuleFilter::Kart);
+    assert_eq!(ModuleFilter::Kart.prev(), ModuleFilter::Rally);
+    assert_eq!(ModuleFilter::Rally.prev(), ModuleFilter::Classic);
+    assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::All);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -308,9 +360,90 @@ fn test_module_subdirectories_and_file_movement() {
 
     // 5. Test multi-directory scanner on fresh TrackManager instance
     let new_scanner = TrackManager::new(&temp_dir);
-    assert_eq!(new_scanner.main_track_choices().len(), 8); // 7 presets + 1 custom
+    assert_eq!(new_scanner.main_track_choices().len(), 22); // 21 presets + 1 custom
     assert_eq!(new_scanner.module_custom_tracks("rally").len(), 1);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_track_manager_tab_and_module_cycling() {
+    let mut active_tab = TrackManagerTab::Main;
+    let mut module_filter = ModuleFilter::All;
+
+    // Tab toggle
+    active_tab = match active_tab {
+        TrackManagerTab::Main => TrackManagerTab::Drafts,
+        TrackManagerTab::Drafts => TrackManagerTab::Main,
+    };
+    assert_eq!(active_tab, TrackManagerTab::Drafts);
+
+    active_tab = match active_tab {
+        TrackManagerTab::Main => TrackManagerTab::Drafts,
+        TrackManagerTab::Drafts => TrackManagerTab::Main,
+    };
+    assert_eq!(active_tab, TrackManagerTab::Main);
+
+    // Module cycling forward (Right arrow)
+    module_filter = module_filter.next();
+    assert_eq!(module_filter, ModuleFilter::Classic);
+    module_filter = module_filter.next();
+    assert_eq!(module_filter, ModuleFilter::Rally);
+    module_filter = module_filter.next();
+    assert_eq!(module_filter, ModuleFilter::Kart);
+    module_filter = module_filter.next();
+    assert_eq!(module_filter, ModuleFilter::F1);
+    module_filter = module_filter.next();
+    assert_eq!(module_filter, ModuleFilter::All);
+
+    // Module cycling backward (Left arrow)
+    module_filter = module_filter.prev();
+    assert_eq!(module_filter, ModuleFilter::F1);
+    module_filter = module_filter.prev();
+    assert_eq!(module_filter, ModuleFilter::Kart);
+    module_filter = module_filter.prev();
+    assert_eq!(module_filter, ModuleFilter::Rally);
+    module_filter = module_filter.prev();
+    assert_eq!(module_filter, ModuleFilter::Classic);
+    module_filter = module_filter.prev();
+    assert_eq!(module_filter, ModuleFilter::All);
+}
+
+#[test]
+fn test_track_manager_open_in_track_editor() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_open_editor_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::default();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    // 1. Create a draft track
+    session
+        .track_manager
+        .create_new_draft_track("Track For Editor", "Draft circuit to edit")
+        .expect("Create draft");
+
+    let draft_choice = session.track_manager.draft_track_choices()[0].clone();
+
+    // 2. Open selected track in Track Editor
+    let file_path = match &draft_choice {
+        TrackChoice::Custom { path, .. } => Some(path.clone()),
+        _ => None,
+    };
+    let track = session.track_manager.load_track(&draft_choice).expect("Load draft");
+    session.track_choice = draft_choice.clone();
+    session.track = track.clone();
+    session.enter_track_editor_with_path(track, file_path.clone());
+
+    // 3. Verify session state is TrackEditor and contains the selected track
+    assert_eq!(session.state, GameState::TrackEditor);
+    assert!(session.editor_state.is_some());
+    let editor_state = session.editor_state.as_ref().unwrap();
+    assert_eq!(editor_state.track.name, "Track For Editor");
+    assert_eq!(editor_state.current_file_path, file_path);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+
 

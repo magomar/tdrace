@@ -2,6 +2,7 @@
   "name": "Classic Grand Prix",
   "description": "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
   "category": "main",
+  "module_id": "classic",
   "spline": {
     "waypoints": [
       {

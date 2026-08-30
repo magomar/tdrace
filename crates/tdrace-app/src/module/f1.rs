@@ -85,6 +85,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -150,6 +151,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -221,6 +223,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -299,6 +302,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -392,6 +396,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -459,6 +464,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -526,6 +532,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -587,6 +594,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -654,6 +662,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -721,6 +730,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -789,6 +799,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -860,6 +871,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 
@@ -932,6 +944,7 @@ impl F1GameModule {
             default_laps: 5,
             predefined_car: None,
             module_id: Some("f1".to_string()),
+            modules: vec!["f1".to_string()],
         }
     }
 

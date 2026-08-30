@@ -100,27 +100,100 @@ impl TrackChoice {
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
 pub fn resolve_track_for_menu(choice: &TrackChoice) -> Option<tdrace_core::track::Track> {
     match choice {
-        TrackChoice::ClassicGrandPrix => Some(tdrace_core::track::presets::classic_grand_prix()),
-        TrackChoice::OvalSpeedway => Some(tdrace_core::track::presets::oval_speedway()),
-        TrackChoice::DriftPark => Some(tdrace_core::track::presets::drift_park()),
-        TrackChoice::KartArena => Some(tdrace_core::track::presets::kart_arena()),
-        TrackChoice::RampRaceway => Some(tdrace_core::track::presets::ramp_raceway()),
-        TrackChoice::OasisRally => Some(tdrace_core::track::presets::oasis_rally()),
-        TrackChoice::OutlawPass => Some(tdrace_core::track::presets::outlaw_pass()),
+        TrackChoice::ClassicGrandPrix => {
+            let candidates = ["tracks/classic/classic_grand_prix.json", "tracks/classic_grand_prix.json"];
+            for p in &candidates {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                    return Some(t);
+                }
+            }
+            Some(tdrace_core::track::presets::classic_grand_prix())
+        }
+        TrackChoice::OvalSpeedway => {
+            let candidates = ["tracks/classic/oval_speedway.json", "tracks/oval_speedway.json"];
+            for p in &candidates {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                    return Some(t);
+                }
+            }
+            Some(tdrace_core::track::presets::oval_speedway())
+        }
+        TrackChoice::DriftPark => {
+            let candidates = ["tracks/classic/drift_park.json", "tracks/drift_park.json"];
+            for p in &candidates {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                    return Some(t);
+                }
+            }
+            Some(tdrace_core::track::presets::drift_park())
+        }
+        TrackChoice::KartArena => {
+            let candidates = ["tracks/kart/kart_arena.json", "tracks/kart_arena.json"];
+            for p in &candidates {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                    return Some(t);
+                }
+            }
+            Some(tdrace_core::track::presets::kart_arena())
+        }
+        TrackChoice::RampRaceway => {
+            let candidates = ["tracks/classic/ramp_raceway.json", "tracks/ramp_raceway.json"];
+            for p in &candidates {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                    return Some(t);
+                }
+            }
+            Some(tdrace_core::track::presets::ramp_raceway())
+        }
+        TrackChoice::OasisRally => {
+            let candidates = ["tracks/rally/oasis_rally.json", "tracks/oasis_rally.json"];
+            for p in &candidates {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                    return Some(t);
+                }
+            }
+            Some(tdrace_core::track::presets::oasis_rally())
+        }
+        TrackChoice::OutlawPass => {
+            let candidates = ["tracks/classic/outlaw_pass.json", "tracks/outlaw_pass.json"];
+            for p in &candidates {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                    return Some(t);
+                }
+            }
+            Some(tdrace_core::track::presets::outlaw_pass())
+        }
         TrackChoice::Custom { id, path, .. } => {
-            if id == "monza" {
-                return Some(crate::module::f1::F1GameModule::track_monza());
+            let file_path = std::path::Path::new(path);
+            if file_path.exists() {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(file_path) {
+                    return Some(t);
+                }
             }
-            if id == "spa" {
-                return Some(crate::module::f1::F1GameModule::track_spa());
+            let subdirs = ["", "drafts/", "classic/", "f1/", "rally/", "kart/"];
+            for sub in &subdirs {
+                let p = format!("tracks/{}{}.json", sub, id);
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
+                    return Some(t);
+                }
             }
-            if id == "silverstone" {
-                return Some(crate::module::f1::F1GameModule::track_silverstone());
+            match id.as_str() {
+                "monza" => Some(crate::module::f1::F1GameModule::track_monza()),
+                "spa" => Some(crate::module::f1::F1GameModule::track_spa()),
+                "silverstone" => Some(crate::module::f1::F1GameModule::track_silverstone()),
+                "monaco" => Some(crate::module::f1::F1GameModule::track_monaco()),
+                "suzuka" => Some(crate::module::f1::F1GameModule::track_suzuka()),
+                "interlagos" => Some(crate::module::f1::F1GameModule::track_interlagos()),
+                "montreal" => Some(crate::module::f1::F1GameModule::track_montreal()),
+                "red_bull_ring" => Some(crate::module::f1::F1GameModule::track_red_bull_ring()),
+                "catalunya" => Some(crate::module::f1::F1GameModule::track_catalunya()),
+                "zandvoort" => Some(crate::module::f1::F1GameModule::track_zandvoort()),
+                "bahrain" => Some(crate::module::f1::F1GameModule::track_bahrain()),
+                "marina_bay" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
+                "cota" => Some(crate::module::f1::F1GameModule::track_cota()),
+                "sahara" => Some(tdrace_core::track::presets::sahara_dunes()),
+                _ => None,
             }
-            if id == "sahara" {
-                return Some(tdrace_core::track::presets::sahara_dunes());
-            }
-            tdrace_core::track::Track::load_from_file(path).ok()
         }
     }
 }
@@ -238,7 +311,7 @@ pub fn render_track_select_menu(
         scaler.s(2.0),
     );
 
-    let sub_str = format!("{} • [G / TAB] Switch Motorsport Hub", module_subtitle);
+    let sub_str = format!("{} • [ESC] Return to Grand Hub", module_subtitle);
     fonts.draw_ui_regular_centered(
         &sub_str,
         sw * 0.5,
@@ -1004,6 +1077,8 @@ pub fn render_module_select_menu(
     fonts: &Fonts,
     selected_idx: usize,
     modules: &[(&str, &str, &str, &str, Color)], // (id, title, tag, description, color)
+    active_profile: &PlayerProfile,
+    active_stats: &ProfileCareerStats,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -1015,8 +1090,8 @@ pub fn render_module_select_menu(
     fonts.draw_display_centered_with_shadow(
         "TDRACE MOTORSPORT GRAND HUB",
         sw * 0.5,
-        scaler.s(45.0),
-        scaler.font_s(36.0),
+        scaler.s(32.0),
+        scaler.font_s(32.0),
         Palette::NEON_GOLD,
         Color::new(0.0, 0.0, 0.0, 0.6),
         scaler.s(2.0),
@@ -1025,15 +1100,21 @@ pub fn render_module_select_menu(
     fonts.draw_ui_regular_centered(
         "Select a Motorsport Championship Category or Circuit Studio Workshop",
         sw * 0.5,
-        scaler.s(68.0),
-        scaler.font_s(14.0),
+        scaler.s(52.0),
+        scaler.font_s(13.0),
         Palette::UI_TEXT_MUTED,
     );
 
     let card_w = (sw * 0.72).clamp(scaler.s(480.0), scaler.s(720.0));
-    let card_h = scaler.s(90.0);
     let card_x = (sw - card_w) * 0.5;
-    let mut curr_y = scaler.s(95.0);
+
+    // Active Profile Badge Banner
+    let badge_y = scaler.s(64.0);
+    let badge_h = scaler.s(48.0);
+    render_profile_badge(fonts, &scaler, card_x, badge_y, card_w, badge_h, active_profile, active_stats);
+
+    let card_h = scaler.s(82.0);
+    let mut curr_y = badge_y + badge_h + scaler.s(12.0);
 
     for (i, (_id, title, tag, desc, accent_col)) in modules.iter().enumerate() {
         let is_sel = i == selected_idx;
@@ -1059,7 +1140,7 @@ pub fn render_module_select_menu(
         fonts.draw_ui_bold(
             tag,
             card_x + scaler.s(20.0),
-            curr_y + scaler.s(22.0),
+            curr_y + scaler.s(20.0),
             scaler.font_s(11.0),
             if is_sel { *accent_col } else { Palette::UI_TEXT_MUTED },
         );
@@ -1068,8 +1149,8 @@ pub fn render_module_select_menu(
         fonts.draw_display(
             title,
             card_x + scaler.s(20.0),
-            curr_y + scaler.s(48.0),
-            scaler.font_s(20.0),
+            curr_y + scaler.s(44.0),
+            scaler.font_s(19.0),
             if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
         );
 
@@ -1077,21 +1158,21 @@ pub fn render_module_select_menu(
         fonts.draw_ui_regular(
             desc,
             card_x + scaler.s(20.0),
-            curr_y + scaler.s(72.0),
-            scaler.font_s(12.5),
+            curr_y + scaler.s(67.0),
+            scaler.font_s(12.0),
             if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
         );
 
-        curr_y += card_h + scaler.s(14.0);
+        curr_y += card_h + scaler.s(10.0);
     }
 
     // Footer prompt
-    let prompt = "USE [UP/DOWN] TO NAVIGATE | [ENTER/SPACE] LAUNCH MOTORSPORT | [ESC] BACK";
+    let prompt = "USE [UP/DOWN] TO SELECT MODULE | [ENTER/SPACE] OPEN MENU | [P] SWITCH PROFILE | [N] NEW PROFILE | [C] CONTROLS | [ESC] QUIT";
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
-        sh - scaler.s(24.0),
-        scaler.font_s(14.0),
+        sh - scaler.s(20.0),
+        scaler.font_s(13.0),
         Palette::NEON_CYAN,
     );
 }

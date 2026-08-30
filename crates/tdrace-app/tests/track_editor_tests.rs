@@ -710,3 +710,117 @@ fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_track_editor_unsaved_changes_exit_flow() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_unsaved_exit_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+
+    let mut session = RaceSession::new();
+    session.track_manager = TrackManager::new(temp_dir.clone());
+
+    let track = classic_grand_prix();
+    session.enter_track_editor(track);
+
+    assert_eq!(session.state, GameState::TrackEditor);
+    assert_eq!(session.editor_modal, tdrace_app::editor::EditorModal::None);
+    assert!(!session.editor_state.as_ref().unwrap().is_dirty);
+
+    // 1. If clean, exiting transitions directly to Menu
+    session.handle_editor_action(tdrace_app::editor::EditorAction::ExitToMenu);
+    assert_eq!(session.state, GameState::Menu);
+
+    // 2. Re-enter and modify track to make state dirty
+    let track = classic_grand_prix();
+    session.enter_track_editor(track);
+    session.editor_state.as_mut().unwrap().record_undo();
+    session.editor_state.as_mut().unwrap().track.name = "Modified GP".to_string();
+    assert!(session.editor_state.as_ref().unwrap().is_dirty);
+
+    // 3. Simulate SaveTrack without exit_after (stays in editor)
+    session.handle_editor_action(tdrace_app::editor::EditorAction::SaveTrack {
+        name: "Modified GP".to_string(),
+        filename: "modified_gp_stay".to_string(),
+        description: "Stay in editor".to_string(),
+        overwrite: false,
+        exit_after: false,
+    });
+    assert_eq!(session.state, GameState::TrackEditor);
+    assert!(!session.editor_state.as_ref().unwrap().is_dirty);
+
+    // 4. Modify again and simulate SaveTrack with exit_after (transitions to Menu)
+    session.editor_state.as_mut().unwrap().record_undo();
+    assert!(session.editor_state.as_ref().unwrap().is_dirty);
+
+    session.handle_editor_action(tdrace_app::editor::EditorAction::SaveTrack {
+        name: "Modified GP".to_string(),
+        filename: "modified_gp_exit".to_string(),
+        description: "Exit after save".to_string(),
+        overwrite: false,
+        exit_after: true,
+    });
+    assert_eq!(session.state, GameState::Menu);
+    assert!(!session.editor_state.as_ref().unwrap().is_dirty);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_track_editing_snapshot_regeneration_and_persistence() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_snapshot_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::default();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    let initial_track = classic_grand_prix();
+    let initial_wp_count = initial_track.spline.waypoints.len();
+    let (initial_min, initial_max) = tdrace_app::ui::compute_track_bounds(&initial_track);
+
+    // 1. Enter editor with track
+    session.enter_track_editor(initial_track);
+    assert_eq!(session.state, GameState::TrackEditor);
+
+    // 2. Modify track waypoints (e.g. extend circuit with a far waypoint)
+    if let Some(state) = &mut session.editor_state {
+        state.record_undo();
+        state.track.spline.waypoints.push(tdrace_core::track::spline::TrackWaypoint::new(
+            glam::Vec2::new(5000.0, 5000.0),
+            16.0,
+        ));
+        state.rebuild_geometry();
+    }
+
+    // 3. Save modified track
+    session.handle_editor_action(tdrace_app::editor::EditorAction::SaveTrack {
+        name: "Extended Circuit".to_string(),
+        filename: "extended_circuit".to_string(),
+        description: "Regenerated snapshot track".to_string(),
+        overwrite: false,
+        exit_after: true,
+    });
+    assert_eq!(session.state, GameState::Menu);
+
+    // 4. Verify TrackManager custom tracks metadata and bounds updated
+    let draft_choices = session.track_manager.draft_track_choices();
+    assert_eq!(draft_choices.len(), 1);
+    let choice = &draft_choices[0];
+
+    let reloaded_track = session.track_manager.load_track(choice).expect("Must load updated track");
+    assert_eq!(reloaded_track.spline.waypoints.len(), initial_wp_count + 1);
+
+    // 5. Verify snapshot bounds regenerated
+    let (new_min, new_max) = tdrace_app::ui::compute_track_bounds(&reloaded_track);
+    assert!(new_max.x >= 5000.0, "Bounds max X must expand to include new waypoint");
+    assert!(new_max.y >= 5000.0, "Bounds max Y must expand to include new waypoint");
+    assert_ne!((initial_min, initial_max), (new_min, new_max));
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+
+

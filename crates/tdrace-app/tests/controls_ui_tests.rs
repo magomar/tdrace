@@ -4,7 +4,7 @@ use tdrace_core::physics::config::AssistProfile;
 #[test]
 fn test_controls_help_game_state_transitions() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
 
     // Enter ControlsHelp from Menu
     session.state = GameState::ControlsHelp(false);

@@ -29,6 +29,7 @@ pub enum EditorModal {
         active_field: usize,
         overwrite: bool,
         custom_filename_edited: bool,
+        exit_on_save: bool,
     },
     OpenTrack {
         selected_tab: usize,
@@ -36,6 +37,7 @@ pub enum EditorModal {
     },
     Diagnostics,
     Help,
+    UnsavedChanges,
 }
 
 /// Actions dispatched from editor UI interactions.
@@ -51,6 +53,7 @@ pub enum EditorAction {
         filename: String,
         description: String,
         overwrite: bool,
+        exit_after: bool,
     },
     OpenTrack(crate::ui::menu::TrackChoice),
     Validate,
@@ -148,6 +151,7 @@ pub fn render_editor_ui(
             active_field: 0,
             overwrite: is_existing,
             custom_filename_edited: is_existing,
+            exit_on_save: false,
         };
     }
     tb_x += scaler.s(72.0);
@@ -205,15 +209,19 @@ pub fn render_editor_ui(
 
     // Right Side: TEST DRIVE & EXIT buttons
     let test_drive_w = scaler.s(130.0);
-    let exit_w = scaler.s(70.0);
+    let exit_w = scaler.s(85.0);
     let td_x = sw - test_drive_w - exit_w - scaler.s(24.0);
 
     if draw_ui_btn(fonts, &scaler, td_x, scaler.s(8.0), test_drive_w, scaler.s(30.0), "TEST DRIVE [Space]", Color::new(0.12, 0.65, 0.32, 0.95), Palette::NEON_GREEN, mouse_pos, bg_mouse_clicked) {
         dispatched_action = EditorAction::StartTestDrive;
     }
 
-    if draw_ui_btn(fonts, &scaler, sw - exit_w - scaler.s(12.0), scaler.s(8.0), exit_w, scaler.s(30.0), "EXIT", Palette::UI_CARD_BG, Palette::RED, mouse_pos, bg_mouse_clicked) {
-        dispatched_action = EditorAction::ExitToMenu;
+    if draw_ui_btn(fonts, &scaler, sw - exit_w - scaler.s(12.0), scaler.s(8.0), exit_w, scaler.s(30.0), "EXIT [Esc]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, bg_mouse_clicked) {
+        if state.is_dirty {
+            *active_modal = EditorModal::UnsavedChanges;
+        } else {
+            dispatched_action = EditorAction::ExitToMenu;
+        }
     }
 
     // 2. LEFT TOOL PALETTE
@@ -309,7 +317,7 @@ pub fn render_editor_ui(
     );
 
     // 5. MODAL OVERLAYS (rendered on top of all toolbars, panels, and track)
-    if *active_modal != EditorModal::None {
+    if is_modal_open {
         draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
         match active_modal {
             EditorModal::Templates => {
@@ -325,7 +333,9 @@ pub fn render_editor_ui(
                 active_field,
                 overwrite,
                 custom_filename_edited,
+                exit_on_save,
             } => {
+                let exit_on_save_val = *exit_on_save;
                 if let Some(action) = render_save_modal(
                     fonts,
                     &scaler,
@@ -337,6 +347,7 @@ pub fn render_editor_ui(
                     active_field,
                     overwrite,
                     custom_filename_edited,
+                    exit_on_save_val,
                     state.current_file_path.as_deref(),
                     track_manager,
                     mouse_pos,
@@ -372,11 +383,34 @@ pub fn render_editor_ui(
                     *active_modal = EditorModal::None;
                 }
             }
+            EditorModal::UnsavedChanges => {
+                if let Some(action) = render_unsaved_changes_modal(
+                    fonts,
+                    &scaler,
+                    sw,
+                    sh,
+                    state,
+                    active_modal,
+                    mouse_pos,
+                    mouse_clicked,
+                ) {
+                    dispatched_action = action;
+                    *active_modal = EditorModal::None;
+                }
+            }
             EditorModal::None => {}
         }
 
-        if is_key_pressed(KeyCode::Escape) {
+        if is_key_pressed(KeyCode::Escape) && *active_modal != EditorModal::None && *active_modal != EditorModal::UnsavedChanges {
             *active_modal = EditorModal::None;
+        }
+    } else {
+        if is_key_pressed(KeyCode::Escape) && dispatched_action == EditorAction::None {
+            if state.is_dirty {
+                *active_modal = EditorModal::UnsavedChanges;
+            } else {
+                dispatched_action = EditorAction::ExitToMenu;
+            }
         }
     }
 
@@ -793,6 +827,7 @@ fn render_save_modal(
     active_field: &mut usize,
     overwrite: &mut bool,
     custom_filename_edited: &mut bool,
+    exit_on_save: bool,
     current_file_path: Option<&str>,
     track_manager: &TrackManager,
     mouse_pos: Vec2,
@@ -805,7 +840,12 @@ fn render_save_modal(
 
     scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GREEN, 2.0);
 
-    fonts.draw_display_centered("SAVE CIRCUIT", sw * 0.5, my + scaler.s(26.0), scaler.font_s(22.0), Palette::NEON_GOLD);
+    let title_text = if exit_on_save {
+        "SAVE & EXIT CIRCUIT"
+    } else {
+        "SAVE CIRCUIT"
+    };
+    fonts.draw_display_centered(title_text, sw * 0.5, my + scaler.s(26.0), scaler.font_s(22.0), Palette::NEON_GOLD);
 
     // Current loaded file context
     if let Some(loaded_path) = current_file_path {
@@ -1181,16 +1221,30 @@ fn render_save_modal(
     let btn_h = scaler.s(36.0);
 
     let (btn_title, btn_color, btn_border) = if *overwrite {
-        (
-            "OVERWRITE [Enter]",
-            Color::new(0.45, 0.28, 0.08, 0.95),
-            Palette::NEON_GOLD,
-        )
+        if exit_on_save {
+            (
+                "OVERWRITE & EXIT [Enter]",
+                Color::new(0.45, 0.28, 0.08, 0.95),
+                Palette::NEON_GOLD,
+            )
+        } else {
+            (
+                "OVERWRITE [Enter]",
+                Color::new(0.45, 0.28, 0.08, 0.95),
+                Palette::NEON_GOLD,
+            )
+        }
     } else if is_filename_conflict {
         (
             "CHANGE FILENAME TO SAVE AS",
             Color::new(0.35, 0.08, 0.08, 0.95),
             Palette::RED,
+        )
+    } else if exit_on_save {
+        (
+            "SAVE & EXIT [Enter]",
+            Color::new(0.12, 0.65, 0.32, 0.95),
+            Palette::NEON_GREEN,
         )
     } else {
         (
@@ -1223,6 +1277,7 @@ fn render_save_modal(
             filename: input_filename.clone(),
             description: input_description.clone(),
             overwrite: *overwrite,
+            exit_after: exit_on_save,
         });
     }
 
@@ -1232,6 +1287,7 @@ fn render_save_modal(
             filename: input_filename.clone(),
             description: input_description.clone(),
             overwrite: *overwrite,
+            exit_after: exit_on_save,
         });
     }
 
@@ -1493,6 +1549,144 @@ fn render_diagnostics_modal(
     draw_ui_btn(fonts, scaler, mx + (mw - scaler.s(160.0)) * 0.5, my + mh - scaler.s(48.0), scaler.s(160.0), scaler.s(34.0), "CLOSE [Esc]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked)
 }
 
+/// Renders modal asking the user how to handle unsaved changes before exiting.
+fn render_unsaved_changes_modal(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    state: &EditorState,
+    active_modal: &mut EditorModal,
+    mouse_pos: Vec2,
+    clicked: bool,
+) -> Option<EditorAction> {
+    let mw = scaler.s(500.0);
+    let mh = scaler.s(220.0);
+    let mx = (sw - mw) * 0.5;
+    let my = (sh - mh) * 0.5;
+
+    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::YELLOW, 2.0);
+
+    fonts.draw_display_centered(
+        "UNSAVED CHANGES",
+        sw * 0.5,
+        my + scaler.s(30.0),
+        scaler.font_s(20.0),
+        Palette::NEON_GOLD,
+    );
+
+    fonts.draw_ui_regular_centered(
+        "You have unsaved changes in this circuit.",
+        sw * 0.5,
+        my + scaler.s(58.0),
+        scaler.font_s(13.0),
+        Palette::WHITE,
+    );
+    fonts.draw_ui_regular_centered(
+        "Save changes before exiting, or discard and exit?",
+        sw * 0.5,
+        my + scaler.s(76.0),
+        scaler.font_s(12.5),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    let btn_h = scaler.s(34.0);
+    let btn_y1 = my + scaler.s(102.0);
+    let btn_y2 = my + scaler.s(144.0);
+    let full_btn_w = mw - scaler.s(40.0);
+    let half_btn_w = (full_btn_w - scaler.s(12.0)) * 0.5;
+    let btn_x = mx + scaler.s(20.0);
+
+    // Save & Exit button (full width top button)
+    let save_clicked = draw_ui_btn(
+        fonts,
+        scaler,
+        btn_x,
+        btn_y1,
+        full_btn_w,
+        btn_h,
+        "SAVE & EXIT [S / Enter]",
+        Color::new(0.12, 0.65, 0.32, 0.95),
+        Palette::NEON_GREEN,
+        mouse_pos,
+        clicked,
+    );
+
+    // Discard Changes & Exit button (left half)
+    let discard_clicked = draw_ui_btn(
+        fonts,
+        scaler,
+        btn_x,
+        btn_y2,
+        half_btn_w,
+        btn_h,
+        "DISCARD & EXIT [D]",
+        Color::new(0.45, 0.10, 0.10, 0.95),
+        Palette::RED,
+        mouse_pos,
+        clicked,
+    );
+
+    // Cancel / Keep Editing button (right half)
+    let cancel_clicked = draw_ui_btn(
+        fonts,
+        scaler,
+        btn_x + half_btn_w + scaler.s(12.0),
+        btn_y2,
+        half_btn_w,
+        btn_h,
+        "CANCEL [Esc]",
+        Palette::UI_CARD_BG,
+        Palette::UI_CARD_BORDER,
+        mouse_pos,
+        clicked,
+    );
+
+    let save_pressed = is_key_pressed(KeyCode::S) || is_key_pressed(KeyCode::Enter) || save_clicked;
+    let discard_pressed = is_key_pressed(KeyCode::D) || is_key_pressed(KeyCode::X) || discard_clicked;
+    let cancel_pressed = is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::C) || cancel_clicked;
+
+    if save_pressed {
+        if let Some(ref p) = state.current_file_path {
+            let stem = std::path::Path::new(p)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("")
+                .to_string();
+            return Some(EditorAction::SaveTrack {
+                name: state.track.name.clone(),
+                filename: stem,
+                description: state.track.description.clone(),
+                overwrite: true,
+                exit_after: true,
+            });
+        } else {
+            let initial_filename = TrackManager::sanitize_slug(&state.track.name);
+            *active_modal = EditorModal::SaveAs {
+                input_name: state.track.name.clone(),
+                input_filename: initial_filename,
+                input_description: state.track.description.clone(),
+                active_field: 0,
+                overwrite: false,
+                custom_filename_edited: false,
+                exit_on_save: true,
+            };
+            return None;
+        }
+    }
+
+    if discard_pressed {
+        return Some(EditorAction::ExitToMenu);
+    }
+
+    if cancel_pressed {
+        *active_modal = EditorModal::None;
+        return None;
+    }
+
+    None
+}
+
 /// Renders Help & Keyboard Shortcuts overlay.
 fn render_help_modal(
     fonts: &Fonts,
@@ -1503,7 +1697,7 @@ fn render_help_modal(
     clicked: bool,
 ) -> bool {
     let mw = scaler.s(580.0);
-    let mh = scaler.s(510.0);
+    let mh = scaler.s(530.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
@@ -1525,16 +1719,17 @@ fn render_help_modal(
         ("Delete / Backspace", "Delete selected waypoint, surface zone, ramp, or prop"),
         ("F Key", "Focus and frame the entire circuit bounds within viewport"),
         ("G Key", "Cycle CAD metric grid snap (Off, 1m, 2.5m, 5m, 10m)"),
+        ("Esc / E", "Exit track editor (prompts to save if unsaved changes)"),
     ];
 
     let mut sy = my + scaler.s(64.0);
     for (key, desc) in shortcuts {
         fonts.draw_ui_bold(key, mx + scaler.s(24.0), sy, scaler.font_s(12.5), Palette::NEON_CYAN);
         fonts.draw_ui_regular(desc, mx + scaler.s(180.0), sy, scaler.font_s(12.0), Palette::WHITE);
-        sy += scaler.s(26.0);
+        sy += scaler.s(25.0);
     }
 
-    draw_ui_btn(fonts, scaler, mx + (mw - scaler.s(160.0)) * 0.5, my + mh - scaler.s(48.0), scaler.s(160.0), scaler.s(34.0), "CLOSE [Esc]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked)
+    draw_ui_btn(fonts, scaler, mx + (mw - scaler.s(160.0)) * 0.5, my + mh - scaler.s(44.0), scaler.s(160.0), scaler.s(34.0), "CLOSE [Esc]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked)
 }
 
 /// Helper function to draw a clickable UI button with hover feedback.
@@ -1592,6 +1787,7 @@ mod tests {
             active_field: 0,
             overwrite: true,
             custom_filename_edited: true,
+            exit_on_save: true,
         };
         if let EditorModal::SaveAs {
             input_name,
@@ -1600,6 +1796,7 @@ mod tests {
             active_field,
             overwrite,
             custom_filename_edited,
+            exit_on_save,
         } = &modal {
             assert_eq!(input_name, "My Custom Circuit");
             assert_eq!(input_filename, "my_custom_circuit");
@@ -1607,6 +1804,7 @@ mod tests {
             assert_eq!(*active_field, 0);
             assert!(overwrite);
             assert!(custom_filename_edited);
+            assert!(exit_on_save);
         } else {
             panic!("Expected SaveAs modal");
         }
@@ -1627,6 +1825,9 @@ mod tests {
 
         modal = EditorModal::Help;
         assert_eq!(modal, EditorModal::Help);
+
+        modal = EditorModal::UnsavedChanges;
+        assert_eq!(modal, EditorModal::UnsavedChanges);
     }
 
     #[test]
@@ -1642,6 +1843,7 @@ mod tests {
             filename: "monaco_gp".to_string(),
             description: "Street circuit in Monte Carlo.".to_string(),
             overwrite: true,
+            exit_after: true,
         };
         assert_eq!(
             act_save,
@@ -1650,6 +1852,7 @@ mod tests {
                 filename: "monaco_gp".to_string(),
                 description: "Street circuit in Monte Carlo.".to_string(),
                 overwrite: true,
+                exit_after: true,
             }
         );
 
@@ -1658,5 +1861,8 @@ mod tests {
             act_open,
             EditorAction::OpenTrack(crate::ui::menu::TrackChoice::ClassicGrandPrix)
         );
+
+        let act_exit = EditorAction::ExitToMenu;
+        assert_eq!(act_exit, EditorAction::ExitToMenu);
     }
 }
