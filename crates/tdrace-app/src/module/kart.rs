@@ -216,33 +216,38 @@ impl KartGameModule {
     /// PF International Kart Circuit (PFI, UK): The Iconic Flyover Crossover Bridge Circuit
     pub fn track_pfi() -> Track {
         let waypoints = vec![
-            // Main Grandstand Straight & Start/Finish
-            TrackWaypoint::new(Vec2::new(-30.0, 0.0), 8.5),
-            TrackWaypoint::new(Vec2::new(40.0, 0.0), 8.5),
-            // Turn 1 Fast Left
-            TrackWaypoint::new(Vec2::new(85.0, 15.0), 8.5).with_curbs(true, false),
-            // Bruno's Hairpin (Sharp right)
-            TrackWaypoint::new(Vec2::new(110.0, 50.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(95.0, 85.0), 8.0).with_curbs(false, true),
-            // Bridge Approach Straight
-            TrackWaypoint::new(Vec2::new(60.0, 90.0), 8.5),
-            // PFI Flyover Crossover Bridge (Climbs to 4.0m elevation crossing over the lower underpass)
-            TrackWaypoint::new(Vec2::new(30.0, 90.0), 8.5).with_elevation(2.0),
-            TrackWaypoint::new(Vec2::new(0.0, 90.0), 8.5).with_elevation(4.0),
-            TrackWaypoint::new(Vec2::new(-30.0, 90.0), 8.5).with_elevation(2.0),
+            // Sector 1: Main Grandstand Straight & Start/Finish (125m smooth straight)
+            TrackWaypoint::new(Vec2::new(-40.0, 0.0), 8.5),
+            TrackWaypoint::new(Vec2::new(10.0, 0.0), 8.5),
+            TrackWaypoint::new(Vec2::new(60.0, 0.0), 8.5),
+            // Turn 1: Fast sweeping left
+            TrackWaypoint::new(Vec2::new(105.0, 15.0), 8.5).with_curbs(true, false),
+            // Bruno's Hairpin (Technical right hairpin)
+            TrackWaypoint::new(Vec2::new(135.0, 50.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(120.0, 85.0), 8.0).with_curbs(false, true),
+            // Bridge Approach Straight heading West
+            TrackWaypoint::new(Vec2::new(75.0, 100.0), 8.5),
+            // PFI Flyover Crossover Bridge (Climbs to 4.0m elevation crossing over the underpass at y: 100)
+            TrackWaypoint::new(Vec2::new(35.0, 100.0), 8.5).with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(0.0, 100.0), 8.5).with_elevation(4.0),
+            TrackWaypoint::new(Vec2::new(-35.0, 100.0), 8.5).with_elevation(2.0),
             // Descent into North Infield
-            TrackWaypoint::new(Vec2::new(-65.0, 105.0), 8.0).with_curbs(false, true),
-            // Far North Loop Hairpin
-            TrackWaypoint::new(Vec2::new(-85.0, 140.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-60.0, 165.0), 8.0).with_curbs(true, false),
-            // North Straight heading to Underpass
-            TrackWaypoint::new(Vec2::new(-25.0, 150.0), 8.5),
-            // Lower Underpass (Crosses beneath the flyover bridge at elevation 0.0)
-            TrackWaypoint::new(Vec2::new(0.0, 90.0), 8.5),
-            // Underpass Exit Sweeper
-            TrackWaypoint::new(Vec2::new(20.0, 45.0), 8.5).with_curbs(false, true),
-            // Final Chicane onto Start Straight
-            TrackWaypoint::new(Vec2::new(5.0, 15.0), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-70.0, 115.0), 8.0).with_curbs(false, true),
+            // Far North Loop Hairpins (Flowing technical loop)
+            TrackWaypoint::new(Vec2::new(-95.0, 150.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-75.0, 180.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-40.0, 175.0), 8.0).with_curbs(true, false),
+            // North Straight heading South towards Underpass
+            TrackWaypoint::new(Vec2::new(-20.0, 145.0), 8.5),
+            // Lower Underpass (Crosses beneath the flyover bridge at (0.0, 100.0) with elevation 0.0)
+            TrackWaypoint::new(Vec2::new(0.0, 100.0), 8.5),
+            // Underpass Exit into Infield Section
+            TrackWaypoint::new(Vec2::new(15.0, 65.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-10.0, 45.0), 8.5).with_curbs(true, false),
+            // Smooth Final Sweeping Turn onto Main Straight
+            TrackWaypoint::new(Vec2::new(-50.0, 35.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-75.0, 18.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-65.0, 0.0), 8.5),
         ];
 
         let spline = TrackSpline::new(waypoints, true);

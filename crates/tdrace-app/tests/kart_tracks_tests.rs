@@ -169,3 +169,56 @@ fn test_kart_race_session_simulation_on_lonato_and_sarno() {
         }
     }
 }
+
+#[test]
+fn test_kart_tracks_centerline_driving_and_no_wall_obstructions() {
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+    use tdrace_core::physics::{Car, CarConfig};
+
+    let module = KartGameModule::new();
+    let tracks = module.tracks();
+
+    for track_def in &tracks {
+        let track = (track_def.generator)();
+        let name = &track.name;
+
+        // 1. Verify that all starting grid slots spawn freely without any barrier collision
+        for (slot_idx, grid_pose) in track.grid_positions.iter().enumerate() {
+            let mut car = Car::new(CarConfig::kart()).with_pose(grid_pose.position, grid_pose.angle);
+            car.state.elevation = track.spline.sample_at_distance(track.spline.project_point(grid_pose.position).progress_distance).elevation;
+            let initial_pos = car.state.position;
+
+            let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
+            let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
+
+            let displacement = (car.state.position - initial_pos).length();
+            assert!(
+                hit_inner.is_empty() && hit_outer.is_empty() && displacement < 0.01,
+                "Track '{}' ({}) Slot #{} spawned in collision with walls! (hit_inner={}, hit_outer={}, disp={:.3}m)",
+                name, track_def.id, slot_idx, !hit_inner.is_empty(), !hit_outer.is_empty(), displacement
+            );
+        }
+
+        // 2. Drive along the centerline at 1.0m intervals: Ensure no barriers cross the track ribbon
+        let total_len = track.spline.total_length();
+        let num_samples = (total_len / 1.0) as usize;
+        for i in 0..num_samples {
+            let dist = i as f32 * 1.0;
+            let sample = track.spline.sample_at_distance(dist);
+            let heading = sample.tangent.y.atan2(sample.tangent.x);
+            let mut car = Car::new(CarConfig::kart()).with_pose(sample.point, heading);
+            car.state.elevation = sample.elevation;
+
+            let initial_pos = car.state.position;
+            let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
+            let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
+
+            let displacement = (car.state.position - initial_pos).length();
+            assert!(
+                hit_inner.is_empty() && hit_outer.is_empty() && displacement < 0.01,
+                "Track '{}' ({}) has barrier obstruction at dist={:.1}m / {:.1}m: pos=({:.1}, {:.1}), disp={:.3}m (hit_inner={}, hit_outer={})",
+                name, track_def.id, dist, total_len, sample.point.x, sample.point.y, displacement, !hit_inner.is_empty(), !hit_outer.is_empty()
+            );
+        }
+    }
+}
