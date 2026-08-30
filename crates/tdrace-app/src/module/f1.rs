@@ -1019,16 +1019,16 @@ impl GameModule for F1GameModule {
         vec![
             VehicleModelDefinition {
                 id: "f1_hybrid_26",
-                name: "Apex-26 Turbo Hybrid",
-                tag: "1050 BHP HYBRID",
-                description: "State-of-the-art 1.6L V6 Turbo Hybrid delivering 1050 BHP with active ground effect aerodynamics.",
+                name: "1050 BHP Hybrid F1 Turbo",
+                tag: "OPEN-WHEEL HYBRID",
+                description: "346 km/h top speed, massive downforce (Cl=3.4), carbon brakes.",
                 config: Self::car_f1_hybrid(),
                 visual_type: VehicleVisualType::OpenWheel {
                     front_wing_span: 1.80,
                     rear_wing_height: 0.85,
                     halo: true,
                 },
-                stats: (0.98, 0.99, 0.99, 0.30),
+                stats: (0.99, 0.99, 0.99, 0.30),
                 default_schemes: vec![
                     CarColorScheme::from_index(0), // Red Bull Dark Navy / Red
                     CarColorScheme::from_index(1), // Electric Cyan

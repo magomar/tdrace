@@ -231,7 +231,7 @@ impl CarChoice {
             Self::DriftCar => "Tuned Drift Spec",
             Self::Kart => "125cc Shifter Kart",
             Self::RallyCar => "AWD Turbo Rally",
-            Self::F1Car => "Apex-26 Turbo Hybrid",
+            Self::F1Car => "1050 BHP Hybrid F1 Turbo",
         }
     }
 
@@ -241,7 +241,7 @@ impl CarChoice {
             Self::DriftCar => "PRO SLIDE",
             Self::Kart => "APEX GRIP",
             Self::RallyCar => "AWD ALL-TERRAIN",
-            Self::F1Car => "1050 BHP HYBRID",
+            Self::F1Car => "OPEN-WHEEL HYBRID",
         }
     }
 
@@ -251,7 +251,7 @@ impl CarChoice {
             Self::DriftCar => "High-power slide machine with loose rear, wide lock & snappy counter-steer.",
             Self::Kart => "Ultra-lightweight direct steering with extreme apex cornering grip.",
             Self::RallyCar => "All-wheel-drive traction with compliant suspension for mixed surfaces.",
-            Self::F1Car => "1.6L V6 Turbo Hybrid delivering 1050 BHP with active ground effect aerodynamics.",
+            Self::F1Car => "346 km/h top speed, massive downforce (Cl=3.4), carbon brakes.",
         }
     }
 
@@ -262,7 +262,7 @@ impl CarChoice {
             Self::DriftCar => (0.80, 0.85, 0.50, 0.98),
             Self::Kart => (0.65, 0.95, 0.95, 0.40),
             Self::RallyCar => (0.78, 0.90, 0.85, 0.75),
-            Self::F1Car => (0.98, 0.99, 0.99, 0.30),
+            Self::F1Car => (0.99, 0.99, 0.99, 0.30),
         }
     }
 }

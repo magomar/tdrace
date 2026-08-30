@@ -62,16 +62,16 @@ fn test_f1_race_roster_car_assignment_and_display_titles() {
     // Player car title on roster screen
     assert_eq!(
         session.grid_participants[0].car_title,
-        "Apex-26 Turbo Hybrid",
-        "Player car title must be 'Apex-26 Turbo Hybrid'"
+        "1050 BHP Hybrid F1 Turbo",
+        "Player car title must be '1050 BHP Hybrid F1 Turbo'"
     );
 
-    // All AI opponents on roster screen must have 'Apex-26 Turbo Hybrid'
+    // All AI opponents on roster screen must have '1050 BHP Hybrid F1 Turbo'
     for participant in &session.grid_participants {
         assert_eq!(
             participant.car_title,
-            "Apex-26 Turbo Hybrid",
-            "Participant '{}' must be assigned 'Apex-26 Turbo Hybrid' on roster",
+            "1050 BHP Hybrid F1 Turbo",
+            "Participant '{}' must be assigned '1050 BHP Hybrid F1 Turbo' on roster",
             participant.name
         );
     }
@@ -124,7 +124,7 @@ fn test_f1_free_car_selection_toggle_in_roster() {
     for p in session.grid_participants.iter().filter(|p| !p.is_player) {
         assert_eq!(
             p.car_title,
-            "Apex-26 Turbo Hybrid",
+            "1050 BHP Hybrid F1 Turbo",
             "F1 bot '{}' should prefer F1 car even with free car selection enabled",
             p.name
         );
@@ -142,7 +142,7 @@ fn test_f1_championship_roster_and_car_assignment() {
     assert_eq!(session.grid_participants.len(), 8);
 
     for p in &session.grid_participants {
-        assert_eq!(p.car_title, "Apex-26 Turbo Hybrid");
+        assert_eq!(p.car_title, "1050 BHP Hybrid F1 Turbo");
     }
 }
 
@@ -154,7 +154,7 @@ fn test_all_disciplines_car_assignment_integrity() {
     session.switch_to_f1();
     assert_eq!(session.resolve_predefined_car(), CarChoice::F1Car);
     assert_eq!(session.active_player_car_choice(), CarChoice::F1Car);
-    assert_eq!(session.active_player_car_choice().title(), "Apex-26 Turbo Hybrid");
+    assert_eq!(session.active_player_car_choice().title(), "1050 BHP Hybrid F1 Turbo");
 
     // 2. Rally Module
     session.switch_to_rally();
