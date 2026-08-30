@@ -83,7 +83,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -149,7 +149,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -221,7 +221,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -300,7 +300,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -394,7 +394,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -462,7 +462,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -530,7 +530,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -592,7 +592,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -660,7 +660,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -728,7 +728,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -797,7 +797,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -869,7 +869,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -942,7 +942,7 @@ impl F1GameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: None,
+            predefined_car: Some("f1_car".to_string()),
             module_id: Some("f1".to_string()),
             modules: vec!["f1".to_string()],
         }
@@ -1226,7 +1226,7 @@ impl GameModule for F1GameModule {
                 name: "Max Hunter",
                 alias: "The Dominator",
                 bio: "4-time World Champion renowned for relentless pace, surgical overtakes, and unwavering consistency in all conditions.",
-                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                preferred_car: crate::ui::menu::CarChoice::F1Car,
                 color_scheme: CarColorScheme::from_index(0),
                 profile: BotProfile {
                     name: "Max Hunter",
@@ -1250,7 +1250,7 @@ impl GameModule for F1GameModule {
                 name: "Charles Laurent",
                 alias: "The Qualifying King",
                 bio: "Scuderia prodigy with unbelievable single-lap hot-lap qualifying pace and unmatched precision on street circuits.",
-                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                preferred_car: crate::ui::menu::CarChoice::F1Car,
                 color_scheme: CarColorScheme::from_index(2),
                 profile: BotProfile {
                     name: "Charles Laurent",
@@ -1274,7 +1274,7 @@ impl GameModule for F1GameModule {
                 name: "Lewis Vance",
                 alias: "The Master",
                 bio: "7-time World Champion whose supreme tire management and legendary racecraft allow him to hunt down leaders from any grid slot.",
-                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                preferred_car: crate::ui::menu::CarChoice::F1Car,
                 color_scheme: CarColorScheme::from_index(1),
                 profile: BotProfile {
                     name: "Lewis Vance",
@@ -1298,7 +1298,7 @@ impl GameModule for F1GameModule {
                 name: "Fernando Toro",
                 alias: "El Matador",
                 bio: "Veteran motorsport warrior who exploits every millimeter of asphalt and turns defensive driving into high art.",
-                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                preferred_car: crate::ui::menu::CarChoice::F1Car,
                 color_scheme: CarColorScheme::from_index(3),
                 profile: BotProfile {
                     name: "Fernando Toro",
@@ -1322,7 +1322,7 @@ impl GameModule for F1GameModule {
                 name: "George Speed",
                 alias: "The Silver Bullet",
                 bio: "Methodical British racer with blistering speed and unyielding qualifying pace for the Silver Arrows.",
-                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                preferred_car: crate::ui::menu::CarChoice::F1Car,
                 color_scheme: CarColorScheme::from_index(7),
                 profile: BotProfile {
                     name: "George Speed",
@@ -1346,7 +1346,7 @@ impl GameModule for F1GameModule {
                 name: "Lando Vance",
                 alias: "Papaya Prodigy",
                 bio: "High-octane fan favorite who excels in dynamic mixed conditions with aggressive late-braking passes.",
-                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                preferred_car: crate::ui::menu::CarChoice::F1Car,
                 color_scheme: CarColorScheme::from_index(4),
                 profile: BotProfile {
                     name: "Lando Vance",
@@ -1370,7 +1370,7 @@ impl GameModule for F1GameModule {
                 name: "Oscar Rocket",
                 alias: "Melbourne Missile",
                 bio: "Ultra-composed Australian rookie sensation known for ice-cold nerve and textbook race craft on high-speed circuits.",
-                preferred_car: crate::ui::menu::CarChoice::SportsCar,
+                preferred_car: crate::ui::menu::CarChoice::F1Car,
                 color_scheme: CarColorScheme::from_index(5),
                 profile: BotProfile {
                     name: "Oscar Rocket",

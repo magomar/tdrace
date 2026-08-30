@@ -8,12 +8,13 @@ use crate::ai::DriverCharacter;
 use crate::render::color::Palette;
 
 /// Renders the full-screen Driver Cards Dossier and Roster Browser.
-pub fn render_driver_cards_screen(fonts: &Fonts, selected_idx: usize) {
+pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], selected_idx: usize) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
 
-    let roster = DriverCharacter::all();
+    let default_roster = DriverCharacter::all();
+    let roster = if drivers.is_empty() { default_roster.as_slice() } else { drivers };
     let driver = &roster[selected_idx % roster.len()];
 
     // Deep motorsport dark backdrop
@@ -54,7 +55,7 @@ pub fn render_driver_cards_screen(fonts: &Fonts, selected_idx: usize) {
     draw_rectangle_lines(x + scaler.s(16.0), y + scaler.s(16.0), box_w - scaler.s(32.0), banner_h, 1.5, Palette::UI_CARD_BORDER);
 
     // Driver Index Badge
-    let badge_str = format!("#{} OF 8", (selected_idx % roster.len()) + 1);
+    let badge_str = format!("#{} OF {}", (selected_idx % roster.len()) + 1, roster.len());
     fonts.draw_ui_bold(&badge_str, x + scaler.s(32.0), y + scaler.s(42.0), scaler.font_s(14.0), Palette::NEON_GOLD);
 
     // Driver Alias / Full Name

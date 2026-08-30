@@ -333,6 +333,7 @@ impl ReplayPlayer {
             CarChoice::DriftCar => CarConfig::drift_car(),
             CarChoice::Kart => CarConfig::kart(),
             CarChoice::RallyCar => CarConfig::rally_car(),
+            CarChoice::F1Car => crate::module::f1::F1GameModule::car_f1_hybrid(),
         };
 
         let initial_pose = track

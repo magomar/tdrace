@@ -822,5 +822,51 @@ fn test_track_editing_snapshot_regeneration_and_persistence() {
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_save_modal_track_name_integrity_and_initialization() {
+    let mut track = classic_grand_prix();
+    track.name = "Silverstone International".to_string();
+    track.description = "Historic high-speed circuit.".to_string();
 
+    let mut session = RaceSession::new();
+    session.enter_track_editor(track.clone());
 
+    if let Some(state) = &session.editor_state {
+        let initial_filename = TrackManager::sanitize_slug(&state.track.name);
+        assert_eq!(state.track.name, "Silverstone International");
+        assert_eq!(initial_filename, "silverstone_international");
+
+        // Verify SaveAs modal initializes with exact name without appended characters
+        let modal = tdrace_app::editor::EditorModal::SaveAs {
+            input_name: state.track.name.clone(),
+            input_filename: initial_filename,
+            input_description: state.track.description.clone(),
+            active_field: 0,
+            overwrite: false,
+            custom_filename_edited: false,
+            exit_on_save: false,
+        };
+
+        if let tdrace_app::editor::EditorModal::SaveAs {
+            input_name,
+            input_filename,
+            input_description,
+            active_field,
+            overwrite,
+            custom_filename_edited,
+            exit_on_save,
+        } = modal {
+            assert_eq!(input_name, "Silverstone International");
+            assert_eq!(input_filename, "silverstone_international");
+            assert_eq!(input_description, "Historic high-speed circuit.");
+            assert_eq!(active_field, 0);
+            assert!(!overwrite);
+            assert!(!custom_filename_edited);
+            assert!(!exit_on_save);
+        } else {
+            panic!("Expected SaveAs modal");
+        }
+    } else {
+        panic!("Expected editor state");
+    }
+}

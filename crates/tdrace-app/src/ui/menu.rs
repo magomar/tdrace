@@ -192,6 +192,14 @@ pub fn resolve_track_for_menu(choice: &TrackChoice) -> Option<tdrace_core::track
                 "marina_bay" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
                 "cota" => Some(crate::module::f1::F1GameModule::track_cota()),
                 "sahara" => Some(tdrace_core::track::presets::sahara_dunes()),
+                "lonato" => Some(crate::module::kart::KartGameModule::track_lonato()),
+                "sarno" => Some(crate::module::kart::KartGameModule::track_sarno()),
+                "genk" => Some(crate::module::kart::KartGameModule::track_genk()),
+                "pfi" => Some(crate::module::kart::KartGameModule::track_pfi()),
+                "zuera" => Some(crate::module::kart::KartGameModule::track_zuera()),
+                "le_mans_kart" => Some(crate::module::kart::KartGameModule::track_le_mans()),
+                "portimao_kart" => Some(crate::module::kart::KartGameModule::track_portimao()),
+                "franciacorta" => Some(crate::module::kart::KartGameModule::track_franciacorta()),
                 _ => None,
             }
         }
@@ -205,14 +213,16 @@ pub enum CarChoice {
     DriftCar,
     Kart,
     RallyCar,
+    F1Car,
 }
 
 impl CarChoice {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::SportsCar,
         Self::DriftCar,
         Self::Kart,
         Self::RallyCar,
+        Self::F1Car,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -221,6 +231,7 @@ impl CarChoice {
             Self::DriftCar => "Tuned Drift Spec",
             Self::Kart => "125cc Shifter Kart",
             Self::RallyCar => "AWD Turbo Rally",
+            Self::F1Car => "Apex-26 Turbo Hybrid",
         }
     }
 
@@ -230,6 +241,7 @@ impl CarChoice {
             Self::DriftCar => "PRO SLIDE",
             Self::Kart => "APEX GRIP",
             Self::RallyCar => "AWD ALL-TERRAIN",
+            Self::F1Car => "1050 BHP HYBRID",
         }
     }
 
@@ -239,6 +251,7 @@ impl CarChoice {
             Self::DriftCar => "High-power slide machine with loose rear, wide lock & snappy counter-steer.",
             Self::Kart => "Ultra-lightweight direct steering with extreme apex cornering grip.",
             Self::RallyCar => "All-wheel-drive traction with compliant suspension for mixed surfaces.",
+            Self::F1Car => "1.6L V6 Turbo Hybrid delivering 1050 BHP with active ground effect aerodynamics.",
         }
     }
 
@@ -249,6 +262,7 @@ impl CarChoice {
             Self::DriftCar => (0.80, 0.85, 0.50, 0.98),
             Self::Kart => (0.65, 0.95, 0.95, 0.40),
             Self::RallyCar => (0.78, 0.90, 0.85, 0.75),
+            Self::F1Car => (0.98, 0.99, 0.99, 0.30),
         }
     }
 }

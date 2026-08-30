@@ -285,10 +285,33 @@ mod tests {
         assert!(!kart.vehicles().is_empty());
         assert!(kart.vehicles().len() >= 1);
         assert!(!kart.tracks().is_empty());
+        assert_eq!(kart.tracks().len(), 10); // 8 world-famous + 2 sprint presets
         assert_eq!(kart.drivers().len(), 7);
 
         let kart_car = KartGameModule::car_shifter_kart();
         assert!(kart_car.mass < 250.0);
+
+        // Verify that every single Kart track definition generates a valid track with 0 validation errors
+        for track_def in kart.tracks() {
+            let track = (track_def.generator)();
+            assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
+            assert!(track.spline.total_length() > 200.0, "Track length too short for {}", track_def.id);
+            assert!(track.checkpoints.len() >= 8, "Checkpoints too few for {}", track_def.id);
+            assert!(track.grid_positions.len() >= 8, "Grid slots too few for {}", track_def.id);
+
+            let diagnostics = tdrace_core::track::validation::validate_track(&track);
+            let errors: Vec<_> = diagnostics
+                .into_iter()
+                .filter(|d| d.severity == tdrace_core::track::validation::ValidationSeverity::Error)
+                .collect();
+            assert!(
+                errors.is_empty(),
+                "Kart track '{}' ({}) had validation errors: {:?}",
+                track.name,
+                track_def.id,
+                errors
+            );
+        }
     }
 
     #[test]

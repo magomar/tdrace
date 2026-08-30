@@ -421,6 +421,7 @@ impl GameConfig {
             CarChoice::DriftCar => "drift_car",
             CarChoice::Kart => "kart",
             CarChoice::RallyCar => "rally_car",
+            CarChoice::F1Car => "f1_car",
         };
 
         if let Some(cfg) = self.cars.get(key) {
@@ -431,6 +432,7 @@ impl GameConfig {
                 CarChoice::DriftCar => CarConfig::drift_car(),
                 CarChoice::Kart => CarConfig::kart(),
                 CarChoice::RallyCar => CarConfig::rally_car(),
+                CarChoice::F1Car => crate::module::f1::F1GameModule::car_f1_hybrid(),
             }
         }
     }

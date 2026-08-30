@@ -245,23 +245,27 @@ fn test_grid_positioning_fast_lap_earns_pole() {
 
 #[test]
 fn test_grid_positioning_slower_lap_placed_behind() {
+    use tdrace_app::ai::DriverCharacter;
     use tdrace_app::db::HallOfFameEntry;
 
     let mut session = RaceSession::new();
     session.track_choice = TrackChoice::ClassicGrandPrix;
-    // Opponent with 20.0s in HoF
-    session.hof_entries = vec![
-        HallOfFameEntry {
+
+    // All possible opponents have 20.0s in HoF
+    session.hof_entries = DriverCharacter::all()
+        .iter()
+        .map(|d| HallOfFameEntry {
             id: Some(1),
             track_id: "classic_grand_prix".to_string(),
-            player_name: "Silvia Tanaka".to_string(),
+            player_name: d.name.to_string(),
             car_name: "GT Sports Coupe".to_string(),
             total_time: 60.0,
             best_lap: Some(20.0),
             laps: 3,
             created_at: "2026-08-27 10:00".to_string(),
-        },
-    ];
+        })
+        .collect();
+
     // Player has slower lap time 25.0s
     session.active_profile_stats.best_times.insert("classic_grand_prix".to_string(), 25.0);
     session.active_profile_stats.best_circuit_times.insert("classic_grand_prix".to_string(), 75.0);
@@ -270,32 +274,33 @@ fn test_grid_positioning_slower_lap_placed_behind() {
     session.rebuild_roster_participants();
 
     let player_slot = session.grid_participants.iter().position(|p| p.is_player).unwrap();
-    let silvia_slot = session.grid_participants.iter().position(|p| p.name == "Silvia Tanaka").unwrap();
 
-    assert_eq!(silvia_slot, 0, "Silvia with 20.0s should be ahead of player with 25.0s");
-    assert_eq!(player_slot, 1, "Player with 25.0s should be at slot 1 (P2)");
+    // Player with 25.0s should be placed behind all opponents with 20.0s
+    assert_eq!(player_slot, session.grid_participants.len() - 1, "Player with 25.0s should be at back of grid");
 }
 
 #[test]
 fn test_grid_positioning_tie_broken_by_circuit_time() {
+    use tdrace_app::ai::DriverCharacter;
     use tdrace_app::db::HallOfFameEntry;
 
     let mut session = RaceSession::new();
     session.track_choice = TrackChoice::ClassicGrandPrix;
 
-    // Silvia has 22.0s lap and 68.0s circuit time
-    session.hof_entries = vec![
-        HallOfFameEntry {
+    // All opponents have 22.0s lap and 68.0s circuit time
+    session.hof_entries = DriverCharacter::all()
+        .iter()
+        .map(|d| HallOfFameEntry {
             id: Some(1),
             track_id: "classic_grand_prix".to_string(),
-            player_name: "Silvia Tanaka".to_string(),
+            player_name: d.name.to_string(),
             car_name: "GT Sports Coupe".to_string(),
             total_time: 68.0,
             best_lap: Some(22.0),
             laps: 3,
             created_at: "2026-08-27 10:00".to_string(),
-        },
-    ];
+        })
+        .collect();
 
     // Player has identical best lap (22.0s), but FASTER circuit time (64.0s)
     session.active_profile_stats.best_times.insert("classic_grand_prix".to_string(), 22.0);
@@ -304,10 +309,8 @@ fn test_grid_positioning_tie_broken_by_circuit_time() {
     session.rebuild_roster_participants();
 
     let player_slot = session.grid_participants.iter().position(|p| p.is_player).unwrap();
-    let silvia_slot = session.grid_participants.iter().position(|p| p.name == "Silvia Tanaka").unwrap();
 
     assert_eq!(player_slot, 0, "Player with faster circuit time on tied lap should earn P1");
-    assert_eq!(silvia_slot, 1, "Silvia with slower circuit time on tied lap should be P2");
 }
 
 #[test]

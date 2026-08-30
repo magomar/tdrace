@@ -75,8 +75,9 @@ use crate::db::{HallOfFameDb, HallOfFameEntry};
 use crate::fx::EffectsManager;
 use crate::input::touch::TouchController;
 use crate::input::InputController;
+pub use crate::module::VehicleVisualType;
 use crate::module::{
-    F1GameModule, GameModule, KartGameModule, RallyGameModule, VehicleVisualType,
+    F1GameModule, GameModule, KartGameModule, RallyGameModule,
 };
 use crate::profile::{CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::car::render_car_with_visual_type;
@@ -564,10 +565,17 @@ impl RaceSession {
     /// Resolves the track's predefined vehicle model as a `CarChoice`.
     pub fn resolve_predefined_car(&self) -> CarChoice {
         match self.track.predefined_car.as_deref() {
+            Some("f1" | "f1_car" | "f1_hybrid_26" | "open_wheel") => CarChoice::F1Car,
             Some("drift_car") => CarChoice::DriftCar,
-            Some("kart") => CarChoice::Kart,
-            Some("rally_car") => CarChoice::RallyCar,
-            Some("sports_car") | None | _ => CarChoice::SportsCar,
+            Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
+            Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
+            Some("sports_car") => CarChoice::SportsCar,
+            _ => match self.track.module_id.as_deref().unwrap_or(self.active_module_id) {
+                "f1" => CarChoice::F1Car,
+                "rally" => CarChoice::RallyCar,
+                "kart" => CarChoice::Kart,
+                _ => CarChoice::SportsCar,
+            },
         }
     }
 
@@ -585,19 +593,30 @@ impl RaceSession {
         self.track_manager.module_catalog_tracks(self.active_module_id)
     }
 
+    /// Returns available driver characters for the active motorsport game module.
+    pub fn active_module_drivers(&self) -> Vec<DriverCharacter> {
+        let effective_mod = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
+        match effective_mod {
+            "f1" => F1GameModule::new().drivers(),
+            "rally" => RallyGameModule::new().drivers(),
+            "kart" => KartGameModule::new().drivers(),
+            _ => DriverCharacter::all().to_vec(),
+        }
+    }
+
     /// Returns available vehicles for the active motorsport game module.
     pub fn active_module_vehicles(&self) -> Vec<(&'static str, &'static str, &'static str, (f32, f32, f32, f32))> {
         match self.active_module_id {
             "f1" => vec![
-                ("1050 BHP Hybrid F1 Turbo", "OPEN-WHEEL HYBRID", "346 km/h top speed, massive downforce (Cl=3.4), carbon brakes.", (0.99, 0.99, 0.99, 0.30)),
+                (CarChoice::F1Car.title(), CarChoice::F1Car.tag(), CarChoice::F1Car.description(), CarChoice::F1Car.stats()),
                 ("Monza Low-Drag Aero Spec", "LOW DRAG VMAX", "Reduced wing angle for 354 km/h straight-line top speed.", (1.00, 0.96, 0.90, 0.35)),
             ],
             "rally" => vec![
-                ("AWD Turbo Rally Spec", "WRC AWD DIRT", "All-wheel-drive with 50/50 torque split and long-travel suspension.", (0.85, 0.92, 0.88, 0.90)),
+                (CarChoice::RallyCar.title(), CarChoice::RallyCar.tag(), CarChoice::RallyCar.description(), CarChoice::RallyCar.stats()),
                 ("Group B Turbo Monster", "GROUP B LEGEND", "520 BHP 1980s twin-charge monster with flame-spitting anti-lag.", (0.95, 0.98, 0.75, 0.98)),
             ],
             "kart" => vec![
-                ("125cc Shifter Kart Super Sprint", "125cc 2-STROKE", "Lightweight 180kg tubular chassis, direct 1:1 steering, 3.5g apex grip.", (0.70, 0.98, 0.98, 0.40)),
+                (CarChoice::Kart.title(), CarChoice::Kart.tag(), CarChoice::Kart.description(), CarChoice::Kart.stats()),
                 ("100cc Direct Drive Sprint", "100cc CLUTCHLESS", "High-revving direct-drive kart with ultra sharp throttle response.", (0.65, 0.95, 0.99, 0.45)),
             ],
             _ => vec![
@@ -681,7 +700,7 @@ impl RaceSession {
         };
         self.track_choice = self.active_module_tracks()[0].clone();
         self.track = self.load_track_for_session(&self.track_choice);
-        self.car_choice = CarChoice::SportsCar;
+        self.car_choice = CarChoice::F1Car;
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
             self.total_laps = 5;
         }
@@ -828,9 +847,11 @@ impl RaceSession {
             .unwrap_or(42))
             .wrapping_add((self.num_bots as u64) * 101);
 
+        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
+
         if !self.is_time_attack && total_cars > 1 {
             let target_opponents = total_cars - 1;
-            let mut module_opponents: Vec<DriverCharacter> = match self.active_module_id {
+            let mut module_opponents: Vec<DriverCharacter> = match effective_module {
                 "f1" => F1GameModule::new().drivers(),
                 "rally" => RallyGameModule::new().drivers(),
                 "kart" => KartGameModule::new().drivers(),
@@ -850,8 +871,8 @@ impl RaceSession {
         }
 
         let player_car_choice = self.active_player_car_choice();
-        let mut base_config = match self.active_module_id {
-            "f1" => {
+        let mut base_config = match player_car_choice {
+            CarChoice::F1Car => {
                 self.current_visual_type = VehicleVisualType::OpenWheel {
                     front_wing_span: 1.80,
                     rear_wing_height: 0.85,
@@ -859,7 +880,7 @@ impl RaceSession {
                 };
                 F1GameModule::car_f1_hybrid()
             }
-            "rally" => {
+            CarChoice::RallyCar => {
                 self.current_visual_type = VehicleVisualType::RallyHatch {
                     roof_scoop: true,
                     mudflaps: true,
@@ -867,36 +888,27 @@ impl RaceSession {
                 };
                 RallyGameModule::car_wrc_rally()
             }
-            "kart" => {
+            CarChoice::Kart => {
                 self.current_visual_type = VehicleVisualType::GoKart {
                     exposed_driver: true,
                     side_bumpers: true,
                 };
                 KartGameModule::car_shifter_kart()
             }
-            _ => {
-                match player_car_choice {
-                    CarChoice::Kart => {
-                        self.current_visual_type = VehicleVisualType::GoKart {
-                            exposed_driver: true,
-                            side_bumpers: true,
-                        };
-                    }
-                    CarChoice::RallyCar => {
-                        self.current_visual_type = VehicleVisualType::RallyHatch {
-                            roof_scoop: true,
-                            mudflaps: true,
-                            large_wing: true,
-                        };
-                    }
-                    _ => {
-                        self.current_visual_type = VehicleVisualType::TouringGT {
-                            widebody: true,
-                            gt_wing: true,
-                            diffuser: true,
-                        };
-                    }
-                }
+            CarChoice::DriftCar => {
+                self.current_visual_type = VehicleVisualType::TouringGT {
+                    widebody: true,
+                    gt_wing: true,
+                    diffuser: true,
+                };
+                self.config.get_car_config(player_car_choice)
+            }
+            CarChoice::SportsCar => {
+                self.current_visual_type = VehicleVisualType::TouringGT {
+                    widebody: true,
+                    gt_wing: true,
+                    diffuser: true,
+                };
                 self.config.get_car_config(player_car_choice)
             }
         };
@@ -907,7 +919,7 @@ impl RaceSession {
         let mut participants = Vec::new();
 
         // 1. Player participant
-        let player_car_title = self.active_player_car_choice().title().to_string();
+        let player_car_title = player_car_choice.title().to_string();
         let player_best_lap = self
             .active_profile_stats
             .best_times
@@ -957,11 +969,12 @@ impl RaceSession {
             let bot_best_circuit = bot_hof.map(|e| e.total_time);
             let bot_seed = seed.wrapping_add((bot_idx as u64 + 1).wrapping_mul(0x9E3779B97F4A7C15));
 
-            let bot_car_title = if self.free_car_selection {
-                character.preferred_car.title().to_string()
+            let bot_car_choice = if self.free_car_selection {
+                character.preferred_car
             } else {
-                self.resolve_predefined_car().title().to_string()
+                self.resolve_predefined_car()
             };
+            let bot_car_title = bot_car_choice.title().to_string();
 
             participants.push(GridParticipant {
                 is_player: false,
@@ -1021,18 +1034,17 @@ impl RaceSession {
                     grid_slot: bot_slot,
                 });
 
-            let bot_config = match self.active_module_id {
-                "f1" => F1GameModule::car_f1_hybrid(),
-                "rally" => RallyGameModule::car_wrc_rally(),
-                "kart" => KartGameModule::car_shifter_kart(),
-                _ => {
-                    let bot_car_choice = if self.free_car_selection {
-                        character.preferred_car
-                    } else {
-                        player_car_choice
-                    };
-                    self.config.get_car_config(bot_car_choice)
-                }
+            let bot_car_choice = if self.free_car_selection {
+                character.preferred_car
+            } else {
+                self.resolve_predefined_car()
+            };
+
+            let bot_config = match bot_car_choice {
+                CarChoice::F1Car => F1GameModule::car_f1_hybrid(),
+                CarChoice::RallyCar => RallyGameModule::car_wrc_rally(),
+                CarChoice::Kart => KartGameModule::car_shifter_kart(),
+                CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(bot_car_choice),
             };
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
 
@@ -1091,16 +1103,17 @@ impl RaceSession {
         self.audio.stop_all_loops();
         self.audio.stop_music(); // In-game music muted
 
-        let sound_type = match self.active_module_id {
+        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
+        let sound_type = match effective_module {
             "f1" => EngineSoundType::F1V6Turbo,
             "rally" => EngineSoundType::RallyTurbo,
             "kart" => EngineSoundType::Kart125cc,
-            "classic" => match active_car {
+            _ => match active_car {
+                CarChoice::F1Car => EngineSoundType::F1V6Turbo,
                 CarChoice::Kart => EngineSoundType::Kart125cc,
                 CarChoice::RallyCar => EngineSoundType::RallyTurbo,
                 CarChoice::SportsCar | CarChoice::DriftCar => EngineSoundType::SportGT,
             },
-            _ => EngineSoundType::Generic,
         };
         self.audio.set_engine_type(sound_type);
 
@@ -1713,7 +1726,8 @@ impl RaceSession {
             }
 
             GameState::DriverCards(origin) => {
-                let roster_len = DriverCharacter::all().len();
+                let drivers = self.active_module_drivers();
+                let roster_len = drivers.len().max(1);
                 if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
                     self.audio.play_sfx(SfxType::UiMove);
                     if self.driver_cards_idx == 0 {
@@ -1814,6 +1828,7 @@ impl RaceSession {
         if is_key_pressed(KeyCode::E) {
             if let Some(p) = self.profile_list.get(current_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
+                while get_char_pressed().is_some() {}
                 let country_idx = p.country.as_deref().and_then(|code| {
                     CountryRegistry::ALL.iter().position(|c| c.code.eq_ignore_ascii_case(code)).map(|pos| pos + 1)
                 }).unwrap_or(0);
@@ -1838,6 +1853,7 @@ impl RaceSession {
         // Create New Profile (N key or Gamepad X)
         if is_key_pressed(KeyCode::N) || self.input.gamepad.snapshot.btn_x_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
+            while get_char_pressed().is_some() {}
             let next_livery = self.profile_list.len() % Palette::CAR_COLORS.len();
             self.state = GameState::ProfileCreate {
                 editing_id: None,
@@ -2258,7 +2274,7 @@ impl RaceSession {
             if self.menu_track_idx < available_tracks.len() {
                 self.track_choice = available_tracks[self.menu_track_idx].clone();
                 self.car_choice = match self.active_module_id {
-                    "f1" => CarChoice::SportsCar,
+                    "f1" => CarChoice::F1Car,
                     "rally" => CarChoice::RallyCar,
                     "kart" => CarChoice::Kart,
                     _ => CarChoice::ALL[self.menu_car_idx.min(CarChoice::ALL.len() - 1)],
@@ -2285,6 +2301,10 @@ impl RaceSession {
         mut modal: TrackManagerModal,
         dt: f32,
     ) {
+        if !matches!(modal, TrackManagerModal::EditMetadata { .. }) {
+            while get_char_pressed().is_some() {}
+        }
+
         match modal {
             TrackManagerModal::EditMetadata {
                 ref track_id,
@@ -2651,6 +2671,7 @@ impl RaceSession {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 if track_choice.is_custom() {
                     self.audio.play_sfx(SfxType::UiSelect);
+                    while get_char_pressed().is_some() {}
                     self.state = GameState::TrackManager {
                         active_tab,
                         module_filter,
@@ -3227,7 +3248,8 @@ impl RaceSession {
                 );
             }
             GameState::DriverCards(_) => {
-                render_driver_cards_screen(&self.fonts, self.driver_cards_idx);
+                let drivers = self.active_module_drivers();
+                render_driver_cards_screen(&self.fonts, &drivers, self.driver_cards_idx);
             }
             GameState::ProfileManager { selected_idx } => {
                 render_profile_manager_screen(
@@ -3430,6 +3452,38 @@ impl RaceSession {
             }
         }
 
+        if (is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper))
+            && is_key_pressed(KeyCode::S)
+        {
+            if self.editor_modal == EditorModal::None {
+                while get_char_pressed().is_some() {}
+                if let Some(state) = &self.editor_state {
+                    let is_existing = state.current_file_path.is_some();
+                    let initial_filename = if let Some(ref p) = state.current_file_path {
+                        std::path::Path::new(p)
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("")
+                            .to_string()
+                    } else {
+                        TrackManager::sanitize_slug(&state.track.name)
+                    };
+                    self.editor_modal = EditorModal::SaveAs {
+                        input_name: state.track.name.clone(),
+                        input_filename: initial_filename,
+                        input_description: state.track.description.clone(),
+                        active_field: 0,
+                        overwrite: is_existing,
+                        custom_filename_edited: is_existing,
+                        exit_on_save: false,
+                    };
+                }
+            }
+        }
+
         if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) {
             if let Some(state) = &mut self.editor_state {
                 if self.editor_tools.delete_selected(state) {
@@ -3463,6 +3517,11 @@ impl RaceSession {
             if let Some(state) = &mut self.editor_state {
                 state.grid_snap = state.grid_snap.next();
             }
+        }
+
+        // Drain unconsumed characters when no text modal is open in the editor
+        if !matches!(self.editor_modal, EditorModal::SaveAs { .. }) {
+            while get_char_pressed().is_some() {}
         }
 
         // Arrow Keys (and WASD / Gamepad) Camera Navigation

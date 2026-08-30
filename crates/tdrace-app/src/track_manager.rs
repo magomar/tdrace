@@ -413,6 +413,54 @@ impl TrackManager {
             }
             "kart" => {
                 let mut list = vec![
+                    TrackChoice::Custom {
+                        id: "lonato".to_string(),
+                        title: "South Garda Karting (Lonato)".to_string(),
+                        description: "The global Mecca of Karting featuring Curva del Paddock, Pettine hairpin, and Variante Nuova.".to_string(),
+                        path: "kart/lonato".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "sarno".to_string(),
+                        title: "Circuito Internazionale Napoli (Sarno)".to_string(),
+                        description: "The Temple of Speed under Mount Vesuvius with massive full-throttle straights and technical Esses.".to_string(),
+                        path: "kart/sarno".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "genk".to_string(),
+                        title: "Karting Genk (Home of Champions)".to_string(),
+                        description: "Legendary Belgian proving grounds featuring the high-G G-Curve carousel, Europabocht, and Champions Chicane.".to_string(),
+                        path: "kart/genk".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "pfi".to_string(),
+                        title: "PF International Kart Circuit".to_string(),
+                        description: "Britain's premier FIA kart venue featuring the world-famous elevated flyover crossover bridge and underpass.".to_string(),
+                        path: "kart/pfi".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "zuera".to_string(),
+                        title: "Circuito Internacional de Zuera".to_string(),
+                        description: "Ultra-fast Spanish supertrack with enormous drafting straights, Curva del Cierzo, and wide passing sweepers.".to_string(),
+                        path: "kart/zuera".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "le_mans_kart".to_string(),
+                        title: "Le Mans Karting International".to_string(),
+                        description: "Alain Prost circuit at the Le Mans 24 Hours complex with Dunlop chicane, Bugatti Esses, and Courbe des 24H.".to_string(),
+                        path: "kart/le_mans_kart".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "portimao_kart".to_string(),
+                        title: "Kartodromo Internacional do Algarve".to_string(),
+                        description: "Undulating Portuguese rollercoaster circuit with dramatic elevation drops, sweeping downhill turns, and Curva do Sol.".to_string(),
+                        path: "kart/portimao_kart".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "franciacorta".to_string(),
+                        title: "Franciacorta Karting Track".to_string(),
+                        description: "Modern premier Italian world championship venue with technical switchback chicanes and trail-braking hairpins.".to_string(),
+                        path: "kart/franciacorta".to_string(),
+                    },
                     TrackChoice::KartArena,
                     TrackChoice::DriftPark,
                 ];
@@ -521,6 +569,54 @@ impl TrackManager {
                     description: "Fast undulating desert sand dunes and high-drift crests.".to_string(),
                     path: "rally/sahara".to_string(),
                 });
+                list.push(TrackChoice::Custom {
+                    id: "lonato".to_string(),
+                    title: "South Garda Karting (Lonato)".to_string(),
+                    description: "The global Mecca of Karting featuring Curva del Paddock, Pettine hairpin, and Variante Nuova.".to_string(),
+                    path: "kart/lonato".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "sarno".to_string(),
+                    title: "Circuito Internazionale Napoli (Sarno)".to_string(),
+                    description: "The Temple of Speed under Mount Vesuvius with massive full-throttle straights and technical Esses.".to_string(),
+                    path: "kart/sarno".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "genk".to_string(),
+                    title: "Karting Genk (Home of Champions)".to_string(),
+                    description: "Legendary Belgian proving grounds featuring the high-G G-Curve carousel, Europabocht, and Champions Chicane.".to_string(),
+                    path: "kart/genk".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "pfi".to_string(),
+                    title: "PF International Kart Circuit".to_string(),
+                    description: "Britain's premier FIA kart venue featuring the world-famous elevated flyover crossover bridge and underpass.".to_string(),
+                    path: "kart/pfi".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "zuera".to_string(),
+                    title: "Circuito Internacional de Zuera".to_string(),
+                    description: "Ultra-fast Spanish supertrack with enormous drafting straights, Curva del Cierzo, and wide passing sweepers.".to_string(),
+                    path: "kart/zuera".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "le_mans_kart".to_string(),
+                    title: "Le Mans Karting International".to_string(),
+                    description: "Alain Prost circuit at the Le Mans 24 Hours complex with Dunlop chicane, Bugatti Esses, and Courbe des 24H.".to_string(),
+                    path: "kart/le_mans_kart".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "portimao_kart".to_string(),
+                    title: "Kartodromo Internacional do Algarve".to_string(),
+                    description: "Undulating Portuguese rollercoaster circuit with dramatic elevation drops, sweeping downhill turns, and Curva do Sol.".to_string(),
+                    path: "kart/portimao_kart".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "franciacorta".to_string(),
+                    title: "Franciacorta Karting Track".to_string(),
+                    description: "Modern premier Italian world championship venue with technical switchback chicanes and trail-braking hairpins.".to_string(),
+                    path: "kart/franciacorta".to_string(),
+                });
                 for custom in &self.custom_tracks {
                     if custom.category == TrackCategory::Main && !list.iter().any(|c| c.track_id() == custom.id) {
                         list.push(TrackChoice::Custom {
@@ -623,6 +719,14 @@ impl TrackManager {
                     "marina_bay" => Ok(crate::module::f1::F1GameModule::track_marina_bay()),
                     "cota" => Ok(crate::module::f1::F1GameModule::track_cota()),
                     "sahara" => Ok(tdrace_core::track::presets::sahara_dunes()),
+                    "lonato" => Ok(crate::module::kart::KartGameModule::track_lonato()),
+                    "sarno" => Ok(crate::module::kart::KartGameModule::track_sarno()),
+                    "genk" => Ok(crate::module::kart::KartGameModule::track_genk()),
+                    "pfi" => Ok(crate::module::kart::KartGameModule::track_pfi()),
+                    "zuera" => Ok(crate::module::kart::KartGameModule::track_zuera()),
+                    "le_mans_kart" => Ok(crate::module::kart::KartGameModule::track_le_mans()),
+                    "portimao_kart" => Ok(crate::module::kart::KartGameModule::track_portimao()),
+                    "franciacorta" => Ok(crate::module::kart::KartGameModule::track_franciacorta()),
                     _ => Err(format!("Track file not found: {}", path)),
                 }
             }
@@ -898,7 +1002,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 21); // 7 classic + 13 f1 + 1 rally unique
+        assert_eq!(choices.len(), 29); // 7 classic + 13 f1 + 1 rally unique + 8 famous kart
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();
@@ -910,8 +1014,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 21, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 21);
+        // Since gp was saved as Draft, main choices is still 29, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 29);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -920,7 +1024,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 22);
+        assert_eq!(manager.main_track_choices().len(), 30);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -931,18 +1035,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[21]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[29]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 21);
+        assert_eq!(manager.main_track_choices().len(), 29);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 21);
+        assert_eq!(manager.main_track_choices().len(), 29);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -1034,11 +1138,15 @@ mod tests {
 
         // Kart tracks
         let kart_tracks = manager.module_catalog_tracks("kart");
-        assert_eq!(kart_tracks.len(), 2);
+        assert_eq!(kart_tracks.len(), 10);
+        assert!(kart_tracks.iter().any(|t| t.title().contains("Lonato")));
+        assert!(kart_tracks.iter().any(|t| t.title().contains("Sarno")));
+        assert!(kart_tracks.iter().any(|t| t.title().contains("Genk")));
+        assert!(kart_tracks.iter().any(|t| t.title().contains("PFI") || t.title().contains("PF International")));
 
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 21);
+        assert_eq!(all_tracks.len(), 29);
 
         // Save a draft
         let mut draft = classic_grand_prix();

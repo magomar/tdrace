@@ -63,6 +63,11 @@ pub enum EditorAction {
     ExitToMenu,
 }
 
+/// Helper to drain any unconsumed characters from macroquad input buffer.
+fn drain_char_queue() {
+    while std::panic::catch_unwind(get_char_pressed).unwrap_or(None).is_some() {}
+}
+
 /// Main UI renderer for the Track Editor suite.
 pub fn render_editor_ui(
     fonts: &Fonts,
@@ -81,6 +86,11 @@ pub fn render_editor_ui(
 
     let is_modal_open = *active_modal != EditorModal::None;
     let bg_mouse_clicked = mouse_clicked && !is_modal_open;
+
+    // Drain accumulated characters whenever no text-input modal is active
+    if !matches!(*active_modal, EditorModal::SaveAs { .. }) {
+        drain_char_queue();
+    }
 
     let mut dispatched_action = EditorAction::None;
 
@@ -134,6 +144,7 @@ pub fn render_editor_ui(
     tb_x += scaler.s(72.0);
 
     if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "SAVE", Palette::UI_CARD_BG, Palette::NEON_GREEN, mouse_pos, bg_mouse_clicked) {
+        drain_char_queue();
         let is_existing = state.current_file_path.is_some();
         let initial_filename = if let Some(ref p) = state.current_file_path {
             std::path::Path::new(p)
@@ -1647,6 +1658,7 @@ fn render_unsaved_changes_modal(
     let cancel_pressed = is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::C) || cancel_clicked;
 
     if save_pressed {
+        drain_char_queue();
         if let Some(ref p) = state.current_file_path {
             let stem = std::path::Path::new(p)
                 .file_stem()
