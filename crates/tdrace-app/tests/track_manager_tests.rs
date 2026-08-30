@@ -481,6 +481,173 @@ fn test_track_manager_delete_with_backspace() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_predefined_track_demote_promote_and_delete() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_predefined_ops_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Initial state: 7 Classic tracks, 29 total
+    let init_classic_count = manager.filtered_main_track_choices(ModuleFilter::Classic).len();
+    assert_eq!(init_classic_count, 7);
+    assert_eq!(manager.draft_track_choices().len(), 0);
+
+    // 1. Demote built-in preset Classic Grand Prix (P key)
+    manager.demote_track("classic_grand_prix").expect("Must demote predefined track");
+
+    // Classic Grand Prix must now appear in Drafts and be removed from Main/Classic
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), init_classic_count - 1);
+    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.draft_track_choices()[0].track_id(), "classic_grand_prix");
+
+    // 2. Promote it back to Classic module (P key on Draft)
+    manager.promote_track_to_module("classic_grand_prix", "classic").expect("Must promote track back");
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), init_classic_count);
+    assert_eq!(manager.draft_track_choices().len(), 0);
+
+    // 3. Delete built-in preset Classic Grand Prix (Backspace / Delete)
+    manager.delete_custom_track("classic_grand_prix").expect("Must delete predefined track");
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), init_classic_count - 1);
+    assert_eq!(manager.draft_track_choices().len(), 0);
+
+    // 4. Test F1 predefined track (Monza) demotion and deletion
+    let init_f1_count = manager.filtered_main_track_choices(ModuleFilter::F1).len();
+    manager.demote_track("monza").expect("Must demote Monza");
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), init_f1_count - 1);
+    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.draft_track_choices()[0].track_id(), "monza");
+
+    manager.delete_custom_track("monza").expect("Must delete Monza");
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), init_f1_count - 1);
+    assert_eq!(manager.draft_track_choices().len(), 0);
+
+    // 5. Verify persistence across new TrackManager instance
+    let manager2 = TrackManager::new(&temp_dir);
+    assert_eq!(manager2.filtered_main_track_choices(ModuleFilter::Classic).len(), init_classic_count - 1);
+    assert_eq!(manager2.filtered_main_track_choices(ModuleFilter::F1).len(), init_f1_count - 1);
+    assert_eq!(manager2.draft_track_choices().len(), 0);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_multi_module_promotion_and_distribution() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_multi_promo_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // 1. Create a draft circuit
+    let track_id = "multi_spec_gp";
+    let mut track = classic_grand_prix();
+    track.name = "Multi Spec GP".to_string();
+    track.description = "Circuit designed for multiple disciplines.".to_string();
+    track.category = TrackCategory::Draft;
+    manager.save_custom_track(&track, Some(track_id)).expect("Save proto");
+
+    assert_eq!(manager.draft_track_choices().len(), 1);
+
+    // 2. Promote simultaneously to Rally, F1, and Classic modules
+    manager
+        .promote_track_to_modules(track_id, &["rally", "f1", "classic"])
+        .expect("Must promote to multiple modules");
+
+    // 3. Verify files on disk in module folders
+    assert!(!temp_dir.join("drafts").join(format!("{}.json", track_id)).exists(), "Draft file must be cleaned up");
+    assert!(temp_dir.join("rally").join(format!("{}.json", track_id)).exists(), "Rally copy must exist");
+    assert!(temp_dir.join("f1").join(format!("{}.json", track_id)).exists(), "F1 copy must exist");
+    assert!(temp_dir.join("classic").join(format!("{}.json", track_id)).exists(), "Classic copy must exist");
+    assert!(!temp_dir.join("kart").join(format!("{}.json", track_id)).exists(), "Kart copy must not exist");
+
+    // 4. Verify catalog queries
+    assert_eq!(manager.draft_track_choices().len(), 0, "No drafts remaining");
+
+    let rally_customs = manager.module_custom_tracks("rally");
+    assert_eq!(rally_customs.len(), 1);
+    assert_eq!(rally_customs[0].title(), "Multi Spec GP");
+
+    let f1_customs = manager.module_custom_tracks("f1");
+    assert_eq!(f1_customs.len(), 1);
+    assert_eq!(f1_customs[0].title(), "Multi Spec GP");
+
+    let classic_customs = manager.module_custom_tracks("classic");
+    assert_eq!(classic_customs.len(), 1);
+    assert_eq!(classic_customs[0].title(), "Multi Spec GP");
+
+    let kart_customs = manager.module_custom_tracks("kart");
+    assert_eq!(kart_customs.len(), 0);
+
+    // 5. Verify module filter choices
+    let rally_choices = manager.filtered_main_track_choices(ModuleFilter::Rally);
+    assert!(rally_choices.iter().any(|c| c.track_id() == track_id));
+
+    let f1_choices = manager.filtered_main_track_choices(ModuleFilter::F1);
+    assert!(f1_choices.iter().any(|c| c.track_id() == track_id));
+
+    let classic_choices = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    assert!(classic_choices.iter().any(|c| c.track_id() == track_id));
+
+    let kart_choices = manager.filtered_main_track_choices(ModuleFilter::Kart);
+    assert!(!kart_choices.iter().any(|c| c.track_id() == track_id));
+
+    // 6. Demote track back to Drafts
+    manager.demote_track(track_id).expect("Must demote multi-module track");
+
+    // 7. Verify all module copies are cleaned up and single draft restored
+    assert!(temp_dir.join("drafts").join(format!("{}.json", track_id)).exists(), "Draft file must be restored");
+    assert!(!temp_dir.join("rally").join(format!("{}.json", track_id)).exists(), "Rally copy removed");
+    assert!(!temp_dir.join("f1").join(format!("{}.json", track_id)).exists(), "F1 copy removed");
+    assert!(!temp_dir.join("classic").join(format!("{}.json", track_id)).exists(), "Classic copy removed");
+
+    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.module_custom_tracks("rally").len(), 0);
+    assert_eq!(manager.module_custom_tracks("f1").len(), 0);
+    assert_eq!(manager.module_custom_tracks("classic").len(), 0);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_consistent_module_categorization_in_module_view() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_module_cat_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Promote a draft to Classic and Rally
+    let mut track = classic_grand_prix();
+    track.name = "Desert Speed".to_string();
+    track.category = TrackCategory::Draft;
+    manager.save_custom_track(&track, Some("desert_speed")).expect("Save");
+    manager.promote_track_to_modules("desert_speed", &["classic", "rally"]).expect("Promote");
+
+    // In Classic view, all tracks should belong to Classic
+    let classic_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    assert!(!classic_tracks.is_empty());
+    for t in &classic_tracks {
+        let tag = t.tag_for_module("classic");
+        assert!(
+            tag == "CLASSIC MOTORSPORT" || tag == "FIA GP CIRCUIT" || tag == "SUPERSPEEDWAY" || tag == "TECHNICAL DRIFT" || tag == "AGILE SPRINT" || tag == "STUNT RAMPS & JUMPS" || tag == "DESERT DIRT RALLY" || tag == "NARROW MOUNTAIN PASS",
+            "Track in classic view should have valid classic tag: {}", tag
+        );
+    }
+
+    // In Rally view, all tracks should belong to Rally
+    let rally_tracks = manager.filtered_main_track_choices(ModuleFilter::Rally);
+    assert!(!rally_tracks.is_empty());
+    for t in &rally_tracks {
+        let tag = t.tag_for_module("rally");
+        assert!(
+            tag == "RALLY CROSS" || tag == "DESERT DIRT RALLY" || tag == "NARROW MOUNTAIN PASS",
+            "Track in rally view should have rally tag: {}", tag
+        );
+    }
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+
 
 
 

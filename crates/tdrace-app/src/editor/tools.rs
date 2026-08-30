@@ -3,7 +3,7 @@ use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle_lines};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceShape, SurfaceZone};
+use tdrace_core::track::geometry::{JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone};
 use tdrace_core::track::spline::TrackWaypoint;
 
 use super::camera::EditorCamera;
@@ -40,11 +40,11 @@ impl EditorToolType {
             Self::Select => "Select & Move [1]",
             Self::RoadSpline => "Road Spline [2]",
             Self::SurfaceZone => "Surfaces & Hazards [3]",
-            Self::JumpRamp => "Jump Ramps [4]",
-            Self::Obstacle => "Props & Obstacles [5]",
-            Self::Checkpoint => "Checkpoint Gates [6]",
+            Self::JumpRamp => "Jump Ramp [4]",
+            Self::Obstacle => "Obstacle Prop [5]",
+            Self::Checkpoint => "Checkpoint Gate [6]",
             Self::StartingGrid => "Starting Grid [7]",
-            Self::PitLane => "Pit Lane & Box [8]",
+            Self::PitLane => "Pit Lane [8]",
         }
     }
 
@@ -68,6 +68,7 @@ pub struct ToolSettings {
     pub active_tool: EditorToolType,
     pub active_surface: SurfaceType,
     pub active_surface_shape: SurfaceShapeType,
+    pub active_surface_layer: SurfaceLayer,
     pub active_obstacle_shape: ObstacleShapeType,
     pub active_polygon_vertices: Vec<Vec2>,
     pub new_waypoint_width: f32,
@@ -83,9 +84,10 @@ pub struct ToolSettings {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SurfaceShapeType {
-    Aabb,
+    Square,
     Circle,
-    OrientedBox,
+    Triangle,
+    Polygon,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -100,7 +102,8 @@ impl Default for ToolSettings {
         Self {
             active_tool: EditorToolType::Select,
             active_surface: SurfaceType::Asphalt,
-            active_surface_shape: SurfaceShapeType::Aabb,
+            active_surface_shape: SurfaceShapeType::Square,
+            active_surface_layer: SurfaceLayer::BelowTrack,
             active_obstacle_shape: ObstacleShapeType::Circle,
             active_polygon_vertices: Vec::new(),
             new_waypoint_width: 14.0,
@@ -220,6 +223,52 @@ impl ToolSettings {
         }
         false
     }
+
+    /// Sets the layer of the selected surface zone (or the active placement layer if none selected).
+    pub fn set_selected_surface_layer(&mut self, state: &mut EditorState, layer: SurfaceLayer) -> bool {
+        self.active_surface_layer = layer;
+        if let Selection::SurfaceZone(idx) = state.selection {
+            if idx < state.track.geometry.surface_zones.len() {
+                if state.track.geometry.surface_zones[idx].layer != layer {
+                    state.record_undo();
+                    state.track.geometry.surface_zones[idx].layer = layer;
+                    state.revalidate();
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// Moves the selected surface zone to Front (AboveTrack).
+    pub fn bring_selected_surface_front(&mut self, state: &mut EditorState) -> bool {
+        self.set_selected_surface_layer(state, SurfaceLayer::AboveTrack)
+    }
+
+    /// Moves the selected surface zone to Back (BelowTrack).
+    pub fn send_selected_surface_back(&mut self, state: &mut EditorState) -> bool {
+        self.set_selected_surface_layer(state, SurfaceLayer::BelowTrack)
+    }
+
+    /// Toggles the selected surface zone's layer between AboveTrack and BelowTrack.
+    pub fn toggle_selected_surface_layer(&mut self, state: &mut EditorState) -> bool {
+        if let Selection::SurfaceZone(idx) = state.selection {
+            if idx < state.track.geometry.surface_zones.len() {
+                let new_layer = if state.track.geometry.surface_zones[idx].is_above_track() {
+                    SurfaceLayer::BelowTrack
+                } else {
+                    SurfaceLayer::AboveTrack
+                };
+                return self.set_selected_surface_layer(state, new_layer);
+            }
+        }
+        self.active_surface_layer = if self.active_surface_layer == SurfaceLayer::AboveTrack {
+            SurfaceLayer::BelowTrack
+        } else {
+            SurfaceLayer::AboveTrack
+        };
+        false
+    }
 }
 
 impl ToolSettings {
@@ -296,9 +345,39 @@ impl ToolSettings {
                 }
             }
             EditorToolType::SurfaceZone => {
-                self.is_dragging = true;
-                self.drag_start_world = snapped_mouse;
-                self.drag_current_world = snapped_mouse;
+                match self.active_surface_shape {
+                    SurfaceShapeType::Square | SurfaceShapeType::Circle => {
+                        self.is_dragging = true;
+                        self.drag_start_world = snapped_mouse;
+                        self.drag_current_world = snapped_mouse;
+                    }
+                    SurfaceShapeType::Triangle => {
+                        self.is_dragging = true;
+                        self.drag_start_world = snapped_mouse;
+                        self.drag_current_world = snapped_mouse;
+                    }
+                    SurfaceShapeType::Polygon => {
+                        // If clicked near first vertex and we have at least 3 vertices, close the polygon!
+                        if self.active_polygon_vertices.len() >= 3
+                            && (self.active_polygon_vertices[0] - snapped_mouse).length() < 1.5
+                        {
+                            state.record_undo();
+                            let vertices = std::mem::take(&mut self.active_polygon_vertices);
+                            let zone_name = format!("{:?} Zone", self.active_surface);
+                            let zone = SurfaceZone::new(
+                                SurfaceShape::Polygon { vertices },
+                                self.active_surface,
+                                zone_name,
+                            )
+                            .with_layer(self.active_surface_layer);
+                            state.track.geometry.surface_zones.push(zone);
+                            state.selection = Selection::SurfaceZone(state.track.geometry.surface_zones.len() - 1);
+                            state.revalidate();
+                        } else {
+                            self.active_polygon_vertices.push(snapped_mouse);
+                        }
+                    }
+                }
             }
             EditorToolType::JumpRamp => {
                 self.is_dragging = true;
@@ -445,23 +524,49 @@ impl ToolSettings {
                 if (max.x - min.x) > 2.0 && (max.y - min.y) > 2.0 {
                     state.record_undo();
                     let shape = match self.active_surface_shape {
-                        SurfaceShapeType::Aabb => SurfaceShape::Aabb { min, max },
+                        SurfaceShapeType::Square => SurfaceShape::Aabb { min, max },
                         SurfaceShapeType::Circle => {
                             let center = (min + max) * 0.5;
                             let radius = ((max.x - min.x) * 0.5).max(2.0);
                             SurfaceShape::Circle { center, radius }
                         }
-                        SurfaceShapeType::OrientedBox => {
-                            let center = (min + max) * 0.5;
-                            let half_extents = (max - min) * 0.5;
-                            SurfaceShape::OrientedBox { center, half_extents, angle: 0.0 }
+                        SurfaceShapeType::Triangle => {
+                            let center_top = Vec2::new((min.x + max.x) * 0.5, max.y);
+                            let bottom_left = Vec2::new(min.x, min.y);
+                            let bottom_right = Vec2::new(max.x, min.y);
+                            SurfaceShape::triangle(bottom_left, bottom_right, center_top)
+                        }
+                        SurfaceShapeType::Polygon => {
+                            return;
                         }
                     };
 
                     let zone_name = format!("{:?} Zone", self.active_surface);
-                    state.track.geometry.surface_zones.push(SurfaceZone::new(shape, self.active_surface, zone_name));
+                    state.track.geometry.surface_zones.push(
+                        SurfaceZone::new(shape, self.active_surface, zone_name)
+                            .with_layer(self.active_surface_layer),
+                    );
                     state.selection = Selection::SurfaceZone(state.track.geometry.surface_zones.len() - 1);
                     state.revalidate();
+                } else if self.active_surface_shape == SurfaceShapeType::Triangle {
+                    // Single-click 3-point triangle workflow
+                    if self.active_polygon_vertices.len() < 2 {
+                        self.active_polygon_vertices.push(snapped_mouse);
+                    } else {
+                        state.record_undo();
+                        let mut vertices = std::mem::take(&mut self.active_polygon_vertices);
+                        vertices.push(snapped_mouse);
+                        let zone_name = format!("{:?} Triangle Zone", self.active_surface);
+                        let zone = SurfaceZone::new(
+                            SurfaceShape::Polygon { vertices },
+                            self.active_surface,
+                            zone_name,
+                        )
+                        .with_layer(self.active_surface_layer);
+                        state.track.geometry.surface_zones.push(zone);
+                        state.selection = Selection::SurfaceZone(state.track.geometry.surface_zones.len() - 1);
+                        state.revalidate();
+                    }
                 }
             }
             EditorToolType::JumpRamp => {
@@ -838,7 +943,38 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
     // 4. Render Active Drag Box preview
     if tools.is_dragging {
         match tools.active_tool {
-            EditorToolType::SurfaceZone | EditorToolType::PitLane => {
+            EditorToolType::SurfaceZone => {
+                let min = Vec2::new(
+                    tools.drag_start_world.x.min(tools.drag_current_world.x),
+                    tools.drag_start_world.y.min(tools.drag_current_world.y),
+                );
+                let max = Vec2::new(
+                    tools.drag_start_world.x.max(tools.drag_current_world.x),
+                    tools.drag_start_world.y.max(tools.drag_current_world.y),
+                );
+                let w = max.x - min.x;
+                let h = max.y - min.y;
+                match tools.active_surface_shape {
+                    SurfaceShapeType::Square => {
+                        draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
+                    }
+                    SurfaceShapeType::Circle => {
+                        let center = (min + max) * 0.5;
+                        let radius = (w * 0.5).max(2.0);
+                        draw_circle_lines(center.x, center.y, radius, 0.4, Palette::NEON_CYAN);
+                    }
+                    SurfaceShapeType::Triangle => {
+                        let top = Vec2::new((min.x + max.x) * 0.5, max.y);
+                        let bl = Vec2::new(min.x, min.y);
+                        let br = Vec2::new(max.x, min.y);
+                        draw_line(bl.x, bl.y, br.x, br.y, 0.4, Palette::NEON_CYAN);
+                        draw_line(br.x, br.y, top.x, top.y, 0.4, Palette::NEON_CYAN);
+                        draw_line(top.x, top.y, bl.x, bl.y, 0.4, Palette::NEON_CYAN);
+                    }
+                    SurfaceShapeType::Polygon => {}
+                }
+            }
+            EditorToolType::PitLane => {
                 let min = Vec2::new(
                     tools.drag_start_world.x.min(tools.drag_current_world.x),
                     tools.drag_start_world.y.min(tools.drag_current_world.y),
@@ -885,6 +1021,27 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                 draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_MAGENTA);
             }
             _ => {}
+        }
+    }
+
+    // 5. Render In-progress Polygon / Triangle Construction vertices
+    if !tools.active_polygon_vertices.is_empty() {
+        let col = if tools.active_tool == EditorToolType::SurfaceZone {
+            Palette::NEON_CYAN
+        } else {
+            Palette::NEON_MAGENTA
+        };
+        for (i, pt) in tools.active_polygon_vertices.iter().enumerate() {
+            draw_circle(pt.x, pt.y, 0.8, col);
+            if i > 0 {
+                let prev = tools.active_polygon_vertices[i - 1];
+                draw_line(prev.x, prev.y, pt.x, pt.y, 0.35, col);
+            }
+        }
+        // Snap closing ring around first vertex if >= 3 vertices
+        if tools.active_polygon_vertices.len() >= 3 {
+            let first = tools.active_polygon_vertices[0];
+            draw_circle_lines(first.x, first.y, 1.5, 0.35, Palette::NEON_GOLD);
         }
     }
 }
@@ -1056,5 +1213,94 @@ mod tests {
         assert_eq!(state.selection, Selection::Waypoint(4));
         assert_eq!(state.track.spline.waypoints[4].surface, Some(SurfaceType::Sand));
         assert_eq!(tools.active_surface, SurfaceType::Sand);
+    }
+
+    #[test]
+    fn test_surface_zone_multi_shapes_and_layer_controls() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+        tools.active_tool = EditorToolType::SurfaceZone;
+
+        // 1. Square Surface Zone Creation via Drag
+        tools.active_surface_shape = SurfaceShapeType::Square;
+        tools.active_surface = SurfaceType::Sand;
+        tools.active_surface_layer = SurfaceLayer::BelowTrack;
+        tools.handle_mouse_down(&mut state, Vec2::new(10.0, 10.0));
+        tools.handle_mouse_drag(&mut state, Vec2::new(30.0, 30.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(30.0, 30.0));
+
+        let zone_idx = state.track.geometry.surface_zones.len() - 1;
+        assert_eq!(state.selection, Selection::SurfaceZone(zone_idx));
+        assert_eq!(state.track.geometry.surface_zones[zone_idx].surface, SurfaceType::Sand);
+        assert_eq!(state.track.geometry.surface_zones[zone_idx].layer, SurfaceLayer::BelowTrack);
+        assert!(matches!(state.track.geometry.surface_zones[zone_idx].shape, SurfaceShape::Aabb { .. }));
+
+        // 2. Layer Toggle Controls
+        assert!(tools.bring_selected_surface_front(&mut state));
+        assert_eq!(state.track.geometry.surface_zones[zone_idx].layer, SurfaceLayer::AboveTrack);
+        assert!(tools.send_selected_surface_back(&mut state));
+        assert_eq!(state.track.geometry.surface_zones[zone_idx].layer, SurfaceLayer::BelowTrack);
+        assert!(tools.toggle_selected_surface_layer(&mut state));
+        assert_eq!(state.track.geometry.surface_zones[zone_idx].layer, SurfaceLayer::AboveTrack);
+
+        // 3. Circle Surface Zone Creation via Drag
+        tools.active_surface_shape = SurfaceShapeType::Circle;
+        tools.active_surface = SurfaceType::Water;
+        tools.active_surface_layer = SurfaceLayer::AboveTrack;
+        tools.handle_mouse_down(&mut state, Vec2::new(50.0, 50.0));
+        tools.handle_mouse_drag(&mut state, Vec2::new(70.0, 70.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(70.0, 70.0));
+
+        let circle_idx = state.track.geometry.surface_zones.len() - 1;
+        assert_eq!(state.selection, Selection::SurfaceZone(circle_idx));
+        assert!(matches!(state.track.geometry.surface_zones[circle_idx].shape, SurfaceShape::Circle { .. }));
+        assert_eq!(state.track.geometry.surface_zones[circle_idx].layer, SurfaceLayer::AboveTrack);
+
+        // 4. Triangle Surface Zone Creation via 3-point click
+        tools.active_surface_shape = SurfaceShapeType::Triangle;
+        tools.active_surface = SurfaceType::Dirt;
+        tools.handle_mouse_down(&mut state, Vec2::new(100.0, 100.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(100.0, 100.0));
+        assert_eq!(tools.active_polygon_vertices.len(), 1);
+
+        tools.handle_mouse_down(&mut state, Vec2::new(120.0, 100.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(120.0, 100.0));
+        assert_eq!(tools.active_polygon_vertices.len(), 2);
+
+        tools.handle_mouse_down(&mut state, Vec2::new(110.0, 120.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(110.0, 120.0));
+        assert!(tools.active_polygon_vertices.is_empty());
+
+        let tri_idx = state.track.geometry.surface_zones.len() - 1;
+        assert_eq!(state.selection, Selection::SurfaceZone(tri_idx));
+        if let SurfaceShape::Polygon { vertices } = &state.track.geometry.surface_zones[tri_idx].shape {
+            assert_eq!(vertices.len(), 3);
+        } else {
+            panic!("Expected Polygon shape with 3 vertices for triangle");
+        }
+
+        // 5. Polygon Surface Zone Creation with arbitrary vertices
+        tools.active_surface_shape = SurfaceShapeType::Polygon;
+        tools.active_surface = SurfaceType::Grass;
+        tools.handle_mouse_down(&mut state, Vec2::new(200.0, 200.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(200.0, 200.0));
+        tools.handle_mouse_down(&mut state, Vec2::new(220.0, 200.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(220.0, 200.0));
+        tools.handle_mouse_down(&mut state, Vec2::new(220.0, 220.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(220.0, 220.0));
+        tools.handle_mouse_down(&mut state, Vec2::new(200.0, 220.0));
+        tools.handle_mouse_up(&mut state, Vec2::new(200.0, 220.0));
+        // Click near first vertex (< 1.5m) to close
+        tools.handle_mouse_down(&mut state, Vec2::new(200.5, 200.5));
+        assert!(tools.active_polygon_vertices.is_empty());
+
+        let poly_idx = state.track.geometry.surface_zones.len() - 1;
+        assert_eq!(state.selection, Selection::SurfaceZone(poly_idx));
+        if let SurfaceShape::Polygon { vertices } = &state.track.geometry.surface_zones[poly_idx].shape {
+            assert_eq!(vertices.len(), 4);
+        } else {
+            panic!("Expected Polygon shape with 4 vertices");
+        }
     }
 }

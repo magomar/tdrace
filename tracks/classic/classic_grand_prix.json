@@ -18921,24 +18921,7 @@
       }
     ],
     "obstacles": [],
-    "surface_zones": [
-      {
-        "shape": {
-          "Aabb": {
-            "min": [
-              180.0,
-              315.0
-            ],
-            "max": [
-              300.0,
-              370.0
-            ]
-          }
-        },
-        "surface": "Sand",
-        "name": "Hairpin Sand Trap"
-      }
-    ],
+    "surface_zones": [],
     "jump_ramps": [],
     "left_boundary_polyline": [
       [

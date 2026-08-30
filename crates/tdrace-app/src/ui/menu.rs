@@ -56,7 +56,47 @@ impl TrackChoice {
             Self::RampRaceway => "STUNT RAMPS & JUMPS",
             Self::OasisRally => "DESERT DIRT RALLY",
             Self::OutlawPass => "NARROW MOUNTAIN PASS",
-            Self::Custom { .. } => "CUSTOM CIRCUIT",
+            Self::Custom { id, path, .. } => {
+                if path.contains("/rally/") || path.starts_with("rally/") || id == "sahara" {
+                    "RALLY CROSS"
+                } else if path.contains("/f1/") || path.starts_with("f1/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota") {
+                    "FORMULA 1"
+                } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta") {
+                    "KARTING"
+                } else {
+                    "CLASSIC MOTORSPORT"
+                }
+            }
+        }
+    }
+
+    pub fn tag_for_module(&self, mod_id: &str) -> &str {
+        match self {
+            Self::ClassicGrandPrix => {
+                if mod_id == "f1" { "F1 GP CIRCUIT" } else { "FIA GP CIRCUIT" }
+            }
+            Self::OvalSpeedway => "SUPERSPEEDWAY",
+            Self::DriftPark => "TECHNICAL DRIFT",
+            Self::KartArena => "AGILE SPRINT",
+            Self::RampRaceway => "STUNT RAMPS & JUMPS",
+            Self::OasisRally => "DESERT DIRT RALLY",
+            Self::OutlawPass => "NARROW MOUNTAIN PASS",
+            Self::Custom { id, path, .. } => {
+                if path.contains("/rally/") || path.starts_with("rally/") || id == "sahara" {
+                    "RALLY CROSS"
+                } else if path.contains("/f1/") || path.starts_with("f1/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota") {
+                    "FORMULA 1"
+                } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta") {
+                    "KARTING"
+                } else {
+                    match mod_id {
+                        "f1" => "FORMULA 1",
+                        "rally" => "RALLY CROSS",
+                        "kart" => "KARTING",
+                        _ => "CLASSIC MOTORSPORT",
+                    }
+                }
+            }
         }
     }
 
@@ -516,9 +556,9 @@ pub fn render_track_select_menu(
             // Tag pill & metrics badge (Length + Surface breakdown)
             let tag_col = if is_sel { module_accent } else { Palette::UI_TEXT_MUTED };
             let tag_label = if let Some(ref tr) = loaded_track {
-                format!("{} • {:.0}m • {}", track_opt.tag(), tr.total_length_m(), tr.surface_summary_string())
+                format!("{} • {:.0}m • {}", track_opt.tag_for_module(active_module_id), tr.total_length_m(), tr.surface_summary_string())
             } else {
-                track_opt.tag().to_string()
+                track_opt.tag_for_module(active_module_id).to_string()
             };
             fonts.draw_ui_bold(
                 &tag_label,
@@ -637,7 +677,7 @@ pub fn render_track_select_menu(
             Palette::WHITE,
         );
         fonts.draw_ui_bold(
-            track_opt.tag(),
+            track_opt.tag_for_module(active_module_id),
             col2_x + col_w - scaler.s(135.0),
             c2_y + scaler.s(16.0),
             scaler.font_s(10.0),

@@ -6,8 +6,8 @@ pub mod validation;
 
 pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
 pub use geometry::{
-    BarrierType, JumpRamp, LineSegment, Obstacle, ObstacleShape, SpawnPose, SurfaceShape,
-    SurfaceZone, TrackGeometry, WallBarrier,
+    BarrierType, JumpRamp, LineSegment, Obstacle, ObstacleShape, SpawnPose, SurfaceLayer,
+    SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
 pub use presets::{
     classic_grand_prix, drift_park, dune_raid, generate_checkpoints, generate_grid_positions,
@@ -114,9 +114,9 @@ impl Track {
     ///    Located underneath the track ribbon, only affecting the vehicle when running off track.
     /// 4. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::Sand`).
     pub fn sample_surface(&self, point: Vec2) -> SurfaceType {
-        // 1. Check on-top hazard overlays first (water puddles, oil slicks, ice)
+        // 1. Check above-track surface zones first (e.g. puddles, oil slicks, sand/grass placed on top of road)
         for zone in &self.geometry.surface_zones {
-            if zone.surface.is_on_track_hazard() && zone.contains(point) {
+            if zone.is_above_track() && zone.contains(point) {
                 return zone.surface;
             }
         }
@@ -130,9 +130,9 @@ impl Track {
             return SurfaceType::Curb;
         }
 
-        // 3. Check off-track ground zones (e.g. Sand traps, asphalt runoff)
+        // 3. Check below-track ground zones (e.g. sand traps, asphalt runoff, dirt base beneath road)
         for zone in &self.geometry.surface_zones {
-            if zone.contains(point) {
+            if !zone.is_above_track() && zone.contains(point) {
                 return zone.surface;
             }
         }
@@ -395,5 +395,56 @@ mod tests {
         assert_eq!(mixed_breakdown.len(), 2);
         let summary = mixed.surface_summary_string();
         assert!(summary.contains("Dirt") && summary.contains("Asphalt"));
+    }
+
+    #[test]
+    fn test_surface_layer_precedence_and_shapes() {
+        let mut track = classic_grand_prix();
+        track.geometry.surface_zones.clear();
+
+        // 1. BelowTrack Sand Zone overlapping the start line (0,0)
+        let sand_shape = SurfaceShape::Aabb {
+            min: Vec2::new(-20.0, -20.0),
+            max: Vec2::new(20.0, 20.0),
+        };
+        track.geometry.surface_zones.push(
+            SurfaceZone::new(sand_shape, SurfaceType::Sand, "Sand Under Road")
+                .with_layer(SurfaceLayer::BelowTrack),
+        );
+
+        // Point on track (0, 0) should remain Asphalt because track ribbon sits above BelowTrack sand
+        assert_eq!(track.sample_surface(Vec2::new(0.0, 0.0)), SurfaceType::Asphalt);
+        // Off-track point (0, 15) is outside the 14m wide track ribbon (half-width 7m) but inside the [-20..20, -20..20] sand zone
+        assert_eq!(track.sample_surface(Vec2::new(0.0, 15.0)), SurfaceType::Sand);
+
+        // 2. AboveTrack Sand Zone overlapping the start line (0,0)
+        track.geometry.surface_zones[0].layer = SurfaceLayer::AboveTrack;
+        // Point on track (0, 0) should now be Sand because AboveTrack sits on top of asphalt!
+        assert_eq!(track.sample_surface(Vec2::new(0.0, 0.0)), SurfaceType::Sand);
+
+        // 3. Triangle Surface Shape test
+        let tri_shape = SurfaceShape::triangle(
+            Vec2::new(50.0, 50.0),
+            Vec2::new(70.0, 50.0),
+            Vec2::new(60.0, 70.0),
+        );
+        let tri_zone = SurfaceZone::new(tri_shape, SurfaceType::Dirt, "Triangle Dirt Zone");
+        assert!(tri_zone.contains(Vec2::new(60.0, 55.0)));
+        assert!(!tri_zone.contains(Vec2::new(50.0, 70.0)));
+        assert_eq!(tri_zone.shape.center(), Vec2::new(60.0, 170.0 / 3.0));
+
+        // 4. Polygon Surface Shape test
+        let poly_shape = SurfaceShape::Polygon {
+            vertices: vec![
+                Vec2::new(100.0, 100.0),
+                Vec2::new(120.0, 100.0),
+                Vec2::new(120.0, 120.0),
+                Vec2::new(100.0, 120.0),
+            ],
+        };
+        let poly_zone = SurfaceZone::new(poly_shape, SurfaceType::Water, "Poly Water Zone");
+        assert!(poly_zone.contains(Vec2::new(110.0, 110.0)));
+        assert!(!poly_zone.contains(Vec2::new(130.0, 130.0)));
+        assert_eq!(poly_zone.shape.center(), Vec2::new(110.0, 110.0));
     }
 }

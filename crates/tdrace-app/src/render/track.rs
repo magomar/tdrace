@@ -2,7 +2,7 @@ use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_triangle};
 use glam::Vec2;
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::SurfaceShape;
+use tdrace_core::track::geometry::{SurfaceLayer, SurfaceShape};
 use tdrace_core::track::spline::TrackSpline;
 use tdrace_core::track::Track;
 
@@ -16,8 +16,8 @@ pub fn render_track(track: &Track) {
 
 /// Renders base ground environment, surface zones, ground track ribbon, hazard zones, and timing lines.
 pub fn render_ground_track(track: &Track) {
-    // 1. Render base off-track surface zones (sand traps, asphalt runoff, dirt areas)
-    render_surface_zones(track);
+    // 1. Render base off-track surface zones (BelowTrack: sand traps, asphalt runoff, dirt areas beneath road)
+    render_surface_zones_layer(track, SurfaceLayer::BelowTrack);
 
     // 2. Render pit box area if defined
     if let Some(pit_area) = &track.pit_box_area {
@@ -28,8 +28,8 @@ pub fn render_ground_track(track: &Track) {
     render_curbs_pass(&track.spline, false);
     render_surface_pass(&track.spline, false);
 
-    // 4. Render on-top surface hazard patches (water puddles, oil slicks)
-    render_on_track_hazard_zones(track);
+    // 4. Render on-top surface zones (AboveTrack: water puddles, oil slicks, sand/grass/dirt overlays)
+    render_surface_zones_layer(track, SurfaceLayer::AboveTrack);
 
     // 5. Render 2.5D jump ramps
     render_jump_ramps(track);
@@ -51,34 +51,34 @@ pub fn render_elevated_track(track: &Track) {
     }
 }
 
-/// Draws dynamic on-track hazard overlays like shimmering water puddles or oil slicks.
-fn render_on_track_hazard_zones(track: &Track) {
+/// Helper returning fill and border colors for a given surface type.
+pub fn get_surface_zone_colors(surface: SurfaceType) -> (Color, Option<Color>) {
+    match surface {
+        SurfaceType::Sand => (Palette::SAND, Some(Palette::SAND_DARK)),
+        SurfaceType::Dirt => (Palette::DIRT, Some(Palette::DIRT_DARK)),
+        SurfaceType::Water => (Palette::WATER, Some(Palette::WATER_BORDER)),
+        SurfaceType::Asphalt => (Palette::RUNOFF_ASPHALT, Some(Palette::WHITE_LINE)),
+        SurfaceType::Grass => (Palette::GRASS_DARK, None),
+        SurfaceType::Curb => (Palette::CURB_RED, None),
+        SurfaceType::Ice => (Color::new(0.85, 0.92, 0.98, 0.8), None),
+        SurfaceType::Oil => (Color::new(0.12, 0.12, 0.15, 0.85), None),
+    }
+}
+
+/// Draws custom surface zones for a specific layer pass (BelowTrack or AboveTrack).
+pub fn render_surface_zones_layer(track: &Track, layer: SurfaceLayer) {
     for zone in &track.geometry.surface_zones {
-        if matches!(zone.surface, SurfaceType::Water | SurfaceType::Oil | SurfaceType::Ice) {
-            let (fill_col, border_col) = match zone.surface {
-                SurfaceType::Water => (Palette::WATER, Some(Palette::WATER_BORDER)),
-                SurfaceType::Ice => (Color::new(0.85, 0.92, 0.98, 0.8), None),
-                SurfaceType::Oil => (Color::new(0.12, 0.12, 0.15, 0.85), None),
-                _ => continue,
-            };
+        if zone.layer == layer {
+            let (fill_col, border_col) = get_surface_zone_colors(zone.surface);
             render_surface_shape(&zone.shape, fill_col, border_col);
         }
     }
 }
 
-/// Draws all custom surface zones (e.g. sand traps, dirt areas, water hazards).
-fn render_surface_zones(track: &Track) {
+/// Draws all custom surface zones.
+pub fn render_surface_zones(track: &Track) {
     for zone in &track.geometry.surface_zones {
-        let (fill_col, border_col) = match zone.surface {
-            SurfaceType::Sand => (Palette::SAND, Some(Palette::SAND_DARK)),
-            SurfaceType::Dirt => (Palette::DIRT, Some(Palette::DIRT_DARK)),
-            SurfaceType::Water => (Palette::WATER, Some(Palette::WATER_BORDER)),
-            SurfaceType::Asphalt => (Palette::RUNOFF_ASPHALT, Some(Palette::WHITE_LINE)),
-            SurfaceType::Grass => (Palette::GRASS_DARK, None),
-            SurfaceType::Curb => (Palette::CURB_RED, None),
-            SurfaceType::Ice => (Color::new(0.85, 0.92, 0.98, 0.8), None),
-            SurfaceType::Oil => (Color::new(0.12, 0.12, 0.15, 0.85), None),
-        };
+        let (fill_col, border_col) = get_surface_zone_colors(zone.surface);
         render_surface_shape(&zone.shape, fill_col, border_col);
     }
 }

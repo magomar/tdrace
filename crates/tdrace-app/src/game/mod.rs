@@ -84,7 +84,7 @@ use crate::render::car::render_car_with_visual_type;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
     render_editor_grid, render_editor_gizmos, render_editor_ui, EditorAction, EditorCamera,
-    EditorModal, EditorState, EditorToolType, ToolSettings,
+    EditorModal, EditorState, EditorToolType, SurfaceShapeType, ToolSettings,
 };
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
@@ -1178,8 +1178,16 @@ impl RaceSession {
             self.touch.toggle_layout();
         }
 
-        // Handle camera toggle / zoom cycle (Tab key or Gamepad Left Stick Click)
-        if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_cam_toggle_pressed {
+        // Handle camera toggle / zoom cycle (Tab key or Gamepad Left Stick Click) during driving/editor
+        let is_camera_state = matches!(
+            self.state,
+            GameState::Racing
+                | GameState::Countdown(_)
+                | GameState::Paused
+                | GameState::EditorTestDrive
+                | GameState::TrackEditor
+        );
+        if is_camera_state && (is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_cam_toggle_pressed) {
             if self.state == GameState::TrackEditor {
                 let bounds = self.editor_state.as_ref().and_then(|s| {
                     let mut min = Vec2::splat(f32::MAX);
@@ -1468,10 +1476,8 @@ impl RaceSession {
                 }
             }
             GameState::StartingGrid => {
-                // 1. Cycle Game Mode (M, Tab, G, or Gamepad X)
-                if is_key_pressed(KeyCode::M)
-                    || is_key_pressed(KeyCode::Tab)
-                    || is_key_pressed(KeyCode::G)
+                // 1. Cycle Game Mode (Tab or Gamepad X)
+                if is_key_pressed(KeyCode::Tab)
                     || self.input.gamepad.snapshot.btn_x_pressed
                 {
                     self.game_mode = self.game_mode.next();
@@ -1515,18 +1521,8 @@ impl RaceSession {
                 if self.game_mode.has_bots() {
                     let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
 
-                    // Cycle next driver count (B / N)
-                    if is_key_pressed(KeyCode::B)
-                        || is_key_pressed(KeyCode::N)
-                    {
-                        self.audio.play_sfx(SfxType::UiMove);
-                        self.num_bots = (self.num_bots % max_bots) + 1;
-                        self.rebuild_roster_participants();
-                    }
-
-                    // Increase driver count (Up / Equal / Gamepad D-pad Up)
+                    // Increase driver count (Up / Gamepad D-pad Up)
                     if is_key_pressed(KeyCode::Up)
-                        || is_key_pressed(KeyCode::Equal)
                         || self.input.gamepad.snapshot.dpad_up_pressed
                     {
                         if self.num_bots < max_bots {
@@ -1536,9 +1532,8 @@ impl RaceSession {
                         }
                     }
 
-                    // Decrease driver count (Down / Minus / Gamepad D-pad Down)
+                    // Decrease driver count (Down / Gamepad D-pad Down)
                     if is_key_pressed(KeyCode::Down)
-                        || is_key_pressed(KeyCode::Minus)
                         || self.input.gamepad.snapshot.dpad_down_pressed
                     {
                         if self.num_bots > 1 {
@@ -2442,16 +2437,25 @@ impl RaceSession {
             TrackManagerModal::SelectModulePromotion {
                 ref track_id,
                 track_title,
-                mut selected_module_idx,
+                mut cursor_idx,
+                mut selected_mask,
             } => {
                 if is_key_pressed(KeyCode::Key1) {
-                    selected_module_idx = 0;
+                    selected_mask[0] = !selected_mask[0];
+                    cursor_idx = 0;
+                    self.audio.play_sfx(SfxType::UiMove);
                 } else if is_key_pressed(KeyCode::Key2) {
-                    selected_module_idx = 1;
+                    selected_mask[1] = !selected_mask[1];
+                    cursor_idx = 1;
+                    self.audio.play_sfx(SfxType::UiMove);
                 } else if is_key_pressed(KeyCode::Key3) {
-                    selected_module_idx = 2;
+                    selected_mask[2] = !selected_mask[2];
+                    cursor_idx = 2;
+                    self.audio.play_sfx(SfxType::UiMove);
                 } else if is_key_pressed(KeyCode::Key4) {
-                    selected_module_idx = 3;
+                    selected_mask[3] = !selected_mask[3];
+                    cursor_idx = 3;
+                    self.audio.play_sfx(SfxType::UiMove);
                 } else if is_key_pressed(KeyCode::Up)
                     || is_key_pressed(KeyCode::W)
                     || is_key_pressed(KeyCode::Left)
@@ -2459,7 +2463,7 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.nav_left
                 {
                     self.audio.play_sfx(SfxType::UiMove);
-                    selected_module_idx = selected_module_idx.saturating_sub(1);
+                    cursor_idx = cursor_idx.saturating_sub(1);
                 } else if is_key_pressed(KeyCode::Down)
                     || is_key_pressed(KeyCode::S)
                     || is_key_pressed(KeyCode::Right)
@@ -2467,19 +2471,35 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.nav_right
                 {
                     self.audio.play_sfx(SfxType::UiMove);
-                    if selected_module_idx + 1 < PROMOTION_MODULES.len() {
-                        selected_module_idx += 1;
+                    if cursor_idx + 1 < PROMOTION_MODULES.len() {
+                        cursor_idx += 1;
                     }
+                }
+
+                if is_key_pressed(KeyCode::Space)
+                    || self.input.gamepad.snapshot.btn_x_pressed
+                    || self.input.gamepad.snapshot.btn_y_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    selected_mask[cursor_idx] = !selected_mask[cursor_idx];
                 }
 
                 if is_key_pressed(KeyCode::Enter)
                     || is_key_pressed(KeyCode::KpEnter)
-                    || is_key_pressed(KeyCode::Space)
                     || self.input.gamepad.snapshot.btn_confirm_pressed
                     || self.input.gamepad.snapshot.btn_a_pressed
                 {
-                    let (target_mod, _, _, _) = PROMOTION_MODULES[selected_module_idx.min(PROMOTION_MODULES.len() - 1)];
-                    let _ = self.track_manager.promote_track_to_module(track_id, target_mod);
+                    let mut target_mods: Vec<&str> = PROMOTION_MODULES
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| selected_mask[*i])
+                        .map(|(_, (mod_id, _, _, _))| *mod_id)
+                        .collect();
+                    if target_mods.is_empty() {
+                        let (cur_mod, _, _, _) = PROMOTION_MODULES[cursor_idx.min(PROMOTION_MODULES.len() - 1)];
+                        target_mods.push(cur_mod);
+                    }
+                    let _ = self.track_manager.promote_track_to_modules(track_id, &target_mods);
                     self.audio.play_sfx(SfxType::UiSelect);
                     let new_len = self.track_manager.draft_track_choices().len();
                     if selected_idx >= new_len && new_len > 0 {
@@ -2512,7 +2532,8 @@ impl RaceSession {
                     modal: TrackManagerModal::SelectModulePromotion {
                         track_id: track_id.clone(),
                         track_title,
-                        selected_module_idx,
+                        cursor_idx,
+                        selected_mask,
                     },
                 };
                 return;
@@ -2643,36 +2664,37 @@ impl RaceSession {
         // 6. Promote / Demote Track (P key / Gamepad Y)
         if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
             if let Some(track_choice) = current_list.get(selected_idx) {
-                if track_choice.is_custom() {
-                    let tid = track_choice.track_id().to_string();
-                    match active_tab {
-                        TrackManagerTab::Drafts => {
-                            self.audio.play_sfx(SfxType::UiSelect);
-                            let default_mod_idx = match self.active_module_id {
-                                "classic" => 0,
-                                "rally" => 1,
-                                "kart" => 2,
-                                _ => 3,
-                            };
-                            self.state = GameState::TrackManager {
-                                active_tab,
-                                module_filter,
-                                selected_idx,
-                                modal: TrackManagerModal::SelectModulePromotion {
-                                    track_id: tid,
-                                    track_title: track_choice.title().to_string(),
-                                    selected_module_idx: default_mod_idx,
-                                },
-                            };
-                            return;
-                        }
-                        TrackManagerTab::Main => {
-                            let _ = self.track_manager.demote_track(&tid);
-                            self.audio.play_sfx(SfxType::UiSelect);
-                            let new_len = self.track_manager.filtered_main_track_choices(module_filter).len();
-                            if selected_idx >= new_len && new_len > 0 {
-                                selected_idx = new_len - 1;
-                            }
+                let tid = track_choice.track_id().to_string();
+                match active_tab {
+                    TrackManagerTab::Drafts => {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        let default_mod_idx = match self.active_module_id {
+                            "classic" => 0,
+                            "rally" => 1,
+                            "kart" => 2,
+                            _ => 3,
+                        };
+                        let mut selected_mask = [false; 4];
+                        selected_mask[default_mod_idx] = true;
+                        self.state = GameState::TrackManager {
+                            active_tab,
+                            module_filter,
+                            selected_idx,
+                            modal: TrackManagerModal::SelectModulePromotion {
+                                track_id: tid,
+                                track_title: track_choice.title().to_string(),
+                                cursor_idx: default_mod_idx,
+                                selected_mask,
+                            },
+                        };
+                        return;
+                    }
+                    TrackManagerTab::Main => {
+                        let _ = self.track_manager.demote_track(&tid);
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        let new_len = self.track_manager.filtered_main_track_choices(module_filter).len();
+                        if selected_idx >= new_len && new_len > 0 {
+                            selected_idx = new_len - 1;
                         }
                     }
                 }
@@ -2682,23 +2704,21 @@ impl RaceSession {
         // 7. Edit Metadata (N key)
         if is_key_pressed(KeyCode::N) {
             if let Some(track_choice) = current_list.get(selected_idx) {
-                if track_choice.is_custom() {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    while get_char_pressed().is_some() {}
-                    self.state = GameState::TrackManager {
-                        active_tab,
-                        module_filter,
-                        selected_idx,
-                        modal: TrackManagerModal::EditMetadata {
-                            track_id: track_choice.track_id().to_string(),
-                            name_input: track_choice.title().to_string(),
-                            desc_input: track_choice.description().to_string(),
-                            active_field: 0,
-                            cursor_timer: 0.0,
-                        },
-                    };
-                    return;
-                }
+                self.audio.play_sfx(SfxType::UiSelect);
+                while get_char_pressed().is_some() {}
+                self.state = GameState::TrackManager {
+                    active_tab,
+                    module_filter,
+                    selected_idx,
+                    modal: TrackManagerModal::EditMetadata {
+                        track_id: track_choice.track_id().to_string(),
+                        name_input: track_choice.title().to_string(),
+                        desc_input: track_choice.description().to_string(),
+                        active_field: 0,
+                        cursor_timer: 0.0,
+                    },
+                };
+                return;
             }
         }
 
@@ -2713,22 +2733,20 @@ impl RaceSession {
             selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
         }
 
-        // 9. Delete Custom Track (Delete / Backspace / X key)
+        // 9. Delete Track (Delete / Backspace / X key)
         if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) || is_key_pressed(KeyCode::X) {
             if let Some(track_choice) = current_list.get(selected_idx) {
-                if track_choice.is_custom() {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.state = GameState::TrackManager {
-                        active_tab,
-                        module_filter,
-                        selected_idx,
-                        modal: TrackManagerModal::ConfirmDelete {
-                            track_id: track_choice.track_id().to_string(),
-                            track_title: track_choice.title().to_string(),
-                        },
-                    };
-                    return;
-                }
+                self.audio.play_sfx(SfxType::UiSelect);
+                self.state = GameState::TrackManager {
+                    active_tab,
+                    module_filter,
+                    selected_idx,
+                    modal: TrackManagerModal::ConfirmDelete {
+                        track_id: track_choice.track_id().to_string(),
+                        track_title: track_choice.title().to_string(),
+                    },
+                };
+                return;
             }
         }
 
@@ -3505,23 +3523,80 @@ impl RaceSession {
             }
         }
 
-        if is_key_pressed(KeyCode::Space) || is_key_pressed(KeyCode::P) {
+        if is_key_pressed(KeyCode::Escape) {
+            if !self.editor_tools.active_polygon_vertices.is_empty() {
+                self.editor_tools.active_polygon_vertices.clear();
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        }
+
+        // Surface Zone Layer & Shape Shortcuts (with Ctrl/Cmd modifier)
+        let ctrl_down = is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper);
+
+        if ctrl_down && is_key_pressed(KeyCode::F) {
+            if let Some(state) = &mut self.editor_state {
+                if self.editor_tools.bring_selected_surface_front(state) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+            }
+        }
+
+        if (ctrl_down || is_key_pressed(KeyCode::B)) && is_key_pressed(KeyCode::B) {
+            if let Some(state) = &mut self.editor_state {
+                if self.editor_tools.send_selected_surface_back(state) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+            }
+        }
+
+        if ctrl_down && is_key_pressed(KeyCode::C) {
+            if self.editor_tools.active_tool == EditorToolType::SurfaceZone {
+                self.editor_tools.active_surface_shape = SurfaceShapeType::Circle;
+                self.audio.play_sfx(SfxType::UiSelect);
+            }
+        }
+
+        if ctrl_down && is_key_pressed(KeyCode::T) {
+            if self.editor_tools.active_tool == EditorToolType::SurfaceZone {
+                self.editor_tools.active_surface_shape = SurfaceShapeType::Triangle;
+                self.editor_tools.active_polygon_vertices.clear();
+                self.audio.play_sfx(SfxType::UiSelect);
+            }
+        }
+
+        if ctrl_down && is_key_pressed(KeyCode::P) {
+            if self.editor_tools.active_tool == EditorToolType::SurfaceZone {
+                self.editor_tools.active_surface_shape = SurfaceShapeType::Polygon;
+                self.editor_tools.active_polygon_vertices.clear();
+                self.audio.play_sfx(SfxType::UiSelect);
+            }
+        }
+
+        if is_key_pressed(KeyCode::Space) || (!ctrl_down && is_key_pressed(KeyCode::P) && self.editor_tools.active_tool != EditorToolType::SurfaceZone) {
             if self.editor_modal == EditorModal::None {
                 self.start_editor_test_drive();
                 return;
             }
         }
 
-        if is_key_pressed(KeyCode::F) {
-            if let Some(state) = &self.editor_state {
-                let mut min = Vec2::splat(f32::MAX);
-                let mut max = Vec2::splat(f32::MIN);
-                for wp in &state.track.spline.waypoints {
-                    min = min.min(wp.point);
-                    max = max.max(wp.point);
-                }
-                if min.x <= max.x {
-                    self.editor_camera.focus_bounds(min, max, sw, sh);
+        if !ctrl_down && is_key_pressed(KeyCode::F) {
+            if let Some(state) = &mut self.editor_state {
+                // If a surface zone is selected, plain F toggles/brings it to front; otherwise focus camera
+                if !self.editor_tools.bring_selected_surface_front(state) {
+                    let mut min = Vec2::splat(f32::MAX);
+                    let mut max = Vec2::splat(f32::MIN);
+                    for wp in &state.track.spline.waypoints {
+                        min = min.min(wp.point);
+                        max = max.max(wp.point);
+                    }
+                    if min.x <= max.x {
+                        self.editor_camera.focus_bounds(min, max, sw, sh);
+                    }
+                } else {
+                    self.audio.play_sfx(SfxType::UiSelect);
                 }
             }
         }
@@ -3699,6 +3774,10 @@ impl RaceSession {
                         }
                     }
                 }
+            }
+            EditorAction::DeleteTrack(id) => {
+                let _ = self.track_manager.delete_custom_track(&id);
+                self.audio.play_sfx(SfxType::UiSelect);
             }
             _ => {}
         }

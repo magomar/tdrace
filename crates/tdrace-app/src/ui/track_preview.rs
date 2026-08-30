@@ -1,6 +1,8 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::{
+    draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines, draw_triangle,
+};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::SurfaceShape;
 use tdrace_core::track::Track;
@@ -197,34 +199,86 @@ pub fn render_track_detailed_preview(
         Palette::NEON_CYAN,
     );
 
-    // 1. Render Off-track Hazard / Surface Zones (e.g. sand traps, lakes)
-    for zone in &track.geometry.surface_zones {
-        let col = match zone.surface {
-            SurfaceType::Water => Color::new(0.18, 0.48, 0.85, 0.45),
-            SurfaceType::Sand => Color::new(0.85, 0.72, 0.32, 0.40),
-            SurfaceType::Dirt => Color::new(0.70, 0.45, 0.18, 0.40),
-            _ => Color::new(0.30, 0.35, 0.45, 0.35),
-        };
-        match &zone.shape {
-            SurfaceShape::Aabb { min: z_min, max: z_max } => {
-                let p0 = to_screen(Vec2::new(z_min.x, z_max.y));
-                let p1 = to_screen(Vec2::new(z_max.x, z_min.y));
-                let rect_x = p0.x.min(p1.x);
-                let rect_y = p0.y.min(p1.y);
-                let rect_w = (p0.x - p1.x).abs();
-                let rect_h = (p0.y - p1.y).abs();
-                draw_rectangle(rect_x, rect_y, rect_w, rect_h, col);
-                draw_rectangle_lines(rect_x, rect_y, rect_w, rect_h, 0.8, col);
+    let render_preview_zones = |layer: tdrace_core::track::geometry::SurfaceLayer| {
+        for zone in &track.geometry.surface_zones {
+            if zone.layer != layer {
+                continue;
             }
-            SurfaceShape::Circle { center, radius } => {
-                let center_s = to_screen(*center);
-                let rad_s = (radius * scale).max(scaler.s(2.0));
-                draw_circle(center_s.x, center_s.y, rad_s, col);
-                draw_circle_lines(center_s.x, center_s.y, rad_s, 0.8, col);
+            let col = match zone.surface {
+                SurfaceType::Water => Color::new(0.18, 0.48, 0.85, 0.55),
+                SurfaceType::Sand => Color::new(0.85, 0.72, 0.32, 0.50),
+                SurfaceType::Dirt => Color::new(0.70, 0.45, 0.18, 0.50),
+                SurfaceType::Ice => Color::new(0.85, 0.92, 0.98, 0.65),
+                SurfaceType::Oil => Color::new(0.12, 0.12, 0.15, 0.75),
+                _ => Color::new(0.30, 0.35, 0.45, 0.45),
+            };
+            match &zone.shape {
+                SurfaceShape::Aabb { min: z_min, max: z_max } => {
+                    let p0 = to_screen(Vec2::new(z_min.x, z_max.y));
+                    let p1 = to_screen(Vec2::new(z_max.x, z_min.y));
+                    let rect_x = p0.x.min(p1.x);
+                    let rect_y = p0.y.min(p1.y);
+                    let rect_w = (p0.x - p1.x).abs();
+                    let rect_h = (p0.y - p1.y).abs();
+                    draw_rectangle(rect_x, rect_y, rect_w, rect_h, col);
+                    draw_rectangle_lines(rect_x, rect_y, rect_w, rect_h, 0.8, col);
+                }
+                SurfaceShape::Circle { center, radius } => {
+                    let center_s = to_screen(*center);
+                    let rad_s = (radius * scale).max(scaler.s(2.0));
+                    draw_circle(center_s.x, center_s.y, rad_s, col);
+                    draw_circle_lines(center_s.x, center_s.y, rad_s, 0.8, col);
+                }
+                SurfaceShape::OrientedBox { center, half_extents, angle } => {
+                    let fwd = Vec2::new(angle.cos(), angle.sin()) * half_extents.x;
+                    let right = Vec2::new(-angle.sin(), angle.cos()) * half_extents.y;
+                    let p0 = to_screen(*center - fwd - right);
+                    let p1 = to_screen(*center + fwd - right);
+                    let p2 = to_screen(*center + fwd + right);
+                    let p3 = to_screen(*center - fwd + right);
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(p0.x, p0.y),
+                        macroquad::prelude::Vec2::new(p1.x, p1.y),
+                        macroquad::prelude::Vec2::new(p2.x, p2.y),
+                        col,
+                    );
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(p0.x, p0.y),
+                        macroquad::prelude::Vec2::new(p2.x, p2.y),
+                        macroquad::prelude::Vec2::new(p3.x, p3.y),
+                        col,
+                    );
+                    draw_line(p0.x, p0.y, p1.x, p1.y, 0.8, col);
+                    draw_line(p1.x, p1.y, p2.x, p2.y, 0.8, col);
+                    draw_line(p2.x, p2.y, p3.x, p3.y, 0.8, col);
+                    draw_line(p3.x, p3.y, p0.x, p0.y, 0.8, col);
+                }
+                SurfaceShape::Polygon { vertices } => {
+                    if vertices.len() >= 3 {
+                        let pts: Vec<Vec2> = vertices.iter().map(|v| to_screen(*v)).collect();
+                        let v0 = pts[0];
+                        for i in 1..pts.len() - 1 {
+                            let v1 = pts[i];
+                            let v2 = pts[i + 1];
+                            draw_triangle(
+                                macroquad::prelude::Vec2::new(v0.x, v0.y),
+                                macroquad::prelude::Vec2::new(v1.x, v1.y),
+                                macroquad::prelude::Vec2::new(v2.x, v2.y),
+                                col,
+                            );
+                        }
+                        for i in 0..pts.len() {
+                            let next = (i + 1) % pts.len();
+                            draw_line(pts[i].x, pts[i].y, pts[next].x, pts[next].y, 0.8, col);
+                        }
+                    }
+                }
             }
-            _ => {}
         }
-    }
+    };
+
+    // 1. Render BelowTrack Surface Zones (e.g. sand traps, lakes, off-track dirt)
+    render_preview_zones(tdrace_core::track::geometry::SurfaceLayer::BelowTrack);
 
     let samples = &track.spline.samples;
     if samples.len() >= 2 {
@@ -257,6 +311,9 @@ pub fn render_track_detailed_preview(
             // Core surface ribbon
             draw_line(p0.x, p0.y, p1.x, p1.y, road_thickness, col);
         }
+
+        // Pass 2b: Render AboveTrack Surface Zones (e.g. oil slicks, water puddles, on-top hazards)
+        render_preview_zones(tdrace_core::track::geometry::SurfaceLayer::AboveTrack);
 
         // Pass 3: Checkpoint timing gates (subtle translucent tick marks)
         for cp in &track.checkpoints {

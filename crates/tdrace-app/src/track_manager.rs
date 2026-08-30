@@ -112,7 +112,14 @@ impl CustomTrackInfo {
     }
 
     pub fn module_name(&self) -> &'static str {
-        if self.belongs_to_module("f1") {
+        if let Some(ref m) = self.module_id {
+            match m.to_lowercase().as_str() {
+                "f1" => "Formula 1",
+                "rally" => "Rally Cross",
+                "kart" => "Karting",
+                _ => "Classic",
+            }
+        } else if self.belongs_to_module("f1") {
             "Formula 1"
         } else if self.belongs_to_module("rally") {
             "Rally Cross"
@@ -129,6 +136,7 @@ impl CustomTrackInfo {
 pub struct TrackManager {
     pub tracks_dir: PathBuf,
     pub custom_tracks: Vec<CustomTrackInfo>,
+    pub deleted_presets: Vec<String>,
 }
 
 impl Default for TrackManager {
@@ -139,12 +147,34 @@ impl Default for TrackManager {
 
 impl TrackManager {
     pub fn new(tracks_dir: impl AsRef<Path>) -> Self {
+        let dir = tracks_dir.as_ref().to_path_buf();
+        let deleted_presets = Self::load_deleted_presets(&dir);
         let mut manager = Self {
-            tracks_dir: tracks_dir.as_ref().to_path_buf(),
+            tracks_dir: dir,
             custom_tracks: Vec::new(),
+            deleted_presets,
         };
         let _ = manager.scan_custom_tracks();
         manager
+    }
+
+    fn load_deleted_presets(tracks_dir: &Path) -> Vec<String> {
+        let path = tracks_dir.join(".deleted_tracks.json");
+        if path.exists() {
+            if let Ok(data) = fs::read_to_string(&path) {
+                if let Ok(list) = serde_json::from_str::<Vec<String>>(&data) {
+                    return list;
+                }
+            }
+        }
+        Vec::new()
+    }
+
+    pub fn save_deleted_presets(&self) {
+        let path = self.tracks_dir.join(".deleted_tracks.json");
+        if let Ok(data) = serde_json::to_string_pretty(&self.deleted_presets) {
+            let _ = fs::write(path, data);
+        }
     }
 
     /// Scans the tracks directory and its subdirectories (drafts, classic, f1, rally, kart, etc.) for `.json` and `.tdtrack` files.
@@ -283,7 +313,7 @@ impl TrackManager {
         let mut choices = Vec::new();
 
         for custom in &self.custom_tracks {
-            if custom.category == TrackCategory::Draft {
+            if custom.category == TrackCategory::Draft && !self.deleted_presets.iter().any(|d| d == &custom.id) {
                 choices.push(TrackChoice::Custom {
                     id: custom.id.clone(),
                     title: custom.title.clone(),
@@ -303,7 +333,18 @@ impl TrackManager {
 
     /// Returns all circuits for a specific registered game module or draft collection.
     pub fn module_catalog_tracks(&self, module_id: &str) -> Vec<TrackChoice> {
-        match module_id {
+        if module_id == "drafts" {
+            return self.draft_track_choices();
+        }
+
+        let draft_ids: std::collections::HashSet<&str> = self
+            .custom_tracks
+            .iter()
+            .filter(|t| t.category == TrackCategory::Draft)
+            .map(|t| t.id.as_str())
+            .collect();
+
+        let raw_list = match module_id {
             "f1" => {
                 let mut list = vec![
                     TrackChoice::Custom {
@@ -480,7 +521,6 @@ impl TrackManager {
                 }
                 list
             }
-            "drafts" => self.draft_track_choices(),
             _ => {
                 // "all"
                 let mut list = Vec::new();
@@ -629,7 +669,38 @@ impl TrackManager {
                 }
                 list
             }
-        }
+        };
+
+        raw_list
+            .into_iter()
+            .filter(|c| {
+                let tid = c.track_id();
+                !self.deleted_presets.iter().any(|d| d == tid) && !draft_ids.contains(tid)
+            })
+            .collect()
+    }
+
+    /// Resolves a track instance by slug ID from disk files or built-in presets.
+    pub fn load_track_by_slug(&self, slug: &str) -> Result<Track, String> {
+        let choice = match slug {
+            "classic_grand_prix" => TrackChoice::ClassicGrandPrix,
+            "oval_speedway" => TrackChoice::OvalSpeedway,
+            "drift_park" => TrackChoice::DriftPark,
+            "kart_arena" => TrackChoice::KartArena,
+            "ramp_raceway" => TrackChoice::RampRaceway,
+            "oasis_rally" => TrackChoice::OasisRally,
+            "outlaw_pass" => TrackChoice::OutlawPass,
+            custom_id => {
+                let path = self.track_path_for_slug(custom_id).to_string_lossy().to_string();
+                TrackChoice::Custom {
+                    id: custom_id.to_string(),
+                    title: custom_id.to_string(),
+                    description: String::new(),
+                    path,
+                }
+            }
+        };
+        self.load_track(&choice)
     }
 
     /// Loads a `Track` from a `TrackChoice`.
@@ -868,91 +939,144 @@ impl TrackManager {
         choices
     }
 
-    /// Promotes a track from Draft to Main category (Approved circuit) assigned to a specific module,
-    /// moving the file from `drafts/` to `<module_id>/`.
-    pub fn promote_track_to_module(&mut self, id: &str, module_id: &str) -> Result<(), String> {
-        if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
+    /// Promotes a track from Draft to Main category (Approved circuit) assigned to multiple modules,
+    /// copying the track file to each target `<module_id>/` folder and removing it from `drafts/`.
+    pub fn promote_track_to_modules(&mut self, id: &str, module_ids: &[&str]) -> Result<(), String> {
+        if module_ids.is_empty() {
+            return Err("No motorsport modules specified for track promotion.".to_string());
+        }
+
+        let (mut track, old_path) = if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let old_path_str = self.custom_tracks[pos].file_path.clone();
             let old_path = PathBuf::from(&old_path_str);
-            let mut track = Track::load_from_file(&old_path)
+            let t = Track::load_from_file(&old_path)
                 .map_err(|e| format!("Failed to load track to promote: {}", e))?;
-            track.category = TrackCategory::Main;
-            track.module_id = Some(module_id.to_string());
-            track.modules = vec![module_id.to_string()];
+            (t, Some(old_path))
+        } else {
+            let t = self.load_track_by_slug(id).map_err(|e| format!("Track '{}' not found: {}", id, e))?;
+            (t, None)
+        };
 
-            let target_dir = self.tracks_dir.join(module_id);
+        track.category = TrackCategory::Main;
+
+        for mod_id in module_ids {
+            let mut mod_track = track.clone();
+            mod_track.category = TrackCategory::Main;
+            mod_track.module_id = Some(mod_id.to_string());
+            mod_track.modules = vec![mod_id.to_string()];
+
+            let target_dir = self.tracks_dir.join(mod_id);
             let _ = fs::create_dir_all(&target_dir);
             let target_path = target_dir.join(format!("{}.json", id));
 
-            track
+            mod_track
                 .save_to_file(&target_path)
-                .map_err(|e| format!("Failed to save promoted track: {}", e))?;
-
-            if old_path != target_path && old_path.exists() {
-                let _ = fs::remove_file(&old_path);
-            }
-
-            let _ = self.scan_custom_tracks();
-            Ok(())
-        } else {
-            Err(format!("Custom track '{}' not found", id))
+                .map_err(|e| format!("Failed to save promoted track to {}: {}", mod_id, e))?;
         }
+
+        // Clean up original draft or root file if it is not one of the destination paths
+        if let Some(old) = old_path {
+            let is_one_of_targets = module_ids.iter().any(|m| self.tracks_dir.join(m).join(format!("{}.json", id)) == old);
+            if !is_one_of_targets && old.exists() {
+                let _ = fs::remove_file(&old);
+            }
+        }
+        let draft_path = self.tracks_dir.join("drafts").join(format!("{}.json", id));
+        if draft_path.exists() {
+            let _ = fs::remove_file(&draft_path);
+        }
+
+        self.deleted_presets.retain(|d| d != id);
+        self.save_deleted_presets();
+
+        let _ = self.scan_custom_tracks();
+        Ok(())
+    }
+
+    /// Promotes a track from Draft to Main category (Approved circuit) assigned to a specific module.
+    pub fn promote_track_to_module(&mut self, id: &str, module_id: &str) -> Result<(), String> {
+        self.promote_track_to_modules(id, &[module_id])
     }
 
     /// Promotes a track from Draft to Main category with default "classic" module.
     pub fn promote_track(&mut self, id: &str) -> Result<(), String> {
-        self.promote_track_to_module(id, "classic")
+        self.promote_track_to_modules(id, &["classic"])
     }
 
-    /// Demotes a track from Main category back to Draft / Testing, moving the file back to `drafts/`.
+    /// Demotes a track from Main category back to Draft / Testing, moving the file back to `drafts/`
+    /// and removing copies from all module folders.
     pub fn demote_track(&mut self, id: &str) -> Result<(), String> {
-        if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
+        let (mut track, old_path) = if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let old_path_str = self.custom_tracks[pos].file_path.clone();
             let old_path = PathBuf::from(&old_path_str);
-            let mut track = Track::load_from_file(&old_path)
+            let t = Track::load_from_file(&old_path)
                 .map_err(|e| format!("Failed to load track to demote: {}", e))?;
-            track.category = TrackCategory::Draft;
-            track.module_id = None;
-            track.modules.clear();
-
-            let target_dir = self.tracks_dir.join("drafts");
-            let _ = fs::create_dir_all(&target_dir);
-            let target_path = target_dir.join(format!("{}.json", id));
-
-            track
-                .save_to_file(&target_path)
-                .map_err(|e| format!("Failed to save demoted track: {}", e))?;
-
-            if old_path != target_path && old_path.exists() {
-                let _ = fs::remove_file(&old_path);
-            }
-
-            let _ = self.scan_custom_tracks();
-            Ok(())
+            (t, Some(old_path))
         } else {
-            Err(format!("Custom track '{}' not found", id))
+            let t = self.load_track_by_slug(id).map_err(|e| format!("Track '{}' not found: {}", id, e))?;
+            (t, None)
+        };
+
+        track.category = TrackCategory::Draft;
+        track.module_id = None;
+        track.modules.clear();
+
+        let target_dir = self.tracks_dir.join("drafts");
+        let _ = fs::create_dir_all(&target_dir);
+        let target_path = target_dir.join(format!("{}.json", id));
+
+        track
+            .save_to_file(&target_path)
+            .map_err(|e| format!("Failed to save demoted track: {}", e))?;
+
+        if let Some(old) = old_path {
+            if old != target_path && old.exists() {
+                let _ = fs::remove_file(&old);
+            }
         }
+
+        // Clean up from all module subdirectories
+        let file_name = format!("{}.json", id);
+        let module_subdirs = ["classic", "f1", "rally", "kart"];
+        for sub in &module_subdirs {
+            let p = self.tracks_dir.join(sub).join(&file_name);
+            if p.exists() && p != target_path {
+                let _ = fs::remove_file(p);
+            }
+        }
+
+        self.deleted_presets.retain(|d| d != id);
+        self.save_deleted_presets();
+
+        let _ = self.scan_custom_tracks();
+        Ok(())
     }
 
     /// Updates the display name and description of a custom track and writes changes to disk.
     pub fn update_track_metadata(&mut self, id: &str, new_title: String, new_description: String) -> Result<(), String> {
-        if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
+        let (mut track, target_path) = if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let path_str = self.custom_tracks[pos].file_path.clone();
             let path = PathBuf::from(&path_str);
-            let mut track = Track::load_from_file(&path)
+            let t = Track::load_from_file(&path)
                 .map_err(|e| format!("Failed to load track for metadata update: {}", e))?;
-            track.name = new_title;
-            track.description = new_description;
-
-            track
-                .save_to_file(&path)
-                .map_err(|e| format!("Failed to save updated track metadata: {}", e))?;
-
-            let _ = self.scan_custom_tracks();
-            Ok(())
+            (t, path)
         } else {
-            Err(format!("Custom track '{}' not found", id))
-        }
+            let t = self.load_track_by_slug(id).map_err(|e| format!("Track '{}' not found: {}", id, e))?;
+            let dir = self.tracks_dir.join("classic");
+            let _ = fs::create_dir_all(&dir);
+            let path = dir.join(format!("{}.json", id));
+            (t, path)
+        };
+
+        track.name = new_title;
+        track.description = new_description;
+
+        track
+            .save_to_file(&target_path)
+            .map_err(|e| format!("Failed to save updated track metadata: {}", e))?;
+
+        let _ = self.scan_custom_tracks();
+        Ok(())
     }
 
     /// Creates a new starter draft circuit in the tracks directory.
@@ -969,19 +1093,41 @@ impl TrackManager {
         self.save_custom_track(&track, None)
     }
 
-    /// Deletes a custom track file from disk.
+    /// Deletes a custom or preset track file from disk and records it in deleted presets list.
     pub fn delete_custom_track(&mut self, id: &str) -> Result<bool, String> {
+        let mut deleted_any = false;
         if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let path_str = self.custom_tracks[pos].file_path.clone();
             let path = PathBuf::from(&path_str);
             if path.exists() {
-                fs::remove_file(&path).map_err(|e| format!("Failed to delete track file: {}", e))?;
+                let _ = fs::remove_file(&path);
+                deleted_any = true;
             }
-            let _ = self.scan_custom_tracks();
-            Ok(true)
-        } else {
-            Ok(false)
         }
+
+        let file_name = format!("{}.json", id);
+        let candidates = [
+            self.tracks_dir.join("drafts").join(&file_name),
+            self.tracks_dir.join("classic").join(&file_name),
+            self.tracks_dir.join("f1").join(&file_name),
+            self.tracks_dir.join("rally").join(&file_name),
+            self.tracks_dir.join("kart").join(&file_name),
+            self.tracks_dir.join(&file_name),
+        ];
+        for cand in &candidates {
+            if cand.exists() {
+                let _ = fs::remove_file(cand);
+                deleted_any = true;
+            }
+        }
+
+        if !self.deleted_presets.iter().any(|d| d == id) {
+            self.deleted_presets.push(id.to_string());
+            self.save_deleted_presets();
+        }
+
+        let _ = self.scan_custom_tracks();
+        Ok(deleted_any || self.deleted_presets.iter().any(|d| d == id))
     }
 }
 

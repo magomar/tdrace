@@ -7,11 +7,12 @@ use macroquad::input::{
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
+use tdrace_core::track::geometry::{SurfaceLayer, SurfaceShape};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
 use crate::editor::camera::EditorCamera;
 use crate::editor::state::{EditorState, GridSnapSetting, Selection};
-use crate::editor::tools::{EditorToolType, ToolSettings};
+use crate::editor::tools::{EditorToolType, SurfaceShapeType, ToolSettings};
 use crate::render::color::Palette;
 use crate::track_manager::TrackManager;
 use crate::ui::font::Fonts;
@@ -56,6 +57,7 @@ pub enum EditorAction {
         exit_after: bool,
     },
     OpenTrack(crate::ui::menu::TrackChoice),
+    DeleteTrack(String),
     Validate,
     StartTestDrive,
     FocusCamera,
@@ -270,6 +272,41 @@ pub fn render_editor_ui(
             tools.active_tool = tool_type;
         }
         item_y += scaler.s(44.0);
+    }
+
+    // 2b. Surface Zone Active Sub-Palette (when Surface Zone tool is active)
+    if tools.active_tool == EditorToolType::SurfaceZone {
+        let sub_h = scaler.s(180.0);
+        let sub_y = tool_y + tool_h + scaler.s(8.0);
+        scaler.draw_glass_card(scaler.s(12.0), sub_y, tool_w, sub_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+        fonts.draw_ui_bold("SHAPES", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_CYAN);
+
+        let shape_buttons = [
+            (SurfaceShapeType::Square, "Square [Ctrl+S]"),
+            (SurfaceShapeType::Circle, "Circle [Ctrl+C]"),
+            (SurfaceShapeType::Triangle, "Triangle [Ctrl+T]"),
+            (SurfaceShapeType::Polygon, "Polygon [Ctrl+P]"),
+        ];
+
+        let mut btn_y = sub_y + scaler.s(22.0);
+        for (st, label) in shape_buttons {
+            let is_active = tools.active_surface_shape == st;
+            let bg_col = if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG };
+            let border_col = if is_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+            if draw_ui_btn(fonts, &scaler, scaler.s(20.0), btn_y, tool_w - scaler.s(16.0), scaler.s(24.0), label, bg_col, border_col, mouse_pos, bg_mouse_clicked) {
+                tools.active_surface_shape = st;
+                tools.active_polygon_vertices.clear();
+            }
+            btn_y += scaler.s(27.0);
+        }
+
+        let is_front = tools.active_surface_layer == SurfaceLayer::AboveTrack;
+        let layer_label = if is_front { "Layer: FRONT (Over)" } else { "Layer: BACK (Under)" };
+        let layer_border = if is_front { Palette::NEON_GREEN } else { Palette::NEON_CYAN };
+        if draw_ui_btn(fonts, &scaler, scaler.s(20.0), btn_y + scaler.s(4.0), tool_w - scaler.s(16.0), scaler.s(26.0), layer_label, Palette::UI_CARD_BG, layer_border, mouse_pos, bg_mouse_clicked) {
+            tools.active_surface_layer = if is_front { SurfaceLayer::BelowTrack } else { SurfaceLayer::AboveTrack };
+        }
     }
 
     // 3. RIGHT INSPECTOR PANEL (when entity or circuit is selected)
@@ -571,12 +608,48 @@ fn render_inspector(
         }
         Selection::SurfaceZone(idx) => {
             if idx < state.track.geometry.surface_zones.len() {
-                let zone = &state.track.geometry.surface_zones[idx];
-                fonts.draw_ui_bold(&format!("Surface Zone #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-                curr_y += scaler.s(24.0);
+                let (zone_surface, is_front, shape_name) = {
+                    let zone = &state.track.geometry.surface_zones[idx];
+                    let shape_name = match &zone.shape {
+                        SurfaceShape::Circle { .. } => "Circle",
+                        SurfaceShape::Aabb { .. } => "Square / Box",
+                        SurfaceShape::OrientedBox { .. } => "Oriented Box",
+                        SurfaceShape::Polygon { vertices } => {
+                            if vertices.len() == 3 {
+                                "Triangle"
+                            } else {
+                                "Polygon"
+                            }
+                        }
+                    };
+                    (zone.surface, zone.is_above_track(), shape_name)
+                };
 
-                fonts.draw_ui_regular(&format!("Type: {:?}", zone.surface), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(26.0);
+                fonts.draw_ui_bold(&format!("Surface Zone #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
+                curr_y += scaler.s(22.0);
+
+                fonts.draw_ui_regular(&format!("Shape: {}", shape_name), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
+                curr_y += scaler.s(18.0);
+
+                fonts.draw_ui_bold("LAYER / DEPTH:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(18.0);
+
+                let front_bg = if is_front { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+                let front_border = if is_front { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER };
+                let back_bg = if !is_front { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+                let back_border = if !is_front { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+
+                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "FRONT [Ctrl+F]", front_bg, front_border, mouse_pos, clicked) {
+                    tools.bring_selected_surface_front(state);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "BACK [Ctrl+B]", back_bg, back_border, mouse_pos, clicked) {
+                    tools.send_selected_surface_back(state);
+                }
+                curr_y += scaler.s(30.0);
+
+                fonts.draw_ui_bold("SURFACE TYPE:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(18.0);
 
                 let surfaces = [
                     (SurfaceType::Sand, "Sand"),
@@ -584,14 +657,19 @@ fn render_inspector(
                     (SurfaceType::Water, "Water"),
                     (SurfaceType::Asphalt, "Asphalt"),
                     (SurfaceType::Grass, "Grass"),
+                    (SurfaceType::Oil, "Oil Slick"),
+                    (SurfaceType::Ice, "Ice Patch"),
                 ];
 
                 for (st, label) in surfaces {
-                    if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(24.0), label, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    let is_active = zone_surface == st;
+                    let st_bg = if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+                    let st_border = if is_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+                    if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(22.0), label, st_bg, st_border, mouse_pos, clicked) {
                         state.record_undo();
                         state.track.geometry.surface_zones[idx].surface = st;
                     }
-                    curr_y += scaler.s(28.0);
+                    curr_y += scaler.s(25.0);
                 }
 
                 if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y + scaler.s(6.0), w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE ZONE [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
@@ -1463,16 +1541,34 @@ fn render_open_modal(
                 Palette::NEON_CYAN
             };
 
-            let badge_w = scaler.s(140.0);
+            let del_btn_w = scaler.s(45.0);
+            let del_btn_x = item_x + item_w - del_btn_w - scaler.s(8.0);
+            let badge_w = scaler.s(125.0);
             fonts.draw_ui_bold(
                 tag,
-                item_x + item_w - badge_w,
+                item_x + item_w - badge_w - del_btn_w - scaler.s(12.0),
                 ty + scaler.s(28.0),
                 scaler.font_s(11.0),
                 badge_col,
             );
 
-            if is_hover && clicked {
+            let del_clicked = draw_ui_btn(
+                fonts,
+                scaler,
+                del_btn_x,
+                ty + scaler.s(10.0),
+                del_btn_w,
+                scaler.s(30.0),
+                "DEL",
+                Palette::UI_CARD_BG,
+                Palette::RED,
+                mouse_pos,
+                clicked,
+            );
+
+            if del_clicked || (is_hover && (is_key_pressed(KeyCode::Backspace) || is_key_pressed(KeyCode::Delete))) {
+                chosen_action = Some(EditorAction::DeleteTrack(choice.track_id().to_string()));
+            } else if is_hover && clicked {
                 chosen_action = Some(EditorAction::OpenTrack(choice.clone()));
             }
 
@@ -1719,7 +1815,9 @@ fn render_help_modal(
 
     let shortcuts = [
         ("Tools 1-8", "Switch between Select, Spline, Surface, Ramp, Obstacle, Checkpoint, Grid, Pit"),
-        ("Left Click", "Place entity / Select / Drag handles / Draw surface boxes"),
+        ("Left Click", "Place entity / Select / Drag handles / Draw surface shapes"),
+        ("Ctrl + S / C / T / P", "Select surface shape (Square, Circle, Triangle, Polygon)"),
+        ("Ctrl + F / Ctrl + B", "Move surface zone to FRONT (Above Track) or BACK (Below Track)"),
         ("Arrow Keys / WASD", "Pan camera across circuit canvas (+Shift for fast pan)"),
         ("Middle / Right Drag", "Pan editor camera across the circuit canvas"),
         ("+ / - Keys", "Progressive zoom in / zoom out (+Shift for fast zoom)"),
@@ -1731,7 +1829,7 @@ fn render_help_modal(
         ("Delete / Backspace", "Delete selected waypoint, surface zone, ramp, or prop"),
         ("F Key", "Focus and frame the entire circuit bounds within viewport"),
         ("G Key", "Cycle CAD metric grid snap (Off, 1m, 2.5m, 5m, 10m)"),
-        ("Esc / E", "Exit track editor (prompts to save if unsaved changes)"),
+        ("Esc / E", "Exit track editor / Cancel vertex drawing (prompts to save if unsaved)"),
     ];
 
     let mut sy = my + scaler.s(64.0);

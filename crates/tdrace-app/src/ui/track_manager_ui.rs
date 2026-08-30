@@ -33,7 +33,8 @@ pub enum TrackManagerModal {
     SelectModulePromotion {
         track_id: String,
         track_title: String,
-        selected_module_idx: usize,
+        cursor_idx: usize,
+        selected_mask: [bool; 4],
     },
 }
 
@@ -306,28 +307,10 @@ pub fn render_track_manager_screen(
             }
 
             // Tag Pill
-            let (tag_text, tag_col) = match active_tab {
-                TrackManagerTab::Main => {
-                    if let Some(info) = track_manager.custom_tracks.iter().find(|t| t.id == track_choice.track_id()) {
-                        match info.module_id.as_deref() {
-                            Some("f1") => ("OFFICIAL PRESET • F1", Palette::RED),
-                            Some("rally") => ("OFFICIAL PRESET • RALLY", Palette::NEON_GOLD),
-                            Some("kart") => ("OFFICIAL PRESET • KART", Palette::NEON_MAGENTA),
-                            _ => ("OFFICIAL PRESET • CLASSIC", Palette::NEON_CYAN),
-                        }
-                    } else {
-                        match track_choice.track_id() {
-                            "monza" | "spa" | "silverstone" => ("OFFICIAL PRESET • F1", Palette::RED),
-                            "sahara" => ("OFFICIAL PRESET • RALLY", Palette::NEON_GOLD),
-                            _ => ("OFFICIAL PRESET • CLASSIC", Palette::NEON_CYAN),
-                        }
-                    }
-                }
-                TrackManagerTab::Drafts => ("TESTING DRAFT", Palette::NEON_GOLD),
-            };
+            let (tag_text, tag_col) = resolve_track_module_badge(track_choice, active_tab, module_filter, track_manager, false);
 
             fonts.draw_ui_bold(
-                tag_text,
+                &tag_text,
                 col1_x + scaler.s(14.0),
                 item_y + scaler.s(16.0),
                 scaler.font_s(10.0),
@@ -370,31 +353,7 @@ pub fn render_track_manager_screen(
         let mut d_y = content_y + scaler.s(18.0);
 
         // Header: Category Pill & Title
-        let custom_info = track_manager.custom_tracks.iter().find(|t| t.id == selected_track.track_id());
-        let (badge_str, badge_col) = match selected_track {
-            TrackChoice::Custom { .. } => {
-                if is_main_active {
-                    let mod_name = custom_info.map(|i| i.module_name()).unwrap_or("Classic");
-                    let col = match custom_info.and_then(|i| i.module_id.as_deref()) {
-                        Some("f1") => Palette::RED,
-                        Some("rally") => Palette::NEON_GOLD,
-                        Some("kart") => Palette::NEON_MAGENTA,
-                        _ => Palette::NEON_CYAN,
-                    };
-                    (format!("OFFICIAL PRESET • {}", mod_name.to_uppercase()), col)
-                } else {
-                    ("DRAFT / TESTING (Hidden from Menu)".to_string(), Palette::NEON_GOLD)
-                }
-            }
-            _ => {
-                let (mod_name, col) = match selected_track.track_id() {
-                    "monza" | "spa" | "silverstone" => ("OFFICIAL PRESET • FORMULA 1", Palette::RED),
-                    "sahara" => ("OFFICIAL PRESET • RALLY", Palette::NEON_GOLD),
-                    _ => ("OFFICIAL PRESET • CLASSIC", Palette::NEON_CYAN),
-                };
-                (mod_name.to_string(), col)
-            }
-        };
+        let (badge_str, badge_col) = resolve_track_module_badge(selected_track, active_tab, module_filter, track_manager, true);
 
         fonts.draw_ui_bold(&badge_str, pad_x, d_y, scaler.font_s(11.5), badge_col);
         d_y += scaler.s(20.0);
@@ -594,8 +553,8 @@ pub fn render_track_manager_screen(
         TrackManagerModal::ConfirmDelete { track_title, .. } => {
             render_delete_modal(fonts, &scaler, sw, sh, track_title);
         }
-        TrackManagerModal::SelectModulePromotion { track_title, selected_module_idx, .. } => {
-            render_promotion_modal(fonts, &scaler, sw, sh, track_title, *selected_module_idx);
+        TrackManagerModal::SelectModulePromotion { track_title, cursor_idx, selected_mask, .. } => {
+            render_promotion_modal(fonts, &scaler, sw, sh, track_title, *cursor_idx, *selected_mask);
         }
         TrackManagerModal::None => {}
     }
@@ -735,27 +694,28 @@ fn render_promotion_modal(
     sw: f32,
     sh: f32,
     track_title: &str,
-    selected_module_idx: usize,
+    cursor_idx: usize,
+    selected_mask: [bool; 4],
 ) {
     // Backdrop dimming
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
 
-    let mw = scaler.s(520.0);
-    let mh = scaler.s(310.0);
+    let mw = scaler.s(540.0);
+    let mh = scaler.s(320.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
     scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GREEN, 2.2);
 
     fonts.draw_ui_bold(
-        "PROMOTE TRACK TO MOTORSPORT MODULE",
+        "PROMOTE TRACK TO MOTORSPORT MODULES",
         mx + scaler.s(20.0),
         my + scaler.s(32.0),
         scaler.font_s(17.0),
         Palette::NEON_GREEN,
     );
 
-    let prompt_msg = format!("Select target category for \"{}\":", track_title);
+    let prompt_msg = format!("Select target modules for \"{}\" ([Space / 1-4] to toggle):", track_title);
     fonts.draw_ui_regular(
         &prompt_msg,
         mx + scaler.s(20.0),
@@ -769,62 +729,175 @@ fn render_promotion_modal(
     let item_w = mw - scaler.s(40.0);
 
     for (idx, (_mod_id, title, desc, accent)) in PROMOTION_MODULES.iter().enumerate() {
-        let is_sel = idx == selected_module_idx;
+        let is_hover = idx == cursor_idx;
+        let is_checked = selected_mask[idx];
         let iy = list_y + idx as f32 * (item_h + scaler.s(6.0));
 
-        let bg_col = if is_sel {
-            Color::new(accent.r * 0.25, accent.g * 0.25, accent.b * 0.25, 0.95)
+        let bg_col = if is_checked {
+            Color::new(accent.r * 0.28, accent.g * 0.28, accent.b * 0.28, 0.95)
+        } else if is_hover {
+            Color::new(0.12, 0.15, 0.22, 0.85)
         } else {
             Color::new(0.07, 0.09, 0.14, 0.70)
         };
-        let border_col = if is_sel {
+        let border_col = if is_hover {
             *accent
+        } else if is_checked {
+            Color::new(accent.r, accent.g, accent.b, 0.7)
         } else {
             Palette::UI_CARD_BORDER
         };
 
-        scaler.draw_glass_card(mx + scaler.s(20.0), iy, item_w, item_h, bg_col, border_col, if is_sel { 2.0 } else { 1.0 });
+        scaler.draw_glass_card(mx + scaler.s(20.0), iy, item_w, item_h, bg_col, border_col, if is_hover { 2.0 } else { 1.0 });
 
-        // Key shortcut pill [1] .. [4]
+        // Checkbox & Key shortcut pill: [✓] [1] or [ ] [1]
+        let check_str = if is_checked { "[X]" } else { "[ ]" };
+        fonts.draw_ui_bold(
+            check_str,
+            mx + scaler.s(30.0),
+            iy + scaler.s(27.0),
+            scaler.font_s(14.0),
+            if is_checked { Palette::NEON_GREEN } else { Palette::UI_TEXT_MUTED },
+        );
+
         let num_str = format!("[{}]", idx + 1);
         fonts.draw_ui_bold(
             &num_str,
-            mx + scaler.s(32.0),
+            mx + scaler.s(60.0),
             iy + scaler.s(27.0),
-            scaler.font_s(14.0),
-            if is_sel { *accent } else { Palette::UI_TEXT_MUTED },
+            scaler.font_s(13.0),
+            if is_hover || is_checked { *accent } else { Palette::UI_TEXT_MUTED },
         );
 
         // Title
         fonts.draw_ui_bold(
             title,
-            mx + scaler.s(65.0),
+            mx + scaler.s(92.0),
             iy + scaler.s(20.0),
             scaler.font_s(14.0),
-            if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+            if is_checked || is_hover { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
         );
 
         // Subtitle
         fonts.draw_ui_regular(
             desc,
-            mx + scaler.s(65.0),
+            mx + scaler.s(92.0),
             iy + scaler.s(36.0),
             scaler.font_s(10.5),
             Palette::UI_TEXT_MUTED,
         );
 
-        if is_sel {
+        if is_checked {
             fonts.draw_ui_bold(
-                "SELECT",
-                mx + item_w - scaler.s(35.0),
+                "SELECTED",
+                mx + item_w - scaler.s(45.0),
                 iy + scaler.s(27.0),
-                scaler.font_s(12.0),
-                *accent,
+                scaler.font_s(11.5),
+                Palette::NEON_GREEN,
+            );
+        } else if is_hover {
+            fonts.draw_ui_bold(
+                "+ TOGGLE",
+                mx + item_w - scaler.s(45.0),
+                iy + scaler.s(27.0),
+                scaler.font_s(11.5),
+                Palette::UI_TEXT_MUTED,
             );
         }
     }
 
     let btn_y = my + mh - scaler.s(20.0);
-    fonts.draw_ui_bold("[Enter / A] CONFIRM PROMOTION", mx + scaler.s(20.0), btn_y, scaler.font_s(13.0), Palette::NEON_GREEN);
-    fonts.draw_ui_bold("[Esc / B] CANCEL", mx + mw - scaler.s(120.0), btn_y, scaler.font_s(13.0), Palette::NEON_CYAN);
+    fonts.draw_ui_bold("[Space / 1-4] TOGGLE", mx + scaler.s(20.0), btn_y, scaler.font_s(13.0), Palette::NEON_GOLD);
+    fonts.draw_ui_bold("[Enter / A] CONFIRM PROMOTION", mx + scaler.s(160.0), btn_y, scaler.font_s(13.0), Palette::NEON_GREEN);
+    fonts.draw_ui_bold("[Esc / B] CANCEL", mx + mw - scaler.s(110.0), btn_y, scaler.font_s(13.0), Palette::NEON_CYAN);
+}
+
+/// Resolves the unified module badge string and accent color for a track choice.
+/// When viewing a specific module, all promoted tracks in that module are categorized as belonging to that module.
+fn resolve_track_module_badge(
+    track_choice: &TrackChoice,
+    active_tab: TrackManagerTab,
+    module_filter: ModuleFilter,
+    track_manager: &TrackManager,
+    is_dossier: bool,
+) -> (String, Color) {
+    if active_tab == TrackManagerTab::Drafts {
+        return if is_dossier {
+            ("DRAFT / TESTING (Hidden from Menu)".to_string(), Palette::NEON_GOLD)
+        } else {
+            ("TESTING DRAFT".to_string(), Palette::NEON_GOLD)
+        };
+    }
+
+    // 1. If currently viewing a specific module (e.g. Classic, Rally, Kart, F1),
+    // ALL promoted tracks in that module are categorized as belonging to that module.
+    let mod_id = if let Some(filtered_mod) = module_filter.id() {
+        filtered_mod
+    } else {
+        // 2. In "ALL MODULES" view, resolve specific module from custom track info or track path/id
+        let custom_info = match track_choice {
+            TrackChoice::Custom { path, id, .. } => {
+                track_manager.custom_tracks.iter().find(|t| &t.file_path == path || &t.id == id)
+            }
+            preset => track_manager.custom_tracks.iter().find(|t| t.id == preset.track_id()),
+        };
+
+        if let Some(info) = custom_info {
+            if let Some(ref m) = info.module_id {
+                match m.as_str() {
+                    "f1" => "f1",
+                    "rally" => "rally",
+                    "kart" => "kart",
+                    _ => "classic",
+                }
+            } else if info.belongs_to_module("f1") {
+                "f1"
+            } else if info.belongs_to_module("rally") {
+                "rally"
+            } else if info.belongs_to_module("kart") {
+                "kart"
+            } else {
+                "classic"
+            }
+        } else {
+            match track_choice.track_id() {
+                "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" => "f1",
+                "sahara" => "rally",
+                "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" => "kart",
+                _ => match track_choice {
+                    TrackChoice::Custom { path, .. } => {
+                        if path.contains("/rally/") || path.starts_with("rally/") {
+                            "rally"
+                        } else if path.contains("/f1/") || path.starts_with("f1/") {
+                            "f1"
+                        } else if path.contains("/kart/") || path.starts_with("kart/") {
+                            "kart"
+                        } else {
+                            "classic"
+                        }
+                    }
+                    _ => "classic",
+                },
+            }
+        }
+    };
+
+    match mod_id {
+        "f1" => (
+            if is_dossier { "OFFICIAL PRESET • FORMULA 1".to_string() } else { "OFFICIAL PRESET • F1".to_string() },
+            Palette::RED,
+        ),
+        "rally" => (
+            if is_dossier { "OFFICIAL PRESET • RALLY CROSS".to_string() } else { "OFFICIAL PRESET • RALLY".to_string() },
+            Palette::NEON_GOLD,
+        ),
+        "kart" => (
+            if is_dossier { "OFFICIAL PRESET • KARTING".to_string() } else { "OFFICIAL PRESET • KART".to_string() },
+            Palette::NEON_MAGENTA,
+        ),
+        _ => (
+            "OFFICIAL PRESET • CLASSIC".to_string(),
+            Palette::NEON_CYAN,
+        ),
+    }
 }

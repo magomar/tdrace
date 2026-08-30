@@ -138,7 +138,7 @@ pub fn render_starting_grid_screen(
     scaler.draw_glass_card(col1_x, curr_y, col_w, mode_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.4);
 
     fonts.draw_ui_bold(
-        "GAME MODE: [M / Tab to cycle] or Gamepad [X]",
+        "GAME MODE: [Tab to cycle] or Gamepad [X]",
         col1_x + scaler.s(12.0),
         curr_y + scaler.s(16.0),
         scaler.font_s(11.0),
@@ -247,7 +247,7 @@ pub fn render_starting_grid_screen(
 
     if game_mode.has_bots() {
         fonts.draw_ui_bold(
-            "GRID CONFIG: [B / N to cycle bots] [Up/Down]",
+            "GRID CONFIG: [Up/Down to adjust bots]",
             col1_x + scaler.s(12.0),
             curr_y + scaler.s(16.0),
             scaler.font_s(10.5),
@@ -449,9 +449,9 @@ pub fn render_starting_grid_screen(
     // FOOTER PROMPTS
     // =========================================================================
     let prompt = if gamepad_connected {
-        "[A/START] Launch Race  |  [X] Game Mode  |  [D-Pad L/R] Select Car  |  [RB/Up/Down] Bots  |  [Y] Dossier  |  [B] Menu"
+        "[A/START] Launch Race  |  [X] Game Mode  |  [D-Pad L/R] Select Car  |  [Up/Down] Bots  |  [Y] Dossier  |  [B] Menu"
     } else {
-        "[SPACE/ENTER] Launch Race  |  [M/TAB] Game Mode  |  [ < / > ] Select Car  |  [B/N/Up/Down] Bots  |  [D] Dossiers  |  [ESC] Menu"
+        "[SPACE/ENTER] Launch Race  |  [TAB] Game Mode  |  [ < / > ] Select Car  |  [Up/Down] Bots  |  [D] Dossiers  |  [ESC] Menu"
     };
 
     fonts.draw_ui_bold_centered(

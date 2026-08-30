@@ -504,11 +504,11 @@ fn test_all_entity_duplications_and_undo() {
     let mut tools = ToolSettings::default();
 
     // 1. Surface Zone Duplication
-    state.track.geometry.surface_zones.push(SurfaceZone {
-        name: "Gravel Trap".to_string(),
-        surface: SurfaceType::Dirt,
-        shape: SurfaceShape::Circle { center: Vec2::new(100.0, 100.0), radius: 15.0 },
-    });
+    state.track.geometry.surface_zones.push(SurfaceZone::new(
+        SurfaceShape::Circle { center: Vec2::new(100.0, 100.0), radius: 15.0 },
+        SurfaceType::Dirt,
+        "Gravel Trap",
+    ));
     let zone_idx = state.track.geometry.surface_zones.len() - 1;
     state.selection = Selection::SurfaceZone(zone_idx);
     assert!(tools.duplicate_selected(&mut state));

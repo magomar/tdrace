@@ -24,9 +24,9 @@ stateDiagram-v2
 
     state "Starting Grid & Roster Setup (StartingGrid)" as StartingGrid {
         [*] --> TwoPanelSetup
-        TwoPanelSetup --> CycleGameMode: [M / TAB / X]
+        TwoPanelSetup --> CycleGameMode: [TAB / X]
         TwoPanelSetup --> SelectCarModel: [LEFT / RIGHT / A / D]
-        TwoPanelSetup --> AdjustBotCount: [B / N / UP / DOWN]
+        TwoPanelSetup --> AdjustBotCount: [UP / DOWN]
     }
 
     state "Driver Dossier (DriverCards)" as DriverCards
@@ -204,7 +204,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
        - 4 Performance stat bars (`SPEED`, `ACCEL`, `GRIP`, `DRIFT` with exact percentages).
        - 4 Mechanical specs chips (Drivetrain, Mass, Top Speed, Downforce).
     4. *Grid Configuration / Session Status Card*:
-       - Bot count modifier `[B / N / Up / Down]` for grid races.
+       - Bot count modifier `[Up / Down]` for grid races.
        - Solo telemetry & personal best benchmark record for Time Trial / Free Ride.
   - **Right Panel (Starting Grid & Roster)**:
     - *In Standard & Experimental Race*: Full starting grid lineup (P1 through P8) with position badges, driver names, aliases, liveries, car models, and qualifying times.
@@ -215,9 +215,9 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Space` / `Enter` / Gamepad `A` / `Start` | Launch Race | Starts 3-2-1 countdown -> `GameState::Countdown(3.5)` |
-| `M` / `Tab` / `G` / Gamepad `X` | Cycle Game Mode | Cycles `Standard Race` -> `Experimental Race` -> `Time Trial` -> `Free Ride` |
+| `Tab` / Gamepad `X` | Cycle Game Mode | Cycles `Standard Race` -> `Experimental Race` -> `Time Trial` -> `Free Ride` |
 | `Left` / `Right` / `A` / `D` | Select Vehicle Model | Changes player/grid vehicle (when mode allows car change) |
-| `B` / `N` / `Up` / `Down` | Modify Bot Count | Adjusts opponent driver count (1 to 7 bots in race modes) |
+| `Up` / `Down` / Gamepad `D-Pad` | Modify Bot Count | Adjusts opponent driver count (1 to 7 bots in race modes) |
 | `D` / Gamepad `Y` | Driver Dossiers | Opens `GameState::DriverCards(DriverCardsOrigin::StartingGrid)` |
 | `Escape` / Gamepad `B` | Return to Menu | Transitions back to `GameState::Menu` |
 

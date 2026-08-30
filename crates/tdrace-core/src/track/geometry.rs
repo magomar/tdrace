@@ -280,6 +280,39 @@ impl SurfaceShape {
             }
         }
     }
+
+    pub fn center(&self) -> Vec2 {
+        match self {
+            Self::Circle { center, .. } => *center,
+            Self::Aabb { min, max } => (*min + *max) * 0.5,
+            Self::OrientedBox { center, .. } => *center,
+            Self::Polygon { vertices } => {
+                if vertices.is_empty() {
+                    Vec2::ZERO
+                } else {
+                    let sum: Vec2 = vertices.iter().copied().sum();
+                    sum / vertices.len() as f32
+                }
+            }
+        }
+    }
+
+    pub fn triangle(v0: Vec2, v1: Vec2, v2: Vec2) -> Self {
+        Self::Polygon {
+            vertices: vec![v0, v1, v2],
+        }
+    }
+}
+
+/// Layering depth of a surface zone relative to the drivable track ribbon.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum SurfaceLayer {
+    /// Rendered below the track ribbon and only affects car physics when off-track.
+    #[default]
+    BelowTrack,
+    /// Rendered on top of the track ribbon and affects car physics both on and off track.
+    AboveTrack,
 }
 
 /// A specific spatial surface zone (e.g. sand trap, oil slick, ice patch, runoff).
@@ -288,15 +321,32 @@ pub struct SurfaceZone {
     pub shape: SurfaceShape,
     pub surface: SurfaceType,
     pub name: String,
+    #[serde(default)]
+    pub layer: SurfaceLayer,
 }
 
 impl SurfaceZone {
     pub fn new(shape: SurfaceShape, surface: SurfaceType, name: impl Into<String>) -> Self {
+        let layer = if surface.is_on_track_hazard() {
+            SurfaceLayer::AboveTrack
+        } else {
+            SurfaceLayer::BelowTrack
+        };
         Self {
             shape,
             surface,
             name: name.into(),
+            layer,
         }
+    }
+
+    pub fn with_layer(mut self, layer: SurfaceLayer) -> Self {
+        self.layer = layer;
+        self
+    }
+
+    pub fn is_above_track(&self) -> bool {
+        self.layer == SurfaceLayer::AboveTrack
     }
 
     pub fn contains(&self, p: Vec2) -> bool {

@@ -79,3 +79,42 @@ fn test_pause_state_audio_toggle_preserves_paused_state() {
     session.update();
     assert_eq!(session.state, GameState::Paused);
 }
+
+#[test]
+fn test_starting_grid_audio_toggle_preserves_starting_grid_state() {
+    let mut session = RaceSession::new();
+    session.state = GameState::StartingGrid;
+
+    // Toggling audio/music mute in StartingGrid preserves StartingGrid state and game mode
+    let initial_mute = session.audio.settings.is_muted;
+    let initial_mode = session.game_mode;
+    session.audio.toggle_mute();
+    assert_eq!(session.audio.settings.is_muted, !initial_mute);
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.game_mode, initial_mode);
+
+    // Update keeps StartingGrid state
+    session.update();
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.game_mode, initial_mode);
+}
+
+#[test]
+fn test_starting_grid_driver_count_bounds() {
+    let mut session = RaceSession::new();
+    session.state = GameState::StartingGrid;
+    let max_bots = (session.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+
+    // Increase driver count up to max
+    session.num_bots = max_bots;
+    session.rebuild_roster_participants();
+    assert_eq!(session.num_bots, max_bots);
+
+    // Decrease driver count down to 1
+    session.num_bots = 1;
+    session.rebuild_roster_participants();
+    assert_eq!(session.num_bots, 1);
+    assert_eq!(session.opponent_drivers.len(), 1);
+}
+
+
