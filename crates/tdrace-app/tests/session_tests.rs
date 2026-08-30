@@ -343,31 +343,29 @@ fn test_race_session_camera_zoom_in_and_out() {
     assert_eq!(session.camera.current_level_idx, 0);
     assert_eq!(session.camera.current_zoom_level().name, "Close");
 
-    // Zoom out to index 1 (Medium)
-    let lvl1 = session.camera.zoom_out().unwrap();
+    // Continuous progressive zoom in/out
+    let init_max = session.camera.max_zoom_scale;
+    session.camera.zoom_progressive(1.0, 1.0, 0.2);
+    assert!(session.camera.max_zoom_scale > init_max);
+    session.camera.zoom_progressive(-1.0, 1.0, 0.2);
+    assert!((session.camera.max_zoom_scale - init_max).abs() < 0.1);
+
+    // Zoom level cycling with Tab
+    let lvl1 = session.camera.cycle_zoom_level();
     assert_eq!(lvl1.name, "Medium");
     assert_eq!(session.camera.current_level_idx, 1);
 
-    // Zoom out to index 2 (Far)
-    let lvl2 = session.camera.zoom_out().unwrap();
+    let lvl2 = session.camera.cycle_zoom_level();
     assert_eq!(lvl2.name, "Far");
     assert_eq!(session.camera.current_level_idx, 2);
 
-    // Zoom out to index 3 (Overview)
-    let lvl3 = session.camera.zoom_out().unwrap();
+    let lvl3 = session.camera.cycle_zoom_level();
     assert_eq!(lvl3.name, "Overview");
     assert_eq!(session.camera.current_level_idx, 3);
 
-    // Cannot zoom out beyond Overview
-    assert!(session.camera.zoom_out().is_none());
-    assert_eq!(session.camera.current_level_idx, 3);
-
-    // Zoom back in to Close (0)
-    assert_eq!(session.camera.zoom_in().unwrap().name, "Far");
-    assert_eq!(session.camera.zoom_in().unwrap().name, "Medium");
-    assert_eq!(session.camera.zoom_in().unwrap().name, "Close");
+    let lvl0 = session.camera.cycle_zoom_level();
+    assert_eq!(lvl0.name, "Close");
     assert_eq!(session.camera.current_level_idx, 0);
-    assert!(session.camera.zoom_in().is_none());
 }
 
 

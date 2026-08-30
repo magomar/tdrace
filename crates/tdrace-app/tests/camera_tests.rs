@@ -177,3 +177,43 @@ fn test_camera_zoom_in_and_zoom_out() {
     assert!(camera.zoom_in().is_none());
     assert_eq!(camera.current_level_idx, 0);
 }
+
+#[test]
+fn test_camera_progressive_zoom_in_and_out() {
+    let mut camera = RaceCamera::new();
+    let initial_min = camera.min_zoom_scale;
+    let initial_max = camera.max_zoom_scale;
+
+    // Continuous Zoom In (+1.0 dir) for 0.5s at 1.0x speed multiplier
+    camera.zoom_progressive(1.0, 1.0, 0.5);
+    assert!(camera.min_zoom_scale > initial_min);
+    assert!(camera.max_zoom_scale > initial_max);
+    let zoomed_in_max = camera.max_zoom_scale;
+
+    // Continuous Zoom Out (-1.0 dir) for 0.5s at 1.0x speed multiplier
+    camera.zoom_progressive(-1.0, 1.0, 0.5);
+    assert!(camera.max_zoom_scale < zoomed_in_max);
+    assert!((camera.max_zoom_scale - initial_max).abs() < 0.1);
+
+    // Fast zoom with 2.0x Shift speed multiplier
+    camera.zoom_progressive(1.0, 2.0, 0.5);
+    assert!(camera.max_zoom_scale > zoomed_in_max);
+
+    // Progressive zoom clamping bounds
+    camera.zoom_progressive(-1.0, 10.0, 10.0);
+    assert_eq!(camera.min_zoom_scale, 1.0);
+    assert_eq!(camera.max_zoom_scale, 1.0);
+
+    camera.zoom_progressive(1.0, 10.0, 10.0);
+    assert_eq!(camera.min_zoom_scale, 40.0);
+    assert_eq!(camera.max_zoom_scale, 50.0);
+
+    // Overview mode continuous progressive zoom
+    camera.toggle_mode();
+    assert_eq!(camera.mode, CameraMode::StaticOverview);
+    let initial_overview = camera.overview_zoom;
+    camera.zoom_progressive(1.0, 1.0, 0.5);
+    assert!(camera.overview_zoom > initial_overview);
+    camera.zoom_progressive(-1.0, 1.0, 0.5);
+    assert!((camera.overview_zoom - initial_overview).abs() < 0.1);
+}

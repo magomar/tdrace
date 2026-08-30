@@ -1196,7 +1196,7 @@ impl RaceSession {
             }
         }
 
-        // Camera Zoom In (+ / Equal / Numpad +) & Zoom Out (- / Minus / Numpad -)
+        // Camera Progressive Zoom (+ / - keys) during gameplay
         let is_gameplay_state = matches!(
             self.state,
             GameState::Racing
@@ -1207,45 +1207,21 @@ impl RaceSession {
                 | GameState::EditorTestDrive
         );
         if is_gameplay_state {
-            let zoom_in_pressed = is_key_pressed(KeyCode::Equal) || is_key_pressed(KeyCode::KpAdd);
-            let zoom_out_pressed = is_key_pressed(KeyCode::Minus) || is_key_pressed(KeyCode::KpSubtract);
+            let mut zoom_dir = 0.0f32;
+            if is_key_down(KeyCode::Equal) || is_key_down(KeyCode::KpAdd) {
+                zoom_dir += 1.0;
+            }
+            if is_key_down(KeyCode::Minus) || is_key_down(KeyCode::KpSubtract) {
+                zoom_dir -= 1.0;
+            }
 
-            if zoom_in_pressed {
-                if let Some(lvl) = self.camera.zoom_in() {
-                    self.audio.play_sfx(SfxType::UiMove);
-                    let car_pos = self
-                        .cars
-                        .first()
-                        .map(|c| c.state.position)
-                        .or_else(|| self.test_drive_car.as_ref().map(|c| c.state.position));
-                    if let Some(pos) = car_pos {
-                        let lvl_idx = self.camera.current_level_idx + 1;
-                        let total_lvls = self.camera.levels.len();
-                        self.fx.drift_popups.spawn_text(
-                            pos,
-                            &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
-                            Color::new(0.3, 0.9, 1.0, 1.0),
-                        );
-                    }
-                }
-            } else if zoom_out_pressed {
-                if let Some(lvl) = self.camera.zoom_out() {
-                    self.audio.play_sfx(SfxType::UiMove);
-                    let car_pos = self
-                        .cars
-                        .first()
-                        .map(|c| c.state.position)
-                        .or_else(|| self.test_drive_car.as_ref().map(|c| c.state.position));
-                    if let Some(pos) = car_pos {
-                        let lvl_idx = self.camera.current_level_idx + 1;
-                        let total_lvls = self.camera.levels.len();
-                        self.fx.drift_popups.spawn_text(
-                            pos,
-                            &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
-                            Color::new(0.3, 0.9, 1.0, 1.0),
-                        );
-                    }
-                }
+            if zoom_dir != 0.0 {
+                let zoom_speed_mult = if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
+                    2.0
+                } else {
+                    1.0
+                };
+                self.camera.zoom_progressive(zoom_dir, zoom_speed_mult, frame_dt);
             }
         }
 

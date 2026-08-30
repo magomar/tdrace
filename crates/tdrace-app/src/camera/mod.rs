@@ -157,6 +157,33 @@ impl RaceCamera {
         }
     }
 
+    /// Smoothly zooms in or out progressively at a continuous rate.
+    /// A positive `zoom_dir` zooms in (+), while a negative `zoom_dir` zooms out (-).
+    pub fn zoom_progressive(&mut self, zoom_dir: f32, speed_multiplier: f32, dt: f32) {
+        if zoom_dir.abs() < 1e-4 {
+            return;
+        }
+        let base_rate = 2.5f32;
+        let exponent = zoom_dir * speed_multiplier * dt;
+        let factor = base_rate.powf(exponent);
+
+        match self.mode {
+            CameraMode::SmoothFollow => {
+                let new_min = (self.min_zoom_scale * factor).clamp(1.0, 40.0);
+                let new_max = (self.max_zoom_scale * factor).clamp(1.0, 50.0);
+                self.min_zoom_scale = new_min;
+                self.max_zoom_scale = new_max;
+                self.target_zoom = (self.target_zoom * factor).clamp(1.0, 50.0);
+                self.current_zoom = (self.current_zoom * factor).clamp(1.0, 50.0);
+            }
+            CameraMode::StaticOverview => {
+                self.overview_zoom = (self.overview_zoom * factor).clamp(0.5, 30.0);
+                self.target_zoom = (self.target_zoom * factor).clamp(0.5, 30.0);
+                self.current_zoom = (self.current_zoom * factor).clamp(0.5, 30.0);
+            }
+        }
+    }
+
     /// Safely gets screen dimensions without panicking if running outside macroquad loop.
     pub fn get_screen_dimensions_safe() -> (f32, f32) {
         let sw = std::panic::catch_unwind(screen_width).unwrap_or(1280.0);
