@@ -351,8 +351,10 @@ fn test_editor_camera_overview_with_bounds_framing() {
 #[test]
 fn test_obstacle_duplication_and_undo() {
     use tdrace_app::editor::{Selection, ToolSettings};
+    use tdrace_core::track::geometry::Obstacle;
 
     let mut state = EditorState::new(classic_grand_prix());
+    state.track.geometry.obstacles.push(Obstacle::circle(1, Vec2::new(100.0, 50.0), 1.5, "Editor Test Obstacle"));
     let initial_obs_count = state.track.geometry.obstacles.len();
     assert!(initial_obs_count > 0);
 

@@ -2,7 +2,7 @@ use glam::Vec2;
 
 use super::checkpoint::Checkpoint;
 use super::geometry::{
-    BarrierType, JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceShape, SurfaceZone,
+    BarrierType, JumpRamp, LineSegment, SpawnPose, SurfaceShape, SurfaceZone,
     TrackGeometry, WallBarrier,
 };
 use super::spline::{TrackSpline, TrackWaypoint};
@@ -252,11 +252,6 @@ pub fn classic_grand_prix() -> Track {
         "Turn 1 Runoff",
     ));
 
-    let obstacles = vec![
-        Obstacle::circle(1, Vec2::new(185.0, 22.0), 1.2, "Apex Tire Stack T1"),
-        Obstacle::circle(2, Vec2::new(225.0, -2.0), 1.2, "Apex Tire Stack T2"),
-    ];
-
     let mut checkpoints = generate_checkpoints(&spline, 12, 3);
     // Add Pit Entry / Exit checkpoints
     let pit_entry_proj = spline.project_point(Vec2::new(-25.0, 0.0));
@@ -294,7 +289,7 @@ pub fn classic_grand_prix() -> Track {
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
-            obstacles,
+            obstacles: Vec::new(),
             surface_zones,
             jump_ramps: Vec::new(),
             left_boundary_polyline: left_poly,
@@ -413,12 +408,6 @@ pub fn drift_park() -> Track {
         ),
     ];
 
-    let obstacles = vec![
-        Obstacle::circle(1, Vec2::new(125.0, 45.0), 1.5, "Drift Clipping Zone 1"),
-        Obstacle::circle(2, Vec2::new(80.0, 95.0), 1.5, "Drift Clipping Zone 2"),
-        Obstacle::circle(3, Vec2::new(-28.0, 35.0), 1.5, "Drift Clipping Zone 3"),
-    ];
-
     let checkpoints = generate_checkpoints(&spline, 10, 3);
     let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
 
@@ -430,7 +419,7 @@ pub fn drift_park() -> Track {
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
-            obstacles,
+            obstacles: Vec::new(),
             surface_zones,
             jump_ramps: Vec::new(),
             left_boundary_polyline: left_poly,
@@ -561,14 +550,6 @@ pub fn ramp_raceway() -> Track {
         ),
     ];
 
-    let obstacles = vec![
-        Obstacle::circle(1, Vec2::new(100.0, 210.0), 1.5, "Stadium Apex Pylon"),
-        Obstacle::circle(2, Vec2::new(-45.0, 20.0), 1.5, "Carousel Apex Pylon"),
-        Obstacle::circle(3, Vec2::new(-50.0, -30.0), 1.2, "Tire Stack 3"),
-        Obstacle::circle(4, Vec2::new(-50.0, -30.0), 1.2, "Tire Stack 4"),
-        Obstacle::circle(5, Vec2::new(-50.0, -30.0), 1.2, "Tire Stack 5"),
-    ];
-
     let checkpoints = generate_checkpoints(&spline, 8, 3);
     let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
 
@@ -580,7 +561,7 @@ pub fn ramp_raceway() -> Track {
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
-            obstacles,
+            obstacles: Vec::new(),
             surface_zones,
             jump_ramps,
             left_boundary_polyline: left_poly,
@@ -732,14 +713,6 @@ pub fn outlaw_pass() -> Track {
     let (left_walls, right_walls, left_poly, right_poly) =
         generate_walls_from_spline(&spline, 2.8, BarrierType::Armco);
 
-    // Obstacles: Towering natural mountain cliff monoliths and rock formations framing the pass
-    let obstacles = vec![
-        Obstacle::circle(1, Vec2::new(30.0, 170.0), 2.5, "Canyon Rock Wall East"),
-        Obstacle::circle(2, Vec2::new(-25.0, 185.0), 3.0, "North Pass Monolith"),
-        Obstacle::circle(3, Vec2::new(-75.0, 145.0), 2.5, "Gorge Cliff Face"),
-        Obstacle::circle(4, Vec2::new(85.0, 45.0), 3.5, "Central Peak Rock Formation"),
-    ];
-
     let checkpoints = generate_checkpoints(&spline, 12, 3);
     let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
 
@@ -751,7 +724,7 @@ pub fn outlaw_pass() -> Track {
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
-            obstacles,
+            obstacles: Vec::new(),
             surface_zones: Vec::new(),
             jump_ramps: Vec::new(),
             left_boundary_polyline: left_poly,

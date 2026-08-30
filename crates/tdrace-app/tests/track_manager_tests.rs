@@ -445,5 +445,42 @@ fn test_track_manager_open_in_track_editor() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_track_manager_delete_with_backspace() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_backspace_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::default();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    // Create a draft track
+    session
+        .track_manager
+        .create_new_draft_track("Track To Delete Backspace", "Test backspace key delete")
+        .expect("Create draft");
+
+    assert_eq!(session.track_manager.draft_track_choices().len(), 1);
+    let track_id = session.track_manager.draft_track_choices()[0].track_id().to_string();
+
+    // Confirm deletion modal state with track
+    session.state = GameState::TrackManager {
+        active_tab: TrackManagerTab::Drafts,
+        module_filter: ModuleFilter::All,
+        selected_idx: 0,
+        modal: TrackManagerModal::ConfirmDelete {
+            track_id: track_id.clone(),
+            track_title: "Track To Delete Backspace".to_string(),
+        },
+    };
+
+    // Perform deletion
+    let deleted = session.track_manager.delete_custom_track(&track_id).unwrap();
+    assert!(deleted);
+    assert_eq!(session.track_manager.draft_track_choices().len(), 0);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+
 
 

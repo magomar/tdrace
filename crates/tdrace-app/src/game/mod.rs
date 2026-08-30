@@ -2387,6 +2387,8 @@ impl RaceSession {
                 if is_key_pressed(KeyCode::Enter)
                     || is_key_pressed(KeyCode::KpEnter)
                     || is_key_pressed(KeyCode::Y)
+                    || is_key_pressed(KeyCode::Backspace)
+                    || is_key_pressed(KeyCode::Delete)
                 {
                     let tid = track_id.clone();
                     let _ = self.track_manager.delete_custom_track(&tid);

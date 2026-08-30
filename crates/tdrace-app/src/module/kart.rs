@@ -2,7 +2,7 @@ use glam::Vec2;
 use macroquad::color::Color;
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{BarrierType, Obstacle, TrackGeometry};
+use tdrace_core::track::geometry::{BarrierType, TrackGeometry};
 use tdrace_core::track::presets::{
     drift_park, generate_checkpoints, generate_grid_positions, generate_walls_from_spline, kart_arena,
 };
@@ -64,11 +64,6 @@ impl KartGameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(92.0, 12.0), 1.0, "Paddock Apex Curb"),
-            Obstacle::circle(2, Vec2::new(-76.0, 86.0), 1.0, "Meccanici Hairpin Apex"),
-        ];
-
         Track {
             name: "South Garda Karting (Lonato)".to_string(),
             description: "The global Mecca of Karting featuring Curva del Paddock, Pettine hairpin, and Variante Nuova.".to_string(),
@@ -77,7 +72,7 @@ impl KartGameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -131,11 +126,6 @@ impl KartGameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(0.0, 138.0), 1.0, "Vesuvio Hairpin Apex"),
-            Obstacle::circle(2, Vec2::new(-35.0, 82.0), 1.0, "Sarno Esses Bollard"),
-        ];
-
         Track {
             name: "Circuito Internazionale Napoli (Sarno)".to_string(),
             description: "The Temple of Speed under Mount Vesuvius with massive full-throttle straights and technical Esses.".to_string(),
@@ -144,7 +134,7 @@ impl KartGameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -198,11 +188,6 @@ impl KartGameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(157.0, 85.0), 1.0, "G-Curve Apex Pylon"),
-            Obstacle::circle(2, Vec2::new(21.0, 153.0), 1.0, "Europabocht Hairpin Curb"),
-        ];
-
         Track {
             name: "Karting Genk (Home of Champions)".to_string(),
             description: "Legendary Belgian proving grounds featuring the high-G G-Curve carousel, Europabocht, and Champions Chicane.".to_string(),
@@ -211,7 +196,7 @@ impl KartGameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -267,11 +252,6 @@ impl KartGameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(112.0, 52.0), 1.0, "Bruno's Hairpin Apex"),
-            Obstacle::circle(2, Vec2::new(-87.0, 142.0), 1.0, "North Loop Hairpin Apex"),
-        ];
-
         Track {
             name: "PF International Kart Circuit (PFI)".to_string(),
             description: "Britain's premier FIA kart venue featuring the world-famous elevated flyover crossover bridge and underpass.".to_string(),
@@ -280,7 +260,7 @@ impl KartGameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -332,11 +312,6 @@ impl KartGameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(242.0, 75.0), 1.0, "Cierzo Sweeper Pylon"),
-            Obstacle::circle(2, Vec2::new(-52.0, 142.0), 1.0, "West Hairpin Apex"),
-        ];
-
         Track {
             name: "Circuito Internacional de Zuera".to_string(),
             description: "Ultra-fast Spanish supertrack with enormous drafting straights, Curva del Cierzo, and wide passing sweepers.".to_string(),
@@ -345,7 +320,7 @@ impl KartGameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -397,11 +372,6 @@ impl KartGameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(107.0, 13.0), 1.0, "Dunlop Chicane Kerb"),
-            Obstacle::circle(2, Vec2::new(-17.0, 152.0), 1.0, "Raccordement Hairpin Apex"),
-        ];
-
         Track {
             name: "Le Mans Karting International".to_string(),
             description: "Alain Prost circuit at the Le Mans 24 Hours complex with Dunlop chicane, Bugatti Esses, and Courbe des 24H.".to_string(),
@@ -410,7 +380,7 @@ impl KartGameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -461,11 +431,6 @@ impl KartGameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(60.0, 163.0), 1.0, "Algarve Hairpin Apex"),
-            Obstacle::circle(2, Vec2::new(-85.0, 78.0), 1.0, "Portimao Chicane Kerb"),
-        ];
-
         Track {
             name: "Kartodromo Internacional do Algarve".to_string(),
             description: "Undulating Portuguese rollercoaster circuit with dramatic elevation drops, sweeping downhill turns, and Curva do Sol.".to_string(),
@@ -474,7 +439,7 @@ impl KartGameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -526,11 +491,6 @@ impl KartGameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(52.0, 148.0), 1.0, "Franciacorta Hairpin Apex"),
-            Obstacle::circle(2, Vec2::new(10.0, 82.0), 1.0, "Infield Chicane Kerb"),
-        ];
-
         Track {
             name: "Franciacorta Karting Track".to_string(),
             description: "Modern premier Italian world championship venue with technical switchback chicanes and trail-braking hairpins.".to_string(),
@@ -539,7 +499,7 @@ impl KartGameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,

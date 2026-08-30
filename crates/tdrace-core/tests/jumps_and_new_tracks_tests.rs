@@ -216,7 +216,7 @@ fn test_outlaw_pass_narrow_mountain_pass_preset() {
         !track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Water),
         "Outlaw Pass has no water hazards"
     );
-    assert_eq!(track.geometry.obstacles.len(), 4, "Must have 4 mountain cliff obstacles");
+    assert_eq!(track.geometry.obstacles.len(), 0, "Outlaw Pass has no obstacles");
 
     // 1. Verify narrow mountain pass section (width <= 7.5m)
     let min_width = track

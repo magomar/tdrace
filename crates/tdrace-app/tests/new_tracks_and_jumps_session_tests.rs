@@ -70,7 +70,7 @@ fn test_outlaw_pass_session_features() {
 
     assert_eq!(session.track.name, "Outlaw Pass");
     assert!(session.track.geometry.jump_ramps.is_empty(), "No jump ramps in Outlaw Pass");
-    assert_eq!(session.track.geometry.obstacles.len(), 4, "Must have 4 mountain cliff obstacles");
+    assert!(session.track.geometry.obstacles.is_empty(), "No obstacles in Outlaw Pass");
     assert!(
         !session.track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Water),
         "Outlaw Pass must have no water hazards"

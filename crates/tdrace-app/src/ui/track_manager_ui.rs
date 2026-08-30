@@ -568,9 +568,9 @@ pub fn render_track_manager_screen(
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
     let action_str = if is_main_active {
-        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [P] DEMOTE | [N] EDIT INFO | [C] NEW DRAFT | [Del] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [P] DEMOTE | [N] EDIT INFO | [C] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     } else {
-        "[Enter] RACE | [Tab] PROMOTED | [E] TRACK EDITOR | [P] PROMOTE TO MODULE | [N] EDIT INFO | [C] NEW DRAFT | [Del] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] PROMOTED | [E] TRACK EDITOR | [P] PROMOTE TO MODULE | [N] EDIT INFO | [C] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     };
     fonts.draw_ui_bold_centered(
         action_str,
@@ -725,7 +725,7 @@ fn render_delete_modal(
     );
 
     let btn_y = my + mh - scaler.s(28.0);
-    fonts.draw_ui_bold("[Enter / Y] YES, DELETE", mx + scaler.s(20.0), btn_y, scaler.font_s(14.0), Palette::RED);
+    fonts.draw_ui_bold("[Enter / Y / Backspace] YES, DELETE", mx + scaler.s(20.0), btn_y, scaler.font_s(14.0), Palette::RED);
     fonts.draw_ui_bold("[Esc / N] CANCEL", mx + mw - scaler.s(130.0), btn_y, scaler.font_s(14.0), Palette::NEON_CYAN);
 }
 

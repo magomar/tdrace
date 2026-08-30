@@ -2,7 +2,7 @@ use glam::Vec2;
 use macroquad::color::Color;
 use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{BarrierType, Obstacle, TrackGeometry};
+use tdrace_core::track::geometry::{BarrierType, TrackGeometry};
 use tdrace_core::track::presets::{classic_grand_prix, generate_checkpoints, generate_grid_positions, generate_walls_from_spline};
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{Track, TrackCategory};
@@ -59,11 +59,6 @@ impl F1GameModule {
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(345.0, 10.0), 1.2, "Rettifilo Foam Barrier"),
-            Obstacle::circle(2, Vec2::new(515.0, 255.0), 1.2, "Roggia Chicane Bollard"),
-        ];
-
         Track {
             name: "Monza Autodromo Nazionale".to_string(),
             description: "High-speed Italian Grand Prix temple of speed.".to_string(),
@@ -72,7 +67,7 @@ impl F1GameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -276,11 +271,6 @@ impl F1GameModule {
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(122.0, -8.0), 1.0, "Nouvelle Chicane Apex Curb"),
-            Obstacle::circle(2, Vec2::new(-80.0, -58.0), 1.0, "Piscine Chicane Kerb"),
-        ];
-
         Track {
             name: "Circuit de Monaco".to_string(),
             description: "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.".to_string(),
@@ -289,7 +279,7 @@ impl F1GameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -371,10 +361,6 @@ impl F1GameModule {
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(-30.0, 9.0), 1.2, "Casio Triangle Foam Bollard"),
-        ];
-
         Track {
             name: "Suzuka International Racing Course".to_string(),
             description: "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.".to_string(),
@@ -383,7 +369,7 @@ impl F1GameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -507,10 +493,6 @@ impl F1GameModule {
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(-10.0, -16.0), 1.2, "Wall of Champions Barrier"),
-        ];
-
         Track {
             name: "Circuit Gilles Villeneuve (Montreal)".to_string(),
             description: "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.".to_string(),
@@ -519,7 +501,7 @@ impl F1GameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
@@ -845,11 +827,6 @@ impl F1GameModule {
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
-        let obstacles = vec![
-            Obstacle::circle(1, Vec2::new(162.0, 18.0), 1.0, "Sheares Apex Curb"),
-            Obstacle::circle(2, Vec2::new(-18.0, -68.0), 1.0, "Bayfront Chicane Curb"),
-        ];
-
         Track {
             name: "Marina Bay Street Circuit (Singapore)".to_string(),
             description: "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.".to_string(),
@@ -858,7 +835,7 @@ impl F1GameModule {
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
-                obstacles,
+                obstacles: Vec::new(),
                 surface_zones: Vec::new(),
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
