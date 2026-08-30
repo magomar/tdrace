@@ -874,3 +874,124 @@ fn test_save_modal_track_name_integrity_and_initialization() {
         panic!("Expected editor state");
     }
 }
+
+#[test]
+fn test_track_editor_surface_shapes_and_layering_e2e() {
+    use tdrace_core::track::geometry::{SurfaceLayer, SurfaceShape, SurfaceZone};
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let mut track = classic_grand_prix();
+    let sample_road_pt = track.spline.waypoints[0].point;
+
+    // 1. BelowTrack zone under the road should be overridden by road surface
+    track.geometry.surface_zones.push(
+        SurfaceZone::new(
+            SurfaceShape::Circle { center: sample_road_pt, radius: 25.0 },
+            SurfaceType::Sand,
+            "Under-Road Sand",
+        )
+        .with_layer(SurfaceLayer::BelowTrack),
+    );
+
+    let sampled_surf = track.sample_surface(sample_road_pt);
+    assert_eq!(sampled_surf, SurfaceType::Asphalt, "Road asphalt must take precedence over BelowTrack sand");
+
+    // 2. AboveTrack zone over the road should override road asphalt (e.g. oil slick or water puddle on track)
+    track.geometry.surface_zones.push(
+        SurfaceZone::new(
+            SurfaceShape::Circle { center: sample_road_pt, radius: 10.0 },
+            SurfaceType::Water,
+            "On-Track Water Hazard",
+        )
+        .with_layer(SurfaceLayer::AboveTrack),
+    );
+
+    let sampled_surf_over = track.sample_surface(sample_road_pt);
+    assert_eq!(sampled_surf_over, SurfaceType::Water, "AboveTrack water hazard must take precedence over road ribbon");
+
+    // 3. Add Triangle and Polygon shapes
+    track.geometry.surface_zones.push(
+        SurfaceZone::new(
+            SurfaceShape::triangle(
+                Vec2::new(300.0, 300.0),
+                Vec2::new(340.0, 300.0),
+                Vec2::new(320.0, 340.0),
+            ),
+            SurfaceType::Dirt,
+            "Triangle Dirt",
+        )
+        .with_layer(SurfaceLayer::BelowTrack),
+    );
+
+    track.geometry.surface_zones.push(
+        SurfaceZone::new(
+            SurfaceShape::Polygon {
+                vertices: vec![
+                    Vec2::new(400.0, 400.0),
+                    Vec2::new(450.0, 400.0),
+                    Vec2::new(460.0, 440.0),
+                    Vec2::new(410.0, 450.0),
+                ],
+            },
+            SurfaceType::Grass,
+            "Custom Polygon Runoff",
+        )
+        .with_layer(SurfaceLayer::AboveTrack),
+    );
+
+    // 4. JSON Serialization & Deserialization Roundtrip
+    let json = serde_json::to_string_pretty(&track).expect("Failed to serialize track with multi-shapes & layers");
+    let restored: Track = serde_json::from_str(&json).expect("Failed to deserialize track");
+
+    assert_eq!(restored.geometry.surface_zones.len(), track.geometry.surface_zones.len());
+    assert_eq!(restored.geometry.surface_zones.last().unwrap().layer, SurfaceLayer::AboveTrack);
+    assert!(matches!(restored.geometry.surface_zones.last().unwrap().shape, SurfaceShape::Polygon { .. }));
+}
+
+#[test]
+fn test_track_editor_multi_segment_batch_operations_e2e() {
+    use tdrace_app::editor::{EditorState, Selection, ToolSettings};
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    // 1. Multi-select waypoints 0, 1, 2
+    state.selection = Selection::MultipleWaypoints(vec![0, 1, 2]);
+
+    let w0 = state.track.spline.waypoints[0].width;
+    let w1 = state.track.spline.waypoints[1].width;
+    let w2 = state.track.spline.waypoints[2].width;
+
+    // 2. Batch adjust width +2m
+    assert!(tools.batch_adjust_width(&mut state, 2.0));
+    assert_eq!(state.track.spline.waypoints[0].width, w0 + 2.0);
+    assert_eq!(state.track.spline.waypoints[1].width, w1 + 2.0);
+    assert_eq!(state.track.spline.waypoints[2].width, w2 + 2.0);
+
+    // Batch set fixed width
+    assert!(tools.batch_set_width(&mut state, 18.0));
+    assert_eq!(state.track.spline.waypoints[0].width, 18.0);
+    assert_eq!(state.track.spline.waypoints[1].width, 18.0);
+    assert_eq!(state.track.spline.waypoints[2].width, 18.0);
+
+    // 3. Batch set curbs to both sides
+    assert!(tools.batch_set_curbs(&mut state, true, true));
+    assert!(state.track.spline.waypoints[0].left_curb && state.track.spline.waypoints[0].right_curb);
+    assert!(state.track.spline.waypoints[1].left_curb && state.track.spline.waypoints[1].right_curb);
+
+    // 4. Batch set surface to Ice
+    assert!(tools.batch_set_surface(&mut state, Some(SurfaceType::Ice)));
+    assert_eq!(state.track.spline.waypoints[0].surface, Some(SurfaceType::Ice));
+    assert_eq!(state.track.spline.waypoints[1].surface, Some(SurfaceType::Ice));
+
+    // 5. Batch duplicate and undo
+    let initial_count = state.track.spline.waypoints.len();
+    assert!(tools.duplicate_selected(&mut state));
+    assert_eq!(state.track.spline.waypoints.len(), initial_count + 3);
+
+    assert!(state.undo());
+    assert_eq!(state.track.spline.waypoints.len(), initial_count);
+}
+

@@ -80,6 +80,7 @@ pub struct ToolSettings {
     pub drag_start_world: Vec2,
     pub drag_current_world: Vec2,
     pub drag_initial_entity_pos: Vec2,
+    pub drag_initial_waypoints: Vec<(usize, Vec2)>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -113,6 +114,7 @@ impl Default for ToolSettings {
             drag_start_world: Vec2::ZERO,
             drag_current_world: Vec2::ZERO,
             drag_initial_entity_pos: Vec2::ZERO,
+            drag_initial_waypoints: Vec::new(),
         }
     }
 }
@@ -120,7 +122,7 @@ impl Default for ToolSettings {
 impl ToolSettings {
     /// Duplicates currently selected obstacle, surface zone, jump ramp, waypoint, checkpoint, or grid slot.
     pub fn duplicate_selected(&mut self, state: &mut EditorState) -> bool {
-        match state.selection {
+        match state.selection.clone() {
             Selection::Obstacle(idx) => {
                 if let Some(obs) = state.track.geometry.obstacles.get(idx).cloned() {
                     state.record_undo();
@@ -219,6 +221,26 @@ impl ToolSettings {
                     return true;
                 }
             }
+            Selection::MultipleWaypoints(indices) => {
+                if !indices.is_empty() {
+                    state.record_undo();
+                    let mut sorted = indices.clone();
+                    sorted.sort_unstable();
+                    sorted.dedup();
+                    let mut new_indices = Vec::new();
+                    for &idx in &sorted {
+                        if idx < state.track.spline.waypoints.len() {
+                            let mut copy = state.track.spline.waypoints[idx].clone();
+                            copy.point += Vec2::new(4.0, 4.0);
+                            state.track.spline.waypoints.push(copy);
+                            new_indices.push(state.track.spline.waypoints.len() - 1);
+                        }
+                    }
+                    state.rebuild_geometry();
+                    state.select(Selection::MultipleWaypoints(new_indices));
+                    return true;
+                }
+            }
             _ => {}
         }
         false
@@ -269,30 +291,142 @@ impl ToolSettings {
         };
         false
     }
+
+    /// Batch modifies track width for all selected waypoints.
+    pub fn batch_set_width(&mut self, state: &mut EditorState, width: f32) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints[idx].width = width.clamp(6.0, 40.0);
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Batch adjusts track width by delta (+/-) for all selected waypoints.
+    pub fn batch_adjust_width(&mut self, state: &mut EditorState, delta: f32) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    let w = state.track.spline.waypoints[idx].width;
+                    state.track.spline.waypoints[idx].width = (w + delta).clamp(6.0, 40.0);
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Batch applies surface material for all selected waypoints.
+    pub fn batch_set_surface(&mut self, state: &mut EditorState, surface: Option<SurfaceType>) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints[idx].surface = surface;
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Batch applies left/right curbs for all selected waypoints.
+    pub fn batch_set_curbs(&mut self, state: &mut EditorState, left: bool, right: bool) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints[idx].left_curb = left;
+                    state.track.spline.waypoints[idx].right_curb = right;
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Batch adjusts elevation for all selected waypoints.
+    pub fn batch_adjust_elevation(&mut self, state: &mut EditorState, delta: f32) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    let elev = state.track.spline.waypoints[idx].elevation;
+                    state.track.spline.waypoints[idx].elevation = (elev + delta).max(0.0);
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
 }
 
 impl ToolSettings {
     /// Handles mouse down event in world space.
     pub fn handle_mouse_down(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        self.handle_mouse_down_with_mods(state, mouse_world, false);
+    }
+
+    /// Handles mouse down event with explicit modifier key flag (e.g. Shift / Ctrl for multi-select).
+    pub fn handle_mouse_down_with_mods(&mut self, state: &mut EditorState, mouse_world: Vec2, is_multi_key: bool) {
         let snapped_mouse = state.grid_snap.snap_point(mouse_world);
 
         match self.active_tool {
             EditorToolType::Select => {
-                // Find closest selectable entity
                 if let Some(sel) = find_closest_entity(state, mouse_world) {
-                    state.select(sel);
+                    if is_multi_key {
+                        if let Selection::Waypoint(idx) = sel {
+                            state.selection.toggle_waypoint(idx);
+                            state.last_selected_waypoint = Some(idx);
+                            self.is_dragging = false;
+                            return;
+                        }
+                    }
+
                     if let Selection::Waypoint(idx) = sel {
+                        if state.selection.is_waypoint_selected(idx) && matches!(state.selection, Selection::MultipleWaypoints(_)) {
+                            // keep multi-selection active for group drag
+                        } else {
+                            state.select(Selection::Waypoint(idx));
+                        }
                         if let Some(wp) = state.track.spline.waypoints.get(idx) {
                             self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
                             self.new_waypoint_width = wp.width;
                             self.new_waypoint_left_curb = wp.left_curb;
                             self.new_waypoint_right_curb = wp.right_curb;
                         }
+                    } else {
+                        state.select(sel);
                     }
+
                     self.is_dragging = true;
                     self.drag_start_world = snapped_mouse;
                     self.drag_current_world = snapped_mouse;
-                    self.drag_initial_entity_pos = get_selection_position(state, sel).unwrap_or(mouse_world);
+                    self.drag_initial_entity_pos = get_selection_position(state, &state.selection).unwrap_or(mouse_world);
+
+                    if let Selection::MultipleWaypoints(ref indices) = state.selection {
+                        self.drag_initial_waypoints = indices
+                            .iter()
+                            .filter_map(|&i| state.track.spline.waypoints.get(i).map(|wp| (i, wp.point)))
+                            .collect();
+                    } else {
+                        self.drag_initial_waypoints.clear();
+                    }
                 } else {
                     state.selection = Selection::None;
                 }
@@ -459,6 +593,15 @@ impl ToolSettings {
                             state.rebuild_geometry();
                         }
                     }
+                    Selection::MultipleWaypoints(_) => {
+                        let delta = snapped_mouse - self.drag_start_world;
+                        for (idx, initial_pt) in &self.drag_initial_waypoints {
+                            if *idx < state.track.spline.waypoints.len() {
+                                state.track.spline.waypoints[*idx].point = *initial_pt + delta;
+                            }
+                        }
+                        state.rebuild_geometry();
+                    }
                     Selection::SurfaceZone(idx) => {
                         if idx < state.track.geometry.surface_zones.len() {
                             set_surface_zone_position(&mut state.track.geometry.surface_zones[idx], new_pos);
@@ -623,7 +766,7 @@ impl ToolSettings {
 
     /// Deletes currently selected entity.
     pub fn delete_selected(&mut self, state: &mut EditorState) -> bool {
-        match state.selection {
+        match state.selection.clone() {
             Selection::Waypoint(idx) => {
                 if state.track.spline.waypoints.len() > 3 && idx < state.track.spline.waypoints.len() {
                     state.record_undo();
@@ -643,6 +786,23 @@ impl ToolSettings {
                             state.last_selected_waypoint = Some(last - 1);
                         }
                     }
+                    return true;
+                }
+            }
+            Selection::MultipleWaypoints(indices) => {
+                if !indices.is_empty() && state.track.spline.waypoints.len() > indices.len() {
+                    state.record_undo();
+                    let mut sorted = indices.clone();
+                    sorted.sort_unstable();
+                    sorted.dedup();
+                    for &idx in sorted.iter().rev() {
+                        if idx < state.track.spline.waypoints.len() {
+                            state.track.spline.waypoints.remove(idx);
+                        }
+                    }
+                    state.rebuild_geometry();
+                    state.selection = Selection::None;
+                    state.last_selected_waypoint = None;
                     return true;
                 }
             }
@@ -794,14 +954,26 @@ fn find_closest_waypoint(state: &EditorState, point: Vec2, max_dist: f32) -> Opt
     closest
 }
 
-fn get_selection_position(state: &EditorState, sel: Selection) -> Option<Vec2> {
+fn get_selection_position(state: &EditorState, sel: &Selection) -> Option<Vec2> {
     match sel {
-        Selection::Waypoint(idx) => state.track.spline.waypoints.get(idx).map(|w| w.point),
-        Selection::SurfaceZone(idx) => state.track.geometry.surface_zones.get(idx).map(|z| get_surface_shape_center(&z.shape)),
-        Selection::Obstacle(idx) => state.track.geometry.obstacles.get(idx).map(|o| o.center()),
-        Selection::JumpRamp(idx) => state.track.geometry.jump_ramps.get(idx).map(|r| get_surface_shape_center(&r.shape)),
-        Selection::Checkpoint(idx) => state.track.checkpoints.get(idx).map(|c| (c.gate.start + c.gate.end) * 0.5),
-        Selection::GridSlot(idx) => state.track.grid_positions.get(idx).map(|g| g.position),
+        Selection::Waypoint(idx) => state.track.spline.waypoints.get(*idx).map(|w| w.point),
+        Selection::MultipleWaypoints(indices) => {
+            let pts: Vec<Vec2> = indices
+                .iter()
+                .filter_map(|&i| state.track.spline.waypoints.get(i).map(|w| w.point))
+                .collect();
+            if pts.is_empty() {
+                None
+            } else {
+                let sum: Vec2 = pts.iter().copied().sum();
+                Some(sum / pts.len() as f32)
+            }
+        }
+        Selection::SurfaceZone(idx) => state.track.geometry.surface_zones.get(*idx).map(|z| get_surface_shape_center(&z.shape)),
+        Selection::Obstacle(idx) => state.track.geometry.obstacles.get(*idx).map(|o| o.center()),
+        Selection::JumpRamp(idx) => state.track.geometry.jump_ramps.get(*idx).map(|r| get_surface_shape_center(&r.shape)),
+        Selection::Checkpoint(idx) => state.track.checkpoints.get(*idx).map(|c| (c.gate.start + c.gate.end) * 0.5),
+        Selection::GridSlot(idx) => state.track.grid_positions.get(*idx).map(|g| g.position),
         Selection::PitBox => state.track.pit_box_area.as_ref().map(get_surface_shape_center),
         Selection::None => None,
     }
@@ -874,7 +1046,7 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
     // 1. Render Waypoint nodes & handles
     let n_wp = state.track.spline.waypoints.len();
     for (i, wp) in state.track.spline.waypoints.iter().enumerate() {
-        let is_selected = state.selection == Selection::Waypoint(i);
+        let is_selected = state.selection.is_waypoint_selected(i);
 
         let node_col = if is_selected {
             Palette::NEON_GOLD // Bright gold when selected
@@ -1302,5 +1474,65 @@ mod tests {
         } else {
             panic!("Expected Polygon shape with 4 vertices");
         }
+    }
+
+    #[test]
+    fn test_multi_segment_selection_and_batch_editing() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+
+        // 1. Multi-selection via toggle
+        state.selection = Selection::Waypoint(1);
+        state.selection.toggle_waypoint(2);
+        state.selection.toggle_waypoint(3);
+        assert_eq!(state.selection, Selection::MultipleWaypoints(vec![1, 2, 3]));
+        assert!(state.selection.is_waypoint_selected(1));
+        assert!(state.selection.is_waypoint_selected(2));
+        assert!(state.selection.is_waypoint_selected(3));
+        assert!(!state.selection.is_waypoint_selected(4));
+
+        // 2. Batch Width Modification
+        assert!(tools.batch_set_width(&mut state, 18.5));
+        assert_eq!(state.track.spline.waypoints[1].width, 18.5);
+        assert_eq!(state.track.spline.waypoints[2].width, 18.5);
+        assert_eq!(state.track.spline.waypoints[3].width, 18.5);
+
+        // 3. Batch Curb Application
+        assert!(tools.batch_set_curbs(&mut state, true, false));
+        assert!(state.track.spline.waypoints[1].left_curb);
+        assert!(!state.track.spline.waypoints[1].right_curb);
+        assert!(state.track.spline.waypoints[2].left_curb);
+        assert!(!state.track.spline.waypoints[2].right_curb);
+
+        // 4. Batch Surface Application
+        assert!(tools.batch_set_surface(&mut state, Some(SurfaceType::Dirt)));
+        assert_eq!(state.track.spline.waypoints[1].surface, Some(SurfaceType::Dirt));
+        assert_eq!(state.track.spline.waypoints[2].surface, Some(SurfaceType::Dirt));
+        assert_eq!(state.track.spline.waypoints[3].surface, Some(SurfaceType::Dirt));
+
+        // 5. Batch Drag / Translation
+        let p1_orig = state.track.spline.waypoints[1].point;
+        let p2_orig = state.track.spline.waypoints[2].point;
+        let p3_orig = state.track.spline.waypoints[3].point;
+
+        tools.active_tool = EditorToolType::Select;
+        tools.drag_start_world = Vec2::new(100.0, 100.0);
+        tools.is_dragging = true;
+        tools.drag_initial_waypoints = vec![(1, p1_orig), (2, p2_orig), (3, p3_orig)];
+        tools.handle_mouse_drag(&mut state, Vec2::new(110.0, 115.0));
+
+        assert_eq!(state.track.spline.waypoints[1].point, p1_orig + Vec2::new(10.0, 15.0));
+        assert_eq!(state.track.spline.waypoints[2].point, p2_orig + Vec2::new(10.0, 15.0));
+        assert_eq!(state.track.spline.waypoints[3].point, p3_orig + Vec2::new(10.0, 15.0));
+
+        // 6. Batch Duplication
+        let prev_len = state.track.spline.waypoints.len();
+        assert!(tools.duplicate_selected(&mut state));
+        assert_eq!(state.track.spline.waypoints.len(), prev_len + 3);
+
+        // 7. Undo restores track
+        assert!(state.undo());
+        assert_eq!(state.track.spline.waypoints.len(), prev_len);
     }
 }

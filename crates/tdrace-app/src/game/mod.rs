@@ -3428,7 +3428,13 @@ impl RaceSession {
 
             if let Some(state) = &mut self.editor_state {
                 if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
-                    self.editor_tools.handle_mouse_down(state, world_mouse);
+                    let is_multi = is_key_down(KeyCode::LeftShift)
+                        || is_key_down(KeyCode::RightShift)
+                        || is_key_down(KeyCode::LeftControl)
+                        || is_key_down(KeyCode::RightControl)
+                        || is_key_down(KeyCode::LeftSuper)
+                        || is_key_down(KeyCode::RightSuper);
+                    self.editor_tools.handle_mouse_down_with_mods(state, world_mouse, is_multi);
                 }
                 if is_mouse_button_down(macroquad::input::MouseButton::Left) {
                     self.editor_tools.handle_mouse_drag(state, world_mouse);

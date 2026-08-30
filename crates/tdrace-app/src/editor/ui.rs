@@ -606,6 +606,62 @@ fn render_inspector(
                 }
             }
         }
+        Selection::MultipleWaypoints(ref indices) => {
+            let count = indices.len();
+            fonts.draw_ui_bold(&format!("Selected Segments ({})", count), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
+            curr_y += scaler.s(22.0);
+
+            fonts.draw_ui_regular(&format!("Waypoints: {:?}", indices), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
+            curr_y += scaler.s(18.0);
+
+            fonts.draw_ui_bold("BATCH WIDTH:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+            curr_y += scaler.s(18.0);
+            let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "-1m Width", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_adjust_width(state, -1.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "+1m Width", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_adjust_width(state, 1.0);
+            }
+            curr_y += scaler.s(30.0);
+
+            fonts.draw_ui_bold("BATCH CURBS:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+            curr_y += scaler.s(18.0);
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "Both Curbs", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                tools.batch_set_curbs(state, true, true);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "No Curbs", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_curbs(state, false, false);
+            }
+            curr_y += scaler.s(30.0);
+
+            fonts.draw_ui_bold("BATCH SURFACE:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+            curr_y += scaler.s(18.0);
+
+            let surfaces = [
+                (SurfaceType::Asphalt, "Asphalt"),
+                (SurfaceType::Dirt, "Dirt"),
+                (SurfaceType::Sand, "Sand"),
+                (SurfaceType::Grass, "Grass"),
+                (SurfaceType::Ice, "Ice"),
+            ];
+
+            for (st, label) in surfaces {
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(22.0), label, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.batch_set_surface(state, Some(st));
+                }
+                curr_y += scaler.s(25.0);
+            }
+
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y + scaler.s(6.0), w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE ALL [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                tools.duplicate_selected(state);
+            }
+            curr_y += scaler.s(36.0);
+
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE ALL [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
+                tools.delete_selected(state);
+            }
+        }
         Selection::SurfaceZone(idx) => {
             if idx < state.track.geometry.surface_zones.len() {
                 let (zone_surface, is_front, shape_name) = {

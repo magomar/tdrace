@@ -61,10 +61,11 @@ impl GridSnapSetting {
 }
 
 /// Identifies an entity selected in the editor.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Selection {
     None,
     Waypoint(usize),
+    MultipleWaypoints(Vec<usize>),
     SurfaceZone(usize),
     Obstacle(usize),
     JumpRamp(usize),
@@ -83,6 +84,54 @@ impl Selection {
             Some(*idx)
         } else {
             None
+        }
+    }
+
+    pub fn selected_waypoint_indices(&self) -> Vec<usize> {
+        match self {
+            Self::Waypoint(idx) => vec![*idx],
+            Self::MultipleWaypoints(indices) => indices.clone(),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn is_waypoint_selected(&self, idx: usize) -> bool {
+        match self {
+            Self::Waypoint(i) => *i == idx,
+            Self::MultipleWaypoints(indices) => indices.contains(&idx),
+            _ => false,
+        }
+    }
+
+    pub fn toggle_waypoint(&mut self, idx: usize) {
+        match self {
+            Self::Waypoint(existing) => {
+                if *existing == idx {
+                    *self = Self::None;
+                } else {
+                    let mut list = vec![*existing, idx];
+                    list.sort_unstable();
+                    list.dedup();
+                    *self = Self::MultipleWaypoints(list);
+                }
+            }
+            Self::MultipleWaypoints(indices) => {
+                if let Some(pos) = indices.iter().position(|&x| x == idx) {
+                    indices.remove(pos);
+                    if indices.is_empty() {
+                        *self = Self::None;
+                    } else if indices.len() == 1 {
+                        *self = Self::Waypoint(indices[0]);
+                    }
+                } else {
+                    indices.push(idx);
+                    indices.sort_unstable();
+                    indices.dedup();
+                }
+            }
+            _ => {
+                *self = Self::Waypoint(idx);
+            }
         }
     }
 }
@@ -233,8 +282,16 @@ impl EditorState {
 
     /// Updates current selection and records last selected waypoint if applicable.
     pub fn select(&mut self, selection: Selection) {
-        if let Selection::Waypoint(idx) = selection {
-            self.last_selected_waypoint = Some(idx);
+        match &selection {
+            Selection::Waypoint(idx) => {
+                self.last_selected_waypoint = Some(*idx);
+            }
+            Selection::MultipleWaypoints(indices) => {
+                if let Some(&first) = indices.first() {
+                    self.last_selected_waypoint = Some(first);
+                }
+            }
+            _ => {}
         }
         self.selection = selection;
     }
@@ -246,10 +303,20 @@ impl EditorState {
 
     /// Returns the index of the currently or last selected waypoint, if valid.
     pub fn current_or_last_waypoint_idx(&self) -> Option<usize> {
-        if let Selection::Waypoint(idx) = self.selection {
-            if idx < self.track.spline.waypoints.len() {
-                return Some(idx);
+        match &self.selection {
+            Selection::Waypoint(idx) => {
+                if *idx < self.track.spline.waypoints.len() {
+                    return Some(*idx);
+                }
             }
+            Selection::MultipleWaypoints(indices) => {
+                if let Some(&last) = indices.last() {
+                    if last < self.track.spline.waypoints.len() {
+                        return Some(last);
+                    }
+                }
+            }
+            _ => {}
         }
         if let Some(idx) = self.last_selected_waypoint {
             if idx < self.track.spline.waypoints.len() {
