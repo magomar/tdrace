@@ -95,9 +95,9 @@ pub fn generate_walls_from_spline(
 
     for s in &spline.samples {
         // Taper barrier offset down to touch the track/curbs on elevated bridge sections
-        let elev_factor = (s.elevation / 2.5).clamp(0.0, 1.0);
-        let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.0 };
-        let bridge_offset = curb_extra + 0.15;
+        let elev_factor = (s.elevation / 3.0).clamp(0.0, 1.0);
+        let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.75 };
+        let bridge_offset = curb_extra + 0.50;
         let offset = barrier_offset * (1.0 - elev_factor) + bridge_offset * elev_factor;
 
         let half_w = s.width * 0.5 + offset;

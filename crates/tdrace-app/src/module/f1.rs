@@ -226,42 +226,37 @@ impl F1GameModule {
     pub fn track_monaco() -> Track {
         let waypoints = vec![
             // Boulevard Albert 1er (Start / Finish)
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
-            TrackWaypoint::new(Vec2::new(100.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 11.5),
+            TrackWaypoint::new(Vec2::new(40.0, 0.0), 11.5),
             // Sainte-Devote (Turn 1 right)
-            TrackWaypoint::new(Vec2::new(160.0, 15.0), 11.0).with_curbs(true, false),
-            // Beau Rivage uphill climb
-            TrackWaypoint::new(Vec2::new(190.0, 60.0), 12.0),
-            TrackWaypoint::new(Vec2::new(200.0, 130.0), 12.0),
-            // Massenet (sweeping left around Hotel de Paris)
-            TrackWaypoint::new(Vec2::new(180.0, 190.0), 12.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(60.0, 20.0), 10.5).with_curbs(false, true),
+            // Beau Rivage uphill climb (inland avenue on west slope)
+            TrackWaypoint::new(Vec2::new(50.0, 60.0), 11.0),
+            TrackWaypoint::new(Vec2::new(30.0, 105.0), 11.0),
+            // Massenet (sweeping right around Hotel de Paris)
+            TrackWaypoint::new(Vec2::new(10.0, 140.0), 11.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(40.0, 155.0), 11.5).with_curbs(false, true),
             // Casino Square (sharp right)
-            TrackWaypoint::new(Vec2::new(140.0, 220.0), 11.5).with_curbs(false, true),
-            // Mirabeau Haute (downhill right)
-            TrackWaypoint::new(Vec2::new(90.0, 230.0), 11.5).with_curbs(false, true),
-            // Fairmont / Loews Hairpin (tightest hairpin in F1)
-            TrackWaypoint::new(Vec2::new(50.0, 210.0), 11.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(40.0, 175.0), 11.0).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(80.0, 140.0), 11.0).with_curbs(false, true),
+            // Mirabeau Haute & Loews Hairpin (tightest hairpin in F1 on east slope)
+            TrackWaypoint::new(Vec2::new(110.0, 110.0), 10.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(90.0, 85.0), 10.5).with_curbs(true, true),
             // Mirabeau Bas & Portier (heading to tunnel)
-            TrackWaypoint::new(Vec2::new(70.0, 145.0), 11.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(110.0, 125.0), 12.0).with_curbs(false, true),
-            // The Tunnel (high speed right sweeper)
-            TrackWaypoint::new(Vec2::new(140.0, 95.0), 13.0),
-            TrackWaypoint::new(Vec2::new(145.0, 45.0), 13.0),
-            // Nouvelle Chicane (heavy braking off tunnel descent)
-            TrackWaypoint::new(Vec2::new(120.0, -10.0), 11.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(80.0, -30.0), 11.0).with_curbs(false, true),
-            // Tabac Corner (fast left along harbor)
-            TrackWaypoint::new(Vec2::new(20.0, -45.0), 12.0).with_curbs(true, false),
-            // Louis Chiron Swimming Pool complex (Piscine chicane 1 & 2)
-            TrackWaypoint::new(Vec2::new(-30.0, -50.0), 12.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-80.0, -60.0), 11.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-120.0, -50.0), 11.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(105.0, 65.0), 10.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(125.0, 45.0), 11.0).with_curbs(false, true),
+            // The Tunnel (high speed seaside right sweeper along coast)
+            TrackWaypoint::new(Vec2::new(140.0, 15.0), 12.0),
+            TrackWaypoint::new(Vec2::new(135.0, -25.0), 12.0),
+            // Nouvelle Chicane (heavy braking off tunnel descent along harbor)
+            TrackWaypoint::new(Vec2::new(95.0, -45.0), 11.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(40.0, -45.0), 11.0).with_curbs(false, true),
+            // Tabac Corner & Swimming Pool (along harbor)
+            TrackWaypoint::new(Vec2::new(-20.0, -40.0), 11.5).with_curbs(true, false),
             // La Rascasse (tight hairpin right)
-            TrackWaypoint::new(Vec2::new(-130.0, -15.0), 11.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-90.0, 15.0), 11.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-55.0, -15.0), 10.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-35.0, 5.0), 10.5).with_curbs(false, true),
             // Anthony Noghes (final right onto start straight)
-            TrackWaypoint::new(Vec2::new(-40.0, 10.0), 11.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-15.0, 5.0), 11.0).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
@@ -299,39 +294,40 @@ impl F1GameModule {
     /// Suzuka International Racing Course: Figure-8 Japanese Masterpiece (S-Curves, Degner, 130R, Casio Triangle)
     pub fn track_suzuka() -> Track {
         let waypoints = vec![
-            // Main Straight & Start/Finish Line (Gantry located 70m down the straight)
-            TrackWaypoint::new(Vec2::new(70.0, 0.0), 14.0),
-            TrackWaypoint::new(Vec2::new(150.0, 0.0), 14.0),
+            // Main Straight & Start/Finish Line (Gantry at X=0)
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
+            TrackWaypoint::new(Vec2::new(80.0, 0.0), 14.0),
+            TrackWaypoint::new(Vec2::new(160.0, 0.0), 14.0),
             // First Corner (Turns 1-2 double right)
-            TrackWaypoint::new(Vec2::new(215.0, 15.0), 13.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(250.0, 55.0), 13.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(250.0, 100.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(220.0, 20.0), 13.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(250.0, 60.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(250.0, 105.0), 13.0).with_curbs(false, true),
             // S-Curves (Esses: Turns 3, 4, 5, 6)
-            TrackWaypoint::new(Vec2::new(225.0, 145.0), 13.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(190.0, 185.0), 13.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(210.0, 230.0), 13.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(180.0, 275.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(225.0, 150.0), 13.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(190.0, 190.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(210.0, 235.0), 13.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(180.0, 280.0), 13.0).with_curbs(false, true),
             // Dunlop Curve (Turn 7 uphill sweeping left)
-            TrackWaypoint::new(Vec2::new(130.0, 310.0), 13.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(130.0, 315.0), 13.5).with_curbs(true, false),
             TrackWaypoint::new(Vec2::new(65.0, 315.0), 13.5).with_curbs(true, false),
             // Degner 1 & 2 (Turns 8-9)
             TrackWaypoint::new(Vec2::new(25.0, 290.0), 13.0).with_curbs(false, true),
             TrackWaypoint::new(Vec2::new(5.0, 245.0), 12.5).with_curbs(false, true),
             // Underpass passage (crossing under the elevated back straight at elevation 0.0)
             TrackWaypoint::new(Vec2::new(0.0, 175.0), 13.0),
-            TrackWaypoint::new(Vec2::new(-15.0, 110.0), 13.0),
+            TrackWaypoint::new(Vec2::new(-15.0, 125.0), 13.0),
             // Hairpin (Turn 11 slow hairpin right)
-            TrackWaypoint::new(Vec2::new(-40.0, 65.0), 12.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-80.0, 55.0), 12.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-120.0, 65.0), 12.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-45.0, 90.0), 12.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-85.0, 85.0), 12.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-125.0, 95.0), 12.0).with_curbs(false, true),
             // 200R Sweeping Curve (Turn 12)
-            TrackWaypoint::new(Vec2::new(-165.0, 90.0), 13.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-215.0, 130.0), 14.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-170.0, 120.0), 13.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-220.0, 150.0), 14.0).with_curbs(false, true),
             // Spoon Curve (Turns 13-14 double-apex left)
-            TrackWaypoint::new(Vec2::new(-260.0, 185.0), 13.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-280.0, 240.0), 13.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-245.0, 275.0), 13.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-185.0, 265.0), 14.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-260.0, 195.0), 13.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-280.0, 245.0), 13.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-245.0, 280.0), 13.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-185.0, 270.0), 14.0).with_curbs(true, false),
             // Back Straight Crossover Bridge (climbs to 5.0m elevation crossing over the underpass at y: 175)
             TrackWaypoint::new(Vec2::new(-120.0, 235.0), 14.0).with_elevation(2.0),
             TrackWaypoint::new(Vec2::new(-60.0, 205.0), 14.5).with_elevation(4.0),
@@ -341,22 +337,23 @@ impl F1GameModule {
             // Back Straight approach to 130R
             TrackWaypoint::new(Vec2::new(110.0, 75.0), 14.5),
             // 130R (Turn 15 legendary high-speed flat-out left)
-            TrackWaypoint::new(Vec2::new(80.0, 30.0), 14.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(25.0, 15.0), 14.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(75.0, 45.0), 14.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(20.0, 42.0), 14.5).with_curbs(true, false),
             // Casio Triangle Chicane (Turns 16-17)
-            TrackWaypoint::new(Vec2::new(-30.0, 15.0), 12.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-75.0, 20.0), 12.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-35.0, 50.0), 12.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-95.0, 50.0), 12.0).with_curbs(true, false),
             // Final Corner (Turn 18 sweeping right onto main straight)
-            TrackWaypoint::new(Vec2::new(-125.0, 18.0), 13.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-155.0, 0.0), 14.0).with_curbs(false, true),
-            // Main Straight approach to start line
-            TrackWaypoint::new(Vec2::new(-80.0, 0.0), 14.0),
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
+            TrackWaypoint::new(Vec2::new(-170.0, 50.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-240.0, 45.0), 13.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-280.0, 25.0), 13.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-270.0, 0.0), 14.0),
+            TrackWaypoint::new(Vec2::new(-200.0, 0.0), 14.0),
+            TrackWaypoint::new(Vec2::new(-100.0, 0.0), 14.0),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 5.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -415,16 +412,15 @@ impl F1GameModule {
             // Mergulho (Turn 11 fast downhill left)
             TrackWaypoint::new(Vec2::new(70.0, 30.0), 13.5).with_curbs(true, false),
             // Juncao (Turn 12 crucial left onto uphill climb)
-            TrackWaypoint::new(Vec2::new(110.0, -10.0), 13.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(105.0, -15.0), 13.0).with_curbs(true, false),
             // Subida dos Boxes & Arquibancadas (uphill sweeping left onto start straight)
-            TrackWaypoint::new(Vec2::new(120.0, -70.0), 14.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(70.0, -60.0), 14.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(20.0, -25.0), 14.5),
+            TrackWaypoint::new(Vec2::new(90.0, -60.0), 14.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(40.0, -40.0), 14.0).with_curbs(true, false),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 5.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -458,7 +454,7 @@ impl F1GameModule {
     pub fn track_montreal() -> Track {
         let waypoints = vec![
             // Pit Straight (Start / Finish)
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
+            TrackWaypoint::new(Vec2::new(40.0, 0.0), 14.0),
             TrackWaypoint::new(Vec2::new(140.0, 0.0), 14.0),
             // Virage Senna (Turns 1-2 tight left-right chicane)
             TrackWaypoint::new(Vec2::new(200.0, 25.0), 13.0).with_curbs(true, false),
@@ -482,13 +478,13 @@ impl F1GameModule {
             TrackWaypoint::new(Vec2::new(-70.0, 180.0), 14.5),
             TrackWaypoint::new(Vec2::new(-50.0, 70.0), 14.5),
             // Wall of Champions Chicane (Turns 13-14 tight right-left chicane)
-            TrackWaypoint::new(Vec2::new(-35.0, 20.0), 12.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-15.0, -10.0), 12.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-45.0, 20.0), 12.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-20.0, -10.0), 12.5).with_curbs(true, false),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 4.0, BarrierType::Concrete);
+            generate_walls_from_spline(&spline, 3.0, BarrierType::Concrete);
 
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -543,14 +539,14 @@ impl F1GameModule {
             // Turn 8 (fast right sweeper)
             TrackWaypoint::new(Vec2::new(-40.0, 60.0), 14.0).with_curbs(false, true),
             // Jochen Rindt (Turn 9 fast downhill right)
-            TrackWaypoint::new(Vec2::new(-50.0, 20.0), 13.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-60.0, 30.0), 13.5).with_curbs(false, true),
             // Red Bull Mobile (Turn 10 final fast right onto main straight)
-            TrackWaypoint::new(Vec2::new(-30.0, -20.0), 14.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-45.0, -10.0), 13.5).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 5.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 16, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -583,49 +579,50 @@ impl F1GameModule {
     /// Circuit de Barcelona-Catalunya: Aerodynamic Testing Benchmark (Elf, Curva Renault, Repsol, Campsa)
     pub fn track_catalunya() -> Track {
         let waypoints = vec![
-            // Main Straight & Start/Finish
+            // Main Straight (Start / Finish)
             TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
-            TrackWaypoint::new(Vec2::new(150.0, 0.0), 14.0),
-            // Elf Chicane (Turns 1-2 right-left)
-            TrackWaypoint::new(Vec2::new(210.0, 20.0), 13.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(240.0, 55.0), 13.0).with_curbs(true, false),
-            // Curva Renault (Turn 3 long high-speed sweeping right)
-            TrackWaypoint::new(Vec2::new(270.0, 110.0), 14.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(270.0, 170.0), 14.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(230.0, 210.0), 14.0).with_curbs(false, true),
-            // Repsol (Turn 4 90-degree right)
-            TrackWaypoint::new(Vec2::new(170.0, 220.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(140.0, 0.0), 14.0),
+            // Elf (Turn 1 uphill heavy braking right)
+            TrackWaypoint::new(Vec2::new(200.0, 20.0), 13.0).with_curbs(false, true),
+            // Turn 2 (tight downhill left)
+            TrackWaypoint::new(Vec2::new(220.0, 60.0), 13.0).with_curbs(true, false),
+            // Curva Renault / Turn 3 (high-speed monumental sweeping right)
+            TrackWaypoint::new(Vec2::new(235.0, 120.0), 14.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(210.0, 180.0), 14.5).with_curbs(false, true),
+            // Repsol (Turn 4 downhill heavy braking right)
+            TrackWaypoint::new(Vec2::new(160.0, 220.0), 13.0).with_curbs(false, true),
             // Seat (Turn 5 slow downhill left hairpin)
-            TrackWaypoint::new(Vec2::new(120.0, 210.0), 12.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(90.0, 180.0), 12.0).with_curbs(true, false),
-            // Moreneta (Turns 7-8 uphill chicane left-right)
-            TrackWaypoint::new(Vec2::new(80.0, 120.0), 13.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(60.0, 70.0), 13.0).with_curbs(false, true),
-            // Campsa (Turn 9 fast blind uphill right)
+            TrackWaypoint::new(Vec2::new(90.0, 240.0), 12.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(60.0, 210.0), 12.0).with_curbs(true, false),
+            // Wurth (Turn 7 fast uphill left)
+            TrackWaypoint::new(Vec2::new(50.0, 150.0), 13.5).with_curbs(true, false),
+            // Campsa (Turn 9 blind uphill right high-speed crest)
             TrackWaypoint::new(Vec2::new(20.0, 90.0), 13.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-30.0, 110.0), 14.0).with_curbs(false, true),
             // Back Straight
-            TrackWaypoint::new(Vec2::new(-40.0, 130.0), 14.5),
-            TrackWaypoint::new(Vec2::new(-110.0, 180.0), 14.5),
-            // Caixa (Turn 10 hairpin left)
-            TrackWaypoint::new(Vec2::new(-160.0, 200.0), 12.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-180.0, 160.0), 12.5).with_curbs(true, false),
-            // Banc de Sabadell (Turn 12 right sweeper)
+            TrackWaypoint::new(Vec2::new(-90.0, 160.0), 14.5),
+            TrackWaypoint::new(Vec2::new(-140.0, 220.0), 14.5),
+            // La Caixa (Turn 10 heavy braking left hairpin)
+            TrackWaypoint::new(Vec2::new(-180.0, 250.0), 12.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-200.0, 210.0), 12.0).with_curbs(true, false),
+            // Banc Sabadell & Europcar (Turns 11-12)
+            TrackWaypoint::new(Vec2::new(-190.0, 150.0), 13.0).with_curbs(false, true),
             TrackWaypoint::new(Vec2::new(-160.0, 100.0), 13.5).with_curbs(false, true),
-            // Fast sweeping final corners (Turns 13-14 right-handers)
-            TrackWaypoint::new(Vec2::new(-120.0, 50.0), 14.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-60.0, 15.0), 14.5).with_curbs(false, true),
+            // New High-Speed Final Sector (Turns 13-14 sweeping right onto straight, chicane removed!)
+            TrackWaypoint::new(Vec2::new(-110.0, 50.0), 14.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-60.0, 15.0), 14.0).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 5.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
         Track {
             name: "Circuit de Barcelona-Catalunya".to_string(),
-            description: "Premier Spanish Grand Prix aerodynamic benchmark featuring Curva Renault and Campsa.".to_string(),
+            description: "Famous Spanish GP test circuit with Curva Renault, Campsa crest, and restored high-speed final sector.".to_string(),
             category: TrackCategory::Main,
             spline,
             geometry: TrackGeometry {
@@ -648,52 +645,67 @@ impl F1GameModule {
         }
     }
 
-    /// Circuit Zandvoort: Dutch Seaside Rollercoaster with Banked Corners (Tarzan, Hugenholtz, Scheivlak, Arie Luyendyk)
+    /// Circuit Zandvoort: Dutch Dunes Rollercoaster with 18-degree Banked Corners (Tarzan, Hugenholtz, Arie Luyendyk)
     pub fn track_zandvoort() -> Track {
         let waypoints = vec![
-            // Pit Straight (Start / Finish)
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
-            TrackWaypoint::new(Vec2::new(120.0, 0.0), 14.0),
-            // Tarzanbocht (Turn 1 iconic 180-deg hairpin right)
-            TrackWaypoint::new(Vec2::new(175.0, 20.0), 13.0).with_curbs(false, true),
+            // Straight (Start / Finish)
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.0),
+            TrackWaypoint::new(Vec2::new(120.0, 0.0), 13.0),
+            // Tarzanbocht (Turn 1 heavy braking 180-degree right)
+            TrackWaypoint::new(Vec2::new(170.0, 20.0), 13.0).with_curbs(false, true),
             TrackWaypoint::new(Vec2::new(190.0, 60.0), 13.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(165.0, 95.0), 13.0).with_curbs(false, true),
-            // Gerlachbocht (Turn 2 fast left)
-            TrackWaypoint::new(Vec2::new(120.0, 110.0), 13.5).with_curbs(true, false),
-            // Hugenholtzbocht (Turn 3 steep bowl banked hairpin left)
-            TrackWaypoint::new(Vec2::new(70.0, 115.0), 13.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(30.0, 135.0), 13.0).with_curbs(true, false),
-            // Hunserug (Turn 4 crest onto straight)
-            TrackWaypoint::new(Vec2::new(10.0, 180.0), 14.0),
-            TrackWaypoint::new(Vec2::new(0.0, 240.0), 14.0),
-            // Slotemakerbocht & Scheivlak (Turns 6-7 high-speed blind crest right)
-            TrackWaypoint::new(Vec2::new(-10.0, 300.0), 14.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-40.0, 350.0), 14.0).with_curbs(false, true),
-            // Mastersbocht (Turn 8 downhill fast right)
-            TrackWaypoint::new(Vec2::new(-90.0, 370.0), 13.5).with_curbs(false, true),
-            // Bocht 9 & 10 (technical slow sweepers)
-            TrackWaypoint::new(Vec2::new(-140.0, 340.0), 13.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-160.0, 280.0), 13.0).with_curbs(false, true),
-            // Hans Ernst Bocht (Turns 11-12 chicane right-left)
-            TrackWaypoint::new(Vec2::new(-150.0, 210.0), 12.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-120.0, 160.0), 12.0).with_curbs(true, false),
-            // Kumhobocht (Turn 13)
-            TrackWaypoint::new(Vec2::new(-100.0, 100.0), 13.5).with_curbs(false, true),
-            // Arie Luyendykbocht (Turn 14 steep banked high-speed right onto main straight)
-            TrackWaypoint::new(Vec2::new(-70.0, 40.0), 14.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-30.0, 10.0), 15.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(165.0, 100.0), 13.0).with_curbs(false, true),
+            // Gerlachbocht (Turn 2 fast right)
+            TrackWaypoint::new(Vec2::new(125.0, 125.0), 12.0).with_curbs(false, true),
+            // Hugenholtzbocht (Turn 3 iconic 18-degree bowl-banked hairpin left)
+            TrackWaypoint::new(Vec2::new(90.0, 140.0), 12.0)
+                .with_curbs(true, false)
+                .with_elevation(2.5),
+            TrackWaypoint::new(Vec2::new(50.0, 180.0), 12.0)
+                .with_curbs(true, false)
+                .with_elevation(3.5),
+            TrackWaypoint::new(Vec2::new(80.0, 230.0), 12.0)
+                .with_curbs(true, false)
+                .with_elevation(2.0),
+            // Hunserug & Rob Slotemakerbocht (Turns 4-6 cresting dunes)
+            TrackWaypoint::new(Vec2::new(125.0, 270.0), 12.0)
+                .with_curbs(true, false)
+                .with_elevation(4.0),
+            TrackWaypoint::new(Vec2::new(165.0, 310.0), 12.0).with_elevation(3.0),
+            // Scheivlak (Turn 7 terrifying blind downhill high-speed right)
+            TrackWaypoint::new(Vec2::new(175.0, 360.0), 12.0)
+                .with_curbs(false, true)
+                .with_elevation(1.0),
+            // Mastersbocht (Turn 8 fast downhill right)
+            TrackWaypoint::new(Vec2::new(140.0, 400.0), 12.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(90.0, 420.0), 12.0).with_curbs(false, true),
+            // Bocht 9 & 10 (Chicane in the dunes)
+            TrackWaypoint::new(Vec2::new(40.0, 420.0), 12.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-10.0, 390.0), 12.0).with_curbs(false, true),
+            // Hans Ernst Bocht (Turns 11-12 chicane)
+            TrackWaypoint::new(Vec2::new(-40.0, 320.0), 12.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-80.0, 270.0), 12.0).with_curbs(false, true),
+            // Kumhobocht (Turn 13 fast right)
+            TrackWaypoint::new(Vec2::new(-95.0, 180.0), 13.5).with_curbs(false, true),
+            // Arie Luyendykbocht (Turn 14 final 18-degree high-banked DRS sweeper onto straight)
+            TrackWaypoint::new(Vec2::new(-80.0, 90.0), 14.5)
+                .with_curbs(false, true)
+                .with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(-45.0, 20.0), 14.0)
+                .with_curbs(false, true)
+                .with_elevation(0.5),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 4.5, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 2.5, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
         Track {
             name: "Circuit Zandvoort".to_string(),
-            description: "Undulating Dutch coastal circuit with high-banked Hugenholtz and Arie Luyendyk corners.".to_string(),
+            description: "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.".to_string(),
             category: TrackCategory::Main,
             spline,
             geometry: TrackGeometry {
@@ -716,53 +728,53 @@ impl F1GameModule {
         }
     }
 
-    /// Bahrain International Circuit (Sakhir): Desert Grand Prix (Turn 1 Schumacher Hairpin, Turn 9-10 Complex)
+    /// Bahrain International Circuit (Sakhir): Modern Desert Jewel (Turn 1 Hairpin, Turn 4, Turn 9-10 Complex)
     pub fn track_bahrain() -> Track {
         let waypoints = vec![
             // Main Straight & Start/Finish
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 15.0),
-            TrackWaypoint::new(Vec2::new(150.0, 0.0), 15.0),
-            // Michael Schumacher Turn 1 Hairpin (heavy braking right)
-            TrackWaypoint::new(Vec2::new(210.0, 15.0), 13.0).with_curbs(false, true),
-            // Turns 2-3 acceleration flick left-right
-            TrackWaypoint::new(Vec2::new(240.0, 45.0), 13.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(255.0, 90.0), 14.0).with_curbs(false, true),
-            // Turn 4 (wide sweeping uphill right)
-            TrackWaypoint::new(Vec2::new(240.0, 150.0), 13.5).with_curbs(false, true),
-            // Downhill Esses (Turns 5-6-7 left-right-left)
-            TrackWaypoint::new(Vec2::new(190.0, 190.0), 13.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(140.0, 220.0), 13.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(90.0, 230.0), 13.0).with_curbs(true, false),
-            // Turn 8 (tight right hairpin)
-            TrackWaypoint::new(Vec2::new(50.0, 210.0), 12.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(40.0, 170.0), 12.0).with_curbs(false, true),
-            // Turns 9-10 (downhill off-camber locking braking left)
-            TrackWaypoint::new(Vec2::new(20.0, 120.0), 12.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-15.0, 80.0), 12.5).with_curbs(true, false),
-            // Back Straight
-            TrackWaypoint::new(Vec2::new(-40.0, 30.0), 14.5),
-            TrackWaypoint::new(Vec2::new(-80.0, -30.0), 14.5),
-            // Turn 11 (uphill sweeping left)
-            TrackWaypoint::new(Vec2::new(-120.0, -75.0), 13.5).with_curbs(true, false),
-            // Turn 12 (flat-out right kink)
-            TrackWaypoint::new(Vec2::new(-110.0, -130.0), 14.0).with_curbs(false, true),
-            // Turn 13 (medium right)
-            TrackWaypoint::new(Vec2::new(-70.0, -160.0), 13.5).with_curbs(false, true),
-            // Turns 14-15 (final 90-degree right onto main straight)
-            TrackWaypoint::new(Vec2::new(-20.0, -140.0), 13.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(0.0, -70.0), 14.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.5),
+            TrackWaypoint::new(Vec2::new(140.0, 0.0), 14.5),
+            // Turn 1 (Tight downhill right hairpin)
+            TrackWaypoint::new(Vec2::new(190.0, 20.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(210.0, 60.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(190.0, 110.0), 13.5).with_curbs(true, false),
+            // Turn 4 (Heavy braking downhill right)
+            TrackWaypoint::new(Vec2::new(150.0, 170.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(110.0, 200.0), 13.0).with_curbs(false, true),
+            // Turns 5-6-7 (High-speed downhill chicane complex)
+            TrackWaypoint::new(Vec2::new(60.0, 220.0), 13.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(10.0, 230.0), 13.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-30.0, 220.0), 13.5).with_curbs(true, false),
+            // Turn 8 (Tight uphill hairpin right)
+            TrackWaypoint::new(Vec2::new(-60.0, 180.0), 12.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-50.0, 140.0), 12.0).with_curbs(false, true),
+            // Turns 9-10 (Tricky downhill left hairpin with blind braking lockup risk)
+            TrackWaypoint::new(Vec2::new(-15.0, 110.0), 12.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(15.0, 90.0), 12.5).with_curbs(true, false),
+            // Turn 11 (Fast uphill left onto back straight)
+            TrackWaypoint::new(Vec2::new(40.0, 70.0), 13.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(20.0, 45.0), 13.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-20.0, 40.0), 14.0),
+            // Turn 12 (Fast right sweeper on western perimeter)
+            TrackWaypoint::new(Vec2::new(-70.0, 50.0), 14.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-110.0, 70.0), 14.0).with_curbs(false, true),
+            // Turn 13 (Medium-speed right onto back straight)
+            TrackWaypoint::new(Vec2::new(-130.0, 50.0), 13.5).with_curbs(false, true),
+            // Back Straight into Turn 14-15 (Final braking zone right onto start straight)
+            TrackWaypoint::new(Vec2::new(-110.0, 20.0), 14.5),
+            TrackWaypoint::new(Vec2::new(-60.0, 5.0), 14.5),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 5.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
         Track {
             name: "Bahrain International Circuit (Sakhir)".to_string(),
-            description: "Modern desert Grand Prix circuit with heavy Turn 1 braking and technical downhill off-camber Turn 9-10 complex.".to_string(),
+            description: "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.".to_string(),
             category: TrackCategory::Main,
             spline,
             geometry: TrackGeometry {
@@ -809,20 +821,19 @@ impl F1GameModule {
             TrackWaypoint::new(Vec2::new(-70.0, 100.0), 12.0),
             // Turn 13 hairpin (tight left around Fullerton Hotel)
             TrackWaypoint::new(Vec2::new(-95.0, 50.0), 11.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-80.0, 10.0), 11.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-85.0, 10.0), 11.5).with_curbs(true, false),
             // Esplanade waterfront drive
-            TrackWaypoint::new(Vec2::new(-50.0, -30.0), 12.5),
+            TrackWaypoint::new(Vec2::new(-75.0, -35.0), 12.0),
             // Turns 16-17 chicane
-            TrackWaypoint::new(Vec2::new(-20.0, -70.0), 12.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(10.0, -90.0), 12.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-60.0, -75.0), 12.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-30.0, -85.0), 12.0).with_curbs(true, false),
             // Turns 18-19 high-speed sweepers back onto main straight
-            TrackWaypoint::new(Vec2::new(35.0, -60.0), 12.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(20.0, -25.0), 13.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-15.0, -45.0), 12.5).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.0, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -887,15 +898,16 @@ impl F1GameModule {
             TrackWaypoint::new(Vec2::new(-45.0, -130.0), 12.5).with_curbs(true, false),
             // Multi-Apex Carousel (Turns 16-17-18 colossal right-hand sweeper)
             TrackWaypoint::new(Vec2::new(-10.0, -110.0), 14.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(15.0, -80.0), 14.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(20.0, -40.0), 14.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(10.0, -80.0), 14.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(5.0, -50.0), 14.0).with_curbs(false, true),
             // Turns 19-20 (Final technical lefts onto pit straight)
-            TrackWaypoint::new(Vec2::new(5.0, -20.0), 13.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-25.0, -35.0), 13.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-35.0, -10.0), 13.5).with_curbs(true, false),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 5.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);

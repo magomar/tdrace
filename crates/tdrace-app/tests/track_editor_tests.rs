@@ -10,7 +10,7 @@ use tdrace_core::track::presets::{
     classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
     ramp_raceway,
 };
-use tdrace_core::track::spline::TrackWaypoint;
+use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 use tdrace_core::track::Track;
 
@@ -73,13 +73,15 @@ fn test_track_editor_custom_circuit_lifecycle_and_io() {
     track.geometry.surface_zones.clear();
     track.geometry.jump_ramps.clear();
     track.geometry.obstacles.clear();
-    track.spline.waypoints = vec![
-        TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
-        TrackWaypoint::new(Vec2::new(100.0, 0.0), 12.0),
-        TrackWaypoint::new(Vec2::new(100.0, 100.0), 14.0),
-        TrackWaypoint::new(Vec2::new(0.0, 100.0), 12.0),
-    ];
-    track.spline.closed = true;
+    track.spline = TrackSpline::new(
+        vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(100.0, 100.0), 14.0),
+            TrackWaypoint::new(Vec2::new(0.0, 100.0), 12.0),
+        ],
+        true,
+    );
 
     // Add surface zone
     track.geometry.surface_zones.push(SurfaceZone::new(

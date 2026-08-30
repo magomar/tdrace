@@ -119,3 +119,74 @@ fn test_suzuka_circuit_grid_and_crossover_geometry() {
     assert!(max_elev >= 4.5, "Suzuka overpass bridge elevation must reach at least 4.5m, got {}", max_elev);
 }
 
+#[test]
+fn test_validate_all_circuits_and_presets() {
+    use tdrace_app::module::f1::F1GameModule;
+    use tdrace_app::module::kart::KartGameModule;
+    use tdrace_app::module::GameModule;
+    use tdrace_core::track::presets::{
+        classic_grand_prix, drift_park, dune_raid, kart_arena, oasis_rally, outlaw_pass,
+        oval_speedway, ramp_raceway, sahara_dunes,
+    };
+    use tdrace_core::track::validation::{validate_track, ValidationSeverity};
+
+    let preset_tracks = [
+        ("Classic Grand Prix", classic_grand_prix()),
+        ("Oval Speedway", oval_speedway()),
+        ("Drift Park", drift_park()),
+        ("Kart Arena", kart_arena()),
+        ("Ramp Raceway", ramp_raceway()),
+        ("Oasis Rally", oasis_rally()),
+        ("Outlaw Pass", outlaw_pass()),
+        ("Sahara Dunes", sahara_dunes()),
+        ("Dune Raid", dune_raid()),
+    ];
+
+    let f1_module = F1GameModule::new();
+    let f1_tracks = f1_module.tracks();
+
+    let kart_module = KartGameModule::new();
+    let kart_tracks = kart_module.tracks();
+
+    println!("\n=== VALIDATING ALL CIRCUITS ===");
+
+    let mut total_errors = 0;
+
+    for (name, track) in &preset_tracks {
+        let diags = validate_track(track);
+        let errors: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Error).collect();
+        let warns: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Warning).collect();
+        println!("[PRESET] {:<25} | errors: {:2} | warns: {:2}", name, errors.len(), warns.len());
+        total_errors += errors.len();
+    }
+
+    for t_def in &f1_tracks {
+        let track = (t_def.generator)();
+        let diags = validate_track(&track);
+        let errors: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Error).collect();
+        let warns: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Warning).collect();
+        println!("[F1]     {:<25} | errors: {:2} | warns: {:2}", t_def.id, errors.len(), warns.len());
+        if !errors.is_empty() {
+            for err in errors.iter().take(5) {
+                println!("  [{}] {}: {}", t_def.id, err.code, err.message);
+            }
+            if errors.len() > 5 {
+                println!("  ... and {} more errors", errors.len() - 5);
+            }
+        }
+        total_errors += errors.len();
+    }
+
+    for t_def in &kart_tracks {
+        let track = (t_def.generator)();
+        let diags = validate_track(&track);
+        let errors: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Error).collect();
+        let warns: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Warning).collect();
+        println!("[KART]   {:<25} | errors: {:2} | warns: {:2}", t_def.id, errors.len(), warns.len());
+        total_errors += errors.len();
+    }
+
+    println!("\nTOTAL ERRORS ACROSS ALL TRACKS: {}", total_errors);
+    assert_eq!(total_errors, 0, "Total validation errors across all tracks: {}", total_errors);
+}
+
