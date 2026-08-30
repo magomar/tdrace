@@ -1241,14 +1241,72 @@ impl RaceSession {
             } else {
                 let lvl = self.camera.cycle_zoom_level().clone();
                 self.audio.play_sfx(SfxType::UiMove);
-                if let Some(player_car) = self.cars.first() {
+                let car_pos = self
+                    .cars
+                    .first()
+                    .map(|c| c.state.position)
+                    .or_else(|| self.test_drive_car.as_ref().map(|c| c.state.position));
+                if let Some(pos) = car_pos {
                     let lvl_idx = self.camera.current_level_idx + 1;
                     let total_lvls = self.camera.levels.len();
                     self.fx.drift_popups.spawn_text(
-                        player_car.state.position,
+                        pos,
                         &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
                         Color::new(0.3, 0.9, 1.0, 1.0),
                     );
+                }
+            }
+        }
+
+        // Camera Zoom In (+ / Equal / Numpad +) & Zoom Out (- / Minus / Numpad -)
+        let is_gameplay_state = matches!(
+            self.state,
+            GameState::Racing
+                | GameState::Countdown(_)
+                | GameState::StartingGrid
+                | GameState::Paused
+                | GameState::Finished
+                | GameState::EditorTestDrive
+        );
+        if is_gameplay_state {
+            let zoom_in_pressed = is_key_pressed(KeyCode::Equal) || is_key_pressed(KeyCode::KpAdd);
+            let zoom_out_pressed = is_key_pressed(KeyCode::Minus) || is_key_pressed(KeyCode::KpSubtract);
+
+            if zoom_in_pressed {
+                if let Some(lvl) = self.camera.zoom_in() {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let car_pos = self
+                        .cars
+                        .first()
+                        .map(|c| c.state.position)
+                        .or_else(|| self.test_drive_car.as_ref().map(|c| c.state.position));
+                    if let Some(pos) = car_pos {
+                        let lvl_idx = self.camera.current_level_idx + 1;
+                        let total_lvls = self.camera.levels.len();
+                        self.fx.drift_popups.spawn_text(
+                            pos,
+                            &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
+                            Color::new(0.3, 0.9, 1.0, 1.0),
+                        );
+                    }
+                }
+            } else if zoom_out_pressed {
+                if let Some(lvl) = self.camera.zoom_out() {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let car_pos = self
+                        .cars
+                        .first()
+                        .map(|c| c.state.position)
+                        .or_else(|| self.test_drive_car.as_ref().map(|c| c.state.position));
+                    if let Some(pos) = car_pos {
+                        let lvl_idx = self.camera.current_level_idx + 1;
+                        let total_lvls = self.camera.levels.len();
+                        self.fx.drift_popups.spawn_text(
+                            pos,
+                            &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
+                            Color::new(0.3, 0.9, 1.0, 1.0),
+                        );
+                    }
                 }
             }
         }

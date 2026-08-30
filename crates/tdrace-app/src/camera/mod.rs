@@ -133,6 +133,30 @@ impl RaceCamera {
         self.set_zoom_level(next_idx)
     }
 
+    /// Zooms in one level closer (inward towards index 0 / Close). Returns the new configuration if changed.
+    pub fn zoom_in(&mut self) -> Option<ZoomLevelConfig> {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        if self.current_level_idx > 0 {
+            Some(self.set_zoom_level(self.current_level_idx - 1))
+        } else {
+            None
+        }
+    }
+
+    /// Zooms out one level farther (outward towards Overview). Returns the new configuration if changed.
+    pub fn zoom_out(&mut self) -> Option<ZoomLevelConfig> {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        if self.current_level_idx + 1 < self.levels.len() {
+            Some(self.set_zoom_level(self.current_level_idx + 1))
+        } else {
+            None
+        }
+    }
+
     /// Safely gets screen dimensions without panicking if running outside macroquad loop.
     pub fn get_screen_dimensions_safe() -> (f32, f32) {
         let sw = std::panic::catch_unwind(screen_width).unwrap_or(1280.0);

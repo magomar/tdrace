@@ -337,4 +337,38 @@ fn test_grid_positioning_all_slots_unique_and_valid() {
     assert_eq!(positions.len(), 8, "All 8 cars must spawn in distinct grid positions");
 }
 
+#[test]
+fn test_race_session_camera_zoom_in_and_out() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert_eq!(session.camera.current_level_idx, 0);
+    assert_eq!(session.camera.current_zoom_level().name, "Close");
+
+    // Zoom out to index 1 (Medium)
+    let lvl1 = session.camera.zoom_out().unwrap();
+    assert_eq!(lvl1.name, "Medium");
+    assert_eq!(session.camera.current_level_idx, 1);
+
+    // Zoom out to index 2 (Far)
+    let lvl2 = session.camera.zoom_out().unwrap();
+    assert_eq!(lvl2.name, "Far");
+    assert_eq!(session.camera.current_level_idx, 2);
+
+    // Zoom out to index 3 (Overview)
+    let lvl3 = session.camera.zoom_out().unwrap();
+    assert_eq!(lvl3.name, "Overview");
+    assert_eq!(session.camera.current_level_idx, 3);
+
+    // Cannot zoom out beyond Overview
+    assert!(session.camera.zoom_out().is_none());
+    assert_eq!(session.camera.current_level_idx, 3);
+
+    // Zoom back in to Close (0)
+    assert_eq!(session.camera.zoom_in().unwrap().name, "Far");
+    assert_eq!(session.camera.zoom_in().unwrap().name, "Medium");
+    assert_eq!(session.camera.zoom_in().unwrap().name, "Close");
+    assert_eq!(session.camera.current_level_idx, 0);
+    assert!(session.camera.zoom_in().is_none());
+}
+
 

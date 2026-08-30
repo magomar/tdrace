@@ -929,7 +929,7 @@ pub fn render_controls_screen(
         ("Reverse Gear", "Z"),
         ("Cycle Assist Profile", "H"),
         ("Controls & Assists Guide", "C / K"),
-        ("Cycle Camera Zoom", "Tab"),
+        ("Camera Zoom In / Out", "+ / - or Tab"),
         ("Instant Session Reset", "R"),
         ("Pause / Resume", "Escape / Pause"),
         ("Audio Mute / Volume", "M / [ and ]"),

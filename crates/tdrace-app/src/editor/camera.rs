@@ -130,6 +130,52 @@ impl EditorCamera {
         self.set_zoom_level_with_bounds(next_idx, bounds, sw, sh)
     }
 
+    /// Zooms in one level closer without explicit bounds.
+    pub fn zoom_in(&mut self) -> Option<ZoomLevelConfig> {
+        let (sw, sh) = Self::get_screen_dimensions();
+        self.zoom_in_with_bounds(None, sw, sh)
+    }
+
+    /// Zooms in one level closer with optional track bounds.
+    pub fn zoom_in_with_bounds(
+        &mut self,
+        bounds: Option<(Vec2, Vec2)>,
+        sw: f32,
+        sh: f32,
+    ) -> Option<ZoomLevelConfig> {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        if self.current_level_idx > 0 {
+            Some(self.set_zoom_level_with_bounds(self.current_level_idx - 1, bounds, sw, sh))
+        } else {
+            None
+        }
+    }
+
+    /// Zooms out one level farther without explicit bounds.
+    pub fn zoom_out(&mut self) -> Option<ZoomLevelConfig> {
+        let (sw, sh) = Self::get_screen_dimensions();
+        self.zoom_out_with_bounds(None, sw, sh)
+    }
+
+    /// Zooms out one level farther with optional track bounds.
+    pub fn zoom_out_with_bounds(
+        &mut self,
+        bounds: Option<(Vec2, Vec2)>,
+        sw: f32,
+        sh: f32,
+    ) -> Option<ZoomLevelConfig> {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        if self.current_level_idx + 1 < self.levels.len() {
+            Some(self.set_zoom_level_with_bounds(self.current_level_idx + 1, bounds, sw, sh))
+        } else {
+            None
+        }
+    }
+
     /// Safely gets screen dimensions without panicking.
     pub fn get_screen_dimensions() -> (f32, f32) {
         let sw = std::panic::catch_unwind(screen_width).unwrap_or(1280.0);

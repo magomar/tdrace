@@ -120,3 +120,60 @@ fn test_multi_level_zoom_cycling() {
     assert_eq!(camera.min_zoom_scale, 13.5);
     assert_eq!(camera.max_zoom_scale, 22.0);
 }
+
+#[test]
+fn test_camera_zoom_in_and_zoom_out() {
+    let mut camera = RaceCamera::new();
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(camera.current_zoom_level().name, "Close");
+
+    // At closest zoom (index 0), zoom_in() returns None and stays at index 0
+    assert!(camera.zoom_in().is_none());
+    assert_eq!(camera.current_level_idx, 0);
+
+    // Zoom out step-by-step: 0 (Close) -> 1 (Medium) -> 2 (Far) -> 3 (Overview)
+    let lvl1 = camera.zoom_out().expect("Should zoom out to Medium");
+    assert_eq!(lvl1.name, "Medium");
+    assert_eq!(camera.current_level_idx, 1);
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.min_zoom_scale, 10.0);
+    assert_eq!(camera.max_zoom_scale, 16.5);
+
+    let lvl2 = camera.zoom_out().expect("Should zoom out to Far");
+    assert_eq!(lvl2.name, "Far");
+    assert_eq!(camera.current_level_idx, 2);
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.min_zoom_scale, 7.0);
+    assert_eq!(camera.max_zoom_scale, 11.5);
+
+    let lvl3 = camera.zoom_out().expect("Should zoom out to Overview");
+    assert_eq!(lvl3.name, "Overview");
+    assert_eq!(camera.current_level_idx, 3);
+    assert_eq!(camera.mode, CameraMode::StaticOverview);
+
+    // At farthest zoom (index 3), zoom_out() returns None and stays at index 3
+    assert!(camera.zoom_out().is_none());
+    assert_eq!(camera.current_level_idx, 3);
+
+    // Zoom in step-by-step: 3 (Overview) -> 2 (Far) -> 1 (Medium) -> 0 (Close)
+    let in2 = camera.zoom_in().expect("Should zoom in to Far");
+    assert_eq!(in2.name, "Far");
+    assert_eq!(camera.current_level_idx, 2);
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+
+    let in1 = camera.zoom_in().expect("Should zoom in to Medium");
+    assert_eq!(in1.name, "Medium");
+    assert_eq!(camera.current_level_idx, 1);
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+
+    let in0 = camera.zoom_in().expect("Should zoom in to Close");
+    assert_eq!(in0.name, "Close");
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.min_zoom_scale, 13.5);
+    assert_eq!(camera.max_zoom_scale, 22.0);
+
+    // Bounded again at closest
+    assert!(camera.zoom_in().is_none());
+    assert_eq!(camera.current_level_idx, 0);
+}

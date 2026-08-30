@@ -277,6 +277,56 @@ fn test_editor_camera_zoom_levels_cycling_and_parity() {
 }
 
 #[test]
+fn test_editor_camera_zoom_in_and_zoom_out() {
+    let mut camera = EditorCamera::new();
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(camera.current_zoom_level().name, "Close");
+    assert_eq!(camera.target_zoom, 22.0);
+
+    // Boundary at index 0
+    assert!(camera.zoom_in().is_none());
+    assert_eq!(camera.current_level_idx, 0);
+
+    // Step-by-step zoom out
+    let lvl1 = camera.zoom_out().expect("Should zoom out to Medium");
+    assert_eq!(lvl1.name, "Medium");
+    assert_eq!(camera.current_level_idx, 1);
+    assert_eq!(camera.target_zoom, 16.5);
+
+    let lvl2 = camera.zoom_out().expect("Should zoom out to Far");
+    assert_eq!(lvl2.name, "Far");
+    assert_eq!(camera.current_level_idx, 2);
+    assert_eq!(camera.target_zoom, 11.5);
+
+    let lvl3 = camera.zoom_out().expect("Should zoom out to Overview");
+    assert_eq!(lvl3.name, "Overview");
+    assert_eq!(camera.current_level_idx, 3);
+    assert_eq!(camera.target_zoom, 3.5);
+
+    // Boundary at index 3
+    assert!(camera.zoom_out().is_none());
+    assert_eq!(camera.current_level_idx, 3);
+
+    // Step-by-step zoom in
+    let in2 = camera.zoom_in().expect("Should zoom in to Far");
+    assert_eq!(in2.name, "Far");
+    assert_eq!(camera.current_level_idx, 2);
+    assert_eq!(camera.target_zoom, 11.5);
+
+    let in1 = camera.zoom_in().expect("Should zoom in to Medium");
+    assert_eq!(in1.name, "Medium");
+    assert_eq!(camera.current_level_idx, 1);
+    assert_eq!(camera.target_zoom, 16.5);
+
+    let in0 = camera.zoom_in().expect("Should zoom in to Close");
+    assert_eq!(in0.name, "Close");
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(camera.target_zoom, 22.0);
+
+    assert!(camera.zoom_in().is_none());
+}
+
+#[test]
 fn test_editor_camera_overview_with_bounds_framing() {
     let mut camera = EditorCamera::new();
     let min_pt = Vec2::new(0.0, 0.0);
