@@ -78,6 +78,8 @@ pub struct ToolSettings {
     // Dragging / selection interaction state
     pub is_dragging: bool,
     pub is_box_selecting: bool,
+    pub is_rotating_ramp: bool,
+    pub drag_rotating_ramp_idx: Option<usize>,
     pub drag_start_world: Vec2,
     pub drag_current_world: Vec2,
     pub drag_initial_entity_pos: Vec2,
@@ -119,6 +121,8 @@ impl Default for ToolSettings {
             new_waypoint_right_curb: false,
             is_dragging: false,
             is_box_selecting: false,
+            is_rotating_ramp: false,
+            drag_rotating_ramp_idx: None,
             drag_start_world: Vec2::ZERO,
             drag_current_world: Vec2::ZERO,
             drag_initial_entity_pos: Vec2::ZERO,
@@ -451,6 +455,113 @@ impl ToolSettings {
         false
     }
 
+    /// Rotates selected jump ramp(s) by delta radians.
+    pub fn rotate_selected_jump_ramp(&mut self, state: &mut EditorState, delta_rad: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.rotate(delta_rad);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Sets the exact 2D orientation angle in radians for selected jump ramp(s).
+    pub fn set_selected_jump_ramp_angle(&mut self, state: &mut EditorState, angle_rad: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.set_angle(angle_rad);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Sets the exact 2D orientation angle in degrees for selected jump ramp(s) (e.g. 0 to 365 degrees).
+    pub fn set_selected_jump_ramp_angle_deg(&mut self, state: &mut EditorState, angle_deg: f32) -> bool {
+        self.set_selected_jump_ramp_angle(state, angle_deg.to_radians())
+    }
+
+    /// Adjusts the length and width of selected jump ramp(s).
+    pub fn adjust_selected_jump_ramp_size(&mut self, state: &mut EditorState, delta_len: f32, delta_wid: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.adjust_size(delta_len, delta_wid);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Scales the size of selected jump ramp(s) by a multiplier factor.
+    pub fn scale_selected_jump_ramp_size(&mut self, state: &mut EditorState, factor: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.scale_size(factor);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Adjusts the launch pitch angle of selected jump ramp(s) in degrees.
+    pub fn adjust_selected_jump_ramp_pitch(&mut self, state: &mut EditorState, delta_deg: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.ramp_angle_deg = (ramp.ramp_angle_deg + delta_deg).clamp(1.0, 60.0);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Adjusts the height of selected jump ramp(s) in meters.
+    pub fn adjust_selected_jump_ramp_height(&mut self, state: &mut EditorState, delta_h: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.height = (ramp.height + delta_h).clamp(0.2, 20.0);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
     /// Sets the layer of the selected surface zone (or the active placement layer if none selected).
     pub fn set_selected_surface_layer(&mut self, state: &mut EditorState, layer: SurfaceLayer) -> bool {
         self.active_surface_layer = layer;
@@ -642,6 +753,33 @@ impl ToolSettings {
 
         match self.active_tool {
             EditorToolType::Select => {
+                // Check if clicking near the orientation tip handle of any selected jump ramp (for continuous angular rotation)
+                let mut clicked_ramp_handle = None;
+                for &idx in &state.selection.selected_jump_ramp_indices() {
+                    if let Some(ramp) = state.track.geometry.jump_ramps.get(idx) {
+                        let center = ramp.shape.center();
+                        let angle = ramp.angle();
+                        let half_extents = ramp.half_extents();
+                        let fwd = Vec2::new(angle.cos(), angle.sin());
+                        let handle_pos = center + fwd * (half_extents.x + 2.5);
+                        if (mouse_world - handle_pos).length() <= 3.5 {
+                            clicked_ramp_handle = Some(idx);
+                            break;
+                        }
+                    }
+                }
+
+                if let Some(ramp_idx) = clicked_ramp_handle {
+                    state.record_undo();
+                    self.is_rotating_ramp = true;
+                    self.drag_rotating_ramp_idx = Some(ramp_idx);
+                    self.is_dragging = true;
+                    self.is_box_selecting = false;
+                    self.drag_start_world = mouse_world;
+                    self.drag_current_world = mouse_world;
+                    return;
+                }
+
                 if let Some(sel) = find_closest_entity(state, mouse_world) {
                     self.is_box_selecting = false;
                     if is_multi_key {
@@ -834,6 +972,20 @@ impl ToolSettings {
             return;
         }
 
+        if self.is_rotating_ramp {
+            if let Some(ramp_idx) = self.drag_rotating_ramp_idx {
+                if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(ramp_idx) {
+                    let center = ramp.shape.center();
+                    let to_mouse = mouse_world - center;
+                    if to_mouse.length_squared() > 1e-4 {
+                        let new_angle = to_mouse.y.atan2(to_mouse.x);
+                        ramp.set_angle(new_angle);
+                    }
+                }
+            }
+            return;
+        }
+
         if self.is_box_selecting {
             self.drag_current_world = mouse_world;
             return;
@@ -906,6 +1058,13 @@ impl ToolSettings {
             return;
         }
         self.is_dragging = false;
+
+        if self.is_rotating_ramp {
+            self.is_rotating_ramp = false;
+            self.drag_rotating_ramp_idx = None;
+            state.revalidate();
+            return;
+        }
 
         if self.is_box_selecting {
             self.is_box_selecting = false;
@@ -1857,8 +2016,37 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
             match &ramp.shape {
                 SurfaceShape::OrientedBox { center, half_extents, angle } => {
                     draw_oriented_box_lines(*center, *half_extents + Vec2::splat(0.6), *angle, 0.5, col);
+
+                    // Direction arrow handle from center forward through launch lip
+                    let fwd = Vec2::new(angle.cos(), angle.sin());
+                    let right = Vec2::new(-angle.sin(), angle.cos());
+                    let arrow_start = *center;
+                    let arrow_end = *center + fwd * (half_extents.x + 2.5);
+                    draw_line(arrow_start.x, arrow_start.y, arrow_end.x, arrow_end.y, 0.45, col);
+
+                    let arrow_head_l = arrow_end - fwd * 1.5 - right * 1.0;
+                    let arrow_head_r = arrow_end - fwd * 1.5 + right * 1.0;
+                    draw_line(arrow_end.x, arrow_end.y, arrow_head_l.x, arrow_head_l.y, 0.45, col);
+                    draw_line(arrow_end.x, arrow_end.y, arrow_head_r.x, arrow_head_r.y, 0.45, col);
+
+                    // Circular rotation handle at the tip for continuous angle rotation
+                    macroquad::shapes::draw_circle(arrow_end.x, arrow_end.y, 0.8, Color::new(0.0, 0.9, 1.0, 0.4));
+                    macroquad::shapes::draw_circle_lines(arrow_end.x, arrow_end.y, 0.8, 0.25, Palette::NEON_CYAN);
                 }
-                _ => {}
+                _ => {
+                    let center = ramp.shape.center();
+                    let dir = ramp.direction;
+                    let right = Vec2::new(-dir.y, dir.x);
+                    let arrow_end = center + dir * 5.0;
+                    draw_line(center.x, center.y, arrow_end.x, arrow_end.y, 0.45, col);
+                    let arrow_head_l = arrow_end - dir * 1.5 - right * 1.0;
+                    let arrow_head_r = arrow_end - dir * 1.5 + right * 1.0;
+                    draw_line(arrow_end.x, arrow_end.y, arrow_head_l.x, arrow_head_l.y, 0.45, col);
+                    draw_line(arrow_end.x, arrow_end.y, arrow_head_r.x, arrow_head_r.y, 0.45, col);
+
+                    macroquad::shapes::draw_circle(arrow_end.x, arrow_end.y, 0.8, Color::new(0.0, 0.9, 1.0, 0.4));
+                    macroquad::shapes::draw_circle_lines(arrow_end.x, arrow_end.y, 0.8, 0.25, Palette::NEON_CYAN);
+                }
             }
         }
     }
@@ -1944,14 +2132,23 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                     );
                 }
                 EditorToolType::JumpRamp => {
-                    draw_line(
-                        tools.drag_start_world.x,
-                        tools.drag_start_world.y,
-                        tools.drag_current_world.x,
-                        tools.drag_current_world.y,
-                        0.6,
-                        Palette::NEON_GOLD,
-                    );
+                    let start = tools.drag_start_world;
+                    let current = tools.drag_current_world;
+                    let dir = (current - start).normalize_or_zero();
+                    let length = (current - start).length().max(6.0);
+                    let center = (start + current) * 0.5;
+                    let angle = dir.y.atan2(dir.x);
+                    let half_extents = Vec2::new(length * 0.5, 4.0);
+
+                    draw_oriented_box_lines(center, half_extents, angle, 0.4, Palette::NEON_CYAN);
+                    draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_GOLD);
+
+                    let right = Vec2::new(-dir.y, dir.x);
+                    let arrow_tip = current;
+                    let l_wing = arrow_tip - dir * 1.8 - right * 1.2;
+                    let r_wing = arrow_tip - dir * 1.8 + right * 1.2;
+                    draw_line(arrow_tip.x, arrow_tip.y, l_wing.x, l_wing.y, 0.5, Palette::NEON_GOLD);
+                    draw_line(arrow_tip.x, arrow_tip.y, r_wing.x, r_wing.y, 0.5, Palette::NEON_GOLD);
                 }
                 EditorToolType::Obstacle => {
                     let min = Vec2::new(
@@ -2419,4 +2616,53 @@ mod tests {
         assert_eq!(state.track.geometry.obstacles.len(), prev_obs_count);
         assert_eq!(state.selection, Selection::None);
     }
+
+    #[test]
+    fn test_jump_ramp_tools_rotation_and_resizing() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+
+        let ramp = JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(50.0, 50.0),
+                half_extents: Vec2::new(5.0, 4.0),
+                angle: 0.0,
+            },
+            Vec2::new(1.0, 0.0),
+            24.0,
+            15.0,
+            1.8,
+            "Editor Test Ramp",
+        );
+        state.track.geometry.jump_ramps.push(ramp);
+        let ramp_idx = state.track.geometry.jump_ramps.len() - 1;
+        state.selection = Selection::JumpRamp(ramp_idx);
+
+        // 1. Rotate Selected Ramp
+        assert!(tools.rotate_selected_jump_ramp(&mut state, std::f32::consts::FRAC_PI_4));
+        assert!((state.track.geometry.jump_ramps[ramp_idx].angle() - std::f32::consts::FRAC_PI_4).abs() < 1e-4);
+
+        // 2. Adjust Size
+        assert!(tools.adjust_selected_jump_ramp_size(&mut state, 4.0, 2.0));
+        assert_eq!(state.track.geometry.jump_ramps[ramp_idx].length(), 14.0);
+        assert_eq!(state.track.geometry.jump_ramps[ramp_idx].width(), 10.0);
+
+        // 3. Scale Size
+        assert!(tools.scale_selected_jump_ramp_size(&mut state, 1.5));
+        assert_eq!(state.track.geometry.jump_ramps[ramp_idx].length(), 21.0);
+        assert_eq!(state.track.geometry.jump_ramps[ramp_idx].width(), 15.0);
+
+        // 4. Adjust Pitch & Height
+        assert!(tools.adjust_selected_jump_ramp_pitch(&mut state, 5.0));
+        assert_eq!(state.track.geometry.jump_ramps[ramp_idx].ramp_angle_deg, 20.0);
+        assert!(tools.adjust_selected_jump_ramp_height(&mut state, 0.5));
+        assert!((state.track.geometry.jump_ramps[ramp_idx].height - 2.3).abs() < 1e-4);
+
+        // 5. Undo restores previous states
+        assert!(state.undo());
+        assert!((state.track.geometry.jump_ramps[ramp_idx].height - 1.8).abs() < 1e-4);
+    }
 }
+

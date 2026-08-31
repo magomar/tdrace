@@ -101,50 +101,76 @@ pub fn render_jump_ramps(track: &Track) {
                 half_extents,
                 angle,
             } => {
-                let fwd = Vec2::new(angle.cos(), angle.sin()) * half_extents.x;
-                let right = Vec2::new(-angle.sin(), angle.cos()) * half_extents.y;
-                let p0 = *center - fwd - right;
-                let p1 = *center + fwd - right;
-                let p2 = *center + fwd + right;
-                let p3 = *center - fwd + right;
+                let fwd = Vec2::new(angle.cos(), angle.sin());
+                let right = Vec2::new(-angle.sin(), angle.cos());
+                let half_len = half_extents.x;
+                let half_wid = half_extents.y;
+
+                let p0 = *center - fwd * half_len - right * half_wid;
+                let p1 = *center + fwd * half_len - right * half_wid;
+                let p2 = *center + fwd * half_len + right * half_wid;
+                let p3 = *center - fwd * half_len + right * half_wid;
 
                 // 1. Drop shadow beneath ramp platform
                 let s_off = Vec2::new(0.40, 0.55);
                 draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
 
                 // 2. Base metallic ramp quad
-                let ramp_base_col = Color::new(0.24, 0.26, 0.30, 1.0);
+                let ramp_base_col = Color::new(0.18, 0.20, 0.24, 1.0);
                 draw_quad(p0, p1, p2, p3, ramp_base_col);
 
-                // 3. Directional hazard chevron stripes (yellow / black)
-                let num_stripes = 4;
-                for s in 0..num_stripes {
-                    let t0 = s as f32 / num_stripes as f32;
-                    let t1 = (s as f32 + 0.5) / num_stripes as f32;
-                    let s_p0 = p0.lerp(p1, t0);
-                    let s_p1 = p0.lerp(p1, t1);
-                    let s_p2 = p3.lerp(p2, t1);
-                    let s_p3 = p3.lerp(p2, t0);
+                // 3. Directional hazard chevron arrows (pointing forward in launch direction)
+                let num_chevrons = if half_len >= 8.0 {
+                    3
+                } else if half_len >= 3.5 {
+                    2
+                } else {
+                    1
+                };
 
-                    let stripe_col = if s % 2 == 0 {
-                        Color::new(0.98, 0.82, 0.12, 0.95) // Neon caution yellow
-                    } else {
-                        Color::new(0.12, 0.12, 0.15, 0.95) // Dark charcoal
-                    };
-                    draw_quad(s_p0, s_p1, s_p2, s_p3, stripe_col);
+                let arrow_half_w = (half_wid * 0.72).max(0.6);
+                let chevron_depth = (half_len * 0.35).min(arrow_half_w * 0.85);
+                let chevron_thick = (half_len * 0.20).min(arrow_half_w * 0.45);
+                let chevron_col = Palette::NEON_GOLD;
+
+                for s in 0..num_chevrons {
+                    let t = (s as f32 + 1.0) / (num_chevrons as f32 + 1.0);
+                    let x_tip = -half_len * 0.60 + t * (half_len * 1.20);
+
+                    let tip = *center + fwd * x_tip;
+                    let notch = tip - fwd * chevron_thick;
+                    let l_out = tip - fwd * chevron_depth - right * arrow_half_w;
+                    let l_in = l_out - fwd * chevron_thick;
+                    let r_out = tip - fwd * chevron_depth + right * arrow_half_w;
+                    let r_in = r_out - fwd * chevron_thick;
+
+                    draw_quad(l_in, l_out, tip, notch, chevron_col);
+                    draw_quad(r_in, notch, tip, r_out, chevron_col);
                 }
 
                 // 4. Elevated launch lip line at exit edge (bright cyan glow)
                 let launch_edge_col = Color::new(0.30, 0.95, 1.0, 1.0);
                 draw_line(p1.x, p1.y, p2.x, p2.y, 0.45, launch_edge_col);
 
-                // 5. Ramp side border rails
+                // 5. Ramp side border rails & entrance edge
                 draw_line(p0.x, p0.y, p1.x, p1.y, 0.30, Color::new(0.85, 0.85, 0.90, 1.0));
                 draw_line(p3.x, p3.y, p2.x, p2.y, 0.30, Color::new(0.85, 0.85, 0.90, 1.0));
                 draw_line(p0.x, p0.y, p3.x, p3.y, 0.30, Color::new(0.60, 0.60, 0.65, 1.0));
             }
             _ => {
-                render_surface_shape(&ramp.shape, Color::new(0.95, 0.80, 0.10, 0.85), Some(Palette::WHITE_LINE));
+                render_surface_shape(&ramp.shape, Color::new(0.18, 0.20, 0.24, 0.95), Some(Palette::WHITE_LINE));
+                let center = ramp.shape.center();
+                let dir = ramp.direction;
+                let right = Vec2::new(-dir.y, dir.x);
+                let arrow_len = 5.0;
+                let arrow_w = 3.0;
+                let tip = center + dir * (arrow_len * 0.5);
+                let base = center - dir * (arrow_len * 0.5);
+                let l_wing = tip - dir * (arrow_len * 0.4) - right * (arrow_w * 0.5);
+                let r_wing = tip - dir * (arrow_len * 0.4) + right * (arrow_w * 0.5);
+                draw_line(base.x, base.y, tip.x, tip.y, 0.45, Palette::NEON_GOLD);
+                draw_line(tip.x, tip.y, l_wing.x, l_wing.y, 0.45, Palette::NEON_GOLD);
+                draw_line(tip.x, tip.y, r_wing.x, r_wing.y, 0.45, Palette::NEON_GOLD);
             }
         }
     }

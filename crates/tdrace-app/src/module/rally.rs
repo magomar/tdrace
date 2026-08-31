@@ -1,7 +1,10 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::presets::{oasis_rally, outlaw_pass, sahara_dunes};
+use tdrace_core::track::presets::{
+    dirt_figure_eight, hell_rx, holjes_rx, loheac_rx, lydden_hill, oasis_rally, outlaw_pass,
+    sahara_dunes,
+};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
 use crate::ai::{BotProfile, DriverCharacter, DriverStats};
@@ -145,6 +148,51 @@ impl GameModule for RallyGameModule {
     fn tracks(&self) -> Vec<TrackDefinition> {
         vec![
             TrackDefinition {
+                id: "dirt_figure_eight",
+                title: "Dirt Figure-8 Arena",
+                tag: "FIGURE-8 CROSSOVER",
+                description: "Stadium figure-8 circuit featuring an elevated crossover bridge overpass, dirt carousels & tabletop jumps.",
+                category: "Figure-8 Arena",
+                default_laps: 4,
+                generator: dirt_figure_eight,
+            },
+            TrackDefinition {
+                id: "holjes_rx",
+                title: "Höljes Motorstadion",
+                tag: "WORLD RX SWEDEN",
+                description: "The holy grail of Rallycross featuring the iconic Höljes jump crest, banked Velodrome & mixed gravel sliding.",
+                category: "World RX",
+                default_laps: 4,
+                generator: holjes_rx,
+            },
+            TrackDefinition {
+                id: "lydden_hill",
+                title: "Lydden Hill Race Circuit",
+                tag: "WORLD RX GREAT BRITAIN",
+                description: "The historic birthplace of Rallycross featuring Chessons Drift gravel slide, North Bend & Devil's Elbow.",
+                category: "World RX",
+                default_laps: 4,
+                generator: lydden_hill,
+            },
+            TrackDefinition {
+                id: "hell_rx",
+                title: "Lånkebanen / Hell RX",
+                tag: "WORLD RX NORWAY",
+                description: "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.",
+                category: "World RX",
+                default_laps: 4,
+                generator: hell_rx,
+            },
+            TrackDefinition {
+                id: "loheac_rx",
+                title: "Circuit de Lohéac",
+                tag: "WORLD RX FRANCE",
+                description: "The French Rallycross classic with long asphalt drag straight, gravel tabletop jump & tight switchbacks.",
+                category: "World RX",
+                default_laps: 4,
+                generator: loheac_rx,
+            },
+            TrackDefinition {
                 id: "oasis_rally",
                 title: "Oasis Desert Rally",
                 tag: "DESERT STAGE",
@@ -175,7 +223,7 @@ impl GameModule for RallyGameModule {
     }
 
     fn default_track_id(&self) -> &'static str {
-        "oasis_rally"
+        "holjes_rx"
     }
 
     fn drivers(&self) -> Vec<DriverCharacter> {
@@ -354,17 +402,35 @@ impl GameModule for RallyGameModule {
     fn supported_game_modes(&self) -> Vec<TournamentFormat> {
         vec![
             TournamentFormat::StageRally {
-                name: "WRC Desert & Mountain Trophy".to_string(),
-                stage_track_ids: vec!["oasis_rally".to_string(), "outlaw_pass".to_string(), "sahara_dunes".to_string()],
+                name: "World RX Tour".to_string(),
+                stage_track_ids: vec![
+                    "dirt_figure_eight".to_string(),
+                    "holjes_rx".to_string(),
+                    "lydden_hill".to_string(),
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
+                    "oasis_rally".to_string(),
+                    "outlaw_pass".to_string(),
+                    "sahara_dunes".to_string(),
+                ],
             },
             TournamentFormat::Championship {
-                name: "World Rally Championship".to_string(),
+                name: "FIA World Rallycross Championship".to_string(),
                 point_system: PointSystem::F1Standard { fastest_lap_bonus: false },
-                track_ids: vec!["oasis_rally".to_string(), "outlaw_pass".to_string(), "sahara_dunes".to_string()],
-                laps_per_round: 3,
+                track_ids: vec![
+                    "dirt_figure_eight".to_string(),
+                    "holjes_rx".to_string(),
+                    "lydden_hill".to_string(),
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
+                    "oasis_rally".to_string(),
+                    "outlaw_pass".to_string(),
+                    "sahara_dunes".to_string(),
+                ],
+                laps_per_round: 4,
             },
             TournamentFormat::QuickRace {
-                default_laps: 3,
+                default_laps: 4,
                 default_bots: 7,
             },
             TournamentFormat::TimeAttack,

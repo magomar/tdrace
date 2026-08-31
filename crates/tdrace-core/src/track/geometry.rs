@@ -634,6 +634,128 @@ impl JumpRamp {
     pub fn contains(&self, p: Vec2) -> bool {
         self.shape.contains(p)
     }
+
+    /// Returns the 2D orientation/yaw angle in radians.
+    pub fn angle(&self) -> f32 {
+        match &self.shape {
+            SurfaceShape::OrientedBox { angle, .. } => *angle,
+            _ => self.direction.y.atan2(self.direction.x),
+        }
+    }
+
+    /// Returns normalized orientation angle in degrees in the range [0.0, 360.0).
+    pub fn angle_deg(&self) -> f32 {
+        let deg = self.angle().to_degrees() % 360.0;
+        if deg < 0.0 {
+            deg + 360.0
+        } else {
+            deg
+        }
+    }
+
+    /// Sets the 2D orientation angle, updating both the shape and the launch direction vector.
+    pub fn set_angle(&mut self, angle_rad: f32) {
+        let dir = Vec2::new(angle_rad.cos(), angle_rad.sin()).normalize_or_zero();
+        self.direction = dir;
+        match &mut self.shape {
+            SurfaceShape::OrientedBox { angle, .. } => {
+                *angle = angle_rad;
+            }
+            SurfaceShape::Aabb { min, max } => {
+                let center = (*min + *max) * 0.5;
+                let half_extents = (*max - *min) * 0.5;
+                self.shape = SurfaceShape::OrientedBox {
+                    center,
+                    half_extents,
+                    angle: angle_rad,
+                };
+            }
+            _ => {}
+        }
+    }
+
+    /// Sets orientation angle directly from degrees (e.g. 0 to 365 degrees).
+    pub fn set_angle_deg(&mut self, angle_deg: f32) {
+        self.set_angle(angle_deg.to_radians());
+    }
+
+    /// Rotates the ramp by a delta angle in radians.
+    pub fn rotate(&mut self, delta_rad: f32) {
+        let current = self.angle();
+        self.set_angle(current + delta_rad);
+    }
+
+    /// Returns the half-extents (half_length, half_width) of the ramp.
+    pub fn half_extents(&self) -> Vec2 {
+        match &self.shape {
+            SurfaceShape::OrientedBox { half_extents, .. } => *half_extents,
+            SurfaceShape::Aabb { min, max } => (*max - *min) * 0.5,
+            SurfaceShape::Circle { radius, .. } => Vec2::splat(*radius),
+            SurfaceShape::Polygon { vertices } => {
+                if vertices.is_empty() {
+                    Vec2::splat(2.0)
+                } else {
+                    let mut min = Vec2::splat(f32::MAX);
+                    let mut max = Vec2::splat(f32::MIN);
+                    for v in vertices {
+                        min = min.min(*v);
+                        max = max.max(*v);
+                    }
+                    (max - min) * 0.5
+                }
+            }
+        }
+    }
+
+    /// Returns the full length of the ramp (along its forward axis).
+    pub fn length(&self) -> f32 {
+        self.half_extents().x * 2.0
+    }
+
+    /// Returns the full width of the ramp (across its lateral axis).
+    pub fn width(&self) -> f32 {
+        self.half_extents().y * 2.0
+    }
+
+    /// Sets the length and width of the ramp.
+    pub fn set_size(&mut self, length: f32, width: f32) {
+        let half_len = (length * 0.5).max(1.0);
+        let half_wid = (width * 0.5).max(1.0);
+        match &mut self.shape {
+            SurfaceShape::OrientedBox { half_extents, .. } => {
+                *half_extents = Vec2::new(half_len, half_wid);
+            }
+            SurfaceShape::Aabb { min, max } => {
+                let center = (*min + *max) * 0.5;
+                *min = center - Vec2::new(half_len, half_wid);
+                *max = center + Vec2::new(half_len, half_wid);
+            }
+            SurfaceShape::Circle { radius, .. } => {
+                *radius = half_len.max(half_wid);
+            }
+            SurfaceShape::Polygon { .. } => {}
+        }
+    }
+
+    /// Adjusts the length and width of the ramp by deltas.
+    pub fn adjust_size(&mut self, delta_length: f32, delta_width: f32) {
+        let current_len = self.length();
+        let current_wid = self.width();
+        self.set_size(
+            (current_len + delta_length).clamp(2.0, 100.0),
+            (current_wid + delta_width).clamp(1.0, 100.0),
+        );
+    }
+
+    /// Scales the size of the ramp by a multiplier factor.
+    pub fn scale_size(&mut self, factor: f32) {
+        let current_len = self.length();
+        let current_wid = self.width();
+        self.set_size(
+            (current_len * factor).clamp(2.0, 100.0),
+            (current_wid * factor).clamp(1.0, 100.0),
+        );
+    }
 }
 
 /// Collection of boundaries, walls, surface zones, static obstacles, and jump ramps comprising track geometry.
@@ -710,4 +832,43 @@ mod tests {
         assert!(poly.contains(Vec2::new(5.0, 5.0)));
         assert!(!poly.contains(Vec2::new(15.0, 5.0)));
     }
+
+    #[test]
+    fn test_jump_ramp_angle_and_size_manipulation() {
+        let mut ramp = JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(20.0, 30.0),
+                half_extents: Vec2::new(6.0, 4.0),
+                angle: 0.0,
+            },
+            Vec2::new(1.0, 0.0),
+            24.0,
+            15.0,
+            1.8,
+            "Test Ramp",
+        );
+
+        assert_eq!(ramp.angle(), 0.0);
+        assert_eq!(ramp.length(), 12.0);
+        assert_eq!(ramp.width(), 8.0);
+        assert_eq!(ramp.direction, Vec2::new(1.0, 0.0));
+
+        // Rotate by PI/2 (90 deg)
+        ramp.rotate(std::f32::consts::FRAC_PI_2);
+        assert!((ramp.angle() - std::f32::consts::FRAC_PI_2).abs() < 1e-4);
+        assert!((ramp.direction.x - 0.0).abs() < 1e-4);
+        assert!((ramp.direction.y - 1.0).abs() < 1e-4);
+
+        // Adjust size
+        ramp.adjust_size(4.0, -2.0);
+        assert_eq!(ramp.length(), 16.0);
+        assert_eq!(ramp.width(), 6.0);
+
+        // Scale size
+        ramp.scale_size(1.5);
+        assert_eq!(ramp.length(), 24.0);
+        assert_eq!(ramp.width(), 9.0);
+    }
 }
+

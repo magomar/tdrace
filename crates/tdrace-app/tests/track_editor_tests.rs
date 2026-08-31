@@ -1158,5 +1158,168 @@ fn test_track_editor_select_all_and_marquee_box_selection() {
     assert_eq!(state.selection, Selection::None);
 }
 
+#[test]
+fn test_track_editor_jump_ramp_turn_angle_and_change_size() {
+    use tdrace_app::editor::{Selection, ToolSettings};
+    use tdrace_core::track::geometry::{JumpRamp, SurfaceShape};
+
+    let mut track = classic_grand_prix();
+    track.geometry.jump_ramps.push(JumpRamp::new(
+        1,
+        SurfaceShape::OrientedBox {
+            center: Vec2::new(120.0, 80.0),
+            half_extents: Vec2::new(6.0, 4.0),
+            angle: 0.0,
+        },
+        Vec2::new(1.0, 0.0),
+        24.0,
+        15.0,
+        1.8,
+        "Custom Launch Ramp 1",
+    ));
+    track.geometry.jump_ramps.push(JumpRamp::new(
+        2,
+        SurfaceShape::OrientedBox {
+            center: Vec2::new(200.0, 150.0),
+            half_extents: Vec2::new(8.0, 5.0),
+            angle: std::f32::consts::FRAC_PI_2,
+        },
+        Vec2::new(0.0, 1.0),
+        26.0,
+        18.0,
+        2.2,
+        "Custom Launch Ramp 2",
+    ));
+
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    // 1. Select First Jump Ramp
+    state.selection = Selection::JumpRamp(0);
+    assert_eq!(state.track.geometry.jump_ramps[0].angle(), 0.0);
+    assert_eq!(state.track.geometry.jump_ramps[0].length(), 12.0);
+    assert_eq!(state.track.geometry.jump_ramps[0].width(), 8.0);
+
+    // 2. Rotate Ramp by +45 degrees (PI/4)
+    assert!(tools.rotate_selected_jump_ramp(&mut state, std::f32::consts::FRAC_PI_4));
+    assert!((state.track.geometry.jump_ramps[0].angle() - std::f32::consts::FRAC_PI_4).abs() < 1e-4);
+    assert!((state.track.geometry.jump_ramps[0].direction.x - std::f32::consts::FRAC_1_SQRT_2).abs() < 1e-4);
+    assert!((state.track.geometry.jump_ramps[0].direction.y - std::f32::consts::FRAC_1_SQRT_2).abs() < 1e-4);
+
+    // 3. Set Exact Angle to 180 degrees (PI)
+    assert!(tools.set_selected_jump_ramp_angle(&mut state, std::f32::consts::PI));
+    assert!((state.track.geometry.jump_ramps[0].angle() - std::f32::consts::PI).abs() < 1e-4);
+    assert!((state.track.geometry.jump_ramps[0].direction.x - (-1.0)).abs() < 1e-4);
+
+    // 4. Adjust Size (+4m Length, +2m Width)
+    assert!(tools.adjust_selected_jump_ramp_size(&mut state, 4.0, 2.0));
+    assert_eq!(state.track.geometry.jump_ramps[0].length(), 16.0);
+    assert_eq!(state.track.geometry.jump_ramps[0].width(), 10.0);
+
+    // 5. Scale Size (* 1.5)
+    assert!(tools.scale_selected_jump_ramp_size(&mut state, 1.5));
+    assert_eq!(state.track.geometry.jump_ramps[0].length(), 24.0);
+    assert_eq!(state.track.geometry.jump_ramps[0].width(), 15.0);
+
+    // 6. Adjust Pitch & Height
+    assert!(tools.adjust_selected_jump_ramp_pitch(&mut state, 3.0));
+    assert_eq!(state.track.geometry.jump_ramps[0].ramp_angle_deg, 18.0);
+    assert!(tools.adjust_selected_jump_ramp_height(&mut state, 0.4));
+    assert!((state.track.geometry.jump_ramps[0].height - 2.2).abs() < 1e-4);
+
+    // 7. Multi-selection Batch Rotation & Scaling
+    state.selection = Selection::from_multi(vec![], vec![], vec![], vec![0, 1], vec![], vec![], false);
+    let ramp1_orig_angle = state.track.geometry.jump_ramps[1].angle();
+    assert!(tools.rotate_selected_jump_ramp(&mut state, std::f32::consts::FRAC_PI_2));
+    assert!((state.track.geometry.jump_ramps[1].angle() - (ramp1_orig_angle + std::f32::consts::FRAC_PI_2)).abs() < 1e-4);
+
+    assert!(tools.scale_selected_jump_ramp_size(&mut state, 0.8));
+    assert_eq!(state.track.geometry.jump_ramps[1].length(), 16.0 * 0.8);
+
+    // 8. Undo Stack Verification
+    assert!(state.undo()); // reverts batch scale
+    assert_eq!(state.track.geometry.jump_ramps[1].length(), 16.0);
+    assert!(state.undo()); // reverts batch rotate
+    assert!((state.track.geometry.jump_ramps[1].angle() - ramp1_orig_angle).abs() < 1e-4);
+
+    // 9. Revalidate Track
+    assert!(state.track.validate().is_empty());
+}
+
+#[test]
+fn test_track_editor_jump_ramp_arbitrary_angle_degrees() {
+    use tdrace_app::editor::{Selection, ToolSettings};
+    use tdrace_core::track::presets::oasis_rally;
+    use tdrace_core::track::geometry::{JumpRamp, SurfaceShape};
+
+    let mut track = oasis_rally();
+    track.geometry.jump_ramps.clear();
+    track.geometry.jump_ramps.push(JumpRamp::new(
+        1,
+        SurfaceShape::OrientedBox {
+            center: Vec2::new(100.0, 50.0),
+            half_extents: Vec2::new(6.0, 4.0),
+            angle: 0.0,
+        },
+        Vec2::new(1.0, 0.0),
+        25.0,
+        15.0,
+        2.0,
+        "Test Ramp",
+    ));
+
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    state.selection = Selection::JumpRamp(0);
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 0.0).abs() < 1e-4);
+
+    // 1. Set specific arbitrary angles: 37.5°, 142.3°, 359.9°, 365.0° (wraps to 5.0°)
+    tools.set_selected_jump_ramp_angle_deg(&mut state, 37.5);
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 37.5).abs() < 1e-3);
+    assert!((state.track.geometry.jump_ramps[0].angle() - 37.5f32.to_radians()).abs() < 1e-3);
+    let expected_dir_37_5 = Vec2::new(37.5f32.to_radians().cos(), 37.5f32.to_radians().sin());
+    assert!((state.track.geometry.jump_ramps[0].direction - expected_dir_37_5).length() < 1e-3);
+
+    tools.set_selected_jump_ramp_angle_deg(&mut state, 142.3);
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 142.3).abs() < 1e-3);
+
+    tools.set_selected_jump_ramp_angle_deg(&mut state, 359.9);
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 359.9).abs() < 1e-3);
+
+    // 365° angle wraps around to 5.0°
+    tools.set_selected_jump_ramp_angle_deg(&mut state, 365.0);
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 5.0).abs() < 1e-3);
+
+    // 2. Interactive continuous angle drag via handle
+    let ramp_center = Vec2::new(100.0, 50.0);
+    let arrow_tip = ramp_center + state.track.geometry.jump_ramps[0].direction * 8.5;
+
+    // Simulate clicking near the handle tip to start continuous angle rotation
+    tools.handle_mouse_down(&mut state, arrow_tip);
+    assert!(tools.is_rotating_ramp);
+    assert_eq!(tools.drag_rotating_ramp_idx, Some(0));
+
+    // Drag mouse to point due North (angle = 90°)
+    let target_mouse_north = ramp_center + Vec2::new(0.0, 20.0);
+    tools.handle_mouse_drag(&mut state, target_mouse_north);
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 90.0).abs() < 1e-3);
+    assert!((state.track.geometry.jump_ramps[0].direction - Vec2::new(0.0, 1.0)).length() < 1e-3);
+
+    // Release mouse
+    tools.handle_mouse_up(&mut state, target_mouse_north);
+    assert!(!tools.is_rotating_ramp);
+    assert_eq!(tools.drag_rotating_ramp_idx, None);
+
+    // 3. Undo and Redo tracking
+    assert!(state.undo());
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 5.0).abs() < 1e-3);
+    assert!(state.redo());
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 90.0).abs() < 1e-3);
+}
+
+
+
+
 
 

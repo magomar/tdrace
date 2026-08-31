@@ -57,7 +57,7 @@ impl TrackChoice {
             Self::OasisRally => "DESERT DIRT RALLY",
             Self::OutlawPass => "NARROW MOUNTAIN PASS",
             Self::Custom { id, path, .. } => {
-                if path.contains("/rally/") || path.starts_with("rally/") || id == "sahara" {
+                if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac") {
                     "RALLY CROSS"
                 } else if path.contains("/f1/") || path.starts_with("f1/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota") {
                     "FORMULA 1"
@@ -82,7 +82,7 @@ impl TrackChoice {
             Self::OasisRally => "DESERT DIRT RALLY",
             Self::OutlawPass => "NARROW MOUNTAIN PASS",
             Self::Custom { id, path, .. } => {
-                if path.contains("/rally/") || path.starts_with("rally/") || id == "sahara" {
+                if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac") {
                     "RALLY CROSS"
                 } else if path.contains("/f1/") || path.starts_with("f1/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota") {
                     "FORMULA 1"
@@ -231,7 +231,12 @@ pub fn resolve_track_for_menu(choice: &TrackChoice) -> Option<tdrace_core::track
                 "bahrain" => Some(crate::module::f1::F1GameModule::track_bahrain()),
                 "marina_bay" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
                 "cota" => Some(crate::module::f1::F1GameModule::track_cota()),
-                "sahara" => Some(tdrace_core::track::presets::sahara_dunes()),
+                "sahara" | "sahara_dunes" => Some(tdrace_core::track::presets::sahara_dunes()),
+                "dirt_figure_eight" | "dirt_eight" => Some(tdrace_core::track::presets::dirt_figure_eight()),
+                "holjes_rx" | "holjes" => Some(tdrace_core::track::presets::holjes_rx()),
+                "lydden_hill" | "lydden" => Some(tdrace_core::track::presets::lydden_hill()),
+                "hell_rx" | "hell" => Some(tdrace_core::track::presets::hell_rx()),
+                "loheac_rx" | "loheac" => Some(tdrace_core::track::presets::loheac_rx()),
                 "lonato" => Some(crate::module::kart::KartGameModule::track_lonato()),
                 "sarno" => Some(crate::module::kart::KartGameModule::track_sarno()),
                 "genk" => Some(crate::module::kart::KartGameModule::track_genk()),

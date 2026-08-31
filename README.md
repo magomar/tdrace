@@ -73,7 +73,7 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
   1. `Select` (`[1]`): Inspect, move, and edit properties of waypoints, ramps, hazard zones, and barriers.
   2. `Road Spline` (`[2]`): Add and shape Catmull-Rom spline waypoints with per-node road widths.
   3. `Surface Zones` (`[3]`): Place custom off-track sand traps, dirt runoffs, water puddles, oil slicks, and ice patches.
-  4. `Jump Ramps` (`[4]`): Configure 2.5D launch speed, ramp angle, and elevation heights.
+  4. `Jump Ramps` (`[4]`): Directional chevron arrow indicators with 2.5D launch speed, turning angle, height, and custom length/width scaling.
   5. `Obstacles` (`[5]`): Place tire barriers, concrete blocks, and restitution physics hazards.
   6. `Checkpoints` (`[6]`): Place sector gates and configure start/finish lines.
   7. `Starting Grid` (`[7]`): Position staggered multi-car starting slots.
@@ -109,6 +109,7 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
 | :---: | :---: | :--- |
 | **`1`–`8`** | **Tool Selector** | Switch between Select, Spline, Surface, Ramp, Obstacle, Checkpoint, Grid, Pit |
 | **`Left Click / Drag`** | **Draw / Move** | Place or drag waypoints, zones, ramps, and obstacle nodes |
+| **`R` / `[` / `]`** | **Rotate Ramp** | Turn selected jump ramp angle (+/- 15° or Shift for reverse) |
 | **`Middle / Right Drag`** | **Pan Canvas** | Pan the 2D CAD camera viewport |
 | **`Scroll Wheel`** | **Zoom** | Zoom smoothly in/out centered at cursor |
 | **`Ctrl+Z` / `Ctrl+Y`** | **Undo / Redo** | Snapshot-based 50-step undo/redo history |

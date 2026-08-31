@@ -39,6 +39,9 @@ pub enum EditorModal {
     Diagnostics,
     Help,
     UnsavedChanges,
+    SetRampAngle {
+        input_angle: String,
+    },
 }
 
 /// Actions dispatched from editor UI interactions.
@@ -90,7 +93,7 @@ pub fn render_editor_ui(
     let bg_mouse_clicked = mouse_clicked && !is_modal_open;
 
     // Drain accumulated characters whenever no text-input modal is active
-    if !matches!(*active_modal, EditorModal::SaveAs { .. }) {
+    if !matches!(*active_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampAngle { .. }) {
         drain_char_queue();
     }
 
@@ -317,7 +320,7 @@ pub fn render_editor_ui(
 
     scaler.draw_glass_card(insp_x, insp_y, insp_w, insp_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
-    render_inspector(fonts, &scaler, insp_x, insp_y, insp_w, insp_h, state, tools, mouse_pos, bg_mouse_clicked);
+    render_inspector(fonts, &scaler, insp_x, insp_y, insp_w, insp_h, state, tools, mouse_pos, bg_mouse_clicked, active_modal);
 
     // 4. BOTTOM STATUS BAR
     let bot_h = scaler.s(32.0);
@@ -446,6 +449,21 @@ pub fn render_editor_ui(
                     *active_modal = EditorModal::None;
                 }
             }
+            EditorModal::SetRampAngle { input_angle } => {
+                if render_set_ramp_angle_modal(
+                    fonts,
+                    &scaler,
+                    sw,
+                    sh,
+                    state,
+                    tools,
+                    input_angle,
+                    mouse_pos,
+                    mouse_clicked,
+                ) {
+                    *active_modal = EditorModal::None;
+                }
+            }
             EditorModal::None => {}
         }
 
@@ -477,6 +495,7 @@ fn render_inspector(
     tools: &mut ToolSettings,
     mouse_pos: Vec2,
     clicked: bool,
+    active_modal: &mut EditorModal,
 ) {
     fonts.draw_ui_bold(
         "INSPECTOR",
@@ -664,7 +683,7 @@ fn render_inspector(
         }
         Selection::SurfaceZone(idx) => {
             if idx < state.track.geometry.surface_zones.len() {
-                let (zone_surface, is_front, shape_name) = {
+                let (_zone_surface, _is_front, shape_name) = {
                     let zone = &state.track.geometry.surface_zones[idx];
                     let shape_name = match &zone.shape {
                         SurfaceShape::Circle { .. } => "Circle",
@@ -688,35 +707,59 @@ fn render_inspector(
                 curr_y += scaler.s(18.0);
 
                 fonts.draw_ui_bold("LAYER / DEPTH:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(24.0);
+
+                let is_above = state.track.geometry.surface_zones[idx].is_above_track();
+                let layer_text = if is_above { "Layer: FRONT (Above Track)" } else { "Layer: BACK (Below Track)" };
+                fonts.draw_ui_bold(layer_text, x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_GOLD);
                 curr_y += scaler.s(18.0);
 
-                let front_bg = if is_front { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
-                let front_border = if is_front { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER };
-                let back_bg = if !is_front { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
-                let back_border = if !is_front { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
-
                 let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "FRONT [Ctrl+F]", front_bg, front_border, mouse_pos, clicked) {
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    half_btn_w,
+                    scaler.s(24.0),
+                    "Bring Front",
+                    if is_above { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_above { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
                     tools.bring_selected_surface_front(state);
                 }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "BACK [Ctrl+B]", back_bg, back_border, mouse_pos, clicked) {
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(18.0) + half_btn_w,
+                    curr_y,
+                    half_btn_w,
+                    scaler.s(24.0),
+                    "Send Back",
+                    if !is_above { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if !is_above { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
                     tools.send_selected_surface_back(state);
                 }
                 curr_y += scaler.s(30.0);
 
-                fonts.draw_ui_bold("SURFACE TYPE:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                fonts.draw_ui_bold("Zone Material:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(18.0);
 
                 let surfaces = [
-                    (SurfaceType::Sand, "Sand"),
-                    (SurfaceType::Dirt, "Dirt"),
-                    (SurfaceType::Water, "Water"),
-                    (SurfaceType::Asphalt, "Asphalt"),
-                    (SurfaceType::Grass, "Grass"),
-                    (SurfaceType::Oil, "Oil Slick"),
-                    (SurfaceType::Ice, "Ice Patch"),
+                    (SurfaceType::Dirt, "Dirt / Gravel Runoff"),
+                    (SurfaceType::Sand, "Deep Sand Trap"),
+                    (SurfaceType::Grass, "Grass Field"),
+                    (SurfaceType::Water, "Water Puddle Hazard"),
+                    (SurfaceType::Ice, "Ice Patch Slick"),
+                    (SurfaceType::Asphalt, "Tarmac Extension"),
                 ];
 
+                let zone_surface = state.track.geometry.surface_zones[idx].surface;
                 for (st, label) in surfaces {
                     let is_active = zone_surface == st;
                     let st_bg = if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
@@ -727,7 +770,7 @@ fn render_inspector(
                     }
                     curr_y += scaler.s(25.0);
                 }
-
+                curr_y += scaler.s(6.0);
                 if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y + scaler.s(6.0), w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE ZONE [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                     tools.duplicate_selected(state);
                 }
@@ -759,12 +802,128 @@ fn render_inspector(
         }
         Selection::JumpRamp(idx) => {
             if idx < state.track.geometry.jump_ramps.len() {
-                fonts.draw_ui_bold(&format!("Jump Ramp #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-                curr_y += scaler.s(24.0);
-
                 let ramp = &state.track.geometry.jump_ramps[idx];
-                fonts.draw_ui_regular(&format!("Height: {:.1}m | Angle: {:.0}°", ramp.height, ramp.ramp_angle_deg), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_GOLD);
-                curr_y += scaler.s(32.0);
+                fonts.draw_ui_bold(&format!("Jump Ramp #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
+                curr_y += scaler.s(22.0);
+
+                let heading_deg = ramp.angle_deg();
+                fonts.draw_ui_bold(&format!("Direction Angle: {:.1}°", heading_deg), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(18.0);
+
+                // Continuous Angle Slider: 0° to 360°
+                let slider_w = w - scaler.s(24.0);
+                let slider_h = scaler.s(20.0);
+                let slider_x = x + scaler.s(12.0);
+                let slider_y = curr_y;
+
+                scaler.draw_glass_card(slider_x, slider_y, slider_w, slider_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.0);
+                let slider_pct = (heading_deg % 360.0) / 360.0;
+                macroquad::shapes::draw_rectangle(slider_x + scaler.s(2.0), slider_y + scaler.s(2.0), (slider_w - scaler.s(4.0)) * slider_pct, slider_h - scaler.s(4.0), Palette::NEON_CYAN);
+                let thumb_x = slider_x + scaler.s(2.0) + (slider_w - scaler.s(4.0)) * slider_pct;
+                macroquad::shapes::draw_circle(thumb_x, slider_y + slider_h * 0.5, scaler.s(6.0), Palette::NEON_GOLD);
+
+                let mouse_over_slider = mouse_pos.x >= slider_x && mouse_pos.x <= slider_x + slider_w && mouse_pos.y >= slider_y && mouse_pos.y <= slider_y + slider_h;
+                if clicked && mouse_over_slider {
+                    let pct = ((mouse_pos.x - slider_x) / slider_w).clamp(0.0, 1.0);
+                    let new_angle_deg = pct * 360.0;
+                    tools.set_selected_jump_ramp_angle_deg(state, new_angle_deg);
+                }
+                curr_y += scaler.s(26.0);
+
+                // Direct Exact Angle Input Button
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(24.0), &format!("SET EXACT ANGLE [{:.1}°]", heading_deg), Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    *active_modal = EditorModal::SetRampAngle {
+                        input_angle: format!("{:.1}", heading_deg),
+                    };
+                }
+                curr_y += scaler.s(28.0);
+
+                // Fine 1-degree and 15-degree adjustment buttons
+                let q_btn_w = (w - scaler.s(42.0)) / 4.0;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, q_btn_w, scaler.s(22.0), "-1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 180.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + q_btn_w, curr_y, q_btn_w, scaler.s(22.0), "+1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 180.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(24.0) + q_btn_w * 2.0, curr_y, q_btn_w, scaler.s(22.0), "-15°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 12.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(30.0) + q_btn_w * 3.0, curr_y, q_btn_w, scaler.s(22.0), "+15°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 12.0);
+                }
+                curr_y += scaler.s(26.0);
+
+                // Cardinal preset buttons (0°, 90°, 180°, 270°)
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, q_btn_w, scaler.s(22.0), "0° (E)", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.set_selected_jump_ramp_angle_deg(state, 0.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + q_btn_w, curr_y, q_btn_w, scaler.s(22.0), "90° (N)", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.set_selected_jump_ramp_angle_deg(state, 90.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(24.0) + q_btn_w * 2.0, curr_y, q_btn_w, scaler.s(22.0), "180° (W)", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.set_selected_jump_ramp_angle_deg(state, 180.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(30.0) + q_btn_w * 3.0, curr_y, q_btn_w, scaler.s(22.0), "270° (S)", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.set_selected_jump_ramp_angle_deg(state, 270.0);
+                }
+                curr_y += scaler.s(30.0);
+
+                // Ramp Size (Length & Width)
+                let ramp = &state.track.geometry.jump_ramps[idx];
+                let len = ramp.length();
+                let wid = ramp.width();
+                fonts.draw_ui_bold(&format!("Size: {:.1}m x {:.1}m", len, wid), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(18.0);
+
+                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+                // Length buttons
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-2m Length", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_size(state, -2.0, 0.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+2m Length", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_size(state, 2.0, 0.0);
+                }
+                curr_y += scaler.s(26.0);
+
+                // Width buttons
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-1m Width", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_size(state, 0.0, -1.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+1m Width", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_size(state, 0.0, 1.0);
+                }
+                curr_y += scaler.s(26.0);
+
+                // Scale +/- 10% buttons
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-10% Scale", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.scale_selected_jump_ramp_size(state, 0.90);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+10% Scale", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.scale_selected_jump_ramp_size(state, 1.10);
+                }
+                curr_y += scaler.s(30.0);
+
+                // Jump Elevation & Pitch Angle
+                let ramp = &state.track.geometry.jump_ramps[idx];
+                fonts.draw_ui_bold(&format!("Height: {:.1}m | Pitch: {:.0}°", ramp.height, ramp.ramp_angle_deg), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+                curr_y += scaler.s(18.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-0.2m Height", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_height(state, -0.2);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+0.2m Height", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_height(state, 0.2);
+                }
+                curr_y += scaler.s(26.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-2° Pitch", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_pitch(state, -2.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+2° Pitch", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_pitch(state, 2.0);
+                }
+                curr_y += scaler.s(30.0);
 
                 if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE RAMP [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                     tools.duplicate_selected(state);
@@ -921,7 +1080,43 @@ fn render_inspector(
                 );
                 curr_y += scaler.s(18.0);
             }
-            curr_y += scaler.s(10.0);
+            curr_y += scaler.s(6.0);
+
+            if !jump_ramps.is_empty() {
+                fonts.draw_ui_bold("BATCH RAMPS:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(18.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(24.0), "SET EXACT ANGLE [0°–365°]", Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    *active_modal = EditorModal::SetRampAngle {
+                        input_angle: "0.0".to_string(),
+                    };
+                }
+                curr_y += scaler.s(28.0);
+
+                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+                let q_btn_w = (w - scaler.s(42.0)) / 4.0;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, q_btn_w, scaler.s(22.0), "-1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 180.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + q_btn_w, curr_y, q_btn_w, scaler.s(22.0), "+1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 180.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(24.0) + q_btn_w * 2.0, curr_y, q_btn_w, scaler.s(22.0), "-15°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 12.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(30.0) + q_btn_w * 3.0, curr_y, q_btn_w, scaler.s(22.0), "+15°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 12.0);
+                }
+                curr_y += scaler.s(26.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-10% Size", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.scale_selected_jump_ramp_size(state, 0.90);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+10% Size", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.scale_selected_jump_ramp_size(state, 1.10);
+                }
+                curr_y += scaler.s(28.0);
+            }
 
             if draw_ui_btn(
                 fonts,
@@ -1201,6 +1396,112 @@ fn render_template_modal(
     }
 
     None
+}
+
+/// Renders modal overlay for specifying exact jump ramp angle (0° to 365°).
+fn render_set_ramp_angle_modal(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    state: &mut EditorState,
+    tools: &mut ToolSettings,
+    input_angle: &mut String,
+    mouse_pos: Vec2,
+    clicked: bool,
+) -> bool {
+    let mw = scaler.s(440.0);
+    let mh = scaler.s(310.0);
+    let mx = (sw - mw) * 0.5;
+    let my = (sh - mh) * 0.5;
+
+    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
+
+    fonts.draw_display_centered("SET JUMP RAMP ANGLE", sw * 0.5, my + scaler.s(26.0), scaler.font_s(20.0), Palette::NEON_GOLD);
+    fonts.draw_ui_regular_centered("Specify custom angle (0° – 365°) • [Enter] to apply", sw * 0.5, my + scaler.s(48.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
+
+    // Text Input Display Box
+    let box_x = mx + scaler.s(30.0);
+    let box_y = my + scaler.s(72.0);
+    let box_w = mw - scaler.s(60.0);
+    let box_h = scaler.s(40.0);
+
+    scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, 1.5);
+    
+    let display_str = if input_angle.is_empty() {
+        "0.0°".to_string()
+    } else {
+        format!("{}°", input_angle)
+    };
+    fonts.draw_ui_bold(&display_str, box_x + scaler.s(16.0), box_y + scaler.s(26.0), scaler.font_s(18.0), Palette::WHITE);
+
+    // Typing handling
+    while let Some(c) = get_char_pressed() {
+        if (c.is_ascii_digit() || c == '.') && input_angle.len() < 8 {
+            if c != '.' || !input_angle.contains('.') {
+                input_angle.push(c);
+            }
+        }
+    }
+    if is_key_pressed(KeyCode::Backspace) {
+        input_angle.pop();
+    }
+
+    // Quick Cardinal Preset Buttons (0°, 90°, 180°, 270°)
+    let presets = [
+        (0.0, "0° (E)"),
+        (90.0, "90° (N)"),
+        (180.0, "180° (W)"),
+        (270.0, "270° (S)"),
+    ];
+    let q_w = (box_w - scaler.s(18.0)) / 4.0;
+    let mut qx = box_x;
+    let qy = my + scaler.s(124.0);
+    for (deg_val, label) in presets {
+        if draw_ui_btn(fonts, scaler, qx, qy, q_w, scaler.s(26.0), label, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+            *input_angle = format!("{:.1}", deg_val);
+        }
+        qx += q_w + scaler.s(6.0);
+    }
+
+    // Angle slider in modal
+    let slider_y = my + scaler.s(166.0);
+    let curr_deg: f32 = input_angle.parse().unwrap_or(0.0);
+    let slider_pct = ((curr_deg % 360.0) / 360.0).clamp(0.0, 1.0);
+    
+    macroquad::shapes::draw_rectangle(box_x, slider_y, box_w, scaler.s(8.0), Palette::UI_CARD_BORDER);
+    macroquad::shapes::draw_rectangle(box_x, slider_y, box_w * slider_pct, scaler.s(8.0), Palette::NEON_CYAN);
+    let thumb_x = box_x + box_w * slider_pct;
+    macroquad::shapes::draw_circle(thumb_x, slider_y + scaler.s(4.0), scaler.s(7.0), Palette::NEON_GOLD);
+
+    if clicked && mouse_pos.x >= box_x && mouse_pos.x <= box_x + box_w && mouse_pos.y >= slider_y - scaler.s(8.0) && mouse_pos.y <= slider_y + scaler.s(16.0) {
+        let pct = ((mouse_pos.x - box_x) / box_w).clamp(0.0, 1.0);
+        let new_deg = pct * 360.0;
+        *input_angle = format!("{:.1}", new_deg);
+    }
+
+    let mut apply_and_close = is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter);
+    let cancel = is_key_pressed(KeyCode::Escape);
+
+    let btn_w = (box_w - scaler.s(12.0)) * 0.5;
+    let btn_y = my + mh - scaler.s(48.0);
+
+    if draw_ui_btn(fonts, scaler, box_x, btn_y, btn_w, scaler.s(32.0), "APPLY [Enter]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+        apply_and_close = true;
+    }
+
+    if draw_ui_btn(fonts, scaler, box_x + btn_w + scaler.s(12.0), btn_y, btn_w, scaler.s(32.0), "CANCEL [Esc]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) || cancel {
+        return true;
+    }
+
+    if apply_and_close {
+        if let Ok(parsed) = input_angle.parse::<f32>() {
+            tools.set_selected_jump_ramp_angle_deg(state, parsed);
+        }
+        return true;
+    }
+
+    false
 }
 
 /// Renders Save As modal overlay with name, filename, and description text inputs and overwrite options.
@@ -2104,7 +2405,7 @@ fn render_help_modal(
     clicked: bool,
 ) -> bool {
     let mw = scaler.s(580.0);
-    let mh = scaler.s(530.0);
+    let mh = scaler.s(560.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
@@ -2117,6 +2418,7 @@ fn render_help_modal(
         ("Left Click", "Place entity / Select / Drag handles / Draw surface shapes"),
         ("Ctrl + S / C / T / P", "Select surface shape (Square, Circle, Triangle, Polygon)"),
         ("Ctrl + F / Ctrl + B", "Move surface zone to FRONT (Above Track) or BACK (Below Track)"),
+        ("R / [ / ]", "Rotate selected Jump Ramp (+/- 15°, Shift for opposite)"),
         ("Arrow Keys / WASD", "Pan camera across circuit canvas (+Shift for fast pan)"),
         ("Middle / Right Drag", "Pan editor camera across the circuit canvas"),
         ("+ / - Keys", "Progressive zoom in / zoom out (+Shift for fast zoom)"),
@@ -2237,6 +2539,15 @@ mod tests {
 
         modal = EditorModal::UnsavedChanges;
         assert_eq!(modal, EditorModal::UnsavedChanges);
+
+        modal = EditorModal::SetRampAngle {
+            input_angle: "135.5".to_string(),
+        };
+        if let EditorModal::SetRampAngle { input_angle } = &modal {
+            assert_eq!(input_angle, "135.5");
+        } else {
+            panic!("Expected SetRampAngle modal");
+        }
     }
 
     #[test]

@@ -436,6 +436,36 @@ impl TrackManager {
             }
             "rally" => {
                 let mut list = vec![
+                    TrackChoice::Custom {
+                        id: "dirt_figure_eight".to_string(),
+                        title: "Dirt Figure-8 Arena".to_string(),
+                        description: "Stadium figure-8 circuit featuring an elevated crossover bridge overpass, dirt carousels & tabletop jumps.".to_string(),
+                        path: "rally/dirt_figure_eight".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "holjes_rx".to_string(),
+                        title: "Höljes Motorstadion (World RX Sweden)".to_string(),
+                        description: "The Holy Grail of Rallycross in Sweden featuring the legendary Höljes Jump, banked Velodrome & mixed gravel sliding.".to_string(),
+                        path: "rally/holjes_rx".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "lydden_hill".to_string(),
+                        title: "Lydden Hill Circuit (World RX Great Britain)".to_string(),
+                        description: "The historic birthplace of Rallycross featuring Chessons Drift gravel slide, North Bend & Devil's Elbow.".to_string(),
+                        path: "rally/lydden_hill".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "hell_rx".to_string(),
+                        title: "Lånkebanen / Hell RX (World RX Norway)".to_string(),
+                        description: "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.".to_string(),
+                        path: "rally/hell_rx".to_string(),
+                    },
+                    TrackChoice::Custom {
+                        id: "loheac_rx".to_string(),
+                        title: "Circuit de Lohéac (World RX France)".to_string(),
+                        description: "The French Rallycross classic in Brittany with long asphalt drag straight, gravel tabletop jump & tight switchbacks.".to_string(),
+                        path: "rally/loheac_rx".to_string(),
+                    },
                     TrackChoice::OasisRally,
                     TrackChoice::OutlawPass,
                     TrackChoice::Custom {
@@ -657,6 +687,36 @@ impl TrackManager {
                     description: "Modern premier Italian world championship venue with technical switchback chicanes and trail-braking hairpins.".to_string(),
                     path: "kart/franciacorta".to_string(),
                 });
+                list.push(TrackChoice::Custom {
+                    id: "dirt_figure_eight".to_string(),
+                    title: "Dirt Figure-8 Arena".to_string(),
+                    description: "Stadium figure-8 circuit featuring an elevated crossover bridge overpass, dirt carousels & tabletop jumps.".to_string(),
+                    path: "rally/dirt_figure_eight".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "holjes_rx".to_string(),
+                    title: "Höljes Motorstadion (World RX Sweden)".to_string(),
+                    description: "The Holy Grail of Rallycross in Sweden featuring the legendary Höljes Jump, banked Velodrome & mixed gravel sliding.".to_string(),
+                    path: "rally/holjes_rx".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "lydden_hill".to_string(),
+                    title: "Lydden Hill Circuit (World RX Great Britain)".to_string(),
+                    description: "The historic birthplace of Rallycross featuring Chessons Drift gravel slide, North Bend & Devil's Elbow.".to_string(),
+                    path: "rally/lydden_hill".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "hell_rx".to_string(),
+                    title: "Lånkebanen / Hell RX (World RX Norway)".to_string(),
+                    description: "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.".to_string(),
+                    path: "rally/hell_rx".to_string(),
+                });
+                list.push(TrackChoice::Custom {
+                    id: "loheac_rx".to_string(),
+                    title: "Circuit de Lohéac (World RX France)".to_string(),
+                    description: "The French Rallycross classic in Brittany with long asphalt drag straight, gravel tabletop jump & tight switchbacks.".to_string(),
+                    path: "rally/loheac_rx".to_string(),
+                });
                 for custom in &self.custom_tracks {
                     if custom.category == TrackCategory::Main && !list.iter().any(|c| c.track_id() == custom.id) {
                         list.push(TrackChoice::Custom {
@@ -789,7 +849,12 @@ impl TrackManager {
                     "bahrain" => Ok(crate::module::f1::F1GameModule::track_bahrain()),
                     "marina_bay" => Ok(crate::module::f1::F1GameModule::track_marina_bay()),
                     "cota" => Ok(crate::module::f1::F1GameModule::track_cota()),
-                    "sahara" => Ok(tdrace_core::track::presets::sahara_dunes()),
+                    "sahara" | "sahara_dunes" => Ok(tdrace_core::track::presets::sahara_dunes()),
+                    "dirt_figure_eight" | "dirt_eight" => Ok(tdrace_core::track::presets::dirt_figure_eight()),
+                    "holjes_rx" | "holjes" => Ok(tdrace_core::track::presets::holjes_rx()),
+                    "lydden_hill" | "lydden" => Ok(tdrace_core::track::presets::lydden_hill()),
+                    "hell_rx" | "hell" => Ok(tdrace_core::track::presets::hell_rx()),
+                    "loheac_rx" | "loheac" => Ok(tdrace_core::track::presets::loheac_rx()),
                     "lonato" => Ok(crate::module::kart::KartGameModule::track_lonato()),
                     "sarno" => Ok(crate::module::kart::KartGameModule::track_sarno()),
                     "genk" => Ok(crate::module::kart::KartGameModule::track_genk()),
@@ -1148,7 +1213,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 29); // 7 classic + 13 f1 + 1 rally unique + 8 famous kart
+        assert_eq!(choices.len(), 34); // 7 classic + 13 f1 + 6 rally unique + 8 famous kart
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();
@@ -1160,8 +1225,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 29, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 29);
+        // Since gp was saved as Draft, main choices is still 34, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 34);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -1170,7 +1235,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 30);
+        assert_eq!(manager.main_track_choices().len(), 35);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -1181,18 +1246,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[29]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[34]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 29);
+        assert_eq!(manager.main_track_choices().len(), 34);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 29);
+        assert_eq!(manager.main_track_choices().len(), 34);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -1279,8 +1344,10 @@ mod tests {
 
         // Rally tracks
         let rally_tracks = manager.module_catalog_tracks("rally");
-        assert_eq!(rally_tracks.len(), 3);
+        assert_eq!(rally_tracks.len(), 8);
         assert!(rally_tracks.iter().any(|t| t.title().contains("Sahara")));
+        assert!(rally_tracks.iter().any(|t| t.title().contains("Figure-8")));
+        assert!(rally_tracks.iter().any(|t| t.title().contains("Höljes")));
 
         // Kart tracks
         let kart_tracks = manager.module_catalog_tracks("kart");
@@ -1292,7 +1359,7 @@ mod tests {
 
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 29);
+        assert_eq!(all_tracks.len(), 34);
 
         // Save a draft
         let mut draft = classic_grand_prix();

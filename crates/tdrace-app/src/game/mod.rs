@@ -3695,6 +3695,55 @@ impl RaceSession {
             }
         }
 
+        // Jump Ramp Rotation Keyboard Shortcuts: R / Shift+R, [ / ], < / >
+        if self.editor_modal == EditorModal::None {
+            if is_key_pressed(KeyCode::R) {
+                let shift_down = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+                let delta = if shift_down {
+                    -std::f32::consts::PI / 12.0
+                } else {
+                    std::f32::consts::PI / 12.0
+                };
+                if let Some(state) = &mut self.editor_state {
+                    if self.editor_tools.rotate_selected_jump_ramp(state, delta) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                }
+            }
+
+            if is_key_pressed(KeyCode::LeftBracket) {
+                if let Some(state) = &mut self.editor_state {
+                    if self.editor_tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 12.0) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                }
+            }
+
+            if is_key_pressed(KeyCode::RightBracket) {
+                if let Some(state) = &mut self.editor_state {
+                    if self.editor_tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 12.0) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                }
+            }
+
+            if is_key_pressed(KeyCode::Comma) {
+                if let Some(state) = &mut self.editor_state {
+                    if self.editor_tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 36.0) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                }
+            }
+
+            if is_key_pressed(KeyCode::Period) {
+                if let Some(state) = &mut self.editor_state {
+                    if self.editor_tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 36.0) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                }
+            }
+        }
+
         if is_key_pressed(KeyCode::G) {
             if let Some(state) = &mut self.editor_state {
                 state.grid_snap = state.grid_snap.next();
@@ -3702,7 +3751,7 @@ impl RaceSession {
         }
 
         // Drain unconsumed characters when no text modal is open in the editor
-        if !matches!(self.editor_modal, EditorModal::SaveAs { .. }) {
+        if !matches!(self.editor_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampAngle { .. }) {
             while get_char_pressed().is_some() {}
         }
 

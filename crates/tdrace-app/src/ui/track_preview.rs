@@ -335,6 +335,23 @@ pub fn render_track_detailed_preview(
             }
         }
 
+        // Pass 3b: Jump Ramps with directional arrow
+        for ramp in &track.geometry.jump_ramps {
+            let center_s = to_screen(ramp.shape.center());
+            let dir_s = Vec2::new(ramp.direction.x, -ramp.direction.y).normalize_or_zero();
+            let right_s = Vec2::new(-dir_s.y, dir_s.x);
+            let arrow_len = scaler.s(8.0);
+            let arrow_w = scaler.s(5.0);
+            let tip = center_s + dir_s * (arrow_len * 0.5);
+            let base = center_s - dir_s * (arrow_len * 0.5);
+            let l_wing = tip - dir_s * (arrow_len * 0.45) - right_s * (arrow_w * 0.5);
+            let r_wing = tip - dir_s * (arrow_len * 0.45) + right_s * (arrow_w * 0.5);
+
+            draw_line(base.x, base.y, tip.x, tip.y, scaler.s(1.6), Palette::NEON_GOLD);
+            draw_line(tip.x, tip.y, l_wing.x, l_wing.y, scaler.s(1.4), Palette::NEON_GOLD);
+            draw_line(tip.x, tip.y, r_wing.x, r_wing.y, scaler.s(1.4), Palette::NEON_GOLD);
+        }
+
         // Pass 4: Starting grid boxes & Finish Line
         let (f_start, f_end, f_dir) = if let Some(cp) = track.checkpoints.iter().find(|c| c.is_finish_line) {
             (to_screen(cp.gate.start), to_screen(cp.gate.end), cp.direction)

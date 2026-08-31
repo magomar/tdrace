@@ -741,3 +741,469 @@ pub fn outlaw_pass() -> Track {
     }
 }
 
+/// Preset 8: Dirt Figure-8 Arena
+/// High-action rally stadium circuit featuring a flyover crossover bridge overpass (4.5m elevation),
+/// sweeping dirt carousels, tabletop jump, and high-sliding rally dynamics.
+pub fn dirt_figure_eight() -> Track {
+    let waypoints = vec![
+        // Sector 1: Start/Finish Straight (Asphalt launch straight in South Loop)
+        TrackWaypoint::new(Vec2::new(0.0, -90.0), 13.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-50.0, -85.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        // Sector 2: South-West Dirt Carousel
+        TrackWaypoint::new(Vec2::new(-85.0, -50.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-85.0, -10.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-60.0, 15.0), 13.0).with_surface(SurfaceType::Dirt),
+        // Sector 3: Flyover Crossover Bridge (Climbs to 4.8m crossing over the lower underpass at (0.0, 50.0))
+        TrackWaypoint::new(Vec2::new(-30.0, 30.0), 13.5).with_surface(SurfaceType::Dirt).with_elevation(2.4),
+        TrackWaypoint::new(Vec2::new(0.0, 50.0), 14.0).with_surface(SurfaceType::Dirt).with_elevation(4.8),
+        TrackWaypoint::new(Vec2::new(30.0, 70.0), 13.5).with_surface(SurfaceType::Dirt).with_elevation(2.4),
+        // Sector 4: North-East Dirt Turn
+        TrackWaypoint::new(Vec2::new(60.0, 85.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(85.0, 110.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(85.0, 150.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 5: North Loop Apex Carousel
+        TrackWaypoint::new(Vec2::new(50.0, 185.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(0.0, 190.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-50.0, 185.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 6: North-West Turn into Underpass Approach
+        TrackWaypoint::new(Vec2::new(-85.0, 150.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-85.0, 110.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-60.0, 85.0), 13.0).with_surface(SurfaceType::Dirt),
+        // Sector 7: Lower Underpass (Passes beneath the crossover bridge at (0.0, 50.0) at elevation 0.0)
+        TrackWaypoint::new(Vec2::new(-30.0, 70.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(0.0, 50.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(30.0, 30.0), 13.0).with_surface(SurfaceType::Dirt),
+        // Sector 8: South-East Turn Return to Finish
+        TrackWaypoint::new(Vec2::new(60.0, 15.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(85.0, -10.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(85.0, -50.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(50.0, -85.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(25.0, -88.0),
+                half_extents: Vec2::new(5.0, 6.0),
+                angle: 3.14,
+            },
+            Vec2::new(-1.0, 0.0),
+            4.2,
+            18.0,
+            2.3,
+            "Stadium Finish Jump",
+        ),
+    ];
+
+    let surface_zones = vec![
+        SurfaceZone::new(
+            SurfaceShape::Circle {
+                center: Vec2::new(0.0, 185.0),
+                radius: 14.0,
+            },
+            SurfaceType::Sand,
+            "North Loop Sand Runoff",
+        ),
+        SurfaceZone::new(
+            SurfaceShape::Circle {
+                center: Vec2::new(0.0, -85.0),
+                radius: 14.0,
+            },
+            SurfaceType::Sand,
+            "South Loop Sand Runoff",
+        ),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 16, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+
+    Track {
+        name: "Dirt Figure-8 Arena".to_string(),
+        description: "High-action rally stadium circuit featuring a flyover crossover bridge overpass, sweeping dirt carousels & tabletop jumps.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones,
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Sand,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Preset 9: Höljes Motorstadion (World RX Sweden)
+/// The holy grail of Rallycross ("The Magic Weekend") in Värmland, Sweden.
+/// Features high-speed asphalt start, the iconic Höljes jump crest, sweeping banked Velodrome, and mixed gravel infield.
+pub fn holjes_rx() -> Track {
+    let waypoints = vec![
+        // Sector 1: Start/Finish Straight (Asphalt)
+        TrackWaypoint::new(Vec2::new(-30.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(40.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt),
+        // Sector 2: Turn 1 (Wide sweeping right hairpin on asphalt)
+        TrackWaypoint::new(Vec2::new(95.0, 20.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(125.0, 60.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(105.0, 100.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        // Sector 3: The Iconic Höljes Jump Crest (Downhill gravel jump)
+        TrackWaypoint::new(Vec2::new(65.0, 130.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(15.0, 150.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 4: The Velodrome (High-speed sweeping banked dirt curve)
+        TrackWaypoint::new(Vec2::new(-45.0, 160.0), 14.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-95.0, 140.0), 14.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-120.0, 95.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 5: Infield Technical Switchback
+        TrackWaypoint::new(Vec2::new(-105.0, 55.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-70.0, 35.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 6: Final Curve onto Start/Finish Straight
+        TrackWaypoint::new(Vec2::new(-60.0, 10.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(65.0, 130.0),
+                half_extents: Vec2::new(5.0, 6.5),
+                angle: 2.75,
+            },
+            Vec2::new(-0.93, 0.37),
+            4.8,
+            20.0,
+            2.6,
+            "Höljes Jump Crest",
+        ),
+    ];
+
+    let surface_zones = vec![
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(110.0, 30.0),
+                max: Vec2::new(150.0, 90.0),
+            },
+            SurfaceType::Sand,
+            "Turn 1 Sand Trap",
+        ),
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(-120.0, 145.0),
+                max: Vec2::new(-20.0, 185.0),
+            },
+            SurfaceType::Sand,
+            "Velodrome Outer Runoff",
+        ),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 16, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Höljes Motorstadion (World RX Sweden)".to_string(),
+        description: "The Holy Grail of Rallycross in Sweden featuring the legendary Höljes Jump, banked Velodrome & mixed gravel sliding.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones,
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Preset 10: Lydden Hill Race Circuit (World RX Great Britain)
+/// The historic birthplace of Rallycross in Kent, England (1967).
+/// Features Chessons Drift (wide gravel sweeper), North Bend hairpin, Hairy Hill descent, and The Elbow.
+pub fn lydden_hill() -> Track {
+    let waypoints = vec![
+        // Pit Straight & Start/Finish (Asphalt)
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(80.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt),
+        // Chessons Drift (Wide sweeping loose gravel drift corner)
+        TrackWaypoint::new(Vec2::new(135.0, 15.0), 14.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(175.0, 50.0), 15.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(185.0, 100.0), 14.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(160.0, 150.0), 14.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        // North Bend (Technical gravel hairpin)
+        TrackWaypoint::new(Vec2::new(115.0, 185.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(65.0, 190.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(20.0, 165.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Hairy Hill (Downhill gravel descent)
+        TrackWaypoint::new(Vec2::new(-15.0, 125.0), 13.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-45.0, 95.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        // The Elbow (Technical transition onto asphalt)
+        TrackWaypoint::new(Vec2::new(-85.0, 75.0), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-115.0, 50.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        // Devil's Elbow onto Pit Straight
+        TrackWaypoint::new(Vec2::new(-95.0, 15.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-50.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let surface_zones = vec![
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(170.0, 30.0),
+                max: Vec2::new(210.0, 130.0),
+            },
+            SurfaceType::Sand,
+            "Chessons Drift Runoff",
+        ),
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(40.0, 180.0),
+                max: Vec2::new(130.0, 215.0),
+            },
+            SurfaceType::Sand,
+            "North Bend Sand Trap",
+        ),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 16, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Lydden Hill Circuit (World RX Great Britain)".to_string(),
+        description: "The historic birthplace of Rallycross featuring the iconic Chessons Drift gravel slide, North Bend & Devil's Elbow.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones,
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Preset 11: Lånkebanen / Hell RX (World RX Norway)
+/// The spectacular Norwegian World RX circuit in Stjørdal / Hell ("Welcome to Hell").
+/// Features dramatic downhill asphalt Turn 1, sweeping loose gravel carousel, undulating terrain, and high-speed jumps.
+pub fn hell_rx() -> Track {
+    let waypoints = vec![
+        // Downhill Start Straight (Asphalt)
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(75.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt),
+        // Turn 1 (High-speed sweeping right on asphalt)
+        TrackWaypoint::new(Vec2::new(130.0, 10.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(165.0, 35.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        // Transition to Gravel Carousel
+        TrackWaypoint::new(Vec2::new(170.0, 80.0), 14.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(140.0, 125.0), 14.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(90.0, 145.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        // Technical Infield Dirt Esses
+        TrackWaypoint::new(Vec2::new(40.0, 130.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(0.0, 150.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-45.0, 135.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // West Gravel Loop & Hairpin
+        TrackWaypoint::new(Vec2::new(-90.0, 110.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-115.0, 70.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Uphill Asphalt Climb onto Main Straight
+        TrackWaypoint::new(Vec2::new(-95.0, 30.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-55.0, 10.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(65.0, 140.0),
+                half_extents: Vec2::new(5.0, 6.0),
+                angle: 3.45,
+            },
+            Vec2::new(-0.95, -0.30),
+            4.5,
+            18.0,
+            2.4,
+            "Hell Gravel Jump",
+        ),
+    ];
+
+    let surface_zones = vec![
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(155.0, 10.0),
+                max: Vec2::new(195.0, 70.0),
+            },
+            SurfaceType::Sand,
+            "Turn 1 Asphalt Runoff",
+        ),
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(-135.0, 50.0),
+                max: Vec2::new(-95.0, 125.0),
+            },
+            SurfaceType::Sand,
+            "West Hairpin Sand Trap",
+        ),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 16, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Lånkebanen (World RX Norway)".to_string(),
+        description: "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones,
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Preset 12: Circuit de Lohéac (World RX France)
+/// The temple of French Rallycross in Brittany.
+/// Features a long asphalt launch straight, tight 90-degree Turn 1, technical gravel infield, tabletop jump, and fast sweeping finish.
+pub fn loheac_rx() -> Track {
+    let waypoints = vec![
+        // Long Front Straight (Asphalt)
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(90.0, 0.0), 14.5).with_surface(SurfaceType::Asphalt),
+        // Turn 1 (Heavy braking 90-degree right on asphalt)
+        TrackWaypoint::new(Vec2::new(145.0, 15.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(160.0, 50.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        // Transition to Gravel & Jump Crest
+        TrackWaypoint::new(Vec2::new(140.0, 95.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(95.0, 120.0), 13.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(45.0, 125.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        // Infield Gravel Chicane
+        TrackWaypoint::new(Vec2::new(0.0, 100.0), 12.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-35.0, 120.0), 12.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        // Western Hairpin
+        TrackWaypoint::new(Vec2::new(-80.0, 110.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-105.0, 75.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Return onto Asphalt & Sweeping Final Corner
+        TrackWaypoint::new(Vec2::new(-90.0, 35.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-50.0, 10.0), 14.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(70.0, 123.0),
+                half_extents: Vec2::new(5.0, 6.0),
+                angle: 3.14,
+            },
+            Vec2::new(-1.0, 0.0),
+            4.6,
+            19.0,
+            2.5,
+            "Lohéac Infield Jump",
+        ),
+    ];
+
+    let surface_zones = vec![
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(145.0, 30.0),
+                max: Vec2::new(185.0, 80.0),
+            },
+            SurfaceType::Sand,
+            "Turn 1 Sand Trap",
+        ),
+        SurfaceZone::new(
+            SurfaceShape::Aabb {
+                min: Vec2::new(-125.0, 60.0),
+                max: Vec2::new(-85.0, 125.0),
+            },
+            SurfaceType::Sand,
+            "Western Hairpin Sand Trap",
+        ),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 16, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Circuit de Lohéac (World RX France)".to_string(),
+        description: "The French Rallycross classic in Brittany with long asphalt drag straight, gravel tabletop jump & tight switchbacks.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones,
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+

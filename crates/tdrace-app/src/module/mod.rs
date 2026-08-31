@@ -278,7 +278,7 @@ mod tests {
         assert!(!rally.title().is_empty());
         assert!(!rally.vehicles().is_empty());
         assert!(rally.vehicles().len() >= 2);
-        assert!(!rally.tracks().is_empty());
+        assert_eq!(rally.tracks().len(), 8);
         assert_eq!(rally.drivers().len(), 7);
         assert_eq!(rally.default_vehicle_id(), "wrc_turbo_rally");
         assert_eq!(rally.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
