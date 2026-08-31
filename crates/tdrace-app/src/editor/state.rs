@@ -72,11 +72,41 @@ pub enum Selection {
     Checkpoint(usize),
     GridSlot(usize),
     PitBox,
+    Multi {
+        waypoints: Vec<usize>,
+        surface_zones: Vec<usize>,
+        obstacles: Vec<usize>,
+        jump_ramps: Vec<usize>,
+        checkpoints: Vec<usize>,
+        grid_slots: Vec<usize>,
+        pit_box: bool,
+    },
 }
 
 impl Selection {
     pub fn is_none(&self) -> bool {
-        matches!(self, Self::None)
+        match self {
+            Self::None => true,
+            Self::Multi {
+                waypoints,
+                surface_zones,
+                obstacles,
+                jump_ramps,
+                checkpoints,
+                grid_slots,
+                pit_box,
+            } => {
+                waypoints.is_empty()
+                    && surface_zones.is_empty()
+                    && obstacles.is_empty()
+                    && jump_ramps.is_empty()
+                    && checkpoints.is_empty()
+                    && grid_slots.is_empty()
+                    && !*pit_box
+            }
+            Self::MultipleWaypoints(wps) => wps.is_empty(),
+            _ => false,
+        }
     }
 
     pub fn is_waypoint(&self) -> Option<usize> {
@@ -87,10 +117,82 @@ impl Selection {
         }
     }
 
+    pub fn total_count(&self) -> usize {
+        match self {
+            Self::None => 0,
+            Self::Waypoint(_)
+            | Self::SurfaceZone(_)
+            | Self::Obstacle(_)
+            | Self::JumpRamp(_)
+            | Self::Checkpoint(_)
+            | Self::GridSlot(_)
+            | Self::PitBox => 1,
+            Self::MultipleWaypoints(indices) => indices.len(),
+            Self::Multi {
+                waypoints,
+                surface_zones,
+                obstacles,
+                jump_ramps,
+                checkpoints,
+                grid_slots,
+                pit_box,
+            } => {
+                waypoints.len()
+                    + surface_zones.len()
+                    + obstacles.len()
+                    + jump_ramps.len()
+                    + checkpoints.len()
+                    + grid_slots.len()
+                    + if *pit_box { 1 } else { 0 }
+            }
+        }
+    }
+
     pub fn selected_waypoint_indices(&self) -> Vec<usize> {
         match self {
             Self::Waypoint(idx) => vec![*idx],
             Self::MultipleWaypoints(indices) => indices.clone(),
+            Self::Multi { waypoints, .. } => waypoints.clone(),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn selected_surface_zone_indices(&self) -> Vec<usize> {
+        match self {
+            Self::SurfaceZone(idx) => vec![*idx],
+            Self::Multi { surface_zones, .. } => surface_zones.clone(),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn selected_obstacle_indices(&self) -> Vec<usize> {
+        match self {
+            Self::Obstacle(idx) => vec![*idx],
+            Self::Multi { obstacles, .. } => obstacles.clone(),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn selected_jump_ramp_indices(&self) -> Vec<usize> {
+        match self {
+            Self::JumpRamp(idx) => vec![*idx],
+            Self::Multi { jump_ramps, .. } => jump_ramps.clone(),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn selected_checkpoint_indices(&self) -> Vec<usize> {
+        match self {
+            Self::Checkpoint(idx) => vec![*idx],
+            Self::Multi { checkpoints, .. } => checkpoints.clone(),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn selected_grid_slot_indices(&self) -> Vec<usize> {
+        match self {
+            Self::GridSlot(idx) => vec![*idx],
+            Self::Multi { grid_slots, .. } => grid_slots.clone(),
             _ => Vec::new(),
         }
     }
@@ -99,8 +201,188 @@ impl Selection {
         match self {
             Self::Waypoint(i) => *i == idx,
             Self::MultipleWaypoints(indices) => indices.contains(&idx),
+            Self::Multi { waypoints, .. } => waypoints.contains(&idx),
             _ => false,
         }
+    }
+
+    pub fn is_surface_zone_selected(&self, idx: usize) -> bool {
+        match self {
+            Self::SurfaceZone(i) => *i == idx,
+            Self::Multi { surface_zones, .. } => surface_zones.contains(&idx),
+            _ => false,
+        }
+    }
+
+    pub fn is_obstacle_selected(&self, idx: usize) -> bool {
+        match self {
+            Self::Obstacle(i) => *i == idx,
+            Self::Multi { obstacles, .. } => obstacles.contains(&idx),
+            _ => false,
+        }
+    }
+
+    pub fn is_jump_ramp_selected(&self, idx: usize) -> bool {
+        match self {
+            Self::JumpRamp(i) => *i == idx,
+            Self::Multi { jump_ramps, .. } => jump_ramps.contains(&idx),
+            _ => false,
+        }
+    }
+
+    pub fn is_checkpoint_selected(&self, idx: usize) -> bool {
+        match self {
+            Self::Checkpoint(i) => *i == idx,
+            Self::Multi { checkpoints, .. } => checkpoints.contains(&idx),
+            _ => false,
+        }
+    }
+
+    pub fn is_grid_slot_selected(&self, idx: usize) -> bool {
+        match self {
+            Self::GridSlot(i) => *i == idx,
+            Self::Multi { grid_slots, .. } => grid_slots.contains(&idx),
+            _ => false,
+        }
+    }
+
+    pub fn is_pit_box_selected(&self) -> bool {
+        match self {
+            Self::PitBox => true,
+            Self::Multi { pit_box, .. } => *pit_box,
+            _ => false,
+        }
+    }
+
+    pub fn contains_entity(&self, other: &Selection) -> bool {
+        match other {
+            Self::Waypoint(i) => self.is_waypoint_selected(*i),
+            Self::SurfaceZone(i) => self.is_surface_zone_selected(*i),
+            Self::Obstacle(i) => self.is_obstacle_selected(*i),
+            Self::JumpRamp(i) => self.is_jump_ramp_selected(*i),
+            Self::Checkpoint(i) => self.is_checkpoint_selected(*i),
+            Self::GridSlot(i) => self.is_grid_slot_selected(*i),
+            Self::PitBox => self.is_pit_box_selected(),
+            _ => false,
+        }
+    }
+
+    pub fn from_multi(
+        mut waypoints: Vec<usize>,
+        mut surface_zones: Vec<usize>,
+        mut obstacles: Vec<usize>,
+        mut jump_ramps: Vec<usize>,
+        mut checkpoints: Vec<usize>,
+        mut grid_slots: Vec<usize>,
+        pit_box: bool,
+    ) -> Self {
+        waypoints.sort_unstable();
+        waypoints.dedup();
+        surface_zones.sort_unstable();
+        surface_zones.dedup();
+        obstacles.sort_unstable();
+        obstacles.dedup();
+        jump_ramps.sort_unstable();
+        jump_ramps.dedup();
+        checkpoints.sort_unstable();
+        checkpoints.dedup();
+        grid_slots.sort_unstable();
+        grid_slots.dedup();
+
+        Self::Multi {
+            waypoints,
+            surface_zones,
+            obstacles,
+            jump_ramps,
+            checkpoints,
+            grid_slots,
+            pit_box,
+        }
+        .normalize()
+    }
+
+    pub fn normalize(self) -> Self {
+        match self {
+            Self::Multi {
+                waypoints,
+                surface_zones,
+                obstacles,
+                jump_ramps,
+                checkpoints,
+                grid_slots,
+                pit_box,
+            } => {
+                let total = waypoints.len()
+                    + surface_zones.len()
+                    + obstacles.len()
+                    + jump_ramps.len()
+                    + checkpoints.len()
+                    + grid_slots.len()
+                    + if pit_box { 1 } else { 0 };
+
+                if total == 0 {
+                    Self::None
+                } else if total == 1 {
+                    if let Some(&w) = waypoints.first() {
+                        Self::Waypoint(w)
+                    } else if let Some(&sz) = surface_zones.first() {
+                        Self::SurfaceZone(sz)
+                    } else if let Some(&obs) = obstacles.first() {
+                        Self::Obstacle(obs)
+                    } else if let Some(&ramp) = jump_ramps.first() {
+                        Self::JumpRamp(ramp)
+                    } else if let Some(&cp) = checkpoints.first() {
+                        Self::Checkpoint(cp)
+                    } else if let Some(&slot) = grid_slots.first() {
+                        Self::GridSlot(slot)
+                    } else if pit_box {
+                        Self::PitBox
+                    } else {
+                        Self::None
+                    }
+                } else if waypoints.len() == total {
+                    Self::MultipleWaypoints(waypoints)
+                } else {
+                    Self::Multi {
+                        waypoints,
+                        surface_zones,
+                        obstacles,
+                        jump_ramps,
+                        checkpoints,
+                        grid_slots,
+                        pit_box,
+                    }
+                }
+            }
+            _ => self,
+        }
+    }
+
+    pub fn union(&self, other: &Selection) -> Self {
+        let mut waypoints = self.selected_waypoint_indices();
+        let mut surface_zones = self.selected_surface_zone_indices();
+        let mut obstacles = self.selected_obstacle_indices();
+        let mut jump_ramps = self.selected_jump_ramp_indices();
+        let mut checkpoints = self.selected_checkpoint_indices();
+        let mut grid_slots = self.selected_grid_slot_indices();
+        let pit_box = self.is_pit_box_selected() || other.is_pit_box_selected();
+
+        waypoints.extend(other.selected_waypoint_indices());
+        surface_zones.extend(other.selected_surface_zone_indices());
+        obstacles.extend(other.selected_obstacle_indices());
+        jump_ramps.extend(other.selected_jump_ramp_indices());
+        checkpoints.extend(other.selected_checkpoint_indices());
+        grid_slots.extend(other.selected_grid_slot_indices());
+
+        Self::from_multi(
+            waypoints,
+            surface_zones,
+            obstacles,
+            jump_ramps,
+            checkpoints,
+            grid_slots,
+            pit_box,
+        )
     }
 
     pub fn toggle_waypoint(&mut self, idx: usize) {
@@ -128,6 +410,16 @@ impl Selection {
                     indices.sort_unstable();
                     indices.dedup();
                 }
+            }
+            Self::Multi { waypoints, .. } => {
+                if let Some(pos) = waypoints.iter().position(|&x| x == idx) {
+                    waypoints.remove(pos);
+                } else {
+                    waypoints.push(idx);
+                    waypoints.sort_unstable();
+                    waypoints.dedup();
+                }
+                *self = self.clone().normalize();
             }
             _ => {
                 *self = Self::Waypoint(idx);
@@ -291,6 +583,11 @@ impl EditorState {
                     self.last_selected_waypoint = Some(first);
                 }
             }
+            Selection::Multi { waypoints, .. } => {
+                if let Some(&first) = waypoints.first() {
+                    self.last_selected_waypoint = Some(first);
+                }
+            }
             _ => {}
         }
         self.selection = selection;
@@ -311,6 +608,13 @@ impl EditorState {
             }
             Selection::MultipleWaypoints(indices) => {
                 if let Some(&last) = indices.last() {
+                    if last < self.track.spline.waypoints.len() {
+                        return Some(last);
+                    }
+                }
+            }
+            Selection::Multi { waypoints, .. } => {
+                if let Some(&last) = waypoints.last() {
                     if last < self.track.spline.waypoints.len() {
                         return Some(last);
                     }
@@ -446,5 +750,39 @@ mod tests {
         // Select waypoint 5
         editor.select(Selection::Waypoint(5));
         assert_eq!(editor.current_or_last_waypoint_idx(), Some(5));
+    }
+
+    #[test]
+    fn test_multi_selection_normalization_and_union() {
+        // Empty -> None
+        let empty = Selection::from_multi(vec![], vec![], vec![], vec![], vec![], vec![], false);
+        assert_eq!(empty, Selection::None);
+        assert!(empty.is_none());
+
+        // Single waypoint -> Waypoint(1)
+        let single_wp = Selection::from_multi(vec![1], vec![], vec![], vec![], vec![], vec![], false);
+        assert_eq!(single_wp, Selection::Waypoint(1));
+        assert_eq!(single_wp.total_count(), 1);
+
+        // Multiple waypoints -> MultipleWaypoints([1, 3])
+        let multi_wp = Selection::from_multi(vec![3, 1], vec![], vec![], vec![], vec![], vec![], false);
+        assert_eq!(multi_wp, Selection::MultipleWaypoints(vec![1, 3]));
+        assert_eq!(multi_wp.total_count(), 2);
+
+        // Mixed entities -> Multi
+        let mixed = Selection::from_multi(vec![1], vec![0], vec![2], vec![], vec![], vec![], false);
+        assert!(matches!(mixed, Selection::Multi { .. }));
+        assert_eq!(mixed.total_count(), 3);
+        assert!(mixed.is_waypoint_selected(1));
+        assert!(mixed.is_surface_zone_selected(0));
+        assert!(mixed.is_obstacle_selected(2));
+        assert!(!mixed.is_jump_ramp_selected(0));
+
+        // Union of single obstacle and waypoint
+        let obs_sel = Selection::Obstacle(5);
+        let combined = single_wp.union(&obs_sel);
+        assert_eq!(combined.total_count(), 2);
+        assert!(combined.is_waypoint_selected(1));
+        assert!(combined.is_obstacle_selected(5));
     }
 }

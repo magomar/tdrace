@@ -101,7 +101,7 @@ use crate::ui::hud::render_hud;
 use crate::ui::menu::{
     render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
     render_module_select_menu, render_pause_menu, render_results_screen, render_track_select_menu,
-    CarChoice, GameMode, RaceResultEntry, TrackChoice,
+    resolve_predefined_car_for_track, CarChoice, GameMode, RaceResultEntry, TrackChoice,
 };
 use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
 use crate::ui::starting_grid::render_starting_grid_screen;
@@ -1313,46 +1313,6 @@ impl RaceSession {
             return;
         }
 
-        // Open Controls & Driving Assists Screen (C or K key)
-        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
-            self.audio.play_sfx(SfxType::UiSelect);
-            let from_paused = matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_));
-            self.state = GameState::ControlsHelp(from_paused);
-            return;
-        }
-
-        // Open Driver Cards Dossier Screen (D key)
-        if is_key_pressed(KeyCode::D) {
-            self.audio.play_sfx(SfxType::UiSelect);
-            let origin = match self.state {
-                GameState::StartingGrid => DriverCardsOrigin::StartingGrid,
-                GameState::Racing | GameState::Paused | GameState::Countdown(_) => DriverCardsOrigin::Paused,
-                _ => DriverCardsOrigin::Menu,
-            };
-            self.state = GameState::DriverCards(origin);
-            return;
-        }
-
-
-        // Cycle Driver Assists Profile (H key or Gamepad Right Stick Click / Select)
-        if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
-            self.assist_profile = self.assist_profile.next();
-            if let Some(player_car) = self.cars.first_mut() {
-                player_car.config.assists = self.assist_profile.to_config();
-                self.fx.drift_popups.spawn_text(
-                    player_car.state.position,
-                    &format!("ASSISTS: {}", self.assist_profile.short_name()),
-                    Color::new(0.3, 0.9, 1.0, 1.0),
-                );
-            }
-        }
-
-        // Global restart shortcut (R key)
-        if is_key_pressed(KeyCode::R) {
-            self.init_race();
-            return;
-        }
-
         // Dispatch dedicated profile manager / creation state logic
         if let GameState::ProfileManager { selected_idx } = self.state {
             self.update_profile_manager(selected_idx);
@@ -1397,6 +1357,45 @@ impl RaceSession {
                 self.update_track_manager(active_tab, module_filter, selected_idx, modal, frame_dt);
                 return;
             }
+        }
+
+        // Open Controls & Driving Assists Screen (C or K key)
+        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let from_paused = matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_));
+            self.state = GameState::ControlsHelp(from_paused);
+            return;
+        }
+
+        // Open Driver Cards Dossier Screen (D key)
+        if is_key_pressed(KeyCode::D) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let origin = match self.state {
+                GameState::StartingGrid => DriverCardsOrigin::StartingGrid,
+                GameState::Racing | GameState::Paused | GameState::Countdown(_) => DriverCardsOrigin::Paused,
+                _ => DriverCardsOrigin::Menu,
+            };
+            self.state = GameState::DriverCards(origin);
+            return;
+        }
+
+        // Cycle Driver Assists Profile (H key or Gamepad Right Stick Click / Select)
+        if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
+            self.assist_profile = self.assist_profile.next();
+            if let Some(player_car) = self.cars.first_mut() {
+                player_car.config.assists = self.assist_profile.to_config();
+                self.fx.drift_popups.spawn_text(
+                    player_car.state.position,
+                    &format!("ASSISTS: {}", self.assist_profile.short_name()),
+                    Color::new(0.3, 0.9, 1.0, 1.0),
+                );
+            }
+        }
+
+        // Global restart shortcut (R key)
+        if is_key_pressed(KeyCode::R) {
+            self.init_race();
+            return;
         }
 
         match self.state {
@@ -2751,8 +2750,19 @@ impl RaceSession {
             }
         }
 
-        // 7. Edit Metadata (N key)
+        // 7. Create New Draft Track (N key)
         if is_key_pressed(KeyCode::N) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let count = self.track_manager.draft_track_choices().len() + 1;
+            let name = format!("Draft Track {}", count);
+            let desc = "Experimental draft circuit layout under testing.".to_string();
+            let _ = self.track_manager.create_new_draft_track(&name, &desc);
+            active_tab = TrackManagerTab::Drafts;
+            selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
+        }
+
+        // 8. Edit Metadata (I key)
+        if is_key_pressed(KeyCode::I) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
                 while get_char_pressed().is_some() {}
@@ -2770,17 +2780,6 @@ impl RaceSession {
                 };
                 return;
             }
-        }
-
-        // 8. Create New Draft Track (C key)
-        if is_key_pressed(KeyCode::C) {
-            self.audio.play_sfx(SfxType::UiSelect);
-            let count = self.track_manager.draft_track_choices().len() + 1;
-            let name = format!("Draft Track {}", count);
-            let desc = "Experimental draft circuit layout under testing.".to_string();
-            let _ = self.track_manager.create_new_draft_track(&name, &desc);
-            active_tab = TrackManagerTab::Drafts;
-            selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
         }
 
         // 9. Delete Track (Delete / Backspace / X key)
@@ -3439,7 +3438,8 @@ impl RaceSession {
     /// Spawns vehicle on the circuit starting grid for zero-latency test driving.
     pub fn start_editor_test_drive(&mut self) {
         if let Some(state) = &self.editor_state {
-            let mut base_config = self.config.get_car_config(self.car_choice);
+            let test_car_choice = resolve_predefined_car_for_track(Some(&state.track), self.active_module_id);
+            let mut base_config = self.config.get_car_config(test_car_choice);
             base_config.assists = self.assist_profile.to_config();
             let init_pose = state
                 .track
@@ -3546,6 +3546,21 @@ impl RaceSession {
         {
             if let Some(state) = &mut self.editor_state {
                 state.redo();
+            }
+        }
+
+        if (is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper))
+            && is_key_pressed(KeyCode::A)
+        {
+            if self.editor_modal == EditorModal::None {
+                if let Some(state) = &mut self.editor_state {
+                    if self.editor_tools.select_all_for_active_tool(state) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                }
             }
         }
 
@@ -3779,6 +3794,18 @@ impl RaceSession {
                     _ => {
                         let mut blank = tdrace_core::track::presets::classic_grand_prix();
                         blank.name = "New Custom Circuit".to_string();
+                        blank.module_id = Some(self.active_module_id.to_string());
+                        blank.modules = vec![self.active_module_id.to_string()];
+                        blank.default_surface = match self.active_module_id {
+                            "rally" => tdrace_core::physics::surface::SurfaceType::Dirt,
+                            _ => tdrace_core::physics::surface::SurfaceType::Grass,
+                        };
+                        blank.predefined_car = match self.active_module_id {
+                            "f1" => Some("f1_car".to_string()),
+                            "kart" => Some("kart".to_string()),
+                            "rally" => Some("rally_car".to_string()),
+                            _ => Some("sports_car".to_string()),
+                        };
                         blank
                     }
                 };

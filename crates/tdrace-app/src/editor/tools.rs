@@ -75,12 +75,19 @@ pub struct ToolSettings {
     pub new_waypoint_left_curb: bool,
     pub new_waypoint_right_curb: bool,
 
-    // Dragging interaction state
+    // Dragging / selection interaction state
     pub is_dragging: bool,
+    pub is_box_selecting: bool,
     pub drag_start_world: Vec2,
     pub drag_current_world: Vec2,
     pub drag_initial_entity_pos: Vec2,
     pub drag_initial_waypoints: Vec<(usize, Vec2)>,
+    pub drag_initial_surface_zones: Vec<(usize, Vec2)>,
+    pub drag_initial_obstacles: Vec<(usize, Vec2)>,
+    pub drag_initial_jump_ramps: Vec<(usize, Vec2)>,
+    pub drag_initial_checkpoints: Vec<(usize, Vec2, Vec2)>,
+    pub drag_initial_grid_slots: Vec<(usize, Vec2)>,
+    pub drag_initial_pit_box: Option<(Vec2, Vec2)>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -111,15 +118,81 @@ impl Default for ToolSettings {
             new_waypoint_left_curb: false,
             new_waypoint_right_curb: false,
             is_dragging: false,
+            is_box_selecting: false,
             drag_start_world: Vec2::ZERO,
             drag_current_world: Vec2::ZERO,
             drag_initial_entity_pos: Vec2::ZERO,
             drag_initial_waypoints: Vec::new(),
+            drag_initial_surface_zones: Vec::new(),
+            drag_initial_obstacles: Vec::new(),
+            drag_initial_jump_ramps: Vec::new(),
+            drag_initial_checkpoints: Vec::new(),
+            drag_initial_grid_slots: Vec::new(),
+            drag_initial_pit_box: None,
         }
     }
 }
 
 impl ToolSettings {
+    /// Selects all elements matching the active tool (or all track elements if Select tool is active).
+    pub fn select_all_for_active_tool(&mut self, state: &mut EditorState) -> bool {
+        let selection = match self.active_tool {
+            EditorToolType::Select => {
+                let waypoints = (0..state.track.spline.waypoints.len()).collect();
+                let surface_zones = (0..state.track.geometry.surface_zones.len()).collect();
+                let obstacles = (0..state.track.geometry.obstacles.len()).collect();
+                let jump_ramps = (0..state.track.geometry.jump_ramps.len()).collect();
+                let checkpoints = (0..state.track.checkpoints.len()).collect();
+                let grid_slots = (0..state.track.grid_positions.len()).collect();
+                let pit_box = state.track.pit_box_area.is_some();
+                Selection::from_multi(
+                    waypoints,
+                    surface_zones,
+                    obstacles,
+                    jump_ramps,
+                    checkpoints,
+                    grid_slots,
+                    pit_box,
+                )
+            }
+            EditorToolType::RoadSpline => {
+                let waypoints = (0..state.track.spline.waypoints.len()).collect();
+                Selection::from_multi(waypoints, vec![], vec![], vec![], vec![], vec![], false)
+            }
+            EditorToolType::SurfaceZone => {
+                let surface_zones = (0..state.track.geometry.surface_zones.len()).collect();
+                Selection::from_multi(vec![], surface_zones, vec![], vec![], vec![], vec![], false)
+            }
+            EditorToolType::JumpRamp => {
+                let jump_ramps = (0..state.track.geometry.jump_ramps.len()).collect();
+                Selection::from_multi(vec![], vec![], vec![], jump_ramps, vec![], vec![], false)
+            }
+            EditorToolType::Obstacle => {
+                let obstacles = (0..state.track.geometry.obstacles.len()).collect();
+                Selection::from_multi(vec![], vec![], obstacles, vec![], vec![], vec![], false)
+            }
+            EditorToolType::Checkpoint => {
+                let checkpoints = (0..state.track.checkpoints.len()).collect();
+                Selection::from_multi(vec![], vec![], vec![], vec![], checkpoints, vec![], false)
+            }
+            EditorToolType::StartingGrid => {
+                let grid_slots = (0..state.track.grid_positions.len()).collect();
+                Selection::from_multi(vec![], vec![], vec![], vec![], vec![], grid_slots, false)
+            }
+            EditorToolType::PitLane => {
+                let pit_box = state.track.pit_box_area.is_some();
+                Selection::from_multi(vec![], vec![], vec![], vec![], vec![], vec![], pit_box)
+            }
+        };
+
+        if selection.is_none() {
+            false
+        } else {
+            state.select(selection);
+            true
+        }
+    }
+
     /// Duplicates currently selected obstacle, surface zone, jump ramp, waypoint, checkpoint, or grid slot.
     pub fn duplicate_selected(&mut self, state: &mut EditorState) -> bool {
         match state.selection.clone() {
@@ -241,6 +314,138 @@ impl ToolSettings {
                     return true;
                 }
             }
+            Selection::Multi {
+                waypoints,
+                surface_zones,
+                obstacles,
+                jump_ramps,
+                checkpoints,
+                grid_slots,
+                pit_box: _,
+            } => {
+                let mut any_duplicated = false;
+                let mut new_waypoints = Vec::new();
+                let mut new_surface_zones = Vec::new();
+                let mut new_obstacles = Vec::new();
+                let mut new_jump_ramps = Vec::new();
+                let mut new_checkpoints = Vec::new();
+                let mut new_grid_slots = Vec::new();
+
+                if !waypoints.is_empty()
+                    || !surface_zones.is_empty()
+                    || !obstacles.is_empty()
+                    || !jump_ramps.is_empty()
+                    || !checkpoints.is_empty()
+                    || !grid_slots.is_empty()
+                {
+                    state.record_undo();
+                }
+
+                // 1. Waypoints
+                if !waypoints.is_empty() {
+                    let mut sorted = waypoints.clone();
+                    sorted.sort_unstable();
+                    sorted.dedup();
+                    for &idx in &sorted {
+                        if idx < state.track.spline.waypoints.len() {
+                            let mut copy = state.track.spline.waypoints[idx].clone();
+                            copy.point += Vec2::new(4.0, 4.0);
+                            state.track.spline.waypoints.push(copy);
+                            new_waypoints.push(state.track.spline.waypoints.len() - 1);
+                            any_duplicated = true;
+                        }
+                    }
+                    state.rebuild_geometry();
+                }
+
+                // 2. Surface Zones
+                for &idx in &surface_zones {
+                    if let Some(zone) = state.track.geometry.surface_zones.get(idx).cloned() {
+                        let mut copy = zone.clone();
+                        copy.name = format!("{} (Copy)", zone.name);
+                        let old_center = get_surface_shape_center(&copy.shape);
+                        set_surface_zone_position(&mut copy, old_center + Vec2::new(4.0, 4.0));
+                        state.track.geometry.surface_zones.push(copy);
+                        new_surface_zones.push(state.track.geometry.surface_zones.len() - 1);
+                        any_duplicated = true;
+                    }
+                }
+
+                // 3. Obstacles
+                for &idx in &obstacles {
+                    if let Some(obs) = state.track.geometry.obstacles.get(idx).cloned() {
+                        let new_id = state.track.geometry.obstacles.len() + 1;
+                        let mut copy = obs.clone();
+                        copy.id = new_id;
+                        copy.name = format!("{} (Copy)", obs.name);
+                        let old_center = copy.center();
+                        copy.set_center(old_center + Vec2::new(4.0, 4.0));
+                        state.track.geometry.obstacles.push(copy);
+                        new_obstacles.push(state.track.geometry.obstacles.len() - 1);
+                        any_duplicated = true;
+                    }
+                }
+
+                // 4. Jump Ramps
+                for &idx in &jump_ramps {
+                    if let Some(ramp) = state.track.geometry.jump_ramps.get(idx).cloned() {
+                        let new_id = state.track.geometry.jump_ramps.len() + 1;
+                        let mut copy = ramp.clone();
+                        copy.id = new_id;
+                        copy.name = format!("{} (Copy)", ramp.name);
+                        let old_center = get_surface_shape_center(&copy.shape);
+                        set_jump_ramp_position(&mut copy, old_center + Vec2::new(4.0, 4.0));
+                        state.track.geometry.jump_ramps.push(copy);
+                        new_jump_ramps.push(state.track.geometry.jump_ramps.len() - 1);
+                        any_duplicated = true;
+                    }
+                }
+
+                // 5. Checkpoints
+                for &idx in &checkpoints {
+                    if idx < state.track.checkpoints.len() {
+                        let mut copy = state.track.checkpoints[idx].clone();
+                        let offset = Vec2::new(4.0, 4.0);
+                        copy.gate.start += offset;
+                        copy.gate.end += offset;
+                        copy.is_finish_line = false;
+                        state.track.checkpoints.push(copy);
+                        new_checkpoints.push(state.track.checkpoints.len() - 1);
+                        any_duplicated = true;
+                    }
+                }
+                for (new_id, cp) in state.track.checkpoints.iter_mut().enumerate() {
+                    cp.id = new_id;
+                }
+
+                // 6. Grid Slots
+                for &idx in &grid_slots {
+                    if idx < state.track.grid_positions.len() {
+                        let mut copy = state.track.grid_positions[idx].clone();
+                        copy.position += Vec2::new(4.0, 4.0);
+                        state.track.grid_positions.push(copy);
+                        new_grid_slots.push(state.track.grid_positions.len() - 1);
+                        any_duplicated = true;
+                    }
+                }
+                for (new_id, slot) in state.track.grid_positions.iter_mut().enumerate() {
+                    slot.grid_slot = new_id;
+                }
+
+                if any_duplicated {
+                    state.select(Selection::from_multi(
+                        new_waypoints,
+                        new_surface_zones,
+                        new_obstacles,
+                        new_jump_ramps,
+                        new_checkpoints,
+                        new_grid_slots,
+                        false,
+                    ));
+                    state.revalidate();
+                    return true;
+                }
+            }
             _ => {}
         }
         false
@@ -317,6 +522,28 @@ impl ToolSettings {
         let next = SurfaceType::OFF_TRACK_TYPES[(idx + 1) % SurfaceType::OFF_TRACK_TYPES.len()];
         self.set_track_default_surface(state, next);
         next
+    }
+
+    /// Sets the track's predefined vehicle model.
+    pub fn set_track_predefined_car(&mut self, state: &mut EditorState, car: Option<String>) -> bool {
+        if state.track.predefined_car != car {
+            state.record_undo();
+            state.track.predefined_car = car;
+            state.is_dirty = true;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Cycles the track's predefined vehicle model through available archetype options.
+    pub fn cycle_track_predefined_car(&mut self, state: &mut EditorState) -> Option<String> {
+        const CAR_PRESETS: [&str; 5] = ["sports_car", "drift_car", "kart", "rally_car", "f1_car"];
+        let current = state.track.predefined_car.as_deref().unwrap_or("sports_car");
+        let idx = CAR_PRESETS.iter().position(|&c| c == current).unwrap_or(0);
+        let next = CAR_PRESETS[(idx + 1) % CAR_PRESETS.len()].to_string();
+        self.set_track_predefined_car(state, Some(next.clone()));
+        Some(next)
     }
 
     /// Batch modifies track width for all selected waypoints.
@@ -416,46 +643,46 @@ impl ToolSettings {
         match self.active_tool {
             EditorToolType::Select => {
                 if let Some(sel) = find_closest_entity(state, mouse_world) {
+                    self.is_box_selecting = false;
                     if is_multi_key {
-                        if let Selection::Waypoint(idx) = sel {
-                            state.selection.toggle_waypoint(idx);
-                            state.last_selected_waypoint = Some(idx);
-                            self.is_dragging = false;
-                            return;
-                        }
+                        state.select(state.selection.union(&sel));
+                        self.is_dragging = false;
+                        return;
+                    }
+
+                    if !state.selection.contains_entity(&sel) {
+                        state.select(sel.clone());
                     }
 
                     if let Selection::Waypoint(idx) = sel {
-                        if state.selection.is_waypoint_selected(idx) && matches!(state.selection, Selection::MultipleWaypoints(_)) {
-                            // keep multi-selection active for group drag
-                        } else {
-                            state.select(Selection::Waypoint(idx));
-                        }
                         if let Some(wp) = state.track.spline.waypoints.get(idx) {
                             self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
                             self.new_waypoint_width = wp.width;
                             self.new_waypoint_left_curb = wp.left_curb;
                             self.new_waypoint_right_curb = wp.right_curb;
                         }
-                    } else {
-                        state.select(sel);
                     }
 
                     self.is_dragging = true;
                     self.drag_start_world = snapped_mouse;
                     self.drag_current_world = snapped_mouse;
                     self.drag_initial_entity_pos = get_selection_position(state, &state.selection).unwrap_or(mouse_world);
-
-                    if let Selection::MultipleWaypoints(ref indices) = state.selection {
-                        self.drag_initial_waypoints = indices
-                            .iter()
-                            .filter_map(|&i| state.track.spline.waypoints.get(i).map(|wp| (i, wp.point)))
-                            .collect();
-                    } else {
-                        self.drag_initial_waypoints.clear();
-                    }
+                    prepare_drag_initial_positions(state, self);
                 } else {
-                    state.selection = Selection::None;
+                    if !is_multi_key {
+                        state.selection = Selection::None;
+                    }
+                    self.is_box_selecting = true;
+                    self.is_dragging = true;
+                    self.drag_start_world = mouse_world;
+                    self.drag_current_world = mouse_world;
+                    self.drag_initial_waypoints.clear();
+                    self.drag_initial_surface_zones.clear();
+                    self.drag_initial_obstacles.clear();
+                    self.drag_initial_jump_ramps.clear();
+                    self.drag_initial_checkpoints.clear();
+                    self.drag_initial_grid_slots.clear();
+                    self.drag_initial_pit_box = None;
                 }
             }
             EditorToolType::RoadSpline => {
@@ -468,10 +695,12 @@ impl ToolSettings {
                         self.new_waypoint_left_curb = wp.left_curb;
                         self.new_waypoint_right_curb = wp.right_curb;
                     }
+                    self.is_box_selecting = false;
                     self.is_dragging = true;
                     self.drag_start_world = snapped_mouse;
                     self.drag_current_world = snapped_mouse;
                     self.drag_initial_entity_pos = state.track.spline.waypoints[wp_idx].point;
+                    prepare_drag_initial_positions(state, self);
                 } else {
                     // Insert new waypoint in relation to current/last selected waypoint
                     state.record_undo();
@@ -605,66 +834,66 @@ impl ToolSettings {
             return;
         }
 
+        if self.is_box_selecting {
+            self.drag_current_world = mouse_world;
+            return;
+        }
+
         let snapped_mouse = state.grid_snap.snap_point(mouse_world);
         self.drag_current_world = snapped_mouse;
 
         match self.active_tool {
             EditorToolType::Select | EditorToolType::RoadSpline => {
                 let delta = snapped_mouse - self.drag_start_world;
-                let new_pos = self.drag_initial_entity_pos + delta;
+                let mut geometry_dirty = false;
 
-                match state.selection {
-                    Selection::Waypoint(idx) => {
-                        if idx < state.track.spline.waypoints.len() {
-                            state.track.spline.waypoints[idx].point = new_pos;
-                            state.rebuild_geometry();
-                        }
+                for (idx, initial_pt) in &self.drag_initial_waypoints {
+                    if *idx < state.track.spline.waypoints.len() {
+                        state.track.spline.waypoints[*idx].point = *initial_pt + delta;
+                        geometry_dirty = true;
                     }
-                    Selection::MultipleWaypoints(_) => {
-                        let delta = snapped_mouse - self.drag_start_world;
-                        for (idx, initial_pt) in &self.drag_initial_waypoints {
-                            if *idx < state.track.spline.waypoints.len() {
-                                state.track.spline.waypoints[*idx].point = *initial_pt + delta;
-                            }
-                        }
-                        state.rebuild_geometry();
+                }
+
+                for (idx, initial_center) in &self.drag_initial_surface_zones {
+                    if *idx < state.track.geometry.surface_zones.len() {
+                        set_surface_zone_position(&mut state.track.geometry.surface_zones[*idx], *initial_center + delta);
                     }
-                    Selection::SurfaceZone(idx) => {
-                        if idx < state.track.geometry.surface_zones.len() {
-                            set_surface_zone_position(&mut state.track.geometry.surface_zones[idx], new_pos);
-                        }
+                }
+
+                for (idx, initial_center) in &self.drag_initial_obstacles {
+                    if *idx < state.track.geometry.obstacles.len() {
+                        set_obstacle_position(&mut state.track.geometry.obstacles[*idx], *initial_center + delta);
                     }
-                    Selection::Obstacle(idx) => {
-                        if idx < state.track.geometry.obstacles.len() {
-                            set_obstacle_position(&mut state.track.geometry.obstacles[idx], new_pos);
-                        }
+                }
+
+                for (idx, initial_center) in &self.drag_initial_jump_ramps {
+                    if *idx < state.track.geometry.jump_ramps.len() {
+                        set_jump_ramp_position(&mut state.track.geometry.jump_ramps[*idx], *initial_center + delta);
                     }
-                    Selection::JumpRamp(idx) => {
-                        if idx < state.track.geometry.jump_ramps.len() {
-                            set_jump_ramp_position(&mut state.track.geometry.jump_ramps[idx], new_pos);
-                        }
+                }
+
+                for (idx, initial_start, initial_end) in &self.drag_initial_checkpoints {
+                    if *idx < state.track.checkpoints.len() {
+                        state.track.checkpoints[*idx].gate.start = *initial_start + delta;
+                        state.track.checkpoints[*idx].gate.end = *initial_end + delta;
                     }
-                    Selection::Checkpoint(idx) => {
-                        if idx < state.track.checkpoints.len() {
-                            let gate = &mut state.track.checkpoints[idx].gate;
-                            let gate_delta = new_pos - (gate.start + gate.end) * 0.5;
-                            gate.start += gate_delta;
-                            gate.end += gate_delta;
-                        }
+                }
+
+                for (idx, initial_pos) in &self.drag_initial_grid_slots {
+                    if *idx < state.track.grid_positions.len() {
+                        state.track.grid_positions[*idx].position = *initial_pos + delta;
                     }
-                    Selection::GridSlot(idx) => {
-                        if idx < state.track.grid_positions.len() {
-                            state.track.grid_positions[idx].position = new_pos;
-                        }
+                }
+
+                if let Some((init_min, init_max)) = self.drag_initial_pit_box {
+                    if let Some(SurfaceShape::Aabb { min, max }) = &mut state.track.pit_box_area {
+                        *min = init_min + delta;
+                        *max = init_max + delta;
                     }
-                    Selection::PitBox => {
-                        if let Some(SurfaceShape::Aabb { min, max }) = &mut state.track.pit_box_area {
-                            let half_w = (*max - *min) * 0.5;
-                            *min = new_pos - half_w;
-                            *max = new_pos + half_w;
-                        }
-                    }
-                    Selection::None => {}
+                }
+
+                if geometry_dirty {
+                    state.rebuild_geometry();
                 }
             }
             _ => {}
@@ -677,6 +906,28 @@ impl ToolSettings {
             return;
         }
         self.is_dragging = false;
+
+        if self.is_box_selecting {
+            self.is_box_selecting = false;
+            let min = Vec2::new(
+                self.drag_start_world.x.min(mouse_world.x),
+                self.drag_start_world.y.min(mouse_world.y),
+            );
+            let max = Vec2::new(
+                self.drag_start_world.x.max(mouse_world.x),
+                self.drag_start_world.y.max(mouse_world.y),
+            );
+
+            if (max.x - min.x) > 0.5 || (max.y - min.y) > 0.5 {
+                let boxed = find_entities_in_box(state, min, max);
+                if !state.selection.is_none() {
+                    state.select(state.selection.union(&boxed));
+                } else {
+                    state.select(boxed);
+                }
+            }
+            return;
+        }
 
         let snapped_mouse = state.grid_snap.snap_point(mouse_world);
 
@@ -891,6 +1142,115 @@ impl ToolSettings {
                 state.revalidate();
                 return true;
             }
+            Selection::Multi {
+                waypoints,
+                surface_zones,
+                obstacles,
+                jump_ramps,
+                checkpoints,
+                grid_slots,
+                pit_box,
+            } => {
+                let mut any_deleted = false;
+                if !waypoints.is_empty()
+                    || !surface_zones.is_empty()
+                    || !obstacles.is_empty()
+                    || !jump_ramps.is_empty()
+                    || !checkpoints.is_empty()
+                    || !grid_slots.is_empty()
+                    || pit_box
+                {
+                    state.record_undo();
+                }
+
+                // 1. Waypoints
+                if !waypoints.is_empty() && state.track.spline.waypoints.len() > waypoints.len() {
+                    let mut sorted = waypoints.clone();
+                    sorted.sort_unstable();
+                    sorted.dedup();
+                    for &idx in sorted.iter().rev() {
+                        if idx < state.track.spline.waypoints.len() {
+                            state.track.spline.waypoints.remove(idx);
+                            any_deleted = true;
+                        }
+                    }
+                    state.rebuild_geometry();
+                    state.last_selected_waypoint = None;
+                }
+
+                // 2. Obstacles (in reverse order)
+                let mut sorted_obs = obstacles.clone();
+                sorted_obs.sort_unstable();
+                sorted_obs.dedup();
+                for &idx in sorted_obs.iter().rev() {
+                    if idx < state.track.geometry.obstacles.len() {
+                        state.track.geometry.obstacles.remove(idx);
+                        any_deleted = true;
+                    }
+                }
+
+                // 3. Surface Zones (in reverse order)
+                let mut sorted_sz = surface_zones.clone();
+                sorted_sz.sort_unstable();
+                sorted_sz.dedup();
+                for &idx in sorted_sz.iter().rev() {
+                    if idx < state.track.geometry.surface_zones.len() {
+                        state.track.geometry.surface_zones.remove(idx);
+                        any_deleted = true;
+                    }
+                }
+
+                // 4. Jump Ramps (in reverse order)
+                let mut sorted_ramps = jump_ramps.clone();
+                sorted_ramps.sort_unstable();
+                sorted_ramps.dedup();
+                for &idx in sorted_ramps.iter().rev() {
+                    if idx < state.track.geometry.jump_ramps.len() {
+                        state.track.geometry.jump_ramps.remove(idx);
+                        any_deleted = true;
+                    }
+                }
+
+                // 5. Checkpoints (in reverse order)
+                let mut sorted_cp = checkpoints.clone();
+                sorted_cp.sort_unstable();
+                sorted_cp.dedup();
+                for &idx in sorted_cp.iter().rev() {
+                    if idx < state.track.checkpoints.len() {
+                        state.track.checkpoints.remove(idx);
+                        any_deleted = true;
+                    }
+                }
+                for (new_id, cp) in state.track.checkpoints.iter_mut().enumerate() {
+                    cp.id = new_id;
+                }
+
+                // 6. Grid Slots (in reverse order)
+                let mut sorted_slots = grid_slots.clone();
+                sorted_slots.sort_unstable();
+                sorted_slots.dedup();
+                for &idx in sorted_slots.iter().rev() {
+                    if idx < state.track.grid_positions.len() {
+                        state.track.grid_positions.remove(idx);
+                        any_deleted = true;
+                    }
+                }
+                for (new_id, slot) in state.track.grid_positions.iter_mut().enumerate() {
+                    slot.grid_slot = new_id;
+                }
+
+                // 7. Pit box
+                if pit_box {
+                    state.track.pit_box_area = None;
+                    any_deleted = true;
+                }
+
+                if any_deleted {
+                    state.selection = Selection::None;
+                    state.revalidate();
+                    return true;
+                }
+            }
             Selection::None => {}
         }
         false
@@ -1002,6 +1362,58 @@ fn get_selection_position(state: &EditorState, sel: &Selection) -> Option<Vec2> 
         Selection::Checkpoint(idx) => state.track.checkpoints.get(*idx).map(|c| (c.gate.start + c.gate.end) * 0.5),
         Selection::GridSlot(idx) => state.track.grid_positions.get(*idx).map(|g| g.position),
         Selection::PitBox => state.track.pit_box_area.as_ref().map(get_surface_shape_center),
+        Selection::Multi {
+            waypoints,
+            surface_zones,
+            obstacles,
+            jump_ramps,
+            checkpoints,
+            grid_slots,
+            pit_box,
+        } => {
+            let mut pts = Vec::new();
+            for &i in waypoints {
+                if let Some(w) = state.track.spline.waypoints.get(i) {
+                    pts.push(w.point);
+                }
+            }
+            for &i in surface_zones {
+                if let Some(z) = state.track.geometry.surface_zones.get(i) {
+                    pts.push(get_surface_shape_center(&z.shape));
+                }
+            }
+            for &i in obstacles {
+                if let Some(o) = state.track.geometry.obstacles.get(i) {
+                    pts.push(o.center());
+                }
+            }
+            for &i in jump_ramps {
+                if let Some(r) = state.track.geometry.jump_ramps.get(i) {
+                    pts.push(get_surface_shape_center(&r.shape));
+                }
+            }
+            for &i in checkpoints {
+                if let Some(c) = state.track.checkpoints.get(i) {
+                    pts.push((c.gate.start + c.gate.end) * 0.5);
+                }
+            }
+            for &i in grid_slots {
+                if let Some(g) = state.track.grid_positions.get(i) {
+                    pts.push(g.position);
+                }
+            }
+            if *pit_box {
+                if let Some(ref pb) = state.track.pit_box_area {
+                    pts.push(get_surface_shape_center(pb));
+                }
+            }
+            if pts.is_empty() {
+                None
+            } else {
+                let sum: Vec2 = pts.iter().copied().sum();
+                Some(sum / pts.len() as f32)
+            }
+        }
         Selection::None => None,
     }
 }
@@ -1068,6 +1480,264 @@ fn set_surface_shape_center(shape: &mut SurfaceShape, new_center: Vec2) {
     }
 }
 
+fn prepare_drag_initial_positions(state: &EditorState, tools: &mut ToolSettings) {
+    tools.drag_initial_waypoints = state
+        .selection
+        .selected_waypoint_indices()
+        .iter()
+        .filter_map(|&i| state.track.spline.waypoints.get(i).map(|wp| (i, wp.point)))
+        .collect();
+
+    tools.drag_initial_surface_zones = state
+        .selection
+        .selected_surface_zone_indices()
+        .iter()
+        .filter_map(|&i| state.track.geometry.surface_zones.get(i).map(|z| (i, get_surface_shape_center(&z.shape))))
+        .collect();
+
+    tools.drag_initial_obstacles = state
+        .selection
+        .selected_obstacle_indices()
+        .iter()
+        .filter_map(|&i| state.track.geometry.obstacles.get(i).map(|o| (i, o.center())))
+        .collect();
+
+    tools.drag_initial_jump_ramps = state
+        .selection
+        .selected_jump_ramp_indices()
+        .iter()
+        .filter_map(|&i| state.track.geometry.jump_ramps.get(i).map(|r| (i, get_surface_shape_center(&r.shape))))
+        .collect();
+
+    tools.drag_initial_checkpoints = state
+        .selection
+        .selected_checkpoint_indices()
+        .iter()
+        .filter_map(|&i| state.track.checkpoints.get(i).map(|cp| (i, cp.gate.start, cp.gate.end)))
+        .collect();
+
+    tools.drag_initial_grid_slots = state
+        .selection
+        .selected_grid_slot_indices()
+        .iter()
+        .filter_map(|&i| state.track.grid_positions.get(i).map(|s| (i, s.position)))
+        .collect();
+
+    tools.drag_initial_pit_box = if state.selection.is_pit_box_selected() {
+        if let Some(SurfaceShape::Aabb { min, max }) = &state.track.pit_box_area {
+            Some((*min, *max))
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+}
+
+fn point_in_aabb(p: Vec2, min: Vec2, max: Vec2) -> bool {
+    p.x >= min.x && p.x <= max.x && p.y >= min.y && p.y <= max.y
+}
+
+fn line_segment_intersects_aabb(start: Vec2, end: Vec2, min: Vec2, max: Vec2) -> bool {
+    if point_in_aabb(start, min, max) || point_in_aabb(end, min, max) {
+        return true;
+    }
+    let p_mid = (start + end) * 0.5;
+    if point_in_aabb(p_mid, min, max) {
+        return true;
+    }
+
+    let seg = LineSegment::new(start, end);
+    let top_left = Vec2::new(min.x, max.y);
+    let bottom_right = Vec2::new(max.x, min.y);
+
+    let edges = [
+        LineSegment::new(min, bottom_right),
+        LineSegment::new(bottom_right, max),
+        LineSegment::new(max, top_left),
+        LineSegment::new(top_left, min),
+    ];
+
+    for edge in &edges {
+        if seg.intersect_segment(edge).is_some() {
+            return true;
+        }
+    }
+    false
+}
+
+fn surface_shape_intersects_aabb(shape: &SurfaceShape, min: Vec2, max: Vec2) -> bool {
+    match shape {
+        SurfaceShape::Aabb { min: s_min, max: s_max } => {
+            s_min.x <= max.x && s_max.x >= min.x && s_min.y <= max.y && s_max.y >= min.y
+        }
+        SurfaceShape::Circle { center, radius } => {
+            let clamped = Vec2::new(center.x.clamp(min.x, max.x), center.y.clamp(min.y, max.y));
+            (*center - clamped).length_squared() <= radius * radius
+        }
+        SurfaceShape::OrientedBox { center, half_extents, angle } => {
+            if point_in_aabb(*center, min, max) {
+                return true;
+            }
+            let cos_a = angle.cos();
+            let sin_a = angle.sin();
+            let ux = Vec2::new(cos_a, sin_a) * half_extents.x;
+            let uy = Vec2::new(-sin_a, cos_a) * half_extents.y;
+            let corners = [
+                *center + ux + uy,
+                *center - ux + uy,
+                *center - ux - uy,
+                *center + ux - uy,
+            ];
+            for c in &corners {
+                if point_in_aabb(*c, min, max) {
+                    return true;
+                }
+            }
+            for i in 0..4 {
+                let next = (i + 1) % 4;
+                if line_segment_intersects_aabb(corners[i], corners[next], min, max) {
+                    return true;
+                }
+            }
+            false
+        }
+        SurfaceShape::Polygon { vertices } => {
+            if vertices.is_empty() {
+                return false;
+            }
+            for v in vertices {
+                if point_in_aabb(*v, min, max) {
+                    return true;
+                }
+            }
+            let c = shape.center();
+            if point_in_aabb(c, min, max) {
+                return true;
+            }
+            let n = vertices.len();
+            for i in 0..n {
+                let next = (i + 1) % n;
+                if line_segment_intersects_aabb(vertices[i], vertices[next], min, max) {
+                    return true;
+                }
+            }
+            false
+        }
+    }
+}
+
+fn obstacle_intersects_aabb(obs: &Obstacle, min: Vec2, max: Vec2) -> bool {
+    match &obs.shape {
+        tdrace_core::track::ObstacleShape::Circle { center, radius } => {
+            let clamped = Vec2::new(center.x.clamp(min.x, max.x), center.y.clamp(min.y, max.y));
+            (*center - clamped).length_squared() <= radius * radius
+        }
+        tdrace_core::track::ObstacleShape::Box { center, half_extents, angle } => {
+            let shape = SurfaceShape::OrientedBox {
+                center: *center,
+                half_extents: *half_extents,
+                angle: *angle,
+            };
+            surface_shape_intersects_aabb(&shape, min, max)
+        }
+        tdrace_core::track::ObstacleShape::Polygon { vertices } => {
+            let shape = SurfaceShape::Polygon {
+                vertices: vertices.clone(),
+            };
+            surface_shape_intersects_aabb(&shape, min, max)
+        }
+    }
+}
+
+pub fn find_entities_in_box(state: &EditorState, min: Vec2, max: Vec2) -> Selection {
+    let mut waypoints = Vec::new();
+    let mut surface_zones = Vec::new();
+    let mut obstacles = Vec::new();
+    let mut jump_ramps = Vec::new();
+    let mut checkpoints = Vec::new();
+    let mut grid_slots = Vec::new();
+    let mut pit_box = false;
+
+    for (i, wp) in state.track.spline.waypoints.iter().enumerate() {
+        if point_in_aabb(wp.point, min, max) {
+            waypoints.push(i);
+        }
+    }
+
+    for (i, cp) in state.track.checkpoints.iter().enumerate() {
+        if line_segment_intersects_aabb(cp.gate.start, cp.gate.end, min, max) {
+            checkpoints.push(i);
+        }
+    }
+
+    for (i, slot) in state.track.grid_positions.iter().enumerate() {
+        if point_in_aabb(slot.position, min, max) {
+            grid_slots.push(i);
+        }
+    }
+
+    for (i, obs) in state.track.geometry.obstacles.iter().enumerate() {
+        if obstacle_intersects_aabb(obs, min, max) {
+            obstacles.push(i);
+        }
+    }
+
+    for (i, ramp) in state.track.geometry.jump_ramps.iter().enumerate() {
+        if surface_shape_intersects_aabb(&ramp.shape, min, max) {
+            jump_ramps.push(i);
+        }
+    }
+
+    for (i, zone) in state.track.geometry.surface_zones.iter().enumerate() {
+        if surface_shape_intersects_aabb(&zone.shape, min, max) {
+            surface_zones.push(i);
+        }
+    }
+
+    if let Some(ref pb) = state.track.pit_box_area {
+        if surface_shape_intersects_aabb(pb, min, max) {
+            pit_box = true;
+        }
+    }
+
+    Selection::from_multi(
+        waypoints,
+        surface_zones,
+        obstacles,
+        jump_ramps,
+        checkpoints,
+        grid_slots,
+        pit_box,
+    )
+}
+
+fn draw_oriented_box_lines(center: Vec2, half_extents: Vec2, angle: f32, thickness: f32, col: Color) {
+    let cos_a = angle.cos();
+    let sin_a = angle.sin();
+    let ux = Vec2::new(cos_a, sin_a) * half_extents.x;
+    let uy = Vec2::new(-sin_a, cos_a) * half_extents.y;
+    let p0 = center + ux + uy;
+    let p1 = center - ux + uy;
+    let p2 = center - ux - uy;
+    let p3 = center + ux - uy;
+    draw_line(p0.x, p0.y, p1.x, p1.y, thickness, col);
+    draw_line(p1.x, p1.y, p2.x, p2.y, thickness, col);
+    draw_line(p2.x, p2.y, p3.x, p3.y, thickness, col);
+    draw_line(p3.x, p3.y, p0.x, p0.y, thickness, col);
+}
+
+fn draw_polygon_lines(vertices: &[Vec2], thickness: f32, col: Color) {
+    if vertices.len() < 2 {
+        return;
+    }
+    let n = vertices.len();
+    for i in 0..n {
+        let next = (i + 1) % n;
+        draw_line(vertices[i].x, vertices[i].y, vertices[next].x, vertices[next].y, thickness, col);
+    }
+}
+
 /// Renders gizmos, selection indicators, handles, and drag previews in world space.
 pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: &EditorCamera) {
     // 1. Render Waypoint nodes & handles
@@ -1111,16 +1781,16 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
 
     // 2. Render Checkpoint Gates & Sector Tags
     for cp in &state.track.checkpoints {
-        let is_selected = state.selection == Selection::Checkpoint(cp.id);
+        let is_selected = state.selection.is_checkpoint_selected(cp.id);
         let gate_col = if cp.is_finish_line {
             Palette::NEON_GOLD
         } else if is_selected {
-            Palette::NEON_CYAN
+            Palette::NEON_GOLD
         } else {
             Color::new(0.2, 0.85, 0.4, 0.8)
         };
 
-        let thickness = if is_selected { 0.6 } else { 0.35 };
+        let thickness = if is_selected { 0.8 } else { 0.35 };
         draw_line(cp.gate.start.x, cp.gate.start.y, cp.gate.end.x, cp.gate.end.y, thickness, gate_col);
 
         // Direction arrow
@@ -1131,7 +1801,7 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
 
     // 3. Render Starting Grid Slot gizmos
     for slot in &state.track.grid_positions {
-        let is_selected = state.selection == Selection::GridSlot(slot.grid_slot);
+        let is_selected = state.selection.is_grid_slot_selected(slot.grid_slot);
         let col = if is_selected { Palette::NEON_GOLD } else { Palette::NEON_MAGENTA };
 
         draw_circle(slot.position.x, slot.position.y, 1.4, col);
@@ -1139,91 +1809,169 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
         draw_line(slot.position.x, slot.position.y, slot.position.x + fwd.x, slot.position.y + fwd.y, 0.4, col);
     }
 
-    // 4. Render Active Drag Box preview
-    if tools.is_dragging {
-        match tools.active_tool {
-            EditorToolType::SurfaceZone => {
-                let min = Vec2::new(
-                    tools.drag_start_world.x.min(tools.drag_current_world.x),
-                    tools.drag_start_world.y.min(tools.drag_current_world.y),
-                );
-                let max = Vec2::new(
-                    tools.drag_start_world.x.max(tools.drag_current_world.x),
-                    tools.drag_start_world.y.max(tools.drag_current_world.y),
-                );
-                let w = max.x - min.x;
-                let h = max.y - min.y;
-                match tools.active_surface_shape {
-                    SurfaceShapeType::Square => {
-                        draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
-                    }
-                    SurfaceShapeType::Circle => {
-                        let center = (min + max) * 0.5;
-                        let radius = (w * 0.5).max(2.0);
-                        draw_circle_lines(center.x, center.y, radius, 0.4, Palette::NEON_CYAN);
-                    }
-                    SurfaceShapeType::Triangle => {
-                        let top = Vec2::new((min.x + max.x) * 0.5, max.y);
-                        let bl = Vec2::new(min.x, min.y);
-                        let br = Vec2::new(max.x, min.y);
-                        draw_line(bl.x, bl.y, br.x, br.y, 0.4, Palette::NEON_CYAN);
-                        draw_line(br.x, br.y, top.x, top.y, 0.4, Palette::NEON_CYAN);
-                        draw_line(top.x, top.y, bl.x, bl.y, 0.4, Palette::NEON_CYAN);
-                    }
-                    SurfaceShapeType::Polygon => {}
+    // 4. Render Selected Obstacle Highlights
+    for (i, obs) in state.track.geometry.obstacles.iter().enumerate() {
+        if state.selection.is_obstacle_selected(i) {
+            let col = Palette::NEON_GOLD;
+            match &obs.shape {
+                tdrace_core::track::ObstacleShape::Circle { center, radius } => {
+                    draw_circle_lines(center.x, center.y, radius + 0.5, 0.4, col);
+                }
+                tdrace_core::track::ObstacleShape::Box { center, half_extents, angle } => {
+                    draw_oriented_box_lines(*center, *half_extents + Vec2::splat(0.5), *angle, 0.4, col);
+                }
+                tdrace_core::track::ObstacleShape::Polygon { vertices } => {
+                    draw_polygon_lines(vertices, 0.4, col);
                 }
             }
-            EditorToolType::PitLane => {
-                let min = Vec2::new(
-                    tools.drag_start_world.x.min(tools.drag_current_world.x),
-                    tools.drag_start_world.y.min(tools.drag_current_world.y),
-                );
-                let max = Vec2::new(
-                    tools.drag_start_world.x.max(tools.drag_current_world.x),
-                    tools.drag_start_world.y.max(tools.drag_current_world.y),
-                );
-                let w = max.x - min.x;
-                let h = max.y - min.y;
-                draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
-            }
-            EditorToolType::Checkpoint => {
-                draw_line(
-                    tools.drag_start_world.x,
-                    tools.drag_start_world.y,
-                    tools.drag_current_world.x,
-                    tools.drag_current_world.y,
-                    0.5,
-                    Palette::NEON_CYAN,
-                );
-            }
-            EditorToolType::JumpRamp => {
-                draw_line(
-                    tools.drag_start_world.x,
-                    tools.drag_start_world.y,
-                    tools.drag_current_world.x,
-                    tools.drag_current_world.y,
-                    0.6,
-                    Palette::NEON_GOLD,
-                );
-            }
-            EditorToolType::Obstacle => {
-                let min = Vec2::new(
-                    tools.drag_start_world.x.min(tools.drag_current_world.x),
-                    tools.drag_start_world.y.min(tools.drag_current_world.y),
-                );
-                let max = Vec2::new(
-                    tools.drag_start_world.x.max(tools.drag_current_world.x),
-                    tools.drag_start_world.y.max(tools.drag_current_world.y),
-                );
-                let w = max.x - min.x;
-                let h = max.y - min.y;
-                draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_MAGENTA);
-            }
-            _ => {}
         }
     }
 
-    // 5. Render In-progress Polygon / Triangle Construction vertices
+    // 5. Render Selected Surface Zone Highlights
+    for (i, zone) in state.track.geometry.surface_zones.iter().enumerate() {
+        if state.selection.is_surface_zone_selected(i) {
+            let col = Palette::NEON_GOLD;
+            match &zone.shape {
+                SurfaceShape::Circle { center, radius } => {
+                    draw_circle_lines(center.x, center.y, radius + 0.6, 0.4, col);
+                }
+                SurfaceShape::Aabb { min, max } => {
+                    let w = max.x - min.x + 1.2;
+                    let h = max.y - min.y + 1.2;
+                    draw_rectangle_lines(min.x - 0.6, min.y - 0.6, w, h, 0.4, col);
+                }
+                SurfaceShape::OrientedBox { center, half_extents, angle } => {
+                    draw_oriented_box_lines(*center, *half_extents + Vec2::splat(0.6), *angle, 0.4, col);
+                }
+                SurfaceShape::Polygon { vertices } => {
+                    draw_polygon_lines(vertices, 0.4, col);
+                }
+            }
+        }
+    }
+
+    // 6. Render Selected Jump Ramp Highlights
+    for (i, ramp) in state.track.geometry.jump_ramps.iter().enumerate() {
+        if state.selection.is_jump_ramp_selected(i) {
+            let col = Palette::NEON_GOLD;
+            match &ramp.shape {
+                SurfaceShape::OrientedBox { center, half_extents, angle } => {
+                    draw_oriented_box_lines(*center, *half_extents + Vec2::splat(0.6), *angle, 0.5, col);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // 7. Render Selected Pit Box Highlight
+    if state.selection.is_pit_box_selected() {
+        if let Some(SurfaceShape::Aabb { min, max }) = &state.track.pit_box_area {
+            let w = max.x - min.x + 1.2;
+            let h = max.y - min.y + 1.2;
+            draw_rectangle_lines(min.x - 0.6, min.y - 0.6, w, h, 0.5, Palette::NEON_GOLD);
+        }
+    }
+
+    // 8. Render Active Drag Box / Marquee Selection preview
+    if tools.is_dragging {
+        if tools.is_box_selecting {
+            let min = Vec2::new(
+                tools.drag_start_world.x.min(tools.drag_current_world.x),
+                tools.drag_start_world.y.min(tools.drag_current_world.y),
+            );
+            let max = Vec2::new(
+                tools.drag_start_world.x.max(tools.drag_current_world.x),
+                tools.drag_start_world.y.max(tools.drag_current_world.y),
+            );
+            let w = max.x - min.x;
+            let h = max.y - min.y;
+            macroquad::shapes::draw_rectangle(min.x, min.y, w, h, Color::new(0.2, 0.8, 1.0, 0.15));
+            draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
+        } else {
+            match tools.active_tool {
+                EditorToolType::SurfaceZone => {
+                    let min = Vec2::new(
+                        tools.drag_start_world.x.min(tools.drag_current_world.x),
+                        tools.drag_start_world.y.min(tools.drag_current_world.y),
+                    );
+                    let max = Vec2::new(
+                        tools.drag_start_world.x.max(tools.drag_current_world.x),
+                        tools.drag_start_world.y.max(tools.drag_current_world.y),
+                    );
+                    let w = max.x - min.x;
+                    let h = max.y - min.y;
+                    match tools.active_surface_shape {
+                        SurfaceShapeType::Square => {
+                            draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
+                        }
+                        SurfaceShapeType::Circle => {
+                            let center = (min + max) * 0.5;
+                            let radius = (w * 0.5).max(2.0);
+                            draw_circle_lines(center.x, center.y, radius, 0.4, Palette::NEON_CYAN);
+                        }
+                        SurfaceShapeType::Triangle => {
+                            let top = Vec2::new((min.x + max.x) * 0.5, max.y);
+                            let bl = Vec2::new(min.x, min.y);
+                            let br = Vec2::new(max.x, min.y);
+                            draw_line(bl.x, bl.y, br.x, br.y, 0.4, Palette::NEON_CYAN);
+                            draw_line(br.x, br.y, top.x, top.y, 0.4, Palette::NEON_CYAN);
+                            draw_line(top.x, top.y, bl.x, bl.y, 0.4, Palette::NEON_CYAN);
+                        }
+                        SurfaceShapeType::Polygon => {}
+                    }
+                }
+                EditorToolType::PitLane => {
+                    let min = Vec2::new(
+                        tools.drag_start_world.x.min(tools.drag_current_world.x),
+                        tools.drag_start_world.y.min(tools.drag_current_world.y),
+                    );
+                    let max = Vec2::new(
+                        tools.drag_start_world.x.max(tools.drag_current_world.x),
+                        tools.drag_start_world.y.max(tools.drag_current_world.y),
+                    );
+                    let w = max.x - min.x;
+                    let h = max.y - min.y;
+                    draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
+                }
+                EditorToolType::Checkpoint => {
+                    draw_line(
+                        tools.drag_start_world.x,
+                        tools.drag_start_world.y,
+                        tools.drag_current_world.x,
+                        tools.drag_current_world.y,
+                        0.5,
+                        Palette::NEON_CYAN,
+                    );
+                }
+                EditorToolType::JumpRamp => {
+                    draw_line(
+                        tools.drag_start_world.x,
+                        tools.drag_start_world.y,
+                        tools.drag_current_world.x,
+                        tools.drag_current_world.y,
+                        0.6,
+                        Palette::NEON_GOLD,
+                    );
+                }
+                EditorToolType::Obstacle => {
+                    let min = Vec2::new(
+                        tools.drag_start_world.x.min(tools.drag_current_world.x),
+                        tools.drag_start_world.y.min(tools.drag_current_world.y),
+                    );
+                    let max = Vec2::new(
+                        tools.drag_start_world.x.max(tools.drag_current_world.x),
+                        tools.drag_start_world.y.max(tools.drag_current_world.y),
+                    );
+                    let w = max.x - min.x;
+                    let h = max.y - min.y;
+                    draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_MAGENTA);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // 9. Render In-progress Polygon / Triangle Construction vertices
     if !tools.active_polygon_vertices.is_empty() {
         let col = if tools.active_tool == EditorToolType::SurfaceZone {
             Palette::NEON_CYAN
@@ -1561,5 +2309,114 @@ mod tests {
         // 7. Undo restores track
         assert!(state.undo());
         assert_eq!(state.track.spline.waypoints.len(), prev_len);
+    }
+
+    #[test]
+    fn test_select_all_for_active_tool_variants() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+
+        // 1. Select Tool selects all elements into Selection::Multi
+        tools.active_tool = EditorToolType::Select;
+        assert!(tools.select_all_for_active_tool(&mut state));
+        assert!(matches!(state.selection, Selection::Multi { .. }));
+        assert_eq!(state.selection.total_count(), 
+            state.track.spline.waypoints.len()
+            + state.track.geometry.surface_zones.len()
+            + state.track.geometry.obstacles.len()
+            + state.track.geometry.jump_ramps.len()
+            + state.track.checkpoints.len()
+            + state.track.grid_positions.len()
+            + if state.track.pit_box_area.is_some() { 1 } else { 0 }
+        );
+
+        // 2. RoadSpline Tool selects only waypoints
+        tools.active_tool = EditorToolType::RoadSpline;
+        assert!(tools.select_all_for_active_tool(&mut state));
+        assert!(matches!(state.selection, Selection::MultipleWaypoints(_)));
+        assert_eq!(state.selection.selected_waypoint_indices().len(), state.track.spline.waypoints.len());
+
+        // 3. SurfaceZone Tool selects surface zones
+        tools.active_tool = EditorToolType::SurfaceZone;
+        if !state.track.geometry.surface_zones.is_empty() {
+            assert!(tools.select_all_for_active_tool(&mut state));
+            assert_eq!(state.selection.selected_surface_zone_indices().len(), state.track.geometry.surface_zones.len());
+        }
+
+        // 4. Obstacle Tool selects obstacles
+        tools.active_tool = EditorToolType::Obstacle;
+        if !state.track.geometry.obstacles.is_empty() {
+            assert!(tools.select_all_for_active_tool(&mut state));
+            assert_eq!(state.selection.selected_obstacle_indices().len(), state.track.geometry.obstacles.len());
+        }
+
+        // 5. Checkpoint Tool selects checkpoints
+        tools.active_tool = EditorToolType::Checkpoint;
+        assert!(tools.select_all_for_active_tool(&mut state));
+        assert_eq!(state.selection.selected_checkpoint_indices().len(), state.track.checkpoints.len());
+
+        // 6. StartingGrid Tool selects grid slots
+        tools.active_tool = EditorToolType::StartingGrid;
+        assert!(tools.select_all_for_active_tool(&mut state));
+        assert_eq!(state.selection.selected_grid_slot_indices().len(), state.track.grid_positions.len());
+    }
+
+    #[test]
+    fn test_box_selection_and_multi_entity_drag_and_batch_ops() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+        tools.active_tool = EditorToolType::Select;
+
+        // Add an obstacle and waypoint in an isolated coordinate area
+        let base_pos = Vec2::new(600.0, 600.0);
+        state.track.geometry.obstacles.push(Obstacle::circle(100, base_pos + Vec2::new(10.0, 10.0), 2.0, "Test Obs"));
+        let obs_idx = state.track.geometry.obstacles.len() - 1;
+        state.track.spline.waypoints.push(TrackWaypoint::new(base_pos + Vec2::new(20.0, 20.0), 12.0));
+        let wp_idx = state.track.spline.waypoints.len() - 1;
+
+        // Perform box drag selection covering the new obstacle and waypoint
+        let box_min = base_pos - Vec2::new(20.0, 20.0);
+        let box_max = base_pos + Vec2::new(40.0, 40.0);
+
+        tools.handle_mouse_down(&mut state, box_min);
+        assert!(tools.is_box_selecting);
+        assert!(tools.is_dragging);
+
+        tools.handle_mouse_drag(&mut state, box_max);
+        tools.handle_mouse_up(&mut state, box_max);
+        assert!(!tools.is_box_selecting);
+
+        // Selection should contain both entities
+        assert!(state.selection.is_waypoint_selected(wp_idx));
+        assert!(state.selection.is_obstacle_selected(obs_idx));
+
+        // Drag multi-selection by (5.0, 5.0)
+        let orig_wp_pos = state.track.spline.waypoints[wp_idx].point;
+        let orig_obs_pos = state.track.geometry.obstacles[obs_idx].center();
+
+        tools.handle_mouse_down(&mut state, orig_wp_pos);
+        assert!(!tools.is_box_selecting);
+        assert!(tools.is_dragging);
+
+        tools.handle_mouse_drag(&mut state, orig_wp_pos + Vec2::new(5.0, 5.0));
+        tools.handle_mouse_up(&mut state, orig_wp_pos + Vec2::new(5.0, 5.0));
+
+        assert_eq!(state.track.spline.waypoints[wp_idx].point, orig_wp_pos + Vec2::new(5.0, 5.0));
+        assert_eq!(state.track.geometry.obstacles[obs_idx].center(), orig_obs_pos + Vec2::new(5.0, 5.0));
+
+        // Duplicate the multi-selection
+        let prev_wp_count = state.track.spline.waypoints.len();
+        let prev_obs_count = state.track.geometry.obstacles.len();
+        assert!(tools.duplicate_selected(&mut state));
+        assert_eq!(state.track.spline.waypoints.len(), prev_wp_count + 1);
+        assert_eq!(state.track.geometry.obstacles.len(), prev_obs_count + 1);
+
+        // Delete the duplicated selection
+        assert!(tools.delete_selected(&mut state));
+        assert_eq!(state.track.spline.waypoints.len(), prev_wp_count);
+        assert_eq!(state.track.geometry.obstacles.len(), prev_obs_count);
+        assert_eq!(state.selection, Selection::None);
     }
 }

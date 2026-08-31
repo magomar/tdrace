@@ -1,5 +1,6 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
+use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{oasis_rally, outlaw_pass, sahara_dunes};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -135,6 +136,10 @@ impl GameModule for RallyGameModule {
 
     fn default_vehicle_id(&self) -> &'static str {
         "wrc_turbo_rally"
+    }
+
+    fn default_off_track_surface(&self) -> SurfaceType {
+        SurfaceType::Dirt
     }
 
     fn tracks(&self) -> Vec<TrackDefinition> {

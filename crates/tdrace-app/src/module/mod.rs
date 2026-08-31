@@ -209,6 +209,11 @@ pub trait GameModule: Send + Sync + 'static {
 
     /// Engine audio synthesis profile.
     fn audio_profile(&self) -> EngineAudioProfile;
+
+    /// Default off-track terrain surface type for this module.
+    fn default_off_track_surface(&self) -> tdrace_core::physics::surface::SurfaceType {
+        tdrace_core::physics::surface::SurfaceType::Grass
+    }
 }
 
 pub use classic::ClassicGameModule;
@@ -231,6 +236,9 @@ mod tests {
         assert_eq!(f1.tracks().len(), 14); // 13 F1 circuits + 1 FIA test track
         assert_eq!(f1.drivers().len(), 7);
         assert!(!f1.supported_game_modes().is_empty());
+
+        assert_eq!(f1.default_vehicle_id(), "f1_hybrid_26");
+        assert_eq!(f1.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
 
         let monza = F1GameModule::track_monza();
         assert_eq!(monza.name, "Monza Autodromo Nazionale");
@@ -272,6 +280,8 @@ mod tests {
         assert!(rally.vehicles().len() >= 2);
         assert!(!rally.tracks().is_empty());
         assert_eq!(rally.drivers().len(), 7);
+        assert_eq!(rally.default_vehicle_id(), "wrc_turbo_rally");
+        assert_eq!(rally.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
 
         let rally_car = RallyGameModule::car_wrc_rally();
         assert_eq!(rally_car.drive_bias, 0.5);
@@ -287,6 +297,8 @@ mod tests {
         assert!(!kart.tracks().is_empty());
         assert_eq!(kart.tracks().len(), 10); // 8 world-famous + 2 sprint presets
         assert_eq!(kart.drivers().len(), 7);
+        assert_eq!(kart.default_vehicle_id(), "shifter_kart_125");
+        assert_eq!(kart.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
 
         let kart_car = KartGameModule::car_shifter_kart();
         assert!(kart_car.mass < 250.0);
@@ -322,6 +334,8 @@ mod tests {
         assert_eq!(classic.vehicles().len(), 4);
         assert_eq!(classic.tracks().len(), 7);
         assert!(!classic.drivers().is_empty());
+        assert_eq!(classic.default_vehicle_id(), "sports_car");
+        assert_eq!(classic.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
     }
 }
 

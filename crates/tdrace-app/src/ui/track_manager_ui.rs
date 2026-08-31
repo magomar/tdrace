@@ -262,7 +262,7 @@ pub fn render_track_manager_screen(
 
     if tracks_list.is_empty() {
         fonts.draw_ui_regular(
-            "No tracks in this category.\nPress [C] to create a new draft track!",
+            "No tracks in this category.\nPress [N] to create a new draft track!",
             col1_x + scaler.s(16.0),
             content_y + scaler.s(40.0),
             scaler.font_s(13.0),
@@ -409,7 +409,7 @@ pub fn render_track_manager_screen(
         scaler.draw_glass_card(pad_x, d_y, desc_w, desc_h, Color::new(0.08, 0.10, 0.15, 0.70), Palette::UI_CARD_BORDER, 1.0);
 
         fonts.draw_ui_regular(
-            "CIRCUIT DESCRIPTION [Edit with N]:",
+            "CIRCUIT DESCRIPTION [Edit with I]:",
             pad_x + scaler.s(8.0),
             d_y + scaler.s(13.0),
             scaler.font_s(10.0),
@@ -527,9 +527,9 @@ pub fn render_track_manager_screen(
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
     let action_str = if is_main_active {
-        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [P] DEMOTE | [N] EDIT INFO | [C] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [P] DEMOTE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     } else {
-        "[Enter] RACE | [Tab] PROMOTED | [E] TRACK EDITOR | [P] PROMOTE TO MODULE | [N] EDIT INFO | [C] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] PROMOTED | [E] TRACK EDITOR | [P] PROMOTE TO MODULE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     };
     fonts.draw_ui_bold_centered(
         action_str,

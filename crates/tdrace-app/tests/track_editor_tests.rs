@@ -1046,3 +1046,117 @@ fn test_track_editor_default_offtrack_surface_mutation_and_cycling() {
     assert_eq!(deserialized.default_surface, SurfaceType::Dirt);
 }
 
+#[test]
+fn test_track_editor_predefined_car_mutation_and_cycling() {
+    use tdrace_app::editor::{EditorState, ToolSettings};
+    use tdrace_core::track::presets::classic_grand_prix;
+    use tdrace_core::track::Track;
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    assert_eq!(state.track.predefined_car.as_deref(), Some("sports_car"));
+    assert!(!state.is_dirty);
+
+    // 1. Set predefined car to "rally_car"
+    assert!(tools.set_track_predefined_car(&mut state, Some("rally_car".to_string())));
+    assert_eq!(state.track.predefined_car.as_deref(), Some("rally_car"));
+    assert!(state.is_dirty);
+
+    // Setting same car returns false
+    assert!(!tools.set_track_predefined_car(&mut state, Some("rally_car".to_string())));
+
+    // 2. Undo restores "sports_car"
+    assert!(state.undo());
+    assert_eq!(state.track.predefined_car.as_deref(), Some("sports_car"));
+
+    // 3. Redo restores "rally_car"
+    assert!(state.redo());
+    assert_eq!(state.track.predefined_car.as_deref(), Some("rally_car"));
+
+    // 4. Test cycling predefined car: rally_car -> f1_car -> sports_car -> drift_car -> kart -> rally_car
+    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("f1_car".to_string()));
+    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("sports_car".to_string()));
+    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("drift_car".to_string()));
+    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("kart".to_string()));
+    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("rally_car".to_string()));
+
+    // 5. JSON serialization roundtrip preserves predefined_car
+    tools.set_track_predefined_car(&mut state, Some("f1_car".to_string()));
+    let json_str = state.track.to_json().expect("Failed to serialize track");
+    let deserialized = Track::from_json(&json_str).expect("Failed to deserialize track");
+    assert_eq!(deserialized.predefined_car.as_deref(), Some("f1_car"));
+}
+
+#[test]
+fn test_track_editor_select_all_and_marquee_box_selection() {
+    use tdrace_app::editor::{EditorState, EditorToolType, Selection, ToolSettings};
+    use tdrace_core::track::geometry::{Obstacle, SurfaceShape};
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let mut track = classic_grand_prix();
+    // Add custom obstacle and pit box
+    track.geometry.obstacles.push(Obstacle::circle(1, Vec2::new(10.0, 10.0), 3.0, "Obs 1"));
+    track.pit_box_area = Some(SurfaceShape::Aabb {
+        min: Vec2::new(0.0, 0.0),
+        max: Vec2::new(20.0, 20.0),
+    });
+
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    // 1. Test Select All with Select Tool
+    tools.active_tool = EditorToolType::Select;
+    assert!(tools.select_all_for_active_tool(&mut state));
+    assert!(matches!(state.selection, Selection::Multi { .. }));
+    assert!(state.selection.is_pit_box_selected());
+    assert!(state.selection.is_obstacle_selected(0));
+    assert!(state.selection.is_waypoint_selected(0));
+
+    // 2. Test Select All with RoadSpline Tool
+    tools.active_tool = EditorToolType::RoadSpline;
+    assert!(tools.select_all_for_active_tool(&mut state));
+    assert!(matches!(state.selection, Selection::MultipleWaypoints(_)));
+    assert_eq!(state.selection.selected_waypoint_indices().len(), state.track.spline.waypoints.len());
+
+    // 3. Test Select All with PitLane Tool
+    tools.active_tool = EditorToolType::PitLane;
+    assert!(tools.select_all_for_active_tool(&mut state));
+    assert_eq!(state.selection, Selection::PitBox);
+
+    // 4. Test Click-and-drag Box Selection in an isolated area
+    tools.active_tool = EditorToolType::Select;
+    state.selection = Selection::None;
+
+    let target_pos = Vec2::new(700.0, 700.0);
+    state.track.geometry.obstacles.push(Obstacle::circle(101, target_pos + Vec2::new(10.0, 10.0), 3.0, "Isolated Obs"));
+    let obs_idx = state.track.geometry.obstacles.len() - 1;
+
+    // Drag box from (680, 680) to (730, 730)
+    tools.handle_mouse_down(&mut state, target_pos - Vec2::new(20.0, 20.0));
+    assert!(tools.is_box_selecting);
+    tools.handle_mouse_drag(&mut state, target_pos + Vec2::new(30.0, 30.0));
+    tools.handle_mouse_up(&mut state, target_pos + Vec2::new(30.0, 30.0));
+    assert!(!tools.is_box_selecting);
+
+    // Should have selected the obstacle
+    assert!(state.selection.is_obstacle_selected(obs_idx));
+
+    // 5. Test moving the multi-selection
+    let obs_orig = state.track.geometry.obstacles[obs_idx].center();
+    tools.handle_mouse_down(&mut state, target_pos + Vec2::new(10.0, 10.0));
+    tools.handle_mouse_drag(&mut state, target_pos + Vec2::new(15.0, 15.0));
+    tools.handle_mouse_up(&mut state, target_pos + Vec2::new(15.0, 15.0));
+
+    assert_eq!(state.track.geometry.obstacles[obs_idx].center(), obs_orig + Vec2::new(5.0, 5.0));
+
+    // 6. Test multi-selection deletion
+    let prev_obs_count = state.track.geometry.obstacles.len();
+    assert!(tools.delete_selected(&mut state));
+    assert_eq!(state.track.geometry.obstacles.len(), prev_obs_count - 1);
+    assert_eq!(state.selection, Selection::None);
+}
+
+
+

@@ -825,6 +825,137 @@ fn render_inspector(
                 tools.delete_selected(state);
             }
         }
+        Selection::Multi {
+            ref waypoints,
+            ref surface_zones,
+            ref obstacles,
+            ref jump_ramps,
+            ref checkpoints,
+            ref grid_slots,
+            pit_box,
+        } => {
+            let total = waypoints.len()
+                + surface_zones.len()
+                + obstacles.len()
+                + jump_ramps.len()
+                + checkpoints.len()
+                + grid_slots.len()
+                + if pit_box { 1 } else { 0 };
+
+            fonts.draw_ui_bold(
+                &format!("Multi-Selection ({})", total),
+                x + scaler.s(12.0),
+                curr_y + scaler.s(14.0),
+                scaler.font_s(13.0),
+                Palette::WHITE,
+            );
+            curr_y += scaler.s(24.0);
+
+            if !waypoints.is_empty() {
+                fonts.draw_ui_regular(
+                    &format!("• Waypoints: {}", waypoints.len()),
+                    x + scaler.s(16.0),
+                    curr_y + scaler.s(12.0),
+                    scaler.font_s(12.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+                curr_y += scaler.s(18.0);
+            }
+            if !surface_zones.is_empty() {
+                fonts.draw_ui_regular(
+                    &format!("• Surface Zones: {}", surface_zones.len()),
+                    x + scaler.s(16.0),
+                    curr_y + scaler.s(12.0),
+                    scaler.font_s(12.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+                curr_y += scaler.s(18.0);
+            }
+            if !obstacles.is_empty() {
+                fonts.draw_ui_regular(
+                    &format!("• Obstacles: {}", obstacles.len()),
+                    x + scaler.s(16.0),
+                    curr_y + scaler.s(12.0),
+                    scaler.font_s(12.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+                curr_y += scaler.s(18.0);
+            }
+            if !jump_ramps.is_empty() {
+                fonts.draw_ui_regular(
+                    &format!("• Jump Ramps: {}", jump_ramps.len()),
+                    x + scaler.s(16.0),
+                    curr_y + scaler.s(12.0),
+                    scaler.font_s(12.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+                curr_y += scaler.s(18.0);
+            }
+            if !checkpoints.is_empty() {
+                fonts.draw_ui_regular(
+                    &format!("• Checkpoints: {}", checkpoints.len()),
+                    x + scaler.s(16.0),
+                    curr_y + scaler.s(12.0),
+                    scaler.font_s(12.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+                curr_y += scaler.s(18.0);
+            }
+            if !grid_slots.is_empty() {
+                fonts.draw_ui_regular(
+                    &format!("• Grid Slots: {}", grid_slots.len()),
+                    x + scaler.s(16.0),
+                    curr_y + scaler.s(12.0),
+                    scaler.font_s(12.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+                curr_y += scaler.s(18.0);
+            }
+            if pit_box {
+                fonts.draw_ui_regular(
+                    "• Pit Lane Area",
+                    x + scaler.s(16.0),
+                    curr_y + scaler.s(12.0),
+                    scaler.font_s(12.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+                curr_y += scaler.s(18.0);
+            }
+            curr_y += scaler.s(10.0);
+
+            if draw_ui_btn(
+                fonts,
+                scaler,
+                x + scaler.s(12.0),
+                curr_y,
+                w - scaler.s(24.0),
+                scaler.s(28.0),
+                "DUPLICATE ALL [Ctrl+D]",
+                Palette::UI_CARD_BG,
+                Palette::NEON_CYAN,
+                mouse_pos,
+                clicked,
+            ) {
+                tools.duplicate_selected(state);
+            }
+            curr_y += scaler.s(32.0);
+
+            if draw_ui_btn(
+                fonts,
+                scaler,
+                x + scaler.s(12.0),
+                curr_y,
+                w - scaler.s(24.0),
+                scaler.s(28.0),
+                "DELETE ALL [Del]",
+                Palette::UI_CARD_BG,
+                Palette::RED,
+                mouse_pos,
+                clicked,
+            ) {
+                tools.delete_selected(state);
+            }
+        }
         Selection::None => {
             if tools.active_tool == EditorToolType::RoadSpline {
                 fonts.draw_ui_bold("Road Spline Tool", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
@@ -933,6 +1064,71 @@ fn render_inspector(
                         clicked,
                     ) {
                         tools.set_track_default_surface(state, st2);
+                    }
+                }
+                curr_y += scaler.s(26.0);
+            }
+            curr_y += scaler.s(6.0);
+
+            fonts.draw_ui_bold("Predefined Vehicle", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_CYAN);
+            curr_y += scaler.s(22.0);
+
+            let cars = [
+                ("sports_car", "GT Sport"),
+                ("drift_car", "Drift Spec"),
+                ("kart", "125cc Kart"),
+                ("rally_car", "AWD Rally"),
+                ("f1_car", "F1 Hybrid"),
+            ];
+
+            let active_car_str = state.track.predefined_car.clone().unwrap_or_else(|| "sports_car".to_string());
+            let is_matching_car = |car_id: &str| -> bool {
+                match car_id {
+                    "sports_car" => matches!(active_car_str.as_str(), "sports_car"),
+                    "drift_car" => matches!(active_car_str.as_str(), "drift_car"),
+                    "kart" => matches!(active_car_str.as_str(), "kart" | "shifter_kart" | "shifter_kart_125"),
+                    "rally_car" => matches!(active_car_str.as_str(), "rally_car" | "wrc_turbo_rally" | "rally"),
+                    "f1_car" => matches!(active_car_str.as_str(), "f1_car" | "f1" | "f1_hybrid_26" | "open_wheel"),
+                    _ => false,
+                }
+            };
+
+            for chunk in cars.chunks(2) {
+                let (cid1, label1) = chunk[0];
+                let is_active1 = is_matching_car(cid1);
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    half_btn_w,
+                    scaler.s(22.0),
+                    label1,
+                    if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    tools.set_track_predefined_car(state, Some(cid1.to_string()));
+                }
+
+                if chunk.len() > 1 {
+                    let (cid2, label2) = chunk[1];
+                    let is_active2 = is_matching_car(cid2);
+                    if draw_ui_btn(
+                        fonts,
+                        scaler,
+                        x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                        curr_y,
+                        half_btn_w,
+                        scaler.s(22.0),
+                        label2,
+                        if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                        if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                        mouse_pos,
+                        clicked,
+                    ) {
+                        tools.set_track_predefined_car(state, Some(cid2.to_string()));
                     }
                 }
                 curr_y += scaler.s(26.0);
