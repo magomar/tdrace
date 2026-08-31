@@ -700,7 +700,22 @@ impl RaceSession {
             rear_wing_height: 0.85,
             halo: true,
         };
-        self.track_choice = self.active_module_tracks()[0].clone();
+        let tracks = self.active_module_tracks();
+        if let Some((idx, choice)) = tracks
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.track_id() == self.config.gameplay.default_track)
+        {
+            self.menu_track_idx = idx;
+            self.track_choice = choice.clone();
+        } else {
+            self.track_choice = tracks.first().cloned().unwrap_or_else(|| TrackChoice::Custom {
+                id: "monza".to_string(),
+                title: "Monza Autodromo Nazionale".to_string(),
+                description: "Temple of Speed. 5.79km high-speed DRS straights & Variante del Rettifilo.".to_string(),
+                path: "f1/monza".to_string(),
+            });
+        }
         self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::F1Car;
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
@@ -721,7 +736,17 @@ impl RaceSession {
             mudflaps: true,
             large_wing: true,
         };
-        self.track_choice = self.active_module_tracks()[0].clone();
+        let tracks = self.active_module_tracks();
+        if let Some((idx, choice)) = tracks
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.track_id() == self.config.gameplay.default_track)
+        {
+            self.menu_track_idx = idx;
+            self.track_choice = choice.clone();
+        } else {
+            self.track_choice = tracks.first().cloned().unwrap_or(TrackChoice::OasisRally);
+        }
         self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::RallyCar;
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
@@ -741,7 +766,22 @@ impl RaceSession {
             exposed_driver: true,
             side_bumpers: true,
         };
-        self.track_choice = self.active_module_tracks()[0].clone();
+        let tracks = self.active_module_tracks();
+        if let Some((idx, choice)) = tracks
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.track_id() == self.config.gameplay.default_track)
+        {
+            self.menu_track_idx = idx;
+            self.track_choice = choice.clone();
+        } else {
+            self.track_choice = tracks.first().cloned().unwrap_or_else(|| TrackChoice::Custom {
+                id: "lonato".to_string(),
+                title: "South Garda Karting (Lonato)".to_string(),
+                description: "The global Mecca of Karting featuring Curva del Paddock, Pettine hairpin, and Variante Nuova.".to_string(),
+                path: "kart/lonato".to_string(),
+            });
+        }
         self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::Kart;
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
@@ -762,8 +802,18 @@ impl RaceSession {
             gt_wing: true,
             diffuser: true,
         };
-        self.track_choice = TrackChoice::ClassicGrandPrix;
-        self.track = tdrace_core::track::presets::classic_grand_prix();
+        let tracks = self.active_module_tracks();
+        if let Some((idx, choice)) = tracks
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.track_id() == self.config.gameplay.default_track)
+        {
+            self.menu_track_idx = idx;
+            self.track_choice = choice.clone();
+        } else {
+            self.track_choice = tracks.first().cloned().unwrap_or(TrackChoice::ClassicGrandPrix);
+        }
+        self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::SportsCar;
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
             self.total_laps = 3;

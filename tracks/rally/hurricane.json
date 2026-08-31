@@ -30770,6 +30770,5 @@
   "default_surface": "Sand",
   "pit_box_area": null,
   "default_laps": 3,
-  "predefined_car": "rally_car",
-  "module_id": "rally"
+  "predefined_car": "rally_car"
 }

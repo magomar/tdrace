@@ -647,7 +647,46 @@ fn test_consistent_module_categorization_in_module_view() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_empty_module_tracks_resilience() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_empty_tracks_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
 
+    let mut session = RaceSession::new();
+    session.track_manager = TrackManager::new(&temp_dir);
 
+    // Delete all known presets so module catalogs are completely empty
+    session.track_manager.deleted_presets = vec![
+        "monza".into(), "spa".into(), "silverstone".into(), "monaco".into(), "suzuka".into(),
+        "interlagos".into(), "montreal".into(), "red_bull_ring".into(), "catalunya".into(),
+        "zandvoort".into(), "bahrain".into(), "marina_bay".into(), "cota".into(),
+        "classic_grand_prix".into(), "oval_speedway".into(), "drift_park".into(),
+        "kart_arena".into(), "ramp_raceway".into(), "oasis_rally".into(), "outlaw_pass".into(),
+        "sahara".into(), "lonato".into(), "sarno".into(), "genk".into(), "pfi".into(),
+        "zuera".into(), "le_mans_kart".into(), "portimao_kart".into(), "franciacorta".into(),
+    ];
 
+    assert_eq!(session.track_manager.module_catalog_tracks("f1").len(), 0);
+    assert_eq!(session.track_manager.module_catalog_tracks("rally").len(), 0);
+    assert_eq!(session.track_manager.module_catalog_tracks("kart").len(), 0);
+    assert_eq!(session.track_manager.module_catalog_tracks("classic").len(), 0);
+
+    // Ensure switching to each module succeeds gracefully without panicking
+    session.switch_to_f1();
+    assert_eq!(session.active_module_id, "f1");
+
+    session.switch_to_rally();
+    assert_eq!(session.active_module_id, "rally");
+
+    session.switch_to_kart();
+    assert_eq!(session.active_module_id, "kart");
+
+    session.switch_to_classic();
+    assert_eq!(session.active_module_id, "classic");
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
 
