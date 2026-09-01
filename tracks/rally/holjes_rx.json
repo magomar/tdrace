@@ -16462,7 +16462,8 @@
         "launch_speed": 4.8,
         "ramp_angle_deg": 20.0,
         "height": 2.6,
-        "name": "Höljes Jump Crest"
+        "name": "Höljes Jump Crest",
+        "surface": "Asphalt"
       }
     ],
     "left_boundary_polyline": [

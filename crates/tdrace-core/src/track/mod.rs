@@ -114,7 +114,14 @@ impl Track {
     ///    Located underneath the track ribbon, only affecting the vehicle when running off track.
     /// 4. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::Sand`).
     pub fn sample_surface(&self, point: Vec2) -> SurfaceType {
-        // 1. Check above-track surface zones first (e.g. puddles, oil slicks, sand/grass placed on top of road)
+        // 1. Check jump ramps (elevated platforms)
+        for ramp in &self.geometry.jump_ramps {
+            if ramp.contains(point) {
+                return ramp.surface;
+            }
+        }
+
+        // 2. Check above-track surface zones first (e.g. puddles, oil slicks, sand/grass placed on top of road)
         for zone in &self.geometry.surface_zones {
             if zone.is_above_track() && zone.contains(point) {
                 return zone.surface;

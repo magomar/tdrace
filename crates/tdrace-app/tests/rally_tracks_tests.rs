@@ -3,6 +3,7 @@ use tdrace_app::module::rally::RallyGameModule;
 use tdrace_app::module::GameModule;
 use tdrace_app::track_manager::TrackManager;
 use tdrace_app::ui::menu::{resolve_track_for_menu, CarChoice, TrackChoice};
+use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
     dirt_figure_eight, hell_rx, holjes_rx, loheac_rx, lydden_hill,
 };
@@ -76,33 +77,42 @@ fn test_rally_module_tracks_integrity_and_validation() {
 }
 
 #[test]
-fn test_dirt_figure_eight_flyover_bridge_and_underpass_elevation() {
+fn test_dirt_figure_eight_horizontal_flat_dirt_arena() {
     let fig8 = dirt_figure_eight();
     assert_eq!(fig8.name, "Dirt Figure-8 Arena");
 
-    // Check that there is a bridge section with elevation >= 4.0m
+    // 1. Verify horizontal orientation (width along X is substantially larger than height along Y)
+    let min_x = fig8.spline.samples.iter().map(|s| s.point.x).fold(f32::INFINITY, f32::min);
+    let max_x = fig8.spline.samples.iter().map(|s| s.point.x).fold(f32::NEG_INFINITY, f32::max);
+    let min_y = fig8.spline.samples.iter().map(|s| s.point.y).fold(f32::INFINITY, f32::min);
+    let max_y = fig8.spline.samples.iter().map(|s| s.point.y).fold(f32::NEG_INFINITY, f32::max);
+    let width_x = max_x - min_x;
+    let height_y = max_y - min_y;
+    assert!(
+        width_x > height_y * 2.0,
+        "Figure-8 circuit must be placed horizontally (width {:.1}m vs height {:.1}m)",
+        width_x,
+        height_y
+    );
+
+    // 2. Verify flat crossover at the same height (0.0m elevation throughout, no bridge overpass)
     let max_elevation = fig8
         .spline
         .samples
         .iter()
         .map(|s| s.elevation)
         .fold(0.0f32, f32::max);
-    assert!(
-        max_elevation >= 4.0,
-        "Figure-8 Flyover Bridge must reach ~4.5m elevation (got {:.2}m)",
-        max_elevation
+    assert_eq!(
+        max_elevation, 0.0,
+        "Figure-8 crossover must be at ground level with 0.0m elevation throughout"
     );
 
-    // Check underpass sample has 0.0 elevation
-    let min_elevation = fig8
-        .spline
-        .samples
-        .iter()
-        .map(|s| s.elevation)
-        .fold(10.0f32, f32::min);
-    assert_eq!(min_elevation, 0.0, "Figure-8 Underpass must be at ground level (0.0m)");
+    // 3. Verify whole track is 100% dirt surface
+    let breakdown = fig8.surface_breakdown();
+    assert_eq!(breakdown.len(), 1, "Figure-8 must be single dirt surface type");
+    assert_eq!(breakdown[0].0, SurfaceType::Dirt, "Track surface must be 100% Dirt");
 
-    // Ensure there is at least one JumpRamp
+    // 4. Ensure there is at least one JumpRamp
     assert!(!fig8.geometry.jump_ramps.is_empty(), "Figure-8 should have jump ramps");
 }
 

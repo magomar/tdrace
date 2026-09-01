@@ -152,7 +152,6 @@ pub enum GameState {
         modal: TrackManagerModal,
     },
     TrackEditor,
-    EditorTestDrive,
 }
 
 
@@ -285,11 +284,9 @@ pub struct RaceSession {
     pub editor_camera: EditorCamera,
     pub editor_tools: ToolSettings,
     pub editor_modal: EditorModal,
-    pub test_drive_car: Option<Car>,
-    pub test_drive_tracker: Option<TrackProgressTracker>,
-    pub test_drive_time: f32,
     pub editor_save_toast_timer: f32,
     pub editor_save_toast_msg: String,
+    pub return_to_editor_on_exit: bool,
 
     // Audio System
     pub audio: AudioManager,
@@ -492,11 +489,9 @@ impl RaceSession {
             editor_camera,
             editor_tools: ToolSettings::default(),
             editor_modal: EditorModal::None,
-            test_drive_car: None,
-            test_drive_tracker: None,
-            test_drive_time: 0.0,
             editor_save_toast_timer: 0.0,
             editor_save_toast_msg: String::new(),
+            return_to_editor_on_exit: false,
             audio,
             engine_rpm: EngineRpmModel::default(),
             prev_countdown_sec: 4,
@@ -1124,8 +1119,10 @@ impl RaceSession {
         self.show_hall_of_fame = true;
         self.refresh_hof_entries();
 
-        // 1. Build selected track
-        self.track = self.load_track_for_session(&self.track_choice);
+        // 1. Build selected track (preserve in-memory track if launched from editor)
+        if !self.return_to_editor_on_exit {
+            self.track = self.load_track_for_session(&self.track_choice);
+        }
 
         // Predefined balanced lap count from track
         self.total_laps = self.track.default_laps;
@@ -1234,7 +1231,6 @@ impl RaceSession {
             GameState::Racing
                 | GameState::Countdown(_)
                 | GameState::Paused
-                | GameState::EditorTestDrive
                 | GameState::TrackEditor
         );
         if is_camera_state && (is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_cam_toggle_pressed) {
@@ -1260,8 +1256,7 @@ impl RaceSession {
                 let car_pos = self
                     .cars
                     .first()
-                    .map(|c| c.state.position)
-                    .or_else(|| self.test_drive_car.as_ref().map(|c| c.state.position));
+                    .map(|c| c.state.position);
                 if let Some(pos) = car_pos {
                     let lvl_idx = self.camera.current_level_idx + 1;
                     let total_lvls = self.camera.levels.len();
@@ -1282,7 +1277,6 @@ impl RaceSession {
                 | GameState::StartingGrid
                 | GameState::Paused
                 | GameState::Finished
-                | GameState::EditorTestDrive
         );
         if is_gameplay_state {
             let mut zoom_dir = 0.0f32;
@@ -1305,11 +1299,6 @@ impl RaceSession {
 
         if self.state == GameState::TrackEditor {
             self.update_track_editor(frame_dt);
-            return;
-        }
-
-        if self.state == GameState::EditorTestDrive {
-            self.update_editor_test_drive(frame_dt);
             return;
         }
 
@@ -1610,15 +1599,20 @@ impl RaceSession {
                     self.state = GameState::DriverCards(DriverCardsOrigin::StartingGrid);
                 }
 
-                // 6. Return to Main Menu (Escape, or Gamepad Cancel [B / East / Back])
+                // 6. Return to Main Menu or Track Editor (Escape, or Gamepad Cancel [B / East / Back])
                 if is_key_pressed(KeyCode::Escape)
                     || self.input.gamepad.snapshot.btn_cancel_pressed
                     || self.input.gamepad.snapshot.btn_back_pressed
                     || self.input.gamepad.snapshot.btn_b_pressed
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.state = GameState::Menu;
-                    self.audio.play_music(MusicTrack::NeonMenu);
+                    if self.return_to_editor_on_exit {
+                        self.return_to_editor_on_exit = false;
+                        self.state = GameState::TrackEditor;
+                    } else {
+                        self.state = GameState::Menu;
+                        self.audio.play_music(MusicTrack::NeonMenu);
+                    }
                 }
             }
             GameState::Countdown(ref mut remaining) => {
@@ -1721,8 +1715,13 @@ impl RaceSession {
                     || exit_clicked
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.state = GameState::Menu;
-                    self.audio.play_music(MusicTrack::NeonMenu);
+                    if self.return_to_editor_on_exit {
+                        self.return_to_editor_on_exit = false;
+                        self.state = GameState::TrackEditor;
+                    } else {
+                        self.state = GameState::Menu;
+                        self.audio.play_music(MusicTrack::NeonMenu);
+                    }
                 }
                 if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
                     self.audio.play_sfx(SfxType::UiSelect);
@@ -1744,10 +1743,20 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
                 }
-                if is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_back_pressed || self.input.gamepad.snapshot.btn_b_pressed {
+                if is_key_pressed(KeyCode::M)
+                    || is_key_pressed(KeyCode::Escape)
+                    || self.input.gamepad.snapshot.btn_cancel_pressed
+                    || self.input.gamepad.snapshot.btn_back_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.state = GameState::Menu;
-                    self.audio.play_music(MusicTrack::NeonMenu);
+                    if self.return_to_editor_on_exit {
+                        self.return_to_editor_on_exit = false;
+                        self.state = GameState::TrackEditor;
+                    } else {
+                        self.state = GameState::Menu;
+                        self.audio.play_music(MusicTrack::NeonMenu);
+                    }
                 }
             }
 
@@ -1818,8 +1827,7 @@ impl RaceSession {
             GameState::ProfileManager { .. }
             | GameState::ProfileCreate { .. }
             | GameState::TrackManager { .. }
-            | GameState::TrackEditor
-            | GameState::EditorTestDrive => {}
+            | GameState::TrackEditor => {}
 
         }
     }
@@ -3221,13 +3229,6 @@ impl RaceSession {
                     crate::render::get_track_backdrop_color(self.track.default_surface)
                 }
             }
-            GameState::EditorTestDrive => {
-                if let Some(ref editor) = self.editor_state {
-                    crate::render::get_track_backdrop_color(editor.track.default_surface)
-                } else {
-                    crate::render::get_track_backdrop_color(self.track.default_surface)
-                }
-            }
             _ => {
                 crate::render::get_track_backdrop_color(self.track.default_surface)
             }
@@ -3401,9 +3402,6 @@ impl RaceSession {
             GameState::TrackEditor => {
                 self.render_track_editor();
             }
-            GameState::EditorTestDrive => {
-                self.render_editor_test_drive();
-            }
         }
     }
 
@@ -3435,27 +3433,18 @@ impl RaceSession {
         self.state = GameState::TrackEditor;
     }
 
-    /// Spawns vehicle on the circuit starting grid for zero-latency test driving.
+    /// Launches a Time Trial race session from the Track Studio editor using the circuit's default car.
     pub fn start_editor_test_drive(&mut self) {
-        if let Some(state) = &self.editor_state {
-            let test_car_choice = resolve_predefined_car_for_track(Some(&state.track), self.active_module_id);
-            let mut base_config = self.config.get_car_config(test_car_choice);
-            base_config.assists = self.assist_profile.to_config();
-            let init_pose = state
-                .track
-                .grid_positions
-                .first()
-                .cloned()
-                .unwrap_or_else(|| {
-                    let p = state.track.spline.waypoints.first().map(|w| w.point).unwrap_or(Vec2::ZERO);
-                    tdrace_core::track::geometry::SpawnPose::new(p, 0.0, 0)
-                });
-            self.test_drive_car = Some(Car::new(base_config).with_pose(init_pose.position, init_pose.angle));
-            self.test_drive_tracker = Some(TrackProgressTracker::new(state.track.checkpoints.len(), 100));
-            self.test_drive_time = 0.0;
-            self.camera.setup_for_track(&state.track);
-            self.audio.play_sfx(SfxType::CountdownHigh);
-            self.state = GameState::EditorTestDrive;
+        if let Some(state) = &mut self.editor_state {
+            state.rebuild_geometry();
+            self.track = state.track.clone();
+            let default_car = resolve_predefined_car_for_track(Some(&self.track), self.active_module_id);
+            self.car_choice = default_car;
+            self.game_mode = GameMode::TimeTrial;
+            self.is_time_attack = true;
+            self.free_car_selection = false;
+            self.return_to_editor_on_exit = true;
+            self.init_race();
         }
     }
 
@@ -3938,82 +3927,7 @@ impl RaceSession {
         }
     }
 
-    /// Frame update tick for instant test drive playtesting mode.
-    pub fn update_editor_test_drive(&mut self, dt: f32) {
-        // [Esc] returns cleanly to Track Studio
-        if is_key_pressed(KeyCode::Escape) {
-            self.audio.stop_all_loops();
-            self.audio.play_sfx(SfxType::UiSelect);
-            self.state = GameState::TrackEditor;
-            return;
-        }
 
-        // [R] resets car back to starting pose
-        if is_key_pressed(KeyCode::R) {
-            if let Some(state) = &self.editor_state {
-                let init_pose = state
-                    .track
-                    .grid_positions
-                    .first()
-                    .cloned()
-                    .unwrap_or_else(|| {
-                        let p = state.track.spline.waypoints.first().map(|w| w.point).unwrap_or(Vec2::ZERO);
-                        tdrace_core::track::geometry::SpawnPose::new(p, 0.0, 0)
-                    });
-                if let Some(car) = &mut self.test_drive_car {
-                    *car = Car::new(car.config).with_pose(init_pose.position, init_pose.angle);
-                }
-                if let Some(tracker) = &mut self.test_drive_tracker {
-                    *tracker = TrackProgressTracker::new(state.track.checkpoints.len(), 100);
-                }
-                self.test_drive_time = 0.0;
-                self.audio.play_sfx(SfxType::UiMove);
-            }
-        }
-
-        // Physics step on test drive car
-        if let (Some(state), Some(car)) = (&self.editor_state, &mut self.test_drive_car) {
-            let kb_ctrl = self.input.poll_player_controls(dt, car.state.local_velocity.x);
-            let touch_ctrl = self.touch.poll_controls();
-            let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-
-            // Sample surface per wheel and step vehicle dynamics
-            let surfaces = state.track.sample_car_surfaces(car);
-            car.step_per_wheel(&player_ctrl, surfaces, dt);
-            let prev_prog = self.test_drive_tracker.as_ref().map(|t| t.progress_distance).unwrap_or(0.0);
-            let proj = state.track.spline.project_point_continuity(car.state.position, prev_prog, 50.0);
-            car.state.road_elevation = proj.elevation;
-
-            // Resolve wall & obstacle collisions
-            resolve_all_wall_collisions(car, &state.track.geometry.inner_walls, &state.track.geometry.obstacles);
-            resolve_all_wall_collisions(car, &state.track.geometry.outer_walls, &[]);
-
-            // Jump ramps
-            for ramp in &state.track.geometry.jump_ramps {
-                if car.try_trigger_jump_ramp(ramp) {
-                    self.audio.play_sfx(SfxType::JumpLaunch);
-                    break;
-                }
-            }
-            if car.state.just_landed {
-                self.audio.play_sfx(SfxType::Landing);
-                self.camera.add_trauma(0.25);
-            }
-
-            // Update lap tracker
-            if let Some(tracker) = &mut self.test_drive_tracker {
-                tracker.update(car, &state.track.spline, &state.track.checkpoints, dt);
-            }
-            self.test_drive_time += dt;
-
-            // Audio & Camera
-            let max_slip = car.state.wheels.iter().map(|w| w.slip_angle.abs()).fold(0.0f32, f32::max);
-            let (rpm, is_shift) = self.engine_rpm.update(car.state.local_velocity.x, player_ctrl.throttle, max_slip, dt);
-            self.audio.update_engine_rpm(rpm, player_ctrl.throttle, is_shift);
-
-            self.camera.update(car, dt);
-        }
-    }
 
     /// Renders the Track Studio viewport pass.
     pub fn render_track_editor(&mut self) {
@@ -4087,86 +4001,7 @@ impl RaceSession {
         }
     }
 
-    /// Renders the instant Test Drive view with HUD and return banner.
-    pub fn render_editor_test_drive(&self) {
-        if let (Some(state), Some(car)) = (&self.editor_state, &self.test_drive_car) {
-            self.camera.apply();
 
-            // 1. Ground Track & Environment
-            render_ground_track(&state.track);
-
-            // 2. Persistent Ground Skidmarks
-            self.fx.render_ground_fx();
-
-            // 3. Ground Barriers and Obstacles
-            render_ground_barriers_and_obstacles(&state.track);
-
-            // 4. Test Car (if at ground level)
-            let is_braking = car.state.local_velocity.x > 1.0 && car.state.wheels[2].slip_ratio < -0.15;
-            let scheme = CarColorScheme::default();
-            if car.total_elevation() < 0.6 {
-                render_car_with_visual_type(car, &scheme, is_braking, self.current_visual_type);
-            }
-
-            // 5. Elevated Overpass Bridges
-            render_elevated_track(&state.track);
-
-            // 6. Elevated Barriers & Guardrails
-            render_elevated_barriers_and_obstacles(&state.track);
-
-            // 7. Test Car (if elevated on bridge)
-            if car.total_elevation() >= 0.6 {
-                render_car_with_visual_type(car, &scheme, is_braking, self.current_visual_type);
-            }
-
-            self.camera.reset_to_screen();
-
-            // Screen HUD: Return to Editor banner & Speedometer
-            let sw = screen_width_safe();
-            let sh = screen_height_safe();
-            let scaler = UiScaler::new(sw, sh);
-
-            let bar_h = scaler.s(36.0);
-            macroquad::shapes::draw_rectangle(0.0, 0.0, sw, bar_h, Color::new(0.08, 0.10, 0.15, 0.92));
-            macroquad::shapes::draw_rectangle_lines(0.0, 0.0, sw, bar_h, 1.5, Palette::NEON_GREEN);
-            self.fonts.draw_ui_bold_centered(
-                "TEST DRIVE MODE — [ESC] Return to Circuit Studio | [R] Reset to Grid",
-                sw * 0.5,
-                scaler.s(24.0),
-                scaler.font_s(14.0),
-                Palette::NEON_GREEN,
-            );
-
-            // Bottom Right Speedometer Badge
-            let spd_kmh = (car.state.local_velocity.x * 3.6).abs().round() as i32;
-            let lap_str = if let Some(tracker) = &self.test_drive_tracker {
-                format!("Lap {} | {:.2}s", tracker.current_lap, tracker.lap_time)
-            } else {
-                format!("{:.2}s", self.test_drive_time)
-            };
-
-            let badge_w = scaler.s(220.0);
-            let badge_h = scaler.s(60.0);
-            let bx = sw - badge_w - scaler.s(16.0);
-            let by = sh - badge_h - scaler.s(16.0);
-            scaler.draw_glass_card(bx, by, badge_w, badge_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.5);
-
-            self.fonts.draw_display(
-                &format!("{} KM/H", spd_kmh),
-                bx + scaler.s(14.0),
-                by + scaler.s(32.0),
-                scaler.font_s(22.0),
-                Palette::WHITE,
-            );
-            self.fonts.draw_ui_bold(
-                &lap_str,
-                bx + scaler.s(14.0),
-                by + scaler.s(50.0),
-                scaler.font_s(13.0),
-                Palette::NEON_GOLD,
-            );
-        }
-    }
 
     /// Renders world-space entities under active camera with strict elevation occlusion layering.
     fn render_world(&self) {

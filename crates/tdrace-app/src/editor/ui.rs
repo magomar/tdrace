@@ -1,13 +1,13 @@
 use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::input::{
-    get_char_pressed, is_key_pressed, is_mouse_button_pressed, mouse_position, KeyCode,
-    MouseButton,
+    get_char_pressed, is_key_pressed, is_mouse_button_down, is_mouse_button_pressed,
+    mouse_position, KeyCode, MouseButton,
 };
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{SurfaceLayer, SurfaceShape};
+use tdrace_core::track::geometry::{JumpRamp, SurfaceLayer, SurfaceShape};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
 use crate::editor::camera::EditorCamera;
@@ -17,6 +17,16 @@ use crate::render::color::Palette;
 use crate::track_manager::TrackManager;
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
+
+/// Dimension / orientation properties of a jump ramp that can be edited in a modal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RampPropertyModal {
+    Angle,
+    Length,
+    Width,
+    Height,
+    Pitch,
+}
 
 /// Modals that can be displayed as overlays on top of the editor viewport.
 #[derive(Debug, Clone, PartialEq)]
@@ -41,6 +51,10 @@ pub enum EditorModal {
     UnsavedChanges,
     SetRampAngle {
         input_angle: String,
+    },
+    SetRampProperty {
+        property: RampPropertyModal,
+        input_val: String,
     },
 }
 
@@ -464,6 +478,22 @@ pub fn render_editor_ui(
                     *active_modal = EditorModal::None;
                 }
             }
+            EditorModal::SetRampProperty { property, input_val } => {
+                if render_set_ramp_property_modal(
+                    fonts,
+                    &scaler,
+                    sw,
+                    sh,
+                    state,
+                    tools,
+                    *property,
+                    input_val,
+                    mouse_pos,
+                    mouse_clicked,
+                ) {
+                    *active_modal = EditorModal::None;
+                }
+            }
             EditorModal::None => {}
         }
 
@@ -806,131 +836,199 @@ fn render_inspector(
                 fonts.draw_ui_bold(&format!("Jump Ramp #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
                 curr_y += scaler.s(22.0);
 
-                let heading_deg = ramp.angle_deg();
-                fonts.draw_ui_bold(&format!("Direction Angle: {:.1}°", heading_deg), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(18.0);
-
-                // Continuous Angle Slider: 0° to 360°
                 let slider_w = w - scaler.s(24.0);
-                let slider_h = scaler.s(20.0);
-                let slider_x = x + scaler.s(12.0);
-                let slider_y = curr_y;
+                let slider_h = scaler.s(18.0);
+                let btn_h = scaler.s(22.0);
 
-                scaler.draw_glass_card(slider_x, slider_y, slider_w, slider_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.0);
-                let slider_pct = (heading_deg % 360.0) / 360.0;
-                macroquad::shapes::draw_rectangle(slider_x + scaler.s(2.0), slider_y + scaler.s(2.0), (slider_w - scaler.s(4.0)) * slider_pct, slider_h - scaler.s(4.0), Palette::NEON_CYAN);
-                let thumb_x = slider_x + scaler.s(2.0) + (slider_w - scaler.s(4.0)) * slider_pct;
-                macroquad::shapes::draw_circle(thumb_x, slider_y + slider_h * 0.5, scaler.s(6.0), Palette::NEON_GOLD);
+                // 1. DIRECTION ANGLE (0° – 360°)
+                let heading_deg = ramp.angle_deg();
+                fonts.draw_ui_bold(&format!("Direction Angle: {:.1}°", heading_deg), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(16.0);
 
-                let mouse_over_slider = mouse_pos.x >= slider_x && mouse_pos.x <= slider_x + slider_w && mouse_pos.y >= slider_y && mouse_pos.y <= slider_y + slider_h;
-                if clicked && mouse_over_slider {
-                    let pct = ((mouse_pos.x - slider_x) / slider_w).clamp(0.0, 1.0);
-                    let new_angle_deg = pct * 360.0;
-                    tools.set_selected_jump_ramp_angle_deg(state, new_angle_deg);
+                let angle_pct = (heading_deg % 360.0) / 360.0;
+                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, angle_pct, mouse_pos) {
+                    tools.set_selected_jump_ramp_angle_deg(state, new_pct * 360.0);
                 }
-                curr_y += scaler.s(26.0);
+                curr_y += slider_h + scaler.s(4.0);
 
-                // Direct Exact Angle Input Button
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(24.0), &format!("SET EXACT ANGLE [{:.1}°]", heading_deg), Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
-                    *active_modal = EditorModal::SetRampAngle {
-                        input_angle: format!("{:.1}", heading_deg),
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT ANGLE [{:.1}°]", heading_deg), Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    *active_modal = EditorModal::SetRampProperty {
+                        property: RampPropertyModal::Angle,
+                        input_val: format!("{:.1}", heading_deg),
                     };
+                }
+                curr_y += btn_h + scaler.s(10.0);
+
+                // 2. LENGTH (2.0m – 50.0m)
+                let ramp = &state.track.geometry.jump_ramps[idx];
+                let len = ramp.length();
+                fonts.draw_ui_bold(&format!("Length: {:.1}m", len), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(16.0);
+
+                let len_pct = ((len - 2.0) / (50.0 - 2.0)).clamp(0.0, 1.0);
+                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, len_pct, mouse_pos) {
+                    let new_len = 2.0 + new_pct * (50.0 - 2.0);
+                    tools.set_selected_jump_ramp_length(state, new_len);
+                }
+                curr_y += slider_h + scaler.s(4.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT LENGTH [{:.1}m]", len), Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    *active_modal = EditorModal::SetRampProperty {
+                        property: RampPropertyModal::Length,
+                        input_val: format!("{:.1}", len),
+                    };
+                }
+                curr_y += btn_h + scaler.s(10.0);
+
+                // 3. WIDTH (1.0m – 30.0m)
+                let ramp = &state.track.geometry.jump_ramps[idx];
+                let wid = ramp.width();
+                fonts.draw_ui_bold(&format!("Width: {:.1}m", wid), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(16.0);
+
+                let wid_pct = ((wid - 1.0) / (30.0 - 1.0)).clamp(0.0, 1.0);
+                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, wid_pct, mouse_pos) {
+                    let new_wid = 1.0 + new_pct * (30.0 - 1.0);
+                    tools.set_selected_jump_ramp_width(state, new_wid);
+                }
+                curr_y += slider_h + scaler.s(4.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT WIDTH [{:.1}m]", wid), Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                    *active_modal = EditorModal::SetRampProperty {
+                        property: RampPropertyModal::Width,
+                        input_val: format!("{:.1}", wid),
+                    };
+                }
+                curr_y += btn_h + scaler.s(10.0);
+
+                // 4. HEIGHT (0.2m – 10.0m)
+                let ramp = &state.track.geometry.jump_ramps[idx];
+                let h = ramp.height;
+                fonts.draw_ui_bold(&format!("Height: {:.1}m", h), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+                curr_y += scaler.s(16.0);
+
+                let h_pct = ((h - 0.2) / (10.0 - 0.2)).clamp(0.0, 1.0);
+                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, h_pct, mouse_pos) {
+                    let new_h = 0.2 + new_pct * (10.0 - 0.2);
+                    tools.set_selected_jump_ramp_height(state, new_h);
+                }
+                curr_y += slider_h + scaler.s(4.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT HEIGHT [{:.1}m]", h), Palette::UI_CARD_BG_HOVER, Palette::NEON_GOLD, mouse_pos, clicked) {
+                    *active_modal = EditorModal::SetRampProperty {
+                        property: RampPropertyModal::Height,
+                        input_val: format!("{:.1}", h),
+                    };
+                }
+                curr_y += btn_h + scaler.s(10.0);
+
+                // 5. PITCH (1.0° – 60.0°)
+                let ramp = &state.track.geometry.jump_ramps[idx];
+                let pitch = ramp.ramp_angle_deg;
+                fonts.draw_ui_bold(&format!("Pitch Angle: {:.1}°", pitch), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+                curr_y += scaler.s(16.0);
+
+                let pitch_pct = ((pitch - 1.0) / (60.0 - 1.0)).clamp(0.0, 1.0);
+                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, pitch_pct, mouse_pos) {
+                    let new_pitch = 1.0 + new_pct * (60.0 - 1.0);
+                    tools.set_selected_jump_ramp_pitch_deg(state, new_pitch);
+                }
+                curr_y += slider_h + scaler.s(4.0);
+
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT PITCH [{:.1}°]", pitch), Palette::UI_CARD_BG_HOVER, Palette::NEON_GOLD, mouse_pos, clicked) {
+                    *active_modal = EditorModal::SetRampProperty {
+                        property: RampPropertyModal::Pitch,
+                        input_val: format!("{:.1}", pitch),
+                    };
+                }
+                curr_y += btn_h + scaler.s(10.0);
+
+                // 6. AUTO-FIT PITCH BUTTON (REMOVE FLAT TOP)
+                let ramp = &state.track.geometry.jump_ramps[idx];
+                let fitted_deg = ramp.fitted_pitch_deg();
+                let flat_len = ramp.flat_length();
+                let fit_label = if flat_len > 0.05 {
+                    format!("FIT PITCH: {:.1}° (FLAT: {:.1}m)", fitted_deg, flat_len)
+                } else {
+                    format!("PITCH FITTED [{:.1}°] (NO FLAT)", fitted_deg)
+                };
+                let fit_border = if flat_len > 0.05 { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER };
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, scaler.s(24.0), &fit_label, Palette::UI_CARD_BG, fit_border, mouse_pos, clicked) {
+                    tools.remove_selected_jump_ramp_flat_portion(state);
                 }
                 curr_y += scaler.s(28.0);
 
-                // Fine 1-degree and 15-degree adjustment buttons
-                let q_btn_w = (w - scaler.s(42.0)) / 4.0;
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, q_btn_w, scaler.s(22.0), "-1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 180.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + q_btn_w, curr_y, q_btn_w, scaler.s(22.0), "+1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 180.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(24.0) + q_btn_w * 2.0, curr_y, q_btn_w, scaler.s(22.0), "-15°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 12.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(30.0) + q_btn_w * 3.0, curr_y, q_btn_w, scaler.s(22.0), "+15°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 12.0);
-                }
-                curr_y += scaler.s(26.0);
+                // 7. RAMP SURFACE MATERIAL PALETTE
+                fonts.draw_ui_bold("Ramp Material:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(16.0);
 
-                // Cardinal preset buttons (0°, 90°, 180°, 270°)
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, q_btn_w, scaler.s(22.0), "0° (E)", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.set_selected_jump_ramp_angle_deg(state, 0.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + q_btn_w, curr_y, q_btn_w, scaler.s(22.0), "90° (N)", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.set_selected_jump_ramp_angle_deg(state, 90.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(24.0) + q_btn_w * 2.0, curr_y, q_btn_w, scaler.s(22.0), "180° (W)", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.set_selected_jump_ramp_angle_deg(state, 180.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(30.0) + q_btn_w * 3.0, curr_y, q_btn_w, scaler.s(22.0), "270° (S)", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.set_selected_jump_ramp_angle_deg(state, 270.0);
-                }
-                curr_y += scaler.s(30.0);
+                let surfaces = [
+                    (SurfaceType::Asphalt, "Asphalt"),
+                    (SurfaceType::Dirt, "Dirt / Rally"),
+                    (SurfaceType::Sand, "Sand"),
+                    (SurfaceType::Grass, "Grass"),
+                    (SurfaceType::Ice, "Ice"),
+                    (SurfaceType::Water, "Water Hazard"),
+                ];
 
-                // Ramp Size (Length & Width)
+                let half_btn_w = (slider_w - scaler.s(6.0)) * 0.5;
+                for chunk in surfaces.chunks(2) {
+                    let (st1, label1) = chunk[0];
+                    let is_active1 = state.track.geometry.jump_ramps[idx].surface == st1;
+                    if draw_ui_btn(
+                        fonts,
+                        scaler,
+                        x + scaler.s(12.0),
+                        curr_y,
+                        half_btn_w,
+                        scaler.s(22.0),
+                        label1,
+                        if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                        if is_active1 { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+                        mouse_pos,
+                        clicked,
+                    ) {
+                        tools.set_selected_jump_ramp_surface(state, st1);
+                    }
+
+                    if chunk.len() > 1 {
+                        let (st2, label2) = chunk[1];
+                        let is_active2 = state.track.geometry.jump_ramps[idx].surface == st2;
+                        if draw_ui_btn(
+                            fonts,
+                            scaler,
+                            x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                            curr_y,
+                            half_btn_w,
+                            scaler.s(22.0),
+                            label2,
+                            if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                            if is_active2 { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+                            mouse_pos,
+                            clicked,
+                        ) {
+                            tools.set_selected_jump_ramp_surface(state, st2);
+                        }
+                    }
+                    curr_y += scaler.s(25.0);
+                }
+                curr_y += scaler.s(6.0);
+
+                // 8. LATERAL VIEW DIAGRAM
+                fonts.draw_ui_bold("Lateral View Profile:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(16.0);
+
                 let ramp = &state.track.geometry.jump_ramps[idx];
-                let len = ramp.length();
-                let wid = ramp.width();
-                fonts.draw_ui_bold(&format!("Size: {:.1}m x {:.1}m", len, wid), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(18.0);
+                draw_ramp_lateral_view(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, scaler.s(80.0), ramp);
+                curr_y += scaler.s(86.0);
 
-                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-                // Length buttons
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-2m Length", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_size(state, -2.0, 0.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+2m Length", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_size(state, 2.0, 0.0);
-                }
-                curr_y += scaler.s(26.0);
-
-                // Width buttons
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-1m Width", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_size(state, 0.0, -1.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+1m Width", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_size(state, 0.0, 1.0);
-                }
-                curr_y += scaler.s(26.0);
-
-                // Scale +/- 10% buttons
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-10% Scale", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.scale_selected_jump_ramp_size(state, 0.90);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+10% Scale", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.scale_selected_jump_ramp_size(state, 1.10);
-                }
-                curr_y += scaler.s(30.0);
-
-                // Jump Elevation & Pitch Angle
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                fonts.draw_ui_bold(&format!("Height: {:.1}m | Pitch: {:.0}°", ramp.height, ramp.ramp_angle_deg), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_GOLD);
-                curr_y += scaler.s(18.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-0.2m Height", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_height(state, -0.2);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+0.2m Height", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_height(state, 0.2);
-                }
-                curr_y += scaler.s(26.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-2° Pitch", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_pitch(state, -2.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+2° Pitch", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_pitch(state, 2.0);
-                }
-                curr_y += scaler.s(30.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE RAMP [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                // 9. ACTION BUTTONS
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, scaler.s(26.0), "DUPLICATE RAMP [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                     tools.duplicate_selected(state);
                 }
-                curr_y += scaler.s(32.0);
+                curr_y += scaler.s(30.0);
 
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE RAMP [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, scaler.s(26.0), "DELETE RAMP [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
                     tools.delete_selected(state);
                 }
             }
@@ -1398,86 +1496,202 @@ fn render_template_modal(
     None
 }
 
-/// Renders modal overlay for specifying exact jump ramp angle (0° to 365°).
-fn render_set_ramp_angle_modal(
+/// Helper to draw an interactive slider bar that can be clicked or dragged.
+fn draw_slider_bar(
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    pct: f32,
+    mouse_pos: Vec2,
+) -> Option<f32> {
+    scaler.draw_glass_card(x, y, w, h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.0);
+    let bar_pct = pct.clamp(0.0, 1.0);
+    let inner_w = (w - scaler.s(4.0)).max(1.0);
+    let inner_h = (h - scaler.s(4.0)).max(1.0);
+    macroquad::shapes::draw_rectangle(x + scaler.s(2.0), y + scaler.s(2.0), inner_w * bar_pct, inner_h, Palette::NEON_CYAN);
+    let thumb_x = x + scaler.s(2.0) + inner_w * bar_pct;
+    macroquad::shapes::draw_circle(thumb_x, y + h * 0.5, scaler.s(5.5), Palette::NEON_GOLD);
+
+    let mouse_over = mouse_pos.x >= x - scaler.s(4.0) && mouse_pos.x <= x + w + scaler.s(4.0) && mouse_pos.y >= y - scaler.s(4.0) && mouse_pos.y <= y + h + scaler.s(4.0);
+    let is_down = is_mouse_button_down(MouseButton::Left);
+    if is_down && mouse_over {
+        let new_pct = ((mouse_pos.x - (x + scaler.s(2.0))) / inner_w).clamp(0.0, 1.0);
+        Some(new_pct)
+    } else {
+        None
+    }
+}
+
+/// Renders a 2D lateral cross-section diagram of a jump ramp showing incline slope, tabletop flat, launch lip, and surface material.
+fn draw_ramp_lateral_view(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    ramp: &JumpRamp,
+) {
+    scaler.draw_glass_card(x, y, w, h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.0);
+
+    let pad_x = scaler.s(18.0);
+    let pad_top = scaler.s(18.0);
+    let pad_bot = scaler.s(20.0);
+
+    let draw_w = (w - pad_x * 2.0).max(10.0);
+    let draw_h = (h - pad_top - pad_bot).max(10.0);
+
+    let ground_y = y + h - pad_bot;
+    let origin_x = x + pad_x;
+
+    let len = ramp.length().max(1.0);
+    let height = ramp.height.max(0.1);
+    let incline_len = ramp.incline_length();
+    let flat_len = ramp.flat_length();
+
+    let s_x = draw_w / len;
+
+    let inc_w = (incline_len * s_x).clamp(0.0, draw_w);
+
+    let p0 = Vec2::new(origin_x, ground_y);
+    let p_inc = Vec2::new(origin_x + inc_w, ground_y - draw_h);
+    let p_top_exit = Vec2::new(origin_x + draw_w, ground_y - draw_h);
+    let p_bot_exit = Vec2::new(origin_x + draw_w, ground_y);
+
+    let (base_col, border_opt, _) = crate::render::track::get_ramp_surface_colors(ramp.surface);
+
+    // Ground line
+    macroquad::shapes::draw_line(origin_x - scaler.s(6.0), ground_y, origin_x + draw_w + scaler.s(6.0), ground_y, scaler.s(1.2), Palette::UI_TEXT_MUTED);
+
+    // Draw ramp cross-section body fill
+    if flat_len > 0.05 && inc_w < draw_w - scaler.s(1.0) {
+        // Triangle incline
+        let p_inc_base = Vec2::new(origin_x + inc_w, ground_y);
+        macroquad::shapes::draw_triangle(
+            macroquad::prelude::Vec2::new(p0.x, p0.y),
+            macroquad::prelude::Vec2::new(p_inc.x, p_inc.y),
+            macroquad::prelude::Vec2::new(p_inc_base.x, p_inc_base.y),
+            base_col,
+        );
+        // Tabletop rectangle
+        macroquad::shapes::draw_rectangle(origin_x + inc_w, ground_y - draw_h, draw_w - inc_w, draw_h, base_col);
+    } else {
+        macroquad::shapes::draw_triangle(
+            macroquad::prelude::Vec2::new(p0.x, p0.y),
+            macroquad::prelude::Vec2::new(p_top_exit.x, p_top_exit.y),
+            macroquad::prelude::Vec2::new(p_bot_exit.x, p_bot_exit.y),
+            base_col,
+        );
+    }
+
+    // Incline slope stroke
+    let slope_col = border_opt.unwrap_or(Palette::NEON_GOLD);
+    macroquad::shapes::draw_line(p0.x, p0.y, p_inc.x, p_inc.y, scaler.s(2.0), slope_col);
+
+    // Tabletop stroke (if flat portion exists)
+    if flat_len > 0.05 && inc_w < draw_w - scaler.s(1.0) {
+        macroquad::shapes::draw_line(p_inc.x, p_inc.y, p_top_exit.x, p_top_exit.y, scaler.s(2.0), Palette::NEON_CYAN);
+    }
+
+    // Exit launch lip (vertical drop line)
+    macroquad::shapes::draw_line(p_top_exit.x, p_top_exit.y, p_bot_exit.x, p_bot_exit.y, scaler.s(2.0), Palette::NEON_CYAN);
+
+    // Annotations text
+    // Length (bottom)
+    let len_str = format!("L:{:.1}m", len);
+    fonts.draw_ui_regular(&len_str, origin_x + draw_w * 0.5 - scaler.s(16.0), ground_y + scaler.s(13.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
+
+    // Height (right vertical)
+    let h_str = format!("H:{:.1}m", height);
+    fonts.draw_ui_regular(&h_str, (p_top_exit.x - scaler.s(36.0)).max(origin_x), ground_y - draw_h * 0.5 + scaler.s(3.0), scaler.font_s(9.5), Palette::NEON_GOLD);
+
+    // Pitch (along slope)
+    let pitch_str = format!("{:.0}°", ramp.ramp_angle_deg);
+    fonts.draw_ui_bold(&pitch_str, p0.x + scaler.s(8.0), ground_y - scaler.s(4.0), scaler.font_s(9.5), Palette::NEON_GOLD);
+
+    // Flat label if present
+    if flat_len > 0.05 {
+        let flat_str = format!("Flat:{:.1}m", flat_len);
+        let flat_x = origin_x + inc_w + (draw_w - inc_w) * 0.5 - scaler.s(18.0);
+        fonts.draw_ui_bold(&flat_str, flat_x.max(origin_x + inc_w), ground_y - draw_h - scaler.s(3.0), scaler.font_s(9.0), Palette::NEON_CYAN);
+    }
+}
+
+/// Renders modal overlay for specifying exact jump ramp dimension/orientation property.
+fn render_set_ramp_property_modal(
     fonts: &Fonts,
     scaler: &UiScaler,
     sw: f32,
     sh: f32,
     state: &mut EditorState,
     tools: &mut ToolSettings,
-    input_angle: &mut String,
+    property: RampPropertyModal,
+    input_val: &mut String,
     mouse_pos: Vec2,
     clicked: bool,
 ) -> bool {
     let mw = scaler.s(440.0);
-    let mh = scaler.s(310.0);
+    let mh = scaler.s(260.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
     scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
 
-    fonts.draw_display_centered("SET JUMP RAMP ANGLE", sw * 0.5, my + scaler.s(26.0), scaler.font_s(20.0), Palette::NEON_GOLD);
-    fonts.draw_ui_regular_centered("Specify custom angle (0° – 365°) • [Enter] to apply", sw * 0.5, my + scaler.s(48.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
+    let (title, subtitle, unit, min_val, max_val) = match property {
+        RampPropertyModal::Angle => ("SET JUMP RAMP ANGLE", "Specify direction angle (0° – 360°) • [Enter] to apply", "°", 0.0, 360.0),
+        RampPropertyModal::Length => ("SET JUMP RAMP LENGTH", "Specify total ramp length (2.0m – 50.0m) • [Enter] to apply", "m", 2.0, 50.0),
+        RampPropertyModal::Width => ("SET JUMP RAMP WIDTH", "Specify ramp width (1.0m – 30.0m) • [Enter] to apply", "m", 1.0, 30.0),
+        RampPropertyModal::Height => ("SET JUMP RAMP HEIGHT", "Specify launch height (0.2m – 10.0m) • [Enter] to apply", "m", 0.2, 10.0),
+        RampPropertyModal::Pitch => ("SET JUMP RAMP PITCH", "Specify incline pitch angle (1.0° – 60.0°) • [Enter] to apply", "°", 1.0, 60.0),
+    };
+
+    fonts.draw_display_centered(title, sw * 0.5, my + scaler.s(26.0), scaler.font_s(20.0), Palette::NEON_GOLD);
+    fonts.draw_ui_regular_centered(subtitle, sw * 0.5, my + scaler.s(48.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
 
     // Text Input Display Box
     let box_x = mx + scaler.s(30.0);
-    let box_y = my + scaler.s(72.0);
+    let box_y = my + scaler.s(68.0);
     let box_w = mw - scaler.s(60.0);
-    let box_h = scaler.s(40.0);
+    let box_h = scaler.s(38.0);
 
     scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, 1.5);
-    
-    let display_str = if input_angle.is_empty() {
-        "0.0°".to_string()
+
+    let display_str = if input_val.is_empty() {
+        format!("0.0{}", unit)
     } else {
-        format!("{}°", input_angle)
+        format!("{}{}", input_val, unit)
     };
-    fonts.draw_ui_bold(&display_str, box_x + scaler.s(16.0), box_y + scaler.s(26.0), scaler.font_s(18.0), Palette::WHITE);
+    fonts.draw_ui_bold(&display_str, box_x + scaler.s(16.0), box_y + scaler.s(24.0), scaler.font_s(17.0), Palette::WHITE);
 
     // Typing handling
     while let Some(c) = get_char_pressed() {
-        if (c.is_ascii_digit() || c == '.') && input_angle.len() < 8 {
-            if c != '.' || !input_angle.contains('.') {
-                input_angle.push(c);
+        if (c.is_ascii_digit() || c == '.') && input_val.len() < 8 {
+            if c != '.' || !input_val.contains('.') {
+                input_val.push(c);
             }
         }
     }
     if is_key_pressed(KeyCode::Backspace) {
-        input_angle.pop();
+        input_val.pop();
     }
 
-    // Quick Cardinal Preset Buttons (0°, 90°, 180°, 270°)
-    let presets = [
-        (0.0, "0° (E)"),
-        (90.0, "90° (N)"),
-        (180.0, "180° (W)"),
-        (270.0, "270° (S)"),
-    ];
-    let q_w = (box_w - scaler.s(18.0)) / 4.0;
-    let mut qx = box_x;
-    let qy = my + scaler.s(124.0);
-    for (deg_val, label) in presets {
-        if draw_ui_btn(fonts, scaler, qx, qy, q_w, scaler.s(26.0), label, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-            *input_angle = format!("{:.1}", deg_val);
-        }
-        qx += q_w + scaler.s(6.0);
-    }
+    // Interactive slider in modal
+    let slider_y = my + scaler.s(126.0);
+    let curr_val: f32 = input_val.parse().unwrap_or(min_val);
+    let slider_pct = ((curr_val - min_val) / (max_val - min_val)).clamp(0.0, 1.0);
 
-    // Angle slider in modal
-    let slider_y = my + scaler.s(166.0);
-    let curr_deg: f32 = input_angle.parse().unwrap_or(0.0);
-    let slider_pct = ((curr_deg % 360.0) / 360.0).clamp(0.0, 1.0);
-    
     macroquad::shapes::draw_rectangle(box_x, slider_y, box_w, scaler.s(8.0), Palette::UI_CARD_BORDER);
     macroquad::shapes::draw_rectangle(box_x, slider_y, box_w * slider_pct, scaler.s(8.0), Palette::NEON_CYAN);
     let thumb_x = box_x + box_w * slider_pct;
     macroquad::shapes::draw_circle(thumb_x, slider_y + scaler.s(4.0), scaler.s(7.0), Palette::NEON_GOLD);
 
-    if clicked && mouse_pos.x >= box_x && mouse_pos.x <= box_x + box_w && mouse_pos.y >= slider_y - scaler.s(8.0) && mouse_pos.y <= slider_y + scaler.s(16.0) {
+    let is_down = is_mouse_button_down(MouseButton::Left);
+    if is_down && mouse_pos.x >= box_x && mouse_pos.x <= box_x + box_w && mouse_pos.y >= slider_y - scaler.s(8.0) && mouse_pos.y <= slider_y + scaler.s(16.0) {
         let pct = ((mouse_pos.x - box_x) / box_w).clamp(0.0, 1.0);
-        let new_deg = pct * 360.0;
-        *input_angle = format!("{:.1}", new_deg);
+        let new_val = min_val + pct * (max_val - min_val);
+        *input_val = format!("{:.1}", new_val);
     }
 
     let mut apply_and_close = is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter);
@@ -1495,13 +1709,45 @@ fn render_set_ramp_angle_modal(
     }
 
     if apply_and_close {
-        if let Ok(parsed) = input_angle.parse::<f32>() {
-            tools.set_selected_jump_ramp_angle_deg(state, parsed);
+        if let Ok(parsed) = input_val.parse::<f32>() {
+            match property {
+                RampPropertyModal::Angle => tools.set_selected_jump_ramp_angle_deg(state, parsed),
+                RampPropertyModal::Length => tools.set_selected_jump_ramp_length(state, parsed),
+                RampPropertyModal::Width => tools.set_selected_jump_ramp_width(state, parsed),
+                RampPropertyModal::Height => tools.set_selected_jump_ramp_height(state, parsed),
+                RampPropertyModal::Pitch => tools.set_selected_jump_ramp_pitch_deg(state, parsed),
+            };
         }
         return true;
     }
 
     false
+}
+
+/// Backward compatible wrapper for angle modal.
+fn render_set_ramp_angle_modal(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    state: &mut EditorState,
+    tools: &mut ToolSettings,
+    input_angle: &mut String,
+    mouse_pos: Vec2,
+    clicked: bool,
+) -> bool {
+    render_set_ramp_property_modal(
+        fonts,
+        scaler,
+        sw,
+        sh,
+        state,
+        tools,
+        RampPropertyModal::Angle,
+        input_angle,
+        mouse_pos,
+        clicked,
+    )
 }
 
 /// Renders Save As modal overlay with name, filename, and description text inputs and overwrite options.

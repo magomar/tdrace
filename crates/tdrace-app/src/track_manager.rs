@@ -439,7 +439,7 @@ impl TrackManager {
                     TrackChoice::Custom {
                         id: "dirt_figure_eight".to_string(),
                         title: "Dirt Figure-8 Arena".to_string(),
-                        description: "Stadium figure-8 circuit featuring an elevated crossover bridge overpass, dirt carousels & tabletop jumps.".to_string(),
+                        description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.".to_string(),
                         path: "rally/dirt_figure_eight".to_string(),
                     },
                     TrackChoice::Custom {
@@ -690,7 +690,7 @@ impl TrackManager {
                 list.push(TrackChoice::Custom {
                     id: "dirt_figure_eight".to_string(),
                     title: "Dirt Figure-8 Arena".to_string(),
-                    description: "Stadium figure-8 circuit featuring an elevated crossover bridge overpass, dirt carousels & tabletop jumps.".to_string(),
+                    description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.".to_string(),
                     path: "rally/dirt_figure_eight".to_string(),
                 });
                 list.push(TrackChoice::Custom {

@@ -151,7 +151,7 @@ impl GameModule for RallyGameModule {
                 id: "dirt_figure_eight",
                 title: "Dirt Figure-8 Arena",
                 tag: "FIGURE-8 CROSSOVER",
-                description: "Stadium figure-8 circuit featuring an elevated crossover bridge overpass, dirt carousels & tabletop jumps.",
+                description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.",
                 category: "Figure-8 Arena",
                 default_laps: 4,
                 generator: dirt_figure_eight,

@@ -93,8 +93,55 @@ pub fn render_surface_zones(track: &Track) {
         render_surface_shape(&zone.shape, fill_col, border_col);
     }
 }
+/// Helper returning base color, border rail color, and chevron color for a jump ramp according to its surface type.
+pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, Color) {
+    match surface {
+        SurfaceType::Asphalt => (
+            Color::new(0.18, 0.20, 0.24, 1.0),
+            Some(Color::new(0.85, 0.85, 0.90, 1.0)),
+            Palette::NEON_GOLD,
+        ),
+        SurfaceType::Dirt => (
+            Palette::DIRT,
+            Some(Palette::DIRT_EDGE),
+            Palette::NEON_GOLD,
+        ),
+        SurfaceType::Sand => (
+            Palette::SAND,
+            Some(Palette::SAND_DARK),
+            Color::new(0.20, 0.22, 0.28, 1.0),
+        ),
+        SurfaceType::Grass => (
+            Palette::GRASS_DARK,
+            Some(Palette::GRASS),
+            Palette::NEON_GOLD,
+        ),
+        SurfaceType::Ice => (
+            Color::new(0.78, 0.88, 0.96, 1.0),
+            Some(Color::new(0.92, 0.96, 1.0, 1.0)),
+            Color::new(0.15, 0.35, 0.65, 1.0),
+        ),
+        SurfaceType::Water => (
+            Palette::WATER,
+            Some(Palette::WATER_BORDER),
+            Palette::NEON_GOLD,
+        ),
+        SurfaceType::Oil => (
+            Color::new(0.12, 0.12, 0.15, 1.0),
+            Some(Color::new(0.28, 0.24, 0.35, 1.0)),
+            Palette::NEON_GOLD,
+        ),
+        SurfaceType::Curb => (
+            Palette::CURB_RED,
+            Some(Palette::CURB_WHITE),
+            Palette::WHITE,
+        ),
+    }
+}
+
 pub fn render_jump_ramps(track: &Track) {
     for ramp in &track.geometry.jump_ramps {
+        let (ramp_base_col, border_opt, chevron_col) = get_ramp_surface_colors(ramp.surface);
         match &ramp.shape {
             SurfaceShape::OrientedBox {
                 center,
@@ -115,8 +162,7 @@ pub fn render_jump_ramps(track: &Track) {
                 let s_off = Vec2::new(0.40, 0.55);
                 draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
 
-                // 2. Base metallic ramp quad
-                let ramp_base_col = Color::new(0.18, 0.20, 0.24, 1.0);
+                // 2. Base metallic/surface ramp quad
                 draw_quad(p0, p1, p2, p3, ramp_base_col);
 
                 // 3. Directional hazard chevron arrows (pointing forward in launch direction)
@@ -131,7 +177,6 @@ pub fn render_jump_ramps(track: &Track) {
                 let arrow_half_w = (half_wid * 0.72).max(0.6);
                 let chevron_depth = (half_len * 0.35).min(arrow_half_w * 0.85);
                 let chevron_thick = (half_len * 0.20).min(arrow_half_w * 0.45);
-                let chevron_col = Palette::NEON_GOLD;
 
                 for s in 0..num_chevrons {
                     let t = (s as f32 + 1.0) / (num_chevrons as f32 + 1.0);
@@ -153,12 +198,13 @@ pub fn render_jump_ramps(track: &Track) {
                 draw_line(p1.x, p1.y, p2.x, p2.y, 0.45, launch_edge_col);
 
                 // 5. Ramp side border rails & entrance edge
-                draw_line(p0.x, p0.y, p1.x, p1.y, 0.30, Color::new(0.85, 0.85, 0.90, 1.0));
-                draw_line(p3.x, p3.y, p2.x, p2.y, 0.30, Color::new(0.85, 0.85, 0.90, 1.0));
+                let rail_col = border_opt.unwrap_or(Color::new(0.85, 0.85, 0.90, 1.0));
+                draw_line(p0.x, p0.y, p1.x, p1.y, 0.30, rail_col);
+                draw_line(p3.x, p3.y, p2.x, p2.y, 0.30, rail_col);
                 draw_line(p0.x, p0.y, p3.x, p3.y, 0.30, Color::new(0.60, 0.60, 0.65, 1.0));
             }
             _ => {
-                render_surface_shape(&ramp.shape, Color::new(0.18, 0.20, 0.24, 0.95), Some(Palette::WHITE_LINE));
+                render_surface_shape(&ramp.shape, ramp_base_col, border_opt);
                 let center = ramp.shape.center();
                 let dir = ramp.direction;
                 let right = Vec2::new(-dir.y, dir.x);
@@ -168,9 +214,9 @@ pub fn render_jump_ramps(track: &Track) {
                 let base = center - dir * (arrow_len * 0.5);
                 let l_wing = tip - dir * (arrow_len * 0.4) - right * (arrow_w * 0.5);
                 let r_wing = tip - dir * (arrow_len * 0.4) + right * (arrow_w * 0.5);
-                draw_line(base.x, base.y, tip.x, tip.y, 0.45, Palette::NEON_GOLD);
-                draw_line(tip.x, tip.y, l_wing.x, l_wing.y, 0.45, Palette::NEON_GOLD);
-                draw_line(tip.x, tip.y, r_wing.x, r_wing.y, 0.45, Palette::NEON_GOLD);
+                draw_line(base.x, base.y, tip.x, tip.y, 0.45, chevron_col);
+                draw_line(tip.x, tip.y, l_wing.x, l_wing.y, 0.45, chevron_col);
+                draw_line(tip.x, tip.y, r_wing.x, r_wing.y, 0.45, chevron_col);
             }
         }
     }

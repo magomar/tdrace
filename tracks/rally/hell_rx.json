@@ -17721,7 +17721,8 @@
         "launch_speed": 4.5,
         "ramp_angle_deg": 18.0,
         "height": 2.4,
-        "name": "Hell Gravel Jump"
+        "name": "Hell Gravel Jump",
+        "surface": "Asphalt"
       }
     ],
     "left_boundary_polyline": [

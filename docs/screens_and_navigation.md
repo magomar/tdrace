@@ -35,7 +35,6 @@ stateDiagram-v2
     state "Profile Editor & Livery (ProfileCreate)" as ProfileCreate
     state "Circuit Hub Workshop (TrackManager)" as TrackManager
     state "CAD Spline Studio (TrackEditor)" as TrackEditor
-    state "Studio Test Drive (EditorTestDrive)" as EditorTestDrive
     state "3-2-1 Race Countdown (Countdown)" as Countdown
     state "Active Race Simulation (Racing)" as Racing
     state "Race Paused Overlay (Paused)" as Paused
@@ -87,11 +86,9 @@ stateDiagram-v2
 
     %% Track Manager & Studio flow
     TrackManager --> TrackEditor: [E / N] (Edit or New Spline)
-    TrackManager --> EditorTestDrive: [ENTER / SPACE] (Test Draft)
     TrackManager --> Menu: [ESC / B]
-    TrackEditor --> EditorTestDrive: [T] (Instant Hotlap)
-    EditorTestDrive --> TrackEditor: [ESC / E] (Return to Studio)
-    TrackEditor --> TrackManager: [ESC] (Exit Studio)
+    TrackEditor --> StartingGrid: [SPACE / P] (Launch Time Trial Test Drive)
+    TrackEditor --> Menu: [ESC] (Exit Studio)
 
     %% Controls Help fallback
     ControlsHelp --> Menu: [ESC / ENTER / B] (if opened from Menu)
@@ -386,7 +383,6 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `1` / `2` / `3` / `Tab` | Switch Tab | Changes active tab (`Main` / `Drafts` / `Templates`) |
 | `F` | Module Filter | Cycles filter (`All`, `Classic`, `Rally`, `Kart`, `F1`) |
 | `Up` / `Down` / `W` / `S` | Select Track | Highlights circuit in catalog list |
-| `Enter` / `Space` / Gamepad `A` | Test Drive Track | Launches hotlap test drive -> `GameState::EditorTestDrive` |
 | `E` | Open in CAD Studio | Opens track spline in `GameState::TrackEditor` |
 | `N` | New Draft Track | Creates new draft track in Drafts workshop |
 | `I` | Edit Metadata | Opens modal to edit track name and description |
@@ -408,25 +404,10 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `T` | Quick Test Drive | Spawns test car -> Transitions to `GameState::EditorTestDrive` |
-| `V` | Validate Track | Runs geometry validation engine |
+| `Space` / `P` | Test Drive Track | Launches full Time Trial race with default car -> `GameState::StartingGrid` (returns to Studio on exit) |
+| `1` - `8` | Tool Selection | Selects active drawing/editing tool |
 | `Ctrl+S` / `S` | Save Track | Serializes track to JSON |
-| `Escape` | Exit Studio | Returns to `GameState::TrackManager` |
-
----
-
-### 3.15. Studio Test Drive (`GameState::EditorTestDrive`)
-* **Purpose**: Real-time hotlap testing of custom circuit geometries directly from CAD Studio.
-* **State Struct**: `GameState::EditorTestDrive`
-* **Components**:
-  - Immediate vehicle spawn on newly designed track spline.
-  - Physics validation HUD (mu friction readings, elevation clearances, ramp launch telemetry).
-* **Navigation & Shortcuts**:
-
-| Key / Input | Action | Target / Result |
-| :--- | :--- | :--- |
-| `Escape` / `E` | Return to Studio | Transitions back to `GameState::TrackEditor` |
-| `R` | Reset Car | Resets vehicle to starting line |
+| `Escape` | Exit Studio | Returns to `GameState::Menu` (with unsaved changes prompt if dirty) |
 
 ---
 

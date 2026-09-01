@@ -16462,7 +16462,8 @@
         "launch_speed": 4.6,
         "ramp_angle_deg": 19.0,
         "height": 2.5,
-        "name": "Lohéac Infield Jump"
+        "name": "Lohéac Infield Jump",
+        "surface": "Asphalt"
       }
     ],
     "left_boundary_polyline": [
@@ -19342,7 +19343,7 @@
         -14.605309,
         4.1547832
       ],
-      "angle": -0.118204154,
+      "angle": -0.11820415,
       "grid_slot": 0
     },
     {

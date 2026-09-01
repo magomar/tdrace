@@ -562,6 +562,113 @@ impl ToolSettings {
         true
     }
 
+    /// Sets the surface type of selected jump ramp(s).
+    pub fn set_selected_jump_ramp_surface(&mut self, state: &mut EditorState, surface: SurfaceType) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.surface = surface;
+            }
+        }
+        self.active_surface = surface;
+        state.revalidate();
+        true
+    }
+
+    /// Sets the exact length of selected jump ramp(s) in meters.
+    pub fn set_selected_jump_ramp_length(&mut self, state: &mut EditorState, length: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        let clamped_len = length.clamp(2.0, 100.0);
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.set_length(clamped_len);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Sets the exact width of selected jump ramp(s) in meters.
+    pub fn set_selected_jump_ramp_width(&mut self, state: &mut EditorState, width: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        let clamped_wid = width.clamp(1.0, 100.0);
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.set_width(clamped_wid);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Sets the exact height of selected jump ramp(s) in meters.
+    pub fn set_selected_jump_ramp_height(&mut self, state: &mut EditorState, height: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        let clamped_h = height.clamp(0.2, 20.0);
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.height = clamped_h;
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Sets the exact pitch angle of selected jump ramp(s) in degrees.
+    pub fn set_selected_jump_ramp_pitch_deg(&mut self, state: &mut EditorState, pitch_deg: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        let clamped_pitch = pitch_deg.clamp(1.0, 60.0);
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.ramp_angle_deg = clamped_pitch;
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Automatically adjusts pitch angle on selected jump ramp(s) to eliminate the flat tabletop portion.
+    pub fn remove_selected_jump_ramp_flat_portion(&mut self, state: &mut EditorState) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.ramp_angle_deg = ramp.fitted_pitch_deg();
+            }
+        }
+        state.revalidate();
+        true
+    }
+
     /// Sets the layer of the selected surface zone (or the active placement layer if none selected).
     pub fn set_selected_surface_layer(&mut self, state: &mut EditorState, layer: SurfaceLayer) -> bool {
         self.active_surface_layer = layer;
@@ -690,14 +797,30 @@ impl ToolSettings {
         false
     }
 
-    /// Batch applies surface material for all selected waypoints.
+    /// Batch applies surface material for all selected waypoints, surface zones, and jump ramps.
     pub fn batch_set_surface(&mut self, state: &mut EditorState, surface: Option<SurfaceType>) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
+        let wp_indices = state.selection.selected_waypoint_indices();
+        let ramp_indices = state.selection.selected_jump_ramp_indices();
+        let zone_indices = state.selection.selected_surface_zone_indices();
+
+        if !wp_indices.is_empty() || (!ramp_indices.is_empty() && surface.is_some()) || (!zone_indices.is_empty() && surface.is_some()) {
             state.record_undo();
-            for idx in indices {
+            for idx in wp_indices {
                 if idx < state.track.spline.waypoints.len() {
                     state.track.spline.waypoints[idx].surface = surface;
+                }
+            }
+            if let Some(st) = surface {
+                self.active_surface = st;
+                for idx in ramp_indices {
+                    if idx < state.track.geometry.jump_ramps.len() {
+                        state.track.geometry.jump_ramps[idx].surface = st;
+                    }
+                }
+                for idx in zone_indices {
+                    if idx < state.track.geometry.surface_zones.len() {
+                        state.track.geometry.surface_zones[idx].surface = st;
+                    }
                 }
             }
             state.rebuild_geometry();
@@ -798,6 +921,14 @@ impl ToolSettings {
                             self.new_waypoint_width = wp.width;
                             self.new_waypoint_left_curb = wp.left_curb;
                             self.new_waypoint_right_curb = wp.right_curb;
+                        }
+                    } else if let Selection::SurfaceZone(idx) = sel {
+                        if let Some(zone) = state.track.geometry.surface_zones.get(idx) {
+                            self.active_surface = zone.surface;
+                        }
+                    } else if let Selection::JumpRamp(idx) = sel {
+                        if let Some(ramp) = state.track.geometry.jump_ramps.get(idx) {
+                            self.active_surface = ramp.surface;
                         }
                     }
 
@@ -1162,7 +1293,8 @@ impl ToolSettings {
                     half_extents: Vec2::new(length * 0.5, 4.0),
                     angle,
                 };
-                let ramp = JumpRamp::new(ramp_id, shape, dir, 24.0, 15.0, 1.8, format!("Jump Ramp {}", ramp_id));
+                let ramp = JumpRamp::new(ramp_id, shape, dir, 24.0, 15.0, 1.8, format!("Jump Ramp {}", ramp_id))
+                    .with_surface(self.active_surface);
                 state.track.geometry.jump_ramps.push(ramp);
                 state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
                 state.revalidate();

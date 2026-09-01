@@ -608,6 +608,8 @@ pub struct JumpRamp {
     pub ramp_angle_deg: f32,
     pub height: f32,
     pub name: String,
+    #[serde(default)]
+    pub surface: SurfaceType,
 }
 
 impl JumpRamp {
@@ -628,7 +630,13 @@ impl JumpRamp {
             ramp_angle_deg,
             height,
             name: name.into(),
+            surface: SurfaceType::Asphalt,
         }
+    }
+
+    pub fn with_surface(mut self, surface: SurfaceType) -> Self {
+        self.surface = surface;
+        self
     }
 
     pub fn contains(&self, p: Vec2) -> bool {
@@ -735,6 +743,41 @@ impl JumpRamp {
             }
             SurfaceShape::Polygon { .. } => {}
         }
+    }
+
+    /// Sets the length of the ramp.
+    pub fn set_length(&mut self, length: f32) {
+        let wid = self.width();
+        self.set_size(length, wid);
+    }
+
+    /// Sets the width of the ramp.
+    pub fn set_width(&mut self, width: f32) {
+        let len = self.length();
+        self.set_size(len, width);
+    }
+
+    /// Returns the horizontal run of the incline portion up to height H: min(L, H / tan(theta)).
+    pub fn incline_length(&self) -> f32 {
+        let angle_rad = self.ramp_angle_deg.to_radians();
+        let tan_val = angle_rad.tan();
+        if tan_val > 1e-4 {
+            (self.height / tan_val).min(self.length()).max(0.0)
+        } else {
+            self.length()
+        }
+    }
+
+    /// Returns the length of the flat tabletop portion on top of the ramp (if any).
+    pub fn flat_length(&self) -> f32 {
+        (self.length() - self.incline_length()).max(0.0)
+    }
+
+    /// Returns the fitted pitch angle in degrees to eliminate the flat portion for the current length and height.
+    pub fn fitted_pitch_deg(&self) -> f32 {
+        let len = self.length().max(0.1);
+        let h = self.height.max(0.01);
+        (h / len).atan().to_degrees().clamp(1.0, 60.0)
     }
 
     /// Adjusts the length and width of the ramp by deltas.
@@ -869,6 +912,69 @@ mod tests {
         ramp.scale_size(1.5);
         assert_eq!(ramp.length(), 24.0);
         assert_eq!(ramp.width(), 9.0);
+    }
+
+    #[test]
+    fn test_jump_ramp_surface_and_flat_portion_fit() {
+        let mut ramp = JumpRamp::new(
+            2,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(10.0, 10.0),
+                half_extents: Vec2::new(10.0, 4.0),
+                angle: 0.0,
+            },
+            Vec2::new(1.0, 0.0),
+            20.0,
+            10.0, // 10 degrees pitch
+            2.0,  // 2 meters height
+            "Surface Ramp",
+        )
+        .with_surface(SurfaceType::Dirt);
+
+        assert_eq!(ramp.surface, SurfaceType::Dirt);
+        assert_eq!(ramp.length(), 20.0);
+        assert_eq!(ramp.width(), 8.0);
+
+        // incline length: 2.0 / tan(10 deg) = 2.0 / 0.17632698 = 11.342563
+        let inc_len = ramp.incline_length();
+        assert!((inc_len - 11.34).abs() < 0.1);
+        let flat_len = ramp.flat_length();
+        assert!((flat_len - (20.0 - inc_len)).abs() < 1e-4);
+        assert!(flat_len > 0.0);
+
+        // Auto-fit pitch: atan(2.0 / 20.0) = atan(0.1) = 5.71 deg
+        let fitted_pitch = ramp.fitted_pitch_deg();
+        assert!((fitted_pitch - 5.71).abs() < 0.1);
+
+        ramp.ramp_angle_deg = fitted_pitch;
+        assert!(ramp.flat_length() < 0.01);
+
+        // Setters
+        ramp.set_length(30.0);
+        assert_eq!(ramp.length(), 30.0);
+        ramp.set_width(12.0);
+        assert_eq!(ramp.width(), 12.0);
+
+        // JSON backwards compatibility test: missing "surface" field defaults to Asphalt
+        let json_data = r#"{
+            "id": 5,
+            "shape": {
+                "OrientedBox": {
+                    "center": [0.0, 0.0],
+                    "half_extents": [5.0, 2.0],
+                    "angle": 0.0
+                }
+            },
+            "direction": [1.0, 0.0],
+            "launch_speed": 22.0,
+            "ramp_angle_deg": 15.0,
+            "height": 1.5,
+            "name": "Legacy Ramp"
+        }"#;
+
+        let deserialized: JumpRamp = serde_json::from_str(json_data).expect("Should deserialize legacy ramp without surface field");
+        assert_eq!(deserialized.surface, SurfaceType::Asphalt);
+        assert_eq!(deserialized.name, "Legacy Ramp");
     }
 }
 

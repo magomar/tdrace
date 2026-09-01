@@ -184,7 +184,21 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                     let elev_j = (samples[j].elevation + samples[next_j].elevation) * 0.5;
                     let clearance = (elev_i - elev_j).abs();
 
-                    if clearance < 3.5 {
+                    if clearance <= 0.3 {
+                        diagnostics.push(
+                            TrackValidationError::info(
+                                "INFO_AT_GRADE_CROSSOVER",
+                                format!(
+                                    "At-grade track crossroads / figure-8 intersection at ({:.1}, {:.1}).",
+                                    hit.x, hit.y
+                                ),
+                            )
+                            .with_details(format!(
+                                "Level crossing at elevation {:.1}m between distance {:.0}m and {:.0}m.",
+                                elev_i, samples[i].distance, samples[j].distance
+                            )),
+                        );
+                    } else if clearance < 3.5 {
                         diagnostics.push(
                             TrackValidationError::error(
                                 "ERR_CROSSOVER_INSUFFICIENT_CLEARANCE",

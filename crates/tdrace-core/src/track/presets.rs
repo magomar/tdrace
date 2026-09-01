@@ -742,80 +742,90 @@ pub fn outlaw_pass() -> Track {
 }
 
 /// Preset 8: Dirt Figure-8 Arena
-/// High-action rally stadium circuit featuring a flyover crossover bridge overpass (4.5m elevation),
+/// High-action rally stadium circuit featuring a flat at-grade figure-8 crossover,
 /// sweeping dirt carousels, tabletop jump, and high-sliding rally dynamics.
 pub fn dirt_figure_eight() -> Track {
     let waypoints = vec![
-        // Sector 1: Start/Finish Straight (Asphalt launch straight in South Loop)
-        TrackWaypoint::new(Vec2::new(0.0, -90.0), 13.5).with_surface(SurfaceType::Asphalt),
-        TrackWaypoint::new(Vec2::new(-50.0, -85.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-        // Sector 2: South-West Dirt Carousel
-        TrackWaypoint::new(Vec2::new(-85.0, -50.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-85.0, -10.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-60.0, 15.0), 13.0).with_surface(SurfaceType::Dirt),
-        // Sector 3: Flyover Crossover Bridge (Climbs to 4.8m crossing over the lower underpass at (0.0, 50.0))
-        TrackWaypoint::new(Vec2::new(-30.0, 30.0), 13.5).with_surface(SurfaceType::Dirt).with_elevation(2.4),
-        TrackWaypoint::new(Vec2::new(0.0, 50.0), 14.0).with_surface(SurfaceType::Dirt).with_elevation(4.8),
-        TrackWaypoint::new(Vec2::new(30.0, 70.0), 13.5).with_surface(SurfaceType::Dirt).with_elevation(2.4),
-        // Sector 4: North-East Dirt Turn
-        TrackWaypoint::new(Vec2::new(60.0, 85.0), 13.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(85.0, 110.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(85.0, 150.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        // Sector 5: North Loop Apex Carousel
-        TrackWaypoint::new(Vec2::new(50.0, 185.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(0.0, 190.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-50.0, 185.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        // Sector 6: North-West Turn into Underpass Approach
-        TrackWaypoint::new(Vec2::new(-85.0, 150.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-85.0, 110.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-60.0, 85.0), 13.0).with_surface(SurfaceType::Dirt),
-        // Sector 7: Lower Underpass (Passes beneath the crossover bridge at (0.0, 50.0) at elevation 0.0)
-        TrackWaypoint::new(Vec2::new(-30.0, 70.0), 13.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(0.0, 50.0), 13.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(30.0, 30.0), 13.0).with_surface(SurfaceType::Dirt),
-        // Sector 8: South-East Turn Return to Finish
-        TrackWaypoint::new(Vec2::new(60.0, 15.0), 13.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(85.0, -10.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(85.0, -50.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(50.0, -85.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        // Sector 1: Start/Finish Straight (West Loop South Straight heading East)
+        TrackWaypoint::new(Vec2::new(-90.0, -48.0), 13.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-50.0, -45.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 2: Approach & Crossing to East Loop (SW to NE through (0.0, 0.0) at ground level)
+        TrackWaypoint::new(Vec2::new(-24.0, -22.0), 13.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(24.0, 22.0), 13.5).with_surface(SurfaceType::Dirt),
+        // Sector 3: East Loop North Bank & Turn
+        TrackWaypoint::new(Vec2::new(50.0, 45.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(90.0, 48.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(130.0, 40.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 4: East Carousel Sweeper
+        TrackWaypoint::new(Vec2::new(155.0, 18.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(160.0, 0.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(155.0, -18.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 5: East Loop South Bank
+        TrackWaypoint::new(Vec2::new(130.0, -40.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(90.0, -48.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(50.0, -45.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 6: Approach & Crossing to West Loop (SE to NW through (0.0, 0.0) at ground level)
+        TrackWaypoint::new(Vec2::new(24.0, -22.0), 13.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-24.0, 22.0), 13.5).with_surface(SurfaceType::Dirt),
+        // Sector 7: West Loop North Bank & Turn
+        TrackWaypoint::new(Vec2::new(-50.0, 45.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-90.0, 48.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-130.0, 40.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        // Sector 8: West Carousel Sweeper Return to Finish
+        TrackWaypoint::new(Vec2::new(-155.0, 18.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-160.0, 0.0), 13.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-155.0, -18.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-130.0, -40.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
-    let (left_walls, right_walls, left_poly, right_poly) =
+    let (mut left_walls, mut right_walls, left_poly, right_poly) =
         generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    // Keep the at-grade crossing open and drivable by removing wall segments inside the intersection zone
+    left_walls.retain(|w| {
+        let mid = (w.segment.start + w.segment.end) * 0.5;
+        mid.length() > 22.0
+    });
+    right_walls.retain(|w| {
+        let mid = (w.segment.start + w.segment.end) * 0.5;
+        mid.length() > 22.0
+    });
 
     let jump_ramps = vec![
         JumpRamp::new(
             1,
             SurfaceShape::OrientedBox {
-                center: Vec2::new(25.0, -88.0),
+                center: Vec2::new(-70.0, -47.0),
                 half_extents: Vec2::new(5.0, 6.0),
-                angle: 3.14,
+                angle: 0.05,
             },
-            Vec2::new(-1.0, 0.0),
+            Vec2::new(1.0, 0.0),
             4.2,
             18.0,
             2.3,
             "Stadium Finish Jump",
-        ),
+        ).with_surface(SurfaceType::Dirt),
     ];
 
     let surface_zones = vec![
         SurfaceZone::new(
             SurfaceShape::Circle {
-                center: Vec2::new(0.0, 185.0),
+                center: Vec2::new(155.0, 0.0),
                 radius: 14.0,
             },
             SurfaceType::Sand,
-            "North Loop Sand Runoff",
+            "East Carousel Sand Runoff",
         ),
         SurfaceZone::new(
             SurfaceShape::Circle {
-                center: Vec2::new(0.0, -85.0),
+                center: Vec2::new(-155.0, 0.0),
                 radius: 14.0,
             },
             SurfaceType::Sand,
-            "South Loop Sand Runoff",
+            "West Carousel Sand Runoff",
         ),
     ];
 
@@ -824,7 +834,7 @@ pub fn dirt_figure_eight() -> Track {
 
     Track {
         name: "Dirt Figure-8 Arena".to_string(),
-        description: "High-action rally stadium circuit featuring a flyover crossover bridge overpass, sweeping dirt carousels & tabletop jumps.".to_string(),
+        description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.".to_string(),
         category: TrackCategory::Main,
         spline,
         geometry: TrackGeometry {

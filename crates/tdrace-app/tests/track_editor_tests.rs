@@ -3,7 +3,7 @@ use tdrace_app::config::{CameraConfig, ZoomLevelConfig};
 use tdrace_app::editor::{EditorCamera, EditorState};
 use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::track_manager::TrackManager;
-use tdrace_app::ui::menu::TrackChoice;
+use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceShape, SurfaceZone};
 use tdrace_core::track::presets::{
@@ -192,7 +192,7 @@ fn test_validation_engine_catches_flaws() {
 }
 
 #[test]
-fn test_race_session_instant_test_drive_flow() {
+fn test_race_session_test_drive_time_trial_flow_and_editor_return() {
     let mut session = RaceSession::new();
     let track = oval_speedway();
 
@@ -201,24 +201,110 @@ fn test_race_session_instant_test_drive_flow() {
     assert_eq!(session.state, GameState::TrackEditor);
     assert!(session.editor_state.is_some());
 
-    // 2. Launch Instant Test Drive
+    // 2. Launch Test Drive -> Launches Time Trial race with default car
     session.start_editor_test_drive();
-    assert_eq!(session.state, GameState::EditorTestDrive);
-    assert!(session.test_drive_car.is_some());
-    assert!(session.test_drive_tracker.is_some());
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.game_mode, GameMode::TimeTrial);
+    assert!(session.is_time_attack);
+    assert!(session.return_to_editor_on_exit);
+    assert_eq!(session.cars.len(), 1);
+    assert_eq!(session.car_choice, session.resolve_predefined_car());
+    assert!(session.editor_state.is_some());
 
-    // 3. Step physics for 60 ticks (1.0 second)
+    // 3. Start countdown -> Racing
+    session.state = GameState::Countdown(0.0);
+    session.state = GameState::Racing;
+
+    // Step physics for 60 ticks (1.0 second)
     for _ in 0..60 {
-        session.update_editor_test_drive(1.0 / 60.0);
+        session.physics_step(1.0 / 60.0);
     }
 
-    let car = session.test_drive_car.as_ref().unwrap();
+    let car = session.cars.first().unwrap();
     assert!(car.state.position.is_finite());
+    assert_eq!(session.trackers.len(), 1);
 
-    // 4. Return to Track Studio
-    session.state = GameState::TrackEditor;
+    // 4. Pause race and exit to Track Editor
+    session.state = GameState::Paused;
+    assert!(session.return_to_editor_on_exit);
+
+    // Simulate Exit Race action
+    if session.return_to_editor_on_exit {
+        session.return_to_editor_on_exit = false;
+        session.state = GameState::TrackEditor;
+    }
     assert_eq!(session.state, GameState::TrackEditor);
+    assert!(!session.return_to_editor_on_exit);
     assert!(session.editor_state.is_some());
+}
+
+#[test]
+fn test_test_drive_exit_from_starting_grid_and_finished_states() {
+    let mut session = RaceSession::new();
+    let track = oasis_rally();
+
+    session.enter_track_editor(track);
+    assert_eq!(session.state, GameState::TrackEditor);
+
+    // 1. Launch Test Drive -> StartingGrid -> Exit immediately via Escape
+    session.start_editor_test_drive();
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert!(session.return_to_editor_on_exit);
+    assert_eq!(session.car_choice, CarChoice::RallyCar);
+
+    // Simulate Escape in StartingGrid
+    if session.return_to_editor_on_exit {
+        session.return_to_editor_on_exit = false;
+        session.state = GameState::TrackEditor;
+    }
+    assert_eq!(session.state, GameState::TrackEditor);
+    assert!(!session.return_to_editor_on_exit);
+    assert!(session.editor_state.is_some());
+
+    // 2. Launch Test Drive -> Race Finished -> Exit to Editor
+    session.start_editor_test_drive();
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert!(session.return_to_editor_on_exit);
+
+    session.state = GameState::Finished;
+    // Simulate Escape / M on Finished screen
+    if session.return_to_editor_on_exit {
+        session.return_to_editor_on_exit = false;
+        session.state = GameState::TrackEditor;
+    }
+    assert_eq!(session.state, GameState::TrackEditor);
+    assert!(!session.return_to_editor_on_exit);
+    assert!(session.editor_state.is_some());
+}
+
+#[test]
+fn test_test_drive_preserves_unsaved_track_edits() {
+    let mut session = RaceSession::new();
+    let track = classic_grand_prix();
+
+    session.enter_track_editor(track);
+    let original_wp_count = session.editor_state.as_ref().unwrap().track.spline.waypoints.len();
+
+    // Add a new waypoint in editor
+    if let Some(state) = &mut session.editor_state {
+        state.track.spline.waypoints.push(TrackWaypoint::new(Vec2::new(999.0, 999.0), 12.0));
+        state.is_dirty = true;
+    }
+
+    // Launch Test Drive
+    session.start_editor_test_drive();
+    assert_eq!(session.track.spline.waypoints.len(), original_wp_count + 1);
+
+    // Return to Editor
+    if session.return_to_editor_on_exit {
+        session.return_to_editor_on_exit = false;
+        session.state = GameState::TrackEditor;
+    }
+
+    assert_eq!(session.state, GameState::TrackEditor);
+    let editor = session.editor_state.as_ref().unwrap();
+    assert_eq!(editor.track.spline.waypoints.len(), original_wp_count + 1);
+    assert!(editor.is_dirty);
 }
 
 #[test]
@@ -531,6 +617,7 @@ fn test_all_entity_duplications_and_undo() {
         launch_speed: 25.0,
         height: 2.5,
         ramp_angle_deg: 18.0,
+        surface: SurfaceType::Asphalt,
     });
     let ramp_idx = state.track.geometry.jump_ramps.len() - 1;
     state.selection = Selection::JumpRamp(ramp_idx);
@@ -1316,6 +1403,68 @@ fn test_track_editor_jump_ramp_arbitrary_angle_degrees() {
     assert!((state.track.geometry.jump_ramps[0].angle_deg() - 5.0).abs() < 1e-3);
     assert!(state.redo());
     assert!((state.track.geometry.jump_ramps[0].angle_deg() - 90.0).abs() < 1e-3);
+}
+
+#[test]
+fn test_jump_ramp_surface_tools_and_surface_sampling() {
+    use tdrace_app::editor::{EditorToolType, Selection, ToolSettings};
+    use tdrace_core::track::presets::oasis_rally;
+
+    let mut track = oasis_rally();
+    track.geometry.jump_ramps.clear();
+
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    // 1. Create jump ramp with active surface
+    tools.active_surface = SurfaceType::Grass;
+    tools.active_tool = EditorToolType::JumpRamp;
+
+    let ramp_center = Vec2::new(60.0, 60.0);
+    tools.handle_mouse_down(&mut state, ramp_center);
+    tools.handle_mouse_up(&mut state, ramp_center);
+
+    assert_eq!(state.track.geometry.jump_ramps.len(), 1);
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Grass);
+
+    // 2. Sample surface physics on the jump ramp
+    assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::Grass);
+
+    // 3. Change surface type via inspector tool
+    state.selection = Selection::JumpRamp(0);
+    assert!(tools.set_selected_jump_ramp_surface(&mut state, SurfaceType::Ice));
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Ice);
+    assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::Ice);
+
+    // 4. Modify dimensions and pitch
+    assert!(tools.set_selected_jump_ramp_length(&mut state, 25.0));
+    assert_eq!(state.track.geometry.jump_ramps[0].length(), 25.0);
+
+    assert!(tools.set_selected_jump_ramp_width(&mut state, 12.0));
+    assert_eq!(state.track.geometry.jump_ramps[0].width(), 12.0);
+
+    assert!(tools.set_selected_jump_ramp_height(&mut state, 2.5));
+    assert_eq!(state.track.geometry.jump_ramps[0].height, 2.5);
+
+    assert!(tools.set_selected_jump_ramp_pitch_deg(&mut state, 20.0));
+    assert_eq!(state.track.geometry.jump_ramps[0].ramp_angle_deg, 20.0);
+
+    // Flat tabletop removal
+    let fitted_deg = state.track.geometry.jump_ramps[0].fitted_pitch_deg();
+    assert!(tools.remove_selected_jump_ramp_flat_portion(&mut state));
+    assert!((state.track.geometry.jump_ramps[0].ramp_angle_deg - fitted_deg).abs() < 1e-3);
+    assert!(state.track.geometry.jump_ramps[0].flat_length() < 0.01);
+
+    // 5. Batch surface set
+    assert!(tools.batch_set_surface(&mut state, Some(SurfaceType::Sand)));
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Sand);
+    assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::Sand);
+
+    // 6. Undo/redo chain
+    assert!(state.undo());
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Ice);
+    assert!(state.redo());
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Sand);
 }
 
 
