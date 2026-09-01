@@ -73,7 +73,7 @@ impl Palette {
     pub const SPARK_WHITE: Color = Color::new(1.0, 0.98, 0.75, 1.0);
 
     // Modern Car Presets (Primary, Secondary, Helmet)
-    pub const CAR_COLORS: [(Color, Color, Color); 8] = [
+    pub const CAR_COLORS: [(Color, Color, Color); 9] = [
         // 0: Player - Hyper Racing Red with Gloss White Stripe & Neon Gold Visor
         (
             Color::new(0.95, 0.12, 0.15, 1.0),
@@ -121,6 +121,12 @@ impl Palette {
             Color::new(0.96, 0.97, 1.0, 1.0),
             Color::new(0.15, 0.50, 0.95, 1.0),
             Color::new(0.25, 0.90, 0.95, 1.0),
+        ),
+        // 8: AI 8 - Cyber Magenta with Electric Cyan Stripe & Midnight Helmet
+        (
+            Color::new(0.90, 0.15, 0.60, 1.0),
+            Color::new(0.20, 0.90, 1.0, 1.0),
+            Color::new(0.12, 0.14, 0.20, 1.0),
         ),
     ];
 }

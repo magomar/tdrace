@@ -5,17 +5,17 @@ use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, ov
 
 #[test]
 fn test_palette_and_car_color_schemes() {
-    assert_eq!(Palette::CAR_COLORS.len(), 8);
+    assert_eq!(Palette::CAR_COLORS.len(), 9);
 
-    for i in 0..8 {
+    for i in 0..9 {
         let scheme = CarColorScheme::from_index(i);
         assert!(scheme.primary.a > 0.0);
         assert!(scheme.secondary.a > 0.0);
         assert!(scheme.helmet.a > 0.0);
     }
 
-    // Wrap around
-    let scheme_wrap = CarColorScheme::from_index(10);
+    // Wrap around (11 % 9 = 2)
+    let scheme_wrap = CarColorScheme::from_index(11);
     let scheme_2 = CarColorScheme::from_index(2);
     assert_eq!(scheme_wrap, scheme_2);
 }

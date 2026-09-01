@@ -170,3 +170,64 @@ fn test_all_roster_bios_wrap_within_dossier_width() {
     }
 }
 
+#[test]
+fn test_no_preset_character_uses_player_default_colors() {
+    use tdrace_app::module::{F1GameModule, GameModule, KartGameModule, RallyGameModule};
+    use tdrace_app::render::color::CarColorScheme;
+
+    let player_scheme = CarColorScheme::from_index(0); // Player: Hyper Racing Red / White / Gold
+    let (p_hex, s_hex, h_hex) = player_scheme.to_hex_strings();
+
+    // Check main roster uniqueness and exclusion of player livery
+    let roster = DriverCharacter::all();
+    let mut liveries = std::collections::HashSet::new();
+    for driver in roster {
+        let (p, s, h) = driver.color_scheme.to_hex_strings();
+        assert_ne!(
+            (p.clone(), s.clone(), h.clone()),
+            (p_hex.clone(), s_hex.clone(), h_hex.clone()),
+            "Main roster driver '{}' must not use human player colors (red, white, yellow)",
+            driver.name
+        );
+        assert!(
+            liveries.insert((p, s, h)),
+            "Main roster driver '{}' has duplicate color scheme",
+            driver.name
+        );
+    }
+
+    // Check F1 game module roster
+    for driver in F1GameModule::new().drivers() {
+        let (p, s, h) = driver.color_scheme.to_hex_strings();
+        assert_ne!(
+            (p, s, h),
+            (p_hex.clone(), s_hex.clone(), h_hex.clone()),
+            "F1 module driver '{}' must not use human player colors",
+            driver.name
+        );
+    }
+
+    // Check Rally game module roster
+    for driver in RallyGameModule::new().drivers() {
+        let (p, s, h) = driver.color_scheme.to_hex_strings();
+        assert_ne!(
+            (p, s, h),
+            (p_hex.clone(), s_hex.clone(), h_hex.clone()),
+            "Rally module driver '{}' must not use human player colors",
+            driver.name
+        );
+    }
+
+    // Check Kart game module roster
+    for driver in KartGameModule::new().drivers() {
+        let (p, s, h) = driver.color_scheme.to_hex_strings();
+        assert_ne!(
+            (p, s, h),
+            (p_hex.clone(), s_hex.clone(), h_hex.clone()),
+            "Kart module driver '{}' must not use human player colors",
+            driver.name
+        );
+    }
+}
+
+

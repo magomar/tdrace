@@ -731,7 +731,7 @@ impl GameModule for KartGameModule {
                 alias: "Drift Apex",
                 bio: "Junior kart sensation who throws the rear end out on entry, pivoting around hairpins at impossible angles.",
                 preferred_car: crate::ui::menu::CarChoice::Kart,
-                color_scheme: CarColorScheme::from_index(0),
+                color_scheme: CarColorScheme::from_index(6),
                 profile: BotProfile {
                     name: "Taro Kazama",
                     lookahead_time: 0.31,

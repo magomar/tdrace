@@ -114,7 +114,7 @@ impl GameModule for RallyGameModule {
                 default_schemes: vec![
                     CarColorScheme::from_index(3), // Rally Orange / White
                     CarColorScheme::from_index(1), // Subie Blue / Gold Rims
-                    CarColorScheme::from_index(0), // Matte Black Stealth
+                    CarColorScheme::from_index(6), // Matte Black Stealth
                 ],
             },
             VehicleModelDefinition {
@@ -282,7 +282,7 @@ impl GameModule for RallyGameModule {
                 alias: "The Maestro",
                 bio: "9-time Rally Champion whose razor-sharp racing line and surgical balance dominate tarmac and gravel alike.",
                 preferred_car: crate::ui::menu::CarChoice::RallyCar,
-                color_scheme: CarColorScheme::from_index(0),
+                color_scheme: CarColorScheme::from_index(7),
                 profile: BotProfile {
                     name: "Sebastien Laurent",
                     lookahead_time: 0.40,

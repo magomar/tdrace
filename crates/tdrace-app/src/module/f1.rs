@@ -1042,7 +1042,7 @@ impl GameModule for F1GameModule {
                 },
                 stats: (0.99, 0.99, 0.99, 0.30),
                 default_schemes: vec![
-                    CarColorScheme::from_index(0), // Red Bull Dark Navy / Red
+                    CarColorScheme::from_index(6), // Red Bull Stealth Carbon / Navy
                     CarColorScheme::from_index(1), // Electric Cyan
                     CarColorScheme::from_index(2), // Ferrari Rosso Corsa
                     CarColorScheme::from_index(3), // McLaren Papaya
@@ -1216,7 +1216,7 @@ impl GameModule for F1GameModule {
                 alias: "The Dominator",
                 bio: "4-time World Champion renowned for relentless pace, surgical overtakes, and unwavering consistency in all conditions.",
                 preferred_car: crate::ui::menu::CarChoice::F1Car,
-                color_scheme: CarColorScheme::from_index(0),
+                color_scheme: CarColorScheme::from_index(6),
                 profile: BotProfile {
                     name: "Max Hunter",
                     lookahead_time: 0.42,

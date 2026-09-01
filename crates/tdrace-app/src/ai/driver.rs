@@ -214,7 +214,7 @@ impl DriverCharacter {
         alias: "Phoenix Lin",
         bio: "An engineering-minded racer who calculates optimal slip angles in real time, delivering blistering straight-line exits.",
         preferred_car: CarChoice::SportsCar,
-        color_scheme: CarColorScheme::from_index(0), // Hyper Racing Red
+        color_scheme: CarColorScheme::from_index(8), // Cyber Magenta & Neon Cyan
         profile: BotProfile {
             name: "Maya Lin",
             lookahead_time: 0.37,
