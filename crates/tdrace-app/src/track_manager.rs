@@ -963,9 +963,7 @@ impl TrackManager {
         } else {
             let mut candidate = base_slug.clone();
             let mut counter = 1;
-            while target_dir.join(format!("{}.json", candidate)).exists()
-                || self.tracks_dir.join(format!("{}.json", candidate)).exists()
-            {
+            while self.track_file_exists(&candidate) {
                 candidate = format!("{}_{}", base_slug, counter);
                 counter += 1;
             }

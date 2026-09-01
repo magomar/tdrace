@@ -956,6 +956,13 @@ mod tests {
         ramp.ramp_angle_deg = fitted_pitch;
         assert!(ramp.flat_length() < 0.01);
 
+        // Auto-fit height: len * tan(10 deg) = 20.0 * 0.17632698 = 3.5265m
+        ramp.ramp_angle_deg = 10.0;
+        let fitted_h = ramp.fitted_height();
+        assert!((fitted_h - 3.53).abs() < 0.05);
+        ramp.height = fitted_h;
+        assert!(ramp.flat_length() < 0.01);
+
         // Setters
         ramp.set_length(30.0);
         assert_eq!(ramp.length(), 30.0);

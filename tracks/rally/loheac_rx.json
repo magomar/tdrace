@@ -14,6 +14,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -27,6 +28,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -40,6 +42,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -53,6 +56,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -66,6 +70,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -79,6 +84,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -92,6 +98,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -105,6 +112,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -118,6 +126,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -131,6 +140,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -144,6 +154,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -157,6 +168,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -170,6 +182,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       }
@@ -195,6 +208,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -217,6 +231,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -239,6 +254,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -261,6 +277,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -283,6 +300,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -305,6 +323,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -327,6 +346,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -349,6 +369,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -371,6 +392,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -393,6 +415,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -415,6 +438,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -437,6 +461,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -459,6 +484,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -481,6 +507,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -503,6 +530,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -525,6 +553,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -547,6 +576,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -569,6 +599,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -591,6 +622,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -613,6 +645,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -635,6 +668,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -657,6 +691,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -679,6 +714,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -701,6 +737,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -723,6 +760,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -745,6 +783,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -767,6 +806,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -789,6 +829,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -811,6 +852,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -833,6 +875,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -855,6 +898,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -877,6 +921,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -899,6 +944,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -921,6 +967,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -943,6 +990,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -965,6 +1013,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -987,6 +1036,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1009,6 +1059,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1031,6 +1082,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1053,6 +1105,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1075,6 +1128,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1097,6 +1151,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1119,6 +1174,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1141,6 +1197,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1163,6 +1220,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1185,6 +1243,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1207,6 +1266,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1229,6 +1289,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1251,6 +1312,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1273,6 +1335,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1295,6 +1358,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1317,6 +1381,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1339,6 +1404,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1361,6 +1427,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1383,6 +1450,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1405,6 +1473,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1427,6 +1496,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1449,6 +1519,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1471,6 +1542,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1493,6 +1565,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1515,6 +1588,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1537,6 +1611,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1559,6 +1634,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1581,6 +1657,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1603,6 +1680,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1625,6 +1703,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1647,6 +1726,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1669,6 +1749,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1691,6 +1772,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1713,6 +1795,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1735,6 +1818,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1757,6 +1841,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1779,6 +1864,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1801,6 +1887,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1823,6 +1910,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1845,6 +1933,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1867,6 +1956,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1889,6 +1979,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1911,6 +2002,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1933,6 +2025,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1955,6 +2048,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1977,6 +2071,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -1999,6 +2094,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2021,6 +2117,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2043,6 +2140,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2065,6 +2163,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2087,6 +2186,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2109,6 +2209,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2131,6 +2232,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2153,6 +2255,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2175,6 +2278,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2197,6 +2301,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2219,6 +2324,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2241,6 +2347,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2263,6 +2370,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2285,6 +2393,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2307,6 +2416,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2329,6 +2439,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2351,6 +2462,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2373,6 +2485,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2395,6 +2508,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2417,6 +2531,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2439,6 +2554,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2461,6 +2577,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2483,6 +2600,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2505,6 +2623,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2527,6 +2646,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2549,6 +2669,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2571,6 +2692,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2593,6 +2715,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2615,6 +2738,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2637,6 +2761,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2659,6 +2784,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2681,6 +2807,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2703,6 +2830,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2725,6 +2853,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2747,6 +2876,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2769,6 +2899,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2791,6 +2922,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2813,6 +2945,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2835,6 +2968,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2857,6 +2991,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2879,6 +3014,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2901,6 +3037,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2923,6 +3060,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2945,6 +3083,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2967,6 +3106,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -2989,6 +3129,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3011,6 +3152,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3033,6 +3175,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3055,6 +3198,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3077,6 +3221,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3099,6 +3244,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3121,6 +3267,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3143,6 +3290,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3165,6 +3313,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3187,6 +3336,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3209,6 +3359,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3231,6 +3382,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3253,6 +3405,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3275,6 +3428,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3297,6 +3451,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3319,6 +3474,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3341,6 +3497,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3363,6 +3520,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3385,6 +3543,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3407,6 +3566,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3429,6 +3589,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3451,6 +3612,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3473,6 +3635,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3495,6 +3658,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3517,6 +3681,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3539,6 +3704,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3561,6 +3727,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3583,6 +3750,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3605,6 +3773,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3627,6 +3796,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3649,6 +3819,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3671,6 +3842,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3693,6 +3865,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3715,6 +3888,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3737,6 +3911,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3759,6 +3934,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3781,6 +3957,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3803,6 +3980,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3825,6 +4003,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3847,6 +4026,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3869,6 +4049,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3891,6 +4072,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3913,6 +4095,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3935,6 +4118,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3957,6 +4141,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -3979,6 +4164,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4001,6 +4187,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4023,6 +4210,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4045,6 +4233,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4067,6 +4256,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4089,6 +4279,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4111,6 +4302,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4133,6 +4325,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4155,6 +4348,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4177,6 +4371,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4199,6 +4394,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4221,6 +4417,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4243,6 +4440,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4265,6 +4463,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4287,6 +4486,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4309,6 +4509,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4331,6 +4532,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4353,6 +4555,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4375,6 +4578,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4397,6 +4601,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4419,6 +4624,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4441,6 +4647,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4463,6 +4670,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4485,6 +4693,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4507,6 +4716,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4529,6 +4739,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4551,6 +4762,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4573,6 +4785,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4595,6 +4808,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4617,6 +4831,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4639,6 +4854,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4661,6 +4877,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4683,6 +4900,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4705,6 +4923,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4727,6 +4946,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4749,6 +4969,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4771,6 +4992,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4793,6 +5015,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4815,6 +5038,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4837,6 +5061,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4859,6 +5084,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4881,6 +5107,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4903,6 +5130,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4925,6 +5153,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4947,6 +5176,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4969,6 +5199,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -4991,6 +5222,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5013,6 +5245,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5035,6 +5268,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5057,6 +5291,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5079,6 +5314,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5101,6 +5337,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5123,6 +5360,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5145,6 +5383,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5167,6 +5406,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5189,6 +5429,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5211,6 +5452,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5233,6 +5475,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5255,6 +5498,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5277,6 +5521,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5299,6 +5544,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5321,6 +5567,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5343,6 +5590,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5365,6 +5613,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5387,6 +5636,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5409,6 +5659,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5431,6 +5682,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5453,6 +5705,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5475,6 +5728,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5497,6 +5751,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5519,6 +5774,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5541,6 +5797,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5563,6 +5820,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5585,6 +5843,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5607,6 +5866,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5629,6 +5889,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5651,6 +5912,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5673,6 +5935,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5695,6 +5958,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5717,6 +5981,7 @@
         "right_curb": false,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5739,6 +6004,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5761,6 +6027,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5783,6 +6050,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5805,6 +6073,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5827,6 +6096,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5849,6 +6119,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5871,6 +6142,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5893,6 +6165,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5915,6 +6188,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5937,6 +6211,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5959,6 +6234,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -5981,6 +6257,7 @@
         "right_curb": true,
         "surface": "Dirt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6003,6 +6280,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6025,6 +6303,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6047,6 +6326,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6069,6 +6349,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6091,6 +6372,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6113,6 +6395,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6135,6 +6418,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6157,6 +6441,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6179,6 +6464,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6201,6 +6487,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6223,6 +6510,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6245,6 +6533,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6267,6 +6556,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6289,6 +6579,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6311,6 +6602,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6333,6 +6625,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6355,6 +6648,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6377,6 +6671,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6399,6 +6694,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6421,6 +6717,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6443,6 +6740,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6465,6 +6763,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6487,6 +6786,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6509,6 +6809,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6531,6 +6832,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6553,6 +6855,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6575,6 +6878,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6597,6 +6901,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6619,6 +6924,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6641,6 +6947,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6663,6 +6970,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6685,6 +6993,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6707,6 +7016,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6729,6 +7039,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6751,6 +7062,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6773,6 +7085,7 @@
         "right_curb": true,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6795,6 +7108,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6817,6 +7131,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6839,6 +7154,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6861,6 +7177,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6883,6 +7200,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6905,6 +7223,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6927,6 +7246,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6949,6 +7269,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6971,6 +7292,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -6993,6 +7315,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -7015,6 +7338,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -7037,6 +7361,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       },
@@ -7059,6 +7384,7 @@
         "right_curb": false,
         "surface": "Asphalt",
         "elevation": 0.0,
+        "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true
       }

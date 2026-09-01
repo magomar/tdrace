@@ -1426,15 +1426,18 @@ fn test_jump_ramp_surface_tools_and_surface_sampling() {
 
     assert_eq!(state.track.geometry.jump_ramps.len(), 1);
     assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Grass);
+    assert_eq!(state.track.geometry.jump_ramps[0].launch_speed, 4.0);
 
     // 2. Sample surface physics on the jump ramp
     assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::Grass);
 
-    // 3. Change surface type via inspector tool
+    // 3. Change surface type and launch speed via inspector tool
     state.selection = Selection::JumpRamp(0);
     assert!(tools.set_selected_jump_ramp_surface(&mut state, SurfaceType::Ice));
     assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Ice);
     assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::Ice);
+    assert!(tools.set_selected_jump_ramp_launch_speed(&mut state, 4.5));
+    assert_eq!(state.track.geometry.jump_ramps[0].launch_speed, 4.5);
 
     // 4. Modify dimensions and pitch
     assert!(tools.set_selected_jump_ramp_length(&mut state, 25.0));
@@ -1449,10 +1452,17 @@ fn test_jump_ramp_surface_tools_and_surface_sampling() {
     assert!(tools.set_selected_jump_ramp_pitch_deg(&mut state, 20.0));
     assert_eq!(state.track.geometry.jump_ramps[0].ramp_angle_deg, 20.0);
 
-    // Flat tabletop removal
+    // Flat tabletop removal via pitch
     let fitted_deg = state.track.geometry.jump_ramps[0].fitted_pitch_deg();
     assert!(tools.remove_selected_jump_ramp_flat_portion(&mut state));
     assert!((state.track.geometry.jump_ramps[0].ramp_angle_deg - fitted_deg).abs() < 1e-3);
+    assert!(state.track.geometry.jump_ramps[0].flat_length() < 0.01);
+
+    // Flat tabletop removal via height
+    assert!(tools.set_selected_jump_ramp_pitch_deg(&mut state, 15.0));
+    let fitted_h = state.track.geometry.jump_ramps[0].fitted_height();
+    assert!(tools.adjust_selected_jump_ramp_height_to_pitch(&mut state));
+    assert!((state.track.geometry.jump_ramps[0].height - fitted_h).abs() < 1e-3);
     assert!(state.track.geometry.jump_ramps[0].flat_length() < 0.01);
 
     // 5. Batch surface set
@@ -1465,6 +1475,70 @@ fn test_jump_ramp_surface_tools_and_surface_sampling() {
     assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Ice);
     assert!(state.redo());
     assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Sand);
+}
+
+#[test]
+fn test_waypoint_banking_editor_controls_and_batch_operations() {
+    use tdrace_app::editor::tools::{EditorToolType, ToolSettings};
+    use tdrace_app::editor::Selection;
+
+    let mut state = EditorState::new(classic_grand_prix());
+    let mut tools = ToolSettings::default();
+
+    // 1. Configure active placement banking angle
+    tools.active_tool = EditorToolType::RoadSpline;
+    tools.new_waypoint_bank_angle = 18.0;
+
+    let initial_count = state.track.spline.waypoints.len();
+    tools.handle_mouse_down(&mut state, Vec2::new(250.0, 250.0));
+    tools.handle_mouse_up(&mut state, Vec2::new(250.0, 250.0));
+
+    assert_eq!(state.track.spline.waypoints.len(), initial_count + 1);
+    let new_wp_idx = state.track.spline.waypoints.len() - 1;
+    assert_eq!(
+        state.track.spline.waypoints[new_wp_idx].bank_angle,
+        18.0,
+        "Newly placed waypoint must inherit active placement banking angle"
+    );
+
+    // 2. Adjust single waypoint banking
+    state.select(Selection::Waypoint(new_wp_idx));
+    assert!(tools.batch_adjust_banking(&mut state, 4.0));
+    assert_eq!(state.track.spline.waypoints[new_wp_idx].bank_angle, 22.0);
+
+    // 3. Multi-waypoint selection and batch banking
+    state.select(Selection::MultipleWaypoints(vec![0, 1, new_wp_idx]));
+
+    assert!(tools.batch_set_banking(&mut state, 15.0));
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, 15.0);
+    assert_eq!(state.track.spline.waypoints[1].bank_angle, 15.0);
+    assert_eq!(state.track.spline.waypoints[new_wp_idx].bank_angle, 15.0);
+
+    // Invert banking (+/-)
+    assert!(tools.batch_invert_banking(&mut state));
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, -15.0);
+    assert_eq!(state.track.spline.waypoints[1].bank_angle, -15.0);
+    assert_eq!(state.track.spline.waypoints[new_wp_idx].bank_angle, -15.0);
+
+    // Reset via batch set
+    assert!(tools.batch_set_banking(&mut state, 0.0));
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, 0.0);
+
+    // Cycle banking presets: 0 -> 10 -> 18 -> 22 -> 0
+    assert!(tools.cycle_selected_banking(&mut state));
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, 10.0);
+    assert!(tools.cycle_selected_banking(&mut state));
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, 18.0);
+    assert!(tools.cycle_selected_banking(&mut state));
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, 22.0);
+    assert!(tools.cycle_selected_banking(&mut state));
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, 0.0);
+
+    // 4. Undo and Redo operations preserve banking
+    assert!(state.undo());
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, 22.0);
+    assert!(state.redo());
+    assert_eq!(state.track.spline.waypoints[0].bank_angle, 0.0);
 }
 
 

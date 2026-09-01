@@ -26,6 +26,7 @@ pub enum RampPropertyModal {
     Width,
     Height,
     Pitch,
+    LaunchSpeed,
 }
 
 /// Modals that can be displayed as overlays on top of the editor viewport.
@@ -548,7 +549,7 @@ fn render_inspector(
                 curr_y += scaler.s(22.0);
 
                 let road_w = state.track.spline.waypoints[idx].width;
-                fonts.draw_ui_bold(&format!("Width: {:.1}m", road_w), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+                fonts.draw_ui_bold("Road Width:", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
                 if draw_ui_btn(fonts, scaler, x + scaler.s(120.0), curr_y, scaler.s(45.0), scaler.s(22.0), "-1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
                     state.record_undo();
                     state.track.spline.waypoints[idx].width = (road_w - 1.0).max(4.0);
@@ -559,6 +560,115 @@ fn render_inspector(
                     state.record_undo();
                     state.track.spline.waypoints[idx].width = (road_w + 1.0).min(30.0);
                     tools.new_waypoint_width = state.track.spline.waypoints[idx].width;
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(26.0);
+
+                let wid_pct = ((road_w - 4.0) / 26.0).clamp(0.0, 1.0);
+                let (drag_w_pct, _) = draw_slider_with_input_field(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    w - scaler.s(24.0),
+                    scaler.s(20.0),
+                    wid_pct,
+                    &format!("{:.1}m", road_w),
+                    false,
+                    mouse_pos,
+                    clicked,
+                );
+                if let Some(p) = drag_w_pct {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].width = (4.0 + p * 26.0).clamp(4.0, 30.0);
+                    tools.new_waypoint_width = state.track.spline.waypoints[idx].width;
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(26.0);
+
+                // Banking controls
+                let bank_deg = state.track.spline.waypoints[idx].bank_angle;
+                fonts.draw_ui_bold("Banking (Superelevation):", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_GOLD);
+                curr_y += scaler.s(20.0);
+
+                let bank_pct = ((bank_deg + 45.0) / 90.0).clamp(0.0, 1.0);
+                let (drag_b_pct, _) = draw_slider_with_input_field(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    w - scaler.s(24.0),
+                    scaler.s(20.0),
+                    bank_pct,
+                    &format!("{:+.1}°", bank_deg),
+                    true,
+                    mouse_pos,
+                    clicked,
+                );
+                if let Some(p) = drag_b_pct {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = (-45.0 + p * 90.0).clamp(-45.0, 45.0);
+                    tools.new_waypoint_bank_angle = state.track.spline.waypoints[idx].bank_angle;
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(24.0);
+
+                let btn_q_w = (w - scaler.s(36.0)) * 0.25;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_q_w, scaler.s(22.0), "-5°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = (bank_deg - 5.0).clamp(-45.0, 45.0);
+                    tools.new_waypoint_bank_angle = state.track.spline.waypoints[idx].bank_angle;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_q_w, curr_y, btn_q_w, scaler.s(22.0), "-1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = (bank_deg - 1.0).clamp(-45.0, 45.0);
+                    tools.new_waypoint_bank_angle = state.track.spline.waypoints[idx].bank_angle;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_q_w * 2.0, curr_y, btn_q_w, scaler.s(22.0), "+1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = (bank_deg + 1.0).clamp(-45.0, 45.0);
+                    tools.new_waypoint_bank_angle = state.track.spline.waypoints[idx].bank_angle;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_q_w * 3.0, curr_y, btn_q_w, scaler.s(22.0), "+5°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = (bank_deg + 5.0).clamp(-45.0, 45.0);
+                    tools.new_waypoint_bank_angle = state.track.spline.waypoints[idx].bank_angle;
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(26.0);
+
+                let btn_p_w = (w - scaler.s(36.0)) * 0.20;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_p_w, scaler.s(20.0), "0°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = 0.0;
+                    tools.new_waypoint_bank_angle = 0.0;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_p_w, curr_y, btn_p_w, scaler.s(20.0), "10°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = 10.0;
+                    tools.new_waypoint_bank_angle = 10.0;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_p_w * 2.0, curr_y, btn_p_w, scaler.s(20.0), "18°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = 18.0;
+                    tools.new_waypoint_bank_angle = 18.0;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_p_w * 3.0, curr_y, btn_p_w, scaler.s(20.0), "22°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = 22.0;
+                    tools.new_waypoint_bank_angle = 22.0;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(20.0) + btn_p_w * 4.0, curr_y, btn_p_w, scaler.s(20.0), "+/-", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].bank_angle = -state.track.spline.waypoints[idx].bank_angle;
+                    tools.new_waypoint_bank_angle = state.track.spline.waypoints[idx].bank_angle;
                     state.rebuild_geometry();
                 }
                 curr_y += scaler.s(28.0);
@@ -692,6 +802,41 @@ fn render_inspector(
                 tools.batch_adjust_width(state, 1.0);
             }
             curr_y += scaler.s(30.0);
+
+            fonts.draw_ui_bold("BATCH BANKING:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+            curr_y += scaler.s(18.0);
+            let btn_q_w = (w - scaler.s(36.0)) * 0.25;
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_q_w, scaler.s(22.0), "-5°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_adjust_banking(state, -5.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_q_w, curr_y, btn_q_w, scaler.s(22.0), "-1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_adjust_banking(state, -1.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_q_w * 2.0, curr_y, btn_q_w, scaler.s(22.0), "+1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_adjust_banking(state, 1.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_q_w * 3.0, curr_y, btn_q_w, scaler.s(22.0), "+5°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_adjust_banking(state, 5.0);
+            }
+            curr_y += scaler.s(26.0);
+
+            let btn_p_w = (w - scaler.s(36.0)) * 0.20;
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_p_w, scaler.s(20.0), "0°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_banking(state, 0.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_p_w, curr_y, btn_p_w, scaler.s(20.0), "10°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_banking(state, 10.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_p_w * 2.0, curr_y, btn_p_w, scaler.s(20.0), "18°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_banking(state, 18.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_p_w * 3.0, curr_y, btn_p_w, scaler.s(20.0), "22°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_banking(state, 22.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(20.0) + btn_p_w * 4.0, curr_y, btn_p_w, scaler.s(20.0), "+/-", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
+                tools.batch_invert_banking(state);
+            }
+            curr_y += scaler.s(28.0);
 
             fonts.draw_ui_bold("BATCH CURBS:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
             curr_y += scaler.s(18.0);
@@ -872,125 +1017,149 @@ fn render_inspector(
                 fonts.draw_ui_bold(&format!("Jump Ramp #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
                 curr_y += scaler.s(22.0);
 
-                let slider_w = w - scaler.s(24.0);
-                let slider_h = scaler.s(18.0);
-                let btn_h = scaler.s(22.0);
+                let row_w = w - scaler.s(24.0);
+                let row_h = scaler.s(20.0);
 
                 // 1. DIRECTION ANGLE (0° – 360°)
                 let heading_deg = ramp.angle_deg();
-                fonts.draw_ui_bold(&format!("Direction Angle: {:.1}°", heading_deg), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                fonts.draw_ui_bold("Direction Angle:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(16.0);
 
                 let angle_pct = (heading_deg % 360.0) / 360.0;
-                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, angle_pct, mouse_pos) {
+                let angle_str = format!("{:.1}°", heading_deg);
+                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, angle_pct, &angle_str, false, mouse_pos, clicked);
+                if let Some(new_pct) = drag_pct {
                     tools.set_selected_jump_ramp_angle_deg(state, new_pct * 360.0);
                 }
-                curr_y += slider_h + scaler.s(4.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT ANGLE [{:.1}°]", heading_deg), Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                if input_click {
                     *active_modal = EditorModal::SetRampProperty {
                         property: RampPropertyModal::Angle,
                         input_val: format!("{:.1}", heading_deg),
                     };
                 }
-                curr_y += btn_h + scaler.s(10.0);
+                curr_y += row_h + scaler.s(10.0);
 
                 // 2. LENGTH (2.0m – 50.0m)
                 let ramp = &state.track.geometry.jump_ramps[idx];
                 let len = ramp.length();
-                fonts.draw_ui_bold(&format!("Length: {:.1}m", len), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                fonts.draw_ui_bold("Length:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(16.0);
 
                 let len_pct = ((len - 2.0) / (50.0 - 2.0)).clamp(0.0, 1.0);
-                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, len_pct, mouse_pos) {
+                let len_str = format!("{:.1}m", len);
+                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, len_pct, &len_str, false, mouse_pos, clicked);
+                if let Some(new_pct) = drag_pct {
                     let new_len = 2.0 + new_pct * (50.0 - 2.0);
                     tools.set_selected_jump_ramp_length(state, new_len);
                 }
-                curr_y += slider_h + scaler.s(4.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT LENGTH [{:.1}m]", len), Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                if input_click {
                     *active_modal = EditorModal::SetRampProperty {
                         property: RampPropertyModal::Length,
                         input_val: format!("{:.1}", len),
                     };
                 }
-                curr_y += btn_h + scaler.s(10.0);
+                curr_y += row_h + scaler.s(10.0);
 
                 // 3. WIDTH (1.0m – 30.0m)
                 let ramp = &state.track.geometry.jump_ramps[idx];
                 let wid = ramp.width();
-                fonts.draw_ui_bold(&format!("Width: {:.1}m", wid), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                fonts.draw_ui_bold("Width:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(16.0);
 
                 let wid_pct = ((wid - 1.0) / (30.0 - 1.0)).clamp(0.0, 1.0);
-                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, wid_pct, mouse_pos) {
+                let wid_str = format!("{:.1}m", wid);
+                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, wid_pct, &wid_str, false, mouse_pos, clicked);
+                if let Some(new_pct) = drag_pct {
                     let new_wid = 1.0 + new_pct * (30.0 - 1.0);
                     tools.set_selected_jump_ramp_width(state, new_wid);
                 }
-                curr_y += slider_h + scaler.s(4.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT WIDTH [{:.1}m]", wid), Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                if input_click {
                     *active_modal = EditorModal::SetRampProperty {
                         property: RampPropertyModal::Width,
                         input_val: format!("{:.1}", wid),
                     };
                 }
-                curr_y += btn_h + scaler.s(10.0);
+                curr_y += row_h + scaler.s(10.0);
 
                 // 4. HEIGHT (0.2m – 10.0m)
                 let ramp = &state.track.geometry.jump_ramps[idx];
                 let h = ramp.height;
-                fonts.draw_ui_bold(&format!("Height: {:.1}m", h), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+                fonts.draw_ui_bold("Height:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
                 curr_y += scaler.s(16.0);
 
                 let h_pct = ((h - 0.2) / (10.0 - 0.2)).clamp(0.0, 1.0);
-                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, h_pct, mouse_pos) {
+                let h_str = format!("{:.1}m", h);
+                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, h_pct, &h_str, true, mouse_pos, clicked);
+                if let Some(new_pct) = drag_pct {
                     let new_h = 0.2 + new_pct * (10.0 - 0.2);
                     tools.set_selected_jump_ramp_height(state, new_h);
                 }
-                curr_y += slider_h + scaler.s(4.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT HEIGHT [{:.1}m]", h), Palette::UI_CARD_BG_HOVER, Palette::NEON_GOLD, mouse_pos, clicked) {
+                if input_click {
                     *active_modal = EditorModal::SetRampProperty {
                         property: RampPropertyModal::Height,
                         input_val: format!("{:.1}", h),
                     };
                 }
-                curr_y += btn_h + scaler.s(10.0);
+                curr_y += row_h + scaler.s(10.0);
 
                 // 5. PITCH (1.0° – 60.0°)
                 let ramp = &state.track.geometry.jump_ramps[idx];
                 let pitch = ramp.ramp_angle_deg;
-                fonts.draw_ui_bold(&format!("Pitch Angle: {:.1}°", pitch), x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+                fonts.draw_ui_bold("Pitch Angle:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
                 curr_y += scaler.s(16.0);
 
                 let pitch_pct = ((pitch - 1.0) / (60.0 - 1.0)).clamp(0.0, 1.0);
-                if let Some(new_pct) = draw_slider_bar(scaler, x + scaler.s(12.0), curr_y, slider_w, slider_h, pitch_pct, mouse_pos) {
+                let pitch_str = format!("{:.1}°", pitch);
+                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, pitch_pct, &pitch_str, true, mouse_pos, clicked);
+                if let Some(new_pct) = drag_pct {
                     let new_pitch = 1.0 + new_pct * (60.0 - 1.0);
                     tools.set_selected_jump_ramp_pitch_deg(state, new_pitch);
                 }
-                curr_y += slider_h + scaler.s(4.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, btn_h, &format!("SET EXACT PITCH [{:.1}°]", pitch), Palette::UI_CARD_BG_HOVER, Palette::NEON_GOLD, mouse_pos, clicked) {
+                if input_click {
                     *active_modal = EditorModal::SetRampProperty {
                         property: RampPropertyModal::Pitch,
                         input_val: format!("{:.1}", pitch),
                     };
                 }
-                curr_y += btn_h + scaler.s(10.0);
+                curr_y += row_h + scaler.s(10.0);
 
-                // 6. AUTO-FIT PITCH BUTTON (REMOVE FLAT TOP)
+                // 6. LAUNCH SPEED (1.0m/s – 20.0m/s)
+                let ramp = &state.track.geometry.jump_ramps[idx];
+                let l_spd = ramp.launch_speed;
+                fonts.draw_ui_bold("Launch Speed Boost:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+                curr_y += scaler.s(16.0);
+
+                let spd_pct = ((l_spd - 1.0) / (20.0 - 1.0)).clamp(0.0, 1.0);
+                let spd_str = format!("{:.1}m/s", l_spd);
+                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, spd_pct, &spd_str, true, mouse_pos, clicked);
+                if let Some(new_pct) = drag_pct {
+                    let new_spd = 1.0 + new_pct * (20.0 - 1.0);
+                    tools.set_selected_jump_ramp_launch_speed(state, new_spd);
+                }
+                if input_click {
+                    *active_modal = EditorModal::SetRampProperty {
+                        property: RampPropertyModal::LaunchSpeed,
+                        input_val: format!("{:.1}", l_spd),
+                    };
+                }
+                curr_y += row_h + scaler.s(12.0);
+
+                // 6. AUTO-FIT BUTTONS: FIT PITCH & FIT HEIGHT
                 let ramp = &state.track.geometry.jump_ramps[idx];
                 let fitted_deg = ramp.fitted_pitch_deg();
+                let fitted_h = ramp.fitted_height();
                 let flat_len = ramp.flat_length();
-                let fit_label = if flat_len > 0.05 {
-                    format!("FIT PITCH: {:.1}° (FLAT: {:.1}m)", fitted_deg, flat_len)
-                } else {
-                    format!("PITCH FITTED [{:.1}°] (NO FLAT)", fitted_deg)
-                };
+
+                let fit_pitch_label = format!("FIT PITCH: {:.1}°", fitted_deg);
+                let fit_height_label = format!("FIT HEIGHT: {:.1}m", fitted_h);
                 let fit_border = if flat_len > 0.05 { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER };
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, scaler.s(24.0), &fit_label, Palette::UI_CARD_BG, fit_border, mouse_pos, clicked) {
+
+                let fit_btn_w = (row_w - scaler.s(6.0)) * 0.5;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, fit_btn_w, scaler.s(24.0), &fit_pitch_label, Palette::UI_CARD_BG, fit_border, mouse_pos, clicked) {
                     tools.remove_selected_jump_ramp_flat_portion(state);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + fit_btn_w, curr_y, fit_btn_w, scaler.s(24.0), &fit_height_label, Palette::UI_CARD_BG, fit_border, mouse_pos, clicked) {
+                    tools.adjust_selected_jump_ramp_height_to_pitch(state);
                 }
                 curr_y += scaler.s(28.0);
 
@@ -1007,7 +1176,7 @@ fn render_inspector(
                     (SurfaceType::Water, "Water Hazard"),
                 ];
 
-                let half_btn_w = (slider_w - scaler.s(6.0)) * 0.5;
+                let half_btn_w = (row_w - scaler.s(6.0)) * 0.5;
                 for chunk in surfaces.chunks(2) {
                     let (st1, label1) = chunk[0];
                     let is_active1 = state.track.geometry.jump_ramps[idx].surface == st1;
@@ -1055,16 +1224,16 @@ fn render_inspector(
                 curr_y += scaler.s(16.0);
 
                 let ramp = &state.track.geometry.jump_ramps[idx];
-                draw_ramp_lateral_view(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, scaler.s(80.0), ramp);
+                draw_ramp_lateral_view(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, scaler.s(80.0), ramp);
                 curr_y += scaler.s(86.0);
 
                 // 9. ACTION BUTTONS
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, scaler.s(26.0), "DUPLICATE RAMP [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, scaler.s(26.0), "DUPLICATE RAMP [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                     tools.duplicate_selected(state);
                 }
                 curr_y += scaler.s(30.0);
 
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, slider_w, scaler.s(26.0), "DELETE RAMP [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, scaler.s(26.0), "DELETE RAMP [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
                     tools.delete_selected(state);
                 }
             }
@@ -1343,7 +1512,92 @@ fn render_inspector(
                     }
                     curr_y += scaler.s(26.0);
                 }
-                curr_y += scaler.s(8.0);
+                curr_y += scaler.s(6.0);
+
+                // Default Placement Width
+                fonts.draw_ui_bold("Placement Width:", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+                if draw_ui_btn(fonts, scaler, x + scaler.s(120.0), curr_y, scaler.s(45.0), scaler.s(22.0), "-1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_width = (tools.new_waypoint_width - 1.0).max(4.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(170.0), curr_y, scaler.s(45.0), scaler.s(22.0), "+1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_width = (tools.new_waypoint_width + 1.0).min(30.0);
+                }
+                curr_y += scaler.s(26.0);
+
+                let wid_pct = ((tools.new_waypoint_width - 4.0) / 26.0).clamp(0.0, 1.0);
+                let (drag_w_pct, _) = draw_slider_with_input_field(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    w - scaler.s(24.0),
+                    scaler.s(20.0),
+                    wid_pct,
+                    &format!("{:.1}m", tools.new_waypoint_width),
+                    false,
+                    mouse_pos,
+                    clicked,
+                );
+                if let Some(p) = drag_w_pct {
+                    tools.new_waypoint_width = (4.0 + p * 26.0).clamp(4.0, 30.0);
+                }
+                curr_y += scaler.s(26.0);
+
+                // Default Placement Banking
+                fonts.draw_ui_bold("Placement Banking:", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_GOLD);
+                curr_y += scaler.s(20.0);
+
+                let bank_pct = ((tools.new_waypoint_bank_angle + 45.0) / 90.0).clamp(0.0, 1.0);
+                let (drag_b_pct, _) = draw_slider_with_input_field(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    w - scaler.s(24.0),
+                    scaler.s(20.0),
+                    bank_pct,
+                    &format!("{:+.1}°", tools.new_waypoint_bank_angle),
+                    true,
+                    mouse_pos,
+                    clicked,
+                );
+                if let Some(p) = drag_b_pct {
+                    tools.new_waypoint_bank_angle = (-45.0 + p * 90.0).clamp(-45.0, 45.0);
+                }
+                curr_y += scaler.s(24.0);
+
+                let btn_q_w = (w - scaler.s(36.0)) * 0.25;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_q_w, scaler.s(22.0), "-5°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = (tools.new_waypoint_bank_angle - 5.0).clamp(-45.0, 45.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_q_w, curr_y, btn_q_w, scaler.s(22.0), "-1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = (tools.new_waypoint_bank_angle - 1.0).clamp(-45.0, 45.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_q_w * 2.0, curr_y, btn_q_w, scaler.s(22.0), "+1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = (tools.new_waypoint_bank_angle + 1.0).clamp(-45.0, 45.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_q_w * 3.0, curr_y, btn_q_w, scaler.s(22.0), "+5°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = (tools.new_waypoint_bank_angle + 5.0).clamp(-45.0, 45.0);
+                }
+                curr_y += scaler.s(26.0);
+
+                let btn_p_w = (w - scaler.s(36.0)) * 0.20;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_p_w, scaler.s(20.0), "0°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = 0.0;
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_p_w, curr_y, btn_p_w, scaler.s(20.0), "10°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = 10.0;
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_p_w * 2.0, curr_y, btn_p_w, scaler.s(20.0), "18°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = 18.0;
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_p_w * 3.0, curr_y, btn_p_w, scaler.s(20.0), "22°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = 22.0;
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(20.0) + btn_p_w * 4.0, curr_y, btn_p_w, scaler.s(20.0), "+/-", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
+                    tools.new_waypoint_bank_angle = -tools.new_waypoint_bank_angle;
+                }
+                curr_y += scaler.s(28.0);
             }
 
             fonts.draw_ui_bold("Global Off-Track Surface", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_CYAN);
@@ -1591,34 +1845,6 @@ fn draw_slider_with_input_field(
     (new_pct, input_clicked)
 }
 
-/// Helper to draw an interactive slider bar that can be clicked or dragged.
-fn draw_slider_bar(
-    scaler: &UiScaler,
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-    pct: f32,
-    mouse_pos: Vec2,
-) -> Option<f32> {
-    scaler.draw_glass_card(x, y, w, h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.0);
-    let bar_pct = pct.clamp(0.0, 1.0);
-    let inner_w = (w - scaler.s(4.0)).max(1.0);
-    let inner_h = (h - scaler.s(4.0)).max(1.0);
-    macroquad::shapes::draw_rectangle(x + scaler.s(2.0), y + scaler.s(2.0), inner_w * bar_pct, inner_h, Palette::NEON_CYAN);
-    let thumb_x = x + scaler.s(2.0) + inner_w * bar_pct;
-    macroquad::shapes::draw_circle(thumb_x, y + h * 0.5, scaler.s(5.5), Palette::NEON_GOLD);
-
-    let mouse_over = mouse_pos.x >= x - scaler.s(4.0) && mouse_pos.x <= x + w + scaler.s(4.0) && mouse_pos.y >= y - scaler.s(4.0) && mouse_pos.y <= y + h + scaler.s(4.0);
-    let is_down = is_mouse_button_down(MouseButton::Left);
-    if is_down && mouse_over {
-        let new_pct = ((mouse_pos.x - (x + scaler.s(2.0))) / inner_w).clamp(0.0, 1.0);
-        Some(new_pct)
-    } else {
-        None
-    }
-}
-
 /// Renders a 2D lateral cross-section diagram of a jump ramp showing incline slope, tabletop flat, launch lip, and surface material.
 fn draw_ramp_lateral_view(
     fonts: &Fonts,
@@ -1740,6 +1966,7 @@ fn render_set_ramp_property_modal(
         RampPropertyModal::Width => ("SET JUMP RAMP WIDTH", "Specify ramp width (1.0m – 30.0m) • [Enter] to apply", "m", 1.0, 30.0),
         RampPropertyModal::Height => ("SET JUMP RAMP HEIGHT", "Specify launch height (0.2m – 10.0m) • [Enter] to apply", "m", 0.2, 10.0),
         RampPropertyModal::Pitch => ("SET JUMP RAMP PITCH", "Specify incline pitch angle (1.0° – 60.0°) • [Enter] to apply", "°", 1.0, 60.0),
+        RampPropertyModal::LaunchSpeed => ("SET LAUNCH SPEED BOOST", "Specify vertical launch speed (1.0m/s – 20.0m/s) • [Enter] to apply", "m/s", 1.0, 20.0),
     };
 
     fonts.draw_display_centered(title, sw * 0.5, my + scaler.s(26.0), scaler.font_s(20.0), Palette::NEON_GOLD);
@@ -1811,6 +2038,7 @@ fn render_set_ramp_property_modal(
                 RampPropertyModal::Width => tools.set_selected_jump_ramp_width(state, parsed),
                 RampPropertyModal::Height => tools.set_selected_jump_ramp_height(state, parsed),
                 RampPropertyModal::Pitch => tools.set_selected_jump_ramp_pitch_deg(state, parsed),
+                RampPropertyModal::LaunchSpeed => tools.set_selected_jump_ramp_launch_speed(state, parsed),
             };
         }
         return true;
@@ -2759,7 +2987,8 @@ fn render_help_modal(
         ("Left Click", "Place entity / Select / Drag handles / Draw surface shapes"),
         ("Ctrl + S / C / T / P", "Select surface shape (Square, Circle, Triangle, Polygon)"),
         ("Ctrl + F / Ctrl + B", "Move surface zone to FRONT (Above Track) or BACK (Below Track)"),
-        ("R / [ / ]", "Rotate selected Jump Ramp (+/- 15°, Shift for opposite)"),
+        ("B / [ / ]", "Adjust Banking on selected waypoint(s) (+/- 1°, Shift for 5°, B to cycle presets)"),
+        ("R / Shift+R", "Rotate selected Jump Ramp (+/- 15°)"),
         ("Arrow Keys / WASD", "Pan camera across circuit canvas (+Shift for fast pan)"),
         ("Middle / Right Drag", "Pan editor camera across the circuit canvas"),
         ("+ / - Keys", "Progressive zoom in / zoom out (+Shift for fast zoom)"),

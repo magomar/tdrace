@@ -226,7 +226,9 @@ impl BotAiDriver {
 
             if local_curvature > 1e-4 {
                 let local_radius = 1.0 / local_curvature;
-                let v_apex = (mu * g * local_radius).sqrt() * self.profile.speed_factor;
+                let bank_rad = s0.bank_angle.to_radians().abs();
+                let effective_grip = mu + bank_rad.tan().clamp(0.0, 0.75);
+                let v_apex = (effective_grip * g * local_radius).sqrt() * self.profile.speed_factor;
                 // Maximum entry speed from distance d: v = sqrt(v_apex^2 + 2 * a * d)
                 let v_allowable = (v_apex * v_apex + 2.0 * a_brake * dist_ahead).sqrt();
                 if v_allowable < target_speed {

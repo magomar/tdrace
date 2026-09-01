@@ -14,9 +14,10 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 8, "Rally module should have 8 tracks (5 new + 3 original)");
+    assert_eq!(tracks.len(), 9, "Rally module should have 9 tracks (6 new + 3 original)");
 
     let expected_ids = [
+        "dirty_oval_speedway",
         "dirt_figure_eight",
         "holjes_rx",
         "lydden_hill",
@@ -114,6 +115,63 @@ fn test_dirt_figure_eight_horizontal_flat_dirt_arena() {
 
     // 4. Ensure there is at least one JumpRamp
     assert!(!fig8.geometry.jump_ramps.is_empty(), "Figure-8 should have jump ramps");
+}
+
+#[test]
+fn test_dirt_figure_eight_jump_ramps_proportional_trajectory() {
+    use tdrace_core::physics::car::{Car, CarControls};
+    use tdrace_core::physics::config::CarConfig;
+
+    let fig8 = dirt_figure_eight();
+    assert_eq!(fig8.geometry.jump_ramps.len(), 2);
+
+    for ramp in &fig8.geometry.jump_ramps {
+        assert_eq!(ramp.height, 1.8);
+        assert!((ramp.ramp_angle_deg - 8.194263).abs() < 1e-4);
+        assert_eq!(ramp.launch_speed, 4.0);
+
+        // Simulate a rally car hitting the ramp at 25.0 m/s (~90 km/h)
+        let mut car = Car::new(CarConfig::rally_car()).with_pose(ramp.shape.center(), 0.0);
+        car.state.velocity = ramp.direction * 25.0;
+
+        let triggered = car.try_trigger_jump_ramp(ramp);
+        assert!(triggered, "Car at speed should trigger jump ramp");
+        assert!(car.state.is_airborne);
+
+        // Step physics forward while airborne
+        let ctrl = CarControls::accelerate();
+        let mut apex_elevation = 0.0f32;
+        let mut steps_to_landing = 0;
+
+        for _ in 0..120 {
+            car.step(&ctrl, SurfaceType::Dirt, 1.0 / 60.0);
+            if car.state.elevation > apex_elevation {
+                apex_elevation = car.state.elevation;
+            }
+            if car.state.just_landed {
+                break;
+            }
+            steps_to_landing += 1;
+        }
+
+        // Apex elevation should be ~1.4m to 2.5m (proportional to 1.8m height and 8.2° pitch, not >10m-30m!)
+        assert!(
+            apex_elevation >= 1.4 && apex_elevation <= 2.5,
+            "Apex elevation should be proportional to ramp (1.4m - 2.5m), got {:.2}m",
+            apex_elevation
+        );
+        // Air time should be ~0.8s to 1.2s (~45-75 frames), not 4+ seconds
+        assert!(
+            steps_to_landing >= 40 && steps_to_landing <= 80,
+            "Jump should last ~0.8-1.2s (40-80 frames), took {} steps ({:.2}s)",
+            steps_to_landing,
+            steps_to_landing as f32 / 60.0
+        );
+        assert!(car.state.just_landed, "Car should have landed");
+        assert_eq!(car.state.elevation, 0.0);
+        assert_eq!(car.state.vertical_velocity, 0.0);
+        assert!(!car.state.is_airborne);
+    }
 }
 
 #[test]
@@ -289,13 +347,10 @@ fn test_rally_tracks_centerline_driving_and_no_wall_obstructions() {
 #[test]
 fn test_export_and_save_rally_tracks_to_disk() {
     use std::fs;
-    use std::path::Path;
     use tdrace_core::track::Track;
 
-    let targets = [
-        Path::new("tracks/rally").to_path_buf(),
-        Path::new("../../tracks/rally").to_path_buf(),
-    ];
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_rally_export_test_{}", std::process::id()));
+    let _ = fs::create_dir_all(&temp_dir);
 
     let presets_to_export = [
         ("dirt_figure_eight", dirt_figure_eight()),
@@ -306,19 +361,16 @@ fn test_export_and_save_rally_tracks_to_disk() {
         ("sahara", tdrace_core::track::presets::sahara_dunes()),
     ];
 
-    for dir in &targets {
-        if dir.parent().map_or(false, |p| p.exists()) || dir.exists() {
-            let _ = fs::create_dir_all(dir);
-            for (slug, track) in &presets_to_export {
-                let file_path = dir.join(format!("{}.json", slug));
-                track.save_to_file(&file_path).expect("Must save track to file");
+    for (slug, track) in &presets_to_export {
+        let file_path = temp_dir.join(format!("{}.json", slug));
+        track.save_to_file(&file_path).expect("Must save track to file");
 
-                // Verify it can be loaded back
-                let loaded = Track::load_from_file(&file_path).expect("Must load track from file");
-                assert_eq!(loaded.name, track.name);
-                assert_eq!(loaded.spline.waypoints.len(), track.spline.waypoints.len());
-                assert_eq!(loaded.checkpoints.len(), track.checkpoints.len());
-            }
-        }
+        // Verify it can be loaded back
+        let loaded = Track::load_from_file(&file_path).expect("Must load track from file");
+        assert_eq!(loaded.name, track.name);
+        assert_eq!(loaded.spline.waypoints.len(), track.spline.waypoints.len());
+        assert_eq!(loaded.checkpoints.len(), track.checkpoints.len());
     }
+
+    let _ = fs::remove_dir_all(&temp_dir);
 }

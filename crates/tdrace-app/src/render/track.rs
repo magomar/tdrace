@@ -425,19 +425,62 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool) {
         let left1 = s1.point + s1.normal * hw1;
         let right1 = s1.point - s1.normal * hw1;
 
+        let avg_bank = (s0.bank_angle + s1.bank_angle) * 0.5;
+        let is_banked = avg_bank.abs() > 0.8;
+
+        // On banked curves, render subtle 2.5D outer rim embankment shadow under outer edge
+        if is_banked {
+            let rim_offset = if avg_bank > 0.0 {
+                -s0.normal * (avg_bank.abs().min(25.0) * 0.03 + 0.30)
+            } else {
+                s0.normal * (avg_bank.abs().min(25.0) * 0.03 + 0.30)
+            };
+            if avg_bank > 0.0 {
+                let r0_shad = right0 + rim_offset;
+                let r1_shad = right1 + rim_offset;
+                draw_quad(right0, right1, r1_shad, r0_shad, Palette::SHADOW);
+            } else {
+                let l0_shad = left0 + rim_offset;
+                let l1_shad = left1 + rim_offset;
+                draw_quad(left0, left1, l1_shad, l0_shad, Palette::SHADOW);
+            }
+        }
+
         match s0.surface {
             SurfaceType::Dirt => {
-                draw_quad(left0, left1, right1, right0, Palette::DIRT);
-                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
-                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
+                if is_banked {
+                    // Split dirt into 3 gradient bands across banking (low apron, mid slide, high cushion)
+                    let mid_l0 = s0.point + s0.normal * (hw0 * 0.30);
+                    let mid_l1 = s1.point + s1.normal * (hw1 * 0.30);
+                    let mid_r0 = s0.point - s0.normal * (hw0 * 0.30);
+                    let mid_r1 = s1.point - s1.normal * (hw1 * 0.30);
 
-                let groove_l0 = s0.point + s0.normal * (hw0 * 0.45);
-                let groove_l1 = s1.point + s1.normal * (hw1 * 0.45);
-                let groove_r0 = s0.point - s0.normal * (hw0 * 0.45);
-                let groove_r1 = s1.point - s1.normal * (hw1 * 0.45);
+                    if avg_bank > 0.0 {
+                        // Banked left: left is lower (moist bottom groove), right is higher (dry top cushion)
+                        draw_quad(left0, left1, mid_l1, mid_l0, Palette::DIRT_DARK);
+                        draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::DIRT);
+                        draw_quad(mid_r0, mid_r1, right1, right0, Color::new(0.60, 0.44, 0.28, 1.0));
+                    } else {
+                        // Banked right: right is lower, left is higher
+                        draw_quad(left0, left1, mid_l1, mid_l0, Color::new(0.60, 0.44, 0.28, 1.0));
+                        draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::DIRT);
+                        draw_quad(mid_r0, mid_r1, right1, right0, Palette::DIRT_DARK);
+                    }
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
+                } else {
+                    draw_quad(left0, left1, right1, right0, Palette::DIRT);
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
 
-                draw_line(groove_l0.x, groove_l0.y, groove_l1.x, groove_l1.y, 0.22, Palette::DIRT_DARK);
-                draw_line(groove_r0.x, groove_r0.y, groove_r1.x, groove_r1.y, 0.22, Palette::DIRT_DARK);
+                    let groove_l0 = s0.point + s0.normal * (hw0 * 0.45);
+                    let groove_l1 = s1.point + s1.normal * (hw1 * 0.45);
+                    let groove_r0 = s0.point - s0.normal * (hw0 * 0.45);
+                    let groove_r1 = s1.point - s1.normal * (hw1 * 0.45);
+
+                    draw_line(groove_l0.x, groove_l0.y, groove_l1.x, groove_l1.y, 0.22, Palette::DIRT_DARK);
+                    draw_line(groove_r0.x, groove_r0.y, groove_r1.x, groove_r1.y, 0.22, Palette::DIRT_DARK);
+                }
             }
             SurfaceType::Sand => {
                 draw_quad(left0, left1, right1, right0, Palette::SAND);
@@ -468,20 +511,45 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool) {
                 draw_quad(left0, left1, right1, right0, Palette::CURB_RED);
             }
             SurfaceType::Asphalt => {
-                draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
-                draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
-                draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+                if is_banked {
+                    // Split asphalt into 3 gradient lighting bands across banking
+                    let mid_l0 = s0.point + s0.normal * (hw0 * 0.33);
+                    let mid_l1 = s1.point + s1.normal * (hw1 * 0.33);
+                    let mid_r0 = s0.point - s0.normal * (hw0 * 0.33);
+                    let mid_r1 = s1.point - s1.normal * (hw1 * 0.33);
 
-                let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
-                if center_stripe {
-                    draw_line(
-                        s0.point.x,
-                        s0.point.y,
-                        s1.point.x,
-                        s1.point.y,
-                        0.16,
-                        Color::new(0.95, 0.95, 0.95, 0.35),
-                    );
+                    if avg_bank > 0.0 {
+                        // Left is lower apron, right is higher wall rim
+                        draw_quad(left0, left1, mid_l1, mid_l0, Color::new(0.12, 0.13, 0.16, 1.0));
+                        draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::ASPHALT);
+                        draw_quad(mid_r0, mid_r1, right1, right0, Color::new(0.24, 0.25, 0.29, 1.0));
+                    } else {
+                        draw_quad(left0, left1, mid_l1, mid_l0, Color::new(0.24, 0.25, 0.29, 1.0));
+                        draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::ASPHALT);
+                        draw_quad(mid_r0, mid_r1, right1, right0, Color::new(0.12, 0.13, 0.16, 1.0));
+                    }
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+
+                    // High-speed racing lane seam lines along banking
+                    draw_line(mid_l0.x, mid_l0.y, mid_l1.x, mid_l1.y, 0.12, Color::new(0.40, 0.42, 0.46, 0.4));
+                    draw_line(mid_r0.x, mid_r0.y, mid_r1.x, mid_r1.y, 0.12, Color::new(0.40, 0.42, 0.46, 0.4));
+                } else {
+                    draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+
+                    let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
+                    if center_stripe {
+                        draw_line(
+                            s0.point.x,
+                            s0.point.y,
+                            s1.point.x,
+                            s1.point.y,
+                            0.16,
+                            Color::new(0.95, 0.95, 0.95, 0.35),
+                        );
+                    }
                 }
             }
         }

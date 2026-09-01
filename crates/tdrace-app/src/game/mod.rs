@@ -2865,12 +2865,15 @@ impl RaceSession {
             wheel_surfaces.push(self.track.sample_car_surfaces(car));
         }
 
-        // 3. Step individual vehicle dynamics and update road elevation
+        // 3. Step individual vehicle dynamics and update road elevation & cross-slope banking
         for i in 0..n_cars {
-            self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
             let prev_prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
             let proj = self.track.spline.project_point_continuity(self.cars[i].state.position, prev_prog, 50.0);
             self.cars[i].state.road_elevation = proj.elevation;
+            self.cars[i].state.road_bank_angle = proj.bank_angle;
+            self.cars[i].state.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);
+
+            self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
         }
 
         // Trigger Jump Ramps & Landing SFX/FX
@@ -3671,9 +3674,37 @@ impl RaceSession {
             }
         }
 
-        if (ctrl_down || is_key_pressed(KeyCode::B)) && is_key_pressed(KeyCode::B) {
+        if ctrl_down && is_key_pressed(KeyCode::B) {
             if let Some(state) = &mut self.editor_state {
                 if self.editor_tools.send_selected_surface_back(state) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+            }
+        }
+
+        if !ctrl_down && is_key_pressed(KeyCode::B) {
+            if let Some(state) = &mut self.editor_state {
+                let shift_down = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+                let has_waypoints = !state.selection.selected_waypoint_indices().is_empty();
+                if has_waypoints {
+                    if shift_down {
+                        if self.editor_tools.batch_invert_banking(state) {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                        }
+                    } else if self.editor_tools.cycle_selected_banking(state) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                } else if !self.editor_tools.send_selected_surface_back(state) {
+                    let curr = self.editor_tools.new_waypoint_bank_angle;
+                    self.editor_tools.new_waypoint_bank_angle = if curr.abs() < 1.0 {
+                        10.0
+                    } else if (curr - 10.0).abs() < 2.0 {
+                        18.0
+                    } else if (curr - 18.0).abs() < 2.0 {
+                        22.0
+                    } else {
+                        0.0
+                    };
                     self.audio.play_sfx(SfxType::UiSelect);
                 }
             }
@@ -3728,10 +3759,10 @@ impl RaceSession {
             }
         }
 
-        // Jump Ramp Rotation Keyboard Shortcuts: R / Shift+R, [ / ], < / >
+        // Waypoint Banking & Jump Ramp Rotation Shortcuts: [ / ], R / Shift+R
         if self.editor_modal == EditorModal::None {
+            let shift_down = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
             if is_key_pressed(KeyCode::R) {
-                let shift_down = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
                 let delta = if shift_down {
                     -std::f32::consts::PI / 12.0
                 } else {
@@ -3746,7 +3777,13 @@ impl RaceSession {
 
             if is_key_pressed(KeyCode::LeftBracket) {
                 if let Some(state) = &mut self.editor_state {
-                    if self.editor_tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 12.0) {
+                    let has_waypoints = !state.selection.selected_waypoint_indices().is_empty();
+                    if has_waypoints {
+                        let delta = if shift_down { -5.0 } else { -1.0 };
+                        if self.editor_tools.batch_adjust_banking(state, delta) {
+                            self.audio.play_sfx(SfxType::UiMove);
+                        }
+                    } else if self.editor_tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 12.0) {
                         self.audio.play_sfx(SfxType::UiSelect);
                     }
                 }
@@ -3754,7 +3791,13 @@ impl RaceSession {
 
             if is_key_pressed(KeyCode::RightBracket) {
                 if let Some(state) = &mut self.editor_state {
-                    if self.editor_tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 12.0) {
+                    let has_waypoints = !state.selection.selected_waypoint_indices().is_empty();
+                    if has_waypoints {
+                        let delta = if shift_down { 5.0 } else { 1.0 };
+                        if self.editor_tools.batch_adjust_banking(state, delta) {
+                            self.audio.play_sfx(SfxType::UiMove);
+                        }
+                    } else if self.editor_tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 12.0) {
                         self.audio.play_sfx(SfxType::UiSelect);
                     }
                 }

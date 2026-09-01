@@ -602,23 +602,23 @@ pub fn classic_grand_prix() -> Track {
 }
 
 /// Preset 2: Oval Speedway
-/// High speed 2-turn oval with perimeter concrete walls, tight wall collisions, asphalt apron.
+/// High speed 2-turn oval with perimeter concrete walls, tight wall collisions, asphalt apron, and 22-degree banked turns.
 pub fn oval_speedway() -> Track {
     let waypoints = vec![
         // Front Straight
-        TrackWaypoint::new(Vec2::new(0.0, -60.0), 18.0),
-        TrackWaypoint::new(Vec2::new(150.0, -60.0), 18.0),
+        TrackWaypoint::new(Vec2::new(0.0, -60.0), 18.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(150.0, -60.0), 18.0).with_bank_angle(0.0),
         // Turn 1 & 2 (East Banked Curve)
-        TrackWaypoint::new(Vec2::new(230.0, -25.0), 20.0).with_curbs(true, true),
-        TrackWaypoint::new(Vec2::new(250.0, 30.0), 20.0).with_curbs(true, true),
-        TrackWaypoint::new(Vec2::new(230.0, 85.0), 20.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(230.0, -25.0), 20.0).with_curbs(true, true).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(250.0, 30.0), 20.0).with_curbs(true, true).with_bank_angle(22.0),
+        TrackWaypoint::new(Vec2::new(230.0, 85.0), 20.0).with_curbs(true, true).with_bank_angle(12.0),
         // Back Straight
-        TrackWaypoint::new(Vec2::new(150.0, 120.0), 18.0),
-        TrackWaypoint::new(Vec2::new(0.0, 120.0), 18.0),
+        TrackWaypoint::new(Vec2::new(150.0, 120.0), 18.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(0.0, 120.0), 18.0).with_bank_angle(0.0),
         // Turn 3 & 4 (West Banked Curve)
-        TrackWaypoint::new(Vec2::new(-80.0, 85.0), 20.0).with_curbs(true, true),
-        TrackWaypoint::new(Vec2::new(-100.0, 30.0), 20.0).with_curbs(true, true),
-        TrackWaypoint::new(Vec2::new(-80.0, -25.0), 20.0).with_curbs(true, true),
+        TrackWaypoint::new(Vec2::new(-80.0, 85.0), 20.0).with_curbs(true, true).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(-100.0, 30.0), 20.0).with_curbs(true, true).with_bank_angle(22.0),
+        TrackWaypoint::new(Vec2::new(-80.0, -25.0), 20.0).with_curbs(true, true).with_bank_angle(12.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -651,6 +651,63 @@ pub fn oval_speedway() -> Track {
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
     }
+}
+
+/// Preset: Dirty Oval Speedway
+/// High-sliding dirt superspeedway oval with 18-degree banked curves and loose gravel cushion.
+pub fn dirty_oval_speedway() -> Track {
+    let waypoints = vec![
+        // Front Straight
+        TrackWaypoint::new(Vec2::new(22.5, -62.5), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(172.5, -62.5), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(0.0),
+        // Turn 1 & 2 (East Banked Dirt Curve)
+        TrackWaypoint::new(Vec2::new(252.5, -27.5), 20.0).with_surface(SurfaceType::Dirt).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(272.5, 27.5), 20.0).with_surface(SurfaceType::Dirt).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(252.5, 82.5), 20.0).with_surface(SurfaceType::Dirt).with_bank_angle(10.0),
+        // Back Straight
+        TrackWaypoint::new(Vec2::new(172.5, 117.5), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(22.5, 117.5), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(0.0),
+        // Turn 3 & 4 (West Banked Dirt Curve)
+        TrackWaypoint::new(Vec2::new(-57.5, 82.5), 20.0).with_surface(SurfaceType::Dirt).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(-77.5, 27.5), 20.0).with_surface(SurfaceType::Dirt).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(-57.5, -27.5), 20.0).with_surface(SurfaceType::Dirt).with_bank_angle(10.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
+
+    let checkpoints = generate_checkpoints(&spline, 8, 2);
+    let grid_positions = generate_grid_positions(&spline, 12, 7.0, 3.0);
+
+    Track {
+        name: "Dirty Oval Speedway".to_string(),
+        description: "High-sliding dirt superspeedway oval with 18-degree banked curves and loose gravel cushion.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Dirt,
+        pit_box_area: None,
+        default_laps: 5,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Backwards compatibility alias for `dirty_oval_speedway`.
+pub fn dirt_oval_speedway() -> Track {
+    dirty_oval_speedway()
 }
 
 /// Preset 3: Drift Park
@@ -1080,15 +1137,28 @@ pub fn dirt_figure_eight() -> Track {
         JumpRamp::new(
             1,
             SurfaceShape::OrientedBox {
-                center: Vec2::new(-70.0, -47.0),
-                half_extents: Vec2::new(5.0, 6.0),
-                angle: 0.05,
+                center: Vec2::new(12.5, 11.25),
+                half_extents: Vec2::new(6.25, 8.95),
+                angle: -2.3339927,
             },
-            Vec2::new(1.0, 0.0),
-            4.2,
-            18.0,
-            2.3,
-            "Stadium Finish Jump",
+            Vec2::new(-0.69123477, -0.72263026),
+            4.0,
+            8.194263,
+            1.8,
+            "Crossover Tabletop East",
+        ).with_surface(SurfaceType::Dirt),
+        JumpRamp::new(
+            2,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(-13.5, -12.25),
+                half_extents: Vec2::new(6.25, 8.95),
+                angle: 0.7290585,
+            },
+            Vec2::new(0.7458019, 0.66616774),
+            4.0,
+            8.194263,
+            1.8,
+            "Crossover Tabletop West",
         ).with_surface(SurfaceType::Dirt),
     ];
 

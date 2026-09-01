@@ -23,6 +23,9 @@ pub struct TrackWaypoint {
     /// Elevation / vertical altitude above ground in meters (default: 0.0).
     #[serde(default)]
     pub elevation: f32,
+    /// Cross-slope banking angle in degrees (default: 0.0; + = right side elevated / banked left, - = left side elevated / banked right).
+    #[serde(default)]
+    pub bank_angle: f32,
     /// Whether a perimeter barrier wall is installed on the left side of the track.
     #[serde(default = "default_true")]
     pub left_wall: bool,
@@ -40,6 +43,7 @@ impl TrackWaypoint {
             right_curb: false,
             surface: None,
             elevation: 0.0,
+            bank_angle: 0.0,
             left_wall: true,
             right_wall: true,
         }
@@ -66,6 +70,11 @@ impl TrackWaypoint {
         self.elevation = elevation;
         self
     }
+
+    pub const fn with_bank_angle(mut self, bank_angle: f32) -> Self {
+        self.bank_angle = bank_angle;
+        self
+    }
 }
 
 /// A finely sampled point along the discretized spline curve with geometric properties.
@@ -81,6 +90,8 @@ pub struct SplineSample {
     pub surface: SurfaceType,
     #[serde(default)]
     pub elevation: f32,
+    #[serde(default)]
+    pub bank_angle: f32,
     #[serde(default = "default_true")]
     pub left_wall: bool,
     #[serde(default = "default_true")]
@@ -118,6 +129,8 @@ pub struct SplineProjection {
     pub base_surface: SurfaceType,
     /// Road surface elevation at the projected point in meters.
     pub elevation: f32,
+    /// Road cross-slope banking angle in degrees.
+    pub bank_angle: f32,
 }
 
 /// Smooth Catmull-Rom spline representation of the racing circuit centerline.
@@ -149,6 +162,7 @@ impl TrackSpline {
         let mut raw_right_curbs = Vec::new();
         let mut raw_surfaces = Vec::new();
         let mut raw_elevations = Vec::new();
+        let mut raw_bank_angles = Vec::new();
         let mut raw_left_walls = Vec::new();
         let mut raw_right_walls = Vec::new();
 
@@ -187,6 +201,23 @@ impl TrackSpline {
                 waypoints[num_wp - 1].elevation
             };
 
+            let b0 = if closed {
+                waypoints[(i + num_wp - 1) % num_wp].bank_angle
+            } else if i == 0 {
+                waypoints[0].bank_angle
+            } else {
+                waypoints[i - 1].bank_angle
+            };
+            let b1 = waypoints[i % num_wp].bank_angle;
+            let b2 = waypoints[(i + 1) % num_wp].bank_angle;
+            let b3 = if closed {
+                waypoints[(i + 2) % num_wp].bank_angle
+            } else if i + 2 < num_wp {
+                waypoints[i + 2].bank_angle
+            } else {
+                waypoints[num_wp - 1].bank_angle
+            };
+
             let wp1 = &waypoints[i % num_wp];
             let wp2 = &waypoints[(i + 1) % num_wp];
 
@@ -194,6 +225,7 @@ impl TrackSpline {
                 let t = s as f32 / steps_per_segment as f32;
                 let pt = catmull_rom_2d(p0, p1, p2, p3, t);
                 let elev = catmull_rom_1d(e0, e1, e2, e3, t).max(0.0);
+                let bank = catmull_rom_1d(b0, b1, b2, b3, t);
                 let w = wp1.width + (wp2.width - wp1.width) * t;
                 let lc = if t < 0.5 { wp1.left_curb } else { wp2.left_curb };
                 let rc = if t < 0.5 { wp1.right_curb } else { wp2.right_curb };
@@ -207,6 +239,7 @@ impl TrackSpline {
                 raw_right_curbs.push(rc);
                 raw_surfaces.push(surf);
                 raw_elevations.push(elev);
+                raw_bank_angles.push(bank);
                 raw_left_walls.push(lw);
                 raw_right_walls.push(rw);
             }
@@ -220,6 +253,7 @@ impl TrackSpline {
             raw_right_curbs.push(raw_right_curbs[0]);
             raw_surfaces.push(raw_surfaces[0]);
             raw_elevations.push(raw_elevations[0]);
+            raw_bank_angles.push(raw_bank_angles[0]);
             raw_left_walls.push(raw_left_walls[0]);
             raw_right_walls.push(raw_right_walls[0]);
         } else {
@@ -230,6 +264,7 @@ impl TrackSpline {
             raw_right_curbs.push(last.right_curb);
             raw_surfaces.push(last.surface.unwrap_or(SurfaceType::Asphalt));
             raw_elevations.push(last.elevation);
+            raw_bank_angles.push(last.bank_angle);
             raw_left_walls.push(last.left_wall);
             raw_right_walls.push(last.right_wall);
         }
@@ -268,6 +303,7 @@ impl TrackSpline {
                 right_curb: raw_right_curbs[i],
                 surface: raw_surfaces[i],
                 elevation: raw_elevations[i],
+                bank_angle: raw_bank_angles[i],
                 left_wall: raw_left_walls[i],
                 right_wall: raw_right_walls[i],
             });
@@ -309,6 +345,7 @@ impl TrackSpline {
                 right_curb: false,
                 surface: SurfaceType::Asphalt,
                 elevation: 0.0,
+                bank_angle: 0.0,
                 left_wall: true,
                 right_wall: true,
             };
@@ -355,6 +392,7 @@ impl TrackSpline {
         let normal = Vec2::new(-tangent.y, tangent.x);
         let width = s0.width + (s1.width - s0.width) * t;
         let elevation = (s0.elevation + (s1.elevation - s0.elevation) * t).max(0.0);
+        let bank_angle = s0.bank_angle + (s1.bank_angle - s0.bank_angle) * t;
 
         SplineSample {
             point,
@@ -366,6 +404,7 @@ impl TrackSpline {
             right_curb: if t < 0.5 { s0.right_curb } else { s1.right_curb },
             surface: s0.surface,
             elevation,
+            bank_angle,
             left_wall: if t < 0.5 { s0.left_wall } else { s1.left_wall },
             right_wall: if t < 0.5 { s0.right_wall } else { s1.right_wall },
         }
@@ -389,6 +428,7 @@ impl TrackSpline {
                 is_on_curb: false,
                 base_surface: SurfaceType::Asphalt,
                 elevation: 0.0,
+                bank_angle: 0.0,
             };
         }
 
@@ -436,6 +476,7 @@ impl TrackSpline {
         let left_curb = if best_t < 0.5 { s0.left_curb } else { s1.left_curb };
         let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
         let elevation = (s0.elevation + (s1.elevation - s0.elevation) * best_t).max(0.0);
+        let bank_angle = s0.bank_angle + (s1.bank_angle - s0.bank_angle) * best_t;
 
         let half_w = track_width * 0.5;
         let is_on_track = lateral_offset.abs() <= half_w;
@@ -470,6 +511,7 @@ impl TrackSpline {
             is_on_curb,
             base_surface: s0.surface,
             elevation,
+            bank_angle,
         }
     }
 
@@ -549,6 +591,7 @@ impl TrackSpline {
         let left_curb = if best_t < 0.5 { s0.left_curb } else { s1.left_curb };
         let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
         let elevation = (s0.elevation + (s1.elevation - s0.elevation) * best_t).max(0.0);
+        let bank_angle = s0.bank_angle + (s1.bank_angle - s0.bank_angle) * best_t;
 
         let half_w = track_width * 0.5;
         let is_on_track = lateral_offset.abs() <= half_w;
@@ -582,7 +625,18 @@ impl TrackSpline {
             is_on_curb,
             base_surface: s0.surface,
             elevation,
+            bank_angle,
         }
+    }
+
+    /// Returns the exact road surface elevation in meters at a 2D world coordinate,
+    /// accounting for centerline elevation and cross-slope banking (superelevation).
+    pub fn sample_cross_slope_elevation(&self, pos: Vec2) -> f32 {
+        let proj = self.project_point(pos);
+        let theta = proj.bank_angle.to_radians();
+        // lateral_offset: + = right of center, - = left of center
+        // When bank_angle > 0: right side is higher (+), left side is lower (-)
+        proj.elevation + proj.lateral_offset * theta.sin()
     }
 }
 

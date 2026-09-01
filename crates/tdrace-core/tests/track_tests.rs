@@ -445,4 +445,133 @@ fn test_overpass_bridge_preserves_guardrails() {
     );
 }
 
+#[test]
+fn test_banked_curves_spline_interpolation_and_cross_slope() {
+    use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
+
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(100.0, 0.0), 20.0).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(200.0, 50.0), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(100.0, 100.0), 20.0).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(0.0, 100.0), 20.0).with_bank_angle(0.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+
+    // Verify distance sampling interpolates bank angle smoothly
+    let s0 = spline.sample_at_distance(0.0);
+    assert!(s0.bank_angle.abs() < 1.0, "Start of straight should be flat, got {}", s0.bank_angle);
+
+    let apex_sample = spline.samples.iter().max_by(|a, b| a.bank_angle.partial_cmp(&b.bank_angle).unwrap()).unwrap();
+    assert!(
+        apex_sample.bank_angle >= 20.0,
+        "Apex sample should reach high banking, got {}",
+        apex_sample.bank_angle
+    );
+
+    // Test cross slope elevation calculation:
+    // When bank_angle > 0, right side (offset -normal) is elevated above left side (+normal)
+    let proj_apex = spline.project_point(apex_sample.point);
+    assert_eq!(proj_apex.bank_angle, apex_sample.bank_angle);
+
+    let right_edge_pos = apex_sample.point - apex_sample.normal * 10.0;
+    let left_edge_pos = apex_sample.point + apex_sample.normal * 10.0;
+
+    let z_center = spline.sample_cross_slope_elevation(apex_sample.point);
+    let z_right = spline.sample_cross_slope_elevation(right_edge_pos);
+    let z_left = spline.sample_cross_slope_elevation(left_edge_pos);
+
+    assert!(
+        z_right > z_center,
+        "Right edge ({}) must be higher than center ({}) on positive banked curve",
+        z_right,
+        z_center
+    );
+    assert!(
+        z_center > z_left,
+        "Center ({}) must be higher than left edge ({}) on positive banked curve",
+        z_center,
+        z_left
+    );
+}
+
+#[test]
+fn test_oval_speedway_and_dirty_oval_presets_have_banking() {
+    use tdrace_core::track::presets::{dirty_oval_speedway, oval_speedway};
+    use tdrace_core::track::validation::validate_track;
+
+    let asphalt_oval = oval_speedway();
+    let max_asphalt_bank = asphalt_oval.spline.samples.iter().map(|s| s.bank_angle).fold(0.0f32, f32::max);
+    assert!(
+        max_asphalt_bank >= 20.0,
+        "Asphalt Oval Speedway should have ~22 deg banking on curves, got {}",
+        max_asphalt_bank
+    );
+    let asphalt_errors = validate_track(&asphalt_oval);
+    assert!(
+        !asphalt_errors.iter().any(|e| e.severity == tdrace_core::track::ValidationSeverity::Error),
+        "Oval speedway must pass validation with 0 errors: {:?}",
+        asphalt_errors
+    );
+
+    let dirt_oval = dirty_oval_speedway();
+    let max_dirt_bank = dirt_oval.spline.samples.iter().map(|s| s.bank_angle).fold(0.0f32, f32::max);
+    assert!(
+        max_dirt_bank >= 16.0,
+        "Dirt Oval Speedway should have ~18 deg banking on curves, got {}",
+        max_dirt_bank
+    );
+    let dirt_errors = validate_track(&dirt_oval);
+    assert!(
+        !dirt_errors.iter().any(|e| e.severity == tdrace_core::track::ValidationSeverity::Error),
+        "Dirty oval speedway must pass validation with 0 errors: {:?}",
+        dirt_errors
+    );
+}
+
+#[test]
+fn test_banking_incline_physics_and_centripetal_downhill_force() {
+    use tdrace_core::physics::car::{Car, CarControls};
+    use tdrace_core::physics::config::CarConfig;
+    use tdrace_core::physics::surface::SurfaceType;
+
+    let mut flat_car = Car::new(CarConfig::sports_car());
+    flat_car.state.road_bank_angle = 0.0;
+    flat_car.state.track_right = Vec2::new(0.0, 1.0);
+
+    let mut banked_car = Car::new(CarConfig::sports_car());
+    banked_car.state.road_bank_angle = 20.0; // 20 degrees banking
+    banked_car.state.track_right = Vec2::new(0.0, 1.0); // Track right is +Y
+
+    let ctrl = CarControls::default();
+    let surfaces = [SurfaceType::Asphalt; 4];
+
+    // Step physics without control input
+    flat_car.step_per_wheel(&ctrl, surfaces, 0.016);
+    banked_car.step_per_wheel(&ctrl, surfaces, 0.016);
+
+    // On flat ground, stopped car has zero lateral downhill acceleration
+    assert_eq!(flat_car.state.velocity, Vec2::ZERO);
+
+    // On 20 deg bank, downhill slope pulls towards left (-track_right, i.e. -Y direction)
+    assert!(
+        banked_car.state.velocity.y < 0.0,
+        "Car on banked curve should accelerate downhill (-Y), got velocity: {:?}",
+        banked_car.state.velocity
+    );
+}
+
+#[test]
+fn test_sync_dirty_oval_json() {
+    use tdrace_core::track::presets::dirty_oval_speedway;
+    use tdrace_core::track::Track;
+    let track = dirty_oval_speedway();
+    let temp_file = std::env::temp_dir().join(format!("test_dirty_oval_{}.json", std::process::id()));
+    track.save_to_file(&temp_file).expect("Failed to save dirty_oval_speedway.json");
+    let loaded = Track::load_from_file(&temp_file).expect("Failed to load dirty_oval_speedway.json");
+    assert_eq!(loaded.name, track.name);
+    let _ = std::fs::remove_file(temp_file);
+}
+
 

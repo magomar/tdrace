@@ -156,6 +156,12 @@ pub struct CarState {
     /// Road surface elevation underneath the vehicle in meters (z >= 0.0).
     #[serde(default)]
     pub road_elevation: f32,
+    /// Road cross-slope banking angle in degrees (default: 0.0; + = right side elevated / banked left, - = left side elevated / banked right).
+    #[serde(default)]
+    pub road_bank_angle: f32,
+    /// Track transverse right vector in world space for resolving banking incline gravity.
+    #[serde(default)]
+    pub track_right: Vec2,
     /// Elevation / vertical jump altitude above road in meters (z >= 0.0).
     pub elevation: f32,
     /// Vertical velocity in m/s (positive = ascending, negative = falling).
@@ -193,6 +199,8 @@ impl Default for CarState {
             esc_active: false,
             abs_active: false,
             road_elevation: 0.0,
+            road_bank_angle: 0.0,
+            track_right: Vec2::ZERO,
             elevation: 0.0,
             vertical_velocity: 0.0,
             is_airborne: false,
@@ -434,24 +442,47 @@ impl Car {
             Vec2::new(-lr, half_w),  // RR
         ];
 
-        // 3. Dynamic Weight Transfer Calculation
+        // 3. Dynamic Weight Transfer Calculation & Superelevation (Banking)
         let g = 9.81;
         let total_weight = self.config.mass * g;
-        let static_front_load = total_weight * (lr / wheelbase);
-        let static_rear_load = total_weight * (lf / wheelbase);
 
         let a_long = self.state.acceleration_local.x;
         let a_lat = self.state.acceleration_local.y;
+
+        // Banking cross-slope angle & dynamic centripetal compression
+        let bank_deg = self.state.road_bank_angle;
+        let bank_rad = bank_deg.to_radians();
+        let (bank_sin, bank_cos) = if bank_deg.abs() > 1e-4 {
+            (bank_rad.sin(), bank_rad.cos())
+        } else {
+            (0.0, 1.0)
+        };
+
+        // Centripetal acceleration pressing the car into the banked turn
+        let bank_compression = if bank_deg.abs() > 1e-4 {
+            self.config.mass * a_lat.abs() * bank_sin.abs()
+        } else {
+            0.0
+        };
+
+        let static_front_load = total_weight * (lr / wheelbase) * bank_cos + bank_compression * (lr / wheelbase);
+        let static_rear_load = total_weight * (lf / wheelbase) * bank_cos + bank_compression * (lf / wheelbase);
 
         // Acceleration squat (a_long > 0): front unloads, rear loads
         let delta_fz_long = (self.config.mass * a_long * (self.config.cg_height / wheelbase))
             * self.config.weight_transfer_longitudinal;
 
-        // Cornering roll (a_lat > 0, turning right): right wheels unload (-), left wheels load (+)
-        let delta_fz_lat_f = (self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) * (lr / wheelbase))
+        // Cornering roll & gravity cross-slope roll moment
+        let cross_slope_roll = if bank_deg.abs() > 1e-4 {
+            self.config.mass * g * bank_sin * (self.config.cg_height / self.config.track_width)
+        } else {
+            0.0
+        };
+
+        let delta_fz_lat_f = ((self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) + cross_slope_roll) * (lr / wheelbase))
             * self.config.weight_transfer_lateral;
 
-        let delta_fz_lat_r = (self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) * (lf / wheelbase))
+        let delta_fz_lat_r = ((self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) + cross_slope_roll) * (lf / wheelbase))
             * self.config.weight_transfer_lateral;
 
         let min_load_f = static_front_load * 0.05 * 0.5;
@@ -717,8 +748,22 @@ impl Car {
 
         let yaw_damping_torque = base_yaw_damping + esc_torque;
 
+        // Transverse gravity downhill slope force from banking
+        let bank_gravity_world = if bank_deg.abs() > 1e-4 {
+            let track_r = if self.state.track_right.length_squared() > 0.5 {
+                self.state.track_right.normalize()
+            } else {
+                right
+            };
+            // Downhill force along cross-slope: when bank_deg > 0 (right side elevated),
+            // slope pulls downhill towards the left (-track_r)
+            -self.config.mass * g * bank_sin * track_r
+        } else {
+            Vec2::ZERO
+        };
+
         // 6. Net world forces & accelerations
-        let net_force_world = total_wheel_force_world + drag_world;
+        let net_force_world = total_wheel_force_world + drag_world + bank_gravity_world;
         let net_torque = total_wheel_torque + yaw_damping_torque;
 
         let linear_accel_world = net_force_world / self.config.mass;
@@ -736,11 +781,12 @@ impl Car {
         self.state.velocity += linear_accel_world * dt;
         self.state.angular_velocity += angular_accel * dt;
 
-        // Low speed resting lock to prevent micro-jitter when stopped
+        // Low speed resting lock to prevent micro-jitter when stopped on flat ground or when holding brakes
+        let on_steep_bank = bank_deg.abs() > 1.0;
+        let is_holding_brakes = clamped_ctrl.brake > 0.05 || clamped_ctrl.handbrake;
         if self.state.speed < 0.05
             && clamped_ctrl.throttle < 1e-3
-            && clamped_ctrl.brake < 1e-3
-            && !clamped_ctrl.handbrake
+            && (is_holding_brakes || !on_steep_bank)
         {
             self.state.velocity = Vec2::ZERO;
             self.state.angular_velocity = 0.0;

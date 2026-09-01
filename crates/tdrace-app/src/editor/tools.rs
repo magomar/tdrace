@@ -76,6 +76,7 @@ pub struct ToolSettings {
     pub new_waypoint_right_curb: bool,
     pub new_waypoint_left_wall: bool,
     pub new_waypoint_right_wall: bool,
+    pub new_waypoint_bank_angle: f32,
 
     // Dragging / selection interaction state
     pub is_dragging: bool,
@@ -123,6 +124,7 @@ impl Default for ToolSettings {
             new_waypoint_right_curb: false,
             new_waypoint_left_wall: true,
             new_waypoint_right_wall: true,
+            new_waypoint_bank_angle: 0.0,
             is_dragging: false,
             is_box_selecting: false,
             is_rotating_ramp: false,
@@ -658,6 +660,41 @@ impl ToolSettings {
         true
     }
 
+    /// Sets the launch boost / speed of selected jump ramp(s) in m/s.
+    pub fn set_selected_jump_ramp_launch_speed(&mut self, state: &mut EditorState, speed: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        let clamped_speed = speed.clamp(1.0, 30.0);
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.launch_speed = clamped_speed;
+            }
+        }
+        state.revalidate();
+        true
+    }
+
+    /// Adjusts the launch boost / speed of selected jump ramp(s) by a delta in m/s.
+    pub fn adjust_selected_jump_ramp_launch_speed(&mut self, state: &mut EditorState, delta: f32) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.launch_speed = (ramp.launch_speed + delta).clamp(1.0, 30.0);
+            }
+        }
+        state.revalidate();
+        true
+    }
+
     /// Automatically adjusts pitch angle on selected jump ramp(s) to eliminate the flat tabletop portion.
     pub fn remove_selected_jump_ramp_flat_portion(&mut self, state: &mut EditorState) -> bool {
         let indices = state.selection.selected_jump_ramp_indices();
@@ -902,6 +939,81 @@ impl ToolSettings {
         }
         false
     }
+
+    /// Batch adjusts banking angle for all selected waypoints.
+    pub fn batch_adjust_banking(&mut self, state: &mut EditorState, delta: f32) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    let bank = state.track.spline.waypoints[idx].bank_angle;
+                    state.track.spline.waypoints[idx].bank_angle = (bank + delta).clamp(-45.0, 45.0);
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Batch sets banking angle for all selected waypoints.
+    pub fn batch_set_banking(&mut self, state: &mut EditorState, bank_angle: f32) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints[idx].bank_angle = bank_angle.clamp(-45.0, 45.0);
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Batch inverts banking angle (+/-) for all selected waypoints.
+    pub fn batch_invert_banking(&mut self, state: &mut EditorState) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints[idx].bank_angle = -state.track.spline.waypoints[idx].bank_angle;
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Cycles banking preset (0° -> 10° -> 18° -> 22° -> 0°) for all selected waypoints.
+    pub fn cycle_selected_banking(&mut self, state: &mut EditorState) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    let curr = state.track.spline.waypoints[idx].bank_angle;
+                    let next = if curr.abs() < 1.0 {
+                        10.0
+                    } else if (curr - 10.0).abs() < 2.0 {
+                        18.0
+                    } else if (curr - 18.0).abs() < 2.0 {
+                        22.0
+                    } else {
+                        0.0
+                    };
+                    state.track.spline.waypoints[idx].bank_angle = next;
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
 }
 
 impl ToolSettings {
@@ -1032,6 +1144,7 @@ impl ToolSettings {
                     wp.right_curb = self.new_waypoint_right_curb;
                     wp.left_wall = self.new_waypoint_left_wall;
                     wp.right_wall = self.new_waypoint_right_wall;
+                    wp.bank_angle = self.new_waypoint_bank_angle;
 
                     let insert_idx = match state.current_or_last_waypoint_idx() {
                         Some(idx) => (idx + 1).min(state.track.spline.waypoints.len()),
@@ -1339,7 +1452,7 @@ impl ToolSettings {
                     half_extents: Vec2::new(length * 0.5, 4.0),
                     angle,
                 };
-                let ramp = JumpRamp::new(ramp_id, shape, dir, 24.0, 15.0, 1.8, format!("Jump Ramp {}", ramp_id))
+                let ramp = JumpRamp::new(ramp_id, shape, dir, 4.0, 15.0, 1.8, format!("Jump Ramp {}", ramp_id))
                     .with_surface(self.active_surface);
                 state.track.geometry.jump_ramps.push(ramp);
                 state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
@@ -2108,6 +2221,24 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
             }
         }
 
+        // Draw banking cross-slope indicator arrow
+        if wp.bank_angle.abs() > 0.5 {
+            let sample = state.track.spline.samples.iter().find(|s| (s.point - wp.point).length() < 2.0);
+            if let Some(s) = sample {
+                let downhill = if wp.bank_angle > 0.0 { s.normal } else { -s.normal };
+                let arrow_start = wp.point;
+                let arrow_end = wp.point + downhill * 3.5;
+                draw_line(arrow_start.x, arrow_start.y, arrow_end.x, arrow_end.y, 0.45, Palette::NEON_GOLD);
+
+                // Arrowhead barb lines
+                let perp = Vec2::new(-downhill.y, downhill.x);
+                let left_barb = arrow_end - downhill * 1.0 + perp * 0.7;
+                let right_barb = arrow_end - downhill * 1.0 - perp * 0.7;
+                draw_line(arrow_end.x, arrow_end.y, left_barb.x, left_barb.y, 0.4, Palette::NEON_GOLD);
+                draw_line(arrow_end.x, arrow_end.y, right_barb.x, right_barb.y, 0.4, Palette::NEON_GOLD);
+            }
+        }
+
         // Draw line connecting to next waypoint node
         if i + 1 < n_wp || state.track.spline.closed {
             let next_i = (i + 1) % n_wp;
@@ -2832,13 +2963,21 @@ mod tests {
         assert_eq!(state.track.geometry.jump_ramps[ramp_idx].length(), 21.0);
         assert_eq!(state.track.geometry.jump_ramps[ramp_idx].width(), 15.0);
 
-        // 4. Adjust Pitch & Height
+        // 4. Adjust Pitch, Height & Launch Speed
         assert!(tools.adjust_selected_jump_ramp_pitch(&mut state, 5.0));
         assert_eq!(state.track.geometry.jump_ramps[ramp_idx].ramp_angle_deg, 20.0);
         assert!(tools.adjust_selected_jump_ramp_height(&mut state, 0.5));
         assert!((state.track.geometry.jump_ramps[ramp_idx].height - 2.3).abs() < 1e-4);
+        assert!(tools.set_selected_jump_ramp_launch_speed(&mut state, 4.2));
+        assert!((state.track.geometry.jump_ramps[ramp_idx].launch_speed - 4.2).abs() < 1e-4);
+        assert!(tools.adjust_selected_jump_ramp_launch_speed(&mut state, 0.5));
+        assert!((state.track.geometry.jump_ramps[ramp_idx].launch_speed - 4.7).abs() < 1e-4);
 
         // 5. Undo restores previous states
+        assert!(state.undo());
+        assert!((state.track.geometry.jump_ramps[ramp_idx].launch_speed - 4.2).abs() < 1e-4);
+        assert!(state.undo());
+        assert!((state.track.geometry.jump_ramps[ramp_idx].launch_speed - 24.0).abs() < 1e-4);
         assert!(state.undo());
         assert!((state.track.geometry.jump_ramps[ramp_idx].height - 1.8).abs() < 1e-4);
     }
