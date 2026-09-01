@@ -21,6 +21,21 @@ pub fn format_lap_time(time_sec: f32) -> String {
     format!("{:02}:{:02}.{:02}", minutes, seconds, millis)
 }
 
+/// Active Personal Best lap achievement notification payload for HUD display.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PersonalBestNotification {
+    /// The lap number completed that established this personal best.
+    pub completed_lap: u32,
+    /// The lap time in seconds.
+    pub lap_time: f32,
+    /// Time delta improvement compared to previous personal best (positive = seconds faster). None if initial track record.
+    pub delta: Option<f32>,
+    /// Remaining display time in seconds.
+    pub timer: f32,
+    /// Total duration of the notification in seconds.
+    pub duration: f32,
+}
+
 /// Renders the complete modern arcade racing HUD with responsive scaling and vector typography.
 #[allow(clippy::too_many_arguments)]
 pub fn render_hud(
@@ -36,6 +51,7 @@ pub fn render_hud(
     is_time_attack: bool,
     countdown_timer: Option<f32>,
     gamepad_connected: bool,
+    pb_notification: Option<&PersonalBestNotification>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -62,6 +78,17 @@ pub fn render_hud(
         scaler.safe_pad_y,
         player_progress,
     );
+
+    // 2b. Personal Best Notification Toast (Under Lap Timer)
+    if let Some(pb) = pb_notification {
+        render_personal_best_toast(
+            fonts,
+            &scaler,
+            sw * 0.5,
+            scaler.safe_pad_y + scaler.s(90.0),
+            pb,
+        );
+    }
 
     // 3. Mini-Map Radar (Top Right)
     let map_w = scaler.s(175.0);
@@ -550,4 +577,105 @@ fn render_countdown(fonts: &Fonts, scaler: &UiScaler, sw: f32, sh: f32, time_rem
         Color::new(0.0, 0.0, 0.0, 0.7),
         scaler.s(4.0),
     );
+}
+
+/// Draws the celebratory Personal Best lap achievement notification banner.
+fn render_personal_best_toast(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    center_x: f32,
+    y: f32,
+    notif: &PersonalBestNotification,
+) {
+    if notif.timer <= 0.0 || notif.duration <= 0.0 {
+        return;
+    }
+
+    // Smooth entry slide & fade in/out
+    let elapsed = notif.duration - notif.timer;
+    let fade_in = (elapsed / 0.25).clamp(0.0, 1.0);
+    let fade_out = (notif.timer / 0.40).clamp(0.0, 1.0);
+    let alpha = fade_in.min(fade_out);
+
+    let enter_offset = (1.0 - fade_in) * scaler.s(-16.0);
+    let card_w = scaler.s(360.0);
+    let card_h = scaler.s(58.0);
+    let x = center_x - card_w * 0.5;
+    let toast_y = y + enter_offset;
+
+    // Outer glow & card background
+    let bg_color = Color::new(0.05, 0.07, 0.12, 0.94 * alpha);
+    let border_color = Color::new(1.0, 0.82, 0.15, 0.95 * alpha);
+    scaler.draw_glass_card(x, toast_y, card_w, card_h, bg_color, border_color, 2.0);
+
+    // Header badge: "★ NEW PERSONAL BEST ★"
+    let title_color = Color::new(1.0, 0.84, 0.20, alpha);
+    fonts.draw_display_centered_with_shadow(
+        "★ NEW PERSONAL BEST ★",
+        center_x,
+        toast_y + scaler.s(22.0),
+        scaler.font_s(16.0),
+        title_color,
+        Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
+        scaler.s(1.5),
+    );
+
+    // Details line: Lap number + Lap time + Delta
+    let time_str = format_lap_time(notif.lap_time);
+    let lap_str = format!("LAP {}: {}", notif.completed_lap, time_str);
+
+    if let Some(delta) = notif.delta {
+        let delta_str = format!("(-{:.2}s)", delta);
+        let combined = format!("{}  {}", lap_str, delta_str);
+
+        let text_dim = fonts.measure_display(&combined, scaler.font_s(20.0));
+        let lap_dim = fonts.measure_display(&format!("{}  ", lap_str), scaler.font_s(20.0));
+        let start_x = center_x - text_dim.width * 0.5;
+
+        fonts.draw_display_with_shadow(
+            &lap_str,
+            start_x,
+            toast_y + scaler.s(48.0),
+            scaler.font_s(20.0),
+            Color::new(1.0, 1.0, 1.0, alpha),
+            Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
+            scaler.s(1.5),
+        );
+
+        fonts.draw_display_with_shadow(
+            &delta_str,
+            start_x + lap_dim.width,
+            toast_y + scaler.s(48.0),
+            scaler.font_s(20.0),
+            Color::new(0.20, 1.0, 0.50, alpha), // Neon Green
+            Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
+            scaler.s(1.5),
+        );
+    } else {
+        let rec_str = "(NEW RECORD)";
+        let combined = format!("{}  {}", lap_str, rec_str);
+        let text_dim = fonts.measure_display(&combined, scaler.font_s(20.0));
+        let lap_dim = fonts.measure_display(&format!("{}  ", lap_str), scaler.font_s(20.0));
+        let start_x = center_x - text_dim.width * 0.5;
+
+        fonts.draw_display_with_shadow(
+            &lap_str,
+            start_x,
+            toast_y + scaler.s(48.0),
+            scaler.font_s(20.0),
+            Color::new(1.0, 1.0, 1.0, alpha),
+            Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
+            scaler.s(1.5),
+        );
+
+        fonts.draw_display_with_shadow(
+            rec_str,
+            start_x + lap_dim.width,
+            toast_y + scaler.s(48.0),
+            scaler.font_s(20.0),
+            Color::new(0.30, 0.90, 1.0, alpha), // Neon Cyan
+            Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
+            scaler.s(1.5),
+        );
+    }
 }

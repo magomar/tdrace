@@ -371,4 +371,86 @@ fn test_race_session_camera_zoom_in_and_out() {
     assert_eq!(session.camera.current_level_idx, 0);
 }
 
+#[test]
+fn test_personal_best_notification_lifecycle() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    let track_id = session.track_choice_id().to_string();
+
+    // Ensure clean baseline for track
+    session.active_profile_stats.best_times.clear();
+    session.pb_notification = None;
+
+    // 1. Lap 1: Initial record establishes first personal best
+    session.trackers[0].last_lap_time = Some(24.5);
+    session.trackers[0].current_lap = 2;
+    session.physics_step(1.0 / 60.0);
+
+    let pb1 = session.pb_notification.as_ref().expect("Expected PB notification on initial lap");
+    assert_eq!(pb1.completed_lap, 1);
+    assert_eq!(pb1.lap_time, 24.5);
+    assert_eq!(pb1.delta, None);
+    assert!(pb1.timer > 3.4);
+    assert_eq!(session.active_profile_stats.best_times.get(&track_id), Some(&24.5));
+    assert!(session.fx.drift_popups.active_popups().iter().any(|p| p.text.contains("PERSONAL BEST! 00:24.50")));
+
+    // 2. Lap 2: Slower lap does NOT trigger a new PB notification
+    let timer_before = session.pb_notification.as_ref().unwrap().timer;
+    session.trackers[0].last_lap_time = Some(25.2);
+    session.trackers[0].current_lap = 3;
+    session.physics_step(1.0 / 60.0);
+
+    let pb_after_slower = session.pb_notification.as_ref().expect("PB notification should persist until expired");
+    assert_eq!(pb_after_slower.completed_lap, 1); // Remains lap 1
+    assert_eq!(pb_after_slower.lap_time, 24.5);
+    assert!(pb_after_slower.timer < timer_before); // Timer ticked down
+    assert_eq!(session.active_profile_stats.best_times.get(&track_id), Some(&24.5));
+
+    // 3. Lap 3: Faster lap (23.8s) triggers new PB notification with delta (-0.70s)
+    session.trackers[0].last_lap_time = Some(23.8);
+    session.trackers[0].current_lap = 4;
+    session.physics_step(1.0 / 60.0);
+
+    let pb3 = session.pb_notification.as_ref().expect("Expected PB notification on faster lap");
+    assert_eq!(pb3.completed_lap, 3);
+    assert_eq!(pb3.lap_time, 23.8);
+    let delta = pb3.delta.expect("Expected positive improvement delta");
+    assert!((delta - 0.70).abs() < 1e-4);
+    assert_eq!(session.active_profile_stats.best_times.get(&track_id), Some(&23.8));
+    assert!(session.fx.drift_popups.active_popups().iter().any(|p| p.text.contains("(-0.70s)")));
+
+    // 4. Notification timer expiration
+    session.physics_step(3.6);
+    assert!(session.pb_notification.is_none(), "Notification must expire after duration");
+}
+
+#[test]
+fn test_personal_best_notification_struct_and_delta() {
+    use tdrace_app::ui::hud::PersonalBestNotification;
+
+    let notif_with_delta = PersonalBestNotification {
+        completed_lap: 2,
+        lap_time: 21.35,
+        delta: Some(0.45),
+        timer: 3.5,
+        duration: 3.5,
+    };
+
+    assert_eq!(notif_with_delta.completed_lap, 2);
+    assert_eq!(notif_with_delta.lap_time, 21.35);
+    assert_eq!(notif_with_delta.delta, Some(0.45));
+    assert_eq!(notif_with_delta.timer, 3.5);
+
+    let notif_initial = PersonalBestNotification {
+        completed_lap: 1,
+        lap_time: 22.00,
+        delta: None,
+        timer: 3.5,
+        duration: 3.5,
+    };
+
+    assert_eq!(notif_initial.completed_lap, 1);
+    assert_eq!(notif_initial.delta, None);
+}
+
 

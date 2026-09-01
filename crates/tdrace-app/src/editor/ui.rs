@@ -581,6 +581,25 @@ fn render_inspector(
                     tools.new_waypoint_right_curb = !rc;
                     state.rebuild_geometry();
                 }
+                curr_y += scaler.s(26.0);
+
+                // Walls toggles
+                let lw = state.track.spline.waypoints[idx].left_wall;
+                let rw = state.track.spline.waypoints[idx].right_wall;
+                let lw_lbl = if lw { "[X] L Wall" } else { "[ ] L Wall" };
+                let rw_lbl = if rw { "[X] R Wall" } else { "[ ] R Wall" };
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), lw_lbl, if lw { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if lw { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].left_wall = !lw;
+                    tools.new_waypoint_left_wall = !lw;
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0) + half_btn_w + scaler.s(6.0), curr_y, half_btn_w, scaler.s(22.0), rw_lbl, if rw { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if rw { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].right_wall = !rw;
+                    tools.new_waypoint_right_wall = !rw;
+                    state.rebuild_geometry();
+                }
                 curr_y += scaler.s(28.0);
 
                 // Surface selector
@@ -681,6 +700,23 @@ fn render_inspector(
             }
             if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "No Curbs", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
                 tools.batch_set_curbs(state, false, false);
+            }
+            curr_y += scaler.s(30.0);
+
+            fonts.draw_ui_bold("BATCH WALLS:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+            curr_y += scaler.s(18.0);
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "Both Walls", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                tools.batch_set_walls(state, true, true);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "No Walls", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_walls(state, false, false);
+            }
+            curr_y += scaler.s(28.0);
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "L Wall Only", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_walls(state, true, false);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "R Wall Only", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_walls(state, false, true);
             }
             curr_y += scaler.s(30.0);
 
@@ -1494,6 +1530,65 @@ fn render_template_modal(
     }
 
     None
+}
+
+/// Helper to draw an interactive slider bar with a compact input field box next to it.
+/// Returns (Some(new_pct) if dragged, true if the input box was clicked to edit).
+fn draw_slider_with_input_field(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    total_w: f32,
+    h: f32,
+    pct: f32,
+    val_str: &str,
+    is_gold: bool,
+    mouse_pos: Vec2,
+    clicked: bool,
+) -> (Option<f32>, bool) {
+    let input_w = scaler.s(60.0);
+    let gap = scaler.s(6.0);
+    let slider_w = (total_w - input_w - gap).max(20.0);
+    let input_x = x + slider_w + gap;
+
+    // 1. Draggable slider on left
+    let accent_col = if is_gold { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+    let thumb_col = if is_gold { Palette::NEON_CYAN } else { Palette::NEON_GOLD };
+
+    scaler.draw_glass_card(x, y, slider_w, h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.0);
+    let bar_pct = pct.clamp(0.0, 1.0);
+    let inner_w = (slider_w - scaler.s(4.0)).max(1.0);
+    let inner_h = (h - scaler.s(4.0)).max(1.0);
+    macroquad::shapes::draw_rectangle(x + scaler.s(2.0), y + scaler.s(2.0), inner_w * bar_pct, inner_h, accent_col);
+    let thumb_x = x + scaler.s(2.0) + inner_w * bar_pct;
+    macroquad::shapes::draw_circle(thumb_x, y + h * 0.5, scaler.s(5.5), thumb_col);
+
+    let mouse_over_slider = mouse_pos.x >= x - scaler.s(4.0) && mouse_pos.x <= x + slider_w + scaler.s(4.0) && mouse_pos.y >= y - scaler.s(4.0) && mouse_pos.y <= y + h + scaler.s(4.0);
+    let is_down = is_mouse_button_down(MouseButton::Left);
+    let new_pct = if is_down && mouse_over_slider {
+        let p = ((mouse_pos.x - (x + scaler.s(2.0))) / inner_w).clamp(0.0, 1.0);
+        Some(p)
+    } else {
+        None
+    };
+
+    // 2. Input field on right
+    let mouse_over_input = mouse_pos.x >= input_x && mouse_pos.x <= input_x + input_w && mouse_pos.y >= y && mouse_pos.y <= y + h;
+    let input_bg = if mouse_over_input { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+    let input_border = if mouse_over_input { accent_col } else { Palette::UI_CARD_BORDER };
+
+    scaler.draw_glass_card(input_x, y, input_w, h, input_bg, input_border, if mouse_over_input { 1.5 } else { 1.0 });
+    fonts.draw_ui_bold_centered(
+        val_str,
+        input_x + input_w * 0.5,
+        y + h * 0.5 + scaler.s(4.0),
+        scaler.font_s(11.0),
+        if mouse_over_input { Palette::WHITE } else { Color::new(0.90, 0.94, 1.0, 1.0) },
+    );
+
+    let input_clicked = mouse_over_input && clicked;
+    (new_pct, input_clicked)
 }
 
 /// Helper to draw an interactive slider bar that can be clicked or dragged.

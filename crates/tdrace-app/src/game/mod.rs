@@ -97,7 +97,7 @@ use crate::track_manager::TrackManager;
 use crate::ui::driver_card::render_driver_cards_screen;
 use crate::ui::font::Fonts;
 use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
-use crate::ui::hud::render_hud;
+use crate::ui::hud::{format_lap_time, render_hud, PersonalBestNotification};
 use crate::ui::menu::{
     render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
     render_module_select_menu, render_pause_menu, render_results_screen, render_track_select_menu,
@@ -298,6 +298,7 @@ pub struct RaceSession {
 
     // Internal trackers
     pub prev_player_lap: u32,
+    pub pb_notification: Option<PersonalBestNotification>,
 }
 
 
@@ -499,6 +500,7 @@ impl RaceSession {
             curb_sound_cooldown: 0.0,
             offroad_sound_cooldown: 0.0,
             prev_player_lap: 1,
+            pb_notification: None,
         };
 
         session.refresh_profiles_and_stats();
@@ -1138,6 +1140,7 @@ impl RaceSession {
         self.session_time = 0.0;
         self.accumulator = 0.0;
         self.prev_player_lap = 1;
+        self.pb_notification = None;
 
         // Reset ghost active lap samples
         self.ghost_recorder.on_lap_invalidated();
@@ -3003,7 +3006,40 @@ impl RaceSession {
                 }
             }
 
+            // 7b. Check and notify Personal Best lap achievement
             if lap_changed {
+                if let Some(last_lap_time) = tracker.last_lap_time {
+                    let track_id = self.track_choice_id().to_string();
+                    let prev_best = self.active_profile_stats.best_times.get(&track_id).copied();
+                    let is_pb = prev_best.map_or(true, |best| last_lap_time < best);
+
+                    if is_pb {
+                        let delta = prev_best.map(|prev| prev - last_lap_time);
+                        self.active_profile_stats.best_times.insert(track_id, last_lap_time);
+
+                        let completed_lap = tracker.current_lap.saturating_sub(1).max(1);
+                        self.pb_notification = Some(PersonalBestNotification {
+                            completed_lap,
+                            lap_time: last_lap_time,
+                            delta,
+                            timer: 3.5,
+                            duration: 3.5,
+                        });
+
+                        if let Some(player_car) = self.cars.first() {
+                            let popup_msg = if let Some(d) = delta {
+                                format!("PERSONAL BEST! {} (-{:.2}s)", format_lap_time(last_lap_time), d)
+                            } else {
+                                format!("PERSONAL BEST! {}", format_lap_time(last_lap_time))
+                            };
+                            self.fx.drift_popups.spawn_text(
+                                player_car.state.position,
+                                &popup_msg,
+                                Palette::NEON_GOLD,
+                            );
+                        }
+                    }
+                }
                 self.prev_player_lap = tracker.current_lap;
             }
         }
@@ -3023,6 +3059,14 @@ impl RaceSession {
             &car_collision_events,
             dt,
         );
+
+        // 10. Update active Personal Best notification timer
+        if let Some(notif) = &mut self.pb_notification {
+            notif.timer -= dt;
+            if notif.timer <= 0.0 {
+                self.pb_notification = None;
+            }
+        }
     }
 
     /// Evaluates current positions and checks for checkered flag completion.
@@ -4117,6 +4161,7 @@ impl RaceSession {
                 self.is_time_attack,
                 countdown,
                 self.input.gamepad.snapshot.is_connected,
+                self.pb_notification.as_ref(),
             );
 
             // F5: Telemetry Panel

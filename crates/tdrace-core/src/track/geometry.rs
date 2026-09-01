@@ -780,6 +780,13 @@ impl JumpRamp {
         (h / len).atan().to_degrees().clamp(1.0, 60.0)
     }
 
+    /// Returns the fitted height in meters to match the incline slope for the current length and pitch angle.
+    pub fn fitted_height(&self) -> f32 {
+        let len = self.length().max(0.1);
+        let angle_rad = self.ramp_angle_deg.to_radians();
+        (len * angle_rad.tan()).clamp(0.2, 20.0)
+    }
+
     /// Adjusts the length and width of the ramp by deltas.
     pub fn adjust_size(&mut self, delta_length: f32, delta_width: f32) {
         let current_len = self.length();

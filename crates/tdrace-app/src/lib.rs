@@ -39,7 +39,7 @@ pub use profile::{draw_country_banner, CountryInfo, CountryRegistry, PlayerProfi
 pub use render::color::{CarColorScheme, Palette};
 pub use render::ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
 pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer, ReplayRecorder};
-pub use ui::hud::render_hud;
+pub use ui::hud::{render_hud, PersonalBestNotification};
 pub use ui::menu::{CarChoice, GameMode, GameModeChoice, RaceResultEntry, TrackChoice};
 pub use ui::profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use ui::starting_grid::render_starting_grid_screen;

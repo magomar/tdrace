@@ -74,6 +74,8 @@ pub struct ToolSettings {
     pub new_waypoint_width: f32,
     pub new_waypoint_left_curb: bool,
     pub new_waypoint_right_curb: bool,
+    pub new_waypoint_left_wall: bool,
+    pub new_waypoint_right_wall: bool,
 
     // Dragging / selection interaction state
     pub is_dragging: bool,
@@ -119,6 +121,8 @@ impl Default for ToolSettings {
             new_waypoint_width: 14.0,
             new_waypoint_left_curb: false,
             new_waypoint_right_curb: false,
+            new_waypoint_left_wall: true,
+            new_waypoint_right_wall: true,
             is_dragging: false,
             is_box_selecting: false,
             is_rotating_ramp: false,
@@ -261,6 +265,8 @@ impl ToolSettings {
                         self.new_waypoint_width = wp.width;
                         self.new_waypoint_left_curb = wp.left_curb;
                         self.new_waypoint_right_curb = wp.right_curb;
+                        self.new_waypoint_left_wall = wp.left_wall;
+                        self.new_waypoint_right_wall = wp.right_wall;
                     }
                     return true;
                 }
@@ -669,6 +675,23 @@ impl ToolSettings {
         true
     }
 
+    /// Automatically adjusts height on selected jump ramp(s) to match the incline pitch angle and eliminate the flat tabletop portion.
+    pub fn adjust_selected_jump_ramp_height_to_pitch(&mut self, state: &mut EditorState) -> bool {
+        let indices = state.selection.selected_jump_ramp_indices();
+        if indices.is_empty() {
+            return false;
+        }
+
+        state.record_undo();
+        for &idx in &indices {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
+                ramp.height = ramp.fitted_height();
+            }
+        }
+        state.revalidate();
+        true
+    }
+
     /// Sets the layer of the selected surface zone (or the active placement layer if none selected).
     pub fn set_selected_surface_layer(&mut self, state: &mut EditorState, layer: SurfaceLayer) -> bool {
         self.active_surface_layer = layer;
@@ -846,6 +869,23 @@ impl ToolSettings {
         false
     }
 
+    /// Batch applies left/right walls for all selected waypoints.
+    pub fn batch_set_walls(&mut self, state: &mut EditorState, left: bool, right: bool) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints[idx].left_wall = left;
+                    state.track.spline.waypoints[idx].right_wall = right;
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
     /// Batch adjusts elevation for all selected waypoints.
     pub fn batch_adjust_elevation(&mut self, state: &mut EditorState, delta: f32) -> bool {
         let indices = state.selection.selected_waypoint_indices();
@@ -921,6 +961,8 @@ impl ToolSettings {
                             self.new_waypoint_width = wp.width;
                             self.new_waypoint_left_curb = wp.left_curb;
                             self.new_waypoint_right_curb = wp.right_curb;
+                            self.new_waypoint_left_wall = wp.left_wall;
+                            self.new_waypoint_right_wall = wp.right_wall;
                         }
                     } else if let Selection::SurfaceZone(idx) = sel {
                         if let Some(zone) = state.track.geometry.surface_zones.get(idx) {
@@ -963,6 +1005,8 @@ impl ToolSettings {
                         self.new_waypoint_width = wp.width;
                         self.new_waypoint_left_curb = wp.left_curb;
                         self.new_waypoint_right_curb = wp.right_curb;
+                        self.new_waypoint_left_wall = wp.left_wall;
+                        self.new_waypoint_right_wall = wp.right_wall;
                     }
                     self.is_box_selecting = false;
                     self.is_dragging = true;
@@ -986,6 +1030,8 @@ impl ToolSettings {
                     wp.surface = Some(inherited_surface);
                     wp.left_curb = self.new_waypoint_left_curb;
                     wp.right_curb = self.new_waypoint_right_curb;
+                    wp.left_wall = self.new_waypoint_left_wall;
+                    wp.right_wall = self.new_waypoint_right_wall;
 
                     let insert_idx = match state.current_or_last_waypoint_idx() {
                         Some(idx) => (idx + 1).min(state.track.spline.waypoints.len()),
@@ -2795,6 +2841,33 @@ mod tests {
         // 5. Undo restores previous states
         assert!(state.undo());
         assert!((state.track.geometry.jump_ramps[ramp_idx].height - 1.8).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_batch_set_walls_and_waypoint_wall_toggles() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+
+        // Select first 3 waypoints
+        state.selection = Selection::MultipleWaypoints(vec![0, 1, 2]);
+
+        // Batch remove both walls
+        assert!(tools.batch_set_walls(&mut state, false, false));
+        assert!(!state.track.spline.waypoints[0].left_wall);
+        assert!(!state.track.spline.waypoints[0].right_wall);
+        assert!(!state.track.spline.waypoints[1].left_wall);
+        assert!(!state.track.spline.waypoints[1].right_wall);
+
+        // Undo restores walls
+        assert!(state.undo());
+        assert!(state.track.spline.waypoints[0].left_wall);
+        assert!(state.track.spline.waypoints[0].right_wall);
+
+        // Batch set left wall only
+        assert!(tools.batch_set_walls(&mut state, true, false));
+        assert!(state.track.spline.waypoints[0].left_wall);
+        assert!(!state.track.spline.waypoints[0].right_wall);
     }
 }
 

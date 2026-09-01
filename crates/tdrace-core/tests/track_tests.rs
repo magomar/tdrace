@@ -322,3 +322,127 @@ fn test_polygon_obstacle_creation_ray_and_sat_collision() {
     assert!((poly_obs.center() - Vec2::new(50.0, 50.0)).length() < 1e-4);
 }
 
+#[test]
+fn test_at_grade_crossing_wall_culling() {
+    use tdrace_core::track::geometry::BarrierType;
+    use tdrace_core::track::presets::generate_walls_from_spline;
+    use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+
+    // Build a figure-8 / level crossing track with crossing at (0.0, 0.0)
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(-80.0, -80.0), 12.0),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0), // Crossing point 1 (heading North-East)
+        TrackWaypoint::new(Vec2::new(80.0, 80.0), 12.0),
+        TrackWaypoint::new(Vec2::new(100.0, 0.0), 12.0),
+        TrackWaypoint::new(Vec2::new(80.0, -80.0), 12.0),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0), // Crossing point 2 (heading North-West)
+        TrackWaypoint::new(Vec2::new(-80.0, 80.0), 12.0),
+        TrackWaypoint::new(Vec2::new(-100.0, 0.0), 12.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, _, _) = generate_walls_from_spline(&spline, 3.0, BarrierType::Concrete);
+
+    // Verify no wall barriers cross through the drivable intersection center within 6m
+    for wall in left_walls.iter().chain(right_walls.iter()) {
+        let mid = (wall.segment.start + wall.segment.end) * 0.5;
+        let start_len = wall.segment.start.length();
+        let end_len = wall.segment.end.length();
+        let mid_len = mid.length();
+        assert!(
+            start_len > 5.5 || end_len > 5.5 || mid_len > 5.5,
+            "Wall segment ({:?} -> {:?}) intrudes into the crossing intersection center!",
+            wall.segment.start,
+            wall.segment.end
+        );
+    }
+
+    // Place a car directly at (0.0, 0.0) heading in both crossing directions and verify no collision
+    let mut car_ne = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), std::f32::consts::FRAC_PI_4);
+    let hits_ne = resolve_all_wall_collisions(&mut car_ne, &left_walls, &[]);
+    let hits_ne_r = resolve_all_wall_collisions(&mut car_ne, &right_walls, &[]);
+    assert!(hits_ne.is_empty(), "Car heading NE should not collide with any trimmed wall at the intersection");
+    assert!(hits_ne_r.is_empty(), "Car heading NE should not collide with any trimmed wall at the intersection");
+
+    let mut car_nw = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 3.0 * std::f32::consts::FRAC_PI_4);
+    let hits_nw = resolve_all_wall_collisions(&mut car_nw, &left_walls, &[]);
+    let hits_nw_r = resolve_all_wall_collisions(&mut car_nw, &right_walls, &[]);
+    assert!(hits_nw.is_empty(), "Car heading NW should not collide with any trimmed wall at the intersection");
+    assert!(hits_nw_r.is_empty(), "Car heading NW should not collide with any trimmed wall at the intersection");
+}
+
+#[test]
+fn test_waypoint_manual_wall_flags_and_backwards_compatibility() {
+    use tdrace_core::track::geometry::BarrierType;
+    use tdrace_core::track::presets::generate_walls_from_spline;
+    use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
+
+    // 1. Backwards compatibility: Deserializing JSON without left_wall / right_wall defaults to true
+    let legacy_json = r#"{
+        "point": [10.0, 20.0],
+        "width": 14.0,
+        "left_curb": true,
+        "right_curb": false,
+        "surface": null,
+        "elevation": 0.0
+    }"#;
+    let deserialized: TrackWaypoint = serde_json::from_str(legacy_json).expect("Must deserialize legacy JSON");
+    assert!(deserialized.left_wall, "left_wall must default to true");
+    assert!(deserialized.right_wall, "right_wall must default to true");
+
+    // 2. Manual wall flags: create a loop where one side has left_wall = false
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0).with_walls(false, true),
+        TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0).with_walls(false, true),
+        TrackWaypoint::new(Vec2::new(100.0, 100.0), 10.0).with_walls(true, true),
+        TrackWaypoint::new(Vec2::new(0.0, 100.0), 10.0).with_walls(true, true),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, _, _) = generate_walls_from_spline(&spline, 3.0, BarrierType::Concrete);
+
+    // Left side for segment 0->1 was disabled; left_walls should have fewer segments than right_walls
+    assert!(
+        left_walls.len() < right_walls.len(),
+        "Left wall count ({}) should be strictly less than right wall count ({}) when left_wall is disabled on a segment",
+        left_walls.len(),
+        right_walls.len()
+    );
+}
+
+#[test]
+fn test_overpass_bridge_preserves_guardrails() {
+    use tdrace_core::track::geometry::BarrierType;
+    use tdrace_core::track::presets::generate_walls_from_spline;
+    use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
+
+    // Build an overpass crossover: crossing at (0, 0) with elevation 4.5m on branch 1 and 0.0m on branch 2
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(-80.0, 0.0), 12.0).with_elevation(4.5),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0).with_elevation(4.5), // Elevated bridge overpass
+        TrackWaypoint::new(Vec2::new(80.0, 0.0), 12.0).with_elevation(4.5),
+        TrackWaypoint::new(Vec2::new(80.0, 80.0), 12.0).with_elevation(2.0),
+        TrackWaypoint::new(Vec2::new(0.0, 80.0), 12.0).with_elevation(0.0),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0).with_elevation(0.0), // Ground level underpass
+        TrackWaypoint::new(Vec2::new(0.0, -80.0), 12.0).with_elevation(0.0),
+        TrackWaypoint::new(Vec2::new(-80.0, -80.0), 12.0).with_elevation(2.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, _, _) = generate_walls_from_spline(&spline, 3.0, BarrierType::Concrete);
+
+    // The bridge (elev 4.5m) should preserve its guardrails above (0.0, 0.0)
+    let bridge_guardrails: Vec<_> = left_walls
+        .iter()
+        .chain(right_walls.iter())
+        .filter(|w| w.elevation > 3.0 && (w.segment.start.x.abs() < 20.0 || w.segment.end.x.abs() < 20.0))
+        .collect();
+
+    assert!(
+        !bridge_guardrails.is_empty(),
+        "Bridge guardrails at elevation 4.5m must be preserved across overpass crossing"
+    );
+}
+
+

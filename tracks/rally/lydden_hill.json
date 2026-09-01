@@ -13,7 +13,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -24,7 +26,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -35,7 +39,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -46,7 +52,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -57,7 +65,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -68,7 +78,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -79,7 +91,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -90,7 +104,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -101,7 +117,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -112,7 +130,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -123,7 +143,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -134,7 +156,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -145,7 +169,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -156,7 +182,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -167,7 +195,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       }
     ],
     "closed": true,
@@ -190,7 +220,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -210,7 +242,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -230,7 +264,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -250,7 +286,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -270,7 +308,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -290,7 +330,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -310,7 +352,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -330,7 +374,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -350,7 +396,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -370,7 +418,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -390,7 +440,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -410,7 +462,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -430,7 +484,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -450,7 +506,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -470,7 +528,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -490,7 +550,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -510,7 +572,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -530,7 +594,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -550,7 +616,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -570,7 +638,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -590,7 +660,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -610,7 +682,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -630,7 +704,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -650,7 +726,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -670,7 +748,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -690,7 +770,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -710,7 +792,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -730,7 +814,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -750,7 +836,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -770,7 +858,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -790,7 +880,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -810,7 +902,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -830,7 +924,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -850,7 +946,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -870,7 +968,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -890,7 +990,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -910,7 +1012,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -930,7 +1034,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -950,7 +1056,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -970,7 +1078,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -990,7 +1100,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1010,7 +1122,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1030,7 +1144,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1050,7 +1166,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1070,7 +1188,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1090,7 +1210,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1110,7 +1232,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1130,7 +1254,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1150,7 +1276,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1170,7 +1298,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1190,7 +1320,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1210,7 +1342,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1230,7 +1364,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1250,7 +1386,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1270,7 +1408,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1290,7 +1430,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1310,7 +1452,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1330,7 +1474,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1350,7 +1496,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1370,7 +1518,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1390,7 +1540,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1410,7 +1562,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1430,7 +1584,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1450,7 +1606,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1470,7 +1628,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1490,7 +1650,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1510,7 +1672,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1530,7 +1694,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1550,7 +1716,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1570,7 +1738,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1590,7 +1760,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1610,7 +1782,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1630,7 +1804,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1650,7 +1826,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1670,7 +1848,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1690,7 +1870,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1710,7 +1892,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1730,7 +1914,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1750,7 +1936,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1770,7 +1958,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1790,7 +1980,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1810,7 +2002,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1830,7 +2024,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1850,7 +2046,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1870,7 +2068,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1890,7 +2090,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1910,7 +2112,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1930,7 +2134,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1950,7 +2156,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1970,7 +2178,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -1990,7 +2200,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2010,7 +2222,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2030,7 +2244,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2050,7 +2266,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2070,7 +2288,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2090,7 +2310,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2110,7 +2332,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2130,7 +2354,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2150,7 +2376,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2170,7 +2398,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2190,7 +2420,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2210,7 +2442,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2230,7 +2464,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2250,7 +2486,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2270,7 +2508,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2290,7 +2530,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2310,7 +2552,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2330,7 +2574,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2350,7 +2596,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2370,7 +2618,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2390,7 +2640,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2410,7 +2662,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2430,7 +2684,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2450,7 +2706,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2470,7 +2728,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2490,7 +2750,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2510,7 +2772,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2530,7 +2794,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2550,7 +2816,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2570,7 +2838,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2590,7 +2860,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2610,7 +2882,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2630,7 +2904,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2650,7 +2926,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2670,7 +2948,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2690,7 +2970,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2710,7 +2992,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2730,7 +3014,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2750,7 +3036,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2770,7 +3058,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2790,7 +3080,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2810,7 +3102,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2830,7 +3124,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2850,7 +3146,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2870,7 +3168,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2890,7 +3190,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2910,7 +3212,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2930,7 +3234,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2950,7 +3256,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2970,7 +3278,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -2990,7 +3300,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3010,7 +3322,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3030,7 +3344,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3050,7 +3366,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3070,7 +3388,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3090,7 +3410,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3110,7 +3432,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3130,7 +3454,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3150,7 +3476,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3170,7 +3498,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3190,7 +3520,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3210,7 +3542,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3230,7 +3564,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3250,7 +3586,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3270,7 +3608,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3290,7 +3630,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3310,7 +3652,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3330,7 +3674,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3350,7 +3696,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3370,7 +3718,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3390,7 +3740,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3410,7 +3762,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3430,7 +3784,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3450,7 +3806,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3470,7 +3828,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3490,7 +3850,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3510,7 +3872,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3530,7 +3894,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3550,7 +3916,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3570,7 +3938,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3590,7 +3960,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3610,7 +3982,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3630,7 +4004,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3650,7 +4026,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3670,7 +4048,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3690,7 +4070,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3710,7 +4092,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3730,7 +4114,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3750,7 +4136,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3770,7 +4158,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3790,7 +4180,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3810,7 +4202,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3830,7 +4224,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3850,7 +4246,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3870,7 +4268,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3890,7 +4290,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3910,7 +4312,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3930,7 +4334,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3950,7 +4356,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3970,7 +4378,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -3990,7 +4400,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4010,7 +4422,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4030,7 +4444,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4050,7 +4466,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4070,7 +4488,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4090,7 +4510,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4110,7 +4532,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4130,7 +4554,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4150,7 +4576,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4170,7 +4598,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4190,7 +4620,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4210,7 +4642,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4230,7 +4664,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4250,7 +4686,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4270,7 +4708,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4290,7 +4730,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4310,7 +4752,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4330,7 +4774,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4350,7 +4796,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4370,7 +4818,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4390,7 +4840,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4410,7 +4862,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4430,7 +4884,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4450,7 +4906,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4470,7 +4928,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4490,7 +4950,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4510,7 +4972,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4530,7 +4994,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4550,7 +5016,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4570,7 +5038,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4590,7 +5060,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4610,7 +5082,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4630,7 +5104,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4650,7 +5126,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4670,7 +5148,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4690,7 +5170,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4710,7 +5192,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4730,7 +5214,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4750,7 +5236,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4770,7 +5258,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4790,7 +5280,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4810,7 +5302,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4830,7 +5324,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4850,7 +5346,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4870,7 +5368,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4890,7 +5390,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4910,7 +5412,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4930,7 +5434,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4950,7 +5456,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4970,7 +5478,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -4990,7 +5500,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5010,7 +5522,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5030,7 +5544,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5050,7 +5566,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5070,7 +5588,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5090,7 +5610,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5110,7 +5632,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5130,7 +5654,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5150,7 +5676,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5170,7 +5698,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5190,7 +5720,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5210,7 +5742,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5230,7 +5764,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5250,7 +5786,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5270,7 +5808,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5290,7 +5830,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5310,7 +5852,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5330,7 +5874,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5350,7 +5896,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5370,7 +5918,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5390,7 +5940,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5410,7 +5962,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5430,7 +5984,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5450,7 +6006,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Dirt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5470,7 +6028,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5490,7 +6050,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5510,7 +6072,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5530,7 +6094,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5550,7 +6116,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5570,7 +6138,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5590,7 +6160,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5610,7 +6182,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5630,7 +6204,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5650,7 +6226,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5670,7 +6248,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5690,7 +6270,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5710,7 +6292,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5730,7 +6314,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5750,7 +6336,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5770,7 +6358,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5790,7 +6380,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5810,7 +6402,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5830,7 +6424,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5850,7 +6446,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5870,7 +6468,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5890,7 +6490,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5910,7 +6512,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5930,7 +6534,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5950,7 +6556,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5970,7 +6578,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -5990,7 +6600,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6010,7 +6622,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6030,7 +6644,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6050,7 +6666,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6070,7 +6688,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6090,7 +6710,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6110,7 +6732,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6130,7 +6754,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6150,7 +6776,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6170,7 +6798,9 @@
         "left_curb": false,
         "right_curb": true,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6190,7 +6820,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6210,7 +6842,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6230,7 +6864,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6250,7 +6886,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6270,7 +6908,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6290,7 +6930,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6310,7 +6952,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6330,7 +6974,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6350,7 +6996,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6370,7 +7018,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6390,7 +7040,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6410,7 +7062,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6430,7 +7084,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6450,7 +7106,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6470,7 +7128,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6490,7 +7150,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6510,7 +7172,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6530,7 +7194,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6550,7 +7216,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6570,7 +7238,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6590,7 +7260,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6610,7 +7282,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6630,7 +7304,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6650,7 +7326,9 @@
         "left_curb": true,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6670,7 +7348,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6690,7 +7370,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6710,7 +7392,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6730,7 +7414,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6750,7 +7436,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6770,7 +7458,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6790,7 +7480,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6810,7 +7502,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6830,7 +7524,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6850,7 +7546,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6870,7 +7568,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6890,7 +7590,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6910,7 +7612,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6930,7 +7634,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6950,7 +7656,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6970,7 +7678,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -6990,7 +7700,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7010,7 +7722,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7030,7 +7744,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7050,7 +7766,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7070,7 +7788,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7090,7 +7810,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7110,7 +7832,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7130,7 +7854,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7150,7 +7876,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7170,7 +7898,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7190,7 +7920,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7210,7 +7942,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7230,7 +7964,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7250,7 +7986,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7270,7 +8008,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7290,7 +8030,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7310,7 +8052,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7330,7 +8074,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7350,7 +8096,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7370,7 +8118,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       },
       {
         "point": [
@@ -7390,7 +8140,9 @@
         "left_curb": false,
         "right_curb": false,
         "surface": "Asphalt",
-        "elevation": 0.0
+        "elevation": 0.0,
+        "left_wall": true,
+        "right_wall": true
       }
     ],
     "total_length": 780.27783

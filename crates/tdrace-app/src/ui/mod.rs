@@ -12,7 +12,7 @@ pub mod track_preview;
 pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
 pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, PlayerCongrats};
-pub use hud::{format_lap_time, render_hud};
+pub use hud::{format_lap_time, render_hud, PersonalBestNotification};
 pub use menu::{
     pause_menu_layout, render_controls_screen, render_pause_menu, render_results_screen,
     render_track_select_menu, CarChoice, GameMode, GameModeChoice, PauseMenuButtonLayout,

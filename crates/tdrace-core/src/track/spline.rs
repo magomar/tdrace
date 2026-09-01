@@ -3,6 +3,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::physics::surface::SurfaceType;
 
+const fn default_true() -> bool {
+    true
+}
+
 /// Waypoint defining a node along the track centerline with cross-section attributes.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TrackWaypoint {
@@ -19,6 +23,12 @@ pub struct TrackWaypoint {
     /// Elevation / vertical altitude above ground in meters (default: 0.0).
     #[serde(default)]
     pub elevation: f32,
+    /// Whether a perimeter barrier wall is installed on the left side of the track.
+    #[serde(default = "default_true")]
+    pub left_wall: bool,
+    /// Whether a perimeter barrier wall is installed on the right side of the track.
+    #[serde(default = "default_true")]
+    pub right_wall: bool,
 }
 
 impl TrackWaypoint {
@@ -30,12 +40,20 @@ impl TrackWaypoint {
             right_curb: false,
             surface: None,
             elevation: 0.0,
+            left_wall: true,
+            right_wall: true,
         }
     }
 
     pub const fn with_curbs(mut self, left: bool, right: bool) -> Self {
         self.left_curb = left;
         self.right_curb = right;
+        self
+    }
+
+    pub const fn with_walls(mut self, left: bool, right: bool) -> Self {
+        self.left_wall = left;
+        self.right_wall = right;
         self
     }
 
@@ -63,6 +81,10 @@ pub struct SplineSample {
     pub surface: SurfaceType,
     #[serde(default)]
     pub elevation: f32,
+    #[serde(default = "default_true")]
+    pub left_wall: bool,
+    #[serde(default = "default_true")]
+    pub right_wall: bool,
 }
 
 /// Result of projecting a 2D world coordinate onto the track spline.
@@ -127,6 +149,8 @@ impl TrackSpline {
         let mut raw_right_curbs = Vec::new();
         let mut raw_surfaces = Vec::new();
         let mut raw_elevations = Vec::new();
+        let mut raw_left_walls = Vec::new();
+        let mut raw_right_walls = Vec::new();
 
         for i in 0..segments {
             let p0 = if closed {
@@ -173,6 +197,8 @@ impl TrackSpline {
                 let w = wp1.width + (wp2.width - wp1.width) * t;
                 let lc = if t < 0.5 { wp1.left_curb } else { wp2.left_curb };
                 let rc = if t < 0.5 { wp1.right_curb } else { wp2.right_curb };
+                let lw = if t < 0.5 { wp1.left_wall } else { wp2.left_wall };
+                let rw = if t < 0.5 { wp1.right_wall } else { wp2.right_wall };
                 let surf = wp1.surface.unwrap_or(SurfaceType::Asphalt);
 
                 raw_points.push(pt);
@@ -181,6 +207,8 @@ impl TrackSpline {
                 raw_right_curbs.push(rc);
                 raw_surfaces.push(surf);
                 raw_elevations.push(elev);
+                raw_left_walls.push(lw);
+                raw_right_walls.push(rw);
             }
         }
 
@@ -192,6 +220,8 @@ impl TrackSpline {
             raw_right_curbs.push(raw_right_curbs[0]);
             raw_surfaces.push(raw_surfaces[0]);
             raw_elevations.push(raw_elevations[0]);
+            raw_left_walls.push(raw_left_walls[0]);
+            raw_right_walls.push(raw_right_walls[0]);
         } else {
             let last = waypoints.last().unwrap();
             raw_points.push(last.point);
@@ -200,6 +230,8 @@ impl TrackSpline {
             raw_right_curbs.push(last.right_curb);
             raw_surfaces.push(last.surface.unwrap_or(SurfaceType::Asphalt));
             raw_elevations.push(last.elevation);
+            raw_left_walls.push(last.left_wall);
+            raw_right_walls.push(last.right_wall);
         }
 
         // 2. Compute cumulative arc-length distances and orientations
@@ -236,6 +268,8 @@ impl TrackSpline {
                 right_curb: raw_right_curbs[i],
                 surface: raw_surfaces[i],
                 elevation: raw_elevations[i],
+                left_wall: raw_left_walls[i],
+                right_wall: raw_right_walls[i],
             });
         }
 
@@ -275,6 +309,8 @@ impl TrackSpline {
                 right_curb: false,
                 surface: SurfaceType::Asphalt,
                 elevation: 0.0,
+                left_wall: true,
+                right_wall: true,
             };
         }
 
@@ -330,6 +366,8 @@ impl TrackSpline {
             right_curb: if t < 0.5 { s0.right_curb } else { s1.right_curb },
             surface: s0.surface,
             elevation,
+            left_wall: if t < 0.5 { s0.left_wall } else { s1.left_wall },
+            right_wall: if t < 0.5 { s0.right_wall } else { s1.right_wall },
         }
     }
 

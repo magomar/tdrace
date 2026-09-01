@@ -79,6 +79,281 @@ pub fn untangle_polyline(pts: &mut Vec<Vec2>, closed: bool) {
     }
 }
 
+/// Trims or removes wall barrier segments that intersect or fall inside non-local drivable road corridors at the same elevation.
+pub fn trim_walls_at_crossings(walls: &mut Vec<(WallBarrier, f32)>, spline: &TrackSpline) -> Vec<WallBarrier> {
+    if walls.is_empty() || spline.samples.len() < 2 {
+        return walls.drain(..).map(|(w, _)| w).collect();
+    }
+
+    let total_len = spline.total_length();
+    let min_loop_dist = (total_len * 0.25).min(30.0).max(15.0);
+    let n_samples = spline.samples.len();
+    let n_segs = if spline.closed { n_samples } else { n_samples - 1 };
+
+    let mut result_walls = Vec::with_capacity(walls.len());
+
+    for (wall, wall_dist) in walls.drain(..) {
+        let mut segments_to_process = vec![wall.segment];
+
+        for j in 0..n_segs {
+            let next_j = (j + 1) % n_samples;
+            let s0 = &spline.samples[j];
+            let s1 = &spline.samples[next_j];
+
+            let seg_elev = (s0.elevation + s1.elevation) * 0.5;
+            let elev_diff = (wall.elevation - seg_elev).abs();
+            if elev_diff >= 2.5 {
+                continue; // Overpass bridge or underpass
+            }
+
+            let seg_dist = s0.distance;
+            let arc_dist = if spline.closed {
+                let d = (wall_dist - seg_dist).abs();
+                d.min(total_len - d)
+            } else {
+                (wall_dist - seg_dist).abs()
+            };
+
+            if arc_dist < min_loop_dist {
+                continue; // Local segment - skip
+            }
+
+            let center_seg = LineSegment::new(s0.point, s1.point);
+            let center_len_sq = center_seg.length_squared();
+            if center_len_sq < 1e-4 {
+                continue;
+            }
+
+            let curb0 = if s0.left_curb || s0.right_curb { 1.35 } else { 0.0 };
+            let curb1 = if s1.left_curb || s1.right_curb { 1.35 } else { 0.0 };
+            let hw0 = s0.width * 0.5 + curb0 + 0.15;
+            let hw1 = s1.width * 0.5 + curb1 + 0.15;
+            let max_hw = hw0.max(hw1);
+
+            let seg_center = (s0.point + s1.point) * 0.5;
+            let seg_radius = center_len_sq.sqrt() * 0.5 + max_hw;
+
+            let left_edge = LineSegment::new(s0.point + s0.normal * hw0, s1.point + s1.normal * hw1);
+            let right_edge = LineSegment::new(s0.point - s0.normal * hw0, s1.point - s1.normal * hw1);
+
+            let mut next_processed = Vec::new();
+
+            for seg in segments_to_process {
+                let seg_mid = (seg.start + seg.end) * 0.5;
+                let seg_radius_w = seg.length() * 0.5;
+                let dist_sq = (seg_mid - seg_center).length_squared();
+                let threshold = seg_radius + seg_radius_w;
+
+                if dist_sq > threshold * threshold {
+                    // Spatially far away - keep segment without detailed intersection tests
+                    next_processed.push(seg);
+                    continue;
+                }
+
+                // Helper to test if a point is inside road ribbon of segment j
+                let point_in_ribbon = |p: Vec2| -> bool {
+                    let ap = p - s0.point;
+                    let ab = s1.point - s0.point;
+                    let t = ap.dot(ab) / center_len_sq;
+                    if t < -0.05 || t > 1.05 {
+                        return false;
+                    }
+                    let t_clamped = t.clamp(0.0, 1.0);
+                    let proj_pt = s0.point + ab * t_clamped;
+                    let local_hw = hw0 + (hw1 - hw0) * t_clamped;
+                    (p - proj_pt).length_squared() <= (local_hw * local_hw)
+                };
+
+                let p0_inside = point_in_ribbon(seg.start);
+                let p1_inside = point_in_ribbon(seg.end);
+
+                let hit_left = seg.intersect_segment(&left_edge);
+                let hit_right = seg.intersect_segment(&right_edge);
+                let hit_center = seg.intersect_segment(&center_seg);
+
+                if p0_inside && p1_inside {
+                    continue;
+                }
+
+                if !p0_inside && !p1_inside {
+                    let mut hits = Vec::new();
+                    if let Some(h) = hit_left { hits.push(h); }
+                    if let Some(h) = hit_right { hits.push(h); }
+
+                    if hits.len() >= 2 {
+                        let dir = seg.direction();
+                        hits.sort_by(|a, b| {
+                            let da = (*a - seg.start).dot(dir);
+                            let db = (*b - seg.start).dot(dir);
+                            da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+                        });
+                        let h1 = hits[0];
+                        let h2 = hits[hits.len() - 1];
+                        if (h1 - seg.start).length() > 0.15 {
+                            next_processed.push(LineSegment::new(seg.start, h1));
+                        }
+                        if (seg.end - h2).length() > 0.15 {
+                            next_processed.push(LineSegment::new(h2, seg.end));
+                        }
+                    } else if hit_center.is_some() && !hits.is_empty() {
+                        let h = hits[0];
+                        let mid = (seg.start + seg.end) * 0.5;
+                        if point_in_ribbon(mid) {
+                            if (h - seg.start).length() > 0.15 {
+                                next_processed.push(LineSegment::new(seg.start, h));
+                            }
+                        } else {
+                            next_processed.push(seg);
+                        }
+                    } else if hit_center.is_some() && point_in_ribbon(seg_mid) {
+                        continue;
+                    } else {
+                        next_processed.push(seg);
+                    }
+                } else if !p0_inside && p1_inside {
+                    let hit = hit_left.or(hit_right).unwrap_or_else(|| {
+                        let mut low = 0.0f32;
+                        let mut high = 1.0f32;
+                        for _ in 0..8 {
+                            let mid_t = (low + high) * 0.5;
+                            let pt = seg.start.lerp(seg.end, mid_t);
+                            if point_in_ribbon(pt) { high = mid_t; } else { low = mid_t; }
+                        }
+                        seg.start.lerp(seg.end, low)
+                    });
+                    if (hit - seg.start).length() > 0.15 {
+                        next_processed.push(LineSegment::new(seg.start, hit));
+                    }
+                } else {
+                    let hit = hit_left.or(hit_right).unwrap_or_else(|| {
+                        let mut low = 0.0f32;
+                        let mut high = 1.0f32;
+                        for _ in 0..8 {
+                            let mid_t = (low + high) * 0.5;
+                            let pt = seg.start.lerp(seg.end, mid_t);
+                            if point_in_ribbon(pt) { low = mid_t; } else { high = mid_t; }
+                        }
+                        seg.start.lerp(seg.end, high)
+                    });
+                    if (seg.end - hit).length() > 0.15 {
+                        next_processed.push(LineSegment::new(hit, seg.end));
+                    }
+                }
+            }
+            segments_to_process = next_processed;
+        }
+
+        for seg in segments_to_process {
+            if seg.length() > 0.10 {
+                result_walls.push(WallBarrier {
+                    segment: seg,
+                    restitution: wall.restitution,
+                    friction: wall.friction,
+                    barrier_type: wall.barrier_type,
+                    elevation: wall.elevation,
+                });
+            }
+        }
+    }
+
+    result_walls
+}
+
+/// Trims clashing non-local wall corners where approaching walls intersect each other at crossroads.
+pub fn trim_corner_intersections(
+    left_walls: &mut Vec<WallBarrier>,
+    right_walls: &mut Vec<WallBarrier>,
+    spline: &TrackSpline,
+) {
+    let total_len = spline.total_length();
+    let min_loop_dist = (total_len * 0.25).min(30.0).max(15.0);
+
+    for _ in 0..4 {
+        let mut modified = false;
+        let n_left = left_walls.len();
+        let n_right = right_walls.len();
+        let total_w = n_left + n_right;
+
+        'outer_pair: for i in 0..total_w {
+            for j in (i + 1)..total_w {
+                let (seg_a, elev_a) = if i < n_left {
+                    (left_walls[i].segment, left_walls[i].elevation)
+                } else {
+                    (right_walls[i - n_left].segment, right_walls[i - n_left].elevation)
+                };
+
+                let (seg_b, elev_b) = if j < n_left {
+                    (left_walls[j].segment, left_walls[j].elevation)
+                } else {
+                    (right_walls[j - n_left].segment, right_walls[j - n_left].elevation)
+                };
+
+                if (elev_a - elev_b).abs() >= 2.5 {
+                    continue;
+                }
+                // Skip connected segments sharing endpoints
+                if (seg_a.start - seg_b.start).length_squared() < 0.01
+                    || (seg_a.start - seg_b.end).length_squared() < 0.01
+                    || (seg_a.end - seg_b.start).length_squared() < 0.01
+                    || (seg_a.end - seg_b.end).length_squared() < 0.01
+                {
+                    continue;
+                }
+
+                if let Some(hit) = seg_a.intersect_segment(&seg_b) {
+                    let mid_a = (seg_a.start + seg_a.end) * 0.5;
+                    let mid_b = (seg_b.start + seg_b.end) * 0.5;
+                    let proj_a = spline.project_point(mid_a);
+                    let proj_b = spline.project_point(mid_b);
+                    let d = (proj_a.progress_distance - proj_b.progress_distance).abs();
+                    let arc_dist = if spline.closed { d.min(total_len - d) } else { d };
+                    if arc_dist < min_loop_dist {
+                        continue;
+                    }
+
+                    // Trim both segments at `hit`
+                    let d0_a = (seg_a.start - proj_b.closest_point).length_squared();
+                    let d1_a = (seg_a.end - proj_b.closest_point).length_squared();
+                    let new_seg_a = if d0_a >= d1_a {
+                        LineSegment::new(seg_a.start, hit)
+                    } else {
+                        LineSegment::new(hit, seg_a.end)
+                    };
+
+                    let d0_b = (seg_b.start - proj_a.closest_point).length_squared();
+                    let d1_b = (seg_b.end - proj_a.closest_point).length_squared();
+                    let new_seg_b = if d0_b >= d1_b {
+                        LineSegment::new(seg_b.start, hit)
+                    } else {
+                        LineSegment::new(hit, seg_b.end)
+                    };
+
+                    if i < n_left {
+                        left_walls[i].segment = new_seg_a;
+                    } else {
+                        right_walls[i - n_left].segment = new_seg_a;
+                    }
+
+                    if j < n_left {
+                        left_walls[j].segment = new_seg_b;
+                    } else {
+                        right_walls[j - n_left].segment = new_seg_b;
+                    }
+
+                    modified = true;
+                    break 'outer_pair;
+                }
+            }
+        }
+        if !modified {
+            break;
+        }
+    }
+
+    left_walls.retain(|w| w.segment.length() > 0.10);
+    right_walls.retain(|w| w.segment.length() > 0.10);
+}
+
 /// Builds boundary wall barriers along the track edges given a spline and barrier offset.
 pub fn generate_walls_from_spline(
     spline: &TrackSpline,
@@ -94,7 +369,6 @@ pub fn generate_walls_from_spline(
     let mut right_pts = Vec::with_capacity(n);
 
     for s in &spline.samples {
-        // Taper barrier offset down to touch the track/curbs on elevated bridge sections
         let elev_factor = (s.elevation / 3.0).clamp(0.0, 1.0);
         let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.75 };
         let bridge_offset = curb_extra + 0.50;
@@ -108,27 +382,45 @@ pub fn generate_walls_from_spline(
     untangle_polyline(&mut left_pts, spline.closed);
     untangle_polyline(&mut right_pts, spline.closed);
 
-    let mut left_walls = Vec::new();
-    let mut right_walls = Vec::new();
+    let mut raw_left_walls = Vec::new();
+    let mut raw_right_walls = Vec::new();
 
     let seg_count_left = if spline.closed { left_pts.len() } else { left_pts.len().saturating_sub(1) };
     for i in 0..seg_count_left {
         let next_i = (i + 1) % left_pts.len();
-        let elev = (spline.samples[i % n].elevation + spline.samples[next_i % n].elevation) * 0.5;
-        left_walls.push(WallBarrier::with_elevation(left_pts[i], left_pts[next_i], barrier_type, elev));
+        let s_curr = &spline.samples[i % n];
+        let s_next = &spline.samples[next_i % n];
+        if s_curr.left_wall && s_next.left_wall {
+            let elev = (s_curr.elevation + s_next.elevation) * 0.5;
+            raw_left_walls.push((
+                WallBarrier::with_elevation(left_pts[i], left_pts[next_i], barrier_type, elev),
+                s_curr.distance,
+            ));
+        }
     }
 
     let seg_count_right = if spline.closed { right_pts.len() } else { right_pts.len().saturating_sub(1) };
     for i in 0..seg_count_right {
         let next_i = (i + 1) % right_pts.len();
-        let elev = (spline.samples[i % n].elevation + spline.samples[next_i % n].elevation) * 0.5;
-        right_walls.push(WallBarrier::with_elevation(
-            right_pts[i],
-            right_pts[next_i],
-            barrier_type,
-            elev,
-        ));
+        let s_curr = &spline.samples[i % n];
+        let s_next = &spline.samples[next_i % n];
+        if s_curr.right_wall && s_next.right_wall {
+            let elev = (s_curr.elevation + s_next.elevation) * 0.5;
+            raw_right_walls.push((
+                WallBarrier::with_elevation(
+                    right_pts[i],
+                    right_pts[next_i],
+                    barrier_type,
+                    elev,
+                ),
+                s_curr.distance,
+            ));
+        }
     }
+
+    let mut left_walls = trim_walls_at_crossings(&mut raw_left_walls, spline);
+    let mut right_walls = trim_walls_at_crossings(&mut raw_right_walls, spline);
+    trim_corner_intersections(&mut left_walls, &mut right_walls, spline);
 
     (left_walls, right_walls, left_pts, right_pts)
 }
@@ -781,18 +1073,8 @@ pub fn dirt_figure_eight() -> Track {
     ];
 
     let spline = TrackSpline::new(waypoints, true);
-    let (mut left_walls, mut right_walls, left_poly, right_poly) =
+    let (left_walls, right_walls, left_poly, right_poly) =
         generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
-
-    // Keep the at-grade crossing open and drivable by removing wall segments inside the intersection zone
-    left_walls.retain(|w| {
-        let mid = (w.segment.start + w.segment.end) * 0.5;
-        mid.length() > 22.0
-    });
-    right_walls.retain(|w| {
-        let mid = (w.segment.start + w.segment.end) * 0.5;
-        mid.length() > 22.0
-    });
 
     let jump_ramps = vec![
         JumpRamp::new(
