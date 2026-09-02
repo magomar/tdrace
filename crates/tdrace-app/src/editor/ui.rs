@@ -1461,7 +1461,7 @@ fn render_inspector(
             let cp_pos = state.track.checkpoints.iter().position(|c| c.id == id);
             if let Some(pos) = cp_pos {
                 let is_finish = state.track.checkpoints[pos].is_finish_line;
-                let finish_lbl = if is_finish { "[X] Finish Line" } else { "[ ] Normal Sector" };
+                let finish_lbl = checkpoint_finish_line_label(is_finish);
                 if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), finish_lbl, Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                     state.record_undo();
                     state.track.checkpoints[pos].is_finish_line = !is_finish;
@@ -3432,6 +3432,17 @@ fn draw_ui_btn(
     is_hover && clicked
 }
 
+/// Returns the toggle button label for a checkpoint gate's finish line flag.
+/// Consistently displays "Finish Line" regardless of whether the checkpoint is
+/// currently designated as the finish line or a normal sector gate.
+pub fn checkpoint_finish_line_label(is_finish: bool) -> &'static str {
+    if is_finish {
+        "[X] Finish Line"
+    } else {
+        "[ ] Finish Line"
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3548,5 +3559,11 @@ mod tests {
 
         let act_exit = EditorAction::ExitToMenu;
         assert_eq!(act_exit, EditorAction::ExitToMenu);
+    }
+
+    #[test]
+    fn test_checkpoint_finish_line_label_consistency() {
+        assert_eq!(checkpoint_finish_line_label(true), "[X] Finish Line");
+        assert_eq!(checkpoint_finish_line_label(false), "[ ] Finish Line");
     }
 }
