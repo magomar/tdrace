@@ -574,4 +574,120 @@ fn test_sync_dirty_oval_json() {
     let _ = std::fs::remove_file(temp_file);
 }
 
+#[test]
+fn test_waypoint_custom_wall_distances_and_zero_distance_flush_walls() {
+    use tdrace_core::track::presets::generate_walls_from_spline;
+    use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
+    use tdrace_core::track::BarrierType;
+
+    // Create a straight corridor with 0.0m wall distance (flush with road edge)
+    let road_w = 12.0;
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), road_w).with_wall_distance(0.0),
+        TrackWaypoint::new(Vec2::new(100.0, 0.0), road_w).with_wall_distance(0.0),
+        TrackWaypoint::new(Vec2::new(200.0, 0.0), road_w).with_wall_distance(0.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, false);
+    assert_eq!(spline.samples[0].left_wall_distance, Some(0.0));
+    assert_eq!(spline.samples[0].right_wall_distance, Some(0.0));
+
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 4.0, BarrierType::Concrete);
+
+    assert!(!left_walls.is_empty());
+    assert!(!right_walls.is_empty());
+
+    // Left wall points should be at y = +6.0 (half_width = 12.0 / 2.0 = 6.0)
+    for p in &left_poly {
+        assert!(
+            (p.y - 6.0).abs() < 0.1,
+            "Flush left wall should sit at y = 6.0, got y = {}",
+            p.y
+        );
+    }
+
+    // Right wall points should be at y = -6.0
+    for p in &right_poly {
+        assert!(
+            (p.y - (-6.0)).abs() < 0.1,
+            "Flush right wall should sit at y = -6.0, got y = {}",
+            p.y
+        );
+    }
+}
+
+#[test]
+fn test_track_spline_wall_distance_interpolation() {
+    use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
+
+    // Transition from 4.0m distance to 0.0m distance
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0).with_wall_distances(Some(4.0), Some(2.0)),
+        TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0).with_wall_distances(Some(0.0), Some(0.0)),
+        TrackWaypoint::new(Vec2::new(200.0, 0.0), 10.0).with_wall_distances(Some(0.0), Some(0.0)),
+    ];
+
+    let spline = TrackSpline::new(waypoints, false);
+
+    // Midpoint sample of segment 0 should have interpolated left distance ~ 2.0m, right ~ 1.0m
+    let mid_sample = &spline.samples[12]; // 24 steps per segment -> step 12 is halfway
+    let left_d = mid_sample.left_wall_distance.expect("Should be Some");
+    let right_d = mid_sample.right_wall_distance.expect("Should be Some");
+
+    assert!(
+        (left_d - 2.0).abs() < 0.2,
+        "Interpolated left wall distance should be ~2.0, got {}",
+        left_d
+    );
+    assert!(
+        (right_d - 1.0).abs() < 0.2,
+        "Interpolated right wall distance should be ~1.0, got {}",
+        right_d
+    );
+}
+
+#[test]
+fn test_waypoint_wall_distance_json_backwards_compatibility() {
+    use tdrace_core::track::spline::TrackWaypoint;
+
+    // JSON without wall distance fields
+    let legacy_json = r#"{
+        "point": [10.0, 20.0],
+        "width": 14.0,
+        "left_curb": false,
+        "right_curb": false,
+        "surface": null,
+        "elevation": 0.0,
+        "bank_angle": 0.0,
+        "left_wall": true,
+        "right_wall": true
+    }"#;
+
+    let deserialized: TrackWaypoint =
+        serde_json::from_str(legacy_json).expect("Must deserialize legacy waypoint JSON");
+    assert_eq!(deserialized.left_wall_distance, None);
+    assert_eq!(deserialized.right_wall_distance, None);
+
+    // JSON with custom wall distance fields
+    let new_json = r#"{
+        "point": [10.0, 20.0],
+        "width": 14.0,
+        "left_curb": false,
+        "right_curb": false,
+        "surface": null,
+        "elevation": 0.0,
+        "bank_angle": 0.0,
+        "left_wall": true,
+        "right_wall": true,
+        "left_wall_distance": 0.0,
+        "right_wall_distance": 1.5
+    }"#;
+
+    let deserialized_new: TrackWaypoint =
+        serde_json::from_str(new_json).expect("Must deserialize new waypoint JSON");
+    assert_eq!(deserialized_new.left_wall_distance, Some(0.0));
+    assert_eq!(deserialized_new.right_wall_distance, Some(1.5));
+}
+
 

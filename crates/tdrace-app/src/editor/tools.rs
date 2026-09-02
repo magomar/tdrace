@@ -76,6 +76,8 @@ pub struct ToolSettings {
     pub new_waypoint_right_curb: bool,
     pub new_waypoint_left_wall: bool,
     pub new_waypoint_right_wall: bool,
+    pub new_waypoint_left_wall_distance: Option<f32>,
+    pub new_waypoint_right_wall_distance: Option<f32>,
     pub new_waypoint_bank_angle: f32,
 
     // Dragging / selection interaction state
@@ -124,6 +126,8 @@ impl Default for ToolSettings {
             new_waypoint_right_curb: false,
             new_waypoint_left_wall: true,
             new_waypoint_right_wall: true,
+            new_waypoint_left_wall_distance: None,
+            new_waypoint_right_wall_distance: None,
             new_waypoint_bank_angle: 0.0,
             is_dragging: false,
             is_box_selecting: false,
@@ -269,6 +273,9 @@ impl ToolSettings {
                         self.new_waypoint_right_curb = wp.right_curb;
                         self.new_waypoint_left_wall = wp.left_wall;
                         self.new_waypoint_right_wall = wp.right_wall;
+                        self.new_waypoint_left_wall_distance = wp.left_wall_distance;
+                        self.new_waypoint_right_wall_distance = wp.right_wall_distance;
+                        self.new_waypoint_bank_angle = wp.bank_angle;
                     }
                     return true;
                 }
@@ -923,6 +930,60 @@ impl ToolSettings {
         false
     }
 
+    /// Batch applies left and right wall distances for all selected waypoints (None resets to default offset).
+    pub fn batch_set_wall_distances(
+        &mut self,
+        state: &mut EditorState,
+        left: Option<f32>,
+        right: Option<f32>,
+    ) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints[idx].left_wall_distance = left;
+                    state.track.spline.waypoints[idx].right_wall_distance = right;
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Batch adjusts wall distances by delta for all selected waypoints.
+    pub fn batch_adjust_wall_distances(&mut self, state: &mut EditorState, delta: f32) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    let current_l = state.track.spline.waypoints[idx]
+                        .left_wall_distance
+                        .unwrap_or(state.barrier_offset);
+                    let current_r = state.track.spline.waypoints[idx]
+                        .right_wall_distance
+                        .unwrap_or(state.barrier_offset);
+                    state.track.spline.waypoints[idx].left_wall_distance =
+                        Some((current_l + delta).clamp(0.0, 25.0));
+                    state.track.spline.waypoints[idx].right_wall_distance =
+                        Some((current_r + delta).clamp(0.0, 25.0));
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
+    /// Sets global default barrier offset for the circuit and rebuilds geometry.
+    pub fn set_global_barrier_offset(&mut self, state: &mut EditorState, offset: f32) {
+        state.record_undo();
+        state.barrier_offset = offset.clamp(0.0, 25.0);
+        state.rebuild_geometry();
+    }
+
     /// Batch adjusts elevation for all selected waypoints.
     pub fn batch_adjust_elevation(&mut self, state: &mut EditorState, delta: f32) -> bool {
         let indices = state.selection.selected_waypoint_indices();
@@ -1075,6 +1136,9 @@ impl ToolSettings {
                             self.new_waypoint_right_curb = wp.right_curb;
                             self.new_waypoint_left_wall = wp.left_wall;
                             self.new_waypoint_right_wall = wp.right_wall;
+                            self.new_waypoint_left_wall_distance = wp.left_wall_distance;
+                            self.new_waypoint_right_wall_distance = wp.right_wall_distance;
+                            self.new_waypoint_bank_angle = wp.bank_angle;
                         }
                     } else if let Selection::SurfaceZone(idx) = sel {
                         if let Some(zone) = state.track.geometry.surface_zones.get(idx) {
@@ -1119,6 +1183,9 @@ impl ToolSettings {
                         self.new_waypoint_right_curb = wp.right_curb;
                         self.new_waypoint_left_wall = wp.left_wall;
                         self.new_waypoint_right_wall = wp.right_wall;
+                        self.new_waypoint_left_wall_distance = wp.left_wall_distance;
+                        self.new_waypoint_right_wall_distance = wp.right_wall_distance;
+                        self.new_waypoint_bank_angle = wp.bank_angle;
                     }
                     self.is_box_selecting = false;
                     self.is_dragging = true;
@@ -1144,6 +1211,8 @@ impl ToolSettings {
                     wp.right_curb = self.new_waypoint_right_curb;
                     wp.left_wall = self.new_waypoint_left_wall;
                     wp.right_wall = self.new_waypoint_right_wall;
+                    wp.left_wall_distance = self.new_waypoint_left_wall_distance;
+                    wp.right_wall_distance = self.new_waypoint_right_wall_distance;
                     wp.bank_angle = self.new_waypoint_bank_angle;
 
                     let insert_idx = match state.current_or_last_waypoint_idx() {

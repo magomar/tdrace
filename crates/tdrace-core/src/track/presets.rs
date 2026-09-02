@@ -372,11 +372,17 @@ pub fn generate_walls_from_spline(
         let elev_factor = (s.elevation / 3.0).clamp(0.0, 1.0);
         let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.75 };
         let bridge_offset = curb_extra + 0.50;
-        let offset = barrier_offset * (1.0 - elev_factor) + bridge_offset * elev_factor;
 
-        let half_w = s.width * 0.5 + offset;
-        left_pts.push(s.point + s.normal * half_w);
-        right_pts.push(s.point - s.normal * half_w);
+        let left_base = s.left_wall_distance.unwrap_or(barrier_offset);
+        let right_base = s.right_wall_distance.unwrap_or(barrier_offset);
+
+        let left_offset = left_base * (1.0 - elev_factor) + bridge_offset * elev_factor;
+        let right_offset = right_base * (1.0 - elev_factor) + bridge_offset * elev_factor;
+
+        let left_half_w = s.width * 0.5 + left_offset;
+        let right_half_w = s.width * 0.5 + right_offset;
+        left_pts.push(s.point + s.normal * left_half_w);
+        right_pts.push(s.point - s.normal * right_half_w);
     }
 
     untangle_polyline(&mut left_pts, spline.closed);

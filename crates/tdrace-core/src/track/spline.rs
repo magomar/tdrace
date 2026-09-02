@@ -32,6 +32,12 @@ pub struct TrackWaypoint {
     /// Whether a perimeter barrier wall is installed on the right side of the track.
     #[serde(default = "default_true")]
     pub right_wall: bool,
+    /// Distance between left track edge and left barrier wall in meters (default: None, inheriting global barrier offset).
+    #[serde(default)]
+    pub left_wall_distance: Option<f32>,
+    /// Distance between right track edge and right barrier wall in meters (default: None, inheriting global barrier offset).
+    #[serde(default)]
+    pub right_wall_distance: Option<f32>,
 }
 
 impl TrackWaypoint {
@@ -46,6 +52,8 @@ impl TrackWaypoint {
             bank_angle: 0.0,
             left_wall: true,
             right_wall: true,
+            left_wall_distance: None,
+            right_wall_distance: None,
         }
     }
 
@@ -58,6 +66,18 @@ impl TrackWaypoint {
     pub const fn with_walls(mut self, left: bool, right: bool) -> Self {
         self.left_wall = left;
         self.right_wall = right;
+        self
+    }
+
+    pub const fn with_wall_distances(mut self, left: Option<f32>, right: Option<f32>) -> Self {
+        self.left_wall_distance = left;
+        self.right_wall_distance = right;
+        self
+    }
+
+    pub const fn with_wall_distance(mut self, distance: f32) -> Self {
+        self.left_wall_distance = Some(distance);
+        self.right_wall_distance = Some(distance);
         self
     }
 
@@ -96,6 +116,10 @@ pub struct SplineSample {
     pub left_wall: bool,
     #[serde(default = "default_true")]
     pub right_wall: bool,
+    #[serde(default)]
+    pub left_wall_distance: Option<f32>,
+    #[serde(default)]
+    pub right_wall_distance: Option<f32>,
 }
 
 /// Result of projecting a 2D world coordinate onto the track spline.
@@ -165,6 +189,8 @@ impl TrackSpline {
         let mut raw_bank_angles = Vec::new();
         let mut raw_left_walls = Vec::new();
         let mut raw_right_walls = Vec::new();
+        let mut raw_left_wall_dists = Vec::new();
+        let mut raw_right_wall_dists = Vec::new();
 
         for i in 0..segments {
             let p0 = if closed {
@@ -231,6 +257,18 @@ impl TrackSpline {
                 let rc = if t < 0.5 { wp1.right_curb } else { wp2.right_curb };
                 let lw = if t < 0.5 { wp1.left_wall } else { wp2.left_wall };
                 let rw = if t < 0.5 { wp1.right_wall } else { wp2.right_wall };
+                let lwd = match (wp1.left_wall_distance, wp2.left_wall_distance) {
+                    (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * t),
+                    (Some(d1), None) => if t < 0.5 { Some(d1) } else { None },
+                    (None, Some(d2)) => if t < 0.5 { None } else { Some(d2) },
+                    (None, None) => None,
+                };
+                let rwd = match (wp1.right_wall_distance, wp2.right_wall_distance) {
+                    (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * t),
+                    (Some(d1), None) => if t < 0.5 { Some(d1) } else { None },
+                    (None, Some(d2)) => if t < 0.5 { None } else { Some(d2) },
+                    (None, None) => None,
+                };
                 let surf = wp1.surface.unwrap_or(SurfaceType::Asphalt);
 
                 raw_points.push(pt);
@@ -242,6 +280,8 @@ impl TrackSpline {
                 raw_bank_angles.push(bank);
                 raw_left_walls.push(lw);
                 raw_right_walls.push(rw);
+                raw_left_wall_dists.push(lwd);
+                raw_right_wall_dists.push(rwd);
             }
         }
 
@@ -256,6 +296,8 @@ impl TrackSpline {
             raw_bank_angles.push(raw_bank_angles[0]);
             raw_left_walls.push(raw_left_walls[0]);
             raw_right_walls.push(raw_right_walls[0]);
+            raw_left_wall_dists.push(raw_left_wall_dists[0]);
+            raw_right_wall_dists.push(raw_right_wall_dists[0]);
         } else {
             let last = waypoints.last().unwrap();
             raw_points.push(last.point);
@@ -267,6 +309,8 @@ impl TrackSpline {
             raw_bank_angles.push(last.bank_angle);
             raw_left_walls.push(last.left_wall);
             raw_right_walls.push(last.right_wall);
+            raw_left_wall_dists.push(last.left_wall_distance);
+            raw_right_wall_dists.push(last.right_wall_distance);
         }
 
         // 2. Compute cumulative arc-length distances and orientations
@@ -306,6 +350,8 @@ impl TrackSpline {
                 bank_angle: raw_bank_angles[i],
                 left_wall: raw_left_walls[i],
                 right_wall: raw_right_walls[i],
+                left_wall_distance: raw_left_wall_dists[i],
+                right_wall_distance: raw_right_wall_dists[i],
             });
         }
 
@@ -348,6 +394,8 @@ impl TrackSpline {
                 bank_angle: 0.0,
                 left_wall: true,
                 right_wall: true,
+                left_wall_distance: None,
+                right_wall_distance: None,
             };
         }
 
@@ -393,6 +441,18 @@ impl TrackSpline {
         let width = s0.width + (s1.width - s0.width) * t;
         let elevation = (s0.elevation + (s1.elevation - s0.elevation) * t).max(0.0);
         let bank_angle = s0.bank_angle + (s1.bank_angle - s0.bank_angle) * t;
+        let left_wall_distance = match (s0.left_wall_distance, s1.left_wall_distance) {
+            (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * t),
+            (Some(d1), None) => if t < 0.5 { Some(d1) } else { None },
+            (None, Some(d2)) => if t < 0.5 { None } else { Some(d2) },
+            (None, None) => None,
+        };
+        let right_wall_distance = match (s0.right_wall_distance, s1.right_wall_distance) {
+            (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * t),
+            (Some(d1), None) => if t < 0.5 { Some(d1) } else { None },
+            (None, Some(d2)) => if t < 0.5 { None } else { Some(d2) },
+            (None, None) => None,
+        };
 
         SplineSample {
             point,
@@ -407,6 +467,8 @@ impl TrackSpline {
             bank_angle,
             left_wall: if t < 0.5 { s0.left_wall } else { s1.left_wall },
             right_wall: if t < 0.5 { s0.right_wall } else { s1.right_wall },
+            left_wall_distance,
+            right_wall_distance,
         }
     }
 

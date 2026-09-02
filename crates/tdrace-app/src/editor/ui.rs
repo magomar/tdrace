@@ -712,6 +712,131 @@ fn render_inspector(
                 }
                 curr_y += scaler.s(28.0);
 
+                // Wall Distance (Separation from track edge)
+                let wp_l_dist = state.track.spline.waypoints[idx].left_wall_distance;
+                let wp_r_dist = state.track.spline.waypoints[idx].right_wall_distance;
+                let effective_dist = wp_l_dist.or(wp_r_dist).unwrap_or(state.barrier_offset);
+
+                let dist_label = match (wp_l_dist, wp_r_dist) {
+                    (Some(l), Some(r)) if (l - r).abs() < 1e-3 => {
+                        if l <= 0.01 {
+                            "Wall Dist: 0.0m (Flush)".to_string()
+                        } else {
+                            format!("Wall Dist: {:.1}m", l)
+                        }
+                    }
+                    (Some(l), Some(r)) => format!("Wall Dist: L {:.1}m / R {:.1}m", l, r),
+                    (Some(l), None) => format!("Wall Dist: L {:.1}m / R Def ({:.1}m)", l, state.barrier_offset),
+                    (None, Some(r)) => format!("Wall Dist: L Def ({:.1}m) / R {:.1}m", state.barrier_offset, r),
+                    (None, None) => format!("Wall Dist: Default ({:.1}m)", state.barrier_offset),
+                };
+
+                fonts.draw_ui_bold(&dist_label, x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(20.0);
+
+                let dist_pct = (effective_dist / 15.0).clamp(0.0, 1.0);
+                let (drag_d_pct, _) = draw_slider_with_input_field(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    w - scaler.s(24.0),
+                    scaler.s(20.0),
+                    dist_pct,
+                    &format!("{:.1}m", effective_dist),
+                    false,
+                    mouse_pos,
+                    clicked,
+                );
+                if let Some(p) = drag_d_pct {
+                    state.record_undo();
+                    let val = (p * 15.0).clamp(0.0, 20.0);
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(val);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(val);
+                    tools.new_waypoint_left_wall_distance = Some(val);
+                    tools.new_waypoint_right_wall_distance = Some(val);
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(24.0);
+
+                let btn_q_w = (w - scaler.s(36.0)) * 0.25;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_q_w, scaler.s(22.0), "-1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    let cur = state.track.spline.waypoints[idx].left_wall_distance.unwrap_or(state.barrier_offset);
+                    let new_val = (cur - 1.0).max(0.0);
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(new_val);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(new_val);
+                    tools.new_waypoint_left_wall_distance = Some(new_val);
+                    tools.new_waypoint_right_wall_distance = Some(new_val);
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_q_w, curr_y, btn_q_w, scaler.s(22.0), "-0.5m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    let cur = state.track.spline.waypoints[idx].left_wall_distance.unwrap_or(state.barrier_offset);
+                    let new_val = (cur - 0.5).max(0.0);
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(new_val);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(new_val);
+                    tools.new_waypoint_left_wall_distance = Some(new_val);
+                    tools.new_waypoint_right_wall_distance = Some(new_val);
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_q_w * 2.0, curr_y, btn_q_w, scaler.s(22.0), "+0.5m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    let cur = state.track.spline.waypoints[idx].left_wall_distance.unwrap_or(state.barrier_offset);
+                    let new_val = (cur + 0.5).min(20.0);
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(new_val);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(new_val);
+                    tools.new_waypoint_left_wall_distance = Some(new_val);
+                    tools.new_waypoint_right_wall_distance = Some(new_val);
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_q_w * 3.0, curr_y, btn_q_w, scaler.s(22.0), "+1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    let cur = state.track.spline.waypoints[idx].left_wall_distance.unwrap_or(state.barrier_offset);
+                    let new_val = (cur + 1.0).min(20.0);
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(new_val);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(new_val);
+                    tools.new_waypoint_left_wall_distance = Some(new_val);
+                    tools.new_waypoint_right_wall_distance = Some(new_val);
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(26.0);
+
+                let btn_p_w = (w - scaler.s(36.0)) * 0.25;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_p_w, scaler.s(20.0), "0m Flush", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(0.0);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(0.0);
+                    tools.new_waypoint_left_wall_distance = Some(0.0);
+                    tools.new_waypoint_right_wall_distance = Some(0.0);
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_p_w, curr_y, btn_p_w, scaler.s(20.0), "1.5m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(1.5);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(1.5);
+                    tools.new_waypoint_left_wall_distance = Some(1.5);
+                    tools.new_waypoint_right_wall_distance = Some(1.5);
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_p_w * 2.0, curr_y, btn_p_w, scaler.s(20.0), "4.0m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(4.0);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(4.0);
+                    tools.new_waypoint_left_wall_distance = Some(4.0);
+                    tools.new_waypoint_right_wall_distance = Some(4.0);
+                    state.rebuild_geometry();
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_p_w * 3.0, curr_y, btn_p_w, scaler.s(20.0), "Reset", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].left_wall_distance = None;
+                    state.track.spline.waypoints[idx].right_wall_distance = None;
+                    tools.new_waypoint_left_wall_distance = None;
+                    tools.new_waypoint_right_wall_distance = None;
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(28.0);
+
                 // Surface selector
                 let current_surf = state.track.spline.waypoints[idx].surface.unwrap_or(SurfaceType::Asphalt);
                 fonts.draw_ui_bold(&format!("Surface: {}", current_surf.name()), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
@@ -862,6 +987,31 @@ fn render_inspector(
             }
             if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "R Wall Only", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
                 tools.batch_set_walls(state, false, true);
+            }
+            curr_y += scaler.s(30.0);
+
+            fonts.draw_ui_bold("BATCH WALL DISTANCE:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+            curr_y += scaler.s(18.0);
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "-1m Dist", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_adjust_wall_distances(state, -1.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "+1m Dist", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_adjust_wall_distances(state, 1.0);
+            }
+            curr_y += scaler.s(28.0);
+
+            let btn_q_w = (w - scaler.s(36.0)) * 0.25;
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_q_w, scaler.s(22.0), "0m Flush", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
+                tools.batch_set_wall_distances(state, Some(0.0), Some(0.0));
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_q_w, curr_y, btn_q_w, scaler.s(22.0), "1.5m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_wall_distances(state, Some(1.5), Some(1.5));
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_q_w * 2.0, curr_y, btn_q_w, scaler.s(22.0), "4.0m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_wall_distances(state, Some(4.0), Some(4.0));
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_q_w * 3.0, curr_y, btn_q_w, scaler.s(22.0), "Reset", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.batch_set_wall_distances(state, None, None);
             }
             curr_y += scaler.s(30.0);
 
@@ -1598,7 +1748,106 @@ fn render_inspector(
                     tools.new_waypoint_bank_angle = -tools.new_waypoint_bank_angle;
                 }
                 curr_y += scaler.s(28.0);
+
+                // Default Placement Wall Distance
+                let cur_placement_dist = tools
+                    .new_waypoint_left_wall_distance
+                    .unwrap_or(state.barrier_offset);
+                fonts.draw_ui_bold(
+                    &format!("Placement Wall Dist: {:.1}m", cur_placement_dist),
+                    x + scaler.s(12.0),
+                    curr_y + scaler.s(14.0),
+                    scaler.font_s(12.0),
+                    Palette::NEON_CYAN,
+                );
+                curr_y += scaler.s(20.0);
+
+                let dist_pct = (cur_placement_dist / 15.0).clamp(0.0, 1.0);
+                let (drag_d_pct, _) = draw_slider_with_input_field(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    w - scaler.s(24.0),
+                    scaler.s(20.0),
+                    dist_pct,
+                    &format!("{:.1}m", cur_placement_dist),
+                    false,
+                    mouse_pos,
+                    clicked,
+                );
+                if let Some(p) = drag_d_pct {
+                    let val = (p * 15.0).clamp(0.0, 20.0);
+                    tools.new_waypoint_left_wall_distance = Some(val);
+                    tools.new_waypoint_right_wall_distance = Some(val);
+                }
+                curr_y += scaler.s(24.0);
+
+                let btn_pwd_w = (w - scaler.s(36.0)) * 0.25;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_pwd_w, scaler.s(20.0), "0m Flush", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
+                    tools.new_waypoint_left_wall_distance = Some(0.0);
+                    tools.new_waypoint_right_wall_distance = Some(0.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_pwd_w, curr_y, btn_pwd_w, scaler.s(20.0), "1.5m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_left_wall_distance = Some(1.5);
+                    tools.new_waypoint_right_wall_distance = Some(1.5);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_pwd_w * 2.0, curr_y, btn_pwd_w, scaler.s(20.0), "4.0m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_left_wall_distance = Some(4.0);
+                    tools.new_waypoint_right_wall_distance = Some(4.0);
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_pwd_w * 3.0, curr_y, btn_pwd_w, scaler.s(20.0), "Default", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                    tools.new_waypoint_left_wall_distance = None;
+                    tools.new_waypoint_right_wall_distance = None;
+                }
+                curr_y += scaler.s(28.0);
             }
+
+            // Global Barrier Offset (Default Wall Distance)
+            fonts.draw_ui_bold(
+                &format!("Global Wall Offset: {:.1}m", state.barrier_offset),
+                x + scaler.s(12.0),
+                curr_y + scaler.s(14.0),
+                scaler.font_s(13.0),
+                Palette::NEON_CYAN,
+            );
+            curr_y += scaler.s(20.0);
+
+            let bo_pct = (state.barrier_offset / 15.0).clamp(0.0, 1.0);
+            let (drag_bo_pct, _) = draw_slider_with_input_field(
+                fonts,
+                scaler,
+                x + scaler.s(12.0),
+                curr_y,
+                w - scaler.s(24.0),
+                scaler.s(20.0),
+                bo_pct,
+                &format!("{:.1}m", state.barrier_offset),
+                false,
+                mouse_pos,
+                clicked,
+            );
+            if let Some(p) = drag_bo_pct {
+                tools.set_global_barrier_offset(state, p * 15.0);
+            }
+            curr_y += scaler.s(24.0);
+
+            let btn_bo_w = (w - scaler.s(36.0)) * 0.25;
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_bo_w, scaler.s(22.0), "-1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                let new_bo = (state.barrier_offset - 1.0).max(0.0);
+                tools.set_global_barrier_offset(state, new_bo);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_bo_w, curr_y, btn_bo_w, scaler.s(22.0), "+1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                let new_bo = (state.barrier_offset + 1.0).min(20.0);
+                tools.set_global_barrier_offset(state, new_bo);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_bo_w * 2.0, curr_y, btn_bo_w, scaler.s(22.0), "0m", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
+                tools.set_global_barrier_offset(state, 0.0);
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_bo_w * 3.0, curr_y, btn_bo_w, scaler.s(22.0), "4m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                tools.set_global_barrier_offset(state, 4.0);
+            }
+            curr_y += scaler.s(28.0);
 
             fonts.draw_ui_bold("Global Off-Track Surface", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_CYAN);
             curr_y += scaler.s(22.0);

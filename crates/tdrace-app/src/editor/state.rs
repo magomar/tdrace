@@ -641,7 +641,11 @@ impl EditorState {
 
         for wp in &self.track.spline.waypoints {
             let p = wp.point;
-            let hw = wp.width * 0.5 + self.barrier_offset + 10.0;
+            let max_wall_dist = wp
+                .left_wall_distance
+                .unwrap_or(self.barrier_offset)
+                .max(wp.right_wall_distance.unwrap_or(self.barrier_offset));
+            let hw = wp.width * 0.5 + max_wall_dist + 10.0;
             min = min.min(p - Vec2::splat(hw));
             max = max.max(p + Vec2::splat(hw));
         }

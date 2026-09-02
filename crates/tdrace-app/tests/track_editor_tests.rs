@@ -1541,6 +1541,65 @@ fn test_waypoint_banking_editor_controls_and_batch_operations() {
     assert_eq!(state.track.spline.waypoints[0].bank_angle, 0.0);
 }
 
+#[test]
+fn test_track_editor_wall_distance_editing_and_batch_operations() {
+    use tdrace_app::editor::tools::{EditorToolType, ToolSettings};
+    use tdrace_app::editor::Selection;
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    // 1. Placement Tool default wall distance
+    tools.active_tool = EditorToolType::RoadSpline;
+    tools.new_waypoint_left_wall_distance = Some(0.0);
+    tools.new_waypoint_right_wall_distance = Some(0.0);
+
+    // Place a new waypoint with 0.0m flush wall distance
+    let click_pos = Vec2::new(100.0, 100.0);
+    tools.handle_mouse_down(&mut state, click_pos);
+
+    let new_wp_idx = state.selection.is_waypoint().expect("New waypoint must be selected");
+    assert_eq!(
+        state.track.spline.waypoints[new_wp_idx].left_wall_distance,
+        Some(0.0),
+        "Newly placed waypoint must inherit active placement wall distance"
+    );
+    assert_eq!(
+        state.track.spline.waypoints[new_wp_idx].right_wall_distance,
+        Some(0.0)
+    );
+
+    // 2. Batch adjust wall distance
+    state.select(Selection::MultipleWaypoints(vec![0, 1, 2]));
+    assert!(tools.batch_adjust_wall_distances(&mut state, -2.0));
+    // Default 4.0 - 2.0 = 2.0
+    assert_eq!(state.track.spline.waypoints[0].left_wall_distance, Some(2.0));
+    assert_eq!(state.track.spline.waypoints[1].left_wall_distance, Some(2.0));
+    assert_eq!(state.track.spline.waypoints[2].left_wall_distance, Some(2.0));
+
+    // 3. Batch set wall distance to 0.0m (Flush / Banked)
+    assert!(tools.batch_set_wall_distances(&mut state, Some(0.0), Some(0.0)));
+    assert_eq!(state.track.spline.waypoints[0].left_wall_distance, Some(0.0));
+    assert_eq!(state.track.spline.waypoints[0].right_wall_distance, Some(0.0));
+    assert_eq!(state.track.spline.waypoints[1].left_wall_distance, Some(0.0));
+
+    // 4. Batch reset wall distance to None (Default)
+    assert!(tools.batch_set_wall_distances(&mut state, None, None));
+    assert_eq!(state.track.spline.waypoints[0].left_wall_distance, None);
+    assert_eq!(state.track.spline.waypoints[0].right_wall_distance, None);
+
+    // 5. Undo / Redo restores waypoint wall distances
+    assert!(state.undo()); // Undo reset (back to Some(0.0))
+    assert_eq!(state.track.spline.waypoints[0].left_wall_distance, Some(0.0));
+    assert!(state.redo()); // Redo reset
+    assert_eq!(state.track.spline.waypoints[0].left_wall_distance, None);
+
+    // 6. Global barrier offset adjustment
+    tools.set_global_barrier_offset(&mut state, 2.5);
+    assert_eq!(state.barrier_offset, 2.5);
+}
+
 
 
 
