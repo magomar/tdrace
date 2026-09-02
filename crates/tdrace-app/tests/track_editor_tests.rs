@@ -1818,9 +1818,85 @@ fn test_auto_grid_slots_finish_line_requirement_and_modal_warning() {
     );
 }
 
+#[test]
+fn test_track_editor_wall_type_selection_and_batch_operations() {
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
 
+    // 1. Single waypoint wall type assignment
+    state.select(Selection::Waypoint(2));
+    state.track.spline.waypoints[2].wall_type = Some(BarrierType::TireWall);
+    state.rebuild_geometry();
+    assert_eq!(state.track.spline.waypoints[2].wall_type, Some(BarrierType::TireWall));
 
+    // 2. Batch wall type assignment to multiple waypoints
+    state.select(Selection::MultipleWaypoints(vec![0, 1, 3]));
+    let applied = tools.batch_set_wall_type(&mut state, Some(BarrierType::Concrete));
+    assert!(applied);
+    assert_eq!(state.track.spline.waypoints[0].wall_type, Some(BarrierType::Concrete));
+    assert_eq!(state.track.spline.waypoints[1].wall_type, Some(BarrierType::Concrete));
+    assert_eq!(state.track.spline.waypoints[3].wall_type, Some(BarrierType::Concrete));
+    // Waypoint 2 should still be TireWall
+    assert_eq!(state.track.spline.waypoints[2].wall_type, Some(BarrierType::TireWall));
 
+    // Batch set to rubber tyres (TireWall)
+    state.select(Selection::MultipleWaypoints(vec![0, 1]));
+    let applied_tire = tools.batch_set_wall_type(&mut state, Some(BarrierType::TireWall));
+    assert!(applied_tire);
+    assert_eq!(state.track.spline.waypoints[0].wall_type, Some(BarrierType::TireWall));
+    assert_eq!(state.track.spline.waypoints[1].wall_type, Some(BarrierType::TireWall));
 
+    // 3. Road spline tool placement inherits or uses new_waypoint_wall_type
+    tools.active_tool = EditorToolType::RoadSpline;
+    tools.new_waypoint_wall_type = Some(BarrierType::TireWall);
+    let initial_count = state.track.spline.waypoints.len();
+    state.selection = Selection::None;
+    state.last_selected_waypoint = None;
+    tools.handle_secondary_down(&mut state, Vec2::new(999.0, 999.0));
+    tools.handle_secondary_up(&mut state, Vec2::new(999.0, 999.0));
+    assert_eq!(state.track.spline.waypoints.len(), initial_count + 1);
+    let new_wp = state.track.spline.waypoints.last().unwrap();
+    assert_eq!(new_wp.wall_type, Some(BarrierType::TireWall));
 
+    // 4. Global barrier type setting
+    tools.set_global_barrier_type(&mut state, BarrierType::TireWall);
+    assert_eq!(state.barrier_type, BarrierType::TireWall);
+    tools.set_global_barrier_type(&mut state, BarrierType::Concrete);
+    assert_eq!(state.barrier_type, BarrierType::Concrete);
+}
 
+#[test]
+fn test_bar_control_selection_and_inline_manual_input() {
+    let mut tools = ToolSettings::default();
+
+    // Initially no bar is selected or being edited
+    assert!(!tools.is_editing_text());
+    assert!(!tools.is_bar_selected("placement_width"));
+    assert!(!tools.is_bar_selected("placement_banking"));
+
+    // Select a bar
+    tools.select_bar("placement_width");
+    assert!(tools.is_bar_selected("placement_width"));
+    assert!(!tools.is_bar_selected("placement_banking"));
+    assert!(!tools.is_editing_text());
+
+    // Start inline manual text editing
+    tools.start_editing_bar("placement_width", "21.5");
+    assert!(tools.is_editing_text());
+    assert!(tools.is_bar_selected("placement_width"));
+    assert_eq!(
+        tools.editing_bar,
+        Some(("placement_width".to_string(), "21.5".to_string()))
+    );
+
+    // Stop editing
+    tools.stop_editing_bar();
+    assert!(!tools.is_editing_text());
+    // Bar remains selected after editing completes
+    assert!(tools.is_bar_selected("placement_width"));
+
+    // Clear selection
+    tools.clear_bar_selection();
+    assert!(!tools.is_bar_selected("placement_width"));
+}

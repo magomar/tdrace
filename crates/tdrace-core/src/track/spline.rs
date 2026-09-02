@@ -2,6 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use crate::physics::surface::SurfaceType;
+use crate::track::geometry::BarrierType;
 
 const fn default_true() -> bool {
     true
@@ -38,6 +39,9 @@ pub struct TrackWaypoint {
     /// Distance between right track edge and right barrier wall in meters (default: None, inheriting global barrier offset).
     #[serde(default)]
     pub right_wall_distance: Option<f32>,
+    /// Optional barrier wall type override (e.g. Concrete or TireWall; default: None, inheriting global barrier type).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wall_type: Option<BarrierType>,
 }
 
 impl TrackWaypoint {
@@ -54,7 +58,13 @@ impl TrackWaypoint {
             right_wall: true,
             left_wall_distance: None,
             right_wall_distance: None,
+            wall_type: None,
         }
+    }
+
+    pub const fn with_wall_type(mut self, wall_type: Option<BarrierType>) -> Self {
+        self.wall_type = wall_type;
+        self
     }
 
     pub const fn with_curbs(mut self, left: bool, right: bool) -> Self {
@@ -120,6 +130,8 @@ pub struct SplineSample {
     pub left_wall_distance: Option<f32>,
     #[serde(default)]
     pub right_wall_distance: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wall_type: Option<BarrierType>,
 }
 
 /// Result of projecting a 2D world coordinate onto the track spline.
@@ -191,6 +203,7 @@ impl TrackSpline {
         let mut raw_right_walls = Vec::new();
         let mut raw_left_wall_dists = Vec::new();
         let mut raw_right_wall_dists = Vec::new();
+        let mut raw_wall_types = Vec::new();
 
         for i in 0..segments {
             let p0 = if closed {
@@ -270,6 +283,7 @@ impl TrackSpline {
                     (None, None) => None,
                 };
                 let surf = wp1.surface.unwrap_or(SurfaceType::Asphalt);
+                let wt = if t < 0.5 { wp1.wall_type } else { wp2.wall_type };
 
                 raw_points.push(pt);
                 raw_widths.push(w);
@@ -282,6 +296,7 @@ impl TrackSpline {
                 raw_right_walls.push(rw);
                 raw_left_wall_dists.push(lwd);
                 raw_right_wall_dists.push(rwd);
+                raw_wall_types.push(wt);
             }
         }
 
@@ -298,6 +313,7 @@ impl TrackSpline {
             raw_right_walls.push(raw_right_walls[0]);
             raw_left_wall_dists.push(raw_left_wall_dists[0]);
             raw_right_wall_dists.push(raw_right_wall_dists[0]);
+            raw_wall_types.push(raw_wall_types[0]);
         } else {
             let last = waypoints.last().unwrap();
             raw_points.push(last.point);
@@ -311,6 +327,7 @@ impl TrackSpline {
             raw_right_walls.push(last.right_wall);
             raw_left_wall_dists.push(last.left_wall_distance);
             raw_right_wall_dists.push(last.right_wall_distance);
+            raw_wall_types.push(last.wall_type);
         }
 
         // 2. Compute cumulative arc-length distances and orientations
@@ -352,6 +369,7 @@ impl TrackSpline {
                 right_wall: raw_right_walls[i],
                 left_wall_distance: raw_left_wall_dists[i],
                 right_wall_distance: raw_right_wall_dists[i],
+                wall_type: raw_wall_types[i],
             });
         }
 
@@ -396,6 +414,7 @@ impl TrackSpline {
                 right_wall: true,
                 left_wall_distance: None,
                 right_wall_distance: None,
+                wall_type: None,
             };
         }
 
@@ -469,6 +488,7 @@ impl TrackSpline {
             right_wall: if t < 0.5 { s0.right_wall } else { s1.right_wall },
             left_wall_distance,
             right_wall_distance,
+            wall_type: if t < 0.5 { s0.wall_type } else { s1.wall_type },
         }
     }
 

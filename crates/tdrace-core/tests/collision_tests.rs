@@ -196,3 +196,56 @@ fn test_static_obstacle_collision() {
     assert!(hit.is_some());
     assert!(car.state.velocity.x < 0.0, "Car must bounce off obstacle");
 }
+
+#[test]
+fn test_wall_contact_braking_resistance_when_running_alongside() {
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.velocity = Vec2::new(25.0, 0.0);
+
+    // Wall running parallel to X axis at y = 0.82 (car half width is ~0.85, so touching)
+    let wall = WallBarrier::new(
+        Vec2::new(-20.0, 0.82),
+        Vec2::new(20.0, 0.82),
+        BarrierType::Concrete,
+    );
+
+    let hit = resolve_car_wall_collision(&mut car, &wall);
+    assert!(hit.is_some(), "Car should be in contact with the wall");
+    let ev = hit.unwrap();
+    assert!(ev.friction_impulse > 0.0, "Friction/braking impulse must be applied when touching wall");
+    assert!(car.state.velocity.x < 25.0, "Car forward speed must be reduced by wall braking resistance");
+}
+
+#[test]
+fn test_rubber_tyres_wall_braking_resistance_stronger_than_concrete() {
+    let mut car_concrete = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car_concrete.state.velocity = Vec2::new(25.0, 0.0);
+
+    let wall_concrete = WallBarrier::new(
+        Vec2::new(-20.0, 0.82),
+        Vec2::new(20.0, 0.82),
+        BarrierType::Concrete,
+    );
+
+    let _ = resolve_car_wall_collision(&mut car_concrete, &wall_concrete);
+    let speed_loss_concrete = 25.0 - car_concrete.state.velocity.x;
+
+    let mut car_tire = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car_tire.state.velocity = Vec2::new(25.0, 0.0);
+
+    let wall_tire = WallBarrier::new(
+        Vec2::new(-20.0, 0.82),
+        Vec2::new(20.0, 0.82),
+        BarrierType::TireWall,
+    );
+
+    let _ = resolve_car_wall_collision(&mut car_tire, &wall_tire);
+    let speed_loss_tire = 25.0 - car_tire.state.velocity.x;
+
+    assert!(
+        speed_loss_tire > speed_loss_concrete,
+        "Rubber tyre wall braking resistance ({}) must exceed concrete wall resistance ({})",
+        speed_loss_tire,
+        speed_loss_concrete
+    );
+}

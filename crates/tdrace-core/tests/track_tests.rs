@@ -772,5 +772,45 @@ fn test_auto_generate_grid_positioned_relative_to_finish_line() {
     );
 }
 
+#[test]
+fn test_waypoint_custom_wall_type_generation_and_json_roundtrip() {
+    use tdrace_core::track::presets::generate_walls_from_spline;
+    use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
+    use tdrace_core::track::geometry::BarrierType;
+
+    let road_w = 12.0;
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), road_w).with_wall_type(Some(BarrierType::Concrete)),
+        TrackWaypoint::new(Vec2::new(100.0, 0.0), road_w).with_wall_type(Some(BarrierType::Concrete)),
+        TrackWaypoint::new(Vec2::new(200.0, 0.0), road_w).with_wall_type(Some(BarrierType::TireWall)),
+        TrackWaypoint::new(Vec2::new(300.0, 0.0), road_w).with_wall_type(Some(BarrierType::TireWall)),
+    ];
+
+    let spline = TrackSpline::new(waypoints, false);
+    assert_eq!(spline.samples[0].wall_type, Some(BarrierType::Concrete));
+    let last_sample = spline.samples.last().unwrap();
+    assert_eq!(last_sample.wall_type, Some(BarrierType::TireWall));
+
+    let (left_walls, right_walls, _, _) =
+        generate_walls_from_spline(&spline, 3.0, BarrierType::Armco);
+
+    assert!(!left_walls.is_empty());
+    assert!(!right_walls.is_empty());
+
+    // First section should have Concrete walls
+    assert_eq!(left_walls.first().unwrap().barrier_type, BarrierType::Concrete);
+    assert_eq!(right_walls.first().unwrap().barrier_type, BarrierType::Concrete);
+
+    // Last section should have TireWall walls
+    assert_eq!(left_walls.last().unwrap().barrier_type, BarrierType::TireWall);
+    assert_eq!(right_walls.last().unwrap().barrier_type, BarrierType::TireWall);
+
+    // JSON serialization / deserialization roundtrip
+    let json = serde_json::to_string(&spline).expect("Serialize spline");
+    let restored: TrackSpline = serde_json::from_str(&json).expect("Deserialize spline");
+    assert_eq!(restored.waypoints[0].wall_type, Some(BarrierType::Concrete));
+    assert_eq!(restored.waypoints[2].wall_type, Some(BarrierType::TireWall));
+}
+
 
 

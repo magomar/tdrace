@@ -3851,7 +3851,11 @@ impl RaceSession {
             }
         }
 
-        // Shortcuts
+        // Shortcuts (bypassed while editing text in an inspector input control)
+        if self.editor_tools.is_editing_text() {
+            return;
+        }
+
         if is_key_pressed(KeyCode::Key1) { self.editor_tools.active_tool = EditorToolType::Select; }
         if is_key_pressed(KeyCode::Key2) { self.editor_tools.active_tool = EditorToolType::RoadSpline; }
         if is_key_pressed(KeyCode::Key3) { self.editor_tools.active_tool = EditorToolType::SurfaceZone; }
@@ -4123,8 +4127,8 @@ impl RaceSession {
             }
         }
 
-        // Drain unconsumed characters when no text modal is open in the editor
-        if !matches!(self.editor_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampAngle { .. }) {
+        // Drain unconsumed characters when no text modal or inline bar editing is open in the editor
+        if !self.editor_tools.is_editing_text() && !matches!(self.editor_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampAngle { .. } | EditorModal::SetRampProperty { .. }) {
             while get_char_pressed().is_some() {}
         }
 

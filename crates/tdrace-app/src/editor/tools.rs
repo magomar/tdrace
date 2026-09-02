@@ -3,7 +3,7 @@ use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle_lines};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone};
 use tdrace_core::track::spline::TrackWaypoint;
 
 use super::camera::EditorCamera;
@@ -78,6 +78,7 @@ pub struct ToolSettings {
     pub new_waypoint_right_wall: bool,
     pub new_waypoint_left_wall_distance: Option<f32>,
     pub new_waypoint_right_wall_distance: Option<f32>,
+    pub new_waypoint_wall_type: Option<BarrierType>,
     pub new_waypoint_bank_angle: f32,
 
     // Dragging / selection interaction state
@@ -96,6 +97,10 @@ pub struct ToolSettings {
     pub drag_initial_checkpoints: Vec<(usize, Vec2, Vec2)>,
     pub drag_initial_grid_slots: Vec<(usize, Vec2)>,
     pub drag_initial_pit_box: Option<(Vec2, Vec2)>,
+
+    // Bar control selection and inline manual text editing
+    pub selected_bar: Option<String>,
+    pub editing_bar: Option<(String, String)>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -129,6 +134,7 @@ impl Default for ToolSettings {
             new_waypoint_right_wall: true,
             new_waypoint_left_wall_distance: None,
             new_waypoint_right_wall_distance: None,
+            new_waypoint_wall_type: None,
             new_waypoint_bank_angle: 0.0,
             is_dragging: false,
             is_box_selecting: false,
@@ -145,11 +151,38 @@ impl Default for ToolSettings {
             drag_initial_checkpoints: Vec::new(),
             drag_initial_grid_slots: Vec::new(),
             drag_initial_pit_box: None,
+            selected_bar: None,
+            editing_bar: None,
         }
     }
 }
 
 impl ToolSettings {
+    pub fn is_editing_text(&self) -> bool {
+        self.editing_bar.is_some()
+    }
+
+    pub fn is_bar_selected(&self, id: &str) -> bool {
+        self.selected_bar.as_deref() == Some(id)
+    }
+
+    pub fn select_bar(&mut self, id: &str) {
+        self.selected_bar = Some(id.to_string());
+    }
+
+    pub fn clear_bar_selection(&mut self) {
+        self.selected_bar = None;
+    }
+
+    pub fn start_editing_bar(&mut self, id: &str, initial_text: &str) {
+        self.selected_bar = Some(id.to_string());
+        self.editing_bar = Some((id.to_string(), initial_text.to_string()));
+    }
+
+    pub fn stop_editing_bar(&mut self) {
+        self.editing_bar = None;
+    }
+
     /// Selects all elements matching the active tool (or all track elements if Select tool is active).
     pub fn select_all_for_active_tool(&mut self, state: &mut EditorState) -> bool {
         let selection = match self.active_tool {
@@ -986,6 +1019,29 @@ impl ToolSettings {
         state.rebuild_geometry();
     }
 
+    /// Sets global default barrier type for the circuit and rebuilds geometry.
+    pub fn set_global_barrier_type(&mut self, state: &mut EditorState, barrier_type: BarrierType) {
+        state.record_undo();
+        state.barrier_type = barrier_type;
+        state.rebuild_geometry();
+    }
+
+    /// Batch applies wall type override for all selected waypoints (None inherits global barrier type).
+    pub fn batch_set_wall_type(&mut self, state: &mut EditorState, wall_type: Option<BarrierType>) -> bool {
+        let indices = state.selection.selected_waypoint_indices();
+        if !indices.is_empty() {
+            state.record_undo();
+            for idx in indices {
+                if idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints[idx].wall_type = wall_type;
+                }
+            }
+            state.rebuild_geometry();
+            return true;
+        }
+        false
+    }
+
     /// Batch adjusts elevation for all selected waypoints.
     pub fn batch_adjust_elevation(&mut self, state: &mut EditorState, delta: f32) -> bool {
         let indices = state.selection.selected_waypoint_indices();
@@ -1308,6 +1364,14 @@ impl ToolSettings {
                     None => self.active_surface,
                 };
 
+                let inherited_wall_type = match state
+                    .current_or_last_waypoint_idx()
+                    .and_then(|idx| state.track.spline.waypoints.get(idx))
+                {
+                    Some(prev_wp) => prev_wp.wall_type.or(self.new_waypoint_wall_type),
+                    None => self.new_waypoint_wall_type,
+                };
+
                 let mut wp = TrackWaypoint::new(snapped_mouse, self.new_waypoint_width);
                 wp.surface = Some(inherited_surface);
                 wp.left_curb = self.new_waypoint_left_curb;
@@ -1316,6 +1380,7 @@ impl ToolSettings {
                 wp.right_wall = self.new_waypoint_right_wall;
                 wp.left_wall_distance = self.new_waypoint_left_wall_distance;
                 wp.right_wall_distance = self.new_waypoint_right_wall_distance;
+                wp.wall_type = inherited_wall_type;
                 wp.bank_angle = self.new_waypoint_bank_angle;
 
                 let insert_idx = match state.current_or_last_waypoint_idx() {

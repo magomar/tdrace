@@ -416,10 +416,10 @@ pub fn render_starting_grid_screen(
         Palette::WHITE,
     );
     fonts.draw_ui_regular_centered(
-        "Start 3-2-1 Countdown  •  Space / Gamepad A",
+        "SPACE / Gamepad A",
         col1_x + col_w * 0.5,
         curr_y + scaler.s(37.0),
-        scaler.font_s(11.0),
+        scaler.font_s(13.5),
         Color::new(0.85, 1.0, 0.90, 0.95),
     );
 

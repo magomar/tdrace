@@ -1,13 +1,13 @@
 use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::input::{
-    get_char_pressed, is_key_pressed, is_mouse_button_down, is_mouse_button_pressed,
+    get_char_pressed, is_key_down, is_key_pressed, is_mouse_button_down, is_mouse_button_pressed,
     mouse_position, KeyCode, MouseButton,
 };
-use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::{draw_circle, draw_circle_lines, draw_rectangle, draw_rectangle_lines};
 use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{JumpRamp, SurfaceLayer, SurfaceShape};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceLayer, SurfaceShape};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
 use crate::editor::camera::EditorCamera;
@@ -164,8 +164,8 @@ pub fn render_editor_ui(
     let is_modal_open = *active_modal != EditorModal::None;
     let bg_mouse_clicked = mouse_clicked && !is_modal_open;
 
-    // Drain accumulated characters whenever no text-input modal is active
-    if !matches!(*active_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampAngle { .. }) {
+    // Drain accumulated characters whenever no text-input modal or inline bar editing is active
+    if !tools.is_editing_text() && !matches!(*active_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampAngle { .. } | EditorModal::SetRampProperty { .. }) {
         drain_char_queue();
     }
 
@@ -630,24 +630,28 @@ fn render_inspector(
                 }
                 curr_y += scaler.s(26.0);
 
-                let wid_pct = ((road_w - 4.0) / 26.0).clamp(0.0, 1.0);
-                let (drag_w_pct, _) = draw_slider_with_input_field(
+                let wid_str = format!("{:.1}m", road_w);
+                if let Some(new_w) = draw_bar_control(
                     fonts,
                     scaler,
+                    tools,
+                    "wp_width",
                     x + scaler.s(12.0),
                     curr_y,
                     w - scaler.s(24.0),
                     scaler.s(20.0),
-                    wid_pct,
-                    &format!("{:.1}m", road_w),
+                    road_w,
+                    4.0,
+                    30.0,
+                    0.5,
+                    &wid_str,
                     false,
                     mouse_pos,
                     clicked,
-                );
-                if let Some(p) = drag_w_pct {
+                ) {
                     state.record_undo();
-                    state.track.spline.waypoints[idx].width = (4.0 + p * 26.0).clamp(4.0, 30.0);
-                    tools.new_waypoint_width = state.track.spline.waypoints[idx].width;
+                    state.track.spline.waypoints[idx].width = new_w;
+                    tools.new_waypoint_width = new_w;
                     state.rebuild_geometry();
                 }
                 curr_y += scaler.s(26.0);
@@ -657,24 +661,28 @@ fn render_inspector(
                 fonts.draw_ui_bold("Banking (Superelevation):", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_GOLD);
                 curr_y += scaler.s(20.0);
 
-                let bank_pct = ((bank_deg + 45.0) / 90.0).clamp(0.0, 1.0);
-                let (drag_b_pct, _) = draw_slider_with_input_field(
+                let bank_str = format!("{:+.1}°", bank_deg);
+                if let Some(new_b) = draw_bar_control(
                     fonts,
                     scaler,
+                    tools,
+                    "wp_banking",
                     x + scaler.s(12.0),
                     curr_y,
                     w - scaler.s(24.0),
                     scaler.s(20.0),
-                    bank_pct,
-                    &format!("{:+.1}°", bank_deg),
+                    bank_deg,
+                    -45.0,
+                    45.0,
+                    1.0,
+                    &bank_str,
                     true,
                     mouse_pos,
                     clicked,
-                );
-                if let Some(p) = drag_b_pct {
+                ) {
                     state.record_undo();
-                    state.track.spline.waypoints[idx].bank_angle = (-45.0 + p * 90.0).clamp(-45.0, 45.0);
-                    tools.new_waypoint_bank_angle = state.track.spline.waypoints[idx].bank_angle;
+                    state.track.spline.waypoints[idx].bank_angle = new_b;
+                    tools.new_waypoint_bank_angle = new_b;
                     state.rebuild_geometry();
                 }
                 curr_y += scaler.s(24.0);
@@ -800,27 +808,30 @@ fn render_inspector(
                 fonts.draw_ui_bold(&dist_label, x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(20.0);
 
-                let dist_pct = (effective_dist / 15.0).clamp(0.0, 1.0);
-                let (drag_d_pct, _) = draw_slider_with_input_field(
+                let dist_str = format!("{:.1}m", effective_dist);
+                if let Some(new_d) = draw_bar_control(
                     fonts,
                     scaler,
+                    tools,
+                    "wp_wall_dist",
                     x + scaler.s(12.0),
                     curr_y,
                     w - scaler.s(24.0),
                     scaler.s(20.0),
-                    dist_pct,
-                    &format!("{:.1}m", effective_dist),
+                    effective_dist,
+                    0.0,
+                    20.0,
+                    0.5,
+                    &dist_str,
                     false,
                     mouse_pos,
                     clicked,
-                );
-                if let Some(p) = drag_d_pct {
+                ) {
                     state.record_undo();
-                    let val = (p * 15.0).clamp(0.0, 20.0);
-                    state.track.spline.waypoints[idx].left_wall_distance = Some(val);
-                    state.track.spline.waypoints[idx].right_wall_distance = Some(val);
-                    tools.new_waypoint_left_wall_distance = Some(val);
-                    tools.new_waypoint_right_wall_distance = Some(val);
+                    state.track.spline.waypoints[idx].left_wall_distance = Some(new_d);
+                    state.track.spline.waypoints[idx].right_wall_distance = Some(new_d);
+                    tools.new_waypoint_left_wall_distance = Some(new_d);
+                    tools.new_waypoint_right_wall_distance = Some(new_d);
                     state.rebuild_geometry();
                 }
                 curr_y += scaler.s(24.0);
@@ -902,6 +913,59 @@ fn render_inspector(
                     state.rebuild_geometry();
                 }
                 curr_y += scaler.s(28.0);
+
+                // Wall Type selector
+                let current_wt = state.track.spline.waypoints[idx].wall_type.unwrap_or(state.barrier_type);
+                let wt_name = match current_wt {
+                    BarrierType::Concrete => "Concrete",
+                    BarrierType::TireWall => "Rubber Tyres",
+                    BarrierType::Armco => "Armco Steel",
+                    BarrierType::CurbWall => "Curb Wall",
+                };
+                fonts.draw_ui_bold(&format!("Wall Type: {}", wt_name), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(20.0);
+
+                let is_conc = current_wt == BarrierType::Concrete;
+                let is_tire = current_wt == BarrierType::TireWall;
+
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    half_btn_w,
+                    scaler.s(22.0),
+                    "Concrete",
+                    if is_conc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_conc { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].wall_type = Some(BarrierType::Concrete);
+                    tools.new_waypoint_wall_type = Some(BarrierType::Concrete);
+                    state.rebuild_geometry();
+                }
+
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                    curr_y,
+                    half_btn_w,
+                    scaler.s(22.0),
+                    "Rubber Tyres",
+                    if is_tire { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_tire { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].wall_type = Some(BarrierType::TireWall);
+                    tools.new_waypoint_wall_type = Some(BarrierType::TireWall);
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(26.0);
 
                 // Surface selector
                 let current_surf = state.track.spline.waypoints[idx].surface.unwrap_or(SurfaceType::Asphalt);
@@ -1081,6 +1145,16 @@ fn render_inspector(
             }
             curr_y += scaler.s(30.0);
 
+            fonts.draw_ui_bold("BATCH WALL TYPE:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+            curr_y += scaler.s(18.0);
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "Concrete", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                tools.batch_set_wall_type(state, Some(BarrierType::Concrete));
+            }
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "Rubber Tyres", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                tools.batch_set_wall_type(state, Some(BarrierType::TireWall));
+            }
+            curr_y += scaler.s(30.0);
+
             fonts.draw_ui_bold("BATCH SURFACE:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
             curr_y += scaler.s(18.0);
 
@@ -1241,17 +1315,26 @@ fn render_inspector(
                 fonts.draw_ui_bold("Direction Angle:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(16.0);
 
-                let angle_pct = (heading_deg % 360.0) / 360.0;
                 let angle_str = format!("{:.1}°", heading_deg);
-                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, angle_pct, &angle_str, false, mouse_pos, clicked);
-                if let Some(new_pct) = drag_pct {
-                    tools.set_selected_jump_ramp_angle_deg(state, new_pct * 360.0);
-                }
-                if input_click {
-                    *active_modal = EditorModal::SetRampProperty {
-                        property: RampPropertyModal::Angle,
-                        input_val: format!("{:.1}", heading_deg),
-                    };
+                if let Some(new_a) = draw_bar_control(
+                    fonts,
+                    scaler,
+                    tools,
+                    "ramp_angle",
+                    x + scaler.s(12.0),
+                    curr_y,
+                    row_w,
+                    row_h,
+                    heading_deg,
+                    0.0,
+                    360.0,
+                    1.0,
+                    &angle_str,
+                    false,
+                    mouse_pos,
+                    clicked,
+                ) {
+                    tools.set_selected_jump_ramp_angle_deg(state, new_a);
                 }
                 curr_y += row_h + scaler.s(10.0);
 
@@ -1261,18 +1344,26 @@ fn render_inspector(
                 fonts.draw_ui_bold("Length:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(16.0);
 
-                let len_pct = ((len - 2.0) / (50.0 - 2.0)).clamp(0.0, 1.0);
                 let len_str = format!("{:.1}m", len);
-                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, len_pct, &len_str, false, mouse_pos, clicked);
-                if let Some(new_pct) = drag_pct {
-                    let new_len = 2.0 + new_pct * (50.0 - 2.0);
+                if let Some(new_len) = draw_bar_control(
+                    fonts,
+                    scaler,
+                    tools,
+                    "ramp_length",
+                    x + scaler.s(12.0),
+                    curr_y,
+                    row_w,
+                    row_h,
+                    len,
+                    2.0,
+                    50.0,
+                    0.5,
+                    &len_str,
+                    false,
+                    mouse_pos,
+                    clicked,
+                ) {
                     tools.set_selected_jump_ramp_length(state, new_len);
-                }
-                if input_click {
-                    *active_modal = EditorModal::SetRampProperty {
-                        property: RampPropertyModal::Length,
-                        input_val: format!("{:.1}", len),
-                    };
                 }
                 curr_y += row_h + scaler.s(10.0);
 
@@ -1282,18 +1373,26 @@ fn render_inspector(
                 fonts.draw_ui_bold("Width:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(16.0);
 
-                let wid_pct = ((wid - 1.0) / (30.0 - 1.0)).clamp(0.0, 1.0);
                 let wid_str = format!("{:.1}m", wid);
-                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, wid_pct, &wid_str, false, mouse_pos, clicked);
-                if let Some(new_pct) = drag_pct {
-                    let new_wid = 1.0 + new_pct * (30.0 - 1.0);
+                if let Some(new_wid) = draw_bar_control(
+                    fonts,
+                    scaler,
+                    tools,
+                    "ramp_width",
+                    x + scaler.s(12.0),
+                    curr_y,
+                    row_w,
+                    row_h,
+                    wid,
+                    1.0,
+                    30.0,
+                    0.5,
+                    &wid_str,
+                    false,
+                    mouse_pos,
+                    clicked,
+                ) {
                     tools.set_selected_jump_ramp_width(state, new_wid);
-                }
-                if input_click {
-                    *active_modal = EditorModal::SetRampProperty {
-                        property: RampPropertyModal::Width,
-                        input_val: format!("{:.1}", wid),
-                    };
                 }
                 curr_y += row_h + scaler.s(10.0);
 
@@ -1303,18 +1402,26 @@ fn render_inspector(
                 fonts.draw_ui_bold("Height:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
                 curr_y += scaler.s(16.0);
 
-                let h_pct = ((h - 0.2) / (10.0 - 0.2)).clamp(0.0, 1.0);
                 let h_str = format!("{:.1}m", h);
-                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, h_pct, &h_str, true, mouse_pos, clicked);
-                if let Some(new_pct) = drag_pct {
-                    let new_h = 0.2 + new_pct * (10.0 - 0.2);
+                if let Some(new_h) = draw_bar_control(
+                    fonts,
+                    scaler,
+                    tools,
+                    "ramp_height",
+                    x + scaler.s(12.0),
+                    curr_y,
+                    row_w,
+                    row_h,
+                    h,
+                    0.2,
+                    10.0,
+                    0.1,
+                    &h_str,
+                    true,
+                    mouse_pos,
+                    clicked,
+                ) {
                     tools.set_selected_jump_ramp_height(state, new_h);
-                }
-                if input_click {
-                    *active_modal = EditorModal::SetRampProperty {
-                        property: RampPropertyModal::Height,
-                        input_val: format!("{:.1}", h),
-                    };
                 }
                 curr_y += row_h + scaler.s(10.0);
 
@@ -1324,18 +1431,26 @@ fn render_inspector(
                 fonts.draw_ui_bold("Pitch Angle:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
                 curr_y += scaler.s(16.0);
 
-                let pitch_pct = ((pitch - 1.0) / (60.0 - 1.0)).clamp(0.0, 1.0);
                 let pitch_str = format!("{:.1}°", pitch);
-                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, pitch_pct, &pitch_str, true, mouse_pos, clicked);
-                if let Some(new_pct) = drag_pct {
-                    let new_pitch = 1.0 + new_pct * (60.0 - 1.0);
-                    tools.set_selected_jump_ramp_pitch_deg(state, new_pitch);
-                }
-                if input_click {
-                    *active_modal = EditorModal::SetRampProperty {
-                        property: RampPropertyModal::Pitch,
-                        input_val: format!("{:.1}", pitch),
-                    };
+                if let Some(new_p) = draw_bar_control(
+                    fonts,
+                    scaler,
+                    tools,
+                    "ramp_pitch",
+                    x + scaler.s(12.0),
+                    curr_y,
+                    row_w,
+                    row_h,
+                    pitch,
+                    1.0,
+                    60.0,
+                    1.0,
+                    &pitch_str,
+                    true,
+                    mouse_pos,
+                    clicked,
+                ) {
+                    tools.set_selected_jump_ramp_pitch_deg(state, new_p);
                 }
                 curr_y += row_h + scaler.s(10.0);
 
@@ -1345,18 +1460,26 @@ fn render_inspector(
                 fonts.draw_ui_bold("Launch Speed Boost:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
                 curr_y += scaler.s(16.0);
 
-                let spd_pct = ((l_spd - 1.0) / (20.0 - 1.0)).clamp(0.0, 1.0);
                 let spd_str = format!("{:.1}m/s", l_spd);
-                let (drag_pct, input_click) = draw_slider_with_input_field(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, row_h, spd_pct, &spd_str, true, mouse_pos, clicked);
-                if let Some(new_pct) = drag_pct {
-                    let new_spd = 1.0 + new_pct * (20.0 - 1.0);
+                if let Some(new_spd) = draw_bar_control(
+                    fonts,
+                    scaler,
+                    tools,
+                    "ramp_speed",
+                    x + scaler.s(12.0),
+                    curr_y,
+                    row_w,
+                    row_h,
+                    l_spd,
+                    1.0,
+                    20.0,
+                    0.5,
+                    &spd_str,
+                    true,
+                    mouse_pos,
+                    clicked,
+                ) {
                     tools.set_selected_jump_ramp_launch_speed(state, new_spd);
-                }
-                if input_click {
-                    *active_modal = EditorModal::SetRampProperty {
-                        property: RampPropertyModal::LaunchSpeed,
-                        input_val: format!("{:.1}", l_spd),
-                    };
                 }
                 curr_y += row_h + scaler.s(12.0);
 
@@ -1740,22 +1863,26 @@ fn render_inspector(
                 }
                 curr_y += scaler.s(26.0);
 
-                let wid_pct = ((tools.new_waypoint_width - 4.0) / 26.0).clamp(0.0, 1.0);
-                let (drag_w_pct, _) = draw_slider_with_input_field(
+                let wid_str = format!("{:.1}m", tools.new_waypoint_width);
+                if let Some(new_w) = draw_bar_control(
                     fonts,
                     scaler,
+                    tools,
+                    "placement_width",
                     x + scaler.s(12.0),
                     curr_y,
                     w - scaler.s(24.0),
                     scaler.s(20.0),
-                    wid_pct,
-                    &format!("{:.1}m", tools.new_waypoint_width),
+                    tools.new_waypoint_width,
+                    4.0,
+                    30.0,
+                    0.5,
+                    &wid_str,
                     false,
                     mouse_pos,
                     clicked,
-                );
-                if let Some(p) = drag_w_pct {
-                    tools.new_waypoint_width = (4.0 + p * 26.0).clamp(4.0, 30.0);
+                ) {
+                    tools.new_waypoint_width = new_w;
                 }
                 curr_y += scaler.s(26.0);
 
@@ -1763,22 +1890,26 @@ fn render_inspector(
                 fonts.draw_ui_bold("Placement Banking:", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_GOLD);
                 curr_y += scaler.s(20.0);
 
-                let bank_pct = ((tools.new_waypoint_bank_angle + 45.0) / 90.0).clamp(0.0, 1.0);
-                let (drag_b_pct, _) = draw_slider_with_input_field(
+                let bank_str = format!("{:+.1}°", tools.new_waypoint_bank_angle);
+                if let Some(new_b) = draw_bar_control(
                     fonts,
                     scaler,
+                    tools,
+                    "placement_banking",
                     x + scaler.s(12.0),
                     curr_y,
                     w - scaler.s(24.0),
                     scaler.s(20.0),
-                    bank_pct,
-                    &format!("{:+.1}°", tools.new_waypoint_bank_angle),
+                    tools.new_waypoint_bank_angle,
+                    -45.0,
+                    45.0,
+                    1.0,
+                    &bank_str,
                     true,
                     mouse_pos,
                     clicked,
-                );
-                if let Some(p) = drag_b_pct {
-                    tools.new_waypoint_bank_angle = (-45.0 + p * 90.0).clamp(-45.0, 45.0);
+                ) {
+                    tools.new_waypoint_bank_angle = new_b;
                 }
                 curr_y += scaler.s(24.0);
 
@@ -1828,22 +1959,26 @@ fn render_inspector(
                 );
                 curr_y += scaler.s(20.0);
 
-                let dist_pct = (cur_placement_dist / 15.0).clamp(0.0, 1.0);
-                let (drag_d_pct, _) = draw_slider_with_input_field(
+                let dist_str = format!("{:.1}m", cur_placement_dist);
+                if let Some(new_d) = draw_bar_control(
                     fonts,
                     scaler,
+                    tools,
+                    "placement_wall_dist",
                     x + scaler.s(12.0),
                     curr_y,
                     w - scaler.s(24.0),
                     scaler.s(20.0),
-                    dist_pct,
-                    &format!("{:.1}m", cur_placement_dist),
+                    cur_placement_dist,
+                    0.0,
+                    20.0,
+                    0.5,
+                    &dist_str,
                     false,
                     mouse_pos,
                     clicked,
-                );
-                if let Some(p) = drag_d_pct {
-                    let val = (p * 15.0).clamp(0.0, 20.0);
+                ) {
+                    let val = new_d.clamp(0.0, 20.0);
                     tools.new_waypoint_left_wall_distance = Some(val);
                     tools.new_waypoint_right_wall_distance = Some(val);
                 }
@@ -1867,6 +2002,60 @@ fn render_inspector(
                     tools.new_waypoint_right_wall_distance = None;
                 }
                 curr_y += scaler.s(28.0);
+
+                // Placement Wall Type
+                let cur_placement_wt = tools.new_waypoint_wall_type.unwrap_or(state.barrier_type);
+                let wt_name = match cur_placement_wt {
+                    BarrierType::Concrete => "Concrete",
+                    BarrierType::TireWall => "Rubber Tyres",
+                    BarrierType::Armco => "Armco Steel",
+                    BarrierType::CurbWall => "Curb Wall",
+                };
+                fonts.draw_ui_bold(
+                    &format!("Placement Wall Type: {}", wt_name),
+                    x + scaler.s(12.0),
+                    curr_y + scaler.s(14.0),
+                    scaler.font_s(12.0),
+                    Palette::NEON_CYAN,
+                );
+                curr_y += scaler.s(20.0);
+
+                let is_conc = cur_placement_wt == BarrierType::Concrete;
+                let is_tire = cur_placement_wt == BarrierType::TireWall;
+                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    half_btn_w,
+                    scaler.s(22.0),
+                    "Concrete",
+                    if is_conc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_conc { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    tools.new_waypoint_wall_type = Some(BarrierType::Concrete);
+                }
+
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                    curr_y,
+                    half_btn_w,
+                    scaler.s(22.0),
+                    "Rubber Tyres",
+                    if is_tire { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_tire { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    tools.new_waypoint_wall_type = Some(BarrierType::TireWall);
+                }
+                curr_y += scaler.s(26.0);
             }
 
             // Global Barrier Offset (Default Wall Distance)
@@ -1879,22 +2068,26 @@ fn render_inspector(
             );
             curr_y += scaler.s(20.0);
 
-            let bo_pct = (state.barrier_offset / 15.0).clamp(0.0, 1.0);
-            let (drag_bo_pct, _) = draw_slider_with_input_field(
+            let bo_str = format!("{:.1}m", state.barrier_offset);
+            if let Some(new_bo) = draw_bar_control(
                 fonts,
                 scaler,
+                tools,
+                "global_wall_offset",
                 x + scaler.s(12.0),
                 curr_y,
                 w - scaler.s(24.0),
                 scaler.s(20.0),
-                bo_pct,
-                &format!("{:.1}m", state.barrier_offset),
+                state.barrier_offset,
+                0.0,
+                20.0,
+                0.5,
+                &bo_str,
                 false,
                 mouse_pos,
                 clicked,
-            );
-            if let Some(p) = drag_bo_pct {
-                tools.set_global_barrier_offset(state, p * 15.0);
+            ) {
+                tools.set_global_barrier_offset(state, new_bo);
             }
             curr_y += scaler.s(24.0);
 
@@ -1912,6 +2105,59 @@ fn render_inspector(
             }
             if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_bo_w * 3.0, curr_y, btn_bo_w, scaler.s(22.0), "4m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
                 tools.set_global_barrier_offset(state, 4.0);
+            }
+            curr_y += scaler.s(28.0);
+
+            // Global Wall Type (Default Circuit Barrier Type)
+            let g_wt_name = match state.barrier_type {
+                BarrierType::Concrete => "Concrete",
+                BarrierType::TireWall => "Rubber Tyres",
+                BarrierType::Armco => "Armco Steel",
+                BarrierType::CurbWall => "Curb Wall",
+            };
+            fonts.draw_ui_bold(
+                &format!("Global Wall Type: {}", g_wt_name),
+                x + scaler.s(12.0),
+                curr_y + scaler.s(14.0),
+                scaler.font_s(13.0),
+                Palette::NEON_CYAN,
+            );
+            curr_y += scaler.s(20.0);
+
+            let is_g_conc = state.barrier_type == BarrierType::Concrete;
+            let is_g_tire = state.barrier_type == BarrierType::TireWall;
+            let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+
+            if draw_ui_btn(
+                fonts,
+                scaler,
+                x + scaler.s(12.0),
+                curr_y,
+                half_btn_w,
+                scaler.s(22.0),
+                "Concrete",
+                if is_g_conc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                if is_g_conc { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                mouse_pos,
+                clicked,
+            ) {
+                tools.set_global_barrier_type(state, BarrierType::Concrete);
+            }
+
+            if draw_ui_btn(
+                fonts,
+                scaler,
+                x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                curr_y,
+                half_btn_w,
+                scaler.s(22.0),
+                "Rubber Tyres",
+                if is_g_tire { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                if is_g_tire { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                mouse_pos,
+                clicked,
+            ) {
+                tools.set_global_barrier_type(state, BarrierType::TireWall);
             }
             curr_y += scaler.s(28.0);
 
@@ -2109,63 +2355,204 @@ fn render_template_modal(
     None
 }
 
-/// Helper to draw an interactive slider bar with a compact input field box next to it.
-/// Returns (Some(new_pct) if dragged, true if the input box was clicked to edit).
-fn draw_slider_with_input_field(
+/// Unified, reusable interactive Bar Control component for the Track Editor suite.
+/// Integrates:
+/// 1. A visual and draggable slider bar with custom ranges, limits, and accent color.
+/// 2. Selection tracking: clicking/dragging the bar or its input field selects it with visual glowing border.
+/// 3. Mouse wheel scrolling: when selected (or hovered), mouse scroll adjusts the bar value by `step`.
+///    Holding Shift multiplies the step for faster adjustment.
+/// 4. Direct in-place manual text input: clicking the right-hand value box enters active text editing
+///    with visible cursor, supporting numbers, decimals, negative signs, Backspace, Enter to commit,
+///    and Escape/click-outside to cancel/commit.
+/// Returns `Some(new_val)` whenever the value changes (via drag, mouse scroll, or manual text commit).
+pub fn draw_bar_control(
     fonts: &Fonts,
     scaler: &UiScaler,
+    tools: &mut ToolSettings,
+    id: &str,
     x: f32,
     y: f32,
     total_w: f32,
     h: f32,
-    pct: f32,
-    val_str: &str,
+    val: f32,
+    min_val: f32,
+    max_val: f32,
+    step: f32,
+    val_display: &str,
     is_gold: bool,
     mouse_pos: Vec2,
     clicked: bool,
-) -> (Option<f32>, bool) {
+) -> Option<f32> {
     let input_w = scaler.s(60.0);
     let gap = scaler.s(6.0);
     let slider_w = (total_w - input_w - gap).max(20.0);
     let input_x = x + slider_w + gap;
 
-    // 1. Draggable slider on left
     let accent_col = if is_gold { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
     let thumb_col = if is_gold { Palette::NEON_CYAN } else { Palette::NEON_GOLD };
 
-    scaler.draw_glass_card(x, y, slider_w, h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.0);
-    let bar_pct = pct.clamp(0.0, 1.0);
-    let inner_w = (slider_w - scaler.s(4.0)).max(1.0);
-    let inner_h = (h - scaler.s(4.0)).max(1.0);
-    macroquad::shapes::draw_rectangle(x + scaler.s(2.0), y + scaler.s(2.0), inner_w * bar_pct, inner_h, accent_col);
-    let thumb_x = x + scaler.s(2.0) + inner_w * bar_pct;
-    macroquad::shapes::draw_circle(thumb_x, y + h * 0.5, scaler.s(5.5), thumb_col);
+    let is_selected = tools.selected_bar.as_deref() == Some(id);
+    let is_editing = tools.editing_bar.as_ref().map(|(eid, _)| eid.as_str()) == Some(id);
 
-    let mouse_over_slider = mouse_pos.x >= x - scaler.s(4.0) && mouse_pos.x <= x + slider_w + scaler.s(4.0) && mouse_pos.y >= y - scaler.s(4.0) && mouse_pos.y <= y + h + scaler.s(4.0);
+    let mouse_over_slider = mouse_pos.x >= x - scaler.s(2.0)
+        && mouse_pos.x <= x + slider_w + scaler.s(2.0)
+        && mouse_pos.y >= y - scaler.s(2.0)
+        && mouse_pos.y <= y + h + scaler.s(2.0);
+
+    let mouse_over_input = mouse_pos.x >= input_x
+        && mouse_pos.x <= input_x + input_w
+        && mouse_pos.y >= y
+        && mouse_pos.y <= y + h;
+
+    let mut result_val: Option<f32> = None;
+
+    // 1. Mouse Dragging / Clicking on Slider Bar
     let is_down = is_mouse_button_down(MouseButton::Left);
-    let new_pct = if is_down && mouse_over_slider {
+    if is_down && mouse_over_slider {
+        tools.selected_bar = Some(id.to_string());
+        if tools.editing_bar.is_some() {
+            tools.editing_bar = None;
+        }
+        let inner_w = (slider_w - scaler.s(4.0)).max(1.0);
         let p = ((mouse_pos.x - (x + scaler.s(2.0))) / inner_w).clamp(0.0, 1.0);
-        Some(p)
+        let new_val = min_val + p * (max_val - min_val);
+        result_val = Some(new_val);
+    }
+
+    // 2. Mouse Scroll Wheel (adjusts when bar is selected or hovered)
+    let wheel_y = std::panic::catch_unwind(macroquad::input::mouse_wheel).unwrap_or((0.0, 0.0)).1;
+    if wheel_y.abs() > 0.01 && (is_selected || mouse_over_slider || mouse_over_input) {
+        tools.selected_bar = Some(id.to_string());
+        if tools.editing_bar.is_some() {
+            tools.editing_bar = None;
+        }
+        let shift = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+        let mult = if shift { 2.0 } else { 1.0 };
+        let dir = if wheel_y > 0.0 { 1.0 } else { -1.0 };
+        let new_val = (val + dir * step * mult).clamp(min_val, max_val);
+        result_val = Some(new_val);
+    }
+
+    // 3. Manual Input Field Interaction & In-Place Editing
+    if !is_editing {
+        if clicked && mouse_over_input {
+            tools.selected_bar = Some(id.to_string());
+            let init_str = format!("{:.1}", val);
+            tools.editing_bar = Some((id.to_string(), init_str));
+        } else if clicked && mouse_over_slider {
+            tools.selected_bar = Some(id.to_string());
+            if tools.editing_bar.is_some() {
+                tools.editing_bar = None;
+            }
+        }
     } else {
-        None
+        // Active in-place text editing
+        let mut stop_editing = false;
+        if clicked && !mouse_over_input {
+            // Click outside commits current text
+            if let Some((_, ref buf)) = tools.editing_bar {
+                if let Ok(parsed) = buf.trim().parse::<f32>() {
+                    result_val = Some(parsed.clamp(min_val, max_val));
+                }
+            }
+            stop_editing = true;
+        } else {
+            // Keyboard handling for active field
+            while let Some(c) = get_char_pressed() {
+                if let Some((_, ref mut buf)) = tools.editing_bar {
+                    let can_minus = min_val < 0.0 && buf.is_empty() && c == '-';
+                    let can_digit = c.is_ascii_digit();
+                    let can_dot = c == '.' && !buf.contains('.');
+                    if (can_digit || can_dot || can_minus) && buf.len() < 8 {
+                        buf.push(c);
+                    }
+                }
+            }
+
+            if is_key_pressed(KeyCode::Backspace) {
+                if let Some((_, ref mut buf)) = tools.editing_bar {
+                    buf.pop();
+                }
+            }
+
+            if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
+                if let Some((_, ref buf)) = tools.editing_bar {
+                    if let Ok(parsed) = buf.trim().parse::<f32>() {
+                        result_val = Some(parsed.clamp(min_val, max_val));
+                    }
+                }
+                stop_editing = true;
+            }
+
+            if is_key_pressed(KeyCode::Escape) {
+                stop_editing = true;
+            }
+        }
+
+        if stop_editing {
+            tools.editing_bar = None;
+        }
+    }
+
+    // 4. Render Slider Bar (Left)
+    let current_val = result_val.unwrap_or(val);
+    let bar_pct = if (max_val - min_val).abs() > 1e-5 {
+        ((current_val - min_val) / (max_val - min_val)).clamp(0.0, 1.0)
+    } else {
+        0.0
     };
 
-    // 2. Input field on right
-    let mouse_over_input = mouse_pos.x >= input_x && mouse_pos.x <= input_x + input_w && mouse_pos.y >= y && mouse_pos.y <= y + h;
-    let input_bg = if mouse_over_input { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
-    let input_border = if mouse_over_input { accent_col } else { Palette::UI_CARD_BORDER };
+    let slider_bg = if mouse_over_slider { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+    let slider_border = if is_selected {
+        accent_col
+    } else if mouse_over_slider {
+        Palette::WHITE
+    } else {
+        Palette::UI_CARD_BORDER
+    };
+    let slider_border_thick = if is_selected { 1.8 } else { 1.0 };
+    scaler.draw_glass_card(x, y, slider_w, h, slider_bg, slider_border, slider_border_thick);
 
-    scaler.draw_glass_card(input_x, y, input_w, h, input_bg, input_border, if mouse_over_input { 1.5 } else { 1.0 });
-    fonts.draw_ui_bold_centered(
-        val_str,
-        input_x + input_w * 0.5,
-        y + h * 0.5 + scaler.s(4.0),
-        scaler.font_s(11.0),
-        if mouse_over_input { Palette::WHITE } else { Color::new(0.90, 0.94, 1.0, 1.0) },
-    );
+    let inner_w = (slider_w - scaler.s(4.0)).max(1.0);
+    let inner_h = (h - scaler.s(4.0)).max(1.0);
+    draw_rectangle(x + scaler.s(2.0), y + scaler.s(2.0), inner_w * bar_pct, inner_h, accent_col);
 
-    let input_clicked = mouse_over_input && clicked;
-    (new_pct, input_clicked)
+    let thumb_x = x + scaler.s(2.0) + inner_w * bar_pct;
+    let thumb_radius = if is_selected { scaler.s(6.5) } else { scaler.s(5.5) };
+    draw_circle(thumb_x, y + h * 0.5, thumb_radius, thumb_col);
+    if is_selected {
+        draw_circle_lines(thumb_x, y + h * 0.5, thumb_radius + scaler.s(1.5), 1.0, Palette::WHITE);
+    }
+
+    // 5. Render Manual Input Control (Right)
+    let is_still_editing = tools.editing_bar.as_ref().map(|(eid, _)| eid.as_str()) == Some(id);
+    if is_still_editing {
+        let input_bg = Color::new(0.04, 0.08, 0.14, 0.95);
+        scaler.draw_glass_card(input_x, y, input_w, h, input_bg, accent_col, 2.0);
+        let buf = tools.editing_bar.as_ref().map(|(_, b)| b.as_str()).unwrap_or("");
+        let cursor = if (macroquad::time::get_time() * 2.5).fract() < 0.5 { "|" } else { "" };
+        let display_text = format!("{}{}", buf, cursor);
+        fonts.draw_ui_bold_centered(
+            &display_text,
+            input_x + input_w * 0.5,
+            y + h * 0.5 + scaler.s(4.0),
+            scaler.font_s(11.0),
+            Palette::WHITE,
+        );
+    } else {
+        let input_bg = if mouse_over_input { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+        let input_border = if mouse_over_input || is_selected { accent_col } else { Palette::UI_CARD_BORDER };
+        scaler.draw_glass_card(input_x, y, input_w, h, input_bg, input_border, if mouse_over_input || is_selected { 1.5 } else { 1.0 });
+        fonts.draw_ui_bold_centered(
+            val_display,
+            input_x + input_w * 0.5,
+            y + h * 0.5 + scaler.s(4.0),
+            scaler.font_s(11.0),
+            if mouse_over_input { Palette::WHITE } else { Color::new(0.90, 0.94, 1.0, 1.0) },
+        );
+    }
+
+    result_val
 }
 
 /// Renders a 2D lateral cross-section diagram of a jump ramp showing incline slope, tabletop flat, launch lip, and surface material.

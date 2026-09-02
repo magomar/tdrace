@@ -129,34 +129,23 @@ pub fn resolve_car_wall_collision(
 
     let v_n = v_contact.dot(normal);
 
-    // If moving away from the wall, only positional pushout was needed
-    if v_n >= 0.0 {
-        return Some(WallCollisionEvent {
-            contact_point,
-            normal,
-            penetration: deepest_penetration,
-            impact_speed: 0.0,
-            normal_impulse: 0.0,
-            friction_impulse: 0.0,
-        });
-    }
-
     let mass = car.config.mass;
     let inertia = car.config.inertia;
 
-    // Cross product (r x n) in 2D = r.x * n.y - r.y * n.x
-    let r_cross_n = r.x * normal.y - r.y * normal.x;
-    let k_n = (1.0 / mass) + (r_cross_n * r_cross_n) / inertia;
+    let mut j_n = 0.0;
+    if v_n < 0.0 {
+        let r_cross_n = r.x * normal.y - r.y * normal.x;
+        let k_n = (1.0 / mass) + (r_cross_n * r_cross_n) / inertia;
+        let restitution = wall.restitution;
+        j_n = (-(1.0 + restitution) * v_n) / k_n;
 
-    let restitution = wall.restitution;
-    let j_n = (-(1.0 + restitution) * v_n) / k_n;
+        // Apply normal impulse
+        let impulse_n = normal * j_n;
+        car.state.velocity += impulse_n / mass;
+        car.state.angular_velocity += (r.x * impulse_n.y - r.y * impulse_n.x) / inertia;
+    }
 
-    // Apply normal impulse
-    let impulse_n = normal * j_n;
-    car.state.velocity += impulse_n / mass;
-    car.state.angular_velocity += (r.x * impulse_n.y - r.y * impulse_n.x) / inertia;
-
-    // 3. Tangential sliding friction impulse
+    // 3. Tangential sliding friction and contact braking resistance
     let v_contact_after_n = car.state.velocity + Vec2::new(-car.state.angular_velocity * r.y, car.state.angular_velocity * r.x);
     let v_tangent_vec = v_contact_after_n - normal * v_contact_after_n.dot(normal);
     let v_t_mag = v_tangent_vec.length();
@@ -168,20 +157,39 @@ pub fn resolve_car_wall_collision(
         let k_t = (1.0 / mass) + (r_cross_t * r_cross_t) / inertia;
 
         let j_t_desired = -v_t_mag / k_t;
-        let max_friction_impulse = wall.friction * j_n;
-        let j_t = j_t_desired.clamp(-max_friction_impulse, max_friction_impulse);
+        let max_impact_friction = wall.friction * j_n;
+
+        // Contact wall resistance acting as brakes when running next to or touching the wall
+        let brake_decel = match wall.barrier_type {
+            crate::track::geometry::BarrierType::TireWall => 22.0, // High rubber grip and compression drag (~2.2g)
+            crate::track::geometry::BarrierType::Concrete => 9.5,  // Solid concrete scraping resistance (~0.95g)
+            crate::track::geometry::BarrierType::Armco => 11.5,    // Steel Armco barrier resistance (~1.15g)
+            crate::track::geometry::BarrierType::CurbWall => 7.5,  // Low curb wall resistance (~0.75g)
+        };
+        // resolve_all_wall_collisions runs 2 sub-iterations per 60Hz frame (dt_sub ~ 0.01667 / 2 = 0.00833s)
+        let contact_brake_impulse = mass * brake_decel * 0.00833;
+
+        let max_total_friction = max_impact_friction + contact_brake_impulse;
+        let j_t = j_t_desired.clamp(-max_total_friction, max_total_friction);
         j_t_applied = j_t.abs();
+
+        let impact_ratio = if max_total_friction > 1e-4 {
+            (max_impact_friction / max_total_friction).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
 
         let impulse_t = tangent * j_t;
         car.state.velocity += impulse_t / mass;
-        car.state.angular_velocity += (r.x * impulse_t.y - r.y * impulse_t.x) / inertia;
+        let torque_fraction = impact_ratio + (1.0 - impact_ratio) * 0.15;
+        car.state.angular_velocity += ((r.x * impulse_t.y - r.y * impulse_t.x) / inertia) * torque_fraction;
     }
 
     Some(WallCollisionEvent {
         contact_point,
         normal,
         penetration: deepest_penetration,
-        impact_speed: -v_n,
+        impact_speed: (-v_n).max(0.0),
         normal_impulse: j_n,
         friction_impulse: j_t_applied,
     })
@@ -237,34 +245,52 @@ pub fn resolve_car_obstacle_collision(
     let v_contact = car.state.velocity + v_rot;
 
     let v_n = v_contact.dot(normal);
-    if v_n >= 0.0 {
-        return Some(WallCollisionEvent {
-            contact_point: contact_pt,
-            normal,
-            penetration: manifold.penetration,
-            impact_speed: 0.0,
-            normal_impulse: 0.0,
-            friction_impulse: 0.0,
-        });
-    }
 
     let mass = car.config.mass;
     let inertia = car.config.inertia;
-    let r_cross_n = r.x * normal.y - r.y * normal.x;
-    let k_n = (1.0 / mass) + (r_cross_n * r_cross_n) / inertia;
 
-    let j_n = (-(1.0 + obstacle.restitution) * v_n) / k_n;
-    let impulse_n = normal * j_n;
-    car.state.velocity += impulse_n / mass;
-    car.state.angular_velocity += (r.x * impulse_n.y - r.y * impulse_n.x) / inertia;
+    let mut j_n = 0.0;
+    if v_n < 0.0 {
+        let r_cross_n = r.x * normal.y - r.y * normal.x;
+        let k_n = (1.0 / mass) + (r_cross_n * r_cross_n) / inertia;
+        let restitution = obstacle.restitution;
+        j_n = (-(1.0 + restitution) * v_n) / k_n;
+
+        let impulse_n = normal * j_n;
+        car.state.velocity += impulse_n / mass;
+        car.state.angular_velocity += (r.x * impulse_n.y - r.y * impulse_n.x) / inertia;
+    }
+
+    // Tangential sliding friction and contact resistance
+    let v_contact_after_n = car.state.velocity + Vec2::new(-car.state.angular_velocity * r.y, car.state.angular_velocity * r.x);
+    let v_tangent_vec = v_contact_after_n - normal * v_contact_after_n.dot(normal);
+    let v_t_mag = v_tangent_vec.length();
+
+    let mut j_t_applied = 0.0;
+    if v_t_mag > 1e-4 {
+        let tangent = v_tangent_vec / v_t_mag;
+        let r_cross_t = r.x * tangent.y - r.y * tangent.x;
+        let k_t = (1.0 / mass) + (r_cross_t * r_cross_t) / inertia;
+
+        let j_t_desired = -v_t_mag / k_t;
+        let max_impact_friction = obstacle.friction * j_n;
+        let contact_brake_impulse = mass * (obstacle.friction * 20.0) * 0.00833;
+        let max_total_friction = max_impact_friction + contact_brake_impulse;
+        let j_t = j_t_desired.clamp(-max_total_friction, max_total_friction);
+        j_t_applied = j_t.abs();
+
+        let impulse_t = tangent * j_t;
+        car.state.velocity += impulse_t / mass;
+        car.state.angular_velocity += ((r.x * impulse_t.y - r.y * impulse_t.x) / inertia) * 0.2;
+    }
 
     Some(WallCollisionEvent {
         contact_point: contact_pt,
         normal,
         penetration: manifold.penetration,
-        impact_speed: -v_n,
+        impact_speed: (-v_n).max(0.0),
         normal_impulse: j_n,
-        friction_impulse: 0.0,
+        friction_impulse: j_t_applied,
     })
 }
 

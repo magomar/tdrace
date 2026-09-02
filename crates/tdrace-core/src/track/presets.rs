@@ -398,8 +398,9 @@ pub fn generate_walls_from_spline(
         let s_next = &spline.samples[next_i % n];
         if s_curr.left_wall && s_next.left_wall {
             let elev = (s_curr.elevation + s_next.elevation) * 0.5;
+            let b_type = s_curr.wall_type.or(s_next.wall_type).unwrap_or(barrier_type);
             raw_left_walls.push((
-                WallBarrier::with_elevation(left_pts[i], left_pts[next_i], barrier_type, elev),
+                WallBarrier::with_elevation(left_pts[i], left_pts[next_i], b_type, elev),
                 s_curr.distance,
             ));
         }
@@ -412,11 +413,12 @@ pub fn generate_walls_from_spline(
         let s_next = &spline.samples[next_i % n];
         if s_curr.right_wall && s_next.right_wall {
             let elev = (s_curr.elevation + s_next.elevation) * 0.5;
+            let b_type = s_curr.wall_type.or(s_next.wall_type).unwrap_or(barrier_type);
             raw_right_walls.push((
                 WallBarrier::with_elevation(
                     right_pts[i],
                     right_pts[next_i],
-                    barrier_type,
+                    b_type,
                     elev,
                 ),
                 s_curr.distance,
