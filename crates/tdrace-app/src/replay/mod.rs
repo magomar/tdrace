@@ -5,10 +5,7 @@ use std::io::{Read, Write};
 use std::path::Path;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
-    ramp_raceway,
-};
+use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::CarConfig;
 
 use crate::ui::menu::{CarChoice, TrackChoice};
@@ -315,18 +312,8 @@ impl ReplayPlayer {
     ///
     /// Returns `Ok(max_error_distance)` if determinism passes, or `Err(diagnostic)` if mismatch occurs.
     pub fn verify_determinism(&self) -> Result<f32, String> {
-        let track = match &self.replay.header.track_choice {
-            TrackChoice::ClassicGrandPrix => classic_grand_prix(),
-            TrackChoice::OvalSpeedway => oval_speedway(),
-            TrackChoice::DriftPark => drift_park(),
-            TrackChoice::KartArena => kart_arena(),
-            TrackChoice::RampRaceway => ramp_raceway(),
-            TrackChoice::OasisRally => oasis_rally(),
-            TrackChoice::OutlawPass => outlaw_pass(),
-            TrackChoice::Custom { path, .. } => {
-                tdrace_core::track::Track::load_from_file(path).unwrap_or_else(|_| classic_grand_prix())
-            }
-        };
+        let track = crate::ui::menu::resolve_track_for_menu(&self.replay.header.track_choice)
+            .unwrap_or_else(classic_grand_prix);
 
         let config = match self.replay.header.car_choice {
             CarChoice::SportsCar => CarConfig::sports_car(),

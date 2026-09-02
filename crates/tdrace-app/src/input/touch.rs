@@ -103,7 +103,7 @@ impl Default for VirtualJoystickState {
 /// - Zero-lag multi-touch tracking supporting simultaneous multi-finger gestures.
 /// - Virtual Joystick mode with configurable deadzone and progressive deflection.
 /// - Split Left/Right steering buttons mode.
-/// - Dedicated Gas (accelerator), Brake (service brake + reverse), and Handbrake buttons.
+/// - Dedicated Gas (accelerator), Brake (service brake / reverse at stop), and Handbrake buttons.
 /// - Automatic touch / mobile detection with fallback and manual overrides.
 /// - Modern translucent glassmorphism styling and glowing feedback.
 #[derive(Debug, Clone, PartialEq)]
@@ -443,7 +443,7 @@ impl TouchController {
 
         let throttle = if self.btn_gas.is_pressed { 1.0 } else { 0.0 };
         let brake = if self.btn_brake.is_pressed { 1.0 } else { 0.0 };
-        let reverse = self.btn_brake.is_pressed;
+        let reverse = false;
         let handbrake = self.btn_handbrake.is_pressed;
 
         CarControls {

@@ -238,7 +238,7 @@ fn test_simultaneous_multi_touch_gestures() {
     let ctrl2 = tc.poll_controls();
     assert_eq!(ctrl2.throttle, 1.0);
     assert_eq!(ctrl2.brake, 1.0);
-    assert!(ctrl2.reverse);
+    assert!(!ctrl2.reverse);
     assert!(!ctrl2.handbrake);
 }
 

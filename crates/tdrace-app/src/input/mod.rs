@@ -76,7 +76,6 @@ impl InputController {
         let mut raw_steer = 0.0f32;
         let mut raw_throttle = 0.0f32;
         let mut raw_brake = 0.0f32;
-        let mut raw_reverse = false;
 
         let is_down = is_key_down;
 
@@ -93,31 +92,25 @@ impl InputController {
             raw_throttle = 1.0;
         }
 
-        // Brake: A / Down
+        // Brake / Reverse at stop: A / Down
         if is_down(KeyCode::A) || is_down(KeyCode::Down) {
             raw_brake = 1.0;
-        }
-
-        // Reverse: Z
-        if is_down(KeyCode::Z) {
-            raw_throttle = 1.0;
-            raw_reverse = true;
         }
 
         // Handbrake: Space
         let kb_handbrake = is_down(KeyCode::Space);
 
-        self.process_inputs((raw_steer, raw_throttle, raw_brake, kb_handbrake, raw_reverse), dt, current_speed_fwd)
+        self.process_inputs((raw_steer, raw_throttle, raw_brake, kb_handbrake), dt, current_speed_fwd)
     }
 
     /// Pure input processing & blending pipeline between keyboard digital ramps and gamepad analog axes.
     pub fn process_inputs(
         &mut self,
-        raw_kb: (f32, f32, f32, bool, bool),
+        raw_kb: (f32, f32, f32, bool),
         dt: f32,
         current_speed_fwd: f32,
     ) -> CarControls {
-        let (raw_steer, raw_throttle, raw_brake, kb_handbrake, raw_reverse) = raw_kb;
+        let (raw_steer, raw_throttle, raw_brake, kb_handbrake) = raw_kb;
 
         // Apply digital input smoothing, progressive ramps & speed-sensitive attenuation to keyboard
         let speed_abs = current_speed_fwd.abs();
@@ -130,10 +123,18 @@ impl InputController {
         } else {
             kb_steer
         };
-        let throttle = kb_throttle.max(gp.throttle).clamp(0.0, 1.0);
-        let brake = kb_brake.max(gp.brake).clamp(0.0, 1.0);
+        let mut throttle = kb_throttle.max(gp.throttle).clamp(0.0, 1.0);
+        let mut brake = kb_brake.max(gp.brake).clamp(0.0, 1.0);
         let handbrake = kb_handbrake || gp.handbrake;
-        let reverse = raw_reverse || gp.reverse;
+        let mut reverse = gp.reverse;
+
+        // When stationary / stopped or moving backward (forward speed <= 0.1 m/s),
+        // pushing the brakes becomes reverse gear unless forward throttle is applied.
+        if current_speed_fwd <= 0.1 && brake > 0.0 && throttle == 0.0 {
+            reverse = true;
+            throttle = brake;
+            brake = 0.0;
+        }
 
         CarControls {
             throttle,
@@ -146,11 +147,17 @@ impl InputController {
 
     /// Combines keyboard/gamepad controls with touch input controls.
     pub fn combine_controls(kb: CarControls, touch: CarControls) -> CarControls {
-        let throttle = (kb.throttle + touch.throttle).clamp(0.0, 1.0);
         let steer = (kb.steer + touch.steer).clamp(-1.0, 1.0);
-        let brake = (kb.brake + touch.brake).clamp(0.0, 1.0);
+        let mut throttle = (kb.throttle + touch.throttle).clamp(0.0, 1.0);
+        let mut brake = (kb.brake + touch.brake).clamp(0.0, 1.0);
         let handbrake = kb.handbrake || touch.handbrake;
-        let reverse = kb.reverse || touch.reverse;
+        let mut reverse = kb.reverse || touch.reverse;
+
+        if kb.reverse && touch.brake > 0.0 && touch.throttle == 0.0 {
+            reverse = true;
+            throttle = (kb.throttle + touch.brake).clamp(0.0, 1.0);
+            brake = kb.brake;
+        }
 
         CarControls {
             throttle,

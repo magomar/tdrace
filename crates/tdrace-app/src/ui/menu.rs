@@ -139,115 +139,84 @@ impl TrackChoice {
 
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
 pub fn resolve_track_for_menu(choice: &TrackChoice) -> Option<tdrace_core::track::Track> {
+    resolve_track_for_menu_with_dir(choice, "tracks")
+}
+
+/// Resolves a TrackChoice to a concrete Track instance for UI preview rendering given a tracks directory.
+pub fn resolve_track_for_menu_with_dir(
+    choice: &TrackChoice,
+    tracks_dir: impl AsRef<std::path::Path>,
+) -> Option<tdrace_core::track::Track> {
+    let dir = tracks_dir.as_ref();
+
+    // 1. If custom choice and path directly exists on disk, load it
+    if let TrackChoice::Custom { path, .. } = choice {
+        let file_path = std::path::Path::new(path);
+        if file_path.exists() {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file(file_path) {
+                return Some(t);
+            }
+        }
+    }
+
+    // 2. Check disk candidate paths across module subdirectories and drafts
+    let id = choice.track_id();
+    let file_name = format!("{}.json", id);
+    let candidate_paths = [
+        dir.join("classic").join(&file_name),
+        dir.join("f1").join(&file_name),
+        dir.join("rally").join(&file_name),
+        dir.join("kart").join(&file_name),
+        dir.join("drafts").join(&file_name),
+        dir.join(&file_name),
+    ];
+    for p in &candidate_paths {
+        if p.exists() {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                return Some(t);
+            }
+        }
+    }
+
+    // 3. Fallback to procedural preset definitions
     match choice {
-        TrackChoice::ClassicGrandPrix => {
-            let candidates = ["tracks/classic/classic_grand_prix.json", "tracks/classic_grand_prix.json"];
-            for p in &candidates {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
-                    return Some(t);
-                }
-            }
-            Some(tdrace_core::track::presets::classic_grand_prix())
-        }
-        TrackChoice::OvalSpeedway => {
-            let candidates = ["tracks/classic/oval_speedway.json", "tracks/oval_speedway.json"];
-            for p in &candidates {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
-                    return Some(t);
-                }
-            }
-            Some(tdrace_core::track::presets::oval_speedway())
-        }
-        TrackChoice::DriftPark => {
-            let candidates = ["tracks/classic/drift_park.json", "tracks/drift_park.json"];
-            for p in &candidates {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
-                    return Some(t);
-                }
-            }
-            Some(tdrace_core::track::presets::drift_park())
-        }
-        TrackChoice::KartArena => {
-            let candidates = ["tracks/kart/kart_arena.json", "tracks/kart_arena.json"];
-            for p in &candidates {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
-                    return Some(t);
-                }
-            }
-            Some(tdrace_core::track::presets::kart_arena())
-        }
-        TrackChoice::RampRaceway => {
-            let candidates = ["tracks/classic/ramp_raceway.json", "tracks/ramp_raceway.json"];
-            for p in &candidates {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
-                    return Some(t);
-                }
-            }
-            Some(tdrace_core::track::presets::ramp_raceway())
-        }
-        TrackChoice::OasisRally => {
-            let candidates = ["tracks/rally/oasis_rally.json", "tracks/oasis_rally.json"];
-            for p in &candidates {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
-                    return Some(t);
-                }
-            }
-            Some(tdrace_core::track::presets::oasis_rally())
-        }
-        TrackChoice::OutlawPass => {
-            let candidates = ["tracks/classic/outlaw_pass.json", "tracks/outlaw_pass.json"];
-            for p in &candidates {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
-                    return Some(t);
-                }
-            }
-            Some(tdrace_core::track::presets::outlaw_pass())
-        }
-        TrackChoice::Custom { id, path, .. } => {
-            let file_path = std::path::Path::new(path);
-            if file_path.exists() {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(file_path) {
-                    return Some(t);
-                }
-            }
-            let subdirs = ["", "drafts/", "classic/", "f1/", "rally/", "kart/"];
-            for sub in &subdirs {
-                let p = format!("tracks/{}{}.json", sub, id);
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
-                    return Some(t);
-                }
-            }
-            match id.as_str() {
-                "monza" => Some(crate::module::f1::F1GameModule::track_monza()),
-                "spa" => Some(crate::module::f1::F1GameModule::track_spa()),
-                "silverstone" => Some(crate::module::f1::F1GameModule::track_silverstone()),
-                "monaco" => Some(crate::module::f1::F1GameModule::track_monaco()),
-                "suzuka" => Some(crate::module::f1::F1GameModule::track_suzuka()),
-                "interlagos" => Some(crate::module::f1::F1GameModule::track_interlagos()),
-                "montreal" => Some(crate::module::f1::F1GameModule::track_montreal()),
-                "red_bull_ring" => Some(crate::module::f1::F1GameModule::track_red_bull_ring()),
-                "catalunya" => Some(crate::module::f1::F1GameModule::track_catalunya()),
-                "zandvoort" => Some(crate::module::f1::F1GameModule::track_zandvoort()),
-                "bahrain" => Some(crate::module::f1::F1GameModule::track_bahrain()),
-                "marina_bay" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
-                "cota" => Some(crate::module::f1::F1GameModule::track_cota()),
-                "sahara" | "sahara_dunes" => Some(tdrace_core::track::presets::sahara_dunes()),
-                "dirt_figure_eight" | "dirt_eight" => Some(tdrace_core::track::presets::dirt_figure_eight()),
-                "holjes_rx" | "holjes" => Some(tdrace_core::track::presets::holjes_rx()),
-                "lydden_hill" | "lydden" => Some(tdrace_core::track::presets::lydden_hill()),
-                "hell_rx" | "hell" => Some(tdrace_core::track::presets::hell_rx()),
-                "loheac_rx" | "loheac" => Some(tdrace_core::track::presets::loheac_rx()),
-                "lonato" => Some(crate::module::kart::KartGameModule::track_lonato()),
-                "sarno" => Some(crate::module::kart::KartGameModule::track_sarno()),
-                "genk" => Some(crate::module::kart::KartGameModule::track_genk()),
-                "pfi" => Some(crate::module::kart::KartGameModule::track_pfi()),
-                "zuera" => Some(crate::module::kart::KartGameModule::track_zuera()),
-                "le_mans_kart" => Some(crate::module::kart::KartGameModule::track_le_mans()),
-                "portimao_kart" => Some(crate::module::kart::KartGameModule::track_portimao()),
-                "franciacorta" => Some(crate::module::kart::KartGameModule::track_franciacorta()),
-                _ => None,
-            }
-        }
+        TrackChoice::ClassicGrandPrix => Some(tdrace_core::track::presets::classic_grand_prix()),
+        TrackChoice::OvalSpeedway => Some(tdrace_core::track::presets::oval_speedway()),
+        TrackChoice::DriftPark => Some(tdrace_core::track::presets::drift_park()),
+        TrackChoice::KartArena => Some(tdrace_core::track::presets::kart_arena()),
+        TrackChoice::RampRaceway => Some(tdrace_core::track::presets::ramp_raceway()),
+        TrackChoice::OasisRally => Some(tdrace_core::track::presets::oasis_rally()),
+        TrackChoice::OutlawPass => Some(tdrace_core::track::presets::outlaw_pass()),
+        TrackChoice::Custom { id, .. } => match id.as_str() {
+            "monza" => Some(crate::module::f1::F1GameModule::track_monza()),
+            "spa" => Some(crate::module::f1::F1GameModule::track_spa()),
+            "silverstone" => Some(crate::module::f1::F1GameModule::track_silverstone()),
+            "monaco" => Some(crate::module::f1::F1GameModule::track_monaco()),
+            "suzuka" => Some(crate::module::f1::F1GameModule::track_suzuka()),
+            "interlagos" => Some(crate::module::f1::F1GameModule::track_interlagos()),
+            "montreal" => Some(crate::module::f1::F1GameModule::track_montreal()),
+            "red_bull_ring" => Some(crate::module::f1::F1GameModule::track_red_bull_ring()),
+            "catalunya" => Some(crate::module::f1::F1GameModule::track_catalunya()),
+            "zandvoort" => Some(crate::module::f1::F1GameModule::track_zandvoort()),
+            "bahrain" => Some(crate::module::f1::F1GameModule::track_bahrain()),
+            "marina_bay" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
+            "cota" => Some(crate::module::f1::F1GameModule::track_cota()),
+            "sahara" | "sahara_dunes" => Some(tdrace_core::track::presets::sahara_dunes()),
+            "dirt_figure_eight" | "dirt_eight" => Some(tdrace_core::track::presets::dirt_figure_eight()),
+            "holjes_rx" | "holjes" => Some(tdrace_core::track::presets::holjes_rx()),
+            "lydden_hill" | "lydden" => Some(tdrace_core::track::presets::lydden_hill()),
+            "hell_rx" | "hell" => Some(tdrace_core::track::presets::hell_rx()),
+            "loheac_rx" | "loheac" => Some(tdrace_core::track::presets::loheac_rx()),
+            "lonato" => Some(crate::module::kart::KartGameModule::track_lonato()),
+            "sarno" => Some(crate::module::kart::KartGameModule::track_sarno()),
+            "genk" => Some(crate::module::kart::KartGameModule::track_genk()),
+            "pfi" => Some(crate::module::kart::KartGameModule::track_pfi()),
+            "zuera" => Some(crate::module::kart::KartGameModule::track_zuera()),
+            "le_mans_kart" => Some(crate::module::kart::KartGameModule::track_le_mans()),
+            "portimao_kart" => Some(crate::module::kart::KartGameModule::track_portimao()),
+            "franciacorta" => Some(crate::module::kart::KartGameModule::track_franciacorta()),
+            _ => None,
+        },
     }
 }
 
@@ -1109,7 +1078,7 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         "R / Y : Restart Race".to_string(),
         "TAB / Left Stick Click : Camera View".to_string(),
         "Q/A/O/P / Arrows / Stick & Triggers : Drive".to_string(),
-        "SPACE / B : Handbrake | Z / LB : Reverse".to_string(),
+        "SPACE / B : Handbrake | Hold Brake at Stop : Reverse".to_string(),
     ];
 
     let mut item_y = div_y + scaler.s(22.0);
@@ -1291,10 +1260,9 @@ pub fn render_controls_screen(
 
     let kb_rows = [
         ("Accelerate / Gas", "Q / Up Arrow"),
-        ("Brake / Decelerate", "A / Down Arrow"),
+        ("Brake / Reverse (at stop)", "A / Down Arrow"),
         ("Steer Left / Right", "O / P or Left / Right"),
         ("Handbrake & Drift", "Spacebar"),
-        ("Reverse Gear", "Z"),
         ("Cycle Assist Profile", "H"),
         ("Controls & Assists Guide", "C / K"),
         ("Camera Zoom In / Out", "+ / - or Tab"),
@@ -1320,9 +1288,8 @@ pub fn render_controls_screen(
     let gp_rows = [
         ("Proportional Steering", "Left Analog Stick / D-Pad"),
         ("Analog Progressive Throttle", "Right Trigger (RT / R2)"),
-        ("Analog Progressive Brake", "Left Trigger (LT / L2)"),
+        ("Analog Brake / Reverse (at stop)", "Left Trigger (LT / L2)"),
         ("Handbrake & Slide Initiation", "A / Cross Button (or RB)"),
-        ("Reverse Gear", "X / Square Button (or LB)"),
         ("Cycle Assist Profile", "Right Stick Click (R3) / Select"),
         ("Cycle Camera Zoom", "Left Stick Click (L3)"),
         ("Pause / Resume Menu", "Start / Menu Button"),

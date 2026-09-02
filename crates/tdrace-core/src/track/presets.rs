@@ -1517,7 +1517,7 @@ pub fn loheac_rx() -> Track {
             SurfaceShape::OrientedBox {
                 center: Vec2::new(70.0, 123.0),
                 half_extents: Vec2::new(5.0, 6.0),
-                angle: 3.14,
+                angle: std::f32::consts::PI,
             },
             Vec2::new(-1.0, 0.0),
             4.6,

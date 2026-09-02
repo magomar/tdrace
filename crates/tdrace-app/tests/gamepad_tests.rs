@@ -39,7 +39,7 @@ fn test_gamepad_analog_steering_and_triggers_injection() {
     };
     input.gamepad.inject_snapshot(snapshot);
 
-    let ctrl = input.process_inputs((0.0, 0.0, 0.0, false, false), dt, 0.0);
+    let ctrl = input.process_inputs((0.0, 0.0, 0.0, false), dt, 0.0);
     assert!((ctrl.steer - 0.65).abs() < 1e-4, "Analog stick steer should be preserved");
     assert!((ctrl.throttle - 0.80).abs() < 1e-4, "Analog trigger throttle should be preserved");
     assert_eq!(ctrl.brake, 0.0);
@@ -66,7 +66,7 @@ fn test_gamepad_and_keyboard_seamless_blending() {
     input.gamepad.inject_snapshot(snapshot);
 
     // Also press keyboard throttle (Q)
-    let ctrl = input.process_inputs((0.0, 1.0, 0.0, false, false), dt, 0.0);
+    let ctrl = input.process_inputs((0.0, 1.0, 0.0, false), dt, 0.0);
     assert!((ctrl.steer - 0.50).abs() < 1e-4);
     assert!(ctrl.throttle > 0.0, "Keyboard throttle blended");
     assert!((ctrl.brake - 0.75).abs() < 1e-4);
@@ -135,7 +135,7 @@ fn test_tri_modal_seamless_input_transition_keyboard_gamepad_touch() {
     let dt = 1.0 / 60.0;
 
     // 1. Keyboard only
-    let kb_ctrl = input.process_inputs((1.0, 1.0, 0.0, false, false), dt, 0.0);
+    let kb_ctrl = input.process_inputs((1.0, 1.0, 0.0, false), dt, 0.0);
     let touch_empty = tdrace_app::input::touch::TouchController::new().poll_controls();
     let combined_1 = InputController::combine_controls(kb_ctrl, touch_empty);
     assert!(combined_1.throttle > 0.0);
@@ -150,7 +150,7 @@ fn test_tri_modal_seamless_input_transition_keyboard_gamepad_touch() {
         ..Default::default()
     });
 
-    let gp_ctrl = input.process_inputs((0.0, 0.0, 0.0, false, false), dt, 0.0);
+    let gp_ctrl = input.process_inputs((0.0, 0.0, 0.0, false), dt, 0.0);
     let combined_2 = InputController::combine_controls(gp_ctrl, touch_empty);
     assert_eq!(combined_2.steer, -0.75);
     assert_eq!(combined_2.throttle, 0.90);
@@ -202,10 +202,49 @@ fn test_gamepad_rt_throttle_lt_brake_a_handbrake_mapping() {
     };
     input.gamepad.inject_snapshot(snapshot);
 
-    let ctrl = input.process_inputs((0.0, 0.0, 0.0, false, false), dt, 0.0);
+    let ctrl = input.process_inputs((0.0, 0.0, 0.0, false), dt, 0.0);
     assert_eq!(ctrl.throttle, 1.0, "RT should produce full throttle");
     assert_eq!(ctrl.brake, 0.85, "LT should produce progressive braking");
     assert!(ctrl.handbrake, "A button should engage handbrake");
+}
+
+#[test]
+fn test_brake_to_reverse_transitions() {
+    let mut input = InputController::new();
+    let dt = 1.0 / 60.0;
+
+    // 1. Moving forward at speed: pressing brake slows the car down (brake > 0, reverse = false)
+    let fwd_speed = 25.0;
+    let ctrl_braking = input.process_inputs((0.0, 0.0, 1.0, false), dt, fwd_speed);
+    assert!(ctrl_braking.brake > 0.0);
+    assert_eq!(ctrl_braking.throttle, 0.0);
+    assert!(!ctrl_braking.reverse, "At forward speed, brake does not engage reverse");
+
+    // 2. Speed reaches zero (<= 0.1 m/s): holding brake engages reverse gear
+    let stopped_speed = 0.0;
+    let ctrl_stopped = input.process_inputs((0.0, 0.0, 1.0, false), dt, stopped_speed);
+    assert!(ctrl_stopped.reverse, "At zero speed, brake engages reverse gear");
+    assert!(ctrl_stopped.throttle > 0.0, "Reverse throttle is driven by brake input");
+    assert_eq!(ctrl_stopped.brake, 0.0, "Service brake is released in reverse gear");
+
+    // 3. Reversing backward (speed < 0.0): holding brake continues reverse
+    let rev_speed = -5.0;
+    let ctrl_reversing = input.process_inputs((0.0, 0.0, 1.0, false), dt, rev_speed);
+    assert!(ctrl_reversing.reverse, "While reversing, brake continues reverse acceleration");
+    assert!(ctrl_reversing.throttle > 0.0);
+    assert_eq!(ctrl_reversing.brake, 0.0);
+
+    // 4. Reversing backward: pressing throttle disengages reverse and applies forward gas
+    let ctrl_forward = input.process_inputs((0.0, 1.0, 0.0, false), dt, rev_speed);
+    assert!(!ctrl_forward.reverse, "Pressing gas disengages reverse");
+    assert!(ctrl_forward.throttle > 0.0, "Forward throttle is applied");
+    assert_eq!(ctrl_forward.brake, 0.0);
+
+    // 5. Simultaneous gas and brake at zero speed: forward gas priority / burnout, reverse remains false
+    let ctrl_burnout = input.process_inputs((0.0, 1.0, 1.0, false), dt, stopped_speed);
+    assert!(!ctrl_burnout.reverse, "Simultaneous throttle prevents reverse engagement");
+    assert!(ctrl_burnout.throttle > 0.0);
+    assert!(ctrl_burnout.brake > 0.0);
 }
 
 #[test]

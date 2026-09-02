@@ -16,7 +16,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -30,7 +32,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -44,7 +48,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -58,7 +64,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -72,7 +80,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -86,7 +96,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -100,7 +112,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -114,7 +128,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -128,7 +144,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -142,7 +160,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -156,7 +176,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -170,7 +192,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -184,7 +208,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -198,7 +224,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -212,7 +240,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       }
     ],
     "closed": true,
@@ -238,7 +268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -261,7 +293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -284,7 +318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -307,7 +343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -330,7 +368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -353,7 +393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -376,7 +418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -399,7 +443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -422,7 +468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -445,7 +493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -468,7 +518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -491,7 +543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -514,7 +568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -537,7 +593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -560,7 +618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -583,7 +643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -606,7 +668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -629,7 +693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -652,7 +718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -675,7 +743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -698,7 +768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -721,7 +793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -744,7 +818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -767,7 +843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -790,7 +868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -813,7 +893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -836,7 +918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -859,7 +943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -882,7 +968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -905,7 +993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -928,7 +1018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -951,7 +1043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -974,7 +1068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -997,7 +1093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1020,7 +1118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1043,7 +1143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1066,7 +1168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1089,7 +1193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1112,7 +1218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1135,7 +1243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1158,7 +1268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1181,7 +1293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1204,7 +1318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1227,7 +1343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1250,7 +1368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1273,7 +1393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1296,7 +1418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1319,7 +1443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1342,7 +1468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1365,7 +1493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1388,7 +1518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1411,7 +1543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1434,7 +1568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1457,7 +1593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1480,7 +1618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1503,7 +1643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1526,7 +1668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1549,7 +1693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1572,7 +1718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1595,7 +1743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1618,7 +1768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1641,7 +1793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1664,7 +1818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1687,7 +1843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1710,7 +1868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1733,7 +1893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1756,7 +1918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1779,7 +1943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1802,7 +1968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1825,7 +1993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1848,7 +2018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1871,7 +2043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1894,7 +2068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1917,7 +2093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1940,7 +2118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1963,7 +2143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -1986,7 +2168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2009,7 +2193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2032,7 +2218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2055,7 +2243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2078,7 +2268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2101,7 +2293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2124,7 +2318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2147,7 +2343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2170,7 +2368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2193,7 +2393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2216,7 +2418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2239,7 +2443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2262,7 +2468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2285,7 +2493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2308,7 +2518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2331,7 +2543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2354,7 +2568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2377,7 +2593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2400,7 +2618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2423,7 +2643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2446,7 +2668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2469,7 +2693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2492,7 +2718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2515,7 +2743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2538,7 +2768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2561,7 +2793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2584,7 +2818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2607,7 +2843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2630,7 +2868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2653,7 +2893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2676,7 +2918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2699,7 +2943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2722,7 +2968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2745,7 +2993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2768,7 +3018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2791,7 +3043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2814,7 +3068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2837,7 +3093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2860,7 +3118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2883,7 +3143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2906,7 +3168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2929,7 +3193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2952,7 +3218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2975,7 +3243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -2998,7 +3268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3021,7 +3293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3044,7 +3318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3067,7 +3343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3090,7 +3368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3113,7 +3393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3136,7 +3418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3159,7 +3443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3182,7 +3468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3205,7 +3493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3228,7 +3518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3251,7 +3543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3274,7 +3568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3297,7 +3593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3320,7 +3618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3343,7 +3643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3366,7 +3668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3389,7 +3693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3412,7 +3718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3435,7 +3743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3458,7 +3768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3481,7 +3793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3504,7 +3818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3527,7 +3843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3550,7 +3868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3573,7 +3893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3596,7 +3918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3619,7 +3943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3642,7 +3968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3665,7 +3993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3688,7 +4018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3711,7 +4043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3734,7 +4068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3757,7 +4093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3780,7 +4118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3803,7 +4143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3826,7 +4168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3849,7 +4193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3872,7 +4218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3895,7 +4243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3918,7 +4268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3941,7 +4293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3964,7 +4318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -3987,7 +4343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4010,7 +4368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4033,7 +4393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4056,7 +4418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4079,7 +4443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4102,7 +4468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4125,7 +4493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4148,7 +4518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4171,7 +4543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4194,7 +4568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4217,7 +4593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4240,7 +4618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4263,7 +4643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4286,7 +4668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4309,7 +4693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4332,7 +4718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4355,7 +4743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4378,7 +4768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4401,7 +4793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4424,7 +4818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4447,7 +4843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4470,7 +4868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4493,7 +4893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4516,7 +4918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4539,7 +4943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4562,7 +4968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4585,7 +4993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4608,7 +5018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4631,7 +5043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4654,7 +5068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4677,7 +5093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4700,7 +5118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4723,7 +5143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4746,7 +5168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4769,7 +5193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4792,7 +5218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4815,7 +5243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4838,7 +5268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4861,7 +5293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4884,7 +5318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4907,7 +5343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4930,7 +5368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4953,7 +5393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4976,7 +5418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -4999,7 +5443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5022,7 +5468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5045,7 +5493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5068,7 +5518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5091,7 +5543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5114,7 +5568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5137,7 +5593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5160,7 +5618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5183,7 +5643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5206,7 +5668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5229,7 +5693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5252,7 +5718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5275,7 +5743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5298,7 +5768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5321,7 +5793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5344,7 +5818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5367,7 +5843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5390,7 +5868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5413,7 +5893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5436,7 +5918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5459,7 +5943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5482,7 +5968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5505,7 +5993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5528,7 +6018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5551,7 +6043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5574,7 +6068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5597,7 +6093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5620,7 +6118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5643,7 +6143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5666,7 +6168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5689,7 +6193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5712,7 +6218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5735,7 +6243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5758,7 +6268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5781,7 +6293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5804,7 +6318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5827,7 +6343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5850,7 +6368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5873,7 +6393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5896,7 +6418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5919,7 +6443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5942,7 +6468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5965,7 +6493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -5988,7 +6518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6011,7 +6543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6034,7 +6568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6057,7 +6593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6080,7 +6618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6103,7 +6643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6126,7 +6668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6149,7 +6693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6172,7 +6718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6195,7 +6743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6218,7 +6768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6241,7 +6793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6264,7 +6818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6287,7 +6843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6310,7 +6868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6333,7 +6893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6356,7 +6918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6379,7 +6943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6402,7 +6968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6425,7 +6993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6448,7 +7018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6471,7 +7043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6494,7 +7068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6517,7 +7093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6540,7 +7118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6563,7 +7143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6586,7 +7168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6609,7 +7193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6632,7 +7218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6655,7 +7243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6678,7 +7268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6701,7 +7293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6724,7 +7318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6747,7 +7343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6770,7 +7368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6793,7 +7393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6816,7 +7418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6839,7 +7443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6862,7 +7468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6885,7 +7493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6908,7 +7518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6931,7 +7543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6954,7 +7568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -6977,7 +7593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7000,7 +7618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7023,7 +7643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7046,7 +7668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7069,7 +7693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7092,7 +7718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7115,7 +7743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7138,7 +7768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7161,7 +7793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7184,7 +7818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7207,7 +7843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7230,7 +7868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7253,7 +7893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7276,7 +7918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7299,7 +7943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7322,7 +7968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7345,7 +7993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7368,7 +8018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7391,7 +8043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7414,7 +8068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7437,7 +8093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7460,7 +8118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7483,7 +8143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7506,7 +8168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7529,7 +8193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7552,7 +8218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7575,7 +8243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7598,7 +8268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7621,7 +8293,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7644,7 +8318,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7667,7 +8343,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7690,7 +8368,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7713,7 +8393,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7736,7 +8418,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7759,7 +8443,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7782,7 +8468,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7805,7 +8493,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7828,7 +8518,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7851,7 +8543,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7874,7 +8568,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7897,7 +8593,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7920,7 +8618,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7943,7 +8643,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7966,7 +8668,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -7989,7 +8693,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8012,7 +8718,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8035,7 +8743,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8058,7 +8768,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8081,7 +8793,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8104,7 +8818,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8127,7 +8843,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8150,7 +8868,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8173,7 +8893,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8196,7 +8918,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8219,7 +8943,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8242,7 +8968,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8265,7 +8993,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8288,7 +9018,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8311,7 +9043,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8334,7 +9068,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8357,7 +9093,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8380,7 +9118,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8403,7 +9143,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8426,7 +9168,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8449,7 +9193,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8472,7 +9218,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8495,7 +9243,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       },
       {
         "point": [
@@ -8518,7 +9268,9 @@
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
-        "right_wall": true
+        "right_wall": true,
+        "left_wall_distance": null,
+        "right_wall_distance": null
       }
     ],
     "total_length": 780.27783
@@ -23413,7 +24165,6 @@
   "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
-    "rally",
-    "classic"
+    "rally"
   ]
 }
