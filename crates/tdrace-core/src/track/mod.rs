@@ -11,7 +11,7 @@ pub use geometry::{
 };
 pub use presets::{
     classic_grand_prix, dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park, dune_raid,
-    generate_checkpoints, generate_grid_positions, generate_walls_from_spline, hell_rx, holjes_rx,
+    generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_walls_from_spline, hell_rx, holjes_rx,
     kart_arena, loheac_rx, lydden_hill, oasis_rally, outlaw_pass, oval_speedway, ramp_raceway,
     sahara_dunes,
 };
@@ -231,11 +231,35 @@ impl Track {
         }
     }
 
-    /// Regenerates starting grid positions on the straight before start line.
-    pub fn auto_generate_grid(&mut self, num_slots: usize, spacing: f32, stagger: f32) {
-        if self.spline.samples.len() >= 2 {
-            self.grid_positions = generate_grid_positions(&self.spline, num_slots, spacing, stagger);
+    /// Returns true if this track has at least one checkpoint designated as the start/finish line.
+    pub fn has_finish_line(&self) -> bool {
+        self.checkpoints.iter().any(|cp| cp.is_finish_line)
+    }
+
+    /// Returns the first checkpoint designated as the start/finish line, if one exists.
+    pub fn finish_line_checkpoint(&self) -> Option<&Checkpoint> {
+        self.checkpoints.iter().find(|cp| cp.is_finish_line)
+    }
+
+    /// Regenerates starting grid positions on the straight before the finish line.
+    ///
+    /// If no finish line checkpoint exists in `self.checkpoints` or the spline has fewer than 2 samples,
+    /// no positions are generated and `false` is returned.
+    /// Returns `true` if grid positions were successfully generated.
+    pub fn auto_generate_grid(&mut self, num_slots: usize, spacing: f32, stagger: f32) -> bool {
+        if self.spline.samples.len() < 2 {
+            return false;
         }
+
+        let Some(finish_cp) = self.checkpoints.iter().find(|cp| cp.is_finish_line) else {
+            return false;
+        };
+
+        let finish_gate_center = (finish_cp.gate.start + finish_cp.gate.end) * 0.5;
+        let finish_dist = self.spline.project_point(finish_gate_center).progress_distance;
+
+        self.grid_positions = generate_grid_positions_at_distance(&self.spline, finish_dist, num_slots, spacing, stagger);
+        true
     }
 
     /// Returns total centerline track length in meters.

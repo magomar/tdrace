@@ -690,4 +690,87 @@ fn test_waypoint_wall_distance_json_backwards_compatibility() {
     assert_eq!(deserialized_new.right_wall_distance, Some(1.5));
 }
 
+#[test]
+fn test_auto_generate_grid_requires_finish_line() {
+    let mut track = classic_grand_prix();
+    // Remove all checkpoints
+    track.checkpoints.clear();
+    track.grid_positions.clear();
+
+    assert!(!track.has_finish_line());
+    assert_eq!(track.finish_line_checkpoint(), None);
+
+    // auto_generate_grid must fail and not generate any slots if no finish line exists
+    let success = track.auto_generate_grid(8, 8.0, 3.0);
+    assert!(!success);
+    assert!(track.grid_positions.is_empty());
+
+    // Add checkpoints where none is marked as finish line
+    track.auto_generate_checkpoints(6, 3);
+    for cp in &mut track.checkpoints {
+        cp.is_finish_line = false;
+    }
+    assert!(!track.has_finish_line());
+
+    let success2 = track.auto_generate_grid(8, 8.0, 3.0);
+    assert!(!success2);
+    assert!(track.grid_positions.is_empty());
+}
+
+#[test]
+fn test_auto_generate_grid_positioned_relative_to_finish_line() {
+    let mut track = classic_grand_prix();
+    track.auto_generate_checkpoints(8, 3);
+    assert!(track.has_finish_line());
+
+    // 1. Finish line at CP0 (start of circuit, dist = 0)
+    let ok = track.auto_generate_grid(6, 8.0, 2.5);
+    assert!(ok);
+    assert_eq!(track.grid_positions.len(), 6);
+
+    let total_len = track.spline.total_length();
+    let slot0_proj = track.spline.project_point(track.grid_positions[0].position);
+    // Slot 0 should be ~15m behind the finish line (at total_len - 15)
+    let dist_behind_cp0 = (total_len - slot0_proj.progress_distance) % total_len;
+    assert!(
+        (dist_behind_cp0 - 15.0).abs() < 1.0,
+        "Slot 0 should be ~15m behind CP0 finish line, got {:.2}m",
+        dist_behind_cp0
+    );
+
+    // 2. Move finish line to CP3 (which is halfway or further along the track)
+    track.checkpoints[0].is_finish_line = false;
+    track.checkpoints[3].is_finish_line = true;
+    let cp3_center = (track.checkpoints[3].gate.start + track.checkpoints[3].gate.end) * 0.5;
+    let cp3_dist = track.spline.project_point(cp3_center).progress_distance;
+
+    let ok2 = track.auto_generate_grid(6, 8.0, 2.5);
+    assert!(ok2);
+    assert_eq!(track.grid_positions.len(), 6);
+
+    // Now slot 0 must be positioned ~15m behind CP3 finish line!
+    let slot0_proj_cp3 = track.spline.project_point(track.grid_positions[0].position);
+    let expected_slot0_dist = (cp3_dist - 15.0 + total_len) % total_len;
+    let actual_slot0_dist = slot0_proj_cp3.progress_distance;
+    assert!(
+        (actual_slot0_dist - expected_slot0_dist).abs() < 1.0,
+        "Slot 0 should be at ~{:.2}m (15m behind CP3 at {:.2}m), got {:.2}m",
+        expected_slot0_dist,
+        cp3_dist,
+        actual_slot0_dist
+    );
+
+    // Slot 1 should be spaced 8m behind Slot 0
+    let slot1_proj_cp3 = track.spline.project_point(track.grid_positions[1].position);
+    let expected_slot1_dist = (cp3_dist - 15.0 - 8.0 + total_len) % total_len;
+    let actual_slot1_dist = slot1_proj_cp3.progress_distance;
+    assert!(
+        (actual_slot1_dist - expected_slot1_dist).abs() < 1.0,
+        "Slot 1 should be at ~{:.2}m (23m behind CP3), got {:.2}m",
+        expected_slot1_dist,
+        actual_slot1_dist
+    );
+}
+
+
 

@@ -474,12 +474,22 @@ pub fn generate_grid_positions(
     spacing: f32,
     stagger_lateral: f32,
 ) -> Vec<SpawnPose> {
+    generate_grid_positions_at_distance(spline, spline.total_length(), num_slots, spacing, stagger_lateral)
+}
+
+/// Generates starting grid spawn positions at a specific track distance before a finish/start line.
+pub fn generate_grid_positions_at_distance(
+    spline: &TrackSpline,
+    finish_dist: f32,
+    num_slots: usize,
+    spacing: f32,
+    stagger_lateral: f32,
+) -> Vec<SpawnPose> {
     let mut slots = Vec::with_capacity(num_slots);
-    let total_len = spline.total_length();
 
     for i in 0..num_slots {
-        // Place slots behind start line (at negative offset along spline)
-        let slot_dist = total_len - 15.0 - (i as f32 * spacing);
+        // Place slots behind start/finish line (at negative offset along spline)
+        let slot_dist = finish_dist - 15.0 - (i as f32 * spacing);
         let sample = spline.sample_at_distance(slot_dist);
 
         let lateral_stagger = if i % 2 == 0 {

@@ -1,6 +1,8 @@
 use glam::Vec2;
 use tdrace_app::config::{CameraConfig, ZoomLevelConfig};
-use tdrace_app::editor::{EditorCamera, EditorState, EditorToolType, Selection, ToolSettings};
+use tdrace_app::editor::{
+    is_mouse_over_editor_ui, EditorCamera, EditorState, EditorToolType, Selection, ToolSettings,
+};
 use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::track_manager::TrackManager;
 use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
@@ -1665,6 +1667,157 @@ fn test_primary_selection_and_secondary_placement_interaction_model() {
     tools.handle_primary_up(&mut state, zone_moved);
     assert_eq!(state.track.geometry.surface_zones[zone_idx].shape.center(), zone_moved);
 }
+
+#[test]
+fn test_editor_ui_hover_detection_and_inspector_click_safety() {
+    // 1. At 1920x1080 (1080p, UiScaler scale = 1.5):
+    //    Top toolbar height is 46 * 1.5 = 69.0.
+    //    Status bar height is 32 * 1.5 = 48.0, so bot_y = 1032.0.
+    //    Inspector panel width is 240 * 1.5 = 360.0. insp_x = 1920 - 360 - 18 = 1542.0.
+    let sw = 1920.0;
+    let sh = 1080.0;
+
+    // A cursor position on the inspector panel (e.g. x = 1600.0, y = 300.0)
+    // Previously with hardcoded `mx > sw - 260.0` (1660.0), 1600.0 evaluated to false!
+    let inspector_click_pos = Vec2::new(1600.0, 300.0);
+    assert!(
+        is_mouse_over_editor_ui(inspector_click_pos, sw, sh, EditorToolType::Select, false),
+        "Inspector panel click at x=1600 must be recognized as over UI at 1080p"
+    );
+
+    // Left edge of inspector panel at 1080p (x = 1545.0)
+    let inspector_left_edge = Vec2::new(1545.0, 200.0);
+    assert!(
+        is_mouse_over_editor_ui(inspector_left_edge, sw, sh, EditorToolType::Select, false),
+        "Inspector left edge at x=1545 must be recognized as over UI at 1080p"
+    );
+
+    // Right edge of inspector panel at 1080p (x = 1900.0)
+    let inspector_right_edge = Vec2::new(1900.0, 200.0);
+    assert!(
+        is_mouse_over_editor_ui(inspector_right_edge, sw, sh, EditorToolType::Select, false),
+        "Inspector right edge at x=1900 must be recognized as over UI at 1080p"
+    );
+
+    // Top toolbar at 1080p (y = 55.0, previously missed by unscaled my < 48.0)
+    let top_bar_pos = Vec2::new(500.0, 55.0);
+    assert!(
+        is_mouse_over_editor_ui(top_bar_pos, sw, sh, EditorToolType::Select, false),
+        "Top toolbar click at y=55 must be recognized as over UI at 1080p"
+    );
+
+    // Bottom status bar at 1080p (y = 1040.0, previously missed by unscaled my > sh - 34.0)
+    let bot_bar_pos = Vec2::new(500.0, 1040.0);
+    assert!(
+        is_mouse_over_editor_ui(bot_bar_pos, sw, sh, EditorToolType::Select, false),
+        "Bottom status bar click at y=1040 must be recognized as over UI at 1080p"
+    );
+
+    // Left tool palette at 1080p (x = 220.0, y = 500.0, previously missed by unscaled mx < 185 && my < 480)
+    let left_tool_pos = Vec2::new(220.0, 500.0);
+    assert!(
+        is_mouse_over_editor_ui(left_tool_pos, sw, sh, EditorToolType::Select, false),
+        "Left tool palette click at x=220, y=500 must be recognized as over UI at 1080p"
+    );
+
+    // Canvas click in center of editing area (x = 960.0, y = 540.0)
+    let canvas_center = Vec2::new(960.0, 540.0);
+    assert!(
+        !is_mouse_over_editor_ui(canvas_center, sw, sh, EditorToolType::Select, false),
+        "Canvas center must not be over UI"
+    );
+
+    // Any coordinate is over UI when a modal is open
+    assert!(
+        is_mouse_over_editor_ui(canvas_center, sw, sh, EditorToolType::Select, true),
+        "Any coordinate must be over UI when modal is open"
+    );
+
+    // 2. Also verify standard 720p (1280x720)
+    let sw_720 = 1280.0;
+    let sh_720 = 720.0;
+    // insp_x = 1280 - 240 - 12 = 1028.0
+    assert!(is_mouse_over_editor_ui(Vec2::new(1050.0, 300.0), sw_720, sh_720, EditorToolType::Select, false));
+    assert!(!is_mouse_over_editor_ui(Vec2::new(640.0, 360.0), sw_720, sh_720, EditorToolType::Select, false));
+}
+
+#[test]
+fn test_auto_grid_slots_finish_line_requirement_and_modal_warning() {
+    use tdrace_app::editor::{EditorModal, EditorState};
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let mut track = classic_grand_prix();
+    // Clear checkpoints and grid positions so no finish line exists
+    track.checkpoints.clear();
+    track.grid_positions.clear();
+
+    let mut state = EditorState::new(track);
+    let mut active_modal = EditorModal::None;
+
+    assert!(!state.track.has_finish_line());
+
+    // 1. Trigger Auto Grid Slots logic without finish line
+    if !state.track.has_finish_line() {
+        active_modal = EditorModal::Warning {
+            title: "FINISH LINE REQUIRED".to_string(),
+            message: "No finish line checkpoint exists on this circuit.\n\nPlease define a finish line before generating starting grid slots.\n(Select an existing checkpoint and mark it as Finish Line,\nor place a new checkpoint using the Checkpoint Tool)".to_string(),
+        };
+    } else {
+        state.record_undo();
+        state.track.auto_generate_grid(8, 8.0, 3.0);
+        state.revalidate();
+    }
+
+    // Modal must be Warning with informative title & message
+    if let EditorModal::Warning { title, message } = &active_modal {
+        assert_eq!(title, "FINISH LINE REQUIRED");
+        assert!(message.contains("No finish line"));
+        assert!(message.contains("define a finish line"));
+    } else {
+        panic!("Expected EditorModal::Warning when auto grid slots clicked without finish line");
+    }
+    assert!(state.track.grid_positions.is_empty());
+    assert!(!state.is_dirty);
+
+    // 2. Now define a finish line and auto generate grid slots
+    state.track.auto_generate_checkpoints(8, 3);
+    assert!(state.track.has_finish_line());
+    active_modal = EditorModal::None;
+
+    if !state.track.has_finish_line() {
+        active_modal = EditorModal::Warning {
+            title: "FINISH LINE REQUIRED".to_string(),
+            message: "No finish line".to_string(),
+        };
+    } else {
+        state.record_undo();
+        let ok = state.track.auto_generate_grid(8, 8.0, 3.0);
+        assert!(ok);
+        state.revalidate();
+    }
+
+    assert_eq!(active_modal, EditorModal::None);
+    assert_eq!(state.track.grid_positions.len(), 8);
+    assert!(state.is_dirty);
+
+    // 3. Move finish line to checkpoint 4 and regenerate
+    state.track.checkpoints[0].is_finish_line = false;
+    state.track.checkpoints[4].is_finish_line = true;
+    let cp4_center = (state.track.checkpoints[4].gate.start + state.track.checkpoints[4].gate.end) * 0.5;
+    let cp4_dist = state.track.spline.project_point(cp4_center).progress_distance;
+    let total_len = state.track.spline.total_length();
+
+    let ok = state.track.auto_generate_grid(8, 8.0, 3.0);
+    assert!(ok);
+
+    let slot0_proj = state.track.spline.project_point(state.track.grid_positions[0].position);
+    let expected_slot0_dist = (cp4_dist - 15.0 + total_len) % total_len;
+    assert!(
+        (slot0_proj.progress_distance - expected_slot0_dist).abs() < 1.0,
+        "Slot 0 should be positioned 15m behind checkpoint 4 finish line"
+    );
+}
+
 
 
 

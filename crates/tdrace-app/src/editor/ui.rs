@@ -57,6 +57,10 @@ pub enum EditorModal {
         property: RampPropertyModal,
         input_val: String,
     },
+    Warning {
+        title: String,
+        message: String,
+    },
 }
 
 /// Actions dispatched from editor UI interactions.
@@ -86,6 +90,59 @@ pub enum EditorAction {
 /// Helper to drain any unconsumed characters from macroquad input buffer.
 fn drain_char_queue() {
     while std::panic::catch_unwind(get_char_pressed).unwrap_or(None).is_some() {}
+}
+
+/// Returns true if the screen mouse coordinate is over any floating editor UI element or active modal.
+pub fn is_mouse_over_editor_ui(
+    mouse_pos: Vec2,
+    sw: f32,
+    sh: f32,
+    active_tool: EditorToolType,
+    is_modal_open: bool,
+) -> bool {
+    if is_modal_open {
+        return true;
+    }
+
+    let scaler = UiScaler::new(sw, sh);
+    let top_h = scaler.s(46.0);
+    let bot_h = scaler.s(32.0);
+    let bot_y = sh - bot_h;
+
+    // Top toolbar
+    if mouse_pos.y <= top_h {
+        return true;
+    }
+
+    // Bottom status bar
+    if mouse_pos.y >= bot_y {
+        return true;
+    }
+
+    // Left tool palette (and active sub-palette if applicable)
+    let tool_w = scaler.s(165.0);
+    let tool_y = top_h + scaler.s(12.0);
+    let tool_h = scaler.s(410.0);
+    let tool_bottom = if active_tool == EditorToolType::SurfaceZone {
+        let sub_h = scaler.s(180.0);
+        let sub_y = tool_y + tool_h + scaler.s(8.0);
+        sub_y + sub_h
+    } else {
+        tool_y + tool_h
+    };
+    let tool_right = scaler.s(12.0) + tool_w + scaler.s(6.0);
+    if mouse_pos.x <= tool_right && mouse_pos.y >= top_h && mouse_pos.y <= tool_bottom + scaler.s(6.0) {
+        return true;
+    }
+
+    // Right inspector panel
+    let insp_w = scaler.s(240.0);
+    let insp_x = sw - insp_w - scaler.s(12.0);
+    if mouse_pos.x >= insp_x - scaler.s(4.0) && mouse_pos.y >= top_h {
+        return true;
+    }
+
+    false
 }
 
 /// Main UI renderer for the Track Editor suite.
@@ -495,10 +552,19 @@ pub fn render_editor_ui(
                     *active_modal = EditorModal::None;
                 }
             }
+            EditorModal::Warning { title, message } => {
+                if render_warning_modal(fonts, &scaler, sw, sh, title, message, mouse_pos, mouse_clicked) {
+                    *active_modal = EditorModal::None;
+                }
+            }
             EditorModal::None => {}
         }
 
-        if is_key_pressed(KeyCode::Escape) && *active_modal != EditorModal::None && *active_modal != EditorModal::UnsavedChanges {
+        if (is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Enter))
+            && matches!(*active_modal, EditorModal::Warning { .. })
+        {
+            *active_modal = EditorModal::None;
+        } else if is_key_pressed(KeyCode::Escape) && *active_modal != EditorModal::None && *active_modal != EditorModal::UnsavedChanges {
             *active_modal = EditorModal::None;
         }
     } else {
@@ -1974,8 +2040,16 @@ fn render_inspector(
             curr_y += scaler.s(32.0);
 
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), "Auto Grid Slots", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
-                state.record_undo();
-                state.track.auto_generate_grid(8, 8.0, 3.0);
+                if !state.track.has_finish_line() {
+                    *active_modal = EditorModal::Warning {
+                        title: "FINISH LINE REQUIRED".to_string(),
+                        message: "No finish line checkpoint exists on this circuit.\n\nPlease define a finish line before generating starting grid slots.\n(Select an existing checkpoint and mark it as Finish Line,\nor place a new checkpoint using the Checkpoint Tool)".to_string(),
+                    };
+                } else {
+                    state.record_undo();
+                    state.track.auto_generate_grid(8, 8.0, 3.0);
+                    state.revalidate();
+                }
             }
             curr_y += scaler.s(32.0);
 
@@ -3074,6 +3148,65 @@ fn render_diagnostics_modal(
     draw_ui_btn(fonts, scaler, mx + (mw - scaler.s(160.0)) * 0.5, my + mh - scaler.s(48.0), scaler.s(160.0), scaler.s(34.0), "CLOSE [Esc]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked)
 }
 
+/// Renders a warning/alert dialog modal overlay.
+fn render_warning_modal(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    title: &str,
+    message: &str,
+    mouse_pos: Vec2,
+    clicked: bool,
+) -> bool {
+    let mw = scaler.s(520.0);
+    let mh = scaler.s(240.0);
+    let mx = (sw - mw) * 0.5;
+    let my = (sh - mh) * 0.5;
+
+    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::YELLOW, 2.0);
+
+    fonts.draw_display_centered(
+        title,
+        sw * 0.5,
+        my + scaler.s(32.0),
+        scaler.font_s(20.0),
+        Palette::NEON_GOLD,
+    );
+
+    let mut ly = my + scaler.s(68.0);
+    for line in message.lines() {
+        if line.is_empty() {
+            ly += scaler.s(8.0);
+            continue;
+        }
+        let is_hint = line.starts_with('(');
+        let col = if is_hint { Palette::UI_TEXT_MUTED } else { Palette::WHITE };
+        let font_size = if is_hint { scaler.font_s(11.5) } else { scaler.font_s(13.0) };
+        fonts.draw_ui_regular_centered(line, sw * 0.5, ly, font_size, col);
+        ly += scaler.s(20.0);
+    }
+
+    let btn_w = scaler.s(160.0);
+    let btn_h = scaler.s(34.0);
+    let btn_x = (sw - btn_w) * 0.5;
+    let btn_y = my + mh - scaler.s(48.0);
+
+    draw_ui_btn(
+        fonts,
+        scaler,
+        btn_x,
+        btn_y,
+        btn_w,
+        btn_h,
+        "OK [Esc / Enter]",
+        Palette::UI_CARD_BG,
+        Palette::NEON_CYAN,
+        mouse_pos,
+        clicked,
+    )
+}
+
 /// Renders modal asking the user how to handle unsaved changes before exiting.
 fn render_unsaved_changes_modal(
     fonts: &Fonts,
@@ -3367,6 +3500,17 @@ mod tests {
             assert_eq!(input_angle, "135.5");
         } else {
             panic!("Expected SetRampAngle modal");
+        }
+
+        modal = EditorModal::Warning {
+            title: "FINISH LINE REQUIRED".to_string(),
+            message: "No finish line exists on this circuit.".to_string(),
+        };
+        if let EditorModal::Warning { title, message } = &modal {
+            assert_eq!(title, "FINISH LINE REQUIRED");
+            assert_eq!(message, "No finish line exists on this circuit.");
+        } else {
+            panic!("Expected Warning modal");
         }
     }
 
