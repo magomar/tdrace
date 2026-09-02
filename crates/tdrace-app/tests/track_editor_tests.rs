@@ -1,6 +1,6 @@
 use glam::Vec2;
 use tdrace_app::config::{CameraConfig, ZoomLevelConfig};
-use tdrace_app::editor::{EditorCamera, EditorState};
+use tdrace_app::editor::{EditorCamera, EditorState, EditorToolType, Selection, ToolSettings};
 use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::track_manager::TrackManager;
 use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
@@ -1598,6 +1598,72 @@ fn test_track_editor_wall_distance_editing_and_batch_operations() {
     // 6. Global barrier offset adjustment
     tools.set_global_barrier_offset(&mut state, 2.5);
     assert_eq!(state.barrier_offset, 2.5);
+}
+
+#[test]
+fn test_primary_selection_and_secondary_placement_interaction_model() {
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    // 1. In RoadSpline tool:
+    tools.active_tool = EditorToolType::RoadSpline;
+    let initial_wps = state.track.spline.waypoints.len();
+
+    // Secondary button (Right Click) places a new waypoint
+    let wp_pos = Vec2::new(350.0, 350.0);
+    tools.handle_secondary_down(&mut state, wp_pos);
+    tools.handle_secondary_up(&mut state, wp_pos);
+    assert_eq!(state.track.spline.waypoints.len(), initial_wps + 1);
+    let new_wp_idx = state.track.spline.waypoints.len() - 1;
+    assert_eq!(state.selection, Selection::Waypoint(new_wp_idx));
+
+    // Primary button (Left Click) on existing waypoint selects & drags it
+    let move_pos = Vec2::new(360.0, 360.0);
+    tools.handle_primary_down(&mut state, wp_pos, false);
+    assert_eq!(state.selection, Selection::Waypoint(new_wp_idx));
+    assert!(tools.is_dragging);
+    tools.handle_primary_drag(&mut state, move_pos);
+    tools.handle_primary_up(&mut state, move_pos);
+    assert_eq!(state.track.spline.waypoints[new_wp_idx].point, move_pos);
+
+    // Primary button (Left Click & Drag) on empty canvas does marquee box selection
+    let box_start = Vec2::new(340.0, 340.0);
+    let box_end = Vec2::new(380.0, 380.0);
+    state.selection = Selection::None;
+    tools.handle_primary_down(&mut state, box_start, false);
+    assert!(tools.is_box_selecting);
+    tools.handle_primary_drag(&mut state, box_end);
+    tools.handle_primary_up(&mut state, box_end);
+    assert!(!tools.is_box_selecting);
+    assert!(state.selection.is_waypoint_selected(new_wp_idx));
+
+    // 2. In SurfaceZone tool:
+    tools.active_tool = EditorToolType::SurfaceZone;
+    tools.active_surface = SurfaceType::Grass;
+    tools.active_surface_shape = tdrace_app::editor::SurfaceShapeType::Square;
+    let initial_zones = state.track.geometry.surface_zones.len();
+
+    // Secondary button (Right Drag) places the surface zone
+    let zone_start = Vec2::new(400.0, 400.0);
+    let zone_end = Vec2::new(450.0, 450.0);
+    tools.handle_secondary_down(&mut state, zone_start);
+    assert!(tools.is_placing);
+    tools.handle_secondary_drag(&mut state, zone_end);
+    tools.handle_secondary_up(&mut state, zone_end);
+    assert!(!tools.is_placing);
+    assert_eq!(state.track.geometry.surface_zones.len(), initial_zones + 1);
+
+    // Primary button (Left Click) on the zone selects & drags it
+    let zone_idx = state.track.geometry.surface_zones.len() - 1;
+    let zone_center = Vec2::new(425.0, 425.0);
+    tools.handle_primary_down(&mut state, zone_center, false);
+    assert_eq!(state.selection, Selection::SurfaceZone(zone_idx));
+    assert!(tools.is_dragging);
+    let zone_moved = Vec2::new(435.0, 435.0);
+    tools.handle_primary_drag(&mut state, zone_moved);
+    tools.handle_primary_up(&mut state, zone_moved);
+    assert_eq!(state.track.geometry.surface_zones[zone_idx].shape.center(), zone_moved);
 }
 
 

@@ -83,6 +83,7 @@ pub struct ToolSettings {
     // Dragging / selection interaction state
     pub is_dragging: bool,
     pub is_box_selecting: bool,
+    pub is_placing: bool,
     pub is_rotating_ramp: bool,
     pub drag_rotating_ramp_idx: Option<usize>,
     pub drag_start_world: Vec2,
@@ -131,6 +132,7 @@ impl Default for ToolSettings {
             new_waypoint_bank_angle: 0.0,
             is_dragging: false,
             is_box_selecting: false,
+            is_placing: false,
             is_rotating_ramp: false,
             drag_rotating_ramp_idx: None,
             drag_start_world: Vec2::ZERO,
@@ -1078,255 +1080,97 @@ impl ToolSettings {
 }
 
 impl ToolSettings {
-    /// Handles mouse down event in world space.
-    pub fn handle_mouse_down(&mut self, state: &mut EditorState, mouse_world: Vec2) {
-        self.handle_mouse_down_with_mods(state, mouse_world, false);
-    }
-
-    /// Handles mouse down event with explicit modifier key flag (e.g. Shift / Ctrl for multi-select).
-    pub fn handle_mouse_down_with_mods(&mut self, state: &mut EditorState, mouse_world: Vec2, is_multi_key: bool) {
+    /// Handles primary button (Left Click) down event in world space.
+    pub fn handle_primary_down(&mut self, state: &mut EditorState, mouse_world: Vec2, is_multi_key: bool) {
         let snapped_mouse = state.grid_snap.snap_point(mouse_world);
 
-        match self.active_tool {
-            EditorToolType::Select => {
-                // Check if clicking near the orientation tip handle of any selected jump ramp (for continuous angular rotation)
-                let mut clicked_ramp_handle = None;
-                for &idx in &state.selection.selected_jump_ramp_indices() {
-                    if let Some(ramp) = state.track.geometry.jump_ramps.get(idx) {
-                        let center = ramp.shape.center();
-                        let angle = ramp.angle();
-                        let half_extents = ramp.half_extents();
-                        let fwd = Vec2::new(angle.cos(), angle.sin());
-                        let handle_pos = center + fwd * (half_extents.x + 2.5);
-                        if (mouse_world - handle_pos).length() <= 3.5 {
-                            clicked_ramp_handle = Some(idx);
-                            break;
-                        }
-                    }
-                }
-
-                if let Some(ramp_idx) = clicked_ramp_handle {
-                    state.record_undo();
-                    self.is_rotating_ramp = true;
-                    self.drag_rotating_ramp_idx = Some(ramp_idx);
-                    self.is_dragging = true;
-                    self.is_box_selecting = false;
-                    self.drag_start_world = mouse_world;
-                    self.drag_current_world = mouse_world;
-                    return;
-                }
-
-                if let Some(sel) = find_closest_entity(state, mouse_world) {
-                    self.is_box_selecting = false;
-                    if is_multi_key {
-                        state.select(state.selection.union(&sel));
-                        self.is_dragging = false;
-                        return;
-                    }
-
-                    if !state.selection.contains_entity(&sel) {
-                        state.select(sel.clone());
-                    }
-
-                    if let Selection::Waypoint(idx) = sel {
-                        if let Some(wp) = state.track.spline.waypoints.get(idx) {
-                            self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
-                            self.new_waypoint_width = wp.width;
-                            self.new_waypoint_left_curb = wp.left_curb;
-                            self.new_waypoint_right_curb = wp.right_curb;
-                            self.new_waypoint_left_wall = wp.left_wall;
-                            self.new_waypoint_right_wall = wp.right_wall;
-                            self.new_waypoint_left_wall_distance = wp.left_wall_distance;
-                            self.new_waypoint_right_wall_distance = wp.right_wall_distance;
-                            self.new_waypoint_bank_angle = wp.bank_angle;
-                        }
-                    } else if let Selection::SurfaceZone(idx) = sel {
-                        if let Some(zone) = state.track.geometry.surface_zones.get(idx) {
-                            self.active_surface = zone.surface;
-                        }
-                    } else if let Selection::JumpRamp(idx) = sel {
-                        if let Some(ramp) = state.track.geometry.jump_ramps.get(idx) {
-                            self.active_surface = ramp.surface;
-                        }
-                    }
-
-                    self.is_dragging = true;
-                    self.drag_start_world = snapped_mouse;
-                    self.drag_current_world = snapped_mouse;
-                    self.drag_initial_entity_pos = get_selection_position(state, &state.selection).unwrap_or(mouse_world);
-                    prepare_drag_initial_positions(state, self);
-                } else {
-                    if !is_multi_key {
-                        state.selection = Selection::None;
-                    }
-                    self.is_box_selecting = true;
-                    self.is_dragging = true;
-                    self.drag_start_world = mouse_world;
-                    self.drag_current_world = mouse_world;
-                    self.drag_initial_waypoints.clear();
-                    self.drag_initial_surface_zones.clear();
-                    self.drag_initial_obstacles.clear();
-                    self.drag_initial_jump_ramps.clear();
-                    self.drag_initial_checkpoints.clear();
-                    self.drag_initial_grid_slots.clear();
-                    self.drag_initial_pit_box = None;
+        // Check if clicking near orientation tip handle of any selected jump ramp (for continuous angular rotation)
+        let mut clicked_ramp_handle = None;
+        for &idx in &state.selection.selected_jump_ramp_indices() {
+            if let Some(ramp) = state.track.geometry.jump_ramps.get(idx) {
+                let center = ramp.shape.center();
+                let angle = ramp.angle();
+                let half_extents = ramp.half_extents();
+                let fwd = Vec2::new(angle.cos(), angle.sin());
+                let handle_pos = center + fwd * (half_extents.x + 2.5);
+                if (mouse_world - handle_pos).length() <= 3.5 {
+                    clicked_ramp_handle = Some(idx);
+                    break;
                 }
             }
-            EditorToolType::RoadSpline => {
-                // If clicked near an existing waypoint, select it
-                if let Some(wp_idx) = find_closest_waypoint(state, mouse_world, 8.0) {
-                    state.select(Selection::Waypoint(wp_idx));
-                    if let Some(wp) = state.track.spline.waypoints.get(wp_idx) {
-                        self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
-                        self.new_waypoint_width = wp.width;
-                        self.new_waypoint_left_curb = wp.left_curb;
-                        self.new_waypoint_right_curb = wp.right_curb;
-                        self.new_waypoint_left_wall = wp.left_wall;
-                        self.new_waypoint_right_wall = wp.right_wall;
-                        self.new_waypoint_left_wall_distance = wp.left_wall_distance;
-                        self.new_waypoint_right_wall_distance = wp.right_wall_distance;
-                        self.new_waypoint_bank_angle = wp.bank_angle;
-                    }
-                    self.is_box_selecting = false;
-                    self.is_dragging = true;
-                    self.drag_start_world = snapped_mouse;
-                    self.drag_current_world = snapped_mouse;
-                    self.drag_initial_entity_pos = state.track.spline.waypoints[wp_idx].point;
-                    prepare_drag_initial_positions(state, self);
-                } else {
-                    // Insert new waypoint in relation to current/last selected waypoint
-                    state.record_undo();
+        }
 
-                    let inherited_surface = match state
-                        .current_or_last_waypoint_idx()
-                        .and_then(|idx| state.track.spline.waypoints.get(idx))
-                    {
-                        Some(prev_wp) => prev_wp.surface.unwrap_or(self.active_surface),
-                        None => self.active_surface,
-                    };
+        if let Some(ramp_idx) = clicked_ramp_handle {
+            state.record_undo();
+            self.is_rotating_ramp = true;
+            self.drag_rotating_ramp_idx = Some(ramp_idx);
+            self.is_dragging = true;
+            self.is_box_selecting = false;
+            self.drag_start_world = mouse_world;
+            self.drag_current_world = mouse_world;
+            return;
+        }
 
-                    let mut wp = TrackWaypoint::new(snapped_mouse, self.new_waypoint_width);
-                    wp.surface = Some(inherited_surface);
-                    wp.left_curb = self.new_waypoint_left_curb;
-                    wp.right_curb = self.new_waypoint_right_curb;
-                    wp.left_wall = self.new_waypoint_left_wall;
-                    wp.right_wall = self.new_waypoint_right_wall;
-                    wp.left_wall_distance = self.new_waypoint_left_wall_distance;
-                    wp.right_wall_distance = self.new_waypoint_right_wall_distance;
-                    wp.bank_angle = self.new_waypoint_bank_angle;
+        if let Some(sel) = find_closest_entity(state, mouse_world) {
+            self.is_box_selecting = false;
+            if is_multi_key {
+                state.select(state.selection.union(&sel));
+                self.is_dragging = false;
+                return;
+            }
 
-                    let insert_idx = match state.current_or_last_waypoint_idx() {
-                        Some(idx) => (idx + 1).min(state.track.spline.waypoints.len()),
-                        None => state.track.spline.waypoints.len(),
-                    };
+            if !state.selection.contains_entity(&sel) {
+                state.select(sel.clone());
+            }
 
-                    if insert_idx < state.track.spline.waypoints.len() {
-                        state.track.spline.waypoints.insert(insert_idx, wp);
-                    } else {
-                        state.track.spline.waypoints.push(wp);
-                    }
-
-                    state.rebuild_geometry();
-                    state.select(Selection::Waypoint(insert_idx));
-                    self.active_surface = inherited_surface;
+            if let Selection::Waypoint(idx) = sel {
+                if let Some(wp) = state.track.spline.waypoints.get(idx) {
+                    self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
+                    self.new_waypoint_width = wp.width;
+                    self.new_waypoint_left_curb = wp.left_curb;
+                    self.new_waypoint_right_curb = wp.right_curb;
+                    self.new_waypoint_left_wall = wp.left_wall;
+                    self.new_waypoint_right_wall = wp.right_wall;
+                    self.new_waypoint_left_wall_distance = wp.left_wall_distance;
+                    self.new_waypoint_right_wall_distance = wp.right_wall_distance;
+                    self.new_waypoint_bank_angle = wp.bank_angle;
+                }
+            } else if let Selection::SurfaceZone(idx) = sel {
+                if let Some(zone) = state.track.geometry.surface_zones.get(idx) {
+                    self.active_surface = zone.surface;
+                }
+            } else if let Selection::JumpRamp(idx) = sel {
+                if let Some(ramp) = state.track.geometry.jump_ramps.get(idx) {
+                    self.active_surface = ramp.surface;
                 }
             }
-            EditorToolType::SurfaceZone => {
-                match self.active_surface_shape {
-                    SurfaceShapeType::Square | SurfaceShapeType::Circle => {
-                        self.is_dragging = true;
-                        self.drag_start_world = snapped_mouse;
-                        self.drag_current_world = snapped_mouse;
-                    }
-                    SurfaceShapeType::Triangle => {
-                        self.is_dragging = true;
-                        self.drag_start_world = snapped_mouse;
-                        self.drag_current_world = snapped_mouse;
-                    }
-                    SurfaceShapeType::Polygon => {
-                        // If clicked near first vertex and we have at least 3 vertices, close the polygon!
-                        if self.active_polygon_vertices.len() >= 3
-                            && (self.active_polygon_vertices[0] - snapped_mouse).length() < 1.5
-                        {
-                            state.record_undo();
-                            let vertices = std::mem::take(&mut self.active_polygon_vertices);
-                            let zone_name = format!("{:?} Zone", self.active_surface);
-                            let zone = SurfaceZone::new(
-                                SurfaceShape::Polygon { vertices },
-                                self.active_surface,
-                                zone_name,
-                            )
-                            .with_layer(self.active_surface_layer);
-                            state.track.geometry.surface_zones.push(zone);
-                            state.selection = Selection::SurfaceZone(state.track.geometry.surface_zones.len() - 1);
-                            state.revalidate();
-                        } else {
-                            self.active_polygon_vertices.push(snapped_mouse);
-                        }
-                    }
-                }
+
+            state.record_undo();
+            self.is_dragging = true;
+            self.drag_start_world = snapped_mouse;
+            self.drag_current_world = snapped_mouse;
+            self.drag_initial_entity_pos = get_selection_position(state, &state.selection).unwrap_or(mouse_world);
+            prepare_drag_initial_positions(state, self);
+        } else {
+            if !is_multi_key {
+                state.selection = Selection::None;
             }
-            EditorToolType::JumpRamp => {
-                self.is_dragging = true;
-                self.drag_start_world = snapped_mouse;
-                self.drag_current_world = snapped_mouse;
-            }
-            EditorToolType::Obstacle => {
-                match self.active_obstacle_shape {
-                    ObstacleShapeType::Circle => {
-                        state.record_undo();
-                        let obs_id = state.track.geometry.obstacles.len() + 1;
-                        let new_obs = Obstacle::circle(obs_id, snapped_mouse, 1.2, format!("Tire Stack {}", obs_id));
-                        state.track.geometry.obstacles.push(new_obs);
-                        state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
-                        state.revalidate();
-                    }
-                    ObstacleShapeType::Box => {
-                        self.is_dragging = true;
-                        self.drag_start_world = snapped_mouse;
-                        self.drag_current_world = snapped_mouse;
-                    }
-                    ObstacleShapeType::Polygon => {
-                        // If clicked near first vertex and we have at least 3 vertices, close the polygon!
-                        if self.active_polygon_vertices.len() >= 3
-                            && (self.active_polygon_vertices[0] - snapped_mouse).length() < 1.5
-                        {
-                            state.record_undo();
-                            let obs_id = state.track.geometry.obstacles.len() + 1;
-                            let vertices = std::mem::take(&mut self.active_polygon_vertices);
-                            let new_obs = Obstacle::polygon(obs_id, vertices, format!("Polygon Obstacle {}", obs_id));
-                            state.track.geometry.obstacles.push(new_obs);
-                            state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
-                            state.revalidate();
-                        } else {
-                            self.active_polygon_vertices.push(snapped_mouse);
-                        }
-                    }
-                }
-            }
-            EditorToolType::Checkpoint => {
-                self.is_dragging = true;
-                self.drag_start_world = snapped_mouse;
-                self.drag_current_world = snapped_mouse;
-            }
-            EditorToolType::StartingGrid => {
-                state.record_undo();
-                let slot_idx = state.track.grid_positions.len();
-                let angle = 0.0;
-                state.track.grid_positions.push(SpawnPose::new(snapped_mouse, angle, slot_idx));
-                state.selection = Selection::GridSlot(slot_idx);
-                state.revalidate();
-            }
-            EditorToolType::PitLane => {
-                self.is_dragging = true;
-                self.drag_start_world = snapped_mouse;
-                self.drag_current_world = snapped_mouse;
-            }
+            self.is_box_selecting = true;
+            self.is_dragging = true;
+            self.drag_start_world = mouse_world;
+            self.drag_current_world = mouse_world;
+            self.drag_initial_waypoints.clear();
+            self.drag_initial_surface_zones.clear();
+            self.drag_initial_obstacles.clear();
+            self.drag_initial_jump_ramps.clear();
+            self.drag_initial_checkpoints.clear();
+            self.drag_initial_grid_slots.clear();
+            self.drag_initial_pit_box = None;
         }
     }
 
-    /// Handles mouse drag event.
-    pub fn handle_mouse_drag(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+    /// Handles primary button (Left Click) drag event.
+    pub fn handle_primary_drag(&mut self, state: &mut EditorState, mouse_world: Vec2) {
         if !self.is_dragging {
             return;
         }
@@ -1353,66 +1197,61 @@ impl ToolSettings {
         let snapped_mouse = state.grid_snap.snap_point(mouse_world);
         self.drag_current_world = snapped_mouse;
 
-        match self.active_tool {
-            EditorToolType::Select | EditorToolType::RoadSpline => {
-                let delta = snapped_mouse - self.drag_start_world;
-                let mut geometry_dirty = false;
+        let delta = snapped_mouse - self.drag_start_world;
+        let mut geometry_dirty = false;
 
-                for (idx, initial_pt) in &self.drag_initial_waypoints {
-                    if *idx < state.track.spline.waypoints.len() {
-                        state.track.spline.waypoints[*idx].point = *initial_pt + delta;
-                        geometry_dirty = true;
-                    }
-                }
-
-                for (idx, initial_center) in &self.drag_initial_surface_zones {
-                    if *idx < state.track.geometry.surface_zones.len() {
-                        set_surface_zone_position(&mut state.track.geometry.surface_zones[*idx], *initial_center + delta);
-                    }
-                }
-
-                for (idx, initial_center) in &self.drag_initial_obstacles {
-                    if *idx < state.track.geometry.obstacles.len() {
-                        set_obstacle_position(&mut state.track.geometry.obstacles[*idx], *initial_center + delta);
-                    }
-                }
-
-                for (idx, initial_center) in &self.drag_initial_jump_ramps {
-                    if *idx < state.track.geometry.jump_ramps.len() {
-                        set_jump_ramp_position(&mut state.track.geometry.jump_ramps[*idx], *initial_center + delta);
-                    }
-                }
-
-                for (idx, initial_start, initial_end) in &self.drag_initial_checkpoints {
-                    if *idx < state.track.checkpoints.len() {
-                        state.track.checkpoints[*idx].gate.start = *initial_start + delta;
-                        state.track.checkpoints[*idx].gate.end = *initial_end + delta;
-                    }
-                }
-
-                for (idx, initial_pos) in &self.drag_initial_grid_slots {
-                    if *idx < state.track.grid_positions.len() {
-                        state.track.grid_positions[*idx].position = *initial_pos + delta;
-                    }
-                }
-
-                if let Some((init_min, init_max)) = self.drag_initial_pit_box {
-                    if let Some(SurfaceShape::Aabb { min, max }) = &mut state.track.pit_box_area {
-                        *min = init_min + delta;
-                        *max = init_max + delta;
-                    }
-                }
-
-                if geometry_dirty {
-                    state.rebuild_geometry();
-                }
+        for (idx, initial_pt) in &self.drag_initial_waypoints {
+            if *idx < state.track.spline.waypoints.len() {
+                state.track.spline.waypoints[*idx].point = *initial_pt + delta;
+                geometry_dirty = true;
             }
-            _ => {}
+        }
+
+        for (idx, initial_center) in &self.drag_initial_surface_zones {
+            if *idx < state.track.geometry.surface_zones.len() {
+                set_surface_zone_position(&mut state.track.geometry.surface_zones[*idx], *initial_center + delta);
+            }
+        }
+
+        for (idx, initial_center) in &self.drag_initial_obstacles {
+            if *idx < state.track.geometry.obstacles.len() {
+                set_obstacle_position(&mut state.track.geometry.obstacles[*idx], *initial_center + delta);
+            }
+        }
+
+        for (idx, initial_center) in &self.drag_initial_jump_ramps {
+            if *idx < state.track.geometry.jump_ramps.len() {
+                set_jump_ramp_position(&mut state.track.geometry.jump_ramps[*idx], *initial_center + delta);
+            }
+        }
+
+        for (idx, initial_start, initial_end) in &self.drag_initial_checkpoints {
+            if *idx < state.track.checkpoints.len() {
+                state.track.checkpoints[*idx].gate.start = *initial_start + delta;
+                state.track.checkpoints[*idx].gate.end = *initial_end + delta;
+            }
+        }
+
+        for (idx, initial_pos) in &self.drag_initial_grid_slots {
+            if *idx < state.track.grid_positions.len() {
+                state.track.grid_positions[*idx].position = *initial_pos + delta;
+            }
+        }
+
+        if let Some((init_min, init_max)) = self.drag_initial_pit_box {
+            if let Some(SurfaceShape::Aabb { min, max }) = &mut state.track.pit_box_area {
+                *min = init_min + delta;
+                *max = init_max + delta;
+            }
+        }
+
+        if geometry_dirty {
+            state.rebuild_geometry();
         }
     }
 
-    /// Handles mouse up event.
-    pub fn handle_mouse_up(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+    /// Handles primary button (Left Click) release event.
+    pub fn handle_primary_up(&mut self, state: &mut EditorState, mouse_world: Vec2) {
         if !self.is_dragging {
             return;
         }
@@ -1447,6 +1286,155 @@ impl ToolSettings {
             return;
         }
 
+        state.revalidate();
+    }
+
+    /// Handles secondary button (Right Click) down event to place/create elements based on active tool.
+    pub fn handle_secondary_down(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        let snapped_mouse = state.grid_snap.snap_point(mouse_world);
+
+        match self.active_tool {
+            EditorToolType::Select => {
+                // No element placement in Select tool mode
+            }
+            EditorToolType::RoadSpline => {
+                state.record_undo();
+
+                let inherited_surface = match state
+                    .current_or_last_waypoint_idx()
+                    .and_then(|idx| state.track.spline.waypoints.get(idx))
+                {
+                    Some(prev_wp) => prev_wp.surface.unwrap_or(self.active_surface),
+                    None => self.active_surface,
+                };
+
+                let mut wp = TrackWaypoint::new(snapped_mouse, self.new_waypoint_width);
+                wp.surface = Some(inherited_surface);
+                wp.left_curb = self.new_waypoint_left_curb;
+                wp.right_curb = self.new_waypoint_right_curb;
+                wp.left_wall = self.new_waypoint_left_wall;
+                wp.right_wall = self.new_waypoint_right_wall;
+                wp.left_wall_distance = self.new_waypoint_left_wall_distance;
+                wp.right_wall_distance = self.new_waypoint_right_wall_distance;
+                wp.bank_angle = self.new_waypoint_bank_angle;
+
+                let insert_idx = match state.current_or_last_waypoint_idx() {
+                    Some(idx) => (idx + 1).min(state.track.spline.waypoints.len()),
+                    None => state.track.spline.waypoints.len(),
+                };
+
+                if insert_idx < state.track.spline.waypoints.len() {
+                    state.track.spline.waypoints.insert(insert_idx, wp);
+                } else {
+                    state.track.spline.waypoints.push(wp);
+                }
+
+                state.rebuild_geometry();
+                state.select(Selection::Waypoint(insert_idx));
+                self.active_surface = inherited_surface;
+            }
+            EditorToolType::SurfaceZone => {
+                match self.active_surface_shape {
+                    SurfaceShapeType::Square | SurfaceShapeType::Circle | SurfaceShapeType::Triangle => {
+                        self.is_placing = true;
+                        self.drag_start_world = snapped_mouse;
+                        self.drag_current_world = snapped_mouse;
+                    }
+                    SurfaceShapeType::Polygon => {
+                        if self.active_polygon_vertices.len() >= 3
+                            && (self.active_polygon_vertices[0] - snapped_mouse).length() < 1.5
+                        {
+                            state.record_undo();
+                            let vertices = std::mem::take(&mut self.active_polygon_vertices);
+                            let zone_name = format!("{:?} Zone", self.active_surface);
+                            let zone = SurfaceZone::new(
+                                SurfaceShape::Polygon { vertices },
+                                self.active_surface,
+                                zone_name,
+                            )
+                            .with_layer(self.active_surface_layer);
+                            state.track.geometry.surface_zones.push(zone);
+                            state.selection = Selection::SurfaceZone(state.track.geometry.surface_zones.len() - 1);
+                            state.revalidate();
+                        } else {
+                            self.active_polygon_vertices.push(snapped_mouse);
+                        }
+                    }
+                }
+            }
+            EditorToolType::JumpRamp => {
+                self.is_placing = true;
+                self.drag_start_world = snapped_mouse;
+                self.drag_current_world = snapped_mouse;
+            }
+            EditorToolType::Obstacle => {
+                match self.active_obstacle_shape {
+                    ObstacleShapeType::Circle => {
+                        state.record_undo();
+                        let obs_id = state.track.geometry.obstacles.len() + 1;
+                        let new_obs = Obstacle::circle(obs_id, snapped_mouse, 1.2, format!("Tire Stack {}", obs_id));
+                        state.track.geometry.obstacles.push(new_obs);
+                        state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
+                        state.revalidate();
+                    }
+                    ObstacleShapeType::Box => {
+                        self.is_placing = true;
+                        self.drag_start_world = snapped_mouse;
+                        self.drag_current_world = snapped_mouse;
+                    }
+                    ObstacleShapeType::Polygon => {
+                        if self.active_polygon_vertices.len() >= 3
+                            && (self.active_polygon_vertices[0] - snapped_mouse).length() < 1.5
+                        {
+                            state.record_undo();
+                            let obs_id = state.track.geometry.obstacles.len() + 1;
+                            let vertices = std::mem::take(&mut self.active_polygon_vertices);
+                            let new_obs = Obstacle::polygon(obs_id, vertices, format!("Polygon Obstacle {}", obs_id));
+                            state.track.geometry.obstacles.push(new_obs);
+                            state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
+                            state.revalidate();
+                        } else {
+                            self.active_polygon_vertices.push(snapped_mouse);
+                        }
+                    }
+                }
+            }
+            EditorToolType::Checkpoint => {
+                self.is_placing = true;
+                self.drag_start_world = snapped_mouse;
+                self.drag_current_world = snapped_mouse;
+            }
+            EditorToolType::StartingGrid => {
+                state.record_undo();
+                let slot_idx = state.track.grid_positions.len();
+                let angle = 0.0;
+                state.track.grid_positions.push(SpawnPose::new(snapped_mouse, angle, slot_idx));
+                state.selection = Selection::GridSlot(slot_idx);
+                state.revalidate();
+            }
+            EditorToolType::PitLane => {
+                self.is_placing = true;
+                self.drag_start_world = snapped_mouse;
+                self.drag_current_world = snapped_mouse;
+            }
+        }
+    }
+
+    /// Handles secondary button (Right Click) drag event for element placement.
+    pub fn handle_secondary_drag(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        if !self.is_placing {
+            return;
+        }
+        let snapped_mouse = state.grid_snap.snap_point(mouse_world);
+        self.drag_current_world = snapped_mouse;
+    }
+
+    /// Handles secondary button (Right Click) release event to finalize element placement.
+    pub fn handle_secondary_up(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        if !self.is_placing {
+            return;
+        }
+        self.is_placing = false;
         let snapped_mouse = state.grid_snap.snap_point(mouse_world);
 
         match self.active_tool {
@@ -1527,6 +1515,28 @@ impl ToolSettings {
                 state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
                 state.revalidate();
             }
+            EditorToolType::Obstacle => {
+                if self.active_obstacle_shape == ObstacleShapeType::Box {
+                    let min = Vec2::new(
+                        self.drag_start_world.x.min(snapped_mouse.x),
+                        self.drag_start_world.y.min(snapped_mouse.y),
+                    );
+                    let max = Vec2::new(
+                        self.drag_start_world.x.max(snapped_mouse.x),
+                        self.drag_start_world.y.max(snapped_mouse.y),
+                    );
+                    if (max.x - min.x) > 1.0 && (max.y - min.y) > 1.0 {
+                        state.record_undo();
+                        let obs_id = state.track.geometry.obstacles.len() + 1;
+                        let center = (min + max) * 0.5;
+                        let half_extents = (max - min) * 0.5;
+                        let new_obs = Obstacle::oriented_box(obs_id, center, half_extents, 0.0, format!("Box Obstacle {}", obs_id));
+                        state.track.geometry.obstacles.push(new_obs);
+                        state.selection = Selection::Obstacle(state.track.geometry.obstacles.len() - 1);
+                        state.revalidate();
+                    }
+                }
+            }
             EditorToolType::Checkpoint => {
                 if (snapped_mouse - self.drag_start_world).length() > 3.0 {
                     state.record_undo();
@@ -1558,6 +1568,49 @@ impl ToolSettings {
                 }
             }
             _ => {}
+        }
+    }
+
+    /// Handles mouse down event in world space (routes to primary or secondary action based on tool & entity proximity).
+    pub fn handle_mouse_down(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        self.handle_mouse_down_with_mods(state, mouse_world, false);
+    }
+
+    /// Handles mouse down event with explicit modifier key flag (e.g. Shift / Ctrl for multi-select).
+    pub fn handle_mouse_down_with_mods(&mut self, state: &mut EditorState, mouse_world: Vec2, is_multi_key: bool) {
+        match self.active_tool {
+            EditorToolType::Select => {
+                self.handle_primary_down(state, mouse_world, is_multi_key);
+            }
+            EditorToolType::RoadSpline => {
+                if find_closest_waypoint(state, mouse_world, 8.0).is_some() {
+                    self.handle_primary_down(state, mouse_world, is_multi_key);
+                } else {
+                    self.handle_secondary_down(state, mouse_world);
+                }
+            }
+            _ => {
+                self.handle_secondary_down(state, mouse_world);
+            }
+        }
+    }
+
+    /// Handles generic mouse drag event.
+    pub fn handle_mouse_drag(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        if self.is_dragging {
+            self.handle_primary_drag(state, mouse_world);
+        } else if self.is_placing {
+            self.handle_secondary_drag(state, mouse_world);
+        }
+    }
+
+    /// Handles generic mouse up event.
+    pub fn handle_mouse_up(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        if self.is_dragging {
+            self.handle_primary_up(state, mouse_world);
+        }
+        if self.is_placing {
+            self.handle_secondary_up(state, mouse_world);
         }
     }
 
@@ -2438,111 +2491,109 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
         }
     }
 
-    // 8. Render Active Drag Box / Marquee Selection preview
-    if tools.is_dragging {
-        if tools.is_box_selecting {
-            let min = Vec2::new(
-                tools.drag_start_world.x.min(tools.drag_current_world.x),
-                tools.drag_start_world.y.min(tools.drag_current_world.y),
-            );
-            let max = Vec2::new(
-                tools.drag_start_world.x.max(tools.drag_current_world.x),
-                tools.drag_start_world.y.max(tools.drag_current_world.y),
-            );
-            let w = max.x - min.x;
-            let h = max.y - min.y;
-            macroquad::shapes::draw_rectangle(min.x, min.y, w, h, Color::new(0.2, 0.8, 1.0, 0.15));
-            draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
-        } else {
-            match tools.active_tool {
-                EditorToolType::SurfaceZone => {
-                    let min = Vec2::new(
-                        tools.drag_start_world.x.min(tools.drag_current_world.x),
-                        tools.drag_start_world.y.min(tools.drag_current_world.y),
-                    );
-                    let max = Vec2::new(
-                        tools.drag_start_world.x.max(tools.drag_current_world.x),
-                        tools.drag_start_world.y.max(tools.drag_current_world.y),
-                    );
-                    let w = max.x - min.x;
-                    let h = max.y - min.y;
-                    match tools.active_surface_shape {
-                        SurfaceShapeType::Square => {
-                            draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
-                        }
-                        SurfaceShapeType::Circle => {
-                            let center = (min + max) * 0.5;
-                            let radius = (w * 0.5).max(2.0);
-                            draw_circle_lines(center.x, center.y, radius, 0.4, Palette::NEON_CYAN);
-                        }
-                        SurfaceShapeType::Triangle => {
-                            let top = Vec2::new((min.x + max.x) * 0.5, max.y);
-                            let bl = Vec2::new(min.x, min.y);
-                            let br = Vec2::new(max.x, min.y);
-                            draw_line(bl.x, bl.y, br.x, br.y, 0.4, Palette::NEON_CYAN);
-                            draw_line(br.x, br.y, top.x, top.y, 0.4, Palette::NEON_CYAN);
-                            draw_line(top.x, top.y, bl.x, bl.y, 0.4, Palette::NEON_CYAN);
-                        }
-                        SurfaceShapeType::Polygon => {}
+    // 8. Render Active Drag Box / Marquee Selection preview or Element Placement preview
+    if tools.is_box_selecting {
+        let min = Vec2::new(
+            tools.drag_start_world.x.min(tools.drag_current_world.x),
+            tools.drag_start_world.y.min(tools.drag_current_world.y),
+        );
+        let max = Vec2::new(
+            tools.drag_start_world.x.max(tools.drag_current_world.x),
+            tools.drag_start_world.y.max(tools.drag_current_world.y),
+        );
+        let w = max.x - min.x;
+        let h = max.y - min.y;
+        macroquad::shapes::draw_rectangle(min.x, min.y, w, h, Color::new(0.2, 0.8, 1.0, 0.15));
+        draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
+    } else if tools.is_placing {
+        match tools.active_tool {
+            EditorToolType::SurfaceZone => {
+                let min = Vec2::new(
+                    tools.drag_start_world.x.min(tools.drag_current_world.x),
+                    tools.drag_start_world.y.min(tools.drag_current_world.y),
+                );
+                let max = Vec2::new(
+                    tools.drag_start_world.x.max(tools.drag_current_world.x),
+                    tools.drag_start_world.y.max(tools.drag_current_world.y),
+                );
+                let w = max.x - min.x;
+                let h = max.y - min.y;
+                match tools.active_surface_shape {
+                    SurfaceShapeType::Square => {
+                        draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
                     }
+                    SurfaceShapeType::Circle => {
+                        let center = (min + max) * 0.5;
+                        let radius = (w * 0.5).max(2.0);
+                        draw_circle_lines(center.x, center.y, radius, 0.4, Palette::NEON_CYAN);
+                    }
+                    SurfaceShapeType::Triangle => {
+                        let top = Vec2::new((min.x + max.x) * 0.5, max.y);
+                        let bl = Vec2::new(min.x, min.y);
+                        let br = Vec2::new(max.x, min.y);
+                        draw_line(bl.x, bl.y, br.x, br.y, 0.4, Palette::NEON_CYAN);
+                        draw_line(br.x, br.y, top.x, top.y, 0.4, Palette::NEON_CYAN);
+                        draw_line(top.x, top.y, bl.x, bl.y, 0.4, Palette::NEON_CYAN);
+                    }
+                    SurfaceShapeType::Polygon => {}
                 }
-                EditorToolType::PitLane => {
-                    let min = Vec2::new(
-                        tools.drag_start_world.x.min(tools.drag_current_world.x),
-                        tools.drag_start_world.y.min(tools.drag_current_world.y),
-                    );
-                    let max = Vec2::new(
-                        tools.drag_start_world.x.max(tools.drag_current_world.x),
-                        tools.drag_start_world.y.max(tools.drag_current_world.y),
-                    );
-                    let w = max.x - min.x;
-                    let h = max.y - min.y;
-                    draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
-                }
-                EditorToolType::Checkpoint => {
-                    draw_line(
-                        tools.drag_start_world.x,
-                        tools.drag_start_world.y,
-                        tools.drag_current_world.x,
-                        tools.drag_current_world.y,
-                        0.5,
-                        Palette::NEON_CYAN,
-                    );
-                }
-                EditorToolType::JumpRamp => {
-                    let start = tools.drag_start_world;
-                    let current = tools.drag_current_world;
-                    let dir = (current - start).normalize_or_zero();
-                    let length = (current - start).length().max(6.0);
-                    let center = (start + current) * 0.5;
-                    let angle = dir.y.atan2(dir.x);
-                    let half_extents = Vec2::new(length * 0.5, 4.0);
-
-                    draw_oriented_box_lines(center, half_extents, angle, 0.4, Palette::NEON_CYAN);
-                    draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_GOLD);
-
-                    let right = Vec2::new(-dir.y, dir.x);
-                    let arrow_tip = current;
-                    let l_wing = arrow_tip - dir * 1.8 - right * 1.2;
-                    let r_wing = arrow_tip - dir * 1.8 + right * 1.2;
-                    draw_line(arrow_tip.x, arrow_tip.y, l_wing.x, l_wing.y, 0.5, Palette::NEON_GOLD);
-                    draw_line(arrow_tip.x, arrow_tip.y, r_wing.x, r_wing.y, 0.5, Palette::NEON_GOLD);
-                }
-                EditorToolType::Obstacle => {
-                    let min = Vec2::new(
-                        tools.drag_start_world.x.min(tools.drag_current_world.x),
-                        tools.drag_start_world.y.min(tools.drag_current_world.y),
-                    );
-                    let max = Vec2::new(
-                        tools.drag_start_world.x.max(tools.drag_current_world.x),
-                        tools.drag_start_world.y.max(tools.drag_current_world.y),
-                    );
-                    let w = max.x - min.x;
-                    let h = max.y - min.y;
-                    draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_MAGENTA);
-                }
-                _ => {}
             }
+            EditorToolType::PitLane => {
+                let min = Vec2::new(
+                    tools.drag_start_world.x.min(tools.drag_current_world.x),
+                    tools.drag_start_world.y.min(tools.drag_current_world.y),
+                );
+                let max = Vec2::new(
+                    tools.drag_start_world.x.max(tools.drag_current_world.x),
+                    tools.drag_start_world.y.max(tools.drag_current_world.y),
+                );
+                let w = max.x - min.x;
+                let h = max.y - min.y;
+                draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_CYAN);
+            }
+            EditorToolType::Checkpoint => {
+                draw_line(
+                    tools.drag_start_world.x,
+                    tools.drag_start_world.y,
+                    tools.drag_current_world.x,
+                    tools.drag_current_world.y,
+                    0.5,
+                    Palette::NEON_CYAN,
+                );
+            }
+            EditorToolType::JumpRamp => {
+                let start = tools.drag_start_world;
+                let current = tools.drag_current_world;
+                let dir = (current - start).normalize_or_zero();
+                let length = (current - start).length().max(6.0);
+                let center = (start + current) * 0.5;
+                let angle = dir.y.atan2(dir.x);
+                let half_extents = Vec2::new(length * 0.5, 4.0);
+
+                draw_oriented_box_lines(center, half_extents, angle, 0.4, Palette::NEON_CYAN);
+                draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_GOLD);
+
+                let right = Vec2::new(-dir.y, dir.x);
+                let arrow_tip = current;
+                let l_wing = arrow_tip - dir * 1.8 - right * 1.2;
+                let r_wing = arrow_tip - dir * 1.8 + right * 1.2;
+                draw_line(arrow_tip.x, arrow_tip.y, l_wing.x, l_wing.y, 0.5, Palette::NEON_GOLD);
+                draw_line(arrow_tip.x, arrow_tip.y, r_wing.x, r_wing.y, 0.5, Palette::NEON_GOLD);
+            }
+            EditorToolType::Obstacle => {
+                let min = Vec2::new(
+                    tools.drag_start_world.x.min(tools.drag_current_world.x),
+                    tools.drag_start_world.y.min(tools.drag_current_world.y),
+                );
+                let max = Vec2::new(
+                    tools.drag_start_world.x.max(tools.drag_current_world.x),
+                    tools.drag_start_world.y.max(tools.drag_current_world.y),
+                );
+                let w = max.x - min.x;
+                let h = max.y - min.y;
+                draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_MAGENTA);
+            }
+            _ => {}
         }
     }
 
@@ -3076,6 +3127,77 @@ mod tests {
         assert!(tools.batch_set_walls(&mut state, true, false));
         assert!(state.track.spline.waypoints[0].left_wall);
         assert!(!state.track.spline.waypoints[0].right_wall);
+    }
+
+    #[test]
+    fn test_primary_button_select_and_box_select_and_drag() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+        tools.active_tool = EditorToolType::RoadSpline;
+
+        // 1. Primary Left Click on empty canvas performs marquee box selection
+        let empty_area = Vec2::new(700.0, 700.0);
+        tools.handle_primary_down(&mut state, empty_area, false);
+        assert!(tools.is_box_selecting);
+        assert!(tools.is_dragging);
+        tools.handle_primary_drag(&mut state, empty_area + Vec2::new(50.0, 50.0));
+        tools.handle_primary_up(&mut state, empty_area + Vec2::new(50.0, 50.0));
+        assert!(!tools.is_box_selecting);
+        assert!(!tools.is_dragging);
+
+        // 2. Primary Left Click on existing waypoint selects and prepares dragging
+        let wp0_pos = state.track.spline.waypoints[0].point;
+        tools.handle_primary_down(&mut state, wp0_pos, false);
+        assert_eq!(state.selection, Selection::Waypoint(0));
+        assert!(tools.is_dragging);
+        assert!(!tools.is_box_selecting);
+
+        // Drag waypoint
+        let new_wp0_pos = wp0_pos + Vec2::new(10.0, 10.0);
+        tools.handle_primary_drag(&mut state, new_wp0_pos);
+        tools.handle_primary_up(&mut state, new_wp0_pos);
+        assert_eq!(state.track.spline.waypoints[0].point, new_wp0_pos);
+    }
+
+    #[test]
+    fn test_secondary_button_places_elements_across_tools() {
+        let track = classic_grand_prix();
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+
+        // 1. Secondary Right Click in RoadSpline tool adds a new waypoint
+        tools.active_tool = EditorToolType::RoadSpline;
+        let initial_wp_count = state.track.spline.waypoints.len();
+        let place_pos = Vec2::new(800.0, 800.0);
+        tools.handle_secondary_down(&mut state, place_pos);
+        tools.handle_secondary_up(&mut state, place_pos);
+        assert_eq!(state.track.spline.waypoints.len(), initial_wp_count + 1);
+        let new_idx = state.track.spline.waypoints.len() - 1;
+        assert_eq!(state.selection, Selection::Waypoint(new_idx));
+        assert_eq!(state.track.spline.waypoints[new_idx].point, place_pos);
+
+        // 2. Secondary Right Drag in SurfaceZone tool adds a SurfaceZone
+        tools.active_tool = EditorToolType::SurfaceZone;
+        tools.active_surface = SurfaceType::Sand;
+        tools.active_surface_shape = SurfaceShapeType::Square;
+        let initial_zones = state.track.geometry.surface_zones.len();
+        tools.handle_secondary_down(&mut state, Vec2::new(820.0, 820.0));
+        assert!(tools.is_placing);
+        tools.handle_secondary_drag(&mut state, Vec2::new(850.0, 850.0));
+        tools.handle_secondary_up(&mut state, Vec2::new(850.0, 850.0));
+        assert!(!tools.is_placing);
+        assert_eq!(state.track.geometry.surface_zones.len(), initial_zones + 1);
+
+        // 3. Secondary Right Drag in JumpRamp tool adds a JumpRamp
+        tools.active_tool = EditorToolType::JumpRamp;
+        let initial_ramps = state.track.geometry.jump_ramps.len();
+        tools.handle_secondary_down(&mut state, Vec2::new(900.0, 900.0));
+        assert!(tools.is_placing);
+        tools.handle_secondary_drag(&mut state, Vec2::new(920.0, 900.0));
+        tools.handle_secondary_up(&mut state, Vec2::new(920.0, 900.0));
+        assert!(!tools.is_placing);
+        assert_eq!(state.track.geometry.jump_ramps.len(), initial_ramps + 1);
     }
 }
 

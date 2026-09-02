@@ -3233,13 +3233,14 @@ fn render_help_modal(
 
     let shortcuts = [
         ("Tools 1-8", "Switch between Select, Spline, Surface, Ramp, Obstacle, Checkpoint, Grid, Pit"),
-        ("Left Click", "Place entity / Select / Drag handles / Draw surface shapes"),
+        ("Left Click / Drag", "Select entity / Click & drag area to box-select / Drag to move"),
+        ("Right Click / Drag", "Place active element (Waypoints, Zones, Ramps, Props, Gates, Grid, Pit)"),
         ("Ctrl + S / C / T / P", "Select surface shape (Square, Circle, Triangle, Polygon)"),
         ("Ctrl + F / Ctrl + B", "Move surface zone to FRONT (Above Track) or BACK (Below Track)"),
         ("B / [ / ]", "Adjust Banking on selected waypoint(s) (+/- 1°, Shift for 5°, B to cycle presets)"),
         ("R / Shift+R", "Rotate selected Jump Ramp (+/- 15°)"),
         ("Arrow Keys / WASD", "Pan camera across circuit canvas (+Shift for fast pan)"),
-        ("Middle / Right Drag", "Pan editor camera across the circuit canvas"),
+        ("Middle Drag", "Pan editor camera across canvas (or Right Drag in Select tool)"),
         ("+ / - Keys", "Progressive zoom in / zoom out (+Shift for fast zoom)"),
         ("Mouse Scroll Wheel", "Zoom in / Zoom out centered on cursor position"),
         ("Tab Key", "Cycle zoom levels (Close, Medium, Far, Overview)"),
