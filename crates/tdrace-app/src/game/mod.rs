@@ -83,8 +83,9 @@ use crate::profile::{CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHis
 use crate::render::car::render_car_with_visual_type;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
-    render_editor_grid, render_editor_gizmos, render_editor_ui, EditorAction, EditorCamera,
-    EditorModal, EditorState, EditorToolType, SurfaceShapeType, ToolSettings,
+    is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_ui,
+    EditorAction, EditorCamera, EditorModal, EditorState, EditorToolType, SurfaceShapeType,
+    ToolSettings,
 };
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
@@ -3777,20 +3778,24 @@ impl RaceSession {
         let world_mouse = self.editor_camera.screen_to_world(mouse_pos, sw, sh);
 
         // Check if cursor is over floating UI palettes or modal
-        let in_top = my < 48.0;
-        let in_bot = my > sh - 34.0;
-        let in_left = mx < 185.0 && my > 48.0 && my < 480.0;
-        let in_right = mx > sw - 260.0 && my > 48.0;
-        let over_ui = in_top || in_bot || in_left || in_right || self.editor_modal != EditorModal::None;
+        let over_ui = is_mouse_over_editor_ui(
+            mouse_pos,
+            sw,
+            sh,
+            self.editor_tools.active_tool,
+            self.editor_modal != EditorModal::None,
+        );
+
+        let is_select_tool = self.editor_tools.active_tool == EditorToolType::Select;
 
         if !over_ui {
-            let is_select_tool = self.editor_tools.active_tool == EditorToolType::Select;
-
             if is_mouse_button_pressed(macroquad::input::MouseButton::Middle)
                 || (is_select_tool && is_mouse_button_pressed(macroquad::input::MouseButton::Right))
             {
                 self.editor_camera.start_pan(mouse_pos);
             }
+        }
+        if self.editor_camera.is_panning {
             if is_mouse_button_down(macroquad::input::MouseButton::Middle)
                 || (is_select_tool && is_mouse_button_down(macroquad::input::MouseButton::Right))
             {
@@ -3801,37 +3806,41 @@ impl RaceSession {
             {
                 self.editor_camera.end_pan();
             }
+        }
 
-            let mouse_wheel_y = mouse_wheel_safe().1;
-            if mouse_wheel_y.abs() > 0.01 {
-                let factor = if mouse_wheel_y > 0.0 { 1.15 } else { 0.85 };
-                self.editor_camera.zoom_at(mouse_pos, factor, sw, sh);
+        let mouse_wheel_y = mouse_wheel_safe().1;
+        if !over_ui && mouse_wheel_y.abs() > 0.01 {
+            let factor = if mouse_wheel_y > 0.0 { 1.15 } else { 0.85 };
+            self.editor_camera.zoom_at(mouse_pos, factor, sw, sh);
+        }
+
+        if let Some(state) = &mut self.editor_state {
+            let is_multi = is_key_down(KeyCode::LeftShift)
+                || is_key_down(KeyCode::RightShift)
+                || is_key_down(KeyCode::LeftControl)
+                || is_key_down(KeyCode::RightControl)
+                || is_key_down(KeyCode::LeftSuper)
+                || is_key_down(KeyCode::RightSuper);
+
+            // Primary Button (Left Click) -> Select entities, drag selection, marquee area box select
+            if !over_ui && is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
+                self.editor_tools.handle_primary_down(state, world_mouse, is_multi);
             }
-
-            if let Some(state) = &mut self.editor_state {
-                let is_multi = is_key_down(KeyCode::LeftShift)
-                    || is_key_down(KeyCode::RightShift)
-                    || is_key_down(KeyCode::LeftControl)
-                    || is_key_down(KeyCode::RightControl)
-                    || is_key_down(KeyCode::LeftSuper)
-                    || is_key_down(KeyCode::RightSuper);
-
-                // Primary Button (Left Click) -> Select entities, drag selection, marquee area box select
-                if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
-                    self.editor_tools.handle_primary_down(state, world_mouse, is_multi);
-                }
+            if self.editor_tools.is_dragging {
                 if is_mouse_button_down(macroquad::input::MouseButton::Left) {
                     self.editor_tools.handle_primary_drag(state, world_mouse);
                 }
                 if is_mouse_button_released(macroquad::input::MouseButton::Left) {
                     self.editor_tools.handle_primary_up(state, world_mouse);
                 }
+            }
 
-                // Secondary Button (Right Click) -> Place elements (for creation tools)
-                if !is_select_tool {
-                    if is_mouse_button_pressed(macroquad::input::MouseButton::Right) {
-                        self.editor_tools.handle_secondary_down(state, world_mouse);
-                    }
+            // Secondary Button (Right Click) -> Place elements (for creation tools)
+            if !is_select_tool {
+                if !over_ui && is_mouse_button_pressed(macroquad::input::MouseButton::Right) {
+                    self.editor_tools.handle_secondary_down(state, world_mouse);
+                }
+                if self.editor_tools.is_placing {
                     if is_mouse_button_down(macroquad::input::MouseButton::Right) {
                         self.editor_tools.handle_secondary_drag(state, world_mouse);
                     }

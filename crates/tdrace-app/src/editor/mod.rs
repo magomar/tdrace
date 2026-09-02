@@ -6,7 +6,7 @@ pub mod ui;
 pub use camera::EditorCamera;
 pub use state::{EditorState, GridSnapSetting, HistoryStack, Selection};
 pub use tools::{render_editor_gizmos, EditorToolType, ObstacleShapeType, SurfaceShapeType, ToolSettings};
-pub use ui::{render_editor_ui, EditorAction, EditorModal};
+pub use ui::{is_mouse_over_editor_ui, render_editor_ui, EditorAction, EditorModal};
 
 use glam::Vec2;
 use macroquad::color::Color;
