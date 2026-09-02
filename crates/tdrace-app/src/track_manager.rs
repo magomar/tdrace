@@ -428,7 +428,9 @@ impl TrackManager {
                     TrackChoice::ClassicGrandPrix,
                 ];
                 for custom in self.module_custom_tracks("f1") {
-                    if !list.iter().any(|c| c.track_id() == custom.track_id()) {
+                    if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
+                        list[pos] = custom;
+                    } else {
                         list.push(custom);
                     }
                 }
@@ -476,7 +478,9 @@ impl TrackManager {
                     },
                 ];
                 for custom in self.module_custom_tracks("rally") {
-                    if !list.iter().any(|c| c.track_id() == custom.track_id()) {
+                    if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
+                        list[pos] = custom;
+                    } else {
                         list.push(custom);
                     }
                 }
@@ -536,7 +540,9 @@ impl TrackManager {
                     TrackChoice::DriftPark,
                 ];
                 for custom in self.module_custom_tracks("kart") {
-                    if !list.iter().any(|c| c.track_id() == custom.track_id()) {
+                    if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
+                        list[pos] = custom;
+                    } else {
                         list.push(custom);
                     }
                 }
@@ -545,7 +551,9 @@ impl TrackManager {
             "classic" => {
                 let mut list = Vec::from(TrackChoice::ALL);
                 for custom in self.module_custom_tracks("classic") {
-                    if !list.iter().any(|c| c.track_id() == custom.track_id()) {
+                    if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
+                        list[pos] = custom;
+                    } else {
                         list.push(custom);
                     }
                 }
@@ -718,13 +726,18 @@ impl TrackManager {
                     path: "rally/loheac_rx".to_string(),
                 });
                 for custom in &self.custom_tracks {
-                    if custom.category == TrackCategory::Main && !list.iter().any(|c| c.track_id() == custom.id) {
-                        list.push(TrackChoice::Custom {
+                    if custom.category == TrackCategory::Main {
+                        let custom_choice = TrackChoice::Custom {
                             id: custom.id.clone(),
                             title: custom.title.clone(),
                             description: custom.description.clone(),
                             path: custom.file_path.clone(),
-                        });
+                        };
+                        if let Some(pos) = list.iter().position(|c| c.track_id() == custom.id) {
+                            list[pos] = custom_choice;
+                        } else {
+                            list.push(custom_choice);
+                        }
                     }
                 }
                 list
@@ -869,6 +882,22 @@ impl TrackManager {
         }
     }
 
+    /// Returns the built-in motorsport module ID for a preset track slug, if applicable.
+    pub fn preset_module(slug: &str) -> Option<&'static str> {
+        match slug {
+            "classic_grand_prix" | "oval_speedway" | "drift_park" | "ramp_raceway" | "outlaw_pass" => Some("classic"),
+            "oasis_rally" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "sahara" | "sahara_dunes" => Some("rally"),
+            "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" => Some("kart"),
+            "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" => Some("f1"),
+            _ => None,
+        }
+    }
+
+    /// Checks if the given slug corresponds to a known preset circuit.
+    pub fn is_preset_slug(slug: &str) -> bool {
+        Self::preset_module(slug).is_some()
+    }
+
     /// Converts a track name into a valid file slug.
     pub fn sanitize_slug(name: &str) -> String {
         let sanitized = name
@@ -908,11 +937,11 @@ impl TrackManager {
     pub fn track_path_for_slug(&self, slug: &str) -> PathBuf {
         let file_name = format!("{}.json", slug);
         let candidates = [
-            self.tracks_dir.join("drafts").join(&file_name),
             self.tracks_dir.join("classic").join(&file_name),
             self.tracks_dir.join("f1").join(&file_name),
             self.tracks_dir.join("rally").join(&file_name),
             self.tracks_dir.join("kart").join(&file_name),
+            self.tracks_dir.join("drafts").join(&file_name),
             self.tracks_dir.join(&file_name),
         ];
         for cand in &candidates {
@@ -920,7 +949,11 @@ impl TrackManager {
                 return cand.clone();
             }
         }
-        self.tracks_dir.join("drafts").join(file_name)
+        if let Some(mod_name) = Self::preset_module(slug) {
+            self.tracks_dir.join(mod_name).join(file_name)
+        } else {
+            self.tracks_dir.join("drafts").join(file_name)
+        }
     }
 
     /// Saves a track to disk with overwrite control in the appropriate category/module subdirectory.
@@ -940,6 +973,7 @@ impl TrackManager {
         };
 
         // If file already exists and was Main category, keep its category and module when overwriting.
+        // If track is a known preset or Main track with module being overwritten, preserve Main category and module.
         // Otherwise, newly created custom tracks land in Drafts by default.
         let existing_path = self.track_path_for_slug(&base_slug);
         if overwrite && existing_path.exists() {
@@ -947,6 +981,16 @@ impl TrackManager {
                 track_to_save.category = existing.category;
                 track_to_save.module_id = existing.module_id;
                 track_to_save.modules = existing.modules;
+            }
+        } else if overwrite && Self::is_preset_slug(&base_slug) {
+            track_to_save.category = TrackCategory::Main;
+            let mod_id = Self::preset_module(&base_slug)
+                .map(|s| s.to_string())
+                .or_else(|| track_to_save.module_id.clone())
+                .unwrap_or_else(|| "classic".to_string());
+            track_to_save.module_id = Some(mod_id.clone());
+            if track_to_save.modules.is_empty() {
+                track_to_save.modules = vec![mod_id];
             }
         } else {
             track_to_save.category = TrackCategory::Draft;
@@ -1002,11 +1046,29 @@ impl TrackManager {
         choices
     }
 
+    /// Returns the list of motorsport module IDs ("classic", "rally", "kart", "f1") where a track is currently promoted / available.
+    pub fn track_promoted_modules(&self, id: &str) -> Vec<String> {
+        let mut mods = Vec::new();
+        for mod_id in ["classic", "rally", "kart", "f1"] {
+            if self.is_track_in_module(id, mod_id) {
+                mods.push(mod_id.to_string());
+            }
+        }
+        mods
+    }
+
+    /// Checks if a track is promoted / available in a specific module.
+    pub fn is_track_in_module(&self, id: &str, module_id: &str) -> bool {
+        self.module_catalog_tracks(module_id)
+            .iter()
+            .any(|c| c.track_id() == id)
+    }
+
     /// Promotes a track from Draft to Main category (Approved circuit) assigned to multiple modules,
-    /// copying the track file to each target `<module_id>/` folder and removing it from `drafts/`.
+    /// copying the track file to each target `<module_id>/` folder and removing it from `drafts/` and unselected module folders.
     pub fn promote_track_to_modules(&mut self, id: &str, module_ids: &[&str]) -> Result<(), String> {
         if module_ids.is_empty() {
-            return Err("No motorsport modules specified for track promotion.".to_string());
+            return self.demote_track(id);
         }
 
         let (mut track, old_path) = if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
@@ -1037,14 +1099,30 @@ impl TrackManager {
                 .map_err(|e| format!("Failed to save promoted track to {}: {}", mod_id, e))?;
         }
 
+        // Clean up from module subdirectories that are NOT in module_ids
+        let file_name = format!("{}.json", id);
+        let all_module_subdirs = ["classic", "f1", "rally", "kart"];
+        for sub in &all_module_subdirs {
+            if !module_ids.contains(sub) {
+                let p = self.tracks_dir.join(sub).join(&file_name);
+                if p.exists() {
+                    let _ = fs::remove_file(p);
+                }
+            }
+        }
+
         // Clean up original draft or root file if it is not one of the destination paths
         if let Some(old) = old_path {
-            let is_one_of_targets = module_ids.iter().any(|m| self.tracks_dir.join(m).join(format!("{}.json", id)) == old);
+            let is_one_of_targets = module_ids.iter().any(|m| self.tracks_dir.join(m).join(&file_name) == old);
             if !is_one_of_targets && old.exists() {
                 let _ = fs::remove_file(&old);
             }
         }
-        let draft_path = self.tracks_dir.join("drafts").join(format!("{}.json", id));
+        let root_path = self.tracks_dir.join(&file_name);
+        if root_path.exists() && !module_ids.is_empty() {
+            let _ = fs::remove_file(&root_path);
+        }
+        let draft_path = self.tracks_dir.join("drafts").join(&file_name);
         if draft_path.exists() {
             let _ = fs::remove_file(&draft_path);
         }

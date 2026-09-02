@@ -857,22 +857,10 @@ impl RaceSession {
     pub fn advance_championship_round(&mut self) {
         if let Some(champ) = &self.championship_session {
             if let Some(track_id) = champ.current_track_id() {
-                match track_id {
-                    "monza" => self.track = F1GameModule::track_monza(),
-                    "spa" => self.track = F1GameModule::track_spa(),
-                    "silverstone" => self.track = F1GameModule::track_silverstone(),
-                    "monaco" => self.track = F1GameModule::track_monaco(),
-                    "suzuka" => self.track = F1GameModule::track_suzuka(),
-                    "interlagos" => self.track = F1GameModule::track_interlagos(),
-                    "montreal" => self.track = F1GameModule::track_montreal(),
-                    "red_bull_ring" => self.track = F1GameModule::track_red_bull_ring(),
-                    "catalunya" => self.track = F1GameModule::track_catalunya(),
-                    "zandvoort" => self.track = F1GameModule::track_zandvoort(),
-                    "bahrain" => self.track = F1GameModule::track_bahrain(),
-                    "marina_bay" => self.track = F1GameModule::track_marina_bay(),
-                    "cota" => self.track = F1GameModule::track_cota(),
-                    _ => self.track = tdrace_core::track::presets::classic_grand_prix(),
-                }
+                self.track = self
+                    .track_manager
+                    .load_track_by_slug(&track_id)
+                    .unwrap_or_else(|_| tdrace_core::track::presets::classic_grand_prix());
                 self.init_race();
             } else {
                 self.championship_session = None;
@@ -2534,14 +2522,19 @@ impl RaceSession {
             if self.menu_track_idx < available_tracks.len() {
                 let chosen = available_tracks[self.menu_track_idx].clone();
                 let file_path = match &chosen {
-                    TrackChoice::Custom { path, .. } => Some(path.clone()),
-                    preset => {
-                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                    TrackChoice::Custom { path, .. } => {
+                        let candidate = self.track_manager.track_path_for_slug(chosen.track_id());
                         if candidate.exists() {
                             Some(candidate.to_string_lossy().to_string())
+                        } else if std::path::Path::new(path).exists() {
+                            Some(path.clone())
                         } else {
-                            None
+                            Some(candidate.to_string_lossy().to_string())
                         }
+                    }
+                    preset => {
+                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                        Some(candidate.to_string_lossy().to_string())
                     }
                 };
                 let track = self.load_track_for_session(&chosen);
@@ -2778,21 +2771,24 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.btn_confirm_pressed
                     || self.input.gamepad.snapshot.btn_a_pressed
                 {
-                    let mut target_mods: Vec<&str> = PROMOTION_MODULES
+                    let target_mods: Vec<&str> = PROMOTION_MODULES
                         .iter()
                         .enumerate()
                         .filter(|(i, _)| selected_mask[*i])
                         .map(|(_, (mod_id, _, _, _))| *mod_id)
                         .collect();
                     if target_mods.is_empty() {
-                        let (cur_mod, _, _, _) = PROMOTION_MODULES[cursor_idx.min(PROMOTION_MODULES.len() - 1)];
-                        target_mods.push(cur_mod);
+                        let _ = self.track_manager.demote_track(track_id);
+                    } else {
+                        let _ = self.track_manager.promote_track_to_modules(track_id, &target_mods);
                     }
-                    let _ = self.track_manager.promote_track_to_modules(track_id, &target_mods);
                     self.audio.play_sfx(SfxType::UiSelect);
-                    let new_len = self.track_manager.draft_track_choices().len();
-                    if selected_idx >= new_len && new_len > 0 {
-                        selected_idx = new_len - 1;
+                    let list_len = match active_tab {
+                        TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter).len(),
+                        TrackManagerTab::Drafts => self.track_manager.draft_track_choices().len(),
+                    };
+                    if selected_idx >= list_len && list_len > 0 {
+                        selected_idx = list_len - 1;
                     }
                     self.state = GameState::TrackManager {
                         active_tab,
@@ -2937,14 +2933,19 @@ impl RaceSession {
                 self.audio.play_sfx(SfxType::UiSelect);
                 self.track_choice = track_choice.clone();
                 let file_path = match track_choice {
-                    TrackChoice::Custom { path, .. } => Some(path.clone()),
-                    preset => {
-                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                    TrackChoice::Custom { path, .. } => {
+                        let candidate = self.track_manager.track_path_for_slug(track_choice.track_id());
                         if candidate.exists() {
                             Some(candidate.to_string_lossy().to_string())
+                        } else if std::path::Path::new(path).exists() {
+                            Some(path.clone())
                         } else {
-                            None
+                            Some(candidate.to_string_lossy().to_string())
                         }
+                    }
+                    preset => {
+                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                        Some(candidate.to_string_lossy().to_string())
                     }
                 };
                 let track = self
@@ -2957,42 +2958,63 @@ impl RaceSession {
             }
         }
 
-        // 6. Promote / Demote Track (P key / Gamepad Y)
+        // 6. Promote / Demote Track (P key = Promote / Edit Modules, Ctrl+P = Demote)
+        let ctrl_down = is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper);
+
         if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 let tid = track_choice.track_id().to_string();
-                match active_tab {
-                    TrackManagerTab::Drafts => {
-                        self.audio.play_sfx(SfxType::UiSelect);
-                        let default_mod_idx = match self.active_module_id {
-                            "classic" => 0,
-                            "rally" => 1,
-                            "kart" => 2,
-                            _ => 3,
-                        };
-                        let mut selected_mask = [false; 4];
-                        selected_mask[default_mod_idx] = true;
-                        self.state = GameState::TrackManager {
-                            active_tab,
-                            module_filter,
-                            selected_idx,
-                            modal: TrackManagerModal::SelectModulePromotion {
-                                track_id: tid,
-                                track_title: track_choice.title().to_string(),
-                                cursor_idx: default_mod_idx,
-                                selected_mask,
-                            },
-                        };
-                        return;
+                if ctrl_down {
+                    // Demote Track (Ctrl+P)
+                    let _ = self.track_manager.demote_track(&tid);
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let list_len = match active_tab {
+                        TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter).len(),
+                        TrackManagerTab::Drafts => self.track_manager.draft_track_choices().len(),
+                    };
+                    if selected_idx >= list_len && list_len > 0 {
+                        selected_idx = list_len - 1;
                     }
-                    TrackManagerTab::Main => {
-                        let _ = self.track_manager.demote_track(&tid);
-                        self.audio.play_sfx(SfxType::UiSelect);
-                        let new_len = self.track_manager.filtered_main_track_choices(module_filter).len();
-                        if selected_idx >= new_len && new_len > 0 {
-                            selected_idx = new_len - 1;
+                } else {
+                    // Promote Track / Configure Modules (P key / Gamepad Y)
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let mut selected_mask = [false; 4];
+                    let mut has_any_selected = false;
+                    for (idx, (mod_id, _, _, _)) in PROMOTION_MODULES.iter().enumerate() {
+                        if self.track_manager.is_track_in_module(&tid, mod_id) {
+                            selected_mask[idx] = true;
+                            has_any_selected = true;
                         }
                     }
+                    let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
+                        "rally" => 1,
+                        "kart" => 2,
+                        "f1" => 3,
+                        _ => 0,
+                    };
+                    if !has_any_selected {
+                        selected_mask[default_mod_idx] = true;
+                    }
+                    let cursor_idx = if has_any_selected {
+                        selected_mask.iter().position(|&b| b).unwrap_or(default_mod_idx)
+                    } else {
+                        default_mod_idx
+                    };
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::SelectModulePromotion {
+                            track_id: tid,
+                            track_title: track_choice.title().to_string(),
+                            cursor_idx,
+                            selected_mask,
+                        },
+                    };
+                    return;
                 }
             }
         }
@@ -3073,7 +3095,12 @@ impl RaceSession {
         let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
         let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
         let touch_ctrl = self.touch.poll_controls();
-        let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+        let mut player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+        if player_speed <= 0.1 && player_ctrl.brake > 0.0 && player_ctrl.throttle == 0.0 {
+            player_ctrl.reverse = true;
+            player_ctrl.throttle = player_ctrl.brake;
+            player_ctrl.brake = 0.0;
+        }
         controls_all.push(player_ctrl);
 
         for i in 1..n_cars {
@@ -3199,9 +3226,13 @@ impl RaceSession {
             let slip_intensity = (max_slip_angle * 1.5).max(max_slip_ratio);
 
             let forward_speed = player_car.state.local_velocity.x;
-            let throttle = player_ctrl.throttle - player_ctrl.brake;
-            let (rpm, is_shift) = self.engine_rpm.update(forward_speed, throttle, slip_intensity, dt);
-            self.audio.update_engine_rpm(rpm, throttle, is_shift);
+            let effective_throttle = if player_ctrl.reverse {
+                -player_ctrl.throttle
+            } else {
+                player_ctrl.throttle - player_ctrl.brake
+            };
+            let (rpm, is_shift) = self.engine_rpm.update(forward_speed, effective_throttle, slip_intensity, dt);
+            self.audio.update_engine_rpm(rpm, effective_throttle, is_shift);
         }
 
         // 6. Update race progression, lap tracking, sector splits, anti-cheat
@@ -4196,14 +4227,19 @@ impl RaceSession {
             EditorAction::OpenTrack(choice) => {
                 if let Ok(track) = self.track_manager.load_track(&choice) {
                     let file_path = match &choice {
-                        TrackChoice::Custom { path, .. } => Some(path.clone()),
-                        preset => {
-                            let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                        TrackChoice::Custom { path, .. } => {
+                            let candidate = self.track_manager.track_path_for_slug(choice.track_id());
                             if candidate.exists() {
                                 Some(candidate.to_string_lossy().to_string())
+                            } else if std::path::Path::new(path).exists() {
+                                Some(path.clone())
                             } else {
-                                None
+                                Some(candidate.to_string_lossy().to_string())
                             }
+                        }
+                        preset => {
+                            let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                            Some(candidate.to_string_lossy().to_string())
                         }
                     };
                     self.enter_track_editor_with_path(track, file_path);

@@ -508,9 +508,9 @@ pub fn render_track_manager_screen(
 
         let expl_text = if is_main_active {
             if selected_track.is_custom() {
-                "This track is an OFFICIAL PRESET. It appears as an approved circuit in the Main Menu."
+                "This track is an OFFICIAL PRESET. Press [P] to configure modules or [Ctrl+P] to demote to Drafts."
             } else {
-                "Built-in official preset circuit. Always available in the Main Menu."
+                "Built-in official preset circuit. Press [P] to configure modules or [Ctrl+P] to demote to Drafts."
             }
         } else {
             "This track is in DRAFT mode. Test and refine it here, then press [P] to promote to Official Preset."
@@ -527,7 +527,7 @@ pub fn render_track_manager_screen(
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
     let action_str = if is_main_active {
-        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [P] DEMOTE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [P] PROMOTE | [Ctrl+P] DEMOTE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     } else {
         "[Enter] RACE | [Tab] PROMOTED | [E] TRACK EDITOR | [P] PROMOTE TO MODULE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     };

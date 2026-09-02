@@ -691,3 +691,184 @@ fn test_empty_module_tracks_resilience() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
+    use tdrace_core::track::presets::oval_speedway;
+    use tdrace_app::module::f1::F1GameModule;
+    use tdrace_app::ui::menu::resolve_track_for_menu_with_dir;
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_preset_persistence_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // 1. Edit Classic preset (Oval Speedway)
+    let mut oval = oval_speedway();
+    oval.name = "Oval Speedway (Modified)".to_string();
+    oval.description = "Customized banked oval.".to_string();
+    let oval_path = manager
+        .save_custom_track_with_options(&oval, Some("oval_speedway"), true)
+        .expect("Save oval preset");
+    assert!(oval_path.ends_with("classic/oval_speedway.json"), "Must save to classic/ subdirectory, got: {}", oval_path);
+
+    // 2. Edit F1 preset (Monza)
+    let mut monza = F1GameModule::track_monza();
+    monza.name = "Monza Modified GP".to_string();
+    monza.description = "Edited temple of speed.".to_string();
+    let monza_path = manager
+        .save_custom_track_with_options(&monza, Some("monza"), true)
+        .expect("Save monza preset");
+    assert!(monza_path.ends_with("f1/monza.json"), "Must save to f1/ subdirectory, got: {}", monza_path);
+
+    // 3. Verify they remain Main category and are NOT demoted to drafts
+    assert_eq!(manager.draft_track_choices().len(), 0, "No drafts should exist after editing presets");
+    let main_tracks = manager.main_track_choices();
+    assert_eq!(main_tracks.len(), 34, "All 34 presets must remain in main tracks list");
+
+    let f1_catalog = manager.module_catalog_tracks("f1");
+    let monza_choice = f1_catalog.iter().find(|t| t.track_id() == "monza").expect("Monza must be in F1 catalog");
+    assert_eq!(monza_choice.title(), "Monza Modified GP");
+
+    let classic_catalog = manager.module_catalog_tracks("classic");
+    let oval_choice = classic_catalog.iter().find(|t| t.track_id() == "oval_speedway").expect("Oval must be in Classic catalog");
+    assert_eq!(oval_choice.title(), "Oval Speedway (Modified)");
+
+    // 4. Verify loading loads the edited version from disk
+    let loaded_oval = manager.load_track(&TrackChoice::OvalSpeedway).unwrap();
+    assert_eq!(loaded_oval.name, "Oval Speedway (Modified)");
+    assert_eq!(loaded_oval.category, TrackCategory::Main);
+    assert_eq!(loaded_oval.module_id, Some("classic".to_string()));
+
+    let loaded_monza = manager.load_track_by_slug("monza").unwrap();
+    assert_eq!(loaded_monza.name, "Monza Modified GP");
+    assert_eq!(loaded_monza.category, TrackCategory::Main);
+    assert_eq!(loaded_monza.module_id, Some("f1".to_string()));
+
+    // 5. Verify resolve_track_for_menu
+    let menu_oval = resolve_track_for_menu_with_dir(&TrackChoice::OvalSpeedway, &temp_dir).unwrap();
+    assert_eq!(menu_oval.name, "Oval Speedway (Modified)");
+
+    let menu_monza = resolve_track_for_menu_with_dir(monza_choice, &temp_dir).unwrap();
+    assert_eq!(menu_monza.name, "Monza Modified GP");
+
+    // 6. Verify Save as Copy lands in drafts
+    let copy_path = manager
+        .save_custom_track_with_options(&monza, Some("monza_custom_copy"), false)
+        .expect("Save copy");
+    assert!(copy_path.ends_with("drafts/monza_custom_copy.json"));
+    assert_eq!(manager.draft_track_choices().len(), 1);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_re_promoting_already_promoted_track_to_different_modules() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_repromo_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // 1. Create a draft track
+    let track_id = "dynamic_apex_gp";
+    let mut track = classic_grand_prix();
+    track.name = "Dynamic Apex GP".to_string();
+    track.category = TrackCategory::Draft;
+    manager.save_custom_track(&track, Some(track_id)).expect("Save draft");
+
+    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.track_promoted_modules(track_id).len(), 0);
+    assert!(!manager.is_track_in_module(track_id, "classic"));
+
+    // 2. Initial Promotion to Classic module
+    manager.promote_track_to_modules(track_id, &["classic"]).expect("Promote to classic");
+    assert_eq!(manager.draft_track_choices().len(), 0);
+    assert!(temp_dir.join("classic").join(format!("{}.json", track_id)).exists());
+    assert!(manager.is_track_in_module(track_id, "classic"));
+    assert_eq!(manager.track_promoted_modules(track_id), vec!["classic".to_string()]);
+
+    // 3. Re-promote to different modules: change from Classic to Rally and Kart (removing Classic)
+    manager
+        .promote_track_to_modules(track_id, &["rally", "kart"])
+        .expect("Re-promote to rally and kart");
+
+    assert!(!temp_dir.join("classic").join(format!("{}.json", track_id)).exists(), "Classic file must be removed");
+    assert!(temp_dir.join("rally").join(format!("{}.json", track_id)).exists(), "Rally file must exist");
+    assert!(temp_dir.join("kart").join(format!("{}.json", track_id)).exists(), "Kart file must exist");
+
+    assert!(!manager.is_track_in_module(track_id, "classic"));
+    assert!(manager.is_track_in_module(track_id, "rally"));
+    assert!(manager.is_track_in_module(track_id, "kart"));
+    assert!(!manager.is_track_in_module(track_id, "f1"));
+
+    let promoted_mods = manager.track_promoted_modules(track_id);
+    assert_eq!(promoted_mods, vec!["rally".to_string(), "kart".to_string()]);
+
+    // 4. Add F1 module without removing Rally or Kart (Rally, Kart, F1)
+    manager
+        .promote_track_to_modules(track_id, &["rally", "kart", "f1"])
+        .expect("Add F1 module");
+
+    assert!(temp_dir.join("rally").join(format!("{}.json", track_id)).exists());
+    assert!(temp_dir.join("kart").join(format!("{}.json", track_id)).exists());
+    assert!(temp_dir.join("f1").join(format!("{}.json", track_id)).exists());
+    assert!(!temp_dir.join("classic").join(format!("{}.json", track_id)).exists());
+
+    let promoted_mods_3 = manager.track_promoted_modules(track_id);
+    assert_eq!(promoted_mods_3, vec!["rally".to_string(), "kart".to_string(), "f1".to_string()]);
+
+    // 5. Promote with empty modules slice -> should demote track back to Drafts
+    manager
+        .promote_track_to_modules(track_id, &[])
+        .expect("Empty promotion should demote");
+
+    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.track_promoted_modules(track_id).len(), 0);
+    assert!(temp_dir.join("drafts").join(format!("{}.json", track_id)).exists(), "Draft file must be restored");
+    assert!(!temp_dir.join("rally").join(format!("{}.json", track_id)).exists());
+    assert!(!temp_dir.join("kart").join(format!("{}.json", track_id)).exists());
+    assert!(!temp_dir.join("f1").join(format!("{}.json", track_id)).exists());
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_track_manager_promotion_mask_resolution_for_promoted_track() {
+    use tdrace_app::ui::track_manager_ui::PROMOTION_MODULES;
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_mask_res_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Create and promote to Kart and F1
+    let track_id = "kart_f1_hybrid";
+    let mut track = classic_grand_prix();
+    track.name = "Hybrid Circuit".to_string();
+    track.category = TrackCategory::Draft;
+    manager.save_custom_track(&track, Some(track_id)).unwrap();
+    manager.promote_track_to_modules(track_id, &["kart", "f1"]).unwrap();
+
+    // Verify mask resolution logic matches PROMOTION_MODULES indices
+    let mut selected_mask = [false; 4];
+    for (idx, (mod_id, _, _, _)) in PROMOTION_MODULES.iter().enumerate() {
+        if manager.is_track_in_module(track_id, mod_id) {
+            selected_mask[idx] = true;
+        }
+    }
+
+    // PROMOTION_MODULES order: 0: classic, 1: rally, 2: kart, 3: f1
+    assert_eq!(selected_mask, [false, false, true, true]);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+

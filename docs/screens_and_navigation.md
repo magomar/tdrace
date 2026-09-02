@@ -394,7 +394,8 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `E` | Open in CAD Studio | Opens track spline in `GameState::TrackEditor` |
 | `N` | New Draft Track | Creates new draft track in Drafts workshop |
 | `I` | Edit Metadata | Opens modal to edit track name and description |
-| `P` | Promote Draft | Promotes valid draft circuit to approved `Main` catalog |
+| `P` / Gamepad `Y` | Promote / Configure Modules | Opens motorsport module promotion menu to promote track or add/remove modules |
+| `Ctrl+P` | Demote Track | Demotes track from approved catalog back to Drafts workshop |
 | `Escape` / Gamepad `B` | Return to Menu | Transitions back to `GameState::Menu` |
 
 ---
@@ -483,5 +484,6 @@ The system supports four distinct operational game modes selectable from the pre
 | **Exit Confirm Dialog** | `ModuleSelect` | `Escape` / Gamepad `B` | `Escape` / `N` / Gamepad `B` | Prevents accidental application close |
 | **Hall of Fame Overlay** | `Finished` | `Tab` / Gamepad `X` | `Tab` / Gamepad `X` | Toggles all-time leaderboard records vs session podium |
 | **Edit Track Metadata** | `TrackManager` | `I` (on custom track) | `Enter` (save) / `Escape` (cancel) | Edits circuit title and description |
+| **Select Module Promotion** | `TrackManager` | `P` / Gamepad `Y` | `Enter` / Gamepad `A` (confirm) / `Escape` / `B` (cancel) | Promotes track or adds/removes module distribution |
 | **Delete Track Modal** | `TrackManager` | `Delete` / `Backspace` | `Y` (confirm) / `N` / `Escape` (cancel) | Confirms custom track file deletion |
 
