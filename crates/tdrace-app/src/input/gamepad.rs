@@ -1,70 +1,7 @@
 use gilrs::{Axis, Button, Event, EventType, GamepadId, Gilrs};
 use serde::{Deserialize, Serialize};
 
-/// Configuration for Gamepad analog stick deadzones, trigger thresholds, and sensitivity curves.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct GamepadConfig {
-    /// Inner deadzone threshold for left analog stick [0.0 .. 1.0].
-    pub stick_deadzone: f32,
-    /// Inner deadzone threshold for analog triggers [0.0 .. 1.0].
-    pub trigger_deadzone: f32,
-    /// Sensitivity curve exponent for analog steering (1.0 = linear, 1.15 = gentle center).
-    pub steer_exponent: f32,
-    /// Sensitivity scale for steering.
-    pub steer_scale: f32,
-}
-
-impl Default for GamepadConfig {
-    fn default() -> Self {
-        Self {
-            stick_deadzone: 0.12,
-            trigger_deadzone: 0.05,
-            steer_exponent: 1.15,
-            steer_scale: 1.0,
-        }
-    }
-}
-
-/// Dynamic snapshot of current Gamepad button and analog axis inputs.
-#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
-pub struct GamepadSnapshot {
-    /// Whether any gamepad is currently connected.
-    pub is_connected: bool,
-    /// Name or model of the active connected gamepad.
-    pub gamepad_name: String,
-    /// Proportional analog steering [-1.0 = left, 0.0 = center, +1.0 = right].
-    pub steer: f32,
-    /// Proportional analog throttle [0.0 = idle, 1.0 = full gas].
-    pub throttle: f32,
-    /// Proportional analog brake [0.0 = release, 1.0 = full brake].
-    pub brake: f32,
-    /// Handbrake button pressed (A / South or Right Bumper).
-    pub handbrake: bool,
-    /// Reverse button pressed (Y / North or Left Bumper).
-    pub reverse: bool,
-
-    // Button trigger events (pressed this frame)
-    pub btn_start_pressed: bool,
-    pub btn_back_pressed: bool,
-    pub btn_a_pressed: bool,      // South (Confirm / Handbrake / Select)
-    pub btn_b_pressed: bool,      // East (Cancel / Back)
-    pub btn_x_pressed: bool,      // West (Mode toggle)
-    pub btn_y_pressed: bool,      // North (Bot count / Cam)
-    pub dpad_up_pressed: bool,
-    pub dpad_down_pressed: bool,
-    pub dpad_left_pressed: bool,
-    pub dpad_right_pressed: bool,
-    pub btn_assist_toggle_pressed: bool, // Right Stick Click or Select
-    pub btn_cam_toggle_pressed: bool,    // Left Stick Click or Y
-
-    // Navigational triggers (D-Pad OR Analog Stick flicks)
-    pub nav_up: bool,
-    pub nav_down: bool,
-    pub nav_left: bool,
-    pub nav_right: bool,
-    pub btn_confirm_pressed: bool, // Universal Confirm (South / East / Start)
-    pub btn_cancel_pressed: bool,  // Universal Cancel (East / South / Back)
-}
+pub use cabinet::input::gamepad::{GamepadConfig, GamepadSnapshot};
 
 /// Optional loaded gamepad profile mapping from `gamepad-mapper`.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]

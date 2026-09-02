@@ -4,6 +4,7 @@ members = [
     "crates/tdrace-core",
     "crates/tdrace-app",
     "crates/tdrace-py",
+    "crates/cabinet",
 ]
 
 [workspace.package]
