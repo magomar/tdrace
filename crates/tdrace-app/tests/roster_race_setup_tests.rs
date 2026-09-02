@@ -155,3 +155,57 @@ fn test_track_serde_default_laps_and_predefined_car_roundtrip() {
     assert_eq!(legacy_track.default_laps, 3);
     assert_eq!(legacy_track.predefined_car, None);
 }
+
+#[test]
+fn test_2d_navigation_focus_and_cursor_state() {
+    use tdrace_app::ui::menu::MenuPanelFocus;
+    use tdrace_app::ui::starting_grid::StartingGridFocus;
+
+    let mut session = RaceSession::new();
+
+    // 1. Verify default Track Select Menu column focus
+    assert_eq!(session.menu_focused_panel, MenuPanelFocus::LeftTracks);
+    assert_eq!(session.menu_track_idx, 0);
+    assert_eq!(session.menu_car_idx, 0);
+
+    // Switch column focus to Right Vehicle
+    session.menu_focused_panel = MenuPanelFocus::RightVehicle;
+    assert_eq!(session.menu_focused_panel, MenuPanelFocus::RightVehicle);
+
+    // 2. Initialize Race and verify Starting Grid default focus
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+    session.init_race();
+
+    assert_eq!(session.starting_grid_focus, StartingGridFocus::LeftSetup);
+    assert_eq!(session.starting_grid_card_idx, 0); // Game Mode card
+    assert_eq!(session.starting_grid_roster_idx, 0);
+
+    // 3. Starting Grid 2D navigation: panel switching & card cycling
+    session.starting_grid_card_idx = 1; // Vehicle Selection card
+    assert_eq!(session.starting_grid_card_idx, 1);
+
+    session.starting_grid_card_idx = 2; // Bot Count card
+    assert_eq!(session.starting_grid_card_idx, 2);
+
+    session.starting_grid_card_idx = 3; // Launch Race button
+    assert_eq!(session.starting_grid_card_idx, 3);
+
+    // Verify Starting Grid Launch button rect geometry
+    let (bx, by, bw, bh) = tdrace_app::ui::starting_grid_launch_button_rect(1280.0, 720.0);
+    assert!(bw > 200.0);
+    assert!(bh > 30.0);
+    assert!(bx > 0.0);
+    assert!(by > 300.0);
+
+    // Switch panel focus to Right Starting Grid Roster
+    session.starting_grid_focus = StartingGridFocus::RightRoster;
+    session.starting_grid_roster_idx = 2;
+    assert_eq!(session.starting_grid_focus, StartingGridFocus::RightRoster);
+    assert_eq!(session.starting_grid_roster_idx, 2);
+
+    // 4. Pause Menu button cursor
+    assert_eq!(session.pause_selected_btn, 0); // Resume
+    session.pause_selected_btn = 1; // Exit
+    assert_eq!(session.pause_selected_btn, 1);
+}
+

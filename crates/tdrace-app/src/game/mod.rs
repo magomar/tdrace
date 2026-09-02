@@ -101,10 +101,10 @@ use crate::ui::hud::{format_lap_time, render_hud, PersonalBestNotification};
 use crate::ui::menu::{
     render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
     render_module_select_menu, render_pause_menu, render_results_screen, render_track_select_menu,
-    resolve_predefined_car_for_track, CarChoice, GameMode, RaceResultEntry, TrackChoice,
+    resolve_predefined_car_for_track, CarChoice, GameMode, MenuPanelFocus, RaceResultEntry, TrackChoice,
 };
 use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
-use crate::ui::starting_grid::render_starting_grid_screen;
+use crate::ui::starting_grid::{render_starting_grid_screen, StartingGridFocus};
 use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
@@ -273,9 +273,14 @@ pub struct RaceSession {
     pub recent_congrats: Option<PlayerCongrats>,
     pub show_hall_of_fame: bool,
 
-    // Menu selection cursor state
+    // Menu selection cursor & 2D navigation state
+    pub menu_focused_panel: MenuPanelFocus,
     pub menu_track_idx: usize,
     pub menu_car_idx: usize,
+    pub starting_grid_focus: StartingGridFocus,
+    pub starting_grid_card_idx: usize,
+    pub starting_grid_roster_idx: usize,
+    pub pause_selected_btn: usize,
     pub assist_profile: AssistProfile,
     pub show_exit_confirm: bool,
 
@@ -483,8 +488,13 @@ impl RaceSession {
             recent_congrats: None,
             show_hall_of_fame: true,
 
+            menu_focused_panel: MenuPanelFocus::LeftTracks,
             menu_track_idx: 0,
             menu_car_idx: 0,
+            starting_grid_focus: StartingGridFocus::LeftSetup,
+            starting_grid_card_idx: 0,
+            starting_grid_roster_idx: 0,
+            pause_selected_btn: 0,
             show_exit_confirm: false,
             editor_state: None,
             editor_camera,
@@ -1180,6 +1190,9 @@ impl RaceSession {
         self.audio.set_engine_type(sound_type);
 
         // Show Starting Grid with selected race participants
+        self.starting_grid_focus = StartingGridFocus::LeftSetup;
+        self.starting_grid_card_idx = 0;
+        self.starting_grid_roster_idx = 0;
         self.state = GameState::StartingGrid;
     }
 
@@ -1517,92 +1530,213 @@ impl RaceSession {
                 }
             }
             GameState::StartingGrid => {
-                // 1. Cycle Game Mode (Tab or Gamepad X)
-                if is_key_pressed(KeyCode::Tab)
-                    || self.input.gamepad.snapshot.btn_x_pressed
+                let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                let (btn_x, btn_y, btn_w, btn_h) = crate::ui::starting_grid_launch_button_rect(sw, sh);
+                let (mx, my) = mouse_position_safe();
+                let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+                let launch_btn_clicked = mouse_clicked
+                    && mx >= btn_x
+                    && mx <= btn_x + btn_w
+                    && my >= btn_y
+                    && my <= btn_y + btn_h;
+
+                // 1. Panel Switching (Left / Right / A / D / D-pad Left/Right / Nav Left/Right)
+                if is_key_pressed(KeyCode::Left)
+                    || is_key_pressed(KeyCode::A)
+                    || self.input.gamepad.snapshot.dpad_left_pressed
+                    || self.input.gamepad.snapshot.nav_left
                 {
-                    self.game_mode = self.game_mode.next();
-                    self.is_time_attack = self.game_mode.is_time_attack();
-                    self.free_car_selection = self.game_mode.allows_car_change();
-                    self.rebuild_roster_participants();
-                    self.audio.play_sfx(SfxType::UiSelect);
-                }
-
-                // 2. Cycle Selected Car (when free car selection is active / mode allows car change)
-                if self.game_mode.allows_car_change() {
-                    if is_key_pressed(KeyCode::Left)
-                        || is_key_pressed(KeyCode::A)
-                        || self.input.gamepad.snapshot.dpad_left_pressed
-                        || self.input.gamepad.snapshot.nav_left
-                        || is_key_pressed(KeyCode::LeftBracket)
-                    {
+                    if self.starting_grid_focus != StartingGridFocus::LeftSetup {
                         self.audio.play_sfx(SfxType::UiMove);
-                        if self.menu_car_idx == 0 {
-                            self.menu_car_idx = CarChoice::ALL.len() - 1;
-                        } else {
-                            self.menu_car_idx -= 1;
-                        }
-                        self.car_choice = CarChoice::ALL[self.menu_car_idx];
-                        self.rebuild_roster_participants();
+                        self.starting_grid_focus = StartingGridFocus::LeftSetup;
                     }
-                    if is_key_pressed(KeyCode::Right)
-                        || is_key_pressed(KeyCode::D)
-                        || self.input.gamepad.snapshot.dpad_right_pressed
-                        || self.input.gamepad.snapshot.nav_right
-                        || is_key_pressed(KeyCode::RightBracket)
-                    {
+                }
+                if is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::D)
+                    || self.input.gamepad.snapshot.dpad_right_pressed
+                    || self.input.gamepad.snapshot.nav_right
+                {
+                    if self.starting_grid_focus != StartingGridFocus::RightRoster {
                         self.audio.play_sfx(SfxType::UiMove);
-                        self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
-                        self.car_choice = CarChoice::ALL[self.menu_car_idx];
-                        self.rebuild_roster_participants();
+                        self.starting_grid_focus = StartingGridFocus::RightRoster;
                     }
                 }
 
-                // 3. Modify Driver Count (only in race modes with bots)
-                if self.game_mode.has_bots() {
-                    let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+                // 2. Navigation & Actions within Active Panel
+                match self.starting_grid_focus {
+                    StartingGridFocus::LeftSetup => {
+                        let num_cards = 4; // 0 = Game Mode, 1 = Vehicle Choice, 2 = Grid / Bot Count, 3 = Launch Race Button
 
-                    // Increase driver count (Up / Gamepad D-pad Up)
-                    if is_key_pressed(KeyCode::Up)
-                        || self.input.gamepad.snapshot.dpad_up_pressed
-                    {
-                        if self.num_bots < max_bots {
+                        // Up / Down to navigate between setup cards
+                        if is_key_pressed(KeyCode::Up)
+                            || is_key_pressed(KeyCode::W)
+                            || self.input.gamepad.snapshot.dpad_up_pressed
+                            || self.input.gamepad.snapshot.nav_up
+                        {
                             self.audio.play_sfx(SfxType::UiMove);
-                            self.num_bots += 1;
+                            if self.starting_grid_card_idx == 0 {
+                                self.starting_grid_card_idx = num_cards - 1;
+                            } else {
+                                self.starting_grid_card_idx -= 1;
+                            }
+                        }
+                        if is_key_pressed(KeyCode::Down)
+                            || is_key_pressed(KeyCode::S)
+                            || self.input.gamepad.snapshot.dpad_down_pressed
+                            || self.input.gamepad.snapshot.nav_down
+                        {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.starting_grid_card_idx = (self.starting_grid_card_idx + 1) % num_cards;
+                        }
+
+                        // Tab / Gamepad X fallback for mode cycling
+                        if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_x_pressed {
+                            self.game_mode = self.game_mode.next();
+                            self.is_time_attack = self.game_mode.is_time_attack();
+                            self.free_car_selection = self.game_mode.allows_car_change();
                             self.rebuild_roster_participants();
+                            self.audio.play_sfx(SfxType::UiSelect);
+                        }
+
+                        // Modify active card setting on Enter / Space / bracket / etc.
+                        match self.starting_grid_card_idx {
+                            0 => {
+                                // Card 0: Game Mode Card
+                                if is_key_pressed(KeyCode::Enter)
+                                    || is_key_pressed(KeyCode::KpEnter)
+                                    || is_key_pressed(KeyCode::RightBracket)
+                                    || is_key_pressed(KeyCode::LeftBracket)
+                                {
+                                    self.game_mode = self.game_mode.next();
+                                    self.is_time_attack = self.game_mode.is_time_attack();
+                                    self.free_car_selection = self.game_mode.allows_car_change();
+                                    self.rebuild_roster_participants();
+                                    self.audio.play_sfx(SfxType::UiSelect);
+                                }
+                            }
+                            1 => {
+                                // Card 1: Vehicle Selection Card
+                                if self.game_mode.allows_car_change() {
+                                    if is_key_pressed(KeyCode::Enter)
+                                        || is_key_pressed(KeyCode::KpEnter)
+                                        || is_key_pressed(KeyCode::RightBracket)
+                                    {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
+                                        self.car_choice = CarChoice::ALL[self.menu_car_idx];
+                                        self.rebuild_roster_participants();
+                                    }
+                                    if is_key_pressed(KeyCode::LeftBracket) {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        if self.menu_car_idx == 0 {
+                                            self.menu_car_idx = CarChoice::ALL.len() - 1;
+                                        } else {
+                                            self.menu_car_idx -= 1;
+                                        }
+                                        self.car_choice = CarChoice::ALL[self.menu_car_idx];
+                                        self.rebuild_roster_participants();
+                                    }
+                                }
+                            }
+                            2 => {
+                                // Card 2: Grid Configuration / Bot Count
+                                if self.game_mode.has_bots() {
+                                    let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+                                    if is_key_pressed(KeyCode::Enter)
+                                        || is_key_pressed(KeyCode::KpEnter)
+                                        || is_key_pressed(KeyCode::RightBracket)
+                                        || is_key_pressed(KeyCode::Equal)
+                                    {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        if self.num_bots < max_bots {
+                                            self.num_bots += 1;
+                                        } else {
+                                            self.num_bots = 1;
+                                        }
+                                        self.rebuild_roster_participants();
+                                    }
+                                    if is_key_pressed(KeyCode::LeftBracket) || is_key_pressed(KeyCode::Minus) {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        if self.num_bots > 1 {
+                                            self.num_bots -= 1;
+                                        } else {
+                                            self.num_bots = max_bots;
+                                        }
+                                        self.rebuild_roster_participants();
+                                    }
+                                }
+                            }
+                            _ => {
+                                // Card 3: Launch Race Button
+                                if is_key_pressed(KeyCode::Enter)
+                                    || is_key_pressed(KeyCode::KpEnter)
+                                    || is_key_pressed(KeyCode::Space)
+                                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                                    || self.input.gamepad.snapshot.btn_a_pressed
+                                {
+                                    self.audio.play_sfx(SfxType::UiSelect);
+                                    self.state = GameState::Countdown(3.5);
+                                    return;
+                                }
+                            }
                         }
                     }
-
-                    // Decrease driver count (Down / Gamepad D-pad Down)
-                    if is_key_pressed(KeyCode::Down)
-                        || self.input.gamepad.snapshot.dpad_down_pressed
-                    {
-                        if self.num_bots > 1 {
+                    StartingGridFocus::RightRoster => {
+                        let roster_len = self.grid_participants.len().max(1);
+                        if is_key_pressed(KeyCode::Up)
+                            || is_key_pressed(KeyCode::W)
+                            || self.input.gamepad.snapshot.dpad_up_pressed
+                            || self.input.gamepad.snapshot.nav_up
+                        {
                             self.audio.play_sfx(SfxType::UiMove);
-                            self.num_bots -= 1;
-                            self.rebuild_roster_participants();
+                            if self.starting_grid_roster_idx == 0 {
+                                self.starting_grid_roster_idx = roster_len - 1;
+                            } else {
+                                self.starting_grid_roster_idx -= 1;
+                            }
+                        }
+                        if is_key_pressed(KeyCode::Down)
+                            || is_key_pressed(KeyCode::S)
+                            || self.input.gamepad.snapshot.dpad_down_pressed
+                            || self.input.gamepad.snapshot.nav_down
+                        {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.starting_grid_roster_idx = (self.starting_grid_roster_idx + 1) % roster_len;
+                        }
+
+                        // Open Driver Dossier for selected slot (Enter / D / Gamepad Y)
+                        if is_key_pressed(KeyCode::Enter)
+                            || is_key_pressed(KeyCode::KpEnter)
+                            || is_key_pressed(KeyCode::D)
+                            || self.input.gamepad.snapshot.btn_y_pressed
+                        {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            self.driver_cards_idx = self.starting_grid_roster_idx;
+                            self.state = GameState::DriverCards(DriverCardsOrigin::StartingGrid);
+                            return;
                         }
                     }
                 }
 
-                // 4. Launch race countdown (Space, Enter, Gamepad Confirm [A / South / Start])
+                // Global Launch race countdown (Space, Launch button clicked, Gamepad Start, Gamepad Confirm)
                 if is_key_pressed(KeyCode::Space)
-                    || is_key_pressed(KeyCode::Enter)
-                    || is_key_pressed(KeyCode::KpEnter)
-                    || self.input.gamepad.snapshot.btn_confirm_pressed
-                    || self.input.gamepad.snapshot.btn_a_pressed
+                    || self.input.gamepad.snapshot.btn_start_pressed
+                    || launch_btn_clicked
+                    || (self.starting_grid_focus == StartingGridFocus::LeftSetup && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Countdown(3.5);
+                    return;
                 }
 
-                // 5. View Driver Dossiers (D key or Gamepad Y)
-                if is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.btn_y_pressed {
+                // View Driver Dossiers direct key shortcut (D key or Gamepad Y)
+                if is_key_pressed(KeyCode::D) || (self.starting_grid_focus == StartingGridFocus::LeftSetup && self.input.gamepad.snapshot.btn_y_pressed) {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::DriverCards(DriverCardsOrigin::StartingGrid);
+                    return;
                 }
 
-                // 6. Return to Main Menu or Track Editor (Escape, or Gamepad Cancel [B / East / Back])
+                // Return to Main Menu or Track Editor (Escape, or Gamepad Cancel [B / East / Back])
                 if is_key_pressed(KeyCode::Escape)
                     || self.input.gamepad.snapshot.btn_cancel_pressed
                     || self.input.gamepad.snapshot.btn_back_pressed
@@ -1700,17 +1834,70 @@ impl RaceSession {
                     && my >= btn_layout.exit_rect.1
                     && my <= btn_layout.exit_rect.1 + btn_layout.exit_rect.3;
 
-                if is_key_pressed(KeyCode::Escape)
-                    || is_key_pressed(KeyCode::Pause)
-                    || is_key_pressed(KeyCode::Enter)
+                // Button cursor navigation (Left / Right / A / D / Up / Down / Gamepad D-pad)
+                if is_key_pressed(KeyCode::Left)
+                    || is_key_pressed(KeyCode::A)
+                    || self.input.gamepad.snapshot.dpad_left_pressed
+                    || self.input.gamepad.snapshot.nav_left
+                {
+                    if self.pause_selected_btn != 0 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.pause_selected_btn = 0;
+                    }
+                }
+                if is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::D)
+                    || self.input.gamepad.snapshot.dpad_right_pressed
+                    || self.input.gamepad.snapshot.nav_right
+                {
+                    if self.pause_selected_btn != 1 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.pause_selected_btn = 1;
+                    }
+                }
+                if is_key_pressed(KeyCode::Up)
+                    || is_key_pressed(KeyCode::Down)
+                    || is_key_pressed(KeyCode::W)
+                    || is_key_pressed(KeyCode::S)
+                    || self.input.gamepad.snapshot.nav_up
+                    || self.input.gamepad.snapshot.nav_down
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.pause_selected_btn = 1 - self.pause_selected_btn;
+                }
+
+                // Action confirmation on highlighted button or click
+                if is_key_pressed(KeyCode::Enter)
                     || is_key_pressed(KeyCode::KpEnter)
-                    || self.input.gamepad.snapshot.btn_start_pressed
+                    || is_key_pressed(KeyCode::Space)
                     || self.input.gamepad.snapshot.btn_confirm_pressed
                     || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if self.pause_selected_btn == 0 {
+                        self.state = GameState::Racing;
+                        return;
+                    } else {
+                        if self.return_to_editor_on_exit {
+                            self.return_to_editor_on_exit = false;
+                            self.state = GameState::TrackEditor;
+                        } else {
+                            self.state = GameState::Menu;
+                            self.audio.play_music(MusicTrack::NeonMenu);
+                        }
+                        return;
+                    }
+                }
+
+                // Direct shortcut triggers
+                if is_key_pressed(KeyCode::Escape)
+                    || is_key_pressed(KeyCode::Pause)
+                    || self.input.gamepad.snapshot.btn_start_pressed
                     || resume_clicked
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::Racing;
+                    return;
                 } else if is_key_pressed(KeyCode::E)
                     || self.input.gamepad.snapshot.btn_cancel_pressed
                     || self.input.gamepad.snapshot.btn_back_pressed
@@ -1725,6 +1912,7 @@ impl RaceSession {
                         self.state = GameState::Menu;
                         self.audio.play_music(MusicTrack::NeonMenu);
                     }
+                    return;
                 }
                 if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
                     self.audio.play_sfx(SfxType::UiSelect);
@@ -1733,7 +1921,15 @@ impl RaceSession {
             }
             GameState::Finished => {
                 self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_x_pressed {
+                if is_key_pressed(KeyCode::Tab)
+                    || is_key_pressed(KeyCode::Left)
+                    || is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::A)
+                    || is_key_pressed(KeyCode::D)
+                    || self.input.gamepad.snapshot.btn_x_pressed
+                    || self.input.gamepad.snapshot.nav_left
+                    || self.input.gamepad.snapshot.nav_right
+                {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.show_hall_of_fame = !self.show_hall_of_fame;
                 }
@@ -2226,33 +2422,66 @@ impl RaceSession {
         if self.menu_track_idx >= total_items {
             self.menu_track_idx = 0;
         }
-
-        // Track selection cursor (Up/Down: Arrows / W/S / D-pad / Left Stick Y)
-        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
-            self.audio.play_sfx(SfxType::UiMove);
-            if self.menu_track_idx == 0 {
-                self.menu_track_idx = total_items.saturating_sub(1);
-            } else {
-                self.menu_track_idx -= 1;
-            }
-        }
-        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.menu_track_idx = (self.menu_track_idx + 1) % total_items;
+        if available_vehicles.is_empty() {
+            self.menu_car_idx = 0;
+        } else if self.menu_car_idx >= available_vehicles.len() {
+            self.menu_car_idx = 0;
         }
 
-        // Car selection cursor (Left/Right: Arrows / A/D / D-pad / Left Stick X)
-        if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
-            self.audio.play_sfx(SfxType::UiMove);
-            if self.menu_car_idx == 0 {
-                self.menu_car_idx = available_vehicles.len().saturating_sub(1);
-            } else {
-                self.menu_car_idx -= 1;
+        // 1. Column Focus Switching (Left/Right: Arrows / A/D / Gamepad D-pad / Left Stick X)
+        if is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
+            || self.input.gamepad.snapshot.dpad_left_pressed
+            || self.input.gamepad.snapshot.nav_left
+        {
+            if self.menu_focused_panel != MenuPanelFocus::LeftTracks {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.menu_focused_panel = MenuPanelFocus::LeftTracks;
             }
         }
-        if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.menu_car_idx = (self.menu_car_idx + 1) % available_vehicles.len();
+        if is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::D)
+            || self.input.gamepad.snapshot.dpad_right_pressed
+            || self.input.gamepad.snapshot.nav_right
+        {
+            if self.menu_focused_panel != MenuPanelFocus::RightVehicle {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.menu_focused_panel = MenuPanelFocus::RightVehicle;
+            }
+        }
+
+        // 2. Active Column Item Navigation (Up/Down: Arrows / W/S / Gamepad D-pad / Left Stick Y)
+        match self.menu_focused_panel {
+            MenuPanelFocus::LeftTracks => {
+                if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if self.menu_track_idx == 0 {
+                        self.menu_track_idx = total_items.saturating_sub(1);
+                    } else {
+                        self.menu_track_idx -= 1;
+                    }
+                }
+                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_track_idx = (self.menu_track_idx + 1) % total_items;
+                }
+            }
+            MenuPanelFocus::RightVehicle => {
+                if !available_vehicles.is_empty() {
+                    if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        if self.menu_car_idx == 0 {
+                            self.menu_car_idx = available_vehicles.len().saturating_sub(1);
+                        } else {
+                            self.menu_car_idx -= 1;
+                        }
+                    }
+                    if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.menu_car_idx = (self.menu_car_idx + 1) % available_vehicles.len();
+                    }
+                }
+            }
         }
 
         // Launch Championship / Tournament (F key)
@@ -2602,7 +2831,7 @@ impl RaceSession {
         }
 
         // --- NON-MODAL NAVIGATION AND ACTIONS ---
-        // 1. Switch Tabs between Promoted tracks and Drafts (Tab key, Key 1 / 2)
+        // 1. Switch Tabs between Promoted tracks and Drafts (Left/Right arrows, A/D, Tab key, Key 1 / 2)
         if is_key_pressed(KeyCode::Key1) {
             if active_tab != TrackManagerTab::Main {
                 self.audio.play_sfx(SfxType::UiMove);
@@ -2611,6 +2840,26 @@ impl RaceSession {
             }
         }
         if is_key_pressed(KeyCode::Key2) {
+            if active_tab != TrackManagerTab::Drafts {
+                self.audio.play_sfx(SfxType::UiMove);
+                active_tab = TrackManagerTab::Drafts;
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
+            || self.input.gamepad.snapshot.nav_left
+        {
+            if active_tab != TrackManagerTab::Main {
+                self.audio.play_sfx(SfxType::UiMove);
+                active_tab = TrackManagerTab::Main;
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::D)
+            || self.input.gamepad.snapshot.nav_right
+        {
             if active_tab != TrackManagerTab::Drafts {
                 self.audio.play_sfx(SfxType::UiMove);
                 active_tab = TrackManagerTab::Drafts;
@@ -2626,30 +2875,17 @@ impl RaceSession {
             selected_idx = 0;
         }
 
-        // 2. Switch Module Filter on Main/Promoted Tab (Left / Right arrows, A / D, M key, Gamepad Left/Right)
-        if is_key_pressed(KeyCode::Left)
-            || is_key_pressed(KeyCode::A)
-            || self.input.gamepad.snapshot.nav_left
+        // 2. Switch Module Filter on Main/Promoted Tab (M / F / [ / ] keys)
+        if (is_key_pressed(KeyCode::M) || is_key_pressed(KeyCode::F) || is_key_pressed(KeyCode::RightBracket))
+            && active_tab == TrackManagerTab::Main
         {
-            if active_tab == TrackManagerTab::Main {
-                self.audio.play_sfx(SfxType::UiMove);
-                module_filter = module_filter.prev();
-                selected_idx = 0;
-            }
-        }
-        if is_key_pressed(KeyCode::Right)
-            || is_key_pressed(KeyCode::D)
-            || self.input.gamepad.snapshot.nav_right
-        {
-            if active_tab == TrackManagerTab::Main {
-                self.audio.play_sfx(SfxType::UiMove);
-                module_filter = module_filter.next();
-                selected_idx = 0;
-            }
-        }
-        if is_key_pressed(KeyCode::M) && active_tab == TrackManagerTab::Main {
             self.audio.play_sfx(SfxType::UiMove);
             module_filter = module_filter.next();
+            selected_idx = 0;
+        }
+        if is_key_pressed(KeyCode::LeftBracket) && active_tab == TrackManagerTab::Main {
+            self.audio.play_sfx(SfxType::UiMove);
+            module_filter = module_filter.prev();
             selected_idx = 0;
         }
 
@@ -3303,6 +3539,7 @@ impl RaceSession {
                     self.menu_track_idx,
                     &self.active_profile,
                     &self.active_profile_stats,
+                    self.menu_focused_panel,
                 );
                 if self.show_exit_confirm {
                     render_exit_confirm_modal(&self.fonts);
@@ -3357,6 +3594,9 @@ impl RaceSession {
                     self.cars.len(),
                     max_grid_size,
                     self.input.gamepad.snapshot.is_connected,
+                    self.starting_grid_focus,
+                    self.starting_grid_card_idx,
+                    self.starting_grid_roster_idx,
                 );
             }
             GameState::Countdown(remaining) => {
@@ -3371,7 +3611,7 @@ impl RaceSession {
             GameState::Paused => {
                 self.render_world();
                 self.render_screen(None);
-                render_pause_menu(&self.fonts, self.assist_profile, &self.audio.settings);
+                render_pause_menu(&self.fonts, self.assist_profile, &self.audio.settings, self.pause_selected_btn);
             }
             GameState::Finished => {
                 self.render_world();

@@ -18,26 +18,26 @@ stateDiagram-v2
     }
 
     state "Track Selection Menu (Menu)" as Menu {
-        [*] --> BrowseTracks
-        BrowseTracks --> RightPanelTelemetry
+        [*] --> LeftPanelTracks
+        LeftPanelTracks --> RightPanelVehicle: [RIGHT / D]
+        RightPanelVehicle --> LeftPanelTracks: [LEFT / A]
     }
 
     state "Starting Grid & Roster Setup (StartingGrid)" as StartingGrid {
-        [*] --> TwoPanelSetup
-        TwoPanelSetup --> CycleGameMode: [TAB / X]
-        TwoPanelSetup --> SelectCarModel: [LEFT / RIGHT / A / D]
-        TwoPanelSetup --> AdjustBotCount: [UP / DOWN]
+        [*] --> LeftSetupPanel
+        LeftSetupPanel --> RightRosterPanel: [RIGHT / D]
+        RightRosterPanel --> LeftSetupPanel: [LEFT / A]
+        LeftSetupPanel --> CycleCards: [UP / DOWN / W / S]
+        LeftSetupPanel --> ModifySetting: [ENTER / SPACE / < / > / + / -]
+        RightRosterPanel --> BrowseRoster: [UP / DOWN / W / S]
+        RightRosterPanel --> ViewDossier: [ENTER / D / Y]
     }
 
-    state "Driver Dossier (DriverCards)" as DriverCards
-    state "Controls & Assists Help (ControlsHelp)" as ControlsHelp
-    state "Player Profile Manager (ProfileManager)" as ProfileManager
-    state "Profile Editor & Livery (ProfileCreate)" as ProfileCreate
-    state "Circuit Hub Workshop (TrackManager)" as TrackManager
-    state "CAD Spline Studio (TrackEditor)" as TrackEditor
-    state "3-2-1 Race Countdown (Countdown)" as Countdown
-    state "Active Race Simulation (Racing)" as Racing
-    state "Race Paused Overlay (Paused)" as Paused
+    state "Race Paused Overlay (Paused)" as Paused {
+        [*] --> SelectButton
+        SelectButton --> ToggleCursor: [LEFT / RIGHT / UP / DOWN / A / D / W / S]
+        SelectButton --> ConfirmAction: [ENTER / SPACE / A]
+    }
     state "Race Results & Podium (Finished)" as Finished
     state "F1 World Championship (ChampionshipStandings)" as ChampionshipStandings
 
@@ -173,7 +173,8 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Up` / `Down` / `W` / `S` / `D-pad` | Navigate track list | Updates `selected_track_idx` and dynamically refreshes right panel |
+| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` | Switch Column Focus | Switches between **Circuit Catalog** (Left Column) and **Vehicle Selection** (Right Column) |
+| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Active Column | When Left Column active: scrolls track list<br>When Right Column active: cycles selectable vehicle models |
 | `Space` / `Enter` / Gamepad `A` | Start Race flow | If circuit selected: loads track -> `GameState::StartingGrid`<br>If Track Manager card selected: -> `GameState::TrackManager` |
 | `T` | Track Manager | Opens `GameState::TrackManager` |
 | `E` | Launch CAD Studio | Loads selected circuit into `GameState::TrackEditor` |
@@ -188,22 +189,23 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 * **Purpose**: Two-panel pre-race setup screen displaying player profile, circuit telemetry, game mode selector, vehicle specifications, and full driver roster or shadow car telemetry.
 * **State Struct**: `GameState::StartingGrid`
 * **Components**:
-  - **Left Panel (Profile, Circuit, Game Mode & Vehicle Specs)**:
-    1. *Player & Circuit Profile Card*: Player Name, Callsign Alias, Nationality banner, Livery swatches, Circuit length, laps, and surface composition.
-    2. *Game Mode Selector Card*: Switch between the 4 supported game modes with title, status tag, and mode description:
+  - **Left Panel (Race & Vehicle Setup Cards)**:
+    1. *Game Mode Selector Card (Card 0)*: Switch between the 4 supported game modes with title, status tag, and mode description:
        - **Standard Race**: Competitive grid race where all drivers use the circuit's predefined car.
        - **Experimental Race**: Multi-car grid race where all drivers use the user-specified vehicle model.
        - **Time Trial**: Solo session racing against personal best time rendered as a dynamic shadow car. Allows changing car.
        - **Free Ride**: Solo open practice to freely test the circuit and vehicle handling. Allows changing car.
-    3. *Vehicle Selection & Specs Card*:
-       - Car model switcher `[ < / > ]` (enabled in `Experimental Race`, `Time Trial`, and `Free Ride`).
+    2. *Vehicle Selection & Specs Card (Card 1)*:
+       - Car model switcher `[Enter / Space / < / > ]` (enabled in `Experimental Race`, `Time Trial`, and `Free Ride`).
        - Enforced predefined lock badge (in `Standard Race`).
        - 4 Performance stat bars (`SPEED`, `ACCEL`, `GRIP`, `DRIFT` with exact percentages).
        - 4 Mechanical specs chips (Drivetrain, Mass, Top Speed, Downforce).
-    4. *Grid Configuration / Session Status Card*:
-       - Bot count modifier `[Up / Down]` for grid races.
+    3. *Grid Configuration Card (Card 2)*:
+       - Bot count modifier `[Enter / Space / + / - ]` for grid races.
        - Solo telemetry & personal best benchmark record for Time Trial / Free Ride.
-  - **Right Panel (Starting Grid & Roster)**:
+    4. *Launch Race Action Button (Card 3)*:
+       - High-visibility green action button `[Enter / Space / Click]` to start the 3-2-1 race countdown immediately.
+  - **Right Panel (Starting Grid & Driver Roster)**:
     - *In Standard & Experimental Race*: Full starting grid lineup (P1 through P8) with position badges, driver names, aliases, liveries, car models, and qualifying times.
     - *In Time Trial*: Live player driver row (P1) + Personal Best Shadow Car row with ghost benchmark lap time.
     - *In Free Ride*: Solo driver practice slot with telemetry and tuning tips.
@@ -211,11 +213,14 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Space` / `Enter` / Gamepad `A` / `Start` | Launch Race | Starts 3-2-1 countdown -> `GameState::Countdown(3.5)` |
-| `Tab` / Gamepad `X` | Cycle Game Mode | Cycles `Standard Race` -> `Experimental Race` -> `Time Trial` -> `Free Ride` |
-| `Left` / `Right` / `A` / `D` | Select Vehicle Model | Changes player/grid vehicle (when mode allows car change) |
-| `Up` / `Down` / Gamepad `D-Pad` | Modify Bot Count | Adjusts opponent driver count (1 to 7 bots in race modes) |
-| `D` / Gamepad `Y` | Driver Dossiers | Opens `GameState::DriverCards(DriverCardsOrigin::StartingGrid)` |
+| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` | Switch Panel Focus | Switches active focus between **Left Setup Panel** and **Right Starting Grid Roster** |
+| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` (Left Panel) | Navigate Setup Cards | Moves active selection between Game Mode (0), Vehicle Specs (1), Bot Count (2), and Launch Race Button (3) |
+| `Enter` / `Space` / `[` / `]` / `+` / `-` (Cards 0–2) | Modify Active Card | Modifies the currently selected setting (cycles mode on Card 0, changes car on Card 1, changes bots on Card 2) |
+| `Enter` / `Space` / Mouse Click (Card 3) | Launch Race Button | Starts 3-2-1 countdown -> `GameState::Countdown(3.5)` |
+| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` (Right Panel) | Browse Driver Roster | Moves selection cursor through starting grid slots (P1 to P8) |
+| `Enter` / `D` / Gamepad `Y` (Right Panel) | Open Driver Dossier | Opens Driver Dossier for highlighted driver -> `GameState::DriverCards` |
+| `Space` / Gamepad `Start` / Gamepad `A` (Global) | Launch Race | Starts 3-2-1 countdown -> `GameState::Countdown(3.5)` |
+| `Tab` / Gamepad `X` | Quick Mode Cycle | Direct shortcut to cycle game modes |
 | `Escape` / Gamepad `B` | Return to Menu | Transitions back to `GameState::Menu` |
 
 ---
@@ -253,15 +258,17 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 * **State Struct**: `GameState::Paused`
 * **Components**:
   - Translucent dimmed backdrop.
-  - Glass card with interactive Resume Race & Exit Race action buttons.
+  - Glass card with interactive Resume Race & Exit Race action buttons with keyboard/gamepad focus outlines.
   - Driver assists profile selector (`Arcade`, `Sport`, `Pro`).
   - Audio status indicator.
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Escape` / `Enter` / Gamepad `A` / `Start` / Resume Button | Resume Race | Transitions to `GameState::Racing` |
-| `E` / Gamepad `B` / Exit Button | Quit to Menu | Stops audio loops -> Transitions to `GameState::Menu` |
+| `Left` / `Right` / `Up` / `Down` / `A` / `D` / `W` / `S` | Toggle Button Cursor | Toggles focus outline between **[Resume Race]** (0) and **[Exit Race]** (1) |
+| `Enter` / `Space` / Gamepad `A` | Confirm Highlighted Button | Executes highlighted action (Resumes race or Quits to menu) |
+| `Escape` / `Pause` / Gamepad `Start` | Resume Race | Transitions to `GameState::Racing` |
+| `E` / Gamepad `B` | Exit Race | Stops audio loops -> Transitions to `GameState::Menu` |
 | `C` / `K` | Controls Help | Opens `GameState::ControlsHelp(true)` |
 
 ---
@@ -278,7 +285,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Space` / `Enter` / Gamepad `A` | Restart / Next Race | If single race: re-initializes race -> `GameState::StartingGrid`<br>If championship: -> `GameState::ChampionshipStandings` |
-| `Tab` / Gamepad `X` | Toggle Hall of Fame | Switches between podium results and all-time leaderboard |
+| `Left` / `Right` / `A` / `D` / `Tab` / Gamepad `X` | Toggle Hall of Fame | Switches between podium results table and all-time Hall of Fame leaderboard |
 | `M` / `Escape` / Gamepad `B` | Return to Menu | Transitions to `GameState::Menu` |
 
 ---
@@ -380,9 +387,10 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `1` / `2` / `3` / `Tab` | Switch Tab | Changes active tab (`Main` / `Drafts` / `Templates`) |
-| `F` | Module Filter | Cycles filter (`All`, `Classic`, `Rally`, `Kart`, `F1`) |
-| `Up` / `Down` / `W` / `S` | Select Track | Highlights circuit in catalog list |
+| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` | Switch Workshop Tab | Changes active tab between **[Promoted Circuits]** (`Main`) and **[Drafts Workshop]** (`Drafts`) |
+| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Select Track | Highlights circuit in catalog list |
+| `M` / `F` / `[` / `]` | Cycle Module Filter | Filters catalog by motorsport module (`All`, `Classic`, `Rally`, `Kart`, `F1`) on `Main` tab |
+| `1` / `2` / `Tab` | Direct Tab Jump | Directly selects Main (1) or Drafts (2) |
 | `E` | Open in CAD Studio | Opens track spline in `GameState::TrackEditor` |
 | `N` | New Draft Track | Creates new draft track in Drafts workshop |
 | `I` | Edit Metadata | Opens modal to edit track name and description |

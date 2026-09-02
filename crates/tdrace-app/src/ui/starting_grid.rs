@@ -11,6 +11,30 @@ use crate::profile::{draw_country_banner, PlayerProfile};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::ui::menu::{CarChoice, GameMode};
 
+/// Selected active column/panel in StartingGrid pre-race setup.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StartingGridFocus {
+    LeftSetup,
+    RightRoster,
+}
+
+/// Returns the rectangle (x, y, w, h) of the high-visibility Launch Race button on the Starting Grid.
+pub fn starting_grid_launch_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
+    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let panel_y = scaler.s(60.0);
+
+    let p1_h = scaler.s(88.0);
+    let mode_h = scaler.s(72.0);
+    let car_card_h = scaler.s(188.0);
+    let grid_h = scaler.s(48.0);
+    let launch_h = scaler.s(48.0);
+
+    let curr_y = panel_y + p1_h + scaler.s(8.0) + mode_h + scaler.s(8.0) + car_card_h + scaler.s(8.0) + grid_h + scaler.s(10.0);
+    (col1_x, curr_y, col_w, launch_h)
+}
+
 /// Renders the 2-panel starting grid and participants showcase screen before race launch.
 #[allow(clippy::too_many_arguments)]
 pub fn render_starting_grid_screen(
@@ -26,6 +50,9 @@ pub fn render_starting_grid_screen(
     num_drivers: usize,
     max_grid_size: usize,
     gamepad_connected: bool,
+    focused_panel: StartingGridFocus,
+    active_card_idx: usize,
+    active_roster_idx: usize,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -68,6 +95,9 @@ pub fn render_starting_grid_screen(
     let col2_x = (sw * 0.5 + scaler.s(12.0)).min(sw - col_w - scaler.safe_pad_x);
     let panel_y = scaler.s(60.0);
     let bottom_prompt_y = sh - scaler.s(24.0);
+
+    let is_left_focused = focused_panel == StartingGridFocus::LeftSetup;
+    let is_right_focused = focused_panel == StartingGridFocus::RightRoster;
 
     // =========================================================================
     // LEFT PANEL: Player Details, Track Details, Game Mode, Car Specs
@@ -134,15 +164,31 @@ pub fn render_starting_grid_screen(
     curr_y += p1_h + scaler.s(8.0);
 
     // Card 2: Game Mode Selector Card
+    let is_mode_active = is_left_focused && active_card_idx == 0;
     let mode_h = scaler.s(72.0);
-    scaler.draw_glass_card(col1_x, curr_y, col_w, mode_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.4);
+    let mode_border = if is_mode_active {
+        Palette::NEON_GOLD
+    } else {
+        Palette::UI_CARD_BORDER
+    };
+    let mode_bg = if is_mode_active {
+        Palette::UI_CARD_BG_HOVER
+    } else {
+        Palette::UI_CARD_BG
+    };
+    scaler.draw_glass_card(col1_x, curr_y, col_w, mode_h, mode_bg, mode_border, if is_mode_active { 2.4 } else { 1.2 });
 
+    let mode_header_label = if is_mode_active {
+        "GAME MODE [ACTIVE • ENTER / SPACE to cycle]"
+    } else {
+        "GAME MODE: [Up/Down to select card]"
+    };
     fonts.draw_ui_bold(
-        "GAME MODE: [Tab to cycle] or Gamepad [X]",
+        mode_header_label,
         col1_x + scaler.s(12.0),
         curr_y + scaler.s(16.0),
         scaler.font_s(11.0),
-        Palette::NEON_GOLD,
+        if is_mode_active { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
     );
     fonts.draw_ui_bold(
         game_mode.tag(),
@@ -170,16 +216,38 @@ pub fn render_starting_grid_screen(
     curr_y += mode_h + scaler.s(8.0);
 
     // Card 3: Vehicle Selection & Specs Card
+    let is_car_active = is_left_focused && active_card_idx == 1;
     let car_card_h = scaler.s(214.0);
-    let car_border_col = if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER };
-    scaler.draw_glass_card(col1_x, curr_y, col_w, car_card_h, Palette::UI_CARD_BG, car_border_col, 1.4);
-
-    let car_header_title = if game_mode.allows_car_change() {
-        "CAR SELECTION: [ < / > ] [Left/Right]"
+    let car_border_col = if is_car_active {
+        if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::NEON_CYAN }
     } else {
-        "CAR SPEC: ENFORCED PREDEFINED [Locked]"
+        Palette::UI_CARD_BORDER
     };
-    let car_header_col = if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::NEON_CYAN };
+    let car_bg = if is_car_active {
+        Palette::UI_CARD_BG_HOVER
+    } else {
+        Palette::UI_CARD_BG
+    };
+    scaler.draw_glass_card(col1_x, curr_y, col_w, car_card_h, car_bg, car_border_col, if is_car_active { 2.4 } else { 1.2 });
+
+    let car_header_title = if is_car_active {
+        if game_mode.allows_car_change() {
+            "CAR SELECTION [ACTIVE • ENTER / < / > to switch]"
+        } else {
+            "CAR SPEC: ENFORCED PREDEFINED [Locked]"
+        }
+    } else {
+        if game_mode.allows_car_change() {
+            "CAR SELECTION: [Up/Down to select card]"
+        } else {
+            "CAR SPEC: ENFORCED PREDEFINED [Locked]"
+        }
+    };
+    let car_header_col = if is_car_active {
+        if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::NEON_CYAN }
+    } else {
+        Palette::UI_TEXT_MUTED
+    };
     fonts.draw_ui_bold(
         car_header_title,
         col1_x + scaler.s(12.0),
@@ -242,16 +310,32 @@ pub fn render_starting_grid_screen(
     curr_y += car_card_h + scaler.s(8.0);
 
     // Card 4: Grid Configuration / Session Status Card
+    let is_grid_active = is_left_focused && active_card_idx == 2;
     let grid_h = scaler.s(48.0);
-    scaler.draw_glass_card(col1_x, curr_y, col_w, grid_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+    let grid_border = if is_grid_active {
+        Palette::NEON_CYAN
+    } else {
+        Palette::UI_CARD_BORDER
+    };
+    let grid_bg = if is_grid_active {
+        Palette::UI_CARD_BG_HOVER
+    } else {
+        Palette::UI_CARD_BG
+    };
+    scaler.draw_glass_card(col1_x, curr_y, col_w, grid_h, grid_bg, grid_border, if is_grid_active { 2.4 } else { 1.2 });
 
     if game_mode.has_bots() {
+        let grid_hdr = if is_grid_active {
+            "GRID CONFIG [ACTIVE • ENTER / + / - to adjust]"
+        } else {
+            "GRID CONFIG: [Up/Down to select card]"
+        };
         fonts.draw_ui_bold(
-            "GRID CONFIG: [Up/Down to adjust bots]",
+            grid_hdr,
             col1_x + scaler.s(12.0),
             curr_y + scaler.s(16.0),
             scaler.font_s(10.5),
-            Palette::NEON_CYAN,
+            if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
         );
         fonts.draw_ui_bold(
             &format!("{} Racers ({} AI Opponents) • Max {} Slots", num_drivers, num_drivers.saturating_sub(1), max_grid_size),
@@ -261,12 +345,17 @@ pub fn render_starting_grid_screen(
             Palette::WHITE,
         );
     } else {
+        let solo_hdr = if is_grid_active {
+            "SESSION STATUS [ACTIVE • Solo Track Time]"
+        } else {
+            "SESSION STATUS: SOLO TRACK TIME"
+        };
         fonts.draw_ui_bold(
-            "SESSION STATUS: SOLO TRACK TIME",
+            solo_hdr,
             col1_x + scaler.s(12.0),
             curr_y + scaler.s(16.0),
             scaler.font_s(10.5),
-            Palette::NEON_CYAN,
+            if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
         );
         let status_str = match game_mode {
             GameMode::TimeTrial => {
@@ -284,25 +373,81 @@ pub fn render_starting_grid_screen(
         );
     }
 
+    curr_y += grid_h + scaler.s(10.0);
+
+    // Card 5 (Index 3): High-Visibility Green "LAUNCH RACE" Action Button
+    let launch_h = scaler.s(48.0);
+    let is_launch_card = is_left_focused && active_card_idx == 3;
+    let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
+    let is_launch_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + launch_h;
+    let is_launch_active = is_launch_card || is_launch_hovered;
+
+    let launch_bg = if is_launch_active {
+        Color::new(0.12, 0.68, 0.32, 0.98)
+    } else {
+        Color::new(0.08, 0.44, 0.22, 0.92)
+    };
+    let launch_border = if is_launch_active {
+        Palette::NEON_GREEN
+    } else {
+        Color::new(0.20, 0.78, 0.40, 0.85)
+    };
+
+    draw_rectangle(col1_x, curr_y, col_w, launch_h, launch_bg);
+    draw_rectangle_lines(
+        col1_x,
+        curr_y,
+        col_w,
+        launch_h,
+        if is_launch_active { 2.8 * scaler.scale } else { 1.6 * scaler.scale },
+        launch_border,
+    );
+
+    let launch_title = if is_launch_active {
+        "▶ LAUNCH RACE  [ENTER / SPACE / CLICK]"
+    } else {
+        "▶ LAUNCH RACE"
+    };
+    fonts.draw_ui_bold_centered(
+        launch_title,
+        col1_x + col_w * 0.5,
+        curr_y + scaler.s(21.0),
+        scaler.font_s(16.0),
+        Palette::WHITE,
+    );
+    fonts.draw_ui_regular_centered(
+        "Start 3-2-1 Countdown  •  Space / Gamepad A",
+        col1_x + col_w * 0.5,
+        curr_y + scaler.s(37.0),
+        scaler.font_s(11.0),
+        Color::new(0.85, 1.0, 0.90, 0.95),
+    );
+
     // =========================================================================
     // RIGHT PANEL: Starting Grid & Roster
     // =========================================================================
-    let roster_header = match game_mode {
+    let roster_base_title = match game_mode {
         GameMode::TimeTrial => "TIME TRIAL • ROSTER & SHADOW CAR",
         GameMode::FreeRide => "FREE RIDE • PRACTICE ROSTER",
-        GameMode::StandardRace | GameMode::ExperimentalRace => "STARTING GRID & ROSTER [D for Dossiers]",
+        GameMode::StandardRace | GameMode::ExperimentalRace => "STARTING GRID & ROSTER",
+    };
+    let roster_header = if is_right_focused {
+        format!("{} [FOCUSED • Up/Down to select slot • ENTER/D for Dossier]", roster_base_title)
+    } else {
+        format!("{} [Right arrow to focus roster]", roster_base_title)
     };
     fonts.draw_ui_bold(
-        roster_header,
+        &roster_header,
         col2_x,
         panel_y + scaler.s(13.0),
-        scaler.font_s(14.5),
-        Palette::NEON_GOLD,
+        scaler.font_s(13.5),
+        if is_right_focused { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
     );
 
     let roster_card_y = panel_y + scaler.s(22.0);
     let roster_card_h = (bottom_prompt_y - roster_card_y - scaler.s(8.0)).max(scaler.s(240.0));
-    scaler.draw_glass_card(col2_x, roster_card_y, col_w, roster_card_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.8);
+    let roster_border = if is_right_focused { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
+    scaler.draw_glass_card(col2_x, roster_card_y, col_w, roster_card_h, Palette::UI_CARD_BG, roster_border, if is_right_focused { 2.2 } else { 1.4 });
 
     let row_w = col_w - scaler.s(16.0);
     let row_x = col2_x + scaler.s(8.0);
@@ -313,6 +458,7 @@ pub fn render_starting_grid_screen(
     match game_mode {
         GameMode::TimeTrial => {
             // Row 1: Player (P1)
+            let is_row_sel = is_right_focused && active_roster_idx == 0;
             let pb_desc = best_lap_time.map(format_lap_time).unwrap_or_else(|| "No Prior Record".to_string());
             let p_line = format!("Personal Best: {}  •  Live Driver Telemetry", pb_desc);
             render_participant_row(
@@ -330,10 +476,12 @@ pub fn render_starting_grid_screen(
                 player_profile.color_scheme,
                 &p_line,
                 true,
+                is_row_sel,
             );
             row_y += row_h + row_gap;
 
             // Row 2: Shadow / Ghost Car
+            let is_ghost_sel = is_right_focused && active_roster_idx == 1;
             let ghost_lap_str = best_lap_time.map(|t| format!("Ghost Target: {}  •  Live Telemetry Replay", format_lap_time(t))).unwrap_or_else(|| "No prior lap recorded  •  Recording live ghost".to_string());
             render_ghost_participant_row(
                 fonts,
@@ -344,18 +492,19 @@ pub fn render_starting_grid_screen(
                 row_h,
                 active_car.title(),
                 &ghost_lap_str,
+                is_ghost_sel,
             );
             row_y += row_h + scaler.s(14.0);
 
             // Explanatory info box for Time Trial mode
             let info_h = scaler.s(160.0);
             scaler.draw_glass_card(row_x, row_y, row_w, info_h, Color::new(0.05, 0.08, 0.13, 0.8), Palette::UI_CARD_BORDER, 1.0);
-            fonts.draw_ui_bold("TIME TRIAL SHADOW CAR TELEMETRY", row_x + scaler.s(12.0), row_y + scaler.s(18.0), scaler.font_s(12.5), Palette::NEON_CYAN);
+            fonts.draw_ui_bold("TIME TRIAL BENCHMARK & SHADOW VEHICLE", row_x + scaler.s(12.0), row_y + scaler.s(18.0), scaler.font_s(12.5), Palette::NEON_CYAN);
             let tips = [
-                "• The shadow car renders semi-transparently using your all-time best lap",
-                "• Accurately compare cornering lines, braking markers, and exit speeds",
-                "• Setting a new fastest lap automatically updates the active shadow benchmark",
-                "• Press [SPACE / ENTER] to initiate the 3-2-1 launch countdown",
+                "• Race against your personal best time recorded in the Hall of Fame",
+                "• Personal best lap is rendered live as an interactive shadow / ghost car",
+                "• Real-time delta comparison (+/- seconds) displayed in racing HUD",
+                "• All car choices unlocked for telemetry tuning and benchmark comparison",
             ];
             let mut tip_y = row_y + scaler.s(42.0);
             for tip in &tips {
@@ -365,7 +514,8 @@ pub fn render_starting_grid_screen(
         }
         GameMode::FreeRide => {
             // Row 1: Player (P1)
-            let p_line = "Open Practice Session  •  Unlimited Free Laps".to_string();
+            let is_row_sel = is_right_focused && active_roster_idx == 0;
+            let p_line = "Unlimited Open Circuit Session  •  Zero Obstacle Traffic".to_string();
             render_participant_row(
                 fonts,
                 &scaler,
@@ -381,6 +531,7 @@ pub fn render_starting_grid_screen(
                 player_profile.color_scheme,
                 &p_line,
                 true,
+                is_row_sel,
             );
             row_y += row_h + scaler.s(14.0);
 
@@ -403,6 +554,7 @@ pub fn render_starting_grid_screen(
         GameMode::StandardRace | GameMode::ExperimentalRace => {
             for (i, participant) in grid_participants.iter().enumerate() {
                 let slot = i + 1;
+                let is_row_sel = is_right_focused && i == active_roster_idx;
                 let desc = match (participant.best_lap, participant.best_circuit_time) {
                     (Some(lap), Some(circ)) => {
                         format!("Best Lap: {}  •  Circuit: {}", format_lap_time(lap), format_lap_time(circ))
@@ -439,6 +591,7 @@ pub fn render_starting_grid_screen(
                     participant.color_scheme,
                     &desc,
                     participant.is_player,
+                    is_row_sel,
                 );
                 row_y += row_h + row_gap;
             }
@@ -449,9 +602,29 @@ pub fn render_starting_grid_screen(
     // FOOTER PROMPTS
     // =========================================================================
     let prompt = if gamepad_connected {
-        "[A/START] Launch Race  |  [X] Game Mode  |  [D-Pad L/R] Select Car  |  [Up/Down] Bots  |  [Y] Dossier  |  [B] Menu"
+        match focused_panel {
+            StartingGridFocus::LeftSetup => match active_card_idx {
+                0 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Cycle Mode  |  [START] Launch  |  [B] Menu",
+                1 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Change Car  |  [START] Launch  |  [B] Menu",
+                2 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Adjust Bots  |  [START] Launch  |  [B] Menu",
+                _ => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A / START] LAUNCH RACE  |  [B] Menu",
+            },
+            StartingGridFocus::RightRoster => {
+                "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Driver  |  [A/Y] View Dossier  |  [START] Launch  |  [B] Menu"
+            }
+        }
     } else {
-        "[SPACE/ENTER] Launch Race  |  [TAB] Game Mode  |  [ < / > ] Select Car  |  [Up/Down] Bots  |  [D] Dossiers  |  [ESC] Menu"
+        match focused_panel {
+            StartingGridFocus::LeftSetup => match active_card_idx {
+                0 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER/SPACE/TAB] Cycle Mode  |  [SPACE] Launch  |  [ESC] Menu",
+                1 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / < / >] Change Vehicle  |  [SPACE] Launch  |  [ESC] Menu",
+                2 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / + / -] Adjust Bots  |  [SPACE] Launch  |  [ESC] Menu",
+                _ => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / SPACE / CLICK] LAUNCH RACE  |  [ESC] Menu",
+            },
+            StartingGridFocus::RightRoster => {
+                "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
+            }
+        }
     };
 
     fonts.draw_ui_bold_centered(
@@ -470,19 +643,24 @@ fn render_grid_stat_bar(
     y: f32,
     w: f32,
     label: &str,
-    val: f32,
-    color: Color,
+    pct: f32,
+    fill_col: Color,
 ) {
-    fonts.draw_ui_bold(label, x, y + scaler.s(7.0), scaler.font_s(9.0), Palette::UI_TEXT_MUTED);
-    let bar_x = x + scaler.s(40.0);
-    let bar_w = (w - scaler.s(76.0)).max(30.0);
-    let bar_h = scaler.s(6.0);
+    let bar_h = scaler.s(10.0);
+    let label_w = scaler.s(55.0);
 
-    draw_rectangle(bar_x, y, bar_w, bar_h, Color::new(0.1, 0.12, 0.16, 0.9));
-    draw_rectangle(bar_x, y, bar_w * val.clamp(0.0, 1.0), bar_h, color);
+    fonts.draw_ui_bold(label, x, y + scaler.s(9.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
 
-    let pct_str = format!("{:.0}%", (val * 100.0).clamp(0.0, 100.0));
-    fonts.draw_ui_bold(&pct_str, bar_x + bar_w + scaler.s(6.0), y + scaler.s(7.0), scaler.font_s(9.0), color);
+    let bar_x = x + label_w;
+    let actual_bar_w = w - label_w - scaler.s(45.0);
+    draw_rectangle(bar_x, y, actual_bar_w, bar_h, Color::new(0.08, 0.10, 0.15, 0.90));
+    draw_rectangle_lines(bar_x, y, actual_bar_w, bar_h, 1.0, Palette::UI_CARD_BORDER);
+
+    let filled_w = actual_bar_w * pct.clamp(0.0, 1.0);
+    draw_rectangle(bar_x, y, filled_w, bar_h, fill_col);
+
+    let pct_str = format!("{:.0}%", pct * 100.0);
+    fonts.draw_ui_bold(&pct_str, x + w - scaler.s(38.0), y + scaler.s(9.0), scaler.font_s(10.0), Palette::WHITE);
 }
 
 fn render_ghost_participant_row(
@@ -494,39 +672,46 @@ fn render_ghost_participant_row(
     h: f32,
     car_name: &str,
     best_lap_str: &str,
+    is_selected: bool,
 ) {
-    let bg_color = Color::new(0.06, 0.14, 0.22, 0.90);
-    let border_color = Palette::NEON_CYAN;
+    let bg_color = if is_selected {
+        Color::new(0.14, 0.24, 0.38, 0.95)
+    } else {
+        Color::new(0.06, 0.10, 0.16, 0.85)
+    };
+    let border_color = if is_selected {
+        Palette::NEON_GOLD
+    } else {
+        Palette::NEON_CYAN
+    };
 
     draw_rectangle(x, y, w, h, bg_color);
-    draw_rectangle_lines(x, y, w, h, 1.4, border_color);
+    draw_rectangle_lines(x, y, w, h, if is_selected { 2.2 } else { 1.2 }, border_color);
 
-    // Ghost Badge
-    let badge_w = scaler.s(48.0);
+    // Badge: "GHOST"
+    let badge_w = scaler.s(50.0);
     let badge_h = h - scaler.s(10.0);
     let badge_x = x + scaler.s(6.0);
     let badge_y = y + scaler.s(5.0);
 
     draw_rectangle(badge_x, badge_y, badge_w, badge_h, Palette::NEON_CYAN);
     fonts.draw_ui_bold_centered(
-        "GHOST",
+        "SHADOW",
         badge_x + badge_w * 0.5,
-        badge_y + badge_h * 0.5 + scaler.s(4.5),
+        badge_y + badge_h * 0.5 + scaler.s(4.0),
         scaler.font_s(11.0),
         Palette::BLACK,
     );
 
     let text_start_x = badge_x + badge_w + scaler.s(10.0);
 
-    // Car column on right
-    let car_col_w = scaler.s(170.0);
+    // Right Column: Car Model
+    let car_col_w = scaler.s(175.0);
     let car_x = x + w - car_col_w;
 
     let sep_x = car_x - scaler.s(8.0);
     draw_rectangle(sep_x, y + scaler.s(6.0), 1.0, h - scaler.s(12.0), Color::new(0.25, 0.35, 0.45, 0.40));
-
-    fonts.draw_ui_bold(car_name, car_x, y + scaler.s(21.0), scaler.font_s(12.5), Palette::WHITE);
-    fonts.draw_ui_regular("Shadow Car", car_x, y + scaler.s(36.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+    fonts.draw_ui_bold(car_name, car_x, y + scaler.s(21.0), scaler.font_s(12.5), Palette::NEON_CYAN);
 
     // Title & Info
     fonts.draw_ui_bold("Personal Best Benchmark", text_start_x, y + scaler.s(21.0), scaler.font_s(13.5), Palette::NEON_CYAN);
@@ -549,9 +734,12 @@ fn render_participant_row(
     scheme: CarColorScheme,
     profile_line: &str,
     is_player: bool,
+    is_selected: bool,
 ) {
     // Row background
-    let bg_color = if is_player {
+    let bg_color = if is_selected {
+        Color::new(0.18, 0.28, 0.42, 0.98)
+    } else if is_player {
         Color::new(0.12, 0.22, 0.35, 0.95)
     } else if pos % 2 == 0 {
         Color::new(0.08, 0.11, 0.17, 0.90)
@@ -559,14 +747,16 @@ fn render_participant_row(
         Color::new(0.06, 0.08, 0.13, 0.90)
     };
 
-    let border_color = if is_player {
+    let border_color = if is_selected {
+        Palette::NEON_GOLD
+    } else if is_player {
         Palette::NEON_CYAN
     } else {
         Palette::UI_CARD_BORDER
     };
 
     draw_rectangle(x, y, w, h, bg_color);
-    draw_rectangle_lines(x, y, w, h, if is_player { 1.8 } else { 1.0 }, border_color);
+    draw_rectangle_lines(x, y, w, h, if is_selected { 2.2 } else if is_player { 1.8 } else { 1.0 }, border_color);
 
     // Position Badge (e.g. "P1", "P2")
     let badge_w = scaler.s(36.0);
@@ -617,24 +807,35 @@ fn render_participant_row(
 
     draw_rectangle(car_x, s_y, swatch_w, swatch_h, scheme.primary);
     draw_rectangle_lines(car_x, s_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
-
-    draw_rectangle(car_x + swatch_w + scaler.s(3.0), s_y, swatch_w, swatch_h, scheme.secondary);
-    draw_rectangle_lines(car_x + swatch_w + scaler.s(3.0), s_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
-
-    draw_rectangle(car_x + (swatch_w + scaler.s(3.0)) * 2.0, s_y, swatch_w, swatch_h, scheme.helmet);
-    draw_rectangle_lines(car_x + (swatch_w + scaler.s(3.0)) * 2.0, s_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
+    draw_rectangle(car_x + swatch_w + scaler.s(2.0), s_y, swatch_w, swatch_h, scheme.secondary);
+    draw_rectangle_lines(car_x + swatch_w + scaler.s(2.0), s_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
+    draw_rectangle(car_x + (swatch_w + scaler.s(2.0)) * 2.0, s_y, swatch_w, swatch_h, scheme.helmet);
+    draw_rectangle_lines(car_x + (swatch_w + scaler.s(2.0)) * 2.0, s_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
 
     fonts.draw_ui_regular("Team Livery", car_x + scaler.s(58.0), s_y + scaler.s(8.5), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
 
-    // Middle Column: Driver Name & Profile / Style
-    let driver_label = if is_player {
+    let driver_label = if is_selected {
+        format!("{}  (\"{}\")  [ENTER / D: DOSSIER]", name, alias)
+    } else if is_player {
         format!("{}  (\"{}\")", name, alias)
     } else {
         format!("{}  (\"{}\")", name, alias)
     };
 
-    let name_color = if is_player { Palette::NEON_CYAN } else { Palette::WHITE };
-    let stats_color = if is_player { Palette::NEON_GOLD } else { Color::new(0.60, 0.85, 0.95, 1.0) };
+    let name_color = if is_selected {
+        Palette::NEON_GOLD
+    } else if is_player {
+        Palette::NEON_CYAN
+    } else {
+        Palette::WHITE
+    };
+    let stats_color = if is_selected {
+        Palette::NEON_GOLD
+    } else if is_player {
+        Palette::NEON_GOLD
+    } else {
+        Color::new(0.60, 0.85, 0.95, 1.0)
+    };
 
     // Line 1: Driver Name & Alias
     fonts.draw_ui_bold(&driver_label, text_start_x, y + scaler.s(21.0), scaler.font_s(13.5), name_color);

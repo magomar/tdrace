@@ -448,6 +448,13 @@ pub struct RaceResultEntry {
 use crate::profile::{PlayerProfile, ProfileCareerStats};
 use super::profile_ui::render_profile_badge;
 
+/// Selected focus column/panel in the Track & Setup Selection Menu.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MenuPanelFocus {
+    LeftTracks,
+    RightVehicle,
+}
+
 /// Renders the modern Track & Setup Selection Menu with glass cards and vector typography.
 #[allow(clippy::too_many_arguments)]
 pub fn render_track_select_menu(
@@ -460,6 +467,7 @@ pub fn render_track_select_menu(
     selected_track_idx: usize,
     active_profile: &PlayerProfile,
     active_stats: &ProfileCareerStats,
+    focused_panel: MenuPanelFocus,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -506,12 +514,19 @@ pub fn render_track_select_menu(
     // Left Column: Track Selection Cards
     let mut curr_y = menu_content_y;
 
+    let is_left_focused = focused_panel == MenuPanelFocus::LeftTracks;
+    let is_right_focused = focused_panel == MenuPanelFocus::RightVehicle;
+    let left_header = if is_left_focused {
+        "CIRCUIT CATALOG [ACTIVE • Up/Down to select]"
+    } else {
+        "CIRCUIT CATALOG [Left arrow to focus]"
+    };
     fonts.draw_ui_bold(
-        "SELECT CIRCUIT [Up/Down] | [T] Track Manager | [E] Studio",
+        left_header,
         col1_x,
         curr_y + scaler.s(13.0),
         scaler.font_s(15.0),
-        module_accent,
+        if is_left_focused { module_accent } else { Palette::UI_TEXT_MUTED },
     );
     curr_y += scaler.s(22.0);
 
@@ -731,19 +746,26 @@ pub fn render_track_select_menu(
 
         c2_y += metrics_h + scaler.s(12.0);
 
-        // Section 2 Header: Predefined Vehicle Specification
+        // Section 2 Header: Predefined Vehicle Specification / Selection
+        let car_header = if is_right_focused {
+            "VEHICLE SELECTION & SPECS [ACTIVE • Up/Down to change]"
+        } else {
+            "PREDEFINED VEHICLE & SPECIFICATIONS [Right arrow to focus]"
+        };
         fonts.draw_ui_bold(
-            "PREDEFINED VEHICLE & SPECIFICATIONS",
+            car_header,
             col2_x,
             c2_y + scaler.s(13.0),
             scaler.font_s(15.0),
-            Palette::NEON_GOLD,
+            if is_right_focused { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
         );
         c2_y += scaler.s(22.0);
 
         // Predefined Car Glass Card
         let car_card_h = scaler.s(182.0);
-        scaler.draw_glass_card(col2_x, c2_y, col_w, car_card_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.4);
+        let car_border = if is_right_focused { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
+        let car_bg = if is_right_focused { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+        scaler.draw_glass_card(col2_x, c2_y, col_w, car_card_h, car_bg, car_border, if is_right_focused { 2.4 } else { 1.4 });
 
         // Car Tag & Title
         fonts.draw_ui_bold(
@@ -963,7 +985,7 @@ pub fn pause_menu_layout(sw: f32, sh: f32) -> (f32, f32, f32, f32, PauseMenuButt
 }
 
 /// Renders the modern Pause overlay with Assist Profile selection, Audio status, and Resume/Exit buttons.
-pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_settings: &AudioSettings) {
+pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_settings: &AudioSettings, selected_btn: usize) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
@@ -991,12 +1013,13 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     // Resume button
     let (rx, ry, rw, rh) = btn_layout.resume_rect;
     let is_resume_hovered = mx >= rx && mx <= rx + rw && my >= ry && my <= ry + rh;
-    let resume_bg = if is_resume_hovered {
-        Color::new(0.12, 0.52, 0.28, 0.95)
+    let is_resume_active = selected_btn == 0 || is_resume_hovered;
+    let resume_bg = if is_resume_active {
+        Color::new(0.14, 0.58, 0.32, 0.98)
     } else {
-        Color::new(0.08, 0.36, 0.20, 0.90)
+        Color::new(0.08, 0.36, 0.20, 0.85)
     };
-    let resume_border = if is_resume_hovered {
+    let resume_border = if is_resume_active {
         Palette::NEON_GREEN
     } else {
         Color::new(0.20, 0.75, 0.40, 0.85)
@@ -1007,11 +1030,11 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         ry,
         rw,
         rh,
-        if is_resume_hovered { 2.4 * scaler.scale } else { 1.8 * scaler.scale },
+        if is_resume_active { 2.6 * scaler.scale } else { 1.4 * scaler.scale },
         resume_border,
     );
     fonts.draw_ui_bold_centered(
-        "[ESC] RESUME RACE",
+        if is_resume_active { "[ENTER] RESUME RACE" } else { "RESUME RACE" },
         rx + rw * 0.5,
         ry + scaler.s(21.0),
         scaler.font_s(14.5),
@@ -1028,12 +1051,13 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     // Exit button
     let (ex, ey, ew, eh) = btn_layout.exit_rect;
     let is_exit_hovered = mx >= ex && mx <= ex + ew && my >= ey && my <= ey + eh;
-    let exit_bg = if is_exit_hovered {
-        Color::new(0.55, 0.12, 0.16, 0.95)
+    let is_exit_active = selected_btn == 1 || is_exit_hovered;
+    let exit_bg = if is_exit_active {
+        Color::new(0.62, 0.14, 0.18, 0.98)
     } else {
-        Color::new(0.38, 0.08, 0.12, 0.90)
+        Color::new(0.38, 0.08, 0.12, 0.85)
     };
-    let exit_border = if is_exit_hovered {
+    let exit_border = if is_exit_active {
         Palette::RED
     } else {
         Color::new(0.85, 0.25, 0.28, 0.85)
@@ -1044,11 +1068,11 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         ey,
         ew,
         eh,
-        if is_exit_hovered { 2.4 * scaler.scale } else { 1.8 * scaler.scale },
+        if is_exit_active { 2.6 * scaler.scale } else { 1.4 * scaler.scale },
         exit_border,
     );
     fonts.draw_ui_bold_centered(
-        "[E] EXIT RACE",
+        if is_exit_active { "[ENTER] EXIT RACE" } else { "EXIT RACE" },
         ex + ew * 0.5,
         ey + scaler.s(21.0),
         scaler.font_s(14.5),
