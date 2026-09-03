@@ -117,4 +117,45 @@ fn test_starting_grid_driver_count_bounds() {
     assert_eq!(session.opponent_drivers.len(), 1);
 }
 
+#[test]
+fn test_finished_state_audio_toggle_preserves_finished_state_and_hof() {
+    let mut session = RaceSession::new();
+    session.state = GameState::Finished;
+    session.show_hall_of_fame = true;
+
+    // Toggle mute while in Hall of Fame view of Finished state
+    let initial_mute = session.audio.settings.is_muted;
+    session.audio.toggle_mute();
+    assert_eq!(session.audio.settings.is_muted, !initial_mute);
+    assert_eq!(session.state, GameState::Finished);
+    assert!(session.show_hall_of_fame);
+
+    // Toggle view to Standings results
+    session.show_hall_of_fame = false;
+    session.audio.toggle_mute();
+    assert_eq!(session.audio.settings.is_muted, initial_mute);
+    assert_eq!(session.state, GameState::Finished);
+    assert!(!session.show_hall_of_fame);
+
+    // Calling session.update() with no keys pressed preserves Finished state
+    session.update();
+    assert_eq!(session.state, GameState::Finished);
+}
+
+#[test]
+fn test_championship_and_profile_audio_toggle_preserves_state() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ChampionshipStandings;
+
+    let initial_mute = session.audio.settings.is_muted;
+    session.audio.toggle_mute();
+    assert_eq!(session.audio.settings.is_muted, !initial_mute);
+    assert_eq!(session.state, GameState::ChampionshipStandings);
+
+    session.state = GameState::ProfileManager { selected_idx: 0 };
+    session.audio.toggle_mute();
+    assert_eq!(session.audio.settings.is_muted, initial_mute);
+    assert_eq!(session.state, GameState::ProfileManager { selected_idx: 0 });
+}
+
 

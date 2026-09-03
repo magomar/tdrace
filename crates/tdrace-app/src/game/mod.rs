@@ -1512,7 +1512,7 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.advance_championship_round();
                 }
-                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::M) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
+                if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.championship_session = None;
                     self.state = GameState::Menu;
@@ -1931,8 +1931,7 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
                 }
-                if is_key_pressed(KeyCode::M)
-                    || is_key_pressed(KeyCode::Escape)
+                if is_key_pressed(KeyCode::Escape)
                     || self.input.gamepad.snapshot.btn_cancel_pressed
                     || self.input.gamepad.snapshot.btn_back_pressed
                     || self.input.gamepad.snapshot.btn_b_pressed
@@ -2132,9 +2131,8 @@ impl RaceSession {
             }
         }
 
-        // Return to Main Menu (Escape, M, or Gamepad Cancel / B)
+        // Return to Main Menu (Escape, or Gamepad Cancel / B)
         if is_key_pressed(KeyCode::Escape)
-            || is_key_pressed(KeyCode::M)
             || self.input.gamepad.snapshot.btn_cancel_pressed
             || self.input.gamepad.snapshot.btn_back_pressed
             || self.input.gamepad.snapshot.btn_b_pressed

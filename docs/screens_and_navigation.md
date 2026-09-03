@@ -60,7 +60,7 @@ stateDiagram-v2
     StartingGrid --> Countdown: [SPACE / ENTER / A]
     StartingGrid --> DriverCards: [D / Y]
     DriverCards --> StartingGrid: [ESC / ENTER / B]
-    StartingGrid --> Menu: [ESC / M / B]
+    StartingGrid --> Menu: [ESC / B]
 
     %% Race Loop transitions
     Countdown --> Racing: Timer Expires (3.5s)
@@ -72,11 +72,11 @@ stateDiagram-v2
     Racing --> Finished: Lap Count Reached
     Finished --> StartingGrid: [SPACE / ENTER / A] (Restart Race)
     Finished --> ChampionshipStandings: [SPACE / ENTER] (If Championship Active)
-    Finished --> Menu: [M / ESC / B]
+    Finished --> Menu: [ESC / B]
 
     %% Championship transitions
     ChampionshipStandings --> StartingGrid: [SPACE / ENTER / A] (Next Round)
-    ChampionshipStandings --> Menu: [ESC / M / B] (Abandon)
+    ChampionshipStandings --> Menu: [ESC / B] (Abandon)
 
     %% Profile flow
     ProfileManager --> ProfileCreate: [N / E]
@@ -286,7 +286,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | :--- | :--- | :--- |
 | `Space` / `Enter` / Gamepad `A` | Restart / Next Race | If single race: re-initializes race -> `GameState::StartingGrid`<br>If championship: -> `GameState::ChampionshipStandings` |
 | `Left` / `Right` / `A` / `D` / `Tab` / Gamepad `X` | Toggle Hall of Fame | Switches between podium results table and all-time Hall of Fame leaderboard |
-| `M` / `Escape` / Gamepad `B` | Return to Menu | Transitions to `GameState::Menu` |
+| `Escape` / Gamepad `B` | Return to Menu | Transitions to `GameState::Menu` |
 
 ---
 
@@ -301,7 +301,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Space` / `Enter` / Gamepad `A` | Advance to Next Round | Loads next round track -> Transitions to `GameState::StartingGrid` |
-| `Escape` / `M` / Gamepad `B` | Abandon Championship | Resets championship session -> Transitions to `GameState::Menu` |
+| `Escape` / Gamepad `B` | Abandon Championship | Resets championship session -> Transitions to `GameState::Menu` |
 
 ---
 

@@ -506,7 +506,7 @@ pub fn render_hall_of_fame_screen(
     }
 
     // Bottom Action Prompt
-    let prompt = "Press [SPACE / ENTER] or [R] to Race Again | [TAB] View Standings | [M] Main Menu";
+    let prompt = "Press [SPACE / ENTER] or [R] to Race Again | [TAB] View Standings | [ESC] Main Menu";
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
