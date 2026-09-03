@@ -812,5 +812,105 @@ fn test_waypoint_custom_wall_type_generation_and_json_roundtrip() {
     assert_eq!(restored.waypoints[2].wall_type, Some(BarrierType::TireWall));
 }
 
+#[test]
+fn test_prototypical_track_templates_all_combinations() {
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::presets::{
+        classic_template, create_prototypical_track, f1_template, kart_template, rally_template,
+        RaceDirection, TrackShape,
+    };
+    use tdrace_core::track::validation::validate_track;
+
+    let modules = ["classic", "f1", "kart", "rally"];
+    let shapes = [TrackShape::Oval, TrackShape::HorizontalEight];
+    let directions = [RaceDirection::Right, RaceDirection::Left];
+
+    for module in modules {
+        for shape in shapes {
+            for direction in directions {
+                let track = create_prototypical_track(module, shape, direction);
+
+                // 1. Validation check: Must be clean without blocking errors
+                let diagnostics = validate_track(&track);
+                let errors: Vec<_> = diagnostics
+                    .iter()
+                    .filter(|d| d.severity == tdrace_core::track::validation::ValidationSeverity::Error)
+                    .collect();
+                assert!(
+                    errors.is_empty(),
+                    "Track for module '{}' shape '{:?}' dir '{:?}' produced validation errors: {:?}",
+                    module,
+                    shape,
+                    direction,
+                    errors
+                );
+
+                // 2. Closed spline with waypoints and checkpoints
+                assert!(track.spline.closed);
+                assert!(!track.spline.waypoints.is_empty());
+                assert!(!track.checkpoints.is_empty());
+                assert!(!track.grid_positions.is_empty());
+
+                // 3. Direction verification: tangent at start line
+                // Finish line is at distance 0, start tangent points along track forward direction
+                let start_sample = track.spline.sample_at_distance(0.0);
+                match direction {
+                    RaceDirection::Right => {
+                        assert!(
+                            start_sample.tangent.x > 0.0,
+                            "Expected rightward race direction (+X), but got tangent: {:?}",
+                            start_sample.tangent
+                        );
+                    }
+                    RaceDirection::Left => {
+                        assert!(
+                            start_sample.tangent.x < 0.0,
+                            "Expected leftward race direction (-X), but got tangent: {:?}",
+                            start_sample.tangent
+                        );
+                    }
+                }
+
+                // 4. Module surface requirements:
+                // "asphalt for classic, F1 and karts, with grass offtrack for F1 and classic, asphalt for karts and dirt for rally"
+                match module {
+                    "classic" => {
+                        assert_eq!(track.default_surface, SurfaceType::Grass);
+                        assert_eq!(track.spline.samples[0].surface, SurfaceType::Asphalt);
+                        assert_eq!(track.predefined_car.as_deref(), Some("sports_car"));
+                    }
+                    "f1" => {
+                        assert_eq!(track.default_surface, SurfaceType::Grass);
+                        assert_eq!(track.spline.samples[0].surface, SurfaceType::Asphalt);
+                        assert_eq!(track.predefined_car.as_deref(), Some("f1_car"));
+                    }
+                    "kart" => {
+                        assert_eq!(track.default_surface, SurfaceType::Asphalt);
+                        assert_eq!(track.spline.samples[0].surface, SurfaceType::Asphalt);
+                        assert_eq!(track.predefined_car.as_deref(), Some("kart"));
+                    }
+                    "rally" => {
+                        assert_eq!(track.default_surface, SurfaceType::Dirt);
+                        assert_eq!(track.spline.samples[0].surface, SurfaceType::Dirt);
+                        assert_eq!(track.predefined_car.as_deref(), Some("rally_car"));
+                    }
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+
+    // 5. Test convenience module helpers match create_prototypical_track
+    let c = classic_template(TrackShape::Oval, RaceDirection::Right);
+    assert_eq!(c.module_id.as_deref(), Some("classic"));
+    let f = f1_template(TrackShape::HorizontalEight, RaceDirection::Left);
+    assert_eq!(f.module_id.as_deref(), Some("f1"));
+    let k = kart_template(TrackShape::Oval, RaceDirection::Left);
+    assert_eq!(k.module_id.as_deref(), Some("kart"));
+    let r = rally_template(TrackShape::HorizontalEight, RaceDirection::Right);
+    assert_eq!(r.module_id.as_deref(), Some("rally"));
+}
+
+
 
 

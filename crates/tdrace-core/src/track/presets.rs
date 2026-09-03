@@ -1,4 +1,5 @@
 use glam::Vec2;
+use serde::{Deserialize, Serialize};
 
 use super::checkpoint::Checkpoint;
 use super::geometry::{
@@ -1585,5 +1586,307 @@ pub fn loheac_rx() -> Track {
         modules: vec!["rally".to_string(), "classic".to_string()],
     }
 }
+
+/// Layout shape options for prototypical circuit generation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TrackShape {
+    Oval,
+    HorizontalEight,
+}
+
+impl TrackShape {
+    pub const ALL: [TrackShape; 2] = [TrackShape::Oval, TrackShape::HorizontalEight];
+
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Oval => "Oval",
+            Self::HorizontalEight => "Horizontal Eight",
+        }
+    }
+}
+
+/// Race direction on circuit start/finish line.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RaceDirection {
+    Right,
+    Left,
+}
+
+impl RaceDirection {
+    pub const ALL: [RaceDirection; 2] = [RaceDirection::Right, RaceDirection::Left];
+
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Right => "Right",
+            Self::Left => "Left",
+        }
+    }
+}
+
+/// Generates waypoints for a high-speed two-turn oval with the given race direction and road surface.
+pub fn generate_oval_waypoints(direction: RaceDirection, surface: SurfaceType, width: f32) -> Vec<TrackWaypoint> {
+    let mut wps = match direction {
+        RaceDirection::Right => vec![
+            // Front Straight heading Right (+X)
+            TrackWaypoint::new(Vec2::new(-30.0, -60.0), width),
+            TrackWaypoint::new(Vec2::new(75.0, -60.0), width),
+            // East Curve
+            TrackWaypoint::new(Vec2::new(135.0, -35.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(155.0, 0.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(135.0, 35.0), width).with_curbs(true, true),
+            // Back Straight heading Left (-X)
+            TrackWaypoint::new(Vec2::new(75.0, 60.0), width),
+            TrackWaypoint::new(Vec2::new(-75.0, 60.0), width),
+            // West Curve
+            TrackWaypoint::new(Vec2::new(-135.0, 35.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(-155.0, 0.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(-135.0, -35.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(-75.0, -60.0), width),
+        ],
+        RaceDirection::Left => vec![
+            // Front Straight heading Left (-X)
+            TrackWaypoint::new(Vec2::new(30.0, -60.0), width),
+            TrackWaypoint::new(Vec2::new(-75.0, -60.0), width),
+            // West Curve
+            TrackWaypoint::new(Vec2::new(-135.0, -35.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(-155.0, 0.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(-135.0, 35.0), width).with_curbs(true, true),
+            // Back Straight heading Right (+X)
+            TrackWaypoint::new(Vec2::new(-75.0, 60.0), width),
+            TrackWaypoint::new(Vec2::new(75.0, 60.0), width),
+            // East Curve
+            TrackWaypoint::new(Vec2::new(135.0, 35.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(155.0, 0.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(135.0, -35.0), width).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(75.0, -60.0), width),
+        ],
+    };
+    if surface != SurfaceType::Asphalt {
+        for wp in &mut wps {
+            wp.surface = Some(surface);
+        }
+    }
+    wps
+}
+
+/// Generates waypoints for a horizontal Figure-8 circuit with central crossover, given race direction and road surface.
+pub fn generate_horizontal_eight_waypoints(direction: RaceDirection, surface: SurfaceType, width: f32) -> Vec<TrackWaypoint> {
+    let mut wps = match direction {
+        RaceDirection::Right => vec![
+            // Sector 1: Start/Finish Straight (West Loop South Straight heading East/Right)
+            TrackWaypoint::new(Vec2::new(-90.0, -48.0), width),
+            TrackWaypoint::new(Vec2::new(-50.0, -45.0), width),
+            // Sector 2: Approach & Crossing to East Loop (SW to NE through (0.0, 0.0))
+            TrackWaypoint::new(Vec2::new(-24.0, -22.0), width),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), width),
+            TrackWaypoint::new(Vec2::new(24.0, 22.0), width),
+            // Sector 3: East Loop North Bank & Turn
+            TrackWaypoint::new(Vec2::new(50.0, 45.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(90.0, 48.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(130.0, 40.0), width).with_curbs(true, false),
+            // Sector 4: East Carousel Sweeper
+            TrackWaypoint::new(Vec2::new(155.0, 18.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(160.0, 0.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(155.0, -18.0), width).with_curbs(true, false),
+            // Sector 5: East Loop South Bank
+            TrackWaypoint::new(Vec2::new(130.0, -40.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(90.0, -48.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(50.0, -45.0), width),
+            // Sector 6: Approach & Crossing to West Loop (SE to NW through (0.0, 0.0))
+            TrackWaypoint::new(Vec2::new(24.0, -22.0), width),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), width),
+            TrackWaypoint::new(Vec2::new(-24.0, 22.0), width),
+            // Sector 7: West Loop North Bank & Turn
+            TrackWaypoint::new(Vec2::new(-50.0, 45.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-90.0, 48.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-130.0, 40.0), width).with_curbs(true, false),
+            // Sector 8: West Carousel Sweeper Return to Finish
+            TrackWaypoint::new(Vec2::new(-155.0, 18.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-160.0, 0.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-155.0, -18.0), width).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-130.0, -40.0), width),
+        ],
+        RaceDirection::Left => vec![
+            // Sector 1: Start/Finish Straight (East Loop South Straight heading West/Left)
+            TrackWaypoint::new(Vec2::new(90.0, -48.0), width),
+            TrackWaypoint::new(Vec2::new(50.0, -45.0), width),
+            // Sector 2: Approach & Crossing to West Loop (SE to NW through (0.0, 0.0))
+            TrackWaypoint::new(Vec2::new(24.0, -22.0), width),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), width),
+            TrackWaypoint::new(Vec2::new(-24.0, 22.0), width),
+            // Sector 3: West Loop North Bank & Turn
+            TrackWaypoint::new(Vec2::new(-50.0, 45.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-90.0, 48.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-130.0, 40.0), width).with_curbs(false, true),
+            // Sector 4: West Carousel Sweeper
+            TrackWaypoint::new(Vec2::new(-155.0, 18.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-160.0, 0.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-155.0, -18.0), width).with_curbs(false, true),
+            // Sector 5: West Loop South Bank
+            TrackWaypoint::new(Vec2::new(-130.0, -40.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-90.0, -48.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-50.0, -45.0), width),
+            // Sector 6: Approach & Crossing to East Loop (SW to NE through (0.0, 0.0))
+            TrackWaypoint::new(Vec2::new(-24.0, -22.0), width),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), width),
+            TrackWaypoint::new(Vec2::new(24.0, 22.0), width),
+            // Sector 7: East Loop North Bank & Turn
+            TrackWaypoint::new(Vec2::new(50.0, 45.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(90.0, 48.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(130.0, 40.0), width).with_curbs(false, true),
+            // Sector 8: East Carousel Sweeper Return to Finish
+            TrackWaypoint::new(Vec2::new(155.0, 18.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(160.0, 0.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(155.0, -18.0), width).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(130.0, -40.0), width),
+        ],
+    };
+    if surface != SurfaceType::Asphalt {
+        for wp in &mut wps {
+            wp.surface = Some(surface);
+        }
+    }
+    wps
+}
+
+/// Creates a prototypical template circuit for a specific module, layout shape, and race direction.
+/// Follows standard module defaults:
+/// - `classic`: Asphalt road, Grass off-track, sports coupe, 14m width
+/// - `f1`: Asphalt road, Grass off-track, F1 car, 15m width
+/// - `kart`: Asphalt road, Asphalt off-track, 125cc kart, 10m width
+/// - `rally`: Dirt road, Dirt off-track, rally car, 12m width
+pub fn create_prototypical_track(
+    module_id: &str,
+    shape: TrackShape,
+    direction: RaceDirection,
+) -> Track {
+    let mod_id_clean = module_id.to_lowercase();
+    let mod_str = mod_id_clean.as_str();
+
+    let (road_surface, offtrack_surface, predefined_car, barrier_type, barrier_offset, width, default_laps) = match mod_str {
+        "f1" => (
+            SurfaceType::Asphalt,
+            SurfaceType::Grass,
+            "f1_car",
+            BarrierType::Armco,
+            4.0,
+            15.0,
+            5,
+        ),
+        "kart" => (
+            SurfaceType::Asphalt,
+            SurfaceType::Asphalt,
+            "kart",
+            BarrierType::TireWall,
+            2.0,
+            10.0,
+            5,
+        ),
+        "rally" => (
+            SurfaceType::Dirt,
+            SurfaceType::Dirt,
+            "rally_car",
+            BarrierType::TireWall,
+            3.5,
+            12.0,
+            3,
+        ),
+        _ => ( // "classic" and fallback
+            SurfaceType::Asphalt,
+            SurfaceType::Grass,
+            "sports_car",
+            BarrierType::TireWall,
+            3.0,
+            14.0,
+            3,
+        ),
+    };
+
+    let waypoints = match shape {
+        TrackShape::Oval => generate_oval_waypoints(direction, road_surface, width),
+        TrackShape::HorizontalEight => generate_horizontal_eight_waypoints(direction, road_surface, width),
+    };
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, barrier_offset, barrier_type);
+
+    let num_checkpoints = match shape {
+        TrackShape::Oval => 8,
+        TrackShape::HorizontalEight => 16,
+    };
+    let checkpoints = generate_checkpoints(&spline, num_checkpoints, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+
+    let shape_name = match shape {
+        TrackShape::Oval => "Oval",
+        TrackShape::HorizontalEight => "Figure-8",
+    };
+    let dir_name = match direction {
+        RaceDirection::Right => "Right",
+        RaceDirection::Left => "Left",
+    };
+    let mod_name = match mod_str {
+        "f1" => "Formula GP",
+        "kart" => "Karting",
+        "rally" => "Rallycross",
+        _ => "Classic",
+    };
+
+    let name = format!("{} {} ({})", mod_name, shape_name, dir_name);
+    let description = format!(
+        "Prototypical {} circuit with {} layout in {} direction (Road: {}, Off-track: {}).",
+        mod_name,
+        shape_name,
+        dir_name,
+        road_surface.name(),
+        offtrack_surface.name()
+    );
+
+    Track {
+        name,
+        description,
+        category: TrackCategory::Draft,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: offtrack_surface,
+        pit_box_area: None,
+        default_laps,
+        predefined_car: Some(predefined_car.to_string()),
+        module_id: Some(mod_str.to_string()),
+        modules: vec![mod_str.to_string()],
+    }
+}
+
+/// Prototypical template for Classic Motorsport module.
+pub fn classic_template(shape: TrackShape, direction: RaceDirection) -> Track {
+    create_prototypical_track("classic", shape, direction)
+}
+
+/// Prototypical template for Formula 1 module.
+pub fn f1_template(shape: TrackShape, direction: RaceDirection) -> Track {
+    create_prototypical_track("f1", shape, direction)
+}
+
+/// Prototypical template for Karting module.
+pub fn kart_template(shape: TrackShape, direction: RaceDirection) -> Track {
+    create_prototypical_track("kart", shape, direction)
+}
+
+/// Prototypical template for Rally Cross Championship module.
+pub fn rally_template(shape: TrackShape, direction: RaceDirection) -> Track {
+    create_prototypical_track("rally", shape, direction)
+}
+
 
 

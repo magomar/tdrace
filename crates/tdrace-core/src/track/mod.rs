@@ -10,10 +10,13 @@ pub use geometry::{
     SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
 pub use presets::{
-    classic_grand_prix, dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park, dune_raid,
-    generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_walls_from_spline, hell_rx, holjes_rx,
-    kart_arena, loheac_rx, lydden_hill, oasis_rally, outlaw_pass, oval_speedway, ramp_raceway,
-    sahara_dunes,
+    classic_grand_prix, classic_template, create_prototypical_track, dirt_figure_eight,
+    dirt_oval_speedway, dirty_oval_speedway, drift_park, dune_raid, f1_template,
+    generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance,
+    generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline,
+    hell_rx, holjes_rx, kart_arena, kart_template, loheac_rx, lydden_hill, oasis_rally,
+    outlaw_pass, oval_speedway, rally_template, ramp_raceway, sahara_dunes, RaceDirection,
+    TrackShape,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 pub use validation::{validate_track, TrackValidationError, ValidationSeverity};

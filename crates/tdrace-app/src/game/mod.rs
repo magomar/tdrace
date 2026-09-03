@@ -3024,9 +3024,16 @@ impl RaceSession {
         if is_key_pressed(KeyCode::N) {
             self.audio.play_sfx(SfxType::UiSelect);
             let count = self.track_manager.draft_track_choices().len() + 1;
+            let effective_module = module_filter.id().unwrap_or(self.active_module_id);
             let name = format!("Draft Track {}", count);
-            let desc = "Experimental draft circuit layout under testing.".to_string();
-            let _ = self.track_manager.create_new_draft_track(&name, &desc);
+            let desc = format!("Experimental draft circuit for {} module.", effective_module);
+            let _ = self.track_manager.create_new_draft_track_with_template(
+                &name,
+                &desc,
+                effective_module,
+                tdrace_core::track::presets::TrackShape::Oval,
+                tdrace_core::track::presets::RaceDirection::Right,
+            );
             active_tab = TrackManagerTab::Drafts;
             selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
         }
@@ -3744,6 +3751,7 @@ impl RaceSession {
             max = Vec2::new(100.0, 100.0);
         }
         self.editor_camera.focus_bounds(min, max, sw, sh);
+        self.track = track.clone();
         let mut state = EditorState::new(track);
         state.current_file_path = file_path;
         self.editor_state = Some(state);
@@ -4212,28 +4220,20 @@ impl RaceSession {
             EditorAction::ExitToMenu => {
                 self.state = GameState::Menu;
             }
+            EditorAction::NewTrack { shape, direction, module_id } => {
+                let track = tdrace_core::track::presets::create_prototypical_track(&module_id, shape, direction);
+                self.enter_track_editor_with_path(track, None);
+            }
             EditorAction::NewFromTemplate(preset) => {
                 let track = match preset.as_str() {
                     "Oval Speedway" => tdrace_core::track::presets::oval_speedway(),
                     "Oasis Rally" => tdrace_core::track::presets::oasis_rally(),
                     "Classic Grand Prix" => tdrace_core::track::presets::classic_grand_prix(),
-                    _ => {
-                        let mut blank = tdrace_core::track::presets::classic_grand_prix();
-                        blank.name = "New Custom Circuit".to_string();
-                        blank.module_id = Some(self.active_module_id.to_string());
-                        blank.modules = vec![self.active_module_id.to_string()];
-                        blank.default_surface = match self.active_module_id {
-                            "rally" => tdrace_core::physics::surface::SurfaceType::Dirt,
-                            _ => tdrace_core::physics::surface::SurfaceType::Grass,
-                        };
-                        blank.predefined_car = match self.active_module_id {
-                            "f1" => Some("f1_car".to_string()),
-                            "kart" => Some("kart".to_string()),
-                            "rally" => Some("rally_car".to_string()),
-                            _ => Some("sports_car".to_string()),
-                        };
-                        blank
-                    }
+                    _ => tdrace_core::track::presets::create_prototypical_track(
+                        self.active_module_id,
+                        tdrace_core::track::presets::TrackShape::Oval,
+                        tdrace_core::track::presets::RaceDirection::Right,
+                    ),
                 };
                 self.enter_track_editor_with_path(track, None);
             }

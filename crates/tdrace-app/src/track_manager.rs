@@ -1226,7 +1226,25 @@ impl TrackManager {
         name: &str,
         description: &str,
     ) -> Result<String, String> {
-        let mut track = classic_grand_prix();
+        self.create_new_draft_track_with_template(
+            name,
+            description,
+            "classic",
+            tdrace_core::track::presets::TrackShape::Oval,
+            tdrace_core::track::presets::RaceDirection::Right,
+        )
+    }
+
+    /// Creates a new starter draft circuit using a prototypical template for the specified module.
+    pub fn create_new_draft_track_with_template(
+        &mut self,
+        name: &str,
+        description: &str,
+        module_id: &str,
+        shape: tdrace_core::track::presets::TrackShape,
+        direction: tdrace_core::track::presets::RaceDirection,
+    ) -> Result<String, String> {
+        let mut track = tdrace_core::track::presets::create_prototypical_track(module_id, shape, direction);
         track.name = name.to_string();
         track.description = description.to_string();
         track.category = TrackCategory::Draft;

@@ -871,4 +871,68 @@ fn test_track_manager_promotion_mask_resolution_for_promoted_track() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_create_new_draft_track_with_module_templates() {
+    use std::fs;
+    use tdrace_app::track_manager::TrackManager;
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::presets::{RaceDirection, TrackShape};
+    use tdrace_core::track::Track;
+
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_mgr_template_test_{}", std::process::id()));
+    let _ = fs::create_dir_all(&temp_dir);
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // 1. Create a rally draft track (Horizontal 8, Left)
+    let rally_path = manager
+        .create_new_draft_track_with_template(
+            "Rally Draft Stage",
+            "Loose dirt testing stage",
+            "rally",
+            TrackShape::HorizontalEight,
+            RaceDirection::Left,
+        )
+        .expect("Rally draft creation should succeed");
+
+    let rally_track = Track::load_from_file(&rally_path).expect("Load rally draft track");
+    assert_eq!(rally_track.default_surface, SurfaceType::Dirt);
+    assert_eq!(rally_track.spline.samples[0].surface, SurfaceType::Dirt);
+    assert_eq!(rally_track.predefined_car.as_deref(), Some("rally_car"));
+
+    // 2. Create a kart draft track (Oval, Right)
+    let kart_path = manager
+        .create_new_draft_track_with_template(
+            "Karting Oval Arena",
+            "Tight kart arena",
+            "kart",
+            TrackShape::Oval,
+            RaceDirection::Right,
+        )
+        .expect("Kart draft creation should succeed");
+
+    let kart_track = Track::load_from_file(&kart_path).expect("Load kart draft track");
+    assert_eq!(kart_track.default_surface, SurfaceType::Asphalt);
+    assert_eq!(kart_track.spline.samples[0].surface, SurfaceType::Asphalt);
+    assert_eq!(kart_track.predefined_car.as_deref(), Some("kart"));
+
+    // 3. Create an F1 draft track (Oval, Right)
+    let f1_path = manager
+        .create_new_draft_track_with_template(
+            "Formula Super Speedway",
+            "High speed DRS oval",
+            "f1",
+            TrackShape::Oval,
+            RaceDirection::Right,
+        )
+        .expect("F1 draft creation should succeed");
+
+    let f1_track = Track::load_from_file(&f1_path).expect("Load F1 draft track");
+    assert_eq!(f1_track.default_surface, SurfaceType::Grass);
+    assert_eq!(f1_track.spline.samples[0].surface, SurfaceType::Asphalt);
+    assert_eq!(f1_track.predefined_car.as_deref(), Some("f1_car"));
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+
 

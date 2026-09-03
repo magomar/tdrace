@@ -1900,3 +1900,62 @@ fn test_bar_control_selection_and_inline_manual_input() {
     tools.clear_bar_selection();
     assert!(!tools.is_bar_selected("placement_width"));
 }
+
+#[test]
+fn test_track_editor_new_track_action_and_templates_modal() {
+    use tdrace_app::editor::ui::{EditorAction, EditorModal};
+    use tdrace_app::game::RaceSession;
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::presets::{RaceDirection, TrackShape};
+
+    // 1. Modal default initialization per module
+    let modal_classic = EditorModal::templates_default(Some("classic"));
+    assert_eq!(
+        modal_classic,
+        EditorModal::Templates {
+            selected_shape: TrackShape::Oval,
+            selected_direction: RaceDirection::Right,
+            selected_module_idx: 0,
+        }
+    );
+
+    let modal_rally = EditorModal::templates_default(Some("rally"));
+    assert_eq!(
+        modal_rally,
+        EditorModal::Templates {
+            selected_shape: TrackShape::Oval,
+            selected_direction: RaceDirection::Right,
+            selected_module_idx: 3,
+        }
+    );
+
+    // 2. Test RaceSession handling of EditorAction::NewTrack
+    let mut session = RaceSession::new();
+
+    // Create a Kart horizontal 8 track with Left direction
+    session.handle_editor_action(EditorAction::NewTrack {
+        shape: TrackShape::HorizontalEight,
+        direction: RaceDirection::Left,
+        module_id: "kart".to_string(),
+    });
+
+    assert_eq!(session.track.default_surface, SurfaceType::Asphalt);
+    assert_eq!(session.track.spline.samples[0].surface, SurfaceType::Asphalt);
+    assert_eq!(session.track.predefined_car.as_deref(), Some("kart"));
+    let start_sample = session.track.spline.sample_at_distance(0.0);
+    assert!(start_sample.tangent.x < 0.0, "Left direction must start with negative X tangent");
+
+    // Create a Rally oval track with Right direction
+    session.handle_editor_action(EditorAction::NewTrack {
+        shape: TrackShape::Oval,
+        direction: RaceDirection::Right,
+        module_id: "rally".to_string(),
+    });
+
+    assert_eq!(session.track.default_surface, SurfaceType::Dirt);
+    assert_eq!(session.track.spline.samples[0].surface, SurfaceType::Dirt);
+    assert_eq!(session.track.predefined_car.as_deref(), Some("rally_car"));
+    let start_sample_rally = session.track.spline.sample_at_distance(0.0);
+    assert!(start_sample_rally.tangent.x > 0.0, "Right direction must start with positive X tangent");
+}
+

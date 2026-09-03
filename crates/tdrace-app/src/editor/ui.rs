@@ -8,6 +8,7 @@ use macroquad::shapes::{draw_circle, draw_circle_lines, draw_rectangle, draw_rec
 use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceLayer, SurfaceShape};
+use tdrace_core::track::presets::{RaceDirection, TrackShape};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
 use crate::editor::camera::EditorCamera;
@@ -33,7 +34,11 @@ pub enum RampPropertyModal {
 #[derive(Debug, Clone, PartialEq)]
 pub enum EditorModal {
     None,
-    Templates,
+    Templates {
+        selected_shape: TrackShape,
+        selected_direction: RaceDirection,
+        selected_module_idx: usize,
+    },
     SaveAs {
         input_name: String,
         input_filename: String,
@@ -63,6 +68,22 @@ pub enum EditorModal {
     },
 }
 
+impl EditorModal {
+    pub fn templates_default(module_id: Option<&str>) -> Self {
+        let mod_idx = match module_id {
+            Some("f1") => 1,
+            Some("kart") => 2,
+            Some("rally") => 3,
+            _ => 0,
+        };
+        Self::Templates {
+            selected_shape: TrackShape::Oval,
+            selected_direction: RaceDirection::Right,
+            selected_module_idx: mod_idx,
+        }
+    }
+}
+
 /// Actions dispatched from editor UI interactions.
 #[derive(Debug, Clone, PartialEq)]
 pub enum EditorAction {
@@ -71,6 +92,11 @@ pub enum EditorAction {
     SetSnap(GridSnapSetting),
     CycleZoom,
     NewFromTemplate(String),
+    NewTrack {
+        shape: TrackShape,
+        direction: RaceDirection,
+        module_id: String,
+    },
     SaveTrack {
         name: String,
         filename: String,
@@ -207,7 +233,7 @@ pub fn render_editor_ui(
 
     // Top action buttons
     if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(65.0), scaler.s(30.0), "NEW", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, bg_mouse_clicked) {
-        *active_modal = EditorModal::Templates;
+        *active_modal = EditorModal::templates_default(state.track.module_id.as_deref());
     }
     tb_x += scaler.s(72.0);
 
@@ -443,8 +469,22 @@ pub fn render_editor_ui(
     if is_modal_open {
         draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
         match active_modal {
-            EditorModal::Templates => {
-                if let Some(action) = render_template_modal(fonts, &scaler, sw, sh, mouse_pos, mouse_clicked) {
+            EditorModal::Templates {
+                ref mut selected_shape,
+                ref mut selected_direction,
+                ref mut selected_module_idx,
+            } => {
+                if let Some(action) = render_template_modal(
+                    fonts,
+                    &scaler,
+                    sw,
+                    sh,
+                    mouse_pos,
+                    mouse_clicked,
+                    selected_shape,
+                    selected_direction,
+                    selected_module_idx,
+                ) {
                     dispatched_action = action;
                     *active_modal = EditorModal::None;
                 }
@@ -2307,7 +2347,7 @@ fn render_inspector(
     }
 }
 
-/// Renders starter template modal overlay.
+/// Renders starter template modal overlay with Shape, Direction, and Module selection.
 fn render_template_modal(
     fonts: &Fonts,
     scaler: &UiScaler,
@@ -2315,41 +2355,196 @@ fn render_template_modal(
     sh: f32,
     mouse_pos: Vec2,
     clicked: bool,
+    selected_shape: &mut TrackShape,
+    selected_direction: &mut RaceDirection,
+    selected_module_idx: &mut usize,
 ) -> Option<EditorAction> {
-    let mw = scaler.s(520.0);
-    let mh = scaler.s(340.0);
+    let mw = scaler.s(600.0);
+    let mh = scaler.s(510.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
     scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
 
-    fonts.draw_display_centered("START NEW CIRCUIT", sw * 0.5, my + scaler.s(32.0), scaler.font_s(22.0), Palette::NEON_GOLD);
-    fonts.draw_ui_regular_centered("Select a starter layout preset or blank canvas", sw * 0.5, my + scaler.s(52.0), scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
+    // Title & Subtitle
+    fonts.draw_display_centered("START NEW CIRCUIT", sw * 0.5, my + scaler.s(28.0), scaler.font_s(22.0), Palette::NEON_GOLD);
+    fonts.draw_ui_regular_centered("Choose circuit layout, race direction, and motorsport module defaults", sw * 0.5, my + scaler.s(48.0), scaler.font_s(12.5), Palette::UI_TEXT_MUTED);
 
-    let templates = [
-        ("Blank Circuit", "Empty 500x500m grass canvas with starting waypoint loop"),
-        ("Classic Grand Prix", "Full asphalt GP layout with chicanes, sand traps, and pit lane"),
-        ("Oval Speedway", "High-speed banked superspeedway"),
-        ("Oasis Rally", "Desert dirt circuit with water hazards and sand dunes"),
+    // Close button (X) top right
+    let close_btn_w = scaler.s(28.0);
+    let close_x = mx + mw - close_btn_w - scaler.s(16.0);
+    let close_y = my + scaler.s(14.0);
+    let close_hover = mouse_pos.x >= close_x && mouse_pos.x <= close_x + close_btn_w && mouse_pos.y >= close_y && mouse_pos.y <= close_y + close_btn_w;
+    scaler.draw_glass_card(close_x, close_y, close_btn_w, close_btn_w, if close_hover { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if close_hover { Palette::RED } else { Palette::UI_CARD_BORDER }, 1.0);
+    fonts.draw_ui_bold_centered("X", close_x + close_btn_w * 0.5, close_y + scaler.s(19.0), scaler.font_s(13.0), if close_hover { Palette::RED } else { Palette::UI_TEXT_MUTED });
+    if close_hover && clicked {
+        return Some(EditorAction::None);
+    }
+
+    let mut cur_y = my + scaler.s(66.0);
+
+    // 1. CIRCUIT SHAPE
+    fonts.draw_ui_bold("1. CIRCUIT LAYOUT SHAPE", mx + scaler.s(24.0), cur_y + scaler.s(12.0), scaler.font_s(12.5), Palette::NEON_CYAN);
+    cur_y += scaler.s(18.0);
+
+    let shape_btn_w = (mw - scaler.s(58.0)) * 0.5;
+    let shape_btn_h = scaler.s(44.0);
+    let shapes = [
+        (TrackShape::Oval, "OVAL SPEEDWAY", "High-speed 2-turn banked oval"),
+        (TrackShape::HorizontalEight, "EIGHT (HORIZONTAL)", "Horizontal figure-8 with crossover"),
     ];
 
-    let mut ty = my + scaler.s(72.0);
-    for (title, desc) in templates {
-        let btn_w = mw - scaler.s(40.0);
-        let btn_h = scaler.s(50.0);
-        let bx = mx + scaler.s(20.0);
+    for (i, (s, title, desc)) in shapes.iter().enumerate() {
+        let bx = mx + scaler.s(24.0) + i as f32 * (shape_btn_w + scaler.s(10.0));
+        let is_selected = *selected_shape == *s;
+        let is_hover = mouse_pos.x >= bx && mouse_pos.x <= bx + shape_btn_w && mouse_pos.y >= cur_y && mouse_pos.y <= cur_y + shape_btn_h;
+        let bg_col = if is_selected {
+            Color::new(0.08, 0.22, 0.28, 0.95)
+        } else if is_hover {
+            Palette::UI_CARD_BG_HOVER
+        } else {
+            Palette::UI_PILL_BG
+        };
+        let border_col = if is_selected { Palette::NEON_CYAN } else if is_hover { Palette::WHITE } else { Palette::UI_CARD_BORDER };
+        scaler.draw_glass_card(bx, cur_y, shape_btn_w, shape_btn_h, bg_col, border_col, if is_selected { 1.8 } else { 1.0 });
 
-        let is_hover = mouse_pos.x >= bx && mouse_pos.x <= bx + btn_w && mouse_pos.y >= ty && mouse_pos.y <= ty + btn_h;
-        let bg_col = if is_hover { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG };
-
-        scaler.draw_glass_card(bx, ty, btn_w, btn_h, bg_col, if is_hover { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, 1.2);
-        fonts.draw_ui_bold(title, bx + scaler.s(16.0), ty + scaler.s(22.0), scaler.font_s(15.0), Palette::WHITE);
-        fonts.draw_ui_regular(desc, bx + scaler.s(16.0), ty + scaler.s(38.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(title, bx + scaler.s(14.0), cur_y + scaler.s(18.0), scaler.font_s(13.5), if is_selected { Palette::NEON_CYAN } else { Palette::WHITE });
+        fonts.draw_ui_regular(desc, bx + scaler.s(14.0), cur_y + scaler.s(34.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
 
         if is_hover && clicked {
-            return Some(EditorAction::NewFromTemplate(title.to_string()));
+            *selected_shape = *s;
         }
-        ty += scaler.s(58.0);
+    }
+    cur_y += shape_btn_h + scaler.s(14.0);
+
+    // 2. RACE DIRECTION
+    fonts.draw_ui_bold("2. RACE DIRECTION", mx + scaler.s(24.0), cur_y + scaler.s(12.0), scaler.font_s(12.5), Palette::NEON_CYAN);
+    cur_y += scaler.s(18.0);
+
+    let dir_btn_w = (mw - scaler.s(58.0)) * 0.5;
+    let dir_btn_h = scaler.s(40.0);
+    let dirs = [
+        (RaceDirection::Right, "RIGHT (FORWARD +X)", "Drives rightwards from start straight"),
+        (RaceDirection::Left, "LEFT (FORWARD -X)", "Drives leftwards from start straight"),
+    ];
+
+    for (i, (d, title, desc)) in dirs.iter().enumerate() {
+        let bx = mx + scaler.s(24.0) + i as f32 * (dir_btn_w + scaler.s(10.0));
+        let is_selected = *selected_direction == *d;
+        let is_hover = mouse_pos.x >= bx && mouse_pos.x <= bx + dir_btn_w && mouse_pos.y >= cur_y && mouse_pos.y <= cur_y + dir_btn_h;
+        let bg_col = if is_selected {
+            Color::new(0.08, 0.22, 0.28, 0.95)
+        } else if is_hover {
+            Palette::UI_CARD_BG_HOVER
+        } else {
+            Palette::UI_PILL_BG
+        };
+        let border_col = if is_selected { Palette::NEON_CYAN } else if is_hover { Palette::WHITE } else { Palette::UI_CARD_BORDER };
+        scaler.draw_glass_card(bx, cur_y, dir_btn_w, dir_btn_h, bg_col, border_col, if is_selected { 1.8 } else { 1.0 });
+
+        fonts.draw_ui_bold(title, bx + scaler.s(14.0), cur_y + scaler.s(17.0), scaler.font_s(13.0), if is_selected { Palette::NEON_CYAN } else { Palette::WHITE });
+        fonts.draw_ui_regular(desc, bx + scaler.s(14.0), cur_y + scaler.s(31.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
+
+        if is_hover && clicked {
+            *selected_direction = *d;
+        }
+    }
+    cur_y += dir_btn_h + scaler.s(14.0);
+
+    // 3. MOTORSPORT MODULE DEFAULTS
+    fonts.draw_ui_bold("3. MOTORSPORT MODULE DEFAULTS", mx + scaler.s(24.0), cur_y + scaler.s(12.0), scaler.font_s(12.5), Palette::NEON_CYAN);
+    cur_y += scaler.s(18.0);
+
+    let mod_defs: [(&str, &str, SurfaceType, SurfaceType, &str, &str, Color); 4] = [
+        ("classic", "CLASSIC", SurfaceType::Asphalt, SurfaceType::Grass, "GT Sports Coupe (RWD)", "14m track ribbon", Palette::NEON_CYAN),
+        ("f1", "FORMULA 1", SurfaceType::Asphalt, SurfaceType::Grass, "Formula 1 Car (V6 Hybrid)", "15m track ribbon with curbs", Palette::RED),
+        ("kart", "KARTING", SurfaceType::Asphalt, SurfaceType::Asphalt, "125cc Go-Kart (Direct)", "10m technical track ribbon", Palette::NEON_MAGENTA),
+        ("rally", "RALLYCROSS", SurfaceType::Dirt, SurfaceType::Dirt, "WRC Rally Car (AWD)", "12m loose dirt ribbon", Palette::NEON_GOLD),
+    ];
+
+    let chip_w = (mw - scaler.s(72.0)) / 4.0;
+    let chip_h = scaler.s(32.0);
+    for (idx, (_, label, _, _, _, _, color)) in mod_defs.iter().enumerate() {
+        let cx = mx + scaler.s(24.0) + idx as f32 * (chip_w + scaler.s(8.0));
+        let is_selected = *selected_module_idx == idx;
+        let is_hover = mouse_pos.x >= cx && mouse_pos.x <= cx + chip_w && mouse_pos.y >= cur_y && mouse_pos.y <= cur_y + chip_h;
+        let bg_col = if is_selected {
+            Color::new(color.r * 0.25, color.g * 0.25, color.b * 0.25, 0.95)
+        } else if is_hover {
+            Palette::UI_CARD_BG_HOVER
+        } else {
+            Palette::UI_PILL_BG
+        };
+        let border_col = if is_selected { *color } else if is_hover { Palette::WHITE } else { Palette::UI_CARD_BORDER };
+        scaler.draw_glass_card(cx, cur_y, chip_w, chip_h, bg_col, border_col, if is_selected { 1.8 } else { 1.0 });
+        fonts.draw_ui_bold_centered(label, cx + chip_w * 0.5, cur_y + scaler.s(20.0), scaler.font_s(11.5), if is_selected { *color } else { Palette::WHITE });
+
+        if is_hover && clicked {
+            *selected_module_idx = idx;
+        }
+    }
+    cur_y += chip_h + scaler.s(8.0);
+
+    // Selected Module Details Banner
+    let active_mod = &mod_defs[*selected_module_idx % mod_defs.len()];
+    let info_w = mw - scaler.s(48.0);
+    let info_h = scaler.s(52.0);
+    let info_x = mx + scaler.s(24.0);
+    scaler.draw_glass_card(info_x, cur_y, info_w, info_h, Color::new(0.04, 0.07, 0.11, 0.90), active_mod.6, 1.0);
+
+    let line1 = format!(
+        "Track Ribbon: {}  •  Off-Track Terrain: {}  •  Width: {}",
+        active_mod.2.name(),
+        active_mod.3.name(),
+        active_mod.5
+    );
+    let line2 = format!("Default Vehicle: {}", active_mod.4);
+    fonts.draw_ui_bold(&line1, info_x + scaler.s(16.0), cur_y + scaler.s(20.0), scaler.font_s(11.5), Palette::WHITE);
+    fonts.draw_ui_regular(&line2, info_x + scaler.s(16.0), cur_y + scaler.s(38.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
+    cur_y += info_h + scaler.s(14.0);
+
+    // 4. ACTION BUTTONS: [ CREATE CIRCUIT ] & [ CANCEL ]
+    let create_btn_w = mw - scaler.s(180.0);
+    let cancel_btn_w = scaler.s(120.0);
+    let btn_h = scaler.s(42.0);
+    let create_x = mx + scaler.s(24.0);
+    let cancel_x = create_x + create_btn_w + scaler.s(12.0);
+
+    let create_hover = mouse_pos.x >= create_x && mouse_pos.x <= create_x + create_btn_w && mouse_pos.y >= cur_y && mouse_pos.y <= cur_y + btn_h;
+    scaler.draw_glass_card(
+        create_x,
+        cur_y,
+        create_btn_w,
+        btn_h,
+        if create_hover { Palette::UI_CARD_BG_HOVER } else { Color::new(0.06, 0.20, 0.12, 0.95) },
+        if create_hover { Palette::WHITE } else { Palette::NEON_GREEN },
+        1.8,
+    );
+    let btn_label = format!("CREATE {} {} ({})", active_mod.1, selected_shape.label().to_uppercase(), selected_direction.label().to_uppercase());
+    fonts.draw_ui_bold_centered(&btn_label, create_x + create_btn_w * 0.5, cur_y + scaler.s(26.0), scaler.font_s(13.5), Palette::NEON_GREEN);
+
+    let cancel_hover = mouse_pos.x >= cancel_x && mouse_pos.x <= cancel_x + cancel_btn_w && mouse_pos.y >= cur_y && mouse_pos.y <= cur_y + btn_h;
+    scaler.draw_glass_card(
+        cancel_x,
+        cur_y,
+        cancel_btn_w,
+        btn_h,
+        if cancel_hover { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG },
+        if cancel_hover { Palette::RED } else { Palette::UI_CARD_BORDER },
+        1.0,
+    );
+    fonts.draw_ui_bold_centered("CANCEL", cancel_x + cancel_btn_w * 0.5, cur_y + scaler.s(26.0), scaler.font_s(12.5), if cancel_hover { Palette::RED } else { Palette::UI_TEXT_MUTED });
+
+    if cancel_hover && clicked {
+        return Some(EditorAction::None);
+    }
+
+    if create_hover && clicked {
+        return Some(EditorAction::NewTrack {
+            shape: *selected_shape,
+            direction: *selected_direction,
+            module_id: active_mod.0.to_string(),
+        });
     }
 
     None
@@ -3839,8 +4034,8 @@ mod tests {
         let mut modal = EditorModal::None;
         assert_eq!(modal, EditorModal::None);
 
-        modal = EditorModal::Templates;
-        assert_eq!(modal, EditorModal::Templates);
+        modal = EditorModal::templates_default(Some("classic"));
+        assert_eq!(modal, EditorModal::templates_default(Some("classic")));
 
         modal = EditorModal::SaveAs {
             input_name: "My Custom Circuit".to_string(),
