@@ -552,7 +552,7 @@ pub fn render_track_manager_screen(
             render_edit_modal(fonts, &scaler, sw, sh, name_input, desc_input, *active_field, *cursor_timer);
         }
         TrackManagerModal::ConfirmDelete { track_title, .. } => {
-            render_delete_modal(fonts, &scaler, sw, sh, track_title);
+            render_delete_modal(fonts, &scaler, sw, sh, track_title, active_tab, module_filter);
         }
         TrackManagerModal::SelectModulePromotion { track_title, cursor_idx, selected_mask, .. } => {
             render_promotion_modal(fonts, &scaler, sw, sh, track_title, *cursor_idx, *selected_mask);
@@ -656,26 +656,53 @@ fn render_delete_modal(
     sw: f32,
     sh: f32,
     track_title: &str,
+    active_tab: TrackManagerTab,
+    module_filter: ModuleFilter,
 ) {
     // Backdrop dimming
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.75));
 
-    let mw = scaler.s(460.0);
+    let mw = scaler.s(480.0);
     let mh = scaler.s(180.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
     scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::RED, 2.2);
 
+    let (title_text, confirm_msg) = match active_tab {
+        TrackManagerTab::Drafts => (
+            "DELETE DRAFT CIRCUIT".to_string(),
+            format!("Are you sure you want to permanently delete draft\n\"{}\"?", track_title),
+        ),
+        TrackManagerTab::Main => match module_filter.id() {
+            Some(mod_id) => {
+                let mod_name = match mod_id {
+                    "classic" => "Classic",
+                    "rally" => "Rally Cross",
+                    "kart" => "Karting",
+                    "f1" => "Formula 1",
+                    _ => mod_id,
+                };
+                (
+                    format!("REMOVE FROM {}", mod_name.to_uppercase()),
+                    format!("Are you sure you want to remove\n\"{}\"\nfrom the {} module?", track_title, mod_name),
+                )
+            }
+            None => (
+                "DELETE CIRCUIT (ALL MODULES)".to_string(),
+                format!("Are you sure you want to delete\n\"{}\"\nfrom all modules?", track_title),
+            ),
+        },
+    };
+
     fonts.draw_ui_bold(
-        "DELETE CUSTOM CIRCUIT",
+        &title_text,
         mx + scaler.s(20.0),
         my + scaler.s(34.0),
         scaler.font_s(18.0),
         Palette::RED,
     );
 
-    let confirm_msg = format!("Are you sure you want to permanently delete\n\"{}\"?", track_title);
     fonts.draw_ui_regular(
         &confirm_msg,
         mx + scaler.s(20.0),
@@ -685,7 +712,7 @@ fn render_delete_modal(
     );
 
     let btn_y = my + mh - scaler.s(28.0);
-    fonts.draw_ui_bold("[Enter / Y / Backspace] YES, DELETE", mx + scaler.s(20.0), btn_y, scaler.font_s(14.0), Palette::RED);
+    fonts.draw_ui_bold("[Enter / Y / Backspace] YES, REMOVE", mx + scaler.s(20.0), btn_y, scaler.font_s(14.0), Palette::RED);
     fonts.draw_ui_bold("[Esc / N] CANCEL", mx + mw - scaler.s(130.0), btn_y, scaler.font_s(14.0), Palette::NEON_CYAN);
 }
 

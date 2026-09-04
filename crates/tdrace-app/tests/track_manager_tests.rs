@@ -1071,5 +1071,80 @@ fn test_track_manager_repeated_cloning_unique_slugs() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_module_scoped_track_deletion_preserves_other_modules() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_scoped_del_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
 
+    let mut manager = TrackManager::new(&temp_dir);
 
+    // 1. Promote a track to both classic and rally
+    let track_id = "dual_discipline_gp";
+    let mut track = classic_grand_prix();
+    track.name = "Dual Discipline GP".to_string();
+    track.category = TrackCategory::Draft;
+    manager.save_custom_track(&track, Some(track_id)).expect("Save draft");
+    manager.promote_track_to_modules(track_id, &["classic", "rally"]).expect("Promote to both");
+
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == track_id));
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == track_id));
+
+    // 2. Delete track specifically from the Rally module
+    let deleted = manager.delete_track_from_module(track_id, Some("rally")).expect("Delete from rally");
+    assert!(deleted);
+
+    // 3. Must be removed from Rally, but STILL present in Classic!
+    assert!(!manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == track_id), "Must be removed from rally");
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == track_id), "Must remain in classic");
+
+    // 4. Verify classic track file is intact on disk
+    let classic_path = temp_dir.join("classic").join(format!("{}.json", track_id));
+    assert!(classic_path.exists(), "Classic file must not be deleted");
+    let rally_path = temp_dir.join("rally").join(format!("{}.json", track_id));
+    assert!(!rally_path.exists(), "Rally file must be deleted");
+
+    // 5. Test with built-in rally preset (dirt_figure_eight) promoted to classic
+    let mut gp_track = tdrace_core::track::presets::dirt_figure_eight();
+    gp_track.name = "Dirt Figure-8 Classic".to_string();
+    gp_track.category = TrackCategory::Main;
+    gp_track.module_id = Some("classic".to_string());
+    gp_track.modules = vec!["classic".to_string()];
+    let classic_dirt_path = temp_dir.join("classic").join("dirt_figure_eight.json");
+    let _ = fs::create_dir_all(temp_dir.join("classic"));
+    gp_track.save_to_file(&classic_dirt_path).expect("Save classic dirt");
+    let _ = manager.scan_custom_tracks();
+
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == "dirt_figure_eight"));
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == "dirt_figure_eight"));
+
+    // Delete dirt_figure_eight specifically from Rally
+    manager.delete_track_from_module("dirt_figure_eight", Some("rally")).expect("Delete from rally");
+
+    assert!(!manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == "dirt_figure_eight"), "dirt_figure_eight removed from rally");
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == "dirt_figure_eight"), "dirt_figure_eight must remain in classic");
+    assert!(classic_dirt_path.exists(), "Classic dirt_figure_eight file must be intact");
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_workspace_rally_deletion_preserves_classic() {
+    let tracks_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks");
+    if !tracks_dir.exists() {
+        return;
+    }
+    let manager = TrackManager::new(&tracks_dir);
+
+    let classic_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    let rally_tracks = manager.filtered_main_track_choices(ModuleFilter::Rally);
+
+    assert!(classic_tracks.iter().any(|c| c.track_id() == "figure_eight"), "figure_eight must be in classic");
+    assert!(classic_tracks.iter().any(|c| c.track_id() == "dirty_oval_speedway"), "dirty_oval_speedway must be in classic");
+    assert!(classic_tracks.iter().any(|c| c.track_id() == "dirt_figure_eight"), "dirt_figure_eight must be in classic");
+
+    assert!(!rally_tracks.iter().any(|c| c.track_id() == "dirt_figure_eight"), "dirt_figure_eight must NOT be in rally");
+    assert!(!rally_tracks.iter().any(|c| c.track_id() == "dirty_oval_speedway"), "dirty_oval_speedway must NOT be in rally");
+}

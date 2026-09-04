@@ -748,9 +748,42 @@ impl TrackManager {
             .into_iter()
             .filter(|c| {
                 let tid = c.track_id();
-                !self.deleted_presets.iter().any(|d| d == tid) && !draft_ids.contains(tid)
+                !self.is_preset_deleted_for_module(tid, module_id) && !draft_ids.contains(tid)
             })
             .collect()
+    }
+
+    /// Checks if a preset or custom circuit is marked as deleted in the target module or globally.
+    pub fn is_preset_deleted_for_module(&self, id: &str, module_id: &str) -> bool {
+        let scoped_key = format!("{}:{}", module_id, id);
+        if self.deleted_presets.iter().any(|d| d == &scoped_key) {
+            return true;
+        }
+
+        // Global un-prefixed deletion (legacy or deleted from All Modules)
+        if self.deleted_presets.iter().any(|d| d == id) {
+            return true;
+        }
+
+        if module_id == "all" {
+            let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
+            if has_scoped_deletion {
+                let active_in_any = ["classic", "f1", "rally", "kart"].iter().any(|m| {
+                    let m_scoped = format!("{}:{}", m, id);
+                    if self.deleted_presets.iter().any(|d| d == &m_scoped) {
+                        return false;
+                    }
+                    let in_custom = self.custom_tracks.iter().any(|t| {
+                        t.id == id && t.category == TrackCategory::Main && t.belongs_to_module(m)
+                    });
+                    let in_presets = Self::preset_module(id) == Some(*m);
+                    in_custom || in_presets
+                });
+                return !active_in_any;
+            }
+        }
+
+        false
     }
 
     /// Resolves a track instance by slug ID from disk files or built-in presets.
@@ -1127,7 +1160,7 @@ impl TrackManager {
             let _ = fs::remove_file(&draft_path);
         }
 
-        self.deleted_presets.retain(|d| d != id);
+        self.deleted_presets.retain(|d| d != id && !module_ids.iter().any(|m| d == &format!("{}:{}", m, id)));
         self.save_deleted_presets();
 
         let _ = self.scan_custom_tracks();
@@ -1186,7 +1219,7 @@ impl TrackManager {
             }
         }
 
-        self.deleted_presets.retain(|d| d != id);
+        self.deleted_presets.retain(|d| d != id && !d.ends_with(&format!(":{}", id)));
         self.save_deleted_presets();
 
         let _ = self.scan_custom_tracks();
@@ -1327,41 +1360,116 @@ impl TrackManager {
         self.clone_track(&choice)
     }
 
-    /// Deletes a custom or preset track file from disk and records it in deleted presets list.
-    pub fn delete_custom_track(&mut self, id: &str) -> Result<bool, String> {
+    /// Deletes a track specifically from the active module (or drafts).
+    /// If `module_id` is None, deletes the track globally across all modules.
+    pub fn delete_track_from_module(&mut self, id: &str, module_id: Option<&str>) -> Result<bool, String> {
         let mut deleted_any = false;
-        if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
-            let path_str = self.custom_tracks[pos].file_path.clone();
-            let path = PathBuf::from(&path_str);
-            if path.exists() {
-                let _ = fs::remove_file(&path);
-                deleted_any = true;
-            }
-        }
 
-        let file_name = format!("{}.json", id);
-        let candidates = [
-            self.tracks_dir.join("drafts").join(&file_name),
-            self.tracks_dir.join("classic").join(&file_name),
-            self.tracks_dir.join("f1").join(&file_name),
-            self.tracks_dir.join("rally").join(&file_name),
-            self.tracks_dir.join("kart").join(&file_name),
-            self.tracks_dir.join(&file_name),
-        ];
-        for cand in &candidates {
-            if cand.exists() {
-                let _ = fs::remove_file(cand);
-                deleted_any = true;
+        match module_id {
+            Some("drafts") => {
+                let file_name = format!("{}.json", id);
+                let draft_path = self.tracks_dir.join("drafts").join(&file_name);
+                if draft_path.exists() {
+                    let _ = fs::remove_file(&draft_path);
+                    deleted_any = true;
+                }
+                let tdtrack_path = self.tracks_dir.join("drafts").join(format!("{}.tdtrack", id));
+                if tdtrack_path.exists() {
+                    let _ = fs::remove_file(&tdtrack_path);
+                    deleted_any = true;
+                }
+                self.deleted_presets.retain(|d| d != id && d != &format!("drafts:{}", id));
+                self.save_deleted_presets();
             }
-        }
+            Some(mod_id) => {
+                let file_name = format!("{}.json", id);
+                // 1. Delete file in the target module folder only
+                let mod_path = self.tracks_dir.join(mod_id).join(&file_name);
+                if mod_path.exists() {
+                    let _ = fs::remove_file(&mod_path);
+                    deleted_any = true;
+                }
+                let mod_tdtrack = self.tracks_dir.join(mod_id).join(format!("{}.tdtrack", id));
+                if mod_tdtrack.exists() {
+                    let _ = fs::remove_file(&mod_tdtrack);
+                    deleted_any = true;
+                }
 
-        if !self.deleted_presets.iter().any(|d| d == id) {
-            self.deleted_presets.push(id.to_string());
-            self.save_deleted_presets();
+                // 2. If track is stored in a shared/root path with multiple modules, update its modules array
+                for custom in &self.custom_tracks {
+                    if custom.id == id && custom.belongs_to_module(mod_id) {
+                        let path = PathBuf::from(&custom.file_path);
+                        if path.exists() && path != mod_path && !path.starts_with(self.tracks_dir.join(mod_id)) {
+                            if let Ok(mut track) = Track::load_from_file(&path) {
+                                track.modules.retain(|m| !m.eq_ignore_ascii_case(mod_id));
+                                if track.module_id.as_deref().map(|m| m.eq_ignore_ascii_case(mod_id)).unwrap_or(false) {
+                                    track.module_id = track.modules.first().cloned();
+                                }
+                                if track.modules.is_empty() {
+                                    let _ = fs::remove_file(&path);
+                                    deleted_any = true;
+                                } else {
+                                    let _ = track.save_to_file(&path);
+                                    deleted_any = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 3. Mark preset/track deleted specifically for this module
+                let scoped_key = format!("{}:{}", mod_id, id);
+                if !self.deleted_presets.iter().any(|d| d == &scoped_key) {
+                    self.deleted_presets.push(scoped_key.clone());
+                    self.save_deleted_presets();
+                }
+
+                // If this track was previously globally deleted (un-prefixed id), remove the global deletion
+                // so other modules can retain it
+                self.deleted_presets.retain(|d| d != id);
+                self.save_deleted_presets();
+            }
+            None => {
+                // Delete across all modules
+                let file_name = format!("{}.json", id);
+                let candidates = [
+                    self.tracks_dir.join("drafts").join(&file_name),
+                    self.tracks_dir.join("classic").join(&file_name),
+                    self.tracks_dir.join("f1").join(&file_name),
+                    self.tracks_dir.join("rally").join(&file_name),
+                    self.tracks_dir.join("kart").join(&file_name),
+                    self.tracks_dir.join(&file_name),
+                ];
+                for cand in &candidates {
+                    if cand.exists() {
+                        let _ = fs::remove_file(cand);
+                        deleted_any = true;
+                    }
+                }
+
+                self.deleted_presets.retain(|d| {
+                    if let Some((_, slug)) = d.split_once(':') {
+                        slug != id
+                    } else {
+                        d != id
+                    }
+                });
+                self.deleted_presets.push(id.to_string());
+                self.save_deleted_presets();
+            }
         }
 
         let _ = self.scan_custom_tracks();
-        Ok(deleted_any || self.deleted_presets.iter().any(|d| d == id))
+        let was_deleted = deleted_any || match module_id {
+            Some(m) => self.deleted_presets.iter().any(|d| d == &format!("{}:{}", m, id) || d == id),
+            None => self.deleted_presets.iter().any(|d| d == id),
+        };
+        Ok(was_deleted)
+    }
+
+    /// Deletes a custom or preset track file from disk and records it in deleted presets list globally.
+    pub fn delete_custom_track(&mut self, id: &str) -> Result<bool, String> {
+        self.delete_track_from_module(id, None)
     }
 }
 

@@ -2850,7 +2850,11 @@ impl RaceSession {
                     || is_key_pressed(KeyCode::Delete)
                 {
                     let tid = track_id.clone();
-                    let _ = self.track_manager.delete_custom_track(&tid);
+                    let target_module = match active_tab {
+                        TrackManagerTab::Main => module_filter.id(),
+                        TrackManagerTab::Drafts => Some("drafts"),
+                    };
+                    let _ = self.track_manager.delete_track_from_module(&tid, target_module);
                     self.audio.play_sfx(SfxType::UiSelect);
                     let list_len = match active_tab {
                         TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter).len(),
