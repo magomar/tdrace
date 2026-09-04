@@ -3,10 +3,13 @@
 
 use cabinet::audio::AudioMixer;
 use cabinet::fx::{HitStop, ScreenFlash, ScreenShake};
-use cabinet::input::{DigitalInputFilter, GamepadManager};
+use cabinet::input::{DigitalInputFilter, GamepadConfig, GamepadManager};
 use cabinet::profile::ProfileManager;
 use cabinet::records::{RecordDatabase, RecordMetric};
-use cabinet::state::{CabinetContext, CabinetScreen, ScreenAction, ScreenStack, UniversalPauseModal};
+use cabinet::state::{
+    ArcadeSettingsModal, CabinetContext, CabinetScreen, ScreenAction, ScreenStack,
+    UniversalPauseModal,
+};
 use cabinet::ui::{draw_stat_bar, CabinetTheme, Fonts, Palette, UiScaler};
 use glam::Vec2;
 use macroquad::color::Color;
@@ -192,6 +195,14 @@ impl CabinetScreen for SpaceArenaGame {
             return ScreenAction::Push(Box::new(UniversalPauseModal::new("SPACE ARENA PAUSED")));
         }
 
+        // Settings modal trigger
+        if is_key_pressed(KeyCode::O) || ctx.gamepad.btn_back_pressed {
+            return ScreenAction::Push(Box::new(ArcadeSettingsModal::new(
+                &self.audio.settings,
+                &GamepadConfig::default(),
+            )));
+        }
+
         let effective_dt = self.hitstop.step(ctx.dt);
         self.shake.update(ctx.dt);
         self.flash.update(ctx.dt);
@@ -335,6 +346,14 @@ impl CabinetScreen for SpaceArenaGame {
             scaler.s(48.0),
             scaler.font_s(26.0),
             Palette::NEON_CYAN,
+        );
+
+        fonts.draw_ui_bold_centered(
+            "[ESC] PAUSE | [O] SETTINGS",
+            sw * 0.5,
+            scaler.s(72.0),
+            scaler.font_s(11.5),
+            Palette::UI_TEXT_MUTED,
         );
     }
 }

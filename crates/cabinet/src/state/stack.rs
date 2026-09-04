@@ -60,6 +60,23 @@ impl ScreenStack {
         self.screens.push(screen);
     }
 
+    /// Number of active screens on the stack.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.screens.len()
+    }
+
+    /// Whether the stack is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.screens.is_empty()
+    }
+
+    /// Name of the top-most active screen, if any.
+    pub fn active_screen_name(&self) -> Option<&str> {
+        self.screens.last().map(|s| s.name())
+    }
+
     /// Pops the top-most screen off the stack.
     pub fn pop(&mut self) -> Option<Box<dyn CabinetScreen>> {
         if self.screens.len() > 1 {

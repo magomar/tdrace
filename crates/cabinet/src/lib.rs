@@ -25,5 +25,11 @@ pub use fx::{HitStop, ScreenFlash, ScreenShake};
 pub use input::{DigitalInputConfig, DigitalInputFilter, GamepadConfig, GamepadManager, GamepadSnapshot, NavGrid2D};
 pub use profile::{ColorScheme, CountryInfo, CountryRegistry, PlayerProfile, ProfileManager};
 pub use records::{HallOfFame, RecordDatabase, RecordEntry, RecordMetric};
-pub use state::{CabinetContext, CabinetScreen, ScreenAction, ScreenStack, UniversalPauseModal};
-pub use ui::{CabinetTheme, Fonts, Palette, UiScaler};
+pub use state::{
+    ArcadeSettingsModal, CabinetContext, CabinetScreen, ScreenAction, ScreenStack,
+    UniversalPauseModal,
+};
+pub use ui::{
+    draw_dropdown, draw_slider, draw_stepper, draw_tab_bar, CabinetTheme, DropdownWidget, Fonts,
+    Palette, SliderWidget, TabBar, UiScaler,
+};
