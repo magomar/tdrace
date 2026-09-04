@@ -7,7 +7,7 @@ SHELL := /bin/bash
 
 # Extract command-line goals and pass through as arguments
 # Supports: make run -- --f1, make run f1, make run ARGS="--f1", make test-rust -- --nocapture
-TARGETS_WITH_ARGS := run run-dev play run-f1 run-rally run-kart run-classic test test-rust test-python bench bench-rust bench-python build build-release
+TARGETS_WITH_ARGS := run run-dev dev play run-f1 run-rally run-kart run-classic test test-rust test-python bench bench-rust bench-python build build-release
 ifeq ($(filter $(firstword $(MAKECMDGOALS)),$(TARGETS_WITH_ARGS)),$(firstword $(MAKECMDGOALS)))
   RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(RUN_ARGS):;@:)
@@ -27,7 +27,7 @@ PYTHON   := $(VENV_DIR)/bin/python
 MATURIN  := $(VENV_DIR)/bin/maturin
 PYTEST   := $(VENV_DIR)/bin/pytest
 
-.PHONY: help setup setup-python run run-dev play run-f1 run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean
+.PHONY: help setup setup-python run run-dev dev play run-f1 run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean
 
 help: ## Display this help screen
 	@echo -e "$(CYAN)🏎️  TDRace Make Commands$(RESET)"
@@ -74,9 +74,12 @@ run: ## Run desktop arcade game (release mode, accepts args: make run -- --f1, m
 play: ## Alias for 'make run'
 	@$(MAKE) run $(if $(EXTRA_ARGS),ARGS="$(EXTRA_ARGS)",)
 
-run-dev: ## Run desktop arcade game in debug mode (accepts args: make run-dev -- --f1, make run-dev f1)
-	@echo -e "$(YELLOW)🚀 Launching TDRace Arcade Game (Debug)...$(RESET)"
-	cargo run -p tdrace-app $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
+run-dev: ## Run desktop arcade game in debug/dev mode (accepts args: make run-dev -- --f1, make run-dev f1)
+	@echo -e "$(YELLOW)🚀 Launching TDRace Arcade Game (Debug/Dev)...$(RESET)"
+	RUST_BACKTRACE=1 cargo run -p tdrace-app $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
+
+dev: ## Run desktop arcade game in development mode (alias for 'make run-dev')
+	@$(MAKE) run-dev $(if $(EXTRA_ARGS),ARGS="$(EXTRA_ARGS)",)
 
 run-f1: ## Run Formula 1 Grand Prix module directly
 	@echo -e "$(CYAN)🏎️  Launching Formula 1 Grand Prix Module...$(RESET)"
