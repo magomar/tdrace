@@ -14,11 +14,11 @@ fn test_track_categories_initial_presets() {
 
     let manager = TrackManager::new(&temp_dir);
 
-    // 1. Initial state: 34 main presets across modules (7 Classic + 13 unique F1 + 6 unique Rally + 8 famous Kart), 0 drafts
+    // 1. Initial state: 36 main presets across modules (10 Classic + 13 unique F1 + 5 unique Rally + 8 famous Kart), 0 drafts
     let main_tracks = manager.main_track_choices();
     let draft_tracks = manager.draft_track_choices();
 
-    assert_eq!(main_tracks.len(), 34, "All 34 presets across modules should be Main tracks");
+    assert_eq!(main_tracks.len(), 36, "All 36 presets across modules should be Main tracks");
     assert_eq!(draft_tracks.len(), 0, "Initial draft tracks list should be empty");
 
     for choice in &main_tracks {
@@ -48,7 +48,7 @@ fn test_draft_creation_and_isolation_from_main_menu() {
     let main_tracks = manager.main_track_choices();
     let draft_tracks = manager.draft_track_choices();
 
-    assert_eq!(main_tracks.len(), 34, "Main menu should only contain approved circuits");
+    assert_eq!(main_tracks.len(), 36, "Main menu should only contain approved circuits");
     assert_eq!(draft_tracks.len(), 1, "Drafts list should contain the newly created draft");
 
     let draft_choice = &draft_tracks[0];
@@ -92,13 +92,13 @@ fn test_promotion_and_demotion_lifecycle() {
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save proto");
 
-    assert_eq!(manager.main_track_choices().len(), 34);
+    assert_eq!(manager.main_track_choices().len(), 36);
     assert_eq!(manager.draft_track_choices().len(), 1);
 
     // Promote to F1 Module
     manager.promote_track_to_module(track_id, "f1").expect("Must promote to F1");
 
-    assert_eq!(manager.main_track_choices().len(), 35, "Promoted track must appear in Main");
+    assert_eq!(manager.main_track_choices().len(), 37, "Promoted track must appear in Main");
     assert_eq!(manager.draft_track_choices().len(), 0, "Promoted track must be removed from Drafts");
 
     let promoted_choice = manager.main_track_choices().into_iter().find(|t| t.track_id() == track_id).unwrap();
@@ -118,7 +118,7 @@ fn test_promotion_and_demotion_lifecycle() {
     // Demote back to Draft (Under testing)
     manager.demote_track(track_id).expect("Must demote to Draft");
 
-    assert_eq!(manager.main_track_choices().len(), 34, "Demoted track must be removed from Main");
+    assert_eq!(manager.main_track_choices().len(), 36, "Demoted track must be removed from Main");
     assert_eq!(manager.draft_track_choices().len(), 1, "Demoted track must reappear in Drafts");
     assert_eq!(manager.module_custom_tracks("f1").len(), 0);
 
@@ -282,11 +282,11 @@ fn test_module_filter_filtering_and_presets_in_classic() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial state: 34 tracks across all modules (7 Classic + 13 unique F1 + 6 unique Rally + 8 famous Kart)
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::All).len(), 34);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 7);
+    // Initial state: 36 tracks across all modules (10 Classic + 13 unique F1 + 5 unique Rally + 8 famous Kart)
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::All).len(), 36);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 14);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 8);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 7);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 10);
 
     // Promote a new track to F1
@@ -302,10 +302,10 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     manager.promote_track_to_module("dune_safari", "rally").unwrap();
 
     // Verify filtered counts
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::All).len(), 36);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 7);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::All).len(), 38);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 15);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 9);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 8);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 10);
 
     // Verify filter cycle (.next())
@@ -332,35 +332,40 @@ fn test_module_subdirectories_and_file_movement() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // 1. Create a draft track -> should land in temp_dir/drafts/my_circuit.json
+    // 1. Create a draft track -> saved flat in temp_dir/my_circuit.json with Draft category
     let mut track = classic_grand_prix();
     track.name = "My Circuit".to_string();
     track.category = TrackCategory::Draft;
     let saved_path = manager.save_custom_track(&track, Some("my_circuit")).expect("Save draft");
-    let draft_file = temp_dir.join("drafts").join("my_circuit.json");
-    assert!(draft_file.exists(), "Draft file must be saved in drafts/ subdirectory");
-    assert_eq!(Path::new(&saved_path), draft_file);
+    let track_file = temp_dir.join("my_circuit.json");
+    assert!(track_file.exists(), "Track file must be saved in user tracks directory");
+    assert_eq!(Path::new(&saved_path), track_file);
 
-    // 2. Promote to F1 -> should move file to temp_dir/f1/my_circuit.json and remove from drafts/
+    // 2. Promote to F1 -> metadata updated to Main category and module 'f1'
     manager.promote_track_to_module("my_circuit", "f1").expect("Promote to F1");
-    let f1_file = temp_dir.join("f1").join("my_circuit.json");
-    assert!(f1_file.exists(), "Promoted file must exist in f1/ subdirectory");
-    assert!(!draft_file.exists(), "Old draft file must be removed after promotion");
+    let loaded = tdrace_core::track::Track::load_from_file(&track_file).expect("Load promoted");
+    assert_eq!(loaded.category, TrackCategory::Main);
+    assert_eq!(loaded.modules, vec!["f1".to_string()]);
+    assert_eq!(manager.draft_track_choices().len(), 0);
+    assert_eq!(manager.module_custom_tracks("f1").len(), 1);
 
-    // 3. Demote back to Draft -> should move file back to temp_dir/drafts/my_circuit.json
+    // 3. Demote back to Draft -> metadata updated to Draft category and empty modules
     manager.demote_track("my_circuit").expect("Demote to Draft");
-    assert!(draft_file.exists(), "Demoted file must exist back in drafts/ subdirectory");
-    assert!(!f1_file.exists(), "Old f1 file must be removed after demotion");
+    let loaded_demoted = tdrace_core::track::Track::load_from_file(&track_file).expect("Load demoted");
+    assert_eq!(loaded_demoted.category, TrackCategory::Draft);
+    assert!(loaded_demoted.modules.is_empty());
+    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.module_custom_tracks("f1").len(), 0);
 
-    // 4. Promote to Rally -> should move file to temp_dir/rally/my_circuit.json
+    // 4. Promote to Rally -> metadata updated to Rally
     manager.promote_track_to_module("my_circuit", "rally").expect("Promote to Rally");
-    let rally_file = temp_dir.join("rally").join("my_circuit.json");
-    assert!(rally_file.exists(), "Promoted file must exist in rally/ subdirectory");
-    assert!(!draft_file.exists(), "Old draft file must be removed");
+    let loaded_rally = tdrace_core::track::Track::load_from_file(&track_file).expect("Load rally");
+    assert_eq!(loaded_rally.category, TrackCategory::Main);
+    assert_eq!(loaded_rally.modules, vec!["rally".to_string()]);
 
-    // 5. Test multi-directory scanner on fresh TrackManager instance
+    // 5. Test scanner on fresh TrackManager instance
     let new_scanner = TrackManager::new(&temp_dir);
-    assert_eq!(new_scanner.main_track_choices().len(), 35); // 34 presets + 1 custom
+    assert_eq!(new_scanner.main_track_choices().len(), 37); // 36 presets + 1 custom
     assert_eq!(new_scanner.module_custom_tracks("rally").len(), 1);
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -488,9 +493,9 @@ fn test_predefined_track_demote_promote_and_delete() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial state: 7 Classic tracks, 29 total
+    // Initial state: 10 Classic tracks
     let init_classic_count = manager.filtered_main_track_choices(ModuleFilter::Classic).len();
-    assert_eq!(init_classic_count, 7);
+    assert_eq!(init_classic_count, 10);
     assert_eq!(manager.draft_track_choices().len(), 0);
 
     // 1. Demote built-in preset Classic Grand Prix (P key)
@@ -553,12 +558,12 @@ fn test_multi_module_promotion_and_distribution() {
         .promote_track_to_modules(track_id, &["rally", "f1", "classic"])
         .expect("Must promote to multiple modules");
 
-    // 3. Verify files on disk in module folders
-    assert!(!temp_dir.join("drafts").join(format!("{}.json", track_id)).exists(), "Draft file must be cleaned up");
-    assert!(temp_dir.join("rally").join(format!("{}.json", track_id)).exists(), "Rally copy must exist");
-    assert!(temp_dir.join("f1").join(format!("{}.json", track_id)).exists(), "F1 copy must exist");
-    assert!(temp_dir.join("classic").join(format!("{}.json", track_id)).exists(), "Classic copy must exist");
-    assert!(!temp_dir.join("kart").join(format!("{}.json", track_id)).exists(), "Kart copy must not exist");
+    // 3. Verify single file on disk with multi-module metadata
+    let single_track_file = temp_dir.join(format!("{}.json", track_id));
+    assert!(single_track_file.exists(), "Single track file must exist in user tracks dir");
+    let loaded = tdrace_core::track::Track::load_from_file(&single_track_file).expect("Load multi-spec");
+    assert_eq!(loaded.category, TrackCategory::Main);
+    assert_eq!(loaded.modules, vec!["rally".to_string(), "f1".to_string(), "classic".to_string()]);
 
     // 4. Verify catalog queries
     assert_eq!(manager.draft_track_choices().len(), 0, "No drafts remaining");
@@ -594,11 +599,11 @@ fn test_multi_module_promotion_and_distribution() {
     // 6. Demote track back to Drafts
     manager.demote_track(track_id).expect("Must demote multi-module track");
 
-    // 7. Verify all module copies are cleaned up and single draft restored
-    assert!(temp_dir.join("drafts").join(format!("{}.json", track_id)).exists(), "Draft file must be restored");
-    assert!(!temp_dir.join("rally").join(format!("{}.json", track_id)).exists(), "Rally copy removed");
-    assert!(!temp_dir.join("f1").join(format!("{}.json", track_id)).exists(), "F1 copy removed");
-    assert!(!temp_dir.join("classic").join(format!("{}.json", track_id)).exists(), "Classic copy removed");
+    // 7. Verify single track file updated to Draft with empty modules
+    assert!(single_track_file.exists(), "Single track file must remain on disk");
+    let loaded_demoted = tdrace_core::track::Track::load_from_file(&single_track_file).expect("Load demoted");
+    assert_eq!(loaded_demoted.category, TrackCategory::Draft);
+    assert!(loaded_demoted.modules.is_empty());
 
     assert_eq!(manager.draft_track_choices().len(), 1);
     assert_eq!(manager.module_custom_tracks("rally").len(), 0);
@@ -628,7 +633,7 @@ fn test_consistent_module_categorization_in_module_view() {
     for t in &classic_tracks {
         let tag = t.tag_for_module("classic");
         assert!(
-            tag == "CLASSIC MOTORSPORT" || tag == "FIA GP CIRCUIT" || tag == "SUPERSPEEDWAY" || tag == "TECHNICAL DRIFT" || tag == "AGILE SPRINT" || tag == "STUNT RAMPS & JUMPS" || tag == "DESERT DIRT RALLY" || tag == "NARROW MOUNTAIN PASS",
+            tag == "CLASSIC MOTORSPORT" || tag == "FIA GP CIRCUIT" || tag == "SUPERSPEEDWAY" || tag == "TECHNICAL DRIFT" || tag == "AGILE SPRINT" || tag == "STUNT RAMPS & JUMPS" || tag == "DESERT DIRT RALLY" || tag == "NARROW MOUNTAIN PASS" || tag == "RALLY CROSS",
             "Track in classic view should have valid classic tag: {}", tag
         );
     }
@@ -665,7 +670,8 @@ fn test_empty_module_tracks_resilience() {
         "zandvoort".into(), "bahrain".into(), "marina_bay".into(), "cota".into(),
         "classic_grand_prix".into(), "oval_speedway".into(), "drift_park".into(),
         "kart_arena".into(), "ramp_raceway".into(), "oasis_rally".into(), "outlaw_pass".into(),
-        "sahara".into(), "dirt_figure_eight".into(), "holjes_rx".into(), "lydden_hill".into(),
+        "dirty_oval_speedway".into(), "figure_eight".into(),
+        "sahara".into(), "sahara_dunes".into(), "dirt_figure_eight".into(), "holjes_rx".into(), "lydden_hill".into(),
         "hell_rx".into(), "loheac_rx".into(), "lonato".into(), "sarno".into(), "genk".into(), "pfi".into(),
         "zuera".into(), "le_mans_kart".into(), "portimao_kart".into(), "franciacorta".into(),
     ];
@@ -712,7 +718,7 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
     let oval_path = manager
         .save_custom_track_with_options(&oval, Some("oval_speedway"), true)
         .expect("Save oval preset");
-    assert!(oval_path.ends_with("classic/oval_speedway.json"), "Must save to classic/ subdirectory, got: {}", oval_path);
+    assert!(oval_path.ends_with("oval_speedway.json"), "Must save to oval_speedway.json, got: {}", oval_path);
 
     // 2. Edit F1 preset (Monza)
     let mut monza = F1GameModule::track_monza();
@@ -721,12 +727,12 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
     let monza_path = manager
         .save_custom_track_with_options(&monza, Some("monza"), true)
         .expect("Save monza preset");
-    assert!(monza_path.ends_with("f1/monza.json"), "Must save to f1/ subdirectory, got: {}", monza_path);
+    assert!(monza_path.ends_with("monza.json"), "Must save to monza.json, got: {}", monza_path);
 
     // 3. Verify they remain Main category and are NOT demoted to drafts
     assert_eq!(manager.draft_track_choices().len(), 0, "No drafts should exist after editing presets");
     let main_tracks = manager.main_track_choices();
-    assert_eq!(main_tracks.len(), 34, "All 34 presets must remain in main tracks list");
+    assert_eq!(main_tracks.len(), 36, "All 36 presets must remain in main tracks list");
 
     let f1_catalog = manager.module_catalog_tracks("f1");
     let monza_choice = f1_catalog.iter().find(|t| t.track_id() == "monza").expect("Monza must be in F1 catalog");
@@ -758,7 +764,7 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
     let copy_path = manager
         .save_custom_track_with_options(&monza, Some("monza_custom_copy"), false)
         .expect("Save copy");
-    assert!(copy_path.ends_with("drafts/monza_custom_copy.json"));
+    assert!(copy_path.ends_with("monza_custom_copy.json"));
     assert_eq!(manager.draft_track_choices().len(), 1);
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -788,7 +794,7 @@ fn test_re_promoting_already_promoted_track_to_different_modules() {
     // 2. Initial Promotion to Classic module
     manager.promote_track_to_modules(track_id, &["classic"]).expect("Promote to classic");
     assert_eq!(manager.draft_track_choices().len(), 0);
-    assert!(temp_dir.join("classic").join(format!("{}.json", track_id)).exists());
+    assert!(temp_dir.join(format!("{}.json", track_id)).exists());
     assert!(manager.is_track_in_module(track_id, "classic"));
     assert_eq!(manager.track_promoted_modules(track_id), vec!["classic".to_string()]);
 
@@ -797,10 +803,7 @@ fn test_re_promoting_already_promoted_track_to_different_modules() {
         .promote_track_to_modules(track_id, &["rally", "kart"])
         .expect("Re-promote to rally and kart");
 
-    assert!(!temp_dir.join("classic").join(format!("{}.json", track_id)).exists(), "Classic file must be removed");
-    assert!(temp_dir.join("rally").join(format!("{}.json", track_id)).exists(), "Rally file must exist");
-    assert!(temp_dir.join("kart").join(format!("{}.json", track_id)).exists(), "Kart file must exist");
-
+    assert!(temp_dir.join(format!("{}.json", track_id)).exists());
     assert!(!manager.is_track_in_module(track_id, "classic"));
     assert!(manager.is_track_in_module(track_id, "rally"));
     assert!(manager.is_track_in_module(track_id, "kart"));
@@ -814,10 +817,11 @@ fn test_re_promoting_already_promoted_track_to_different_modules() {
         .promote_track_to_modules(track_id, &["rally", "kart", "f1"])
         .expect("Add F1 module");
 
-    assert!(temp_dir.join("rally").join(format!("{}.json", track_id)).exists());
-    assert!(temp_dir.join("kart").join(format!("{}.json", track_id)).exists());
-    assert!(temp_dir.join("f1").join(format!("{}.json", track_id)).exists());
-    assert!(!temp_dir.join("classic").join(format!("{}.json", track_id)).exists());
+    assert!(temp_dir.join(format!("{}.json", track_id)).exists());
+    assert!(manager.is_track_in_module(track_id, "rally"));
+    assert!(manager.is_track_in_module(track_id, "kart"));
+    assert!(manager.is_track_in_module(track_id, "f1"));
+    assert!(!manager.is_track_in_module(track_id, "classic"));
 
     let promoted_mods_3 = manager.track_promoted_modules(track_id);
     assert_eq!(promoted_mods_3, vec!["rally".to_string(), "kart".to_string(), "f1".to_string()]);
@@ -829,10 +833,11 @@ fn test_re_promoting_already_promoted_track_to_different_modules() {
 
     assert_eq!(manager.draft_track_choices().len(), 1);
     assert_eq!(manager.track_promoted_modules(track_id).len(), 0);
-    assert!(temp_dir.join("drafts").join(format!("{}.json", track_id)).exists(), "Draft file must be restored");
-    assert!(!temp_dir.join("rally").join(format!("{}.json", track_id)).exists());
-    assert!(!temp_dir.join("kart").join(format!("{}.json", track_id)).exists());
-    assert!(!temp_dir.join("f1").join(format!("{}.json", track_id)).exists());
+    let draft_file = temp_dir.join(format!("{}.json", track_id));
+    assert!(draft_file.exists(), "Track file must exist");
+    let loaded_draft = tdrace_core::track::Track::load_from_file(&draft_file).expect("Load demoted");
+    assert_eq!(loaded_draft.category, TrackCategory::Draft);
+    assert!(loaded_draft.modules.is_empty());
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -941,8 +946,8 @@ fn test_track_manager_clone_preset_to_drafts() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial check: 34 main tracks, 0 drafts
-    assert_eq!(manager.main_track_choices().len(), 34);
+    // Initial check: 36 main tracks, 0 drafts
+    assert_eq!(manager.main_track_choices().len(), 36);
     assert_eq!(manager.draft_track_choices().len(), 0);
 
     // Clone Classic Grand Prix
@@ -954,10 +959,10 @@ fn test_track_manager_clone_preset_to_drafts() {
     assert!(cloned_track.module_id.is_none());
     assert!(cloned_track.modules.is_empty());
     assert!(Path::new(&saved_path).exists());
-    assert!(saved_path.contains("drafts"));
+    assert!(saved_path.ends_with(".json"));
 
-    // Verify drafts list has 1 track, main still has 34
-    assert_eq!(manager.main_track_choices().len(), 34);
+    // Verify drafts list has 1 track, main still has 36
+    assert_eq!(manager.main_track_choices().len(), 36);
     let drafts = manager.draft_track_choices();
     assert_eq!(drafts.len(), 1);
     assert_eq!(drafts[0].title(), "Classic Grand Prix (clone)");
@@ -1100,32 +1105,31 @@ fn test_module_scoped_track_deletion_preserves_other_modules() {
     assert!(!manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == track_id), "Must be removed from rally");
     assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == track_id), "Must remain in classic");
 
-    // 4. Verify classic track file is intact on disk
-    let classic_path = temp_dir.join("classic").join(format!("{}.json", track_id));
-    assert!(classic_path.exists(), "Classic file must not be deleted");
-    let rally_path = temp_dir.join("rally").join(format!("{}.json", track_id));
-    assert!(!rally_path.exists(), "Rally file must be deleted");
+    // 4. Verify track file is intact on disk with updated metadata
+    let track_path = temp_dir.join(format!("{}.json", track_id));
+    assert!(track_path.exists(), "Track file must remain on disk");
+    let loaded_track = tdrace_core::track::Track::load_from_file(&track_path).expect("Load track");
+    assert_eq!(loaded_track.modules, vec!["classic".to_string()]);
 
-    // 5. Test with built-in rally preset (dirt_figure_eight) promoted to classic
-    let mut gp_track = tdrace_core::track::presets::dirt_figure_eight();
-    gp_track.name = "Dirt Figure-8 Classic".to_string();
-    gp_track.category = TrackCategory::Main;
-    gp_track.module_id = Some("classic".to_string());
-    gp_track.modules = vec!["classic".to_string()];
-    let classic_dirt_path = temp_dir.join("classic").join("dirt_figure_eight.json");
-    let _ = fs::create_dir_all(temp_dir.join("classic"));
-    gp_track.save_to_file(&classic_dirt_path).expect("Save classic dirt");
-    let _ = manager.scan_custom_tracks();
+    // 5. Test with a custom circuit promoted to multiple modules
+    let mut custom_fig8 = tdrace_core::track::presets::dirt_figure_eight();
+    custom_fig8.name = "Dirt Figure-8 Custom".to_string();
+    custom_fig8.category = TrackCategory::Draft;
+    let _ = manager.save_custom_track(&custom_fig8, Some("my_custom_fig8")).expect("Save");
+    manager.promote_track_to_modules("my_custom_fig8", &["classic", "rally"]).expect("Promote");
 
-    assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == "dirt_figure_eight"));
-    assert!(manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == "dirt_figure_eight"));
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == "my_custom_fig8"));
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == "my_custom_fig8"));
 
-    // Delete dirt_figure_eight specifically from Rally
-    manager.delete_track_from_module("dirt_figure_eight", Some("rally")).expect("Delete from rally");
+    // Delete my_custom_fig8 specifically from Rally
+    manager.delete_track_from_module("my_custom_fig8", Some("rally")).expect("Delete from rally");
 
-    assert!(!manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == "dirt_figure_eight"), "dirt_figure_eight removed from rally");
-    assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == "dirt_figure_eight"), "dirt_figure_eight must remain in classic");
-    assert!(classic_dirt_path.exists(), "Classic dirt_figure_eight file must be intact");
+    assert!(!manager.filtered_main_track_choices(ModuleFilter::Rally).iter().any(|c| c.track_id() == "my_custom_fig8"), "my_custom_fig8 removed from rally");
+    assert!(manager.filtered_main_track_choices(ModuleFilter::Classic).iter().any(|c| c.track_id() == "my_custom_fig8"), "my_custom_fig8 must remain in classic");
+    let fig8_file = temp_dir.join("my_custom_fig8.json");
+    assert!(fig8_file.exists(), "my_custom_fig8 file must be intact");
+    let loaded_fig8 = tdrace_core::track::Track::load_from_file(&fig8_file).expect("Load");
+    assert_eq!(loaded_fig8.modules, vec!["classic".to_string()]);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

@@ -139,7 +139,7 @@ impl TrackChoice {
 
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
 pub fn resolve_track_for_menu(choice: &TrackChoice) -> Option<tdrace_core::track::Track> {
-    resolve_track_for_menu_with_dir(choice, "tracks")
+    resolve_track_for_menu_with_dir(choice, crate::storage::resolve_user_tracks_dir())
 }
 
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering given a tracks directory.
@@ -188,6 +188,8 @@ pub fn resolve_track_for_menu_with_dir(
         TrackChoice::OasisRally => Some(tdrace_core::track::presets::oasis_rally()),
         TrackChoice::OutlawPass => Some(tdrace_core::track::presets::outlaw_pass()),
         TrackChoice::Custom { id, .. } => match id.as_str() {
+            "dirty_oval_speedway" | "dirty_oval" => Some(tdrace_core::track::presets::dirty_oval_speedway()),
+            "figure_eight" | "figure_8" => Some(tdrace_core::track::presets::figure_eight()),
             "monza" => Some(crate::module::f1::F1GameModule::track_monza()),
             "spa" => Some(crate::module::f1::F1GameModule::track_spa()),
             "silverstone" => Some(crate::module::f1::F1GameModule::track_silverstone()),

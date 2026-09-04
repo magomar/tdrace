@@ -2,8 +2,7 @@ use macroquad::color::Color;
 use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    dirt_figure_eight, dirty_oval_speedway, hell_rx, holjes_rx, loheac_rx, lydden_hill, oasis_rally, outlaw_pass,
-    sahara_dunes,
+    hell_rx, holjes_rx, loheac_rx, lydden_hill, oasis_rally, outlaw_pass, sahara_dunes,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -147,24 +146,6 @@ impl GameModule for RallyGameModule {
 
     fn tracks(&self) -> Vec<TrackDefinition> {
         vec![
-            TrackDefinition {
-                id: "dirty_oval_speedway",
-                title: "Dirty Oval Speedway",
-                tag: "BANKED DIRT SPEEDWAY",
-                description: "High-sliding dirt superspeedway oval with 18-degree banked curves and loose gravel cushion.",
-                category: "Dirt Speedway",
-                default_laps: 5,
-                generator: dirty_oval_speedway,
-            },
-            TrackDefinition {
-                id: "dirt_figure_eight",
-                title: "Dirt Figure-8 Arena",
-                tag: "FIGURE-8 CROSSOVER",
-                description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.",
-                category: "Figure-8 Arena",
-                default_laps: 4,
-                generator: dirt_figure_eight,
-            },
             TrackDefinition {
                 id: "holjes_rx",
                 title: "Höljes Motorstadion",

@@ -14,11 +14,9 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 9, "Rally module should have 9 tracks (6 new + 3 original)");
+    assert_eq!(tracks.len(), 7, "Rally module should have 7 tracks (5 RX/Dunes + 2 classic rally)");
 
     let expected_ids = [
-        "dirty_oval_speedway",
-        "dirt_figure_eight",
         "holjes_rx",
         "lydden_hill",
         "hell_rx",
@@ -205,17 +203,16 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
     let tm = TrackManager::default();
     let rally_catalog = tm.module_catalog_tracks("rally");
 
-    assert!(rally_catalog.len() >= 8);
+    assert_eq!(rally_catalog.len(), 7);
 
     let rally_ids = [
-        "dirt_figure_eight",
         "holjes_rx",
         "lydden_hill",
         "hell_rx",
         "loheac_rx",
         "oasis_rally",
         "outlaw_pass",
-        "sahara",
+        "sahara_dunes",
     ];
 
     for id in &rally_ids {

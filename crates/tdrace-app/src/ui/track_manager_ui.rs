@@ -93,7 +93,7 @@ pub fn render_track_manager_screen(
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
 
     // Header Title
-    let title = "CIRCUIT HUB & TRACK MANAGER";
+    let title = "MY CIRCUITS & TRACK LIBRARY";
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
@@ -104,7 +104,7 @@ pub fn render_track_manager_screen(
         scaler.s(2.0),
     );
 
-    let subtitle = "Tested & Approved Circuits (Main Menu) vs Experimental Drafts Workshop";
+    let subtitle = "Tested & Approved Circuits (Main Menu) vs Experimental Workshop Drafts";
     fonts.draw_ui_regular_centered(
         subtitle,
         sw * 0.5,
@@ -143,7 +143,7 @@ pub fn render_track_manager_screen(
     };
     scaler.draw_glass_card(box_x + scaler.s(12.0), tab_y, tab_w, tab_h, tab1_bg, tab1_border, if is_main_active { 2.0 } else { 1.0 });
 
-    let tab1_label = format!("PROMOTED TRACKS (Approved) [{}] [Tab / 1]", main_count);
+    let tab1_label = format!("READY TO RACE [{}] [Tab / 1]", main_count);
     fonts.draw_ui_bold(
         &tab1_label,
         box_x + scaler.s(24.0),
@@ -166,7 +166,7 @@ pub fn render_track_manager_screen(
     };
     scaler.draw_glass_card(box_x + scaler.s(20.0) + tab_w, tab_y, tab_w, tab_h, tab2_bg, tab2_border, if is_draft_active { 2.0 } else { 1.0 });
 
-    let tab2_label = format!("DRAFTS & TESTING [{}] [Tab / 2]", draft_count);
+    let tab2_label = format!("DRAFTS & WORKSHOP [{}] [Tab / 2]", draft_count);
     fonts.draw_ui_bold(
         &tab2_label,
         box_x + scaler.s(32.0) + tab_w,
@@ -509,12 +509,12 @@ pub fn render_track_manager_screen(
 
         let expl_text = if is_main_active {
             if selected_track.is_custom() {
-                "This track is an OFFICIAL PRESET. Press [P] to configure modules or [Ctrl+P] to demote to Drafts."
+                "Approved circuit. Press [P] to assign disciplines or [Ctrl+P] to move to Drafts."
             } else {
-                "Built-in official preset circuit. Press [P] to configure modules or [Ctrl+P] to demote to Drafts."
+                "Built-in official preset circuit. Press [P] to assign disciplines or [Ctrl+P] to demote to Drafts."
             }
         } else {
-            "This track is in DRAFT mode. Test and refine it here, then press [P] to promote to Official Preset."
+            "Workshop draft circuit. Test and refine it here, then press [P] to assign disciplines."
         };
         fonts.draw_ui_regular(
             expl_text,
@@ -528,9 +528,9 @@ pub fn render_track_manager_screen(
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
     let action_str = if is_main_active {
-        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [C] CLONE | [P] PROMOTE | [Ctrl+P] DEMOTE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] DISCIPLINE | [E] STUDIO | [C] CLONE | [P] ASSIGN DISCIPLINES | [Ctrl+P] DEMOTE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     } else {
-        "[Enter] RACE | [Tab] PROMOTED | [E] TRACK EDITOR | [C] CLONE | [P] PROMOTE TO MODULE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] READY TO RACE | [E] STUDIO | [C] CLONE | [P] ASSIGN DISCIPLINES | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     };
     fonts.draw_ui_bold_centered(
         action_str,

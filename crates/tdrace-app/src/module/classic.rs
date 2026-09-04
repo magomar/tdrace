@@ -1,7 +1,8 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway, ramp_raceway,
+    classic_grand_prix, dirt_figure_eight, dirty_oval_speedway, drift_park, figure_eight,
+    kart_arena, oasis_rally, outlaw_pass, oval_speedway, ramp_raceway,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -143,6 +144,33 @@ impl GameModule for ClassicGameModule {
                 category: "Oval Superspeedway",
                 default_laps: 5,
                 generator: oval_speedway,
+            },
+            TrackDefinition {
+                id: "dirty_oval_speedway",
+                title: "Dirty Oval Speedway",
+                tag: "DIRT SPEEDWAY",
+                description: "Banked dirt oval speedway with loose gravel cushion and high-sliding turns.",
+                category: "Dirt Oval",
+                default_laps: 5,
+                generator: dirty_oval_speedway,
+            },
+            TrackDefinition {
+                id: "figure_eight",
+                title: "Figure 8",
+                tag: "ASPHALT CROSSOVER",
+                description: "High-speed asphalt figure-8 arena with at-grade flat crossover and concrete safety walls.",
+                category: "Figure-8 Arena",
+                default_laps: 4,
+                generator: figure_eight,
+            },
+            TrackDefinition {
+                id: "dirt_figure_eight",
+                title: "Dirt Figure-8 Arena",
+                tag: "DIRT CROSSOVER",
+                description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.",
+                category: "Figure-8 Arena",
+                default_laps: 4,
+                generator: dirt_figure_eight,
             },
             TrackDefinition {
                 id: "drift_park",

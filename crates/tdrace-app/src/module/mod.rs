@@ -278,7 +278,7 @@ mod tests {
         assert!(!rally.title().is_empty());
         assert!(!rally.vehicles().is_empty());
         assert!(rally.vehicles().len() >= 2);
-        assert_eq!(rally.tracks().len(), 9);
+        assert_eq!(rally.tracks().len(), 7);
         assert_eq!(rally.drivers().len(), 7);
         assert_eq!(rally.default_vehicle_id(), "wrc_turbo_rally");
         assert_eq!(rally.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
@@ -332,7 +332,7 @@ mod tests {
         assert_eq!(classic.id(), "classic");
         assert!(!classic.title().is_empty());
         assert_eq!(classic.vehicles().len(), 4);
-        assert_eq!(classic.tracks().len(), 7);
+        assert_eq!(classic.tracks().len(), 10);
         assert!(!classic.drivers().is_empty());
         assert_eq!(classic.default_vehicle_id(), "sports_car");
         assert_eq!(classic.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);

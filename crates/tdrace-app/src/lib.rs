@@ -3,6 +3,7 @@ pub mod audio;
 pub mod camera;
 pub mod config;
 pub mod db;
+pub mod dev_tools;
 pub mod editor;
 pub mod fx;
 pub mod game;
@@ -11,9 +12,12 @@ pub mod module;
 pub mod profile;
 pub mod render;
 pub mod replay;
+pub mod storage;
 pub mod tournament;
 pub mod track_manager;
 pub mod ui;
+
+pub use storage::{resolve_user_data_dir, resolve_user_tracks_dir};
 
 pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverStats};
 pub use audio::{AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType};

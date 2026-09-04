@@ -1228,6 +1228,25 @@ pub fn dirt_figure_eight() -> Track {
     }
 }
 
+/// Preset: Figure 8 Arena (Classic Asphalt)
+/// High-speed classic asphalt figure-8 arena with at-grade flat crossover, smooth concrete barriers, and sweeping carousels.
+pub fn figure_eight() -> Track {
+    let mut track = dirt_figure_eight();
+    track.name = "Figure 8".to_string();
+    track.description = "High-speed asphalt figure-8 arena featuring an at-grade flat crossover, sweeping carousels & concrete safety walls.".to_string();
+    track.default_surface = SurfaceType::Grass;
+    for wp in &mut track.spline.waypoints {
+        wp.surface = Some(SurfaceType::Asphalt);
+        wp.wall_type = Some(BarrierType::Concrete);
+    }
+    track.module_id = Some("classic".to_string());
+    track.modules = vec!["classic".to_string()];
+    track.predefined_car = Some("sports_car".to_string());
+    track.rebuild_geometry(5.0, BarrierType::Concrete);
+    track
+}
+
+
 /// Preset 9: Höljes Motorstadion (World RX Sweden)
 /// The holy grail of Rallycross ("The Magic Weekend") in Värmland, Sweden.
 /// Features high-speed asphalt start, the iconic Höljes jump crest, sweeping banked Velodrome, and mixed gravel infield.

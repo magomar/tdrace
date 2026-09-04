@@ -11,7 +11,7 @@ pub use geometry::{
 };
 pub use presets::{
     classic_grand_prix, classic_template, create_prototypical_track, dirt_figure_eight,
-    dirt_oval_speedway, dirty_oval_speedway, drift_park, dune_raid, f1_template,
+    dirt_oval_speedway, dirty_oval_speedway, drift_park, dune_raid, f1_template, figure_eight,
     generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance,
     generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline,
     hell_rx, holjes_rx, kart_arena, kart_template, loheac_rx, lydden_hill, oasis_rally,
