@@ -36,6 +36,15 @@ pub struct PersonalBestNotification {
     pub duration: f32,
 }
 
+/// Active visibility aid toggle notification payload for HUD display.
+#[derive(Debug, Clone, PartialEq)]
+pub struct VisibilityToast {
+    pub text: String,
+    pub is_on: bool,
+    pub timer: f32,
+    pub duration: f32,
+}
+
 /// Renders the complete modern arcade racing HUD with responsive scaling and vector typography.
 #[allow(clippy::too_many_arguments)]
 pub fn render_hud(
@@ -52,6 +61,7 @@ pub fn render_hud(
     countdown_timer: Option<f32>,
     gamepad_connected: bool,
     pb_notification: Option<&PersonalBestNotification>,
+    visibility_toast: Option<&VisibilityToast>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -88,6 +98,16 @@ pub fn render_hud(
             scaler.safe_pad_y + scaler.s(90.0),
             pb,
         );
+    }
+
+    // 2c. Player Car Visibility Aid Toggle Notification Toast (Under Lap Timer or PB Toast)
+    if let Some(vt) = visibility_toast {
+        let toast_y = if pb_notification.is_some() {
+            scaler.safe_pad_y + scaler.s(155.0)
+        } else {
+            scaler.safe_pad_y + scaler.s(90.0)
+        };
+        render_visibility_toast(fonts, &scaler, sw * 0.5, toast_y, vt);
     }
 
     // 3. Mini-Map Radar (Top Right)
@@ -514,7 +534,7 @@ fn render_speedometer(
 
 /// Small keyboard and gamepad controls tooltip in lower left corner.
 fn render_controls_guide(fonts: &Fonts, scaler: &UiScaler, x: f32, y: f32) {
-    let guide = "Q/Up: Gas | A/Down: Brake | O/P: Steer | Space: Handbrake | H: Assists | C: Controls | Tab: Cam | Esc: Pause";
+    let guide = "Q/Up: Gas | A/Down: Brake | O/P: Steer | Space: Handbrake | 1-4: Car Aids | Tab: Cam | Esc: Pause";
     fonts.draw_ui_regular(
         guide,
         x,
@@ -679,3 +699,71 @@ fn render_personal_best_toast(
         );
     }
 }
+
+/// Draws the visibility aid toggle notification banner.
+fn render_visibility_toast(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    center_x: f32,
+    y: f32,
+    toast: &VisibilityToast,
+) {
+    if toast.timer <= 0.0 || toast.duration <= 0.0 {
+        return;
+    }
+
+    let elapsed = toast.duration - toast.timer;
+    let fade_in = (elapsed / 0.15).clamp(0.0, 1.0);
+    let fade_out = (toast.timer / 0.25).clamp(0.0, 1.0);
+    let alpha = fade_in.min(fade_out);
+    if alpha <= 0.01 {
+        return;
+    }
+
+    let card_w = scaler.s(320.0);
+    let card_h = scaler.s(38.0);
+    let x = center_x - card_w * 0.5;
+
+    let bg_color = Color::new(0.05, 0.07, 0.12, 0.92 * alpha);
+    let border_color = if toast.is_on {
+        Color::new(Palette::NEON_CYAN.r, Palette::NEON_CYAN.g, Palette::NEON_CYAN.b, 0.90 * alpha)
+    } else {
+        Color::new(0.40, 0.45, 0.50, 0.65 * alpha)
+    };
+    scaler.draw_glass_card(x, y, card_w, card_h, bg_color, border_color, 1.5);
+
+    let text_col = if toast.is_on {
+        Color::new(1.0, 1.0, 1.0, alpha)
+    } else {
+        Color::new(0.70, 0.75, 0.80, alpha)
+    };
+
+    fonts.draw_ui_bold(
+        &toast.text,
+        x + scaler.s(16.0),
+        y + scaler.s(25.0),
+        scaler.font_s(14.0),
+        text_col,
+    );
+
+    // Pill badge for ON / OFF
+    let badge_w = scaler.s(48.0);
+    let badge_h = scaler.s(22.0);
+    let badge_x = x + card_w - badge_w - scaler.s(10.0);
+    let badge_y = y + scaler.s(8.0);
+    let (badge_bg, badge_str, badge_text_col) = if toast.is_on {
+        (Color::new(0.10, 0.45, 0.40, 0.85 * alpha), "ON", Palette::NEON_CYAN)
+    } else {
+        (Color::new(0.20, 0.22, 0.26, 0.85 * alpha), "OFF", Palette::UI_TEXT_MUTED)
+    };
+    draw_rectangle(badge_x, badge_y, badge_w, badge_h, badge_bg);
+    draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, 1.0, border_color);
+    fonts.draw_ui_bold(
+        badge_str,
+        badge_x + scaler.s(13.0),
+        badge_y + scaler.s(15.5),
+        scaler.font_s(12.0),
+        badge_text_col,
+    );
+}
+

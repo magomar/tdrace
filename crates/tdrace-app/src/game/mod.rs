@@ -89,8 +89,10 @@ use crate::editor::{
 };
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
-    render_elevated_barriers_and_obstacles, render_elevated_track,
+    compute_adaptive_alpha, render_elevated_barriers_and_obstacles, render_elevated_track,
     render_ground_barriers_and_obstacles, render_ground_track,
+    render_player_ground_aura, render_player_overhead_chevron, render_player_roof_beacon,
+    PlayerVisibilityOptions,
 };
 use crate::replay::{ReplayPlayer, ReplayRecorder};
 use crate::tournament::{ChampionshipSession, PointSystem, RoundDriverResult};
@@ -98,7 +100,7 @@ use crate::track_manager::TrackManager;
 use crate::ui::driver_card::render_driver_cards_screen;
 use crate::ui::font::Fonts;
 use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
-use crate::ui::hud::{format_lap_time, render_hud, PersonalBestNotification};
+use crate::ui::hud::{format_lap_time, render_hud, PersonalBestNotification, VisibilityToast};
 use crate::ui::menu::{
     render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
     render_module_select_menu, render_pause_menu, render_results_screen, render_track_select_menu,
@@ -254,6 +256,8 @@ pub struct RaceSession {
     pub input: InputController,
     pub touch: TouchController,
     pub fonts: Fonts,
+    pub visibility_options: PlayerVisibilityOptions,
+    pub visibility_toast: Option<VisibilityToast>,
 
     // Ghost vehicle recording and playback (Time Attack)
     pub ghost_recorder: GhostRecorder,
@@ -473,6 +477,8 @@ impl RaceSession {
             input,
             touch: TouchController::new(),
             fonts: Fonts::load_embedded(),
+            visibility_options: PlayerVisibilityOptions::default(),
+            visibility_toast: None,
 
             ghost_recorder: GhostRecorder::new(),
             replay_recorder: None,
@@ -1284,6 +1290,82 @@ impl RaceSession {
                 | GameState::Finished
         );
         if is_gameplay_state {
+            // [1] Toggle Overhead Chevron Indicator
+            if is_key_pressed(KeyCode::Key1) {
+                self.visibility_options.overhead_chevron = !self.visibility_options.overhead_chevron;
+                self.audio.play_sfx(SfxType::UiMove);
+                let state_str = if self.visibility_options.overhead_chevron { "ON" } else { "OFF" };
+                let col = if self.visibility_options.overhead_chevron { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                if let Some(pos) = self.cars.first().map(|c| c.state.position) {
+                    self.fx.drift_popups.spawn_text(pos, &format!("[1] CHEVRON: {}", state_str), col);
+                }
+                self.visibility_toast = Some(VisibilityToast {
+                    text: format!("[1] OVERHEAD CHEVRON: {}", state_str),
+                    is_on: self.visibility_options.overhead_chevron,
+                    timer: 1.8,
+                    duration: 1.8,
+                });
+            }
+
+            // [2] Toggle Player Ground Aura / Underglow Disc
+            if is_key_pressed(KeyCode::Key2) {
+                self.visibility_options.ground_aura = !self.visibility_options.ground_aura;
+                self.audio.play_sfx(SfxType::UiMove);
+                let state_str = if self.visibility_options.ground_aura { "ON" } else { "OFF" };
+                let col = if self.visibility_options.ground_aura { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                if let Some(pos) = self.cars.first().map(|c| c.state.position) {
+                    self.fx.drift_popups.spawn_text(pos, &format!("[2] GROUND AURA: {}", state_str), col);
+                }
+                self.visibility_toast = Some(VisibilityToast {
+                    text: format!("[2] GROUND AURA: {}", state_str),
+                    is_on: self.visibility_options.ground_aura,
+                    timer: 1.8,
+                    duration: 1.8,
+                });
+            }
+
+            // [3] Toggle Context-Aware Adaptive Visibility
+            if is_key_pressed(KeyCode::Key3) {
+                self.visibility_options.adaptive_visibility = !self.visibility_options.adaptive_visibility;
+                self.audio.play_sfx(SfxType::UiMove);
+                let state_str = if self.visibility_options.adaptive_visibility { "ON" } else { "OFF" };
+                let col = if self.visibility_options.adaptive_visibility { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                if let Some(pos) = self.cars.first().map(|c| c.state.position) {
+                    self.fx.drift_popups.spawn_text(pos, &format!("[3] ADAPTIVE: {}", state_str), col);
+                }
+                self.visibility_toast = Some(VisibilityToast {
+                    text: format!("[3] ADAPTIVE SCALING: {}", state_str),
+                    is_on: self.visibility_options.adaptive_visibility,
+                    timer: 1.8,
+                    duration: 1.8,
+                });
+            }
+
+            // [4] Toggle High-Visibility Roof Beacon
+            if is_key_pressed(KeyCode::Key4) {
+                self.visibility_options.roof_beacon = !self.visibility_options.roof_beacon;
+                self.audio.play_sfx(SfxType::UiMove);
+                let state_str = if self.visibility_options.roof_beacon { "ON" } else { "OFF" };
+                let col = if self.visibility_options.roof_beacon { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                if let Some(pos) = self.cars.first().map(|c| c.state.position) {
+                    self.fx.drift_popups.spawn_text(pos, &format!("[4] ROOF BEACON: {}", state_str), col);
+                }
+                self.visibility_toast = Some(VisibilityToast {
+                    text: format!("[4] ROOF BEACON: {}", state_str),
+                    is_on: self.visibility_options.roof_beacon,
+                    timer: 1.8,
+                    duration: 1.8,
+                });
+            }
+
+            // Update visibility toast timer
+            if let Some(toast) = &mut self.visibility_toast {
+                toast.timer -= frame_dt;
+                if toast.timer <= 0.0 {
+                    self.visibility_toast = None;
+                }
+            }
+
             let mut zoom_dir = 0.0f32;
             if is_key_down(KeyCode::Equal) || is_key_down(KeyCode::KpAdd) {
                 zoom_dir += 1.0;
@@ -4431,6 +4513,21 @@ impl RaceSession {
         });
 
         // 4. Ground-Level Vehicles
+        let player_alpha = self.cars.first().map(|pc| {
+            compute_adaptive_alpha(
+                self.visibility_options.adaptive_visibility,
+                self.camera.current_zoom,
+                pc.state.speed,
+                self.session_time,
+            )
+        }).unwrap_or(1.0);
+
+        if self.visibility_options.ground_aura && ground_cars.contains(&0) {
+            if let Some(player_car) = self.cars.first() {
+                let scheme = self.color_schemes.first().unwrap_or(&self.active_profile.color_scheme);
+                render_player_ground_aura(player_car.state.position, self.camera.current_zoom, scheme, player_alpha);
+            }
+        }
         for &i in &ground_cars {
             let car = &self.cars[i];
             let scheme = &self.color_schemes[i];
@@ -4459,6 +4556,12 @@ impl RaceSession {
         render_elevated_barriers_and_obstacles(&self.track);
 
         // 8. Elevated Vehicles (drawn on top of the bridge deck)
+        if self.visibility_options.ground_aura && elevated_cars.contains(&0) {
+            if let Some(player_car) = self.cars.first() {
+                let scheme = self.color_schemes.first().unwrap_or(&self.active_profile.color_scheme);
+                render_player_ground_aura(player_car.state.position, self.camera.current_zoom, scheme, player_alpha);
+            }
+        }
         for &i in &elevated_cars {
             let car = &self.cars[i];
             let scheme = &self.color_schemes[i];
@@ -4470,7 +4573,33 @@ impl RaceSession {
         // 9. Airborne Particles (Smoke, Dirt roost, Sparks, Drift text)
         self.fx.render_airborne_fx();
 
-        // 7. Debug Overlays (F1: LIDAR, F2: Checkpoints, F3: OBBs, F4: AI Lines)
+        // 10. Player Car Visibility Aids (Overhead Chevron, Roof Beacon)
+        if let Some(player_car) = self.cars.first() {
+            let scheme = self.color_schemes.first().unwrap_or(&self.active_profile.color_scheme);
+            if self.visibility_options.roof_beacon {
+                render_player_roof_beacon(
+                    player_car.state.position,
+                    player_car.forward_vector(),
+                    player_car.total_elevation(),
+                    self.camera.current_zoom,
+                    self.session_time,
+                    scheme,
+                    player_alpha,
+                );
+            }
+            if self.visibility_options.overhead_chevron {
+                render_player_overhead_chevron(
+                    player_car.state.position,
+                    player_car.total_elevation(),
+                    self.camera.current_zoom,
+                    self.session_time,
+                    scheme,
+                    player_alpha,
+                );
+            }
+        }
+
+        // 11. Debug Overlays (F1: LIDAR, F2: Checkpoints, F3: OBBs, F4: AI Lines)
         if let Some(player_car) = self.cars.first() {
             let player_tracker = &self.trackers[0];
             self.input.render_world_debug(
@@ -4509,6 +4638,7 @@ impl RaceSession {
                 countdown,
                 self.input.gamepad.snapshot.is_connected,
                 self.pb_notification.as_ref(),
+                self.visibility_toast.as_ref(),
             );
 
             // F5: Telemetry Panel
