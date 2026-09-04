@@ -76,7 +76,7 @@ play: ## Alias for 'make run'
 
 run-dev: ## Run desktop arcade game in debug/dev mode (accepts args: make run-dev -- --f1, make run-dev f1)
 	@echo -e "$(YELLOW)🚀 Launching TDRace Arcade Game (Debug/Dev)...$(RESET)"
-	RUST_BACKTRACE=1 cargo run -p tdrace-app $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
+	TDRACE_DEV=1 RUST_BACKTRACE=1 cargo run -p tdrace-app $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
 
 dev: ## Run desktop arcade game in development mode (alias for 'make run-dev')
 	@$(MAKE) run-dev $(if $(EXTRA_ARGS),ARGS="$(EXTRA_ARGS)",)

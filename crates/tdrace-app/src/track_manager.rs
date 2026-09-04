@@ -381,7 +381,9 @@ impl TrackManager {
                     .collect();
                 for custom in self.module_custom_tracks("f1") {
                     if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                        list[pos] = custom;
+                        if crate::storage::is_dev_mode() {
+                            list[pos] = custom;
+                        }
                     } else {
                         list.push(custom);
                     }
@@ -397,7 +399,9 @@ impl TrackManager {
                     .collect();
                 for custom in self.module_custom_tracks("rally") {
                     if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                        list[pos] = custom;
+                        if crate::storage::is_dev_mode() {
+                            list[pos] = custom;
+                        }
                     } else {
                         list.push(custom);
                     }
@@ -413,7 +417,9 @@ impl TrackManager {
                     .collect();
                 for custom in self.module_custom_tracks("kart") {
                     if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                        list[pos] = custom;
+                        if crate::storage::is_dev_mode() {
+                            list[pos] = custom;
+                        }
                     } else {
                         list.push(custom);
                     }
@@ -429,7 +435,9 @@ impl TrackManager {
                     .collect();
                 for custom in self.module_custom_tracks("classic") {
                     if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                        list[pos] = custom;
+                        if crate::storage::is_dev_mode() {
+                            list[pos] = custom;
+                        }
                     } else {
                         list.push(custom);
                     }
@@ -476,7 +484,9 @@ impl TrackManager {
                             path: custom.file_path.clone(),
                         };
                         if let Some(pos) = list.iter().position(|c| c.track_id() == custom.id) {
-                            list[pos] = custom_choice;
+                            if crate::storage::is_dev_mode() {
+                                list[pos] = custom_choice;
+                            }
                         } else {
                             list.push(custom_choice);
                         }
@@ -551,8 +561,31 @@ impl TrackManager {
         self.load_track(&choice)
     }
 
+    /// Loads the canonical procedural version of an official preset track.
+    pub fn load_procedural_preset(&self, choice: &TrackChoice) -> Result<Track, String> {
+        TrackChoice::resolve_procedural_preset(choice)
+            .ok_or_else(|| format!("Not an official procedural preset: {}", choice.track_id()))
+    }
+
     /// Loads a `Track` from a `TrackChoice`.
     pub fn load_track(&self, choice: &TrackChoice) -> Result<Track, String> {
+        // In normal user mode, official presets are strictly immutable and always load
+        // directly from their canonical procedural generators.
+        if choice.is_official_preset() {
+            if !crate::storage::is_dev_mode() {
+                return self.load_procedural_preset(choice);
+            } else if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                let slug = choice.track_id();
+                let mod_id = Self::preset_module(slug).unwrap_or("classic");
+                let git_file = git_tracks_dir.join(mod_id).join(format!("{}.json", slug));
+                if git_file.exists() {
+                    if let Ok(t) = Track::load_from_file(&git_file) {
+                        return Ok(t);
+                    }
+                }
+            }
+        }
+
         match choice {
             TrackChoice::ClassicGrandPrix => {
                 let p = self.track_path_for_slug("classic_grand_prix");
@@ -742,8 +775,30 @@ impl TrackManager {
             Self::sanitize_slug(&track_to_save.name)
         };
 
+        // Official presets are strictly immutable for end-users.
+        // In dev mode, they are saved directly into the repository's git-tracked tracks/<module>/ directory.
+        if Self::is_preset_slug(&base_slug) {
+            if !crate::storage::is_dev_mode() {
+                return Err(format!(
+                    "'{}' is an official preset and cannot be modified directly. Please clone it to My Circuits / Drafts.",
+                    base_slug
+                ));
+            } else if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                let mod_id = Self::preset_module(&base_slug).unwrap_or("classic");
+                let git_dir = git_tracks_dir.join(mod_id);
+                let _ = fs::create_dir_all(&git_dir);
+                let git_file = git_dir.join(format!("{}.json", base_slug));
+                track_to_save.category = TrackCategory::Main;
+                track_to_save.module_id = Some(mod_id.to_string());
+                track_to_save.modules = vec![mod_id.to_string()];
+                track_to_save
+                    .save_to_file(&git_file)
+                    .map_err(|e| format!("Failed to save git-tracked preset: {}", e))?;
+                return Ok(git_file.to_string_lossy().to_string());
+            }
+        }
+
         // If file already exists and was Main category, keep its category and module when overwriting.
-        // If track is a known preset or Main track with module being overwritten, preserve Main category and module.
         // Otherwise, newly created custom tracks land in Drafts by default.
         let existing_path = self.track_path_for_slug(&base_slug);
         if overwrite && existing_path.exists() {

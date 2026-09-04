@@ -700,8 +700,6 @@ fn test_empty_module_tracks_resilience() {
 #[test]
 fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
     use tdrace_core::track::presets::oval_speedway;
-    use tdrace_app::module::f1::F1GameModule;
-    use tdrace_app::ui::menu::resolve_track_for_menu_with_dir;
 
     let temp_dir = std::env::temp_dir().join(format!(
         "tdrace_test_preset_persistence_{}",
@@ -711,61 +709,36 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // 1. Edit Classic preset (Oval Speedway)
+    // 1. In normal user mode, official presets cannot be overwritten directly
     let mut oval = oval_speedway();
     oval.name = "Oval Speedway (Modified)".to_string();
     oval.description = "Customized banked oval.".to_string();
-    let oval_path = manager
+
+    let err_oval = manager
         .save_custom_track_with_options(&oval, Some("oval_speedway"), true)
-        .expect("Save oval preset");
-    assert!(oval_path.ends_with("oval_speedway.json"), "Must save to oval_speedway.json, got: {}", oval_path);
+        .expect_err("Normal user mode must reject overwriting official preset");
+    assert!(err_oval.contains("is an official preset and cannot be modified directly"));
 
-    // 2. Edit F1 preset (Monza)
-    let mut monza = F1GameModule::track_monza();
-    monza.name = "Monza Modified GP".to_string();
-    monza.description = "Edited temple of speed.".to_string();
-    let monza_path = manager
-        .save_custom_track_with_options(&monza, Some("monza"), true)
-        .expect("Save monza preset");
-    assert!(monza_path.ends_with("monza.json"), "Must save to monza.json, got: {}", monza_path);
-
-    // 3. Verify they remain Main category and are NOT demoted to drafts
-    assert_eq!(manager.draft_track_choices().len(), 0, "No drafts should exist after editing presets");
-    let main_tracks = manager.main_track_choices();
-    assert_eq!(main_tracks.len(), 36, "All 36 presets must remain in main tracks list");
-
-    let f1_catalog = manager.module_catalog_tracks("f1");
-    let monza_choice = f1_catalog.iter().find(|t| t.track_id() == "monza").expect("Monza must be in F1 catalog");
-    assert_eq!(monza_choice.title(), "Monza Modified GP");
-
-    let classic_catalog = manager.module_catalog_tracks("classic");
-    let oval_choice = classic_catalog.iter().find(|t| t.track_id() == "oval_speedway").expect("Oval must be in Classic catalog");
-    assert_eq!(oval_choice.title(), "Oval Speedway (Modified)");
-
-    // 4. Verify loading loads the edited version from disk
+    // Official presets remain untouched in the catalog
     let loaded_oval = manager.load_track(&TrackChoice::OvalSpeedway).unwrap();
-    assert_eq!(loaded_oval.name, "Oval Speedway (Modified)");
-    assert_eq!(loaded_oval.category, TrackCategory::Main);
-    assert_eq!(loaded_oval.module_id, Some("classic".to_string()));
+    assert_eq!(loaded_oval.name, "Oval Speedway");
 
-    let loaded_monza = manager.load_track_by_slug("monza").unwrap();
-    assert_eq!(loaded_monza.name, "Monza Modified GP");
-    assert_eq!(loaded_monza.category, TrackCategory::Main);
-    assert_eq!(loaded_monza.module_id, Some("f1".to_string()));
-
-    // 5. Verify resolve_track_for_menu
-    let menu_oval = resolve_track_for_menu_with_dir(&TrackChoice::OvalSpeedway, &temp_dir).unwrap();
-    assert_eq!(menu_oval.name, "Oval Speedway (Modified)");
-
-    let menu_monza = resolve_track_for_menu_with_dir(monza_choice, &temp_dir).unwrap();
-    assert_eq!(menu_monza.name, "Monza Modified GP");
-
-    // 6. Verify Save as Copy lands in drafts
-    let copy_path = manager
-        .save_custom_track_with_options(&monza, Some("monza_custom_copy"), false)
-        .expect("Save copy");
-    assert!(copy_path.ends_with("monza_custom_copy.json"));
+    // 2. Cloning an official preset creates a copy in Drafts
+    let (cloned_oval, copy_path) = manager
+        .clone_track(&TrackChoice::OvalSpeedway)
+        .expect("Clone preset to drafts");
+    assert!(copy_path.contains("oval_speedway_clone"));
+    assert_eq!(cloned_oval.category, TrackCategory::Draft);
     assert_eq!(manager.draft_track_choices().len(), 1);
+
+    // 3. In Developer Mode (TDRACE_DEV=1), official presets can be modified directly
+    std::env::set_var(tdrace_app::storage::ENV_DEV_MODE, "1");
+    assert!(tdrace_app::storage::is_dev_mode());
+
+    let dev_save = manager.save_custom_track_with_options(&oval, Some("oval_speedway"), true);
+    assert!(dev_save.is_ok(), "Dev mode must allow saving preset");
+
+    std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -1151,4 +1124,51 @@ fn test_workspace_rally_deletion_preserves_classic() {
 
     assert!(!rally_tracks.iter().any(|c| c.track_id() == "dirt_figure_eight"), "dirt_figure_eight must NOT be in rally");
     assert!(!rally_tracks.iter().any(|c| c.track_id() == "dirty_oval_speedway"), "dirty_oval_speedway must NOT be in rally");
+}
+
+#[test]
+fn test_export_canonical_presets_to_git_repo() {
+    use tdrace_app::module::{
+        classic::ClassicGameModule, f1::F1GameModule, kart::KartGameModule, rally::RallyGameModule,
+        GameModule,
+    };
+    use tdrace_core::track::TrackCategory;
+
+    let repo_tracks_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks");
+    if !repo_tracks_dir.exists() {
+        return;
+    }
+
+    let modules: Vec<Box<dyn GameModule>> = vec![
+        Box::new(ClassicGameModule::new()),
+        Box::new(F1GameModule::new()),
+        Box::new(RallyGameModule::new()),
+        Box::new(KartGameModule::new()),
+    ];
+
+    let mut total_exported = 0;
+    for module in modules {
+        let mod_id = module.id();
+        let target_dir = repo_tracks_dir.join(mod_id);
+        let _ = fs::create_dir_all(&target_dir);
+
+        for track_def in module.tracks() {
+            let mut track = (track_def.generator)();
+            track.category = TrackCategory::Main;
+            track.module_id = Some(mod_id.to_string());
+            if !track.modules.contains(&mod_id.to_string()) {
+                track.modules.push(mod_id.to_string());
+            }
+            let file_path = target_dir.join(format!("{}.json", track_def.id));
+            track.save_to_file(&file_path).expect("Failed to export canonical preset");
+
+            // Verify load
+            let loaded = tdrace_core::track::Track::load_from_file(&file_path)
+                .expect("Failed to load exported canonical preset");
+            assert_eq!(loaded.name, track.name);
+            assert_eq!(loaded.category, TrackCategory::Main);
+            total_exported += 1;
+        }
+    }
+    assert!(total_exported >= 41, "Must export all 41 preset track definitions across modules");
 }

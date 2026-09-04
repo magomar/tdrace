@@ -24165,6 +24165,7 @@
   "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
-    "rally"
+    "rally",
+    "classic"
   ]
 }

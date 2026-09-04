@@ -7,6 +7,39 @@ pub const ENV_USER_DATA_DIR: &str = "TDRACE_USER_DATA_DIR";
 /// Environment variable to override the user circuits/tracks directory.
 pub const ENV_USER_TRACKS_DIR: &str = "TDRACE_USER_TRACKS_DIR";
 
+/// Environment variable indicating developer mode execution.
+pub const ENV_DEV_MODE: &str = "TDRACE_DEV";
+
+/// Checks whether developer mode is active.
+///
+/// Returns `true` if:
+/// 1. `TDRACE_DEV` environment variable is set to "1" or "true" (case-insensitive)
+/// 2. Any CLI argument equals `--dev` or `-d`
+pub fn is_dev_mode() -> bool {
+    if let Ok(val) = std::env::var(ENV_DEV_MODE) {
+        if val == "1" || val.eq_ignore_ascii_case("true") {
+            return true;
+        }
+    }
+    std::env::args().any(|arg| arg == "--dev" || arg == "-d")
+}
+
+/// Resolves the repository's git-tracked `tracks/` directory when running in dev mode.
+/// Checks current working directory (`tracks`), parent directory, or relative paths.
+pub fn resolve_git_tracks_dir() -> Option<PathBuf> {
+    let candidates = [
+        PathBuf::from("tracks"),
+        PathBuf::from("../tracks"),
+        PathBuf::from("../../tracks"),
+    ];
+    for c in &candidates {
+        if c.is_dir() {
+            return c.canonicalize().ok().or_else(|| Some(c.clone()));
+        }
+    }
+    None
+}
+
 /// Resolves the user-specific storage root directory for local game data, profiles, and tracks.
 ///
 /// Priority order:
@@ -118,5 +151,20 @@ mod tests {
 
         std::env::remove_var(ENV_USER_TRACKS_DIR);
         let _ = fs::remove_dir_all(&temp);
+    }
+
+    #[test]
+    fn test_is_dev_mode_detection() {
+        std::env::remove_var(ENV_DEV_MODE);
+        // Defaults to false when env var is not set and no --dev arg
+        assert!(!is_dev_mode());
+
+        std::env::set_var(ENV_DEV_MODE, "1");
+        assert!(is_dev_mode());
+
+        std::env::set_var(ENV_DEV_MODE, "true");
+        assert!(is_dev_mode());
+
+        std::env::remove_var(ENV_DEV_MODE);
     }
 }

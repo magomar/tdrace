@@ -23988,7 +23988,7 @@
   },
   "default_laps": 3,
   "predefined_car": "sports_car",
-  "module_id": "classic",
+  "module_id": "f1",
   "modules": [
     "classic",
     "f1"

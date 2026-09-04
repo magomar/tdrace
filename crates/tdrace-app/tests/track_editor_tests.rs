@@ -790,15 +790,23 @@ fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
     let custom_saved_track = Track::load_from_file(&custom_filename_path).expect("Load custom filename file");
     assert_eq!(custom_saved_track.name, "Updated Circuit");
 
-    // 7. Verify preset overwrite and disk loading
-    let preset_path = manager
+    // 7. Verify preset immutability in normal user mode
+    let err = manager
         .save_custom_track_with_options(&editor_state.track, Some("classic_grand_prix"), true)
-        .expect("Save preset to disk must succeed");
-    assert!(preset_path.ends_with("classic_grand_prix.json"));
+        .expect_err("Saving directly to an official preset in normal mode must fail");
+    assert!(err.contains("is an official preset and cannot be modified directly"));
+
     let loaded_preset_choice = manager
         .load_track(&TrackChoice::ClassicGrandPrix)
-        .expect("Load preset must load from disk file when present");
-    assert_eq!(loaded_preset_choice.name, "Updated Circuit");
+        .expect("Load preset must load canonical version in normal user mode");
+    assert_eq!(loaded_preset_choice.name, "Classic Grand Prix");
+
+    // 8. In dev mode, developer can save to git-tracked preset
+    std::env::set_var(tdrace_app::storage::ENV_DEV_MODE, "1");
+    assert!(tdrace_app::storage::is_dev_mode());
+    let dev_save_result = manager.save_custom_track_with_options(&editor_state.track, Some("classic_grand_prix"), true);
+    assert!(dev_save_result.is_ok());
+    std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }

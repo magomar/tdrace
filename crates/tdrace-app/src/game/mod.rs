@@ -2692,6 +2692,20 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiSelect);
             if self.menu_track_idx < available_tracks.len() {
                 let chosen = available_tracks[self.menu_track_idx].clone();
+                if chosen.is_official_preset() {
+                    self.state = GameState::TrackManager {
+                        active_tab: TrackManagerTab::Main,
+                        module_filter: ModuleFilter::for_module(self.active_module_id),
+                        selected_idx: self.menu_track_idx,
+                        modal: TrackManagerModal::CloneBeforeEdit {
+                            track_choice: chosen.clone(),
+                            track_title: chosen.title().to_string(),
+                            is_dev_mode: crate::storage::is_dev_mode(),
+                            dev_choice: 0,
+                        },
+                    };
+                    return;
+                }
                 let file_path = match &chosen {
                     TrackChoice::Custom { path, .. } => {
                         let candidate = self.track_manager.track_path_for_slug(chosen.track_id());
@@ -2703,10 +2717,7 @@ impl RaceSession {
                             Some(candidate.to_string_lossy().to_string())
                         }
                     }
-                    preset => {
-                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
-                        Some(candidate.to_string_lossy().to_string())
-                    }
+                    _ => None,
                 };
                 let track = self.load_track_for_session(&chosen);
                 self.enter_track_editor_with_path(track, file_path);
@@ -2998,6 +3009,94 @@ impl RaceSession {
                 };
                 return;
             }
+            TrackManagerModal::CloneBeforeEdit {
+                ref track_choice,
+                ref track_title,
+                is_dev_mode,
+                ref mut dev_choice,
+            } => {
+                if is_dev_mode {
+                    if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::Key1) {
+                        *dev_choice = 0;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                    if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::Key2) {
+                        *dev_choice = 1;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                }
+
+                if is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Space)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if is_dev_mode && *dev_choice == 0 {
+                        // Developer mode: Overwrite Git-Tracked Preset directly
+                        let track = self
+                            .track_manager
+                            .load_track(track_choice)
+                            .unwrap_or_else(|_| classic_grand_prix());
+                        let file_path = if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                            let mod_id = TrackManager::preset_module(track_choice.track_id()).unwrap_or("classic");
+                            Some(git_tracks_dir.join(mod_id).join(format!("{}.json", track_choice.track_id())).to_string_lossy().to_string())
+                        } else {
+                            None
+                        };
+                        self.track_choice = track_choice.clone();
+                        self.track = track.clone();
+                        self.enter_track_editor_with_path(track, file_path);
+                        return;
+                    } else {
+                        // Clone to Drafts (safe sandbox)
+                        if let Ok((cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
+                            let file_stem = std::path::Path::new(&file_path)
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .unwrap_or("cloned_track")
+                                .to_string();
+                            self.track_choice = TrackChoice::Custom {
+                                id: file_stem,
+                                title: cloned_track.name.clone(),
+                                description: cloned_track.description.clone(),
+                                path: file_path.clone(),
+                            };
+                            self.track = cloned_track.clone();
+                            self.enter_track_editor_with_path(cloned_track, Some(file_path));
+                            return;
+                        }
+                    }
+                }
+
+                if is_key_pressed(KeyCode::Escape)
+                    || self.input.gamepad.snapshot.btn_back_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                self.state = GameState::TrackManager {
+                    active_tab,
+                    module_filter,
+                    selected_idx,
+                    modal: TrackManagerModal::CloneBeforeEdit {
+                        track_choice: track_choice.clone(),
+                        track_title: track_title.clone(),
+                        is_dev_mode,
+                        dev_choice: *dev_choice,
+                    },
+                };
+                return;
+            }
             TrackManagerModal::None => {}
         }
 
@@ -3106,6 +3205,22 @@ impl RaceSession {
         if is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_x_pressed {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
+                if track_choice.is_official_preset() {
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::CloneBeforeEdit {
+                            track_choice: track_choice.clone(),
+                            track_title: track_choice.title().to_string(),
+                            is_dev_mode: crate::storage::is_dev_mode(),
+                            dev_choice: 0,
+                        },
+                    };
+                    return;
+                }
+
+                // If user custom track, open directly in Track Editor
                 self.track_choice = track_choice.clone();
                 let file_path = match track_choice {
                     TrackChoice::Custom { path, .. } => {
@@ -3118,10 +3233,7 @@ impl RaceSession {
                             Some(candidate.to_string_lossy().to_string())
                         }
                     }
-                    preset => {
-                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
-                        Some(candidate.to_string_lossy().to_string())
-                    }
+                    _ => None,
                 };
                 let track = self
                     .track_manager

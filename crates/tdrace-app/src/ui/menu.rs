@@ -135,6 +135,31 @@ impl TrackChoice {
     pub fn is_custom(&self) -> bool {
         matches!(self, Self::Custom { .. })
     }
+
+    /// Returns true if this track choice represents an official built-in preset (from core or a game module).
+    pub fn is_official_preset(&self) -> bool {
+        match self {
+            Self::ClassicGrandPrix
+            | Self::OvalSpeedway
+            | Self::DriftPark
+            | Self::KartArena
+            | Self::RampRaceway
+            | Self::OasisRally
+            | Self::OutlawPass => true,
+            Self::Custom { id, path, .. } => {
+                crate::track_manager::TrackManager::is_preset_slug(id)
+                    || path.starts_with("f1/")
+                    || path.starts_with("rally/")
+                    || path.starts_with("kart/")
+                    || path.starts_with("classic/")
+            }
+        }
+    }
+
+    /// Returns true if this track choice represents a user-created custom or cloned circuit.
+    pub fn is_user_custom(&self) -> bool {
+        !self.is_official_preset()
+    }
 }
 
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
@@ -148,6 +173,12 @@ pub fn resolve_track_for_menu_with_dir(
     tracks_dir: impl AsRef<std::path::Path>,
 ) -> Option<tdrace_core::track::Track> {
     let dir = tracks_dir.as_ref();
+
+    // If this is an official preset and we are NOT in dev mode, skip disk candidate overrides
+    // and load strictly from official procedural generators.
+    if choice.is_official_preset() && !crate::storage::is_dev_mode() {
+        return TrackChoice::resolve_procedural_preset(choice);
+    }
 
     // 1. If custom choice and path directly exists on disk, load it
     if let TrackChoice::Custom { path, .. } = choice {
@@ -179,6 +210,11 @@ pub fn resolve_track_for_menu_with_dir(
     }
 
     // 3. Fallback to procedural preset definitions
+    TrackChoice::resolve_procedural_preset(choice)
+}
+
+impl TrackChoice {
+    pub fn resolve_procedural_preset(choice: &TrackChoice) -> Option<tdrace_core::track::Track> {
     match choice {
         TrackChoice::ClassicGrandPrix => Some(tdrace_core::track::presets::classic_grand_prix()),
         TrackChoice::OvalSpeedway => Some(tdrace_core::track::presets::oval_speedway()),
@@ -220,6 +256,7 @@ pub fn resolve_track_for_menu_with_dir(
             _ => None,
         },
     }
+}
 }
 
 /// Available vehicle model options.

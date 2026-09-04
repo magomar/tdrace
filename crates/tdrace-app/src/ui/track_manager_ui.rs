@@ -36,6 +36,12 @@ pub enum TrackManagerModal {
         cursor_idx: usize,
         selected_mask: [bool; 4],
     },
+    CloneBeforeEdit {
+        track_choice: TrackChoice,
+        track_title: String,
+        is_dev_mode: bool,
+        dev_choice: usize,
+    },
 }
 
 /// Available motorsport modules for circuit promotion.
@@ -368,30 +374,46 @@ pub fn render_track_manager_screen(
         );
         d_y += scaler.s(16.0);
 
+        // Origin Status Badge
+        let is_preset = selected_track.is_official_preset();
+        let (origin_str, origin_col) = if is_preset {
+            ("ORIGIN: OFFICIAL PRESET (IMMUTABLE)", Palette::NEON_CYAN)
+        } else if active_tab == TrackManagerTab::Drafts {
+            ("ORIGIN: LOCAL DRAFT CIRCUIT", Palette::NEON_GOLD)
+        } else {
+            ("ORIGIN: USER CUSTOM CIRCUIT", Color::new(0.35, 0.90, 0.45, 1.0))
+        };
+        fonts.draw_ui_bold(
+            origin_str,
+            pad_x,
+            d_y,
+            scaler.font_s(11.0),
+            origin_col,
+        );
+        d_y += scaler.s(15.0);
+
         // File Path
-        let file_path_str = match selected_track {
-            TrackChoice::Custom { path, .. } => {
-                if let Ok(cwd) = std::env::current_dir() {
-                    let cwd_str = cwd.to_string_lossy();
-                    if path.starts_with(cwd_str.as_ref()) {
-                        path.strip_prefix(cwd_str.as_ref())
-                            .unwrap_or(path)
-                            .trim_start_matches('/')
-                            .to_string()
+        let file_path_str = if is_preset {
+            let mod_id = TrackManager::preset_module(selected_track.track_id()).unwrap_or("classic");
+            format!("tracks/{}/{}.json (Git-Tracked)", mod_id, selected_track.track_id())
+        } else {
+            match selected_track {
+                TrackChoice::Custom { path, .. } => {
+                    if let Ok(cwd) = std::env::current_dir() {
+                        let cwd_str = cwd.to_string_lossy();
+                        if path.starts_with(cwd_str.as_ref()) {
+                            path.strip_prefix(cwd_str.as_ref())
+                                .unwrap_or(path)
+                                .trim_start_matches('/')
+                                .to_string()
+                        } else {
+                            path.clone()
+                        }
                     } else {
                         path.clone()
                     }
-                } else {
-                    path.clone()
                 }
-            }
-            preset => {
-                let candidate = track_manager.track_path_for_slug(preset.track_id());
-                if candidate.exists() {
-                    format!("tracks/{}.json", preset.track_id())
-                } else {
-                    format!("Built-in Asset ({}.json)", preset.track_id())
-                }
+                _ => format!("{}.json", selected_track.track_id()),
             }
         };
 
@@ -556,6 +578,9 @@ pub fn render_track_manager_screen(
         }
         TrackManagerModal::SelectModulePromotion { track_title, cursor_idx, selected_mask, .. } => {
             render_promotion_modal(fonts, &scaler, sw, sh, track_title, *cursor_idx, *selected_mask);
+        }
+        TrackManagerModal::CloneBeforeEdit { track_title, is_dev_mode, dev_choice, .. } => {
+            render_clone_before_edit_modal(fonts, &scaler, sw, sh, track_title, *is_dev_mode, *dev_choice);
         }
         TrackManagerModal::None => {}
     }
@@ -851,11 +876,13 @@ fn resolve_track_module_badge(
 ) -> (String, Color) {
     if active_tab == TrackManagerTab::Drafts {
         return if is_dossier {
-            ("DRAFT / TESTING (Hidden from Menu)".to_string(), Palette::NEON_GOLD)
+            ("WORKSHOP DRAFT (Local Circuit)".to_string(), Palette::NEON_GOLD)
         } else {
-            ("TESTING DRAFT".to_string(), Palette::NEON_GOLD)
+            ("WORKSHOP DRAFT".to_string(), Palette::NEON_GOLD)
         };
     }
+
+    let is_preset = track_choice.is_official_preset();
 
     // 1. If currently viewing a specific module (e.g. Classic, Rally, Kart, F1),
     // ALL promoted tracks in that module are categorized as belonging to that module.
@@ -887,45 +914,199 @@ fn resolve_track_module_badge(
             } else {
                 "classic"
             }
+        } else if let Some(preset_mod) = TrackManager::preset_module(track_choice.track_id()) {
+            preset_mod
         } else {
-            match track_choice.track_id() {
-                "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" => "f1",
-                "sahara" => "rally",
-                "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" => "kart",
-                _ => match track_choice {
-                    TrackChoice::Custom { path, .. } => {
-                        if path.contains("/rally/") || path.starts_with("rally/") {
-                            "rally"
-                        } else if path.contains("/f1/") || path.starts_with("f1/") {
-                            "f1"
-                        } else if path.contains("/kart/") || path.starts_with("kart/") {
-                            "kart"
-                        } else {
-                            "classic"
-                        }
+            match track_choice {
+                TrackChoice::Custom { path, .. } => {
+                    if path.contains("/rally/") || path.starts_with("rally/") {
+                        "rally"
+                    } else if path.contains("/f1/") || path.starts_with("f1/") {
+                        "f1"
+                    } else if path.contains("/kart/") || path.starts_with("kart/") {
+                        "kart"
+                    } else {
+                        "classic"
                     }
-                    _ => "classic",
-                },
+                }
+                _ => "classic",
             }
         }
     };
 
-    match mod_id {
-        "f1" => (
-            if is_dossier { "OFFICIAL PRESET • FORMULA 1".to_string() } else { "OFFICIAL PRESET • F1".to_string() },
-            Palette::RED,
-        ),
-        "rally" => (
-            if is_dossier { "OFFICIAL PRESET • RALLY CROSS".to_string() } else { "OFFICIAL PRESET • RALLY".to_string() },
-            Palette::NEON_GOLD,
-        ),
-        "kart" => (
-            if is_dossier { "OFFICIAL PRESET • KARTING".to_string() } else { "OFFICIAL PRESET • KART".to_string() },
-            Palette::NEON_MAGENTA,
-        ),
-        _ => (
-            "OFFICIAL PRESET • CLASSIC".to_string(),
+    if is_preset {
+        match mod_id {
+            "f1" => (
+                if is_dossier { "OFFICIAL PRESET • FORMULA 1".to_string() } else { "OFFICIAL PRESET • F1".to_string() },
+                Palette::RED,
+            ),
+            "rally" => (
+                if is_dossier { "OFFICIAL PRESET • RALLY CROSS".to_string() } else { "OFFICIAL PRESET • RALLY".to_string() },
+                Palette::NEON_GOLD,
+            ),
+            "kart" => (
+                if is_dossier { "OFFICIAL PRESET • KARTING".to_string() } else { "OFFICIAL PRESET • KART".to_string() },
+                Palette::NEON_MAGENTA,
+            ),
+            _ => (
+                if is_dossier { "OFFICIAL PRESET • CLASSIC ARCADE".to_string() } else { "OFFICIAL PRESET • CLASSIC".to_string() },
+                Palette::NEON_CYAN,
+            ),
+        }
+    } else {
+        let green = Color::new(0.35, 0.90, 0.45, 1.0);
+        match mod_id {
+            "f1" => (
+                if is_dossier { "CUSTOM CIRCUIT • FORMULA 1".to_string() } else { "CUSTOM CIRCUIT • F1".to_string() },
+                green,
+            ),
+            "rally" => (
+                if is_dossier { "CUSTOM CIRCUIT • RALLY CROSS".to_string() } else { "CUSTOM CIRCUIT • RALLY".to_string() },
+                green,
+            ),
+            "kart" => (
+                if is_dossier { "CUSTOM CIRCUIT • KARTING".to_string() } else { "CUSTOM CIRCUIT • KART".to_string() },
+                green,
+            ),
+            _ => (
+                if is_dossier { "CUSTOM CIRCUIT • CLASSIC ARCADE".to_string() } else { "CUSTOM CIRCUIT • CLASSIC".to_string() },
+                green,
+            ),
+        }
+    }
+}
+
+fn render_clone_before_edit_modal(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    track_title: &str,
+    is_dev_mode: bool,
+    dev_choice: usize,
+) {
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.80));
+
+    let mw = scaler.s(540.0);
+    let mh = if is_dev_mode { scaler.s(290.0) } else { scaler.s(220.0) };
+    let mx = (sw - mw) * 0.5;
+    let my = (sh - mh) * 0.5;
+
+    let border_col = if is_dev_mode { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, border_col, 2.2);
+
+    if !is_dev_mode {
+        fonts.draw_ui_bold(
+            "CLONE OFFICIAL PRESET TO DRAFTS",
+            mx + scaler.s(20.0),
+            my + scaler.s(32.0),
+            scaler.font_s(18.0),
             Palette::NEON_CYAN,
-        ),
+        );
+
+        let info_msg = format!(
+            "\"{}\" is an official built-in circuit and cannot be modified directly.\n\nClone this circuit to \"My Circuits / Drafts\" to open and customize it\nin the Track Studio?",
+            track_title
+        );
+        fonts.draw_ui_regular(
+            &info_msg,
+            mx + scaler.s(20.0),
+            my + scaler.s(60.0),
+            scaler.font_s(13.5),
+            Palette::WHITE,
+        );
+
+        let btn_y = my + mh - scaler.s(26.0);
+        fonts.draw_ui_bold(
+            "[Enter / Space] CLONE TO DRAFTS & EDIT",
+            mx + scaler.s(20.0),
+            btn_y,
+            scaler.font_s(13.5),
+            Palette::NEON_CYAN,
+        );
+        fonts.draw_ui_bold(
+            "[Esc] CANCEL",
+            mx + mw - scaler.s(100.0),
+            btn_y,
+            scaler.font_s(13.5),
+            Palette::UI_TEXT_MUTED,
+        );
+    } else {
+        fonts.draw_ui_bold(
+            "DEVELOPER MODE • PRESET STUDIO",
+            mx + scaler.s(20.0),
+            my + scaler.s(32.0),
+            scaler.font_s(18.0),
+            Palette::NEON_GOLD,
+        );
+
+        let info_msg = format!(
+            "\"{}\" is an official git-tracked circuit preset.\nChoose how you want to open and modify it:",
+            track_title
+        );
+        fonts.draw_ui_regular(
+            &info_msg,
+            mx + scaler.s(20.0),
+            my + scaler.s(58.0),
+            scaler.font_s(13.0),
+            Palette::WHITE,
+        );
+
+        let opt_y = my + scaler.s(98.0);
+        let opt_w = mw - scaler.s(40.0);
+        let opt_h = scaler.s(46.0);
+
+        let opts = [
+            (
+                "OVERWRITE GIT PRESET (Developer Mode)",
+                "Edits canonical tracks/<module>/<slug>.json directly",
+                Palette::RED,
+            ),
+            (
+                "CLONE TO DRAFTS (Safe Sandbox)",
+                "Creates a copy in My Circuits / Drafts without touching repo preset",
+                Palette::NEON_CYAN,
+            ),
+        ];
+
+        for (idx, (opt_title, opt_desc, col)) in opts.iter().enumerate() {
+            let item_y = opt_y + (idx as f32) * (opt_h + scaler.s(8.0));
+            let is_sel = idx == dev_choice;
+            let bg = if is_sel { Color::new(0.18, 0.22, 0.32, 0.85) } else { Color::new(0.08, 0.10, 0.16, 0.65) };
+            let border = if is_sel { *col } else { Palette::UI_CARD_BORDER };
+            scaler.draw_glass_card(mx + scaler.s(20.0), item_y, opt_w, opt_h, bg, border, 1.2);
+
+            let prefix = if is_sel { "> [X] " } else { "  [ ] " };
+            fonts.draw_ui_bold(
+                &format!("{}{}", prefix, opt_title),
+                mx + scaler.s(28.0),
+                item_y + scaler.s(17.0),
+                scaler.font_s(13.0),
+                if is_sel { *col } else { Palette::WHITE },
+            );
+            fonts.draw_ui_regular(
+                opt_desc,
+                mx + scaler.s(32.0),
+                item_y + scaler.s(33.0),
+                scaler.font_s(11.0),
+                Palette::UI_TEXT_MUTED,
+            );
+        }
+
+        let btn_y = my + mh - scaler.s(24.0);
+        fonts.draw_ui_bold(
+            "[Up/Down / 1-2] SELECT   [Enter] CONFIRM",
+            mx + scaler.s(20.0),
+            btn_y,
+            scaler.font_s(12.5),
+            Palette::NEON_GOLD,
+        );
+        fonts.draw_ui_bold(
+            "[Esc] CANCEL",
+            mx + mw - scaler.s(90.0),
+            btn_y,
+            scaler.font_s(12.5),
+            Palette::UI_TEXT_MUTED,
+        );
     }
 }
