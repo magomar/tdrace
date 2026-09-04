@@ -5,6 +5,8 @@ use tdrace_core::physics::car::Car;
 use tdrace_core::track::Track;
 use crate::config::{CameraConfig, ZoomLevelConfig};
 
+pub use cabinet::fx::ScreenShake;
+
 /// Camera mode setting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CameraMode {
@@ -38,11 +40,11 @@ pub struct RaceCamera {
     pub levels: Vec<ZoomLevelConfig>,
     pub current_level_idx: usize,
 
-    // Trauma-based screen shake
+    // Trauma-based screen shake (powered by cabinet::fx::ScreenShake)
+    pub shake: ScreenShake,
     pub trauma: f32,
     pub trauma_decay: f32,
     pub max_shake_offset: f32,
-    shake_seed: f32,
 }
 
 impl Default for RaceCamera {
@@ -72,6 +74,8 @@ impl RaceCamera {
             CameraMode::SmoothFollow
         };
 
+        let shake = ScreenShake::new(config.max_shake_offset, config.trauma_decay);
+
         Self {
             mode,
             target_pos: Vec2::ZERO,
@@ -91,10 +95,10 @@ impl RaceCamera {
             levels,
             current_level_idx: initial_idx,
 
+            shake,
             trauma: 0.0,
             trauma_decay: config.trauma_decay,
             max_shake_offset: config.max_shake_offset,
-            shake_seed: 0.0,
         }
     }
 
@@ -257,17 +261,20 @@ impl RaceCamera {
 
     /// Adds screen shake trauma from collision impact (clamped to [0.0, 1.0]).
     pub fn add_trauma(&mut self, amount: f32) {
-        self.trauma = (self.trauma + amount).clamp(0.0, 1.0);
+        self.shake.add_trauma(amount);
+        self.trauma = self.shake.trauma;
     }
 
     /// Updates camera positioning, speed-dependent zoom, and shake.
     pub fn update(&mut self, target_car: &Car, dt: f32) {
-        self.shake_seed += dt * 35.0;
-
-        // Decay screen shake trauma
-        if self.trauma > 0.0 {
-            self.trauma = (self.trauma - self.trauma_decay * dt).max(0.0);
+        // Sync trauma state with cabinet ScreenShake
+        if (self.trauma - self.shake.trauma).abs() > 1e-5 {
+            self.shake.trauma = self.trauma;
         }
+        self.shake.decay_rate = self.trauma_decay;
+        self.shake.max_offset = self.max_shake_offset;
+        self.shake.update(dt);
+        self.trauma = self.shake.trauma;
 
         match self.mode {
             CameraMode::SmoothFollow => {
@@ -300,14 +307,7 @@ impl RaceCamera {
 
     /// Computes current camera view including screen shake offset with given viewport.
     pub fn camera_2d_with_viewport(&self, sw: f32, sh: f32) -> Camera2D {
-        let shake_amount = self.trauma * self.trauma;
-        let shake_offset = if shake_amount > 1e-4 {
-            let sx = (self.shake_seed * 1.3).sin() * self.max_shake_offset * shake_amount;
-            let sy = (self.shake_seed * 1.7).cos() * self.max_shake_offset * shake_amount;
-            Vec2::new(sx, sy)
-        } else {
-            Vec2::ZERO
-        };
+        let (shake_offset, _rot) = self.shake.sample_shake();
 
         let view_center = self.current_pos + shake_offset;
         let zoom_x = (2.0 * self.current_zoom) / sw;

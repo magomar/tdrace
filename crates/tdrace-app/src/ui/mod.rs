@@ -27,6 +27,11 @@ pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,
 };
 pub use track_preview::{compute_track_bounds, render_track_detailed_preview, render_track_thumbnail};
+pub use cabinet::state::{
+    ArcadeSettingsModal, CabinetContext, CabinetScreen, ScreenAction, ScreenStack,
+    UniversalPauseModal,
+};
+pub use cabinet::CabinetTheme;
 
 
 

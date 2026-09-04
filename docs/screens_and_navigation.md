@@ -85,7 +85,7 @@ stateDiagram-v2
     ProfileManager --> Menu: [ESC / B] (if opened from Menu)
 
     %% Track Manager & Studio flow
-    TrackManager --> TrackEditor: [E / N] (Edit or New Spline)
+    TrackManager --> TrackEditor: [E / N / C] (Edit, New Spline, or Clone)
     TrackManager --> Menu: [ESC / B]
     TrackEditor --> StartingGrid: [SPACE / P] (Launch Time Trial Test Drive)
     TrackEditor --> Menu: [ESC] (Exit Studio)
@@ -392,6 +392,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `M` / `F` / `[` / `]` | Cycle Module Filter | Filters catalog by motorsport module (`All`, `Classic`, `Rally`, `Kart`, `F1`) on `Main` tab |
 | `1` / `2` / `Tab` | Direct Tab Jump | Directly selects Main (1) or Drafts (2) |
 | `E` | Open in CAD Studio | Opens track spline in `GameState::TrackEditor` |
+| `C` | Clone Circuit | Clones selected circuit into Drafts with "(clone)" suffix and opens in CAD Studio |
 | `N` | New Draft Track | Creates new draft track in Drafts workshop |
 | `I` | Edit Metadata | Opens modal to edit track name and description |
 | `P` / Gamepad `Y` | Promote / Configure Modules | Opens motorsport module promotion menu to promote track or add/remove modules |

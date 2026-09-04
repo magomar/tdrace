@@ -217,3 +217,31 @@ fn test_camera_progressive_zoom_in_and_out() {
     camera.zoom_progressive(-1.0, 1.0, 0.5);
     assert!((camera.overview_zoom - initial_overview).abs() < 0.1);
 }
+
+#[test]
+fn test_camera_cabinet_screen_shake_integration() {
+    use tdrace_app::camera::ScreenShake;
+
+    let mut camera = RaceCamera::new();
+    // Test ScreenShake re-export
+    let mut standalone = ScreenShake::new(20.0, 2.0);
+    standalone.add_trauma(0.5);
+    assert_eq!(standalone.trauma, 0.5);
+
+    // Test RaceCamera embedded ScreenShake
+    camera.add_trauma(0.75);
+    assert_eq!(camera.shake.trauma, 0.75);
+    assert_eq!(camera.trauma, 0.75);
+
+    let (offset, _angle) = camera.shake.sample_shake();
+    assert!(offset.length() > 0.0);
+
+    let car = Car::new(CarConfig::sports_car());
+    camera.update(&car, 0.1);
+    assert_eq!(camera.trauma, camera.shake.trauma);
+    assert!(camera.trauma < 0.75);
+
+    let (_offset2, angle2) = camera.shake.sample_shake();
+    assert!(angle2.abs() > 0.0);
+}
+

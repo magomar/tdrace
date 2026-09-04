@@ -1,31 +1,33 @@
 use macroquad::color::Color;
 
+pub use cabinet::ui::theme::{color_to_hex, hex_to_color, CabinetTheme, Palette as CabinetPalette};
+
 /// Modern arcade motorsport palette with high-visibility accents and glassmorphism styling.
 pub struct Palette;
 
 impl Palette {
     // Basic constants
-    pub const WHITE: Color = Color::new(1.0, 1.0, 1.0, 1.0);
-    pub const BLACK: Color = Color::new(0.0, 0.0, 0.0, 1.0);
-    pub const RED: Color = Color::new(0.95, 0.20, 0.20, 1.0);
-    pub const GREEN: Color = Color::new(0.18, 0.90, 0.35, 1.0);
-    pub const BLUE: Color = Color::new(0.20, 0.55, 1.0, 1.0);
-    pub const YELLOW: Color = Color::new(1.0, 0.85, 0.15, 1.0);
+    pub const WHITE: Color = CabinetPalette::WHITE;
+    pub const BLACK: Color = CabinetPalette::BLACK;
+    pub const RED: Color = CabinetPalette::RED;
+    pub const GREEN: Color = CabinetPalette::GREEN;
+    pub const BLUE: Color = CabinetPalette::BLUE;
+    pub const YELLOW: Color = CabinetPalette::YELLOW;
 
     // Modern Neon & UI Accents
-    pub const NEON_CYAN: Color = Color::new(0.20, 0.90, 1.0, 1.0);
-    pub const NEON_GOLD: Color = Color::new(1.0, 0.82, 0.15, 1.0);
-    pub const NEON_MAGENTA: Color = Color::new(1.0, 0.25, 0.80, 1.0);
-    pub const NEON_GREEN: Color = Color::new(0.20, 0.95, 0.45, 1.0);
-    pub const NEON_ORANGE: Color = Color::new(1.0, 0.50, 0.10, 1.0);
+    pub const NEON_CYAN: Color = CabinetPalette::NEON_CYAN;
+    pub const NEON_GOLD: Color = CabinetPalette::NEON_GOLD;
+    pub const NEON_MAGENTA: Color = CabinetPalette::NEON_MAGENTA;
+    pub const NEON_GREEN: Color = CabinetPalette::NEON_GREEN;
+    pub const NEON_ORANGE: Color = CabinetPalette::NEON_ORANGE;
 
     // Glassmorphism & UI Backdrops
-    pub const UI_CARD_BG: Color = Color::new(0.07, 0.09, 0.14, 0.92);
-    pub const UI_CARD_BG_HOVER: Color = Color::new(0.12, 0.16, 0.24, 0.95);
-    pub const UI_CARD_BORDER: Color = Color::new(0.25, 0.35, 0.50, 0.85);
-    pub const UI_CARD_BORDER_GLOW: Color = Color::new(0.35, 0.80, 1.0, 1.0);
-    pub const UI_TEXT_MUTED: Color = Color::new(0.65, 0.72, 0.82, 1.0);
-    pub const UI_PILL_BG: Color = Color::new(0.10, 0.13, 0.20, 0.90);
+    pub const UI_CARD_BG: Color = CabinetPalette::UI_CARD_BG;
+    pub const UI_CARD_BG_HOVER: Color = CabinetPalette::UI_CARD_BG_HOVER;
+    pub const UI_CARD_BORDER: Color = CabinetPalette::UI_CARD_BORDER;
+    pub const UI_CARD_BORDER_GLOW: Color = CabinetPalette::UI_CARD_BORDER_GLOW;
+    pub const UI_TEXT_MUTED: Color = CabinetPalette::UI_TEXT_MUTED;
+    pub const UI_PILL_BG: Color = CabinetPalette::UI_PILL_BG;
 
     // Modern Terrain & Track Surfaces
     pub const GRASS: Color = Color::new(0.18, 0.48, 0.24, 1.0);
@@ -62,8 +64,8 @@ impl Palette {
     pub const CONCRETE_TOP: Color = Color::new(0.94, 0.94, 0.94, 1.0);
     pub const TIRE_WALL: Color = Color::new(0.14, 0.15, 0.17, 1.0);
     pub const TIRE_RIM: Color = Color::new(0.38, 0.40, 0.45, 1.0);
-    pub const SHADOW: Color = Color::new(0.0, 0.0, 0.0, 0.42);
-    pub const SOFT_SHADOW: Color = Color::new(0.0, 0.0, 0.0, 0.22);
+    pub const SHADOW: Color = CabinetPalette::SHADOW;
+    pub const SOFT_SHADOW: Color = CabinetPalette::SOFT_SHADOW;
 
     // FX Colors
     pub const SKIDMARK: Color = Color::new(0.06, 0.06, 0.08, 0.65);
@@ -131,36 +133,6 @@ impl Palette {
     ];
 }
 
-/// Converts a macroquad Color into an 8-character hex string (#RRGGBBAA).
-pub fn color_to_hex(c: Color) -> String {
-    let r = (c.r.clamp(0.0, 1.0) * 255.0).round() as u8;
-    let g = (c.g.clamp(0.0, 1.0) * 255.0).round() as u8;
-    let b = (c.b.clamp(0.0, 1.0) * 255.0).round() as u8;
-    let a = (c.a.clamp(0.0, 1.0) * 255.0).round() as u8;
-    format!("#{:02X}{:02X}{:02X}{:02X}", r, g, b, a)
-}
-
-/// Parses a hex string (#RRGGBB or #RRGGBBAA) into a macroquad Color.
-pub fn hex_to_color(hex: &str) -> Color {
-    let clean = hex.trim().trim_start_matches('#');
-    if clean.len() == 6 {
-        if let Ok(v) = u32::from_str_radix(clean, 16) {
-            let r = ((v >> 16) & 0xFF) as f32 / 255.0;
-            let g = ((v >> 8) & 0xFF) as f32 / 255.0;
-            let b = (v & 0xFF) as f32 / 255.0;
-            return Color::new(r, g, b, 1.0);
-        }
-    } else if clean.len() == 8 {
-        if let Ok(v) = u32::from_str_radix(clean, 16) {
-            let r = ((v >> 24) & 0xFF) as f32 / 255.0;
-            let g = ((v >> 16) & 0xFF) as f32 / 255.0;
-            let b = ((v >> 8) & 0xFF) as f32 / 255.0;
-            let a = (v & 0xFF) as f32 / 255.0;
-            return Color::new(r, g, b, a);
-        }
-    }
-    Palette::WHITE
-}
 
 /// Car visual color scheme.
 #[derive(Debug, Clone, Copy, PartialEq)]

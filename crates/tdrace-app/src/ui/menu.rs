@@ -1073,9 +1073,9 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     let items = [
         assist_item,
         audio_item,
+        "O / Y : Arcade Settings & Preferences".to_string(),
         "D : Driver Cards & Opponents Dossier".to_string(),
-        "C / K : Controls & Gamepad Guide".to_string(),
-        "R / Y : Restart Race".to_string(),
+        "C / K : Controls Guide | R : Restart Race".to_string(),
         "TAB / Left Stick Click : Camera View".to_string(),
         "Q/A/O/P / Arrows / Stick & Triggers : Drive".to_string(),
         "SPACE / B : Handbrake | Hold Brake at Stop : Reverse".to_string(),

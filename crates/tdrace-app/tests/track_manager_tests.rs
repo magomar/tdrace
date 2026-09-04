@@ -934,5 +934,142 @@ fn test_create_new_draft_track_with_module_templates() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_track_manager_clone_preset_to_drafts() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_clone_preset_{}", std::process::id()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Initial check: 34 main tracks, 0 drafts
+    assert_eq!(manager.main_track_choices().len(), 34);
+    assert_eq!(manager.draft_track_choices().len(), 0);
+
+    // Clone Classic Grand Prix
+    let gp_choice = TrackChoice::ClassicGrandPrix;
+    let (cloned_track, saved_path) = manager.clone_track(&gp_choice).expect("Clone preset must succeed");
+
+    assert_eq!(cloned_track.name, "Classic Grand Prix (clone)");
+    assert_eq!(cloned_track.category, TrackCategory::Draft);
+    assert!(cloned_track.module_id.is_none());
+    assert!(cloned_track.modules.is_empty());
+    assert!(Path::new(&saved_path).exists());
+    assert!(saved_path.contains("drafts"));
+
+    // Verify drafts list has 1 track, main still has 34
+    assert_eq!(manager.main_track_choices().len(), 34);
+    let drafts = manager.draft_track_choices();
+    assert_eq!(drafts.len(), 1);
+    assert_eq!(drafts[0].title(), "Classic Grand Prix (clone)");
+
+    // Verify exact clone of geometry & properties
+    let original = manager.load_track(&gp_choice).unwrap();
+    assert_eq!(cloned_track.spline.waypoints.len(), original.spline.waypoints.len());
+    assert_eq!(cloned_track.checkpoints.len(), original.checkpoints.len());
+    assert_eq!(cloned_track.default_surface, original.default_surface);
+    assert_eq!(cloned_track.default_laps, original.default_laps);
+    assert_eq!(cloned_track.predefined_car, original.predefined_car);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_track_manager_clone_and_open_in_track_editor() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_clone_editor_{}", std::process::id()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::default();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    // Enter track manager
+    session.state = GameState::TrackManager {
+        active_tab: TrackManagerTab::Main,
+        module_filter: ModuleFilter::All,
+        selected_idx: 0,
+        modal: TrackManagerModal::None,
+    };
+
+    let selected_track_choice = session.track_manager.main_track_choices()[0].clone();
+    let original_title = selected_track_choice.title().to_string();
+
+    // Execute cloning flow as triggered by C key
+    let (cloned_track, file_path) = session
+        .track_manager
+        .clone_track(&selected_track_choice)
+        .expect("Clone track");
+
+    let file_stem = std::path::Path::new(&file_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("cloned_track")
+        .to_string();
+
+    session.track_choice = TrackChoice::Custom {
+        id: file_stem,
+        title: cloned_track.name.clone(),
+        description: cloned_track.description.clone(),
+        path: file_path.clone(),
+    };
+    session.track = cloned_track.clone();
+    session.enter_track_editor_with_path(cloned_track, Some(file_path.clone()));
+
+    // Verify immediately opened in track editor
+    assert_eq!(session.state, GameState::TrackEditor);
+    assert!(session.editor_state.is_some());
+
+    let editor_state = session.editor_state.as_ref().unwrap();
+    assert_eq!(editor_state.track.name, format!("{} (clone)", original_title));
+    assert_eq!(editor_state.track.category, TrackCategory::Draft);
+    assert_eq!(editor_state.current_file_path, Some(file_path.clone()));
+    assert!(Path::new(&file_path).exists());
+
+    // Verify the clone exists in drafts group of track manager
+    assert_eq!(session.track_manager.draft_track_choices().len(), 1);
+    assert_eq!(session.track_manager.draft_track_choices()[0].title(), format!("{} (clone)", original_title));
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_track_manager_repeated_cloning_unique_slugs() {
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_clone_repeated_{}", std::process::id()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Create a draft
+    let initial_path = manager
+        .create_new_draft_track("Loop Track", "Test loop track")
+        .expect("Create draft");
+    assert!(Path::new(&initial_path).exists());
+    assert_eq!(manager.draft_track_choices().len(), 1);
+
+    let draft_choice = manager.draft_track_choices()[0].clone();
+
+    // 1st Clone
+    let (clone1, path1) = manager.clone_track(&draft_choice).expect("Clone 1");
+    assert_eq!(clone1.name, "Loop Track (clone)");
+    assert!(path1.ends_with("loop_track_clone.json"));
+    assert!(Path::new(&path1).exists());
+    assert_eq!(manager.draft_track_choices().len(), 2);
+
+    // 2nd Clone of the same original
+    let (clone2, path2) = manager.clone_track(&draft_choice).expect("Clone 2");
+    assert_eq!(clone2.name, "Loop Track (clone)");
+    assert!(path2.ends_with("loop_track_clone_1.json"));
+    assert!(Path::new(&path2).exists());
+    assert_eq!(manager.draft_track_choices().len(), 3);
+
+    // 3rd Clone of the first clone
+    let clone1_choice = manager.draft_track_choices().into_iter().find(|t| t.title() == "Loop Track (clone)").unwrap();
+    let (clone3, path3) = manager.clone_track(&clone1_choice).expect("Clone of clone");
+    assert_eq!(clone3.name, "Loop Track (clone) (clone)");
+    assert!(path3.ends_with("loop_track_clone_clone.json"));
+    assert!(Path::new(&path3).exists());
+    assert_eq!(manager.draft_track_choices().len(), 4);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
 
 

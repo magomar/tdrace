@@ -13,9 +13,9 @@ pub struct AudioSettings {
 impl Default for AudioSettings {
     fn default() -> Self {
         Self {
-            master_volume: 1.0,
-            music_volume: 0.75,
-            sfx_volume: 0.85,
+            master_volume: 0.85,
+            music_volume: 0.70,
+            sfx_volume: 0.90,
             ui_volume: 0.90,
             is_muted: false,
         }
@@ -23,6 +23,12 @@ impl Default for AudioSettings {
 }
 
 impl AudioSettings {
+    /// Toggles global audio mute.
+    #[inline]
+    pub fn toggle_mute(&mut self) {
+        self.is_muted = !self.is_muted;
+    }
+
     /// Computes effective output volume for background music.
     #[inline]
     pub fn effective_music_volume(&self) -> f32 {
@@ -33,13 +39,19 @@ impl AudioSettings {
         }
     }
 
-    /// Computes effective output volume for in-game sound effects.
+    /// Computes effective output volume for in-game sound effects without extra scaling.
     #[inline]
     pub fn effective_sfx_volume(&self) -> f32 {
+        self.effective_sfx_volume_scaled(1.0)
+    }
+
+    /// Computes effective output volume for in-game sound effects scaled by additional gain.
+    #[inline]
+    pub fn effective_sfx_volume_scaled(&self, sfx_gain: f32) -> f32 {
         if self.is_muted {
             0.0
         } else {
-            (self.master_volume * self.sfx_volume).clamp(0.0, 1.0)
+            (self.master_volume * self.sfx_volume * sfx_gain).clamp(0.0, 1.0)
         }
     }
 

@@ -54,6 +54,7 @@ pub enum TrackManagerAction {
     SelectIndex(usize),
     RaceTrack(TrackChoice),
     EditInStudio(TrackChoice),
+    CloneTrack(TrackChoice),
     PromoteTrack(String),
     DemoteTrack(String),
     OpenEditModal {
@@ -527,9 +528,9 @@ pub fn render_track_manager_screen(
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
     let action_str = if is_main_active {
-        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [P] PROMOTE | [Ctrl+P] DEMOTE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [E] TRACK EDITOR | [C] CLONE | [P] PROMOTE | [Ctrl+P] DEMOTE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     } else {
-        "[Enter] RACE | [Tab] PROMOTED | [E] TRACK EDITOR | [P] PROMOTE TO MODULE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
+        "[Enter] RACE | [Tab] PROMOTED | [E] TRACK EDITOR | [C] CLONE | [P] PROMOTE TO MODULE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
     };
     fonts.draw_ui_bold_centered(
         action_str,

@@ -74,7 +74,7 @@ use crate::config::GameConfig;
 use crate::db::{HallOfFameDb, HallOfFameEntry};
 use crate::fx::EffectsManager;
 use crate::input::touch::TouchController;
-use crate::input::InputController;
+use crate::input::{InputController, NavGrid2D};
 pub use crate::module::VehicleVisualType;
 use crate::module::{
     F1GameModule, GameModule, KartGameModule, RallyGameModule,
@@ -111,7 +111,9 @@ use crate::ui::starting_grid::{render_starting_grid_screen, StartingGridFocus};
 use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
-use crate::ui::UiScaler;
+use crate::ui::{
+    ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme, ScreenAction, UiScaler,
+};
 
 /// Source screen that launched the DriverCards dossier view.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -285,9 +287,11 @@ pub struct RaceSession {
     pub starting_grid_focus: StartingGridFocus,
     pub starting_grid_card_idx: usize,
     pub starting_grid_roster_idx: usize,
+    pub pause_nav: NavGrid2D,
     pub pause_selected_btn: usize,
     pub assist_profile: AssistProfile,
     pub show_exit_confirm: bool,
+    pub settings_modal: Option<ArcadeSettingsModal>,
 
     // Track Editor & Test Drive state
     pub editor_state: Option<EditorState>,
@@ -501,8 +505,10 @@ impl RaceSession {
             starting_grid_focus: StartingGridFocus::LeftSetup,
             starting_grid_card_idx: 0,
             starting_grid_roster_idx: 0,
+            pause_nav: NavGrid2D::new(vec![1, 1]),
             pause_selected_btn: 0,
             show_exit_confirm: false,
+            settings_modal: None,
             editor_state: None,
             editor_camera,
             editor_tools: ToolSettings::default(),
@@ -576,6 +582,38 @@ impl RaceSession {
     pub async fn init_audio(&mut self) {
         self.audio.init_async().await;
         self.audio.play_music(MusicTrack::NeonMenu);
+    }
+
+    /// Opens the Arcade Settings Modal, pre-populating it with current audio, gamepad, and assist configs.
+    pub fn open_settings_modal(&mut self) {
+        let mut modal = ArcadeSettingsModal::new(&self.audio.settings, &self.input.gamepad.config);
+        let assist_idx = match self.assist_profile {
+            AssistProfile::Arcade => 0,
+            AssistProfile::Sport => 1,
+            AssistProfile::Pro => 2,
+        };
+        modal.assist_dropdown.set_selected(assist_idx);
+        self.settings_modal = Some(modal);
+    }
+
+    /// Returns true if the settings modal overlay is currently open.
+    pub fn is_settings_modal_open(&self) -> bool {
+        self.settings_modal.is_some()
+    }
+
+    /// Closes the settings modal, optionally applying the modified settings to audio, gamepad, and assists.
+    pub fn close_settings_modal(&mut self, save: bool) {
+        if let Some(modal) = self.settings_modal.take() {
+            if save {
+                modal.apply_to_audio(&mut self.audio.settings);
+                modal.apply_to_gamepad(&mut self.input.gamepad.config);
+                self.assist_profile = match modal.assist_dropdown.selected_index {
+                    0 => AssistProfile::Arcade,
+                    1 => AssistProfile::Sport,
+                    _ => AssistProfile::Pro,
+                };
+            }
+        }
     }
 
     /// Resolves the track's predefined vehicle model as a `CarChoice`.
@@ -1888,22 +1926,60 @@ impl RaceSession {
             GameState::Paused => {
                 self.audio.stop_all_loops();
 
+                // If Arcade Settings Modal is open, handle its updates and return
+                if let Some(ref mut modal) = self.settings_modal {
+                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::default();
+                    let mut ctx = CabinetContext {
+                        scaler: &scaler,
+                        fonts: &self.fonts,
+                        theme: &theme,
+                        gamepad: &self.input.gamepad.snapshot,
+                        dt: self.accumulator.min(0.1),
+                    };
+                    let action = modal.update(&mut ctx);
+                    if matches!(action, ScreenAction::Pop) {
+                        if modal.is_saved {
+                            modal.apply_to_audio(&mut self.audio.settings);
+                            modal.apply_to_gamepad(&mut self.input.gamepad.config);
+                            self.assist_profile = match modal.assist_dropdown.selected_index {
+                                0 => AssistProfile::Arcade,
+                                1 => AssistProfile::Sport,
+                                _ => AssistProfile::Pro,
+                            };
+                            self.audio.play_sfx(SfxType::UiSelect);
+                        }
+                        self.settings_modal = None;
+                    }
+                    return;
+                }
+
+                // Open Arcade Settings Modal via O key or Gamepad Y button
+                if is_key_pressed(KeyCode::O) || self.input.gamepad.snapshot.btn_y_pressed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.open_settings_modal();
+                    return;
+                }
+
                 let (sw, sh) = (screen_width_safe(), screen_height_safe());
                 let (_, _, _, _, btn_layout) = crate::ui::pause_menu_layout(sw, sh);
-                let (mx, my) = mouse_position_safe();
-                let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
 
-                let resume_clicked = mouse_clicked
-                    && mx >= btn_layout.resume_rect.0
-                    && mx <= btn_layout.resume_rect.0 + btn_layout.resume_rect.2
-                    && my >= btn_layout.resume_rect.1
-                    && my <= btn_layout.resume_rect.1 + btn_layout.resume_rect.3;
+                if NavGrid2D::check_mouse_hover(btn_layout.resume_rect) {
+                    if self.pause_nav.focused_col != 0 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.pause_nav.set_focus(0, 0);
+                    }
+                }
+                if NavGrid2D::check_mouse_hover(btn_layout.exit_rect) {
+                    if self.pause_nav.focused_col != 1 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.pause_nav.set_focus(1, 0);
+                    }
+                }
 
-                let exit_clicked = mouse_clicked
-                    && mx >= btn_layout.exit_rect.0
-                    && mx <= btn_layout.exit_rect.0 + btn_layout.exit_rect.2
-                    && my >= btn_layout.exit_rect.1
-                    && my <= btn_layout.exit_rect.1 + btn_layout.exit_rect.3;
+                let resume_clicked = NavGrid2D::check_mouse_click(btn_layout.resume_rect);
+                let exit_clicked = NavGrid2D::check_mouse_click(btn_layout.exit_rect);
 
                 // Button cursor navigation (Left / Right / A / D / Up / Down / Gamepad D-pad)
                 if is_key_pressed(KeyCode::Left)
@@ -1911,9 +1987,9 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.dpad_left_pressed
                     || self.input.gamepad.snapshot.nav_left
                 {
-                    if self.pause_selected_btn != 0 {
+                    if self.pause_nav.focused_col != 0 {
                         self.audio.play_sfx(SfxType::UiMove);
-                        self.pause_selected_btn = 0;
+                        self.pause_nav.set_focus(0, 0);
                     }
                 }
                 if is_key_pressed(KeyCode::Right)
@@ -1921,9 +1997,9 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.dpad_right_pressed
                     || self.input.gamepad.snapshot.nav_right
                 {
-                    if self.pause_selected_btn != 1 {
+                    if self.pause_nav.focused_col != 1 {
                         self.audio.play_sfx(SfxType::UiMove);
-                        self.pause_selected_btn = 1;
+                        self.pause_nav.set_focus(1, 0);
                     }
                 }
                 if is_key_pressed(KeyCode::Up)
@@ -1934,18 +2010,32 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.nav_down
                 {
                     self.audio.play_sfx(SfxType::UiMove);
-                    self.pause_selected_btn = 1 - self.pause_selected_btn;
+                    let next_col = 1 - self.pause_nav.focused_col;
+                    self.pause_nav.set_focus(next_col, 0);
                 }
 
+                self.pause_selected_btn = self.pause_nav.focused_col;
+
                 // Action confirmation on highlighted button or click
-                if is_key_pressed(KeyCode::Enter)
+                let is_confirmed = is_key_pressed(KeyCode::Enter)
                     || is_key_pressed(KeyCode::KpEnter)
                     || is_key_pressed(KeyCode::Space)
-                    || self.input.gamepad.snapshot.btn_confirm_pressed
-                    || self.input.gamepad.snapshot.btn_a_pressed
-                {
+                    || self.pause_nav.is_confirmed(
+                        self.input.gamepad.snapshot.btn_confirm_pressed
+                            || self.input.gamepad.snapshot.btn_a_pressed,
+                    );
+
+                if is_confirmed || resume_clicked || exit_clicked {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    if self.pause_selected_btn == 0 {
+                    let action_idx = if resume_clicked {
+                        0
+                    } else if exit_clicked {
+                        1
+                    } else {
+                        self.pause_selected_btn
+                    };
+
+                    if action_idx == 0 {
                         self.state = GameState::Racing;
                         return;
                     } else {
@@ -3039,7 +3129,30 @@ impl RaceSession {
             }
         }
 
-        // 6. Promote / Demote Track (P key = Promote / Edit Modules, Ctrl+P = Demote)
+        // 6. Clone Circuit to Drafts and Open in Track Editor (C key)
+        if is_key_pressed(KeyCode::C) {
+            if let Some(track_choice) = current_list.get(selected_idx) {
+                if let Ok((cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let file_stem = std::path::Path::new(&file_path)
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("cloned_track")
+                        .to_string();
+                    self.track_choice = TrackChoice::Custom {
+                        id: file_stem,
+                        title: cloned_track.name.clone(),
+                        description: cloned_track.description.clone(),
+                        path: file_path.clone(),
+                    };
+                    self.track = cloned_track.clone();
+                    self.enter_track_editor_with_path(cloned_track, Some(file_path));
+                    return;
+                }
+            }
+        }
+
+        // 7. Promote / Demote Track (P key = Promote / Edit Modules, Ctrl+P = Demote)
         let ctrl_down = is_key_down(KeyCode::LeftControl)
             || is_key_down(KeyCode::RightControl)
             || is_key_down(KeyCode::LeftSuper)
@@ -3100,7 +3213,7 @@ impl RaceSession {
             }
         }
 
-        // 7. Create New Draft Track (N key)
+        // 8. Create New Draft Track (N key)
         if is_key_pressed(KeyCode::N) {
             self.audio.play_sfx(SfxType::UiSelect);
             let count = self.track_manager.draft_track_choices().len() + 1;
@@ -3118,7 +3231,7 @@ impl RaceSession {
             selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
         }
 
-        // 8. Edit Metadata (I key)
+        // 9. Edit Metadata (I key)
         if is_key_pressed(KeyCode::I) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
@@ -3139,7 +3252,7 @@ impl RaceSession {
             }
         }
 
-        // 9. Delete Track (Delete / Backspace / X key)
+        // 10. Delete Track (Delete / Backspace / X key)
         if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) || is_key_pressed(KeyCode::X) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
@@ -3156,7 +3269,7 @@ impl RaceSession {
             }
         }
 
-        // 10. Back to Main Menu (Escape / Gamepad Back)
+        // 11. Back to Main Menu (Escape / Gamepad Back)
         if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_back_pressed {
             self.audio.play_sfx(SfxType::UiMove);
             self.state = GameState::Menu;
@@ -3731,6 +3844,19 @@ impl RaceSession {
                 self.render_world();
                 self.render_screen(None);
                 render_pause_menu(&self.fonts, self.assist_profile, &self.audio.settings, self.pause_selected_btn);
+                if let Some(ref modal) = self.settings_modal {
+                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::default();
+                    let ctx = CabinetContext {
+                        scaler: &scaler,
+                        fonts: &self.fonts,
+                        theme: &theme,
+                        gamepad: &self.input.gamepad.snapshot,
+                        dt: 0.0,
+                    };
+                    modal.draw(&ctx);
+                }
             }
             GameState::Finished => {
                 self.render_world();

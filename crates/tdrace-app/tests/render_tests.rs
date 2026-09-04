@@ -21,6 +21,24 @@ fn test_palette_and_car_color_schemes() {
 }
 
 #[test]
+fn test_cabinet_color_utilities_and_theme_reexport() {
+    use tdrace_app::render::color::{color_to_hex, hex_to_color, CabinetPalette, CabinetTheme};
+
+    let col = Palette::NEON_CYAN;
+    let hex = color_to_hex(col);
+    assert!(hex.starts_with('#'));
+    let roundtrip = hex_to_color(&hex);
+    assert!((roundtrip.r - col.r).abs() < 0.02);
+    assert!((roundtrip.g - col.g).abs() < 0.02);
+    assert!((roundtrip.b - col.b).abs() < 0.02);
+
+    // Verify CabinetTheme re-export
+    let theme = CabinetTheme::cyberpunk_neon();
+    assert_eq!(theme.card_border_glow, CabinetPalette::NEON_CYAN);
+    assert_eq!(Palette::WHITE, CabinetPalette::WHITE);
+}
+
+#[test]
 fn test_track_presets_geometry_for_rendering() {
     let tracks = [
         classic_grand_prix(),

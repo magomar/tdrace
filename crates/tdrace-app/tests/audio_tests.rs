@@ -172,7 +172,9 @@ fn test_audio_settings_and_mixer_gain() {
 
     settings.toggle_mute();
     assert_eq!(settings.effective_music_volume(), 0.0);
-    assert_eq!(settings.effective_sfx_volume(1.0), 0.0);
+    assert_eq!(settings.effective_sfx_volume(), 0.0);
+    assert_eq!(settings.effective_sfx_volume_scaled(1.0), 0.0);
+    assert_eq!(settings.effective_ui_volume(), 0.0);
 
     settings.toggle_mute();
     assert!((settings.effective_music_volume() - 0.35).abs() < 0.01);

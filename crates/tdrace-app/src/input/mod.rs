@@ -24,6 +24,7 @@ use tdrace_core::track::Track;
 
 use crate::ai::BotAiDriver;
 use crate::render::color::Palette;
+pub use cabinet::input::NavGrid2D;
 pub use filter::{DigitalInputConfig, DigitalInputFilter};
 pub use gamepad::{GamepadConfig, GamepadController, GamepadSnapshot};
 pub use touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};

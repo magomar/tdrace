@@ -1252,6 +1252,81 @@ impl TrackManager {
         self.save_custom_track(&track, None)
     }
 
+    /// Clones an existing circuit (preset or custom), creating an exact duplicate in the drafts group.
+    /// Appends "(clone)" to the track name, sets category to Draft, and writes to `drafts/<slug>.json`.
+    /// Returns the cloned Track instance and its saved file path.
+    pub fn clone_track(&mut self, choice: &TrackChoice) -> Result<(Track, String), String> {
+        let original_track = self.load_track(choice)?;
+        let mut cloned_track = original_track.clone();
+
+        let name_base = if !original_track.name.trim().is_empty() {
+            original_track.name.trim()
+        } else {
+            choice.title().trim()
+        };
+        cloned_track.name = format!("{} (clone)", name_base);
+        cloned_track.category = TrackCategory::Draft;
+        cloned_track.module_id = None;
+        cloned_track.modules.clear();
+
+        let base_slug = format!("{}_clone", Self::sanitize_slug(choice.track_id()));
+        let target_dir = self.tracks_dir.join("drafts");
+        let _ = fs::create_dir_all(&target_dir);
+
+        let mut file_slug = base_slug.clone();
+        let mut counter = 1;
+        while self.track_file_exists(&file_slug) {
+            file_slug = format!("{}_{}", base_slug, counter);
+            counter += 1;
+        }
+
+        let file_name = format!("{}.json", file_slug);
+        let path = target_dir.join(file_name);
+
+        cloned_track
+            .save_to_file(&path)
+            .map_err(|e| format!("Failed to save cloned track: {}", e))?;
+
+        self.deleted_presets.retain(|d| d != &file_slug);
+        self.save_deleted_presets();
+
+        let _ = self.scan_custom_tracks();
+        Ok((cloned_track, path.to_string_lossy().to_string()))
+    }
+
+    /// Clones an existing circuit identified by its slug into the drafts group.
+    pub fn clone_track_by_slug(&mut self, slug: &str) -> Result<(Track, String), String> {
+        let track = self.load_track_by_slug(slug)?;
+        let choice = if let Some(custom) = self.custom_tracks.iter().find(|t| t.id == slug) {
+            TrackChoice::Custom {
+                id: custom.id.clone(),
+                title: custom.title.clone(),
+                description: custom.description.clone(),
+                path: custom.file_path.clone(),
+            }
+        } else {
+            match slug {
+                "classic_grand_prix" => TrackChoice::ClassicGrandPrix,
+                "oval_speedway" => TrackChoice::OvalSpeedway,
+                "drift_park" => TrackChoice::DriftPark,
+                "kart_arena" => TrackChoice::KartArena,
+                "ramp_raceway" => TrackChoice::RampRaceway,
+                "oasis_rally" => TrackChoice::OasisRally,
+                "outlaw_pass" => TrackChoice::OutlawPass,
+                custom_id => {
+                    let path = self.track_path_for_slug(custom_id).to_string_lossy().to_string();
+                    TrackChoice::Custom {
+                        id: custom_id.to_string(),
+                        title: track.name.clone(),
+                        description: track.description.clone(),
+                        path,
+                    }
+                }
+            }
+        };
+        self.clone_track(&choice)
+    }
+
     /// Deletes a custom or preset track file from disk and records it in deleted presets list.
     pub fn delete_custom_track(&mut self, id: &str) -> Result<bool, String> {
         let mut deleted_any = false;
@@ -1463,6 +1538,61 @@ mod tests {
         let drafts = manager.module_catalog_tracks("drafts");
         assert_eq!(drafts.len(), 1);
         assert_eq!(drafts[0].title(), "My Draft Circuit");
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_clone_track_presets_and_drafts() {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "tdrace_test_clone_mgr_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let _ = fs::remove_dir_all(&temp_dir);
+        let mut manager = TrackManager::new(&temp_dir);
+
+        // 1. Clone a preset track (ClassicGrandPrix)
+        let (cloned_gp, path_gp) = manager
+            .clone_track(&TrackChoice::ClassicGrandPrix)
+            .expect("Must clone ClassicGrandPrix");
+
+        assert_eq!(cloned_gp.name, "Classic Grand Prix (clone)");
+        assert_eq!(cloned_gp.category, TrackCategory::Draft);
+        assert!(cloned_gp.module_id.is_none());
+        assert!(cloned_gp.modules.is_empty());
+        assert!(Path::new(&path_gp).exists());
+        assert!(path_gp.contains("drafts"));
+
+        // Cloned track must appear in drafts, and main count stays 34
+        assert_eq!(manager.draft_track_choices().len(), 1);
+        assert_eq!(manager.main_track_choices().len(), 34);
+        assert_eq!(manager.draft_track_choices()[0].title(), "Classic Grand Prix (clone)");
+
+        // 2. Clone a module preset by slug
+        let (cloned_monza, path_monza) = manager
+            .clone_track_by_slug("monza")
+            .expect("Must clone Monza by slug");
+
+        assert_eq!(cloned_monza.name, "Monza Autodromo Nazionale (clone)");
+        assert_eq!(cloned_monza.category, TrackCategory::Draft);
+        assert!(cloned_monza.module_id.is_none());
+        assert!(cloned_monza.modules.is_empty());
+        assert!(Path::new(&path_monza).exists());
+        assert!(path_monza.contains("drafts"));
+        assert_eq!(manager.draft_track_choices().len(), 2);
+
+        // 3. Clone again to verify collision handling (appends _1)
+        let (cloned_monza_2, path_monza_2) = manager
+            .clone_track_by_slug("monza")
+            .expect("Must clone Monza a second time");
+
+        assert_eq!(cloned_monza_2.name, "Monza Autodromo Nazionale (clone)");
+        assert!(path_monza_2.ends_with("monza_clone_1.json"));
+        assert!(Path::new(&path_monza_2).exists());
+        assert_eq!(manager.draft_track_choices().len(), 3);
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
