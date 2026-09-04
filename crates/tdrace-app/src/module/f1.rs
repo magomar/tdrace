@@ -576,53 +576,98 @@ impl F1GameModule {
         }
     }
 
-    /// Circuit de Barcelona-Catalunya: Aerodynamic Testing Benchmark (Elf, Curva Renault, Repsol, Campsa)
+    /// Circuit de Barcelona-Catalunya: Spanish Grand Prix (Elf, Curva Renault, Repsol, Seat, Campsa, La Caixa)
     pub fn track_catalunya() -> Track {
         let waypoints = vec![
-            // Main Straight (Start / Finish)
+            // Main Straight & Start/Finish (wide 14m straight running right-to-left into Turn 1)
             TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
-            TrackWaypoint::new(Vec2::new(140.0, 0.0), 14.0),
-            // Elf (Turn 1 uphill heavy braking right)
-            TrackWaypoint::new(Vec2::new(200.0, 20.0), 13.0).with_curbs(false, true),
-            // Turn 2 (tight downhill left)
-            TrackWaypoint::new(Vec2::new(220.0, 60.0), 13.0).with_curbs(true, false),
-            // Curva Renault / Turn 3 (high-speed monumental sweeping right)
-            TrackWaypoint::new(Vec2::new(235.0, 120.0), 14.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(210.0, 180.0), 14.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-140.0, 0.0), 14.0).with_elevation(0.5),
+            TrackWaypoint::new(Vec2::new(-185.0, 0.0), 14.0).with_elevation(1.0),
+            // Elf (Turn 1 uphill heavy braking 90-degree right)
+            TrackWaypoint::new(Vec2::new(-215.0, 15.0), 13.0)
+                .with_curbs(false, true)
+                .with_elevation(2.0),
+            // Turn 2 (downhill technical left)
+            TrackWaypoint::new(Vec2::new(-225.0, 45.0), 13.0)
+                .with_curbs(true, false)
+                .with_elevation(1.5),
+            // Curva Renault / Turn 3 (high-speed monumental sweeping right carousel)
+            TrackWaypoint::new(Vec2::new(-270.0, 75.0), 14.0)
+                .with_curbs(false, true)
+                .with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(-265.0, 145.0), 14.5)
+                .with_curbs(false, true)
+                .with_elevation(2.5),
+            TrackWaypoint::new(Vec2::new(-200.0, 195.0), 14.5)
+                .with_curbs(false, true)
+                .with_elevation(2.0),
             // Repsol (Turn 4 downhill heavy braking right)
-            TrackWaypoint::new(Vec2::new(160.0, 220.0), 13.0).with_curbs(false, true),
-            // Seat (Turn 5 slow downhill left hairpin)
-            TrackWaypoint::new(Vec2::new(90.0, 240.0), 12.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(60.0, 210.0), 12.0).with_curbs(true, false),
-            // Wurth (Turn 7 fast uphill left)
-            TrackWaypoint::new(Vec2::new(50.0, 150.0), 13.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-135.0, 185.0), 13.0)
+                .with_curbs(false, true)
+                .with_elevation(1.0),
+            // Seat Approach & Turn 5 (Seat slow downhill left hairpin)
+            TrackWaypoint::new(Vec2::new(-145.0, 145.0), 12.5),
+            TrackWaypoint::new(Vec2::new(-185.0, 120.0), 12.5),
+            TrackWaypoint::new(Vec2::new(-225.0, 115.0), 12.0)
+                .with_curbs(true, false)
+                .with_elevation(-0.5)
+                .with_wall_distances(Some(2.0), Some(3.0)),
+            TrackWaypoint::new(Vec2::new(-220.0, 75.0), 12.0)
+                .with_curbs(true, false)
+                .with_elevation(-0.5)
+                .with_wall_distances(Some(2.0), Some(3.0)),
+            // Turn 6 & 7 (Wurth fast uphill left)
+            TrackWaypoint::new(Vec2::new(-160.0, 45.0), 13.0)
+                .with_curbs(true, false)
+                .with_elevation(1.0),
+            TrackWaypoint::new(Vec2::new(-95.0, 40.0), 13.0)
+                .with_curbs(true, false)
+                .with_elevation(2.0),
+            // Turn 8 (fast uphill right kink)
+            TrackWaypoint::new(Vec2::new(-65.0, 80.0), 13.5)
+                .with_curbs(false, true)
+                .with_elevation(3.0),
             // Campsa (Turn 9 blind uphill right high-speed crest)
-            TrackWaypoint::new(Vec2::new(20.0, 90.0), 13.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-30.0, 110.0), 14.0).with_curbs(false, true),
-            // Back Straight
-            TrackWaypoint::new(Vec2::new(-90.0, 160.0), 14.5),
-            TrackWaypoint::new(Vec2::new(-140.0, 220.0), 14.5),
+            TrackWaypoint::new(Vec2::new(0.0, 160.0), 14.0)
+                .with_curbs(false, true)
+                .with_elevation(4.0),
+            // Back Straight (high-speed downhill drag strip)
+            TrackWaypoint::new(Vec2::new(80.0, 110.0), 14.5).with_elevation(2.5),
+            TrackWaypoint::new(Vec2::new(150.0, 50.0), 13.5).with_elevation(1.5),
             // La Caixa (Turn 10 heavy braking left hairpin)
-            TrackWaypoint::new(Vec2::new(-180.0, 250.0), 12.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-200.0, 210.0), 12.0).with_curbs(true, false),
-            // Banc Sabadell & Europcar (Turns 11-12)
-            TrackWaypoint::new(Vec2::new(-190.0, 150.0), 13.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-160.0, 100.0), 13.5).with_curbs(false, true),
-            // New High-Speed Final Sector (Turns 13-14 sweeping right onto straight, chicane removed!)
-            TrackWaypoint::new(Vec2::new(-110.0, 50.0), 14.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-60.0, 15.0), 14.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(190.0, 30.0), 12.5)
+                .with_curbs(true, false)
+                .with_elevation(0.5),
+            // Turn 11 (sweeping uphill left)
+            TrackWaypoint::new(Vec2::new(210.0, 65.0), 13.0)
+                .with_curbs(true, false)
+                .with_elevation(1.0),
+            // Banc Sabadell (Turn 12 90-degree right)
+            TrackWaypoint::new(Vec2::new(150.0, 95.0), 13.0)
+                .with_curbs(false, true)
+                .with_elevation(1.5),
+            // Europcar (Turn 13 high-speed sweeping right downhill)
+            TrackWaypoint::new(Vec2::new(215.0, 140.0), 14.0)
+                .with_curbs(false, true)
+                .with_elevation(1.0),
+            // Curva Catalunya (Turn 14 final fast sweeping right onto straight)
+            TrackWaypoint::new(Vec2::new(240.0, 30.0), 14.5)
+                .with_curbs(false, true)
+                .with_elevation(0.5),
+            // Main Straight Entry (accelerating past pit wall)
+            TrackWaypoint::new(Vec2::new(200.0, 0.0), 14.0),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
 
         let checkpoints = generate_checkpoints(&spline, 18, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
         Track {
             name: "Circuit de Barcelona-Catalunya".to_string(),
-            description: "Famous Spanish GP test circuit with Curva Renault, Campsa crest, and restored high-speed final sector.".to_string(),
+            description: "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.".to_string(),
             category: TrackCategory::Main,
             spline,
             geometry: TrackGeometry {
