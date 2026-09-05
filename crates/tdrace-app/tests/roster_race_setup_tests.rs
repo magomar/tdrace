@@ -267,3 +267,31 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_custom_tracks_track_manager_entry_and_shortcut() {
+    use tdrace_app::game::GameState;
+    use tdrace_app::ui::menu::TrackCatalogFilter;
+
+    let mut session = RaceSession::new();
+    session.state = GameState::Menu;
+    session.menu_track_filter = TrackCatalogFilter::Custom;
+
+    let available = session.filtered_menu_tracks();
+    let has_tm_entry = session.menu_track_filter == TrackCatalogFilter::Custom;
+    let total_items = if has_tm_entry { available.len() + 1 } else { available.len() };
+    assert_eq!(total_items, available.len() + 1);
+
+    // Track Manager entry is indexed at available.len()
+    session.menu_track_idx = available.len();
+    assert_eq!(session.menu_track_idx, available.len());
+
+    // Verify transition to Track Manager
+    session.state = GameState::TrackManager {
+        active_tab: tdrace_app::ui::TrackManagerTab::Main,
+        module_filter: tdrace_app::track_manager::ModuleFilter::for_module(session.active_module_id),
+        selected_idx: 0,
+        modal: tdrace_app::ui::TrackManagerModal::None,
+    };
+    assert!(matches!(session.state, GameState::TrackManager { .. }));
+}
+

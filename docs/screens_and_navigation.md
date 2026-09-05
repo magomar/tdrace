@@ -168,9 +168,8 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 * **Components**:
   - **Left Column (Circuit Catalog)**:
     - **Filter Pill Bar**: Two neon filter tabs (`[ PRESETS [P] ]`, `[ CUSTOM [C] ]`) with live track counters.
-    - **Circuit List**: Catalog list displaying either official motorsport presets or user-created custom circuits according to the active tab. Custom circuits are distinguished by a golden `CUSTOM CIRCUIT` badge.
-    - **Empty State**: Friendly contextual message when filtering for Custom circuits before any user tracks exist.
-  - **Right Column Top (Circuit Dossier)**: Full vector track layout preview (curbs, surface materials, checkpoints, start/finish direction arrow) + Circuit specs (length, laps, checkpoints, grid slots).
+    - **Circuit List**: Catalog list displaying either official motorsport presets or user-created custom circuits according to the active tab. In the `[ CUSTOM ]` view, a dedicated **Track Manager [T]** entry is included to open the track management and organization hub. Custom circuits are distinguished by a golden `CUSTOM CIRCUIT` badge.
+  - **Right Column Top (Circuit Dossier)**: Full vector track layout preview (curbs, surface materials, checkpoints, start/finish direction arrow) + Circuit specs (length, laps, checkpoints, grid slots). When the **Track Manager [T]** entry is highlighted, this panel renders the Circuit Studio & Workshop overview with quick actions.
   - **Right Column Bottom (Vehicle Specifications)**: Predefined car class tag, vehicle title, handling description, 4 neon performance rating bars (`SPEED`, `ACCEL`, `GRIP`, `DRIFT` with exact percentages), and engineering specs. (Interactive vehicle selection is performed on the subsequent Starting Grid screen).
 * **Navigation & Shortcuts**:
 
@@ -178,8 +177,14 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | :--- | :--- | :--- |
 | `Left` / `Right` / `A` / `D` / `Tab` / Gamepad `D-pad X` | Toggle Filter Tab | Switches catalog filter between `[ PRESETS ]` and `[ CUSTOM ]` |
 | `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Catalog | Scrolls circuit list within the active filter category |
-| `Space` / `Enter` / Gamepad `A` | Select Circuit & Race | Loads highlighted circuit and transitions to `GameState::StartingGrid` |
-| `T` | Toggle Presets / Custom | Directly toggles catalog filter between `Presets` and `Custom` |
+| `Space` / `Enter` / Gamepad `A` | Confirm Selection | If circuit selected: loads circuit -> `GameState::StartingGrid`<br>If Track Manager selected: opens `GameState::TrackManager` |
+| `T` | Open Track Manager | Directly opens Track Manager hub -> `GameState::TrackManager` |
+| `C` | Clone Circuit | Duplicates highlighted preset or custom circuit into custom storage |
+| `E` | Launch CAD Studio | Loads highlighted circuit into Track CAD Editor -> `GameState::TrackEditor` |
+| `F` | Start Championship | Launches Championship mode (e.g. F1 World Championship) |
+| `P` / Gamepad `Y` | Profile Manager | Opens `GameState::ProfileManager` |
+| `K` | Controls Help | Opens `GameState::ControlsHelp(false)` |
+| `Escape` / `G` / Gamepad `B` | Return to Hub | Transitions back to Grand Hub -> `GameState::ModuleSelect` |
 | `C` | Clone Circuit | Duplicates highlighted preset or custom circuit into custom storage |
 | `E` | Launch CAD Studio | Loads highlighted circuit into Track CAD Editor -> `GameState::TrackEditor` |
 | `F` | Start Championship | Launches Championship mode (e.g. F1 World Championship) |
