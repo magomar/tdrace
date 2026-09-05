@@ -226,22 +226,18 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
     session.track_manager = tdrace_app::track_manager::TrackManager::new(&temp_dir);
     session.active_module_id = "classic";
 
-    // 1. Filter cycling verification
-    assert_eq!(session.menu_track_filter, TrackCatalogFilter::All);
-    assert_eq!(session.menu_track_filter.next(), TrackCatalogFilter::Presets);
-    assert_eq!(session.menu_track_filter.next().next(), TrackCatalogFilter::Custom);
-    assert_eq!(session.menu_track_filter.next().next().next(), TrackCatalogFilter::All);
+    // 1. Filter cycling verification: Presets <-> Custom
+    assert_eq!(session.menu_track_filter, TrackCatalogFilter::Presets);
+    assert_eq!(session.menu_track_filter.next(), TrackCatalogFilter::Custom);
+    assert_eq!(session.menu_track_filter.next().next(), TrackCatalogFilter::Presets);
 
     assert_eq!(session.menu_track_filter.prev(), TrackCatalogFilter::Custom);
     assert_eq!(session.menu_track_filter.prev().prev(), TrackCatalogFilter::Presets);
-    assert_eq!(session.menu_track_filter.prev().prev().prev(), TrackCatalogFilter::All);
 
     // Initial state: 10 classic presets, 0 custom
-    let (all_c, preset_c, custom_c) = session.menu_track_filter_counts();
+    let (preset_c, custom_c) = session.menu_track_filter_counts();
     assert_eq!(preset_c, 10);
     assert_eq!(custom_c, 0);
-    assert_eq!(all_c, 10);
-    assert_eq!(all_c, preset_c + custom_c);
 
     // 2. Add a custom circuit
     let mut custom_track = classic_grand_prix();
@@ -250,18 +246,9 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
     let _ = session.track_manager.save_custom_track(&custom_track, Some("my_test_custom_circuit"));
 
     // Counts after adding custom circuit
-    let (all_c, preset_c, custom_c) = session.menu_track_filter_counts();
+    let (preset_c, custom_c) = session.menu_track_filter_counts();
     assert_eq!(preset_c, 10);
     assert_eq!(custom_c, 1);
-    assert_eq!(all_c, 11);
-    assert_eq!(all_c, preset_c + custom_c);
-
-    // Filter: All -> Contains both presets and the custom track
-    session.menu_track_filter = TrackCatalogFilter::All;
-    let filtered_all = session.filtered_menu_tracks();
-    assert_eq!(filtered_all.len(), 11);
-    assert!(filtered_all.iter().any(|t| t.is_user_custom() && t.title() == "My Test Custom Circuit"));
-    assert!(filtered_all.iter().any(|t| t.is_official_preset()));
 
     // Filter: Presets -> Only official presets
     session.menu_track_filter = TrackCatalogFilter::Presets;

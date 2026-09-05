@@ -502,7 +502,7 @@ impl RaceSession {
             show_hall_of_fame: true,
 
             menu_focused_panel: MenuPanelFocus::LeftTracks,
-            menu_track_filter: TrackCatalogFilter::All,
+            menu_track_filter: TrackCatalogFilter::Presets,
             menu_track_idx: 0,
             menu_car_idx: 0,
             starting_grid_focus: StartingGridFocus::LeftSetup,
@@ -667,18 +667,17 @@ impl RaceSession {
     pub fn filtered_menu_tracks(&self) -> Vec<TrackChoice> {
         let all = self.active_module_tracks();
         match self.menu_track_filter {
-            TrackCatalogFilter::All => all,
             TrackCatalogFilter::Presets => all.into_iter().filter(|t| t.is_official_preset()).collect(),
             TrackCatalogFilter::Custom => all.into_iter().filter(|t| t.is_user_custom()).collect(),
         }
     }
 
-    /// Returns counts of (all, presets, custom) tracks for the active motorsport module.
-    pub fn menu_track_filter_counts(&self) -> (usize, usize, usize) {
+    /// Returns counts of (presets, custom) tracks for the active motorsport module.
+    pub fn menu_track_filter_counts(&self) -> (usize, usize) {
         let all = self.active_module_tracks();
         let presets = all.iter().filter(|t| t.is_official_preset()).count();
         let custom = all.iter().filter(|t| t.is_user_custom()).count();
-        (all.len(), presets, custom)
+        (presets, custom)
     }
 
     /// Returns available driver characters for the active motorsport game module.
@@ -2746,14 +2745,10 @@ impl RaceSession {
             }
         }
 
-        // Direct Custom Tracks filter toggle (T key)
+        // Direct Presets / Custom filter toggle (T key)
         if is_key_pressed(KeyCode::T) {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.menu_track_filter = if self.menu_track_filter == TrackCatalogFilter::Custom {
-                TrackCatalogFilter::All
-            } else {
-                TrackCatalogFilter::Custom
-            };
+            self.menu_track_filter = self.menu_track_filter.next();
             self.menu_track_idx = 0;
         }
 

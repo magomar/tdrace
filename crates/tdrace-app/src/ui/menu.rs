@@ -463,11 +463,10 @@ pub enum MenuPanelFocus {
     RightVehicle,
 }
 
-/// Catalog filter tabs in the Circuit Selection Menu.
+/// Catalog filter tabs in the Circuit Selection Menu (Presets or Custom circuits).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TrackCatalogFilter {
     #[default]
-    All,
     Presets,
     Custom,
 }
@@ -475,18 +474,13 @@ pub enum TrackCatalogFilter {
 impl TrackCatalogFilter {
     pub fn next(self) -> Self {
         match self {
-            Self::All => Self::Presets,
             Self::Presets => Self::Custom,
-            Self::Custom => Self::All,
+            Self::Custom => Self::Presets,
         }
     }
 
     pub fn prev(self) -> Self {
-        match self {
-            Self::All => Self::Custom,
-            Self::Presets => Self::All,
-            Self::Custom => Self::Presets,
-        }
+        self.next()
     }
 }
 
@@ -503,7 +497,7 @@ pub fn render_track_select_menu(
     active_profile: &PlayerProfile,
     active_stats: &ProfileCareerStats,
     active_filter: TrackCatalogFilter,
-    filter_counts: (usize, usize, usize),
+    filter_counts: (usize, usize),
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -559,13 +553,12 @@ pub fn render_track_select_menu(
     );
     curr_y += scaler.s(20.0);
 
-    // Filter Tabs: [ ALL (N) ]  [ PRESETS (P) ]  [ CUSTOM (C) ]
+    // Filter Tabs: [ PRESETS (P) ]  [ CUSTOM (C) ]
     let tab_h = scaler.s(25.0);
     let tab_gap = scaler.s(6.0);
     let filter_tabs = [
-        (TrackCatalogFilter::All, format!("ALL [{}]", filter_counts.0)),
-        (TrackCatalogFilter::Presets, format!("PRESETS [{}]", filter_counts.1)),
-        (TrackCatalogFilter::Custom, format!("CUSTOM [{}]", filter_counts.2)),
+        (TrackCatalogFilter::Presets, format!("PRESETS [{}]", filter_counts.0)),
+        (TrackCatalogFilter::Custom, format!("CUSTOM [{}]", filter_counts.1)),
     ];
     let tab_count = filter_tabs.len() as f32;
     let tab_w = (col_w - tab_gap * (tab_count - 1.0)) / tab_count;
