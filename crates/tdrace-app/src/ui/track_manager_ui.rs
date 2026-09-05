@@ -315,6 +315,27 @@ pub fn render_track_manager_screen(
         );
         d_y += scaler.s(15.0);
 
+        // Assigned Categories Badge
+        let active_mods = track_manager.track_promoted_modules(selected_track.track_id());
+        let cats_str = if active_mods.is_empty() {
+            format!("CATEGORIES: {}", module_filter.label())
+        } else {
+            format!("CATEGORIES: {}", active_mods.iter().map(|m| match m.as_str() {
+                "f1" => "FORMULA 1",
+                "rally" => "RALLY",
+                "kart" => "KARTING",
+                _ => "CLASSIC",
+            }).collect::<Vec<_>>().join(" • "))
+        };
+        fonts.draw_ui_bold(
+            &cats_str,
+            pad_x,
+            d_y,
+            scaler.font_s(11.0),
+            Palette::NEON_GOLD,
+        );
+        d_y += scaler.s(15.0);
+
         // File Path
         let file_path_str = if is_preset {
             let mod_id = TrackManager::preset_module(selected_track.track_id()).unwrap_or("classic");
@@ -445,9 +466,9 @@ pub fn render_track_manager_screen(
         scaler.draw_glass_card(pad_x, d_y, desc_w, scaler.s(38.0), expl_bg, expl_border, 1.2);
 
         let expl_text = if selected_track.is_custom() {
-            "Custom circuit. Press [P] to assign modules, [E] to edit in Studio, or [C] to clone."
+            "Custom circuit. Press [P] to assign categories, [E] to edit in Studio, or [C] to clone."
         } else {
-            "Built-in official preset circuit. Press [P] to assign modules or [C] to clone."
+            "Built-in official preset circuit. Press [P] to assign categories or [C] to clone."
         };
         fonts.draw_ui_regular(
             expl_text,
@@ -460,7 +481,7 @@ pub fn render_track_manager_screen(
 
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
-    let action_str = "[Enter] RACE | [Left/Right] SWITCH MODULE | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [P] ASSIGN MODULES | [I] EDIT INFO | [N] NEW CIRCUIT | [Backspace] DELETE | [Esc] BACK";
+    let action_str = "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [P] ASSIGN CATEGORIES | [I] EDIT INFO | [N] NEW CIRCUIT | [Backspace] DELETE | [Esc] BACK";
     fonts.draw_ui_bold_centered(
         action_str,
         sw * 0.5,
@@ -651,14 +672,14 @@ fn render_promotion_modal(
     scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GREEN, 2.2);
 
     fonts.draw_ui_bold(
-        "PROMOTE TRACK TO MOTORSPORT MODULES",
+        "ASSIGN MOTORSPORT CATEGORIES",
         mx + scaler.s(20.0),
         my + scaler.s(32.0),
         scaler.font_s(17.0),
         Palette::NEON_GREEN,
     );
 
-    let prompt_msg = format!("Select target modules for \"{}\" ([Space / 1-4] to toggle):", track_title);
+    let prompt_msg = format!("Select categories for \"{}\" ([Space / 1-4] to toggle):", track_title);
     fonts.draw_ui_regular(
         &prompt_msg,
         mx + scaler.s(20.0),
@@ -751,7 +772,7 @@ fn render_promotion_modal(
 
     let btn_y = my + mh - scaler.s(20.0);
     fonts.draw_ui_bold("[Space / 1-4] TOGGLE", mx + scaler.s(20.0), btn_y, scaler.font_s(13.0), Palette::NEON_GOLD);
-    fonts.draw_ui_bold("[Enter / A] CONFIRM PROMOTION", mx + scaler.s(160.0), btn_y, scaler.font_s(13.0), Palette::NEON_GREEN);
+    fonts.draw_ui_bold("[Enter / A] CONFIRM CATEGORIES", mx + scaler.s(160.0), btn_y, scaler.font_s(13.0), Palette::NEON_GREEN);
     fonts.draw_ui_bold("[Esc / B] CANCEL", mx + mw - scaler.s(110.0), btn_y, scaler.font_s(13.0), Palette::NEON_CYAN);
 }
 

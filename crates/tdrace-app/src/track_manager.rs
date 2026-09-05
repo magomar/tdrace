@@ -447,6 +447,7 @@ impl TrackManager {
     }
 
     /// Returns all circuits for a specific registered game module or draft collection.
+    /// Presets for the module are returned first, followed by custom circuits belonging to that category.
     pub fn module_catalog_tracks(&self, module_id: &str) -> Vec<TrackChoice> {
         if module_id == "drafts" {
             return self.draft_track_choices();
@@ -459,133 +460,20 @@ impl TrackManager {
             .map(|t| t.id.as_str())
             .collect();
 
-        let raw_list = match module_id {
-            "f1" => {
-                let f1_module = F1GameModule::new();
-                let mut list: Vec<TrackChoice> = f1_module
-                    .tracks()
-                    .iter()
-                    .map(|def| Self::track_choice_from_def(def, "f1"))
-                    .collect();
-                for custom in self.module_custom_tracks("f1") {
-                    if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                        if crate::storage::is_dev_mode() {
-                            list[pos] = custom;
-                        }
-                    } else {
-                        list.push(custom);
-                    }
-                }
-                list
-            }
-            "rally" => {
-                let rally_module = RallyGameModule::new();
-                let mut list: Vec<TrackChoice> = rally_module
-                    .tracks()
-                    .iter()
-                    .map(|def| Self::track_choice_from_def(def, "rally"))
-                    .collect();
-                for custom in self.module_custom_tracks("rally") {
-                    if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                        if crate::storage::is_dev_mode() {
-                            list[pos] = custom;
-                        }
-                    } else {
-                        list.push(custom);
-                    }
-                }
-                list
-            }
-            "kart" => {
-                let kart_module = KartGameModule::new();
-                let mut list: Vec<TrackChoice> = kart_module
-                    .tracks()
-                    .iter()
-                    .map(|def| Self::track_choice_from_def(def, "kart"))
-                    .collect();
-                for custom in self.module_custom_tracks("kart") {
-                    if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                        if crate::storage::is_dev_mode() {
-                            list[pos] = custom;
-                        }
-                    } else {
-                        list.push(custom);
-                    }
-                }
-                list
-            }
-            "classic" => {
-                let classic_module = ClassicGameModule::new();
-                let mut list: Vec<TrackChoice> = classic_module
-                    .tracks()
-                    .iter()
-                    .map(|def| Self::track_choice_from_def(def, "classic"))
-                    .collect();
-                for custom in self.module_custom_tracks("classic") {
-                    if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                        if crate::storage::is_dev_mode() {
-                            list[pos] = custom;
-                        }
-                    } else {
-                        list.push(custom);
-                    }
-                }
-                list
-            }
-            _ => {
-                // "all"
-                let classic_module = ClassicGameModule::new();
-                let f1_module = F1GameModule::new();
-                let rally_module = RallyGameModule::new();
-                let kart_module = KartGameModule::new();
+        let mut list: Vec<TrackChoice> = self.preset_track_choices(module_id);
+        let custom_tracks = self.module_custom_tracks(module_id);
 
-                let mut list: Vec<TrackChoice> = Vec::new();
-                let mut seen_ids = std::collections::HashSet::new();
-
-                for def in classic_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "classic"));
-                    }
+        for custom in custom_tracks {
+            if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
+                if crate::storage::is_dev_mode() {
+                    list[pos] = custom;
                 }
-                for def in f1_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "f1"));
-                    }
-                }
-                for def in rally_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "rally"));
-                    }
-                }
-                for def in kart_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "kart"));
-                    }
-                }
-
-                for custom in &self.custom_tracks {
-                    if custom.category == TrackCategory::Main {
-                        let custom_choice = TrackChoice::Custom {
-                            id: custom.id.clone(),
-                            title: custom.title.clone(),
-                            description: custom.description.clone(),
-                            path: custom.file_path.clone(),
-                        };
-                        if let Some(pos) = list.iter().position(|c| c.track_id() == custom.id) {
-                            if crate::storage::is_dev_mode() {
-                                list[pos] = custom_choice;
-                            }
-                        } else {
-                            list.push(custom_choice);
-                        }
-                    }
-                }
-                list
+            } else {
+                list.push(custom);
             }
-        };
+        }
 
-        raw_list
-            .into_iter()
+        list.into_iter()
             .filter(|c| {
                 let tid = c.track_id();
                 !self.is_preset_deleted_for_module(tid, module_id) && !draft_ids.contains(tid)
@@ -887,13 +775,14 @@ impl TrackManager {
         }
 
         // If file already exists and was Main category, keep its category and module when overwriting.
-        // Otherwise, newly created custom tracks land in Drafts by default.
         let existing_path = self.track_path_for_slug(&base_slug);
         if overwrite && existing_path.exists() {
             if let Ok(existing) = Track::load_from_file(&existing_path) {
                 track_to_save.category = existing.category;
-                track_to_save.module_id = existing.module_id;
-                track_to_save.modules = existing.modules;
+                if track_to_save.modules.is_empty() {
+                    track_to_save.module_id = existing.module_id;
+                    track_to_save.modules = existing.modules;
+                }
             }
         } else if overwrite && Self::is_preset_slug(&base_slug) {
             track_to_save.category = TrackCategory::Main;
@@ -903,6 +792,12 @@ impl TrackManager {
                 .unwrap_or_else(|| "classic".to_string());
             track_to_save.module_id = Some(mod_id.clone());
             if track_to_save.modules.is_empty() {
+                track_to_save.modules = vec![mod_id];
+            }
+        } else if track_to_save.category == TrackCategory::Main {
+            if track_to_save.modules.is_empty() {
+                let mod_id = track_to_save.module_id.clone().unwrap_or_else(|| "classic".to_string());
+                track_to_save.module_id = Some(mod_id.clone());
                 track_to_save.modules = vec![mod_id];
             }
         } else {
@@ -944,11 +839,17 @@ impl TrackManager {
         self.save_custom_track_with_options(track, slug, true)
     }
 
-    /// Returns custom tracks promoted to a specific module.
+    /// Returns custom tracks assigned to a specific module.
     pub fn module_custom_tracks(&self, module_id: &str) -> Vec<TrackChoice> {
         let mut choices = Vec::new();
         for custom in &self.custom_tracks {
-            if custom.category == TrackCategory::Main && custom.belongs_to_module(module_id) {
+            if custom.category == TrackCategory::Main
+                && custom.belongs_to_module(module_id)
+                && !self.is_preset_deleted_for_module(&custom.id, module_id)
+            {
+                if !crate::storage::is_dev_mode() && Self::is_preset_slug(&custom.id) {
+                    continue;
+                }
                 choices.push(TrackChoice::Custom {
                     id: custom.id.clone(),
                     title: custom.title.clone(),
@@ -1092,6 +993,26 @@ impl TrackManager {
 
         let _ = self.scan_custom_tracks();
         Ok(())
+    }
+
+    /// Creates a new starter custom circuit assigned to a specific module.
+    pub fn create_new_custom_track_with_template(
+        &mut self,
+        name: &str,
+        description: &str,
+        module_id: &str,
+        shape: tdrace_core::track::presets::TrackShape,
+        direction: tdrace_core::track::presets::RaceDirection,
+    ) -> Result<String, String> {
+        let mut track = tdrace_core::track::presets::create_prototypical_track(module_id, shape, direction);
+        track.name = name.to_string();
+        track.description = description.to_string();
+        track.category = TrackCategory::Main;
+        track.module_id = Some(module_id.to_string());
+        track.modules = vec![module_id.to_string()];
+
+        let slug = Self::sanitize_slug(name);
+        self.save_custom_track_with_options(&track, Some(&slug), false)
     }
 
     /// Creates a new starter draft circuit in the tracks directory.
@@ -1489,14 +1410,38 @@ mod tests {
         let all_tracks = manager.module_catalog_tracks("all");
         assert_eq!(all_tracks.len(), 36);
 
-        // Save a draft
-        let mut draft = classic_grand_prix();
-        draft.name = "My Draft Circuit".to_string();
-        let _ = manager.save_custom_track_with_options(&draft, Some("my_draft"), false);
+        // Save a custom circuit assigned to classic and rally
+        let mut custom_circuit = classic_grand_prix();
+        custom_circuit.name = "Custom Category Circuit".to_string();
+        custom_circuit.modules = vec!["classic".to_string(), "rally".to_string()];
+        let _ = manager.save_custom_track_with_options(&custom_circuit, Some("custom_cat_circuit"), false);
 
-        let drafts = manager.module_catalog_tracks("drafts");
-        assert_eq!(drafts.len(), 1);
-        assert_eq!(drafts[0].title(), "My Draft Circuit");
+        // Classic category: 10 presets first, then 1 custom track
+        let classic_after = manager.module_catalog_tracks("classic");
+        assert_eq!(classic_after.len(), 11);
+        for track in &classic_after[..10] {
+            assert!(track.is_official_preset(), "Presets must appear first in catalog: {}", track.title());
+        }
+        assert!(classic_after[10].is_user_custom(), "Custom circuit must appear after presets");
+        assert_eq!(classic_after[10].title(), "Custom Category Circuit");
+
+        // Rally category: 7 presets first, then 1 custom track
+        let rally_after = manager.module_catalog_tracks("rally");
+        assert_eq!(rally_after.len(), 8);
+        for track in &rally_after[..7] {
+            assert!(track.is_official_preset(), "Presets must appear first in rally: {}", track.title());
+        }
+        assert!(rally_after[7].is_user_custom(), "Custom circuit must appear after presets");
+        assert_eq!(rally_after[7].title(), "Custom Category Circuit");
+
+        // F1 and Kart: Must not contain this custom track
+        let f1_after = manager.module_catalog_tracks("f1");
+        assert_eq!(f1_after.len(), 14);
+        assert!(!f1_after.iter().any(|t| t.title() == "Custom Category Circuit"));
+
+        let kart_after = manager.module_catalog_tracks("kart");
+        assert_eq!(kart_after.len(), 10);
+        assert!(!kart_after.iter().any(|t| t.title() == "Custom Category Circuit"));
 
         let _ = fs::remove_dir_all(&temp_dir);
     }

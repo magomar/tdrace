@@ -65,7 +65,7 @@ use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::presets::classic_grand_prix;
-use tdrace_core::track::Track;
+use tdrace_core::track::{Track, TrackCategory};
 
 use crate::ai::{BotAiDriver, DriverCharacter};
 use crate::audio::{AudioManager, EngineSoundType, MusicTrack, SfxType};
@@ -2999,7 +2999,8 @@ impl RaceSession {
                         .map(|(_, (mod_id, _, _, _))| *mod_id)
                         .collect();
                     if target_mods.is_empty() {
-                        let _ = self.track_manager.demote_track(track_id);
+                        let fallback_mod = module_filter.id().unwrap_or("classic");
+                        let _ = self.track_manager.promote_track_to_modules(track_id, &[fallback_mod]);
                     } else {
                         let _ = self.track_manager.promote_track_to_modules(track_id, &target_mods);
                     }
@@ -3082,8 +3083,17 @@ impl RaceSession {
                         self.enter_track_editor_with_path(track, file_path);
                         return;
                     } else {
-                        // Clone to Drafts (safe sandbox)
-                        if let Ok((cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
+                        // Clone track with active category
+                        if let Ok((mut cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
+                            let active_mod = module_filter.id().unwrap_or(self.active_module_id);
+                            cloned_track.category = TrackCategory::Main;
+                            if cloned_track.modules.is_empty() {
+                                let orig_mod = TrackManager::preset_module(track_choice.track_id()).unwrap_or(active_mod);
+                                cloned_track.module_id = Some(orig_mod.to_string());
+                                cloned_track.modules = vec![orig_mod.to_string()];
+                            }
+                            let _ = cloned_track.save_to_file(std::path::Path::new(&file_path));
+                            let _ = self.track_manager.scan_custom_tracks();
                             let file_stem = std::path::Path::new(&file_path)
                                 .file_stem()
                                 .and_then(|s| s.to_str())
@@ -3274,10 +3284,19 @@ impl RaceSession {
             }
         }
 
-        // 6. Clone Circuit to Drafts and Open in Track Editor (C key)
+        // 6. Clone Circuit and Open in Track Editor (C key)
         if is_key_pressed(KeyCode::C) {
             if let Some(track_choice) = current_list.get(selected_idx) {
-                if let Ok((cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
+                if let Ok((mut cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
+                    let active_mod = module_filter.id().unwrap_or(self.active_module_id);
+                    cloned_track.category = TrackCategory::Main;
+                    if cloned_track.modules.is_empty() {
+                        let orig_mod = TrackManager::preset_module(track_choice.track_id()).unwrap_or(active_mod);
+                        cloned_track.module_id = Some(orig_mod.to_string());
+                        cloned_track.modules = vec![orig_mod.to_string()];
+                    }
+                    let _ = cloned_track.save_to_file(std::path::Path::new(&file_path));
+                    let _ = self.track_manager.scan_custom_tracks();
                     self.audio.play_sfx(SfxType::UiSelect);
                     let file_stem = std::path::Path::new(&file_path)
                         .file_stem()
@@ -3307,8 +3326,9 @@ impl RaceSession {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 let tid = track_choice.track_id().to_string();
                 if ctrl_down {
-                    // Demote Track (Ctrl+P)
-                    let _ = self.track_manager.demote_track(&tid);
+                    // Reset modules to current category
+                    let fallback_mod = module_filter.id().unwrap_or("classic");
+                    let _ = self.track_manager.promote_track_to_modules(&tid, &[fallback_mod]);
                     self.audio.play_sfx(SfxType::UiSelect);
                     let list_len = self.track_manager.filtered_main_track_choices(module_filter).len();
                     if selected_idx >= list_len && list_len > 0 {
@@ -3362,7 +3382,7 @@ impl RaceSession {
             let count = self.track_manager.filtered_main_track_choices(module_filter).len() + 1;
             let name = format!("Custom Track {}", count);
             let desc = format!("Custom circuit for {} module.", effective_module);
-            let _ = self.track_manager.create_new_draft_track_with_template(
+            let _ = self.track_manager.create_new_custom_track_with_template(
                 &name,
                 &desc,
                 effective_module,

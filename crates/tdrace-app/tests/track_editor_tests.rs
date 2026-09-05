@@ -909,9 +909,9 @@ fn test_track_editing_snapshot_regeneration_and_persistence() {
     assert_eq!(session.state, GameState::Menu);
 
     // 4. Verify TrackManager custom tracks metadata and bounds updated
-    let draft_choices = session.track_manager.draft_track_choices();
-    assert_eq!(draft_choices.len(), 1);
-    let choice = &draft_choices[0];
+    let custom_choices = session.track_manager.module_custom_tracks("classic");
+    assert_eq!(custom_choices.len(), 1);
+    let choice = &custom_choices[0];
 
     let reloaded_track = session.track_manager.load_track(choice).expect("Must load updated track");
     assert_eq!(reloaded_track.spline.waypoints.len(), initial_wp_count + 1);

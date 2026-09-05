@@ -393,6 +393,10 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
   - `RALLY`: Dirt courses, dunes, and off-road stages (e.g. Oasis Rally, Outlaw Pass).
   - `KARTING`: Tight technical hairpins, indoor arenas, and sprint tracks (e.g. Kart Arena).
   - `FORMULA 1`: High-speed DRS circuits, chicanes, and grand prix courses.
+* **Circuit Catalog Layout**:
+  - In each discipline category, official built-in presets appear first, followed by custom circuits belonging to that category.
+  - Custom circuits can belong to one or more motorsport disciplines.
+  - New circuits (`[N]`) and cloned circuits (`[C]`) are automatically initialized into the active discipline.
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
@@ -402,11 +406,11 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Select Track | Highlights circuit in catalog list |
 | `Enter` / `Space` / Gamepad `A` | Race Track | Starts race session on the highlighted circuit |
 | `E` / Gamepad `X` | Open in CAD Studio | Opens track in vector spline designer (`GameState::TrackEditor`) |
-| `C` | Clone Circuit | Duplicates selected circuit for current module and opens in CAD Studio |
-| `N` | New Circuit | Creates new prototypical custom track in the active module |
+| `C` | Clone Circuit | Duplicates selected circuit for current discipline and opens in CAD Studio |
+| `N` | New Circuit | Creates new prototypical custom track in the active discipline |
 | `I` | Edit Metadata | Opens modal to edit track name and description |
-| `P` / Gamepad `Y` | Assign Modules | Opens module multi-select modal to assign circuit across modules |
-| `Backspace` / `Delete` | Remove Track | Removes track from the active module |
+| `P` / Gamepad `Y` | Assign Categories | Opens multi-select modal to assign custom circuit across one or more categories |
+| `Backspace` / `Delete` | Remove Track | Removes track from the active category |
 | `Escape` / Gamepad `B` | Return to Menu | Transitions back to `GameState::Menu` |
 
 ---

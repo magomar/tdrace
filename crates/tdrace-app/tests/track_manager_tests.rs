@@ -62,13 +62,13 @@ fn test_draft_creation_and_isolation_from_main_menu() {
     assert_eq!(loaded.description, draft_desc);
     assert_eq!(loaded.category, TrackCategory::Draft);
 
-    // 4. Save a track that originally had TrackCategory::Main (e.g. preset clone)
-    let mut main_preset_copy = classic_grand_prix();
-    main_preset_copy.name = "My Modified GP".to_string();
-    assert_eq!(main_preset_copy.category, TrackCategory::Main);
-    manager.save_custom_track(&main_preset_copy, Some("my_modified_gp")).expect("Save preset copy");
+    // 4. Save a track that has TrackCategory::Draft
+    let mut draft_copy = classic_grand_prix();
+    draft_copy.name = "My Modified GP".to_string();
+    draft_copy.category = TrackCategory::Draft;
+    manager.save_custom_track(&draft_copy, Some("my_modified_gp")).expect("Save draft copy");
 
-    // Must still land in drafts by default!
+    // Must land in drafts
     let draft_tracks_after = manager.draft_track_choices();
     assert_eq!(draft_tracks_after.len(), 2, "Saved custom track must land in Drafts");
     let loaded_modified = manager.load_track(&draft_tracks_after.iter().find(|t| t.title() == "My Modified GP").unwrap()).unwrap();
@@ -144,7 +144,7 @@ fn test_metadata_editing() {
     let mut track = classic_grand_prix();
     track.name = "Original Name".to_string();
     track.description = "Original Desc".to_string();
-    track.category = TrackCategory::Main;
+    track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save");
 
     // Edit Name and Description
@@ -1166,3 +1166,138 @@ fn test_export_canonical_presets_to_git_repo() {
     }
     assert!(total_exported >= 41, "Must export all 41 preset track definitions across modules");
 }
+
+#[test]
+fn test_category_ordering_presets_first_then_custom() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_ordering_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Create custom tracks in classic and rally
+    let _ = manager.create_new_custom_track_with_template(
+        "Alpha Custom Classic",
+        "A fast custom classic track",
+        "classic",
+        tdrace_core::track::presets::TrackShape::Oval,
+        tdrace_core::track::presets::RaceDirection::Right,
+    ).expect("Create classic track");
+
+    let _ = manager.create_new_custom_track_with_template(
+        "Beta Custom Classic",
+        "A technical custom classic track",
+        "classic",
+        tdrace_core::track::presets::TrackShape::HorizontalEight,
+        tdrace_core::track::presets::RaceDirection::Right,
+    ).expect("Create classic track 2");
+
+    let _ = manager.create_new_custom_track_with_template(
+        "Muddy Trail Rally",
+        "Custom rally track",
+        "rally",
+        tdrace_core::track::presets::TrackShape::Oval,
+        tdrace_core::track::presets::RaceDirection::Left,
+    ).expect("Create rally track");
+
+    // Verify Classic category: 10 presets first, then 2 custom tracks
+    let classic_tracks = manager.module_catalog_tracks("classic");
+    assert_eq!(classic_tracks.len(), 12);
+    for (i, track) in classic_tracks.iter().enumerate() {
+        if i < 10 {
+            assert!(track.is_official_preset(), "Track at index {} must be official preset: {}", i, track.title());
+            assert!(!track.is_user_custom());
+        } else {
+            assert!(track.is_user_custom(), "Track at index {} must be user custom: {}", i, track.title());
+        }
+    }
+
+    // Verify Rally category: 7 presets first, then 1 custom track
+    let rally_tracks = manager.module_catalog_tracks("rally");
+    assert_eq!(rally_tracks.len(), 8);
+    for (i, track) in rally_tracks.iter().enumerate() {
+        if i < 7 {
+            assert!(track.is_official_preset(), "Track at index {} must be official preset: {}", i, track.title());
+        } else {
+            assert!(track.is_user_custom(), "Track at index {} must be user custom: {}", i, track.title());
+            assert_eq!(track.title(), "Muddy Trail Rally");
+        }
+    }
+
+    // Verify F1 category: pure presets (14), no custom tracks leaked
+    let f1_tracks = manager.module_catalog_tracks("f1");
+    assert_eq!(f1_tracks.len(), 14);
+    assert!(f1_tracks.iter().all(|t| t.is_official_preset()));
+
+    // Verify Kart category: pure presets (10), no custom tracks leaked
+    let kart_tracks = manager.module_catalog_tracks("kart");
+    assert_eq!(kart_tracks.len(), 10);
+    assert!(kart_tracks.iter().all(|t| t.is_official_preset()));
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_custom_circuit_multi_category_assignment() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_multi_cat_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Create a track assigned to both Classic and Rally
+    let mut hybrid_track = classic_grand_prix();
+    hybrid_track.name = "Hybrid Classic Rally".to_string();
+    hybrid_track.category = TrackCategory::Main;
+    hybrid_track.modules = vec!["classic".to_string(), "rally".to_string()];
+    let _ = manager.save_custom_track_with_options(&hybrid_track, Some("hybrid_circuit"), false)
+        .expect("Save hybrid track");
+
+    // Check presence in Classic: after presets
+    let classic_tracks = manager.module_catalog_tracks("classic");
+    assert_eq!(classic_tracks.len(), 11);
+    assert!(classic_tracks[10].is_user_custom());
+    assert_eq!(classic_tracks[10].title(), "Hybrid Classic Rally");
+
+    // Check presence in Rally: after presets
+    let rally_tracks = manager.module_catalog_tracks("rally");
+    assert_eq!(rally_tracks.len(), 8);
+    assert!(rally_tracks[7].is_user_custom());
+    assert_eq!(rally_tracks[7].title(), "Hybrid Classic Rally");
+
+    // Check absence in F1 and Kart
+    let f1_tracks = manager.module_catalog_tracks("f1");
+    assert!(!f1_tracks.iter().any(|t| t.title() == "Hybrid Classic Rally"));
+
+    let kart_tracks = manager.module_catalog_tracks("kart");
+    assert!(!kart_tracks.iter().any(|t| t.title() == "Hybrid Classic Rally"));
+
+    // Now re-assign to Kart and F1 using promote_track_to_modules
+    manager.promote_track_to_modules("hybrid_circuit", &["kart", "f1"])
+        .expect("Reassign categories");
+
+    // Must now be present in Kart and F1, after presets
+    let kart_after = manager.module_catalog_tracks("kart");
+    assert_eq!(kart_after.len(), 11);
+    assert!(kart_after[10].is_user_custom());
+    assert_eq!(kart_after[10].title(), "Hybrid Classic Rally");
+
+    let f1_after = manager.module_catalog_tracks("f1");
+    assert_eq!(f1_after.len(), 15);
+    assert!(f1_after[14].is_user_custom());
+    assert_eq!(f1_after[14].title(), "Hybrid Classic Rally");
+
+    // Must no longer appear in Classic and Rally
+    let classic_after = manager.module_catalog_tracks("classic");
+    assert_eq!(classic_after.len(), 10);
+    assert!(!classic_after.iter().any(|t| t.title() == "Hybrid Classic Rally"));
+
+    let rally_after = manager.module_catalog_tracks("rally");
+    assert_eq!(rally_after.len(), 7);
+    assert!(!rally_after.iter().any(|t| t.title() == "Hybrid Classic Rally"));
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
