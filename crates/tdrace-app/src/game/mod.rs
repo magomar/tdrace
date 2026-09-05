@@ -2806,7 +2806,7 @@ impl RaceSession {
     /// Handles input and actions for the dedicated Track Manager screen.
     fn update_track_manager(
         &mut self,
-        mut active_tab: TrackManagerTab,
+        active_tab: TrackManagerTab,
         mut module_filter: ModuleFilter,
         mut selected_idx: usize,
         mut modal: TrackManagerModal,
@@ -2902,16 +2902,10 @@ impl RaceSession {
                     || is_key_pressed(KeyCode::Delete)
                 {
                     let tid = track_id.clone();
-                    let target_module = match active_tab {
-                        TrackManagerTab::Main => module_filter.id(),
-                        TrackManagerTab::Drafts => Some("drafts"),
-                    };
+                    let target_module = module_filter.id();
                     let _ = self.track_manager.delete_track_from_module(&tid, target_module);
                     self.audio.play_sfx(SfxType::UiSelect);
-                    let list_len = match active_tab {
-                        TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter).len(),
-                        TrackManagerTab::Drafts => self.track_manager.draft_track_choices().len(),
-                    };
+                    let list_len = self.track_manager.filtered_main_track_choices(module_filter).len();
                     if selected_idx >= list_len && list_len > 0 {
                         selected_idx = list_len - 1;
                     }
@@ -3010,10 +3004,7 @@ impl RaceSession {
                         let _ = self.track_manager.promote_track_to_modules(track_id, &target_mods);
                     }
                     self.audio.play_sfx(SfxType::UiSelect);
-                    let list_len = match active_tab {
-                        TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter).len(),
-                        TrackManagerTab::Drafts => self.track_manager.draft_track_choices().len(),
-                    };
+                    let list_len = self.track_manager.filtered_main_track_choices(module_filter).len();
                     if selected_idx >= list_len && list_len > 0 {
                         selected_idx = list_len - 1;
                     }
@@ -3142,69 +3133,66 @@ impl RaceSession {
         }
 
         // --- NON-MODAL NAVIGATION AND ACTIONS ---
-        // 1. Switch Tabs between Promoted tracks and Drafts (Left/Right arrows, A/D, Tab key, Key 1 / 2)
-        if is_key_pressed(KeyCode::Key1) {
-            if active_tab != TrackManagerTab::Main {
-                self.audio.play_sfx(SfxType::UiMove);
-                active_tab = TrackManagerTab::Main;
-                selected_idx = 0;
-            }
-        }
-        if is_key_pressed(KeyCode::Key2) {
-            if active_tab != TrackManagerTab::Drafts {
-                self.audio.play_sfx(SfxType::UiMove);
-                active_tab = TrackManagerTab::Drafts;
-                selected_idx = 0;
-            }
-        }
+        // 1. Switch Motorsport Module (Left/Right arrows, A/D, Tab, LeftBracket/RightBracket, Gamepad Nav Left/Right)
         if is_key_pressed(KeyCode::Left)
             || is_key_pressed(KeyCode::A)
+            || is_key_pressed(KeyCode::LeftBracket)
             || self.input.gamepad.snapshot.nav_left
         {
-            if active_tab != TrackManagerTab::Main {
-                self.audio.play_sfx(SfxType::UiMove);
-                active_tab = TrackManagerTab::Main;
-                selected_idx = 0;
-            }
+            self.audio.play_sfx(SfxType::UiMove);
+            module_filter = module_filter.prev();
+            selected_idx = 0;
         }
         if is_key_pressed(KeyCode::Right)
             || is_key_pressed(KeyCode::D)
+            || is_key_pressed(KeyCode::RightBracket)
+            || is_key_pressed(KeyCode::Tab)
             || self.input.gamepad.snapshot.nav_right
-        {
-            if active_tab != TrackManagerTab::Drafts {
-                self.audio.play_sfx(SfxType::UiMove);
-                active_tab = TrackManagerTab::Drafts;
-                selected_idx = 0;
-            }
-        }
-        if is_key_pressed(KeyCode::Tab) {
-            self.audio.play_sfx(SfxType::UiMove);
-            active_tab = match active_tab {
-                TrackManagerTab::Main => TrackManagerTab::Drafts,
-                TrackManagerTab::Drafts => TrackManagerTab::Main,
-            };
-            selected_idx = 0;
-        }
-
-        // 2. Switch Module Filter on Main/Promoted Tab (M / F / [ / ] keys)
-        if (is_key_pressed(KeyCode::M) || is_key_pressed(KeyCode::F) || is_key_pressed(KeyCode::RightBracket))
-            && active_tab == TrackManagerTab::Main
         {
             self.audio.play_sfx(SfxType::UiMove);
             module_filter = module_filter.next();
             selected_idx = 0;
         }
-        if is_key_pressed(KeyCode::LeftBracket) && active_tab == TrackManagerTab::Main {
+
+        // Direct module selection via number keys 1-4
+        if is_key_pressed(KeyCode::Key1) {
+            if module_filter != ModuleFilter::Classic {
+                self.audio.play_sfx(SfxType::UiMove);
+                module_filter = ModuleFilter::Classic;
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::Key2) {
+            if module_filter != ModuleFilter::Rally {
+                self.audio.play_sfx(SfxType::UiMove);
+                module_filter = ModuleFilter::Rally;
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::Key3) {
+            if module_filter != ModuleFilter::Kart {
+                self.audio.play_sfx(SfxType::UiMove);
+                module_filter = ModuleFilter::Kart;
+                selected_idx = 0;
+            }
+        }
+        if is_key_pressed(KeyCode::Key4) {
+            if module_filter != ModuleFilter::F1 {
+                self.audio.play_sfx(SfxType::UiMove);
+                module_filter = ModuleFilter::F1;
+                selected_idx = 0;
+            }
+        }
+
+        // Module cycling shortcuts (M / F)
+        if is_key_pressed(KeyCode::M) || is_key_pressed(KeyCode::F) {
             self.audio.play_sfx(SfxType::UiMove);
-            module_filter = module_filter.prev();
+            module_filter = module_filter.next();
             selected_idx = 0;
         }
 
-        // Re-evaluate list after potential tab/filter switch
-        let current_list = match active_tab {
-            TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter),
-            TrackManagerTab::Drafts => self.track_manager.draft_track_choices(),
-        };
+        // Re-evaluate list after potential module switch
+        let current_list = self.track_manager.filtered_main_track_choices(module_filter);
         let list_len = current_list.len();
 
         if list_len > 0 && selected_idx >= list_len {
@@ -3322,10 +3310,7 @@ impl RaceSession {
                     // Demote Track (Ctrl+P)
                     let _ = self.track_manager.demote_track(&tid);
                     self.audio.play_sfx(SfxType::UiSelect);
-                    let list_len = match active_tab {
-                        TrackManagerTab::Main => self.track_manager.filtered_main_track_choices(module_filter).len(),
-                        TrackManagerTab::Drafts => self.track_manager.draft_track_choices().len(),
-                    };
+                    let list_len = self.track_manager.filtered_main_track_choices(module_filter).len();
                     if selected_idx >= list_len && list_len > 0 {
                         selected_idx = list_len - 1;
                     }
@@ -3370,13 +3355,13 @@ impl RaceSession {
             }
         }
 
-        // 8. Create New Draft Track (N key)
+        // 8. Create New Custom Track (N key)
         if is_key_pressed(KeyCode::N) {
             self.audio.play_sfx(SfxType::UiSelect);
-            let count = self.track_manager.draft_track_choices().len() + 1;
             let effective_module = module_filter.id().unwrap_or(self.active_module_id);
-            let name = format!("Draft Track {}", count);
-            let desc = format!("Experimental draft circuit for {} module.", effective_module);
+            let count = self.track_manager.filtered_main_track_choices(module_filter).len() + 1;
+            let name = format!("Custom Track {}", count);
+            let desc = format!("Custom circuit for {} module.", effective_module);
             let _ = self.track_manager.create_new_draft_track_with_template(
                 &name,
                 &desc,
@@ -3384,8 +3369,7 @@ impl RaceSession {
                 tdrace_core::track::presets::TrackShape::Oval,
                 tdrace_core::track::presets::RaceDirection::Right,
             );
-            active_tab = TrackManagerTab::Drafts;
-            selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
+            selected_idx = self.track_manager.filtered_main_track_choices(module_filter).len().saturating_sub(1);
         }
 
         // 9. Edit Metadata (I key)

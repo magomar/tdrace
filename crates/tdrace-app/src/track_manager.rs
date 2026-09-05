@@ -17,16 +17,14 @@ use crate::ui::menu::TrackChoice;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ModuleFilter {
     #[default]
-    All,
     Classic,
-    F1,
     Rally,
     Kart,
+    F1,
 }
 
 impl ModuleFilter {
-    pub const ALL: [Self; 5] = [
-        Self::All,
+    pub const ALL: [Self; 4] = [
         Self::Classic,
         Self::Rally,
         Self::Kart,
@@ -35,7 +33,6 @@ impl ModuleFilter {
 
     pub fn id(&self) -> Option<&'static str> {
         match self {
-            Self::All => None,
             Self::Classic => Some("classic"),
             Self::Rally => Some("rally"),
             Self::Kart => Some("kart"),
@@ -45,7 +42,6 @@ impl ModuleFilter {
 
     pub fn label(&self) -> &'static str {
         match self {
-            Self::All => "ALL MODULES",
             Self::Classic => "CLASSIC",
             Self::Rally => "RALLY",
             Self::Kart => "KARTING",
@@ -55,18 +51,16 @@ impl ModuleFilter {
 
     pub fn next(&self) -> Self {
         match self {
-            Self::All => Self::Classic,
             Self::Classic => Self::Rally,
             Self::Rally => Self::Kart,
             Self::Kart => Self::F1,
-            Self::F1 => Self::All,
+            Self::F1 => Self::Classic,
         }
     }
 
     pub fn prev(&self) -> Self {
         match self {
-            Self::All => Self::F1,
-            Self::Classic => Self::All,
+            Self::Classic => Self::F1,
             Self::Rally => Self::Classic,
             Self::Kart => Self::Rally,
             Self::F1 => Self::Kart,
@@ -313,7 +307,6 @@ impl TrackManager {
     /// Returns Main category tracks filtered by a specific ModuleFilter.
     pub fn filtered_main_track_choices(&self, filter: ModuleFilter) -> Vec<TrackChoice> {
         match filter {
-            ModuleFilter::All => self.main_track_choices(),
             ModuleFilter::Classic => self.module_catalog_tracks("classic"),
             ModuleFilter::F1 => self.module_catalog_tracks("f1"),
             ModuleFilter::Rally => self.module_catalog_tracks("rally"),

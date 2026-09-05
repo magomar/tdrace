@@ -110,7 +110,7 @@ pub fn render_track_manager_screen(
         scaler.s(2.0),
     );
 
-    let subtitle = "Tested & Approved Circuits (Main Menu) vs Experimental Workshop Drafts";
+    let subtitle = "Browse and organize circuits across motorsport modules • [Left / Right] Switch Module";
     fonts.draw_ui_regular_centered(
         subtitle,
         sw * 0.5,
@@ -127,138 +127,63 @@ pub fn render_track_manager_screen(
 
     scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.8);
 
-    // Tab Headers Row
-    let tab_w = (box_w - scaler.s(32.0)) * 0.5;
+    // Motorsport Modules Bar at top of card
     let tab_h = scaler.s(36.0);
     let tab_y = box_y + scaler.s(12.0);
+    let filters = ModuleFilter::ALL;
+    let spacing = scaler.s(8.0);
+    let total_spacing = spacing * (filters.len() as f32 - 1.0);
+    let chip_w = (box_w - scaler.s(24.0) - total_spacing) / filters.len() as f32;
 
-    let main_count = track_manager.main_track_choices().len();
-    let draft_count = track_manager.draft_track_choices().len();
+    for (idx, filter) in filters.iter().enumerate() {
+        let chip_x = box_x + scaler.s(12.0) + idx as f32 * (chip_w + spacing);
+        let is_chip_active = *filter == module_filter;
+        let count = track_manager.filtered_main_track_choices(*filter).len();
 
-    // Tab 1: Main Tracks (Approved)
-    let is_main_active = active_tab == TrackManagerTab::Main;
-    let tab1_bg = if is_main_active {
-        Palette::UI_CARD_BG_HOVER
-    } else {
-        Color::new(0.07, 0.09, 0.14, 0.80)
-    };
-    let tab1_border = if is_main_active {
-        Palette::NEON_GREEN
-    } else {
-        Palette::UI_CARD_BORDER
-    };
-    scaler.draw_glass_card(box_x + scaler.s(12.0), tab_y, tab_w, tab_h, tab1_bg, tab1_border, if is_main_active { 2.0 } else { 1.0 });
+        let chip_border = match filter {
+            ModuleFilter::Classic => Palette::NEON_CYAN,
+            ModuleFilter::Rally => Palette::NEON_GOLD,
+            ModuleFilter::Kart => Palette::NEON_MAGENTA,
+            ModuleFilter::F1 => Palette::RED,
+        };
 
-    let tab1_label = format!("READY TO RACE [{}] [Tab / 1]", main_count);
-    fonts.draw_ui_bold(
-        &tab1_label,
-        box_x + scaler.s(24.0),
-        tab_y + scaler.s(23.0),
-        scaler.font_s(14.0),
-        if is_main_active { Palette::NEON_GREEN } else { Palette::UI_TEXT_MUTED },
-    );
+        let (chip_bg, border_col, text_col) = if is_chip_active {
+            (
+                Color::new(0.14, 0.20, 0.30, 0.95),
+                chip_border,
+                Palette::WHITE,
+            )
+        } else {
+            (
+                Color::new(0.06, 0.08, 0.12, 0.70),
+                Palette::UI_CARD_BORDER,
+                Palette::UI_TEXT_MUTED,
+            )
+        };
 
-    // Tab 2: Drafts & Testing
-    let is_draft_active = active_tab == TrackManagerTab::Drafts;
-    let tab2_bg = if is_draft_active {
-        Palette::UI_CARD_BG_HOVER
-    } else {
-        Color::new(0.07, 0.09, 0.14, 0.80)
-    };
-    let tab2_border = if is_draft_active {
-        Palette::NEON_GOLD
-    } else {
-        Palette::UI_CARD_BORDER
-    };
-    scaler.draw_glass_card(box_x + scaler.s(20.0) + tab_w, tab_y, tab_w, tab_h, tab2_bg, tab2_border, if is_draft_active { 2.0 } else { 1.0 });
+        scaler.draw_glass_card(chip_x, tab_y, chip_w, tab_h, chip_bg, border_col, if is_chip_active { 2.0 } else { 1.0 });
 
-    let tab2_label = format!("DRAFTS & WORKSHOP [{}] [Tab / 2]", draft_count);
-    fonts.draw_ui_bold(
-        &tab2_label,
-        box_x + scaler.s(32.0) + tab_w,
-        tab_y + scaler.s(23.0),
-        scaler.font_s(14.0),
-        if is_draft_active { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
-    );
-
-    // Module Filter Bar below tabs
-    let filter_bar_h = scaler.s(30.0);
-    let filter_bar_y = tab_y + tab_h + scaler.s(8.0);
-
-    if is_main_active {
-        let filters = ModuleFilter::ALL;
-        let spacing = scaler.s(6.0);
-        let total_spacing = spacing * (filters.len() as f32 - 1.0);
-        let chip_w = (box_w - scaler.s(24.0) - total_spacing) / filters.len() as f32;
-
-        for (idx, filter) in filters.iter().enumerate() {
-            let chip_x = box_x + scaler.s(12.0) + idx as f32 * (chip_w + spacing);
-            let is_chip_active = *filter == module_filter;
-            let count = track_manager.filtered_main_track_choices(*filter).len();
-
-            let (chip_bg, chip_border, chip_text_col) = if is_chip_active {
-                (
-                    Color::new(0.12, 0.18, 0.26, 0.90),
-                    match filter {
-                        ModuleFilter::All => Palette::NEON_CYAN,
-                        ModuleFilter::Classic => Palette::NEON_CYAN,
-                        ModuleFilter::F1 => Palette::RED,
-                        ModuleFilter::Rally => Palette::NEON_GOLD,
-                        ModuleFilter::Kart => Palette::NEON_MAGENTA,
-                    },
-                    Palette::WHITE,
-                )
-            } else {
-                (
-                    Color::new(0.06, 0.08, 0.12, 0.70),
-                    Palette::UI_CARD_BORDER,
-                    Palette::UI_TEXT_MUTED,
-                )
-            };
-
-            scaler.draw_glass_card(chip_x, filter_bar_y, chip_w, filter_bar_h, chip_bg, chip_border, if is_chip_active { 1.8 } else { 1.0 });
-
-            let label = format!("{} [{}]", filter.label(), count);
-            fonts.draw_ui_bold_centered(
-                &label,
-                chip_x + chip_w * 0.5,
-                filter_bar_y + scaler.s(19.0),
-                scaler.font_s(11.0),
-                chip_text_col,
-            );
-        }
-    } else {
-        scaler.draw_glass_card(
-            box_x + scaler.s(12.0),
-            filter_bar_y,
-            box_w - scaler.s(24.0),
-            filter_bar_h,
-            Color::new(0.06, 0.08, 0.12, 0.70),
-            Palette::NEON_GOLD,
-            1.0,
-        );
-        fonts.draw_ui_bold(
-            "DRAFTS WORKSHOP • Work-in-progress custom circuits. Press [P] to promote circuit to a module.",
-            box_x + scaler.s(24.0),
-            filter_bar_y + scaler.s(19.0),
-            scaler.font_s(11.5),
-            Palette::NEON_GOLD,
+        let shortcut_num = idx + 1;
+        let label = format!("{} [{}] [{}]", filter.label(), count, shortcut_num);
+        fonts.draw_ui_bold_centered(
+            &label,
+            chip_x + chip_w * 0.5,
+            tab_y + scaler.s(23.0),
+            scaler.font_s(12.0),
+            text_col,
         );
     }
 
-    // Two-Column Content Area below filter bar
-    let content_y = filter_bar_y + filter_bar_h + scaler.s(8.0);
+    // Two-Column Content Area below module bar
+    let content_y = tab_y + tab_h + scaler.s(10.0);
     let content_h = box_h - (content_y - box_y) - scaler.s(12.0);
     let col1_w = (box_w * 0.42).clamp(scaler.s(260.0), scaler.s(420.0));
     let col2_w = box_w - col1_w - scaler.s(36.0);
     let col1_x = box_x + scaler.s(12.0);
     let col2_x = col1_x + col1_w + scaler.s(12.0);
 
-    // Get current tracks for active tab and module filter
-    let tracks_list = match active_tab {
-        TrackManagerTab::Main => track_manager.filtered_main_track_choices(module_filter),
-        TrackManagerTab::Drafts => track_manager.draft_track_choices(),
-    };
+    // Get current tracks for active module filter
+    let tracks_list = track_manager.filtered_main_track_choices(module_filter);
 
     // --- LEFT COLUMN: TRACK LIST ---
     scaler.draw_glass_card(col1_x, content_y, col1_w, content_h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.2);
@@ -269,7 +194,7 @@ pub fn render_track_manager_screen(
 
     if tracks_list.is_empty() {
         fonts.draw_ui_regular(
-            "No tracks in this category.\nPress [N] to create a new draft track!",
+            "No tracks found for this module.\nPress [N] to create a new circuit or [C] to clone a track!",
             col1_x + scaler.s(16.0),
             content_y + scaler.s(40.0),
             scaler.font_s(13.0),
@@ -296,7 +221,7 @@ pub fn render_track_manager_screen(
                 Color::new(0.08, 0.10, 0.16, 0.60)
             };
             let item_border = if is_sel {
-                if is_main_active { Palette::NEON_GREEN } else { Palette::NEON_GOLD }
+                Palette::NEON_GREEN
             } else {
                 Palette::UI_CARD_BORDER
             };
@@ -378,8 +303,6 @@ pub fn render_track_manager_screen(
         let is_preset = selected_track.is_official_preset();
         let (origin_str, origin_col) = if is_preset {
             ("ORIGIN: OFFICIAL PRESET (IMMUTABLE)", Palette::NEON_CYAN)
-        } else if active_tab == TrackManagerTab::Drafts {
-            ("ORIGIN: LOCAL DRAFT CIRCUIT", Palette::NEON_GOLD)
         } else {
             ("ORIGIN: USER CUSTOM CIRCUIT", Color::new(0.35, 0.90, 0.45, 1.0))
         };
@@ -517,26 +440,14 @@ pub fn render_track_manager_screen(
         d_y = grid_y2 + card_h + scaler.s(12.0);
 
         // Category Status Explanation Box
-        let expl_bg = if is_main_active {
-            Color::new(0.08, 0.18, 0.12, 0.70)
-        } else {
-            Color::new(0.18, 0.14, 0.06, 0.70)
-        };
-        let expl_border = if is_main_active {
-            Palette::NEON_GREEN
-        } else {
-            Palette::NEON_GOLD
-        };
+        let expl_bg = Color::new(0.08, 0.18, 0.12, 0.70);
+        let expl_border = Palette::NEON_GREEN;
         scaler.draw_glass_card(pad_x, d_y, desc_w, scaler.s(38.0), expl_bg, expl_border, 1.2);
 
-        let expl_text = if is_main_active {
-            if selected_track.is_custom() {
-                "Approved circuit. Press [P] to assign disciplines or [Ctrl+P] to move to Drafts."
-            } else {
-                "Built-in official preset circuit. Press [P] to assign disciplines or [Ctrl+P] to demote to Drafts."
-            }
+        let expl_text = if selected_track.is_custom() {
+            "Custom circuit. Press [P] to assign modules, [E] to edit in Studio, or [C] to clone."
         } else {
-            "Workshop draft circuit. Test and refine it here, then press [P] to assign disciplines."
+            "Built-in official preset circuit. Press [P] to assign modules or [C] to clone."
         };
         fonts.draw_ui_regular(
             expl_text,
@@ -549,11 +460,7 @@ pub fn render_track_manager_screen(
 
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
-    let action_str = if is_main_active {
-        "[Enter] RACE | [Tab] DRAFTS | [Left/Right] DISCIPLINE | [E] STUDIO | [C] CLONE | [P] ASSIGN DISCIPLINES | [Ctrl+P] DEMOTE | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
-    } else {
-        "[Enter] RACE | [Tab] READY TO RACE | [E] STUDIO | [C] CLONE | [P] ASSIGN DISCIPLINES | [I] EDIT INFO | [N] NEW DRAFT | [Backspace] DELETE | [Esc] BACK"
-    };
+    let action_str = "[Enter] RACE | [Left/Right] SWITCH MODULE | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [P] ASSIGN MODULES | [I] EDIT INFO | [N] NEW CIRCUIT | [Backspace] DELETE | [Esc] BACK";
     fonts.draw_ui_bold_centered(
         action_str,
         sw * 0.5,
@@ -681,7 +588,7 @@ fn render_delete_modal(
     sw: f32,
     sh: f32,
     track_title: &str,
-    active_tab: TrackManagerTab,
+    _active_tab: TrackManagerTab,
     module_filter: ModuleFilter,
 ) {
     // Backdrop dimming
@@ -692,33 +599,16 @@ fn render_delete_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::RED, 2.2);
-
-    let (title_text, confirm_msg) = match active_tab {
-        TrackManagerTab::Drafts => (
-            "DELETE DRAFT CIRCUIT".to_string(),
-            format!("Are you sure you want to permanently delete draft\n\"{}\"?", track_title),
-        ),
-        TrackManagerTab::Main => match module_filter.id() {
-            Some(mod_id) => {
-                let mod_name = match mod_id {
-                    "classic" => "Classic",
-                    "rally" => "Rally Cross",
-                    "kart" => "Karting",
-                    "f1" => "Formula 1",
-                    _ => mod_id,
-                };
-                (
-                    format!("REMOVE FROM {}", mod_name.to_uppercase()),
-                    format!("Are you sure you want to remove\n\"{}\"\nfrom the {} module?", track_title, mod_name),
-                )
-            }
-            None => (
-                "DELETE CIRCUIT (ALL MODULES)".to_string(),
-                format!("Are you sure you want to delete\n\"{}\"\nfrom all modules?", track_title),
-            ),
-        },
+    let mod_id = module_filter.id().unwrap_or("classic");
+    let mod_name = match mod_id {
+        "classic" => "Classic",
+        "rally" => "Rally Cross",
+        "kart" => "Karting",
+        "f1" => "Formula 1",
+        _ => mod_id,
     };
+    let title_text = format!("REMOVE FROM {}", mod_name.to_uppercase());
+    let confirm_msg = format!("Are you sure you want to remove\n\"{}\"\nfrom the {} module?", track_title, mod_name);
 
     fonts.draw_ui_bold(
         &title_text,
@@ -869,70 +759,13 @@ fn render_promotion_modal(
 /// When viewing a specific module, all promoted tracks in that module are categorized as belonging to that module.
 fn resolve_track_module_badge(
     track_choice: &TrackChoice,
-    active_tab: TrackManagerTab,
+    _active_tab: TrackManagerTab,
     module_filter: ModuleFilter,
-    track_manager: &TrackManager,
+    _track_manager: &TrackManager,
     is_dossier: bool,
 ) -> (String, Color) {
-    if active_tab == TrackManagerTab::Drafts {
-        return if is_dossier {
-            ("WORKSHOP DRAFT (Local Circuit)".to_string(), Palette::NEON_GOLD)
-        } else {
-            ("WORKSHOP DRAFT".to_string(), Palette::NEON_GOLD)
-        };
-    }
-
     let is_preset = track_choice.is_official_preset();
-
-    // 1. If currently viewing a specific module (e.g. Classic, Rally, Kart, F1),
-    // ALL promoted tracks in that module are categorized as belonging to that module.
-    let mod_id = if let Some(filtered_mod) = module_filter.id() {
-        filtered_mod
-    } else {
-        // 2. In "ALL MODULES" view, resolve specific module from custom track info or track path/id
-        let custom_info = match track_choice {
-            TrackChoice::Custom { path, id, .. } => {
-                track_manager.custom_tracks.iter().find(|t| &t.file_path == path || &t.id == id)
-            }
-            preset => track_manager.custom_tracks.iter().find(|t| t.id == preset.track_id()),
-        };
-
-        if let Some(info) = custom_info {
-            if let Some(ref m) = info.module_id {
-                match m.as_str() {
-                    "f1" => "f1",
-                    "rally" => "rally",
-                    "kart" => "kart",
-                    _ => "classic",
-                }
-            } else if info.belongs_to_module("f1") {
-                "f1"
-            } else if info.belongs_to_module("rally") {
-                "rally"
-            } else if info.belongs_to_module("kart") {
-                "kart"
-            } else {
-                "classic"
-            }
-        } else if let Some(preset_mod) = TrackManager::preset_module(track_choice.track_id()) {
-            preset_mod
-        } else {
-            match track_choice {
-                TrackChoice::Custom { path, .. } => {
-                    if path.contains("/rally/") || path.starts_with("rally/") {
-                        "rally"
-                    } else if path.contains("/f1/") || path.starts_with("f1/") {
-                        "f1"
-                    } else if path.contains("/kart/") || path.starts_with("kart/") {
-                        "kart"
-                    } else {
-                        "classic"
-                    }
-                }
-                _ => "classic",
-            }
-        }
-    };
+    let mod_id = module_filter.id().unwrap_or("classic");
 
     if is_preset {
         match mod_id {

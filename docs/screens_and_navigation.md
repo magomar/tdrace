@@ -386,26 +386,27 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 ---
 
 ### 3.13. Circuit Hub & Workshop (`GameState::TrackManager`)
-* **Purpose**: Manage approved circuits, create custom tracks from templates, promote user drafts, and edit circuit metadata.
+* **Purpose**: Browse and manage official presets and custom circuits by motorsport discipline, clone tracks, configure module availability, and edit circuit metadata.
 * **State Struct**: `GameState::TrackManager { active_tab: TrackManagerTab, module_filter: ModuleFilter, selected_idx: usize, modal: TrackManagerModal }`
-* **Tabs**:
-  - `Main`: Official validated motorsport circuits.
-  - `Drafts`: User-created and in-progress custom circuits.
-  - `Templates`: Starter circuits (Oval, Technical, Sprint, Rally).
+* **Motorsport Module Tabs**:
+  - `CLASSIC`: Standard arcade & sports car circuits (e.g. Classic Grand Prix, Oval Speedway).
+  - `RALLY`: Dirt courses, dunes, and off-road stages (e.g. Oasis Rally, Outlaw Pass).
+  - `KARTING`: Tight technical hairpins, indoor arenas, and sprint tracks (e.g. Kart Arena).
+  - `FORMULA 1`: High-speed DRS circuits, chicanes, and grand prix courses.
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` | Switch Workshop Tab | Changes active tab between **[Promoted Circuits]** (`Main`) and **[Drafts Workshop]** (`Drafts`) |
+| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` / `Tab` | Switch Module Tab | Cycles active discipline (`Classic` ⇄ `Rally` ⇄ `Karting` ⇄ `Formula 1`) |
+| `1` / `2` / `3` / `4` | Direct Module Jump | Directly selects Classic (1), Rally (2), Karting (3), or Formula 1 (4) |
 | `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Select Track | Highlights circuit in catalog list |
-| `M` / `F` / `[` / `]` | Cycle Module Filter | Filters catalog by motorsport module (`All`, `Classic`, `Rally`, `Kart`, `F1`) on `Main` tab |
-| `1` / `2` / `Tab` | Direct Tab Jump | Directly selects Main (1) or Drafts (2) |
-| `E` | Open in CAD Studio | Opens track spline in `GameState::TrackEditor` |
-| `C` | Clone Circuit | Clones selected circuit into Drafts with "(clone)" suffix and opens in CAD Studio |
-| `N` | New Draft Track | Creates new draft track in Drafts workshop |
+| `Enter` / `Space` / Gamepad `A` | Race Track | Starts race session on the highlighted circuit |
+| `E` / Gamepad `X` | Open in CAD Studio | Opens track in vector spline designer (`GameState::TrackEditor`) |
+| `C` | Clone Circuit | Duplicates selected circuit for current module and opens in CAD Studio |
+| `N` | New Circuit | Creates new prototypical custom track in the active module |
 | `I` | Edit Metadata | Opens modal to edit track name and description |
-| `P` / Gamepad `Y` | Promote / Configure Modules | Opens motorsport module promotion menu to promote track or add/remove modules |
-| `Ctrl+P` | Demote Track | Demotes track from approved catalog back to Drafts workshop |
+| `P` / Gamepad `Y` | Assign Modules | Opens module multi-select modal to assign circuit across modules |
+| `Backspace` / `Delete` | Remove Track | Removes track from the active module |
 | `Escape` / Gamepad `B` | Return to Menu | Transitions back to `GameState::Menu` |
 
 ---

@@ -806,6 +806,8 @@ fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
     assert!(tdrace_app::storage::is_dev_mode());
     let dev_save_result = manager.save_custom_track_with_options(&editor_state.track, Some("classic_grand_prix"), true);
     assert!(dev_save_result.is_ok());
+    let canonical = classic_grand_prix();
+    let _ = manager.save_custom_track_with_options(&canonical, Some("classic_grand_prix"), true);
     std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
 
     let _ = std::fs::remove_dir_all(&temp_dir);

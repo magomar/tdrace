@@ -206,7 +206,7 @@ fn test_race_session_with_track_manager_flow() {
     // 2. Transition to Track Manager
     session.state = GameState::TrackManager {
         active_tab: TrackManagerTab::Main,
-        module_filter: ModuleFilter::All,
+        module_filter: ModuleFilter::Classic,
         selected_idx: 0,
         modal: TrackManagerModal::None,
     };
@@ -259,7 +259,7 @@ fn test_track_manager_confirm_delete_modal() {
 
     session.state = GameState::TrackManager {
         active_tab: TrackManagerTab::Drafts,
-        module_filter: ModuleFilter::All,
+        module_filter: ModuleFilter::Classic,
         selected_idx: 0,
         modal: TrackManagerModal::ConfirmDelete {
             track_id: track_id.clone(),
@@ -283,7 +283,7 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // Initial state: 36 tracks across all modules (10 Classic + 13 unique F1 + 5 unique Rally + 8 famous Kart)
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::All).len(), 36);
+    assert_eq!(manager.main_track_choices().len(), 36);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 14);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 7);
@@ -302,25 +302,23 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     manager.promote_track_to_module("dune_safari", "rally").unwrap();
 
     // Verify filtered counts
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::All).len(), 38);
+    assert_eq!(manager.main_track_choices().len(), 38);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 15);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 8);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 10);
 
     // Verify filter cycle (.next())
-    assert_eq!(ModuleFilter::All.next(), ModuleFilter::Classic);
     assert_eq!(ModuleFilter::Classic.next(), ModuleFilter::Rally);
     assert_eq!(ModuleFilter::Rally.next(), ModuleFilter::Kart);
     assert_eq!(ModuleFilter::Kart.next(), ModuleFilter::F1);
-    assert_eq!(ModuleFilter::F1.next(), ModuleFilter::All);
+    assert_eq!(ModuleFilter::F1.next(), ModuleFilter::Classic);
 
     // Verify filter cycle (.prev())
-    assert_eq!(ModuleFilter::All.prev(), ModuleFilter::F1);
+    assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::F1);
     assert_eq!(ModuleFilter::F1.prev(), ModuleFilter::Kart);
     assert_eq!(ModuleFilter::Kart.prev(), ModuleFilter::Rally);
     assert_eq!(ModuleFilter::Rally.prev(), ModuleFilter::Classic);
-    assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::All);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -374,7 +372,7 @@ fn test_module_subdirectories_and_file_movement() {
 #[test]
 fn test_track_manager_tab_and_module_cycling() {
     let mut active_tab = TrackManagerTab::Main;
-    let mut module_filter = ModuleFilter::All;
+    let mut module_filter = ModuleFilter::Classic;
 
     // Tab toggle
     active_tab = match active_tab {
@@ -391,15 +389,13 @@ fn test_track_manager_tab_and_module_cycling() {
 
     // Module cycling forward (Right arrow)
     module_filter = module_filter.next();
-    assert_eq!(module_filter, ModuleFilter::Classic);
-    module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Rally);
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Kart);
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::F1);
     module_filter = module_filter.next();
-    assert_eq!(module_filter, ModuleFilter::All);
+    assert_eq!(module_filter, ModuleFilter::Classic);
 
     // Module cycling backward (Left arrow)
     module_filter = module_filter.prev();
@@ -410,8 +406,6 @@ fn test_track_manager_tab_and_module_cycling() {
     assert_eq!(module_filter, ModuleFilter::Rally);
     module_filter = module_filter.prev();
     assert_eq!(module_filter, ModuleFilter::Classic);
-    module_filter = module_filter.prev();
-    assert_eq!(module_filter, ModuleFilter::All);
 }
 
 #[test]
@@ -470,7 +464,7 @@ fn test_track_manager_delete_with_backspace() {
     // Confirm deletion modal state with track
     session.state = GameState::TrackManager {
         active_tab: TrackManagerTab::Drafts,
-        module_filter: ModuleFilter::All,
+        module_filter: ModuleFilter::Classic,
         selected_idx: 0,
         modal: TrackManagerModal::ConfirmDelete {
             track_id: track_id.clone(),
@@ -962,7 +956,7 @@ fn test_track_manager_clone_and_open_in_track_editor() {
     // Enter track manager
     session.state = GameState::TrackManager {
         active_tab: TrackManagerTab::Main,
-        module_filter: ModuleFilter::All,
+        module_filter: ModuleFilter::Classic,
         selected_idx: 0,
         modal: TrackManagerModal::None,
     };
