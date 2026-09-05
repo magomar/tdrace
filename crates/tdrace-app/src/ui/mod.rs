@@ -16,7 +16,7 @@ pub use hud::{format_lap_time, render_hud, PersonalBestNotification};
 pub use menu::{
     pause_menu_layout, render_controls_screen, render_pause_menu, render_results_screen,
     render_track_select_menu, CarChoice, GameMode, GameModeChoice, MenuPanelFocus,
-    PauseMenuButtonLayout, RaceResultEntry, TrackChoice,
+    PauseMenuButtonLayout, RaceResultEntry, TrackCatalogFilter, TrackChoice,
 };
 pub use profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use scaler::UiScaler;

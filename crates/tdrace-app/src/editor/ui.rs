@@ -3302,7 +3302,7 @@ fn render_save_modal(
             p.to_string_lossy().to_string()
         }
     } else {
-        format!("tracks/drafts/{}.json", slug)
+        format!("tracks/{}.json", slug)
     };
 
     let info_y = f3_box_y + f3_h + scaler.s(12.0);
@@ -3478,7 +3478,7 @@ fn render_open_modal(
 
     fonts.draw_display_centered("OPEN CIRCUIT", sw * 0.5, my + scaler.s(26.0), scaler.font_s(22.0), Palette::NEON_GOLD);
     fonts.draw_ui_regular_centered(
-        "Browse circuits across all registered motorsport modules and drafts workshop",
+        "Browse circuits across all registered motorsport modules and custom circuits",
         sw * 0.5,
         my + scaler.s(45.0),
         scaler.font_s(11.5),
@@ -3491,7 +3491,7 @@ fn render_open_modal(
         ("F1 GP", "f1"),
         ("RALLY", "rally"),
         ("KARTING", "kart"),
-        ("DRAFTS", "drafts"),
+        ("CUSTOM", "custom"),
     ];
 
     if is_key_pressed(KeyCode::Left) {
@@ -3537,7 +3537,11 @@ fn render_open_modal(
 
     // Get tracks for active tab
     let mod_id = tabs[*selected_tab].1;
-    let tracks = track_manager.module_catalog_tracks(mod_id);
+    let tracks = if mod_id == "custom" {
+        track_manager.custom_track_choices()
+    } else {
+        track_manager.module_catalog_tracks(mod_id)
+    };
 
     let items_per_page = 5;
     let total_pages = ((tracks.len() + items_per_page - 1) / items_per_page).max(1);

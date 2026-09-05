@@ -105,6 +105,9 @@ pub struct CustomTrackInfo {
 
 impl CustomTrackInfo {
     pub fn belongs_to_module(&self, mod_id: &str) -> bool {
+        if mod_id.eq_ignore_ascii_case("all") {
+            return true;
+        }
         if self.modules.iter().any(|m| m.eq_ignore_ascii_case(mod_id)) {
             return true;
         }
@@ -113,7 +116,8 @@ impl CustomTrackInfo {
                 return true;
             }
         }
-        false
+        // If no explicit module restriction is specified, the custom circuit is open to all motorsport modules.
+        self.modules.is_empty() && self.module_id.is_none()
     }
 
     pub fn module_name(&self) -> &'static str {
@@ -317,6 +321,24 @@ impl TrackManager {
         }
     }
 
+    /// Returns all user-created / custom circuits.
+    pub fn custom_track_choices(&self) -> Vec<TrackChoice> {
+        let mut choices = Vec::new();
+
+        for custom in &self.custom_tracks {
+            if !Self::is_preset_slug(&custom.id) && !self.deleted_presets.iter().any(|d| d == &custom.id) {
+                choices.push(TrackChoice::Custom {
+                    id: custom.id.clone(),
+                    title: custom.title.clone(),
+                    description: custom.description.clone(),
+                    path: custom.file_path.clone(),
+                });
+            }
+        }
+
+        choices
+    }
+
     /// Returns Draft / Testing category tracks: Work in progress and experimental prototypes.
     pub fn draft_track_choices(&self) -> Vec<TrackChoice> {
         let mut choices = Vec::new();
@@ -333,6 +355,79 @@ impl TrackManager {
         }
 
         choices
+    }
+
+    /// Returns official built-in preset circuits for a given module.
+    pub fn preset_track_choices(&self, module_id: &str) -> Vec<TrackChoice> {
+        let raw: Vec<TrackChoice> = match module_id {
+            "f1" => {
+                let f1_module = F1GameModule::new();
+                f1_module
+                    .tracks()
+                    .iter()
+                    .map(|def| Self::track_choice_from_def(def, "f1"))
+                    .collect()
+            }
+            "rally" => {
+                let rally_module = RallyGameModule::new();
+                rally_module
+                    .tracks()
+                    .iter()
+                    .map(|def| Self::track_choice_from_def(def, "rally"))
+                    .collect()
+            }
+            "kart" => {
+                let kart_module = KartGameModule::new();
+                kart_module
+                    .tracks()
+                    .iter()
+                    .map(|def| Self::track_choice_from_def(def, "kart"))
+                    .collect()
+            }
+            "all" => {
+                let classic_module = ClassicGameModule::new();
+                let f1_module = F1GameModule::new();
+                let rally_module = RallyGameModule::new();
+                let kart_module = KartGameModule::new();
+
+                let mut list: Vec<TrackChoice> = Vec::new();
+                let mut seen_ids = std::collections::HashSet::new();
+
+                for def in classic_module.tracks() {
+                    if seen_ids.insert(def.id) {
+                        list.push(Self::track_choice_from_def(&def, "classic"));
+                    }
+                }
+                for def in f1_module.tracks() {
+                    if seen_ids.insert(def.id) {
+                        list.push(Self::track_choice_from_def(&def, "f1"));
+                    }
+                }
+                for def in rally_module.tracks() {
+                    if seen_ids.insert(def.id) {
+                        list.push(Self::track_choice_from_def(&def, "rally"));
+                    }
+                }
+                for def in kart_module.tracks() {
+                    if seen_ids.insert(def.id) {
+                        list.push(Self::track_choice_from_def(&def, "kart"));
+                    }
+                }
+                list
+            }
+            _ => {
+                let classic_module = ClassicGameModule::new();
+                classic_module
+                    .tracks()
+                    .iter()
+                    .map(|def| Self::track_choice_from_def(def, "classic"))
+                    .collect()
+            }
+        };
+
+        raw.into_iter()
+            .filter(|choice| !self.is_preset_deleted_for_module(choice.track_id(), module_id))
+            .collect()
     }
 
     /// Returns all available track choices appearing in main menu (Main category tracks).

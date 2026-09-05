@@ -209,3 +209,74 @@ fn test_2d_navigation_focus_and_cursor_state() {
     assert_eq!(session.pause_selected_btn, 1);
 }
 
+#[test]
+fn test_circuit_catalog_filtering_presets_and_custom() {
+    use tdrace_app::ui::menu::TrackCatalogFilter;
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_catalog_filter_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::new();
+    session.track_manager = tdrace_app::track_manager::TrackManager::new(&temp_dir);
+    session.active_module_id = "classic";
+
+    // 1. Filter cycling verification
+    assert_eq!(session.menu_track_filter, TrackCatalogFilter::All);
+    assert_eq!(session.menu_track_filter.next(), TrackCatalogFilter::Presets);
+    assert_eq!(session.menu_track_filter.next().next(), TrackCatalogFilter::Custom);
+    assert_eq!(session.menu_track_filter.next().next().next(), TrackCatalogFilter::All);
+
+    assert_eq!(session.menu_track_filter.prev(), TrackCatalogFilter::Custom);
+    assert_eq!(session.menu_track_filter.prev().prev(), TrackCatalogFilter::Presets);
+    assert_eq!(session.menu_track_filter.prev().prev().prev(), TrackCatalogFilter::All);
+
+    // Initial state: 10 classic presets, 0 custom
+    let (all_c, preset_c, custom_c) = session.menu_track_filter_counts();
+    assert_eq!(preset_c, 10);
+    assert_eq!(custom_c, 0);
+    assert_eq!(all_c, 10);
+    assert_eq!(all_c, preset_c + custom_c);
+
+    // 2. Add a custom circuit
+    let mut custom_track = classic_grand_prix();
+    custom_track.name = "My Test Custom Circuit".to_string();
+    custom_track.description = "A custom track created by user.".to_string();
+    let _ = session.track_manager.save_custom_track(&custom_track, Some("my_test_custom_circuit"));
+
+    // Counts after adding custom circuit
+    let (all_c, preset_c, custom_c) = session.menu_track_filter_counts();
+    assert_eq!(preset_c, 10);
+    assert_eq!(custom_c, 1);
+    assert_eq!(all_c, 11);
+    assert_eq!(all_c, preset_c + custom_c);
+
+    // Filter: All -> Contains both presets and the custom track
+    session.menu_track_filter = TrackCatalogFilter::All;
+    let filtered_all = session.filtered_menu_tracks();
+    assert_eq!(filtered_all.len(), 11);
+    assert!(filtered_all.iter().any(|t| t.is_user_custom() && t.title() == "My Test Custom Circuit"));
+    assert!(filtered_all.iter().any(|t| t.is_official_preset()));
+
+    // Filter: Presets -> Only official presets
+    session.menu_track_filter = TrackCatalogFilter::Presets;
+    let filtered_presets = session.filtered_menu_tracks();
+    assert_eq!(filtered_presets.len(), 10);
+    assert!(filtered_presets.iter().all(|t| t.is_official_preset()));
+    assert!(!filtered_presets.iter().any(|t| t.is_user_custom()));
+
+    // Filter: Custom -> Only custom tracks
+    session.menu_track_filter = TrackCatalogFilter::Custom;
+    let filtered_custom = session.filtered_menu_tracks();
+    assert_eq!(filtered_custom.len(), 1);
+    assert!(filtered_custom.iter().all(|t| t.is_user_custom()));
+    assert_eq!(filtered_custom[0].title(), "My Test Custom Circuit");
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+

@@ -163,25 +163,29 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 ---
 
 ### 3.2. Track & Setup Menu (`GameState::Menu`)
-* **Purpose**: Circuit selection, vector map preview, telemetry analysis, and predefined car specifications.
+* **Purpose**: Circuit selection from a unified catalog containing official presets and user-created custom circuits, vector map preview, telemetry analysis, and predefined car specifications.
 * **State Struct**: `GameState::Menu`
 * **Components**:
-  - **Left Column**: Scrollable list of available circuits + dedicated "Circuit Hub & Workshop" card (`TrackManager`).
+  - **Left Column (Circuit Catalog)**:
+    - **Filter Pill Bar**: Three neon filter tabs (`[ ALL [N] ]`, `[ PRESETS [P] ]`, `[ CUSTOM [C] ]`) with live track counters.
+    - **Circuit List**: Unified list displaying both official motorsport presets and user-created custom circuits. Custom circuits are distinguished by a golden `CUSTOM CIRCUIT` badge.
+    - **Empty State**: Friendly contextual message when filtering for Custom circuits before any user tracks exist.
   - **Right Column Top (Circuit Dossier)**: Full vector track layout preview (curbs, surface materials, checkpoints, start/finish direction arrow) + Circuit specs (length, laps, checkpoints, grid slots).
-  - **Right Column Bottom (Vehicle Specifications)**: Predefined car class tag, vehicle title, handling description, 4 neon performance rating bars (`SPEED`, `ACCEL`, `GRIP`, `DRIFT` with exact percentages), and engineering specs (Drivetrain, Mass, Top Speed, Downforce).
+  - **Right Column Bottom (Vehicle Specifications)**: Predefined car class tag, vehicle title, handling description, 4 neon performance rating bars (`SPEED`, `ACCEL`, `GRIP`, `DRIFT` with exact percentages), and engineering specs. (Interactive vehicle selection is performed on the subsequent Starting Grid screen).
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` | Switch Column Focus | Switches between **Circuit Catalog** (Left Column) and **Vehicle Selection** (Right Column) |
-| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Active Column | When Left Column active: scrolls track list<br>When Right Column active: cycles selectable vehicle models |
-| `Space` / `Enter` / Gamepad `A` | Start Race flow | If circuit selected: loads track -> `GameState::StartingGrid`<br>If Track Manager card selected: -> `GameState::TrackManager` |
-| `T` | Track Manager | Opens `GameState::TrackManager` |
-| `E` | Launch CAD Studio | Loads selected circuit into `GameState::TrackEditor` |
+| `Left` / `Right` / `A` / `D` / `Tab` / Gamepad `D-pad X` | Cycle Filter Tab | Cycles catalog filter between `[ ALL ]`, `[ PRESETS ]`, and `[ CUSTOM ]` |
+| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Catalog | Scrolls circuit list within the active filter category |
+| `Space` / `Enter` / Gamepad `A` | Select Circuit & Race | Loads highlighted circuit and transitions to `GameState::StartingGrid` |
+| `T` | Toggle Custom Filter | Directly toggles catalog filter between `All` and `Custom` |
+| `C` | Clone Circuit | Duplicates highlighted preset or custom circuit into custom storage |
+| `E` | Launch CAD Studio | Loads highlighted circuit into Track CAD Editor -> `GameState::TrackEditor` |
 | `F` | Start Championship | Launches Championship mode (e.g. F1 World Championship) |
 | `P` / Gamepad `Y` | Profile Manager | Opens `GameState::ProfileManager` |
-| `C` / `K` | Controls Help | Opens `GameState::ControlsHelp(false)` |
-| `Escape` / `Tab` / `G` / Gamepad `B` | Return to Hub | Transitions back to `GameState::ModuleSelect` |
+| `K` | Controls Help | Opens `GameState::ControlsHelp(false)` |
+| `Escape` / `G` / Gamepad `B` | Return to Hub | Transitions back to Grand Hub -> `GameState::ModuleSelect` |
 
 ---
 

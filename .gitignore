@@ -27,6 +27,7 @@ htmlcov/
 *.sqlite3
 .beads/*.db
 .beads/*.db-*
+.beads/.*.vacuum-*
 crates/tdrace-app/tracks/
 
 
