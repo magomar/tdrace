@@ -418,7 +418,46 @@ impl TrackManager {
             }
         };
 
-        raw.into_iter()
+        let mut list = raw;
+
+        // In dev mode or when git_tracks_dir exists, discover promoted presets
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+            let scan_modules: Vec<&str> = if module_id == "all" {
+                vec!["classic", "rally", "kart", "f1"]
+            } else {
+                vec![module_id]
+            };
+
+            for mod_name in scan_modules {
+                let mod_dir = git_tracks_dir.join(mod_name);
+                if let Ok(entries) = fs::read_dir(&mod_dir) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.is_file() {
+                            if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                                if ext.eq_ignore_ascii_case("json") {
+                                    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                                        let canonical_stem = Self::canonical_preset_id(stem);
+                                        if !list.iter().any(|c| Self::canonical_preset_id(c.track_id()) == canonical_stem) {
+                                            if let Ok(t) = Track::load_from_file(&path) {
+                                                list.push(TrackChoice::Custom {
+                                                    id: stem.to_string(),
+                                                    title: t.name,
+                                                    description: t.description,
+                                                    path: format!("{}/{}", mod_name, stem),
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        list.into_iter()
             .filter(|choice| !self.is_preset_deleted_for_module(choice.track_id(), module_id))
             .collect()
     }
@@ -483,6 +522,11 @@ impl TrackManager {
 
     /// Checks if a preset or custom circuit is marked as deleted in the target module or globally.
     pub fn is_preset_deleted_for_module(&self, id: &str, module_id: &str) -> bool {
+        let demoted_key = format!("demoted:{}", id);
+        if self.deleted_presets.iter().any(|d| d == &demoted_key) {
+            return true;
+        }
+
         let scoped_key = format!("{}:{}", module_id, id);
         if self.deleted_presets.iter().any(|d| d == &scoped_key) {
             return true;
@@ -525,6 +569,16 @@ impl TrackManager {
             "oasis_rally" => TrackChoice::OasisRally,
             "outlaw_pass" => TrackChoice::OutlawPass,
             custom_id => {
+                // If it exists in git_tracks_dir, load directly from the git preset file
+                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                    for m in ["classic", "rally", "kart", "f1"] {
+                        let git_file = git_tracks_dir.join(m).join(format!("{}.json", custom_id));
+                        if git_file.exists() {
+                            return Track::load_from_file(&git_file)
+                                .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
+                        }
+                    }
+                }
                 let path = self.track_path_for_slug(custom_id).to_string_lossy().to_string();
                 TrackChoice::Custom {
                     id: custom_id.to_string(),
@@ -546,9 +600,22 @@ impl TrackManager {
     /// Loads a `Track` from a `TrackChoice`.
     pub fn load_track(&self, choice: &TrackChoice) -> Result<Track, String> {
         // In normal user mode, official presets are strictly immutable and always load
-        // directly from their canonical procedural generators.
+        // directly from their canonical procedural generators or git preset files.
         if choice.is_official_preset() {
             if !crate::storage::is_dev_mode() {
+                if let Ok(t) = self.load_procedural_preset(choice) {
+                    return Ok(t);
+                }
+                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                    let slug = choice.track_id();
+                    let mod_id = Self::preset_module(slug).unwrap_or("classic");
+                    let git_file = git_tracks_dir.join(mod_id).join(format!("{}.json", slug));
+                    if git_file.exists() {
+                        if let Ok(t) = Track::load_from_file(&git_file) {
+                            return Ok(t);
+                        }
+                    }
+                }
                 return self.load_procedural_preset(choice);
             } else if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
                 let slug = choice.track_id();
@@ -675,7 +742,35 @@ impl TrackManager {
             "oasis_rally" | "outlaw_pass" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "sahara" | "sahara_dunes" => Some("rally"),
             "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" => Some("kart"),
             "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" => Some("f1"),
-            _ => None,
+            _ => {
+                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                    for m in ["classic", "rally", "kart", "f1"] {
+                        if git_tracks_dir.join(m).join(format!("{}.json", slug)).exists() {
+                            return match m {
+                                "classic" => Some("classic"),
+                                "rally" => Some("rally"),
+                                "kart" => Some("kart"),
+                                "f1" => Some("f1"),
+                                _ => None,
+                            };
+                        }
+                    }
+                }
+                None
+            }
+        }
+    }
+
+    /// Returns the canonical preset ID for aliases (e.g. "sahara" -> "sahara_dunes").
+    pub fn canonical_preset_id(slug: &str) -> &str {
+        match slug {
+            "sahara" => "sahara_dunes",
+            "hell" => "hell_rx",
+            "holjes" => "holjes_rx",
+            "lydden" => "lydden_hill",
+            "loheac" => "loheac_rx",
+            "dirt_eight" => "dirt_figure_eight",
+            other => other,
         }
     }
 
@@ -886,6 +981,48 @@ impl TrackManager {
             return self.demote_track(id);
         }
 
+        if Self::is_preset_slug(id) {
+            if !crate::storage::is_dev_mode() {
+                return Err(format!(
+                    "'{}' is an official preset circuit and its categories cannot be modified in standard mode.",
+                    id
+                ));
+            }
+            if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
+                let path_str = self.custom_tracks[pos].file_path.clone();
+                let path = PathBuf::from(&path_str);
+                if let Ok(mut t) = Track::load_from_file(&path) {
+                    t.category = TrackCategory::Main;
+                    t.modules = module_ids.iter().map(|s| s.to_string()).collect();
+                    t.module_id = module_ids.first().map(|s| s.to_string());
+                    let _ = t.save_to_file(&path);
+                }
+            }
+            if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                let mut track = self.load_track_by_slug(id)?;
+                track.category = TrackCategory::Main;
+                track.modules = module_ids.iter().map(|s| s.to_string()).collect();
+                track.module_id = module_ids.first().map(|s| s.to_string());
+                let orig_mod = Self::preset_module(id).unwrap_or("classic");
+                let file_name = format!("{}.json", id);
+                let target_p = git_tracks_dir.join(orig_mod).join(&file_name);
+                let _ = fs::create_dir_all(git_tracks_dir.join(orig_mod));
+                track
+                    .save_to_file(&target_p)
+                    .map_err(|e| format!("Failed to save git preset: {}", e))?;
+
+                self.deleted_presets.retain(|d| {
+                    d != id
+                        && !module_ids.iter().any(|m| d == &format!("{}:{}", m, id))
+                        && d != &format!("demoted:{}", id)
+                });
+                self.save_deleted_presets();
+
+                let _ = self.scan_custom_tracks();
+                return Ok(());
+            }
+        }
+
         let (mut track, target_path) = if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let path_str = self.custom_tracks[pos].file_path.clone();
             let path = PathBuf::from(&path_str);
@@ -934,6 +1071,13 @@ impl TrackManager {
 
     /// Demotes a track from Main category back to Draft / Testing, updating the single file's metadata.
     pub fn demote_track(&mut self, id: &str) -> Result<(), String> {
+        if Self::is_preset_slug(id) && !crate::storage::is_dev_mode() {
+            return Err(format!(
+                "'{}' is an official preset circuit and cannot be demoted in standard mode.",
+                id
+            ));
+        }
+
         let (mut track, target_path) = if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let path_str = self.custom_tracks[pos].file_path.clone();
             let path = PathBuf::from(&path_str);
@@ -972,6 +1116,30 @@ impl TrackManager {
 
     /// Updates the display name and description of a custom track and writes changes to disk.
     pub fn update_track_metadata(&mut self, id: &str, new_title: String, new_description: String) -> Result<(), String> {
+        if Self::is_preset_slug(id) {
+            if !crate::storage::is_dev_mode() {
+                return Err(format!(
+                    "'{}' is an official preset circuit and its metadata cannot be modified in standard mode.",
+                    id
+                ));
+            }
+            if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                let mut track = self.load_track_by_slug(id)?;
+                track.name = new_title;
+                track.description = new_description;
+                let orig_mod = Self::preset_module(id).unwrap_or("classic");
+                let file_name = format!("{}.json", id);
+                let target_p = git_tracks_dir.join(orig_mod).join(&file_name);
+                let _ = fs::create_dir_all(git_tracks_dir.join(orig_mod));
+                track
+                    .save_to_file(&target_p)
+                    .map_err(|e| format!("Failed to save git preset: {}", e))?;
+
+                let _ = self.scan_custom_tracks();
+                return Ok(());
+            }
+        }
+
         let (mut track, target_path) = if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
             let path_str = self.custom_tracks[pos].file_path.clone();
             let path = PathBuf::from(&path_str);
@@ -1124,6 +1292,13 @@ impl TrackManager {
     /// Deletes a track specifically from the active module (or drafts).
     /// If `module_id` is None, deletes the track globally across all modules.
     pub fn delete_track_from_module(&mut self, id: &str, module_id: Option<&str>) -> Result<bool, String> {
+        if Self::is_preset_slug(id) && !crate::storage::is_dev_mode() {
+            return Err(format!(
+                "'{}' is an official preset circuit and cannot be deleted in standard mode.",
+                id
+            ));
+        }
+
         let mut deleted_any = false;
 
         match module_id {
@@ -1187,6 +1362,7 @@ impl TrackManager {
                     deleted_any = true;
                 }
 
+
                 // 2. Mark preset/track deleted specifically for this module
                 let scoped_key = format!("{}:{}", mod_id, id);
                 if !self.deleted_presets.iter().any(|d| d == &scoped_key) {
@@ -1220,6 +1396,7 @@ impl TrackManager {
                     deleted_any = true;
                 }
 
+
                 self.deleted_presets.retain(|d| {
                     if let Some((_, slug)) = d.split_once(':') {
                         slug != id
@@ -1243,6 +1420,106 @@ impl TrackManager {
     /// Deletes a custom or preset track file from disk and records it in deleted presets list globally.
     pub fn delete_custom_track(&mut self, id: &str) -> Result<bool, String> {
         self.delete_track_from_module(id, None)
+    }
+
+    /// Promotes a custom track to an official git-tracked preset (dev mode only).
+    /// Saves the track JSON into `tracks/<module>/<slug>.json` and cleans up the local custom copy.
+    pub fn promote_custom_track_to_git_preset(&mut self, id: &str) -> Result<PathBuf, String> {
+        if !crate::storage::is_dev_mode() {
+            return Err("Promoting tracks to preset circuits is only allowed in developer mode.".to_string());
+        }
+        let git_tracks_dir = crate::storage::resolve_git_tracks_dir()
+            .ok_or_else(|| "Git repository tracks directory not found.".to_string())?;
+
+        let (mut track, local_path) = if let Some(pos) = self.custom_tracks.iter().position(|t| t.id == id) {
+            let p_str = self.custom_tracks[pos].file_path.clone();
+            let p = PathBuf::from(&p_str);
+            let t = Track::load_from_file(&p)
+                .map_err(|e| format!("Failed to load custom track '{}': {}", id, e))?;
+            (t, Some(p))
+        } else {
+            let t = self.load_track_by_slug(id)
+                .map_err(|e| format!("Track '{}' not found: {}", id, e))?;
+            (t, None)
+        };
+
+        let target_module = track.module_id.clone()
+            .or_else(|| track.modules.first().cloned())
+            .unwrap_or_else(|| "classic".to_string());
+
+        track.category = TrackCategory::Main;
+        if track.modules.is_empty() {
+            track.modules = vec![target_module.clone()];
+        }
+        track.module_id = Some(target_module.clone());
+
+        let target_dir = git_tracks_dir.join(&target_module);
+        let _ = fs::create_dir_all(&target_dir);
+        let target_path = target_dir.join(format!("{}.json", id));
+
+        track.save_to_file(&target_path)
+            .map_err(|e| format!("Failed to save git preset '{}': {}", target_path.display(), e))?;
+
+        // Remove local custom copy if exists
+        if let Some(p) = local_path {
+            if p.exists() {
+                let _ = fs::remove_file(p);
+            }
+        }
+        let cand = self.tracks_dir.join(format!("{}.json", id));
+        if cand.exists() {
+            let _ = fs::remove_file(cand);
+        }
+        let draft_cand = self.tracks_dir.join("drafts").join(format!("{}.json", id));
+        if draft_cand.exists() {
+            let _ = fs::remove_file(draft_cand);
+        }
+
+        // Clean up any deleted_presets marker for this track
+        self.deleted_presets.retain(|d| {
+            d != id && !d.ends_with(&format!(":{}", id)) && d != &format!("demoted:{}", id)
+        });
+        self.save_deleted_presets();
+
+        let _ = self.scan_custom_tracks();
+        Ok(target_path)
+    }
+
+    /// Demotes an official preset circuit to a custom draft circuit in local storage (dev mode only).
+    pub fn demote_preset_to_custom_track(&mut self, id: &str) -> Result<PathBuf, String> {
+        if !crate::storage::is_dev_mode() {
+            return Err("Demoting preset circuits is only allowed in developer mode.".to_string());
+        }
+
+        let mut track = self.load_track_by_slug(id)?;
+        track.category = TrackCategory::Draft;
+        track.module_id = None;
+        track.modules.clear();
+
+        let _ = fs::create_dir_all(&self.tracks_dir);
+        let target_path = self.tracks_dir.join(format!("{}.json", id));
+        track.save_to_file(&target_path)
+            .map_err(|e| format!("Failed to save custom circuit: {}", e))?;
+
+        // If it was a git preset, remove it from git_tracks_dir
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+            for m in ["classic", "rally", "kart", "f1"] {
+                let git_file = git_tracks_dir.join(m).join(format!("{}.json", id));
+                if git_file.exists() {
+                    let _ = fs::remove_file(git_file);
+                }
+            }
+        }
+
+        // Add demoted marker to hide procedural preset from preset lists
+        let demoted_marker = format!("demoted:{}", id);
+        if !self.deleted_presets.iter().any(|d| d == &demoted_marker) {
+            self.deleted_presets.push(demoted_marker);
+            self.save_deleted_presets();
+        }
+
+        let _ = self.scan_custom_tracks();
+        Ok(target_path)
     }
 }
 

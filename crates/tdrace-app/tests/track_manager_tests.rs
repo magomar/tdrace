@@ -7,6 +7,21 @@ use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
 use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::TrackCategory;
 
+static DEV_MODE_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+struct DevModeGuard;
+impl DevModeGuard {
+    fn enter() -> Self {
+        std::env::set_var("TDRACE_DEV", "1");
+        Self
+    }
+}
+impl Drop for DevModeGuard {
+    fn drop(&mut self) {
+        std::env::remove_var("TDRACE_DEV");
+    }
+}
+
 #[test]
 fn test_track_categories_initial_presets() {
     let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_presets_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
@@ -482,6 +497,9 @@ fn test_track_manager_delete_with_backspace() {
 
 #[test]
 fn test_predefined_track_demote_promote_and_delete() {
+    let _lock = DEV_MODE_MUTEX.lock().unwrap();
+    std::env::remove_var("TDRACE_DEV");
+
     let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_predefined_ops_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
     let _ = fs::remove_dir_all(&temp_dir);
 
@@ -492,8 +510,16 @@ fn test_predefined_track_demote_promote_and_delete() {
     assert_eq!(init_classic_count, 10);
     assert_eq!(manager.draft_track_choices().len(), 0);
 
-    // 1. Demote built-in preset Classic Grand Prix (P key)
-    manager.demote_track("classic_grand_prix").expect("Must demote predefined track");
+    // In standard mode, modifying presets is strictly prohibited
+    assert!(manager.demote_track("classic_grand_prix").is_err(), "Standard mode must reject demoting presets");
+    assert!(manager.promote_track_to_module("classic_grand_prix", "f1").is_err(), "Standard mode must reject reassigning preset categories");
+    assert!(manager.delete_custom_track("classic_grand_prix").is_err(), "Standard mode must reject deleting presets");
+
+    // Enable developer mode for developer operations via guard
+    let _dev_guard = DevModeGuard::enter();
+
+    // 1. Demote built-in preset Classic Grand Prix (P key in dev mode)
+    manager.demote_track("classic_grand_prix").expect("Must demote predefined track in dev mode");
 
     // Classic Grand Prix must now appear in Drafts and be removed from Main/Classic
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), init_classic_count - 1);
@@ -527,6 +553,7 @@ fn test_predefined_track_demote_promote_and_delete() {
     assert_eq!(manager2.filtered_main_track_choices(ModuleFilter::F1).len(), init_f1_count - 1);
     assert_eq!(manager2.draft_track_choices().len(), 0);
 
+    drop(_dev_guard);
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
@@ -693,6 +720,9 @@ fn test_empty_module_tracks_resilience() {
 
 #[test]
 fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
+    let _lock = DEV_MODE_MUTEX.lock().unwrap();
+    std::env::remove_var("TDRACE_DEV");
+
     use tdrace_core::track::presets::oval_speedway;
 
     let temp_dir = std::env::temp_dir().join(format!(
@@ -726,13 +756,17 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
     assert_eq!(manager.draft_track_choices().len(), 1);
 
     // 3. In Developer Mode (TDRACE_DEV=1), official presets can be modified directly
-    std::env::set_var(tdrace_app::storage::ENV_DEV_MODE, "1");
-    assert!(tdrace_app::storage::is_dev_mode());
+    {
+        let _dev_guard = DevModeGuard::enter();
+        assert!(tdrace_app::storage::is_dev_mode());
 
-    let dev_save = manager.save_custom_track_with_options(&oval, Some("oval_speedway"), true);
-    assert!(dev_save.is_ok(), "Dev mode must allow saving preset");
+        let dev_save = manager.save_custom_track_with_options(&oval, Some("oval_speedway"), true);
+        assert!(dev_save.is_ok(), "Dev mode must allow saving preset");
 
-    std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
+        // Revert preset back to canonical
+        let canonical_oval = oval_speedway();
+        let _ = manager.save_custom_track_with_options(&canonical_oval, Some("oval_speedway"), true);
+    }
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

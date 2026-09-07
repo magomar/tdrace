@@ -3139,6 +3139,120 @@ impl RaceSession {
                 };
                 return;
             }
+            TrackManagerModal::ConfirmPromoteToPreset {
+                ref track_id,
+                ref track_title,
+                ref target_module,
+            } => {
+                if is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::Y)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    let tid = track_id.clone();
+                    if let Ok(_p) = self.track_manager.promote_custom_track_to_git_preset(&tid) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    } else {
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                    let list_len = self.track_manager.filtered_main_track_choices(module_filter).len();
+                    if selected_idx >= list_len && list_len > 0 {
+                        selected_idx = list_len - 1;
+                    }
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                if is_key_pressed(KeyCode::Escape)
+                    || is_key_pressed(KeyCode::N)
+                    || self.input.gamepad.snapshot.btn_back_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                self.state = GameState::TrackManager {
+                    active_tab,
+                    module_filter,
+                    selected_idx,
+                    modal: TrackManagerModal::ConfirmPromoteToPreset {
+                        track_id: track_id.clone(),
+                        track_title: track_title.clone(),
+                        target_module: target_module.clone(),
+                    },
+                };
+                return;
+            }
+            TrackManagerModal::ConfirmDemoteToCustom {
+                ref track_id,
+                ref track_title,
+            } => {
+                if is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::Y)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    let tid = track_id.clone();
+                    if let Ok(_p) = self.track_manager.demote_preset_to_custom_track(&tid) {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    } else {
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                    let list_len = self.track_manager.filtered_main_track_choices(module_filter).len();
+                    if selected_idx >= list_len && list_len > 0 {
+                        selected_idx = list_len - 1;
+                    }
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                if is_key_pressed(KeyCode::Escape)
+                    || is_key_pressed(KeyCode::N)
+                    || self.input.gamepad.snapshot.btn_back_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
+                    };
+                    return;
+                }
+
+                self.state = GameState::TrackManager {
+                    active_tab,
+                    module_filter,
+                    selected_idx,
+                    modal: TrackManagerModal::ConfirmDemoteToCustom {
+                        track_id: track_id.clone(),
+                        track_title: track_title.clone(),
+                    },
+                };
+                return;
+            }
             TrackManagerModal::None => {}
         }
 
@@ -3316,7 +3430,7 @@ impl RaceSession {
             }
         }
 
-        // 7. Promote / Demote Track (P key = Promote / Edit Modules, Ctrl+P = Demote)
+        // 7. Promote / Demote Track (P key = Dev Promote/Demote, Ctrl+P = Assign Categories)
         let ctrl_down = is_key_down(KeyCode::LeftControl)
             || is_key_down(KeyCode::RightControl)
             || is_key_down(KeyCode::LeftSuper)
@@ -3325,52 +3439,82 @@ impl RaceSession {
         if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 let tid = track_choice.track_id().to_string();
+                let is_dev = crate::storage::is_dev_mode();
+                let is_preset = track_choice.is_official_preset();
+
                 if ctrl_down {
-                    // Reset modules to current category
-                    let fallback_mod = module_filter.id().unwrap_or("classic");
-                    let _ = self.track_manager.promote_track_to_modules(&tid, &[fallback_mod]);
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    let list_len = self.track_manager.filtered_main_track_choices(module_filter).len();
-                    if selected_idx >= list_len && list_len > 0 {
-                        selected_idx = list_len - 1;
+                    // Ctrl+P: Assign Categories (Modifying categories a circuit belongs to)
+                    if is_preset && !is_dev {
+                        // Presets are strictly immutable in standard mode!
+                        self.audio.play_sfx(SfxType::UiMove);
+                    } else {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        let mut selected_mask = [false; 4];
+                        let mut has_any_selected = false;
+                        for (idx, (mod_id, _, _, _)) in PROMOTION_MODULES.iter().enumerate() {
+                            if self.track_manager.is_track_in_module(&tid, mod_id) {
+                                selected_mask[idx] = true;
+                                has_any_selected = true;
+                            }
+                        }
+                        let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
+                            "rally" => 1,
+                            "kart" => 2,
+                            "f1" => 3,
+                            _ => 0,
+                        };
+                        if !has_any_selected {
+                            selected_mask[default_mod_idx] = true;
+                        }
+                        let cursor_idx = if has_any_selected {
+                            selected_mask.iter().position(|&b| b).unwrap_or(default_mod_idx)
+                        } else {
+                            default_mod_idx
+                        };
+                        self.state = GameState::TrackManager {
+                            active_tab,
+                            module_filter,
+                            selected_idx,
+                            modal: TrackManagerModal::SelectModulePromotion {
+                                track_id: tid,
+                                track_title: track_choice.title().to_string(),
+                                cursor_idx,
+                                selected_mask,
+                            },
+                        };
+                        return;
                     }
                 } else {
-                    // Promote Track / Configure Modules (P key / Gamepad Y)
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    let mut selected_mask = [false; 4];
-                    let mut has_any_selected = false;
-                    for (idx, (mod_id, _, _, _)) in PROMOTION_MODULES.iter().enumerate() {
-                        if self.track_manager.is_track_in_module(&tid, mod_id) {
-                            selected_mask[idx] = true;
-                            has_any_selected = true;
-                        }
-                    }
-                    let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
-                        "rally" => 1,
-                        "kart" => 2,
-                        "f1" => 3,
-                        _ => 0,
-                    };
-                    if !has_any_selected {
-                        selected_mask[default_mod_idx] = true;
-                    }
-                    let cursor_idx = if has_any_selected {
-                        selected_mask.iter().position(|&b| b).unwrap_or(default_mod_idx)
+                    // Regular P: Promote / Demote
+                    if !is_dev {
+                        self.audio.play_sfx(SfxType::UiMove);
+                    } else if is_preset {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.state = GameState::TrackManager {
+                            active_tab,
+                            module_filter,
+                            selected_idx,
+                            modal: TrackManagerModal::ConfirmDemoteToCustom {
+                                track_id: tid,
+                                track_title: track_choice.title().to_string(),
+                            },
+                        };
+                        return;
                     } else {
-                        default_mod_idx
-                    };
-                    self.state = GameState::TrackManager {
-                        active_tab,
-                        module_filter,
-                        selected_idx,
-                        modal: TrackManagerModal::SelectModulePromotion {
-                            track_id: tid,
-                            track_title: track_choice.title().to_string(),
-                            cursor_idx,
-                            selected_mask,
-                        },
-                    };
-                    return;
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        let target_mod = module_filter.id().unwrap_or(self.active_module_id).to_string();
+                        self.state = GameState::TrackManager {
+                            active_tab,
+                            module_filter,
+                            selected_idx,
+                            modal: TrackManagerModal::ConfirmPromoteToPreset {
+                                track_id: tid,
+                                track_title: track_choice.title().to_string(),
+                                target_module: target_mod,
+                            },
+                        };
+                        return;
+                    }
                 }
             }
         }
@@ -3395,38 +3539,46 @@ impl RaceSession {
         // 9. Edit Metadata (I key)
         if is_key_pressed(KeyCode::I) {
             if let Some(track_choice) = current_list.get(selected_idx) {
-                self.audio.play_sfx(SfxType::UiSelect);
-                while get_char_pressed().is_some() {}
-                self.state = GameState::TrackManager {
-                    active_tab,
-                    module_filter,
-                    selected_idx,
-                    modal: TrackManagerModal::EditMetadata {
-                        track_id: track_choice.track_id().to_string(),
-                        name_input: track_choice.title().to_string(),
-                        desc_input: track_choice.description().to_string(),
-                        active_field: 0,
-                        cursor_timer: 0.0,
-                    },
-                };
-                return;
+                if track_choice.is_official_preset() && !crate::storage::is_dev_mode() {
+                    self.audio.play_sfx(SfxType::UiMove);
+                } else {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    while get_char_pressed().is_some() {}
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::EditMetadata {
+                            track_id: track_choice.track_id().to_string(),
+                            name_input: track_choice.title().to_string(),
+                            desc_input: track_choice.description().to_string(),
+                            active_field: 0,
+                            cursor_timer: 0.0,
+                        },
+                    };
+                    return;
+                }
             }
         }
 
         // 10. Delete Track (Delete / Backspace / X key)
         if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) || is_key_pressed(KeyCode::X) {
             if let Some(track_choice) = current_list.get(selected_idx) {
-                self.audio.play_sfx(SfxType::UiSelect);
-                self.state = GameState::TrackManager {
-                    active_tab,
-                    module_filter,
-                    selected_idx,
-                    modal: TrackManagerModal::ConfirmDelete {
-                        track_id: track_choice.track_id().to_string(),
-                        track_title: track_choice.title().to_string(),
-                    },
-                };
-                return;
+                if track_choice.is_official_preset() && !crate::storage::is_dev_mode() {
+                    self.audio.play_sfx(SfxType::UiMove);
+                } else {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::ConfirmDelete {
+                            track_id: track_choice.track_id().to_string(),
+                            track_title: track_choice.title().to_string(),
+                        },
+                    };
+                    return;
+                }
             }
         }
 

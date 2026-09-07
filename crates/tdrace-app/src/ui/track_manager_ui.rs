@@ -42,6 +42,15 @@ pub enum TrackManagerModal {
         is_dev_mode: bool,
         dev_choice: usize,
     },
+    ConfirmPromoteToPreset {
+        track_id: String,
+        track_title: String,
+        target_module: String,
+    },
+    ConfirmDemoteToCustom {
+        track_id: String,
+        track_title: String,
+    },
 }
 
 /// Available motorsport modules for circuit promotion.
@@ -461,15 +470,39 @@ pub fn render_track_manager_screen(
         d_y = grid_y2 + card_h + scaler.s(12.0);
 
         // Category Status Explanation Box
-        let expl_bg = Color::new(0.08, 0.18, 0.12, 0.70);
-        let expl_border = Palette::NEON_GREEN;
-        scaler.draw_glass_card(pad_x, d_y, desc_w, scaler.s(38.0), expl_bg, expl_border, 1.2);
+        let is_dev = crate::storage::is_dev_mode();
+        let is_preset = selected_track.is_official_preset();
 
-        let expl_text = if selected_track.is_custom() {
-            "Custom circuit. Press [P] to assign categories, [E] to edit in Studio, or [C] to clone."
+        let (expl_text, expl_bg, expl_border) = if is_preset {
+            if is_dev {
+                (
+                    "Built-in official preset circuit. [DEV] [P] Demote to Custom • [Ctrl+P] Categories • [C] Clone",
+                    Color::new(0.20, 0.16, 0.05, 0.80),
+                    Palette::NEON_GOLD,
+                )
+            } else {
+                (
+                    "Built-in official preset circuit (Read-only). Press [E] to Clone & Edit, or [C] to clone.",
+                    Color::new(0.08, 0.12, 0.18, 0.70),
+                    Palette::NEON_CYAN,
+                )
+            }
         } else {
-            "Built-in official preset circuit. Press [P] to assign categories or [C] to clone."
+            if is_dev {
+                (
+                    "Custom circuit. [P] Promote to Preset • [Ctrl+P] Assign Categories • [E] Studio • [C] Clone",
+                    Color::new(0.08, 0.18, 0.12, 0.70),
+                    Palette::NEON_GREEN,
+                )
+            } else {
+                (
+                    "Custom circuit. Press [Ctrl+P] to assign categories, [E] to edit in Studio, or [C] to clone.",
+                    Color::new(0.08, 0.18, 0.12, 0.70),
+                    Palette::NEON_GREEN,
+                )
+            }
         };
+        scaler.draw_glass_card(pad_x, d_y, desc_w, scaler.s(38.0), expl_bg, expl_border, 1.2);
         fonts.draw_ui_regular(
             expl_text,
             pad_x + scaler.s(10.0),
@@ -481,7 +514,25 @@ pub fn render_track_manager_screen(
 
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
-    let action_str = "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [P] ASSIGN CATEGORIES | [I] EDIT INFO | [N] NEW CIRCUIT | [Backspace] DELETE | [Esc] BACK";
+    let is_dev = crate::storage::is_dev_mode();
+    let action_str = if let Some(choice) = tracks_list.get(selected_idx) {
+        if choice.is_official_preset() {
+            if is_dev {
+                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [P] DEMOTE TO CUSTOM | [Ctrl+P] ASSIGN CATEGORIES | [I] EDIT INFO | [Backspace] DELETE | [Esc] BACK"
+            } else {
+                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] CLONE & EDIT | [C] CLONE | [Esc] BACK"
+            }
+        } else {
+            if is_dev {
+                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [P] PROMOTE TO PRESET | [Ctrl+P] ASSIGN CATEGORIES | [I] EDIT INFO | [N] NEW CIRCUIT | [Backspace] DELETE | [Esc] BACK"
+            } else {
+                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [Ctrl+P] ASSIGN CATEGORIES | [I] EDIT INFO | [N] NEW CIRCUIT | [Backspace] DELETE | [Esc] BACK"
+            }
+        }
+    } else {
+        "[Left/Right] SWITCH CATEGORY | [N] NEW CIRCUIT | [Esc] BACK"
+    };
+
     fonts.draw_ui_bold_centered(
         action_str,
         sw * 0.5,
@@ -509,6 +560,19 @@ pub fn render_track_manager_screen(
         }
         TrackManagerModal::CloneBeforeEdit { track_title, is_dev_mode, dev_choice, .. } => {
             render_clone_before_edit_modal(fonts, &scaler, sw, sh, track_title, *is_dev_mode, *dev_choice);
+        }
+        TrackManagerModal::ConfirmPromoteToPreset {
+            track_id,
+            track_title,
+            target_module,
+        } => {
+            render_promote_to_preset_modal(fonts, &scaler, sw, sh, track_id, track_title, target_module);
+        }
+        TrackManagerModal::ConfirmDemoteToCustom {
+            track_id,
+            track_title,
+        } => {
+            render_demote_to_custom_modal(fonts, &scaler, sw, sh, track_id, track_title);
         }
         TrackManagerModal::None => {}
     }
@@ -963,4 +1027,117 @@ fn render_clone_before_edit_modal(
             Palette::UI_TEXT_MUTED,
         );
     }
+}
+
+fn render_promote_to_preset_modal(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    track_id: &str,
+    track_title: &str,
+    target_module: &str,
+) {
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.80));
+
+    let mw = scaler.s(560.0);
+    let mh = scaler.s(260.0);
+    let mx = (sw - mw) * 0.5;
+    let my = (sh - mh) * 0.5;
+
+    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GOLD, 2.2);
+
+    fonts.draw_ui_bold(
+        "DEVELOPER MODE • PROMOTE TO OFFICIAL PRESET",
+        mx + scaler.s(20.0),
+        my + scaler.s(32.0),
+        scaler.font_s(18.0),
+        Palette::NEON_GOLD,
+    );
+
+    let info_msg = format!(
+        "Promote custom circuit \"{}\" to an official git preset?\n\nTarget Module: {}\nOutput File:   tracks/{}/{}.json\n\nThis will move the circuit to repository presets and remove the local copy.",
+        track_title,
+        target_module.to_uppercase(),
+        target_module,
+        track_id,
+    );
+    fonts.draw_ui_regular(
+        &info_msg,
+        mx + scaler.s(20.0),
+        my + scaler.s(62.0),
+        scaler.font_s(13.0),
+        Palette::WHITE,
+    );
+
+    let btn_y = my + mh - scaler.s(24.0);
+    fonts.draw_ui_bold(
+        "[Enter / Space] PROMOTE TO PRESET",
+        mx + scaler.s(20.0),
+        btn_y,
+        scaler.font_s(13.0),
+        Palette::NEON_GOLD,
+    );
+    fonts.draw_ui_bold(
+        "[Esc] CANCEL",
+        mx + mw - scaler.s(90.0),
+        btn_y,
+        scaler.font_s(13.0),
+        Palette::UI_TEXT_MUTED,
+    );
+}
+
+fn render_demote_to_custom_modal(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    track_id: &str,
+    track_title: &str,
+) {
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.80));
+
+    let mw = scaler.s(560.0);
+    let mh = scaler.s(250.0);
+    let mx = (sw - mw) * 0.5;
+    let my = (sh - mh) * 0.5;
+
+    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GOLD, 2.2);
+
+    fonts.draw_ui_bold(
+        "DEVELOPER MODE • DEMOTE TO CUSTOM CIRCUIT",
+        mx + scaler.s(20.0),
+        my + scaler.s(32.0),
+        scaler.font_s(18.0),
+        Palette::NEON_GOLD,
+    );
+
+    let info_msg = format!(
+        "Demote official preset \"{}\" to a local custom circuit?\n\nTarget Output: ~/.local/share/tdrace/tracks/{}.json\n\nThis creates an editable custom draft circuit and hides/removes the preset.",
+        track_title,
+        track_id,
+    );
+    fonts.draw_ui_regular(
+        &info_msg,
+        mx + scaler.s(20.0),
+        my + scaler.s(62.0),
+        scaler.font_s(13.0),
+        Palette::WHITE,
+    );
+
+    let btn_y = my + mh - scaler.s(24.0);
+    fonts.draw_ui_bold(
+        "[Enter / Space] DEMOTE TO CUSTOM",
+        mx + scaler.s(20.0),
+        btn_y,
+        scaler.font_s(13.0),
+        Palette::NEON_GOLD,
+    );
+    fonts.draw_ui_bold(
+        "[Esc] CANCEL",
+        mx + mw - scaler.s(90.0),
+        btn_y,
+        scaler.font_s(13.0),
+        Palette::UI_TEXT_MUTED,
+    );
 }

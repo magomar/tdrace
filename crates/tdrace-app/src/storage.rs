@@ -34,7 +34,10 @@ pub fn resolve_git_tracks_dir() -> Option<PathBuf> {
     ];
     for c in &candidates {
         if c.is_dir() {
-            return c.canonicalize().ok().or_else(|| Some(c.clone()));
+            let parent = c.parent().unwrap_or(std::path::Path::new("."));
+            if parent.join("crates").is_dir() || parent.join(".git").exists() {
+                return c.canonicalize().ok().or_else(|| Some(c.clone()));
+            }
         }
     }
     None

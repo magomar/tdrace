@@ -147,11 +147,12 @@ impl TrackChoice {
             | Self::OasisRally
             | Self::OutlawPass => true,
             Self::Custom { id, path, .. } => {
-                crate::track_manager::TrackManager::is_preset_slug(id)
-                    || path.starts_with("f1/")
-                    || path.starts_with("rally/")
-                    || path.starts_with("kart/")
-                    || path.starts_with("classic/")
+                !std::path::Path::new(path).is_absolute()
+                    && (crate::track_manager::TrackManager::is_preset_slug(id)
+                        || path.starts_with("f1/")
+                        || path.starts_with("rally/")
+                        || path.starts_with("kart/")
+                        || path.starts_with("classic/"))
             }
         }
     }
@@ -174,10 +175,25 @@ pub fn resolve_track_for_menu_with_dir(
 ) -> Option<tdrace_core::track::Track> {
     let dir = tracks_dir.as_ref();
 
-    // If this is an official preset and we are NOT in dev mode, skip disk candidate overrides
-    // and load strictly from official procedural generators.
+    // If this is an official preset and we are NOT in dev mode, skip user disk candidate overrides
+    // and load strictly from official procedural generators or git preset files.
     if choice.is_official_preset() && !crate::storage::is_dev_mode() {
-        return TrackChoice::resolve_procedural_preset(choice);
+        if let Some(t) = TrackChoice::resolve_procedural_preset(choice) {
+            return Some(t);
+        }
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+            let id = choice.track_id();
+            let file_name = format!("{}.json", id);
+            for m in ["classic", "rally", "kart", "f1"] {
+                let p = git_tracks_dir.join(m).join(&file_name);
+                if p.exists() {
+                    if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
+                        return Some(t);
+                    }
+                }
+            }
+        }
+        return None;
     }
 
     // 1. If custom choice and path directly exists on disk, load it
