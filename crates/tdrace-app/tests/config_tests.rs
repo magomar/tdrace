@@ -301,12 +301,12 @@ default_num_bots = 7
     assert!((session.audio.settings.master_volume - 0.80).abs() < 1e-4);
     assert_eq!(session.assist_profile, AssistProfile::Arcade);
 
-    // Switch to F1 (loads config.f1.toml overrides)
-    session.switch_to_f1();
-    assert_eq!(session.active_module_id, "f1");
-    assert_eq!(session.total_laps, 5, "F1 specific laps configured in config.f1.toml");
-    assert_eq!(session.assist_profile, AssistProfile::Pro, "F1 specific assist configured");
-    assert!((session.camera.velocity_lookahead_time - 0.50).abs() < 1e-4, "F1 specific camera lookahead configured");
+    // Switch to GT (loads config.gt.toml or config.f1.toml overrides)
+    session.switch_to_gt();
+    assert_eq!(session.active_module_id, "gt");
+    assert_eq!(session.total_laps, 5, "GT/F1 specific laps configured in config.f1.toml");
+    assert_eq!(session.assist_profile, AssistProfile::Pro, "GT/F1 specific assist configured");
+    assert!((session.camera.velocity_lookahead_time - 0.50).abs() < 1e-4, "GT/F1 specific camera lookahead configured");
 
     // Switch to Rally (loads config.rally.toml overrides)
     session.switch_to_rally();

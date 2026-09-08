@@ -7,19 +7,19 @@ use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 fn test_f1_game_module_drivers_and_preferred_car() {
     let f1 = F1GameModule::new();
     let drivers = f1.drivers();
-    assert_eq!(drivers.len(), 7, "F1 module must have 7 predefined driver characters");
+    assert_eq!(drivers.len(), 7, "GT module must have 7 predefined driver characters");
 
     for d in &drivers {
         assert_eq!(
             d.preferred_car,
-            CarChoice::F1Car,
-            "Driver '{}' must have preferred_car = CarChoice::F1Car",
+            CarChoice::GT3Car,
+            "Driver '{}' must have preferred_car = CarChoice::GT3Car",
             d.name
         );
         assert!(!d.name.is_empty());
         assert!(!d.alias.is_empty());
         assert!(!d.bio.is_empty());
-        assert!(d.stats.speed >= 0.90, "F1 driver speed stat must be top tier");
+        assert!(d.stats.speed >= 0.90, "GT driver speed stat must be top tier");
     }
 }
 
@@ -27,73 +27,73 @@ fn test_f1_game_module_drivers_and_preferred_car() {
 fn test_f1_tracks_predefined_car_and_resolve_predefined_car() {
     let f1 = F1GameModule::new();
     let track_defs = f1.tracks();
-    assert_eq!(track_defs.len(), 14);
+    assert_eq!(track_defs.len(), 15);
 
     for t_def in &track_defs {
         if t_def.id != "classic_grand_prix" {
             let track = (t_def.generator)();
             assert_eq!(
                 track.predefined_car.as_deref(),
-                Some("f1_car"),
-                "Track '{}' must define predefined_car = 'f1_car'",
+                Some("gt3_car"),
+                "Track '{}' must define predefined_car = 'gt3_car'",
                 t_def.id
             );
         }
     }
 
     let mut session = RaceSession::new();
-    session.switch_to_f1();
+    session.switch_to_gt();
 
-    assert_eq!(session.resolve_predefined_car(), CarChoice::F1Car);
-    assert_eq!(session.active_player_car_choice(), CarChoice::F1Car);
+    assert_eq!(session.resolve_predefined_car(), CarChoice::GT3Car);
+    assert_eq!(session.active_player_car_choice(), CarChoice::GT3Car);
 }
 
 #[test]
 fn test_f1_race_roster_car_assignment_and_display_titles() {
     let mut session = RaceSession::new();
-    session.switch_to_f1();
+    session.switch_to_gt();
     session.num_bots = 7;
     session.init_race();
 
     // Roster / Starting grid state
     assert_eq!(session.state, GameState::StartingGrid);
-    assert_eq!(session.grid_participants.len(), 8); // 1 Player + 7 F1 opponents
+    assert_eq!(session.grid_participants.len(), 8); // 1 Player + 7 GT opponents
 
     // Player car title on roster screen
     assert_eq!(
         session.grid_participants[0].car_title,
-        "1050 BHP Hybrid F1 Turbo",
-        "Player car title must be '1050 BHP Hybrid F1 Turbo'"
+        "600 BHP GT3 Evo Racer",
+        "Player car title must be '600 BHP GT3 Evo Racer'"
     );
 
-    // All AI opponents on roster screen must have '1050 BHP Hybrid F1 Turbo'
+    // All AI opponents on roster screen must have '600 BHP GT3 Evo Racer'
     for participant in &session.grid_participants {
         assert_eq!(
             participant.car_title,
-            "1050 BHP Hybrid F1 Turbo",
-            "Participant '{}' must be assigned '1050 BHP Hybrid F1 Turbo' on roster",
+            "600 BHP GT3 Evo Racer",
+            "Participant '{}' must be assigned '600 BHP GT3 Evo Racer' on roster",
             participant.name
         );
     }
 
-    // Verify visual archetype is OpenWheel (exposed wings, halo)
+    // Verify visual archetype is TouringGT (aerodynamic GT body)
     match session.current_visual_type {
-        VehicleVisualType::OpenWheel { front_wing_span, halo, .. } => {
-            assert!(front_wing_span > 1.5);
-            assert!(halo);
+        VehicleVisualType::TouringGT { gt_wing, diffuser, .. } => {
+            assert!(gt_wing);
+            assert!(diffuser);
         }
-        _ => panic!("Expected OpenWheel vehicle visual type in F1 race"),
+        _ => panic!("Expected TouringGT vehicle visual type in GT World Challenge race"),
     }
 
-    // Verify all cars in session are tuned with F1 physics (> 340 km/h top speed, downforce > 3.0)
+    // Verify all cars in session are tuned with GT3 physics (~295 km/h top speed, downforce ~2.1)
     for car in &session.cars {
         assert!(
-            car.config.top_speed_mps * 3.6 > 340.0,
-            "Car top speed must exceed 340 km/h for F1 spec"
+            car.config.top_speed_mps * 3.6 > 280.0,
+            "Car top speed must exceed 280 km/h for GT3 spec"
         );
         assert!(
-            car.config.downforce_coefficient > 3.0,
-            "Car downforce must exceed 3.0 for F1 spec"
+            car.config.downforce_coefficient > 2.0,
+            "Car downforce must exceed 2.0 for GT3 spec"
         );
     }
 }
@@ -101,31 +101,31 @@ fn test_f1_race_roster_car_assignment_and_display_titles() {
 #[test]
 fn test_f1_free_car_selection_toggle_in_roster() {
     let mut session = RaceSession::new();
-    session.switch_to_f1();
+    session.switch_to_gt();
     session.num_bots = 3;
     session.init_race();
 
-    assert_eq!(session.resolve_predefined_car(), CarChoice::F1Car);
-    assert_eq!(session.active_player_car_choice(), CarChoice::F1Car);
+    assert_eq!(session.resolve_predefined_car(), CarChoice::GT3Car);
+    assert_eq!(session.active_player_car_choice(), CarChoice::GT3Car);
 
-    // Enable free car selection and choose a SportsCar for player
+    // Enable free car selection and choose experimental F1Car for player
     session.free_car_selection = true;
-    session.car_choice = CarChoice::SportsCar;
+    session.car_choice = CarChoice::F1Car;
     session.rebuild_roster_participants();
 
-    // Player gets SportsCar
-    assert_eq!(session.active_player_car_choice(), CarChoice::SportsCar);
+    // Player gets experimental F1 car
+    assert_eq!(session.active_player_car_choice(), CarChoice::F1Car);
     assert_eq!(
         session.grid_participants.iter().find(|p| p.is_player).unwrap().car_title,
-        "GT Sports Coupe"
+        "1050 BHP Hybrid F1 Turbo (Experimental)"
     );
 
-    // F1 AI opponents retain their preferred F1 cars
+    // GT AI opponents retain their preferred GT3 cars
     for p in session.grid_participants.iter().filter(|p| !p.is_player) {
         assert_eq!(
             p.car_title,
-            "1050 BHP Hybrid F1 Turbo",
-            "F1 bot '{}' should prefer F1 car even with free car selection enabled",
+            "600 BHP GT3 Evo Racer",
+            "GT bot '{}' should prefer GT3 car even with free car selection enabled",
             p.name
         );
     }
@@ -134,15 +134,15 @@ fn test_f1_free_car_selection_toggle_in_roster() {
 #[test]
 fn test_f1_championship_roster_and_car_assignment() {
     let mut session = RaceSession::new();
-    session.start_f1_championship();
+    session.start_gt_championship();
 
     assert!(session.championship_session.is_some());
-    assert_eq!(session.active_module_id, "f1");
+    assert_eq!(session.active_module_id, "gt");
     assert_eq!(session.cars.len(), 8);
     assert_eq!(session.grid_participants.len(), 8);
 
     for p in &session.grid_participants {
-        assert_eq!(p.car_title, "1050 BHP Hybrid F1 Turbo");
+        assert_eq!(p.car_title, "600 BHP GT3 Evo Racer");
     }
 }
 
@@ -150,11 +150,11 @@ fn test_f1_championship_roster_and_car_assignment() {
 fn test_all_disciplines_car_assignment_integrity() {
     let mut session = RaceSession::new();
 
-    // 1. F1 Module
-    session.switch_to_f1();
-    assert_eq!(session.resolve_predefined_car(), CarChoice::F1Car);
-    assert_eq!(session.active_player_car_choice(), CarChoice::F1Car);
-    assert_eq!(session.active_player_car_choice().title(), "1050 BHP Hybrid F1 Turbo");
+    // 1. GT World Challenge Module
+    session.switch_to_gt();
+    assert_eq!(session.resolve_predefined_car(), CarChoice::GT3Car);
+    assert_eq!(session.active_player_car_choice(), CarChoice::GT3Car);
+    assert_eq!(session.active_player_car_choice().title(), "600 BHP GT3 Evo Racer");
 
     // 2. Rally Module
     session.switch_to_rally();

@@ -43923,9 +43923,10 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 5,
-  "predefined_car": "f1_car",
-  "module_id": "f1",
+  "predefined_car": "gt3_car",
+  "module_id": "gt",
   "modules": [
+    "gt",
     "f1"
   ]
 }

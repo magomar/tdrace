@@ -78,7 +78,8 @@ fn test_resolve_predefined_car_for_track_and_modules() {
     assert_eq!(resolve_predefined_car_for_track(Some(&drift), "classic"), CarChoice::DriftCar);
 
     // Module fallbacks when track is None
-    assert_eq!(resolve_predefined_car_for_track(None, "f1"), CarChoice::F1Car);
+    assert_eq!(resolve_predefined_car_for_track(None, "gt"), CarChoice::GT3Car);
+    assert_eq!(resolve_predefined_car_for_track(None, "f1"), CarChoice::GT3Car);
     assert_eq!(resolve_predefined_car_for_track(None, "rally"), CarChoice::RallyCar);
     assert_eq!(resolve_predefined_car_for_track(None, "kart"), CarChoice::Kart);
     assert_eq!(resolve_predefined_car_for_track(None, "classic"), CarChoice::SportsCar);
