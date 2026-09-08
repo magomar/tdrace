@@ -14,7 +14,7 @@ use crate::ai::{BotProfile, DriverCharacter, DriverStats};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
-/// Sprint Karting Cup Game Module
+/// Karting World Cup Game Module
 pub struct KartGameModule;
 
 impl KartGameModule {
@@ -26,42 +26,46 @@ impl KartGameModule {
         CarConfig::kart()
     }
 
-    /// South Garda Karting (Lonato, Italy): The Mecca of International Karting
+    /// South Garda Karting (Lonato, Italy): CIK-FIA World Championship Circuit
     pub fn track_lonato() -> Track {
         let waypoints = vec![
-            // Main Straight & Start/Finish
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 9.0),
-            TrackWaypoint::new(Vec2::new(50.0, 0.0), 9.0),
-            // Curva del Paddock (Fast sweeping right)
-            TrackWaypoint::new(Vec2::new(90.0, 15.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(115.0, 45.0), 8.5).with_curbs(false, true),
-            // Variante Esse (Left-Right chicane complex)
-            TrackWaypoint::new(Vec2::new(110.0, 80.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(85.0, 105.0), 8.0).with_curbs(false, true),
-            // Approach Straight to Pettine Hairpin
-            TrackWaypoint::new(Vec2::new(85.0, 140.0), 8.5),
-            // Curva del Pettine (Hairpin 1 - tight right)
-            TrackWaypoint::new(Vec2::new(65.0, 175.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(35.0, 175.0), 8.0).with_curbs(false, true),
-            // Infield Downhill Sprint
-            TrackWaypoint::new(Vec2::new(20.0, 140.0), 8.5).with_curbs(false, true),
-            // Variante Nuova (Fast switchback)
-            TrackWaypoint::new(Vec2::new(5.0, 105.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-20.0, 95.0), 8.0).with_curbs(false, true),
-            // Curva dei Meccanici (Paddock Hairpin - technical left)
-            TrackWaypoint::new(Vec2::new(-50.0, 110.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-75.0, 85.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-70.0, 50.0), 8.5).with_curbs(true, false),
-            // Final Acceleration Sweeper onto Main Straight
-            TrackWaypoint::new(Vec2::new(-50.0, 20.0), 9.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-25.0, 0.0), 9.0),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(39.6, -1.0), 9.2),
+            TrackWaypoint::new(Vec2::new(79.4, -5.2), 9.2),
+            TrackWaypoint::new(Vec2::new(119.3, -4.1), 9.2),
+            TrackWaypoint::new(Vec2::new(159.3, -3.4), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(193.1, 12.8), 8.5),
+            TrackWaypoint::new(Vec2::new(231.1, 22.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(262.4, -1.8), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(271.7, -39.5), 8.5),
+            TrackWaypoint::new(Vec2::new(271.0, -79.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(236.2, -85.4), 8.5),
+            TrackWaypoint::new(Vec2::new(196.7, -85.9), 8.5),
+            TrackWaypoint::new(Vec2::new(156.8, -82.2), 8.5),
+            TrackWaypoint::new(Vec2::new(117.0, -78.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(125.2, -54.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(165.1, -57.3), 8.5),
+            TrackWaypoint::new(Vec2::new(205.0, -60.5), 8.5),
+            TrackWaypoint::new(Vec2::new(244.2, -59.9), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(247.2, -23.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(211.1, -19.4), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(174.3, -29.8), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(134.8, -24.5), 8.5),
+            TrackWaypoint::new(Vec2::new(94.8, -26.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(83.3, -57.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(50.1, -68.5), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(10.5, -62.9), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-9.4, -41.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(30.0, -42.3), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(54.5, -27.4), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(16.2, -20.9), 8.0).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
-        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
         Track {
@@ -88,42 +92,48 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
-
-    /// Circuito Internazionale Napoli (Sarno, Italy): The High-Speed Temple of Speed
+    /// Circuito Internazionale Napoli (Sarno, Italy): High-Speed Temple of Speed
     pub fn track_sarno() -> Track {
         let waypoints = vec![
-            // Main Straight & Start/Finish (140m+ high speed straight)
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 9.5),
-            TrackWaypoint::new(Vec2::new(70.0, 0.0), 9.5),
-            TrackWaypoint::new(Vec2::new(140.0, 0.0), 9.5),
-            // Turn 1 & 2 (High speed sweeping right)
-            TrackWaypoint::new(Vec2::new(195.0, 20.0), 9.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(220.0, 60.0), 9.0).with_curbs(false, true),
-            // Turn 3 Sweeper Left
-            TrackWaypoint::new(Vec2::new(200.0, 105.0), 8.5).with_curbs(true, false),
-            // Back Straight Sprint
-            TrackWaypoint::new(Vec2::new(150.0, 130.0), 9.0),
-            TrackWaypoint::new(Vec2::new(90.0, 140.0), 9.0),
-            // Curva Vesuvio (Heavy braking hairpin)
-            TrackWaypoint::new(Vec2::new(35.0, 160.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(0.0, 140.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-10.0, 105.0), 8.5).with_curbs(false, true),
-            // Sarno Technical Esses (Tight left-right flick)
-            TrackWaypoint::new(Vec2::new(-35.0, 80.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-65.0, 95.0), 8.0).with_curbs(false, true),
-            // Double Apex Carousel onto Home Stretch
-            TrackWaypoint::new(Vec2::new(-100.0, 80.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-105.0, 45.0), 8.5).with_curbs(true, false),
-            // Final Chicane & Acceleration
-            TrackWaypoint::new(Vec2::new(-80.0, 15.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-40.0, 0.0), 9.0),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(46.8, 5.3), 9.5),
+            TrackWaypoint::new(Vec2::new(95.0, 8.0), 9.5),
+            TrackWaypoint::new(Vec2::new(142.9, 14.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(190.3, 4.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(196.2, -25.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(149.2, -33.0), 8.5),
+            TrackWaypoint::new(Vec2::new(108.8, -52.3), 8.5),
+            TrackWaypoint::new(Vec2::new(71.0, -57.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(37.9, -33.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(32.2, -80.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(64.0, -111.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(110.6, -103.4), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(151.7, -78.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(199.6, -78.1), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(230.7, -101.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(185.5, -107.6), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(148.5, -129.8), 8.5),
+            TrackWaypoint::new(Vec2::new(104.6, -147.1), 8.5),
+            TrackWaypoint::new(Vec2::new(56.8, -154.5), 8.5),
+            TrackWaypoint::new(Vec2::new(9.1, -163.0), 8.5),
+            TrackWaypoint::new(Vec2::new(-38.7, -170.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-70.8, -137.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-84.2, -91.2), 8.5),
+            TrackWaypoint::new(Vec2::new(-97.7, -44.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-87.4, -0.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-52.0, -7.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-53.6, -53.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-24.0, -87.9), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-11.2, -125.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(6.4, -85.4), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(0.1, -39.9), 9.5),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
-        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let checkpoints = generate_checkpoints(&spline, 24, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
         Track {
@@ -150,42 +160,46 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
-
     /// Karting Genk (Genk, Belgium): Home of Champions
     pub fn track_genk() -> Track {
         let waypoints = vec![
-            // Pit Straight & Start/Finish
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 9.0),
-            TrackWaypoint::new(Vec2::new(60.0, 0.0), 9.0),
-            // Turn 1 Fast Right Kink
-            TrackWaypoint::new(Vec2::new(105.0, 15.0), 9.0).with_curbs(false, true),
-            // The Legendary G-Curve (Multi-apex high-G sweeping right)
-            TrackWaypoint::new(Vec2::new(140.0, 45.0), 9.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(155.0, 85.0), 9.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(140.0, 125.0), 9.0).with_curbs(false, true),
-            // North Loop Transition
-            TrackWaypoint::new(Vec2::new(100.0, 150.0), 8.5).with_curbs(true, false),
-            // Europabocht Hairpin (Heavy braking technical hairpin)
-            TrackWaypoint::new(Vec2::new(55.0, 170.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(20.0, 155.0), 8.0).with_curbs(false, true),
-            // Downhill Infield Straight
-            TrackWaypoint::new(Vec2::new(10.0, 120.0), 8.5),
-            // Chicane des Champions (Left-Right rhythm section)
-            TrackWaypoint::new(Vec2::new(-5.0, 85.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-30.0, 75.0), 8.0).with_curbs(false, true),
-            // Infield Technical Hairpin Complex
-            TrackWaypoint::new(Vec2::new(-60.0, 95.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-85.0, 70.0), 8.5).with_curbs(true, false),
-            // Fast Esses onto Final Sweeper
-            TrackWaypoint::new(Vec2::new(-75.0, 30.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-40.0, 10.0), 9.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(44.3, 4.9), 9.2),
+            TrackWaypoint::new(Vec2::new(89.6, 5.8), 9.2),
+            TrackWaypoint::new(Vec2::new(134.9, 6.7), 9.2),
+            TrackWaypoint::new(Vec2::new(180.3, 7.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(217.1, -13.9), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(197.5, -25.6), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(153.5, -21.1), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(152.0, -63.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(194.9, -71.3), 8.5),
+            TrackWaypoint::new(Vec2::new(239.5, -67.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(257.5, -28.3), 8.5),
+            TrackWaypoint::new(Vec2::new(273.5, 9.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(285.8, -26.3), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(280.7, -71.3), 8.5),
+            TrackWaypoint::new(Vec2::new(275.6, -116.3), 8.5),
+            TrackWaypoint::new(Vec2::new(270.2, -161.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(230.5, -163.7), 8.5),
+            TrackWaypoint::new(Vec2::new(192.9, -167.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(184.0, -125.5), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(227.5, -120.1), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(247.5, -95.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(203.3, -92.2), 8.5),
+            TrackWaypoint::new(Vec2::new(157.9, -92.9), 8.5),
+            TrackWaypoint::new(Vec2::new(113.3, -90.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(119.5, -52.4), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(97.5, -22.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(52.3, -25.4), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(11.6, -45.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-24.2, -37.5), 8.0).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
-        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
         Track {
@@ -212,49 +226,48 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
-
-    /// PF International Kart Circuit (PFI, UK): The Iconic Flyover Crossover Bridge Circuit
+    /// PF International Kart Circuit (PFI, UK): Elevated Flyover Crossover Bridge
     pub fn track_pfi() -> Track {
         let waypoints = vec![
-            // Sector 1: Main Grandstand Straight & Start/Finish (125m smooth straight)
-            TrackWaypoint::new(Vec2::new(-40.0, 0.0), 8.5),
-            TrackWaypoint::new(Vec2::new(10.0, 0.0), 8.5),
-            TrackWaypoint::new(Vec2::new(60.0, 0.0), 8.5),
-            // Turn 1: Fast sweeping left
-            TrackWaypoint::new(Vec2::new(105.0, 15.0), 8.5).with_curbs(true, false),
-            // Bruno's Hairpin (Technical right hairpin)
-            TrackWaypoint::new(Vec2::new(135.0, 50.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(120.0, 85.0), 8.0).with_curbs(false, true),
-            // Bridge Approach Straight heading West
-            TrackWaypoint::new(Vec2::new(75.0, 100.0), 8.5),
-            // PFI Flyover Crossover Bridge (Climbs to 4.0m elevation crossing over the underpass at y: 100)
-            TrackWaypoint::new(Vec2::new(35.0, 100.0), 8.5).with_elevation(2.0),
-            TrackWaypoint::new(Vec2::new(0.0, 100.0), 8.5).with_elevation(4.0),
-            TrackWaypoint::new(Vec2::new(-35.0, 100.0), 8.5).with_elevation(2.0),
-            // Descent into North Infield
-            TrackWaypoint::new(Vec2::new(-70.0, 115.0), 8.0).with_curbs(false, true),
-            // Far North Loop Hairpins (Flowing technical loop)
-            TrackWaypoint::new(Vec2::new(-95.0, 150.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-75.0, 180.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-40.0, 175.0), 8.0).with_curbs(true, false),
-            // North Straight heading South towards Underpass
-            TrackWaypoint::new(Vec2::new(-20.0, 145.0), 8.5),
-            // Lower Underpass (Crosses beneath the flyover bridge at (0.0, 100.0) with elevation 0.0)
-            TrackWaypoint::new(Vec2::new(0.0, 100.0), 8.5),
-            // Underpass Exit into Infield Section
-            TrackWaypoint::new(Vec2::new(15.0, 65.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-10.0, 45.0), 8.5).with_curbs(true, false),
-            // Smooth Final Sweeping Turn onto Main Straight
-            TrackWaypoint::new(Vec2::new(-50.0, 35.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-75.0, 18.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-65.0, 0.0), 8.5),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 9.2),
+            TrackWaypoint::new(Vec2::new(43.2, 0.5), 9.2),
+            TrackWaypoint::new(Vec2::new(86.4, 0.2), 8.5),
+            TrackWaypoint::new(Vec2::new(125.6, -12.1), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(157.9, -36.9), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(200.8, -37.9), 8.5),
+            TrackWaypoint::new(Vec2::new(240.7, -51.4), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(248.5, -16.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(211.4, -0.4), 8.0).with_elevation(2.2).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(180.1, -19.3), 8.0).with_elevation(4.2).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(181.2, -56.4), 8.0).with_elevation(4.2).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(138.1, -58.8), 8.5).with_elevation(2.2),
+            TrackWaypoint::new(Vec2::new(94.9, -59.5), 8.5),
+            TrackWaypoint::new(Vec2::new(51.7, -59.9), 8.5),
+            TrackWaypoint::new(Vec2::new(8.5, -60.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-20.8, -44.2), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(20.8, -39.7), 8.5),
+            TrackWaypoint::new(Vec2::new(64.0, -39.8), 8.5),
+            TrackWaypoint::new(Vec2::new(104.3, -32.8), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(69.9, -20.1), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(26.7, -19.9), 8.5),
+            TrackWaypoint::new(Vec2::new(-16.5, -19.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-40.5, -46.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-75.7, -60.1), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-118.9, -63.6), 8.5),
+            TrackWaypoint::new(Vec2::new(-161.8, -62.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-167.4, -17.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-136.0, -4.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-143.5, -39.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-100.9, -41.1), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-77.5, -12.9), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-43.2, 0.4), 8.5).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
-        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let checkpoints = generate_checkpoints(&spline, 24, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
         Track {
@@ -281,40 +294,48 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
-
-    /// Circuito Internacional de Zuera (Zaragoza, Spain): High-Speed Spanish Supertrack
+    /// Circuito Internacional de Zuera (Zaragoza, Spain): Ultra-Fast Supertrack
     pub fn track_zuera() -> Track {
         let waypoints = vec![
-            // Main Straight & Start/Finish (Ultra-wide 160m drafting straight)
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
-            TrackWaypoint::new(Vec2::new(80.0, 0.0), 10.0),
-            TrackWaypoint::new(Vec2::new(160.0, 0.0), 10.0),
-            // Curva del Cierzo (Wide high-speed right sweeper)
-            TrackWaypoint::new(Vec2::new(215.0, 25.0), 9.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(240.0, 75.0), 9.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(220.0, 130.0), 9.5).with_curbs(false, true),
-            // North Hairpin (Left hairpin onto infield straight)
-            TrackWaypoint::new(Vec2::new(170.0, 165.0), 9.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(120.0, 175.0), 9.0).with_curbs(true, false),
-            // Infield High-Speed Straight
-            TrackWaypoint::new(Vec2::new(80.0, 140.0), 9.0),
-            TrackWaypoint::new(Vec2::new(40.0, 110.0), 9.0).with_curbs(false, true),
-            // West Technical Hairpin Complex
-            TrackWaypoint::new(Vec2::new(-10.0, 130.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-50.0, 140.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-85.0, 115.0), 9.0).with_curbs(true, false),
-            // Long Western Straight
-            TrackWaypoint::new(Vec2::new(-95.0, 70.0), 9.5),
-            // Final Sweeping Double Right onto Main Straight
-            TrackWaypoint::new(Vec2::new(-80.0, 25.0), 9.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-45.0, 5.0), 10.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(51.3, 9.7), 9.0),
+            TrackWaypoint::new(Vec2::new(104.4, 10.8), 10.0),
+            TrackWaypoint::new(Vec2::new(157.5, 11.9), 10.0),
+            TrackWaypoint::new(Vec2::new(210.6, 13.4), 9.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(257.6, -6.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(270.6, -56.5), 9.0),
+            TrackWaypoint::new(Vec2::new(271.5, -109.6), 9.0),
+            TrackWaypoint::new(Vec2::new(272.3, -162.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(228.6, -170.3), 9.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(179.5, -161.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(136.1, -192.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(105.1, -187.9), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(144.8, -152.7), 9.0),
+            TrackWaypoint::new(Vec2::new(185.0, -117.9), 9.0),
+            TrackWaypoint::new(Vec2::new(225.1, -83.2), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(230.2, -36.1), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(183.7, -27.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(177.5, -75.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(129.1, -61.8), 9.0),
+            TrackWaypoint::new(Vec2::new(81.3, -38.6), 9.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(40.5, -39.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(77.9, -75.4), 9.0),
+            TrackWaypoint::new(Vec2::new(121.7, -103.9), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(101.2, -146.4), 9.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(61.0, -181.1), 9.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(14.3, -201.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-18.4, -168.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(18.2, -132.1), 9.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(36.5, -89.2), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-13.3, -86.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-27.3, -42.7), 8.0).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.0, BarrierType::TireWall);
+            generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
-        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let checkpoints = generate_checkpoints(&spline, 24, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
         Track {
@@ -341,40 +362,46 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
-
-    /// Le Mans Karting International (Le Mans, France): Alain Prost 24H Karting Circuit
+    /// Le Mans Karting International (Le Mans, France): Alain Prost CIK Circuit
     pub fn track_le_mans() -> Track {
         let waypoints = vec![
-            // Pit Straight & Start/Finish
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 9.0),
-            TrackWaypoint::new(Vec2::new(65.0, 0.0), 9.0),
-            // Dunlop Chicane Tribute (Quick left-right chicane)
-            TrackWaypoint::new(Vec2::new(105.0, 15.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(130.0, 40.0), 8.5).with_curbs(false, true),
-            // La Chapelle Sweeper
-            TrackWaypoint::new(Vec2::new(145.0, 80.0), 9.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(130.0, 120.0), 9.0).with_curbs(true, false),
-            // Bugatti Esses (Flowing switchbacks)
-            TrackWaypoint::new(Vec2::new(95.0, 145.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(55.0, 140.0), 8.5).with_curbs(false, true),
-            // Virage du Raccordement Hairpin
-            TrackWaypoint::new(Vec2::new(20.0, 160.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-15.0, 150.0), 8.0).with_curbs(true, false),
-            // Downhill Return Straight
-            TrackWaypoint::new(Vec2::new(-30.0, 115.0), 8.5),
-            // Courbe des 24 Heures (Double-apex fast left)
-            TrackWaypoint::new(Vec2::new(-50.0, 80.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-80.0, 55.0), 8.5).with_curbs(true, false),
-            // Maison Blanche Chicane onto Pit Straight
-            TrackWaypoint::new(Vec2::new(-80.0, 20.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-45.0, 5.0), 9.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.5),
+            TrackWaypoint::new(Vec2::new(45.6, 5.7), 9.2),
+            TrackWaypoint::new(Vec2::new(91.6, 8.5), 9.2),
+            TrackWaypoint::new(Vec2::new(137.6, 11.4), 9.2),
+            TrackWaypoint::new(Vec2::new(183.6, 12.4), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(217.0, -11.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(209.4, -55.3), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(179.5, -79.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(200.0, -121.1), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(167.7, -137.4), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(121.6, -138.6), 8.5),
+            TrackWaypoint::new(Vec2::new(75.5, -139.9), 8.5),
+            TrackWaypoint::new(Vec2::new(29.4, -140.3), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-8.5, -118.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-40.6, -149.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-71.5, -139.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-39.6, -105.9), 8.5),
+            TrackWaypoint::new(Vec2::new(-1.5, -83.3), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(44.5, -80.4), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(71.4, -49.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(112.4, -49.9), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(96.9, -88.9), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(135.7, -106.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(151.7, -70.7), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(147.4, -24.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(107.0, -16.7), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(61.2, -22.5), 8.5),
+            TrackWaypoint::new(Vec2::new(15.5, -28.7), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-17.5, -59.3), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-36.7, -27.2), 8.0).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
-        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
         Track {
@@ -401,39 +428,48 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
-
-    /// Kartódromo Internacional do Algarve (Portimão, Portugal): Algarve Rollercoaster
+    /// Kartodromo Internacional do Algarve (Portimao, Portugal): Rollercoaster Track
     pub fn track_portimao() -> Track {
         let waypoints = vec![
-            // Pit Straight & Start/Finish
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 9.0),
-            TrackWaypoint::new(Vec2::new(65.0, 0.0), 9.0),
-            // Downhill Turn 1 & 2 Sweeping Right
-            TrackWaypoint::new(Vec2::new(115.0, 15.0), 9.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(150.0, 45.0), 9.0).with_curbs(false, true),
-            // Uphill Climb into Crest
-            TrackWaypoint::new(Vec2::new(160.0, 90.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(140.0, 135.0), 8.5).with_curbs(true, false),
-            // Algarve Hairpin (Sharp right)
-            TrackWaypoint::new(Vec2::new(100.0, 160.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(60.0, 165.0), 8.0).with_curbs(false, true),
-            // Infield Downhill Sprint
-            TrackWaypoint::new(Vec2::new(30.0, 135.0), 8.5),
-            // Curva do Sol Carousel
-            TrackWaypoint::new(Vec2::new(0.0, 110.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-25.0, 125.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-60.0, 115.0), 8.5).with_curbs(true, false),
-            // Switchback Chicane onto Home Stretch
-            TrackWaypoint::new(Vec2::new(-85.0, 80.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-80.0, 40.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-50.0, 15.0), 9.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.5),
+            TrackWaypoint::new(Vec2::new(46.5, -5.1), 9.5),
+            TrackWaypoint::new(Vec2::new(94.3, -3.2), 9.5),
+            TrackWaypoint::new(Vec2::new(142.1, -0.4), 9.5),
+            TrackWaypoint::new(Vec2::new(189.8, 2.6), 8.5),
+            TrackWaypoint::new(Vec2::new(237.6, 6.1), 8.5),
+            TrackWaypoint::new(Vec2::new(285.3, 9.6), 8.5),
+            TrackWaypoint::new(Vec2::new(332.2, 6.5), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(371.1, -21.2), 8.5),
+            TrackWaypoint::new(Vec2::new(402.7, -57.0), 8.5),
+            TrackWaypoint::new(Vec2::new(432.4, -94.5), 8.5),
+            TrackWaypoint::new(Vec2::new(462.4, -131.8), 8.5),
+            TrackWaypoint::new(Vec2::new(498.3, -162.4), 8.5),
+            TrackWaypoint::new(Vec2::new(527.8, -199.5), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(537.5, -245.6), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(525.8, -291.4), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(494.9, -327.1), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(451.8, -346.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(406.6, -336.8), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(368.3, -308.1), 8.5),
+            TrackWaypoint::new(Vec2::new(330.1, -279.3), 8.5),
+            TrackWaypoint::new(Vec2::new(291.8, -250.6), 8.5),
+            TrackWaypoint::new(Vec2::new(253.6, -221.8), 8.5),
+            TrackWaypoint::new(Vec2::new(215.3, -193.1), 8.5),
+            TrackWaypoint::new(Vec2::new(177.1, -164.4), 8.5),
+            TrackWaypoint::new(Vec2::new(138.8, -135.6), 8.5),
+            TrackWaypoint::new(Vec2::new(100.6, -106.9), 8.5),
+            TrackWaypoint::new(Vec2::new(62.3, -78.1), 8.5),
+            TrackWaypoint::new(Vec2::new(24.1, -49.4), 8.5),
+            TrackWaypoint::new(Vec2::new(-14.2, -20.6), 8.5),
+            TrackWaypoint::new(Vec2::new(-51.7, 8.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-38.3, 28.7), 8.0).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
-        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let checkpoints = generate_checkpoints(&spline, 24, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
         Track {
@@ -460,40 +496,46 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
-
-    /// Franciacorta Karting Track (Castrezzato, Italy): Modern Championship Benchmark
+    /// Franciacorta Karting Track (Castrezzato, Italy): World Championship Benchmark
     pub fn track_franciacorta() -> Track {
         let waypoints = vec![
-            // Main Straight & Start/Finish
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 9.0),
-            TrackWaypoint::new(Vec2::new(60.0, 0.0), 9.0),
-            // Turn 1 & 2 Rapid Chicane
-            TrackWaypoint::new(Vec2::new(105.0, 15.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(130.0, 45.0), 8.5).with_curbs(true, false),
-            // Outer Sweeping Arc
-            TrackWaypoint::new(Vec2::new(140.0, 85.0), 9.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(125.0, 125.0), 9.0).with_curbs(false, true),
-            // Curva Franciacorta Hairpin (Trail braking left)
-            TrackWaypoint::new(Vec2::new(90.0, 150.0), 8.0).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(50.0, 150.0), 8.0).with_curbs(true, false),
-            // Central Infield Straight
-            TrackWaypoint::new(Vec2::new(30.0, 115.0), 8.5),
-            // Technical Switchback Chicane
-            TrackWaypoint::new(Vec2::new(10.0, 80.0), 8.0).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-15.0, 65.0), 8.0).with_curbs(true, false),
-            // West Hairpin Left
-            TrackWaypoint::new(Vec2::new(-45.0, 85.0), 8.5).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-75.0, 75.0), 8.5).with_curbs(true, false),
-            // Fast Right Sweeper onto Finish Straight
-            TrackWaypoint::new(Vec2::new(-80.0, 35.0), 8.5).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-45.0, 10.0), 9.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(42.7, -5.0), 9.2),
+            TrackWaypoint::new(Vec2::new(86.0, -6.4), 9.2),
+            TrackWaypoint::new(Vec2::new(128.5, -2.2), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(136.7, 37.8), 8.5),
+            TrackWaypoint::new(Vec2::new(137.7, 81.1), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(101.9, 100.0), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(60.3, 96.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(70.2, 64.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(113.3, 61.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(111.4, 22.5), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(68.9, 18.6), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(29.5, 29.1), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(28.2, 71.1), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(12.0, 102.2), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-31.3, 103.3), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-63.8, 85.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-71.3, 42.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-98.6, 21.3), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-110.4, 46.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-94.3, 83.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-122.9, 108.2), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-147.3, 82.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-149.2, 39.5), 8.5),
+            TrackWaypoint::new(Vec2::new(-147.9, -3.2), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-105.7, -10.1), 8.5),
+            TrackWaypoint::new(Vec2::new(-62.4, -11.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-48.6, 26.6), 8.5),
+            TrackWaypoint::new(Vec2::new(-32.3, 63.9), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-5.3, 42.7), 8.0).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
-        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
 
         Track {
@@ -534,7 +576,7 @@ impl GameModule for KartGameModule {
     }
 
     fn title(&self) -> &'static str {
-        "TDRACE SPRINT KARTING CUP"
+        "KARTING WORLD CUP"
     }
 
     fn subtitle(&self) -> &'static str {
@@ -545,7 +587,7 @@ impl GameModule for KartGameModule {
         ModuleTheme {
             primary_accent: Color::new(0.30, 0.95, 0.40, 1.0), // Electric Kart Green
             secondary_accent: Color::new(1.0, 0.85, 0.20, 1.0), // Racing Yellow
-            header_badge: "INTERNATIONAL KARTING CHAMPIONSHIP",
+            header_badge: "KARTING WORLD CUP",
             background_tint: Color::new(0.04, 0.07, 0.05, 0.98),
         }
     }
@@ -854,7 +896,7 @@ impl GameModule for KartGameModule {
                 elimination_interval: 2,
             },
             TournamentFormat::Championship {
-                name: "FIA World Karting Championship".to_string(),
+                name: "Karting World Cup".to_string(),
                 point_system: PointSystem::ClassicArcade,
                 track_ids: vec![
                     "lonato".to_string(),
