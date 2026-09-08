@@ -5,7 +5,8 @@ use tdrace_app::track_manager::TrackManager;
 use tdrace_app::ui::menu::{resolve_track_for_menu, CarChoice, TrackChoice};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    dirt_figure_eight, hell_rx, holjes_rx, loheac_rx, lydden_hill,
+    catalunya_rx, dirt_figure_eight, estering_rx, hell_rx, holjes_rx, kouvola_rx, loheac_rx,
+    lydden_hill, montalegre_rx, nyirad_rx,
 };
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
@@ -14,13 +15,18 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 7, "Rally module should have 7 tracks (5 RX/Dunes + 2 classic rally)");
+    assert_eq!(tracks.len(), 12, "Rally module should have 12 tracks (10 RX + 2 classic rally)");
 
     let expected_ids = [
         "holjes_rx",
         "lydden_hill",
         "hell_rx",
         "loheac_rx",
+        "estering_rx",
+        "montalegre_rx",
+        "nyirad_rx",
+        "kouvola_rx",
+        "catalunya_rx",
         "oasis_rally",
         "outlaw_pass",
         "sahara_dunes",
@@ -196,20 +202,240 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
     assert!(!loheac.geometry.jump_ramps.is_empty(), "Lohéac must have jump ramp");
     let loheac_breakdown = loheac.surface_breakdown();
     assert!(loheac_breakdown.len() >= 2, "Lohéac must be mixed surface");
+
+    let estering = estering_rx();
+    assert_eq!(estering.name, "Estering Buxtehude (World RX Germany)");
+    let estering_breakdown = estering.surface_breakdown();
+    assert!(estering_breakdown.len() >= 2, "Estering must be mixed surface");
+
+    let montalegre = montalegre_rx();
+    assert_eq!(montalegre.name, "Pista Automóvel de Montalegre (World RX Portugal)");
+    assert!(!montalegre.geometry.jump_ramps.is_empty(), "Montalegre must have jump ramp");
+    let montalegre_breakdown = montalegre.surface_breakdown();
+    assert!(montalegre_breakdown.len() >= 2, "Montalegre must be mixed surface");
+
+    let nyirad = nyirad_rx();
+    assert_eq!(nyirad.name, "Nyirád Racing Center (Euro RX Hungary)");
+    let nyirad_breakdown = nyirad.surface_breakdown();
+    assert!(nyirad_breakdown.len() >= 2, "Nyirád must be mixed surface");
+
+    let kouvola = kouvola_rx();
+    assert_eq!(kouvola.name, "Tykkimäen Moottorirata (World RX Finland)");
+    assert!(!kouvola.geometry.jump_ramps.is_empty(), "Kouvola must have jump ramp");
+    let kouvola_breakdown = kouvola.surface_breakdown();
+    assert!(kouvola_breakdown.len() >= 2, "Kouvola must be mixed surface");
+
+    let catalunya = catalunya_rx();
+    assert_eq!(catalunya.name, "Circuit de Barcelona-Catalunya RX (World RX Spain)");
+    assert!(!catalunya.geometry.jump_ramps.is_empty(), "Catalunya RX must have jump ramp");
+    let catalunya_breakdown = catalunya.surface_breakdown();
+    assert!(catalunya_breakdown.len() >= 2, "Catalunya RX must be mixed surface");
+
+    // Verify 1:1 scale lengths based on OpenStreetMap & FIA homologation standards
+    assert!(
+        holjes.spline.total_length() >= 1150.0 && holjes.spline.total_length() <= 1250.0,
+        "Höljes 1:1 FIA length expected ~1210m, got {:.1}m",
+        holjes.spline.total_length()
+    );
+    assert!(
+        lydden.spline.total_length() >= 1120.0 && lydden.spline.total_length() <= 1220.0,
+        "Lydden Hill 1:1 FIA length expected ~1170m, got {:.1}m",
+        lydden.spline.total_length()
+    );
+    assert!(
+        hell.spline.total_length() >= 980.0 && hell.spline.total_length() <= 1060.0,
+        "Hell RX 1:1 FIA length expected ~1019m, got {:.1}m",
+        hell.spline.total_length()
+    );
+    assert!(
+        loheac.spline.total_length() >= 1040.0 && loheac.spline.total_length() <= 1130.0,
+        "Lohéac 1:1 FIA length expected ~1088m, got {:.1}m",
+        loheac.spline.total_length()
+    );
+    assert!(
+        estering.spline.total_length() >= 910.0 && estering.spline.total_length() <= 990.0,
+        "Estering 1:1 FIA length expected ~952m, got {:.1}m",
+        estering.spline.total_length()
+    );
+    assert!(
+        montalegre.spline.total_length() >= 1000.0 && montalegre.spline.total_length() <= 1100.0,
+        "Montalegre 1:1 FIA length expected ~1050m, got {:.1}m",
+        montalegre.spline.total_length()
+    );
+    assert!(
+        nyirad.spline.total_length() >= 1170.0 && nyirad.spline.total_length() <= 1270.0,
+        "Nyirád 1:1 FIA length expected ~1220m, got {:.1}m",
+        nyirad.spline.total_length()
+    );
+    assert!(
+        kouvola.spline.total_length() >= 960.0 && kouvola.spline.total_length() <= 1080.0,
+        "Kouvola 1:1 FIA length expected ~1060m, got {:.1}m",
+        kouvola.spline.total_length()
+    );
+    assert!(
+        catalunya.spline.total_length() >= 1075.0 && catalunya.spline.total_length() <= 1175.0,
+        "Catalunya RX 1:1 FIA length expected ~1125m, got {:.1}m",
+        catalunya.spline.total_length()
+    );
+}
+
+#[test]
+fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+    use tdrace_core::physics::car::{Car, CarControls};
+    use tdrace_core::physics::config::CarConfig;
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::geometry::SurfaceShape;
+
+    let tracks = [
+        ("holjes_rx", holjes_rx()),
+        ("hell_rx", hell_rx()),
+        ("loheac_rx", loheac_rx()),
+        ("montalegre_rx", montalegre_rx()),
+        ("kouvola_rx", kouvola_rx()),
+        ("catalunya_rx", catalunya_rx()),
+    ];
+
+    for (slug, track) in &tracks {
+        assert_eq!(track.geometry.jump_ramps.len(), 1, "Track {} should have 1 jump ramp", slug);
+        let ramp = &track.geometry.jump_ramps[0];
+
+        // 1. Verify surface is Dirt (user request: depicted as dirt ramp, not asphalt)
+        assert_eq!(
+            ramp.surface,
+            SurfaceType::Dirt,
+            "Track {} jump ramp must use SurfaceType::Dirt",
+            slug
+        );
+
+        // 2. Verify ramp dimensions are compact to avoid launching cars out of the circuit
+        if let SurfaceShape::OrientedBox { half_extents, .. } = ramp.shape {
+            assert!(
+                half_extents.x <= 4.0,
+                "Track {} ramp half length must be <= 4.0m (compact kicker/crest), got {:.1}m",
+                slug,
+                half_extents.x
+            );
+            assert!(
+                half_extents.y <= 6.0,
+                "Track {} ramp half width must fit track corridor (<= 6.0m), got {:.1}m",
+                slug,
+                half_extents.y
+            );
+        } else {
+            panic!("Expected OrientedBox shape for jump ramp on {}", slug);
+        }
+
+        // 3. Verify launch parameters are realistic and safe
+        assert!(ramp.height <= 1.5, "Track {} ramp height must be <= 1.5m, got {:.2}m", slug, ramp.height);
+        assert!(
+            ramp.ramp_angle_deg <= 7.0,
+            "Track {} ramp angle must be <= 7.0 deg, got {:.2} deg",
+            slug,
+            ramp.ramp_angle_deg
+        );
+        assert!(
+            ramp.launch_speed <= 3.0,
+            "Track {} ramp launch speed must be <= 3.0 m/s, got {:.2} m/s",
+            slug,
+            ramp.launch_speed
+        );
+
+        // 4. Test physical jump containment at high rally speeds: 30 m/s (108 km/h) and 42 m/s (151 km/h)
+        for &approach_speed in &[30.0f32, 42.0f32] {
+            let mut car = Car::new(CarConfig::rally_car()).with_pose(ramp.shape.center(), 0.0);
+            car.state.velocity = ramp.direction * approach_speed;
+
+            let triggered = car.try_trigger_jump_ramp(ramp);
+            assert!(triggered, "Car at {:.1} m/s should trigger jump ramp on {}", approach_speed, slug);
+            assert!(car.state.is_airborne);
+
+            let ctrl = CarControls::accelerate();
+            let mut apex_elevation = 0.0f32;
+            let mut steps_to_landing = 0;
+
+            for _ in 0..120 {
+                car.step(&ctrl, SurfaceType::Dirt, 1.0 / 60.0);
+                if car.state.elevation > apex_elevation {
+                    apex_elevation = car.state.elevation;
+                }
+                if car.state.just_landed {
+                    break;
+                }
+                steps_to_landing += 1;
+            }
+
+            assert!(car.state.just_landed, "Car at {:.1} m/s should land within 120 frames on {}", approach_speed, slug);
+            assert!(!car.state.is_airborne);
+            assert_eq!(car.state.elevation, 0.0);
+
+            // Apex elevation must be modest and realistic (~0.4m - 1.8m)
+            assert!(
+                apex_elevation >= 0.4 && apex_elevation <= 1.8,
+                "Track {} apex elevation at {:.1} m/s must be between 0.4m and 1.8m, got {:.2}m",
+                slug,
+                approach_speed,
+                apex_elevation
+            );
+
+            // Air time must be snappy (~0.3s to 1.0s)
+            assert!(
+                steps_to_landing >= 18 && steps_to_landing <= 60,
+                "Track {} jump at {:.1} m/s took {} steps ({:.2}s)",
+                slug,
+                approach_speed,
+                steps_to_landing,
+                steps_to_landing as f32 / 60.0
+            );
+
+            // 5. Containment check: At landing point, car must NOT be inside/over outer or inner barriers
+            let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
+            let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
+            assert!(
+                hit_inner.is_empty() && hit_outer.is_empty(),
+                "Track {} car jumped outside circuit or into walls at {:.1} m/s! Landing pos: ({:.1}, {:.1})",
+                slug,
+                approach_speed,
+                car.state.position.x,
+                car.state.position.y
+            );
+
+            // Distance to track centerline must be well within the track boundaries
+            let proj = track.spline.project_point(car.state.position);
+            let sample = track.spline.sample_at_distance(proj.progress_distance);
+            let lateral_offset = (car.state.position - sample.point).length();
+            let allowed_lateral = sample.width * 0.5 + 3.5;
+            assert!(
+                lateral_offset <= allowed_lateral,
+                "Track {} car landed too far laterally from track ribbon ({:.1}m > {:.1}m) at pos ({:.1}, {:.1})",
+                slug,
+                lateral_offset,
+                allowed_lateral,
+                car.state.position.x,
+                car.state.position.y
+            );
+        }
+    }
 }
 
 #[test]
 fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
-    let tm = TrackManager::default();
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_rally_tm_test_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let tm = TrackManager::new(&temp_dir);
     let rally_catalog = tm.module_catalog_tracks("rally");
-
-    assert_eq!(rally_catalog.len(), 7);
+    assert_eq!(rally_catalog.len(), 12);
 
     let rally_ids = [
         "holjes_rx",
         "lydden_hill",
         "hell_rx",
         "loheac_rx",
+        "estering_rx",
+        "montalegre_rx",
+        "nyirad_rx",
+        "kouvola_rx",
+        "catalunya_rx",
         "oasis_rally",
         "outlaw_pass",
         "sahara_dunes",
@@ -245,7 +471,18 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
 
 #[test]
 fn test_rally_race_session_simulation_on_new_tracks() {
-    let test_tracks = ["dirt_figure_eight", "holjes_rx", "lydden_hill", "hell_rx", "loheac_rx"];
+    let test_tracks = [
+        "dirt_figure_eight",
+        "holjes_rx",
+        "lydden_hill",
+        "hell_rx",
+        "loheac_rx",
+        "estering_rx",
+        "montalegre_rx",
+        "nyirad_rx",
+        "kouvola_rx",
+        "catalunya_rx",
+    ];
 
     for id in &test_tracks {
         let mut session = RaceSession::new();

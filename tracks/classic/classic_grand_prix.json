@@ -23990,7 +23990,6 @@
   "predefined_car": "sports_car",
   "module_id": "classic",
   "modules": [
-    "classic",
-    "f1"
+    "classic"
   ]
 }

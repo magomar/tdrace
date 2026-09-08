@@ -660,7 +660,7 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
 
     // 9. Jump Ramp Checks
     for (i, ramp) in track.geometry.jump_ramps.iter().enumerate() {
-        if ramp.launch_speed < 3.0 {
+        if ramp.launch_speed < 2.0 {
             diagnostics.push(
                 TrackValidationError::warning(
                     "WARN_LOW_RAMP_SPEED",

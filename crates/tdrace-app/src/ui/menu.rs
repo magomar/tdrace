@@ -57,7 +57,7 @@ impl TrackChoice {
             Self::OasisRally => "DESERT DIRT RALLY",
             Self::OutlawPass => "NARROW MOUNTAIN PASS",
             Self::Custom { id, path, .. } => {
-                if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac") {
+                if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx") {
                     "RALLY CROSS"
                 } else if path.contains("/f1/") || path.starts_with("f1/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota") {
                     "FORMULA 1"
@@ -82,7 +82,7 @@ impl TrackChoice {
             Self::OasisRally => "DESERT DIRT RALLY",
             Self::OutlawPass => "NARROW MOUNTAIN PASS",
             Self::Custom { id, path, .. } => {
-                if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac") {
+                if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx") {
                     "RALLY CROSS"
                 } else if path.contains("/f1/") || path.starts_with("f1/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota") {
                     "FORMULA 1"
@@ -261,6 +261,11 @@ impl TrackChoice {
             "lydden_hill" | "lydden" => Some(tdrace_core::track::presets::lydden_hill()),
             "hell_rx" | "hell" => Some(tdrace_core::track::presets::hell_rx()),
             "loheac_rx" | "loheac" => Some(tdrace_core::track::presets::loheac_rx()),
+            "estering_rx" | "estering" => Some(tdrace_core::track::presets::estering_rx()),
+            "montalegre_rx" | "montalegre" => Some(tdrace_core::track::presets::montalegre_rx()),
+            "nyirad_rx" | "nyirad" => Some(tdrace_core::track::presets::nyirad_rx()),
+            "kouvola_rx" | "kouvola" => Some(tdrace_core::track::presets::kouvola_rx()),
+            "catalunya_rx" => Some(tdrace_core::track::presets::catalunya_rx()),
             "lonato" => Some(crate::module::kart::KartGameModule::track_lonato()),
             "sarno" => Some(crate::module::kart::KartGameModule::track_sarno()),
             "genk" => Some(crate::module::kart::KartGameModule::track_genk()),
