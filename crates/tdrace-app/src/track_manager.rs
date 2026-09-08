@@ -9,6 +9,7 @@ use tdrace_core::track::{Track, TrackCategory};
 use crate::module::classic::ClassicGameModule;
 use crate::module::f1::F1GameModule;
 use crate::module::kart::KartGameModule;
+use crate::module::nascar::NascarGameModule;
 use crate::module::rally::RallyGameModule;
 use crate::module::{GameModule, TrackDefinition};
 use crate::ui::menu::TrackChoice;
@@ -21,14 +22,16 @@ pub enum ModuleFilter {
     Rally,
     Kart,
     F1,
+    Nascar,
 }
 
 impl ModuleFilter {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::Classic,
         Self::Rally,
         Self::Kart,
         Self::F1,
+        Self::Nascar,
     ];
 
     pub fn id(&self) -> Option<&'static str> {
@@ -37,6 +40,7 @@ impl ModuleFilter {
             Self::Rally => Some("rally"),
             Self::Kart => Some("kart"),
             Self::F1 => Some("f1"),
+            Self::Nascar => Some("nascar"),
         }
     }
 
@@ -46,6 +50,7 @@ impl ModuleFilter {
             Self::Rally => "RALLY",
             Self::Kart => "KARTING",
             Self::F1 => "FORMULA 1",
+            Self::Nascar => "NASCAR",
         }
     }
 
@@ -54,24 +59,27 @@ impl ModuleFilter {
             Self::Classic => Self::Rally,
             Self::Rally => Self::Kart,
             Self::Kart => Self::F1,
-            Self::F1 => Self::Classic,
+            Self::F1 => Self::Nascar,
+            Self::Nascar => Self::Classic,
         }
     }
 
     pub fn prev(&self) -> Self {
         match self {
-            Self::Classic => Self::F1,
+            Self::Classic => Self::Nascar,
             Self::Rally => Self::Classic,
             Self::Kart => Self::Rally,
             Self::F1 => Self::Kart,
+            Self::Nascar => Self::F1,
         }
     }
 
     pub fn for_module(mod_id: &str) -> Self {
         match mod_id {
-            "f1" => Self::F1,
+            "gt" | "gt_challenge" | "f1" => Self::F1,
             "rally" => Self::Rally,
             "kart" => Self::Kart,
+            "nascar" => Self::Nascar,
             _ => Self::Classic,
         }
     }
@@ -102,11 +110,16 @@ impl CustomTrackInfo {
         if mod_id.eq_ignore_ascii_case("all") {
             return true;
         }
-        if self.modules.iter().any(|m| m.eq_ignore_ascii_case(mod_id)) {
+        let target_ids = if mod_id.eq_ignore_ascii_case("gt") || mod_id.eq_ignore_ascii_case("f1") {
+            vec!["gt", "gt_challenge", "f1"]
+        } else {
+            vec![mod_id]
+        };
+        if self.modules.iter().any(|m| target_ids.iter().any(|&tid| m.eq_ignore_ascii_case(tid))) {
             return true;
         }
         if let Some(ref m) = self.module_id {
-            if m.eq_ignore_ascii_case(mod_id) {
+            if target_ids.iter().any(|&tid| m.eq_ignore_ascii_case(tid)) {
                 return true;
             }
         }
@@ -117,13 +130,13 @@ impl CustomTrackInfo {
     pub fn module_name(&self) -> &'static str {
         if let Some(ref m) = self.module_id {
             match m.to_lowercase().as_str() {
-                "f1" => "Formula 1",
+                "gt" | "gt_challenge" | "f1" => "GT World Challenge",
                 "rally" => "Rally Cross",
                 "kart" => "Karting",
                 _ => "Classic",
             }
-        } else if self.belongs_to_module("f1") {
-            "Formula 1"
+        } else if self.belongs_to_module("gt") || self.belongs_to_module("f1") {
+            "GT World Challenge"
         } else if self.belongs_to_module("rally") {
             "Rally Cross"
         } else if self.belongs_to_module("kart") {
@@ -201,7 +214,7 @@ impl TrackManager {
         if module_id == "all" {
             let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
             if has_scoped_deletion {
-                let active_in_any = ["classic", "f1", "rally", "kart"].iter().any(|m| {
+                let active_in_any = ["classic", "f1", "rally", "kart", "nascar"].iter().any(|m| {
                     let m_scoped = format!("{}:{}", m, id);
                     if self.deleted_presets.iter().any(|d| d == &m_scoped) {
                         return false;
@@ -372,6 +385,7 @@ impl TrackManager {
             ModuleFilter::F1 => self.module_catalog_tracks("f1"),
             ModuleFilter::Rally => self.module_catalog_tracks("rally"),
             ModuleFilter::Kart => self.module_catalog_tracks("kart"),
+            ModuleFilter::Nascar => self.module_catalog_tracks("nascar"),
         }
     }
 
@@ -420,12 +434,12 @@ impl TrackManager {
     /// Returns official built-in preset circuits for a given module.
     pub fn preset_track_choices(&self, module_id: &str) -> Vec<TrackChoice> {
         let raw: Vec<TrackChoice> = match module_id {
-            "f1" => {
+            "gt" | "gt_challenge" | "f1" => {
                 let f1_module = F1GameModule::new();
                 f1_module
                     .tracks()
                     .iter()
-                    .map(|def| Self::track_choice_from_def(def, "f1"))
+                    .map(|def| Self::track_choice_from_def(def, "gt"))
                     .collect()
             }
             "rally" => {
@@ -444,11 +458,20 @@ impl TrackManager {
                     .map(|def| Self::track_choice_from_def(def, "kart"))
                     .collect()
             }
+            "nascar" => {
+                let nascar_module = NascarGameModule::new();
+                nascar_module
+                    .tracks()
+                    .iter()
+                    .map(|def| Self::track_choice_from_def(def, "nascar"))
+                    .collect()
+            }
             "all" => {
                 let classic_module = ClassicGameModule::new();
                 let f1_module = F1GameModule::new();
                 let rally_module = RallyGameModule::new();
                 let kart_module = KartGameModule::new();
+                let nascar_module = NascarGameModule::new();
 
                 let mut list: Vec<TrackChoice> = Vec::new();
                 let mut seen_ids = std::collections::HashSet::new();
@@ -473,6 +496,11 @@ impl TrackManager {
                         list.push(Self::track_choice_from_def(&def, "kart"));
                     }
                 }
+                for def in nascar_module.tracks() {
+                    if seen_ids.insert(def.id) {
+                        list.push(Self::track_choice_from_def(&def, "nascar"));
+                    }
+                }
                 list
             }
             _ => {
@@ -490,7 +518,7 @@ impl TrackManager {
         // In dev mode or when git_tracks_dir exists, discover promoted presets
         if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
             let scan_modules: Vec<&str> = if module_id == "all" {
-                vec!["classic", "rally", "kart", "f1"]
+                vec!["classic", "rally", "kart", "f1", "nascar"]
             } else {
                 vec![module_id]
             };
@@ -612,7 +640,7 @@ impl TrackManager {
         if module_id == "all" {
             let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
             if has_scoped_deletion {
-                let active_in_any = ["classic", "f1", "rally", "kart"].iter().any(|m| {
+                let active_in_any = ["classic", "f1", "rally", "kart", "nascar"].iter().any(|m| {
                     let m_scoped = format!("{}:{}", m, id);
                     if self.deleted_presets.iter().any(|d| d == &m_scoped) {
                         return false;
@@ -787,6 +815,7 @@ impl TrackManager {
                     "bahrain" => Ok(crate::module::f1::F1GameModule::track_bahrain()),
                     "marina_bay" => Ok(crate::module::f1::F1GameModule::track_marina_bay()),
                     "cota" => Ok(crate::module::f1::F1GameModule::track_cota()),
+                    "madring" => Ok(crate::module::f1::F1GameModule::track_madring()),
                     "sahara" | "sahara_dunes" => Ok(tdrace_core::track::presets::sahara_dunes()),
                     "dirt_figure_eight" | "dirt_eight" => Ok(tdrace_core::track::presets::dirt_figure_eight()),
                     "holjes_rx" | "holjes" => Ok(tdrace_core::track::presets::holjes_rx()),
@@ -806,6 +835,10 @@ impl TrackManager {
                     "le_mans_kart" => Ok(crate::module::kart::KartGameModule::track_le_mans()),
                     "portimao_kart" => Ok(crate::module::kart::KartGameModule::track_portimao()),
                     "franciacorta" => Ok(crate::module::kart::KartGameModule::track_franciacorta()),
+                    "daytona" | "daytona_superspeedway" => Ok(tdrace_core::track::presets::daytona_superspeedway()),
+                    "talladega" | "talladega_superspeedway" => Ok(tdrace_core::track::presets::talladega_superspeedway()),
+                    "watkins_glen" | "watkins_glen_nascar" => Ok(tdrace_core::track::presets::watkins_glen_nascar()),
+                    "bristol" | "bristol_motor_speedway" => Ok(tdrace_core::track::presets::bristol_motor_speedway()),
                     _ => Err(format!("Track file not found: {}", path)),
                 }
             }
@@ -818,16 +851,18 @@ impl TrackManager {
             "classic_grand_prix" | "oval_speedway" | "dirty_oval_speedway" | "figure_eight" | "dirt_figure_eight" | "dirt_eight" | "drift_park" | "ramp_raceway" => Some("classic"),
             "oasis_rally" | "outlaw_pass" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "sahara" | "sahara_dunes" => Some("rally"),
             "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" => Some("kart"),
-            "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" => Some("f1"),
+            "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring" => Some("f1"),
+            "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" => Some("nascar"),
             _ => {
                 if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    for m in ["classic", "rally", "kart", "f1"] {
+                    for m in ["classic", "rally", "kart", "f1", "nascar"] {
                         if git_tracks_dir.join(m).join(format!("{}.json", slug)).exists() {
                             return match m {
                                 "classic" => Some("classic"),
                                 "rally" => Some("rally"),
                                 "kart" => Some("kart"),
                                 "f1" => Some("f1"),
+                                "nascar" => Some("nascar"),
                                 _ => None,
                             };
                         }
@@ -851,6 +886,10 @@ impl TrackManager {
             "nyirad" => "nyirad_rx",
             "kouvola" => "kouvola_rx",
             "dirt_eight" => "dirt_figure_eight",
+            "daytona" => "daytona_superspeedway",
+            "talladega" => "talladega_superspeedway",
+            "watkins_glen" => "watkins_glen_nascar",
+            "bristol" => "bristol_motor_speedway",
             other => other,
         }
     }
@@ -887,6 +926,7 @@ impl TrackManager {
             || self.tracks_dir.join("f1").join(&file_name).exists()
             || self.tracks_dir.join("rally").join(&file_name).exists()
             || self.tracks_dir.join("kart").join(&file_name).exists()
+            || self.tracks_dir.join("nascar").join(&file_name).exists()
     }
 
     /// Resolves the destination path for a given slug, checking existing files first.
@@ -901,6 +941,7 @@ impl TrackManager {
             self.tracks_dir.join("f1").join(&file_name),
             self.tracks_dir.join("rally").join(&file_name),
             self.tracks_dir.join("kart").join(&file_name),
+            self.tracks_dir.join("nascar").join(&file_name),
             self.tracks_dir.join("drafts").join(&file_name),
         ];
         for cand in &candidates {
@@ -1042,7 +1083,7 @@ impl TrackManager {
     /// Returns the list of motorsport module IDs ("classic", "rally", "kart", "f1") where a track is currently promoted / available.
     pub fn track_promoted_modules(&self, id: &str) -> Vec<String> {
         let mut mods = Vec::new();
-        for mod_id in ["classic", "rally", "kart", "f1"] {
+        for mod_id in ["classic", "rally", "kart", "f1", "nascar"] {
             if self.is_track_in_module(id, mod_id) {
                 mods.push(mod_id.to_string());
             }
@@ -1128,7 +1169,7 @@ impl TrackManager {
 
         // Clean up any duplicate legacy files across subdirectories if they differ from target_path
         let file_name = format!("{}.json", id);
-        for sub in &["classic", "f1", "rally", "kart", "drafts"] {
+        for sub in &["classic", "f1", "rally", "kart", "nascar", "drafts"] {
             let legacy_p = self.tracks_dir.join(sub).join(&file_name);
             if legacy_p.exists() && legacy_p != target_path {
                 let _ = fs::remove_file(legacy_p);
@@ -1183,7 +1224,7 @@ impl TrackManager {
 
         // Clean up legacy files across subdirectories
         let file_name = format!("{}.json", id);
-        for sub in &["classic", "f1", "rally", "kart", "drafts"] {
+        for sub in &["classic", "f1", "rally", "kart", "nascar", "drafts"] {
             let legacy_p = self.tracks_dir.join(sub).join(&file_name);
             if legacy_p.exists() && legacy_p != target_path {
                 let _ = fs::remove_file(legacy_p);
@@ -1638,7 +1679,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 41); // 10 classic + 13 f1 + 10 rally unique + 8 famous kart
+        assert_eq!(choices.len(), 46); // 10 classic + 14 f1 + 10 rally unique + 8 famous kart + 4 nascar
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();
@@ -1650,8 +1691,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 41, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 41);
+        // Since gp was saved as Draft, main choices is still 46, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 46);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -1660,7 +1701,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 42);
+        assert_eq!(manager.main_track_choices().len(), 47);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -1671,18 +1712,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[41]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[46]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 41);
+        assert_eq!(manager.main_track_choices().len(), 46);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 41);
+        assert_eq!(manager.main_track_choices().len(), 46);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -1762,10 +1803,11 @@ mod tests {
 
         // F1 tracks
         let f1_tracks = manager.module_catalog_tracks("f1");
-        assert_eq!(f1_tracks.len(), 14);
+        assert_eq!(f1_tracks.len(), 15);
         assert!(f1_tracks.iter().any(|t| t.title().contains("Monza")));
         assert!(f1_tracks.iter().any(|t| t.title().contains("Spa")));
         assert!(f1_tracks.iter().any(|t| t.title().contains("Silverstone")));
+        assert!(f1_tracks.iter().any(|t| t.title().contains("MadRing")));
 
         // Rally tracks
         let rally_tracks = manager.module_catalog_tracks("rally");
@@ -1781,9 +1823,17 @@ mod tests {
         assert!(kart_tracks.iter().any(|t| t.title().contains("Genk")));
         assert!(kart_tracks.iter().any(|t| t.title().contains("PFI") || t.title().contains("PF International")));
 
+        // Nascar tracks
+        let nascar_tracks = manager.module_catalog_tracks("nascar");
+        assert_eq!(nascar_tracks.len(), 4);
+        assert!(nascar_tracks.iter().any(|t| t.title().contains("Daytona")));
+        assert!(nascar_tracks.iter().any(|t| t.title().contains("Talladega")));
+        assert!(nascar_tracks.iter().any(|t| t.title().contains("Watkins Glen")));
+        assert!(nascar_tracks.iter().any(|t| t.title().contains("Bristol")));
+
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 41);
+        assert_eq!(all_tracks.len(), 46);
 
         // Save a custom circuit assigned to classic and rally
         let mut custom_circuit = classic_grand_prix();
@@ -1811,7 +1861,7 @@ mod tests {
 
         // F1 and Kart: Must not contain this custom track
         let f1_after = manager.module_catalog_tracks("f1");
-        assert_eq!(f1_after.len(), 14);
+        assert_eq!(f1_after.len(), 15);
         assert!(!f1_after.iter().any(|t| t.title() == "Custom Category Circuit"));
 
         let kart_after = manager.module_catalog_tracks("kart");
@@ -1844,9 +1894,9 @@ mod tests {
         assert!(cloned_gp.modules.is_empty());
         assert!(Path::new(&path_gp).exists());
 
-        // Cloned track must appear in drafts, and main count stays 41
+        // Cloned track must appear in drafts, and main count stays 46
         assert_eq!(manager.draft_track_choices().len(), 1);
-        assert_eq!(manager.main_track_choices().len(), 41);
+        assert_eq!(manager.main_track_choices().len(), 46);
         assert_eq!(manager.draft_track_choices()[0].title(), "Classic Grand Prix (clone)");
 
         // 2. Clone a module preset by slug

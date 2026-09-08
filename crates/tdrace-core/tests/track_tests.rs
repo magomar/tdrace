@@ -816,8 +816,8 @@ fn test_waypoint_custom_wall_type_generation_and_json_roundtrip() {
 fn test_prototypical_track_templates_all_combinations() {
     use tdrace_core::physics::surface::SurfaceType;
     use tdrace_core::track::presets::{
-        classic_template, create_prototypical_track, f1_template, kart_template, rally_template,
-        RaceDirection, TrackShape,
+        classic_template, create_prototypical_track, f1_template, kart_template, nascar_template,
+        rally_template, RaceDirection, TrackShape,
     };
     use tdrace_core::track::validation::validate_track;
 
@@ -909,6 +909,52 @@ fn test_prototypical_track_templates_all_combinations() {
     assert_eq!(k.module_id.as_deref(), Some("kart"));
     let r = rally_template(TrackShape::HorizontalEight, RaceDirection::Right);
     assert_eq!(r.module_id.as_deref(), Some("rally"));
+    let n = nascar_template(TrackShape::Oval, RaceDirection::Right);
+    assert_eq!(n.module_id.as_deref(), Some("nascar"));
+}
+
+#[test]
+fn test_nascar_track_presets_and_validation() {
+    use tdrace_core::track::presets::{
+        bristol_motor_speedway, daytona_superspeedway, talladega_superspeedway,
+        watkins_glen_nascar,
+    };
+    use tdrace_core::track::validation::{validate_track, ValidationSeverity};
+
+    let track_pairs = [
+        ("daytona.json", daytona_superspeedway()),
+        ("talladega.json", talladega_superspeedway()),
+        ("watkins_glen.json", watkins_glen_nascar()),
+        ("bristol.json", bristol_motor_speedway()),
+    ];
+
+    let nascar_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks/nascar");
+    let _ = std::fs::create_dir_all(&nascar_dir);
+
+    for (filename, track) in &track_pairs {
+        assert!(!track.name.is_empty());
+        assert!(!track.checkpoints.is_empty());
+        assert!(track.checkpoints[0].is_finish_line);
+        assert!(!track.grid_positions.is_empty());
+        assert!(track.grid_positions.len() >= 16);
+        assert_eq!(track.module_id.as_deref(), Some("nascar"));
+        assert!(track.spline.total_length() > 500.0);
+
+        let diags = validate_track(track);
+        let errors: Vec<_> = diags
+            .iter()
+            .filter(|d| d.severity == ValidationSeverity::Error)
+            .collect();
+        assert!(
+            errors.is_empty(),
+            "Track {} should have 0 validation errors: {:?}",
+            track.name,
+            errors
+        );
+
+        let json = serde_json::to_string_pretty(track).expect("Serialize NASCAR track");
+        let _ = std::fs::write(nascar_dir.join(filename), json);
+    }
 }
 
 

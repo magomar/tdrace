@@ -174,6 +174,9 @@ pub struct CarState {
     pub jump_count: u32,
     /// Flag indicating the vehicle touched down on the ground during this physics tick.
     pub just_landed: bool,
+    /// Aerodynamic drafting / slipstream drag reduction factor [0.0 = clean air, up to ~0.40 = 40% drag reduction in wake].
+    #[serde(default)]
+    pub draft_intensity: f32,
 }
 
 impl Default for CarState {
@@ -207,6 +210,7 @@ impl Default for CarState {
             air_time: 0.0,
             jump_count: 0,
             just_landed: false,
+            draft_intensity: 0.0,
         }
     }
 }
@@ -339,6 +343,51 @@ impl Car {
             let delta_fr = (l / r_outer).atan();
             (delta_fl, delta_fr)
         }
+    }
+
+    /// Computes the aerodynamic slipstream drafting intensity [0.0..0.40] based on opponent vehicles
+    /// within the forward wake cone (up to 32m ahead, +/- 2.8m lateral), with subtle push-draft support.
+    pub fn compute_draft_intensity(&self, other_cars: &[&Car]) -> f32 {
+        if self.state.speed < 20.0 {
+            return 0.0;
+        }
+
+        let my_pos = self.state.position;
+        let my_fwd = self.forward_vector();
+        let my_right = self.right_vector();
+
+        let mut max_draft = 0.0f32;
+
+        for opp in other_cars {
+            if std::ptr::eq(*opp, self) {
+                continue;
+            }
+            if opp.state.speed < 15.0 {
+                continue;
+            }
+
+            let to_opp = opp.state.position - my_pos;
+            let fwd_dist = to_opp.dot(my_fwd);
+            let lat_dist = to_opp.dot(my_right).abs();
+
+            // Check if opponent is ahead within slipstream wake cone (2.0m to 32.0m)
+            if fwd_dist > 2.0 && fwd_dist < 32.0 && lat_dist < 2.8 {
+                let dist_factor = 1.0 - (fwd_dist - 2.0) / 30.0;
+                let lat_factor = (1.0 - lat_dist / 2.8).clamp(0.0, 1.0);
+                let draft = 0.38 * dist_factor * lat_factor;
+                if draft > max_draft {
+                    max_draft = draft;
+                }
+            } else if fwd_dist < -2.0 && fwd_dist > -10.0 && lat_dist < 2.0 {
+                // Subtle push draft from trailing car
+                let push_draft = 0.06 * (1.0 - (-fwd_dist - 2.0) / 8.0) * (1.0 - lat_dist / 2.0);
+                if push_draft > max_draft {
+                    max_draft = push_draft;
+                }
+            }
+        }
+
+        max_draft
     }
 
     /// Steps the physics simulation forward by a fixed timestep `dt` over a uniform surface.
@@ -709,7 +758,8 @@ impl Car {
         // 5. Aerodynamic drag, yaw damping, and ESC
         let avg_surface_drag: f32 = surfaces.iter().map(|s| s.surface_drag_multiplier()).sum::<f32>() / 4.0;
         let avg_surface_mu: f32 = surfaces.iter().map(|s| s.friction_coefficient()).sum::<f32>() / 4.0;
-        let drag_fwd = -self.config.air_drag_coefficient * v_long * v_long.abs() * avg_surface_drag;
+        let effective_drag_coeff = self.config.air_drag_coefficient * (1.0 - self.state.draft_intensity.clamp(0.0, 0.50));
+        let drag_fwd = -effective_drag_coeff * v_long * v_long.abs() * avg_surface_drag;
         let drag_lat = -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
         let drag_world = fwd * drag_fwd + right * drag_lat;
 

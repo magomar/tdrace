@@ -28,7 +28,7 @@ pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{DriverCardsOrigin, GameState, GridParticipant, RaceSession};
 pub use module::{
     ClassicGameModule, EngineAudioProfile, F1GameModule, GameModule, KartGameModule, ModuleTheme,
-    RallyGameModule, TrackDefinition, VehicleModelDefinition, VehicleVisualType,
+    NascarGameModule, RallyGameModule, TrackDefinition, VehicleModelDefinition, VehicleVisualType,
 };
 pub use tournament::{
     ChampionshipRoundResult, ChampionshipSession, EliminationSession, PointSystem, QualifyingResult,

@@ -260,22 +260,36 @@ impl BotAiDriver {
                 if opp_fwd_proj > 0.5 {
                     let rel_speed = car_speed - opp.state.speed;
 
+                    // Slipstream Drafting Behavior (Pack Racing):
+                    // At high speeds, cars tucked in the slipstream cone follow the wake
+                    // to gain aerodynamic tow instead of steering out prematurely.
+                    let in_slipstream_zone = opp_fwd_proj > 3.5 && opp_fwd_proj < 30.0 && car_speed > 30.0;
+                    if in_slipstream_zone && opp_lat_proj.abs() < 3.2 && self.profile.aggression > 0.5 {
+                        // Align toward leader's wake (tuck in)
+                        let align_wake = -opp_lat_proj * 0.12;
+                        avoidance_steer += align_wake;
+                    }
+
                     // If we are rapidly closing in on car ahead
                     if rel_speed > 1.2 && opp_fwd_proj < 10.0 {
-                        // Slow down to match speed or avoid rear-end crash
-                        let urgency = (1.0 - (opp_fwd_proj / 10.0)).clamp(0.0, 1.0);
-                        throttle_limit = (1.0 - urgency * 0.7).min(throttle_limit);
-                        if rel_speed > 3.0 && opp_fwd_proj < 5.0 {
-                            extra_brake = extra_brake.max(urgency * 0.8);
+                        // In high-speed pack drafting on straights, allow close tucking / bump-drafting
+                        let is_bump_drafting = in_slipstream_zone && rel_speed < 3.0 && opp_fwd_proj > 2.5;
+                        if !is_bump_drafting {
+                            // Slow down to match speed or avoid rear-end crash
+                            let urgency = (1.0 - (opp_fwd_proj / 10.0)).clamp(0.0, 1.0);
+                            throttle_limit = (1.0 - urgency * 0.7).min(throttle_limit);
+                            if rel_speed > 3.0 && opp_fwd_proj < 5.0 {
+                                extra_brake = extra_brake.max(urgency * 0.8);
+                            }
                         }
                     }
 
-                    // Attempt lateral overtaking maneuver around car in front
-                    if opp_fwd_proj < 14.0 && opp_lat_proj.abs() < 2.5 {
+                    // Attempt lateral slingshot overtaking maneuver around car in front
+                    if opp_fwd_proj < 15.0 && opp_lat_proj.abs() < 2.8 {
                         // Pick the side with more track clearance
                         let evade_dir = if opp_lat_proj >= 0.0 { 1.0 } else { -1.0 };
-                        let evade_strength = (1.0 - (opp_fwd_proj / 14.0)) * self.profile.aggression;
-                        avoidance_steer += evade_dir * evade_strength * 0.45;
+                        let evade_strength = (1.0 - (opp_fwd_proj / 15.0)) * self.profile.aggression;
+                        avoidance_steer += evade_dir * evade_strength * 0.50;
                     }
                 }
                 // Opponent is side-by-side (prevent rubbing/interlocking wheels)

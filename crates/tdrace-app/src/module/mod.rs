@@ -38,6 +38,12 @@ pub enum VehicleVisualType {
         exposed_driver: bool,
         side_bumpers: bool,
     },
+    /// NASCAR Cup / Trans-Am TA1 Stock Car: wide muscular silhouette, ducktail or high-mount TA1 wing, side exhaust heat shields, roof shark fins, window net, door number plates.
+    StockCar {
+        tall_wing: bool,
+        roof_fins: bool,
+        window_net: bool,
+    },
 }
 
 impl Default for VehicleVisualType {
@@ -178,6 +184,19 @@ impl EngineAudioProfile {
             anti_lag_pops: false,
         }
     }
+
+    pub fn nascar_v8_pushrod() -> Self {
+        Self {
+            sound_type: EngineSoundType::NascarV8,
+            idle_rpm: 900.0,
+            max_rpm: 9200.0,
+            base_pitch: 50.0,
+            pitch_scale: 0.032,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: false,
+        }
+    }
 }
 
 /// The core `GameModule` trait. Any standalone game subproject implements this trait.
@@ -217,9 +236,12 @@ pub trait GameModule: Send + Sync + 'static {
 }
 
 pub use classic::ClassicGameModule;
-pub use f1::F1GameModule;
+pub use f1::{F1GameModule, GtWorldChallengeModule};
 pub use kart::KartGameModule;
+pub use nascar::NascarGameModule;
 pub use rally::RallyGameModule;
+
+pub mod nascar;
 
 #[cfg(test)]
 mod tests {
@@ -227,29 +249,33 @@ mod tests {
 
     #[test]
     fn test_f1_game_module() {
-        let f1 = F1GameModule::new();
-        assert_eq!(f1.id(), "f1");
-        assert!(!f1.title().is_empty());
-        assert!(!f1.vehicles().is_empty());
-        assert!(f1.vehicles().len() >= 2);
-        assert!(!f1.tracks().is_empty());
-        assert_eq!(f1.tracks().len(), 14); // 13 F1 circuits + 1 FIA test track
-        assert_eq!(f1.drivers().len(), 7);
-        assert!(!f1.supported_game_modes().is_empty());
+        let gt = GtWorldChallengeModule::new();
+        assert_eq!(gt.id(), "gt");
+        assert_eq!(gt.title(), "GT WORLD CHALLENGE");
+        assert!(!gt.vehicles().is_empty());
+        assert!(gt.vehicles().len() >= 3);
+        assert!(!gt.tracks().is_empty());
+        assert_eq!(gt.tracks().len(), 15);
+        assert_eq!(gt.drivers().len(), 7);
+        assert!(!gt.supported_game_modes().is_empty());
 
-        assert_eq!(f1.default_vehicle_id(), "f1_hybrid_26");
-        assert_eq!(f1.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
+        assert_eq!(gt.default_vehicle_id(), "gt3_evo");
+        assert_eq!(gt.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
 
-        let monza = F1GameModule::track_monza();
+        let monza = GtWorldChallengeModule::track_monza();
         assert_eq!(monza.name, "Monza Autodromo Nazionale");
         assert!(!monza.checkpoints.is_empty());
 
-        let car = F1GameModule::car_f1_hybrid();
-        assert!(car.downforce_coefficient > 3.0);
-        assert!(car.top_speed_mps * 3.6 > 340.0);
+        let gt3 = GtWorldChallengeModule::car_gt3_evo();
+        assert!(gt3.downforce_coefficient >= 2.0);
+        assert!(gt3.top_speed_mps * 3.6 > 280.0);
 
-        // Verify that every single F1 track definition generates a valid track with 0 validation errors
-        for track_def in f1.tracks() {
+        let f1 = GtWorldChallengeModule::car_f1_hybrid();
+        assert!(f1.downforce_coefficient > 3.0);
+        assert!(f1.top_speed_mps * 3.6 > 340.0);
+
+        // Verify that every single GT World Challenge track definition generates a valid track with 0 validation errors
+        for track_def in gt.tracks() {
             let track = (track_def.generator)();
             assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
             assert!(track.spline.total_length() > 300.0, "Track length too short for {}", track_def.id);
@@ -336,6 +362,50 @@ mod tests {
         assert!(!classic.drivers().is_empty());
         assert_eq!(classic.default_vehicle_id(), "sports_car");
         assert_eq!(classic.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
+    }
+
+    #[test]
+    fn test_nascar_audio_profile() {
+        let profile = EngineAudioProfile::nascar_v8_pushrod();
+        assert_eq!(profile.sound_type, EngineSoundType::NascarV8);
+        assert_eq!(profile.idle_rpm, 900.0);
+        assert_eq!(profile.max_rpm, 9200.0);
+        assert_eq!(profile.harmonic_ratio, 4.0);
+        assert!(!profile.turbo_flutter);
+        assert!(!profile.anti_lag_pops);
+    }
+
+    #[test]
+    fn test_nascar_game_module() {
+        let nascar = NascarGameModule::new();
+        assert_eq!(nascar.id(), "nascar");
+        assert!(!nascar.title().is_empty());
+        assert_eq!(nascar.vehicles().len(), 2);
+        assert_eq!(nascar.tracks().len(), 4);
+        assert_eq!(nascar.drivers().len(), 12);
+        assert_eq!(nascar.default_vehicle_id(), "nascar_cup_v8");
+        assert_eq!(nascar.default_track_id(), "daytona_superspeedway");
+
+        for track_def in nascar.tracks() {
+            let track = (track_def.generator)();
+            assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
+            assert!(track.spline.total_length() > 300.0, "Track length too short for {}", track_def.id);
+            assert!(track.checkpoints.len() >= 8, "Checkpoints too few for {}", track_def.id);
+            assert!(track.grid_positions.len() >= 12, "Grid slots check for {}", track_def.id);
+
+            let diagnostics = tdrace_core::track::validation::validate_track(&track);
+            let errors: Vec<_> = diagnostics
+                .into_iter()
+                .filter(|d| d.severity == tdrace_core::track::validation::ValidationSeverity::Error)
+                .collect();
+            assert!(
+                errors.is_empty(),
+                "NASCAR track '{}' ({}) had validation errors: {:?}",
+                track.name,
+                track_def.id,
+                errors
+            );
+        }
     }
 }
 

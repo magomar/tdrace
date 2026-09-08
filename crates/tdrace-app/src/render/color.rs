@@ -131,6 +131,14 @@ impl Palette {
             Color::new(0.12, 0.14, 0.20, 1.0),
         ),
     ];
+
+    // Classic American Stock Car Liveries & Accents
+    pub const DAYTONA_BLUE: Color = Color::new(0.06, 0.42, 0.92, 1.0);
+    pub const SUNSET_ORANGE: Color = Color::new(0.98, 0.38, 0.06, 1.0);
+    pub const RACING_RED: Color = Color::new(0.90, 0.12, 0.14, 1.0);
+    pub const CUP_GOLD: Color = Color::new(1.0, 0.82, 0.08, 1.0);
+    pub const INTIMIDATOR_BLACK: Color = Color::new(0.10, 0.10, 0.12, 1.0);
+    pub const CAROLINA_BLUE: Color = Color::new(0.20, 0.65, 0.95, 1.0);
 }
 
 
@@ -165,6 +173,31 @@ impl CarColorScheme {
             secondary: s,
             helmet: h,
         }
+    }
+
+    /// Classic American Stock Car - Daytona Blue / White / Gold
+    pub const fn stock_car_daytona_blue() -> Self {
+        Self::new(Palette::DAYTONA_BLUE, Palette::WHITE, Palette::CUP_GOLD)
+    }
+
+    /// Classic American Stock Car - Sunset Orange / Carbon Black / White
+    pub const fn stock_car_sunset_orange() -> Self {
+        Self::new(Palette::SUNSET_ORANGE, Palette::INTIMIDATOR_BLACK, Palette::WHITE)
+    }
+
+    /// Classic American Stock Car - Racing Red / White / Black
+    pub const fn stock_car_racing_red() -> Self {
+        Self::new(Palette::RACING_RED, Palette::WHITE, Palette::INTIMIDATOR_BLACK)
+    }
+
+    /// Classic American Stock Car - Intimidator Black / Silver / Red
+    pub const fn stock_car_intimidator_black() -> Self {
+        Self::new(Palette::INTIMIDATOR_BLACK, Palette::WHITE, Palette::RACING_RED)
+    }
+
+    /// Classic American Stock Car - Carolina Petty Blue / White / Red
+    pub const fn stock_car_carolina_blue() -> Self {
+        Self::new(Palette::CAROLINA_BLUE, Palette::WHITE, Palette::RACING_RED)
     }
 
     pub fn to_hex_strings(&self) -> (String, String, String) {

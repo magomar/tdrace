@@ -389,6 +389,66 @@ impl CarConfig {
         cfg.tire.drift_slide_friction = 0.90;
         cfg
     }
+
+    /// 850 BHP Trans-Am TA1 / NASCAR Cup tubular spaceframe V8 stock car spec.
+    ///
+    /// Characterized by massive pushrod V8 power (11,800 N tractive force, ~850 BHP),
+    /// heavy inertia, low-to-moderate aerodynamic downforce, and progressive rear slip
+    /// that demands precise throttle modulation to avoid power-oversteer while remaining
+    /// planted and controllable at high superspeedway speeds.
+    pub fn stock_car_ta1() -> Self {
+        Self {
+            mass: 1260.0,
+            inertia: 1680.0,
+            wheelbase: 2.75,
+            track_width: 1.85,
+            cg_to_front: 1.35,
+            cg_to_rear: 1.40,
+            cg_height: 0.32,
+
+            max_engine_force: 11800.0, // ~850 BHP pushrod V8
+            max_reverse_force: 3600.0,
+            max_brake_force: 21000.0,
+            handbrake_force: 7000.0,
+            brake_bias: 0.62,
+            drive_bias: 0.0, // RWD
+            top_speed_mps: 89.0, // ~320 km/h (~200 mph)
+
+            max_steer_angle: 0.48, // ~27.5 deg quick-ratio stock car steering box
+            steer_speed: 7.5,
+            steer_return_speed: 10.0,
+            counter_steer_assist: 1.35,
+            speed_sensitive_steer_factor: 0.0012,
+
+            air_drag_coefficient: 0.52,
+            lateral_drag_coefficient: 1.35,
+            rolling_resistance_coefficient: 0.013,
+            angular_damping: 175.0,
+
+            weight_transfer_longitudinal: 0.85,
+            weight_transfer_lateral: 0.75,
+
+            engine_braking_coefficient: 0.18,
+            downforce_coefficient: 1.25, // Moderate downforce package
+
+            tire: TireConfig {
+                stiffness_b: 11.5,
+                shape_c: 1.48,
+                peak_d: 1.15,
+                curvature_e: -0.12,
+                drift_slide_friction: 0.86,
+                handbrake_lateral_friction_multiplier: 0.42,
+                skid_threshold: 0.09,
+                skid_full_threshold: 0.28,
+            },
+            assists: DriverAssistsConfig::sport(),
+        }
+    }
+
+    /// Alias for `stock_car_ta1()` representing the 850 BHP Trans-Am TA1 spaceframe racer.
+    pub fn trans_am_ta1() -> Self {
+        Self::stock_car_ta1()
+    }
 }
 
 #[cfg(test)]
@@ -401,10 +461,17 @@ mod tests {
         let drift = CarConfig::drift_car();
         let kart = CarConfig::kart();
         let rally = CarConfig::rally_car();
+        let stock = CarConfig::stock_car_ta1();
 
         assert_eq!(sports.drive_bias, 0.0);
         assert_eq!(rally.drive_bias, 0.5);
         assert!(drift.max_steer_angle > sports.max_steer_angle);
         assert!(kart.mass < sports.mass);
+
+        assert_eq!(stock.drive_bias, 0.0);
+        assert!(stock.max_engine_force > 10000.0);
+        assert!(stock.top_speed_mps * 3.6 > 310.0);
+        assert!(stock.mass > sports.mass);
+        assert_eq!(CarConfig::trans_am_ta1(), stock);
     }
 }

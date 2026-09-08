@@ -314,6 +314,18 @@ impl GameConfig {
                 }
             }
         }
+        if module_id == "gt" {
+            for path in Self::candidate_module_paths("f1") {
+                if path.exists() {
+                    if let Ok(content) = std::fs::read_to_string(&path) {
+                        if let Ok(val) = toml::from_str::<toml::Value>(&content) {
+                            println!("[Config] Loaded module override for 'gt' (fallback 'f1') from {:?}", path);
+                            return Some(val);
+                        }
+                    }
+                }
+            }
+        }
         None
     }
 
@@ -325,7 +337,14 @@ impl GameConfig {
             Err(_) => return self.clone(),
         };
 
-        if let Some(module_val) = self.modules.get(module_id) {
+        let module_val_opt = self.modules.get(module_id).or_else(|| {
+            if module_id == "gt" {
+                self.modules.get("f1")
+            } else {
+                None
+            }
+        });
+        if let Some(module_val) = module_val_opt {
             deep_merge_toml(&mut base_value, module_val);
         }
 
@@ -351,8 +370,15 @@ impl GameConfig {
             Err(_) => return self.clone(),
         };
 
-        // 2. Apply in-file [modules.<module_id>] override if present
-        if let Some(module_val) = self.modules.get(module_id) {
+        // 2. Apply in-file [modules.<module_id>] override if present (with gt -> f1 fallback)
+        let module_val_opt = self.modules.get(module_id).or_else(|| {
+            if module_id == "gt" {
+                self.modules.get("f1")
+            } else {
+                None
+            }
+        });
+        if let Some(module_val) = module_val_opt {
             deep_merge_toml(&mut base_value, module_val);
         }
 
@@ -421,7 +447,9 @@ impl GameConfig {
             CarChoice::DriftCar => "drift_car",
             CarChoice::Kart => "kart",
             CarChoice::RallyCar => "rally_car",
+            CarChoice::GT3Car => "gt3_car",
             CarChoice::F1Car => "f1_car",
+            CarChoice::StockCar => "stock_car",
         };
 
         if let Some(cfg) = self.cars.get(key) {
@@ -432,7 +460,9 @@ impl GameConfig {
                 CarChoice::DriftCar => CarConfig::drift_car(),
                 CarChoice::Kart => CarConfig::kart(),
                 CarChoice::RallyCar => CarConfig::rally_car(),
-                CarChoice::F1Car => crate::module::f1::F1GameModule::car_f1_hybrid(),
+                CarChoice::GT3Car => crate::module::f1::GtWorldChallengeModule::car_gt3_evo(),
+                CarChoice::F1Car => crate::module::f1::GtWorldChallengeModule::car_f1_hybrid(),
+                CarChoice::StockCar => CarConfig::stock_car_ta1(),
             }
         }
     }

@@ -358,6 +358,25 @@ impl EngineSoundConfig {
             saturation_drive: 1.30,
         }
     }
+
+    /// 850 BHP 5.9L (358 cu in) American Pushrod V8 (NASCAR Cup / Trans-Am TA1)
+    /// Roaring, high-compression un-muffled boom with heavy crank lump, massive intake bark,
+    /// solid lifter valvetrain chatter, and thunderous low-frequency exhaust resonance.
+    pub const fn nascar_v8() -> Self {
+        Self {
+            cylinder_count: 8,
+            is_two_stroke: false,
+            crank_lumpiness: 0.50, // Extreme 9,000 RPM pushrod V8 lope and displacement thrum
+            combustion_asymmetry: 0.56, // High compression ratio combustion crackle
+            intake_growl_intensity: 0.42, // 850 BHP Holley carb / throttle-body intake gulp
+            turbo_whine_level: 0.0, // Naturally aspirated 358ci pushrod V8
+            mechanical_buzz: 0.26, // Pushrod solid roller cam and rocker arm valvetrain clatter
+            formant_f1_hz: 120.0, // Boom tunnel side-exit exhaust sub-resonance
+            formant_f2_hz: 1300.0, // Open boom-tube megaphone exhaust roar
+            formant_q: 2.4,
+            saturation_drive: 1.40, // Rich analog drive saturation
+        }
+    }
 }
 
 /// Generates an integer-cycle seamless looping engine harmonic sound for a specific configuration and RPM frequency.
@@ -496,6 +515,11 @@ pub fn generate_f1_v6_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
 /// Generates aggressive 4-cylinder WRC turbo rally engine sound loop band.
 pub fn generate_rally_turbo_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
     generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::rally_turbo())
+}
+
+/// Generates roaring 5.9L Pushrod V8 stock car engine sound loop band.
+pub fn generate_nascar_v8_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
+    generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::nascar_v8())
 }
 
 /// Legacy / Standard engine RPM band generator (aliases to generic procedural engine band).
@@ -725,6 +749,7 @@ mod tests {
             ("kart", generate_kart_125cc_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("f1", generate_f1_v6_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("rally", generate_rally_turbo_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
+            ("nascar", generate_nascar_v8_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
         ];
 
         for (name, wav) in presets {

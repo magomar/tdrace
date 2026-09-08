@@ -9,6 +9,7 @@ fn test_off_throttle_engine_braking_deceleration_across_all_presets() {
         ("DriftCar", CarConfig::drift_car(), 0.08, 0.20),
         ("Kart", CarConfig::kart(), 0.12, 0.30),
         ("RallyCar", CarConfig::rally_car(), 0.10, 0.24),
+        ("StockCarTA1", CarConfig::stock_car_ta1(), 0.10, 0.25),
     ];
 
     for (name, config, min_g, max_g) in presets {
@@ -181,5 +182,86 @@ fn test_high_speed_cornering_grip_and_esc_stability() {
         max_ay / 9.81 >= 0.75,
         "Sports car must generate at least 0.75g lateral grip in 90 km/h curve (got {:.2}g)",
         max_ay / 9.81
+    );
+}
+
+#[test]
+fn test_stock_car_ta1_power_and_top_speed_dynamics() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::stock_car_ta1();
+    let mut car = Car::new(cfg);
+
+    // Test straight line acceleration: 0-100 km/h in under 3.5 seconds
+    let mut steps_to_100 = 0;
+    while car.speed_kmh() < 100.0 && steps_to_100 < 60 * 10 {
+        car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+        steps_to_100 += 1;
+    }
+    let time_0_100 = steps_to_100 as f32 * dt;
+    println!("Stock Car TA1 0-100 km/h time: {:.2}s", time_0_100);
+    assert!(time_0_100 < 5.5, "850 BHP Stock car must reach 100 km/h in < 5.5s (got {:.2}s)", time_0_100);
+
+    // Accelerate to top speed convergence
+    for _ in 0..(60 * 25) {
+        car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+    println!("Stock Car TA1 top speed reached: {:.1} km/h (target ~320 km/h)", car.speed_kmh());
+    assert!(
+        car.speed_kmh() > 300.0,
+        "Stock car top speed must exceed 300 km/h (got {:.1} km/h)",
+        car.speed_kmh()
+    );
+}
+
+#[test]
+fn test_aerodynamic_drafting_and_slipstream_velocity_boost() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::stock_car_ta1();
+
+    // Solo car running flat out on straightaway
+    let mut solo_car = Car::new(cfg);
+    for _ in 0..(60 * 20) {
+        solo_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+    let solo_top_speed = solo_car.speed_kmh();
+
+    // Lead car + Trailing drafting car
+    let mut lead_car = Car::new(cfg).with_pose(glam::Vec2::new(12.0, 0.0), 0.0);
+    lead_car.state.speed = 85.0; // ~306 km/h
+    lead_car.state.velocity = glam::Vec2::new(85.0, 0.0);
+
+    let mut trailing_car = Car::new(cfg).with_pose(glam::Vec2::new(0.0, 0.0), 0.0);
+    trailing_car.state.speed = 85.0;
+    trailing_car.state.velocity = glam::Vec2::new(85.0, 0.0);
+
+    // Compute drafting intensity: trailing car is 12m directly behind lead car
+    let draft = trailing_car.compute_draft_intensity(&[&lead_car]);
+    println!("Draft intensity 12m behind lead car: {:.3} (expected > 0.20)", draft);
+    assert!(draft > 0.20, "Draft intensity at 12m directly behind should exceed 0.20");
+
+    trailing_car.state.draft_intensity = draft;
+
+    // Advance both cars under full throttle
+    for _ in 0..(60 * 10) {
+        let draft_lead = lead_car.compute_draft_intensity(&[&trailing_car]);
+        lead_car.state.draft_intensity = draft_lead;
+        lead_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+
+        let draft_trail = trailing_car.compute_draft_intensity(&[&lead_car]);
+        trailing_car.state.draft_intensity = draft_trail;
+        trailing_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+
+    let drafting_top_speed = trailing_car.speed_kmh();
+    println!(
+        "Solo top speed: {:.1} km/h vs Drafting top speed: {:.1} km/h (Delta = +{:.1} km/h)",
+        solo_top_speed,
+        drafting_top_speed,
+        drafting_top_speed - solo_top_speed
+    );
+
+    assert!(
+        drafting_top_speed > solo_top_speed,
+        "Car in slipstream wake draft must achieve higher speed than solo car"
     );
 }

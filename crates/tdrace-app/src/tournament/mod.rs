@@ -9,6 +9,8 @@ pub enum PointSystem {
     MotoGp,
     /// Classic arcade 6-place scoring: 10, 6, 4, 3, 2, 1
     ClassicArcade,
+    /// Official NASCAR Cup Series scoring: 40 pts for 1st, 35 for 2nd, 34 for 3rd... down to 1 pt, plus stage win bonus (10 pts)
+    NascarCup { stage_win_bonus: bool },
     /// Custom points matrix
     Custom(Vec<u32>),
 }
@@ -59,6 +61,12 @@ impl PointSystem {
                 6 => 1,
                 _ => 0,
             },
+            Self::NascarCup { .. } => match position {
+                1 => 40,
+                2 => 35,
+                p if (3..=35).contains(&p) => (37 - p) as u32,
+                _ => 1,
+            },
             Self::Custom(pts) => {
                 if position <= pts.len() {
                     pts[position - 1]
@@ -70,6 +78,7 @@ impl PointSystem {
 
         let bonus = match self {
             Self::F1Standard { fastest_lap_bonus: true } if has_fastest_lap && position <= 10 => 1,
+            Self::NascarCup { stage_win_bonus: true } if has_fastest_lap => 10,
             _ => 0,
         };
 
@@ -417,5 +426,18 @@ mod tests {
         assert_eq!(champ.standings[1].points, 18);
         assert_eq!(champ.current_round, 1);
         assert!(!champ.is_completed);
+    }
+
+    #[test]
+    fn test_nascar_point_system() {
+        let pts = PointSystem::NascarCup { stage_win_bonus: true };
+        assert_eq!(pts.points_for_position(1, false), 40);
+        assert_eq!(pts.points_for_position(1, true), 50); // 40 win + 10 stage win bonus
+        assert_eq!(pts.points_for_position(2, false), 35);
+        assert_eq!(pts.points_for_position(3, false), 34);
+        assert_eq!(pts.points_for_position(10, false), 27);
+        assert_eq!(pts.points_for_position(35, false), 2);
+        assert_eq!(pts.points_for_position(36, false), 1);
+        assert_eq!(pts.points_for_position(40, false), 1);
     }
 }

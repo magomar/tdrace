@@ -104,6 +104,24 @@ pub fn render_car_with_visual_type(
             render_cockpit(chassis_center, fwd, right, color_scheme);
             render_car_details(chassis_center, fwd, right, body_half_len, body_half_w, is_braking);
         }
+        VehicleVisualType::StockCar { tall_wing, roof_fins, window_net } => {
+            for i in 0..4 {
+                render_wheel(wheel_positions[i], angle + wheel_steers[i], true);
+            }
+            render_stock_car_body(
+                car,
+                chassis_center,
+                fwd,
+                right,
+                body_half_len,
+                body_half_w,
+                color_scheme,
+                tall_wing,
+                roof_fins,
+                window_net,
+                is_braking,
+            );
+        }
     }
 }
 
@@ -536,4 +554,382 @@ fn render_car_details(
     let w3 = wing_pos - fwd * wing_thick - right * wing_half_w;
 
     draw_quad(w0, w1, w2, w3, Color::new(0.12, 0.12, 0.15, 0.98));
+}
+
+/// Renders American Stock Car / Trans-Am TA1 silhouette body with muscular proportions,
+/// side exhaust heat shields, overrun flames, door number plates, window netting, and aero wings.
+#[allow(clippy::too_many_arguments)]
+fn render_stock_car_body(
+    car: &Car,
+    pos: Vec2,
+    fwd: Vec2,
+    right: Vec2,
+    half_len: f32,
+    half_w: f32,
+    color_scheme: &CarColorScheme,
+    tall_wing: bool,
+    roof_fins: bool,
+    window_net: bool,
+    is_braking: bool,
+) {
+    // 1. --- Muscular Stock Car Body Profile ---
+    let nose_w = half_w * 0.88;
+    let tail_w = half_w * 0.90;
+
+    let p_nose_l = pos + fwd * half_len - right * nose_w;
+    let p_nose_r = pos + fwd * half_len + right * nose_w;
+    let p_fender_fl = pos + fwd * (half_len * 0.55) - right * (half_w * 1.02);
+    let p_fender_fr = pos + fwd * (half_len * 0.55) + right * (half_w * 1.02);
+    let p_waist_l = pos - right * (half_w * 0.96);
+    let p_waist_r = pos + right * (half_w * 0.96);
+    let p_fender_rl = pos - fwd * (half_len * 0.55) - right * (half_w * 1.02);
+    let p_fender_rr = pos - fwd * (half_len * 0.55) + right * (half_w * 1.02);
+    let p_tail_l = pos - fwd * half_len - right * tail_w;
+    let p_tail_r = pos - fwd * half_len + right * tail_w;
+
+    // Body segments
+    draw_quad(p_nose_l, p_nose_r, p_fender_fr, p_fender_fl, color_scheme.primary);
+    draw_quad(p_fender_fl, p_fender_fr, p_waist_r, p_waist_l, color_scheme.primary);
+    draw_quad(p_waist_l, p_waist_r, p_fender_rr, p_fender_rl, color_scheme.primary);
+    draw_quad(p_fender_rl, p_fender_rr, p_tail_r, p_tail_l, color_scheme.primary);
+
+    // Front chin splitter / air dam
+    let split_len = half_len + 0.18;
+    let split_w = nose_w + 0.08;
+    let sp_fl = pos + fwd * split_len - right * split_w;
+    let sp_fr = pos + fwd * split_len + right * split_w;
+    let sp_bl = pos + fwd * half_len - right * split_w;
+    let sp_br = pos + fwd * half_len + right * split_w;
+    draw_quad(sp_fl, sp_fr, sp_br, sp_bl, Color::new(0.10, 0.10, 0.12, 0.98));
+
+    // Splitter tie rods (struts)
+    let rod_y = half_w * 0.45;
+    let rod_l_start = pos + fwd * split_len - right * rod_y;
+    let rod_l_end = pos + fwd * half_len - right * (rod_y * 0.85);
+    let rod_r_start = pos + fwd * split_len + right * rod_y;
+    let rod_r_end = pos + fwd * half_len + right * (rod_y * 0.85);
+    draw_line(rod_l_start.x, rod_l_start.y, rod_l_end.x, rod_l_end.y, 0.05, Color::new(0.75, 0.75, 0.80, 0.95));
+    draw_line(rod_r_start.x, rod_r_start.y, rod_r_end.x, rod_r_end.y, 0.05, Color::new(0.75, 0.75, 0.80, 0.95));
+
+    // Specular top reflection along body centerline
+    let spec_l = pos + fwd * (half_len * 0.85) - right * (half_w * 0.28);
+    let spec_r = pos + fwd * (half_len * 0.85) + right * (half_w * 0.08);
+    let spec_rr = pos - fwd * (half_len * 0.50) + right * (half_w * 0.08);
+    let spec_rl = pos - fwd * (half_len * 0.50) - right * (half_w * 0.28);
+    draw_quad(spec_l, spec_r, spec_rr, spec_rl, Color::new(1.0, 1.0, 1.0, 0.16));
+
+    // Classic twin racing stripes or hood scallop
+    let stripe_hw = half_w * 0.24;
+    let s_nl = pos + fwd * half_len - right * stripe_hw;
+    let s_nr = pos + fwd * half_len + right * stripe_hw;
+    let s_tr = pos - fwd * half_len + right * stripe_hw;
+    let s_tl = pos - fwd * half_len - right * stripe_hw;
+    draw_quad(s_nl, s_nr, s_tr, s_tl, color_scheme.secondary);
+
+    // Hood pins
+    let pin_fwd = pos + fwd * (half_len * 0.72);
+    let pin_offset = right * (half_w * 0.55);
+    draw_circle((pin_fwd - pin_offset).x, (pin_fwd - pin_offset).y, 0.06, Color::new(0.85, 0.85, 0.90, 0.95));
+    draw_circle((pin_fwd + pin_offset).x, (pin_fwd + pin_offset).y, 0.06, Color::new(0.85, 0.85, 0.90, 0.95));
+
+    // 2. --- Greenhouse / Cockpit ---
+    let cockpit_center = pos - fwd * 0.12;
+    let glass_flen = 0.55;
+    let glass_rlen = 0.65;
+    let glass_fw = half_w * 0.65;
+    let glass_rw = half_w * 0.70;
+
+    let g_fl = cockpit_center + fwd * glass_flen - right * glass_fw;
+    let g_fr = cockpit_center + fwd * glass_flen + right * glass_fw;
+    let g_rr = cockpit_center - fwd * glass_rlen + right * glass_rw;
+    let g_rl = cockpit_center - fwd * glass_rlen - right * glass_rw;
+
+    // Dark safety glass
+    draw_quad(g_fl, g_fr, g_rr, g_rl, Color::new(0.08, 0.10, 0.14, 0.92));
+
+    // Windshield specular angle highlight
+    let w_spec_l = g_fl + fwd * 0.04;
+    let w_spec_r = cockpit_center + fwd * (glass_flen * 0.6) + right * 0.08;
+    let w_spec_rr = cockpit_center + right * 0.08;
+    let w_spec_rl = g_fl - fwd * 0.16;
+    draw_quad(w_spec_l, w_spec_r, w_spec_rr, w_spec_rl, Color::new(1.0, 1.0, 1.0, 0.30));
+
+    // Roof metal panel
+    let roof_hl = 0.38;
+    let roof_hw = half_w * 0.58;
+    let r_fl = cockpit_center + fwd * roof_hl - right * roof_hw;
+    let r_fr = cockpit_center + fwd * roof_hl + right * roof_hw;
+    let r_rr = cockpit_center - fwd * roof_hl + right * roof_hw;
+    let r_rl = cockpit_center - fwd * roof_hl - right * roof_hw;
+    draw_quad(r_fl, r_fr, r_rr, r_rl, color_scheme.primary);
+
+    // Driver window safety netting (Left side of cockpit)
+    if window_net {
+        let net_start = cockpit_center + fwd * (roof_hl * 0.8) - right * (glass_fw * 0.95);
+        let net_end = cockpit_center - fwd * (roof_hl * 0.8) - right * (glass_rw * 0.95);
+        let net_col = Color::new(0.06, 0.06, 0.08, 0.95);
+
+        // Outer border
+        draw_line(net_start.x, net_start.y, net_end.x, net_end.y, 0.06, net_col);
+
+        // Webbing grid (vertical & horizontal net ribbons)
+        for step in 1..4 {
+            let t = step as f32 / 4.0;
+            let p = net_start.lerp(net_end, t);
+            let inner_p = p + right * 0.16;
+            draw_line(p.x, p.y, inner_p.x, inner_p.y, 0.035, net_col);
+        }
+        draw_line(
+            (net_start + right * 0.08).x,
+            (net_start + right * 0.08).y,
+            (net_end + right * 0.08).x,
+            (net_end + right * 0.08).y,
+            0.035,
+            net_col,
+        );
+    }
+
+    // Aerodynamic roof fins & roof safety flaps
+    if roof_fins {
+        let fin_col = Color::new(0.12, 0.12, 0.16, 0.90);
+        // Roof longitudinal roof rails
+        let fin_offset = roof_hw * 0.70;
+        let l_start = cockpit_center + fwd * roof_hl - right * fin_offset;
+        let l_end = cockpit_center - fwd * roof_hl - right * fin_offset;
+        let r_start = cockpit_center + fwd * roof_hl + right * fin_offset;
+        let r_end = cockpit_center - fwd * roof_hl + right * fin_offset;
+        draw_line(l_start.x, l_start.y, l_end.x, l_end.y, 0.04, fin_col);
+        draw_line(r_start.x, r_start.y, r_end.x, r_end.y, 0.04, fin_col);
+
+        // Rear window shark-fin stabilizer (NASCAR superspeedway shark-fin on greenhouse)
+        let fin_win_start = cockpit_center - fwd * roof_hl - right * (roof_hw * 0.35);
+        let fin_win_end = cockpit_center - fwd * glass_rlen - right * (roof_hw * 0.35);
+        draw_line(fin_win_start.x, fin_win_start.y, fin_win_end.x, fin_win_end.y, 0.05, fin_col);
+    }
+
+    // Driver Helmet inside cockpit
+    let helmet_pos = cockpit_center - fwd * 0.05 - right * 0.14;
+    let helmet_radius = 0.22;
+    draw_circle(helmet_pos.x + 0.04, helmet_pos.y + 0.04, helmet_radius, Color::new(0.0, 0.0, 0.0, 0.4));
+    draw_circle(helmet_pos.x, helmet_pos.y, helmet_radius, color_scheme.helmet);
+    draw_circle_lines(helmet_pos.x, helmet_pos.y, helmet_radius, 0.04, Color::new(0.1, 0.1, 0.1, 0.8));
+    // Visor
+    let visor_pos = helmet_pos + fwd * (helmet_radius * 0.55);
+    draw_line(
+        (visor_pos - right * 0.11).x,
+        (visor_pos - right * 0.11).y,
+        (visor_pos + right * 0.11).x,
+        (visor_pos + right * 0.11).y,
+        0.06,
+        Color::new(0.08, 0.08, 0.10, 0.95),
+    );
+
+    // 3. --- Sponsor Door Number Plates ---
+    let plate_hl = 0.28;
+    let plate_hw = 0.10;
+    // Right side door plate
+    let plate_r = pos - fwd * 0.08 + right * (half_w * 0.98);
+    draw_quad(
+        plate_r + fwd * plate_hl - right * plate_hw,
+        plate_r + fwd * plate_hl + right * plate_hw,
+        plate_r - fwd * plate_hl + right * plate_hw,
+        plate_r - fwd * plate_hl - right * plate_hw,
+        Palette::WHITE,
+    );
+    // Dark door race number badge inside plate
+    draw_line(
+        (plate_r + fwd * 0.14).x,
+        (plate_r + fwd * 0.14).y,
+        (plate_r - fwd * 0.14).x,
+        (plate_r - fwd * 0.14).y,
+        0.08,
+        Color::new(0.10, 0.10, 0.12, 0.95),
+    );
+
+    // Left side door plate
+    let plate_l = pos - fwd * 0.08 - right * (half_w * 0.98);
+    draw_quad(
+        plate_l + fwd * plate_hl - right * plate_hw,
+        plate_l + fwd * plate_hl + right * plate_hw,
+        plate_l - fwd * plate_hl + right * plate_hw,
+        plate_l - fwd * plate_hl - right * plate_hw,
+        Palette::WHITE,
+    );
+    draw_line(
+        (plate_l + fwd * 0.14).x,
+        (plate_l + fwd * 0.14).y,
+        (plate_l - fwd * 0.14).x,
+        (plate_l - fwd * 0.14).y,
+        0.08,
+        Color::new(0.10, 0.10, 0.12, 0.95),
+    );
+
+    // 4. --- Side Exhaust Heat Shields & Outlets ---
+    // Right side boom tube exhaust (classic NASCAR side exit)
+    let exh_pos = pos - fwd * (half_len * 0.22) + right * (half_w * 0.98);
+    let shield_hl = 0.28;
+    let shield_hw = 0.08;
+    // Aluminum heat shield plate
+    draw_quad(
+        exh_pos + fwd * shield_hl - right * shield_hw,
+        exh_pos + fwd * shield_hl + right * shield_hw,
+        exh_pos - fwd * shield_hl + right * shield_hw,
+        exh_pos - fwd * shield_hl - right * shield_hw,
+        Color::new(0.74, 0.76, 0.80, 0.95),
+    );
+    // Fasteners / rivets on heat shield
+    draw_circle((exh_pos + fwd * 0.22).x, (exh_pos + fwd * 0.22).y, 0.025, Color::new(0.2, 0.2, 0.25, 0.9));
+    draw_circle((exh_pos - fwd * 0.22).x, (exh_pos - fwd * 0.22).y, 0.025, Color::new(0.2, 0.2, 0.25, 0.9));
+
+    // Dual exhaust pipe tips
+    let tip1 = exh_pos + fwd * 0.08;
+    let tip2 = exh_pos - fwd * 0.08;
+    draw_circle(tip1.x, tip1.y, 0.055, Color::new(0.15, 0.15, 0.18, 1.0));
+    draw_circle(tip2.x, tip2.y, 0.055, Color::new(0.15, 0.15, 0.18, 1.0));
+    draw_circle(tip1.x, tip1.y, 0.035, Color::new(0.04, 0.04, 0.05, 1.0));
+    draw_circle(tip2.x, tip2.y, 0.035, Color::new(0.04, 0.04, 0.05, 1.0));
+
+    // 5. --- Exhaust Flame Visual Effect on Overrun ---
+    // Overrun occurs during deceleration or braking when lifting off throttle at speed
+    let is_overrun = (is_braking || car.state.acceleration_local.x < -0.6) && car.state.speed > 5.0;
+    if is_overrun {
+        // High-compression 850 BHP V8 combustion overrun flames licking out from the boom tubes
+        let flame_dir = (-fwd * 0.65 + right * 0.75).normalize();
+        let flame_len = 0.52 + ((pos.x * 12.0 + pos.y * 7.0).sin().abs() * 0.22);
+        let flame_tip = exh_pos + flame_dir * flame_len;
+        let flame_perp = Vec2::new(-flame_dir.y, flame_dir.x);
+
+        // Outer orange/red flame plume
+        let plume_w = 0.12;
+        draw_quad(
+            exh_pos - flame_perp * (plume_w * 0.6),
+            exh_pos + flame_perp * (plume_w * 0.6),
+            flame_tip + flame_perp * (plume_w * 0.2),
+            flame_tip - flame_perp * (plume_w * 0.2),
+            Color::new(1.0, 0.30, 0.05, 0.88),
+        );
+
+        // Hot inner yellow/white flame core
+        let core_len = flame_len * 0.65;
+        let core_tip = exh_pos + flame_dir * core_len;
+        let core_w = plume_w * 0.5;
+        draw_quad(
+            exh_pos - flame_perp * core_w,
+            exh_pos + flame_perp * core_w,
+            core_tip + flame_perp * (core_w * 0.2),
+            core_tip - flame_perp * (core_w * 0.2),
+            Color::new(1.0, 0.95, 0.40, 0.98),
+        );
+
+        // Sparks ejecting backwards
+        let spark1 = flame_tip + flame_dir * 0.12 + flame_perp * 0.05;
+        let spark2 = flame_tip + flame_dir * 0.22 - flame_perp * 0.08;
+        draw_circle(spark1.x, spark1.y, 0.035, Color::new(1.0, 0.85, 0.20, 0.95));
+        draw_circle(spark2.x, spark2.y, 0.028, Color::new(1.0, 0.50, 0.10, 0.85));
+    }
+
+    // 6. --- Rear Wing / Ducktail Spoiler ---
+    if tall_wing {
+        // Trans-Am TA1 High-Mount Carbon GT Wing
+        let wing_pos = pos - fwd * (half_len + 0.16);
+        let wing_hw = half_w * 0.98;
+        let wing_th = 0.16;
+
+        // Uprights / stanchions connecting to rear deck
+        let stanch_offset = half_w * 0.40;
+        let s_l_start = pos - fwd * (half_len * 0.75) - right * stanch_offset;
+        let s_l_end = wing_pos - right * stanch_offset;
+        let s_r_start = pos - fwd * (half_len * 0.75) + right * stanch_offset;
+        let s_r_end = wing_pos + right * stanch_offset;
+        draw_line(s_l_start.x, s_l_start.y, s_l_end.x, s_l_end.y, 0.06, Color::new(0.20, 0.20, 0.24, 1.0));
+        draw_line(s_r_start.x, s_r_start.y, s_r_end.x, s_r_end.y, 0.06, Color::new(0.20, 0.20, 0.24, 1.0));
+
+        // Main wing blade
+        let w0 = wing_pos + fwd * wing_th - right * wing_hw;
+        let w1 = wing_pos + fwd * wing_th + right * wing_hw;
+        let w2 = wing_pos - fwd * wing_th + right * wing_hw;
+        let w3 = wing_pos - fwd * wing_th - right * wing_hw;
+        draw_quad(w0, w1, w2, w3, Color::new(0.12, 0.12, 0.15, 0.98));
+
+        // Aerodynamic endplates
+        let ep_len = 0.24;
+        let ep_col = color_scheme.primary;
+        draw_line(
+            (wing_pos - right * wing_hw + fwd * ep_len).x,
+            (wing_pos - right * wing_hw + fwd * ep_len).y,
+            (wing_pos - right * wing_hw - fwd * ep_len).x,
+            (wing_pos - right * wing_hw - fwd * ep_len).y,
+            0.08,
+            ep_col,
+        );
+        draw_line(
+            (wing_pos + right * wing_hw + fwd * ep_len).x,
+            (wing_pos + right * wing_hw + fwd * ep_len).y,
+            (wing_pos + right * wing_hw - fwd * ep_len).x,
+            (wing_pos + right * wing_hw - fwd * ep_len).y,
+            0.08,
+            ep_col,
+        );
+    } else {
+        // NASCAR Cup Ducktail / Blade Spoiler
+        let spoiler_pos = pos - fwd * (half_len - 0.02);
+        let spoiler_hw = half_w * 0.94;
+        let spoiler_th = 0.14;
+
+        // Polycarbonate blade / aluminum decklid spoiler
+        let sp0 = spoiler_pos + fwd * spoiler_th - right * spoiler_hw;
+        let sp1 = spoiler_pos + fwd * spoiler_th + right * spoiler_hw;
+        let sp2 = spoiler_pos - fwd * spoiler_th + right * spoiler_hw;
+        let sp3 = spoiler_pos - fwd * spoiler_th - right * spoiler_hw;
+        draw_quad(sp0, sp1, sp2, sp3, Color::new(0.18, 0.20, 0.25, 0.95));
+
+        // Top wickerbill lip / Gurney flap
+        let gurney_pos = spoiler_pos - fwd * spoiler_th;
+        draw_line(
+            (gurney_pos - right * spoiler_hw).x,
+            (gurney_pos - right * spoiler_hw).y,
+            (gurney_pos + right * spoiler_hw).x,
+            (gurney_pos + right * spoiler_hw).y,
+            0.05,
+            Color::new(0.85, 0.88, 0.95, 0.95),
+        );
+
+        // Turnbuckle adjustment braces supporting spoiler from rear decklid
+        let tb1 = spoiler_pos - right * (spoiler_hw * 0.45);
+        let tb2 = spoiler_pos + right * (spoiler_hw * 0.45);
+        let tb1_base = tb1 + fwd * 0.22;
+        let tb2_base = tb2 + fwd * 0.22;
+        draw_line(tb1.x, tb1.y, tb1_base.x, tb1_base.y, 0.04, Color::new(0.65, 0.68, 0.72, 0.95));
+        draw_line(tb2.x, tb2.y, tb2_base.x, tb2_base.y, 0.04, Color::new(0.65, 0.68, 0.72, 0.95));
+    }
+
+    // 7. --- Front Decal Headlights & Rear Taillights ---
+    // NASCAR Printed Decal Headlights (authentic sticker look)
+    let decal_w = half_w * 0.62;
+    let head_l = pos + fwd * (half_len - 0.02) - right * decal_w;
+    let head_r = pos + fwd * (half_len - 0.02) + right * decal_w;
+    draw_circle(head_l.x, head_l.y, 0.13, Color::new(0.90, 0.92, 0.96, 0.85));
+    draw_circle(head_r.x, head_r.y, 0.13, Color::new(0.90, 0.92, 0.96, 0.85));
+    draw_circle(head_l.x, head_l.y, 0.08, Color::new(0.40, 0.45, 0.55, 0.90));
+    draw_circle(head_r.x, head_r.y, 0.08, Color::new(0.40, 0.45, 0.55, 0.90));
+
+    // Rear Taillights & Brake Lights
+    let tail_w = half_w * 0.72;
+    let tail_l = pos - fwd * (half_len - 0.04) - right * tail_w;
+    let tail_r = pos - fwd * (half_len - 0.04) + right * tail_w;
+
+    if is_braking {
+        draw_circle(tail_l.x, tail_l.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
+        draw_circle(tail_r.x, tail_r.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
+        draw_circle(tail_l.x, tail_l.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
+        draw_circle(tail_r.x, tail_r.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
+    } else {
+        draw_circle(tail_l.x, tail_l.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+        draw_circle(tail_r.x, tail_r.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+    }
+
+    // Rear fuel cell filler cap (NASCAR red quick-fill cap on left rear quarter panel)
+    let fuel_cap_pos = pos - fwd * (half_len * 0.65) - right * (half_w * 0.86);
+    draw_circle(fuel_cap_pos.x, fuel_cap_pos.y, 0.07, Color::new(0.85, 0.12, 0.12, 0.95));
+    draw_circle_lines(fuel_cap_pos.x, fuel_cap_pos.y, 0.07, 0.02, Color::new(0.2, 0.2, 0.2, 0.9));
 }

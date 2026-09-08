@@ -97,3 +97,69 @@ fn test_track_backdrop_colors() {
     let col_fallback = get_track_backdrop_color(SurfaceType::Water);
     assert_eq!(col_fallback, Palette::BACKDROP_GRASS);
 }
+
+#[test]
+fn test_stock_car_visual_archetype_and_liveries() {
+    use tdrace_app::module::VehicleVisualType;
+
+    // Verify stock car palette constants
+    assert_eq!(Palette::DAYTONA_BLUE.a, 1.0);
+    assert_eq!(Palette::SUNSET_ORANGE.a, 1.0);
+    assert_eq!(Palette::RACING_RED.a, 1.0);
+    assert_eq!(Palette::CUP_GOLD.a, 1.0);
+    assert_eq!(Palette::INTIMIDATOR_BLACK.a, 1.0);
+    assert_eq!(Palette::CAROLINA_BLUE.a, 1.0);
+
+    // Verify stock car livery constructors
+    let daytona = CarColorScheme::stock_car_daytona_blue();
+    assert_eq!(daytona.primary, Palette::DAYTONA_BLUE);
+    assert_eq!(daytona.secondary, Palette::WHITE);
+
+    let sunset = CarColorScheme::stock_car_sunset_orange();
+    assert_eq!(sunset.primary, Palette::SUNSET_ORANGE);
+
+    let racing_red = CarColorScheme::stock_car_racing_red();
+    assert_eq!(racing_red.primary, Palette::RACING_RED);
+
+    let intimidator = CarColorScheme::stock_car_intimidator_black();
+    assert_eq!(intimidator.primary, Palette::INTIMIDATOR_BLACK);
+
+    let petty = CarColorScheme::stock_car_carolina_blue();
+    assert_eq!(petty.primary, Palette::CAROLINA_BLUE);
+
+    // Test StockCar visual archetype configs
+    let nascar_cup = VehicleVisualType::StockCar {
+        tall_wing: false,
+        roof_fins: true,
+        window_net: true,
+    };
+
+    let trans_am_ta1 = VehicleVisualType::StockCar {
+        tall_wing: true,
+        roof_fins: false,
+        window_net: true,
+    };
+
+    // Verify pattern matching on variants
+    match nascar_cup {
+        VehicleVisualType::StockCar { tall_wing, roof_fins, window_net } => {
+            assert!(!tall_wing, "NASCAR Cup car uses ducktail blade spoiler");
+            assert!(roof_fins, "NASCAR Cup car features roof aerodynamic safety flaps");
+            assert!(window_net, "Stock car includes driver window safety net");
+        }
+        _ => panic!("Expected StockCar visual type"),
+    }
+
+    match trans_am_ta1 {
+        VehicleVisualType::StockCar { tall_wing, .. } => {
+            assert!(tall_wing, "Trans-Am TA1 silhouette uses tall high-mount GT wing");
+        }
+        _ => panic!("Expected StockCar visual type"),
+    }
+
+    // Verify stock car dimensions and physics setup
+    let car = Car::new(CarConfig::stock_car_ta1());
+    assert!(car.config.top_speed_mps * 3.6 > 310.0);
+    assert_eq!(car.config.mass, 1260.0);
+}
+

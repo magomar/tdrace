@@ -154,6 +154,7 @@ pub fn render_track_manager_screen(
             ModuleFilter::Rally => Palette::NEON_GOLD,
             ModuleFilter::Kart => Palette::NEON_MAGENTA,
             ModuleFilter::F1 => Palette::RED,
+            ModuleFilter::Nascar => Palette::NEON_ORANGE,
         };
 
         let (chip_bg, border_col, text_col) = if is_chip_active {

@@ -59,10 +59,12 @@ impl TrackChoice {
             Self::Custom { id, path, .. } => {
                 if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx") {
                     "RALLY CROSS"
-                } else if path.contains("/f1/") || path.starts_with("f1/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota") {
-                    "FORMULA 1"
+                } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring") {
+                    "GT WORLD CHALLENGE"
                 } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta") {
                     "KARTING"
+                } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway") {
+                    "NASCAR CUP"
                 } else {
                     "CLASSIC MOTORSPORT"
                 }
@@ -73,7 +75,7 @@ impl TrackChoice {
     pub fn tag_for_module(&self, mod_id: &str) -> &str {
         match self {
             Self::ClassicGrandPrix => {
-                if mod_id == "f1" { "F1 GP CIRCUIT" } else { "FIA GP CIRCUIT" }
+                if mod_id == "f1" || mod_id == "gt" || mod_id == "gt_challenge" { "GT GP CIRCUIT" } else { "FIA GP CIRCUIT" }
             }
             Self::OvalSpeedway => "SUPERSPEEDWAY",
             Self::DriftPark => "TECHNICAL DRIFT",
@@ -84,15 +86,18 @@ impl TrackChoice {
             Self::Custom { id, path, .. } => {
                 if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx") {
                     "RALLY CROSS"
-                } else if path.contains("/f1/") || path.starts_with("f1/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota") {
-                    "FORMULA 1"
+                } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring") {
+                    "GT WORLD CHALLENGE"
                 } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta") {
                     "KARTING"
+                } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway") {
+                    "NASCAR CUP"
                 } else {
                     match mod_id {
-                        "f1" => "FORMULA 1",
+                        "gt" | "gt_challenge" | "f1" => "GT WORLD CHALLENGE",
                         "rally" => "RALLY CROSS",
                         "kart" => "KARTING",
+                        "nascar" => "NASCAR CUP",
                         _ => "CLASSIC MOTORSPORT",
                     }
                 }
@@ -152,6 +157,7 @@ impl TrackChoice {
                         || path.starts_with("f1/")
                         || path.starts_with("rally/")
                         || path.starts_with("kart/")
+                        || path.starts_with("nascar/")
                         || path.starts_with("classic/"))
             }
         }
@@ -184,7 +190,7 @@ pub fn resolve_track_for_menu_with_dir(
         if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
             let id = choice.track_id();
             let file_name = format!("{}.json", id);
-            for m in ["classic", "rally", "kart", "f1"] {
+            for m in ["classic", "rally", "kart", "f1", "nascar"] {
                 let p = git_tracks_dir.join(m).join(&file_name);
                 if p.exists() {
                     if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
@@ -214,6 +220,7 @@ pub fn resolve_track_for_menu_with_dir(
         dir.join("f1").join(&file_name),
         dir.join("rally").join(&file_name),
         dir.join("kart").join(&file_name),
+        dir.join("nascar").join(&file_name),
         dir.join("drafts").join(&file_name),
         dir.join(&file_name),
     ];
@@ -255,6 +262,7 @@ impl TrackChoice {
             "bahrain" => Some(crate::module::f1::F1GameModule::track_bahrain()),
             "marina_bay" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
             "cota" => Some(crate::module::f1::F1GameModule::track_cota()),
+            "madring" => Some(crate::module::f1::F1GameModule::track_madring()),
             "sahara" | "sahara_dunes" => Some(tdrace_core::track::presets::sahara_dunes()),
             "dirt_figure_eight" | "dirt_eight" => Some(tdrace_core::track::presets::dirt_figure_eight()),
             "holjes_rx" | "holjes" => Some(tdrace_core::track::presets::holjes_rx()),
@@ -274,6 +282,10 @@ impl TrackChoice {
             "le_mans_kart" => Some(crate::module::kart::KartGameModule::track_le_mans()),
             "portimao_kart" => Some(crate::module::kart::KartGameModule::track_portimao()),
             "franciacorta" => Some(crate::module::kart::KartGameModule::track_franciacorta()),
+            "daytona" | "daytona_superspeedway" => Some(tdrace_core::track::presets::daytona_superspeedway()),
+            "talladega" | "talladega_superspeedway" => Some(tdrace_core::track::presets::talladega_superspeedway()),
+            "watkins_glen" | "watkins_glen_nascar" => Some(tdrace_core::track::presets::watkins_glen_nascar()),
+            "bristol" | "bristol_motor_speedway" => Some(tdrace_core::track::presets::bristol_motor_speedway()),
             _ => None,
         },
     }
@@ -287,16 +299,20 @@ pub enum CarChoice {
     DriftCar,
     Kart,
     RallyCar,
+    GT3Car,
     F1Car,
+    StockCar,
 }
 
 impl CarChoice {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 7] = [
         Self::SportsCar,
         Self::DriftCar,
         Self::Kart,
         Self::RallyCar,
+        Self::GT3Car,
         Self::F1Car,
+        Self::StockCar,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -305,7 +321,9 @@ impl CarChoice {
             Self::DriftCar => "Tuned Drift Spec",
             Self::Kart => "125cc Shifter Kart",
             Self::RallyCar => "AWD Turbo Rally",
-            Self::F1Car => "1050 BHP Hybrid F1 Turbo",
+            Self::GT3Car => "600 BHP GT3 Evo Racer",
+            Self::F1Car => "1050 BHP Hybrid F1 Turbo (Experimental)",
+            Self::StockCar => "850 BHP NASCAR Cup V8",
         }
     }
 
@@ -315,7 +333,9 @@ impl CarChoice {
             Self::DriftCar => "PRO SLIDE",
             Self::Kart => "APEX GRIP",
             Self::RallyCar => "AWD ALL-TERRAIN",
-            Self::F1Car => "OPEN-WHEEL HYBRID",
+            Self::GT3Car => "FIA GT3 SPEC",
+            Self::F1Car => "EXPERIMENTAL OPEN-WHEEL",
+            Self::StockCar => "850 BHP SPACEFRAME V8",
         }
     }
 
@@ -325,7 +345,9 @@ impl CarChoice {
             Self::DriftCar => "High-power slide machine with loose rear, wide lock & snappy counter-steer.",
             Self::Kart => "Ultra-lightweight direct steering with extreme apex cornering grip.",
             Self::RallyCar => "All-wheel-drive traction with compliant suspension for mixed surfaces.",
-            Self::F1Car => "346 km/h top speed, massive downforce (Cl=3.4), carbon brakes.",
+            Self::GT3Car => "4.0L V8, 600 BHP, high aerodynamic downforce (Cl=2.1), carbon brakes, ABS & TC.",
+            Self::F1Car => "Experimental 1050 BHP hybrid open-wheel test bench, 346 km/h, extreme downforce (Cl=3.4).",
+            Self::StockCar => "High-compression 5.9L pushrod V8, 850 BHP, 1260 kg, quick-ratio steering, 320 km/h superspeedway pack racer.",
         }
     }
 
@@ -336,7 +358,9 @@ impl CarChoice {
             Self::DriftCar => (0.80, 0.85, 0.50, 0.98),
             Self::Kart => (0.65, 0.95, 0.95, 0.40),
             Self::RallyCar => (0.78, 0.90, 0.85, 0.75),
+            Self::GT3Car => (0.92, 0.94, 0.95, 0.50),
             Self::F1Car => (0.99, 0.99, 0.99, 0.30),
+            Self::StockCar => (0.97, 0.90, 0.86, 0.88),
         }
     }
 
@@ -347,7 +371,9 @@ impl CarChoice {
             Self::DriftCar => ("RWD Drift Spec", "980 kg Mass", "45° Wide Drift Lock", "High-Slip Balance"),
             Self::Kart => ("Direct Rear Axle", "180 kg Mass", "115 km/h Top Speed", "1:1 Direct Rack"),
             Self::RallyCar => ("AWD 50:50 Split", "1,240 kg Mass", "Long-Travel Setup", "Cl 0.70 Downforce"),
+            Self::GT3Car => ("RWD GT3 Spec", "1,260 kg Mass", "297 km/h Top Speed", "Cl 2.10 Downforce"),
             Self::F1Car => ("Hybrid V6 Turbo", "798 kg Mass", "346 km/h Top Speed", "Cl 3.40 Downforce"),
+            Self::StockCar => ("RWD Spaceframe V8", "1,260 kg Mass", "320 km/h Top Speed", "Pack Draft Dynamic"),
         }
     }
 }
@@ -356,23 +382,33 @@ impl CarChoice {
 pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track>, module_id: &str) -> CarChoice {
     if let Some(tr) = track {
         match tr.predefined_car.as_deref() {
-            Some("f1" | "f1_car" | "f1_hybrid_26" | "open_wheel") => CarChoice::F1Car,
+            Some("gt3" | "gt3_car" | "gt3_evo" | "gt2" | "gt2_biturbo" | "gt") => CarChoice::GT3Car,
+            Some("f1" | "f1_car" | "f1_hybrid_26" | "open_wheel") => {
+                if tr.module_id.as_deref().unwrap_or(module_id) == "gt" || module_id == "gt" {
+                    CarChoice::GT3Car
+                } else {
+                    CarChoice::F1Car
+                }
+            }
             Some("drift_car") => CarChoice::DriftCar,
             Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
             Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
+            Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1") => CarChoice::StockCar,
             Some("sports_car") => CarChoice::SportsCar,
             _ => match tr.module_id.as_deref().unwrap_or(module_id) {
-                "f1" => CarChoice::F1Car,
+                "gt" | "gt_challenge" | "f1" => CarChoice::GT3Car,
                 "rally" => CarChoice::RallyCar,
                 "kart" => CarChoice::Kart,
+                "nascar" => CarChoice::StockCar,
                 _ => CarChoice::SportsCar,
             },
         }
     } else {
         match module_id {
-            "f1" => CarChoice::F1Car,
+            "gt" | "gt_challenge" | "f1" => CarChoice::GT3Car,
             "rally" => CarChoice::RallyCar,
             "kart" => CarChoice::Kart,
+            "nascar" => CarChoice::StockCar,
             _ => CarChoice::SportsCar,
         }
     }
