@@ -12,8 +12,10 @@ import argparse
 import json
 import math
 import os
+import re
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 
 CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "target", "osm_cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -90,7 +92,7 @@ TRACK_SPECS = {
     "estering_rx": {
         "name": "Estering Buxtehude (World RX Germany)",
         "description": "The cathedral of German Rallycross featuring the iconic Turn 1 hairpin dive, high-speed forest drag and technical gravel carousel.",
-        "query": '[out:json][timeout:25];(way["highway"="raceway"](53.435,9.680,53.445,9.705););out body;>;out skel qt;',
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](53.444,9.685,53.453,9.700););out body;>;out skel qt;',
         "fia_length": 952.0,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -100,7 +102,7 @@ TRACK_SPECS = {
     "montalegre_rx": {
         "name": "Pista Automóvel de Montalegre (World RX Portugal)",
         "description": "High-altitude mountain thriller in Portugal featuring an undulating drag straight, gravel stadium section and fast table crest.",
-        "query": '[out:json][timeout:25];(way["highway"="raceway"](41.815,-7.795,41.830,-7.770););out body;>;out skel qt;',
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](41.842,-7.762,41.850,-7.752););out body;>;out skel qt;',
         "fia_length": 1050.0,
         "default_width": 13.0,
         "straight_width": 14.0,
@@ -118,7 +120,7 @@ TRACK_SPECS = {
     "nyirad_rx": {
         "name": "Nyirád Racing Center (Euro RX Hungary)",
         "description": "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
-        "query": '[out:json][timeout:25];(way["highway"="raceway"](46.995,17.435,47.010,17.465););out body;>;out skel qt;',
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](46.963,17.410,46.974,17.428););out body;>;out skel qt;',
         "fia_length": 1220.0,
         "default_width": 13.5,
         "straight_width": 14.5,
@@ -128,7 +130,7 @@ TRACK_SPECS = {
     "kouvola_rx": {
         "name": "Tykkimäen Moottorirata (World RX Finland)",
         "description": "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkimäki dirt crest.",
-        "query": '[out:json][timeout:25];(way["highway"="raceway"](60.885,26.785,60.900,26.830););out body;>;out skel qt;',
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](60.878,26.785,60.890,26.810););out body;>;out skel qt;',
         "fia_length": 1060.0,
         "default_width": 13.0,
         "straight_width": 14.0,
@@ -170,6 +172,44 @@ def query_osm_cached(name, query):
         with open(cache_file, "r") as f:
             return json.load(f)
 
+    # 1. Try Direct OSM Map API using bbox extracted from query
+    m = re.search(r"\(([-0-9.]+),([-0-9.]+),([-0-9.]+),([-0-9.]+)\)", query)
+    if m:
+        lat1, lon1, lat2, lon2 = map(float, m.groups())
+        min_lat, max_lat = min(lat1, lat2), max(lat1, lat2)
+        min_lon, max_lon = min(lon1, lon2), max(lon1, lon2)
+        map_url = f"https://api.openstreetmap.org/api/0.6/map?bbox={min_lon},{min_lat},{max_lon},{max_lat}"
+        try:
+            req = urllib.request.Request(map_url, headers={"User-Agent": "tdrace-osm-tool/1.0"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                tree = ET.fromstring(resp.read().decode("utf-8"))
+            elements = []
+            for n in tree.findall("node"):
+                tags = {t.get("k"): t.get("v") for t in n.findall("tag")}
+                elements.append({
+                    "type": "node",
+                    "id": int(n.get("id")),
+                    "lat": float(n.get("lat")),
+                    "lon": float(n.get("lon")),
+                    "tags": tags,
+                })
+            for w in tree.findall("way"):
+                tags = {t.get("k"): t.get("v") for t in w.findall("tag")}
+                nodes = [int(nd.get("ref")) for nd in w.findall("nd")]
+                elements.append({
+                    "type": "way",
+                    "id": int(w.get("id")),
+                    "nodes": nodes,
+                    "tags": tags,
+                })
+            data = {"elements": elements}
+            with open(cache_file, "w") as f:
+                json.dump(data, f)
+            return data
+        except Exception:
+            pass
+
+    # 2. Fallback to Overpass API
     endpoints = [
         "https://overpass-api.de/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
@@ -186,7 +226,7 @@ def query_osm_cached(name, query):
                 return data
         except Exception:
             continue
-    raise RuntimeError(f"Failed to query OSM Overpass for {name}")
+    raise RuntimeError(f"Failed to query OSM for {name}")
 
 
 def latlon_to_meters(lat, lon, lat0, lon0):
@@ -385,19 +425,29 @@ def process_track(track_id):
 
         v1 = (x - p_prev[0], y - p_prev[1])
         v2 = (p_next[0] - x, p_next[1] - y)
-        cross = v1[0] * v2[1] - v1[1] * v2[0]
+        len1 = math.hypot(v1[0], v1[1])
+        len2 = math.hypot(v2[0], v2[1])
+        if len1 > 1e-4 and len2 > 1e-4:
+            norm_cross = (v1[0] * v2[1] - v1[1] * v2[0]) / (len1 * len2)
+        else:
+            norm_cross = 0.0
 
-        # Width
-        is_straight = abs(cross) < 15.0 and i < 4
+        # Straight width on start straight (first 4 and last 2 waypoints with low curvature)
+        is_straight = abs(norm_cross) < 0.18 and (i < 4 or i >= n - 2)
         width = spec["straight_width"] if is_straight else spec["default_width"]
 
-        # Curbs: if cornering sharp enough
+        # Hairpin apex clearance: narrow road width to prevent wall intersection
+        if abs(norm_cross) > 0.70:
+            width = min(width, 11.5)
+
+        # Curbs: assigned only to inside corner apexes (deflection > 20 deg), never on start straight or waypoint 0
         left_curb = False
         right_curb = False
-        if cross > 60.0:  # Turning Left -> right side curb / apex curb
-            left_curb = True
-        elif cross < -60.0:  # Turning Right -> right side curb
-            right_curb = True
+        if not is_straight and i != 0:
+            if norm_cross > 0.35:  # Left turn -> inside curb on left side
+                left_curb = True
+            elif norm_cross < -0.35:  # Right turn -> inside curb on right side
+                right_curb = True
 
         waypoints.append({
             "x": round(x, 1),

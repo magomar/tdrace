@@ -142,7 +142,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 ## 3. Screen Specifications & Navigation Catalog
 
 ### 3.1. Grand Hub (`GameState::ModuleSelect`)
-* **Purpose**: Primary platform entry point. Allows choosing motorsport disciplines (Classic Arcade, WRC Rally, Sprint Karting, Formula 1).
+* **Purpose**: Primary platform entry point. Allows choosing motorsport disciplines (Classic Arcade, Rallycross World Cup, Karting World Cup, Formula 1).
 * **State Struct**: `GameState::ModuleSelect { selected_idx: usize }`
 * **Components**:
   - Header with branding & Profile badge banner.

@@ -11,7 +11,7 @@ use crate::ai::{BotProfile, DriverCharacter, DriverStats};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
-/// World Rally Stage Championship Game Module
+/// Rallycross World Cup Game Module
 pub struct RallyGameModule;
 
 impl RallyGameModule {
@@ -81,18 +81,18 @@ impl GameModule for RallyGameModule {
     }
 
     fn title(&self) -> &'static str {
-        "TDRACE WORLD RALLY CHAMPIONSHIP"
+        "RALLYCROSS WORLD CUP"
     }
 
     fn subtitle(&self) -> &'static str {
-        "Loose Surface AWD Stage Time Trials & Extreme Mountain Passes"
+        "World RX & Euro RX Mixed Surface Stages, Stadium Jumps & Drifts"
     }
 
     fn theme(&self) -> ModuleTheme {
         ModuleTheme {
             primary_accent: Color::new(1.0, 0.55, 0.15, 1.0), // Dirt Rally Orange
             secondary_accent: Color::new(0.95, 0.85, 0.20, 1.0), // Desert Sand Yellow
-            header_badge: "WORLD RALLY CHAMPIONSHIP (WRC)",
+            header_badge: "RALLYCROSS WORLD CUP",
             background_tint: Color::new(0.07, 0.06, 0.05, 0.98),
         }
     }
@@ -456,7 +456,7 @@ impl GameModule for RallyGameModule {
                 ],
             },
             TournamentFormat::Championship {
-                name: "FIA World Rallycross Championship".to_string(),
+                name: "Rallycross World Cup".to_string(),
                 point_system: PointSystem::F1Standard { fastest_lap_bonus: false },
                 track_ids: vec![
                     "dirt_figure_eight".to_string(),

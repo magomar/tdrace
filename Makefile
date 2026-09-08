@@ -85,12 +85,12 @@ run-f1: ## Run Formula 1 Grand Prix module directly
 	@echo -e "$(CYAN)🏎️  Launching Formula 1 Grand Prix Module...$(RESET)"
 	cargo run --release -p tdrace-app -- --f1 $(EXTRA_ARGS)
 
-run-rally: ## Run World Rally Championship (WRC) module directly
-	@echo -e "$(YELLOW)🏎️  Launching World Rally Championship Module...$(RESET)"
+run-rally: ## Run Rallycross World Cup module directly
+	@echo -e "$(YELLOW)🏎️  Launching Rallycross World Cup Module...$(RESET)"
 	cargo run --release -p tdrace-app -- --rally $(EXTRA_ARGS)
 
-run-kart: ## Run Sprint Karting Cup module directly
-	@echo -e "$(GREEN)🏎️  Launching Sprint Karting Cup Module...$(RESET)"
+run-kart: ## Run Karting World Cup module directly
+	@echo -e "$(GREEN)🏎️  Launching Karting World Cup Module...$(RESET)"
 	cargo run --release -p tdrace-app -- --kart $(EXTRA_ARGS)
 
 run-classic: ## Run Classic Arcade Motorsport module directly
