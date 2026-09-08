@@ -201,3 +201,79 @@ fn test_dev_mode_promote_custom_track_and_demote_preset() {
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
+    let _lock = PERM_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let _dev_guard = DevModeGuard::enter();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_perm_demote_visible_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Initial counts
+    let init_classic = manager.filtered_main_track_choices(ModuleFilter::Classic).len();
+    let init_rally = manager.filtered_main_track_choices(ModuleFilter::Rally).len();
+
+    // Backup exact git preset files before demote so the repo working directory stays clean
+    let git_backup: Vec<_> = tdrace_app::storage::resolve_git_tracks_dir()
+        .map(|git_dir| {
+            let paths = [
+                git_dir.join("classic").join("outlaw_pass.json"),
+                git_dir.join("rally").join("outlaw_pass.json"),
+                git_dir.join("rally").join("sahara_dunes.json"),
+            ];
+            paths.into_iter().filter_map(|p| {
+                fs::read(&p).ok().map(|content| (p, content))
+            }).collect()
+        })
+        .unwrap_or_default();
+
+    // Demote outlaw_pass and sahara_dunes
+    let outlaw_path = manager.demote_preset_to_custom_track("outlaw_pass").expect("Demote outlaw_pass");
+    let sahara_path = manager.demote_preset_to_custom_track("sahara_dunes").expect("Demote sahara_dunes");
+    assert!(outlaw_path.exists());
+    assert!(sahara_path.exists());
+
+    // Both tracks must remain visible in Track Manager under their respective modules!
+    let classic_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    let rally_tracks = manager.filtered_main_track_choices(ModuleFilter::Rally);
+
+    assert_eq!(classic_tracks.len(), init_classic, "Classic track count must not decrease when demoting to custom");
+    assert_eq!(rally_tracks.len(), init_rally, "Rally track count must not decrease when demoting to custom");
+
+    // They must now appear as custom circuits, NOT immutable official presets
+    let outlaw_choice = classic_tracks.iter().find(|t| t.track_id() == "outlaw_pass").expect("outlaw_pass in Classic");
+    assert!(!outlaw_choice.is_official_preset(), "Demoted outlaw_pass must be a custom track");
+    assert!(matches!(outlaw_choice, tdrace_app::ui::menu::TrackChoice::Custom { .. }));
+
+    let sahara_choice = rally_tracks.iter().find(|t| t.track_id() == "sahara_dunes").expect("sahara_dunes in Rally");
+    assert!(!sahara_choice.is_official_preset(), "Demoted sahara_dunes must be a custom track");
+    assert!(matches!(sahara_choice, tdrace_app::ui::menu::TrackChoice::Custom { .. }));
+
+    // Both must appear in custom_track_choices (for Main Menu CUSTOM tab)
+    let custom_choices = manager.custom_track_choices();
+    assert!(custom_choices.iter().any(|t| t.track_id() == "outlaw_pass"));
+    assert!(custom_choices.iter().any(|t| t.track_id() == "sahara_dunes"));
+
+    // Verify persistence when reloading manager from disk
+    let reloaded_manager = TrackManager::new(&temp_dir);
+    let reloaded_classic = reloaded_manager.filtered_main_track_choices(ModuleFilter::Classic);
+    let reloaded_rally = reloaded_manager.filtered_main_track_choices(ModuleFilter::Rally);
+
+    assert!(reloaded_classic.iter().any(|t| t.track_id() == "outlaw_pass" && !t.is_official_preset()));
+    assert!(reloaded_rally.iter().any(|t| t.track_id() == "sahara_dunes" && !t.is_official_preset()));
+    assert!(reloaded_rally.iter().any(|t| t.track_id() == "outlaw_pass" && !t.is_official_preset()));
+
+    // Restore git preset files removed by demote during this test
+    for (p, content) in git_backup {
+        let _ = fs::write(p, content);
+    }
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+

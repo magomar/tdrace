@@ -180,6 +180,43 @@ impl TrackManager {
         }
     }
 
+    /// Checks if an official preset circuit was demoted to a custom circuit.
+    pub fn is_preset_demoted(&self, id: &str) -> bool {
+        let demoted_marker = format!("demoted:{}", id);
+        self.deleted_presets.iter().any(|d| d == &demoted_marker)
+    }
+
+    /// Checks if a custom track is marked as deleted in the target module or globally.
+    /// Note: `demoted:<id>` marks the official preset as demoted, NOT the custom track as deleted.
+    pub fn is_custom_track_deleted_for_module(&self, id: &str, module_id: &str) -> bool {
+        let scoped_key = format!("{}:{}", module_id, id);
+        if self.deleted_presets.iter().any(|d| d == &scoped_key) {
+            return true;
+        }
+
+        if self.deleted_presets.iter().any(|d| d == id) {
+            return true;
+        }
+
+        if module_id == "all" {
+            let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
+            if has_scoped_deletion {
+                let active_in_any = ["classic", "f1", "rally", "kart"].iter().any(|m| {
+                    let m_scoped = format!("{}:{}", m, id);
+                    if self.deleted_presets.iter().any(|d| d == &m_scoped) {
+                        return false;
+                    }
+                    self.custom_tracks.iter().any(|t| {
+                        t.id == id && t.category == TrackCategory::Main && t.belongs_to_module(m)
+                    })
+                });
+                return !active_in_any;
+            }
+        }
+
+        false
+    }
+
     /// Scans the tracks directory and any subdirectories for `.json` and `.tdtrack` files.
     pub fn scan_custom_tracks(&mut self) -> Result<usize, String> {
         self.custom_tracks.clear();
@@ -229,24 +266,49 @@ impl TrackManager {
                             .unwrap_or("custom_track")
                             .to_string();
 
+                        let is_demoted = self.is_preset_demoted(&stem);
                         let mut modules = track.modules.clone();
-                        // Infer category and module_id from subdirectory if file lacks explicit metadata
-                        if let Some(ref dir) = subdir {
+                        let mut category = track.category;
+                        let mut module_id = track.module_id.clone();
+
+                        if is_demoted {
+                            category = TrackCategory::Main;
+                            if stem == "sahara_dunes" || stem == "sahara" {
+                                modules = vec!["rally".to_string()];
+                                module_id = Some("rally".to_string());
+                            } else if stem == "outlaw_pass" {
+                                if modules.is_empty() {
+                                    modules = vec!["classic".to_string(), "rally".to_string()];
+                                    module_id = Some("classic".to_string());
+                                }
+                            } else if modules.is_empty() && module_id.is_none() {
+                                if let Some(m) = Self::preset_module(&stem) {
+                                    modules = vec![m.to_string()];
+                                    module_id = Some(m.to_string());
+                                }
+                            }
+                            if track.category != category || track.modules != modules || track.module_id != module_id {
+                                track.category = category;
+                                track.modules = modules.clone();
+                                track.module_id = module_id.clone();
+                                let _ = track.save_to_file(&path);
+                            }
+                        } else if let Some(ref dir) = subdir {
                             if modules.is_empty() && track.module_id.is_none() {
                                 if dir == "drafts" {
-                                    track.category = TrackCategory::Draft;
-                                    track.module_id = None;
+                                    category = TrackCategory::Draft;
+                                    module_id = None;
                                     modules.clear();
                                 } else {
-                                    track.category = TrackCategory::Main;
-                                    track.module_id = Some(dir.clone());
+                                    category = TrackCategory::Main;
+                                    module_id = Some(dir.clone());
                                     modules = vec![dir.clone()];
                                 }
                             }
-                        } else if track.category == TrackCategory::Main {
-                            let mod_id = track.module_id.clone().unwrap_or_else(|| "classic".to_string());
-                            if track.module_id.is_none() {
-                                track.module_id = Some(mod_id.clone());
+                        } else if category == TrackCategory::Main {
+                            let mod_id = module_id.clone().unwrap_or_else(|| "classic".to_string());
+                            if module_id.is_none() {
+                                module_id = Some(mod_id.clone());
                             }
                             if modules.is_empty() {
                                 modules = vec![mod_id];
@@ -261,11 +323,10 @@ impl TrackManager {
                         let obstacle_count = track.geometry.obstacles.len();
                         let default_surface = track.default_surface;
                         let default_laps = track.default_laps;
-                        let category = track.category;
-                        let module_id = if category == TrackCategory::Main && track.module_id.is_none() {
+                        let module_id = if category == TrackCategory::Main && module_id.is_none() {
                             Some("classic".to_string())
                         } else {
-                            track.module_id.clone()
+                            module_id
                         };
 
                         self.custom_tracks.push(CustomTrackInfo {
@@ -319,7 +380,10 @@ impl TrackManager {
         let mut choices = Vec::new();
 
         for custom in &self.custom_tracks {
-            if !Self::is_preset_slug(&custom.id) && !self.deleted_presets.iter().any(|d| d == &custom.id) {
+            let is_demoted = self.is_preset_demoted(&custom.id);
+            if (!Self::is_preset_slug(&custom.id) || is_demoted)
+                && !self.is_custom_track_deleted_for_module(&custom.id, "all")
+            {
                 choices.push(TrackChoice::Custom {
                     id: custom.id.clone(),
                     title: custom.title.clone(),
@@ -337,7 +401,10 @@ impl TrackManager {
         let mut choices = Vec::new();
 
         for custom in &self.custom_tracks {
-            if custom.category == TrackCategory::Draft && !self.deleted_presets.iter().any(|d| d == &custom.id) {
+            let is_demoted = self.is_preset_demoted(&custom.id);
+            if (custom.category == TrackCategory::Draft || is_demoted)
+                && !self.is_custom_track_deleted_for_module(&custom.id, "all")
+            {
                 choices.push(TrackChoice::Custom {
                     id: custom.id.clone(),
                     title: custom.title.clone(),
@@ -495,7 +562,7 @@ impl TrackManager {
         let draft_ids: std::collections::HashSet<&str> = self
             .custom_tracks
             .iter()
-            .filter(|t| t.category == TrackCategory::Draft)
+            .filter(|t| t.category == TrackCategory::Draft && !self.is_preset_demoted(&t.id))
             .map(|t| t.id.as_str())
             .collect();
 
@@ -504,7 +571,7 @@ impl TrackManager {
 
         for custom in custom_tracks {
             if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                if crate::storage::is_dev_mode() {
+                if crate::storage::is_dev_mode() || self.is_preset_demoted(custom.track_id()) {
                     list[pos] = custom;
                 }
             } else {
@@ -515,7 +582,12 @@ impl TrackManager {
         list.into_iter()
             .filter(|c| {
                 let tid = c.track_id();
-                !self.is_preset_deleted_for_module(tid, module_id) && !draft_ids.contains(tid)
+                let is_deleted = if c.is_official_preset() {
+                    self.is_preset_deleted_for_module(tid, module_id)
+                } else {
+                    self.is_custom_track_deleted_for_module(tid, module_id)
+                };
+                !is_deleted && !draft_ids.contains(tid)
             })
             .collect()
     }
@@ -848,7 +920,7 @@ impl TrackManager {
 
         // Official presets are strictly immutable for end-users.
         // In dev mode, they are saved directly into the repository's git-tracked tracks/<module>/ directory.
-        if Self::is_preset_slug(&base_slug) {
+        if Self::is_preset_slug(&base_slug) && !self.is_preset_demoted(&base_slug) {
             if !crate::storage::is_dev_mode() {
                 return Err(format!(
                     "'{}' is an official preset and cannot be modified directly. Please clone it to My Circuits / Drafts.",
@@ -938,11 +1010,13 @@ impl TrackManager {
     pub fn module_custom_tracks(&self, module_id: &str) -> Vec<TrackChoice> {
         let mut choices = Vec::new();
         for custom in &self.custom_tracks {
-            if custom.category == TrackCategory::Main
+            let is_demoted = self.is_preset_demoted(&custom.id);
+            let is_active = custom.category == TrackCategory::Main || is_demoted;
+            if is_active
                 && custom.belongs_to_module(module_id)
-                && !self.is_preset_deleted_for_module(&custom.id, module_id)
+                && !self.is_custom_track_deleted_for_module(&custom.id, module_id)
             {
-                if !crate::storage::is_dev_mode() && Self::is_preset_slug(&custom.id) {
+                if !crate::storage::is_dev_mode() && !is_demoted && Self::is_preset_slug(&custom.id) {
                     continue;
                 }
                 choices.push(TrackChoice::Custom {
@@ -981,7 +1055,7 @@ impl TrackManager {
             return self.demote_track(id);
         }
 
-        if Self::is_preset_slug(id) {
+        if Self::is_preset_slug(id) && !self.is_preset_demoted(id) {
             if !crate::storage::is_dev_mode() {
                 return Err(format!(
                     "'{}' is an official preset circuit and its categories cannot be modified in standard mode.",
@@ -1116,7 +1190,7 @@ impl TrackManager {
 
     /// Updates the display name and description of a custom track and writes changes to disk.
     pub fn update_track_metadata(&mut self, id: &str, new_title: String, new_description: String) -> Result<(), String> {
-        if Self::is_preset_slug(id) {
+        if Self::is_preset_slug(id) && !self.is_preset_demoted(id) {
             if !crate::storage::is_dev_mode() {
                 return Err(format!(
                     "'{}' is an official preset circuit and its metadata cannot be modified in standard mode.",
@@ -1292,7 +1366,7 @@ impl TrackManager {
     /// Deletes a track specifically from the active module (or drafts).
     /// If `module_id` is None, deletes the track globally across all modules.
     pub fn delete_track_from_module(&mut self, id: &str, module_id: Option<&str>) -> Result<bool, String> {
-        if Self::is_preset_slug(id) && !crate::storage::is_dev_mode() {
+        if Self::is_preset_slug(id) && !self.is_preset_demoted(id) && !crate::storage::is_dev_mode() {
             return Err(format!(
                 "'{}' is an official preset circuit and cannot be deleted in standard mode.",
                 id
@@ -1492,9 +1566,24 @@ impl TrackManager {
         }
 
         let mut track = self.load_track_by_slug(id)?;
-        track.category = TrackCategory::Draft;
-        track.module_id = None;
-        track.modules.clear();
+        track.category = TrackCategory::Main;
+        let orig_mod = Self::preset_module(id).unwrap_or("classic");
+        match id {
+            "outlaw_pass" => {
+                track.modules = vec!["classic".to_string(), "rally".to_string()];
+                track.module_id = Some("classic".to_string());
+            }
+            "sahara_dunes" | "sahara" => {
+                track.modules = vec!["rally".to_string()];
+                track.module_id = Some("rally".to_string());
+            }
+            _ => {
+                if track.modules.is_empty() {
+                    track.module_id = Some(orig_mod.to_string());
+                    track.modules = vec![orig_mod.to_string()];
+                }
+            }
+        }
 
         let _ = fs::create_dir_all(&self.tracks_dir);
         let target_path = self.tracks_dir.join(format!("{}.json", id));
