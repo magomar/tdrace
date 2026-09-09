@@ -89,10 +89,12 @@ use crate::editor::{
 };
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
-    compute_adaptive_alpha, render_elevated_barriers_and_obstacles, render_elevated_track,
-    render_ground_barriers_and_obstacles, render_ground_track,
-    render_player_ground_aura, render_player_overhead_chevron, render_player_roof_beacon,
-    PlayerVisibilityOptions,
+    compute_adaptive_alpha, render_elevated_barriers_and_obstacles,
+    render_elevated_barriers_and_obstacles_culled, render_elevated_track,
+    render_elevated_track_culled, render_ground_barriers_and_obstacles,
+    render_ground_barriers_and_obstacles_culled, render_ground_track,
+    render_ground_track_culled, render_player_ground_aura, render_player_overhead_chevron,
+    render_player_roof_beacon, PlayerVisibilityOptions,
 };
 use crate::replay::{ReplayPlayer, ReplayRecorder};
 use crate::tournament::{ChampionshipSession, PointSystem, RoundDriverResult};
@@ -3773,8 +3775,9 @@ impl RaceSession {
 
         // 2. Sample surfaces under all wheels of all cars
         let mut wheel_surfaces = Vec::with_capacity(n_cars);
-        for car in &self.cars {
-            wheel_surfaces.push(self.track.sample_car_surfaces(car));
+        for (i, car) in self.cars.iter().enumerate() {
+            let prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
+            wheel_surfaces.push(self.track.sample_car_surfaces_with_hint(car, prog));
         }
 
         // 2b. Compute aerodynamic slipstream wake drafting between cars
@@ -5073,15 +5076,16 @@ impl RaceSession {
     /// Renders world-space entities under active camera with strict elevation occlusion layering.
     fn render_world(&self) {
         self.camera.apply();
+        let view_bounds = Some(self.camera.visible_world_bounds(12.0));
 
         // 1. Ground Track & Environment (elevation < 0.6m)
-        render_ground_track(&self.track);
+        render_ground_track_culled(&self.track, view_bounds);
 
         // 2. Persistent Ground Skidmarks
         self.fx.render_ground_fx();
 
         // 3. Ground Barriers & Obstacles (elevation < 0.6m)
-        render_ground_barriers_and_obstacles(&self.track);
+        render_ground_barriers_and_obstacles_culled(&self.track, view_bounds);
 
         // Separate cars into ground and elevated groups
         let mut ground_cars = Vec::new();
@@ -5144,10 +5148,10 @@ impl RaceSession {
         }
 
         // 6. Elevated Overpass Bridges (solid opaque concrete deck + drop shadow + ribbon)
-        render_elevated_track(&self.track);
+        render_elevated_track_culled(&self.track, view_bounds);
 
         // 7. Elevated Bridge Barriers & Guardrails (drawn on top of the bridge deck, touching the track)
-        render_elevated_barriers_and_obstacles(&self.track);
+        render_elevated_barriers_and_obstacles_culled(&self.track, view_bounds);
 
         // 8. Elevated Vehicles (drawn on top of the bridge deck)
         if self.visibility_options.ground_aura && elevated_cars.contains(&0) {

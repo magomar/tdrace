@@ -169,18 +169,53 @@ impl TrackChoice {
     }
 }
 
+static MENU_TRACK_CACHE: std::sync::Mutex<Option<std::collections::HashMap<String, tdrace_core::track::Track>>> =
+    std::sync::Mutex::new(None);
+
+/// Clears the cached resolved menu tracks (e.g. after track edit or save).
+pub fn clear_menu_track_cache() {
+    if let Ok(mut guard) = MENU_TRACK_CACHE.lock() {
+        if let Some(cache) = guard.as_mut() {
+            cache.clear();
+        }
+    }
+}
+
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
 pub fn resolve_track_for_menu(choice: &TrackChoice) -> Option<tdrace_core::track::Track> {
     resolve_track_for_menu_with_dir(choice, crate::storage::resolve_user_tracks_dir())
 }
 
-/// Resolves a TrackChoice to a concrete Track instance for UI preview rendering given a tracks directory.
+/// Resolves a TrackChoice to a concrete Track instance for UI preview rendering given a tracks directory, cached.
 pub fn resolve_track_for_menu_with_dir(
     choice: &TrackChoice,
     tracks_dir: impl AsRef<std::path::Path>,
 ) -> Option<tdrace_core::track::Track> {
     let dir = tracks_dir.as_ref();
+    let cache_key = format!("{}:{}", choice.track_id(), dir.display());
 
+    if let Ok(guard) = MENU_TRACK_CACHE.lock() {
+        if let Some(cache) = guard.as_ref() {
+            if let Some(track) = cache.get(&cache_key) {
+                return Some(track.clone());
+            }
+        }
+    }
+
+    let loaded = resolve_track_for_menu_with_dir_uncached(choice, dir);
+    if let Some(ref t) = loaded {
+        if let Ok(mut guard) = MENU_TRACK_CACHE.lock() {
+            let cache = guard.get_or_insert_with(std::collections::HashMap::new);
+            cache.insert(cache_key, t.clone());
+        }
+    }
+    loaded
+}
+
+fn resolve_track_for_menu_with_dir_uncached(
+    choice: &TrackChoice,
+    dir: &std::path::Path,
+) -> Option<tdrace_core::track::Track> {
     // If this is an official preset and we are NOT in dev mode, skip user disk candidate overrides
     // and load strictly from official procedural generators or git preset files.
     if choice.is_official_preset() && !crate::storage::is_dev_mode() {

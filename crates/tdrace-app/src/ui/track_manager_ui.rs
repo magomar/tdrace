@@ -223,7 +223,7 @@ pub fn render_track_manager_screen(
         for i in start_idx..end_idx {
             let track_choice = &tracks_list[i];
             let is_sel = i == selected_idx;
-            let loaded_track = track_manager.load_track(track_choice).ok();
+            let loaded_track = super::menu::resolve_track_for_menu_with_dir(track_choice, &track_manager.tracks_dir);
 
             let item_bg = if is_sel {
                 Palette::UI_CARD_BG_HOVER
@@ -290,7 +290,7 @@ pub fn render_track_manager_screen(
     scaler.draw_glass_card(col2_x, content_y, col2_w, content_h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.2);
 
     if let Some(selected_track) = tracks_list.get(selected_idx) {
-        let loaded_track = track_manager.load_track(selected_track).ok();
+        let loaded_track = super::menu::resolve_track_for_menu_with_dir(selected_track, &track_manager.tracks_dir);
         let pad_x = col2_x + scaler.s(18.0);
         let mut d_y = content_y + scaler.s(18.0);
 

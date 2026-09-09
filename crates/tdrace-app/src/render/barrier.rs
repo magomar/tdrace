@@ -10,6 +10,40 @@ use super::track::draw_quad;
 /// Global 2.5D visual light / shadow offset in meters.
 pub const SHADOW_OFFSET: Vec2 = Vec2::new(0.35, 0.45);
 
+#[inline]
+fn is_wall_in_view(wall: &WallBarrier, view_bounds: Option<(Vec2, Vec2)>) -> bool {
+    if let Some((min, max)) = view_bounds {
+        let p0 = wall.segment.start;
+        let p1 = wall.segment.end;
+        let w_min_x = p0.x.min(p1.x) - 1.5;
+        let w_max_x = p0.x.max(p1.x) + 1.5;
+        let w_min_y = p0.y.min(p1.y) - 1.5;
+        let w_max_y = p0.y.max(p1.y) + 1.5;
+        !(w_max_x < min.x || w_min_x > max.x || w_max_y < min.y || w_min_y > max.y)
+    } else {
+        true
+    }
+}
+
+#[inline]
+fn is_obs_in_view(obs: &Obstacle, view_bounds: Option<(Vec2, Vec2)>) -> bool {
+    if let Some((min, max)) = view_bounds {
+        let (c, r) = match &obs.shape {
+            ObstacleShape::Circle { center, radius } => (*center, *radius),
+            ObstacleShape::Box { center, half_extents, .. } => (*center, half_extents.length()),
+            ObstacleShape::Polygon { vertices } => {
+                let c = obs.center();
+                let max_r = vertices.iter().map(|v| (*v - c).length()).fold(0.0f32, f32::max);
+                (c, max_r)
+            }
+        };
+        let r_margin = r + 1.5;
+        !(c.x + r_margin < min.x || c.x - r_margin > max.x || c.y + r_margin < min.y || c.y - r_margin > max.y)
+    } else {
+        true
+    }
+}
+
 /// Renders all boundary wall barriers and static obstacles with 2.5D drop shadows in elevation layers.
 pub fn render_barriers_and_obstacles(track: &Track) {
     render_ground_barriers_and_obstacles(track);
@@ -18,19 +52,28 @@ pub fn render_barriers_and_obstacles(track: &Track) {
 
 /// Draws ground barrier drop shadows, obstacles, and wall bodies (elevation < 0.6m).
 pub fn render_ground_barriers_and_obstacles(track: &Track) {
+    render_ground_barriers_and_obstacles_culled(track, None);
+}
+
+/// Draws ground barrier drop shadows, obstacles, and wall bodies with camera viewport culling.
+pub fn render_ground_barriers_and_obstacles_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
     for wall in track.geometry.all_walls().filter(|w| w.elevation < 0.6) {
-        render_wall_shadow(wall);
+        if is_wall_in_view(wall, view_bounds) {
+            render_wall_shadow(wall);
+        }
     }
     for obs in &track.geometry.obstacles {
-        if obs.elevation < 0.6 {
+        if obs.elevation < 0.6 && is_obs_in_view(obs, view_bounds) {
             render_obstacle_shadow(obs);
         }
     }
     for wall in track.geometry.all_walls().filter(|w| w.elevation < 0.6) {
-        render_wall_body(wall);
+        if is_wall_in_view(wall, view_bounds) {
+            render_wall_body(wall);
+        }
     }
     for obs in &track.geometry.obstacles {
-        if obs.elevation < 0.6 {
+        if obs.elevation < 0.6 && is_obs_in_view(obs, view_bounds) {
             render_obstacle_body(obs);
         }
     }
@@ -38,19 +81,28 @@ pub fn render_ground_barriers_and_obstacles(track: &Track) {
 
 /// Draws elevated bridge barrier drop shadows, obstacles, and guardrails on top of the bridge deck (elevation >= 0.6m).
 pub fn render_elevated_barriers_and_obstacles(track: &Track) {
+    render_elevated_barriers_and_obstacles_culled(track, None);
+}
+
+/// Draws elevated bridge barrier drop shadows, obstacles, and guardrails with camera viewport culling.
+pub fn render_elevated_barriers_and_obstacles_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
     for wall in track.geometry.all_walls().filter(|w| w.elevation >= 0.6) {
-        render_wall_shadow(wall);
+        if is_wall_in_view(wall, view_bounds) {
+            render_wall_shadow(wall);
+        }
     }
     for obs in &track.geometry.obstacles {
-        if obs.elevation >= 0.6 {
+        if obs.elevation >= 0.6 && is_obs_in_view(obs, view_bounds) {
             render_obstacle_shadow(obs);
         }
     }
     for wall in track.geometry.all_walls().filter(|w| w.elevation >= 0.6) {
-        render_wall_body(wall);
+        if is_wall_in_view(wall, view_bounds) {
+            render_wall_body(wall);
+        }
     }
     for obs in &track.geometry.obstacles {
-        if obs.elevation >= 0.6 {
+        if obs.elevation >= 0.6 && is_obs_in_view(obs, view_bounds) {
             render_obstacle_body(obs);
         }
     }
@@ -121,17 +173,26 @@ fn render_wall_body(wall: &WallBarrier) {
             draw_line(top0.x, top0.y, top1.x, top1.y, 0.15, Palette::CONCRETE_TOP);
         }
         BarrierType::TireWall => {
-            // Stacked tire circles along the wall segment
-            let tire_radius = 0.45;
-            let tire_step = tire_radius * 1.75;
-            let count = (len / tire_step).max(1.0) as usize;
+            // Continuous rubber tire wall quad with binding strap and tire section ribs
+            let half_w = 0.42;
+            let a = p0 + norm * half_w;
+            let b = p1 + norm * half_w;
+            let c = p1 - norm * half_w;
+            let d = p0 - norm * half_w;
+            draw_quad(a, b, c, d, Palette::TIRE_WALL);
 
-            for i in 0..=count {
+            // Center rubber binding strap / rim highlight
+            draw_line(p0.x, p0.y, p1.x, p1.y, 0.14, Palette::TIRE_RIM);
+
+            // Stacked tire division ribs along the barrier segment
+            let tire_step = 1.0;
+            let count = (len / tire_step).max(1.0) as usize;
+            for i in 1..count {
                 let t = i as f32 / count as f32;
-                let center = p0 + dir * t;
-                draw_circle(center.x, center.y, tire_radius, Palette::TIRE_WALL);
-                draw_circle_lines(center.x, center.y, tire_radius, 0.08, Color::new(0.08, 0.08, 0.10, 1.0));
-                draw_circle(center.x, center.y, tire_radius * 0.45, Palette::TIRE_RIM);
+                let rib_center = p0 + dir * t;
+                let l = rib_center + norm * half_w;
+                let r = rib_center - norm * half_w;
+                draw_line(l.x, l.y, r.x, r.y, 0.08, Color::new(0.08, 0.09, 0.11, 0.9));
             }
         }
         BarrierType::CurbWall => {

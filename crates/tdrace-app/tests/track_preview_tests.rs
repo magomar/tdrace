@@ -190,3 +190,38 @@ fn test_validate_all_circuits_and_presets() {
     assert_eq!(total_errors, 0, "Total validation errors across all tracks: {}", total_errors);
 }
 
+#[test]
+fn test_menu_track_cache_performance_and_consistency() {
+    use tdrace_app::ui::menu::clear_menu_track_cache;
+    use std::time::Instant;
+
+    clear_menu_track_cache();
+
+    let holjes_choice = TrackChoice::Custom {
+        id: "holjes_rx".to_string(),
+        title: "Höljes Motorstadion".to_string(),
+        description: "World RX Sweden".to_string(),
+        path: "rally/holjes_rx".to_string(),
+    };
+
+    // First call: initial resolution / cache miss
+    let t0 = Instant::now();
+    let track1 = resolve_track_for_menu(&holjes_choice).expect("Höljes must resolve");
+    let dur_first = t0.elapsed();
+
+    // Second call: cache hit - should be instantaneous
+    let t1 = Instant::now();
+    let track2 = resolve_track_for_menu(&holjes_choice).expect("Höljes must resolve from cache");
+    let dur_second = t1.elapsed();
+
+    assert_eq!(track1.name, track2.name);
+    assert_eq!(track1.spline.samples.len(), track2.spline.samples.len());
+    // Cache hit should be dramatically faster than the initial generation
+    println!("Höljes first resolve: {:?}, second cached resolve: {:?}", dur_first, dur_second);
+    assert!(dur_second.as_millis() < 5, "Cached resolve must take < 5ms, took {:?}", dur_second);
+
+    // Test clear_menu_track_cache
+    clear_menu_track_cache();
+}
+
+

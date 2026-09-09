@@ -165,6 +165,54 @@ impl Track {
         ]
     }
 
+    /// Samples surface types underneath all 4 wheels of a car with a track progress distance hint.
+    #[inline]
+    pub fn sample_car_surfaces_with_hint(&self, car: &Car, hint_dist: f32) -> [SurfaceType; 4] {
+        let wheel_positions = car.wheel_positions_world();
+        [
+            self.sample_surface_near(wheel_positions[0], hint_dist),
+            self.sample_surface_near(wheel_positions[1], hint_dist),
+            self.sample_surface_near(wheel_positions[2], hint_dist),
+            self.sample_surface_near(wheel_positions[3], hint_dist),
+        ]
+    }
+
+    /// Samples the surface at `point` with localized spline projection near `hint_dist`.
+    pub fn sample_surface_near(&self, point: Vec2, hint_dist: f32) -> SurfaceType {
+        // 1. Check jump ramps
+        for ramp in &self.geometry.jump_ramps {
+            if ramp.contains(point) {
+                return ramp.surface;
+            }
+        }
+
+        // 2. Check above-track surface zones
+        for zone in &self.geometry.surface_zones {
+            if zone.is_above_track() && zone.contains(point) {
+                return zone.surface;
+            }
+        }
+
+        // 3. Localized spline projection near hint distance
+        let proj = self.spline.project_point_continuity(point, hint_dist, 45.0);
+        if proj.is_on_track {
+            return proj.base_surface;
+        }
+        if proj.is_on_curb {
+            return SurfaceType::Curb;
+        }
+
+        // 4. Check below-track ground zones
+        for zone in &self.geometry.surface_zones {
+            if !zone.is_above_track() && zone.contains(point) {
+                return zone.surface;
+            }
+        }
+
+        // 5. Default terrain
+        self.default_surface
+    }
+
     /// Tests if a car's center is currently inside the pit box servicing zone.
     pub fn is_in_pit_box(&self, car: &Car) -> bool {
         if let Some(pit_shape) = &self.pit_box_area {

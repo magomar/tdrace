@@ -3,19 +3,43 @@ use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangl
 use glam::Vec2;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{SurfaceLayer, SurfaceShape};
-use tdrace_core::track::spline::TrackSpline;
+use tdrace_core::track::spline::{SplineSample, TrackSpline};
 use tdrace_core::track::Track;
 
 use super::color::Palette;
 
+#[inline]
+fn is_segment_in_view(s0: &SplineSample, s1: &SplineSample, view_bounds: Option<(Vec2, Vec2)>) -> bool {
+    if let Some((min, max)) = view_bounds {
+        let max_w = s0.width.max(s1.width) * 0.5 + 4.5;
+        let s_min_x = s0.point.x.min(s1.point.x) - max_w;
+        let s_max_x = s0.point.x.max(s1.point.x) + max_w;
+        let s_min_y = s0.point.y.min(s1.point.y) - max_w;
+        let s_max_y = s0.point.y.max(s1.point.y) + max_w;
+        !(s_max_x < min.x || s_min_x > max.x || s_max_y < min.y || s_min_y > max.y)
+    } else {
+        true
+    }
+}
+
 /// Renders the complete track geometry (ground layer followed by elevated bridges).
 pub fn render_track(track: &Track) {
-    render_ground_track(track);
-    render_elevated_track(track);
+    render_track_culled(track, None);
+}
+
+/// Renders the complete track geometry with camera viewport culling.
+pub fn render_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
+    render_ground_track_culled(track, view_bounds);
+    render_elevated_track_culled(track, view_bounds);
 }
 
 /// Renders base ground environment, surface zones, ground track ribbon, hazard zones, and timing lines.
 pub fn render_ground_track(track: &Track) {
+    render_ground_track_culled(track, None);
+}
+
+/// Renders ground track ribbon and surface features with camera viewport culling.
+pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
     // 1. Render base off-track surface zones (BelowTrack: sand traps, asphalt runoff, dirt areas beneath road)
     render_surface_zones_layer(track, SurfaceLayer::BelowTrack);
 
@@ -25,8 +49,8 @@ pub fn render_ground_track(track: &Track) {
     }
 
     // 3. Render ground curbs and ground surface quads
-    render_curbs_pass(&track.spline, false);
-    render_surface_pass(&track.spline, false);
+    render_curbs_pass(&track.spline, false, view_bounds);
+    render_surface_pass(&track.spline, false, view_bounds);
 
     // 4. Render on-top surface zones (AboveTrack: water puddles, oil slicks, sand/grass/dirt overlays)
     render_surface_zones_layer(track, SurfaceLayer::AboveTrack);
@@ -43,11 +67,16 @@ pub fn render_ground_track(track: &Track) {
 
 /// Renders elevated overpass bridges: drop shadows, solid concrete deck slab, curbs, and asphalt ribbon.
 pub fn render_elevated_track(track: &Track) {
+    render_elevated_track_culled(track, None);
+}
+
+/// Renders elevated overpass bridges with camera viewport culling.
+pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
     let has_elevated = track.spline.samples.iter().any(|s| s.elevation >= 0.6);
     if has_elevated {
-        render_bridge_structure_pass(&track.spline);
-        render_curbs_pass(&track.spline, true);
-        render_surface_pass(&track.spline, true);
+        render_bridge_structure_pass(&track.spline, view_bounds);
+        render_curbs_pass(&track.spline, true, view_bounds);
+        render_surface_pass(&track.spline, true, view_bounds);
     }
 }
 
@@ -296,7 +325,7 @@ pub fn render_surface_shape(shape: &SurfaceShape, fill_col: Color, border_col: O
 }
 
 /// Draws drop shadows and structural concrete slab deck for elevated bridge sections.
-fn render_bridge_structure_pass(spline: &TrackSpline) {
+fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2, Vec2)>) {
     let samples = &spline.samples;
     let n = samples.len();
     let seg_count = if spline.closed { n } else { n - 1 };
@@ -306,7 +335,7 @@ fn render_bridge_structure_pass(spline: &TrackSpline) {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
         let avg_elev = (s0.elevation + s1.elevation) * 0.5;
-        if avg_elev < 0.6 {
+        if avg_elev < 0.6 || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
 
@@ -326,7 +355,7 @@ fn render_bridge_structure_pass(spline: &TrackSpline) {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
         let avg_elev = (s0.elevation + s1.elevation) * 0.5;
-        if avg_elev < 0.6 {
+        if avg_elev < 0.6 || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
 
@@ -356,7 +385,7 @@ fn render_bridge_structure_pass(spline: &TrackSpline) {
 }
 
 /// Draws curb rumble strips for either ground or elevated bridge segments.
-fn render_curbs_pass(spline: &TrackSpline, elevated: bool) {
+fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
     let samples = &spline.samples;
     let n = samples.len();
     let curb_extra_width = 1.35;
@@ -366,7 +395,7 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool) {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
         let is_seg_elevated = (s0.elevation + s1.elevation) * 0.5 >= 0.6;
-        if is_seg_elevated != elevated {
+        if is_seg_elevated != elevated || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
 
@@ -404,7 +433,7 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool) {
 }
 
 /// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments.
-fn render_surface_pass(spline: &TrackSpline, elevated: bool) {
+fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
     let samples = &spline.samples;
     let n = samples.len();
     let seg_count = if spline.closed { n } else { n - 1 };
@@ -413,7 +442,7 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool) {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
         let is_seg_elevated = (s0.elevation + s1.elevation) * 0.5 >= 0.6;
-        if is_seg_elevated != elevated {
+        if is_seg_elevated != elevated || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
 

@@ -30,14 +30,26 @@ pub fn resolve_car_wall_collision(
     if (car.total_elevation() - wall.elevation).abs() > 1.8 || car.state.elevation > 1.2 {
         return None;
     }
-    let obb = OrientedBox::from_car(car);
-    let corners = obb.corners();
 
     let seg = &wall.segment;
     let seg_len_sq = seg.length_squared();
     if seg_len_sq < 1e-6 {
         return None;
     }
+
+    // Fast broad-phase AABB rejection: car bounding radius + margin
+    let car_reach = 3.6f32;
+    let min_x = seg.start.x.min(seg.end.x) - car_reach;
+    let max_x = seg.start.x.max(seg.end.x) + car_reach;
+    let min_y = seg.start.y.min(seg.end.y) - car_reach;
+    let max_y = seg.start.y.max(seg.end.y) + car_reach;
+    let pos = car.state.position;
+    if pos.x < min_x || pos.x > max_x || pos.y < min_y || pos.y > max_y {
+        return None;
+    }
+
+    let obb = OrientedBox::from_car(car);
+    let corners = obb.corners();
 
     let wall_norm = seg.normal();
     // Determine which side of the wall the car center is on

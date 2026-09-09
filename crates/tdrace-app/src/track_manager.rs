@@ -1048,6 +1048,7 @@ impl TrackManager {
             .map_err(|e| format!("Failed to save custom track: {}", e))?;
 
         let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
         Ok(target_path.to_string_lossy().to_string())
     }
 
@@ -1534,6 +1535,7 @@ impl TrackManager {
         }
 
         let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
         let was_deleted = deleted_any || match module_id {
             Some(m) => self.deleted_presets.iter().any(|d| d == &format!("{}:{}", m, id) || d == id),
             None => self.deleted_presets.iter().any(|d| d == id),

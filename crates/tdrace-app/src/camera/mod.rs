@@ -365,4 +365,21 @@ impl RaceCamera {
         let (sw, sh) = Self::get_screen_dimensions_safe();
         self.screen_to_world_with_viewport(screen_pos, sw, sh)
     }
+
+    /// Computes the axis-aligned world bounds visible through the camera plus a safety margin.
+    pub fn visible_world_bounds_with_viewport(&self, sw: f32, sh: f32, margin: f32) -> (Vec2, Vec2) {
+        let zoom = self.current_zoom.max(0.1);
+        let half_w = (sw * 0.5) / zoom + margin;
+        let half_h = (sh * 0.5) / zoom + margin;
+        let min = Vec2::new(self.current_pos.x - half_w, self.current_pos.y - half_h);
+        let max = Vec2::new(self.current_pos.x + half_w, self.current_pos.y + half_h);
+        (min, max)
+    }
+
+    /// Computes the axis-aligned world bounds visible through the camera plus a safety margin.
+    pub fn visible_world_bounds(&self, margin: f32) -> (Vec2, Vec2) {
+        let (sw, sh) = Self::get_screen_dimensions_safe();
+        self.visible_world_bounds_with_viewport(sw, sh, margin)
+    }
 }
+
