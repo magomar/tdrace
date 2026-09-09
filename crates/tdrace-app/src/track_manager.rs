@@ -39,7 +39,7 @@ impl ModuleFilter {
             Self::Classic => Some("classic"),
             Self::Rally => Some("rally"),
             Self::Kart => Some("kart"),
-            Self::F1 => Some("f1"),
+            Self::F1 => Some("gt"),
             Self::Nascar => Some("nascar"),
         }
     }
@@ -49,7 +49,7 @@ impl ModuleFilter {
             Self::Classic => "CLASSIC",
             Self::Rally => "RALLY",
             Self::Kart => "KARTING",
-            Self::F1 => "FORMULA 1",
+            Self::F1 => "GT WORLD CHALLENGE",
             Self::Nascar => "NASCAR",
         }
     }

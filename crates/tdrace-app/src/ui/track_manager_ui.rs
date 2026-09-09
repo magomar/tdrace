@@ -58,7 +58,7 @@ pub const PROMOTION_MODULES: [(&str, &str, &str, macroquad::color::Color); 4] = 
     ("classic", "Classic Motorsport", "Standard arcade & sports car circuits", Palette::NEON_CYAN),
     ("rally", "Rally Cross Championship", "Dirt tracks, dunes & rugged mountain stages", Palette::NEON_GOLD),
     ("kart", "Karting Cup", "Tight technical hairpins & indoor arenas", Palette::NEON_MAGENTA),
-    ("f1", "Formula Grand Prix", "High-speed DRS circuits & chicanes", Palette::RED),
+    ("gt", "GT World Challenge", "High-speed GT3 & GT2 circuits & chicanes", Palette::RED),
 ];
 
 /// Action dispatched from Track Manager interactions.
@@ -331,9 +331,10 @@ pub fn render_track_manager_screen(
             format!("CATEGORIES: {}", module_filter.label())
         } else {
             format!("CATEGORIES: {}", active_mods.iter().map(|m| match m.as_str() {
-                "f1" => "FORMULA 1",
+                "gt" | "gt_challenge" | "f1" => "GT WORLD CHALLENGE",
                 "rally" => "RALLY",
                 "kart" => "KARTING",
+                "nascar" => "NASCAR",
                 _ => "CLASSIC",
             }).collect::<Vec<_>>().join(" • "))
         };
@@ -690,7 +691,8 @@ fn render_delete_modal(
         "classic" => "Classic",
         "rally" => "Rally Cross",
         "kart" => "Karting",
-        "f1" => "Formula 1",
+        "gt" | "gt_challenge" | "f1" => "GT World Challenge",
+        "nascar" => "NASCAR Cup",
         _ => mod_id,
     };
     let title_text = format!("REMOVE FROM {}", mod_name.to_uppercase());
@@ -855,8 +857,8 @@ fn resolve_track_module_badge(
 
     if is_preset {
         match mod_id {
-            "f1" => (
-                if is_dossier { "OFFICIAL PRESET • FORMULA 1".to_string() } else { "OFFICIAL PRESET • F1".to_string() },
+            "gt" | "gt_challenge" | "f1" => (
+                if is_dossier { "OFFICIAL PRESET • GT WORLD CHALLENGE".to_string() } else { "OFFICIAL PRESET • GT".to_string() },
                 Palette::RED,
             ),
             "rally" => (
@@ -875,8 +877,8 @@ fn resolve_track_module_badge(
     } else {
         let green = Color::new(0.35, 0.90, 0.45, 1.0);
         match mod_id {
-            "f1" => (
-                if is_dossier { "CUSTOM CIRCUIT • FORMULA 1".to_string() } else { "CUSTOM CIRCUIT • F1".to_string() },
+            "gt" | "gt_challenge" | "f1" => (
+                if is_dossier { "CUSTOM CIRCUIT • GT WORLD CHALLENGE".to_string() } else { "CUSTOM CIRCUIT • GT".to_string() },
                 green,
             ),
             "rally" => (

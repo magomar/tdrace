@@ -1690,7 +1690,7 @@ impl RaceSession {
                         0 => self.switch_to_classic(),
                         1 => self.switch_to_rally(),
                         2 => self.switch_to_kart(),
-                        _ => self.switch_to_f1(),
+                        _ => self.switch_to_gt(),
                     }
                 }
 
@@ -2661,10 +2661,12 @@ impl RaceSession {
             return;
         }
 
-        // Quick Championship trigger for Formula 1 (F key)
-        if self.active_module_id == "f1" && is_key_pressed(KeyCode::F) {
+        // Quick Championship trigger for GT World Challenge (G / F key)
+        if (self.active_module_id == "gt" || self.active_module_id == "f1")
+            && (is_key_pressed(KeyCode::F) || is_key_pressed(KeyCode::G))
+        {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.start_f1_championship();
+            self.start_gt_championship();
             return;
         }
 
@@ -4173,9 +4175,10 @@ impl RaceSession {
                 let available_tracks = self.filtered_menu_tracks();
                 let filter_counts = self.menu_track_filter_counts();
                 let (mod_title, mod_sub, mod_accent) = match self.active_module_id {
-                    "f1" => ("FORMULA 1 GRAND PRIX", "FIA Hybrid Turbo Championship", Palette::RED),
+                    "gt" | "gt_challenge" | "f1" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
                     "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
                     "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
+                    "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
                     _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
                 };
                 render_track_select_menu(
@@ -4200,7 +4203,7 @@ impl RaceSession {
                     ("classic", "Classic Arcade Motorsport", "ALL-IN-ONE ARCADE & STUDIO", "GT Coupe, Drift Spec, Shifter Kart, Rally Car & CAD Circuit Studio Workshop.", Palette::NEON_CYAN),
                     ("rally", "Rallycross World Cup", "MIXED SURFACE WORLD RX & EURO RX", "World RX supercars, jumps, and high-sliding dirt stages.", Palette::NEON_GOLD),
                     ("kart", "Karting World Cup", "125CC SHIFTER KARTS", "Direct 1:1 steering, 3.5G cornering bites, and elimination tournament heats.", Palette::NEON_GREEN),
-                    ("f1", "Formula 1 Grand Prix", "FIA WORLD CHAMPIONSHIP", "High-downforce 1050 BHP hybrid open-wheelers on Monza, Spa, and Silverstone.", Palette::RED),
+                    ("gt", "GT World Challenge", "FIA GT3 & SRO GT2 WORLD TOUR", "High-downforce 600 BHP GT3 Evo & 707 BHP GT2 Biturbo racers on Monza, Spa, and Silverstone.", Palette::RED),
                 ];
                 render_module_select_menu(
                     &self.fonts,

@@ -81,9 +81,11 @@ run-dev: ## Run desktop arcade game in debug/dev mode (accepts args: make run-de
 dev: ## Run desktop arcade game in development mode (alias for 'make run-dev')
 	@$(MAKE) run-dev $(if $(EXTRA_ARGS),ARGS="$(EXTRA_ARGS)",)
 
-run-f1: ## Run Formula 1 Grand Prix module directly
-	@echo -e "$(CYAN)🏎️  Launching Formula 1 Grand Prix Module...$(RESET)"
-	cargo run --release -p tdrace-app -- --f1 $(EXTRA_ARGS)
+run-gt: ## Run GT World Challenge module directly
+	@echo -e "$(CYAN)🏎️  Launching GT World Challenge Module...$(RESET)"
+	cargo run --release -p tdrace-app -- --gt $(EXTRA_ARGS)
+
+run-f1: run-gt ## Run GT World Challenge module directly (alias)
 
 run-rally: ## Run Rallycross World Cup module directly
 	@echo -e "$(YELLOW)🏎️  Launching Rallycross World Cup Module...$(RESET)"

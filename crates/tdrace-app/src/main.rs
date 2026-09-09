@@ -26,16 +26,16 @@ async fn main() {
             if let Some(mod_name) = args.get(i + 1) {
                 session.switch_to_module(mod_name.trim_start_matches('-'));
             }
-        } else if clean_arg == "f1" {
-            session.switch_to_f1();
+        } else if clean_arg == "gt" || clean_arg == "f1" {
+            session.switch_to_gt();
         } else if clean_arg == "rally" {
             session.switch_to_rally();
         } else if clean_arg == "kart" {
             session.switch_to_kart();
         } else if clean_arg == "classic" {
             session.switch_to_classic();
-        } else if clean_arg == "championship" || clean_arg == "f1-championship" {
-            session.start_f1_championship();
+        } else if clean_arg == "championship" || clean_arg == "gt-championship" || clean_arg == "f1-championship" {
+            session.start_gt_championship();
         }
     }
 

@@ -71,7 +71,7 @@ pub enum EditorModal {
 impl EditorModal {
     pub fn templates_default(module_id: Option<&str>) -> Self {
         let mod_idx = match module_id {
-            Some("f1") => 1,
+            Some("gt") | Some("gt_challenge") | Some("f1") => 1,
             Some("kart") => 2,
             Some("rally") => 3,
             _ => 0,
@@ -2457,7 +2457,7 @@ fn render_template_modal(
 
     let mod_defs: [(&str, &str, SurfaceType, SurfaceType, &str, &str, Color); 4] = [
         ("classic", "CLASSIC", SurfaceType::Asphalt, SurfaceType::Grass, "GT Sports Coupe (RWD)", "14m track ribbon", Palette::NEON_CYAN),
-        ("f1", "FORMULA 1", SurfaceType::Asphalt, SurfaceType::Grass, "Formula 1 Car (V6 Hybrid)", "15m track ribbon with curbs", Palette::RED),
+        ("gt", "GT WORLD CHALLENGE", SurfaceType::Asphalt, SurfaceType::Grass, "GT3 Evo Racer (600 BHP)", "15m track ribbon with curbs", Palette::RED),
         ("kart", "KARTING", SurfaceType::Asphalt, SurfaceType::Asphalt, "125cc Go-Kart (Direct)", "10m technical track ribbon", Palette::NEON_MAGENTA),
         ("rally", "RALLYCROSS", SurfaceType::Dirt, SurfaceType::Dirt, "WRC Rally Car (AWD)", "12m loose dirt ribbon", Palette::NEON_GOLD),
     ];
