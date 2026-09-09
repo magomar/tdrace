@@ -1,4 +1,10 @@
-use tdrace_app::ui::curve_indicator::{compute_curve_colors, compute_indicator_alpha, CurveColorScheme};
+use tdrace_app::ui::curve_indicator::{
+    compute_curve_colors, compute_indicator_alpha, compute_smart_curve_arrow_position,
+    CurveColorScheme,
+};
+use tdrace_core::physics::car::Car;
+use tdrace_core::physics::config::CarConfig;
+use tdrace_core::track::curve::CurveDirection;
 use tdrace_core::track::presets::classic_grand_prix;
 
 #[test]
@@ -124,4 +130,54 @@ fn test_indicator_alpha_quick_fade_past_apex() {
     let a_past_15m = compute_indicator_alpha(-40.0, -15.0, true);
     assert_eq!(a_past_15m, 0.0);
 }
+
+#[test]
+fn test_smart_curve_arrow_positioning_left_right_and_avoidance() {
+    let track = classic_grand_prix();
+    let sample = &track.spline.samples[0];
+    let player_car = Car::new(CarConfig::sports_car())
+        .with_pose(sample.point, 0.0);
+    let all_cars = vec![player_car.clone()];
+    let zoom = 12.0;
+
+    // 1. Left curve: arrow must be placed to the LEFT of the player car (x < car.x)
+    let pos_left = compute_smart_curve_arrow_position(&track, &all_cars, &player_car, CurveDirection::Left, zoom);
+    assert!(
+        pos_left.x < player_car.state.position.x,
+        "Left curve arrow ({}) must be to the left of the player car ({})",
+        pos_left.x,
+        player_car.state.position.x
+    );
+
+    // 2. Right curve: arrow must be placed to the RIGHT of the player car (x > car.x)
+    let pos_right = compute_smart_curve_arrow_position(&track, &all_cars, &player_car, CurveDirection::Right, zoom);
+    assert!(
+        pos_right.x > player_car.state.position.x,
+        "Right curve arrow ({}) must be to the right of the player car ({})",
+        pos_right.x,
+        player_car.state.position.x
+    );
+
+    // 3. Spacing: comfortable clearance from car center
+    let dist_left = pos_left.distance(player_car.state.position);
+    let dist_right = pos_right.distance(player_car.state.position);
+    assert!(dist_left >= 2.5 && dist_left <= 8.0, "Left arrow clearance must be comfortable (got {})", dist_left);
+    assert!(dist_right >= 2.5 && dist_right <= 8.0, "Right arrow clearance must be comfortable (got {})", dist_right);
+
+    // 4. Opponent car avoidance: place an opponent car directly at the default lateral offset
+    let mut cars_with_opponent = all_cars.clone();
+    let opp = Car::new(CarConfig::sports_car())
+        .with_pose(pos_right, 0.0);
+    cars_with_opponent.push(opp);
+
+    // Smart positioning should shift vertically (up or down) to avoid colliding with the opponent car!
+    let pos_avoid = compute_smart_curve_arrow_position(&track, &cars_with_opponent, &player_car, CurveDirection::Right, zoom);
+    let dist_to_opp = pos_avoid.distance(pos_right);
+    assert!(
+        dist_to_opp > 1.0,
+        "Smart positioning must shift away from opponent vehicle (shifted by {})",
+        dist_to_opp
+    );
+}
+
 

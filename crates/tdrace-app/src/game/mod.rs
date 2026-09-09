@@ -115,7 +115,8 @@ use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
 use crate::ui::{
-    ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme, ScreenAction, UiScaler,
+    render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
+    ScreenAction, UiScaler,
 };
 
 /// Source screen that launched the DriverCards dossier view.
@@ -5230,6 +5231,25 @@ impl RaceSession {
                     scheme,
                     player_alpha,
                 );
+            }
+            if self.visibility_options.curve_helper {
+                let player_tracker = &self.trackers[0];
+                let max_lookahead = (player_car.state.speed * 3.5).clamp(130.0, 220.0);
+                if let Some(status) = self.track.spline.upcoming_curve(
+                    player_tracker.progress_distance,
+                    player_car.state.speed,
+                    max_lookahead,
+                ) {
+                    render_curve_indicator(
+                        &self.track,
+                        &self.cars,
+                        player_car,
+                        &status,
+                        self.visibility_options.curve_color_scheme,
+                        self.camera.current_zoom,
+                        self.session_time,
+                    );
+                }
             }
         }
 

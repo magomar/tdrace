@@ -1,12 +1,10 @@
+use glam::Vec2;
 use macroquad::color::Color;
-use macroquad::shapes::{draw_line, draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::draw_line;
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::car::Car;
 use tdrace_core::track::curve::{CurveApproachStatus, CurveDirection};
-
-use super::font::Fonts;
-use super::scaler::UiScaler;
-use crate::render::color::Palette;
+use tdrace_core::track::Track;
 
 /// Available color schemes for the curve approaching & braking indicator.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -159,170 +157,214 @@ pub fn compute_indicator_alpha(
     approach_alpha * apex_fade_alpha
 }
 
-/// Renders the Curve Approaching and Dynamic Braking Helper HUD widget.
-pub fn render_curve_indicator(
-    fonts: &Fonts,
-    scaler: &UiScaler,
-    center_x: f32,
-    center_y: f32,
-    status: &CurveApproachStatus,
+/// Computes the smart world-space position for curve alert arrows adjacent to the player car.
+///
+/// Places arrows to the left or right of the player car based on curve direction,
+/// and searches for a vertical offset (moving slightly up or down) that avoids
+/// overlaying the circuit track ribbon or nearby opponent vehicles.
+pub fn compute_smart_curve_arrow_position(
+    track: &Track,
+    all_cars: &[Car],
     player_car: &Car,
+    direction: CurveDirection,
+    current_zoom: f32,
+) -> Vec2 {
+    let zoom = current_zoom.max(0.5);
+    let car_pos = player_car.state.position;
+    let elevation = player_car.total_elevation();
+
+    // Horizontal offset: left or right of car with comfortable clearance
+    let side_sign = match direction {
+        CurveDirection::Left => -1.0,
+        CurveDirection::Right => 1.0,
+    };
+    let lateral_dist = (38.0 / zoom).clamp(2.6, 6.0);
+    let base_x = car_pos.x + side_sign * lateral_dist;
+    let base_y = car_pos.y + elevation;
+
+    // Vertical candidate shifts: test level (0.0), slightly up, slightly down, then further up/down
+    let step_y = 16.0 / zoom;
+    let y_shifts = [
+        0.0,
+        step_y,
+        -step_y,
+        2.0 * step_y,
+        -2.0 * step_y,
+        3.0 * step_y,
+        -3.0 * step_y,
+    ];
+
+    let mut best_pos = Vec2::new(base_x, base_y);
+    let mut best_penalty = f32::INFINITY;
+
+    for dy in y_shifts {
+        let cand = Vec2::new(base_x, base_y + dy);
+
+        // 1. Circuit track avoidance penalty
+        let proj = track.spline.project_point(cand);
+        let track_penalty = if proj.is_on_track {
+            // Heavily penalize covering the main asphalt racing ribbon
+            150.0
+        } else if proj.is_on_curb {
+            // Lightly penalize curbs
+            35.0
+        } else {
+            // Free terrain (grass, gravel, runoff) - optimal!
+            0.0
+        };
+
+        // 2. Opponent car avoidance penalty
+        let mut car_penalty = 0.0f32;
+        let min_car_clearance = (28.0 / zoom).clamp(2.2, 4.5);
+        for other in all_cars.iter().skip(1) {
+            let dist = other.state.position.distance(cand);
+            if dist < min_car_clearance {
+                car_penalty += 180.0 * (1.0 - dist / min_car_clearance);
+            }
+        }
+
+        // 3. Displacement penalty (prefer staying closer to car level if clear)
+        let dist_penalty = dy.abs() * 1.5;
+
+        let total_penalty = track_penalty + car_penalty + dist_penalty;
+        if total_penalty < best_penalty {
+            best_penalty = total_penalty;
+            best_pos = cand;
+        }
+    }
+
+    best_pos
+}
+
+/// Renders the simplified curve alert chevrons in world space adjacent to the player car.
+///
+/// Features no background box and no text labels — only anti-aliased, glowing vector chevrons
+/// positioned left or right of the car, with smart up/down repositioning to avoid obscuring
+/// the circuit ribbon or other vehicles.
+pub fn render_curve_indicator(
+    track: &Track,
+    all_cars: &[Car],
+    player_car: &Car,
+    status: &CurveApproachStatus,
     scheme: CurveColorScheme,
+    current_zoom: f32,
     anim_time: f32,
 ) {
-    let distance_ahead = status.distance_to_entry;
-    let alpha = compute_indicator_alpha(status.distance_to_entry, status.distance_to_apex, status.is_inside_curve);
+    let alpha = compute_indicator_alpha(
+        status.distance_to_entry,
+        status.distance_to_apex,
+        status.is_inside_curve,
+    );
 
     if alpha <= 0.02 {
         return;
     }
 
     let degree = status.curve.degree.clamp(1, 5);
-    let (color, border_color) = compute_curve_colors(scheme, status.urgency, degree, alpha);
+    let (color, _border_color) = compute_curve_colors(scheme, status.urgency, degree, alpha);
 
-    // Pulse intensity when in critical braking zone
+    // Pulse scale when in critical braking envelope
     let is_critical = status.urgency >= 0.85;
     let pulse_scale = if is_critical {
-        1.0 + (anim_time * 9.0).sin().abs() * 0.06
+        1.0 + (anim_time * 9.0).sin().abs() * 0.10
     } else {
         1.0
     };
 
-    let card_w = scaler.s(280.0) * pulse_scale;
-    let card_h = scaler.s(74.0) * pulse_scale;
-    let card_x = center_x - card_w * 0.5;
-    let card_y = center_y - card_h * 0.5;
+    let zoom = current_zoom.max(0.5);
 
-    // Outer card backdrop with semi-transparent dark glass
-    let bg_color = Color::new(0.04, 0.06, 0.10, 0.48 * alpha);
-    let border_stroke = if is_critical { 2.5 } else { 1.5 };
-    scaler.draw_glass_card(card_x, card_y, card_w, card_h, bg_color, border_color, border_stroke);
-
-    // 1. Top Sub-badge: Direction + Degree name + Apex speed
-    let severity_name = match degree {
-        1 => "GENTLE",
-        2 => "MILD",
-        3 => "MEDIUM",
-        4 => "SHARP",
-        _ => "HAIRPIN",
-    };
-    let dir_name = status.curve.direction.as_str();
-    let apex_speed_kmh = (status.curve.safe_apex_speed_mps * 3.6).round() as u32;
-
-    let sub_title = format!("{} {}  •  APEX {} KM/H", severity_name, dir_name, apex_speed_kmh);
-    fonts.draw_display_centered_with_shadow(
-        &sub_title,
-        center_x,
-        card_y + scaler.s(16.0),
-        scaler.font_s(11.0),
-        Color::new(0.70, 0.78, 0.88, 0.95 * alpha),
-        Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
-        scaler.s(1.0),
+    // Compute smart position to the left or right of the car
+    let arrow_center = compute_smart_curve_arrow_position(
+        track,
+        all_cars,
+        player_car,
+        status.curve.direction,
+        zoom,
     );
 
-    // 2. Center: Draw 1 to 5 Vector Chevrons
-    let chevron_w = scaler.s(18.0);
-    let chevron_h = scaler.s(28.0);
-    let chevron_thickness = scaler.s(4.5);
-    let spacing = scaler.s(21.0);
+    // Vector chevron dimensions in world units (scaled by 1.0 / zoom for fixed screen size)
+    let chevron_w = (14.0 * pulse_scale) / zoom;
+    let chevron_h = (22.0 * pulse_scale) / zoom;
+    let chevron_thickness = (3.5 * pulse_scale) / zoom;
+    let spacing = (16.0 * pulse_scale) / zoom;
+    let shadow_offset = 1.6 / zoom;
 
     let num_chevrons = degree as usize;
-    let total_chevrons_w = (num_chevrons as f32 - 1.0) * spacing + chevron_w;
-    let chevrons_start_x = center_x - total_chevrons_w * 0.5;
-    let chevrons_y = card_y + scaler.s(39.0);
+    let total_w = (num_chevrons as f32 - 1.0) * spacing + chevron_w;
+    let start_x = arrow_center.x - total_w * 0.5;
+    let cy = arrow_center.y;
+
+    let shadow_col = Color::new(0.0, 0.0, 0.0, 0.70 * alpha);
+    let glow_col = Color::new(color.r, color.g, color.b, 0.35 * alpha);
 
     for i in 0..num_chevrons {
-        let cx = chevrons_start_x + (i as f32) * spacing;
-        let shadow_offset = scaler.s(1.5);
-        let shadow_col = Color::new(0.0, 0.0, 0.0, 0.65 * alpha);
+        let cx = start_x + (i as f32) * spacing;
 
         match status.curve.direction {
             CurveDirection::Left => {
                 // Points Left: <
-                // Apex at (cx, chevrons_y)
-                let apex = (cx, chevrons_y);
-                let top = (cx + chevron_w, chevrons_y - chevron_h * 0.5);
-                let btm = (cx + chevron_w, chevrons_y + chevron_h * 0.5);
+                let apex = Vec2::new(cx, cy);
+                let top = Vec2::new(cx + chevron_w, cy + chevron_h * 0.5);
+                let btm = Vec2::new(cx + chevron_w, cy - chevron_h * 0.5);
 
-                // Drop shadow
-                draw_line(top.0 + shadow_offset, top.1 + shadow_offset, apex.0 + shadow_offset, apex.1 + shadow_offset, chevron_thickness, shadow_col);
-                draw_line(apex.0 + shadow_offset, apex.1 + shadow_offset, btm.0 + shadow_offset, btm.1 + shadow_offset, chevron_thickness, shadow_col);
+                // 1. Dark outer drop shadow
+                draw_line(
+                    top.x + shadow_offset,
+                    top.y - shadow_offset,
+                    apex.x + shadow_offset,
+                    apex.y - shadow_offset,
+                    chevron_thickness + 1.2 / zoom,
+                    shadow_col,
+                );
+                draw_line(
+                    apex.x + shadow_offset,
+                    apex.y - shadow_offset,
+                    btm.x + shadow_offset,
+                    btm.y - shadow_offset,
+                    chevron_thickness + 1.2 / zoom,
+                    shadow_col,
+                );
 
-                // Main strokes
-                draw_line(top.0, top.1, apex.0, apex.1, chevron_thickness, color);
-                draw_line(apex.0, apex.1, btm.0, btm.1, chevron_thickness, color);
+                // 2. Glowing ambient stroke
+                draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness * 1.8, glow_col);
+                draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness * 1.8, glow_col);
+
+                // 3. Crisp sharp primary stroke
+                draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness, color);
+                draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness, color);
             }
             CurveDirection::Right => {
                 // Points Right: >
-                // Apex at (cx + chevron_w, chevrons_y)
-                let apex = (cx + chevron_w, chevrons_y);
-                let top = (cx, chevrons_y - chevron_h * 0.5);
-                let btm = (cx, chevrons_y + chevron_h * 0.5);
+                let apex = Vec2::new(cx + chevron_w, cy);
+                let top = Vec2::new(cx, cy + chevron_h * 0.5);
+                let btm = Vec2::new(cx, cy - chevron_h * 0.5);
 
-                // Drop shadow
-                draw_line(top.0 + shadow_offset, top.1 + shadow_offset, apex.0 + shadow_offset, apex.1 + shadow_offset, chevron_thickness, shadow_col);
-                draw_line(apex.0 + shadow_offset, apex.1 + shadow_offset, btm.0 + shadow_offset, btm.1 + shadow_offset, chevron_thickness, shadow_col);
+                // 1. Dark outer drop shadow
+                draw_line(
+                    top.x + shadow_offset,
+                    top.y - shadow_offset,
+                    apex.x + shadow_offset,
+                    apex.y - shadow_offset,
+                    chevron_thickness + 1.2 / zoom,
+                    shadow_col,
+                );
+                draw_line(
+                    apex.x + shadow_offset,
+                    apex.y - shadow_offset,
+                    btm.x + shadow_offset,
+                    btm.y - shadow_offset,
+                    chevron_thickness + 1.2 / zoom,
+                    shadow_col,
+                );
 
-                // Main strokes
-                draw_line(top.0, top.1, apex.0, apex.1, chevron_thickness, color);
-                draw_line(apex.0, apex.1, btm.0, btm.1, chevron_thickness, color);
+                // 2. Glowing ambient stroke
+                draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness * 1.8, glow_col);
+                draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness * 1.8, glow_col);
+
+                // 3. Crisp sharp primary stroke
+                draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness, color);
+                draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness, color);
             }
         }
     }
-
-    // 3. Bottom Row: Distance Countdown + Dynamic Action Badge
-    let dist_str = if status.distance_to_apex < 0.0 {
-        "EXIT".to_string()
-    } else if status.is_inside_curve {
-        "APEX".to_string()
-    } else {
-        format!("{}M", distance_ahead.max(0.0).round() as u32)
-    };
-
-    let badge_h = scaler.s(16.0);
-    let badge_y = card_y + card_h - badge_h - scaler.s(6.0);
-
-    // Draw distance on left side
-    fonts.draw_display_with_shadow(
-        &dist_str,
-        card_x + scaler.s(18.0),
-        badge_y + scaler.s(12.5),
-        scaler.font_s(14.0),
-        Color::new(1.0, 1.0, 1.0, 0.95 * alpha),
-        Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
-        scaler.s(1.0),
-    );
-
-    // Action status badge on right side
-    let (badge_text, badge_bg, badge_fg) = if status.distance_to_apex < 0.0 {
-        ("EXIT", Color::new(0.12, 0.55, 0.28, 0.52 * alpha), Color::new(0.80, 1.0, 0.85, alpha))
-    } else if is_critical {
-        if player_car.state.speed > status.curve.safe_apex_speed_mps {
-            ("BRAKE HARD!", Color::new(0.85, 0.12, 0.18, 0.55 * alpha), Palette::WHITE)
-        } else {
-            ("SPEED SAFE", Color::new(0.12, 0.55, 0.28, 0.52 * alpha), Color::new(0.80, 1.0, 0.85, alpha))
-        }
-    } else if status.urgency >= 0.40 {
-        ("PREPARE BRAKE", Color::new(0.65, 0.48, 0.08, 0.52 * alpha), Color::new(1.0, 0.95, 0.70, alpha))
-    } else if player_car.state.speed <= status.curve.safe_apex_speed_mps + 1.5 {
-        ("SPEED SAFE", Color::new(0.12, 0.55, 0.28, 0.52 * alpha), Color::new(0.80, 1.0, 0.85, alpha))
-    } else {
-        ("APPROACHING", Color::new(0.15, 0.20, 0.28, 0.52 * alpha), Color::new(0.70, 0.78, 0.88, alpha))
-    };
-
-    let badge_w = scaler.s(105.0);
-    let badge_x = card_x + card_w - badge_w - scaler.s(16.0);
-
-    draw_rectangle(badge_x, badge_y, badge_w, badge_h, badge_bg);
-    draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, 1.0, border_color);
-
-    fonts.draw_display_centered_with_shadow(
-        badge_text,
-        badge_x + badge_w * 0.5,
-        badge_y + scaler.s(11.5),
-        scaler.font_s(10.5),
-        badge_fg,
-        Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
-        scaler.s(1.0),
-    );
 }

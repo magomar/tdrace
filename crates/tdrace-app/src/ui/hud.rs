@@ -6,7 +6,6 @@ use tdrace_core::physics::car::Car;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::Track;
 
-use super::curve_indicator::render_curve_indicator;
 use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::render::color::{CarColorScheme, Palette};
@@ -64,8 +63,8 @@ pub fn render_hud(
     gamepad_connected: bool,
     pb_notification: Option<&PersonalBestNotification>,
     visibility_toast: Option<&VisibilityToast>,
-    visibility_options: &PlayerVisibilityOptions,
-    session_time: f32,
+    _visibility_options: &PlayerVisibilityOptions,
+    _session_time: f32,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -112,28 +111,6 @@ pub fn render_hud(
             scaler.safe_pad_y + scaler.s(90.0)
         };
         render_visibility_toast(fonts, &scaler, sw * 0.5, toast_y, vt);
-    }
-
-    // 2d. Approaching Curve & Dynamic Braking Helper (Bottom Center)
-    if visibility_options.curve_helper {
-        let max_lookahead = (player_car.state.speed * 3.5).clamp(130.0, 220.0);
-        if let Some(status) = track.spline.upcoming_curve(
-            player_progress.progress_distance,
-            player_car.state.speed,
-            max_lookahead,
-        ) {
-            let indicator_y = sh - scaler.s(52.0) - scaler.safe_pad_y;
-            render_curve_indicator(
-                fonts,
-                &scaler,
-                sw * 0.5,
-                indicator_y,
-                &status,
-                player_car,
-                visibility_options.curve_color_scheme,
-                session_time,
-            );
-        }
     }
 
     // 3. Mini-Map Radar (Top Right)
