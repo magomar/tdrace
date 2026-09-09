@@ -160,30 +160,45 @@ pub fn compute_indicator_alpha(
 /// Computes the smart world-space position for curve alert arrows adjacent to the player car.
 ///
 /// Places arrows to the left or right of the player car based on curve direction,
-/// and searches for a vertical offset (moving slightly up or down) that avoids
+/// factoring in the total width of the chevron block so multi-arrow clusters expand
+/// outward and maintain generous clearance from the vehicle chassis.
+/// Searches for a vertical offset (moving slightly up or down) that avoids
 /// overlaying the circuit track ribbon or nearby opponent vehicles.
 pub fn compute_smart_curve_arrow_position(
     track: &Track,
     all_cars: &[Car],
     player_car: &Car,
     direction: CurveDirection,
+    degree: u8,
     current_zoom: f32,
 ) -> Vec2 {
     let zoom = current_zoom.max(0.5);
     let car_pos = player_car.state.position;
     let elevation = player_car.total_elevation();
 
-    // Horizontal offset: left or right of car with comfortable clearance
+    // Horizontal offset: left or right of car
     let side_sign = match direction {
         CurveDirection::Left => -1.0,
         CurveDirection::Right => 1.0,
     };
-    let lateral_dist = (38.0 / zoom).clamp(2.6, 6.0);
+
+    // Total width of the chevron cluster
+    let deg = degree.clamp(1, 5) as usize;
+    let spacing = 16.0 / zoom;
+    let chevron_w = 14.0 / zoom;
+    let total_w = (deg as f32 - 1.0) * spacing + chevron_w;
+
+    // Guaranteed clearance between the car center and the nearest chevron
+    // (set to 56px / ~4.5m so multi-arrow clusters never encroach on the vehicle)
+    let inner_clearance = (56.0 / zoom).clamp(4.2, 8.5);
+
+    // Center of the chevron block is offset so the innermost chevron maintains `inner_clearance`
+    let lateral_dist = inner_clearance + total_w * 0.5;
     let base_x = car_pos.x + side_sign * lateral_dist;
     let base_y = car_pos.y + elevation;
 
     // Vertical candidate shifts: test level (0.0), slightly up, slightly down, then further up/down
-    let step_y = 16.0 / zoom;
+    let step_y = 18.0 / zoom;
     let y_shifts = [
         0.0,
         step_y,
@@ -215,7 +230,7 @@ pub fn compute_smart_curve_arrow_position(
 
         // 2. Opponent car avoidance penalty
         let mut car_penalty = 0.0f32;
-        let min_car_clearance = (28.0 / zoom).clamp(2.2, 4.5);
+        let min_car_clearance = (30.0 / zoom).clamp(2.4, 5.0);
         for other in all_cars.iter().skip(1) {
             let dist = other.state.position.distance(cand);
             if dist < min_car_clearance {
@@ -273,12 +288,13 @@ pub fn render_curve_indicator(
 
     let zoom = current_zoom.max(0.5);
 
-    // Compute smart position to the left or right of the car
+    // Compute smart position to the left or right of the car (factoring in degree for cluster width)
     let arrow_center = compute_smart_curve_arrow_position(
         track,
         all_cars,
         player_car,
         status.curve.direction,
+        degree,
         zoom,
     );
 

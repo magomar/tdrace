@@ -141,7 +141,7 @@ fn test_smart_curve_arrow_positioning_left_right_and_avoidance() {
     let zoom = 12.0;
 
     // 1. Left curve: arrow must be placed to the LEFT of the player car (x < car.x)
-    let pos_left = compute_smart_curve_arrow_position(&track, &all_cars, &player_car, CurveDirection::Left, zoom);
+    let pos_left = compute_smart_curve_arrow_position(&track, &all_cars, &player_car, CurveDirection::Left, 3, zoom);
     assert!(
         pos_left.x < player_car.state.position.x,
         "Left curve arrow ({}) must be to the left of the player car ({})",
@@ -150,7 +150,7 @@ fn test_smart_curve_arrow_positioning_left_right_and_avoidance() {
     );
 
     // 2. Right curve: arrow must be placed to the RIGHT of the player car (x > car.x)
-    let pos_right = compute_smart_curve_arrow_position(&track, &all_cars, &player_car, CurveDirection::Right, zoom);
+    let pos_right = compute_smart_curve_arrow_position(&track, &all_cars, &player_car, CurveDirection::Right, 3, zoom);
     assert!(
         pos_right.x > player_car.state.position.x,
         "Right curve arrow ({}) must be to the right of the player car ({})",
@@ -158,11 +158,11 @@ fn test_smart_curve_arrow_positioning_left_right_and_avoidance() {
         player_car.state.position.x
     );
 
-    // 3. Spacing: comfortable clearance from car center
+    // 3. Spacing: generous clearance from car center
     let dist_left = pos_left.distance(player_car.state.position);
     let dist_right = pos_right.distance(player_car.state.position);
-    assert!(dist_left >= 2.5 && dist_left <= 8.0, "Left arrow clearance must be comfortable (got {})", dist_left);
-    assert!(dist_right >= 2.5 && dist_right <= 8.0, "Right arrow clearance must be comfortable (got {})", dist_right);
+    assert!(dist_left >= 4.0 && dist_left <= 12.0, "Left arrow clearance must be comfortable (got {})", dist_left);
+    assert!(dist_right >= 4.0 && dist_right <= 12.0, "Right arrow clearance must be comfortable (got {})", dist_right);
 
     // 4. Opponent car avoidance: place an opponent car directly at the default lateral offset
     let mut cars_with_opponent = all_cars.clone();
@@ -171,12 +171,22 @@ fn test_smart_curve_arrow_positioning_left_right_and_avoidance() {
     cars_with_opponent.push(opp);
 
     // Smart positioning should shift vertically (up or down) to avoid colliding with the opponent car!
-    let pos_avoid = compute_smart_curve_arrow_position(&track, &cars_with_opponent, &player_car, CurveDirection::Right, zoom);
+    let pos_avoid = compute_smart_curve_arrow_position(&track, &cars_with_opponent, &player_car, CurveDirection::Right, 3, zoom);
     let dist_to_opp = pos_avoid.distance(pos_right);
     assert!(
         dist_to_opp > 1.0,
         "Smart positioning must shift away from opponent vehicle (shifted by {})",
         dist_to_opp
+    );
+
+    // 5. Multi-arrow expansion: even with 5 chevrons, the nearest chevron remains comfortably clear of the car
+    let pos_5 = compute_smart_curve_arrow_position(&track, &all_cars, &player_car, CurveDirection::Right, 5, zoom);
+    let total_w_5 = (4.0 * 16.0 + 14.0) / zoom;
+    let closest_chevron_dist = (pos_5.x - total_w_5 * 0.5) - player_car.state.position.x;
+    assert!(
+        closest_chevron_dist >= 4.0,
+        "Innermost chevron of 5-arrow alert must remain clear of car (got {:.2}m)",
+        closest_chevron_dist
     );
 }
 
