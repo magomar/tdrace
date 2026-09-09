@@ -1,3 +1,4 @@
+pub mod curve_indicator;
 pub mod driver_card;
 pub mod font;
 pub mod hall_of_fame;
@@ -9,6 +10,7 @@ pub mod starting_grid;
 pub mod track_manager_ui;
 pub mod track_preview;
 
+pub use curve_indicator::{compute_curve_colors, render_curve_indicator, CurveColorScheme};
 pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
 pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, PlayerCongrats};

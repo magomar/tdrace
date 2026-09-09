@@ -2,6 +2,9 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use crate::physics::surface::SurfaceType;
+use crate::track::curve::{
+    evaluate_curve_approach, extract_curves_from_samples, CurveApproachStatus, TrackCurve,
+};
 use crate::track::geometry::BarrierType;
 
 const fn default_true() -> bool {
@@ -176,6 +179,8 @@ pub struct TrackSpline {
     pub closed: bool,
     pub samples: Vec<SplineSample>,
     pub total_length: f32,
+    #[serde(default)]
+    pub curves: Vec<TrackCurve>,
 }
 
 impl TrackSpline {
@@ -373,12 +378,32 @@ impl TrackSpline {
             });
         }
 
+        let curves = extract_curves_from_samples(&samples, total_length, closed);
+
         Self {
             waypoints,
             closed,
             samples,
             total_length,
+            curves,
         }
+    }
+
+    /// Evaluates the next upcoming or active curve ahead of the given track progress distance.
+    pub fn upcoming_curve(
+        &self,
+        progress_dist: f32,
+        car_speed_mps: f32,
+        max_lookahead: f32,
+    ) -> Option<CurveApproachStatus> {
+        evaluate_curve_approach(
+            &self.curves,
+            progress_dist,
+            self.total_length,
+            self.closed,
+            car_speed_mps,
+            max_lookahead,
+        )
     }
 
     /// Helper to build a closed track spline from raw points with a constant width.

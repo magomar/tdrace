@@ -3,8 +3,9 @@ use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_triangle};
 
 use super::color::{CarColorScheme, Palette};
+use crate::ui::CurveColorScheme;
 
-/// Runtime toggle flags for all four player car visibility enhancement options.
+/// Runtime toggle flags for player car visibility and HUD driving aids.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlayerVisibilityOptions {
     /// Option 1: Inverted neon chevron (`▼`) floating above the player car roof.
@@ -15,6 +16,10 @@ pub struct PlayerVisibilityOptions {
     pub adaptive_visibility: bool,
     /// Option 4: High-visibility diegetic roof beacon / roll-hoop T-cam strobe.
     pub roof_beacon: bool,
+    /// Option 5: Approaching curve indicator and dynamic braking helper on HUD.
+    pub curve_helper: bool,
+    /// Active color scheme for the curve approaching helper (cycled via key 6).
+    pub curve_color_scheme: CurveColorScheme,
 }
 
 impl Default for PlayerVisibilityOptions {
@@ -24,6 +29,8 @@ impl Default for PlayerVisibilityOptions {
             ground_aura: true,
             adaptive_visibility: true,
             roof_beacon: true,
+            curve_helper: true,
+            curve_color_scheme: CurveColorScheme::Traffic,
         }
     }
 }

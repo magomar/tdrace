@@ -1,4 +1,5 @@
 use tdrace_app::render::{compute_adaptive_alpha, PlayerVisibilityOptions};
+use tdrace_app::ui::CurveColorScheme;
 use tdrace_app::ui::hud::VisibilityToast;
 use tdrace_app::game::RaceSession;
 
@@ -9,6 +10,8 @@ fn test_player_visibility_options_defaults() {
     assert!(opts.ground_aura, "Option 2 (Ground Aura) must be enabled by default");
     assert!(opts.adaptive_visibility, "Option 3 (Adaptive Visibility) must be enabled by default");
     assert!(opts.roof_beacon, "Option 4 (Roof Beacon) must be enabled by default");
+    assert!(opts.curve_helper, "Option 5 (Curve Helper) must be enabled by default");
+    assert_eq!(opts.curve_color_scheme, CurveColorScheme::Traffic);
 }
 
 #[test]
@@ -33,10 +36,28 @@ fn test_player_visibility_options_individual_toggles() {
     // Toggle 4
     opts.roof_beacon = !opts.roof_beacon;
     assert!(!opts.roof_beacon);
+    assert!(opts.curve_helper);
+
+    // Toggle 5 (Curve Helper)
+    opts.curve_helper = !opts.curve_helper;
+    assert!(!opts.curve_helper);
+
+    // Cycle 6 (Color Scheme: Traffic -> Synthwave -> Contrast -> Rally -> Traffic)
+    assert_eq!(opts.curve_color_scheme, CurveColorScheme::Traffic);
+    opts.curve_color_scheme = opts.curve_color_scheme.next();
+    assert_eq!(opts.curve_color_scheme, CurveColorScheme::Synthwave);
+    opts.curve_color_scheme = opts.curve_color_scheme.next();
+    assert_eq!(opts.curve_color_scheme, CurveColorScheme::Contrast);
+    opts.curve_color_scheme = opts.curve_color_scheme.next();
+    assert_eq!(opts.curve_color_scheme, CurveColorScheme::Rally);
+    opts.curve_color_scheme = opts.curve_color_scheme.next();
+    assert_eq!(opts.curve_color_scheme, CurveColorScheme::Traffic);
 
     // Turn back on
     opts.overhead_chevron = true;
+    opts.curve_helper = true;
     assert!(opts.overhead_chevron);
+    assert!(opts.curve_helper);
 }
 
 #[test]
@@ -85,5 +106,7 @@ fn test_race_session_visibility_initialization() {
     assert!(session.visibility_options.ground_aura);
     assert!(session.visibility_options.adaptive_visibility);
     assert!(session.visibility_options.roof_beacon);
+    assert!(session.visibility_options.curve_helper);
+    assert_eq!(session.visibility_options.curve_color_scheme, CurveColorScheme::Traffic);
     assert!(session.visibility_toast.is_none());
 }

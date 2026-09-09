@@ -1,10 +1,15 @@
 pub mod checkpoint;
+pub mod curve;
 pub mod geometry;
 pub mod presets;
 pub mod spline;
 pub mod validation;
 
 pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
+pub use curve::{
+    classify_curve_degree, compute_safe_apex_speed, evaluate_curve_approach,
+    CurveApproachStatus, CurveDirection, TrackCurve,
+};
 pub use geometry::{
     BarrierType, JumpRamp, LineSegment, Obstacle, ObstacleShape, SpawnPose, SurfaceLayer,
     SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
@@ -225,7 +230,15 @@ impl Track {
 
     /// Deserializes a `Track` from a JSON string.
     pub fn from_json(json_str: &str) -> Result<Self, TrackError> {
-        serde_json::from_str(json_str).map_err(|e| TrackError::Json(e.to_string()))
+        let mut track: Self = serde_json::from_str(json_str).map_err(|e| TrackError::Json(e.to_string()))?;
+        if track.spline.curves.is_empty() && !track.spline.samples.is_empty() {
+            track.spline.curves = curve::extract_curves_from_samples(
+                &track.spline.samples,
+                track.spline.total_length,
+                track.spline.closed,
+            );
+        }
+        Ok(track)
     }
 
     /// Serializes this `Track` to a compact JSON string.

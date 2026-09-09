@@ -44,6 +44,7 @@ pub use render::color::{CarColorScheme, Palette};
 pub use render::ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
 pub use render::{compute_adaptive_alpha, PlayerVisibilityOptions};
 pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer, ReplayRecorder};
+pub use ui::curve_indicator::CurveColorScheme;
 pub use ui::hud::{render_hud, PersonalBestNotification, VisibilityToast};
 pub use ui::menu::{CarChoice, GameMode, GameModeChoice, RaceResultEntry, TrackChoice};
 pub use ui::profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};

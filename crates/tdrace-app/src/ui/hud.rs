@@ -6,9 +6,11 @@ use tdrace_core::physics::car::Car;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::Track;
 
+use super::curve_indicator::render_curve_indicator;
 use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::render::color::{CarColorScheme, Palette};
+use crate::render::marker::PlayerVisibilityOptions;
 
 /// Formats seconds into mm:ss.xx time string.
 pub fn format_lap_time(time_sec: f32) -> String {
@@ -62,6 +64,8 @@ pub fn render_hud(
     gamepad_connected: bool,
     pb_notification: Option<&PersonalBestNotification>,
     visibility_toast: Option<&VisibilityToast>,
+    visibility_options: &PlayerVisibilityOptions,
+    session_time: f32,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -108,6 +112,34 @@ pub fn render_hud(
             scaler.safe_pad_y + scaler.s(90.0)
         };
         render_visibility_toast(fonts, &scaler, sw * 0.5, toast_y, vt);
+    }
+
+    // 2d. Approaching Curve & Dynamic Braking Helper (Under Lap Timer and Notifications)
+    if visibility_options.curve_helper {
+        let max_lookahead = (player_car.state.speed * 3.5).clamp(130.0, 220.0);
+        if let Some(status) = track.spline.upcoming_curve(
+            player_progress.progress_distance,
+            player_car.state.speed,
+            max_lookahead,
+        ) {
+            let mut indicator_y = scaler.safe_pad_y + scaler.s(105.0);
+            if pb_notification.is_some() {
+                indicator_y += scaler.s(65.0);
+            }
+            if visibility_toast.is_some() {
+                indicator_y += scaler.s(45.0);
+            }
+            render_curve_indicator(
+                fonts,
+                &scaler,
+                sw * 0.5,
+                indicator_y,
+                &status,
+                player_car,
+                visibility_options.curve_color_scheme,
+                session_time,
+            );
+        }
     }
 
     // 3. Mini-Map Radar (Top Right)

@@ -6809,7 +6809,74 @@
         "right_wall_distance": null
       }
     ],
-    "total_length": 383.20676
+    "total_length": 383.20676,
+    "curves": [
+      {
+        "id": 0,
+        "direction": "Left",
+        "degree": 5,
+        "entry_distance": 316.12894,
+        "apex_distance": 327.19708,
+        "exit_distance": 3.7552872,
+        "min_radius": 11.847076,
+        "peak_curvature": 0.08440901,
+        "total_turn_angle": 2.6072898,
+        "safe_apex_speed_mps": 9.762185,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 1,
+        "direction": "Left",
+        "degree": 5,
+        "entry_distance": 51.67682,
+        "apex_distance": 121.38782,
+        "exit_distance": 130.81174,
+        "min_radius": 10.324084,
+        "peak_curvature": 0.09686089,
+        "total_turn_angle": 2.6488826,
+        "safe_apex_speed_mps": 9.113122,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 2,
+        "direction": "Right",
+        "degree": 5,
+        "entry_distance": 136.2637,
+        "apex_distance": 148.98062,
+        "exit_distance": 160.59622,
+        "min_radius": 8.766519,
+        "peak_curvature": 0.11407037,
+        "total_turn_angle": 1.3792976,
+        "safe_apex_speed_mps": 8.397596,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 3,
+        "direction": "Left",
+        "degree": 5,
+        "entry_distance": 164.71956,
+        "apex_distance": 249.80522,
+        "exit_distance": 264.3031,
+        "min_radius": 7.8347406,
+        "peak_curvature": 0.12763664,
+        "total_turn_angle": 3.7112112,
+        "safe_apex_speed_mps": 7.9387794,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 4,
+        "direction": "Right",
+        "degree": 5,
+        "entry_distance": 276.65158,
+        "apex_distance": 291.28766,
+        "exit_distance": 307.39722,
+        "min_radius": 9.334499,
+        "peak_curvature": 0.10712948,
+        "total_turn_angle": 1.4953005,
+        "safe_apex_speed_mps": 8.665366,
+        "bank_angle": 0.0
+      }
+    ]
   },
   "geometry": {
     "inner_walls": [

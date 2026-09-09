@@ -7425,7 +7425,87 @@
         "right_wall_distance": null
       }
     ],
-    "total_length": 758.6467
+    "total_length": 758.6467,
+    "curves": [
+      {
+        "id": 0,
+        "direction": "Left",
+        "degree": 1,
+        "entry_distance": 60.39764,
+        "apex_distance": 69.35227,
+        "exit_distance": 72.26627,
+        "min_radius": 102.828445,
+        "peak_curvature": 0.0097249355,
+        "total_turn_angle": 0.10046429,
+        "safe_apex_speed_mps": 31.52179,
+        "bank_angle": 9.369793
+      },
+      {
+        "id": 1,
+        "direction": "Left",
+        "degree": 4,
+        "entry_distance": 110.31256,
+        "apex_distance": 232.15387,
+        "exit_distance": 263.36017,
+        "min_radius": 38.516563,
+        "peak_curvature": 0.025962856,
+        "total_turn_angle": 2.3360038,
+        "safe_apex_speed_mps": 22.79583,
+        "bank_angle": 29.042969
+      },
+      {
+        "id": 2,
+        "direction": "Left",
+        "degree": 1,
+        "entry_distance": 301.3025,
+        "apex_distance": 304.17935,
+        "exit_distance": 312.9213,
+        "min_radius": 102.82434,
+        "peak_curvature": 0.009725324,
+        "total_turn_angle": 0.102766395,
+        "safe_apex_speed_mps": 31.701763,
+        "bank_angle": 10.0
+      },
+      {
+        "id": 3,
+        "direction": "Left",
+        "degree": 1,
+        "entry_distance": 439.7213,
+        "apex_distance": 448.67596,
+        "exit_distance": 451.58997,
+        "min_radius": 102.83897,
+        "peak_curvature": 0.009723941,
+        "total_turn_angle": 0.10046497,
+        "safe_apex_speed_mps": 31.523403,
+        "bank_angle": 9.369793
+      },
+      {
+        "id": 4,
+        "direction": "Left",
+        "degree": 4,
+        "entry_distance": 489.63623,
+        "apex_distance": 611.47723,
+        "exit_distance": 642.6836,
+        "min_radius": 38.51742,
+        "peak_curvature": 0.025962278,
+        "total_turn_angle": 2.3360033,
+        "safe_apex_speed_mps": 22.796082,
+        "bank_angle": 29.042969
+      },
+      {
+        "id": 5,
+        "direction": "Left",
+        "degree": 1,
+        "entry_distance": 680.6258,
+        "apex_distance": 683.5026,
+        "exit_distance": 692.24457,
+        "min_radius": 102.826065,
+        "peak_curvature": 0.009725161,
+        "total_turn_angle": 0.10276704,
+        "safe_apex_speed_mps": 31.702028,
+        "bank_angle": 10.0
+      }
+    ]
   },
   "geometry": {
     "inner_walls": [

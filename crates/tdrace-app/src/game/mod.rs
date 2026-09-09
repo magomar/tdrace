@@ -1553,6 +1553,39 @@ impl RaceSession {
                 });
             }
 
+            // [5] Toggle Approaching Curve & Dynamic Braking Helper
+            if is_key_pressed(KeyCode::Key5) {
+                self.visibility_options.curve_helper = !self.visibility_options.curve_helper;
+                self.audio.play_sfx(SfxType::UiMove);
+                let state_str = if self.visibility_options.curve_helper { "ON" } else { "OFF" };
+                let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                if let Some(pos) = self.cars.first().map(|c| c.state.position) {
+                    self.fx.drift_popups.spawn_text(pos, &format!("[5] CORNER ASSIST: {}", state_str), col);
+                }
+                self.visibility_toast = Some(VisibilityToast {
+                    text: format!("[5] CORNER ASSIST: {}", state_str),
+                    is_on: self.visibility_options.curve_helper,
+                    timer: 1.8,
+                    duration: 1.8,
+                });
+            }
+
+            // [6] Cycle Curve Helper Color Scheme (Traffic -> Synthwave -> Contrast -> Rally)
+            if is_key_pressed(KeyCode::Key6) {
+                self.visibility_options.curve_color_scheme = self.visibility_options.curve_color_scheme.next();
+                self.audio.play_sfx(SfxType::UiMove);
+                let scheme_str = self.visibility_options.curve_color_scheme.as_str();
+                if let Some(pos) = self.cars.first().map(|c| c.state.position) {
+                    self.fx.drift_popups.spawn_text(pos, &format!("[6] COLOR: {}", scheme_str), Palette::NEON_GOLD);
+                }
+                self.visibility_toast = Some(VisibilityToast {
+                    text: format!("[6] COLOR: {}", scheme_str),
+                    is_on: true,
+                    timer: 2.2,
+                    duration: 2.2,
+                });
+            }
+
             // Update visibility toast timer
             if let Some(toast) = &mut self.visibility_toast {
                 toast.timer -= frame_dt;
@@ -5240,6 +5273,8 @@ impl RaceSession {
                 self.input.gamepad.snapshot.is_connected,
                 self.pb_notification.as_ref(),
                 self.visibility_toast.as_ref(),
+                &self.visibility_options,
+                self.session_time,
             );
 
             // F5: Telemetry Panel

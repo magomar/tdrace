@@ -9273,7 +9273,139 @@
         "right_wall_distance": null
       }
     ],
-    "total_length": 1243.482
+    "total_length": 1243.482,
+    "curves": [
+      {
+        "id": 0,
+        "direction": "Left",
+        "degree": 3,
+        "entry_distance": 23.765753,
+        "apex_distance": 50.288967,
+        "exit_distance": 63.54128,
+        "min_radius": 38.649,
+        "peak_curvature": 0.025873892,
+        "total_turn_angle": 0.6260719,
+        "safe_apex_speed_mps": 17.632364,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 1,
+        "direction": "Right",
+        "degree": 5,
+        "entry_distance": 91.40502,
+        "apex_distance": 118.2556,
+        "exit_distance": 135.55817,
+        "min_radius": 14.498656,
+        "peak_curvature": 0.06897191,
+        "total_turn_angle": 1.4324868,
+        "safe_apex_speed_mps": 10.799541,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 2,
+        "direction": "Left",
+        "degree": 4,
+        "entry_distance": 153.6569,
+        "apex_distance": 176.64404,
+        "exit_distance": 206.00552,
+        "min_radius": 19.01389,
+        "peak_curvature": 0.05259313,
+        "total_turn_angle": 1.2944944,
+        "safe_apex_speed_mps": 12.367357,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 3,
+        "direction": "Left",
+        "degree": 1,
+        "entry_distance": 368.0016,
+        "apex_distance": 394.68408,
+        "exit_distance": 416.7242,
+        "min_radius": 87.73085,
+        "peak_curvature": 0.011398499,
+        "total_turn_angle": 0.44844413,
+        "safe_apex_speed_mps": 26.565475,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 4,
+        "direction": "Left",
+        "degree": 1,
+        "entry_distance": 508.35645,
+        "apex_distance": 512.7037,
+        "exit_distance": 525.9384,
+        "min_radius": 108.740395,
+        "peak_curvature": 0.009196214,
+        "total_turn_angle": 0.15073645,
+        "safe_apex_speed_mps": 29.575827,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 5,
+        "direction": "Left",
+        "degree": 4,
+        "entry_distance": 612.96246,
+        "apex_distance": 703.0982,
+        "exit_distance": 725.2804,
+        "min_radius": 36.849194,
+        "peak_curvature": 0.027137637,
+        "total_turn_angle": 1.3675445,
+        "safe_apex_speed_mps": 17.216919,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 6,
+        "direction": "Right",
+        "degree": 5,
+        "entry_distance": 772.8667,
+        "apex_distance": 796.35474,
+        "exit_distance": 820.2156,
+        "min_radius": 16.809736,
+        "peak_curvature": 0.059489336,
+        "total_turn_angle": 1.4844443,
+        "safe_apex_speed_mps": 11.628451,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 7,
+        "direction": "Left",
+        "degree": 5,
+        "entry_distance": 835.2532,
+        "apex_distance": 854.6345,
+        "exit_distance": 889.7608,
+        "min_radius": 17.527916,
+        "peak_curvature": 0.05705185,
+        "total_turn_angle": 1.3273243,
+        "safe_apex_speed_mps": 11.874261,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 8,
+        "direction": "Left",
+        "degree": 2,
+        "entry_distance": 1052.5765,
+        "apex_distance": 1060.6005,
+        "exit_distance": 1091.1278,
+        "min_radius": 83.233185,
+        "peak_curvature": 0.012014438,
+        "total_turn_angle": 0.38148323,
+        "safe_apex_speed_mps": 25.875555,
+        "bank_angle": 0.0
+      },
+      {
+        "id": 9,
+        "direction": "Left",
+        "degree": 5,
+        "entry_distance": 1146.1697,
+        "apex_distance": 1155.7596,
+        "exit_distance": 1182.4543,
+        "min_radius": 10.161405,
+        "peak_curvature": 0.09841159,
+        "total_turn_angle": 1.2051135,
+        "safe_apex_speed_mps": 9.0410385,
+        "bank_angle": 0.0
+      }
+    ]
   },
   "geometry": {
     "inner_walls": [
@@ -23990,7 +24122,6 @@
   "predefined_car": "sports_car",
   "module_id": "classic",
   "modules": [
-    "classic",
-    "f1"
+    "classic"
   ]
 }
