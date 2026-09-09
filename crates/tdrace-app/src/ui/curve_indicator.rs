@@ -175,8 +175,8 @@ pub fn render_curve_indicator(
     let card_x = center_x - card_w * 0.5;
     let card_y = center_y - card_h * 0.5;
 
-    // Outer card backdrop
-    let bg_color = Color::new(0.04, 0.06, 0.10, 0.90 * alpha);
+    // Outer card backdrop with semi-transparent dark glass
+    let bg_color = Color::new(0.04, 0.06, 0.10, 0.48 * alpha);
     let border_stroke = if is_critical { 2.5 } else { 1.5 };
     scaler.draw_glass_card(card_x, card_y, card_w, card_h, bg_color, border_color, border_stroke);
 
@@ -276,16 +276,16 @@ pub fn render_curve_indicator(
     // Action status badge on right side
     let (badge_text, badge_bg, badge_fg) = if is_critical {
         if player_car.state.speed > status.curve.safe_apex_speed_mps {
-            ("BRAKE HARD!", Color::new(0.85, 0.12, 0.18, 0.85 * alpha), Palette::WHITE)
+            ("BRAKE HARD!", Color::new(0.85, 0.12, 0.18, 0.55 * alpha), Palette::WHITE)
         } else {
-            ("SPEED SAFE", Color::new(0.12, 0.55, 0.28, 0.85 * alpha), Color::new(0.80, 1.0, 0.85, alpha))
+            ("SPEED SAFE", Color::new(0.12, 0.55, 0.28, 0.52 * alpha), Color::new(0.80, 1.0, 0.85, alpha))
         }
     } else if status.urgency >= 0.40 {
-        ("PREPARE BRAKE", Color::new(0.65, 0.48, 0.08, 0.85 * alpha), Color::new(1.0, 0.95, 0.70, alpha))
+        ("PREPARE BRAKE", Color::new(0.65, 0.48, 0.08, 0.52 * alpha), Color::new(1.0, 0.95, 0.70, alpha))
     } else if player_car.state.speed <= status.curve.safe_apex_speed_mps + 1.5 {
-        ("SPEED SAFE", Color::new(0.12, 0.55, 0.28, 0.85 * alpha), Color::new(0.80, 1.0, 0.85, alpha))
+        ("SPEED SAFE", Color::new(0.12, 0.55, 0.28, 0.52 * alpha), Color::new(0.80, 1.0, 0.85, alpha))
     } else {
-        ("APPROACHING", Color::new(0.15, 0.20, 0.28, 0.85 * alpha), Color::new(0.70, 0.78, 0.88, alpha))
+        ("APPROACHING", Color::new(0.15, 0.20, 0.28, 0.52 * alpha), Color::new(0.70, 0.78, 0.88, alpha))
     };
 
     let badge_w = scaler.s(105.0);

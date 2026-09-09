@@ -114,7 +114,7 @@ pub fn render_hud(
         render_visibility_toast(fonts, &scaler, sw * 0.5, toast_y, vt);
     }
 
-    // 2d. Approaching Curve & Dynamic Braking Helper (Under Lap Timer and Notifications)
+    // 2d. Approaching Curve & Dynamic Braking Helper (Bottom Center)
     if visibility_options.curve_helper {
         let max_lookahead = (player_car.state.speed * 3.5).clamp(130.0, 220.0);
         if let Some(status) = track.spline.upcoming_curve(
@@ -122,13 +122,7 @@ pub fn render_hud(
             player_car.state.speed,
             max_lookahead,
         ) {
-            let mut indicator_y = scaler.safe_pad_y + scaler.s(105.0);
-            if pb_notification.is_some() {
-                indicator_y += scaler.s(65.0);
-            }
-            if visibility_toast.is_some() {
-                indicator_y += scaler.s(45.0);
-            }
+            let indicator_y = sh - scaler.s(52.0) - scaler.safe_pad_y;
             render_curve_indicator(
                 fonts,
                 &scaler,
