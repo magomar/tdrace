@@ -39,10 +39,10 @@ stateDiagram-v2
         SelectButton --> ConfirmAction: [ENTER / SPACE / A]
     }
     state "Race Results & Podium (Finished)" as Finished
-    state "F1 World Championship (ChampionshipStandings)" as ChampionshipStandings
+    state "Championship Standings (ChampionshipStandings)" as ChampionshipStandings
 
     %% Grand Hub transitions
-    ModuleSelect --> Menu: [ENTER / SPACE / A] (Load Classic/Rally/Kart/F1)
+    ModuleSelect --> Menu: [ENTER / SPACE / A] (Load Classic/Rally/Kart/GT/NASCAR)
     ModuleSelect --> ProfileManager: [P / Y]
     ModuleSelect --> ProfileCreate: [N / X]
     ModuleSelect --> ControlsHelp: [C / K]
@@ -52,7 +52,7 @@ stateDiagram-v2
     Menu --> StartingGrid: [SPACE / ENTER / A]
     Menu --> TrackManager: [T] or select Track Manager card
     Menu --> TrackEditor: [E] (Launch Editor with Selected Track)
-    Menu --> ChampionshipStandings: [F] (Formula 1 Championship Mode)
+    Menu --> ChampionshipStandings: [F] (GT World Challenge / NASCAR Cup Championship Mode)
     Menu --> ProfileManager: [P / Y]
     Menu --> ControlsHelp: [C / K]
 
@@ -142,18 +142,18 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 ## 3. Screen Specifications & Navigation Catalog
 
 ### 3.1. Grand Hub (`GameState::ModuleSelect`)
-* **Purpose**: Primary platform entry point. Allows choosing motorsport disciplines (Classic Arcade, Rallycross World Cup, Karting World Cup, Formula 1).
+* **Purpose**: Primary platform entry point. Allows choosing motorsport disciplines (Classic Arcade, Rallycross World Cup, Karting World Cup, GT World Challenge, NASCAR Cup Series).
 * **State Struct**: `GameState::ModuleSelect { selected_idx: usize }`
 * **Components**:
   - Header with branding & Profile badge banner.
-  - 4 Motorsport Module cards with titles, neon accent tags, descriptions, and active icons.
+  - 5 Motorsport Module cards with titles, neon accent tags, descriptions, and active icons.
   - Active profile quick status.
   - Exit application confirmation dialog modal (`show_exit_confirm`).
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Up` / `Down` / `W` / `S` / `D-pad` | Select module | Changes `selected_idx` (0: Classic, 1: Rally, 2: Kart, 3: F1) |
+| `Up` / `Down` / `W` / `S` / `D-pad` | Select module | Changes `selected_idx` (0: Classic, 1: Rally, 2: Kart, 3: GT, 4: NASCAR) |
 | `Enter` / `Space` / Gamepad `A` | Confirm module | Transitions to `GameState::Menu` configured for selected module |
 | `P` / Gamepad `Y` | Open Profile Manager | Transitions to `GameState::ProfileManager` |
 | `N` / Gamepad `X` | Create Profile | Transitions to `GameState::ProfileCreate` |

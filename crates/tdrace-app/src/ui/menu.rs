@@ -1612,8 +1612,11 @@ pub fn render_module_select_menu(
     let badge_h = scaler.s(48.0);
     render_profile_badge(fonts, &scaler, card_x, badge_y, card_w, badge_h, active_profile, active_stats);
 
-    let card_h = scaler.s(82.0);
-    let mut curr_y = badge_y + badge_h + scaler.s(12.0);
+    let card_gap = scaler.s(8.0);
+    let start_y = badge_y + badge_h + scaler.s(10.0);
+    let available_h = (sh - start_y - scaler.s(38.0)).max(scaler.s(240.0));
+    let card_h = ((available_h - card_gap * (modules.len() as f32 - 1.0)) / modules.len() as f32).clamp(scaler.s(60.0), scaler.s(82.0));
+    let mut curr_y = start_y;
 
     for (i, (_id, title, tag, desc, accent_col)) in modules.iter().enumerate() {
         let is_sel = i == selected_idx;
@@ -1639,7 +1642,7 @@ pub fn render_module_select_menu(
         fonts.draw_ui_bold(
             tag,
             card_x + scaler.s(20.0),
-            curr_y + scaler.s(20.0),
+            curr_y + card_h * 0.25,
             scaler.font_s(11.0),
             if is_sel { *accent_col } else { Palette::UI_TEXT_MUTED },
         );
@@ -1648,8 +1651,8 @@ pub fn render_module_select_menu(
         fonts.draw_display(
             title,
             card_x + scaler.s(20.0),
-            curr_y + scaler.s(44.0),
-            scaler.font_s(19.0),
+            curr_y + card_h * 0.54,
+            scaler.font_s(18.0),
             if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
         );
 
@@ -1657,12 +1660,12 @@ pub fn render_module_select_menu(
         fonts.draw_ui_regular(
             desc,
             card_x + scaler.s(20.0),
-            curr_y + scaler.s(67.0),
+            curr_y + card_h * 0.82,
             scaler.font_s(12.0),
             if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
         );
 
-        curr_y += card_h + scaler.s(10.0);
+        curr_y += card_h + card_gap;
     }
 
     // Footer prompt

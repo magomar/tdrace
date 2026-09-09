@@ -28,12 +28,16 @@ async fn main() {
             }
         } else if clean_arg == "gt" || clean_arg == "f1" {
             session.switch_to_gt();
+        } else if clean_arg == "nascar" {
+            session.switch_to_nascar();
         } else if clean_arg == "rally" {
             session.switch_to_rally();
         } else if clean_arg == "kart" {
             session.switch_to_kart();
         } else if clean_arg == "classic" {
             session.switch_to_classic();
+        } else if clean_arg == "nascar-championship" {
+            session.start_nascar_championship();
         } else if clean_arg == "championship" || clean_arg == "gt-championship" || clean_arg == "f1-championship" {
             session.start_gt_championship();
         }

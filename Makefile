@@ -7,7 +7,7 @@ SHELL := /bin/bash
 
 # Extract command-line goals and pass through as arguments
 # Supports: make run -- --f1, make run f1, make run ARGS="--f1", make test-rust -- --nocapture
-TARGETS_WITH_ARGS := run run-dev dev play run-f1 run-rally run-kart run-classic test test-rust test-python bench bench-rust bench-python build build-release
+TARGETS_WITH_ARGS := run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic test test-rust test-python bench bench-rust bench-python build build-release
 ifeq ($(filter $(firstword $(MAKECMDGOALS)),$(TARGETS_WITH_ARGS)),$(firstword $(MAKECMDGOALS)))
   RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(RUN_ARGS):;@:)
@@ -27,7 +27,7 @@ PYTHON   := $(VENV_DIR)/bin/python
 MATURIN  := $(VENV_DIR)/bin/maturin
 PYTEST   := $(VENV_DIR)/bin/pytest
 
-.PHONY: help setup setup-python run run-dev dev play run-f1 run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean
+.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean
 
 help: ## Display this help screen
 	@echo -e "$(CYAN)🏎️  TDRace Make Commands$(RESET)"
@@ -86,6 +86,10 @@ run-gt: ## Run GT World Challenge module directly
 	cargo run --release -p tdrace-app -- --gt $(EXTRA_ARGS)
 
 run-f1: run-gt ## Run GT World Challenge module directly (alias)
+
+run-nascar: ## Run NASCAR Cup Series module directly
+	@echo -e "$(YELLOW)🏎️  Launching NASCAR Cup Series Module...$(RESET)"
+	cargo run --release -p tdrace-app -- --nascar $(EXTRA_ARGS)
 
 run-rally: ## Run Rallycross World Cup module directly
 	@echo -e "$(YELLOW)🏎️  Launching Rallycross World Cup Module...$(RESET)"

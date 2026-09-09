@@ -223,3 +223,82 @@ fn test_nascar_race_session_starting_grid_and_roster() {
         _ => panic!("Expected StockCar vehicle visual type in NASCAR race"),
     }
 }
+
+#[test]
+fn test_nascar_phase2_hub_navigation_and_return_mapping() {
+    let mut session = RaceSession::new();
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+
+    // Switching to NASCAR
+    session.switch_to_nascar();
+    assert_eq!(session.active_module_id, "nascar");
+    assert_eq!(session.state, GameState::Menu);
+
+    // Returning from Menu to ModuleSelect maps nascar -> index 4
+    let cur_mod_idx = match session.active_module_id {
+        "classic" => 0,
+        "rally" => 1,
+        "kart" => 2,
+        "gt" | "gt_challenge" | "f1" => 3,
+        "nascar" => 4,
+        _ => 0,
+    };
+    assert_eq!(cur_mod_idx, 4, "NASCAR should map to index 4 in Grand Hub carousel");
+}
+
+#[test]
+fn test_nascar_phase2_championship_lifecycle() {
+    let mut session = RaceSession::new();
+    session.start_nascar_championship();
+
+    assert_eq!(session.active_module_id, "nascar");
+    assert!(session.championship_session.is_some());
+
+    {
+        let champ = session.championship_session.as_ref().unwrap();
+        assert_eq!(champ.name, "NASCAR Cup Series Championship 2026");
+        assert_eq!(champ.total_rounds(), 4);
+        assert_eq!(champ.current_round, 0);
+        assert_eq!(champ.current_track_id(), Some("daytona_superspeedway"));
+        assert!(matches!(champ.point_system, PointSystem::NascarCup { stage_win_bonus: true }));
+
+        // Drivers in championship should match 12-driver roster + player
+        assert_eq!(champ.standings.len(), 12);
+        assert!(champ.standings.iter().any(|s| s.driver_name.contains("Intimidator")));
+        assert!(champ.standings.iter().any(|s| s.driver_name.contains("The King")));
+    }
+
+    // Submit round 1 results to advance championship round
+    let results = vec![
+        RoundDriverResult {
+            driver_id: "dale_vance".to_string(),
+            driver_name: "Dale Vance".to_string(),
+            team_name: "Richard Childress Racing".to_string(),
+            finish_position: 1,
+            total_time: 120.0,
+            best_lap: Some(25.0),
+            points_awarded: 0,
+            has_fastest_lap: false,
+        },
+    ];
+    session.championship_session.as_mut().unwrap().submit_round_results("Daytona International Speedway", results);
+
+    // Advance round to round 2 (Talladega)
+    session.advance_championship_round();
+    let champ_r2 = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ_r2.current_round, 1);
+    assert_eq!(champ_r2.current_track_id(), Some("talladega_superspeedway"));
+}
+
+#[test]
+fn test_nascar_phase2_config_file_and_overrides() {
+    use tdrace_app::config::GameConfig;
+
+    let override_val = GameConfig::load_module_override_file("nascar")
+        .expect("config.nascar.toml must be loadable via load_module_override_file");
+    let gameplay = override_val.get("gameplay").expect("gameplay table expected");
+    assert_eq!(gameplay.get("default_track").and_then(|v| v.as_str()), Some("daytona_superspeedway"));
+    assert_eq!(gameplay.get("default_laps").and_then(|v| v.as_integer()), Some(10));
+    assert_eq!(gameplay.get("default_num_bots").and_then(|v| v.as_integer()), Some(11));
+}
+

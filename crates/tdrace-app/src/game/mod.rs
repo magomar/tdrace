@@ -995,6 +995,38 @@ impl RaceSession {
         self.start_gt_championship();
     }
 
+    /// Starts a full NASCAR Cup Series Championship Season.
+    pub fn start_nascar_championship(&mut self) {
+        let champ = ChampionshipSession::new(
+            "NASCAR Cup Series Championship 2026",
+            PointSystem::NascarCup { stage_win_bonus: true },
+            vec![
+                "daytona_superspeedway".to_string(),
+                "talladega_superspeedway".to_string(),
+                "watkins_glen_nascar".to_string(),
+                "bristol_motor_speedway".to_string(),
+            ],
+            10,
+            &[
+                ("player", "Player", "Apex Stock Car"),
+                ("dale_vance", "Dale 'The Intimidator' Vance", "Richard Childress Racing"),
+                ("chase_gordon", "Chase 'Rainbow' Gordon", "Hendrick Motorsports"),
+                ("richard_pettyfield", "Richard 'The King' Pettyfield", "Petty Enterprises"),
+                ("rowdy_busch", "Rowdy 'Wild Thing' Busch", "Joe Gibbs Racing"),
+                ("jimmie_johnson", "Jimmie 'Seven-Time' Johnson", "Hendrick Motorsports"),
+                ("tony_stewart", "Tony 'Smoke' Stewart", "Stewart-Haas Racing"),
+                ("bobby_allison", "Bobby 'Alabama' Allison", "Alabama Gang"),
+                ("bubba_wallace", "Bubba 'The Rocket' Wallace", "23XI Racing"),
+                ("joey_logano", "Joey 'Sliced Bread' Logano", "Team Penske"),
+                ("bill_elliott", "Bill 'Awesome Bill' Elliott", "Melling Racing"),
+                ("cale_yarborough", "Cale 'The Iron Man' Yarborough", "Junior Johnson Racing"),
+            ],
+        );
+        self.switch_to_nascar();
+        self.championship_session = Some(champ);
+        self.init_race();
+    }
+
     /// Advances to the next round in an active championship season.
     pub fn advance_championship_round(&mut self) {
         if let Some(champ) = &self.championship_session {
@@ -1666,7 +1698,7 @@ impl RaceSession {
                     return;
                 }
 
-                let num_modules = 4;
+                let num_modules = 5;
                 if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
                     self.audio.play_sfx(SfxType::UiMove);
                     if *selected_idx == 0 {
@@ -1690,7 +1722,8 @@ impl RaceSession {
                         0 => self.switch_to_classic(),
                         1 => self.switch_to_rally(),
                         2 => self.switch_to_kart(),
-                        _ => self.switch_to_gt(),
+                        3 => self.switch_to_gt(),
+                        _ => self.switch_to_nascar(),
                     }
                 }
 
@@ -2648,7 +2681,9 @@ impl RaceSession {
                 "classic" => 0,
                 "rally" => 1,
                 "kart" => 2,
-                _ => 3,
+                "gt" | "gt_challenge" | "f1" => 3,
+                "nascar" => 4,
+                _ => 0,
             };
             self.state = GameState::ModuleSelect { selected_idx: cur_mod_idx };
             return;
@@ -2667,6 +2702,13 @@ impl RaceSession {
         {
             self.audio.play_sfx(SfxType::UiSelect);
             self.start_gt_championship();
+            return;
+        }
+
+        // Quick Championship trigger for NASCAR Cup Series (F key)
+        if self.active_module_id == "nascar" && is_key_pressed(KeyCode::F) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.start_nascar_championship();
             return;
         }
 
@@ -2757,8 +2799,12 @@ impl RaceSession {
         if is_key_pressed(KeyCode::F) {
             self.audio.play_sfx(SfxType::UiSelect);
             match self.active_module_id {
-                "f1" => {
-                    self.start_f1_championship();
+                "f1" | "gt" | "gt_challenge" => {
+                    self.start_gt_championship();
+                    return;
+                }
+                "nascar" => {
+                    self.start_nascar_championship();
                     return;
                 }
                 "rally" => {
@@ -4204,6 +4250,7 @@ impl RaceSession {
                     ("rally", "Rallycross World Cup", "MIXED SURFACE WORLD RX & EURO RX", "World RX supercars, jumps, and high-sliding dirt stages.", Palette::NEON_GOLD),
                     ("kart", "Karting World Cup", "125CC SHIFTER KARTS", "Direct 1:1 steering, 3.5G cornering bites, and elimination tournament heats.", Palette::NEON_GREEN),
                     ("gt", "GT World Challenge", "FIA GT3 & SRO GT2 WORLD TOUR", "High-downforce 600 BHP GT3 Evo & 707 BHP GT2 Biturbo racers on Monza, Spa, and Silverstone.", Palette::RED),
+                    ("nascar", "NASCAR Cup Series & Trans-Am TA1", "850 BHP V8 & SUPERSPEEDWAYS", "850 BHP pushrod V8 stock cars, pack drafting, high-banked tri-ovals and road courses.", Color::new(1.0, 0.82, 0.08, 1.0)),
                 ];
                 render_module_select_menu(
                     &self.fonts,
