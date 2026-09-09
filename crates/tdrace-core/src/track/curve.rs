@@ -368,7 +368,27 @@ pub fn evaluate_curve_approach(
             (total_length - curve.entry_distance) + curve.exit_distance
         };
 
-        let is_inside = dist_to_exit <= curve_span && dist_to_entry > (total_length - curve_span);
+        let is_inside = if closed {
+            dist_to_exit <= curve_span && dist_to_entry > (total_length - curve_span)
+        } else {
+            current_dist >= curve.entry_distance && current_dist <= curve.exit_distance
+        };
+
+        let signed_apex_dist = if closed {
+            if dist_to_apex > total_length * 0.5 {
+                dist_to_apex - total_length
+            } else {
+                dist_to_apex
+            }
+        } else {
+            dist_to_apex
+        };
+
+        // If the car is inside this curve but has already traversed past the apex / inflexion point by > 10m,
+        // it has finished the turn and we should allow the next upcoming curve to be targeted.
+        if is_inside && signed_apex_dist < -10.0 {
+            continue;
+        }
 
         let forward_check_dist = if is_inside { 0.0 } else { dist_to_entry };
 
@@ -390,7 +410,7 @@ pub fn evaluate_curve_approach(
             // Compute dynamic urgency factor [0.0 to 1.0]
             let (urgency, must_brake) = if is_inside {
                 // If inside before apex and still over-speeding: critical
-                if dist_to_apex < (total_length * 0.5) && car_speed_mps > curve.safe_apex_speed_mps {
+                if signed_apex_dist >= 0.0 && car_speed_mps > curve.safe_apex_speed_mps {
                     (1.0, true)
                 } else {
                     (0.0, false)
@@ -414,12 +434,6 @@ pub fn evaluate_curve_approach(
                 -(curve_span - dist_to_exit)
             } else {
                 dist_to_entry
-            };
-
-            let signed_apex_dist = if dist_to_apex > total_length * 0.5 {
-                dist_to_apex - total_length
-            } else {
-                dist_to_apex
             };
 
             best_status = Some(CurveApproachStatus {

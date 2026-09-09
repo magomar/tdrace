@@ -174,3 +174,65 @@ fn test_classic_grand_prix_has_detected_curves() {
         assert!(curve.entry_distance < track.spline.total_length);
     }
 }
+
+#[test]
+fn test_apex_inflexion_traversal_and_clearance() {
+    let curve1 = TrackCurve {
+        id: 0,
+        direction: CurveDirection::Right,
+        degree: 3,
+        entry_distance: 200.0,
+        apex_distance: 230.0,
+        exit_distance: 260.0,
+        min_radius: 40.0,
+        peak_curvature: 1.0 / 40.0,
+        total_turn_angle: 1.0,
+        safe_apex_speed_mps: 18.0,
+        bank_angle: 0.0,
+    };
+    let curve2 = TrackCurve {
+        id: 1,
+        direction: CurveDirection::Left,
+        degree: 4,
+        entry_distance: 320.0,
+        apex_distance: 350.0,
+        exit_distance: 380.0,
+        min_radius: 25.0,
+        peak_curvature: 1.0 / 25.0,
+        total_turn_angle: 1.2,
+        safe_apex_speed_mps: 14.0,
+        bank_angle: 0.0,
+    };
+    let curves = vec![curve1, curve2];
+    let total_len = 1000.0;
+    let closed = true;
+
+    // 1. Inside curve1 before apex (current_dist = 220.0, apex = 230.0): distance_to_apex is +10m
+    let status_approaching_apex = evaluate_curve_approach(&curves, 220.0, total_len, closed, 25.0, 150.0);
+    assert!(status_approaching_apex.is_some());
+    let s_appr = status_approaching_apex.unwrap();
+    assert_eq!(s_appr.curve.id, 0);
+    assert!(s_appr.is_inside_curve);
+    assert!((s_appr.distance_to_apex - 10.0).abs() < 1e-3);
+    assert!(s_appr.must_brake, "Overspeeding before apex must alert");
+
+    // 2. Traversed past apex by 5m (current_dist = 235.0, apex = 230.0): distance_to_apex is -5m
+    let status_past_apex = evaluate_curve_approach(&curves, 235.0, total_len, closed, 25.0, 150.0);
+    assert!(status_past_apex.is_some());
+    let s_past = status_past_apex.unwrap();
+    assert_eq!(s_past.curve.id, 0);
+    assert!(s_past.is_inside_curve);
+    assert!((s_past.distance_to_apex - (-5.0)).abs() < 1e-3);
+    assert_eq!(s_past.urgency, 0.0, "Urgency resets to 0 past apex");
+    assert!(!s_past.must_brake, "Must not brake once accelerating past apex");
+
+    // 3. Traversed past apex by > 10m (current_dist = 245.0, apex = 230.0):
+    // Curve 0 is skipped and target advances to Curve 1 (entry at 320m, 75m ahead)
+    let status_cleared = evaluate_curve_approach(&curves, 245.0, total_len, closed, 25.0, 150.0);
+    assert!(status_cleared.is_some());
+    let s_next = status_cleared.unwrap();
+    assert_eq!(s_next.curve.id, 1, "Should target next curve after traversing past apex");
+    assert!(!s_next.is_inside_curve);
+    assert!((s_next.distance_to_entry - 75.0).abs() < 1e-3);
+}
+

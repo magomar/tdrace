@@ -1,4 +1,4 @@
-use tdrace_app::ui::curve_indicator::{compute_curve_colors, CurveColorScheme};
+use tdrace_app::ui::curve_indicator::{compute_curve_colors, compute_indicator_alpha, CurveColorScheme};
 use tdrace_core::track::presets::classic_grand_prix;
 
 #[test]
@@ -87,3 +87,41 @@ fn test_classic_grand_prix_curve_evaluation_at_speed() {
     assert_eq!(s_slow.urgency, 0.0, "Slow approach requires zero braking urgency");
     assert_eq!(s_slow.required_braking_distance, 0.0);
 }
+
+#[test]
+fn test_indicator_alpha_quick_fade_past_apex() {
+    // 1. Far approach: 150m is 0.0, 140m is 0.5, 130m is 1.0
+    let a_150 = compute_indicator_alpha(150.0, 180.0, false);
+    assert!((a_150 - 0.0).abs() < 1e-3);
+
+    let a_140 = compute_indicator_alpha(140.0, 170.0, false);
+    assert!((a_140 - 0.5).abs() < 1e-3);
+
+    let a_100 = compute_indicator_alpha(100.0, 130.0, false);
+    assert!((a_100 - 1.0).abs() < 1e-3);
+
+    // 2. Inside curve approaching apex: alpha is full 1.0
+    let a_in_turn = compute_indicator_alpha(-10.0, 15.0, true);
+    assert!((a_in_turn - 1.0).abs() < 1e-3);
+
+    // 3. At apex: alpha is full 1.0
+    let a_at_apex = compute_indicator_alpha(-25.0, 0.0, true);
+    assert!((a_at_apex - 1.0).abs() < 1e-3);
+
+    // 4. Past apex by 3m: fades quickly (1.0 - 0.3 = 0.7)
+    let a_past_3m = compute_indicator_alpha(-28.0, -3.0, true);
+    assert!((a_past_3m - 0.7).abs() < 1e-3);
+
+    // 5. Past apex by 5m: half faded (0.5)
+    let a_past_5m = compute_indicator_alpha(-30.0, -5.0, true);
+    assert!((a_past_5m - 0.5).abs() < 1e-3);
+
+    // 6. Past apex by 10m: fully faded (0.0)
+    let a_past_10m = compute_indicator_alpha(-35.0, -10.0, true);
+    assert!((a_past_10m - 0.0).abs() < 1e-3);
+
+    // 7. Beyond 10m: clamped to 0.0
+    let a_past_15m = compute_indicator_alpha(-40.0, -15.0, true);
+    assert_eq!(a_past_15m, 0.0);
+}
+

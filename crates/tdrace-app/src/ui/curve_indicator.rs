@@ -132,6 +132,33 @@ pub fn compute_curve_colors(
     )
 }
 
+/// Calculates the display opacity for the curve indicator based on approach distance and apex traversal.
+pub fn compute_indicator_alpha(
+    distance_to_entry: f32,
+    distance_to_apex: f32,
+    is_inside_curve: bool,
+) -> f32 {
+    // Smooth fade in on approach (150m -> 130m)
+    let approach_alpha = if is_inside_curve {
+        1.0
+    } else if distance_to_entry > 130.0 {
+        ((150.0 - distance_to_entry) / 20.0).clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+
+    // Quick fade away after the apex / inflexion point of the curve has been traversed (< 0.0)
+    let apex_fade_alpha = if distance_to_apex < 0.0 {
+        let past_apex = -distance_to_apex;
+        // Fades smoothly to zero across 10 meters past apex
+        (1.0 - past_apex / 10.0).clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+
+    approach_alpha * apex_fade_alpha
+}
+
 /// Renders the Curve Approaching and Dynamic Braking Helper HUD widget.
 pub fn render_curve_indicator(
     fonts: &Fonts,
@@ -144,16 +171,7 @@ pub fn render_curve_indicator(
     anim_time: f32,
 ) {
     let distance_ahead = status.distance_to_entry;
-
-    // Smooth fade in / out based on proximity
-    // Fade in between 140m and 110m, full alpha inside curve, fade out past exit
-    let alpha = if status.is_inside_curve {
-        1.0
-    } else if distance_ahead > 130.0 {
-        ((150.0 - distance_ahead) / 20.0).clamp(0.0, 1.0)
-    } else {
-        1.0
-    };
+    let alpha = compute_indicator_alpha(status.distance_to_entry, status.distance_to_apex, status.is_inside_curve);
 
     if alpha <= 0.02 {
         return;
@@ -253,8 +271,10 @@ pub fn render_curve_indicator(
     }
 
     // 3. Bottom Row: Distance Countdown + Dynamic Action Badge
-    let dist_str = if status.is_inside_curve {
-        "IN APEX".to_string()
+    let dist_str = if status.distance_to_apex < 0.0 {
+        "EXIT".to_string()
+    } else if status.is_inside_curve {
+        "APEX".to_string()
     } else {
         format!("{}M", distance_ahead.max(0.0).round() as u32)
     };
@@ -274,7 +294,9 @@ pub fn render_curve_indicator(
     );
 
     // Action status badge on right side
-    let (badge_text, badge_bg, badge_fg) = if is_critical {
+    let (badge_text, badge_bg, badge_fg) = if status.distance_to_apex < 0.0 {
+        ("EXIT", Color::new(0.12, 0.55, 0.28, 0.52 * alpha), Color::new(0.80, 1.0, 0.85, alpha))
+    } else if is_critical {
         if player_car.state.speed > status.curve.safe_apex_speed_mps {
             ("BRAKE HARD!", Color::new(0.85, 0.12, 0.18, 0.55 * alpha), Palette::WHITE)
         } else {
