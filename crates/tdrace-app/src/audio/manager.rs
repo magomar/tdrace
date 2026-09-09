@@ -18,6 +18,10 @@ use crate::audio::sfx::{
 };
 use crate::audio::synthwave::{generate_menu_theme, generate_nightcall_race_theme};
 use crate::audio::dsp::DEFAULT_SAMPLE_RATE;
+use crate::audio::auxiliary_fx::AuxiliaryAudioLayer;
+use crate::audio::backend::AudioBackend;
+use crate::audio::engine_mixer::EngineAudioMixer;
+use crate::audio::samples::ArchetypeSampleBank;
 
 /// Vehicle engine audio synthesis archetype.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -294,6 +298,10 @@ pub struct AudioManager {
     pub engine_active_bands: [bool; NUM_RPM_BANDS],
     pub shift_gap_timer: f32,
     limiter_timer: f32,
+    pub backend: AudioBackend,
+    pub sampled_engine: Option<EngineAudioMixer>,
+    pub auxiliary_layer: Option<AuxiliaryAudioLayer>,
+    pub use_sampled_engine: bool,
 }
 
 impl Default for AudioManager {
@@ -325,6 +333,17 @@ fn safe_stop_sound(sound: &Sound) {
 
 impl AudioManager {
     pub fn new() -> Self {
+        let mut backend = AudioBackend::new();
+        let (sampled_engine, auxiliary_layer) = if backend.is_available() {
+            let bank = ArchetypeSampleBank::generate(EngineSoundType::Generic, DEFAULT_SAMPLE_RATE);
+            (
+                Some(EngineAudioMixer::new(bank)),
+                Some(AuxiliaryAudioLayer::new(&mut backend)),
+            )
+        } else {
+            (None, None)
+        };
+
         Self {
             settings: AudioSettings::default(),
             bank: SoundBank::empty(),
@@ -335,6 +354,10 @@ impl AudioManager {
             engine_active_bands: [false; NUM_RPM_BANDS],
             shift_gap_timer: 0.0,
             limiter_timer: 0.0,
+            backend,
+            sampled_engine,
+            auxiliary_layer,
+            use_sampled_engine: true,
         }
     }
 
@@ -343,6 +366,10 @@ impl AudioManager {
         if self.active_engine_type != engine_type {
             self.stop_all_loops();
             self.active_engine_type = engine_type;
+            if let Some(sampled) = self.sampled_engine.as_mut() {
+                let new_bank = ArchetypeSampleBank::generate(engine_type, DEFAULT_SAMPLE_RATE);
+                sampled.set_bank(new_bank, &mut self.backend);
+            }
         }
     }
 
@@ -480,6 +507,19 @@ impl AudioManager {
 
     /// Dynamically crossfades multi-harmonic engine RPM sound bands, reflects throttle load, clutch shift gap, and triggers shift pops.
     pub fn update_engine_rpm(&mut self, rpm: f32, throttle: f32, is_shift: bool) {
+        self.update_engine_telemetry(rpm, throttle, is_shift, 0.0, 1, 0.016);
+    }
+
+    /// Full telemetry update feeding RPM, throttle, gear, speed, and delta into sampled engine and auxiliary layers.
+    pub fn update_engine_telemetry(
+        &mut self,
+        rpm: f32,
+        throttle: f32,
+        is_shift: bool,
+        speed: f32,
+        gear: usize,
+        dt: f32,
+    ) {
         if self.settings.is_muted {
             self.stop_all_loops();
             return;
@@ -489,9 +529,41 @@ impl AudioManager {
             self.play_sfx_with_gain(SfxType::ShiftPop, 0.95);
             self.shift_gap_timer = 0.075; // 75ms clutch disengagement gap
         } else if self.shift_gap_timer > 0.0 {
-            self.shift_gap_timer = (self.shift_gap_timer - 0.016).max(0.0);
+            self.shift_gap_timer = (self.shift_gap_timer - dt).max(0.0);
         }
 
+        let effective_throttle = if self.shift_gap_timer > 0.0 {
+            0.0
+        } else {
+            throttle
+        };
+
+        // If modern sampled engine audio is active and hardware backend is available
+        if self.use_sampled_engine && self.backend.is_available() && self.sampled_engine.is_some() {
+            let limiter_mod = if let Some(aux) = self.auxiliary_layer.as_mut() {
+                aux.update(
+                    speed.abs(),
+                    gear,
+                    rpm,
+                    effective_throttle,
+                    self.active_engine_type,
+                    dt,
+                    self.settings.effective_sfx_volume(),
+                    &mut self.backend,
+                )
+            } else {
+                1.0
+            };
+
+            let effective_vol = self.settings.effective_sfx_volume() * limiter_mod;
+            if let Some(sampled) = self.sampled_engine.as_mut() {
+                sampled.update(rpm, effective_throttle, effective_vol, &mut self.backend);
+            }
+            self.is_engine_active = true;
+            return;
+        }
+
+        // Fallback: procedural 28-band crossfade (e.g. headless/WASM)
         let min_rpm = RPM_BAND_RPMS[0];
         let max_rpm = RPM_BAND_RPMS[NUM_RPM_BANDS - 1];
         let clamped_rpm = rpm.clamp(min_rpm, max_rpm);
@@ -515,13 +587,6 @@ impl AudioManager {
                 }
             }
         }
-
-        // Clutch shift-gap: Choke throttle load to 0 during upshift gap (50-75ms)
-        let effective_throttle = if self.shift_gap_timer > 0.0 {
-            0.0
-        } else {
-            throttle
-        };
 
         // Engine volume reflecting throttle demand: wide-open intake roar vs engine braking overrun
         let load_factor = effective_throttle.max(0.0);
@@ -579,6 +644,13 @@ impl AudioManager {
 
     /// Stops all continuous loops across all engine bands.
     pub fn stop_all_loops(&mut self) {
+        if let Some(sampled) = self.sampled_engine.as_mut() {
+            sampled.stop();
+        }
+        if let Some(aux) = self.auxiliary_layer.as_mut() {
+            aux.stop();
+        }
+
         for engine_type in [
             EngineSoundType::Generic,
             EngineSoundType::SportGT,

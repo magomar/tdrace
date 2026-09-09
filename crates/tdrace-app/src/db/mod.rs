@@ -1,6 +1,9 @@
 use std::path::Path;
 use chrono::Utc;
+#[cfg(not(target_arch = "wasm32"))]
 use rusqlite::{params, Connection, Result};
+#[cfg(target_arch = "wasm32")]
+pub type Result<T> = std::result::Result<T, String>;
 use serde::{Deserialize, Serialize};
 
 use crate::profile::{PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
@@ -20,10 +23,12 @@ pub struct HallOfFameEntry {
 }
 
 /// SQLite persistence manager for local Hall of Fame leaderboards, player profiles, and career race logs.
+#[cfg(not(target_arch = "wasm32"))]
 pub struct HallOfFameDb {
     conn: Connection,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl HallOfFameDb {
     /// Default database filename placed in the working directory.
     pub const DEFAULT_DB_PATH: &'static str = "tdrace_records.db";
@@ -495,6 +500,191 @@ impl HallOfFameDb {
     /// Seeds default records if needed (currently a clean no-op, preserving real race records).
     pub fn seed_defaults_if_empty(&self, _track_id: &str) -> Result<()> {
         // Real race results are logged dynamically on session completion.
+        Ok(())
+    }
+}
+
+/// In-memory fallback persistence manager for WebAssembly targets.
+#[cfg(target_arch = "wasm32")]
+pub struct HallOfFameDb {
+    profiles: std::sync::Mutex<Vec<PlayerProfile>>,
+    history: std::sync::Mutex<Vec<RaceHistoryEntry>>,
+    hof: std::sync::Mutex<Vec<HallOfFameEntry>>,
+}
+
+#[cfg(target_arch = "wasm32")]
+impl HallOfFameDb {
+    pub const DEFAULT_DB_PATH: &'static str = "tdrace_records.db";
+
+    pub fn open_default() -> Result<Self> {
+        Ok(Self::new_in_memory())
+    }
+
+    pub fn open(_path: &Path) -> Result<Self> {
+        Ok(Self::new_in_memory())
+    }
+
+    pub fn open_in_memory() -> Result<Self> {
+        Ok(Self::new_in_memory())
+    }
+
+    fn new_in_memory() -> Self {
+        Self {
+            profiles: std::sync::Mutex::new(Vec::new()),
+            history: std::sync::Mutex::new(Vec::new()),
+            hof: std::sync::Mutex::new(Vec::new()),
+        }
+    }
+
+    pub fn get_all_profiles(&self) -> Result<Vec<PlayerProfile>> {
+        let list = self.profiles.lock().unwrap().clone();
+        Ok(list)
+    }
+
+    pub fn get_active_profile(&self) -> Result<PlayerProfile> {
+        let guard = self.profiles.lock().unwrap();
+        if let Some(p) = guard.iter().find(|p| p.is_active) {
+            Ok(p.clone())
+        } else {
+            drop(guard);
+            self.seed_default_profile_if_empty()
+        }
+    }
+
+    pub fn get_profile_by_id(&self, id: i64) -> Result<Option<PlayerProfile>> {
+        let guard = self.profiles.lock().unwrap();
+        Ok(guard.iter().find(|p| p.id == Some(id)).cloned())
+    }
+
+    pub fn create_profile(&self, profile: &PlayerProfile) -> Result<i64> {
+        let mut guard = self.profiles.lock().unwrap();
+        let new_id = (guard.len() as i64) + 1;
+        if profile.is_active {
+            for p in guard.iter_mut() {
+                p.is_active = false;
+            }
+        }
+        let mut p = profile.clone();
+        p.id = Some(new_id);
+        guard.push(p);
+        Ok(new_id)
+    }
+
+    pub fn update_profile(&self, profile: &PlayerProfile) -> Result<()> {
+        if let Some(id) = profile.id {
+            let mut guard = self.profiles.lock().unwrap();
+            if profile.is_active {
+                for p in guard.iter_mut() {
+                    if p.id != Some(id) {
+                        p.is_active = false;
+                    }
+                }
+            }
+            if let Some(p) = guard.iter_mut().find(|p| p.id == Some(id)) {
+                *p = profile.clone();
+            }
+        }
+        Ok(())
+    }
+
+    pub fn set_active_profile(&self, profile_id: i64) -> Result<()> {
+        let mut guard = self.profiles.lock().unwrap();
+        for p in guard.iter_mut() {
+            p.is_active = p.id == Some(profile_id);
+        }
+        Ok(())
+    }
+
+    pub fn delete_profile(&self, profile_id: i64) -> Result<()> {
+        let mut guard = self.profiles.lock().unwrap();
+        let was_active = guard.iter().find(|p| p.id == Some(profile_id)).map(|p| p.is_active).unwrap_or(false);
+        guard.retain(|p| p.id != Some(profile_id));
+        if was_active {
+            if let Some(first) = guard.first_mut() {
+                first.is_active = true;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn seed_default_profile_if_empty(&self) -> Result<PlayerProfile> {
+        let mut guard = self.profiles.lock().unwrap();
+        if guard.is_empty() {
+            let default_profile = PlayerProfile {
+                id: Some(1),
+                name: "Racer One".to_string(),
+                alias: "Apex Legend".to_string(),
+                country: Some("ESP".to_string()),
+                color_scheme: CarColorScheme::from_index(0),
+                is_active: true,
+                created_at: Utc::now().format("%Y-%m-%d %H:%M").to_string(),
+            };
+            guard.push(default_profile.clone());
+            Ok(default_profile)
+        } else {
+            Ok(guard.first().cloned().unwrap_or_default())
+        }
+    }
+
+    pub fn insert_race_history(&self, record: &RaceHistoryEntry) -> Result<i64> {
+        let mut guard = self.history.lock().unwrap();
+        let new_id = (guard.len() as i64) + 1;
+        let mut r = record.clone();
+        r.id = Some(new_id);
+        guard.push(r);
+        Ok(new_id)
+    }
+
+    pub fn get_history_for_profile(&self, profile_id: i64, limit: usize) -> Result<Vec<RaceHistoryEntry>> {
+        let guard = self.history.lock().unwrap();
+        let items: Vec<RaceHistoryEntry> = guard
+            .iter()
+            .filter(|r| r.profile_id == profile_id)
+            .rev()
+            .take(limit)
+            .cloned()
+            .collect();
+        Ok(items)
+    }
+
+    pub fn get_stats_for_profile(&self, profile_id: i64) -> Result<ProfileCareerStats> {
+        let races = self.get_history_for_profile(profile_id, 1000)?;
+        Ok(ProfileCareerStats::compute(&races))
+    }
+
+    pub fn get_top_10(&self, track_id: &str) -> Result<Vec<HallOfFameEntry>> {
+        let guard = self.hof.lock().unwrap();
+        let mut matching: Vec<HallOfFameEntry> = guard.iter().filter(|e| e.track_id == track_id).cloned().collect();
+        matching.sort_by(|a, b| a.total_time.partial_cmp(&b.total_time).unwrap_or(std::cmp::Ordering::Equal));
+        matching.truncate(10);
+        Ok(matching)
+    }
+
+    pub fn is_top_10(&self, track_id: &str, total_time: f32) -> Result<bool> {
+        let top = self.get_top_10(track_id)?;
+        if top.len() < 10 {
+            Ok(true)
+        } else {
+            Ok(total_time < top[9].total_time)
+        }
+    }
+
+    pub fn insert_entry(&self, entry: &HallOfFameEntry) -> Result<i64> {
+        let mut guard = self.hof.lock().unwrap();
+        let new_id = (guard.len() as i64) + 1;
+        let mut e = entry.clone();
+        e.id = Some(new_id);
+        guard.push(e);
+        Ok(new_id)
+    }
+
+    pub fn clear_hall_of_fame(&self) -> Result<()> {
+        let mut guard = self.hof.lock().unwrap();
+        guard.clear();
+        Ok(())
+    }
+
+    pub fn seed_defaults_if_empty(&self, _track_id: &str) -> Result<()> {
         Ok(())
     }
 }

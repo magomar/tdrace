@@ -2062,7 +2062,7 @@ impl RaceSession {
                 let touch_ctrl = self.touch.poll_controls();
                 let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
                 let (rpm, is_shift) = self.engine_rpm.update(0.0, player_ctrl.throttle, 0.0, frame_dt);
-                self.audio.update_engine_rpm(rpm, player_ctrl.throttle, is_shift);
+                self.audio.update_engine_telemetry(rpm, player_ctrl.throttle, is_shift, 0.0, self.engine_rpm.current_gear, frame_dt);
 
                 // Countdown audio beeps (3, 2, 1)
                 if *remaining <= 3.0 && self.prev_countdown_sec > 3 {
@@ -3937,7 +3937,7 @@ impl RaceSession {
                 player_ctrl.throttle - player_ctrl.brake
             };
             let (rpm, is_shift) = self.engine_rpm.update(forward_speed, effective_throttle, slip_intensity, dt);
-            self.audio.update_engine_rpm(rpm, effective_throttle, is_shift);
+            self.audio.update_engine_telemetry(rpm, effective_throttle, is_shift, forward_speed, self.engine_rpm.current_gear, dt);
         }
 
         // 6. Update race progression, lap tracking, sector splits, anti-cheat
