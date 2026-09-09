@@ -823,7 +823,7 @@ impl RaceSession {
         self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::StockCar;
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
-            self.total_laps = 10;
+            self.total_laps = 3;
         }
         self.camera.setup_for_track(&self.track);
         self.rebuild_roster_participants();
@@ -1005,10 +1005,13 @@ impl RaceSession {
             vec![
                 "daytona_superspeedway".to_string(),
                 "talladega_superspeedway".to_string(),
-                "watkins_glen_nascar".to_string(),
+                "charlotte_motor_speedway".to_string(),
+                "darlington_raceway".to_string(),
                 "bristol_motor_speedway".to_string(),
+                "martinsville_speedway".to_string(),
+                "watkins_glen_nascar".to_string(),
             ],
-            10,
+            4,
             &[
                 ("player", "Player", "Apex Stock Car"),
                 ("dale_vance", "Dale 'The Intimidator' Vance", "Richard Childress Racing"),

@@ -33004,7 +33004,7 @@
   ],
   "default_surface": "Grass",
   "pit_box_area": null,
-  "default_laps": 5,
+  "default_laps": 3,
   "predefined_car": "stock_car",
   "module_id": "nascar",
   "modules": [

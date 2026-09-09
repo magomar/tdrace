@@ -381,13 +381,15 @@ mod tests {
         assert_eq!(nascar.id(), "nascar");
         assert!(!nascar.title().is_empty());
         assert_eq!(nascar.vehicles().len(), 2);
-        assert_eq!(nascar.tracks().len(), 4);
+        assert_eq!(nascar.tracks().len(), 7);
         assert_eq!(nascar.drivers().len(), 12);
         assert_eq!(nascar.default_vehicle_id(), "nascar_cup_v8");
         assert_eq!(nascar.default_track_id(), "daytona_superspeedway");
 
         for track_def in nascar.tracks() {
+            assert!(track_def.default_laps >= 3 && track_def.default_laps <= 5);
             let track = (track_def.generator)();
+            assert!(track.default_laps >= 3 && track.default_laps <= 5);
             assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
             assert!(track.spline.total_length() > 300.0, "Track length too short for {}", track_def.id);
             assert!(track.checkpoints.len() >= 8, "Checkpoints too few for {}", track_def.id);

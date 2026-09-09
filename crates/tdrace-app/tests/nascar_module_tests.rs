@@ -33,20 +33,25 @@ fn test_nascar_game_module_identity_and_vehicles() {
 fn test_nascar_tracks_and_geometry_validation() {
     let nascar = NascarGameModule::new();
     let tracks = nascar.tracks();
-    assert_eq!(tracks.len(), 4, "Expected 4 NASCAR tracks");
+    assert_eq!(tracks.len(), 7, "Expected 7 NASCAR tracks");
 
     let expected_ids = [
         "daytona_superspeedway",
         "talladega_superspeedway",
         "watkins_glen_nascar",
         "bristol_motor_speedway",
+        "martinsville_speedway",
+        "darlington_raceway",
+        "charlotte_motor_speedway",
     ];
 
     for (idx, def) in tracks.iter().enumerate() {
         assert_eq!(def.id, expected_ids[idx]);
+        assert!(def.default_laps >= 3 && def.default_laps <= 5, "Track '{}' default laps ({}) must be between 3 and 5", def.id, def.default_laps);
 
         let track = (def.generator)();
         assert_eq!(track.predefined_car.as_deref(), Some("stock_car"));
+        assert!(track.default_laps >= 3 && track.default_laps <= 5, "Track '{}' generator default laps ({}) must be between 3 and 5", def.id, track.default_laps);
         let issues = validate_track(&track);
         assert!(
             issues.is_empty(),
@@ -96,8 +101,8 @@ fn test_nascar_tournament_formats_and_points() {
         })
         .expect("NASCAR Cup Series Championship must be present");
 
-    assert_eq!(cup_champ.2.len(), 4);
-    assert_eq!(*cup_champ.3, 10);
+    assert_eq!(cup_champ.2.len(), 7);
+    assert_eq!(*cup_champ.3, 4);
     assert!(matches!(cup_champ.1, PointSystem::NascarCup { stage_win_bonus: true }));
 
     // Test NASCAR Cup point system
@@ -125,7 +130,7 @@ fn test_nascar_tournament_formats_and_points() {
         &initial_drivers,
     );
     assert_eq!(session.current_round, 0);
-    assert_eq!(session.total_rounds(), 4);
+    assert_eq!(session.total_rounds(), 7);
 
     let round_results = vec![
         RoundDriverResult {
@@ -257,7 +262,7 @@ fn test_nascar_phase2_championship_lifecycle() {
     {
         let champ = session.championship_session.as_ref().unwrap();
         assert_eq!(champ.name, "NASCAR Cup Series Championship 2026");
-        assert_eq!(champ.total_rounds(), 4);
+        assert_eq!(champ.total_rounds(), 7);
         assert_eq!(champ.current_round, 0);
         assert_eq!(champ.current_track_id(), Some("daytona_superspeedway"));
         assert!(matches!(champ.point_system, PointSystem::NascarCup { stage_win_bonus: true }));
@@ -298,7 +303,7 @@ fn test_nascar_phase2_config_file_and_overrides() {
         .expect("config.nascar.toml must be loadable via load_module_override_file");
     let gameplay = override_val.get("gameplay").expect("gameplay table expected");
     assert_eq!(gameplay.get("default_track").and_then(|v| v.as_str()), Some("daytona_superspeedway"));
-    assert_eq!(gameplay.get("default_laps").and_then(|v| v.as_integer()), Some(10));
+    assert_eq!(gameplay.get("default_laps").and_then(|v| v.as_integer()), Some(3));
     assert_eq!(gameplay.get("default_num_bots").and_then(|v| v.as_integer()), Some(11));
 }
 

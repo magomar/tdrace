@@ -63,7 +63,7 @@ impl TrackChoice {
                     "GT WORLD CHALLENGE"
                 } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta") {
                     "KARTING"
-                } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway") {
+                } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway") {
                     "NASCAR CUP"
                 } else {
                     "CLASSIC MOTORSPORT"
@@ -90,7 +90,7 @@ impl TrackChoice {
                     "GT WORLD CHALLENGE"
                 } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta") {
                     "KARTING"
-                } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway") {
+                } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway") {
                     "NASCAR CUP"
                 } else {
                     match mod_id {
@@ -321,6 +321,9 @@ impl TrackChoice {
             "talladega" | "talladega_superspeedway" => Some(tdrace_core::track::presets::talladega_superspeedway()),
             "watkins_glen" | "watkins_glen_nascar" => Some(tdrace_core::track::presets::watkins_glen_nascar()),
             "bristol" | "bristol_motor_speedway" => Some(tdrace_core::track::presets::bristol_motor_speedway()),
+            "martinsville" | "martinsville_speedway" => Some(tdrace_core::track::presets::martinsville_speedway()),
+            "darlington" | "darlington_raceway" => Some(tdrace_core::track::presets::darlington_raceway()),
+            "charlotte" | "charlotte_motor_speedway" => Some(tdrace_core::track::presets::charlotte_motor_speedway()),
             _ => None,
         },
     }

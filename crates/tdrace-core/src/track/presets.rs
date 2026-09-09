@@ -2398,7 +2398,7 @@ pub fn daytona_superspeedway() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
-        default_laps: 10,
+        default_laps: 3,
         predefined_car: Some("stock_car".to_string()),
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
@@ -2459,7 +2459,7 @@ pub fn talladega_superspeedway() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
-        default_laps: 10,
+        default_laps: 3,
         predefined_car: Some("stock_car".to_string()),
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
@@ -2527,7 +2527,7 @@ pub fn watkins_glen_nascar() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
-        default_laps: 5,
+        default_laps: 3,
         predefined_car: Some("stock_car".to_string()),
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
@@ -2583,7 +2583,184 @@ pub fn bristol_motor_speedway() -> Track {
         grid_positions,
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
-        default_laps: 15,
+        default_laps: 5,
+        predefined_car: Some("stock_car".to_string()),
+        module_id: Some("nascar".to_string()),
+        modules: vec!["nascar".to_string()],
+    }
+}
+
+/// Preset: Martinsville Speedway (The Paperclip)
+/// Historic 0.526-mile flat short track: long straights, tight flat concrete turns with 12° banking,
+/// and intense heavy-braking bumper contact.
+pub fn martinsville_speedway() -> Track {
+    let waypoints = vec![
+        // Frontstretch (Start/Finish Line at WP 0)
+        TrackWaypoint::new(Vec2::new(0.0, -35.0), 16.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(100.0, -35.0), 16.0).with_bank_angle(0.0),
+        // Turns 1 & 2 (Tight East concrete hairpin, 12-degree banking)
+        TrackWaypoint::new(Vec2::new(140.0, -25.0), 16.0).with_bank_angle(8.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(160.0, 0.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(160.0, 30.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(140.0, 55.0), 16.0).with_bank_angle(8.0).with_curbs(true, false),
+        // Backstretch
+        TrackWaypoint::new(Vec2::new(100.0, 65.0), 16.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(0.0, 65.0), 16.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-100.0, 65.0), 16.0).with_bank_angle(0.0),
+        // Turns 3 & 4 (Tight West concrete hairpin, 12-degree banking)
+        TrackWaypoint::new(Vec2::new(-140.0, 55.0), 16.0).with_bank_angle(8.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-160.0, 30.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-160.0, 0.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-140.0, -25.0), 16.0).with_bank_angle(8.0).with_curbs(true, false),
+        // Approach to Start/Finish
+        TrackWaypoint::new(Vec2::new(-100.0, -35.0), 16.0).with_bank_angle(0.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 1.2, BarrierType::Concrete);
+
+    let checkpoints = generate_checkpoints(&spline, 8, 2);
+    let grid_positions = generate_grid_positions(&spline, 16, 7.5, 3.0);
+
+    Track {
+        name: "Martinsville Speedway".to_string(),
+        description: "The Paperclip: 0.526-mile flat short track with tight 12° concrete corners, heavy curb-hopping, and brutal paint-trading.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 5,
+        predefined_car: Some("stock_car".to_string()),
+        module_id: Some("nascar".to_string()),
+        modules: vec!["nascar".to_string()],
+    }
+}
+
+/// Preset: Darlington Raceway (The Lady in Black / Too Tough to Tame)
+/// Legendary 1.366-mile egg-shaped asymmetrical speedway: wide 25° sweeping Turns 1 & 2,
+/// ultra-narrow 23° Turns 3 & 4 where stock cars brush the outside wall for the 'Darlington Stripe'.
+pub fn darlington_raceway() -> Track {
+    let waypoints = vec![
+        // Frontstretch (Start/Finish Line at WP 0)
+        TrackWaypoint::new(Vec2::new(0.0, -85.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(120.0, -85.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(240.0, -78.0), 18.0).with_bank_angle(6.0),
+        // Turns 1 & 2 (Wide East sweeper, 25-degree banking)
+        TrackWaypoint::new(Vec2::new(340.0, -40.0), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(390.0, 30.0), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(360.0, 100.0), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(280.0, 145.0), 18.0).with_bank_angle(15.0),
+        // Backstretch
+        TrackWaypoint::new(Vec2::new(150.0, 160.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(0.0, 160.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-120.0, 155.0), 18.0).with_bank_angle(4.0),
+        // Turns 3 & 4 (Narrow & tight West curve, 23-degree banking)
+        TrackWaypoint::new(Vec2::new(-210.0, 130.0), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-260.0, 75.0), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-270.0, 0.0), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-230.0, -55.0), 18.0).with_bank_angle(18.0),
+        // Turn 4 exit to Frontstretch
+        TrackWaypoint::new(Vec2::new(-140.0, -80.0), 18.0).with_bank_angle(5.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 1.5, BarrierType::Concrete);
+
+    let checkpoints = generate_checkpoints(&spline, 10, 3);
+    let grid_positions = generate_grid_positions(&spline, 16, 8.0, 3.2);
+
+    Track {
+        name: "Darlington Raceway".to_string(),
+        description: "The Lady in Black: 1.366-mile egg-shaped asymmetrical oval with 25° high banks and the famous wall-scraping 'Darlington Stripe'.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("stock_car".to_string()),
+        module_id: Some("nascar".to_string()),
+        modules: vec!["nascar".to_string()],
+    }
+}
+
+/// Preset: Charlotte Motor Speedway (The Beast of the Southeast)
+/// Iconic 1.5-mile quad-oval speedway featuring 24-degree banking in turns,
+/// frontstretch double dogleg, and multi-groove slipstream pack racing.
+pub fn charlotte_motor_speedway() -> Track {
+    let waypoints = vec![
+        // Frontstretch quad-oval dogleg (Start/Finish at WP 0)
+        TrackWaypoint::new(Vec2::new(0.0, -95.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(110.0, -90.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(220.0, -75.0), 20.0).with_bank_angle(8.0),
+        // Turns 1 & 2 (24° High Banked East Curve)
+        TrackWaypoint::new(Vec2::new(320.0, -35.0), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(370.0, 35.0), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(340.0, 105.0), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(260.0, 150.0), 20.0).with_bank_angle(14.0),
+        // Backstretch
+        TrackWaypoint::new(Vec2::new(140.0, 165.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(0.0, 165.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-140.0, 165.0), 20.0).with_bank_angle(5.0),
+        // Turns 3 & 4 (24° High Banked West Curve)
+        TrackWaypoint::new(Vec2::new(-260.0, 150.0), 20.0).with_bank_angle(14.0),
+        TrackWaypoint::new(Vec2::new(-340.0, 105.0), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-370.0, 35.0), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-320.0, -35.0), 20.0).with_bank_angle(24.0),
+        // Quad-oval entry kink
+        TrackWaypoint::new(Vec2::new(-220.0, -75.0), 20.0).with_bank_angle(8.0),
+        TrackWaypoint::new(Vec2::new(-110.0, -90.0), 20.0).with_bank_angle(5.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 1.5, BarrierType::Concrete);
+
+    let checkpoints = generate_checkpoints(&spline, 12, 3);
+    let grid_positions = generate_grid_positions(&spline, 16, 8.5, 3.5);
+
+    Track {
+        name: "Charlotte Motor Speedway".to_string(),
+        description: "The Beast of the Southeast: 1.5-mile quad-oval with 24° banking, frontstretch dogleg, and high-speed pack drafting battles.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
         predefined_car: Some("stock_car".to_string()),
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],

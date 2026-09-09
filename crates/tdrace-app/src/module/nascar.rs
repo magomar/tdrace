@@ -2,7 +2,8 @@ use macroquad::color::Color;
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    bristol_motor_speedway, daytona_superspeedway, talladega_superspeedway, watkins_glen_nascar,
+    bristol_motor_speedway, charlotte_motor_speedway, darlington_raceway, daytona_superspeedway,
+    martinsville_speedway, talladega_superspeedway, watkins_glen_nascar,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -117,7 +118,7 @@ impl GameModule for NascarGameModule {
                 tag: "SUPERSPEEDWAY 31° BANK",
                 description: "The World Center of Racing: 4.0 km tri-oval featuring 31° high banks, 18° tri-oval frontstretch, and intense high-speed pack drafting.",
                 category: "Superspeedway",
-                default_laps: 10,
+                default_laps: 3,
                 generator: daytona_superspeedway,
             },
             TrackDefinition {
@@ -126,7 +127,7 @@ impl GameModule for NascarGameModule {
                 tag: "SUPERSPEEDWAY 33° BANK",
                 description: "The biggest, fastest superspeedway in motorsport: 4.3 km tri-oval with extreme 33° banking where slipstream draft slingshots decide victory.",
                 category: "Superspeedway",
-                default_laps: 10,
+                default_laps: 3,
                 generator: talladega_superspeedway,
             },
             TrackDefinition {
@@ -135,7 +136,7 @@ impl GameModule for NascarGameModule {
                 tag: "NASCAR ROAD COURSE",
                 description: "Historic 5.4 km upstate New York road course: the uphill Esses, Inner Loop Bus Stop chicane, high-speed Carousel, and Boot complex.",
                 category: "Road Course",
-                default_laps: 6,
+                default_laps: 3,
                 generator: watkins_glen_nascar,
             },
             TrackDefinition {
@@ -144,8 +145,35 @@ impl GameModule for NascarGameModule {
                 tag: "SHORT TRACK 28° BANK",
                 description: "The Last Great Colosseum: 0.85 km high-banked concrete bowl with 28° turns, brutal bumper-to-bumper contact, and lightning fast 15-second laps.",
                 category: "Short Track",
-                default_laps: 15,
+                default_laps: 5,
                 generator: bristol_motor_speedway,
+            },
+            TrackDefinition {
+                id: "martinsville_speedway",
+                title: "Martinsville Speedway",
+                tag: "SHORT TRACK 12° BANK",
+                description: "The Paperclip: 0.526-mile flat short track with tight 12° concrete corners, heavy curb-hopping, and brutal paint-trading.",
+                category: "Short Track",
+                default_laps: 5,
+                generator: martinsville_speedway,
+            },
+            TrackDefinition {
+                id: "darlington_raceway",
+                title: "Darlington Raceway",
+                tag: "EGG-SHAPED OVAL 25° BANK",
+                description: "The Lady in Black: 1.366-mile egg-shaped asymmetrical oval with 25° high banks and the famous wall-scraping 'Darlington Stripe'.",
+                category: "Intermediate Oval",
+                default_laps: 4,
+                generator: darlington_raceway,
+            },
+            TrackDefinition {
+                id: "charlotte_motor_speedway",
+                title: "Charlotte Motor Speedway",
+                tag: "QUAD-OVAL 24° BANK",
+                description: "The Beast of the Southeast: 1.5-mile quad-oval with 24° banking, frontstretch dogleg, and high-speed pack drafting battles.",
+                category: "Intermediate Oval",
+                default_laps: 4,
+                generator: charlotte_motor_speedway,
             },
         ]
     }
@@ -455,10 +483,13 @@ impl GameModule for NascarGameModule {
                 track_ids: vec![
                     "daytona_superspeedway".to_string(),
                     "talladega_superspeedway".to_string(),
-                    "watkins_glen_nascar".to_string(),
+                    "charlotte_motor_speedway".to_string(),
+                    "darlington_raceway".to_string(),
                     "bristol_motor_speedway".to_string(),
+                    "martinsville_speedway".to_string(),
+                    "watkins_glen_nascar".to_string(),
                 ],
-                laps_per_round: 10,
+                laps_per_round: 4,
             },
             TournamentFormat::EliminationCup {
                 elimination_interval: 3,
@@ -468,14 +499,17 @@ impl GameModule for NascarGameModule {
                 point_system: PointSystem::NascarCup { stage_win_bonus: false },
                 track_ids: vec![
                     "watkins_glen_nascar".to_string(),
+                    "charlotte_motor_speedway".to_string(),
+                    "darlington_raceway".to_string(),
                     "daytona_superspeedway".to_string(),
                     "talladega_superspeedway".to_string(),
                     "bristol_motor_speedway".to_string(),
+                    "martinsville_speedway".to_string(),
                 ],
-                laps_per_round: 8,
+                laps_per_round: 4,
             },
             TournamentFormat::QuickRace {
-                default_laps: 6,
+                default_laps: 3,
                 default_bots: 11,
             },
             TournamentFormat::TimeAttack,

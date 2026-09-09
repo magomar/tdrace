@@ -3,7 +3,7 @@
 
 [gameplay]
 default_track = "daytona_superspeedway"
-default_laps = 10
+default_laps = 3
 default_num_bots = 11
 default_assist_profile = "arcade"
 

@@ -839,6 +839,9 @@ impl TrackManager {
                     "talladega" | "talladega_superspeedway" => Ok(tdrace_core::track::presets::talladega_superspeedway()),
                     "watkins_glen" | "watkins_glen_nascar" => Ok(tdrace_core::track::presets::watkins_glen_nascar()),
                     "bristol" | "bristol_motor_speedway" => Ok(tdrace_core::track::presets::bristol_motor_speedway()),
+                    "martinsville" | "martinsville_speedway" => Ok(tdrace_core::track::presets::martinsville_speedway()),
+                    "darlington" | "darlington_raceway" => Ok(tdrace_core::track::presets::darlington_raceway()),
+                    "charlotte" | "charlotte_motor_speedway" => Ok(tdrace_core::track::presets::charlotte_motor_speedway()),
                     _ => Err(format!("Track file not found: {}", path)),
                 }
             }
@@ -852,7 +855,7 @@ impl TrackManager {
             "oasis_rally" | "outlaw_pass" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "sahara" | "sahara_dunes" => Some("rally"),
             "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" => Some("kart"),
             "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring" => Some("f1"),
-            "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" => Some("nascar"),
+            "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" => Some("nascar"),
             _ => {
                 if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
                     for m in ["classic", "rally", "kart", "f1", "nascar"] {
@@ -890,6 +893,9 @@ impl TrackManager {
             "talladega" => "talladega_superspeedway",
             "watkins_glen" => "watkins_glen_nascar",
             "bristol" => "bristol_motor_speedway",
+            "martinsville" => "martinsville_speedway",
+            "darlington" => "darlington_raceway",
+            "charlotte" => "charlotte_motor_speedway",
             other => other,
         }
     }
@@ -1681,7 +1687,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 46); // 10 classic + 14 f1 + 10 rally unique + 8 famous kart + 4 nascar
+        assert_eq!(choices.len(), 49); // 10 classic + 14 f1 + 10 rally unique + 8 famous kart + 7 nascar
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();
@@ -1693,8 +1699,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 46, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 46);
+        // Since gp was saved as Draft, main choices is still 49, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 49);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -1703,7 +1709,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 47);
+        assert_eq!(manager.main_track_choices().len(), 50);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -1714,18 +1720,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[46]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[49]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 46);
+        assert_eq!(manager.main_track_choices().len(), 49);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 46);
+        assert_eq!(manager.main_track_choices().len(), 49);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -1827,15 +1833,18 @@ mod tests {
 
         // Nascar tracks
         let nascar_tracks = manager.module_catalog_tracks("nascar");
-        assert_eq!(nascar_tracks.len(), 4);
+        assert_eq!(nascar_tracks.len(), 7);
         assert!(nascar_tracks.iter().any(|t| t.title().contains("Daytona")));
         assert!(nascar_tracks.iter().any(|t| t.title().contains("Talladega")));
         assert!(nascar_tracks.iter().any(|t| t.title().contains("Watkins Glen")));
         assert!(nascar_tracks.iter().any(|t| t.title().contains("Bristol")));
+        assert!(nascar_tracks.iter().any(|t| t.title().contains("Martinsville")));
+        assert!(nascar_tracks.iter().any(|t| t.title().contains("Darlington")));
+        assert!(nascar_tracks.iter().any(|t| t.title().contains("Charlotte")));
 
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 46);
+        assert_eq!(all_tracks.len(), 49);
 
         // Save a custom circuit assigned to classic and rally
         let mut custom_circuit = classic_grand_prix();
@@ -1896,9 +1905,9 @@ mod tests {
         assert!(cloned_gp.modules.is_empty());
         assert!(Path::new(&path_gp).exists());
 
-        // Cloned track must appear in drafts, and main count stays 46
+        // Cloned track must appear in drafts, and main count stays 49
         assert_eq!(manager.draft_track_choices().len(), 1);
-        assert_eq!(manager.main_track_choices().len(), 46);
+        assert_eq!(manager.main_track_choices().len(), 49);
         assert_eq!(manager.draft_track_choices()[0].title(), "Classic Grand Prix (clone)");
 
         // 2. Clone a module preset by slug

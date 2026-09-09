@@ -916,7 +916,8 @@ fn test_prototypical_track_templates_all_combinations() {
 #[test]
 fn test_nascar_track_presets_and_validation() {
     use tdrace_core::track::presets::{
-        bristol_motor_speedway, daytona_superspeedway, talladega_superspeedway,
+        bristol_motor_speedway, charlotte_motor_speedway, darlington_raceway,
+        daytona_superspeedway, martinsville_speedway, talladega_superspeedway,
         watkins_glen_nascar,
     };
     use tdrace_core::track::validation::{validate_track, ValidationSeverity};
@@ -926,6 +927,9 @@ fn test_nascar_track_presets_and_validation() {
         ("talladega.json", talladega_superspeedway()),
         ("watkins_glen.json", watkins_glen_nascar()),
         ("bristol.json", bristol_motor_speedway()),
+        ("martinsville.json", martinsville_speedway()),
+        ("darlington.json", darlington_raceway()),
+        ("charlotte.json", charlotte_motor_speedway()),
     ];
 
     let nascar_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks/nascar");
@@ -938,6 +942,7 @@ fn test_nascar_track_presets_and_validation() {
         assert!(!track.grid_positions.is_empty());
         assert!(track.grid_positions.len() >= 16);
         assert_eq!(track.module_id.as_deref(), Some("nascar"));
+        assert!(track.default_laps >= 3 && track.default_laps <= 5);
         assert!(track.spline.total_length() > 500.0);
 
         let diags = validate_track(track);
