@@ -8,6 +8,9 @@ use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::audio::AudioSettings;
 use crate::render::color::Palette;
+use cabinet::input::GamepadSnapshot;
+use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
+use cabinet::ui::theme::CabinetTheme;
 use tdrace_core::physics::config::AssistProfile;
 
 /// Available track options in track selection menu.
@@ -1812,55 +1815,10 @@ pub fn render_exit_confirm_modal(fonts: &Fonts) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
-
-    // Dark backdrop overlay
-    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
-
-    let mw = scaler.s(480.0).min(sw - scaler.s(32.0));
-    let mh = scaler.s(200.0);
-    let mx = (sw - mw) * 0.5;
-    let my = (sh - mh) * 0.5;
-
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::RED, 2.2);
-
-    fonts.draw_ui_bold(
-        "QUIT TDRACE",
-        mx + scaler.s(24.0),
-        my + scaler.s(36.0),
-        scaler.font_s(20.0),
-        Palette::RED,
-    );
-
-    fonts.draw_ui_regular(
-        "Are you sure you want to exit the application?",
-        mx + scaler.s(24.0),
-        my + scaler.s(72.0),
-        scaler.font_s(15.0),
-        Palette::WHITE,
-    );
-
-    fonts.draw_ui_regular(
-        "Any unsaved progress will be lost.",
-        mx + scaler.s(24.0),
-        my + scaler.s(96.0),
-        scaler.font_s(12.5),
-        Palette::UI_TEXT_MUTED,
-    );
-
-    let btn_y = my + mh - scaler.s(32.0);
-    fonts.draw_ui_bold(
-        "[ENTER / SPACE / A] YES, QUIT",
-        mx + scaler.s(24.0),
-        btn_y,
-        scaler.font_s(14.0),
-        Palette::RED,
-    );
-    fonts.draw_ui_bold(
-        "[ESC / B] CANCEL",
-        mx + mw - scaler.s(140.0),
-        btn_y,
-        scaler.font_s(14.0),
-        Palette::NEON_CYAN,
-    );
+    let theme = CabinetTheme::cyberpunk_neon();
+    let gp = GamepadSnapshot::default();
+    let modal = UniversalConfirmModal::quit_game();
+    let ctx = CabinetContext::new(&scaler, fonts, &theme, &gp, 0.0);
+    modal.draw(&ctx);
 }
 

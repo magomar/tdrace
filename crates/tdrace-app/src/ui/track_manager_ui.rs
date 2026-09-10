@@ -5,6 +5,9 @@ use macroquad::shapes::draw_rectangle;
 use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::render::color::Palette;
+use cabinet::input::GamepadSnapshot;
+use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
+use cabinet::ui::theme::CabinetTheme;
 pub use crate::track_manager::{ModuleFilter, TrackManager};
 use crate::ui::menu::TrackChoice;
 
@@ -678,13 +681,7 @@ fn render_delete_modal(
     _active_tab: TrackManagerTab,
     module_filter: ModuleFilter,
 ) {
-    // Backdrop dimming
-    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.75));
-
-    let mw = scaler.s(480.0);
-    let mh = scaler.s(180.0);
-    let mx = (sw - mw) * 0.5;
-    let my = (sh - mh) * 0.5;
+    let _ = (sw, sh);
 
     let mod_id = module_filter.id().unwrap_or("classic");
     let mod_name = match mod_id {
@@ -697,26 +694,13 @@ fn render_delete_modal(
     };
     let title_text = format!("REMOVE FROM {}", mod_name.to_uppercase());
     let confirm_msg = format!("Are you sure you want to remove\n\"{}\"\nfrom the {} module?", track_title, mod_name);
-
-    fonts.draw_ui_bold(
-        &title_text,
-        mx + scaler.s(20.0),
-        my + scaler.s(34.0),
-        scaler.font_s(18.0),
-        Palette::RED,
-    );
-
-    fonts.draw_ui_regular(
-        &confirm_msg,
-        mx + scaler.s(20.0),
-        my + scaler.s(68.0),
-        scaler.font_s(14.0),
-        Palette::WHITE,
-    );
-
-    let btn_y = my + mh - scaler.s(28.0);
-    fonts.draw_ui_bold("[Enter / Y / Backspace] YES, REMOVE", mx + scaler.s(20.0), btn_y, scaler.font_s(14.0), Palette::RED);
-    fonts.draw_ui_bold("[Esc / N] CANCEL", mx + mw - scaler.s(130.0), btn_y, scaler.font_s(14.0), Palette::NEON_CYAN);
+    let modal = UniversalConfirmModal::new(title_text, confirm_msg)
+        .with_labels("YES, REMOVE", "CANCEL")
+        .with_accent(Palette::RED);
+    let theme = CabinetTheme::cyberpunk_neon();
+    let gp = GamepadSnapshot::default();
+    let ctx = CabinetContext::new(scaler, fonts, &theme, &gp, 0.0);
+    modal.draw(&ctx);
 }
 
 fn render_promotion_modal(

@@ -116,7 +116,7 @@ use crate::ui::track_manager_ui::{
 };
 use crate::ui::{
     render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
-    ScreenAction, UiScaler,
+    ScreenAction, UiScaler, UniversalConfirmModal,
 };
 
 /// Source screen that launched the DriverCards dossier view.
@@ -296,6 +296,7 @@ pub struct RaceSession {
     pub pause_selected_btn: usize,
     pub assist_profile: AssistProfile,
     pub show_exit_confirm: bool,
+    pub exit_confirm_modal: Option<UniversalConfirmModal>,
     pub settings_modal: Option<ArcadeSettingsModal>,
 
     // Track Editor & Test Drive state
@@ -514,6 +515,7 @@ impl RaceSession {
             pause_nav: NavGrid2D::new(vec![1, 1]),
             pause_selected_btn: 0,
             show_exit_confirm: false,
+            exit_confirm_modal: None,
             settings_modal: None,
             editor_state: None,
             editor_camera,
@@ -1711,29 +1713,46 @@ impl RaceSession {
             GameState::ModuleSelect { ref mut selected_idx } => {
                 // If exit confirmation modal is currently open:
                 if self.show_exit_confirm {
-                    // Confirm Exit: Enter, KpEnter, Space, Y, or Gamepad Confirm (A / Start)
-                    if is_key_pressed(KeyCode::Enter)
-                        || is_key_pressed(KeyCode::KpEnter)
-                        || is_key_pressed(KeyCode::Space)
-                        || is_key_pressed(KeyCode::Y)
-                        || self.input.gamepad.snapshot.btn_confirm_pressed
-                        || self.input.gamepad.snapshot.btn_a_pressed
-                        || self.input.gamepad.snapshot.btn_start_pressed
-                    {
-                        std::process::exit(0);
+                    if self.exit_confirm_modal.is_none() {
+                        self.exit_confirm_modal = Some(UniversalConfirmModal::quit_game());
                     }
+                    if let Some(ref mut modal) = self.exit_confirm_modal {
+                        let sw = screen_width_safe();
+                        let sh = screen_height_safe();
+                        let scaler = UiScaler::new(sw, sh);
+                        let theme = CabinetTheme::cyberpunk_neon();
+                        let mut ctx = CabinetContext::new(
+                            &scaler,
+                            &self.fonts,
+                            &theme,
+                            &self.input.gamepad.snapshot,
+                            1.0 / 60.0,
+                        )
+                        .with_audio(Some(&self.audio));
 
-                    // Cancel / Dismiss Exit Dialog: Escape, N, or Gamepad Cancel (B / Back / Select)
-                    if is_key_pressed(KeyCode::Escape)
-                        || is_key_pressed(KeyCode::N)
-                        || self.input.gamepad.snapshot.btn_cancel_pressed
-                        || self.input.gamepad.snapshot.btn_b_pressed
-                        || self.input.gamepad.snapshot.btn_back_pressed
-                    {
-                        self.audio.play_sfx(SfxType::UiSelect);
-                        self.show_exit_confirm = false;
+                        // Direct legacy shortcuts for Y / N
+                        if is_key_pressed(KeyCode::Y) {
+                            std::process::exit(0);
+                        }
+                        if is_key_pressed(KeyCode::N) {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            self.show_exit_confirm = false;
+                            self.exit_confirm_modal = None;
+                            return;
+                        }
+
+                        let action = modal.update(&mut ctx);
+                        match action {
+                            ScreenAction::Quit => {
+                                std::process::exit(0);
+                            }
+                            ScreenAction::Pop => {
+                                self.show_exit_confirm = false;
+                                self.exit_confirm_modal = None;
+                            }
+                            _ => {}
+                        }
                     }
-
                     return;
                 }
 
@@ -2683,29 +2702,46 @@ impl RaceSession {
 
         // If exit confirmation modal is currently open:
         if self.show_exit_confirm {
-            // Confirm Exit: Enter, KpEnter, Space, Y, or Gamepad Confirm (A / Start)
-            if is_key_pressed(KeyCode::Enter)
-                || is_key_pressed(KeyCode::KpEnter)
-                || is_key_pressed(KeyCode::Space)
-                || is_key_pressed(KeyCode::Y)
-                || self.input.gamepad.snapshot.btn_confirm_pressed
-                || self.input.gamepad.snapshot.btn_a_pressed
-                || self.input.gamepad.snapshot.btn_start_pressed
-            {
-                std::process::exit(0);
+            if self.exit_confirm_modal.is_none() {
+                self.exit_confirm_modal = Some(UniversalConfirmModal::quit_game());
             }
+            if let Some(ref mut modal) = self.exit_confirm_modal {
+                let sw = screen_width_safe();
+                let sh = screen_height_safe();
+                let scaler = UiScaler::new(sw, sh);
+                let theme = CabinetTheme::cyberpunk_neon();
+                let mut ctx = CabinetContext::new(
+                    &scaler,
+                    &self.fonts,
+                    &theme,
+                    &self.input.gamepad.snapshot,
+                    1.0 / 60.0,
+                )
+                .with_audio(Some(&self.audio));
 
-            // Cancel / Dismiss Exit Dialog: Escape, N, or Gamepad Cancel (B / Back / Select)
-            if is_key_pressed(KeyCode::Escape)
-                || is_key_pressed(KeyCode::N)
-                || self.input.gamepad.snapshot.btn_cancel_pressed
-                || self.input.gamepad.snapshot.btn_b_pressed
-                || self.input.gamepad.snapshot.btn_back_pressed
-            {
-                self.audio.play_sfx(SfxType::UiSelect);
-                self.show_exit_confirm = false;
+                // Direct legacy shortcuts for Y / N
+                if is_key_pressed(KeyCode::Y) {
+                    std::process::exit(0);
+                }
+                if is_key_pressed(KeyCode::N) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.show_exit_confirm = false;
+                    self.exit_confirm_modal = None;
+                    return;
+                }
+
+                let action = modal.update(&mut ctx);
+                match action {
+                    ScreenAction::Quit => {
+                        std::process::exit(0);
+                    }
+                    ScreenAction::Pop => {
+                        self.show_exit_confirm = false;
+                        self.exit_confirm_modal = None;
+                    }
+                    _ => {}
+                }
             }
-
             return;
         }
 
@@ -4283,7 +4319,16 @@ impl RaceSession {
                     filter_counts,
                 );
                 if self.show_exit_confirm {
-                    render_exit_confirm_modal(&self.fonts);
+                    if let Some(ref modal) = self.exit_confirm_modal {
+                        let sw = screen_width_safe();
+                        let sh = screen_height_safe();
+                        let scaler = UiScaler::new(sw, sh);
+                        let theme = CabinetTheme::cyberpunk_neon();
+                        let ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, 0.0);
+                        modal.draw(&ctx);
+                    } else {
+                        render_exit_confirm_modal(&self.fonts);
+                    }
                 }
             }
             GameState::ModuleSelect { selected_idx } => {
@@ -4302,7 +4347,16 @@ impl RaceSession {
                     &self.active_profile_stats,
                 );
                 if self.show_exit_confirm {
-                    render_exit_confirm_modal(&self.fonts);
+                    if let Some(ref modal) = self.exit_confirm_modal {
+                        let sw = screen_width_safe();
+                        let sh = screen_height_safe();
+                        let scaler = UiScaler::new(sw, sh);
+                        let theme = CabinetTheme::cyberpunk_neon();
+                        let ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, 0.0);
+                        modal.draw(&ctx);
+                    } else {
+                        render_exit_confirm_modal(&self.fonts);
+                    }
                 }
             }
             GameState::ChampionshipStandings => {
