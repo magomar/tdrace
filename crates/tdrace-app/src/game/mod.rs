@@ -5245,8 +5245,6 @@ impl RaceSession {
                     max_lookahead,
                 ) {
                     render_curve_indicator(
-                        &self.track,
-                        &self.cars,
                         player_car,
                         &status,
                         self.visibility_options.curve_color_scheme,

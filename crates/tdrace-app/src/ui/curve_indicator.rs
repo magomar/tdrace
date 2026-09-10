@@ -157,16 +157,13 @@ pub fn compute_indicator_alpha(
     approach_alpha * apex_fade_alpha
 }
 
-/// Computes the smart world-space position for curve alert arrows adjacent to the player car.
+/// Computes the fixed horizontal world-space position for curve alert arrows adjacent to the player car.
 ///
-/// Places arrows to the left or right of the player car based on curve direction,
-/// factoring in the total width of the chevron block so multi-arrow clusters expand
-/// outward and maintain generous clearance from the vehicle chassis.
-/// Searches for a vertical offset (moving slightly up or down) that avoids
-/// overlaying the circuit track ribbon or nearby opponent vehicles.
-pub fn compute_smart_curve_arrow_position(
-    track: &Track,
-    all_cars: &[Car],
+/// Places arrows strictly horizontal with respect to the player car (at the car's vertical level),
+/// to the left or right based on curve direction.
+/// Factors in the total width of the chevron block so multi-arrow clusters expand outward
+/// while maintaining generous clearance from the vehicle chassis.
+pub fn compute_curve_arrow_position(
     player_car: &Car,
     direction: CurveDirection,
     degree: u8,
@@ -197,68 +194,27 @@ pub fn compute_smart_curve_arrow_position(
     let base_x = car_pos.x + side_sign * lateral_dist;
     let base_y = car_pos.y + elevation;
 
-    // Vertical candidate shifts: test level (0.0), slightly up, slightly down, then further up/down
-    let step_y = 18.0 / zoom;
-    let y_shifts = [
-        0.0,
-        step_y,
-        -step_y,
-        2.0 * step_y,
-        -2.0 * step_y,
-        3.0 * step_y,
-        -3.0 * step_y,
-    ];
-
-    let mut best_pos = Vec2::new(base_x, base_y);
-    let mut best_penalty = f32::INFINITY;
-
-    for dy in y_shifts {
-        let cand = Vec2::new(base_x, base_y + dy);
-
-        // 1. Circuit track avoidance penalty
-        let proj = track.spline.project_point(cand);
-        let track_penalty = if proj.is_on_track {
-            // Heavily penalize covering the main asphalt racing ribbon
-            150.0
-        } else if proj.is_on_curb {
-            // Lightly penalize curbs
-            35.0
-        } else {
-            // Free terrain (grass, gravel, runoff) - optimal!
-            0.0
-        };
-
-        // 2. Opponent car avoidance penalty
-        let mut car_penalty = 0.0f32;
-        let min_car_clearance = (30.0 / zoom).clamp(2.4, 5.0);
-        for other in all_cars.iter().skip(1) {
-            let dist = other.state.position.distance(cand);
-            if dist < min_car_clearance {
-                car_penalty += 180.0 * (1.0 - dist / min_car_clearance);
-            }
-        }
-
-        // 3. Displacement penalty (prefer staying closer to car level if clear)
-        let dist_penalty = dy.abs() * 1.5;
-
-        let total_penalty = track_penalty + car_penalty + dist_penalty;
-        if total_penalty < best_penalty {
-            best_penalty = total_penalty;
-            best_pos = cand;
-        }
-    }
-
-    best_pos
+    Vec2::new(base_x, base_y)
 }
 
-/// Renders the simplified curve alert chevrons in world space adjacent to the player car.
+/// Backwards-compatible alias for `compute_curve_arrow_position` without dynamic repositioning overhead.
+#[inline]
+pub fn compute_smart_curve_arrow_position(
+    _track: &Track,
+    _all_cars: &[Car],
+    player_car: &Car,
+    direction: CurveDirection,
+    degree: u8,
+    current_zoom: f32,
+) -> Vec2 {
+    compute_curve_arrow_position(player_car, direction, degree, current_zoom)
+}
+
+/// Renders the simplified curve alert chevrons in world space horizontally adjacent to the player car.
 ///
 /// Features no background box and no text labels — only anti-aliased, glowing vector chevrons
-/// positioned left or right of the car, with smart up/down repositioning to avoid obscuring
-/// the circuit ribbon or other vehicles.
+/// positioned strictly horizontal to the left or right of the car.
 pub fn render_curve_indicator(
-    track: &Track,
-    all_cars: &[Car],
     player_car: &Car,
     status: &CurveApproachStatus,
     scheme: CurveColorScheme,
@@ -288,10 +244,8 @@ pub fn render_curve_indicator(
 
     let zoom = current_zoom.max(0.5);
 
-    // Compute smart position to the left or right of the car (factoring in degree for cluster width)
-    let arrow_center = compute_smart_curve_arrow_position(
-        track,
-        all_cars,
+    // Compute static horizontal position to the left or right of the car
+    let arrow_center = compute_curve_arrow_position(
         player_car,
         status.curve.direction,
         degree,
