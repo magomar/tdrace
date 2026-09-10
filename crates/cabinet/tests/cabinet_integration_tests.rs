@@ -2,11 +2,12 @@ use cabinet::audio::AudioSettings;
 use cabinet::fx::{HitStop, ScreenShake};
 use cabinet::input::{DigitalInputFilter, GamepadConfig, GamepadSnapshot, NavGrid2D};
 use cabinet::profile::{ColorScheme, PlayerProfile, ProfileManager};
+use cabinet::records::{HallOfFame, RecordEntry, RecordMetric};
 use cabinet::state::{
-    ArcadeSettingsModal, CabinetContext, CabinetScreen, ScreenAction, ScreenStack,
-    UniversalPauseModal,
+    format_metric_score, ArcadeSettingsModal, CabinetContext, CabinetScreen, LeaderboardModal,
+    ProfileSelectModal, ScreenAction, ScreenStack, UniversalConfirmModal, UniversalPauseModal,
 };
-use cabinet::ui::{CabinetTheme, DropdownWidget, Fonts, SliderWidget, TabBar, UiScaler};
+use cabinet::ui::{CabinetTheme, DropdownWidget, Fonts, Palette, SliderWidget, TabBar, UiScaler};
 
 #[test]
 fn test_ui_scaler_responsive_math() {
@@ -273,3 +274,169 @@ fn test_arcade_settings_modal_lifecycle_and_bindings() {
     assert_eq!(stack.len(), 1);
     assert_eq!(stack.active_screen_name(), Some("GameRoot"));
 }
+
+#[test]
+fn test_universal_confirm_modal_lifecycle() {
+    let mut modal = UniversalConfirmModal::new("RESTART RUN", "Are you sure you want to restart?")
+        .with_labels("RESTART NOW", "KEEP GOING")
+        .with_accent(Palette::NEON_RED);
+
+    assert_eq!(modal.name(), "UniversalConfirmModal");
+    assert!(modal.is_transparent());
+    assert_eq!(modal.confirm_label, "RESTART NOW");
+    assert_eq!(modal.cancel_label, "KEEP GOING");
+    assert_eq!(modal.nav.focused_col, 0); // Safety default: Cancel focused
+
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let fonts = Fonts { display: None, ui_bold: None, ui_regular: None };
+    let theme = CabinetTheme::cyberpunk_neon();
+
+    // 1. Cancel via gamepad B
+    let mut gp_cancel = GamepadSnapshot::default();
+    gp_cancel.btn_b_pressed = true;
+    let mut ctx_cancel = CabinetContext {
+        scaler: &scaler,
+        fonts: &fonts,
+        theme: &theme,
+        gamepad: &gp_cancel,
+        dt: 1.0 / 60.0,
+    };
+    let action = modal.update(&mut ctx_cancel);
+    assert!(matches!(action, ScreenAction::Pop));
+    assert_eq!(modal.result, Some(false));
+
+    // 2. Confirm: navigate to col 1 (Confirm button) and press A / confirm
+    let mut modal_confirm = UniversalConfirmModal::quit_game();
+    assert_eq!(modal_confirm.title, "QUIT GAME");
+    modal_confirm.nav.set_focus(1, 0); // Move focus to Confirm
+
+    let mut gp_confirm = GamepadSnapshot::default();
+    gp_confirm.btn_a_pressed = true;
+    let mut ctx_confirm = CabinetContext {
+        scaler: &scaler,
+        fonts: &fonts,
+        theme: &theme,
+        gamepad: &gp_confirm,
+        dt: 1.0 / 60.0,
+    };
+    let action_confirm = modal_confirm.update(&mut ctx_confirm);
+    assert!(matches!(action_confirm, ScreenAction::Quit));
+    assert_eq!(modal_confirm.result, Some(true));
+}
+
+#[test]
+fn test_leaderboard_modal_rendering_and_scrolling() {
+    // 1. Metric formatting tests
+    assert_eq!(format_metric_score(24.582, RecordMetric::LowestTime), "24.582s");
+    assert_eq!(format_metric_score(74.238, RecordMetric::LowestTime), "1:14.238");
+    assert_eq!(format_metric_score(1250400.0, RecordMetric::HighestScore), "1,250,400 PTS");
+
+    // 2. Create HallOfFame with 20 entries
+    let mut hof = HallOfFame::new("arcade_time_attack", RecordMetric::LowestTime, 25);
+    for i in 1..=20 {
+        hof.insert(RecordEntry {
+            player_name: format!("Driver {:02}", i),
+            player_alias: format!("D{:02}", i),
+            country: Some(if i % 2 == 0 { "ESP".to_string() } else { "USA".to_string() }),
+            score: 50.0 + (i as f64 * 1.5),
+            detail: format!("Lap {}", i),
+            timestamp: "2026-09-10".to_string(),
+        });
+    }
+    assert_eq!(hof.entries.len(), 20);
+
+    let mut modal = LeaderboardModal::new("CIRCUIT RECORD STANDINGS", hof).with_highlight(1);
+    assert_eq!(modal.name(), "LeaderboardModal");
+    assert!(modal.is_transparent());
+    assert_eq!(modal.highlight_rank, Some(1));
+    assert_eq!(modal.scroll_offset, 0);
+
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let fonts = Fonts { display: None, ui_bold: None, ui_regular: None };
+    let theme = CabinetTheme::cyberpunk_neon();
+
+    // Navigate down past visible window (row 16 > 11 visible rows)
+    modal.nav.set_focus(0, 16);
+    let gp_idle = GamepadSnapshot::default();
+    {
+        let mut ctx = CabinetContext {
+            scaler: &scaler,
+            fonts: &fonts,
+            theme: &theme,
+            gamepad: &gp_idle,
+            dt: 1.0 / 60.0,
+        };
+        let _ = modal.update(&mut ctx);
+        assert!(modal.scroll_offset > 0); // Autoscrolled to keep focused item in view
+    }
+
+    // Close modal via B button
+    let mut gp_close = GamepadSnapshot::default();
+    gp_close.btn_b_pressed = true;
+    let mut ctx_close = CabinetContext {
+        scaler: &scaler,
+        fonts: &fonts,
+        theme: &theme,
+        gamepad: &gp_close,
+        dt: 1.0 / 60.0,
+    };
+    let action = modal.update(&mut ctx_close);
+    assert!(matches!(action, ScreenAction::Pop));
+}
+
+#[test]
+fn test_profile_select_modal_slot_and_customization() {
+    let mut manager = ProfileManager::new();
+    let p2 = PlayerProfile::new("Viper Pilot", "Ghost", Some("USA"), ColorScheme::from_index(2));
+    manager.add_profile(p2);
+    assert_eq!(manager.profiles.len(), 2);
+    assert_eq!(manager.active_index, 1);
+
+    let mut modal = ProfileSelectModal::new(&manager);
+    assert_eq!(modal.name(), "ProfileSelectModal");
+    assert!(modal.is_transparent());
+    assert_eq!(modal.highlighted_slot, 1);
+
+    // Test cycle country on highlighted profile
+    let orig_country = modal.manager.profiles[1].country.clone();
+    modal.cycle_country(true);
+    let new_country = modal.manager.profiles[1].country.clone();
+    assert_ne!(orig_country, new_country);
+
+    // Test cycle livery
+    let orig_scheme = modal.manager.profiles[1].color_scheme;
+    modal.cycle_livery();
+    let new_scheme = modal.manager.profiles[1].color_scheme;
+    assert_ne!(orig_scheme, new_scheme);
+
+    // Switch active slot to 0
+    modal.manager.select_profile(0);
+    assert_eq!(modal.manager.active_index, 0);
+
+    // Apply back to target manager
+    let mut target_manager = ProfileManager::new();
+    modal.apply_to_manager(&mut target_manager);
+    assert_eq!(target_manager.profiles.len(), 2);
+    assert_eq!(target_manager.active_index, 0);
+    assert_eq!(target_manager.profiles[1].country, new_country);
+    assert_eq!(target_manager.profiles[1].color_scheme, new_scheme);
+
+    // Close modal via cancel
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let fonts = Fonts { display: None, ui_bold: None, ui_regular: None };
+    let theme = CabinetTheme::cyberpunk_neon();
+    let mut gp = GamepadSnapshot::default();
+    gp.btn_b_pressed = true;
+
+    let mut ctx = CabinetContext {
+        scaler: &scaler,
+        fonts: &fonts,
+        theme: &theme,
+        gamepad: &gp,
+        dt: 1.0 / 60.0,
+    };
+    let action = modal.update(&mut ctx);
+    assert!(matches!(action, ScreenAction::Pop));
+    assert!(modal.is_saved);
+}
+

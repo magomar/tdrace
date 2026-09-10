@@ -26,8 +26,8 @@ pub use input::{DigitalInputConfig, DigitalInputFilter, GamepadConfig, GamepadMa
 pub use profile::{ColorScheme, CountryInfo, CountryRegistry, PlayerProfile, ProfileManager};
 pub use records::{HallOfFame, RecordDatabase, RecordEntry, RecordMetric};
 pub use state::{
-    ArcadeSettingsModal, CabinetContext, CabinetScreen, ScreenAction, ScreenStack,
-    UniversalPauseModal,
+    ArcadeSettingsModal, CabinetContext, CabinetScreen, LeaderboardModal, ProfileSelectModal,
+    ScreenAction, ScreenStack, UniversalConfirmModal, UniversalPauseModal,
 };
 pub use ui::{
     draw_dropdown, draw_slider, draw_stepper, draw_tab_bar, CabinetTheme, DropdownWidget, Fonts,

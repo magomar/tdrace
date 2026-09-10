@@ -5,10 +5,10 @@ use cabinet::audio::AudioMixer;
 use cabinet::fx::{HitStop, ScreenFlash, ScreenShake};
 use cabinet::input::{DigitalInputFilter, GamepadConfig, GamepadManager};
 use cabinet::profile::ProfileManager;
-use cabinet::records::{RecordDatabase, RecordMetric};
+use cabinet::records::{HallOfFame, RecordDatabase, RecordEntry, RecordMetric};
 use cabinet::state::{
-    ArcadeSettingsModal, CabinetContext, CabinetScreen, ScreenAction, ScreenStack,
-    UniversalPauseModal,
+    ArcadeSettingsModal, CabinetContext, CabinetScreen, LeaderboardModal, ProfileSelectModal,
+    ScreenAction, ScreenStack, UniversalConfirmModal, UniversalPauseModal,
 };
 use cabinet::ui::{draw_stat_bar, CabinetTheme, Fonts, Palette, UiScaler};
 use glam::Vec2;
@@ -67,7 +67,31 @@ impl Default for SpaceArenaGame {
 impl SpaceArenaGame {
     pub fn new() -> Self {
         let mut record_db = RecordDatabase::new();
-        record_db.get_or_create("space_arena_highscores", RecordMetric::HighestScore, 10);
+        let hof = record_db.get_or_create("space_arena_highscores", RecordMetric::HighestScore, 10);
+        hof.insert(RecordEntry {
+            player_name: "Ace Pilot".to_string(),
+            player_alias: "Viper".to_string(),
+            country: Some("ESP".to_string()),
+            score: 14500.0,
+            detail: "Wave 8".to_string(),
+            timestamp: "2026-09-08".to_string(),
+        });
+        hof.insert(RecordEntry {
+            player_name: "Nova Hunter".to_string(),
+            player_alias: "Ghost".to_string(),
+            country: Some("USA".to_string()),
+            score: 9800.0,
+            detail: "Wave 6".to_string(),
+            timestamp: "2026-09-06".to_string(),
+        });
+        hof.insert(RecordEntry {
+            player_name: "Cosmic Drift".to_string(),
+            player_alias: "Apex".to_string(),
+            country: Some("JPN".to_string()),
+            score: 7200.0,
+            detail: "Wave 5".to_string(),
+            timestamp: "2026-09-04".to_string(),
+        });
 
         let mut game = Self {
             ship_pos: Vec2::new(640.0, 360.0),
@@ -201,6 +225,27 @@ impl CabinetScreen for SpaceArenaGame {
                 &self.audio.settings,
                 &GamepadConfig::default(),
             )));
+        }
+
+        // Leaderboard modal trigger
+        if is_key_pressed(KeyCode::H) || ctx.gamepad.btn_y_pressed {
+            let hof = self
+                .record_db
+                .categories
+                .get("space_arena_highscores")
+                .cloned()
+                .unwrap_or_else(|| HallOfFame::new("space_arena_highscores", RecordMetric::HighestScore, 10));
+            return ScreenAction::Push(Box::new(LeaderboardModal::new("SPACE ARENA HALL OF FAME", hof)));
+        }
+
+        // Profile select modal trigger
+        if is_key_pressed(KeyCode::P) || ctx.gamepad.btn_x_pressed {
+            return ScreenAction::Push(Box::new(ProfileSelectModal::new(&self.profile_manager)));
+        }
+
+        // Quit confirmation modal trigger
+        if is_key_pressed(KeyCode::Q) {
+            return ScreenAction::Push(Box::new(UniversalConfirmModal::quit_game()));
         }
 
         let effective_dt = self.hitstop.step(ctx.dt);
@@ -349,7 +394,7 @@ impl CabinetScreen for SpaceArenaGame {
         );
 
         fonts.draw_ui_bold_centered(
-            "[ESC] PAUSE | [O] SETTINGS",
+            "[ESC] PAUSE | [O] SETTINGS | [H] SCORES | [P] PILOT | [Q] QUIT",
             sw * 0.5,
             scaler.s(72.0),
             scaler.font_s(11.5),

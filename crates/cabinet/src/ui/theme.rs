@@ -19,6 +19,7 @@ impl Palette {
     pub const NEON_MAGENTA: Color = Color::new(1.0, 0.25, 0.80, 1.0);
     pub const NEON_GREEN: Color = Color::new(0.20, 0.95, 0.45, 1.0);
     pub const NEON_ORANGE: Color = Color::new(1.0, 0.50, 0.10, 1.0);
+    pub const NEON_RED: Color = Color::new(1.0, 0.22, 0.25, 1.0);
 
     // Glassmorphism & UI Backdrops
     pub const UI_CARD_BG: Color = Color::new(0.07, 0.09, 0.14, 0.92);
