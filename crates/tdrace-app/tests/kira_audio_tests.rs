@@ -17,7 +17,7 @@ fn test_amplitude_to_db_scaling() {
 
 #[test]
 fn test_audio_backend_lifecycle_and_mock_safety() {
-    let mut backend = AudioBackend::new();
+    let backend = AudioBackend::new();
     // In headless environments, is_available may be false, but it must not panic
     let _ = backend.is_available();
 
@@ -46,4 +46,101 @@ fn test_audio_backend_lifecycle_and_mock_safety() {
     handle.set_volume(0.0, Duration::from_millis(10));
 
     handle.stop(Duration::from_millis(10));
+}
+
+fn block_on<F: std::future::Future>(mut fut: F) -> F::Output {
+    use std::pin::Pin;
+    use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+
+    fn dummy_raw_waker() -> RawWaker {
+        fn no_op(_: *const ()) {}
+        fn clone(_: *const ()) -> RawWaker {
+            dummy_raw_waker()
+        }
+        let vtable = &RawWakerVTable::new(clone, no_op, no_op, no_op);
+        RawWaker::new(std::ptr::null(), vtable)
+    }
+
+    let waker = unsafe { Waker::from_raw(dummy_raw_waker()) };
+    let mut cx = Context::from_waker(&waker);
+    let mut pinned = unsafe { Pin::new_unchecked(&mut fut) };
+
+    match pinned.as_mut().poll(&mut cx) {
+        Poll::Ready(val) => val,
+        Poll::Pending => panic!("Future did not complete synchronously"),
+    }
+}
+
+#[test]
+fn test_soundbank_kira_sfx_and_music_population() {
+    use tdrace_app::audio::{MusicTrack, SfxType, SoundBank};
+
+    let bank = block_on(SoundBank::load_all());
+
+    // Verify all 17 SFX types have decoded Kira sound data
+    let all_sfx = [
+        SfxType::Engine,
+        SfxType::ShiftPop,
+        SfxType::Skid,
+        SfxType::WallCrash,
+        SfxType::CarHit,
+        SfxType::Curb,
+        SfxType::Offroad,
+        SfxType::CountdownLow,
+        SfxType::CountdownHigh,
+        SfxType::LapChime,
+        SfxType::SectorPing,
+        SfxType::UiSelect,
+        SfxType::UiMove,
+        SfxType::RaceFinish,
+        SfxType::JumpLaunch,
+        SfxType::Landing,
+        SfxType::WaterSplash,
+    ];
+
+    for sfx in all_sfx {
+        assert!(
+            bank.get_kira_sfx(sfx).is_some(),
+            "SFX {:?} should be populated in SoundBank::kira_sfx",
+            sfx
+        );
+    }
+
+    // Verify music tracks have decoded Kira sound data
+    assert!(bank.get_kira_music(MusicTrack::NightcallRace).is_some());
+    assert!(bank.get_kira_music(MusicTrack::NeonMenu).is_some());
+}
+
+#[test]
+fn test_audio_manager_kira_sfx_and_music_lifecycle() {
+    use tdrace_app::audio::{AudioManager, MusicTrack, SfxType};
+
+    let mut audio = AudioManager::new();
+    block_on(audio.init_async());
+
+    // SFX playback
+    audio.play_sfx(SfxType::UiSelect);
+    audio.play_sfx(SfxType::CountdownHigh);
+    audio.play_sfx_with_gain(SfxType::LapChime, 0.8);
+
+    // Music playback
+    audio.play_music(MusicTrack::NightcallRace);
+    assert_eq!(audio.current_music, Some(MusicTrack::NightcallRace));
+
+    // Volume updates & sync
+    audio.set_music_volume(0.6);
+    audio.set_master_volume(0.85);
+    audio.toggle_mute();
+    assert!(audio.settings.is_muted);
+    audio.toggle_mute();
+    assert!(!audio.settings.is_muted);
+
+    // Switch music track
+    audio.play_music(MusicTrack::NeonMenu);
+    assert_eq!(audio.current_music, Some(MusicTrack::NeonMenu));
+
+    // Stop music
+    audio.stop_music();
+    assert_eq!(audio.current_music, None);
+    assert!(audio.active_music_handle.is_none());
 }

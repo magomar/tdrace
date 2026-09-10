@@ -1,4 +1,6 @@
-use macroquad::audio::{play_sound, PlaySoundParams, Sound};
+use macroquad::audio::Sound;
+#[cfg(target_arch = "wasm32")]
+use macroquad::audio::{play_sound, PlaySoundParams};
 use crate::audio::bus::AudioSettings;
 
 /// Sound category bus routing.
@@ -37,6 +39,7 @@ impl AudioMixer {
             };
             let effective_vol = (bus_vol * volume_scale).clamp(0.0, 1.0);
             if effective_vol > 1e-4 {
+                #[cfg(target_arch = "wasm32")]
                 let _ = std::panic::catch_unwind(|| {
                     play_sound(
                         snd,
@@ -46,6 +49,8 @@ impl AudioMixer {
                         },
                     );
                 });
+                #[cfg(not(target_arch = "wasm32"))]
+                let _ = snd;
             }
         }
     }

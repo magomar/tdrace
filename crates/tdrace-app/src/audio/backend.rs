@@ -121,7 +121,7 @@ impl SoundData {
 /// Master audio backend coordinating device audio output.
 pub struct AudioBackend {
     #[cfg(not(target_arch = "wasm32"))]
-    manager: Option<AudioManager<DefaultBackend>>,
+    manager: Option<std::sync::Mutex<AudioManager<DefaultBackend>>>,
 }
 
 impl Default for AudioBackend {
@@ -136,7 +136,9 @@ impl AudioBackend {
     pub fn new() -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).ok();
+            let manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())
+                .ok()
+                .map(std::sync::Mutex::new);
             Self { manager }
         }
         #[cfg(target_arch = "wasm32")]
@@ -158,16 +160,18 @@ impl AudioBackend {
     }
 
     /// Plays a sound asset with specified initial volume and playback rate.
-    pub fn play(&mut self, sound: &SoundData, initial_volume: f32, initial_pitch: f32) -> ActiveSoundHandle {
+    pub fn play(&self, sound: &SoundData, initial_volume: f32, initial_pitch: f32) -> ActiveSoundHandle {
         #[cfg(not(target_arch = "wasm32"))]
-        if let (Some(mgr), Some(data)) = (self.manager.as_mut(), sound.data.as_ref()) {
-            let mut sound_copy = data.clone();
-            let db = amplitude_to_db(initial_volume);
-            sound_copy.settings.volume = Decibels(db).into();
-            sound_copy.settings.playback_rate = (initial_pitch as f64).into();
+        if let (Some(mutex), Some(data)) = (self.manager.as_ref(), sound.data.as_ref()) {
+            if let Ok(mut mgr) = mutex.lock() {
+                let mut sound_copy = data.clone();
+                let db = amplitude_to_db(initial_volume);
+                sound_copy.settings.volume = Decibels(db).into();
+                sound_copy.settings.playback_rate = (initial_pitch as f64).into();
 
-            if let Ok(handle) = mgr.play(sound_copy) {
-                return ActiveSoundHandle::from_handle(handle);
+                if let Ok(handle) = mgr.play(sound_copy) {
+                    return ActiveSoundHandle::from_handle(handle);
+                }
             }
         }
         #[cfg(target_arch = "wasm32")]

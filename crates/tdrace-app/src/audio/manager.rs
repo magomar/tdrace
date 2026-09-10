@@ -1,9 +1,23 @@
 //! Central Audio Manager and Mixer coordinating SoundBank, Music, and Dynamic SFX.
 
-use macroquad::audio::{
-    load_sound_from_bytes, play_sound, set_sound_volume, stop_sound,
-    PlaySoundParams, Sound,
-};
+use std::collections::HashMap;
+use std::time::Duration;
+use macroquad::audio::{PlaySoundParams, Sound};
+#[cfg(target_arch = "wasm32")]
+use macroquad::audio::{load_sound_from_bytes, play_sound, set_sound_volume, stop_sound};
+
+/// Safe wrapper around macroquad load_sound_from_bytes that avoids uninitialized macroquad window contexts on native desktop.
+async fn safe_load_sound_from_bytes(data: &[u8]) -> Option<Sound> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        load_sound_from_bytes(data).await.ok()
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let _ = data;
+        None
+    }
+}
 use serde::{Deserialize, Serialize};
 
 use crate::audio::sfx::{
@@ -19,7 +33,7 @@ use crate::audio::sfx::{
 use crate::audio::synthwave::{generate_menu_theme, generate_nightcall_race_theme};
 use crate::audio::dsp::DEFAULT_SAMPLE_RATE;
 use crate::audio::auxiliary_fx::AuxiliaryAudioLayer;
-use crate::audio::backend::AudioBackend;
+use crate::audio::backend::{ActiveSoundHandle, AudioBackend, SoundData};
 use crate::audio::engine_mixer::EngineAudioMixer;
 use crate::audio::samples::ArchetypeSampleBank;
 
@@ -70,14 +84,14 @@ pub const RPM_BAND_FREQS: [f32; NUM_RPM_BANDS] = [
 pub use cabinet::audio::AudioSettings;
 
 /// Music Track Identifier.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum MusicTrack {
     NightcallRace,
     NeonMenu,
 }
 
 /// Sound Effect Identifier.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SfxType {
     Engine,
     ShiftPop,
@@ -126,6 +140,8 @@ pub struct SoundBank {
     pub sfx_jump_launch: Option<Sound>,
     pub sfx_landing: Option<Sound>,
     pub sfx_water_splash: Option<Sound>,
+    pub kira_sfx: HashMap<SfxType, SoundData>,
+    pub kira_music: HashMap<MusicTrack, SoundData>,
 }
 
 impl SoundBank {
@@ -157,6 +173,8 @@ impl SoundBank {
             sfx_jump_launch: None,
             sfx_landing: None,
             sfx_water_splash: None,
+            kira_sfx: HashMap::new(),
+            kira_music: HashMap::new(),
         }
     }
 
@@ -177,22 +195,22 @@ impl SoundBank {
 
         for (idx, &freq) in RPM_BAND_FREQS.iter().enumerate() {
             let gen_wav = generate_generic_engine_rpm_band(sample_rate, freq);
-            generic_bands[idx] = load_sound_from_bytes(&gen_wav).await.ok();
+            generic_bands[idx] = safe_load_sound_from_bytes(&gen_wav).await;
 
             let gt_wav = generate_sport_gt_rpm_band(sample_rate, freq);
-            sport_gt_bands[idx] = load_sound_from_bytes(&gt_wav).await.ok();
+            sport_gt_bands[idx] = safe_load_sound_from_bytes(&gt_wav).await;
 
             let kart_wav = generate_kart_125cc_rpm_band(sample_rate, freq);
-            kart_bands[idx] = load_sound_from_bytes(&kart_wav).await.ok();
+            kart_bands[idx] = safe_load_sound_from_bytes(&kart_wav).await;
 
             let f1_wav = generate_f1_v6_rpm_band(sample_rate, freq);
-            f1_bands[idx] = load_sound_from_bytes(&f1_wav).await.ok();
+            f1_bands[idx] = safe_load_sound_from_bytes(&f1_wav).await;
 
             let rally_wav = generate_rally_turbo_rpm_band(sample_rate, freq);
-            rally_bands[idx] = load_sound_from_bytes(&rally_wav).await.ok();
+            rally_bands[idx] = safe_load_sound_from_bytes(&rally_wav).await;
 
             let nascar_wav = generate_nascar_v8_rpm_band(sample_rate, freq);
-            nascar_bands[idx] = load_sound_from_bytes(&nascar_wav).await.ok();
+            nascar_bands[idx] = safe_load_sound_from_bytes(&nascar_wav).await;
         }
 
         let shift_pop_wav = generate_gear_shift_pop(sample_rate);
@@ -213,9 +231,45 @@ impl SoundBank {
         let land_wav = generate_landing_sound(sample_rate);
         let water_wav = generate_water_splash_sound(sample_rate);
 
+        let mut kira_sfx = HashMap::new();
+        let mut kira_music = HashMap::new();
+
+        if let Ok(sd) = SoundData::from_bytes(&nightcall_wav, true) {
+            kira_music.insert(MusicTrack::NightcallRace, sd);
+        }
+        if let Ok(sd) = SoundData::from_bytes(&menu_wav, true) {
+            kira_music.insert(MusicTrack::NeonMenu, sd);
+        }
+
+        let sfx_sources = [
+            (SfxType::ShiftPop, &shift_pop_wav),
+            (SfxType::Engine, &engine_wav),
+            (SfxType::Skid, &skid_wav),
+            (SfxType::WallCrash, &wall_crash_wav),
+            (SfxType::CarHit, &car_hit_wav),
+            (SfxType::Curb, &curb_wav),
+            (SfxType::Offroad, &offroad_wav),
+            (SfxType::CountdownLow, &cd_low_wav),
+            (SfxType::CountdownHigh, &cd_high_wav),
+            (SfxType::LapChime, &lap_wav),
+            (SfxType::SectorPing, &sector_wav),
+            (SfxType::UiSelect, &ui_sel_wav),
+            (SfxType::UiMove, &ui_mov_wav),
+            (SfxType::RaceFinish, &finish_wav),
+            (SfxType::JumpLaunch, &jump_wav),
+            (SfxType::Landing, &land_wav),
+            (SfxType::WaterSplash, &water_wav),
+        ];
+
+        for (sfx_type, bytes) in sfx_sources {
+            if let Ok(sd) = SoundData::from_bytes(bytes, false) {
+                kira_sfx.insert(sfx_type, sd);
+            }
+        }
+
         Self {
-            music_nightcall: load_sound_from_bytes(&nightcall_wav).await.ok(),
-            music_menu: load_sound_from_bytes(&menu_wav).await.ok(),
+            music_nightcall: safe_load_sound_from_bytes(&nightcall_wav).await,
+            music_menu: safe_load_sound_from_bytes(&menu_wav).await,
             engine_rpm_bands: generic_bands.clone(),
             engine_generic: generic_bands,
             engine_sport_gt: sport_gt_bands,
@@ -223,23 +277,25 @@ impl SoundBank {
             engine_f1: f1_bands,
             engine_rally: rally_bands,
             engine_nascar: nascar_bands,
-            sfx_shift_pop: load_sound_from_bytes(&shift_pop_wav).await.ok(),
-            sfx_engine: load_sound_from_bytes(&engine_wav).await.ok(),
-            sfx_skid: load_sound_from_bytes(&skid_wav).await.ok(),
-            sfx_wall_crash: load_sound_from_bytes(&wall_crash_wav).await.ok(),
-            sfx_car_hit: load_sound_from_bytes(&car_hit_wav).await.ok(),
-            sfx_curb: load_sound_from_bytes(&curb_wav).await.ok(),
-            sfx_offroad: load_sound_from_bytes(&offroad_wav).await.ok(),
-            sfx_cd_low: load_sound_from_bytes(&cd_low_wav).await.ok(),
-            sfx_cd_high: load_sound_from_bytes(&cd_high_wav).await.ok(),
-            sfx_lap: load_sound_from_bytes(&lap_wav).await.ok(),
-            sfx_sector: load_sound_from_bytes(&sector_wav).await.ok(),
-            sfx_ui_select: load_sound_from_bytes(&ui_sel_wav).await.ok(),
-            sfx_ui_move: load_sound_from_bytes(&ui_mov_wav).await.ok(),
-            sfx_finish: load_sound_from_bytes(&finish_wav).await.ok(),
-            sfx_jump_launch: load_sound_from_bytes(&jump_wav).await.ok(),
-            sfx_landing: load_sound_from_bytes(&land_wav).await.ok(),
-            sfx_water_splash: load_sound_from_bytes(&water_wav).await.ok(),
+            sfx_shift_pop: safe_load_sound_from_bytes(&shift_pop_wav).await,
+            sfx_engine: safe_load_sound_from_bytes(&engine_wav).await,
+            sfx_skid: safe_load_sound_from_bytes(&skid_wav).await,
+            sfx_wall_crash: safe_load_sound_from_bytes(&wall_crash_wav).await,
+            sfx_car_hit: safe_load_sound_from_bytes(&car_hit_wav).await,
+            sfx_curb: safe_load_sound_from_bytes(&curb_wav).await,
+            sfx_offroad: safe_load_sound_from_bytes(&offroad_wav).await,
+            sfx_cd_low: safe_load_sound_from_bytes(&cd_low_wav).await,
+            sfx_cd_high: safe_load_sound_from_bytes(&cd_high_wav).await,
+            sfx_lap: safe_load_sound_from_bytes(&lap_wav).await,
+            sfx_sector: safe_load_sound_from_bytes(&sector_wav).await,
+            sfx_ui_select: safe_load_sound_from_bytes(&ui_sel_wav).await,
+            sfx_ui_move: safe_load_sound_from_bytes(&ui_mov_wav).await,
+            sfx_finish: safe_load_sound_from_bytes(&finish_wav).await,
+            sfx_jump_launch: safe_load_sound_from_bytes(&jump_wav).await,
+            sfx_landing: safe_load_sound_from_bytes(&land_wav).await,
+            sfx_water_splash: safe_load_sound_from_bytes(&water_wav).await,
+            kira_sfx,
+            kira_music,
         }
     }
 
@@ -285,6 +341,14 @@ impl SoundBank {
             SfxType::WaterSplash => self.sfx_water_splash.as_ref(),
         }
     }
+
+    pub fn get_kira_sfx(&self, sfx: SfxType) -> Option<&SoundData> {
+        self.kira_sfx.get(&sfx)
+    }
+
+    pub fn get_kira_music(&self, track: MusicTrack) -> Option<&SoundData> {
+        self.kira_music.get(&track)
+    }
 }
 
 /// Master Audio System Coordinator.
@@ -302,6 +366,7 @@ pub struct AudioManager {
     pub sampled_engine: Option<EngineAudioMixer>,
     pub auxiliary_layer: Option<AuxiliaryAudioLayer>,
     pub use_sampled_engine: bool,
+    pub active_music_handle: Option<ActiveSoundHandle>,
 }
 
 impl Default for AudioManager {
@@ -312,23 +377,32 @@ impl Default for AudioManager {
 
 /// Safe wrapper around macroquad play_sound that handles uninitialized headless contexts.
 fn safe_play_sound(sound: &Sound, params: PlaySoundParams) {
+    #[cfg(target_arch = "wasm32")]
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         play_sound(sound, params);
     }));
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = (sound, params);
 }
 
 /// Safe wrapper around macroquad set_sound_volume.
 fn safe_set_sound_volume(sound: &Sound, volume: f32) {
+    #[cfg(target_arch = "wasm32")]
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         set_sound_volume(sound, volume);
     }));
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = (sound, volume);
 }
 
 /// Safe wrapper around macroquad stop_sound.
 fn safe_stop_sound(sound: &Sound) {
+    #[cfg(target_arch = "wasm32")]
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         stop_sound(sound);
     }));
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = sound;
 }
 
 impl AudioManager {
@@ -358,6 +432,7 @@ impl AudioManager {
             sampled_engine,
             auxiliary_layer,
             use_sampled_engine: true,
+            active_music_handle: None,
         }
     }
 
@@ -378,18 +453,24 @@ impl AudioManager {
         self.bank = SoundBank::load_all().await;
         if let Some(track) = self.current_music {
             let vol = self.settings.effective_music_volume();
-            let sound = match track {
-                MusicTrack::NightcallRace => self.bank.music_nightcall.as_ref(),
-                MusicTrack::NeonMenu => self.bank.music_menu.as_ref(),
-            };
-            if let Some(s) = sound {
-                safe_play_sound(
-                    s,
-                    PlaySoundParams {
-                        looped: true,
-                        volume: vol,
-                    },
-                );
+            if self.backend.is_available() {
+                if let Some(sd) = self.bank.get_kira_music(track) {
+                    self.active_music_handle = Some(self.backend.play(sd, vol, 1.0));
+                }
+            } else {
+                let sound = match track {
+                    MusicTrack::NightcallRace => self.bank.music_nightcall.as_ref(),
+                    MusicTrack::NeonMenu => self.bank.music_menu.as_ref(),
+                };
+                if let Some(s) = sound {
+                    safe_play_sound(
+                        s,
+                        PlaySoundParams {
+                            looped: true,
+                            volume: vol,
+                        },
+                    );
+                }
             }
         }
     }
@@ -435,6 +516,13 @@ impl AudioManager {
         self.current_music = Some(track);
 
         let vol = self.settings.effective_music_volume();
+        if self.backend.is_available() {
+            if let Some(sd) = self.bank.get_kira_music(track) {
+                self.active_music_handle = Some(self.backend.play(sd, vol, 1.0));
+                return;
+            }
+        }
+
         let sound = match track {
             MusicTrack::NightcallRace => self.bank.music_nightcall.as_ref(),
             MusicTrack::NeonMenu => self.bank.music_menu.as_ref(),
@@ -452,8 +540,11 @@ impl AudioManager {
     }
 
     /// Synchronizes current music channel volume with settings.
-    pub fn sync_music_volume(&self) {
+    pub fn sync_music_volume(&mut self) {
         let vol = self.settings.effective_music_volume();
+        if let Some(h) = self.active_music_handle.as_mut() {
+            h.set_volume(vol, Duration::from_millis(50));
+        }
         if let Some(track) = self.current_music {
             let sound = match track {
                 MusicTrack::NightcallRace => self.bank.music_nightcall.as_ref(),
@@ -467,6 +558,9 @@ impl AudioManager {
 
     /// Stops currently playing music.
     pub fn stop_music(&mut self) {
+        if let Some(mut h) = self.active_music_handle.take() {
+            h.stop(Duration::from_millis(150));
+        }
         if let Some(track) = self.current_music {
             let sound = match track {
                 MusicTrack::NightcallRace => self.bank.music_nightcall.as_ref(),
@@ -492,6 +586,13 @@ impl AudioManager {
         };
         if vol <= 0.001 {
             return;
+        }
+
+        if self.backend.is_available() {
+            if let Some(sound_data) = self.bank.get_kira_sfx(sfx) {
+                self.backend.play(sound_data, vol.clamp(0.0, 1.0), 1.0);
+                return;
+            }
         }
 
         if let Some(sound) = self.bank.get_sound(sfx) {
