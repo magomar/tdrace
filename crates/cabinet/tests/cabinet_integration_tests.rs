@@ -517,5 +517,31 @@ fn test_cabinet_context_audio_wiring_and_tactile_feedback() {
     assert_eq!(sink.selects.load(Ordering::SeqCst), 1, "Should trigger ui_select on confirmation");
 }
 
+#[test]
+fn test_crt_scanlines_and_settings_integration() {
+    use cabinet::fx::{CrtOverlay, ScanlineMode};
+
+    let audio = AudioSettings::default();
+    let gp = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp);
+
+    let mut crt = CrtOverlay::default();
+    assert_eq!(crt.config.mode, ScanlineMode::Disabled);
+
+    // Scanlines dropdown selection: 2 is Arcade CRT
+    modal.scanlines_dropdown.set_selected(2);
+    assert_eq!(modal.scanline_mode(), ScanlineMode::ArcadeCrt);
+
+    modal.apply_to_crt(&mut crt);
+    assert_eq!(crt.config.mode, ScanlineMode::ArcadeCrt);
+    assert!(crt.is_active());
+    assert!((crt.effective_opacity() - ScanlineMode::ArcadeCrt.opacity()).abs() < 1e-4);
+
+    // Check custom configuration and roll animation
+    crt.config.roll_speed = 50.0;
+    crt.update(0.2);
+    assert!((crt.roll_offset - 10.0).abs() < 1e-4);
+}
+
 
 

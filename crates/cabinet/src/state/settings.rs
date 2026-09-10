@@ -162,6 +162,16 @@ impl ArcadeSettingsModal {
         gp.steer_scale = self.steer_sensitivity_slider.value;
         gp.steer_exponent = self.steer_exponent_slider.value;
     }
+
+    /// Returns the currently selected CRT scanline mode.
+    pub fn scanline_mode(&self) -> crate::fx::ScanlineMode {
+        crate::fx::ScanlineMode::from_index(self.scanlines_dropdown.selected_index)
+    }
+
+    /// Applies configured CRT scanline mode to an external `CrtOverlay`.
+    pub fn apply_to_crt(&self, crt: &mut crate::fx::CrtOverlay) {
+        crt.config.mode = self.scanline_mode();
+    }
 }
 
 impl CabinetScreen for ArcadeSettingsModal {

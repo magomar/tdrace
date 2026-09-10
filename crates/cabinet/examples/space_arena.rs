@@ -56,6 +56,7 @@ pub struct SpaceArenaGame {
     pub profile_manager: ProfileManager,
     pub record_db: RecordDatabase,
     pub audio: AudioMixer,
+    pub crt: cabinet::fx::CrtOverlay,
     pub fire_cooldown: f32,
 }
 
@@ -111,6 +112,7 @@ impl SpaceArenaGame {
             profile_manager: ProfileManager::new(),
             record_db,
             audio: AudioMixer::new(),
+            crt: cabinet::fx::CrtOverlay::with_mode(cabinet::fx::ScanlineMode::Subtle),
             fire_cooldown: 0.0,
         };
         game.spawn_wave(1);
@@ -252,6 +254,7 @@ impl CabinetScreen for SpaceArenaGame {
         let effective_dt = self.hitstop.step(ctx.dt);
         self.shake.update(ctx.dt);
         self.flash.update(ctx.dt);
+        self.crt.update(ctx.dt);
 
         if self.fire_cooldown > 0.0 {
             self.fire_cooldown -= ctx.dt;
@@ -401,6 +404,8 @@ impl CabinetScreen for SpaceArenaGame {
             scaler.font_s(11.5),
             Palette::UI_TEXT_MUTED,
         );
+
+        self.crt.render(0.0, 0.0, sw, sh);
     }
 }
 
