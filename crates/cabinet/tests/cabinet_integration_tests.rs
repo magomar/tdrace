@@ -589,5 +589,32 @@ fn test_screen_stack_transitions_lifecycle() {
     assert!(!stack.is_transitioning());
 }
 
+#[test]
+fn test_input_mapping_action_system() {
+    use cabinet::input::{ArcadeAction, ArcadeKey, GamepadButton, InputMap, InputSource};
+
+    let mut map = InputMap::default_arcade();
+    let mut gp = GamepadSnapshot::default();
+
+    // Default bindings respond to Gamepad buttons
+    assert!(!map.is_down(ArcadeAction::Primary, &gp));
+    gp.btn_a_pressed = true;
+    assert!(map.is_pressed(ArcadeAction::Primary, &gp));
+
+    // Custom rebinding
+    map.set_bindings(
+        ArcadeAction::Primary,
+        vec![
+            InputSource::Key(ArcadeKey::Space),
+            InputSource::GamepadBtn(GamepadButton::RightBumper),
+        ],
+    );
+
+    // Serialization persistence
+    let json = map.to_json().expect("InputMap serialize failed");
+    let deserialized = InputMap::from_json(&json).expect("InputMap deserialize failed");
+    assert_eq!(map, deserialized);
+}
+
 
 
