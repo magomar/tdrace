@@ -124,6 +124,8 @@ fn render_wall_shadow(wall: &WallBarrier) {
     };
 
     draw_line(s0.x, s0.y, s1.x, s1.y, thickness, Palette::SHADOW);
+    draw_circle(s0.x, s0.y, thickness * 0.5, Palette::SHADOW);
+    draw_circle(s1.x, s1.y, thickness * 0.5, Palette::SHADOW);
 }
 
 /// Draws the actual barrier geometry based on its barrier type.
@@ -166,6 +168,8 @@ fn render_wall_body(wall: &WallBarrier) {
             let c = p1 - norm * half_w;
             let d = p0 - norm * half_w;
             draw_quad(a, b, c, d, Palette::CONCRETE_WALL);
+            draw_circle(p0.x, p0.y, half_w, Palette::CONCRETE_WALL);
+            draw_circle(p1.x, p1.y, half_w, Palette::CONCRETE_WALL);
 
             // Top highlight bevel line
             let top0 = p0 + norm * (half_w * 0.4);
@@ -180,9 +184,13 @@ fn render_wall_body(wall: &WallBarrier) {
             let c = p1 - norm * half_w;
             let d = p0 - norm * half_w;
             draw_quad(a, b, c, d, Palette::TIRE_WALL);
+            draw_circle(p0.x, p0.y, half_w, Palette::TIRE_WALL);
+            draw_circle(p1.x, p1.y, half_w, Palette::TIRE_WALL);
 
             // Center rubber binding strap / rim highlight
             draw_line(p0.x, p0.y, p1.x, p1.y, 0.14, Palette::TIRE_RIM);
+            draw_circle(p0.x, p0.y, 0.12, Palette::TIRE_RIM);
+            draw_circle(p1.x, p1.y, 0.12, Palette::TIRE_RIM);
 
             // Stacked tire division ribs along the barrier segment
             let tire_step = 1.0;
@@ -202,6 +210,8 @@ fn render_wall_body(wall: &WallBarrier) {
             let c = p1 - norm * half_w;
             let d = p0 - norm * half_w;
             draw_quad(a, b, c, d, Palette::CURB_RED);
+            draw_circle(p0.x, p0.y, half_w, Palette::CURB_RED);
+            draw_circle(p1.x, p1.y, half_w, Palette::CURB_RED);
         }
     }
 }

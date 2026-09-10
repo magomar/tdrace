@@ -249,3 +249,63 @@ fn test_rubber_tyres_wall_braking_resistance_stronger_than_concrete() {
         speed_loss_concrete
     );
 }
+
+#[test]
+fn test_corner_no_phantom_collision_past_endpoint() {
+    // Wall from x = -10.0 to x = 0.0 along y = 0.0, normal is +Y (0, 1)
+    let wall = WallBarrier::new(
+        Vec2::new(-10.0, 0.0),
+        Vec2::new(0.0, 0.0),
+        BarrierType::TireWall,
+    );
+
+    // Car centered at x = 2.0, y = 0.5 (past the wall's end at x = 0.0)
+    // Rear corners of car are at x ~ 0.65, y ~ -0.35 (in open space beyond the wall)
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(2.0, 0.5), 0.0);
+    car.state.velocity = Vec2::new(15.0, 0.0);
+
+    let col = resolve_car_wall_collision(&mut car, &wall);
+    assert!(
+        col.is_none(),
+        "Car past the end of the wall segment must not suffer phantom collisions, got: {:?}",
+        col
+    );
+    assert_eq!(car.state.velocity.x, 15.0, "Car velocity must not be altered");
+}
+
+#[test]
+fn test_corner_turn_does_not_freeze_car() {
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+    use tdrace_core::physics::car::CarControls;
+    use tdrace_core::physics::surface::SurfaceType;
+
+    // Corner with two segments meeting at vertex (0.0, 0.0):
+    // Segment 1: from (-15.0, 0.0) to (0.0, 0.0) along X axis
+    // Segment 2: from (0.0, 0.0) to (0.0, -15.0) along Y axis
+    let walls = vec![
+        WallBarrier::new(Vec2::new(-15.0, 0.0), Vec2::new(0.0, 0.0), BarrierType::TireWall),
+        WallBarrier::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, -15.0), BarrierType::TireWall),
+    ];
+
+    // Place car at (-1.5, 0.9) heading along +X with full throttle, turning right
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-1.5, 0.9), 0.0);
+    car.state.velocity = Vec2::new(10.0, 0.0);
+
+    let dt = 1.0 / 120.0;
+    let mut ctrl = CarControls::accelerate();
+    ctrl.steer = -0.5; // Turn right into the corner
+
+    // Step physics & collision resolution for 60 sub-steps (0.5 second)
+    for _ in 0..60 {
+        car.step(&ctrl, SurfaceType::Asphalt, dt);
+        let _ = resolve_all_wall_collisions(&mut car, &walls, &[]);
+    }
+
+    // Car must not be frozen or stopped dead in the corner
+    let speed = car.state.velocity.length();
+    assert!(
+        speed > 2.0,
+        "Car must maintain forward driving momentum and not get permanently pinned at corner, speed was {}",
+        speed
+    );
+}

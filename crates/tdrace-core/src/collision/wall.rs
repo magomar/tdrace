@@ -51,7 +51,10 @@ pub fn resolve_car_wall_collision(
     let obb = OrientedBox::from_car(car);
     let corners = obb.corners();
 
-    let wall_norm = seg.normal();
+    let seg_ab = seg.end - seg.start;
+    let seg_len = seg_ab.length();
+    let seg_dir = if seg_len > 1e-6 { seg_ab / seg_len } else { Vec2::X };
+    let wall_norm = Vec2::new(-seg_dir.y, seg_dir.x);
     // Determine which side of the wall the car center is on
     let car_center_side = (car.state.position - seg.start).dot(wall_norm);
     let (approach_normal, is_positive_side) = if car_center_side >= 0.0 {
@@ -62,7 +65,7 @@ pub fn resolve_car_wall_collision(
 
     let skin_thickness = 0.02f32;
     let mut deepest_penetration = 0.0f32;
-    let mut penetrating_points = Vec::new();
+    let mut penetrating_points: Vec<(Vec2, f32, Vec2)> = Vec::new();
 
     // Test each car corner against the line segment
     for &c in &corners {
@@ -74,34 +77,60 @@ pub fn resolve_car_wall_collision(
             continue;
         }
 
-        let signed_dist = (c - seg.start).dot(wall_norm);
-        let penetration = if is_positive_side {
-            skin_thickness - signed_dist
-        } else {
-            skin_thickness + signed_dist
-        };
+        let ac = c - seg.start;
+        let proj_t = ac.dot(seg_dir);
 
-        if penetration > 0.0 {
+        if proj_t >= -0.05 && proj_t <= seg_len + 0.05 {
+            // Corner falls within the segment's longitudinal span
+            let perp_dist = if is_positive_side {
+                ac.dot(wall_norm)
+            } else {
+                -ac.dot(wall_norm)
+            };
+            let penetration = skin_thickness - perp_dist;
+            if penetration > 0.0 {
+                if penetration > deepest_penetration {
+                    deepest_penetration = penetration;
+                }
+                penetrating_points.push((c, penetration, approach_normal));
+            }
+        } else if dist_to_seg < skin_thickness {
+            // Corner is past segment endpoints: only collide if within skin_thickness of endpoint
+            let penetration = skin_thickness - dist_to_seg;
+            let pt_norm = if dist_to_seg > 1e-5 {
+                (c - closest_pt) / dist_to_seg
+            } else {
+                approach_normal
+            };
             if penetration > deepest_penetration {
                 deepest_penetration = penetration;
             }
-            penetrating_points.push((c, penetration));
+            penetrating_points.push((c, penetration, pt_norm));
         }
     }
 
     // Also test segment endpoints against car OBB
+    let fwd = obb.forward();
+    let left = obb.left();
     for &endpoint in &[seg.start, seg.end] {
         if obb.contains_point(endpoint) {
-            let closest_on_car = obb.center + (endpoint - obb.center).clamp(
-                -obb.half_extents,
-                obb.half_extents,
-            );
-            let pen = (endpoint - closest_on_car).length() + skin_thickness;
-            if pen > 0.0 {
+            let rel = endpoint - obb.center;
+            let local_x = rel.dot(fwd);
+            let local_y = rel.dot(left);
+            let overlap_x = obb.half_extents.x - local_x.abs();
+            let overlap_y = obb.half_extents.y - local_y.abs();
+            if overlap_x > 0.0 && overlap_y > 0.0 {
+                let (pen, pt_norm) = if overlap_x < overlap_y {
+                    let sign = if local_x >= 0.0 { -1.0 } else { 1.0 };
+                    (overlap_x + skin_thickness, fwd * sign)
+                } else {
+                    let sign = if local_y >= 0.0 { -1.0 } else { 1.0 };
+                    (overlap_y + skin_thickness, left * sign)
+                };
                 if pen > deepest_penetration {
                     deepest_penetration = pen;
                 }
-                penetrating_points.push((endpoint, pen));
+                penetrating_points.push((endpoint, pen, pt_norm));
             }
         }
     }
@@ -110,13 +139,15 @@ pub fn resolve_car_wall_collision(
         return None;
     }
 
-    // Average the contact points that are close to maximum penetration
+    // Average the contact points and normals that are close to maximum penetration
     let threshold = (deepest_penetration - 0.02).max(0.0);
     let mut contact_sum = Vec2::ZERO;
+    let mut normal_sum = Vec2::ZERO;
     let mut count = 0.0f32;
-    for (pt, pen) in &penetrating_points {
+    for (pt, pen, norm) in &penetrating_points {
         if *pen >= threshold {
             contact_sum += *pt;
+            normal_sum += *norm;
             count += 1.0;
         }
     }
@@ -126,7 +157,11 @@ pub fn resolve_car_wall_collision(
         penetrating_points[0].0
     };
 
-    let normal = approach_normal;
+    let normal = if normal_sum.length_squared() > 1e-4 {
+        normal_sum.normalize()
+    } else {
+        approach_normal
+    };
 
     // 1. Positional pushout to resolve penetration
     let pushout = normal * (deepest_penetration + 0.002);
@@ -179,7 +214,9 @@ pub fn resolve_car_wall_collision(
             crate::track::geometry::BarrierType::CurbWall => 7.5,  // Low curb wall resistance (~0.75g)
         };
         // resolve_all_wall_collisions runs 2 sub-iterations per 60Hz frame (dt_sub ~ 0.01667 / 2 = 0.00833s)
-        let contact_brake_impulse = mass * brake_decel * 0.00833;
+        // Scale contact brake impulse at very low speed (< 1.0 m/s) to prevent velocity-lock at corners and rest
+        let speed_scale = (v_t_mag / 1.0).clamp(0.0, 1.0);
+        let contact_brake_impulse = mass * brake_decel * 0.00833 * speed_scale;
 
         let max_total_friction = max_impact_friction + contact_brake_impulse;
         let j_t = j_t_desired.clamp(-max_total_friction, max_total_friction);
@@ -286,7 +323,8 @@ pub fn resolve_car_obstacle_collision(
 
         let j_t_desired = -v_t_mag / k_t;
         let max_impact_friction = obstacle.friction * j_n;
-        let contact_brake_impulse = mass * (obstacle.friction * 20.0) * 0.00833;
+        let speed_scale = (v_t_mag / 1.0).clamp(0.0, 1.0);
+        let contact_brake_impulse = mass * (obstacle.friction * 20.0) * 0.00833 * speed_scale;
         let max_total_friction = max_impact_friction + contact_brake_impulse;
         let j_t = j_t_desired.clamp(-max_total_friction, max_total_friction);
         j_t_applied = j_t.abs();
