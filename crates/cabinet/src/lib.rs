@@ -25,7 +25,10 @@ pub use audio::{
     CabinetAudioSink, SoundBus, SoundCue, SoundData,
 };
 
-pub use fx::{CrtConfig, CrtOverlay, HitStop, ScanlineMode, ScreenFlash, ScreenShake};
+pub use fx::{
+    CrtConfig, CrtOverlay, HitStop, ScanlineMode, ScreenFlash, ScreenShake, ScreenTransition,
+    TransitionConfig, TransitionPhase, TransitionType,
+};
 pub use input::{DigitalInputConfig, DigitalInputFilter, GamepadConfig, GamepadManager, GamepadSnapshot, NavGrid2D};
 pub use profile::{ColorScheme, CountryInfo, CountryRegistry, PlayerProfile, ProfileManager};
 pub use records::{HallOfFame, RecordDatabase, RecordEntry, RecordMetric};

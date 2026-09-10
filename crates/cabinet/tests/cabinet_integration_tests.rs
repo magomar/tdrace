@@ -543,5 +543,51 @@ fn test_crt_scanlines_and_settings_integration() {
     assert!((crt.roll_offset - 10.0).abs() < 1e-4);
 }
 
+#[test]
+fn test_screen_stack_transitions_lifecycle() {
+    use cabinet::fx::ScreenTransition;
+
+    let root = Box::new(DummyScreen {
+        name: "Stage1".to_string(),
+    });
+    let mut stack = ScreenStack::new(root);
+
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let fonts = Fonts { display: None, ui_bold: None, ui_regular: None };
+    let theme = CabinetTheme::cyberpunk_neon();
+    let gp = GamepadSnapshot::default();
+    let mut ctx = CabinetContext::new(&scaler, &fonts, &theme, &gp, 0.1);
+
+    assert_eq!(stack.active_screen_name(), Some("Stage1"));
+    assert!(!stack.is_transitioning());
+
+    // Start transition to switch to Stage2 using a 0.2s fade (0.096s cover, 0.008s hold, 0.096s uncover)
+    let next = Box::new(DummyScreen {
+        name: "Stage2".to_string(),
+    });
+    stack.start_transition(ScreenTransition::fade(0.2), ScreenAction::Switch(next));
+
+    assert!(stack.is_transitioning());
+    assert_eq!(stack.active_screen_name(), Some("Stage1")); // Still Stage1 during cover
+
+    // Step halfway (0.05s) - still covering Stage1
+    ctx.dt = 0.05;
+    let _ = stack.update(&mut ctx);
+    assert!(stack.is_transitioning());
+    assert_eq!(stack.active_screen_name(), Some("Stage1"));
+
+    // Step across midpoint (0.06s) -> hits holding, executes swap to Stage2!
+    ctx.dt = 0.06;
+    let _ = stack.update(&mut ctx);
+    assert_eq!(stack.active_screen_name(), Some("Stage2"));
+    assert!(stack.is_transitioning());
+
+    // Step to conclusion
+    ctx.dt = 0.15;
+    let _ = stack.update(&mut ctx);
+    assert_eq!(stack.active_screen_name(), Some("Stage2"));
+    assert!(!stack.is_transitioning());
+}
+
 
 

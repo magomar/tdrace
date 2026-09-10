@@ -1,4 +1,5 @@
 use crate::audio::{CabinetAudioSink, SoundCue};
+use crate::fx::ScreenTransition;
 use crate::input::GamepadSnapshot;
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
@@ -79,10 +80,16 @@ pub enum ScreenAction {
     None,
     /// Pop this screen off the stack (e.g. closing a pause modal).
     Pop,
+    /// Pop this screen with a visual transition.
+    PopWith(ScreenTransition),
     /// Push a new modal screen on top of the current screen stack.
     Push(Box<dyn CabinetScreen>),
+    /// Push a new modal screen with a visual transition.
+    PushWith(Box<dyn CabinetScreen>, ScreenTransition),
     /// Replace the entire screen stack with a new screen (e.g. restarting to Main Menu).
     Switch(Box<dyn CabinetScreen>),
+    /// Replace the entire screen stack with a new screen using a visual transition.
+    SwitchWith(Box<dyn CabinetScreen>, ScreenTransition),
     /// Exit the application.
     Quit,
 }
@@ -104,15 +111,25 @@ pub trait CabinetScreen {
     }
 }
 
+enum PendingTransitionAction {
+    Pop,
+    Push(Box<dyn CabinetScreen>),
+    Switch(Box<dyn CabinetScreen>),
+}
+
 /// Dynamic stack of active screens allowing modal dialogs, pause overlays, and menus.
 pub struct ScreenStack {
     screens: Vec<Box<dyn CabinetScreen>>,
+    active_transition: Option<ScreenTransition>,
+    pending_action: Option<PendingTransitionAction>,
 }
 
 impl ScreenStack {
     pub fn new(root_screen: Box<dyn CabinetScreen>) -> Self {
         Self {
             screens: vec![root_screen],
+            active_transition: None,
+            pending_action: None,
         }
     }
 
@@ -153,8 +170,70 @@ impl ScreenStack {
         self.screens.push(screen);
     }
 
+    /// Starts an arcade screen transition tied to a pending screen action.
+    pub fn start_transition(&mut self, trans: ScreenTransition, action: ScreenAction) {
+        let pending = match action {
+            ScreenAction::Pop | ScreenAction::PopWith(_) => Some(PendingTransitionAction::Pop),
+            ScreenAction::Push(next) | ScreenAction::PushWith(next, _) => {
+                Some(PendingTransitionAction::Push(next))
+            }
+            ScreenAction::Switch(next) | ScreenAction::SwitchWith(next, _) => {
+                Some(PendingTransitionAction::Switch(next))
+            }
+            _ => None,
+        };
+
+        if let Some(act) = pending {
+            self.active_transition = Some(trans);
+            self.pending_action = Some(act);
+        }
+    }
+
+    /// Whether a screen transition is currently active.
+    pub fn is_transitioning(&self) -> bool {
+        self.active_transition
+            .as_ref()
+            .map_or(false, |t| t.is_active())
+    }
+
+    /// Returns a reference to the active transition if present.
+    pub fn transition(&self) -> Option<&ScreenTransition> {
+        self.active_transition.as_ref()
+    }
+
     /// Updates the top-most active screen and processes any returned transition action.
     pub fn update(&mut self, ctx: &mut CabinetContext) -> Option<ScreenAction> {
+        let mut swap_action = None;
+        let mut transition_complete = false;
+
+        if let Some(ref mut trans) = self.active_transition {
+            let swap_frame = trans.update(ctx.dt);
+            if swap_frame {
+                swap_action = self.pending_action.take();
+            }
+            if trans.is_complete() {
+                transition_complete = true;
+            }
+        }
+
+        if let Some(act) = swap_action {
+            match act {
+                PendingTransitionAction::Pop => {
+                    self.pop();
+                }
+                PendingTransitionAction::Push(next) => {
+                    self.push(next);
+                }
+                PendingTransitionAction::Switch(next) => {
+                    self.switch_root(next);
+                }
+            }
+        }
+
+        if transition_complete {
+            self.active_transition = None;
+        }
+
         if let Some(top) = self.screens.last_mut() {
             let action = top.update(ctx);
             match action {
@@ -162,12 +241,24 @@ impl ScreenStack {
                     self.pop();
                     Some(ScreenAction::Pop)
                 }
+                ScreenAction::PopWith(trans) => {
+                    self.start_transition(trans, ScreenAction::Pop);
+                    Some(ScreenAction::None)
+                }
                 ScreenAction::Push(next) => {
                     self.push(next);
                     Some(ScreenAction::None)
                 }
+                ScreenAction::PushWith(next, trans) => {
+                    self.start_transition(trans, ScreenAction::Push(next));
+                    Some(ScreenAction::None)
+                }
                 ScreenAction::Switch(next) => {
                     self.switch_root(next);
+                    Some(ScreenAction::None)
+                }
+                ScreenAction::SwitchWith(next, trans) => {
+                    self.start_transition(trans, ScreenAction::Switch(next));
                     Some(ScreenAction::None)
                 }
                 ScreenAction::Quit => Some(ScreenAction::Quit),
@@ -178,7 +269,7 @@ impl ScreenStack {
         }
     }
 
-    /// Renders all visible screens from bottom to top (rendering transparent overlays over base screens).
+    /// Renders all visible screens from bottom to top, followed by any active transition overlay.
     pub fn draw(&self, ctx: &CabinetContext) {
         if self.screens.is_empty() {
             return;
@@ -192,6 +283,11 @@ impl ScreenStack {
 
         for i in start_idx..self.screens.len() {
             self.screens[i].draw(ctx);
+        }
+
+        // Render transition overlay on top of all screens
+        if let Some(ref trans) = self.active_transition {
+            trans.render(0.0, 0.0, ctx.scaler.screen_w, ctx.scaler.screen_h);
         }
     }
 }
