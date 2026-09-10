@@ -616,5 +616,30 @@ fn test_input_mapping_action_system() {
     assert_eq!(map, deserialized);
 }
 
+#[test]
+fn test_floating_text_popups_and_decay() {
+    use cabinet::fx::FloatingTextManager;
+    use glam::Vec2;
+
+    let mut mgr = FloatingTextManager::new(32);
+    assert!(mgr.is_empty());
+
+    mgr.spawn_score(500, Vec2::new(200.0, 300.0));
+    mgr.spawn_combo(4, Vec2::new(200.0, 340.0));
+    mgr.spawn_alert("PERFECT!", Vec2::new(640.0, 360.0), Palette::NEON_GREEN);
+
+    assert_eq!(mgr.count(), 3);
+    assert!(!mgr.is_empty());
+
+    // Step physics
+    mgr.update(0.3);
+    assert_eq!(mgr.count(), 3);
+
+    // Fade and expiry
+    mgr.update(1.2);
+    assert_eq!(mgr.count(), 0);
+    assert!(mgr.is_empty());
+}
+
 
 

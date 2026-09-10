@@ -26,8 +26,8 @@ pub use audio::{
 };
 
 pub use fx::{
-    CrtConfig, CrtOverlay, HitStop, ScanlineMode, ScreenFlash, ScreenShake, ScreenTransition,
-    TransitionConfig, TransitionPhase, TransitionType,
+    CrtConfig, CrtOverlay, FloatingTextItem, FloatingTextManager, HitStop, ScanlineMode,
+    ScreenFlash, ScreenShake, ScreenTransition, TransitionConfig, TransitionPhase, TransitionType,
 };
 pub use input::{
     ArcadeAction, ArcadeKey, DigitalInputConfig, DigitalInputFilter, GamepadAxis, GamepadButton,
