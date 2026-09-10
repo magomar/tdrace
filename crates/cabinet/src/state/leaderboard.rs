@@ -133,12 +133,16 @@ impl CabinetScreen for LeaderboardModal {
             self.nav.set_column_len(0, total_items);
         }
 
+        let prev_row = self.nav.cursor_rows[0];
         self.nav.handle_standard_inputs(
             ctx.gamepad.nav_left,
             ctx.gamepad.nav_right,
             ctx.gamepad.nav_up,
             ctx.gamepad.nav_down,
         );
+        if self.nav.cursor_rows[0] != prev_row {
+            ctx.play_ui_move();
+        }
 
         let sw = ctx.scaler.screen_w;
         let sh = ctx.scaler.screen_h;
@@ -161,16 +165,20 @@ impl CabinetScreen for LeaderboardModal {
 
         let close_clicked = NavGrid2D::check_mouse_click(layout.close_btn_rect);
         if close_clicked || self.nav.is_cancelled(ctx.gamepad.btn_cancel_pressed || ctx.gamepad.btn_b_pressed) {
+            ctx.play_ui_cancel();
             return ScreenAction::Pop;
         }
 
         if self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed) {
+            ctx.play_ui_select();
             return ScreenAction::Pop;
         }
 
         if ctx.gamepad.btn_start_pressed {
+            ctx.play_ui_cancel();
             return ScreenAction::Pop;
         }
+
 
         ScreenAction::None
     }

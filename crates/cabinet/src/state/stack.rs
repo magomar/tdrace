@@ -1,3 +1,4 @@
+use crate::audio::{CabinetAudioSink, SoundCue};
 use crate::input::GamepadSnapshot;
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
@@ -10,7 +11,67 @@ pub struct CabinetContext<'a> {
     pub theme: &'a CabinetTheme,
     pub gamepad: &'a GamepadSnapshot,
     pub dt: f32,
+    pub audio: Option<&'a dyn CabinetAudioSink>,
 }
+
+impl<'a> CabinetContext<'a> {
+    /// Creates a basic context without audio.
+    pub fn new(
+        scaler: &'a UiScaler,
+        fonts: &'a Fonts,
+        theme: &'a CabinetTheme,
+        gamepad: &'a GamepadSnapshot,
+        dt: f32,
+    ) -> Self {
+        Self {
+            scaler,
+            fonts,
+            theme,
+            gamepad,
+            dt,
+            audio: None,
+        }
+    }
+
+    /// Builder method to attach an audio sink.
+    pub fn with_audio(mut self, audio: Option<&'a dyn CabinetAudioSink>) -> Self {
+        self.audio = audio;
+        self
+    }
+
+    /// Plays UI select/confirm blip if an audio sink is present.
+    #[inline]
+    pub fn play_ui_select(&self) {
+        if let Some(audio) = self.audio {
+            audio.play_ui_select();
+        }
+    }
+
+    /// Plays UI move/tick if an audio sink is present.
+    #[inline]
+    pub fn play_ui_move(&self) {
+        if let Some(audio) = self.audio {
+            audio.play_ui_move();
+        }
+    }
+
+    /// Plays UI cancel/back sound if an audio sink is present.
+    #[inline]
+    pub fn play_ui_cancel(&self) {
+        if let Some(audio) = self.audio {
+            audio.play_ui_cancel();
+        }
+    }
+
+    /// Plays an arbitrary sound cue if an audio sink is present.
+    #[inline]
+    pub fn play_cue(&self, cue: SoundCue) {
+        if let Some(audio) = self.audio {
+            audio.play_cue(cue);
+        }
+    }
+}
+
 
 /// Action returned by a screen during its frame update.
 pub enum ScreenAction {

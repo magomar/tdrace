@@ -14,6 +14,11 @@ serde_json = "1.0"
 gilrs = { version = "0.11", optional = true }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+kira = { version = "0.12", optional = true }
+
 [features]
-default = ["gamepad"]
+default = ["gamepad", "kira"]
 gamepad = ["dep:gilrs"]
+kira = ["dep:kira"]
+

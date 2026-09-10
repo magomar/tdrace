@@ -180,6 +180,7 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         // Cancel / Back closes modal without saving
         if self.nav.is_cancelled(ctx.gamepad.btn_cancel_pressed || ctx.gamepad.btn_b_pressed || ctx.gamepad.btn_back_pressed) {
+            ctx.play_ui_cancel();
             return ScreenAction::Pop;
         }
 
@@ -199,6 +200,7 @@ impl CabinetScreen for ArcadeSettingsModal {
         // Tab Bar navigation (Q / E or Gamepad Bumper / Mouse)
         let tab_changed = self.tab_bar.handle_input(false, false, tab_bar_rect);
         if tab_changed {
+            ctx.play_ui_move();
             self.nav.set_focus(self.tab_bar.active_tab, 0);
         }
 
@@ -212,12 +214,16 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.ghost_car_dropdown.is_open;
 
         if !is_any_dropdown_open {
+            let prev_row = self.nav.active_row();
             self.nav.handle_standard_inputs(
                 ctx.gamepad.nav_left,
                 ctx.gamepad.nav_right,
                 ctx.gamepad.nav_up,
                 ctx.gamepad.nav_down,
             );
+            if self.nav.active_row() != prev_row {
+                ctx.play_ui_move();
+            }
         }
 
         let active_tab = self.tab_bar.active_tab;
@@ -240,11 +246,19 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let r3 = (content_x, content_y + (row_h + row_gap) * 3.0, content_w, row_h);
                 let r4 = (content_x, content_y + (row_h + row_gap) * 4.0, content_w, row_h);
 
-                self.master_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0);
-                self.music_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1);
-                self.sfx_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2);
-                self.ui_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3);
-                self.mute_dropdown.handle_input(
+                if self.master_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0) {
+                    ctx.play_ui_move();
+                }
+                if self.music_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
+                    ctx.play_ui_move();
+                }
+                if self.sfx_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                    ctx.play_ui_move();
+                }
+                if self.ui_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                    ctx.play_ui_move();
+                }
+                if self.mute_dropdown.handle_input(
                     active_row == 4,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -254,7 +268,9 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_cancel_pressed,
                     r4,
                     scaler,
-                );
+                ) {
+                    ctx.play_ui_select();
+                }
             }
             1 => {
                 // CONTROLS: 0: Stick Deadzone, 1: Trigger Deadzone, 2: Steer Sensitivity, 3: Steer Exponent, 4: Bottom Buttons
@@ -263,10 +279,18 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let r2 = (content_x, content_y + (row_h + row_gap) * 2.0, content_w, row_h);
                 let r3 = (content_x, content_y + (row_h + row_gap) * 3.0, content_w, row_h);
 
-                self.stick_deadzone_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0);
-                self.trigger_deadzone_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1);
-                self.steer_sensitivity_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2);
-                self.steer_exponent_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3);
+                if self.stick_deadzone_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0) {
+                    ctx.play_ui_move();
+                }
+                if self.trigger_deadzone_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
+                    ctx.play_ui_move();
+                }
+                if self.steer_sensitivity_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                    ctx.play_ui_move();
+                }
+                if self.steer_exponent_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                    ctx.play_ui_move();
+                }
             }
             2 => {
                 // DISPLAY: 0: Theme, 1: Scanlines, 2: UI Scale, 3: Bottom Buttons
@@ -274,7 +298,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let r1 = (content_x, content_y + (row_h + row_gap), content_w, row_h);
                 let r2 = (content_x, content_y + (row_h + row_gap) * 2.0, content_w, row_h);
 
-                self.theme_dropdown.handle_input(
+                if self.theme_dropdown.handle_input(
                     active_row == 0,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -284,8 +308,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_cancel_pressed,
                     r0,
                     scaler,
-                );
-                self.scanlines_dropdown.handle_input(
+                ) {
+                    ctx.play_ui_select();
+                }
+                if self.scanlines_dropdown.handle_input(
                     active_row == 1,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -295,8 +321,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_cancel_pressed,
                     r1,
                     scaler,
-                );
-                self.ui_scale_dropdown.handle_input(
+                ) {
+                    ctx.play_ui_select();
+                }
+                if self.ui_scale_dropdown.handle_input(
                     active_row == 2,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -306,7 +334,9 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_cancel_pressed,
                     r2,
                     scaler,
-                );
+                ) {
+                    ctx.play_ui_select();
+                }
             }
             _ => {
                 // GAMEPLAY: 0: Assist, 1: Speed Units, 2: Ghost Car, 3: Bottom Buttons
@@ -314,7 +344,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let r1 = (content_x, content_y + (row_h + row_gap), content_w, row_h);
                 let r2 = (content_x, content_y + (row_h + row_gap) * 2.0, content_w, row_h);
 
-                self.assist_dropdown.handle_input(
+                if self.assist_dropdown.handle_input(
                     active_row == 0,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -324,8 +354,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_cancel_pressed,
                     r0,
                     scaler,
-                );
-                self.speed_unit_dropdown.handle_input(
+                ) {
+                    ctx.play_ui_select();
+                }
+                if self.speed_unit_dropdown.handle_input(
                     active_row == 1,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -335,8 +367,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_cancel_pressed,
                     r1,
                     scaler,
-                );
-                self.ghost_car_dropdown.handle_input(
+                ) {
+                    ctx.play_ui_select();
+                }
+                if self.ghost_car_dropdown.handle_input(
                     active_row == 2,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -346,7 +380,9 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_cancel_pressed,
                     r2,
                     scaler,
-                );
+                ) {
+                    ctx.play_ui_select();
+                }
             }
         }
 
@@ -362,12 +398,15 @@ impl CabinetScreen for ArcadeSettingsModal {
         let is_last_row = active_row == self.nav.column_lengths.get(active_tab).copied().unwrap_or(1) - 1;
 
         if NavGrid2D::check_mouse_click(reset_rect) {
+            ctx.play_ui_select();
             self.restore_defaults();
         }
         if NavGrid2D::check_mouse_click(save_rect) || (is_last_row && self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed)) {
+            ctx.play_ui_select();
             self.is_saved = true;
             return ScreenAction::Pop;
         }
+
 
         ScreenAction::None
     }

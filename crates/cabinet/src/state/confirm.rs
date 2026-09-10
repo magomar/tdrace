@@ -114,6 +114,7 @@ impl CabinetScreen for UniversalConfirmModal {
     }
 
     fn update(&mut self, ctx: &mut CabinetContext) -> ScreenAction {
+        let prev_col = self.nav.focused_col;
         self.nav.handle_standard_inputs(
             ctx.gamepad.nav_left,
             ctx.gamepad.nav_right,
@@ -132,17 +133,23 @@ impl CabinetScreen for UniversalConfirmModal {
             self.nav.set_focus(1, 0);
         }
 
+        if self.nav.focused_col != prev_col {
+            ctx.play_ui_move();
+        }
+
         let cancel_clicked = NavGrid2D::check_mouse_click(btn_layout.cancel_rect);
         let confirm_clicked = NavGrid2D::check_mouse_click(btn_layout.confirm_rect);
 
         // Escape / B button cancels immediately
         if cancel_clicked || self.nav.is_cancelled(ctx.gamepad.btn_cancel_pressed || ctx.gamepad.btn_b_pressed) {
+            ctx.play_ui_cancel();
             self.result = Some(false);
             return ScreenAction::Pop;
         }
 
         // Mouse click on confirm
         if confirm_clicked {
+            ctx.play_ui_select();
             self.result = Some(true);
             return self.on_confirm_action.take().unwrap_or(ScreenAction::Pop);
         }
@@ -150,13 +157,16 @@ impl CabinetScreen for UniversalConfirmModal {
         // Enter / Gamepad A on focused button
         if self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed) {
             if self.nav.focused_col == 0 {
+                ctx.play_ui_cancel();
                 self.result = Some(false);
                 return ScreenAction::Pop;
             } else {
+                ctx.play_ui_select();
                 self.result = Some(true);
                 return self.on_confirm_action.take().unwrap_or(ScreenAction::Pop);
             }
         }
+
 
         ScreenAction::None
     }

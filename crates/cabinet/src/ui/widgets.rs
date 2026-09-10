@@ -271,7 +271,26 @@ impl SliderWidget {
 
         changed
     }
+
+    /// Handles keyboard, gamepad, and mouse interactions and plays tactile audio on value change.
+    pub fn handle_input_with_audio(
+        &mut self,
+        is_focused: bool,
+        gamepad_left: bool,
+        gamepad_right: bool,
+        card_rect: (f32, f32, f32, f32),
+        audio: Option<&dyn crate::audio::CabinetAudioSink>,
+    ) -> bool {
+        let changed = self.handle_input(is_focused, gamepad_left, gamepad_right, card_rect);
+        if changed {
+            if let Some(a) = audio {
+                a.play_ui_move();
+            }
+        }
+        changed
+    }
 }
+
 
 /// Renders an arcade slider control with glassmorphism track, vibrant progress fill,
 /// glowing thumb knob, and left/right value labels.
@@ -545,7 +564,47 @@ impl DropdownWidget {
 
         changed
     }
+
+    /// Handles dropdown input and triggers tactile audio cues on option change or opening/closing.
+    #[allow(clippy::too_many_arguments)]
+    pub fn handle_input_with_audio(
+        &mut self,
+        is_focused: bool,
+        gamepad_left: bool,
+        gamepad_right: bool,
+        gamepad_up: bool,
+        gamepad_down: bool,
+        gamepad_confirm: bool,
+        gamepad_cancel: bool,
+        rect: (f32, f32, f32, f32),
+        scaler: &UiScaler,
+        audio: Option<&dyn crate::audio::CabinetAudioSink>,
+    ) -> bool {
+        let was_open = self.is_open;
+        let changed = self.handle_input(
+            is_focused,
+            gamepad_left,
+            gamepad_right,
+            gamepad_up,
+            gamepad_down,
+            gamepad_confirm,
+            gamepad_cancel,
+            rect,
+            scaler,
+        );
+        if changed {
+            if let Some(a) = audio {
+                a.play_ui_select();
+            }
+        } else if self.is_open != was_open {
+            if let Some(a) = audio {
+                a.play_ui_move();
+            }
+        }
+        changed
+    }
 }
+
 
 /// Renders an inline arcade cycle-stepper `[ < ] [ Option ] [ > ]` with chevron buttons.
 pub fn draw_stepper(
@@ -805,7 +864,25 @@ impl TabBar {
 
         changed
     }
+
+    /// Handles tab switching and triggers subtle tactile audio tick when the active tab changes.
+    pub fn handle_input_with_audio(
+        &mut self,
+        gamepad_prev: bool,
+        gamepad_next: bool,
+        rect: (f32, f32, f32, f32),
+        audio: Option<&dyn crate::audio::CabinetAudioSink>,
+    ) -> bool {
+        let changed = self.handle_input(gamepad_prev, gamepad_next, rect);
+        if changed {
+            if let Some(a) = audio {
+                a.play_ui_move();
+            }
+        }
+        changed
+    }
 }
+
 
 /// Renders a horizontal arcade tab bar with glassmorphism tabs, active glowing pill/underline,
 /// and shortcut indicators.

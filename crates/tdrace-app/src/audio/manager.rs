@@ -36,6 +36,8 @@ use crate::audio::auxiliary_fx::AuxiliaryAudioLayer;
 use crate::audio::backend::{ActiveSoundHandle, AudioBackend, SoundData};
 use crate::audio::engine_mixer::EngineAudioMixer;
 use crate::audio::samples::ArchetypeSampleBank;
+use cabinet::audio::{CabinetAudioSink, SoundCue};
+
 
 /// Vehicle engine audio synthesis archetype.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -773,7 +775,27 @@ impl AudioManager {
     }
 }
 
+impl CabinetAudioSink for AudioManager {
+    fn play_cue(&self, cue: SoundCue) {
+        match cue {
+            SoundCue::UiSelect => self.play_sfx(SfxType::UiSelect),
+            SoundCue::UiMove | SoundCue::UiCancel => self.play_sfx(SfxType::UiMove),
+            SoundCue::CountdownLow => self.play_sfx(SfxType::CountdownLow),
+            SoundCue::CountdownHigh => self.play_sfx(SfxType::CountdownHigh),
+            SoundCue::LapChime => self.play_sfx(SfxType::LapChime),
+            SoundCue::SectorPing => self.play_sfx(SfxType::SectorPing),
+            SoundCue::RaceFinish => self.play_sfx(SfxType::RaceFinish),
+            SoundCue::Skid => self.play_sfx(SfxType::Skid),
+            SoundCue::ImpactLight => self.play_sfx(SfxType::CarHit),
+
+            SoundCue::ImpactHeavy => self.play_sfx(SfxType::WallCrash),
+            SoundCue::Custom(_) => {}
+        }
+    }
+}
+
 #[cfg(test)]
+
 mod tests {
     use super::*;
 

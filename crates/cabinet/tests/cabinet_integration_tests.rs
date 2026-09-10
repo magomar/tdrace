@@ -267,6 +267,7 @@ fn test_arcade_settings_modal_lifecycle_and_bindings() {
         theme: &theme,
         gamepad: &gamepad,
         dt: 1.0 / 60.0,
+        audio: None,
     };
 
     let action = stack.update(&mut ctx);
@@ -300,6 +301,7 @@ fn test_universal_confirm_modal_lifecycle() {
         theme: &theme,
         gamepad: &gp_cancel,
         dt: 1.0 / 60.0,
+        audio: None,
     };
     let action = modal.update(&mut ctx_cancel);
     assert!(matches!(action, ScreenAction::Pop));
@@ -318,7 +320,9 @@ fn test_universal_confirm_modal_lifecycle() {
         theme: &theme,
         gamepad: &gp_confirm,
         dt: 1.0 / 60.0,
+        audio: None,
     };
+
     let action_confirm = modal_confirm.update(&mut ctx_confirm);
     assert!(matches!(action_confirm, ScreenAction::Quit));
     assert_eq!(modal_confirm.result, Some(true));
@@ -365,6 +369,7 @@ fn test_leaderboard_modal_rendering_and_scrolling() {
             theme: &theme,
             gamepad: &gp_idle,
             dt: 1.0 / 60.0,
+            audio: None,
         };
         let _ = modal.update(&mut ctx);
         assert!(modal.scroll_offset > 0); // Autoscrolled to keep focused item in view
@@ -379,6 +384,7 @@ fn test_leaderboard_modal_rendering_and_scrolling() {
         theme: &theme,
         gamepad: &gp_close,
         dt: 1.0 / 60.0,
+        audio: None,
     };
     let action = modal.update(&mut ctx_close);
     assert!(matches!(action, ScreenAction::Pop));
@@ -434,9 +440,82 @@ fn test_profile_select_modal_slot_and_customization() {
         theme: &theme,
         gamepad: &gp,
         dt: 1.0 / 60.0,
+        audio: None,
     };
     let action = modal.update(&mut ctx);
     assert!(matches!(action, ScreenAction::Pop));
     assert!(modal.is_saved);
 }
+
+#[test]
+fn test_cabinet_context_audio_wiring_and_tactile_feedback() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use cabinet::audio::{CabinetAudioSink, SoundCue};
+
+    struct TestSink {
+        selects: AtomicUsize,
+        moves: AtomicUsize,
+        cancels: AtomicUsize,
+    }
+
+    impl CabinetAudioSink for TestSink {
+        fn play_cue(&self, cue: SoundCue) {
+            match cue {
+                SoundCue::UiSelect => { self.selects.fetch_add(1, Ordering::SeqCst); }
+                SoundCue::UiMove => { self.moves.fetch_add(1, Ordering::SeqCst); }
+                SoundCue::UiCancel => { self.cancels.fetch_add(1, Ordering::SeqCst); }
+                _ => {}
+            }
+        }
+    }
+
+    let sink = TestSink {
+        selects: AtomicUsize::new(0),
+        moves: AtomicUsize::new(0),
+        cancels: AtomicUsize::new(0),
+    };
+
+
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let fonts = Fonts { display: None, ui_bold: None, ui_regular: None };
+    let theme = CabinetTheme::cyberpunk_neon();
+
+    // 1. Settings navigation move
+    let audio_settings = AudioSettings::default();
+    let gamepad_config = GamepadConfig::default();
+    let mut settings = ArcadeSettingsModal::new(&audio_settings, &gamepad_config);
+    let mut gp_move = GamepadSnapshot::default();
+
+    gp_move.nav_down = true;
+
+    let mut ctx = CabinetContext::new(&scaler, &fonts, &theme, &gp_move, 1.0 / 60.0)
+        .with_audio(Some(&sink));
+
+    let _ = settings.update(&mut ctx);
+    assert!(sink.moves.load(Ordering::SeqCst) >= 1, "Should trigger ui_move on navigation");
+
+    // 2. Settings cancel
+    let mut gp_cancel = GamepadSnapshot::default();
+    gp_cancel.btn_b_pressed = true;
+    let mut ctx_cancel = CabinetContext::new(&scaler, &fonts, &theme, &gp_cancel, 1.0 / 60.0)
+        .with_audio(Some(&sink));
+
+    let action = settings.update(&mut ctx_cancel);
+    assert!(matches!(action, ScreenAction::Pop));
+    assert_eq!(sink.cancels.load(Ordering::SeqCst), 1, "Should trigger ui_cancel on back/escape");
+
+    // 3. Confirm modal selection
+    let mut confirm = UniversalConfirmModal::quit_game();
+    confirm.nav.set_focus(1, 0); // Focus confirm button
+    let mut gp_confirm = GamepadSnapshot::default();
+    gp_confirm.btn_a_pressed = true;
+    let mut ctx_confirm = CabinetContext::new(&scaler, &fonts, &theme, &gp_confirm, 1.0 / 60.0)
+        .with_audio(Some(&sink));
+
+    let confirm_action = confirm.update(&mut ctx_confirm);
+    assert!(matches!(confirm_action, ScreenAction::Quit));
+    assert_eq!(sink.selects.load(Ordering::SeqCst), 1, "Should trigger ui_select on confirmation");
+}
+
+
 

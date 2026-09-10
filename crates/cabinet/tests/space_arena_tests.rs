@@ -59,6 +59,7 @@ fn test_space_arena_modal_stack_pause_resume() {
         theme: &theme,
         gamepad: &gamepad,
         dt: 1.0 / 60.0,
+        audio: None,
     };
 
     // Update triggers modal push
@@ -74,6 +75,7 @@ fn test_space_arena_modal_stack_pause_resume() {
         theme: &theme,
         gamepad: &gamepad,
         dt: 1.0 / 60.0,
+        audio: None,
     };
     let pop_action = stack.update(&mut ctx2);
     assert!(matches!(pop_action, Some(ScreenAction::Pop)));
@@ -102,7 +104,9 @@ fn test_space_arena_modals_integration() {
         theme: &theme,
         gamepad: &gp_b,
         dt: 1.0 / 60.0,
+        audio: None,
     };
+
     let pop = stack.update(&mut ctx_b);
     assert!(matches!(pop, Some(ScreenAction::Pop)));
     assert_eq!(stack.len(), 1);

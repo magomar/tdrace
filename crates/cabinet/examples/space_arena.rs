@@ -1,7 +1,8 @@
 //! Space Arena Prototype - Standalone 2D Arcade Game powered by Cabinet.
 //! Demonstrates multi-game UI/UX consistency, 2D navigation, Juice FX, and modal screen stack.
 
-use cabinet::audio::AudioMixer;
+use cabinet::audio::{AudioMixer, CabinetAudioPlayer};
+
 use cabinet::fx::{HitStop, ScreenFlash, ScreenShake};
 use cabinet::input::{DigitalInputFilter, GamepadConfig, GamepadManager};
 use cabinet::profile::ProfileManager;
@@ -420,6 +421,7 @@ async fn main() {
     let mut gamepad = GamepadManager::new();
     let theme = CabinetTheme::cyberpunk_neon();
     let fonts = Fonts::load_embedded();
+    let audio = CabinetAudioPlayer::new();
 
     loop {
         let sw = screen_width();
@@ -435,7 +437,9 @@ async fn main() {
             theme: &theme,
             gamepad: &gamepad.snapshot,
             dt,
+            audio: Some(&audio),
         };
+
 
         if let Some(action) = stack.update(&mut ctx) {
             if matches!(action, ScreenAction::Quit) {

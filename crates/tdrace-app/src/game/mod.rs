@@ -2129,7 +2129,9 @@ impl RaceSession {
                         theme: &theme,
                         gamepad: &self.input.gamepad.snapshot,
                         dt: self.accumulator.min(0.1),
+                        audio: Some(&self.audio),
                     };
+
                     let action = modal.update(&mut ctx);
                     if matches!(action, ScreenAction::Pop) {
                         if modal.is_saved {
@@ -4362,7 +4364,9 @@ impl RaceSession {
                         theme: &theme,
                         gamepad: &self.input.gamepad.snapshot,
                         dt: 0.0,
+                        audio: Some(&self.audio),
                     };
+
                     modal.draw(&ctx);
                 }
             }

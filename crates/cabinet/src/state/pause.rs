@@ -35,12 +35,16 @@ impl CabinetScreen for UniversalPauseModal {
     }
 
     fn update(&mut self, ctx: &mut CabinetContext) -> ScreenAction {
+        let prev_col = self.nav.focused_col;
         self.nav.handle_standard_inputs(
             ctx.gamepad.nav_left,
             ctx.gamepad.nav_right,
             ctx.gamepad.nav_up,
             ctx.gamepad.nav_down,
         );
+        if self.nav.focused_col != prev_col {
+            ctx.play_ui_move();
+        }
 
         let sw = ctx.scaler.screen_w;
         let sh = ctx.scaler.screen_h;
@@ -58,25 +62,31 @@ impl CabinetScreen for UniversalPauseModal {
 
         if self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed) {
             if self.nav.focused_col == 0 {
+                ctx.play_ui_select();
                 return ScreenAction::Pop;
             } else {
+                ctx.play_ui_cancel();
                 return ScreenAction::Quit;
             }
         }
 
         if resume_clicked || ctx.gamepad.btn_start_pressed {
+            ctx.play_ui_select();
             return ScreenAction::Pop;
         }
         if exit_clicked {
+            ctx.play_ui_cancel();
             return ScreenAction::Quit;
         }
 
         if self.nav.is_cancelled(ctx.gamepad.btn_cancel_pressed) {
+            ctx.play_ui_cancel();
             return ScreenAction::Pop;
         }
 
         ScreenAction::None
     }
+
 
     fn draw(&self, ctx: &CabinetContext) {
         let sw = ctx.scaler.screen_w;

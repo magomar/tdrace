@@ -160,12 +160,17 @@ impl CabinetScreen for ProfileSelectModal {
             self.nav.set_column_len(0, total_slots);
         }
 
+        let prev_col = self.nav.focused_col;
+        let prev_row = self.nav.active_row();
         self.nav.handle_standard_inputs(
             ctx.gamepad.nav_left,
             ctx.gamepad.nav_right,
             ctx.gamepad.nav_up,
             ctx.gamepad.nav_down,
         );
+        if self.nav.focused_col != prev_col || self.nav.active_row() != prev_row {
+            ctx.play_ui_move();
+        }
 
         let sw = ctx.scaler.screen_w;
         let sh = ctx.scaler.screen_h;
@@ -184,6 +189,7 @@ impl CabinetScreen for ProfileSelectModal {
                 self.nav.set_focus(0, i);
                 self.highlighted_slot = i;
                 if NavGrid2D::check_mouse_click(slot_rect) {
+                    ctx.play_ui_select();
                     self.manager.select_profile(i);
                 }
             }
@@ -202,32 +208,39 @@ impl CabinetScreen for ProfileSelectModal {
 
         // Actions
         if select_clicked || (self.nav.focused_col == 1 && self.nav.cursor_rows[1] == 0 && self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed)) {
+            ctx.play_ui_select();
             self.manager.select_profile(self.highlighted_slot);
         }
 
         if country_clicked || (self.nav.focused_col == 1 && self.nav.cursor_rows[1] == 1 && self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed)) {
+            ctx.play_ui_move();
             self.cycle_country(true);
         }
 
         if livery_clicked || (self.nav.focused_col == 1 && self.nav.cursor_rows[1] == 2 && self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed)) {
+            ctx.play_ui_move();
             self.cycle_livery();
         }
 
         if close_clicked || (self.nav.focused_col == 1 && self.nav.cursor_rows[1] == 3 && self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed)) {
+            ctx.play_ui_select();
             self.is_saved = true;
             return ScreenAction::Pop;
         }
 
         // Shortcut: Enter on slot selects it
         if self.nav.focused_col == 0 && self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed) {
+            ctx.play_ui_select();
             self.manager.select_profile(self.highlighted_slot);
         }
 
         // Escape or Gamepad B pops
         if self.nav.is_cancelled(ctx.gamepad.btn_cancel_pressed || ctx.gamepad.btn_b_pressed || ctx.gamepad.btn_back_pressed) {
+            ctx.play_ui_cancel();
             self.is_saved = true;
             return ScreenAction::Pop;
         }
+
 
         ScreenAction::None
     }

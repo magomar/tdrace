@@ -20,7 +20,11 @@ pub mod state;
 pub mod ui;
 
 // Top-level convenient re-exports
-pub use audio::{AudioMixer, AudioSettings, SoundBus};
+pub use audio::{
+    ActiveSoundHandle, AudioBackend, AudioMixer, AudioSettings, CabinetAudioPlayer,
+    CabinetAudioSink, SoundBus, SoundCue, SoundData,
+};
+
 pub use fx::{HitStop, ScreenFlash, ScreenShake};
 pub use input::{DigitalInputConfig, DigitalInputFilter, GamepadConfig, GamepadManager, GamepadSnapshot, NavGrid2D};
 pub use profile::{ColorScheme, CountryInfo, CountryRegistry, PlayerProfile, ProfileManager};
