@@ -25,10 +25,10 @@ min_zoom = 7.0
 max_zoom = 11.5
 
 [[camera.levels]]
-name = "Overview"
-mode = "overview"
-min_zoom = 3.5
-max_zoom = 3.5
+name = "Very Far"
+mode = "follow"
+min_zoom = 5.0
+max_zoom = 8.0
 
 [input]
 steer_rise_rate = 6.0

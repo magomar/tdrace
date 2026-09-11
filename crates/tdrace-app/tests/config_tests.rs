@@ -65,9 +65,9 @@ fn test_custom_camera_zoom_levels_configuration() {
         },
         ZoomLevelConfig {
             name: "Bird-Eye".to_string(),
-            mode: "overview".to_string(),
+            mode: "follow".to_string(),
             min_zoom: 4.0,
-            max_zoom: 4.0,
+            max_zoom: 6.0,
         },
     ];
     config.camera.default_level_index = 1;
@@ -80,10 +80,10 @@ fn test_custom_camera_zoom_levels_configuration() {
     assert_eq!(camera.current_level_idx, 1);
     assert_eq!(camera.current_zoom_level().name, "Mid");
 
-    // Cycle to Bird-Eye (overview)
+    // Cycle to Bird-Eye (follow)
     let lvl = camera.cycle_zoom_level();
     assert_eq!(lvl.name, "Bird-Eye");
-    assert_eq!(camera.mode, tdrace_app::camera::CameraMode::StaticOverview);
+    assert_eq!(camera.mode, tdrace_app::camera::CameraMode::SmoothFollow);
 
     // Cycle to Hyper-Close (follow)
     let lvl = camera.cycle_zoom_level();

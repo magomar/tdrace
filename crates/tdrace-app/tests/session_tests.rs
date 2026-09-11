@@ -363,12 +363,43 @@ fn test_race_session_camera_zoom_in_and_out() {
     assert_eq!(session.camera.current_level_idx, 2);
 
     let lvl3 = session.camera.cycle_zoom_level();
-    assert_eq!(lvl3.name, "Overview");
+    assert_eq!(lvl3.name, "Very Far");
     assert_eq!(session.camera.current_level_idx, 3);
 
     let lvl0 = session.camera.cycle_zoom_level();
     assert_eq!(lvl0.name, "Close");
     assert_eq!(session.camera.current_level_idx, 0);
+}
+
+#[test]
+fn test_race_session_pause_shows_circuit_overview_and_resumes_to_follow() {
+    use tdrace_app::camera::CameraMode;
+    let mut session = RaceSession::new();
+    session.init_race();
+    session.state = GameState::Racing;
+
+    // Set driving zoom to Far (idx 2)
+    session.camera.set_zoom_level(2);
+    assert_eq!(session.camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(session.camera.current_zoom_level().name, "Far");
+
+    // Pause race
+    session.pause_race();
+    assert_eq!(session.state, GameState::Paused);
+    assert_eq!(session.camera.mode, CameraMode::StaticOverview);
+    assert_eq!(session.camera.current_pos, session.camera.overview_center);
+    assert_eq!(session.camera.current_zoom, session.camera.overview_zoom);
+
+    // Calling update() while paused preserves overview
+    session.update();
+    assert_eq!(session.camera.mode, CameraMode::StaticOverview);
+
+    // Resume race
+    session.resume_race();
+    assert_eq!(session.state, GameState::Racing);
+    assert_eq!(session.camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(session.camera.current_level_idx, 2);
+    assert_eq!(session.camera.current_zoom_level().name, "Far");
 }
 
 #[test]

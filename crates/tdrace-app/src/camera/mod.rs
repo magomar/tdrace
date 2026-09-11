@@ -45,6 +45,9 @@ pub struct RaceCamera {
     pub trauma: f32,
     pub trauma_decay: f32,
     pub max_shake_offset: f32,
+
+    // Follow level preserved when paused overview is active
+    pub paused_from_follow: Option<usize>,
 }
 
 impl Default for RaceCamera {
@@ -99,6 +102,8 @@ impl RaceCamera {
             trauma: 0.0,
             trauma_decay: config.trauma_decay,
             max_shake_offset: config.max_shake_offset,
+
+            paused_from_follow: None,
         }
     }
 
@@ -128,36 +133,83 @@ impl RaceCamera {
         lvl
     }
 
-    /// Cycles to the next zoom level in sequence and returns its configuration.
+    /// Cycles to the next zoom level in sequence (skipping any overview levels) and returns its configuration.
     pub fn cycle_zoom_level(&mut self) -> ZoomLevelConfig {
         if self.levels.is_empty() {
             self.levels = CameraConfig::default().levels;
         }
-        let next_idx = (self.current_level_idx + 1) % self.levels.len();
+        let n = self.levels.len();
+        let mut next_idx = (self.current_level_idx + 1) % n;
+        for _ in 0..n {
+            if !self.levels[next_idx].is_overview() {
+                break;
+            }
+            next_idx = (next_idx + 1) % n;
+        }
         self.set_zoom_level(next_idx)
     }
 
-    /// Zooms in one level closer (inward towards index 0 / Close). Returns the new configuration if changed.
+    /// Zooms in one level closer (inward towards index 0 / Close), skipping overview levels. Returns the new configuration if changed.
     pub fn zoom_in(&mut self) -> Option<ZoomLevelConfig> {
         if self.levels.is_empty() {
             self.levels = CameraConfig::default().levels;
         }
-        if self.current_level_idx > 0 {
-            Some(self.set_zoom_level(self.current_level_idx - 1))
+        let mut prev_idx = self.current_level_idx.checked_sub(1)?;
+        while self.levels[prev_idx].is_overview() {
+            if prev_idx == 0 {
+                return None;
+            }
+            prev_idx -= 1;
+        }
+        Some(self.set_zoom_level(prev_idx))
+    }
+
+    /// Zooms out one level farther, skipping overview levels. Returns the new configuration if changed.
+    pub fn zoom_out(&mut self) -> Option<ZoomLevelConfig> {
+        if self.levels.is_empty() {
+            self.levels = CameraConfig::default().levels;
+        }
+        let mut next_idx = self.current_level_idx + 1;
+        while next_idx < self.levels.len() && self.levels[next_idx].is_overview() {
+            next_idx += 1;
+        }
+        if next_idx < self.levels.len() {
+            Some(self.set_zoom_level(next_idx))
         } else {
             None
         }
     }
 
-    /// Zooms out one level farther (outward towards Overview). Returns the new configuration if changed.
-    pub fn zoom_out(&mut self) -> Option<ZoomLevelConfig> {
-        if self.levels.is_empty() {
-            self.levels = CameraConfig::default().levels;
+    /// Activates the static whole circuit overview when the race is paused.
+    /// Saves the active driving follow zoom level index to restore upon resuming.
+    pub fn set_paused_overview(&mut self) {
+        if self.paused_from_follow.is_none() {
+            self.paused_from_follow = Some(self.current_level_idx);
         }
-        if self.current_level_idx + 1 < self.levels.len() {
-            Some(self.set_zoom_level(self.current_level_idx + 1))
-        } else {
-            None
+        self.mode = CameraMode::StaticOverview;
+        self.current_pos = self.overview_center;
+        self.target_pos = self.overview_center;
+        self.current_zoom = self.overview_zoom;
+        self.target_zoom = self.overview_zoom;
+    }
+
+    /// Resumes normal smooth follow driving camera from paused overview mode.
+    /// Restores the saved driving zoom level and snaps camera directly to the player vehicle with lookahead.
+    pub fn resume_from_pause(&mut self, target_car: Option<&Car>) {
+        let saved_idx = self.paused_from_follow.take().unwrap_or(self.current_level_idx);
+        self.set_zoom_level(saved_idx);
+        self.mode = CameraMode::SmoothFollow;
+
+        if let Some(car) = target_car {
+            let lookahead = car.state.velocity * self.velocity_lookahead_time;
+            self.target_pos = car.state.position + lookahead;
+            self.current_pos = self.target_pos;
+
+            let speed = car.state.speed;
+            let speed_ratio = (speed / 50.0).clamp(0.0, 1.0);
+            self.target_zoom = self.max_zoom_scale
+                - speed_ratio * (self.max_zoom_scale - self.min_zoom_scale);
+            self.current_zoom = self.target_zoom;
         }
     }
 

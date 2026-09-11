@@ -329,11 +329,11 @@ fn test_editor_camera_zoom_levels_cycling_and_parity() {
     assert_eq!(lvl2.name, "Far");
     assert_eq!(camera.target_zoom, 11.5);
 
-    // 3. Cycle to Overview (without bounds)
+    // 3. Cycle to Very Far (without bounds)
     let lvl3 = camera.cycle_zoom_level();
     assert_eq!(camera.current_level_idx, 3);
-    assert_eq!(lvl3.name, "Overview");
-    assert_eq!(camera.target_zoom, 3.5);
+    assert_eq!(lvl3.name, "Very Far");
+    assert_eq!(camera.target_zoom, 8.0);
 
     // 4. Cycle wraps around to Close
     let lvl0 = camera.cycle_zoom_level();
@@ -388,10 +388,10 @@ fn test_editor_camera_zoom_in_and_zoom_out() {
     assert_eq!(camera.current_level_idx, 2);
     assert_eq!(camera.target_zoom, 11.5);
 
-    let lvl3 = camera.zoom_out().expect("Should zoom out to Overview");
-    assert_eq!(lvl3.name, "Overview");
+    let lvl3 = camera.zoom_out().expect("Should zoom out to Very Far");
+    assert_eq!(lvl3.name, "Very Far");
     assert_eq!(camera.current_level_idx, 3);
-    assert_eq!(camera.target_zoom, 3.5);
+    assert_eq!(camera.target_zoom, 8.0);
 
     // Boundary at index 3
     assert!(camera.zoom_out().is_none());
@@ -419,14 +419,21 @@ fn test_editor_camera_zoom_in_and_zoom_out() {
 #[test]
 fn test_editor_camera_overview_with_bounds_framing() {
     let mut camera = EditorCamera::new();
+    camera.levels.push(ZoomLevelConfig {
+        name: "Overview".to_string(),
+        mode: "overview".to_string(),
+        min_zoom: 3.5,
+        max_zoom: 3.5,
+    });
+    let overview_idx = camera.levels.len() - 1;
     let min_pt = Vec2::new(0.0, 0.0);
     let max_pt = Vec2::new(200.0, 100.0);
     let bounds = Some((min_pt, max_pt));
 
-    // Jump to Overview level (index 3) with track bounds
-    let lvl = camera.set_zoom_level_with_bounds(3, bounds, 1280.0, 720.0);
+    // Jump to Overview level with track bounds
+    let lvl = camera.set_zoom_level_with_bounds(overview_idx, bounds, 1280.0, 720.0);
     assert_eq!(lvl.name, "Overview");
-    assert_eq!(camera.current_level_idx, 3);
+    assert_eq!(camera.current_level_idx, overview_idx);
     assert_eq!(camera.target_center, Vec2::new(100.0, 50.0));
     assert!(camera.target_zoom > 0.5 && camera.target_zoom < 20.0);
 
@@ -434,7 +441,7 @@ fn test_editor_camera_overview_with_bounds_framing() {
     camera.set_zoom_level(0); // Switch to Close
     assert_eq!(camera.current_level_idx, 0);
     camera.focus_bounds(min_pt, max_pt, 1280.0, 720.0);
-    assert_eq!(camera.current_level_idx, 3);
+    assert_eq!(camera.current_level_idx, overview_idx);
     assert_eq!(camera.current_zoom_level().name, "Overview");
 }
 

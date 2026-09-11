@@ -106,11 +106,13 @@ fn test_multi_level_zoom_cycling() {
     assert_eq!(camera.min_zoom_scale, 7.0);
     assert_eq!(camera.max_zoom_scale, 11.5);
 
-    // Overview (Zoomed out)
+    // Level 3: Very Far (follow mode, not static overview)
     let lvl3_name = camera.cycle_zoom_level().name.clone();
     assert_eq!(camera.current_level_idx, 3);
-    assert_eq!(lvl3_name, "Overview");
-    assert_eq!(camera.mode, CameraMode::StaticOverview);
+    assert_eq!(lvl3_name, "Very Far");
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.min_zoom_scale, 5.0);
+    assert_eq!(camera.max_zoom_scale, 8.0);
 
     // Wraparound to Close
     let lvl0_name = camera.cycle_zoom_level().name.clone();
@@ -131,7 +133,7 @@ fn test_camera_zoom_in_and_zoom_out() {
     assert!(camera.zoom_in().is_none());
     assert_eq!(camera.current_level_idx, 0);
 
-    // Zoom out step-by-step: 0 (Close) -> 1 (Medium) -> 2 (Far) -> 3 (Overview)
+    // Zoom out step-by-step: 0 (Close) -> 1 (Medium) -> 2 (Far) -> 3 (Very Far)
     let lvl1 = camera.zoom_out().expect("Should zoom out to Medium");
     assert_eq!(lvl1.name, "Medium");
     assert_eq!(camera.current_level_idx, 1);
@@ -146,16 +148,18 @@ fn test_camera_zoom_in_and_zoom_out() {
     assert_eq!(camera.min_zoom_scale, 7.0);
     assert_eq!(camera.max_zoom_scale, 11.5);
 
-    let lvl3 = camera.zoom_out().expect("Should zoom out to Overview");
-    assert_eq!(lvl3.name, "Overview");
+    let lvl3 = camera.zoom_out().expect("Should zoom out to Very Far");
+    assert_eq!(lvl3.name, "Very Far");
     assert_eq!(camera.current_level_idx, 3);
-    assert_eq!(camera.mode, CameraMode::StaticOverview);
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.min_zoom_scale, 5.0);
+    assert_eq!(camera.max_zoom_scale, 8.0);
 
     // At farthest zoom (index 3), zoom_out() returns None and stays at index 3
     assert!(camera.zoom_out().is_none());
     assert_eq!(camera.current_level_idx, 3);
 
-    // Zoom in step-by-step: 3 (Overview) -> 2 (Far) -> 1 (Medium) -> 0 (Close)
+    // Zoom in step-by-step: 3 (Very Far) -> 2 (Far) -> 1 (Medium) -> 0 (Close)
     let in2 = camera.zoom_in().expect("Should zoom in to Far");
     assert_eq!(in2.name, "Far");
     assert_eq!(camera.current_level_idx, 2);
@@ -176,6 +180,77 @@ fn test_camera_zoom_in_and_zoom_out() {
     // Bounded again at closest
     assert!(camera.zoom_in().is_none());
     assert_eq!(camera.current_level_idx, 0);
+}
+
+#[test]
+fn test_camera_skip_overview_on_tab_cycle() {
+    use tdrace_app::config::ZoomLevelConfig;
+    let mut camera = RaceCamera::new();
+    // Inject custom levels where one is an Overview
+    camera.levels = vec![
+        ZoomLevelConfig {
+            name: "Near".to_string(),
+            mode: "follow".to_string(),
+            min_zoom: 12.0,
+            max_zoom: 20.0,
+        },
+        ZoomLevelConfig {
+            name: "Overview".to_string(),
+            mode: "overview".to_string(),
+            min_zoom: 3.5,
+            max_zoom: 3.5,
+        },
+        ZoomLevelConfig {
+            name: "Distant".to_string(),
+            mode: "follow".to_string(),
+            min_zoom: 6.0,
+            max_zoom: 10.0,
+        },
+    ];
+    camera.current_level_idx = 0;
+
+    // Cycling from Near (0) should SKIP Overview (1) and jump to Distant (2)
+    let next = camera.cycle_zoom_level();
+    assert_eq!(next.name, "Distant");
+    assert_eq!(camera.current_level_idx, 2);
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+
+    // Cycling from Distant (2) should wraparound to Near (0)
+    let next2 = camera.cycle_zoom_level();
+    assert_eq!(next2.name, "Near");
+    assert_eq!(camera.current_level_idx, 0);
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+}
+
+#[test]
+fn test_camera_paused_overview_and_resume() {
+    let mut camera = RaceCamera::new();
+    let track = classic_grand_prix();
+    camera.setup_for_track(&track);
+    camera.set_zoom_level(1); // Medium
+
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.current_level_idx, 1);
+
+    // Pause race -> should activate overview
+    camera.set_paused_overview();
+    assert_eq!(camera.mode, CameraMode::StaticOverview);
+    assert_eq!(camera.current_pos, camera.overview_center);
+    assert_eq!(camera.current_zoom, camera.overview_zoom);
+    assert_eq!(camera.paused_from_follow, Some(1));
+
+    // Resume race -> should restore follow camera and car positioning
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(100.0, 50.0), 0.0);
+    car.state.speed = 20.0;
+    car.state.velocity = Vec2::new(20.0, 0.0);
+
+    camera.resume_from_pause(Some(&car));
+    assert_eq!(camera.mode, CameraMode::SmoothFollow);
+    assert_eq!(camera.current_level_idx, 1);
+    assert_eq!(camera.paused_from_follow, None);
+    // Camera snapped directly to car + lookahead (100.0 + 20.0 * 0.40 = 108.0)
+    assert!((camera.current_pos.x - 108.0).abs() < 1e-3);
+    assert!((camera.current_pos.y - 50.0).abs() < 1e-3);
 }
 
 #[test]

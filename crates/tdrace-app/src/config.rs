@@ -84,10 +84,10 @@ impl Default for CameraConfig {
                     max_zoom: 11.5,
                 },
                 ZoomLevelConfig {
-                    name: "Overview".to_string(),
-                    mode: "overview".to_string(),
-                    min_zoom: 3.5,
-                    max_zoom: 3.5,
+                    name: "Very Far".to_string(),
+                    mode: "follow".to_string(),
+                    min_zoom: 5.0,
+                    max_zoom: 8.0,
                 },
             ],
         }

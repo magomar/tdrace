@@ -1389,6 +1389,20 @@ impl RaceSession {
         self.state = GameState::StartingGrid;
     }
 
+    /// Pauses the race session and activates the static full-circuit overview camera.
+    pub fn pause_race(&mut self) {
+        self.audio.stop_all_loops();
+        self.state = GameState::Paused;
+        self.camera.set_paused_overview();
+    }
+
+    /// Resumes the race session from pause, restoring the active follow driving camera.
+    pub fn resume_race(&mut self) {
+        self.state = GameState::Racing;
+        let player_car = self.cars.first();
+        self.camera.resume_from_pause(player_car);
+    }
+
     /// Master update tick called once per frame.
     pub fn update(&mut self) {
         let frame_dt = get_frame_time_safe().min(0.1);
@@ -1439,7 +1453,6 @@ impl RaceSession {
             self.state,
             GameState::Racing
                 | GameState::Countdown(_)
-                | GameState::Paused
                 | GameState::TrackEditor
         );
         if is_camera_state && (is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_cam_toggle_pressed) {
@@ -1468,7 +1481,7 @@ impl RaceSession {
                     .map(|c| c.state.position);
                 if let Some(pos) = car_pos {
                     let lvl_idx = self.camera.current_level_idx + 1;
-                    let total_lvls = self.camera.levels.len();
+                    let total_lvls = self.camera.levels.iter().filter(|l| !l.is_overview()).count().max(1);
                     self.fx.drift_popups.spawn_text(
                         pos,
                         &format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls),
@@ -2106,10 +2119,15 @@ impl RaceSession {
                 }
             }
             GameState::Racing => {
+                // If resuming race after paused overview was active, restore driving follow camera
+                if self.camera.paused_from_follow.is_some() {
+                    let player_car = self.cars.first();
+                    self.camera.resume_from_pause(player_car);
+                }
+
                 // Pause trigger (Escape / Pause key or Gamepad Start)
                 if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed {
-                    self.audio.stop_all_loops();
-                    self.state = GameState::Paused;
+                    self.pause_race();
                     return;
                 }
 
@@ -2136,6 +2154,9 @@ impl RaceSession {
             }
             GameState::Paused => {
                 self.audio.stop_all_loops();
+                if self.camera.paused_from_follow.is_none() {
+                    self.camera.set_paused_overview();
+                }
 
                 // If Arcade Settings Modal is open, handle its updates and return
                 if let Some(ref mut modal) = self.settings_modal {
@@ -2249,9 +2270,10 @@ impl RaceSession {
                     };
 
                     if action_idx == 0 {
-                        self.state = GameState::Racing;
+                        self.resume_race();
                         return;
                     } else {
+                        self.camera.resume_from_pause(None);
                         if self.return_to_editor_on_exit {
                             self.return_to_editor_on_exit = false;
                             self.state = GameState::TrackEditor;
@@ -2270,7 +2292,7 @@ impl RaceSession {
                     || resume_clicked
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.state = GameState::Racing;
+                    self.resume_race();
                     return;
                 } else if is_key_pressed(KeyCode::E)
                     || self.input.gamepad.snapshot.btn_cancel_pressed
@@ -2279,6 +2301,7 @@ impl RaceSession {
                     || exit_clicked
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
+                    self.camera.resume_from_pause(None);
                     if self.return_to_editor_on_exit {
                         self.return_to_editor_on_exit = false;
                         self.state = GameState::TrackEditor;
