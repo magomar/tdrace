@@ -1,5 +1,5 @@
 use macroquad::color::Color;
-use macroquad::input::{is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, mouse_position, KeyCode, MouseButton};
+use macroquad::input::{is_key_down, is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, mouse_position, KeyCode, MouseButton};
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use serde::{Deserialize, Serialize};
 use crate::ui::font::Fonts;
@@ -9,6 +9,11 @@ use crate::ui::theme::Palette;
 #[inline]
 fn safe_key_pressed(key: KeyCode) -> bool {
     std::panic::catch_unwind(|| is_key_pressed(key)).unwrap_or(false)
+}
+
+#[inline]
+fn safe_key_down(key: KeyCode) -> bool {
+    std::panic::catch_unwind(|| is_key_down(key)).unwrap_or(false)
 }
 
 #[inline]
@@ -859,12 +864,20 @@ impl TabBar {
     ) -> bool {
         let mut changed = false;
 
-        // Keyboard Q/E, PageUp/PageDown, or Gamepad LB/RB
+        // Keyboard Q/E, PageUp/PageDown, Tab/Shift+Tab, or Gamepad LB/RB
         if safe_key_pressed(KeyCode::Q) || safe_key_pressed(KeyCode::PageUp) || gamepad_prev {
             changed |= self.prev_tab();
         }
         if safe_key_pressed(KeyCode::E) || safe_key_pressed(KeyCode::PageDown) || gamepad_next {
             changed |= self.next_tab();
+        }
+        if safe_key_pressed(KeyCode::Tab) {
+            let is_shift = safe_key_down(KeyCode::LeftShift) || safe_key_down(KeyCode::RightShift);
+            if is_shift {
+                changed |= self.prev_tab();
+            } else {
+                changed |= self.next_tab();
+            }
         }
 
         // Mouse click on tabs
@@ -915,6 +928,7 @@ pub fn draw_tab_bar(
     tabs: &[String],
     active_tab: usize,
     hovered_tab: Option<usize>,
+    is_focused: bool,
     accent_color: Color,
 ) {
     if tabs.is_empty() {
@@ -928,8 +942,8 @@ pub fn draw_tab_bar(
         w,
         h,
         Color::new(0.06, 0.08, 0.12, 0.88),
-        Palette::UI_CARD_BORDER,
-        1.2,
+        if is_focused { accent_color } else { Palette::UI_CARD_BORDER },
+        if is_focused { 2.0 } else { 1.2 },
     );
 
     let tab_w = w / tabs.len() as f32;
@@ -947,15 +961,29 @@ pub fn draw_tab_bar(
                 y + scaler.s(2.0),
                 tab_w - scaler.s(4.0),
                 h - scaler.s(4.0),
-                Color::new(accent_color.r * 0.25, accent_color.g * 0.25, accent_color.b * 0.25, 0.95),
+                if is_focused {
+                    Color::new(accent_color.r * 0.40, accent_color.g * 0.40, accent_color.b * 0.40, 0.98)
+                } else {
+                    Color::new(accent_color.r * 0.25, accent_color.g * 0.25, accent_color.b * 0.25, 0.95)
+                },
             );
+            if is_focused {
+                draw_rectangle_lines(
+                    tx + scaler.s(2.0),
+                    y + scaler.s(2.0),
+                    tab_w - scaler.s(4.0),
+                    h - scaler.s(4.0),
+                    1.8 * scaler.scale,
+                    Palette::NEON_GOLD,
+                );
+            }
             // Glowing underline bar
             draw_rectangle(
                 tx + scaler.s(8.0),
                 y + h - scaler.s(3.0),
                 tab_w - scaler.s(16.0),
                 scaler.s(3.0),
-                accent_color,
+                if is_focused { Palette::NEON_GOLD } else { accent_color },
             );
         } else if is_hovered {
             // Hover highlight
@@ -980,15 +1008,21 @@ pub fn draw_tab_bar(
         }
 
         let text_color = if is_active {
-            Palette::WHITE
+            if is_focused { Palette::WHITE } else { Palette::WHITE }
         } else if is_hovered {
             Color::new(0.88, 0.92, 0.98, 1.0)
         } else {
             Palette::UI_TEXT_MUTED
         };
 
+        let label_text = if is_active && is_focused {
+            format!("<  {}  >", tab_name)
+        } else {
+            tab_name.clone()
+        };
+
         fonts.draw_ui_bold_centered(
-            tab_name,
+            &label_text,
             tx + tab_w * 0.5,
             y + h * 0.65,
             scaler.font_s(13.0),

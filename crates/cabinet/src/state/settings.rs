@@ -1,4 +1,5 @@
 use macroquad::color::Color;
+use macroquad::input::KeyCode;
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use crate::audio::AudioSettings;
 use crate::input::{GamepadConfig, NavGrid2D};
@@ -9,6 +10,11 @@ use crate::ui::widgets::{
     draw_dropdown, draw_dropdown_popup, draw_slider, draw_tab_bar, DropdownWidget, SliderWidget,
     TabBar,
 };
+
+#[inline]
+fn safe_key_pressed(key: KeyCode) -> bool {
+    std::panic::catch_unwind(|| macroquad::input::is_key_pressed(key)).unwrap_or(false)
+}
 
 /// Comprehensive, reusable Arcade Settings Modal screen.
 /// Implements `CabinetScreen` and unifies `TabBar`, `SliderWidget`, and `DropdownWidget`
@@ -42,6 +48,8 @@ pub struct ArcadeSettingsModal {
     pub speed_unit_dropdown: DropdownWidget,
     pub ghost_car_dropdown: DropdownWidget,
 
+    pub is_tab_focused: bool,
+    pub selected_bottom_btn: usize,
     pub is_saved: bool,
 }
 
@@ -129,6 +137,8 @@ impl ArcadeSettingsModal {
             speed_unit_dropdown: DropdownWidget::new("SPEEDOMETER UNIT", speed_options, 0),
             ghost_car_dropdown: DropdownWidget::new("GHOST REPLAY", ghost_options, 0),
 
+            is_tab_focused: true,
+            selected_bottom_btn: 1,
             is_saved: false,
         }
     }
@@ -252,14 +262,16 @@ impl CabinetScreen for ArcadeSettingsModal {
         let tab_bar_h = scaler.s(36.0);
         let tab_bar_rect = (tab_bar_x, tab_bar_y, tab_bar_w, tab_bar_h);
 
-        // Tab Bar navigation (Q / E or Gamepad Bumper / Mouse)
+        // Tab Bar navigation (Q / E / Tab / Mouse clicks)
         let tab_changed = self.tab_bar.handle_input(false, false, tab_bar_rect);
         if tab_changed {
             ctx.play_ui_move();
-            self.nav.set_focus(self.tab_bar.active_tab, 0);
+            if !self.is_tab_focused {
+                self.nav.set_focus(self.tab_bar.active_tab, 0);
+            }
         }
 
-        // Check if any dropdown is currently open. If so, let it capture vertical input
+        // Check if any dropdown is currently open. If so, let it capture input
         let is_any_dropdown_open = self.mute_dropdown.is_open
             || self.resolution_dropdown.is_open
             || self.display_mode_dropdown.is_open
@@ -271,21 +283,103 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.ghost_car_dropdown.is_open;
 
         if !is_any_dropdown_open {
-            let prev_row = self.nav.active_row();
-            self.nav.handle_standard_inputs(
-                ctx.gamepad.nav_left,
-                ctx.gamepad.nav_right,
-                ctx.gamepad.nav_up,
-                ctx.gamepad.nav_down,
-            );
-            if self.nav.active_row() != prev_row {
-                ctx.play_ui_move();
+            let nav_left = safe_key_pressed(KeyCode::Left) || safe_key_pressed(KeyCode::A) || ctx.gamepad.nav_left;
+            let nav_right = safe_key_pressed(KeyCode::Right) || safe_key_pressed(KeyCode::D) || ctx.gamepad.nav_right;
+            let nav_up = safe_key_pressed(KeyCode::Up) || safe_key_pressed(KeyCode::W) || ctx.gamepad.nav_up;
+            let nav_down = safe_key_pressed(KeyCode::Down) || safe_key_pressed(KeyCode::S) || ctx.gamepad.nav_down;
+            let is_confirm = safe_key_pressed(KeyCode::Enter)
+                || safe_key_pressed(KeyCode::KpEnter)
+                || safe_key_pressed(KeyCode::Space)
+                || ctx.gamepad.btn_confirm_pressed
+                || ctx.gamepad.btn_a_pressed;
+
+            let active_tab = self.tab_bar.active_tab;
+            let last_row = self.nav.column_lengths.get(active_tab).copied().unwrap_or(1).saturating_sub(1);
+
+            if self.is_tab_focused {
+                if nav_left {
+                    self.tab_bar.prev_tab();
+                    self.nav.set_focus(self.tab_bar.active_tab, 0);
+                    ctx.play_ui_move();
+                } else if nav_right {
+                    self.tab_bar.next_tab();
+                    self.nav.set_focus(self.tab_bar.active_tab, 0);
+                    ctx.play_ui_move();
+                } else if nav_down || is_confirm {
+                    self.is_tab_focused = false;
+                    self.nav.set_focus(self.tab_bar.active_tab, 0);
+                    ctx.play_ui_move();
+                } else if nav_up {
+                    // Wrap up from tab bar to bottom action buttons
+                    self.is_tab_focused = false;
+                    self.nav.set_focus(active_tab, last_row);
+                    self.selected_bottom_btn = 1;
+                    ctx.play_ui_move();
+                }
+            } else {
+                let active_row = self.nav.active_row();
+                if active_row == last_row {
+                    // Focus is on bottom action buttons
+                    if nav_left {
+                        if self.selected_bottom_btn != 0 {
+                            self.selected_bottom_btn = 0;
+                            ctx.play_ui_move();
+                        }
+                    } else if nav_right {
+                        if self.selected_bottom_btn != 1 {
+                            self.selected_bottom_btn = 1;
+                            ctx.play_ui_move();
+                        }
+                    } else if nav_up {
+                        // Move up to the last setting widget
+                        self.nav.set_focus(active_tab, last_row.saturating_sub(1));
+                        ctx.play_ui_move();
+                    } else if nav_down {
+                        // Wrap down from bottom buttons back up to Tab Bar
+                        self.is_tab_focused = true;
+                        ctx.play_ui_move();
+                    } else if is_confirm {
+                        ctx.play_ui_select();
+                        if self.selected_bottom_btn == 0 {
+                            self.restore_defaults();
+                        } else {
+                            self.is_saved = true;
+                            return ScreenAction::Pop;
+                        }
+                    }
+                } else {
+                    // Focus is on a setting widget row (0..last_row - 1)
+                    if nav_up {
+                        if active_row == 0 {
+                            // Move up to Tab Bar
+                            self.is_tab_focused = true;
+                            ctx.play_ui_move();
+                        } else {
+                            self.nav.set_focus(active_tab, active_row - 1);
+                            ctx.play_ui_move();
+                        }
+                    } else if nav_down {
+                        self.nav.set_focus(active_tab, active_row + 1);
+                        if active_row + 1 == last_row {
+                            self.selected_bottom_btn = 1;
+                        }
+                        ctx.play_ui_move();
+                    }
+                }
             }
         }
 
         let active_tab = self.tab_bar.active_tab;
         self.nav.focused_col = active_tab;
-        let active_row = self.nav.active_row();
+        let active_row = if self.is_tab_focused {
+            usize::MAX
+        } else {
+            self.nav.active_row()
+        };
+
+        if is_any_dropdown_open {
+            self.is_tab_focused = false;
+        }
 
         // Content items area
         let content_x = box_x + scaler.s(24.0);
@@ -480,18 +574,15 @@ impl CabinetScreen for ArcadeSettingsModal {
         let reset_rect = (box_x + scaler.s(24.0), bottom_btn_y, single_btn_w, bottom_btn_h);
         let save_rect = (box_x + scaler.s(24.0) + single_btn_w + btn_gap, bottom_btn_y, single_btn_w, bottom_btn_h);
 
-        let is_last_row = active_row == self.nav.column_lengths.get(active_tab).copied().unwrap_or(1) - 1;
-
         if NavGrid2D::check_mouse_click(reset_rect) {
             ctx.play_ui_select();
             self.restore_defaults();
         }
-        if NavGrid2D::check_mouse_click(save_rect) || (is_last_row && self.nav.is_confirmed(ctx.gamepad.btn_confirm_pressed || ctx.gamepad.btn_a_pressed)) {
+        if NavGrid2D::check_mouse_click(save_rect) {
             ctx.play_ui_select();
             self.is_saved = true;
             return ScreenAction::Pop;
         }
-
 
         ScreenAction::None
     }
@@ -541,6 +632,7 @@ impl CabinetScreen for ArcadeSettingsModal {
             &self.tab_bar.tabs,
             self.tab_bar.active_tab,
             None,
+            self.is_tab_focused,
             accent,
         );
 
@@ -552,7 +644,11 @@ impl CabinetScreen for ArcadeSettingsModal {
         let row_gap = scaler.s(8.0);
 
         let active_tab = self.tab_bar.active_tab;
-        let active_row = self.nav.active_row();
+        let active_row = if self.is_tab_focused {
+            usize::MAX
+        } else {
+            self.nav.active_row()
+        };
 
         match active_tab {
             0 => {
@@ -647,27 +743,30 @@ impl CabinetScreen for ArcadeSettingsModal {
         let reset_rect = (box_x + scaler.s(24.0), bottom_btn_y, single_btn_w, bottom_btn_h);
         let save_rect = (box_x + scaler.s(24.0) + single_btn_w + btn_gap, bottom_btn_y, single_btn_w, bottom_btn_h);
 
-        let is_last_row = active_row == self.nav.column_lengths.get(active_tab).copied().unwrap_or(1) - 1;
+        let is_last_row = !self.is_tab_focused && active_row == self.nav.column_lengths.get(active_tab).copied().unwrap_or(1) - 1;
 
         // Reset Button
+        let is_reset_focused = is_last_row && self.selected_bottom_btn == 0;
         let is_reset_hovered = NavGrid2D::check_mouse_hover(reset_rect);
+        let is_reset_active = is_reset_focused || is_reset_hovered;
+
         draw_rectangle(
             reset_rect.0,
             reset_rect.1,
             reset_rect.2,
             reset_rect.3,
-            if is_reset_hovered { Color::new(0.35, 0.12, 0.14, 0.95) } else { Color::new(0.20, 0.08, 0.10, 0.85) },
+            if is_reset_active { Color::new(0.35, 0.12, 0.14, 0.95) } else { Color::new(0.20, 0.08, 0.10, 0.85) },
         );
         draw_rectangle_lines(
             reset_rect.0,
             reset_rect.1,
             reset_rect.2,
             reset_rect.3,
-            if is_reset_hovered { 2.0 * scaler.scale } else { 1.0 * scaler.scale },
-            Palette::RED,
+            if is_reset_active { 2.4 * scaler.scale } else { 1.0 * scaler.scale },
+            if is_reset_focused { Palette::NEON_GOLD } else if is_reset_hovered { Palette::NEON_RED } else { Palette::RED },
         );
         fonts.draw_ui_bold_centered(
-            "RESTORE DEFAULTS",
+            if is_reset_focused { "[ENTER] RESTORE DEFAULTS" } else { "RESTORE DEFAULTS" },
             reset_rect.0 + reset_rect.2 * 0.5,
             reset_rect.1 + reset_rect.3 * 0.65,
             scaler.font_s(13.0),
@@ -675,7 +774,7 @@ impl CabinetScreen for ArcadeSettingsModal {
         );
 
         // Save & Close Button
-        let is_save_focused = is_last_row;
+        let is_save_focused = is_last_row && self.selected_bottom_btn == 1;
         let is_save_hovered = NavGrid2D::check_mouse_hover(save_rect);
         let is_save_active = is_save_focused || is_save_hovered;
 
@@ -692,14 +791,28 @@ impl CabinetScreen for ArcadeSettingsModal {
             save_rect.2,
             save_rect.3,
             if is_save_active { 2.4 * scaler.scale } else { 1.2 * scaler.scale },
-            if is_save_active { Palette::NEON_GREEN } else { Color::new(0.20, 0.70, 0.35, 0.85) },
+            if is_save_focused { Palette::NEON_GOLD } else if is_save_active { Palette::NEON_GREEN } else { Color::new(0.20, 0.70, 0.35, 0.85) },
         );
         fonts.draw_ui_bold_centered(
-            if is_save_active { "[ENTER] SAVE & CLOSE" } else { "SAVE & CLOSE" },
+            if is_save_focused { "[ENTER] SAVE & CLOSE" } else { "SAVE & CLOSE" },
             save_rect.0 + save_rect.2 * 0.5,
             save_rect.1 + save_rect.3 * 0.65,
             scaler.font_s(13.5),
             Palette::WHITE,
+        );
+
+        // Navigation hints under dialog box
+        let hint_text = if self.is_tab_focused {
+            "◄ / ► ARROWS: Switch Category   •   ▼ DOWN / ENTER: Adjust Settings   •   TAB / Q / E: Cycle"
+        } else {
+            "▲ UP (at top): Back to Categories   •   ◄ / ►: Adjust Setting   •   TAB / Q / E: Switch Category   •   ESC: Close"
+        };
+        fonts.draw_ui_regular_centered(
+            hint_text,
+            sw * 0.5,
+            box_y + box_h + scaler.s(18.0),
+            scaler.font_s(11.0),
+            Color::new(0.80, 0.88, 0.95, 0.85),
         );
     }
 }

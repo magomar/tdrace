@@ -719,5 +719,114 @@ fn test_arcade_settings_modal_display_tab_integration() {
     assert_eq!(modal.theme_dropdown.selected_index, 0);
 }
 
+#[test]
+fn test_arcade_settings_modal_arrow_category_navigation() {
+    let audio = AudioSettings::default();
+    let gp_config = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp_config);
+
+    // Initial state: Tab Bar is focused on AUDIO
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "AUDIO");
+    assert_eq!(modal.selected_bottom_btn, 1);
+
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let fonts = Fonts { display: None, ui_bold: None, ui_regular: None };
+    let theme = CabinetTheme::cyberpunk_neon();
+
+    // 1. Press Right Arrow -> Switches to CONTROLS
+    let mut gp_right = GamepadSnapshot::default();
+    gp_right.nav_right = true;
+    let mut ctx = CabinetContext {
+        scaler: &scaler,
+        fonts: &fonts,
+        theme: &theme,
+        gamepad: &gp_right,
+        dt: 1.0 / 60.0,
+        audio: None,
+    };
+    let action = modal.update(&mut ctx);
+    assert!(matches!(action, ScreenAction::None));
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
+
+    // 2. Press Right Arrow again -> Switches to DISPLAY
+    modal.update(&mut ctx);
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "DISPLAY");
+
+    // 3. Press Left Arrow -> Switches back to CONTROLS
+    let mut gp_left = GamepadSnapshot::default();
+    gp_left.nav_left = true;
+    ctx.gamepad = &gp_left;
+    modal.update(&mut ctx);
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
+
+    // 4. Press Down Arrow -> Steps down from Tab Bar into category settings (row 0)
+    let mut gp_down = GamepadSnapshot::default();
+    gp_down.nav_down = true;
+    ctx.gamepad = &gp_down;
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert_eq!(modal.nav.active_row(), 0);
+
+    // 5. Press Down Arrow again -> Moves to row 1 (trigger deadzone)
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert_eq!(modal.nav.active_row(), 1);
+
+    // 6. Press Up Arrow -> Moves back to row 0
+    let mut gp_up = GamepadSnapshot::default();
+    gp_up.nav_up = true;
+    ctx.gamepad = &gp_up;
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert_eq!(modal.nav.active_row(), 0);
+
+    // 7. Press Up Arrow from row 0 -> Moves focus back up to the Tab Bar!
+    modal.update(&mut ctx);
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
+
+    // 8. Press Up Arrow from Tab Bar -> Wraps to bottom action buttons
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert_eq!(modal.nav.active_row(), 4); // Last row in Controls column (len 5)
+    assert_eq!(modal.selected_bottom_btn, 1); // Defaults to Save & Close
+
+    // 9. Press Left Arrow on bottom row -> Selects Restore Defaults (btn 0)
+    ctx.gamepad = &gp_left;
+    modal.update(&mut ctx);
+    assert_eq!(modal.selected_bottom_btn, 0);
+
+    // 10. Press Right Arrow on bottom row -> Selects Save & Close (btn 1)
+    ctx.gamepad = &gp_right;
+    modal.update(&mut ctx);
+    assert_eq!(modal.selected_bottom_btn, 1);
+
+    // 11. Press Down Arrow from bottom row -> Wraps back up to Tab Bar!
+    ctx.gamepad = &gp_down;
+    modal.update(&mut ctx);
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
+
+    // 12. Press Confirm (Enter/Space/A) on Tab Bar -> Steps into settings (row 0)
+    let mut gp_confirm = GamepadSnapshot::default();
+    gp_confirm.btn_confirm_pressed = true;
+    ctx.gamepad = &gp_confirm;
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert_eq!(modal.nav.active_row(), 0);
+
+    // 13. Move directly to bottom buttons and confirm save
+    modal.nav.set_focus(1, 4);
+    modal.selected_bottom_btn = 1;
+    ctx.gamepad = &gp_confirm;
+    let pop_action = modal.update(&mut ctx);
+    assert!(matches!(pop_action, ScreenAction::Pop));
+    assert!(modal.is_saved);
+}
+
 
 

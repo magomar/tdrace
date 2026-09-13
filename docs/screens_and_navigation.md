@@ -40,12 +40,15 @@ stateDiagram-v2
     }
     state "Race Results & Podium (Finished)" as Finished
     state "Championship Standings (ChampionshipStandings)" as ChampionshipStandings
+    state "Arcade Settings Modal (ArcadeSettingsModal)" as ArcadeSettingsModal
 
     %% Grand Hub transitions
     ModuleSelect --> Menu: [ENTER / SPACE / A] (Load Classic/Rally/Kart/GT/NASCAR)
     ModuleSelect --> ProfileManager: [P / Y]
     ModuleSelect --> ProfileCreate: [N / X]
     ModuleSelect --> ControlsHelp: [K]
+    ModuleSelect --> ArcadeSettingsModal: [O / X]
+    ArcadeSettingsModal --> ModuleSelect: [ESC / B / Save] (if opened from Hub)
 
     %% Menu transitions
     Menu --> ModuleSelect: [ESC / TAB / G]
@@ -55,6 +58,8 @@ stateDiagram-v2
     Menu --> ChampionshipStandings: [F] (GT World Challenge / NASCAR Cup Championship Mode)
     Menu --> ProfileManager: [P / Y]
     Menu --> ControlsHelp: [K]
+    Menu --> ArcadeSettingsModal: [O]
+    ArcadeSettingsModal --> Menu: [ESC / B / Save] (if opened from Menu)
 
     %% StartingGrid transitions
     StartingGrid --> Countdown: [SPACE / ENTER / A]
@@ -69,6 +74,8 @@ stateDiagram-v2
     Paused --> Menu: [E / Exit Click]
     Paused --> ControlsHelp: [K]
     ControlsHelp --> Paused: [ESC / ENTER / K / B] (if from_paused)
+    Paused --> ArcadeSettingsModal: [O / Y]
+    ArcadeSettingsModal --> Paused: [ESC / B / Save] (if opened from Paused)
     Racing --> Finished: Lap Count Reached
     Finished --> StartingGrid: [SPACE / ENTER / A] (Restart Race)
     Finished --> ChampionshipStandings: [SPACE / ENTER] (If Championship Active)
@@ -149,12 +156,14 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
   - 5 Motorsport Module cards with titles, neon accent tags, descriptions, and active icons.
   - Active profile quick status.
   - Exit application confirmation dialog modal (`show_exit_confirm`).
+  - Arcade Settings Modal (`settings_modal` overlay for Audio, Display Resolution, Window Mode, CRT scanlines, and Driver Assists).
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Up` / `Down` / `W` / `S` / `D-pad` | Select module | Changes `selected_idx` (0: Classic, 1: Rally, 2: Kart, 3: GT, 4: NASCAR) |
 | `Enter` / `Space` / Gamepad `A` | Confirm module | Transitions to `GameState::Menu` configured for selected module |
+| `O` / `X` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
 | `P` / Gamepad `Y` | Open Profile Manager | Transitions to `GameState::ProfileManager` |
 | `N` / Gamepad `X` | Create Profile | Transitions to `GameState::ProfileCreate` |
 | `K` | Controls Help | Transitions to `GameState::ControlsHelp(false)` |
@@ -183,6 +192,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `E` | Launch CAD Studio | Loads highlighted circuit into Track CAD Editor -> `GameState::TrackEditor` |
 | `F` | Start Championship | Launches Championship mode (e.g. F1 World Championship) |
 | `P` / Gamepad `Y` | Profile Manager | Opens `GameState::ProfileManager` |
+| `O` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
 | `K` | Controls Help | Opens `GameState::ControlsHelp(false)` |
 | `Escape` / `G` / Gamepad `B` | Return to Hub | Transitions back to Grand Hub -> `GameState::ModuleSelect` |
 
@@ -264,12 +274,14 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
   - Glass card with interactive Resume Race & Exit Race action buttons with keyboard/gamepad focus outlines.
   - Driver assists profile selector (`Arcade`, `Sport`, `Pro`).
   - Audio status indicator.
+  - Arcade Settings Modal (`settings_modal` overlay for Audio, Display Resolution, Window Mode, CRT scanlines, and Driver Assists).
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Left` / `Right` / `Up` / `Down` / `A` / `D` / `W` / `S` | Toggle Button Cursor | Toggles focus outline between **[Resume Race]** (0) and **[Exit Race]** (1) |
 | `Enter` / `Space` / Gamepad `A` | Confirm Highlighted Button | Executes highlighted action (Resumes race or Quits to menu) |
+| `O` / Gamepad `Y` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
 | `Escape` / `Pause` / Gamepad `Start` | Resume Race | Transitions to `GameState::Racing` |
 | `E` / Gamepad `B` | Exit Race | Stops audio loops -> Transitions to `GameState::Menu` |
 | `K` | Controls Help | Opens `GameState::ControlsHelp(true)` |
@@ -429,6 +441,30 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 ---
 
+### 3.15. Arcade Settings Modal (`ArcadeSettingsModal`)
+* **Purpose**: Comprehensive arcade cabinet preferences overlay configuring Audio, Controls, Display, and Gameplay options.
+* **Host Screens**: Accessible from `GameState::ModuleSelect` (`O` / `X`), `GameState::Menu` (`O`), and `GameState::Paused` (`O` / Gamepad `Y`).
+* **Category Tabs**:
+  - `AUDIO`: Master Volume, Music Volume, SFX Volume, UI Sounds Volume, Audio Output (Unmuted / Muted).
+  - `CONTROLS`: Left Stick Deadzone, Analog Trigger Deadzone, Steering Sensitivity, Steering Exponent.
+  - `DISPLAY`: Screen Resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), Display Mode (Windowed / Fullscreen), UI Scaling, CRT Scanlines, Color Theme.
+  - `GAMEPLAY`: Assist Profile (`Arcade`, `Sport`, `Pro`), Speedometer Unit (`km/h`, `mph`), Ghost Replay Shadow Car.
+* **Navigation & Shortcuts**:
+
+| Key / Input | Action | Target / Result |
+| :--- | :--- | :--- |
+| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` (Tab Bar focused) | Switch Category | Changes active category tab (`AUDIO` ⇄ `CONTROLS` ⇄ `DISPLAY` ⇄ `GAMEPLAY`) |
+| `Tab` / `Shift+Tab` / `Q` / `E` / `PageUp` / `PageDown` | Global Category Cycle | Cycles category tabs from any row |
+| `Down` / `S` / `Enter` / `Space` / Gamepad `A` (Tab Bar focused) | Enter Category Options | Shifts focus down into the active category's settings (Row 0) |
+| `Up` / `W` (Row 0) | Return to Tab Bar | Moves focus back up to the Category Tab Bar |
+| `Left` / `Right` / `A` / `D` (Setting row focused) | Adjust Setting Value | Steps slider or changes dropdown selection |
+| `Up` / `Down` / `W` / `S` (Settings rows) | Navigate Rows | Moves through setting widgets and bottom action buttons |
+| `Left` / `Right` (Bottom button row) | Select Bottom Button | Toggles between **[RESTORE DEFAULTS]** and **[SAVE & CLOSE]** |
+| `Enter` / `Space` / Gamepad `A` (Bottom row) | Execute Action | Restores default preferences or saves and closes modal |
+| `Escape` / Gamepad `B` | Cancel & Close | Discards uncommitted changes and closes modal |
+
+---
+
 ## 4. Game Modes & Vehicle Allocation Schema
 
 The system supports four distinct operational game modes selectable from the pre-race setup screen:
@@ -491,6 +527,7 @@ The system supports four distinct operational game modes selectable from the pre
 | Modal Name | Host Screen | Trigger Input | Dismiss Input | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
 | **Exit Confirm Dialog** | `ModuleSelect` | `Escape` / Gamepad `B` | `Escape` / `N` / Gamepad `B` | Prevents accidental application close |
+| **Arcade Settings Modal** | `ModuleSelect`, `Menu`, `Paused` | `O` / `X` (Hub), `O` (Menu), `O` / Gamepad `Y` (Paused) | `Escape` / Gamepad `B` / Click Save/Cancel | Full cabinet arcade settings modal: Master/Music/SFX volume, stereo balance, audio mute, screen resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), display mode (Windowed / Fullscreen), UI scaling, CRT scanline presets, color themes, and driving assists |
 | **Hall of Fame Overlay** | `Finished` | `Tab` / Gamepad `X` | `Tab` / Gamepad `X` | Toggles all-time leaderboard records vs session podium |
 | **Edit Track Metadata** | `TrackManager` | `I` (on custom track) | `Enter` (save) / `Escape` (cancel) | Edits circuit title and description |
 | **Select Module Promotion** | `TrackManager` | `P` / Gamepad `Y` | `Enter` / Gamepad `A` (confirm) / `Escape` / `B` (cancel) | Promotes track or adds/removes module distribution |

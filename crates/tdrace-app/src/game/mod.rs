@@ -2087,6 +2087,31 @@ impl RaceSession {
                 self.update_menu();
             }
             GameState::ModuleSelect { ref mut selected_idx } => {
+                // If Arcade Settings Modal is open on the Grand Hub, update it and return:
+                if let Some(ref mut modal) = self.settings_modal {
+                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::default();
+                    let mut ctx = CabinetContext {
+                        scaler: &scaler,
+                        fonts: &self.fonts,
+                        theme: &theme,
+                        gamepad: &self.input.gamepad.snapshot,
+                        dt: 1.0 / 60.0,
+                        audio: Some(&self.audio),
+                    };
+
+                    let action = modal.update(&mut ctx);
+                    if matches!(action, ScreenAction::Pop) {
+                        let saved = modal.is_saved;
+                        self.close_settings_modal(saved);
+                        if saved {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                        }
+                    }
+                    return;
+                }
+
                 // If exit confirmation modal is currently open:
                 if self.show_exit_confirm {
                     if self.exit_confirm_modal.is_none() {
@@ -2184,6 +2209,13 @@ impl RaceSession {
                         livery_idx: next_livery,
                         cursor_timer: 0.0,
                     };
+                    return;
+                }
+
+                // Arcade Settings Modal (O or X key)
+                if is_key_pressed(KeyCode::O) || is_key_pressed(KeyCode::X) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.open_settings_modal();
                     return;
                 }
 
@@ -5011,6 +5043,20 @@ impl RaceSession {
                     } else {
                         render_exit_confirm_modal(&self.fonts);
                     }
+                }
+                if let Some(ref modal) = self.settings_modal {
+                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::default();
+                    let ctx = CabinetContext {
+                        scaler: &scaler,
+                        fonts: &self.fonts,
+                        theme: &theme,
+                        gamepad: &self.input.gamepad.snapshot,
+                        dt: 0.0,
+                        audio: Some(&self.audio),
+                    };
+                    modal.draw(&ctx);
                 }
             }
             GameState::ChampionshipStandings => {

@@ -1734,7 +1734,7 @@ pub fn render_module_select_menu(
     }
 
     // Footer prompt
-    let prompt = "USE [UP/DOWN] TO SELECT MODULE | [ENTER/SPACE] OPEN MENU | [P] SWITCH PROFILE | [N] NEW PROFILE | [K] CONTROLS | [ESC] QUIT";
+    let prompt = "USE [UP/DOWN] TO SELECT MODULE | [ENTER/SPACE] OPEN MENU | [O/X] SETTINGS | [P] SWITCH PROFILE | [N] NEW PROFILE | [K] CONTROLS | [ESC] QUIT";
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
