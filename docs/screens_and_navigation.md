@@ -45,7 +45,7 @@ stateDiagram-v2
     ModuleSelect --> Menu: [ENTER / SPACE / A] (Load Classic/Rally/Kart/GT/NASCAR)
     ModuleSelect --> ProfileManager: [P / Y]
     ModuleSelect --> ProfileCreate: [N / X]
-    ModuleSelect --> ControlsHelp: [C / K]
+    ModuleSelect --> ControlsHelp: [K]
 
     %% Menu transitions
     Menu --> ModuleSelect: [ESC / TAB / G]
@@ -54,7 +54,7 @@ stateDiagram-v2
     Menu --> TrackEditor: [E] (Launch Editor with Selected Track)
     Menu --> ChampionshipStandings: [F] (GT World Challenge / NASCAR Cup Championship Mode)
     Menu --> ProfileManager: [P / Y]
-    Menu --> ControlsHelp: [C / K]
+    Menu --> ControlsHelp: [K]
 
     %% StartingGrid transitions
     StartingGrid --> Countdown: [SPACE / ENTER / A]
@@ -67,8 +67,8 @@ stateDiagram-v2
     Racing --> Paused: [ESC / Pause / Start]
     Paused --> Racing: [ESC / ENTER / Resume Click]
     Paused --> Menu: [E / Exit Click]
-    Paused --> ControlsHelp: [C / K]
-    ControlsHelp --> Paused: [ESC / ENTER / B] (if from_paused)
+    Paused --> ControlsHelp: [K]
+    ControlsHelp --> Paused: [ESC / ENTER / K / B] (if from_paused)
     Racing --> Finished: Lap Count Reached
     Finished --> StartingGrid: [SPACE / ENTER / A] (Restart Race)
     Finished --> ChampionshipStandings: [SPACE / ENTER] (If Championship Active)
@@ -91,8 +91,8 @@ stateDiagram-v2
     TrackEditor --> Menu: [ESC] (Exit Studio)
 
     %% Controls Help fallback
-    ControlsHelp --> Menu: [ESC / ENTER / B] (if opened from Menu)
-    ControlsHelp --> ModuleSelect: [ESC / ENTER / B] (if opened from Hub)
+    ControlsHelp --> Menu: [ESC / ENTER / K / B] (if opened from Menu)
+    ControlsHelp --> ModuleSelect: [ESC / ENTER / K / B] (if opened from Hub)
 ```
 
 ---
@@ -157,7 +157,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `Enter` / `Space` / Gamepad `A` | Confirm module | Transitions to `GameState::Menu` configured for selected module |
 | `P` / Gamepad `Y` | Open Profile Manager | Transitions to `GameState::ProfileManager` |
 | `N` / Gamepad `X` | Create Profile | Transitions to `GameState::ProfileCreate` |
-| `C` / `K` | Controls Help | Transitions to `GameState::ControlsHelp(false)` |
+| `K` | Controls Help | Transitions to `GameState::ControlsHelp(false)` |
 | `Escape` / Gamepad `B` | Exit Game | Opens exit confirmation modal |
 
 ---
@@ -179,12 +179,6 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Catalog | Scrolls circuit list within the active filter category |
 | `Space` / `Enter` / Gamepad `A` | Confirm Selection | If circuit selected: loads circuit -> `GameState::StartingGrid`<br>If Track Manager selected: opens `GameState::TrackManager` |
 | `T` | Open Track Manager | Directly opens Track Manager hub -> `GameState::TrackManager` |
-| `C` | Clone Circuit | Duplicates highlighted preset or custom circuit into custom storage |
-| `E` | Launch CAD Studio | Loads highlighted circuit into Track CAD Editor -> `GameState::TrackEditor` |
-| `F` | Start Championship | Launches Championship mode (e.g. F1 World Championship) |
-| `P` / Gamepad `Y` | Profile Manager | Opens `GameState::ProfileManager` |
-| `K` | Controls Help | Opens `GameState::ControlsHelp(false)` |
-| `Escape` / `G` / Gamepad `B` | Return to Hub | Transitions back to Grand Hub -> `GameState::ModuleSelect` |
 | `C` | Clone Circuit | Duplicates highlighted preset or custom circuit into custom storage |
 | `E` | Launch CAD Studio | Loads highlighted circuit into Track CAD Editor -> `GameState::TrackEditor` |
 | `F` | Start Championship | Launches Championship mode (e.g. F1 World Championship) |
@@ -278,7 +272,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `Enter` / `Space` / Gamepad `A` | Confirm Highlighted Button | Executes highlighted action (Resumes race or Quits to menu) |
 | `Escape` / `Pause` / Gamepad `Start` | Resume Race | Transitions to `GameState::Racing` |
 | `E` / Gamepad `B` | Exit Race | Stops audio loops -> Transitions to `GameState::Menu` |
-| `C` / `K` | Controls Help | Opens `GameState::ControlsHelp(true)` |
+| `K` | Controls Help | Opens `GameState::ControlsHelp(true)` |
 
 ---
 
@@ -326,7 +320,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `H` / Gamepad Assist Toggle | Cycle Assists | Cycles assists mode (`Arcade` -> `Sport` -> `Pro`) |
-| `Escape` / `Enter` / `C` / `K` / Gamepad `B` | Close Help | Returns to `GameState::Paused` (if `from_paused`) or `GameState::Menu` |
+| `Escape` / `Enter` / `K` / Gamepad `B` | Close Help | Returns to `GameState::Paused` (if `from_paused`) or `GameState::Menu` |
 
 ---
 
