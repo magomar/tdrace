@@ -170,6 +170,9 @@ pub struct CarState {
     pub is_airborne: bool,
     /// Time spent in the air during the current jump in seconds.
     pub air_time: f32,
+    /// Duration of the most recent aerial jump in seconds (captured upon touchdown).
+    #[serde(default)]
+    pub last_air_time: f32,
     /// Cumulative count of jumps completed.
     pub jump_count: u32,
     /// Flag indicating the vehicle touched down on the ground during this physics tick.
@@ -208,6 +211,7 @@ impl Default for CarState {
             vertical_velocity: 0.0,
             is_airborne: false,
             air_time: 0.0,
+            last_air_time: 0.0,
             jump_count: 0,
             just_landed: false,
             draft_intensity: 0.0,
@@ -413,6 +417,7 @@ impl Car {
                 self.state.elevation = 0.0;
                 self.state.vertical_velocity = 0.0;
                 self.state.is_airborne = false;
+                self.state.last_air_time = self.state.air_time;
                 self.state.air_time = 0.0;
                 self.state.just_landed = true;
             } else {

@@ -109,6 +109,9 @@ pub struct TrackProgressTracker {
     pub sector_times: Vec<f32>,
     /// Best sector times achieved across all completed laps.
     pub best_sector_times: Vec<Option<f32>>,
+    /// Sector times from the most recently completed lap.
+    #[serde(default)]
+    pub last_lap_sector_times: Vec<f32>,
     /// ID of the last validated checkpoint crossed in sequence.
     pub last_checkpoint_idx: usize,
     /// ID of the expected next sequential checkpoint to cross.
@@ -153,6 +156,7 @@ impl TrackProgressTracker {
             current_sector: 0,
             sector_times: vec![0.0; sectors],
             best_sector_times: vec![None; sectors],
+            last_lap_sector_times: vec![0.0; sectors],
             last_checkpoint_idx: 0,
             next_checkpoint_idx: 0,
             checkpoints_passed_this_lap: 0,
@@ -181,6 +185,7 @@ impl TrackProgressTracker {
         self.current_sector = 0;
         self.sector_times = vec![0.0; sectors];
         self.best_sector_times = vec![None; sectors];
+        self.last_lap_sector_times = vec![0.0; sectors];
         self.last_checkpoint_idx = 0;
         self.next_checkpoint_idx = 0;
         self.checkpoints_passed_this_lap = 0;
@@ -336,6 +341,9 @@ impl TrackProgressTracker {
                 self.lap_time = 0.0;
                 self.checkpoints_passed_this_lap = 0;
                 self.lap_completed = true;
+
+                // Save completed lap sector times before resetting for next lap
+                self.last_lap_sector_times = self.sector_times.clone();
 
                 // Reset current lap sector times
                 for s in self.sector_times.iter_mut() {

@@ -119,6 +119,7 @@ use crate::ui::{
     ScreenAction, UiScaler, UniversalConfirmModal,
 };
 pub use cabinet::fx::crt::{CrtConfig, CrtOverlay, ScanlineMode};
+pub use cabinet::fx::floating_text::{FloatingTextItem, FloatingTextManager};
 pub use cabinet::fx::transition::{ScreenTransition, TransitionConfig, TransitionPhase, TransitionType};
 
 /// Source screen that launched the DriverCards dossier view.
@@ -314,7 +315,7 @@ pub struct RaceSession {
     pub audio: AudioManager,
     pub engine_rpm: EngineRpmModel,
     prev_countdown_sec: i32,
-    prev_player_sector: usize,
+    pub prev_player_sector: usize,
     curb_sound_cooldown: f32,
     offroad_sound_cooldown: f32,
 
@@ -328,6 +329,13 @@ pub struct RaceSession {
 
     // CRT & Retro Scanline post-processing overlay (Cabinet FX)
     pub crt_overlay: CrtOverlay,
+
+    // Floating Text Popups for HUD & Alerts (Cabinet FX)
+    pub floating_text: FloatingTextManager,
+    pub prev_best_sectors: Vec<Option<f32>>,
+    pub drift_combo_count: u32,
+    pub drift_combo_timer: f32,
+    pub prev_player_drifting: bool,
 }
 
 
@@ -545,6 +553,11 @@ impl RaceSession {
             transition: None,
             pending_state: None,
             crt_overlay,
+            floating_text: FloatingTextManager::new(64),
+            prev_best_sectors: Vec::new(),
+            drift_combo_count: 0,
+            drift_combo_timer: 0.0,
+            prev_player_drifting: false,
         };
 
         session.refresh_profiles_and_stats();
@@ -1381,6 +1394,11 @@ impl RaceSession {
         self.rebuild_roster_participants();
 
         self.fx.clear();
+        self.floating_text.clear();
+        self.prev_best_sectors.clear();
+        self.drift_combo_count = 0;
+        self.drift_combo_timer = 0.0;
+        self.prev_player_drifting = false;
         self.results.clear();
         self.session_time = 0.0;
         self.accumulator = 0.0;
@@ -1547,6 +1565,17 @@ impl RaceSession {
 
         // Step active CRT overlay animation
         self.crt_overlay.update(frame_dt);
+
+        // Step active floating text popups
+        self.floating_text.update(frame_dt);
+
+        // Step active drift combo decay timer
+        if self.drift_combo_timer > 0.0 {
+            self.drift_combo_timer -= frame_dt;
+            if self.drift_combo_timer <= 0.0 {
+                self.drift_combo_count = 0;
+            }
+        }
 
         // If a transition is actively covering or holding before the state swap,
         // suppress UI navigation and game interaction.
@@ -4069,6 +4098,7 @@ impl RaceSession {
         }
 
         // Trigger Jump Ramps & Landing SFX/FX
+        let mut player_jump_air_time = None;
         for (i, car) in self.cars.iter_mut().enumerate() {
             for ramp in &self.track.geometry.jump_ramps {
                 if car.try_trigger_jump_ramp(ramp) {
@@ -4082,9 +4112,49 @@ impl RaceSession {
                 if i == 0 {
                     self.audio.play_sfx(SfxType::Landing);
                     self.camera.add_trauma(0.25);
+                    if car.state.last_air_time >= 0.20 {
+                        player_jump_air_time = Some(car.state.last_air_time);
+                    }
                 }
                 let surf = wheel_surfaces.get(i).map(|s| s[0]).unwrap_or(SurfaceType::Asphalt);
                 self.fx.particles.emit_landing_dust(car.state.position, car.state.speed, surf);
+            }
+        }
+
+        if let Some(air_time) = player_jump_air_time {
+            if let Some(player_car) = self.cars.first() {
+                let pts = (air_time * 250.0).round() as u32;
+                let sw = screen_width_safe();
+                let sh = screen_height_safe();
+                let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
+                let anchor = Vec2::new(
+                    screen_pos.x.clamp(100.0, sw - 100.0),
+                    (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
+                );
+
+                self.drift_combo_count += 1;
+                self.drift_combo_timer = 4.0;
+
+                if air_time >= 0.70 {
+                    self.floating_text.spawn_alert(
+                        format!("MEGA JUMP! {:.2}s (+{} PTS)", air_time, pts),
+                        anchor,
+                        Palette::NEON_GOLD,
+                    );
+                } else {
+                    self.floating_text.spawn_alert(
+                        format!("AIR TIME {:.2}s (+{} PTS)", air_time, pts),
+                        anchor,
+                        Palette::NEON_CYAN,
+                    );
+                }
+
+                if self.drift_combo_count >= 2 {
+                    self.floating_text.spawn_combo(
+                        self.drift_combo_count,
+                        anchor + Vec2::new(0.0, -26.0),
+                    );
+                }
             }
         }
 
@@ -4182,6 +4252,46 @@ impl RaceSession {
                 if tracker.current_sector > 0 {
                     self.audio.play_sfx(SfxType::SectorPing);
                 }
+
+                let completed_sector = self.prev_player_sector;
+                let sector_time = if lap_changed {
+                    tracker.last_lap_sector_times.get(completed_sector).copied().unwrap_or(0.0)
+                } else {
+                    tracker.sector_times.get(completed_sector).copied().unwrap_or(0.0)
+                };
+
+                if sector_time > 0.05 {
+                    let sw = screen_width_safe();
+                    let sh = screen_height_safe();
+                    let popup_pos = Vec2::new(sw * 0.5, sh * 0.20);
+
+                    let num_sectors = tracker.sector_times.len();
+                    if self.prev_best_sectors.len() < num_sectors {
+                        self.prev_best_sectors.resize(num_sectors, None);
+                    }
+
+                    if let Some(prev_best) = self.prev_best_sectors.get(completed_sector).copied().flatten() {
+                        let delta = sector_time - prev_best;
+                        if delta < -0.005 {
+                            // Purple / personal best sector
+                            let delta_str = format!("-{:.2}s", -delta);
+                            let text = format!("{} SECTOR {}", delta_str, completed_sector + 1);
+                            self.floating_text.spawn_alert(text, popup_pos, Palette::NEON_MAGENTA);
+                            self.prev_best_sectors[completed_sector] = Some(sector_time);
+                        } else {
+                            // Slower sector
+                            let delta_str = format!("+{:.2}s", delta);
+                            let text = format!("{} SECTOR {}", delta_str, completed_sector + 1);
+                            self.floating_text.spawn_alert(text, popup_pos, Palette::YELLOW);
+                        }
+                    } else {
+                        // Benchmark sector on first flying lap
+                        let text = format!("SECTOR {}: {:.2}s", completed_sector + 1, sector_time);
+                        self.floating_text.spawn_alert(text, popup_pos, Palette::NEON_CYAN);
+                        self.prev_best_sectors[completed_sector] = Some(sector_time);
+                    }
+                }
+
                 self.prev_player_sector = tracker.current_sector;
             }
             if lap_changed && (self.is_time_attack || tracker.current_lap <= self.total_laps) {
@@ -4236,6 +4346,14 @@ impl RaceSession {
                                 &popup_msg,
                                 Palette::NEON_GOLD,
                             );
+
+                            let sw = screen_width_safe();
+                            let sh = screen_height_safe();
+                            self.floating_text.spawn_alert(
+                                &popup_msg,
+                                Vec2::new(sw * 0.5, sh * 0.16),
+                                Palette::NEON_GOLD,
+                            );
                         }
                     }
                 }
@@ -4258,6 +4376,36 @@ impl RaceSession {
             &car_collision_events,
             dt,
         );
+
+        // 9b. Drift Combo & HUD Floating Popups
+        if let Some(player_car) = self.cars.first() {
+            let was_drifting = self.prev_player_drifting;
+            let is_drifting = player_car.state.is_drifting;
+
+            if was_drifting && !is_drifting && player_car.state.drift_score > 50.0 {
+                self.drift_combo_count += 1;
+                self.drift_combo_timer = 4.0;
+
+                let sw = screen_width_safe();
+                let sh = screen_height_safe();
+                let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
+                let anchor = Vec2::new(
+                    screen_pos.x.clamp(100.0, sw - 100.0),
+                    (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
+                );
+
+                let pts = player_car.state.drift_score.round() as u32;
+                self.floating_text.spawn_score(pts, anchor);
+
+                if self.drift_combo_count >= 2 {
+                    self.floating_text.spawn_combo(
+                        self.drift_combo_count,
+                        anchor + Vec2::new(0.0, -26.0),
+                    );
+                }
+            }
+            self.prev_player_drifting = is_drifting;
+        }
 
         // 10. Update active Personal Best notification timer
         if let Some(notif) = &mut self.pb_notification {
@@ -5557,5 +5705,40 @@ impl RaceSession {
             // Mobile Touch Controls Overlay (Virtual Joystick / Buttons + Pedals)
             self.touch.render(&self.fonts, sw, sh);
         }
+
+        // Render floating text popups (combos, sector splits, alerts) on HUD overlay
+        let scaler = UiScaler::new(sw, sh);
+        self.floating_text.draw(&self.fonts, &scaler);
+    }
+
+    /// Spawns an animated HUD alert or milestone notification banner.
+    pub fn spawn_hud_alert(&mut self, text: impl Into<String>, color: Color) {
+        let sw = screen_width_safe();
+        let sh = screen_height_safe();
+        self.floating_text.spawn_alert(text, Vec2::new(sw * 0.5, sh * 0.20), color);
+    }
+
+    /// Spawns a floating sector split time delta popup.
+    pub fn spawn_sector_split_popup(&mut self, sector_idx: usize, delta: f32) {
+        let sw = screen_width_safe();
+        let sh = screen_height_safe();
+        let pos = Vec2::new(sw * 0.5, sh * 0.20);
+        if delta < -0.005 {
+            let text = format!("-{:.2}s SECTOR {}", -delta, sector_idx + 1);
+            self.floating_text.spawn_alert(text, pos, Palette::NEON_MAGENTA);
+        } else {
+            let text = format!("+{:.2}s SECTOR {}", delta, sector_idx + 1);
+            self.floating_text.spawn_alert(text, pos, Palette::YELLOW);
+        }
+    }
+
+    /// Spawns an arcade score popup at screen position.
+    pub fn spawn_score_popup(&mut self, score: u32, pos: Vec2) {
+        self.floating_text.spawn_score(score, pos);
+    }
+
+    /// Spawns an arcade combo notification popup at screen position.
+    pub fn spawn_combo_popup(&mut self, combo: u32, pos: Vec2) {
+        self.floating_text.spawn_combo(combo, pos);
     }
 }

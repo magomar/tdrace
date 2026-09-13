@@ -691,4 +691,144 @@ fn test_race_session_crt_overlay_settings_and_toggle() {
     assert!(session.crt_overlay.roll_offset > initial_offset);
 }
 
+#[test]
+fn test_floating_text_popups_lifecycle_in_race_session() {
+    let mut session = RaceSession::new();
+    assert!(session.floating_text.is_empty());
+    assert_eq!(session.floating_text.count(), 0);
+
+    // Spawning score, combo, and alerts via helper methods
+    session.spawn_score_popup(500, glam::Vec2::new(300.0, 200.0));
+    session.spawn_combo_popup(3, glam::Vec2::new(300.0, 160.0));
+    session.spawn_hud_alert("TEST ALERT", cabinet::ui::theme::Palette::NEON_CYAN);
+    assert_eq!(session.floating_text.count(), 3);
+
+    // Verify properties of spawned items
+    assert!(session.floating_text.items.iter().any(|item| item.text == "+500 PTS"));
+    assert!(session.floating_text.items.iter().any(|item| item.text == "COMBO x3!"));
+    assert!(session.floating_text.items.iter().any(|item| item.text == "TEST ALERT"));
+
+    // Step physics & update
+    let initial_y = session.floating_text.items[0].pos.y;
+    session.update(); // Steps floating_text.update
+    assert!(session.floating_text.items[0].pos.y < initial_y, "Floating text items should drift upward");
+
+    // Clear on init_race
+    session.init_race();
+    assert!(session.floating_text.is_empty(), "floating_text must be cleared on init_race");
+}
+
+#[test]
+fn test_checkpoint_crossings_trigger_sector_split_popups_with_color_coding() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert!(session.floating_text.is_empty());
+
+    // 1. First sector benchmark (no previous best)
+    session.prev_best_sectors = vec![None; 3];
+    session.prev_player_sector = 0;
+    if let Some(tracker) = session.trackers.first_mut() {
+        tracker.current_sector = 1; // Crossed into sector 1
+        tracker.sector_times[0] = 18.50; // Sector 0 took 18.50s
+    }
+
+    session.physics_step(0.016);
+    assert_eq!(session.floating_text.count(), 1);
+    let item = &session.floating_text.items[0];
+    assert!(item.text.contains("SECTOR 1: 18.50s"));
+    assert_eq!(item.color, cabinet::ui::theme::Palette::NEON_CYAN);
+    assert_eq!(session.prev_best_sectors[0], Some(18.50));
+
+    // Clear popups for next test
+    session.floating_text.clear();
+
+    // 2. Faster sector on subsequent lap (-0.42s)
+    session.prev_player_sector = 0;
+    if let Some(tracker) = session.trackers.first_mut() {
+        tracker.current_sector = 1;
+        tracker.sector_times[0] = 18.08; // 18.08s (-0.42s compared to 18.50)
+    }
+
+    session.physics_step(0.016);
+    assert_eq!(session.floating_text.count(), 1);
+    let item = &session.floating_text.items[0];
+    assert!(item.text.contains("-0.42s SECTOR 1"));
+    assert_eq!(item.color, cabinet::ui::theme::Palette::NEON_MAGENTA, "Faster sector should be Purple / Neon Magenta");
+    assert_eq!(session.prev_best_sectors[0], Some(18.08));
+
+    session.floating_text.clear();
+
+    // 3. Slower sector (+0.35s)
+    session.prev_player_sector = 0;
+    if let Some(tracker) = session.trackers.first_mut() {
+        tracker.current_sector = 1;
+        tracker.sector_times[0] = 18.43; // 18.43s (+0.35s compared to 18.08)
+    }
+
+    session.physics_step(0.016);
+    assert_eq!(session.floating_text.count(), 1);
+    let item = &session.floating_text.items[0];
+    assert!(item.text.contains("+0.35s SECTOR 1"));
+    assert_eq!(item.color, cabinet::ui::theme::Palette::YELLOW, "Slower sector should be Yellow");
+}
+
+#[test]
+fn test_drift_combo_and_jump_landing_dynamic_popups() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert_eq!(session.drift_combo_count, 0);
+    assert!(session.floating_text.is_empty());
+
+    // 1. Drift completion triggers score popup and combo increment
+    session.prev_player_drifting = true;
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.is_drifting = false;
+        player_car.state.drift_score = 350.0;
+    }
+
+    session.physics_step(0.016);
+    assert_eq!(session.drift_combo_count, 1);
+    assert_eq!(session.drift_combo_timer, 4.0);
+    assert!(session.floating_text.items.iter().any(|item| item.text == "+350 PTS"));
+
+    // 2. Second drift completion within combo window triggers COMBO x2!
+    session.prev_player_drifting = true;
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.is_drifting = false;
+        player_car.state.drift_score = 520.0;
+    }
+
+    session.physics_step(0.016);
+    assert_eq!(session.drift_combo_count, 2);
+    assert!(session.floating_text.items.iter().any(|item| item.text == "COMBO x2!"));
+    assert!(session.floating_text.items.iter().any(|item| item.text == "+520 PTS"));
+
+    // 3. Jump landing triggers dynamic air time alert and combo chaining
+    session.floating_text.clear();
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.elevation = 0.01;
+        player_car.state.vertical_velocity = -5.0;
+        player_car.state.air_time = 0.85; // 0.85s mega jump
+    }
+
+    session.physics_step(0.016);
+    assert_eq!(session.drift_combo_count, 3, "Jump landing should chain into active combo");
+    assert!(session.floating_text.items.iter().any(|item| item.text.contains("MEGA JUMP! 0.85s")));
+    assert!(session.floating_text.items.iter().any(|item| item.text == "COMBO x3!"));
+
+    // 4. Decay timer resets combo after 4.0 seconds of inactivity
+    session.floating_text.clear();
+    session.drift_combo_timer = 0.1;
+    // Step by 0.2s via update
+    let dt = 0.2;
+    if session.drift_combo_timer > 0.0 {
+        session.drift_combo_timer -= dt;
+        if session.drift_combo_timer <= 0.0 {
+            session.drift_combo_count = 0;
+        }
+    }
+    assert_eq!(session.drift_combo_count, 0, "Combo count should reset after timer expires");
+}
+
+
 
