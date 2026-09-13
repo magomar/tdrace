@@ -199,6 +199,35 @@ impl TrackManager {
         self.deleted_presets.iter().any(|d| d == &demoted_marker)
     }
 
+    /// Checks if a preset track was marked as demoted, inspecting either the parent directory of path or user tracks dir.
+    pub fn is_preset_slug_demoted_in_path(slug: &str, path: &str) -> bool {
+        let marker = format!("demoted:{}", slug);
+        let p = Path::new(path);
+        if let Some(parent) = p.parent() {
+            let del_file = parent.join(".deleted_tracks.json");
+            if del_file.exists() {
+                if let Ok(data) = fs::read_to_string(&del_file) {
+                    if let Ok(list) = serde_json::from_str::<Vec<String>>(&data) {
+                        if list.iter().any(|d| d == &marker) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        let user_del = crate::storage::resolve_user_tracks_dir().join(".deleted_tracks.json");
+        if user_del.exists() {
+            if let Ok(data) = fs::read_to_string(&user_del) {
+                if let Ok(list) = serde_json::from_str::<Vec<String>>(&data) {
+                    if list.iter().any(|d| d == &marker) {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
     /// Checks if a custom track is marked as deleted in the target module or globally.
     /// Note: `demoted:<id>` marks the official preset as demoted, NOT the custom track as deleted.
     pub fn is_custom_track_deleted_for_module(&self, id: &str, module_id: &str) -> bool {
@@ -283,6 +312,10 @@ impl TrackManager {
                         let mut modules = track.modules.clone();
                         let mut category = track.category;
                         let mut module_id = track.module_id.clone();
+
+                        if category != TrackCategory::Draft && !is_demoted && Self::is_preset_slug(&stem) {
+                            continue;
+                        }
 
                         if is_demoted {
                             category = TrackCategory::Main;
@@ -599,7 +632,7 @@ impl TrackManager {
 
         for custom in custom_tracks {
             if let Some(pos) = list.iter().position(|c| c.track_id() == custom.track_id()) {
-                if crate::storage::is_dev_mode() || self.is_preset_demoted(custom.track_id()) {
+                if self.is_preset_demoted(custom.track_id()) {
                     list[pos] = custom;
                 }
             } else {
@@ -671,7 +704,7 @@ impl TrackManager {
             custom_id => {
                 // If it exists in git_tracks_dir, load directly from the git preset file
                 if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    for m in ["classic", "rally", "kart", "f1"] {
+                    for m in ["classic", "rally", "kart", "f1", "nascar"] {
                         let git_file = git_tracks_dir.join(m).join(format!("{}.json", custom_id));
                         if git_file.exists() {
                             return Track::load_from_file(&git_file)
@@ -1073,7 +1106,7 @@ impl TrackManager {
                 && custom.belongs_to_module(module_id)
                 && !self.is_custom_track_deleted_for_module(&custom.id, module_id)
             {
-                if !crate::storage::is_dev_mode() && !is_demoted && Self::is_preset_slug(&custom.id) {
+                if !is_demoted && Self::is_preset_slug(&custom.id) {
                     continue;
                 }
                 choices.push(TrackChoice::Custom {

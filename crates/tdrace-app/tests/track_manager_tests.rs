@@ -504,7 +504,7 @@ fn test_track_manager_delete_with_backspace() {
 
 #[test]
 fn test_predefined_track_demote_promote_and_delete() {
-    let _lock = DEV_MODE_MUTEX.lock().unwrap();
+    let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
     std::env::remove_var("TDRACE_DEV");
 
     let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_predefined_ops_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
@@ -728,7 +728,7 @@ fn test_empty_module_tracks_resilience() {
 
 #[test]
 fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
-    let _lock = DEV_MODE_MUTEX.lock().unwrap();
+    let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
     std::env::remove_var("TDRACE_DEV");
 
     use tdrace_core::track::presets::oval_speedway;
@@ -1339,6 +1339,57 @@ fn test_custom_circuit_multi_category_assignment() {
     let rally_after = manager.module_catalog_tracks("rally");
     assert_eq!(rally_after.len(), 12);
     assert!(!rally_after.iter().any(|t| t.title() == "Hybrid Classic Rally"));
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_custom_circuit_promoted_to_preset_classified_as_official_preset() {
+    let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_tm_preset_styling_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    // 1. A TrackChoice::Custom representing a preset in git must be recognized as an official preset
+    let git_preset_choice = TrackChoice::Custom {
+        id: "figure_eight".to_string(),
+        title: "Figure Eight".to_string(),
+        description: "Classic crossover".to_string(),
+        path: "classic/figure_eight".to_string(),
+    };
+    assert!(git_preset_choice.is_official_preset(), "Track in presets must be official preset");
+
+    // 2. Even if represented with an absolute path, it must be recognized as official preset when not demoted
+    let abs_preset_choice = TrackChoice::Custom {
+        id: "classic_grand_prix".to_string(),
+        title: "Classic Grand Prix".to_string(),
+        description: "GP circuit".to_string(),
+        path: temp_dir.join("classic_grand_prix.json").to_string_lossy().to_string(),
+    };
+    assert!(abs_preset_choice.is_official_preset(), "Preset with absolute path must remain official preset if not demoted");
+
+    // 3. If marked as demoted in .deleted_tracks.json, it is NOT an official preset
+    let _ = fs::create_dir_all(&temp_dir);
+    let deleted_file = temp_dir.join(".deleted_tracks.json");
+    let _ = fs::write(&deleted_file, serde_json::to_string(&vec!["demoted:classic_grand_prix"]).unwrap());
+
+    assert!(!abs_preset_choice.is_official_preset(), "Demoted preset must NOT be official preset");
+
+    // 4. Stale user track copy resilience: even if a file with preset slug exists in user tracks dir,
+    // TrackManager keeps it classified as an official preset.
+    let stale_path = temp_dir.join("classic_grand_prix.json");
+    let mut gp_track = classic_grand_prix();
+    gp_track.category = TrackCategory::Main;
+    let _ = gp_track.save_to_file(&stale_path);
+    // Clear demoted marker
+    let _ = fs::write(&deleted_file, "[]");
+
+    let manager_with_stale = TrackManager::new(&temp_dir);
+    let c_gp = manager_with_stale
+        .filtered_main_track_choices(ModuleFilter::Classic)
+        .into_iter()
+        .find(|t| t.track_id() == "classic_grand_prix")
+        .expect("Classic GP present");
+    assert!(c_gp.is_official_preset(), "Classic GP must remain official preset even with stale local file");
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

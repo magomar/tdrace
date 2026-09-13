@@ -310,23 +310,9 @@ pub fn render_track_manager_screen(
             scaler.font_s(21.0),
             Palette::WHITE,
         );
-        d_y += scaler.s(16.0);
+        d_y += scaler.s(18.0);
 
-        // Origin Status Badge
         let is_preset = selected_track.is_official_preset();
-        let (origin_str, origin_col) = if is_preset {
-            ("ORIGIN: OFFICIAL PRESET (IMMUTABLE)", Palette::NEON_CYAN)
-        } else {
-            ("ORIGIN: USER CUSTOM CIRCUIT", Color::new(0.35, 0.90, 0.45, 1.0))
-        };
-        fonts.draw_ui_bold(
-            origin_str,
-            pad_x,
-            d_y,
-            scaler.font_s(11.0),
-            origin_col,
-        );
-        d_y += scaler.s(15.0);
 
         // Assigned Categories Badge
         let active_mods = track_manager.track_promoted_modules(selected_track.track_id());
@@ -853,6 +839,10 @@ fn resolve_track_module_badge(
                 if is_dossier { "OFFICIAL PRESET • KARTING".to_string() } else { "OFFICIAL PRESET • KART".to_string() },
                 Palette::NEON_MAGENTA,
             ),
+            "nascar" => (
+                if is_dossier { "OFFICIAL PRESET • NASCAR CUP".to_string() } else { "OFFICIAL PRESET • NASCAR".to_string() },
+                Palette::NEON_GOLD,
+            ),
             _ => (
                 if is_dossier { "OFFICIAL PRESET • CLASSIC ARCADE".to_string() } else { "OFFICIAL PRESET • CLASSIC".to_string() },
                 Palette::NEON_CYAN,
@@ -871,6 +861,10 @@ fn resolve_track_module_badge(
             ),
             "kart" => (
                 if is_dossier { "CUSTOM CIRCUIT • KARTING".to_string() } else { "CUSTOM CIRCUIT • KART".to_string() },
+                green,
+            ),
+            "nascar" => (
+                if is_dossier { "CUSTOM CIRCUIT • NASCAR CUP".to_string() } else { "CUSTOM CIRCUIT • NASCAR".to_string() },
                 green,
             ),
             _ => (
