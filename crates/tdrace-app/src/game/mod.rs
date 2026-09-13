@@ -115,6 +115,7 @@ use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
 use crate::ui::{
+    confirm_modal_layout,
     render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
     ScreenAction, UiScaler, UniversalConfirmModal,
 };
@@ -3594,14 +3595,63 @@ impl RaceSession {
             }
             TrackManagerModal::ConfirmDelete {
                 ref track_id,
-                ..
+                ref track_title,
+                mut cursor_idx,
             } => {
-                if is_key_pressed(KeyCode::Enter)
-                    || is_key_pressed(KeyCode::KpEnter)
-                    || is_key_pressed(KeyCode::Y)
-                    || is_key_pressed(KeyCode::Backspace)
-                    || is_key_pressed(KeyCode::Delete)
+                let sw = screen_width_safe();
+                let sh = screen_height_safe();
+                let (_, _, _, _, btn_layout) = confirm_modal_layout(sw, sh);
+
+                if NavGrid2D::check_mouse_hover(btn_layout.cancel_rect) {
+                    if cursor_idx != 0 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        cursor_idx = 0;
+                    }
+                }
+                if NavGrid2D::check_mouse_hover(btn_layout.confirm_rect) {
+                    if cursor_idx != 1 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        cursor_idx = 1;
+                    }
+                }
+
+                let cancel_clicked = NavGrid2D::check_mouse_click(btn_layout.cancel_rect);
+                let confirm_clicked = NavGrid2D::check_mouse_click(btn_layout.confirm_rect);
+
+                // Button cursor navigation (Left / Right / A / D / Up / Down / W / S / Tab / Gamepad D-pad & Sticks)
+                if is_key_pressed(KeyCode::Left)
+                    || is_key_pressed(KeyCode::A)
+                    || self.input.gamepad.snapshot.dpad_left_pressed
+                    || self.input.gamepad.snapshot.nav_left
                 {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    cursor_idx = if cursor_idx == 0 { 1 } else { 0 };
+                } else if is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::D)
+                    || self.input.gamepad.snapshot.dpad_right_pressed
+                    || self.input.gamepad.snapshot.nav_right
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    cursor_idx = if cursor_idx == 1 { 0 } else { 1 };
+                } else if is_key_pressed(KeyCode::Up)
+                    || is_key_pressed(KeyCode::Down)
+                    || is_key_pressed(KeyCode::W)
+                    || is_key_pressed(KeyCode::S)
+                    || is_key_pressed(KeyCode::Tab)
+                    || self.input.gamepad.snapshot.nav_up
+                    || self.input.gamepad.snapshot.nav_down
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    cursor_idx = 1 - cursor_idx;
+                }
+
+                let is_confirmed = is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Space)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed;
+
+                if confirm_clicked || (is_confirmed && cursor_idx == 1) || is_key_pressed(KeyCode::Y) {
                     let tid = track_id.clone();
                     let target_module = module_filter.id();
                     let _ = self.track_manager.delete_track_from_module(&tid, target_module);
@@ -3619,7 +3669,13 @@ impl RaceSession {
                     return;
                 }
 
-                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::N) {
+                if cancel_clicked
+                    || (is_confirmed && cursor_idx == 0)
+                    || is_key_pressed(KeyCode::Escape)
+                    || is_key_pressed(KeyCode::N)
+                    || self.input.gamepad.snapshot.btn_back_pressed
+                    || self.input.gamepad.snapshot.btn_b_pressed
+                {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.state = GameState::TrackManager {
                         active_tab,
@@ -3634,7 +3690,11 @@ impl RaceSession {
                     active_tab,
                     module_filter,
                     selected_idx,
-                    modal,
+                    modal: TrackManagerModal::ConfirmDelete {
+                        track_id: track_id.clone(),
+                        track_title: track_title.clone(),
+                        cursor_idx,
+                    },
                 };
                 return;
             }
@@ -4276,6 +4336,7 @@ impl RaceSession {
                         modal: TrackManagerModal::ConfirmDelete {
                             track_id: track_choice.track_id().to_string(),
                             track_title: track_choice.title().to_string(),
+                            cursor_idx: 0,
                         },
                     };
                     return;

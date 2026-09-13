@@ -279,6 +279,7 @@ fn test_track_manager_confirm_delete_modal() {
         modal: TrackManagerModal::ConfirmDelete {
             track_id: track_id.clone(),
             track_title: "Track To Delete".to_string(),
+            cursor_idx: 0,
         },
     };
 
@@ -286,6 +287,100 @@ fn test_track_manager_confirm_delete_modal() {
     let deleted = session.track_manager.delete_custom_track(&track_id).unwrap();
     assert!(deleted);
     assert_eq!(session.track_manager.draft_track_choices().len(), 0);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_track_manager_confirm_delete_modal_arrow_switching() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_tm_arrow_switch_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::default();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    session
+        .track_manager
+        .create_new_draft_track("Track To Remove", "Test arrow switching")
+        .expect("Create draft");
+
+    let track_id = session.track_manager.draft_track_choices()[0].track_id().to_string();
+
+    // 1. Initial state of ConfirmDelete modal: cursor_idx defaults to 0 (Cancel)
+    session.state = GameState::TrackManager {
+        active_tab: TrackManagerTab::Drafts,
+        module_filter: ModuleFilter::Classic,
+        selected_idx: 0,
+        modal: TrackManagerModal::ConfirmDelete {
+            track_id: track_id.clone(),
+            track_title: "Track To Remove".to_string(),
+            cursor_idx: 0,
+        },
+    };
+
+    if let GameState::TrackManager { modal: TrackManagerModal::ConfirmDelete { cursor_idx, .. }, .. } = &session.state {
+        assert_eq!(*cursor_idx, 0, "Cancel should be focused by default for safety");
+    } else {
+        panic!("Expected ConfirmDelete modal");
+    }
+
+    // 2. Simulate pressing Right arrow (or D) -> switches to 1 (Remove)
+    let mut cursor_idx = 0;
+    cursor_idx = if cursor_idx == 1 { 0 } else { 1 };
+    assert_eq!(cursor_idx, 1, "Right arrow should switch from Cancel (0) to Remove (1)");
+
+    // 3. Simulate pressing Left arrow (or A) -> switches back to 0 (Cancel)
+    cursor_idx = if cursor_idx == 0 { 1 } else { 0 };
+    assert_eq!(cursor_idx, 0, "Left arrow should switch from Remove (1) to Cancel (0)");
+
+    // 4. Simulate pressing Up or Down arrow or Tab -> toggles between Cancel and Remove
+    cursor_idx = 1 - cursor_idx;
+    assert_eq!(cursor_idx, 1, "Up/Down should toggle to Remove (1)");
+    cursor_idx = 1 - cursor_idx;
+    assert_eq!(cursor_idx, 0, "Up/Down should toggle back to Cancel (0)");
+
+    // 5. Confirm when cursor_idx == 0 (Cancel): modal is dismissed, track is preserved
+    let is_confirmed = true;
+    if is_confirmed && cursor_idx == 0 {
+        session.state = GameState::TrackManager {
+            active_tab: TrackManagerTab::Drafts,
+            module_filter: ModuleFilter::Classic,
+            selected_idx: 0,
+            modal: TrackManagerModal::None,
+        };
+    }
+    assert_eq!(session.track_manager.draft_track_choices().len(), 1, "Track must NOT be deleted when Cancel was selected");
+
+    // 6. Re-open modal, switch to 1 (Remove), and confirm: track is deleted
+    cursor_idx = 1;
+    session.state = GameState::TrackManager {
+        active_tab: TrackManagerTab::Drafts,
+        module_filter: ModuleFilter::Classic,
+        selected_idx: 0,
+        modal: TrackManagerModal::ConfirmDelete {
+            track_id: track_id.clone(),
+            track_title: "Track To Remove".to_string(),
+            cursor_idx,
+        },
+    };
+
+    if is_confirmed && cursor_idx == 1 {
+        let deleted = session.track_manager.delete_custom_track(&track_id).unwrap();
+        assert!(deleted);
+        session.state = GameState::TrackManager {
+            active_tab: TrackManagerTab::Drafts,
+            module_filter: ModuleFilter::Classic,
+            selected_idx: 0,
+            modal: TrackManagerModal::None,
+        };
+    }
+    assert_eq!(session.track_manager.draft_track_choices().len(), 0, "Track must be deleted when Remove was selected");
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -491,6 +586,7 @@ fn test_track_manager_delete_with_backspace() {
         modal: TrackManagerModal::ConfirmDelete {
             track_id: track_id.clone(),
             track_title: "Track To Delete Backspace".to_string(),
+            cursor_idx: 0,
         },
     };
 

@@ -32,6 +32,7 @@ pub enum TrackManagerModal {
     ConfirmDelete {
         track_id: String,
         track_title: String,
+        cursor_idx: usize,
     },
     SelectModulePromotion {
         track_id: String,
@@ -543,8 +544,12 @@ pub fn render_track_manager_screen(
         } => {
             render_edit_modal(fonts, &scaler, sw, sh, name_input, desc_input, *active_field, *cursor_timer);
         }
-        TrackManagerModal::ConfirmDelete { track_title, .. } => {
-            render_delete_modal(fonts, &scaler, sw, sh, track_title, active_tab, module_filter);
+        TrackManagerModal::ConfirmDelete {
+            track_title,
+            cursor_idx,
+            ..
+        } => {
+            render_delete_modal(fonts, &scaler, sw, sh, track_title, active_tab, module_filter, *cursor_idx);
         }
         TrackManagerModal::SelectModulePromotion { track_title, cursor_idx, selected_mask, .. } => {
             render_promotion_modal(fonts, &scaler, sw, sh, track_title, *cursor_idx, *selected_mask);
@@ -666,6 +671,7 @@ fn render_delete_modal(
     track_title: &str,
     _active_tab: TrackManagerTab,
     module_filter: ModuleFilter,
+    cursor_idx: usize,
 ) {
     let _ = (sw, sh);
 
@@ -680,9 +686,10 @@ fn render_delete_modal(
     };
     let title_text = format!("REMOVE FROM {}", mod_name.to_uppercase());
     let confirm_msg = format!("Are you sure you want to remove\n\"{}\"\nfrom the {} module?", track_title, mod_name);
-    let modal = UniversalConfirmModal::new(title_text, confirm_msg)
+    let mut modal = UniversalConfirmModal::new(title_text, confirm_msg)
         .with_labels("YES, REMOVE", "CANCEL")
         .with_accent(Palette::RED);
+    modal.nav.set_focus(cursor_idx, 0);
     let theme = CabinetTheme::cyberpunk_neon();
     let gp = GamepadSnapshot::default();
     let ctx = CabinetContext::new(scaler, fonts, &theme, &gp, 0.0);

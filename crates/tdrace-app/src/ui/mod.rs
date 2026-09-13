@@ -33,6 +33,7 @@ pub use track_manager_ui::{
 };
 pub use track_preview::{compute_track_bounds, render_track_detailed_preview, render_track_thumbnail};
 pub use cabinet::state::{
+    confirm_modal_layout,
     ArcadeSettingsModal, CabinetContext, CabinetScreen, ScreenAction, ScreenStack,
     UniversalConfirmModal, UniversalPauseModal,
 };
