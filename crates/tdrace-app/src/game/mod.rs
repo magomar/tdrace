@@ -118,6 +118,7 @@ use crate::ui::{
     render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
     ScreenAction, UiScaler, UniversalConfirmModal,
 };
+pub use cabinet::fx::transition::{ScreenTransition, TransitionConfig, TransitionPhase, TransitionType};
 
 /// Source screen that launched the DriverCards dossier view.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -319,6 +320,10 @@ pub struct RaceSession {
     // Internal trackers
     pub prev_player_lap: u32,
     pub pb_notification: Option<PersonalBestNotification>,
+
+    // Screen transitions (Cabinet FX)
+    pub transition: Option<ScreenTransition>,
+    pub pending_state: Option<GameState>,
 }
 
 
@@ -532,6 +537,8 @@ impl RaceSession {
             offroad_sound_cooldown: 0.0,
             prev_player_lap: 1,
             pb_notification: None,
+            transition: None,
+            pending_state: None,
         };
 
         session.refresh_profiles_and_stats();
@@ -1403,6 +1410,90 @@ impl RaceSession {
         self.camera.resume_from_pause(player_car);
     }
 
+    /// Starts an animated screen transition towards a target `GameState`.
+    /// When the transition reaches its midpoint (Holding phase, full coverage),
+    /// `self.state` is swapped to `target_state`.
+    pub fn transition_to(&mut self, target_state: GameState, transition: ScreenTransition) {
+        self.pending_state = Some(target_state);
+        self.transition = Some(transition);
+    }
+
+    /// Helper for a smooth fade transition to target state.
+    pub fn transition_fade_to(&mut self, target_state: GameState, duration: f32) {
+        self.transition_to(target_state, ScreenTransition::fade(duration));
+    }
+
+    /// Helper for an iris wipe transition to target state.
+    pub fn transition_iris_to(&mut self, target_state: GameState, duration: f32) {
+        self.transition_to(target_state, ScreenTransition::iris(duration));
+    }
+
+    /// Helper for a curtain wipe transition to target state.
+    pub fn transition_curtain_to(&mut self, target_state: GameState, duration: f32) {
+        self.transition_to(target_state, ScreenTransition::curtain(duration));
+    }
+
+    /// Helper for a scanline wipe transition to target state.
+    pub fn transition_scanline_to(&mut self, target_state: GameState, duration: f32) {
+        self.transition_to(target_state, ScreenTransition::scanline(duration));
+    }
+
+    /// Returns whether a screen transition is currently active.
+    pub fn is_transitioning(&self) -> bool {
+        self.transition.as_ref().is_some_and(|t| t.is_active())
+    }
+
+    /// Steps any active screen transition by `dt`. Returns `true` if a state swap occurred on this tick.
+    pub fn update_transition(&mut self, dt: f32) -> bool {
+        let reached_hold = if let Some(ref mut trans) = self.transition {
+            trans.update(dt)
+        } else {
+            false
+        };
+
+        let mut swapped = false;
+        if reached_hold {
+            if let Some(target) = self.pending_state.take() {
+                self.apply_transition_target(target);
+                swapped = true;
+            }
+        }
+
+        if self.transition.as_ref().is_some_and(|t| t.is_complete()) {
+            self.transition = None;
+            self.pending_state = None;
+        }
+
+        swapped
+    }
+
+    /// Applies the state swap when transition reaches holding point.
+    fn apply_transition_target(&mut self, target: GameState) {
+        match &target {
+            GameState::Countdown(_) => {
+                self.audio.stop_all_loops();
+                self.audio.play_sfx(SfxType::UiSelect);
+            }
+            GameState::Menu => {
+                if let GameState::ModuleSelect { selected_idx } = self.state {
+                    match selected_idx {
+                        0 => self.switch_to_classic(),
+                        1 => self.switch_to_rally(),
+                        2 => self.switch_to_kart(),
+                        3 => self.switch_to_gt(),
+                        _ => self.switch_to_nascar(),
+                    }
+                }
+                self.audio.play_music(MusicTrack::NeonMenu);
+            }
+            GameState::ModuleSelect { .. } => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+            }
+            _ => {}
+        }
+        self.state = target;
+    }
+
     /// Master update tick called once per frame.
     pub fn update(&mut self) {
         let frame_dt = get_frame_time_safe().min(0.1);
@@ -1411,6 +1502,17 @@ impl RaceSession {
 
         // Handle gamepad input updates
         self.input.gamepad.update();
+
+        // Step active screen transition
+        self.update_transition(frame_dt);
+
+        // If a transition is actively covering or holding before the state swap,
+        // suppress UI navigation and game interaction.
+        if self.transition.as_ref().is_some_and(|t| {
+            t.phase == TransitionPhase::Covering || t.phase == TransitionPhase::Holding
+        }) {
+            return;
+        }
 
         // Handle debug toggles
         self.input.update_debug_toggles();
@@ -1789,13 +1891,8 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.btn_a_pressed
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    match *selected_idx {
-                        0 => self.switch_to_classic(),
-                        1 => self.switch_to_rally(),
-                        2 => self.switch_to_kart(),
-                        3 => self.switch_to_gt(),
-                        _ => self.switch_to_nascar(),
-                    }
+                    self.transition_scanline_to(GameState::Menu, 0.35);
+                    return;
                 }
 
                 // Profile Manager (P key or Gamepad Y)
@@ -2008,7 +2105,7 @@ impl RaceSession {
                                     || self.input.gamepad.snapshot.btn_a_pressed
                                 {
                                     self.audio.play_sfx(SfxType::UiSelect);
-                                    self.state = GameState::Countdown(3.5);
+                                    self.transition_iris_to(GameState::Countdown(3.5), 0.45);
                                     return;
                                 }
                             }
@@ -2058,7 +2155,7 @@ impl RaceSession {
                     || (self.starting_grid_focus == StartingGridFocus::LeftSetup && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.state = GameState::Countdown(3.5);
+                    self.transition_iris_to(GameState::Countdown(3.5), 0.45);
                     return;
                 }
 
@@ -2078,11 +2175,11 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     if self.return_to_editor_on_exit {
                         self.return_to_editor_on_exit = false;
-                        self.state = GameState::TrackEditor;
+                        self.transition_fade_to(GameState::TrackEditor, 0.35);
                     } else {
-                        self.state = GameState::Menu;
-                        self.audio.play_music(MusicTrack::NeonMenu);
+                        self.transition_fade_to(GameState::Menu, 0.35);
                     }
+                    return;
                 }
             }
             GameState::Countdown(ref mut remaining) => {
@@ -2276,10 +2373,9 @@ impl RaceSession {
                         self.camera.resume_from_pause(None);
                         if self.return_to_editor_on_exit {
                             self.return_to_editor_on_exit = false;
-                            self.state = GameState::TrackEditor;
+                            self.transition_fade_to(GameState::TrackEditor, 0.35);
                         } else {
-                            self.state = GameState::Menu;
-                            self.audio.play_music(MusicTrack::NeonMenu);
+                            self.transition_fade_to(GameState::Menu, 0.35);
                         }
                         return;
                     }
@@ -2304,10 +2400,9 @@ impl RaceSession {
                     self.camera.resume_from_pause(None);
                     if self.return_to_editor_on_exit {
                         self.return_to_editor_on_exit = false;
-                        self.state = GameState::TrackEditor;
+                        self.transition_fade_to(GameState::TrackEditor, 0.35);
                     } else {
-                        self.state = GameState::Menu;
-                        self.audio.play_music(MusicTrack::NeonMenu);
+                        self.transition_fade_to(GameState::Menu, 0.35);
                     }
                     return;
                 }
@@ -2338,6 +2433,8 @@ impl RaceSession {
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.init_race();
+                    self.transition_iris_to(GameState::Countdown(3.5), 0.45);
+                    return;
                 }
                 if is_key_pressed(KeyCode::Escape)
                     || self.input.gamepad.snapshot.btn_cancel_pressed
@@ -2347,11 +2444,11 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     if self.return_to_editor_on_exit {
                         self.return_to_editor_on_exit = false;
-                        self.state = GameState::TrackEditor;
+                        self.transition_fade_to(GameState::TrackEditor, 0.35);
                     } else {
-                        self.state = GameState::Menu;
-                        self.audio.play_music(MusicTrack::NeonMenu);
+                        self.transition_fade_to(GameState::Menu, 0.35);
                     }
+                    return;
                 }
             }
 
@@ -2792,7 +2889,7 @@ impl RaceSession {
                 "nascar" => 4,
                 _ => 0,
             };
-            self.state = GameState::ModuleSelect { selected_idx: cur_mod_idx };
+            self.transition_fade_to(GameState::ModuleSelect { selected_idx: cur_mod_idx }, 0.3);
             return;
         }
 
@@ -4532,6 +4629,11 @@ impl RaceSession {
             GameState::TrackEditor => {
                 self.render_track_editor();
             }
+        }
+
+        // Render top-most arcade screen transition overlay if active
+        if let Some(ref trans) = self.transition {
+            trans.render(0.0, 0.0, screen_width_safe(), screen_height_safe());
         }
     }
 

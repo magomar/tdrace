@@ -512,4 +512,105 @@ fn test_race_session_input_map_integration_and_rebinding() {
     assert_eq!(session.input.input_map, loaded);
 }
 
+#[test]
+fn test_race_session_screen_transition_phase_stepping_and_state_swap() {
+    use cabinet::fx::transition::{TransitionPhase, TransitionType};
+
+    let mut session = RaceSession::new();
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert!(!session.is_transitioning());
+    assert!(session.transition.is_none());
+
+    // Start iris transition towards Countdown
+    session.transition_iris_to(GameState::Countdown(3.5), 0.40);
+    assert!(session.is_transitioning());
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(session.pending_state, Some(GameState::Countdown(3.5)));
+
+    let trans = session.transition.as_ref().unwrap();
+    assert_eq!(trans.config.kind, TransitionType::IrisWipe);
+    assert_eq!(trans.phase, TransitionPhase::Covering);
+
+    // Step halfway through covering (0.40 * 0.48 = 0.192s cover duration)
+    let swapped = session.update_transition(0.08);
+    assert!(!swapped, "State should not swap during covering phase");
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(
+        session.transition.as_ref().unwrap().phase,
+        TransitionPhase::Covering
+    );
+
+    // Step enough to cross into Holding phase
+    let swapped = session.update_transition(0.15);
+    assert!(swapped, "State must swap exactly when transition enters Holding");
+    assert_eq!(session.state, GameState::Countdown(3.5));
+    assert!(session.pending_state.is_none());
+    assert!(session.is_transitioning());
+
+    // Step through uncovering to completion
+    let swapped = session.update_transition(0.30);
+    assert!(!swapped);
+    assert!(!session.is_transitioning());
+    assert!(session.transition.is_none());
+    assert_eq!(session.state, GameState::Countdown(3.5));
+}
+
+#[test]
+fn test_screen_transition_presets_and_config() {
+    use cabinet::fx::transition::TransitionType;
+
+    let mut session = RaceSession::new();
+
+    // Fade preset
+    session.transition_fade_to(GameState::Menu, 0.30);
+    assert!(session.is_transitioning());
+    assert_eq!(
+        session.transition.as_ref().unwrap().config.kind,
+        TransitionType::Fade
+    );
+    session.update_transition(0.50);
+    assert!(!session.is_transitioning());
+    assert_eq!(session.state, GameState::Menu);
+
+    // Curtain preset
+    session.transition_curtain_to(GameState::StartingGrid, 0.40);
+    assert!(session.is_transitioning());
+    assert_eq!(
+        session.transition.as_ref().unwrap().config.kind,
+        TransitionType::CurtainWipe
+    );
+    session.update_transition(0.50);
+    assert!(!session.is_transitioning());
+    assert_eq!(session.state, GameState::StartingGrid);
+
+    // Scanline preset
+    session.transition_scanline_to(GameState::Finished, 0.35);
+    assert!(session.is_transitioning());
+    assert_eq!(
+        session.transition.as_ref().unwrap().config.kind,
+        TransitionType::ScanlineWipe
+    );
+    session.update_transition(0.50);
+    assert!(!session.is_transitioning());
+    assert_eq!(session.state, GameState::Finished);
+}
+
+#[test]
+fn test_screen_transition_module_select_switch_to_menu() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ModuleSelect { selected_idx: 1 }; // Rally module selected
+
+    session.transition_scanline_to(GameState::Menu, 0.35);
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 1 });
+
+    // Advance to Holding: module switch should be automatically applied
+    session.update_transition(0.20);
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.active_module_id, "rally");
+
+    // Complete transition
+    session.update_transition(0.25);
+    assert!(!session.is_transitioning());
+}
+
 
