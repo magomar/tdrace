@@ -288,7 +288,7 @@ impl InputController {
         p1_speed_fwd: f32,
         p2_speed_fwd: f32,
     ) -> (CarControls, CarControls) {
-        let p1_ctrl = self.poll_player_controls(dt, p1_speed_fwd);
+        let p1_ctrl = self.poll_keyboard_controls(dt, p1_speed_fwd);
 
         let p2_ctrl = if self.gamepad.snapshot.is_connected {
             self.poll_gamepad_controls(dt, p2_speed_fwd)
