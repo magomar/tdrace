@@ -613,4 +613,82 @@ fn test_screen_transition_module_select_switch_to_menu() {
     assert!(!session.is_transitioning());
 }
 
+#[test]
+fn test_race_session_crt_overlay_settings_and_toggle() {
+    use cabinet::fx::crt::ScanlineMode;
+
+    let mut session = RaceSession::new();
+    assert_eq!(session.crt_overlay.config.mode, ScanlineMode::Disabled);
+    assert!(!session.crt_overlay.is_active());
+
+    // Cycle modes
+    let m1 = session.cycle_scanline_mode();
+    assert_eq!(m1, ScanlineMode::Subtle);
+    assert_eq!(session.crt_overlay.config.mode, ScanlineMode::Subtle);
+    assert_eq!(session.config.display.scanline_mode, "subtle");
+    assert!(session.crt_overlay.is_active());
+
+    let m2 = session.cycle_scanline_mode();
+    assert_eq!(m2, ScanlineMode::ArcadeCrt);
+    assert_eq!(session.crt_overlay.config.mode, ScanlineMode::ArcadeCrt);
+    assert_eq!(session.config.display.scanline_mode, "arcade_crt");
+    assert!(session.crt_overlay.is_active());
+
+    let m3 = session.cycle_scanline_mode();
+    assert_eq!(m3, ScanlineMode::RetroGlow);
+    assert_eq!(session.crt_overlay.config.mode, ScanlineMode::RetroGlow);
+    assert_eq!(session.config.display.scanline_mode, "retro_glow");
+    assert!(session.crt_overlay.is_active());
+
+    let m4 = session.cycle_scanline_mode();
+    assert_eq!(m4, ScanlineMode::Disabled);
+    assert_eq!(session.crt_overlay.config.mode, ScanlineMode::Disabled);
+    assert_eq!(session.config.display.scanline_mode, "disabled");
+
+    // Open settings modal and verify scanlines dropdown synchronization
+    session.set_scanline_mode(ScanlineMode::ArcadeCrt);
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+
+    let modal = session.settings_modal.as_ref().unwrap();
+    assert_eq!(
+        modal.scanlines_dropdown.selected_index,
+        ScanlineMode::ArcadeCrt.to_index()
+    );
+
+    // Modify dropdown to RetroGlow and save
+    session
+        .settings_modal
+        .as_mut()
+        .unwrap()
+        .scanlines_dropdown
+        .set_selected(ScanlineMode::RetroGlow.to_index());
+    session.close_settings_modal(true);
+    assert!(!session.is_settings_modal_open());
+    assert_eq!(session.crt_overlay.config.mode, ScanlineMode::RetroGlow);
+    assert_eq!(session.config.display.scanline_mode, "retro_glow");
+
+    // Modify dropdown and discard (close without save)
+    session.open_settings_modal();
+    session
+        .settings_modal
+        .as_mut()
+        .unwrap()
+        .scanlines_dropdown
+        .set_selected(ScanlineMode::Disabled.to_index());
+    session.close_settings_modal(false);
+    assert_eq!(
+        session.crt_overlay.config.mode,
+        ScanlineMode::RetroGlow,
+        "Mode should remain RetroGlow when discarded"
+    );
+
+    // Stepping overlay animation
+    session.crt_overlay.config.roll_speed = 50.0;
+    session.crt_overlay.config.roll_bar_opacity = 0.1;
+    let initial_offset = session.crt_overlay.roll_offset;
+    session.crt_overlay.update(0.1);
+    assert!(session.crt_overlay.roll_offset > initial_offset);
+}
+
 

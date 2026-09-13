@@ -118,6 +118,7 @@ use crate::ui::{
     render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
     ScreenAction, UiScaler, UniversalConfirmModal,
 };
+pub use cabinet::fx::crt::{CrtConfig, CrtOverlay, ScanlineMode};
 pub use cabinet::fx::transition::{ScreenTransition, TransitionConfig, TransitionPhase, TransitionType};
 
 /// Source screen that launched the DriverCards dossier view.
@@ -324,6 +325,9 @@ pub struct RaceSession {
     // Screen transitions (Cabinet FX)
     pub transition: Option<ScreenTransition>,
     pub pending_state: Option<GameState>,
+
+    // CRT & Retro Scanline post-processing overlay (Cabinet FX)
+    pub crt_overlay: CrtOverlay,
 }
 
 
@@ -450,6 +454,7 @@ impl RaceSession {
 
         let camera = RaceCamera::from_config(&config.camera);
         let editor_camera = EditorCamera::from_config(&config.camera);
+        let crt_overlay = config.display.to_crt_overlay();
 
         let mut session = Self {
             state: GameState::ModuleSelect { selected_idx: 0 },
@@ -539,6 +544,7 @@ impl RaceSession {
             pb_notification: None,
             transition: None,
             pending_state: None,
+            crt_overlay,
         };
 
         session.refresh_profiles_and_stats();
@@ -608,6 +614,7 @@ impl RaceSession {
             AssistProfile::Pro => 2,
         };
         modal.assist_dropdown.set_selected(assist_idx);
+        modal.scanlines_dropdown.set_selected(self.crt_overlay.config.mode.to_index());
         self.settings_modal = Some(modal);
     }
 
@@ -622,6 +629,8 @@ impl RaceSession {
             if save {
                 modal.apply_to_audio(&mut self.audio.settings);
                 modal.apply_to_gamepad(&mut self.input.gamepad.config);
+                let selected_mode = ScanlineMode::from_index(modal.scanlines_dropdown.selected_index);
+                self.set_scanline_mode(selected_mode);
                 self.assist_profile = match modal.assist_dropdown.selected_index {
                     0 => AssistProfile::Arcade,
                     1 => AssistProfile::Sport,
@@ -629,6 +638,36 @@ impl RaceSession {
                 };
             }
         }
+    }
+
+    /// Sets active CRT scanline mode.
+    pub fn set_scanline_mode(&mut self, mode: ScanlineMode) {
+        self.crt_overlay.config.mode = mode;
+        self.crt_overlay.config.vignette_intensity = if mode == ScanlineMode::Disabled {
+            0.0
+        } else if self.config.display.vignette_intensity > 0.0 {
+            self.config.display.vignette_intensity
+        } else {
+            0.25
+        };
+        self.config.display.scanline_mode = match mode {
+            ScanlineMode::Disabled => "disabled".to_string(),
+            ScanlineMode::Subtle => "subtle".to_string(),
+            ScanlineMode::ArcadeCrt => "arcade_crt".to_string(),
+            ScanlineMode::RetroGlow => "retro_glow".to_string(),
+        };
+    }
+
+    /// Cycles CRT scanline intensity modes (Disabled -> Subtle -> Arcade CRT -> Retro Glow -> Disabled).
+    pub fn cycle_scanline_mode(&mut self) -> ScanlineMode {
+        let next = match self.crt_overlay.config.mode {
+            ScanlineMode::Disabled => ScanlineMode::Subtle,
+            ScanlineMode::Subtle => ScanlineMode::ArcadeCrt,
+            ScanlineMode::ArcadeCrt => ScanlineMode::RetroGlow,
+            ScanlineMode::RetroGlow => ScanlineMode::Disabled,
+        };
+        self.set_scanline_mode(next);
+        next
     }
 
     /// Resolves the track's predefined vehicle model as a `CarChoice`.
@@ -1506,6 +1545,9 @@ impl RaceSession {
         // Step active screen transition
         self.update_transition(frame_dt);
 
+        // Step active CRT overlay animation
+        self.crt_overlay.update(frame_dt);
+
         // If a transition is actively covering or holding before the state swap,
         // suppress UI navigation and game interaction.
         if self.transition.as_ref().is_some_and(|t| {
@@ -1701,6 +1743,23 @@ impl RaceSession {
                     is_on: true,
                     timer: 2.2,
                     duration: 2.2,
+                });
+            }
+
+            // [7] Toggle / Cycle CRT Scanlines Post-Processing Overlay
+            if is_key_pressed(KeyCode::Key7) || is_key_pressed(KeyCode::F7) {
+                let mode = self.cycle_scanline_mode();
+                self.audio.play_sfx(SfxType::UiMove);
+                let is_on = mode != ScanlineMode::Disabled;
+                let col = if is_on { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                if let Some(pos) = self.cars.first().map(|c| c.state.position) {
+                    self.fx.drift_popups.spawn_text(pos, &format!("[7] CRT: {}", mode.label()), col);
+                }
+                self.visibility_toast = Some(VisibilityToast {
+                    text: format!("[7] CRT SCANLINES: {}", mode.label().to_uppercase()),
+                    is_on,
+                    timer: 1.8,
+                    duration: 1.8,
                 });
             }
 
@@ -4629,6 +4688,11 @@ impl RaceSession {
             GameState::TrackEditor => {
                 self.render_track_editor();
             }
+        }
+
+        // Render CRT & Retro Scanline post-processing overlay
+        if self.crt_overlay.is_active() {
+            self.crt_overlay.render(0.0, 0.0, screen_width_safe(), screen_height_safe());
         }
 
         // Render top-most arcade screen transition overlay if active

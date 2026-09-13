@@ -178,6 +178,57 @@ impl Default for GameplayConfig {
     }
 }
 
+/// Display, post-processing, and CRT scanline visual options.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct DisplayConfig {
+    /// Scanline intensity mode: "disabled", "subtle", "arcade_crt", or "retro_glow".
+    pub scanline_mode: String,
+    /// Vignette edge-darkening intensity (0.0 to 1.0).
+    pub vignette_intensity: f32,
+    /// Distance in pixels between scanlines.
+    pub line_spacing: f32,
+    /// Custom opacity override if specified.
+    pub custom_opacity: Option<f32>,
+}
+
+impl Default for DisplayConfig {
+    fn default() -> Self {
+        Self {
+            scanline_mode: "disabled".to_string(),
+            vignette_intensity: 0.0,
+            line_spacing: 3.0,
+            custom_opacity: None,
+        }
+    }
+}
+
+impl DisplayConfig {
+    pub fn to_scanline_mode(&self) -> cabinet::fx::ScanlineMode {
+        match self.scanline_mode.to_lowercase().as_str() {
+            "subtle" => cabinet::fx::ScanlineMode::Subtle,
+            "arcade_crt" | "arcade" | "crt" => cabinet::fx::ScanlineMode::ArcadeCrt,
+            "retro_glow" | "retro" | "glow" => cabinet::fx::ScanlineMode::RetroGlow,
+            _ => cabinet::fx::ScanlineMode::Disabled,
+        }
+    }
+
+    pub fn to_crt_overlay(&self) -> cabinet::fx::CrtOverlay {
+        let mode = self.to_scanline_mode();
+        let mut overlay = cabinet::fx::CrtOverlay::with_mode(mode);
+        overlay.config.vignette_intensity = if mode == cabinet::fx::ScanlineMode::Disabled {
+            0.0
+        } else if self.vignette_intensity > 0.0 {
+            self.vignette_intensity
+        } else {
+            0.25
+        };
+        overlay.config.line_spacing = self.line_spacing;
+        overlay.config.custom_opacity = self.custom_opacity;
+        overlay
+    }
+}
+
 /// Recursively merges `overrides` into `base`.
 /// For tables, keys present in `overrides` are merged into `base` (existing sub-tables are recursively merged).
 /// For all other values, `overrides` replaces `base`.
@@ -210,6 +261,8 @@ pub struct GameConfig {
     #[serde(default)]
     pub gameplay: GameplayConfig,
     #[serde(default)]
+    pub display: DisplayConfig,
+    #[serde(default)]
     pub cars: BTreeMap<String, CarConfig>,
     #[serde(default)]
     pub modules: BTreeMap<String, toml::Value>,
@@ -228,6 +281,7 @@ impl Default for GameConfig {
             input: InputConfig::default(),
             audio: AudioConfig::default(),
             gameplay: GameplayConfig::default(),
+            display: DisplayConfig::default(),
             cars,
             modules: BTreeMap::new(),
         }
