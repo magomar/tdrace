@@ -681,6 +681,75 @@ pub fn draw_stepper(
     );
 }
 
+/// Renders an expanded floating popup dropdown card over the UI.
+pub fn draw_dropdown_popup(
+    scaler: &UiScaler,
+    fonts: &Fonts,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    options: &[String],
+    selected_idx: usize,
+    hovered_idx: Option<usize>,
+    accent_color: Color,
+) {
+    if options.is_empty() {
+        return;
+    }
+    let pad_x = scaler.s(16.0);
+    let opt_w = (w * 0.58).clamp(scaler.s(160.0), scaler.s(320.0));
+    let opt_x = x + w - opt_w - pad_x;
+    let item_h = scaler.s(32.0);
+    let total_popup_h = options.len() as f32 * item_h;
+    let popup_y = y + h + scaler.s(4.0);
+
+    // Glassmorphism popup container card with drop shadow
+    scaler.draw_glass_card(
+        opt_x,
+        popup_y,
+        opt_w,
+        total_popup_h,
+        Color::new(0.07, 0.09, 0.14, 0.98),
+        accent_color,
+        1.8,
+    );
+
+    for (idx, opt) in options.iter().enumerate() {
+        let iy = popup_y + idx as f32 * item_h;
+        let is_opt_selected = idx == selected_idx;
+        let is_opt_hovered = hovered_idx == Some(idx);
+
+        if is_opt_hovered {
+            draw_rectangle(
+                opt_x + scaler.s(2.0),
+                iy + scaler.s(1.0),
+                opt_w - scaler.s(4.0),
+                item_h - scaler.s(2.0),
+                Color::new(accent_color.r * 0.25, accent_color.g * 0.25, accent_color.b * 0.25, 0.95),
+            );
+        }
+
+        let text_color = if is_opt_selected {
+            accent_color
+        } else if is_opt_hovered {
+            Palette::WHITE
+        } else {
+            Palette::UI_TEXT_MUTED
+        };
+
+        let prefix = if is_opt_selected { "> " } else { "  " };
+        let display_text = format!("{}{}", prefix, opt);
+        fonts.draw_ui_bold(
+            &display_text,
+            opt_x + scaler.s(12.0),
+            iy + item_h * 0.68,
+            scaler.font_s(12.5),
+            text_color,
+        );
+    }
+}
+
 /// Renders a dropdown widget: renders the inline stepper header plus an expandable floating popup
 /// card if `is_open` is true.
 pub fn draw_dropdown(
@@ -702,58 +771,8 @@ pub fn draw_dropdown(
     let current_opt = options.get(selected_idx).map(|s| s.as_str()).unwrap_or("");
     draw_stepper(scaler, fonts, x, y, w, h, label, current_opt, is_focused, is_hovered, accent_color);
 
-    if is_open && !options.is_empty() {
-        let pad_x = scaler.s(16.0);
-        let opt_w = (w * 0.58).clamp(scaler.s(160.0), scaler.s(320.0));
-        let opt_x = x + w - opt_w - pad_x;
-        let item_h = scaler.s(32.0);
-        let total_popup_h = options.len() as f32 * item_h;
-        let popup_y = y + h + scaler.s(4.0);
-
-        // Glassmorphism popup container card with drop shadow
-        scaler.draw_glass_card(
-            opt_x,
-            popup_y,
-            opt_w,
-            total_popup_h,
-            Color::new(0.07, 0.09, 0.14, 0.98),
-            accent_color,
-            1.8,
-        );
-
-        for (idx, opt) in options.iter().enumerate() {
-            let iy = popup_y + idx as f32 * item_h;
-            let is_opt_selected = idx == selected_idx;
-            let is_opt_hovered = hovered_idx == Some(idx);
-
-            if is_opt_hovered {
-                draw_rectangle(
-                    opt_x + scaler.s(2.0),
-                    iy + scaler.s(1.0),
-                    opt_w - scaler.s(4.0),
-                    item_h - scaler.s(2.0),
-                    Color::new(accent_color.r * 0.25, accent_color.g * 0.25, accent_color.b * 0.25, 0.95),
-                );
-            }
-
-            let text_color = if is_opt_selected {
-                accent_color
-            } else if is_opt_hovered {
-                Palette::WHITE
-            } else {
-                Palette::UI_TEXT_MUTED
-            };
-
-            let prefix = if is_opt_selected { "> " } else { "  " };
-            let display_text = format!("{}{}", prefix, opt);
-            fonts.draw_ui_bold(
-                &display_text,
-                opt_x + scaler.s(12.0),
-                iy + item_h * 0.68,
-                scaler.font_s(12.5),
-                text_color,
-            );
-        }
+    if is_open {
+        draw_dropdown_popup(scaler, fonts, x, y, w, h, options, selected_idx, hovered_idx, accent_color);
     }
 }
 

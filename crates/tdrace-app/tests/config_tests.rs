@@ -369,4 +369,36 @@ default_laps = 20
     assert_eq!(final_cfg.gameplay.default_laps, 20, "Specific higher-level override prevails");
 }
 
+#[test]
+fn test_display_resolution_and_window_config_roundtrip() {
+    let mut config = GameConfig::default();
+    assert_eq!(config.display.window_width, 1280);
+    assert_eq!(config.display.window_height, 720);
+    assert!(!config.display.fullscreen);
+    assert_eq!(config.display.ui_scale, "auto");
+
+    config.display.window_width = 1920;
+    config.display.window_height = 1080;
+    config.display.fullscreen = true;
+    config.display.ui_scale = "standard".to_string();
+
+    let toml_str = toml::to_string(&config).expect("Serialize toml failed");
+    let deserialized: GameConfig = toml::from_str(&toml_str).expect("Deserialize toml failed");
+
+    assert_eq!(deserialized.display.window_width, 1920);
+    assert_eq!(deserialized.display.window_height, 1080);
+    assert!(deserialized.display.fullscreen);
+    assert_eq!(deserialized.display.ui_scale, "standard");
+
+    // Backwards compatibility test: TOML without display table uses defaults
+    let legacy_toml = r#"
+[gameplay]
+default_track = "oval_speedway"
+"#;
+    let legacy_config: GameConfig = toml::from_str(legacy_toml).expect("Legacy toml should parse");
+    assert_eq!(legacy_config.display.window_width, 1280);
+    assert_eq!(legacy_config.display.window_height, 720);
+    assert!(!legacy_config.display.fullscreen);
+}
+
 

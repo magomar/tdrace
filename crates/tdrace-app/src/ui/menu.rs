@@ -1144,7 +1144,7 @@ pub fn render_track_select_menu(
     let btn_y = sh - btn_h - scaler.s(14.0);
 
     fonts.draw_ui_regular_centered(
-        "[Left / Right] Presets / Custom  •  [Up / Down] Select Track  •  [T] Track Manager  •  [E] CAD Studio  •  [C] Clone  •  [K] Controls  •  [ESC] Back",
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Track Manager  •  [O] Settings  •  [K] Controls  •  [ESC] Back",
         sw * 0.5,
         btn_y - scaler.s(10.0),
         scaler.font_s(11.0),

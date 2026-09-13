@@ -194,6 +194,8 @@ fn test_pause_menu_nav_grid_2d_navigation() {
 fn test_arcade_settings_modal_integration_and_bindings() {
     use tdrace_core::physics::config::AssistProfile;
 
+    let orig_config = std::fs::read_to_string("config.toml").ok();
+
     let mut session = RaceSession::new();
     assert!(!session.is_settings_modal_open());
     assert!(session.settings_modal.is_none());
@@ -208,15 +210,21 @@ fn test_arcade_settings_modal_integration_and_bindings() {
         assert!((modal.music_slider.normalized() - session.audio.settings.music_volume).abs() < 1e-4);
         assert!((modal.stick_deadzone_slider.value - session.input.gamepad.config.stick_deadzone).abs() < 1e-4);
         assert_eq!(modal.assist_dropdown.selected_index, 0); // Default Arcade
+        assert_eq!(modal.selected_resolution(), (session.config.display.window_width, session.config.display.window_height));
+        assert_eq!(modal.is_fullscreen(), session.config.display.fullscreen);
     }
 
-    // 2. Mutate settings in modal
+    // 2. Mutate settings in modal (including screen resolution and display mode)
     if let Some(ref mut modal) = session.settings_modal {
         modal.master_slider.set_normalized(0.45);
         modal.music_slider.set_normalized(0.35);
         modal.mute_dropdown.set_selected(1); // Muted
         modal.stick_deadzone_slider.set_value(0.24);
         modal.assist_dropdown.set_selected(2); // Pro
+
+        // Set resolution to 1920x1080 (FHD, index 2) and fullscreen to Fullscreen (index 1)
+        modal.resolution_dropdown.set_selected(2);
+        modal.display_mode_dropdown.set_selected(1);
     }
 
     // 3. Close with save=true and verify applied state
@@ -227,18 +235,31 @@ fn test_arcade_settings_modal_integration_and_bindings() {
     assert!(session.audio.settings.is_muted);
     assert!((session.input.gamepad.config.stick_deadzone - 0.24).abs() < 1e-4);
     assert_eq!(session.assist_profile, AssistProfile::Pro);
+    assert_eq!(session.config.display.window_width, 1920);
+    assert_eq!(session.config.display.window_height, 1080);
+    assert!(session.config.display.fullscreen);
 
     // 4. Open again, mutate, then cancel (save=false)
     session.open_settings_modal();
     if let Some(ref mut modal) = session.settings_modal {
         modal.master_slider.set_normalized(0.95);
         modal.assist_dropdown.set_selected(1); // Sport
+        modal.resolution_dropdown.set_selected(4); // 4K UHD
+        modal.display_mode_dropdown.set_selected(0); // Windowed
     }
     session.close_settings_modal(false);
     assert!(!session.is_settings_modal_open());
     // Values should remain as they were before opening
     assert!((session.audio.settings.master_volume - 0.45).abs() < 1e-4);
     assert_eq!(session.assist_profile, AssistProfile::Pro);
+    assert_eq!(session.config.display.window_width, 1920);
+    assert_eq!(session.config.display.window_height, 1080);
+    assert!(session.config.display.fullscreen);
+
+    // Restore original disk config so tests leave workspace clean
+    if let Some(ref content) = orig_config {
+        let _ = std::fs::write("config.toml", content);
+    }
 }
 
 #[test]
@@ -295,6 +316,34 @@ fn test_screen_stack_and_cabinet_screen_architecture() {
     // Root screen cannot be popped
     assert!(stack.pop().is_none());
     assert_eq!(stack.len(), 1);
+}
+
+#[test]
+fn test_menu_state_settings_modal_integration() {
+    use tdrace_app::game::RaceSession;
+
+    let orig_config = std::fs::read_to_string("config.toml").ok();
+
+    let mut session = RaceSession::new();
+    assert!(!session.is_settings_modal_open());
+
+    // Open settings from Menu state
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+
+    // Mutate and save
+    if let Some(ref mut modal) = session.settings_modal {
+        modal.resolution_dropdown.set_selected(3); // 2560x1440 QHD
+    }
+    session.close_settings_modal(true);
+    assert!(!session.is_settings_modal_open());
+    assert_eq!(session.config.display.window_width, 2560);
+    assert_eq!(session.config.display.window_height, 1440);
+
+    // Restore original disk config so tests leave workspace clean
+    if let Some(ref content) = orig_config {
+        let _ = std::fs::write("config.toml", content);
+    }
 }
 
 

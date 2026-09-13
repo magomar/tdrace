@@ -178,10 +178,18 @@ impl Default for GameplayConfig {
     }
 }
 
-/// Display, post-processing, and CRT scanline visual options.
+/// Display, window resolution, post-processing, and CRT scanline visual options.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct DisplayConfig {
+    /// Desired window/render width in pixels.
+    pub window_width: u32,
+    /// Desired window/render height in pixels.
+    pub window_height: u32,
+    /// Fullscreen mode toggle.
+    pub fullscreen: bool,
+    /// UI scaling preference: "auto", "compact", "standard", or "large".
+    pub ui_scale: String,
     /// Scanline intensity mode: "disabled", "subtle", "arcade_crt", or "retro_glow".
     pub scanline_mode: String,
     /// Vignette edge-darkening intensity (0.0 to 1.0).
@@ -195,6 +203,10 @@ pub struct DisplayConfig {
 impl Default for DisplayConfig {
     fn default() -> Self {
         Self {
+            window_width: 1280,
+            window_height: 720,
+            fullscreen: false,
+            ui_scale: "auto".to_string(),
             scanline_mode: "disabled".to_string(),
             vignette_intensity: 0.0,
             line_spacing: 3.0,
@@ -354,6 +366,16 @@ impl GameConfig {
         // Attempt to persist default config to ./config.toml for easy user editing
         let _ = default_config.save_to_path(Path::new("config.toml"));
         default_config
+    }
+
+    /// Saves the configuration to the first existing candidate file found, or default config.toml.
+    pub fn save_to_first_existing_or_default(&self) -> Result<(), String> {
+        for path in Self::candidate_paths() {
+            if path.exists() {
+                return self.save_to_path(&path);
+            }
+        }
+        self.save_to_path(Path::new("config.toml"))
     }
 
     /// Looks for a module-specific config file from candidate paths and parses it as a TOML Value.

@@ -3,8 +3,12 @@ use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use crate::audio::AudioSettings;
 use crate::input::{GamepadConfig, NavGrid2D};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
+use crate::ui::display::{safe_request_screen_size, safe_set_fullscreen, DisplayResolution, WindowMode};
 use crate::ui::theme::Palette;
-use crate::ui::widgets::{draw_dropdown, draw_slider, draw_tab_bar, DropdownWidget, SliderWidget, TabBar};
+use crate::ui::widgets::{
+    draw_dropdown, draw_dropdown_popup, draw_slider, draw_tab_bar, DropdownWidget, SliderWidget,
+    TabBar,
+};
 
 /// Comprehensive, reusable Arcade Settings Modal screen.
 /// Implements `CabinetScreen` and unifies `TabBar`, `SliderWidget`, and `DropdownWidget`
@@ -27,9 +31,11 @@ pub struct ArcadeSettingsModal {
     pub steer_exponent_slider: SliderWidget,
 
     // Display / Theme Widgets
-    pub theme_dropdown: DropdownWidget,
-    pub scanlines_dropdown: DropdownWidget,
+    pub resolution_dropdown: DropdownWidget,
+    pub display_mode_dropdown: DropdownWidget,
     pub ui_scale_dropdown: DropdownWidget,
+    pub scanlines_dropdown: DropdownWidget,
+    pub theme_dropdown: DropdownWidget,
 
     // Gameplay Widgets
     pub assist_dropdown: DropdownWidget,
@@ -58,12 +64,15 @@ impl ArcadeSettingsModal {
         // Grid navigation: 4 columns for the 4 tabs, each with widget count + 1 (for bottom buttons)
         // Tab 0 (Audio): 5 widgets + 1 bottom row = 6 rows
         // Tab 1 (Controls): 4 widgets + 1 bottom row = 5 rows
-        // Tab 2 (Display): 3 widgets + 1 bottom row = 4 rows
+        // Tab 2 (Display): 5 widgets + 1 bottom row = 6 rows
         // Tab 3 (Gameplay): 3 widgets + 1 bottom row = 4 rows
-        let nav = NavGrid2D::new(vec![6, 5, 4, 4]);
+        let nav = NavGrid2D::new(vec![6, 5, 6, 4]);
 
         let mute_options = vec!["ACTIVE (UNMUTED)".to_string(), "MUTED".to_string()];
         let mute_idx = if audio.is_muted { 1 } else { 0 };
+
+        let resolution_options = DisplayResolution::preset_labels();
+        let display_mode_options = WindowMode::options();
 
         let theme_options = vec![
             "Cyberpunk Neon".to_string(),
@@ -110,9 +119,11 @@ impl ArcadeSettingsModal {
             steer_sensitivity_slider: SliderWidget::new("STEER SENSITIVITY", 0.50, 2.00, 0.05, gamepad.steer_scale),
             steer_exponent_slider: SliderWidget::new("STEER EXPONENT", 1.00, 1.50, 0.05, gamepad.steer_exponent),
 
-            theme_dropdown: DropdownWidget::new("COLOR THEME", theme_options, 0),
-            scanlines_dropdown: DropdownWidget::new("CRT FILTER", scanline_options, 0),
+            resolution_dropdown: DropdownWidget::new("SCREEN RESOLUTION", resolution_options, 0),
+            display_mode_dropdown: DropdownWidget::new("DISPLAY MODE", display_mode_options, 0),
             ui_scale_dropdown: DropdownWidget::new("UI SCALING", scale_options, 0),
+            scanlines_dropdown: DropdownWidget::new("CRT FILTER", scanline_options, 0),
+            theme_dropdown: DropdownWidget::new("COLOR THEME", theme_options, 0),
 
             assist_dropdown: DropdownWidget::new("ASSIST PROFILE", assist_options, 0),
             speed_unit_dropdown: DropdownWidget::new("SPEEDOMETER UNIT", speed_options, 0),
@@ -138,12 +149,46 @@ impl ArcadeSettingsModal {
         self.steer_sensitivity_slider.set_value(def_gp.steer_scale);
         self.steer_exponent_slider.set_value(def_gp.steer_exponent);
 
-        self.theme_dropdown.set_selected(0);
-        self.scanlines_dropdown.set_selected(0);
+        self.resolution_dropdown.set_selected(0);
+        self.display_mode_dropdown.set_selected(0);
         self.ui_scale_dropdown.set_selected(0);
+        self.scanlines_dropdown.set_selected(0);
+        self.theme_dropdown.set_selected(0);
         self.assist_dropdown.set_selected(0);
         self.speed_unit_dropdown.set_selected(0);
         self.ghost_car_dropdown.set_selected(0);
+    }
+
+    /// Pre-populates the resolution and window mode dropdowns based on active dimensions.
+    pub fn set_display_state(&mut self, width: u32, height: u32, is_fullscreen: bool) {
+        let res_idx = DisplayResolution::find_closest_preset_index(width, height);
+        self.resolution_dropdown.set_selected(res_idx);
+        self.display_mode_dropdown.set_selected(if is_fullscreen { 1 } else { 0 });
+    }
+
+    /// Returns the currently selected screen resolution in pixels `(width, height)`.
+    pub fn selected_resolution(&self) -> (u32, u32) {
+        let presets = DisplayResolution::standard_presets();
+        if let Some(res) = presets.get(self.resolution_dropdown.selected_index) {
+            (res.width, res.height)
+        } else {
+            (1280, 720)
+        }
+    }
+
+    /// Returns true if Fullscreen mode is selected.
+    pub fn is_fullscreen(&self) -> bool {
+        self.display_mode_dropdown.selected_index == 1
+    }
+
+    /// Applies configured display options to Macroquad window environment safely.
+    pub fn apply_display_settings(&self) {
+        let (w, h) = self.selected_resolution();
+        let fullscreen = self.is_fullscreen();
+        safe_set_fullscreen(fullscreen);
+        if !fullscreen {
+            safe_request_screen_size(w as f32, h as f32);
+        }
     }
 
     /// Applies configured values to an external `AudioSettings` struct.
@@ -216,9 +261,11 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         // Check if any dropdown is currently open. If so, let it capture vertical input
         let is_any_dropdown_open = self.mute_dropdown.is_open
-            || self.theme_dropdown.is_open
-            || self.scanlines_dropdown.is_open
+            || self.resolution_dropdown.is_open
+            || self.display_mode_dropdown.is_open
             || self.ui_scale_dropdown.is_open
+            || self.scanlines_dropdown.is_open
+            || self.theme_dropdown.is_open
             || self.assist_dropdown.is_open
             || self.speed_unit_dropdown.is_open
             || self.ghost_car_dropdown.is_open;
@@ -303,12 +350,14 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
             }
             2 => {
-                // DISPLAY: 0: Theme, 1: Scanlines, 2: UI Scale, 3: Bottom Buttons
+                // DISPLAY: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Theme, 5: Bottom Buttons
                 let r0 = (content_x, content_y, content_w, row_h);
                 let r1 = (content_x, content_y + (row_h + row_gap), content_w, row_h);
                 let r2 = (content_x, content_y + (row_h + row_gap) * 2.0, content_w, row_h);
+                let r3 = (content_x, content_y + (row_h + row_gap) * 3.0, content_w, row_h);
+                let r4 = (content_x, content_y + (row_h + row_gap) * 4.0, content_w, row_h);
 
-                if self.theme_dropdown.handle_input(
+                if self.resolution_dropdown.handle_input(
                     active_row == 0,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -321,7 +370,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 ) {
                     ctx.play_ui_select();
                 }
-                if self.scanlines_dropdown.handle_input(
+                if self.display_mode_dropdown.handle_input(
                     active_row == 1,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -343,6 +392,32 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_confirm_pressed,
                     ctx.gamepad.btn_cancel_pressed,
                     r2,
+                    scaler,
+                ) {
+                    ctx.play_ui_select();
+                }
+                if self.scanlines_dropdown.handle_input(
+                    active_row == 3,
+                    ctx.gamepad.nav_left,
+                    ctx.gamepad.nav_right,
+                    ctx.gamepad.nav_up,
+                    ctx.gamepad.nav_down,
+                    ctx.gamepad.btn_confirm_pressed,
+                    ctx.gamepad.btn_cancel_pressed,
+                    r3,
+                    scaler,
+                ) {
+                    ctx.play_ui_select();
+                }
+                if self.theme_dropdown.handle_input(
+                    active_row == 4,
+                    ctx.gamepad.nav_left,
+                    ctx.gamepad.nav_right,
+                    ctx.gamepad.nav_up,
+                    ctx.gamepad.nav_down,
+                    ctx.gamepad.btn_confirm_pressed,
+                    ctx.gamepad.btn_cancel_pressed,
+                    r4,
                     scaler,
                 ) {
                     ctx.play_ui_select();
@@ -491,7 +566,12 @@ impl CabinetScreen for ArcadeSettingsModal {
                 y += row_h + row_gap;
                 draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.ui_slider.label, &self.ui_slider.formatted_value(), self.ui_slider.normalized(), active_row == 3, false, accent);
                 y += row_h + row_gap;
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.mute_dropdown.label, &self.mute_dropdown.options, self.mute_dropdown.selected_index, self.mute_dropdown.is_open, self.mute_dropdown.popup_hovered_index, active_row == 4, false, accent);
+                let r4 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.mute_dropdown.label, &self.mute_dropdown.options, self.mute_dropdown.selected_index, false, self.mute_dropdown.popup_hovered_index, active_row == 4, false, accent);
+
+                if self.mute_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r4.0, r4.1, r4.2, r4.3, &self.mute_dropdown.options, self.mute_dropdown.selected_index, self.mute_dropdown.popup_hovered_index, accent);
+                }
             }
             1 => {
                 // CONTROLS TAB
@@ -505,22 +585,56 @@ impl CabinetScreen for ArcadeSettingsModal {
                 draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.steer_exponent_slider.label, &self.steer_exponent_slider.formatted_value(), self.steer_exponent_slider.normalized(), active_row == 3, false, accent);
             }
             2 => {
-                // DISPLAY TAB
+                // DISPLAY TAB: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Theme
                 let mut y = content_y;
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.theme_dropdown.label, &self.theme_dropdown.options, self.theme_dropdown.selected_index, self.theme_dropdown.is_open, self.theme_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                let r0 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.resolution_dropdown.label, &self.resolution_dropdown.options, self.resolution_dropdown.selected_index, false, self.resolution_dropdown.popup_hovered_index, active_row == 0, false, accent);
                 y += row_h + row_gap;
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.scanlines_dropdown.label, &self.scanlines_dropdown.options, self.scanlines_dropdown.selected_index, self.scanlines_dropdown.is_open, self.scanlines_dropdown.popup_hovered_index, active_row == 1, false, accent);
+                let r1 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.display_mode_dropdown.label, &self.display_mode_dropdown.options, self.display_mode_dropdown.selected_index, false, self.display_mode_dropdown.popup_hovered_index, active_row == 1, false, accent);
                 y += row_h + row_gap;
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.ui_scale_dropdown.label, &self.ui_scale_dropdown.options, self.ui_scale_dropdown.selected_index, self.ui_scale_dropdown.is_open, self.ui_scale_dropdown.popup_hovered_index, active_row == 2, false, accent);
+                let r2 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.ui_scale_dropdown.label, &self.ui_scale_dropdown.options, self.ui_scale_dropdown.selected_index, false, self.ui_scale_dropdown.popup_hovered_index, active_row == 2, false, accent);
+                y += row_h + row_gap;
+                let r3 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.scanlines_dropdown.label, &self.scanlines_dropdown.options, self.scanlines_dropdown.selected_index, false, self.scanlines_dropdown.popup_hovered_index, active_row == 3, false, accent);
+                y += row_h + row_gap;
+                let r4 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.theme_dropdown.label, &self.theme_dropdown.options, self.theme_dropdown.selected_index, false, self.theme_dropdown.popup_hovered_index, active_row == 4, false, accent);
+
+                // Foreground layer: Draw open popup over other rows
+                if self.resolution_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.resolution_dropdown.options, self.resolution_dropdown.selected_index, self.resolution_dropdown.popup_hovered_index, accent);
+                } else if self.display_mode_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.display_mode_dropdown.options, self.display_mode_dropdown.selected_index, self.display_mode_dropdown.popup_hovered_index, accent);
+                } else if self.ui_scale_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r2.0, r2.1, r2.2, r2.3, &self.ui_scale_dropdown.options, self.ui_scale_dropdown.selected_index, self.ui_scale_dropdown.popup_hovered_index, accent);
+                } else if self.scanlines_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r3.0, r3.1, r3.2, r3.3, &self.scanlines_dropdown.options, self.scanlines_dropdown.selected_index, self.scanlines_dropdown.popup_hovered_index, accent);
+                } else if self.theme_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r4.0, r4.1, r4.2, r4.3, &self.theme_dropdown.options, self.theme_dropdown.selected_index, self.theme_dropdown.popup_hovered_index, accent);
+                }
             }
             _ => {
                 // GAMEPLAY TAB
                 let mut y = content_y;
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.assist_dropdown.label, &self.assist_dropdown.options, self.assist_dropdown.selected_index, self.assist_dropdown.is_open, self.assist_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                let r0 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.assist_dropdown.label, &self.assist_dropdown.options, self.assist_dropdown.selected_index, false, self.assist_dropdown.popup_hovered_index, active_row == 0, false, accent);
                 y += row_h + row_gap;
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.speed_unit_dropdown.label, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, self.speed_unit_dropdown.is_open, self.speed_unit_dropdown.popup_hovered_index, active_row == 1, false, accent);
+                let r1 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.speed_unit_dropdown.label, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, false, self.speed_unit_dropdown.popup_hovered_index, active_row == 1, false, accent);
                 y += row_h + row_gap;
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.ghost_car_dropdown.label, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, self.ghost_car_dropdown.is_open, self.ghost_car_dropdown.popup_hovered_index, active_row == 2, false, accent);
+                let r2 = (content_x, y, content_w, row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.ghost_car_dropdown.label, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, false, self.ghost_car_dropdown.popup_hovered_index, active_row == 2, false, accent);
+
+                // Foreground layer: Draw open popup over other rows
+                if self.assist_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.assist_dropdown.options, self.assist_dropdown.selected_index, self.assist_dropdown.popup_hovered_index, accent);
+                } else if self.speed_unit_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, self.speed_unit_dropdown.popup_hovered_index, accent);
+                } else if self.ghost_car_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r2.0, r2.1, r2.2, r2.3, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, self.ghost_car_dropdown.popup_hovered_index, accent);
+                }
             }
         }
 

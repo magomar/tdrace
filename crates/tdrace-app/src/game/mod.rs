@@ -618,7 +618,7 @@ impl RaceSession {
         self.audio.play_music(MusicTrack::NeonMenu);
     }
 
-    /// Opens the Arcade Settings Modal, pre-populating it with current audio, gamepad, and assist configs.
+    /// Opens the Arcade Settings Modal, pre-populating it with current audio, gamepad, assists, and display resolution.
     pub fn open_settings_modal(&mut self) {
         let mut modal = ArcadeSettingsModal::new(&self.audio.settings, &self.input.gamepad.config);
         let assist_idx = match self.assist_profile {
@@ -628,6 +628,15 @@ impl RaceSession {
         };
         modal.assist_dropdown.set_selected(assist_idx);
         modal.scanlines_dropdown.set_selected(self.crt_overlay.config.mode.to_index());
+
+        let (w, h) = if self.config.display.window_width > 0 && self.config.display.window_height > 0 {
+            (self.config.display.window_width, self.config.display.window_height)
+        } else {
+            (screen_width_safe().round() as u32, screen_height_safe().round() as u32)
+        };
+        let is_fs = self.config.display.fullscreen;
+        modal.set_display_state(w, h, is_fs);
+
         self.settings_modal = Some(modal);
     }
 
@@ -636,7 +645,7 @@ impl RaceSession {
         self.settings_modal.is_some()
     }
 
-    /// Closes the settings modal, optionally applying the modified settings to audio, gamepad, and assists.
+    /// Closes the settings modal, optionally applying the modified settings to audio, gamepad, assists, and display resolution.
     pub fn close_settings_modal(&mut self, save: bool) {
         if let Some(modal) = self.settings_modal.take() {
             if save {
@@ -649,6 +658,22 @@ impl RaceSession {
                     1 => AssistProfile::Sport,
                     _ => AssistProfile::Pro,
                 };
+
+                // Apply and persist display settings (resolution & fullscreen)
+                modal.apply_display_settings();
+                let (sel_w, sel_h) = modal.selected_resolution();
+                let is_fs = modal.is_fullscreen();
+                self.config.display.window_width = sel_w;
+                self.config.display.window_height = sel_h;
+                self.config.display.fullscreen = is_fs;
+                self.config.display.scanline_mode = match selected_mode {
+                    ScanlineMode::Subtle => "subtle".to_string(),
+                    ScanlineMode::ArcadeCrt => "arcade_crt".to_string(),
+                    ScanlineMode::RetroGlow => "retro_glow".to_string(),
+                    ScanlineMode::Disabled => "disabled".to_string(),
+                };
+
+                let _ = self.config.save_to_first_existing_or_default();
             }
         }
     }
@@ -2359,17 +2384,11 @@ impl RaceSession {
 
                     let action = modal.update(&mut ctx);
                     if matches!(action, ScreenAction::Pop) {
-                        if modal.is_saved {
-                            modal.apply_to_audio(&mut self.audio.settings);
-                            modal.apply_to_gamepad(&mut self.input.gamepad.config);
-                            self.assist_profile = match modal.assist_dropdown.selected_index {
-                                0 => AssistProfile::Arcade,
-                                1 => AssistProfile::Sport,
-                                _ => AssistProfile::Pro,
-                            };
+                        let saved = modal.is_saved;
+                        self.close_settings_modal(saved);
+                        if saved {
                             self.audio.play_sfx(SfxType::UiSelect);
                         }
-                        self.settings_modal = None;
                     }
                     return;
                 }
@@ -2957,6 +2976,38 @@ impl RaceSession {
                     _ => {}
                 }
             }
+            return;
+        }
+
+        // If Arcade Settings Modal is open in the main menu, update it and return:
+        if let Some(ref mut modal) = self.settings_modal {
+            let (sw, sh) = (screen_width_safe(), screen_height_safe());
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::default();
+            let mut ctx = CabinetContext {
+                scaler: &scaler,
+                fonts: &self.fonts,
+                theme: &theme,
+                gamepad: &self.input.gamepad.snapshot,
+                dt: 1.0 / 60.0,
+                audio: Some(&self.audio),
+            };
+
+            let action = modal.update(&mut ctx);
+            if matches!(action, ScreenAction::Pop) {
+                let saved = modal.is_saved;
+                self.close_settings_modal(saved);
+                if saved {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+            }
+            return;
+        }
+
+        // Open Arcade Settings Modal (O key)
+        if is_key_pressed(KeyCode::O) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.open_settings_modal();
             return;
         }
 
@@ -4663,6 +4714,20 @@ impl RaceSession {
                     } else {
                         render_exit_confirm_modal(&self.fonts);
                     }
+                }
+                if let Some(ref modal) = self.settings_modal {
+                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::default();
+                    let ctx = CabinetContext {
+                        scaler: &scaler,
+                        fonts: &self.fonts,
+                        theme: &theme,
+                        gamepad: &self.input.gamepad.snapshot,
+                        dt: 0.0,
+                        audio: Some(&self.audio),
+                    };
+                    modal.draw(&ctx);
                 }
             }
             GameState::ModuleSelect { selected_idx } => {

@@ -2,10 +2,16 @@ use macroquad::prelude::*;
 use tdrace_app::game::RaceSession;
 
 fn window_conf() -> Conf {
+    let cfg = tdrace_app::config::GameConfig::load_or_default();
+    let width = cfg.display.window_width.max(640) as i32;
+    let height = cfg.display.window_height.max(360) as i32;
+    let fullscreen = cfg.display.fullscreen;
+
     Conf {
         window_title: "TDRace - Modular Arcade Motorsport Platform".to_string(),
-        window_width: 1280,
-        window_height: 720,
+        window_width: width,
+        window_height: height,
+        fullscreen,
         window_resizable: true,
         high_dpi: true,
         sample_count: 4,

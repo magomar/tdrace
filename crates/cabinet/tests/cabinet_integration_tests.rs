@@ -641,5 +641,83 @@ fn test_floating_text_popups_and_decay() {
     assert!(mgr.is_empty());
 }
 
+#[test]
+fn test_display_resolutions_and_window_modes() {
+    use cabinet::ui::display::{DisplayResolution, WindowMode};
+
+    let presets = DisplayResolution::standard_presets();
+    assert_eq!(presets.len(), 8);
+
+    // 16:9 checks
+    assert_eq!(DisplayResolution::HD_720P.aspect_ratio_str(), "16:9");
+    assert_eq!(DisplayResolution::FHD_1080P.aspect_ratio_str(), "16:9");
+    assert_eq!(DisplayResolution::QHD_1440P.aspect_ratio_str(), "16:9");
+    assert_eq!(DisplayResolution::UHD_4K.aspect_ratio_str(), "16:9");
+
+    // 21:9 Ultrawide checks
+    assert_eq!(DisplayResolution::UW_FHD.aspect_ratio_str(), "21:9");
+    assert_eq!(DisplayResolution::UW_QHD.aspect_ratio_str(), "21:9");
+
+    // 16:10 Handheld check
+    assert_eq!(DisplayResolution::DECK_800P.aspect_ratio_str(), "16:10");
+
+    // Closest match finding
+    assert_eq!(DisplayResolution::find_closest_preset_index(1920, 1080), 2);
+    assert_eq!(DisplayResolution::find_closest_preset_index(1920, 1000), 2); // close to 1080p
+    assert_eq!(DisplayResolution::find_closest_preset_index(1280, 720), 0);
+    assert_eq!(DisplayResolution::find_closest_preset_index(3840, 2160), 4);
+
+    // WindowMode checks
+    let wm_win = WindowMode::from_index(0);
+    assert_eq!(wm_win, WindowMode::Windowed);
+    assert!(!wm_win.is_fullscreen());
+    assert_eq!(wm_win.to_index(), 0);
+
+    let wm_fs = WindowMode::from_index(1);
+    assert_eq!(wm_fs, WindowMode::Fullscreen);
+    assert!(wm_fs.is_fullscreen());
+    assert_eq!(wm_fs.to_index(), 1);
+
+    assert_eq!(WindowMode::options(), vec!["Windowed", "Fullscreen"]);
+}
+
+#[test]
+fn test_arcade_settings_modal_display_tab_integration() {
+    use cabinet::audio::AudioSettings;
+    use cabinet::input::GamepadConfig;
+    use cabinet::state::ArcadeSettingsModal;
+
+    let audio = AudioSettings::default();
+    let gp = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp);
+
+    // Switch to DISPLAY tab (index 2)
+    modal.tab_bar.set_tab(2);
+    modal.nav.focused_col = 2;
+    assert_eq!(modal.tab_bar.active_tab_name(), "DISPLAY");
+    assert_eq!(modal.nav.column_lengths[2], 6); // 5 widgets + 1 bottom button row
+
+    // Verify initial values
+    assert_eq!(modal.selected_resolution(), (1280, 720));
+    assert!(!modal.is_fullscreen());
+
+    // Set display state
+    modal.set_display_state(1920, 1080, true);
+    assert_eq!(modal.resolution_dropdown.selected_index, 2); // 1080p
+    assert_eq!(modal.selected_resolution(), (1920, 1080));
+    assert!(modal.is_fullscreen());
+
+    // Test apply_display_settings (should not panic in test environment due to catch_unwind)
+    modal.apply_display_settings();
+
+    // Test restore defaults
+    modal.restore_defaults();
+    assert_eq!(modal.selected_resolution(), (1280, 720));
+    assert!(!modal.is_fullscreen());
+    assert_eq!(modal.ui_scale_dropdown.selected_index, 0);
+    assert_eq!(modal.scanlines_dropdown.selected_index, 0);
+    assert_eq!(modal.theme_dropdown.selected_index, 0);
+}
+
 
 

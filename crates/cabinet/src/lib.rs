@@ -40,6 +40,7 @@ pub use state::{
     ScreenAction, ScreenStack, UniversalConfirmModal, UniversalPauseModal,
 };
 pub use ui::{
-    draw_dropdown, draw_slider, draw_stepper, draw_tab_bar, CabinetTheme, DropdownWidget, Fonts,
-    Palette, SliderWidget, TabBar, UiScaler,
+    draw_dropdown, draw_dropdown_popup, draw_slider, draw_stepper, draw_tab_bar,
+    safe_request_screen_size, safe_set_fullscreen, CabinetTheme, DisplayResolution, DropdownWidget,
+    Fonts, Palette, SliderWidget, TabBar, UiScaler, WindowMode,
 };
