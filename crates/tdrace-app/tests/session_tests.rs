@@ -1023,5 +1023,59 @@ fn test_split_screen_synchronized_zoom_cycling_and_progressive() {
     assert_eq!(session.camera_p2.max_zoom_scale, p2_max_before);
 }
 
+#[test]
+fn test_split_screen_player2_audio_computation_and_telemetry() {
+    let mut session = RaceSession::new();
+    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+    session.num_bots = 0;
+    session.init_race();
+
+    // 1. Initial audio & engine RPM state
+    assert_eq!(session.prev_p2_lap, 1);
+    assert_eq!(session.prev_p2_sector, 0);
+    assert_eq!(session.engine_rpm_p2.current_gear, 1);
+    assert!(!session.audio.is_engine_active);
+    assert!(!session.audio.is_engine_active_p2);
+
+    // 2. Countdown phase: throttle revs on grid should update both P1 and P2 telemetry
+    session.state = GameState::Countdown(2.5);
+    session.update();
+    assert!(session.audio.is_engine_active, "P1 engine audio should be active during countdown");
+    assert!(session.audio.is_engine_active_p2, "P2 engine audio should be active during countdown in split mode");
+
+    // 3. Racing phase: step physics drives both engines
+    session.state = GameState::Racing;
+    // Accelerate P2 car to verify engine RPM updates
+    session.cars[1].state.local_velocity.x = 25.0;
+    session.physics_step(1.0 / 60.0);
+
+    assert!(session.audio.is_engine_active);
+    assert!(session.audio.is_engine_active_p2);
+    assert!(session.engine_rpm_p2.current_rpm > 1000.0);
+
+    // 4. Sector & Lap tracking audio feedback for Player 2
+    session.trackers[1].current_sector = 1;
+    session.physics_step(1.0 / 60.0);
+    assert_eq!(session.prev_p2_sector, 1);
+
+    session.trackers[1].current_lap = 2;
+    session.physics_step(1.0 / 60.0);
+    assert_eq!(session.prev_p2_lap, 2);
+
+    // 5. Switching out of split screen silences Player 2 engine audio
+    session.game_mode = tdrace_app::ui::menu::GameMode::StandardRace;
+    session.physics_step(1.0 / 60.0);
+    assert!(!session.audio.is_engine_active_p2, "P2 engine audio should stop when not in split screen");
+
+    // 6. Pausing race stops all engine loops
+    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+    session.physics_step(1.0 / 60.0);
+    assert!(session.audio.is_engine_active_p2);
+
+    session.pause_race();
+    assert!(!session.audio.is_engine_active);
+    assert!(!session.audio.is_engine_active_p2);
+}
+
 
 

@@ -367,6 +367,11 @@ pub struct AudioManager {
     pub backend: AudioBackend,
     pub sampled_engine: Option<EngineAudioMixer>,
     pub auxiliary_layer: Option<AuxiliaryAudioLayer>,
+    pub sampled_engine_p2: Option<EngineAudioMixer>,
+    pub auxiliary_layer_p2: Option<AuxiliaryAudioLayer>,
+    pub is_engine_active_p2: bool,
+    pub shift_gap_timer_p2: f32,
+    _limiter_timer_p2: f32,
     pub use_sampled_engine: bool,
     pub active_music_handle: Option<ActiveSoundHandle>,
 }
@@ -410,14 +415,17 @@ fn safe_stop_sound(sound: &Sound) {
 impl AudioManager {
     pub fn new() -> Self {
         let mut backend = AudioBackend::new();
-        let (sampled_engine, auxiliary_layer) = if backend.is_available() {
+        let (sampled_engine, auxiliary_layer, sampled_engine_p2, auxiliary_layer_p2) = if backend.is_available() {
             let bank = ArchetypeSampleBank::generate(EngineSoundType::Generic, DEFAULT_SAMPLE_RATE);
+            let bank_p2 = bank.clone();
             (
                 Some(EngineAudioMixer::new(bank)),
                 Some(AuxiliaryAudioLayer::new(&mut backend)),
+                Some(EngineAudioMixer::new(bank_p2)),
+                Some(AuxiliaryAudioLayer::new(&mut backend)),
             )
         } else {
-            (None, None)
+            (None, None, None, None)
         };
 
         Self {
@@ -426,13 +434,18 @@ impl AudioManager {
             current_music: None,
             active_engine_type: EngineSoundType::Generic,
             is_engine_active: false,
+            is_engine_active_p2: false,
             is_skid_active: false,
             engine_active_bands: [false; NUM_RPM_BANDS],
             shift_gap_timer: 0.0,
+            shift_gap_timer_p2: 0.0,
             limiter_timer: 0.0,
+            _limiter_timer_p2: 0.0,
             backend,
             sampled_engine,
+            sampled_engine_p2,
             auxiliary_layer,
+            auxiliary_layer_p2,
             use_sampled_engine: true,
             active_music_handle: None,
         }
@@ -445,7 +458,10 @@ impl AudioManager {
             self.active_engine_type = engine_type;
             if let Some(sampled) = self.sampled_engine.as_mut() {
                 let new_bank = ArchetypeSampleBank::generate(engine_type, DEFAULT_SAMPLE_RATE);
-                sampled.set_bank(new_bank, &mut self.backend);
+                sampled.set_bank(new_bank.clone(), &mut self.backend);
+                if let Some(sampled_p2) = self.sampled_engine_p2.as_mut() {
+                    sampled_p2.set_bank(new_bank, &mut self.backend);
+                }
             }
         }
     }
@@ -740,18 +756,94 @@ impl AudioManager {
         self.is_engine_active = true;
     }
 
+    /// Dynamically updates Player 2 engine sound from RPM and throttle load.
+    pub fn update_engine_rpm_p2(&mut self, rpm: f32, throttle: f32, is_shift: bool) {
+        self.update_engine_telemetry_p2(rpm, throttle, is_shift, 0.0, 1, 0.016);
+    }
+
+    /// Full telemetry update feeding RPM, throttle, gear, speed, and delta into sampled engine and auxiliary layers for Player 2.
+    pub fn update_engine_telemetry_p2(
+        &mut self,
+        rpm: f32,
+        throttle: f32,
+        is_shift: bool,
+        speed: f32,
+        gear: usize,
+        dt: f32,
+    ) {
+        if self.settings.is_muted {
+            self.stop_player2_engine();
+            return;
+        }
+
+        if is_shift {
+            self.play_sfx_with_gain(SfxType::ShiftPop, 0.95);
+            self.shift_gap_timer_p2 = 0.075; // 75ms clutch disengagement gap
+        } else if self.shift_gap_timer_p2 > 0.0 {
+            self.shift_gap_timer_p2 = (self.shift_gap_timer_p2 - dt).max(0.0);
+        }
+
+        let effective_throttle = if self.shift_gap_timer_p2 > 0.0 {
+            0.0
+        } else {
+            throttle
+        };
+
+        if self.use_sampled_engine && self.backend.is_available() && self.sampled_engine_p2.is_some() {
+            let limiter_mod = if let Some(aux) = self.auxiliary_layer_p2.as_mut() {
+                aux.update(
+                    speed.abs(),
+                    gear,
+                    rpm,
+                    effective_throttle,
+                    self.active_engine_type,
+                    dt,
+                    self.settings.effective_sfx_volume(),
+                    &mut self.backend,
+                )
+            } else {
+                1.0
+            };
+
+            let effective_vol = self.settings.effective_sfx_volume() * limiter_mod;
+            if let Some(sampled) = self.sampled_engine_p2.as_mut() {
+                sampled.update(rpm, effective_throttle, effective_vol, &mut self.backend);
+            }
+            self.is_engine_active_p2 = true;
+        } else {
+            self.is_engine_active_p2 = true;
+        }
+    }
+
+    /// Stops all continuous loops for Player 2's engine.
+    pub fn stop_player2_engine(&mut self) {
+        if let Some(sampled) = self.sampled_engine_p2.as_mut() {
+            sampled.stop();
+        }
+        if let Some(aux) = self.auxiliary_layer_p2.as_mut() {
+            aux.stop();
+        }
+        self.is_engine_active_p2 = false;
+    }
+
     /// Triggers tire drift sounds when breaking traction (disabled to keep pure engine audio).
     pub fn update_skid_chirp(&mut self, _slip_intensity: f32, _dt: f32) {
         // Disabled: Keep pure internal combustion engine audio without synthetic chirp overlays
     }
 
-    /// Stops all continuous loops across all engine bands.
+    /// Stops all continuous loops across all engine bands for both players.
     pub fn stop_all_loops(&mut self) {
         if let Some(sampled) = self.sampled_engine.as_mut() {
             sampled.stop();
         }
+        if let Some(sampled_p2) = self.sampled_engine_p2.as_mut() {
+            sampled_p2.stop();
+        }
         if let Some(aux) = self.auxiliary_layer.as_mut() {
             aux.stop();
+        }
+        if let Some(aux_p2) = self.auxiliary_layer_p2.as_mut() {
+            aux_p2.stop();
         }
 
         for engine_type in [
@@ -771,6 +863,7 @@ impl AudioManager {
         }
         self.engine_active_bands = [false; NUM_RPM_BANDS];
         self.is_engine_active = false;
+        self.is_engine_active_p2 = false;
         self.is_skid_active = false;
     }
 }
@@ -825,6 +918,22 @@ mod tests {
         assert_eq!(mgr.settings.is_muted, false);
         assert_eq!(mgr.current_music, None);
         assert_eq!(mgr.is_engine_active, false);
+        assert_eq!(mgr.is_engine_active_p2, false);
         assert_eq!(mgr.is_skid_active, false);
+    }
+
+    #[test]
+    fn test_player2_engine_audio_lifecycle() {
+        let mut mgr = AudioManager::new();
+        assert_eq!(mgr.is_engine_active_p2, false);
+
+        // Feed Player 2 telemetry
+        mgr.update_engine_rpm_p2(3600.0, 0.8, true);
+        assert_eq!(mgr.is_engine_active_p2, true);
+        assert!(mgr.shift_gap_timer_p2 > 0.05);
+
+        // Stop Player 2 engine
+        mgr.stop_player2_engine();
+        assert_eq!(mgr.is_engine_active_p2, false);
     }
 }

@@ -160,9 +160,9 @@ impl InputController {
             self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
         let mut reverse = false;
 
-        if current_speed_fwd <= 0.1 && brake > 0.0 && throttle == 0.0 {
+        if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle == 0.0 {
             reverse = true;
-            throttle = brake;
+            throttle = raw_brake.max(brake);
             brake = 0.0;
         }
 
@@ -212,7 +212,7 @@ impl InputController {
             || self.input_map.is_gamepad_btn_down(ArcadeAction::Primary, gp);
         let mut reverse = gp.reverse;
 
-        if current_speed_fwd <= 0.1 && brake > 0.0 && throttle == 0.0 {
+        if current_speed_fwd <= 0.25 && brake > 0.0 && throttle == 0.0 {
             reverse = true;
             throttle = brake;
             brake = 0.0;
@@ -265,9 +265,9 @@ impl InputController {
             filter_p2.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
         let mut reverse = false;
 
-        if current_speed_fwd <= 0.1 && brake > 0.0 && throttle == 0.0 {
+        if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle == 0.0 {
             reverse = true;
-            throttle = brake;
+            throttle = raw_brake.max(brake);
             brake = 0.0;
         }
 
@@ -280,36 +280,36 @@ impl InputController {
         }
     }
 
-    /// Polls isolated controls for both players in Split Mode.
-    /// Player 1 receives strictly keyboard input.
     /// Player 2 receives Gamepad if connected, or secondary keyboard fallback.
     pub fn poll_split_player_controls(
         &mut self,
         filter_p2: &mut DigitalInputFilter,
         dt: f32,
-        p1_speed: f32,
-        p2_speed: f32,
+        p1_speed_fwd: f32,
+        p2_speed_fwd: f32,
     ) -> (CarControls, CarControls) {
-        let p1 = self.poll_keyboard_controls(dt, p1_speed);
-        let p2 = if self.gamepad.snapshot.is_connected {
-            self.poll_gamepad_controls(dt, p2_speed)
+        let p1_ctrl = self.poll_player_controls(dt, p1_speed_fwd);
+
+        let p2_ctrl = if self.gamepad.snapshot.is_connected {
+            self.poll_gamepad_controls(dt, p2_speed_fwd)
         } else {
-            self.poll_keyboard_p2_fallback(filter_p2, dt, p2_speed)
+            self.poll_keyboard_p2_fallback(filter_p2, dt, p2_speed_fwd)
         };
-        (p1, p2)
+
+        (p1_ctrl, p2_ctrl)
     }
 
-    /// Pure input processing & blending pipeline between keyboard digital ramps and gamepad analog axes.
+    /// Pure, deterministic processing method mapping raw keyboard and gamepad states into smoothed CarControls.
     pub fn process_inputs(
         &mut self,
         raw_kb: (f32, f32, f32, bool),
         dt: f32,
         current_speed_fwd: f32,
     ) -> CarControls {
+        let speed_abs = current_speed_fwd.abs();
         let (raw_steer, raw_throttle, raw_brake, kb_handbrake) = raw_kb;
 
-        // Apply digital input smoothing, progressive ramps & speed-sensitive attenuation to keyboard
-        let speed_abs = current_speed_fwd.abs();
+        // Apply progressive smoothing filter to keyboard inputs
         let (kb_steer, kb_throttle, kb_brake) = self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
 
         // Blend Keyboard and Analog Gamepad controls seamlessly
@@ -350,11 +350,11 @@ impl InputController {
             || self.input_map.is_gamepad_btn_down(ArcadeAction::Primary, gp);
         let mut reverse = gp.reverse;
 
-        // When stationary / stopped or moving backward (forward speed <= 0.1 m/s),
+        // When stationary / stopped or moving backward (forward speed <= 0.25 m/s),
         // pushing the brakes becomes reverse gear unless forward throttle is applied.
-        if current_speed_fwd <= 0.1 && brake > 0.0 && throttle == 0.0 {
+        if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle == 0.0 {
             reverse = true;
-            throttle = brake;
+            throttle = raw_brake.max(brake);
             brake = 0.0;
         }
 

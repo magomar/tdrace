@@ -59,7 +59,7 @@ fn screen_height_safe() -> f32 {
 }
 use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
 use tdrace_core::collision::wall::resolve_all_wall_collisions;
-use tdrace_core::physics::car::Car;
+use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::AssistProfile;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
@@ -317,13 +317,16 @@ pub struct RaceSession {
     // Audio System
     pub audio: AudioManager,
     pub engine_rpm: EngineRpmModel,
+    pub engine_rpm_p2: EngineRpmModel,
     prev_countdown_sec: i32,
     pub prev_player_sector: usize,
+    pub prev_p2_sector: usize,
     curb_sound_cooldown: f32,
     offroad_sound_cooldown: f32,
 
     // Internal trackers
     pub prev_player_lap: u32,
+    pub prev_p2_lap: u32,
     pub pb_notification: Option<PersonalBestNotification>,
 
     // Screen transitions (Cabinet FX)
@@ -551,11 +554,14 @@ impl RaceSession {
             return_to_editor_on_exit: false,
             audio,
             engine_rpm: EngineRpmModel::default(),
+            engine_rpm_p2: EngineRpmModel::default(),
             prev_countdown_sec: 4,
             prev_player_sector: 0,
+            prev_p2_sector: 0,
             curb_sound_cooldown: 0.0,
             offroad_sound_cooldown: 0.0,
             prev_player_lap: 1,
+            prev_p2_lap: 1,
             pb_notification: None,
             transition: None,
             pending_state: None,
@@ -1543,6 +1549,11 @@ impl RaceSession {
         self.session_time = 0.0;
         self.accumulator = 0.0;
         self.prev_player_lap = 1;
+        self.prev_player_sector = 0;
+        self.prev_p2_lap = 1;
+        self.prev_p2_sector = 0;
+        self.engine_rpm = EngineRpmModel::default();
+        self.engine_rpm_p2 = EngineRpmModel::default();
         self.pb_notification = None;
 
         // Reset ghost active lap samples
@@ -2480,11 +2491,19 @@ impl RaceSession {
                 *remaining -= frame_dt;
 
                 // Player launch throttle / revs on grid
-                let kb_ctrl = self.input.poll_player_controls(frame_dt, 0.0);
-                let touch_ctrl = self.touch.poll_controls();
-                let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-                let (rpm, is_shift) = self.engine_rpm.update(0.0, player_ctrl.throttle, 0.0, frame_dt);
-                self.audio.update_engine_telemetry(rpm, player_ctrl.throttle, is_shift, 0.0, self.engine_rpm.current_gear, frame_dt);
+                if self.game_mode.is_split_screen() {
+                    let (p1_ctrl, p2_ctrl) = self.input.poll_split_player_controls(&mut self.filter_p2, frame_dt, 0.0, 0.0);
+                    let (rpm1, is_shift1) = self.engine_rpm.update(0.0, p1_ctrl.throttle, 0.0, frame_dt);
+                    self.audio.update_engine_telemetry(rpm1, p1_ctrl.throttle, is_shift1, 0.0, self.engine_rpm.current_gear, frame_dt);
+                    let (rpm2, is_shift2) = self.engine_rpm_p2.update(0.0, p2_ctrl.throttle, 0.0, frame_dt);
+                    self.audio.update_engine_telemetry_p2(rpm2, p2_ctrl.throttle, is_shift2, 0.0, self.engine_rpm_p2.current_gear, frame_dt);
+                } else {
+                    let kb_ctrl = self.input.poll_player_controls(frame_dt, 0.0);
+                    let touch_ctrl = self.touch.poll_controls();
+                    let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+                    let (rpm, is_shift) = self.engine_rpm.update(0.0, player_ctrl.throttle, 0.0, frame_dt);
+                    self.audio.update_engine_telemetry(rpm, player_ctrl.throttle, is_shift, 0.0, self.engine_rpm.current_gear, frame_dt);
+                }
 
                 // Countdown audio beeps (3, 2, 1)
                 if *remaining <= 3.0 && self.prev_countdown_sec > 3 {
@@ -4297,12 +4316,12 @@ impl RaceSession {
                 p1_speed,
                 p2_speed,
             );
-            if p1_speed <= 0.1 && p1_ctrl.brake > 0.0 && p1_ctrl.throttle == 0.0 {
+            if p1_speed <= 0.25 && p1_ctrl.brake > 0.0 && p1_ctrl.throttle == 0.0 {
                 p1_ctrl.reverse = true;
                 p1_ctrl.throttle = p1_ctrl.brake;
                 p1_ctrl.brake = 0.0;
             }
-            if p2_speed <= 0.1 && p2_ctrl.brake > 0.0 && p2_ctrl.throttle == 0.0 {
+            if p2_speed <= 0.25 && p2_ctrl.brake > 0.0 && p2_ctrl.throttle == 0.0 {
                 p2_ctrl.reverse = true;
                 p2_ctrl.throttle = p2_ctrl.brake;
                 p2_ctrl.brake = 0.0;
@@ -4320,12 +4339,16 @@ impl RaceSession {
                     .map(|(_, c)| c)
                     .collect();
 
-                let bot_ctrl = self.ai_drivers[ai_idx].compute_controls(
-                    &self.cars[i],
-                    &self.track,
-                    &other_cars_refs,
-                    dt,
-                );
+                let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
+                    ai.compute_controls(
+                        &self.cars[i],
+                        &self.track,
+                        &other_cars_refs,
+                        dt,
+                    )
+                } else {
+                    CarControls::default()
+                };
                 controls_all.push(bot_ctrl);
             }
         } else {
@@ -4333,7 +4356,7 @@ impl RaceSession {
             let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
             let touch_ctrl = self.touch.poll_controls();
             let mut player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-            if player_speed <= 0.1 && player_ctrl.brake > 0.0 && player_ctrl.throttle == 0.0 {
+            if player_speed <= 0.25 && player_ctrl.brake > 0.0 && player_ctrl.throttle == 0.0 {
                 player_ctrl.reverse = true;
                 player_ctrl.throttle = player_ctrl.brake;
                 player_ctrl.brake = 0.0;
@@ -4350,12 +4373,16 @@ impl RaceSession {
                     .map(|(_, c)| c)
                     .collect();
 
-                let bot_ctrl = self.ai_drivers[ai_idx].compute_controls(
-                    &self.cars[i],
-                    &self.track,
-                    &other_cars_refs,
-                    dt,
-                );
+                let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
+                    ai.compute_controls(
+                        &self.cars[i],
+                        &self.track,
+                        &other_cars_refs,
+                        dt,
+                    )
+                } else {
+                    CarControls::default()
+                };
                 controls_all.push(bot_ctrl);
             }
         }
@@ -4399,7 +4426,7 @@ impl RaceSession {
         for (i, car) in self.cars.iter_mut().enumerate() {
             for ramp in &self.track.geometry.jump_ramps {
                 if car.try_trigger_jump_ramp(ramp) {
-                    if i == 0 {
+                    if i == 0 || (i == 1 && is_split) {
                         self.audio.play_sfx(SfxType::JumpLaunch);
                     }
                     break;
@@ -4458,17 +4485,19 @@ impl RaceSession {
             }
         }
 
-        // Water splash sound effect on player car
-        if let Some(player_surfaces) = wheel_surfaces.first() {
-            let in_water = player_surfaces.iter().any(|&s| s == SurfaceType::Water);
-            if in_water {
-                if let Some(player_car) = self.cars.first() {
-                    if !player_car.state.is_airborne
-                        && player_car.state.elevation <= 0.0
-                        && player_car.state.speed > 3.0
+        // Water splash sound effect on player cars (P1 and P2 in split screen)
+        let player_count = if is_split { 2.min(self.cars.len()) } else { 1.min(self.cars.len()) };
+        for p_idx in 0..player_count {
+            if let Some(surfaces) = wheel_surfaces.get(p_idx) {
+                let in_water = surfaces.iter().any(|&s| s == SurfaceType::Water);
+                if in_water {
+                    let car = &self.cars[p_idx];
+                    if !car.state.is_airborne
+                        && car.state.elevation <= 0.0
+                        && car.state.speed > 3.0
                         && self.session_time.fract() < dt * 4.0
                     {
-                        let gain = (player_car.state.speed / 18.0).clamp(0.35, 0.85);
+                        let gain = (car.state.speed / 18.0).clamp(0.35, 0.85);
                         self.audio.play_sfx_with_gain(SfxType::WaterSplash, gain);
                     }
                 }
@@ -4546,6 +4575,25 @@ impl RaceSession {
             };
             let (rpm, is_shift) = self.engine_rpm.update(forward_speed, effective_throttle, slip_intensity, dt);
             self.audio.update_engine_telemetry(rpm, effective_throttle, is_shift, forward_speed, self.engine_rpm.current_gear, dt);
+        }
+
+        if is_split && self.cars.len() >= 2 {
+            let p2_car = &self.cars[1];
+            let max_slip_angle = p2_car.state.wheels.iter().map(|w| w.slip_angle.abs()).fold(0.0f32, f32::max);
+            let max_slip_ratio = p2_car.state.wheels.iter().map(|w| w.slip_ratio.abs()).fold(0.0f32, f32::max);
+            let slip_intensity = (max_slip_angle * 1.5).max(max_slip_ratio);
+
+            let p2_ctrl = controls_all[1];
+            let forward_speed = p2_car.state.local_velocity.x;
+            let effective_throttle = if p2_ctrl.reverse {
+                -p2_ctrl.throttle
+            } else {
+                p2_ctrl.throttle - p2_ctrl.brake
+            };
+            let (rpm2, is_shift2) = self.engine_rpm_p2.update(forward_speed, effective_throttle, slip_intensity, dt);
+            self.audio.update_engine_telemetry_p2(rpm2, effective_throttle, is_shift2, forward_speed, self.engine_rpm_p2.current_gear, dt);
+        } else {
+            self.audio.stop_player2_engine();
         }
 
         // 6. Update race progression, lap tracking, sector splits, anti-cheat
@@ -4672,6 +4720,24 @@ impl RaceSession {
                     }
                 }
                 self.prev_player_lap = tracker.current_lap;
+            }
+        }
+
+        // Lap and sector split audio feedback for Player 2
+        if is_split && self.trackers.len() >= 2 {
+            let p2_tracker = &self.trackers[1];
+            let p2_lap_changed = p2_tracker.current_lap > self.prev_p2_lap;
+            if p2_tracker.current_sector != self.prev_p2_sector {
+                if p2_tracker.current_sector > 0 {
+                    self.audio.play_sfx(SfxType::SectorPing);
+                }
+                self.prev_p2_sector = p2_tracker.current_sector;
+            }
+            if p2_lap_changed && p2_tracker.current_lap <= self.total_laps {
+                self.audio.play_sfx(SfxType::LapChime);
+            }
+            if p2_lap_changed {
+                self.prev_p2_lap = p2_tracker.current_lap;
             }
         }
 
