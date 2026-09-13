@@ -42,6 +42,10 @@ pub struct CustomGamepadProfile {
     pub btn_start: Option<CustomButtonBinding>,
     #[serde(default)]
     pub btn_select: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub stick_l3: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub stick_r3: Option<CustomButtonBinding>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -54,6 +58,10 @@ pub struct CustomAxisBinding {
     pub deadzone: f32,
     #[serde(default)]
     pub scale: f32,
+    #[serde(default)]
+    pub fallback_btn_pos: Option<String>,
+    #[serde(default)]
+    pub fallback_btn_neg: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -66,6 +74,8 @@ pub struct CustomTriggerBinding {
     pub inverted: bool,
     #[serde(default)]
     pub deadzone: f32,
+    #[serde(default)]
+    pub alternate_code: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -317,13 +327,14 @@ impl GamepadController {
         standard_pressed: bool,
     ) -> bool {
         if let Some(b) = binding {
-            if pressed_codes.contains(&b.code) {
+            if pressed_codes.iter().any(|p| {
+                p == &b.code
+                    || p.trim_start_matches("Btn_") == b.code.trim_start_matches("Btn_")
+                    || b.alternate.as_ref().map_or(false, |alt| {
+                        p == alt || p.trim_start_matches("Btn_") == alt.trim_start_matches("Btn_")
+                    })
+            }) {
                 return true;
-            }
-            if let Some(ref alt) = b.alternate {
-                if pressed_codes.contains(alt) {
-                    return true;
-                }
             }
         }
         standard_pressed
@@ -333,28 +344,84 @@ impl GamepadController {
     fn is_binding_held(
         binding: &Option<CustomButtonBinding>,
         raw_buttons_held: &[String],
-        gp: &gilrs::Gamepad,
+        gp: Option<&gilrs::Gamepad>,
         standard_held: bool,
     ) -> bool {
         if let Some(b) = binding {
-            if raw_buttons_held.contains(&b.code) {
+            if raw_buttons_held.iter().any(|raw| {
+                raw == &b.code
+                    || raw.trim_start_matches("Btn_") == b.code.trim_start_matches("Btn_")
+                    || b.alternate.as_ref().map_or(false, |alt| {
+                        raw == alt || raw.trim_start_matches("Btn_") == alt.trim_start_matches("Btn_")
+                    })
+            }) {
                 return true;
             }
-            if let Some(ref alt) = b.alternate {
-                if raw_buttons_held.contains(alt) {
+            if let Some(gamepad) = gp {
+                if sample_input_value(gamepad, raw_buttons_held, &b.code) > 0.5 {
                     return true;
                 }
-            }
-            if sample_input_value(gp, &b.code) > 0.5 {
-                return true;
-            }
-            if let Some(ref alt) = b.alternate {
-                if sample_input_value(gp, alt) > 0.5 {
-                    return true;
+                if let Some(ref alt) = b.alternate {
+                    if sample_input_value(gamepad, raw_buttons_held, alt) > 0.5 {
+                        return true;
+                    }
                 }
             }
         }
         standard_held
+    }
+
+    /// Computes trigger depression level (0.0 to 1.0) from custom profile or fallback hardware state.
+    fn sample_trigger(
+        binding: &Option<CustomTriggerBinding>,
+        raw_buttons_held: &[String],
+        gp: Option<&gilrs::Gamepad>,
+        fallback_code: &str,
+        fallback_btn: Button,
+    ) -> f32 {
+        if let Some(ref tr) = binding {
+            let is_held = raw_buttons_held.iter().any(|b| {
+                b == &tr.primary_code
+                    || b.trim_start_matches("Btn_") == tr.primary_code.trim_start_matches("Btn_")
+                    || tr.alternate_code.as_ref().map_or(false, |alt| {
+                        b == alt || b.trim_start_matches("Btn_") == alt.trim_start_matches("Btn_")
+                    })
+            });
+
+            let val = if let Some(gamepad) = gp {
+                let v1 = sample_input_value(gamepad, raw_buttons_held, &tr.primary_code);
+                let v2 = tr.alternate_code.as_ref().map_or(0.0, |alt| {
+                    sample_input_value(gamepad, raw_buttons_held, alt)
+                });
+                v1.max(v2)
+            } else {
+                0.0
+            };
+
+            let combined = val.max(if is_held { 1.0 } else { 0.0 });
+            if tr.inverted {
+                (1.0 - combined).max(0.0)
+            } else {
+                combined
+            }
+        } else if let Some(gamepad) = gp {
+            let btn_val = gamepad.button_data(fallback_btn).map(|d| d.value()).unwrap_or(0.0);
+            let is_p = if gamepad.is_pressed(fallback_btn) { 1.0 } else { 0.0 };
+            let is_held = if raw_buttons_held.iter().any(|b| {
+                b == fallback_code || b.trim_start_matches("Btn_") == fallback_code.trim_start_matches("Btn_")
+            }) {
+                1.0
+            } else {
+                0.0
+            };
+            btn_val.max(is_p).max(is_held)
+        } else if raw_buttons_held.iter().any(|b| {
+            b == fallback_code || b.trim_start_matches("Btn_") == fallback_code.trim_start_matches("Btn_")
+        }) {
+            1.0
+        } else {
+            0.0
+        }
     }
 
     /// Polls and updates gamepad state, draining all hardware events.
@@ -511,146 +578,185 @@ impl GamepadController {
 
         let config = self.config;
 
-        let mut steer = 0.0;
-        let mut throttle = 0.0;
-        let mut brake = 0.0;
-        let mut handbrake = false;
-        let mut reverse = false;
-        let mut stick_up = false;
-        let mut stick_down = false;
-        let mut stick_left = false;
-        let mut stick_right = false;
-
         // Sample continuous analog axes and button states from active gamepad
-        if let Some(id) = self.active_gamepad {
-            let maybe_gp = gilrs.connected_gamepad(id).or_else(|| {
+        let maybe_gp = if let Some(id) = self.active_gamepad {
+            gilrs.connected_gamepad(id).or_else(|| {
                 gilrs.gamepads().find(|(gid, _)| *gid == id).map(|(_, gp)| gp)
-            });
+            })
+        } else {
+            None
+        };
 
-            if let Some(gp) = maybe_gp {
-                self.snapshot.is_connected = true;
-                self.snapshot.gamepad_name = gp.name().to_string();
+        let mut curr_south = false;
+        let mut curr_east = false;
+        let mut curr_west = false;
+        let mut curr_north = false;
+        let mut curr_start = false;
+        let mut curr_select = false;
+        let mut curr_dpad_u = false;
+        let mut curr_dpad_d = false;
+        let mut curr_dpad_l = false;
+        let mut curr_dpad_r = false;
+        let mut curr_thumb_r = false;
+        let mut curr_thumb_l = false;
+        let mut raw_dpad_x = 0.0;
 
-                // State polling for continuous state
-                let curr_south = gp.is_pressed(Button::South);
-                let curr_east = gp.is_pressed(Button::East);
-                let curr_west = gp.is_pressed(Button::West);
-                let curr_north = gp.is_pressed(Button::North);
-                let curr_start = gp.is_pressed(Button::Start);
-                let curr_select = gp.is_pressed(Button::Select);
-                let dpad_y_axis = gp.axis_data(Axis::DPadY).map(|d| d.value()).unwrap_or(0.0);
-                let dpad_x_axis = gp.axis_data(Axis::DPadX).map(|d| d.value()).unwrap_or(0.0);
-                let curr_dpad_u = gp.is_pressed(Button::DPadUp) || dpad_y_axis > 0.5;
-                let curr_dpad_d = gp.is_pressed(Button::DPadDown) || dpad_y_axis < -0.5;
-                let curr_dpad_l = gp.is_pressed(Button::DPadLeft) || dpad_x_axis < -0.5;
-                let curr_dpad_r = gp.is_pressed(Button::DPadRight) || dpad_x_axis > 0.5;
-                let curr_thumb_r = gp.is_pressed(Button::RightThumb);
-                let curr_thumb_l = gp.is_pressed(Button::LeftThumb);
+        let (raw_stick_x, raw_stick_y) = if let Some(gp) = maybe_gp {
+            self.snapshot.is_connected = true;
+            self.snapshot.gamepad_name = gp.name().to_string();
 
-                // Edge-triggered fallback detection (guarantees detection across all driver types)
-                if curr_south && !self.prev_south { btn_south = true; }
-                if curr_east && !self.prev_east { btn_east = true; }
-                if curr_west && !self.prev_west { btn_west = true; }
-                if curr_north && !self.prev_north { btn_north = true; }
-                if curr_start && !self.prev_start { btn_start = true; }
-                if curr_select && !self.prev_select { btn_select = true; }
-                if curr_dpad_u && !self.prev_dpad_up { dpad_u = true; }
-                if curr_dpad_d && !self.prev_dpad_down { dpad_d = true; }
-                if curr_dpad_l && !self.prev_dpad_left { dpad_l = true; }
-                if curr_dpad_r && !self.prev_dpad_right { dpad_r = true; }
-                if curr_thumb_r && !self.prev_thumb_r { thumb_r = true; }
-                if curr_thumb_l && !self.prev_thumb_l { thumb_l = true; }
+            // State polling for continuous state
+            curr_south = gp.is_pressed(Button::South);
+            curr_east = gp.is_pressed(Button::East);
+            curr_west = gp.is_pressed(Button::West);
+            curr_north = gp.is_pressed(Button::North);
+            curr_start = gp.is_pressed(Button::Start);
+            curr_select = gp.is_pressed(Button::Select);
+            let dpad_y_axis = gp.axis_data(Axis::DPadY).map(|d| d.value()).unwrap_or(0.0);
+            let dpad_x_axis = gp.axis_data(Axis::DPadX).map(|d| d.value()).unwrap_or(0.0);
+            curr_dpad_u = gp.is_pressed(Button::DPadUp) || dpad_y_axis > 0.5;
+            curr_dpad_d = gp.is_pressed(Button::DPadDown) || dpad_y_axis < -0.5;
+            curr_dpad_l = gp.is_pressed(Button::DPadLeft) || dpad_x_axis < -0.5;
+            curr_dpad_r = gp.is_pressed(Button::DPadRight) || dpad_x_axis > 0.5;
+            curr_thumb_r = gp.is_pressed(Button::RightThumb);
+            curr_thumb_l = gp.is_pressed(Button::LeftThumb);
 
-                self.prev_south = curr_south;
-                self.prev_east = curr_east;
-                self.prev_west = curr_west;
-                self.prev_north = curr_north;
-                self.prev_start = curr_start;
-                self.prev_select = curr_select;
-                self.prev_dpad_up = curr_dpad_u;
-                self.prev_dpad_down = curr_dpad_d;
-                self.prev_dpad_left = curr_dpad_l;
-                self.prev_dpad_right = curr_dpad_r;
-                self.prev_thumb_r = curr_thumb_r;
-                self.prev_thumb_l = curr_thumb_l;
-
-                // 1. Left Analog Stick (Steering + Menu Flick Navigation)
-                let raw_stick_x = gp.axis_data(Axis::LeftStickX).map(|d| d.value()).unwrap_or(0.0);
-                let raw_stick_y = gp.axis_data(Axis::LeftStickY).map(|d| d.value()).unwrap_or(0.0);
-
-                stick_up = raw_stick_y > 0.45 && self.prev_stick_y <= 0.45;
-                stick_down = raw_stick_y < -0.45 && self.prev_stick_y >= -0.45;
-                stick_left = raw_stick_x < -0.45 && self.prev_stick_x >= -0.45;
-                stick_right = raw_stick_x > 0.45 && self.prev_stick_x <= 0.45;
-
-                self.prev_stick_x = raw_stick_x;
-                self.prev_stick_y = raw_stick_y;
-
-                let raw_dpad_x = if curr_dpad_r {
-                    1.0
-                } else if curr_dpad_l {
-                    -1.0
-                } else if dpad_x_axis.abs() > 0.2 {
-                    dpad_x_axis.signum()
-                } else {
-                    0.0
-                };
-
-                let stick_steer =
-                    Self::process_axis_deadzone(raw_stick_x, config.stick_deadzone, config.steer_exponent);
-                steer = (stick_steer * config.steer_scale + raw_dpad_x).clamp(-1.0, 1.0);
-
-                // 2. Throttle (Right Trigger or Custom Profile Binding)
-                let raw_rt = if let Some(ref prof) = self.custom_profile {
-                    if let Some(ref th) = prof.throttle {
-                        sample_input_value(&gp, &th.primary_code)
-                    } else {
-                        let raw_rt_btn = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
-                        let is_rt_pressed = if gp.is_pressed(Button::RightTrigger2) { 1.0 } else { 0.0 };
-                        raw_rt_btn.max(is_rt_pressed)
-                    }
-                } else {
-                    let raw_rt_btn = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
-                    let is_rt_pressed = if gp.is_pressed(Button::RightTrigger2) { 1.0 } else { 0.0 };
-                    raw_rt_btn.max(is_rt_pressed)
-                };
-                throttle =
-                    Self::process_trigger_deadzone(raw_rt, config.trigger_deadzone).clamp(0.0, 1.0);
-
-                // 3. Brake (Left Trigger or Custom Profile Binding)
-                let raw_lt = if let Some(ref prof) = self.custom_profile {
-                    if let Some(ref br) = prof.brake {
-                        sample_input_value(&gp, &br.primary_code)
-                    } else {
-                        let raw_lt_btn = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
-                        let is_lt_pressed = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
-                        raw_lt_btn.max(is_lt_pressed)
-                    }
-                } else {
-                    let raw_lt_btn = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
-                    let is_lt_pressed = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
-                    raw_lt_btn.max(is_lt_pressed)
-                };
-                brake =
-                    Self::process_trigger_deadzone(raw_lt, config.trigger_deadzone).clamp(0.0, 1.0);
-
-                // 4. Handbrake (Button A / South or Custom Profile Binding)
-                handbrake = Self::is_binding_held(
-                    &self.custom_profile.as_ref().and_then(|p| p.btn_south.clone().or_else(|| p.handbrake.clone())),
-                    &self.raw_buttons_held,
-                    &gp,
-                    curr_south,
-                );
-
-                // 5. Reverse (Button X / West or Custom Profile Binding)
-                reverse = Self::is_binding_held(
-                    &self.custom_profile.as_ref().and_then(|p| p.btn_west.clone().or_else(|| p.reverse.clone())),
-                    &self.raw_buttons_held,
-                    &gp,
-                    curr_west,
-                );
+            if curr_dpad_r {
+                raw_dpad_x = 1.0;
+            } else if curr_dpad_l {
+                raw_dpad_x = -1.0;
+            } else if dpad_x_axis.abs() > 0.2 {
+                raw_dpad_x = dpad_x_axis.signum();
             }
-        }
+
+            let sx = if let Some(ref prof) = self.custom_profile {
+                if let Some(ref st) = prof.steering {
+                    let val = sample_input_value(&gp, &self.raw_buttons_held, &st.axis_name);
+                    let val = if st.inverted { -val } else { val };
+                    let mut final_val = val;
+                    if final_val.abs() <= st.deadzone {
+                        if let Some(ref pos) = st.fallback_btn_pos {
+                            if self.raw_buttons_held.iter().any(|b| b == pos || b.trim_start_matches("Btn_") == pos.trim_start_matches("Btn_")) {
+                                final_val = 1.0;
+                            }
+                        }
+                        if let Some(ref neg) = st.fallback_btn_neg {
+                            if self.raw_buttons_held.iter().any(|b| b == neg || b.trim_start_matches("Btn_") == neg.trim_start_matches("Btn_")) {
+                                final_val = -1.0;
+                            }
+                        }
+                    }
+                    final_val
+                } else {
+                    gp.axis_data(Axis::LeftStickX).map(|d| d.value()).unwrap_or(0.0)
+                }
+            } else {
+                gp.axis_data(Axis::LeftStickX).map(|d| d.value()).unwrap_or(0.0)
+            };
+            let sy = gp.axis_data(Axis::LeftStickY).map(|d| d.value()).unwrap_or(0.0);
+            (sx, sy)
+        } else {
+            let mut sx = 0.0;
+            if let Some(ref prof) = self.custom_profile {
+                if let Some(ref st) = prof.steering {
+                    if let Some(ref pos) = st.fallback_btn_pos {
+                        if self.raw_buttons_held.iter().any(|b| b == pos || b.trim_start_matches("Btn_") == pos.trim_start_matches("Btn_")) {
+                            sx = 1.0;
+                        }
+                    }
+                    if let Some(ref neg) = st.fallback_btn_neg {
+                        if self.raw_buttons_held.iter().any(|b| b == neg || b.trim_start_matches("Btn_") == neg.trim_start_matches("Btn_")) {
+                            sx = -1.0;
+                        }
+                    }
+                }
+            }
+            (sx, 0.0)
+        };
+
+        // Edge-triggered fallback detection (guarantees detection across all driver types)
+        if curr_south && !self.prev_south { btn_south = true; }
+        if curr_east && !self.prev_east { btn_east = true; }
+        if curr_west && !self.prev_west { btn_west = true; }
+        if curr_north && !self.prev_north { btn_north = true; }
+        if curr_start && !self.prev_start { btn_start = true; }
+        if curr_select && !self.prev_select { btn_select = true; }
+        if curr_dpad_u && !self.prev_dpad_up { dpad_u = true; }
+        if curr_dpad_d && !self.prev_dpad_down { dpad_d = true; }
+        if curr_dpad_l && !self.prev_dpad_left { dpad_l = true; }
+        if curr_dpad_r && !self.prev_dpad_right { dpad_r = true; }
+        if curr_thumb_r && !self.prev_thumb_r { thumb_r = true; }
+        if curr_thumb_l && !self.prev_thumb_l { thumb_l = true; }
+
+        self.prev_south = curr_south;
+        self.prev_east = curr_east;
+        self.prev_west = curr_west;
+        self.prev_north = curr_north;
+        self.prev_start = curr_start;
+        self.prev_select = curr_select;
+        self.prev_dpad_up = curr_dpad_u;
+        self.prev_dpad_down = curr_dpad_d;
+        self.prev_dpad_left = curr_dpad_l;
+        self.prev_dpad_right = curr_dpad_r;
+        self.prev_thumb_r = curr_thumb_r;
+        self.prev_thumb_l = curr_thumb_l;
+
+        // 1. Left Analog Stick (Steering + Menu Flick Navigation)
+        let stick_up = raw_stick_y > 0.45 && self.prev_stick_y <= 0.45;
+        let stick_down = raw_stick_y < -0.45 && self.prev_stick_y >= -0.45;
+        let stick_left = raw_stick_x < -0.45 && self.prev_stick_x >= -0.45;
+        let stick_right = raw_stick_x > 0.45 && self.prev_stick_x <= 0.45;
+
+        self.prev_stick_x = raw_stick_x;
+        self.prev_stick_y = raw_stick_y;
+
+        let stick_steer =
+            Self::process_axis_deadzone(raw_stick_x, config.stick_deadzone, config.steer_exponent);
+        let steer = (stick_steer * config.steer_scale + raw_dpad_x).clamp(-1.0, 1.0);
+
+        // 2. Throttle (Right Trigger or Custom Profile Binding)
+        let raw_rt = Self::sample_trigger(
+            &self.custom_profile.as_ref().and_then(|p| p.throttle.clone()),
+            &self.raw_buttons_held,
+            maybe_gp.as_ref(),
+            "RightTrigger2",
+            Button::RightTrigger2,
+        );
+        let throttle_deadzone = self.custom_profile.as_ref()
+            .and_then(|p| p.throttle.as_ref())
+            .map(|t| t.deadzone)
+            .unwrap_or(config.trigger_deadzone);
+        let throttle = Self::process_trigger_deadzone(raw_rt, throttle_deadzone).clamp(0.0, 1.0);
+
+        // 3. Brake (Left Trigger or Custom Profile Binding)
+        let raw_lt = Self::sample_trigger(
+            &self.custom_profile.as_ref().and_then(|p| p.brake.clone()),
+            &self.raw_buttons_held,
+            maybe_gp.as_ref(),
+            "LeftTrigger2",
+            Button::LeftTrigger2,
+        );
+        let brake_deadzone = self.custom_profile.as_ref()
+            .and_then(|p| p.brake.as_ref())
+            .map(|b| b.deadzone)
+            .unwrap_or(config.trigger_deadzone);
+        let brake = Self::process_trigger_deadzone(raw_lt, brake_deadzone).clamp(0.0, 1.0);
+
+        // 4. Handbrake (Button A / South or Custom Profile Binding)
+        let handbrake = Self::is_binding_held(
+            &self.custom_profile.as_ref().and_then(|p| p.btn_south.clone().or_else(|| p.handbrake.clone())),
+            &self.raw_buttons_held,
+            maybe_gp.as_ref(),
+            curr_south,
+        );
+
+        // 5. Reverse (Button X / West or Custom Profile Binding)
+        let reverse = Self::is_binding_held(
+            &self.custom_profile.as_ref().and_then(|p| p.btn_west.clone().or_else(|| p.reverse.clone())),
+            &self.raw_buttons_held,
+            maybe_gp.as_ref(),
+            curr_west,
+        );
 
         let is_a_pressed = Self::is_binding_pressed_this_frame(
             &self.custom_profile.as_ref().and_then(|p| p.btn_south.clone().or_else(|| p.handbrake.clone())),
@@ -719,8 +825,18 @@ impl GamepadController {
         self.snapshot.dpad_down_pressed = is_dpad_d;
         self.snapshot.dpad_left_pressed = is_dpad_l;
         self.snapshot.dpad_right_pressed = is_dpad_r;
-        self.snapshot.btn_assist_toggle_pressed = thumb_r || is_select_pressed;
-        self.snapshot.btn_cam_toggle_pressed = thumb_l;
+        let is_r3_pressed = Self::is_binding_pressed_this_frame(
+            &self.custom_profile.as_ref().and_then(|p| p.stick_r3.clone()),
+            &pressed_codes,
+            thumb_r,
+        );
+        let is_l3_pressed = Self::is_binding_pressed_this_frame(
+            &self.custom_profile.as_ref().and_then(|p| p.stick_l3.clone()),
+            &pressed_codes,
+            thumb_l,
+        );
+        self.snapshot.btn_assist_toggle_pressed = is_r3_pressed || is_select_pressed;
+        self.snapshot.btn_cam_toggle_pressed = is_l3_pressed;
 
         self.snapshot.nav_up = is_dpad_u || stick_up;
         self.snapshot.nav_down = is_dpad_d || stick_down;
@@ -758,7 +874,14 @@ impl GamepadController {
 }
 
 /// Helper function to sample named axis or button value from Gilrs gamepad.
-fn sample_input_value(gp: &gilrs::Gamepad, code: &str) -> f32 {
+fn sample_input_value(gp: &gilrs::Gamepad, raw_buttons_held: &[String], code: &str) -> f32 {
+    if raw_buttons_held.iter().any(|b| {
+        b == code
+            || b.trim_start_matches("Btn_") == code.trim_start_matches("Btn_")
+    }) {
+        return 1.0;
+    }
+
     match code {
         "RightTrigger2" => {
             let btn_val = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
@@ -770,8 +893,16 @@ fn sample_input_value(gp: &gilrs::Gamepad, code: &str) -> f32 {
             let is_p = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
             btn_val.max(is_p)
         }
-        "RightTrigger" => if gp.is_pressed(Button::RightTrigger) { 1.0 } else { 0.0 },
-        "LeftTrigger" => if gp.is_pressed(Button::LeftTrigger) { 1.0 } else { 0.0 },
+        "RightTrigger" => {
+            let btn_val = gp.button_data(Button::RightTrigger).map(|d| d.value()).unwrap_or(0.0);
+            let is_p = if gp.is_pressed(Button::RightTrigger) { 1.0 } else { 0.0 };
+            btn_val.max(is_p)
+        }
+        "LeftTrigger" => {
+            let btn_val = gp.button_data(Button::LeftTrigger).map(|d| d.value()).unwrap_or(0.0);
+            let is_p = if gp.is_pressed(Button::LeftTrigger) { 1.0 } else { 0.0 };
+            btn_val.max(is_p)
+        }
         "South" => if gp.is_pressed(Button::South) { 1.0 } else { 0.0 },
         "East" => if gp.is_pressed(Button::East) { 1.0 } else { 0.0 },
         "West" => if gp.is_pressed(Button::West) { 1.0 } else { 0.0 },
@@ -780,13 +911,36 @@ fn sample_input_value(gp: &gilrs::Gamepad, code: &str) -> f32 {
         "LeftStickY" => gp.axis_data(Axis::LeftStickY).map(|d| d.value()).unwrap_or(0.0),
         "RightStickX" => gp.axis_data(Axis::RightStickX).map(|d| d.value()).unwrap_or(0.0),
         "RightStickY" => gp.axis_data(Axis::RightStickY).map(|d| d.value()).unwrap_or(0.0),
+        "LeftZ" => gp.axis_data(Axis::LeftZ).map(|d| d.value()).unwrap_or(0.0),
+        "RightZ" => gp.axis_data(Axis::RightZ).map(|d| d.value()).unwrap_or(0.0),
+        "DPadX" => gp.axis_data(Axis::DPadX).map(|d| d.value()).unwrap_or(0.0),
+        "DPadY" => gp.axis_data(Axis::DPadY).map(|d| d.value()).unwrap_or(0.0),
         "DPadUp" => if gp.is_pressed(Button::DPadUp) { 1.0 } else { 0.0 },
         "DPadDown" => if gp.is_pressed(Button::DPadDown) { 1.0 } else { 0.0 },
         "DPadLeft" => if gp.is_pressed(Button::DPadLeft) { 1.0 } else { 0.0 },
         "DPadRight" => if gp.is_pressed(Button::DPadRight) { 1.0 } else { 0.0 },
         "Start" => if gp.is_pressed(Button::Start) { 1.0 } else { 0.0 },
         "Select" => if gp.is_pressed(Button::Select) { 1.0 } else { 0.0 },
-        _ => 0.0,
+        "LeftThumb" => if gp.is_pressed(Button::LeftThumb) { 1.0 } else { 0.0 },
+        "RightThumb" => if gp.is_pressed(Button::RightThumb) { 1.0 } else { 0.0 },
+        _ => {
+            let trimmed = code.trim_start_matches("Btn_").trim_start_matches("Axis_");
+            for (nec, btn_data) in gp.state().buttons() {
+                let s = nec.to_string();
+                if s == code || s == trimmed || format!("Btn_{s}") == code {
+                    let val = btn_data.value();
+                    let is_p = if btn_data.is_pressed() { 1.0 } else { 0.0 };
+                    return val.max(is_p);
+                }
+            }
+            for (nec, axis_data) in gp.state().axes() {
+                let s = nec.to_string();
+                if s == code || s == trimmed || format!("Axis_{s}") == code {
+                    return axis_data.value();
+                }
+            }
+            0.0
+        }
     }
 }
 

@@ -317,6 +317,34 @@ fn test_custom_profile_raw_code_button_mappings() {
     assert!(gp.snapshot.btn_a_pressed, "Custom raw button code should trigger btn_a_pressed");
 }
 
+#[test]
+fn test_custom_profile_raw_code_trigger_throttle_and_brake() {
+    use tdrace_app::input::gamepad::{CustomGamepadProfile, CustomTriggerBinding};
 
+    let mut gp = GamepadController::new();
+    gp.custom_profile = Some(CustomGamepadProfile {
+        device_name: "Twin USB Joystick".to_string(),
+        throttle: Some(CustomTriggerBinding {
+            primary_code: "Btn_KEY(293)".to_string(),
+            alternate_code: None,
+            is_axis: false,
+            inverted: false,
+            deadzone: 0.05,
+        }),
+        brake: Some(CustomTriggerBinding {
+            primary_code: "Btn_KEY(292)".to_string(),
+            alternate_code: None,
+            is_axis: false,
+            inverted: false,
+            deadzone: 0.05,
+        }),
+        ..Default::default()
+    });
 
+    // Simulate pressing raw code Btn_KEY(293) for RT throttle
+    gp.raw_buttons_held.push("Btn_KEY(293)".to_string());
+    gp.update();
 
+    assert_eq!(gp.snapshot.throttle, 1.0, "Holding custom RT (Btn_KEY(293)) must produce throttle");
+    assert_eq!(gp.snapshot.brake, 0.0);
+}
