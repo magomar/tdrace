@@ -46,6 +46,8 @@ async fn main() {
             session.start_nascar_championship();
         } else if clean_arg == "championship" || clean_arg == "gt-championship" || clean_arg == "f1-championship" {
             session.start_gt_championship();
+        } else if clean_arg == "split" || clean_arg == "splitscreen" || clean_arg == "s" {
+            session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
         }
     }
 

@@ -21,7 +21,7 @@ pub use storage::{resolve_user_data_dir, resolve_user_tracks_dir};
 
 pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverStats};
 pub use audio::{AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType};
-pub use camera::{CameraMode, RaceCamera};
+pub use camera::{CameraMode, RaceCamera, SplitLayout};
 pub use config::{AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, ZoomLevelConfig};
 pub use db::{HallOfFameDb, HallOfFameEntry};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
@@ -45,7 +45,7 @@ pub use render::ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, Ghos
 pub use render::{compute_adaptive_alpha, PlayerVisibilityOptions};
 pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer, ReplayRecorder};
 pub use ui::curve_indicator::CurveColorScheme;
-pub use ui::hud::{render_hud, PersonalBestNotification, VisibilityToast};
+pub use ui::hud::{render_hud, render_split_hud, PersonalBestNotification, VisibilityToast};
 pub use ui::menu::{CarChoice, GameMode, GameModeChoice, RaceResultEntry, TrackChoice};
 pub use ui::profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use ui::starting_grid::render_starting_grid_screen;

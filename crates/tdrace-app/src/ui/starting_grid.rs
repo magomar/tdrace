@@ -337,8 +337,18 @@ pub fn render_starting_grid_screen(
             scaler.font_s(10.5),
             if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
         );
+        let racer_desc = if game_mode == GameMode::SplitScreen {
+            let bot_count = num_drivers.saturating_sub(2);
+            if bot_count == 0 {
+                format!("2 Players (1v1 Head-to-Head Duel) • Max {} Slots", max_grid_size)
+            } else {
+                format!("{} Racers (2 Players + {} AI Bots) • Max {} Slots", num_drivers, bot_count, max_grid_size)
+            }
+        } else {
+            format!("{} Racers ({} AI Opponents) • Max {} Slots", num_drivers, num_drivers.saturating_sub(1), max_grid_size)
+        };
         fonts.draw_ui_bold(
-            &format!("{} Racers ({} AI Opponents) • Max {} Slots", num_drivers, num_drivers.saturating_sub(1), max_grid_size),
+            &racer_desc,
             col1_x + scaler.s(12.0),
             curr_y + scaler.s(34.0),
             scaler.font_s(12.5),
@@ -430,6 +440,7 @@ pub fn render_starting_grid_screen(
         GameMode::TimeTrial => "TIME TRIAL • ROSTER & SHADOW CAR",
         GameMode::FreeRide => "FREE RIDE • PRACTICE ROSTER",
         GameMode::StandardRace | GameMode::ExperimentalRace => "STARTING GRID & ROSTER",
+        GameMode::SplitScreen => "2P SPLIT SCREEN • KEYS VS GAMEPAD",
     };
     let roster_header = if is_right_focused {
         format!("{} [FOCUSED • Up/Down to select slot • ENTER/D for Dossier]", roster_base_title)
@@ -551,26 +562,40 @@ pub fn render_starting_grid_screen(
                 tip_y += scaler.s(24.0);
             }
         }
-        GameMode::StandardRace | GameMode::ExperimentalRace => {
+        GameMode::StandardRace | GameMode::ExperimentalRace | GameMode::SplitScreen => {
             for (i, participant) in grid_participants.iter().enumerate() {
                 let slot = i + 1;
                 let is_row_sel = is_right_focused && i == active_roster_idx;
-                let desc = match (participant.best_lap, participant.best_circuit_time) {
-                    (Some(lap), Some(circ)) => {
-                        format!("Best Lap: {}  •  Circuit: {}", format_lap_time(lap), format_lap_time(circ))
+                let desc = if game_mode == GameMode::SplitScreen && i == 0 {
+                    "Player 1: Keyboard (WASD / Arrows) • Grid Slot 1".to_string()
+                } else if game_mode == GameMode::SplitScreen && i == 1 {
+                    if gamepad_connected {
+                        "Player 2: Gamepad [CONNECTED: Analog Precision]".to_string()
+                    } else {
+                        "Player 2: Gamepad [NOT DETECTED - Connect Controller / Fallback Arrows]".to_string()
                     }
-                    (Some(lap), None) => format!("Best Lap: {}", format_lap_time(lap)),
-                    (None, Some(circ)) => format!("Circuit: {}", format_lap_time(circ)),
-                    (None, None) => {
-                        if participant.is_player {
-                            "No Prior Record  •  Grid Draw".to_string()
-                        } else {
-                            "No Prior Record  •  Rookie Draw".to_string()
+                } else {
+                    match (participant.best_lap, participant.best_circuit_time) {
+                        (Some(lap), Some(circ)) => {
+                            format!("Best Lap: {}  •  Circuit: {}", format_lap_time(lap), format_lap_time(circ))
+                        }
+                        (Some(lap), None) => format!("Best Lap: {}", format_lap_time(lap)),
+                        (None, Some(circ)) => format!("Circuit: {}", format_lap_time(circ)),
+                        (None, None) => {
+                            if participant.is_player {
+                                "No Prior Record  •  Grid Draw".to_string()
+                            } else {
+                                "No Prior Record  •  Rookie Draw".to_string()
+                            }
                         }
                     }
                 };
 
-                let display_name = if participant.is_player {
+                let display_name = if game_mode == GameMode::SplitScreen && i == 0 {
+                    format!("{} (P1 Keys)", participant.name)
+                } else if game_mode == GameMode::SplitScreen && i == 1 {
+                    format!("{} (P2 Gamepad)", participant.name)
+                } else if participant.is_player {
                     format!("{} (You)", participant.name)
                 } else {
                     participant.name.clone()

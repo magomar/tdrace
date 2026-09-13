@@ -467,14 +467,17 @@ pub enum GameMode {
     StandardRace,
     /// Experimental Race: all drivers use the car model specified by the user. Allows changing car.
     ExperimentalRace,
+    /// Split Screen: 2 simultaneous local players (P1 on Keyboard vs P2 on Gamepad).
+    SplitScreen,
 }
 
 pub type GameModeChoice = GameMode;
 
 impl GameMode {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::StandardRace,
         Self::ExperimentalRace,
+        Self::SplitScreen,
         Self::TimeTrial,
         Self::FreeRide,
     ];
@@ -483,6 +486,7 @@ impl GameMode {
         match self {
             Self::StandardRace => "Standard Race",
             Self::ExperimentalRace => "Experimental Race",
+            Self::SplitScreen => "2P Split Screen",
             Self::TimeTrial => "Time Trial",
             Self::FreeRide => "Free Ride",
         }
@@ -492,6 +496,7 @@ impl GameMode {
         match self {
             Self::StandardRace => "PREDEFINED CAR • GRID",
             Self::ExperimentalRace => "CUSTOM CAR SPEC • MULTI-CAR",
+            Self::SplitScreen => "LOCAL 2-PLAYER • KEYS VS GAMEPAD",
             Self::TimeTrial => "VS GHOST SHADOW CAR",
             Self::FreeRide => "SOLO PRACTICE & TUNING",
         }
@@ -501,6 +506,7 @@ impl GameMode {
         match self {
             Self::StandardRace => "All drivers compete using the circuit's official predefined car.",
             Self::ExperimentalRace => "All drivers compete using the car model specified by the player.",
+            Self::SplitScreen => "Simultaneous 2-player split screen: Player 1 on Keyboard vs Player 2 on Gamepad.",
             Self::TimeTrial => "Race against your personal best time shown as a shadow car.",
             Self::FreeRide => "Solo open practice to freely test the circuit and vehicle handling.",
         }
@@ -509,13 +515,13 @@ impl GameMode {
     pub fn allows_car_change(&self) -> bool {
         match self {
             Self::StandardRace => false,
-            Self::ExperimentalRace | Self::TimeTrial | Self::FreeRide => true,
+            Self::ExperimentalRace | Self::SplitScreen | Self::TimeTrial | Self::FreeRide => true,
         }
     }
 
     pub fn has_bots(&self) -> bool {
         match self {
-            Self::StandardRace | Self::ExperimentalRace => true,
+            Self::StandardRace | Self::ExperimentalRace | Self::SplitScreen => true,
             Self::TimeTrial | Self::FreeRide => false,
         }
     }
@@ -523,7 +529,7 @@ impl GameMode {
     pub fn is_time_attack(&self) -> bool {
         match self {
             Self::TimeTrial | Self::FreeRide => true,
-            Self::StandardRace | Self::ExperimentalRace => false,
+            Self::StandardRace | Self::ExperimentalRace | Self::SplitScreen => false,
         }
     }
 
@@ -531,10 +537,15 @@ impl GameMode {
         matches!(self, Self::TimeTrial)
     }
 
+    pub fn is_split_screen(&self) -> bool {
+        matches!(self, Self::SplitScreen)
+    }
+
     pub fn next(&self) -> Self {
         match self {
             Self::StandardRace => Self::ExperimentalRace,
-            Self::ExperimentalRace => Self::TimeTrial,
+            Self::ExperimentalRace => Self::SplitScreen,
+            Self::SplitScreen => Self::TimeTrial,
             Self::TimeTrial => Self::FreeRide,
             Self::FreeRide => Self::StandardRace,
         }

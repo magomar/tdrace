@@ -617,7 +617,8 @@ fn test_screen_transition_module_select_switch_to_menu() {
 fn test_race_session_crt_overlay_settings_and_toggle() {
     use cabinet::fx::crt::ScanlineMode;
 
-    let mut session = RaceSession::new();
+    let orig_config = std::fs::read_to_string("config.toml").ok();
+    let mut session = RaceSession::new_with_config(tdrace_app::config::GameConfig::default());
     assert_eq!(session.crt_overlay.config.mode, ScanlineMode::Disabled);
     assert!(!session.crt_overlay.is_active());
 
@@ -689,6 +690,10 @@ fn test_race_session_crt_overlay_settings_and_toggle() {
     let initial_offset = session.crt_overlay.roll_offset;
     session.crt_overlay.update(0.1);
     assert!(session.crt_overlay.roll_offset > initial_offset);
+
+    if let Some(content) = orig_config {
+        let _ = std::fs::write("config.toml", content);
+    }
 }
 
 #[test]
@@ -828,6 +833,194 @@ fn test_drift_combo_and_jump_landing_dynamic_popups() {
         }
     }
     assert_eq!(session.drift_combo_count, 0, "Combo count should reset after timer expires");
+}
+
+#[test]
+fn test_split_screen_session_initialization() {
+    let mut session = RaceSession::new();
+    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+    session.num_bots = 2;
+    session.init_race();
+
+    assert!(session.is_split_screen());
+    // 2 human players (P1 Keys, P2 Gamepad) + 2 AI bots = 4 cars
+    assert_eq!(session.cars.len(), 4);
+    assert_eq!(session.trackers.len(), 4);
+    assert_eq!(session.ai_drivers.len(), 2);
+    assert_eq!(session.color_schemes.len(), 4);
+    assert_eq!(session.grid_participants.len(), 4);
+
+    // Participant 0 is Player 1
+    assert!(session.grid_participants[0].is_player);
+    assert_eq!(session.grid_participants[0].bot_index, None);
+    assert_eq!(session.grid_participants[0].name, session.active_profile.name);
+
+    // Participant 1 is Player 2
+    assert!(session.grid_participants[1].is_player);
+    assert_eq!(session.grid_participants[1].bot_index, None);
+    assert_eq!(session.grid_participants[1].name, "PLAYER 2");
+    assert_eq!(session.grid_participants[1].alias, "P2");
+
+    // Participants 2 and 3 are AI bots
+    assert!(!session.grid_participants[2].is_player);
+    assert_eq!(session.grid_participants[2].bot_index, Some(0));
+    assert!(!session.grid_participants[3].is_player);
+    assert_eq!(session.grid_participants[3].bot_index, Some(1));
+
+    // Both players must have distinct contrasting liveries
+    assert_ne!(session.color_schemes[0], session.color_schemes[1]);
+
+    // Both cameras must be initialized
+    assert_eq!(session.camera.levels.len(), session.camera_p2.levels.len());
+}
+
+#[test]
+fn test_split_screen_physics_stepping_and_standings() {
+    let mut session = RaceSession::new();
+    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+    session.num_bots = 0; // 1v1 Head-to-Head Duel
+    session.init_race();
+
+    assert_eq!(session.cars.len(), 2);
+
+    // Run multiple physics steps
+    for _ in 0..10 {
+        session.physics_step(1.0 / 60.0);
+    }
+
+    // Advance P2 ahead of P1
+    session.trackers[1].current_lap = 2;
+    session.trackers[1].normalized_progress = 0.40;
+    session.trackers[0].current_lap = 1;
+    session.trackers[0].normalized_progress = 0.90;
+
+    let standings = session.compute_standings();
+    assert_eq!(standings[0], 1, "P2 (Car 1) should be in 1st position");
+    assert_eq!(standings[1], 0, "P1 (Car 0) should be in 2nd position");
+}
+
+#[test]
+fn test_split_screen_race_finish_and_results() {
+    let mut session = RaceSession::new();
+    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+    session.num_bots = 1; // 2 players + 1 bot
+    session.init_race();
+
+    // Player 2 completes all laps
+    session.trackers[1].current_lap = session.total_laps + 1;
+    session.trackers[1].normalized_progress = 0.1;
+    session.trackers[0].current_lap = session.total_laps;
+    session.trackers[0].normalized_progress = 0.95;
+
+    session.check_race_finish();
+    assert_eq!(session.state, GameState::Finished);
+    assert_eq!(session.results.len(), 3);
+
+    // First finisher should be P2
+    assert_eq!(session.results[0].position, 1);
+    assert_eq!(session.results[0].car_name, "PLAYER 2 (P2 Gamepad)");
+    assert!(session.results[0].is_player);
+
+    // Second finisher should be P1
+    assert_eq!(session.results[1].position, 2);
+    assert!(session.results[1].car_name.contains("P1 Keys"));
+    assert!(session.results[1].is_player);
+
+    // Third finisher is the AI bot
+    assert_eq!(session.results[2].position, 3);
+    assert!(!session.results[2].is_player);
+}
+
+#[test]
+fn test_split_screen_pause_and_camera_management() {
+    let mut session = RaceSession::new();
+    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+    session.init_race();
+
+    // Trigger pause
+    session.pause_race();
+    assert_eq!(session.state, GameState::Paused);
+    assert!(session.camera.paused_from_follow.is_some());
+    assert!(session.camera_p2.paused_from_follow.is_some());
+
+    // Resume
+    session.resume_race();
+    assert_eq!(session.state, GameState::Racing);
+    assert!(session.camera.paused_from_follow.is_none());
+    assert!(session.camera_p2.paused_from_follow.is_none());
+}
+
+#[test]
+fn test_split_screen_synchronized_zoom_cycling_and_progressive() {
+    let mut session = RaceSession::new();
+    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+    session.init_race();
+
+    // 1. Initial zoom levels should match (index 0 / Close)
+    assert_eq!(session.camera.current_level_idx, 0);
+    assert_eq!(session.camera_p2.current_level_idx, 0);
+    assert_eq!(session.camera.current_zoom_level().name, "Close");
+    assert_eq!(session.camera_p2.current_zoom_level().name, "Close");
+
+    // 2. Cycle zoom level via session helper -> synchronizes both cameras
+    let lvl1 = session.cycle_camera_zoom();
+    assert_eq!(lvl1.name, "Medium");
+    assert_eq!(session.camera.current_level_idx, 1);
+    assert_eq!(session.camera_p2.current_level_idx, 1);
+    assert_eq!(session.camera_p2.current_zoom_level().name, "Medium");
+
+    let lvl2 = session.cycle_camera_zoom();
+    assert_eq!(lvl2.name, "Far");
+    assert_eq!(session.camera.current_level_idx, 2);
+    assert_eq!(session.camera_p2.current_level_idx, 2);
+
+    let lvl3 = session.cycle_camera_zoom();
+    assert_eq!(lvl3.name, "Very Far");
+    assert_eq!(session.camera.current_level_idx, 3);
+    assert_eq!(session.camera_p2.current_level_idx, 3);
+
+    let lvl0 = session.cycle_camera_zoom();
+    assert_eq!(lvl0.name, "Close");
+    assert_eq!(session.camera.current_level_idx, 0);
+    assert_eq!(session.camera_p2.current_level_idx, 0);
+
+    // 3. Discrete zoom_out / zoom_in synchronizes both cameras
+    session.zoom_out();
+    assert_eq!(session.camera.current_level_idx, 1);
+    assert_eq!(session.camera_p2.current_level_idx, 1);
+
+    session.zoom_in();
+    assert_eq!(session.camera.current_level_idx, 0);
+    assert_eq!(session.camera_p2.current_level_idx, 0);
+
+    // 4. Progressive zoom applies to both cameras simultaneously
+    let init_max_p1 = session.camera.max_zoom_scale;
+    let init_max_p2 = session.camera_p2.max_zoom_scale;
+    assert_eq!(init_max_p1, init_max_p2);
+
+    session.zoom_progressive(1.0, 1.0, 0.2);
+    assert!(session.camera.max_zoom_scale > init_max_p1);
+    assert!(session.camera_p2.max_zoom_scale > init_max_p2);
+    assert_eq!(session.camera.max_zoom_scale, session.camera_p2.max_zoom_scale);
+
+    session.zoom_progressive(-1.0, 1.0, 0.2);
+    assert!((session.camera.max_zoom_scale - init_max_p1).abs() < 0.1);
+    assert!((session.camera_p2.max_zoom_scale - init_max_p2).abs() < 0.1);
+    assert_eq!(session.camera.max_zoom_scale, session.camera_p2.max_zoom_scale);
+
+    // 5. In single-player mode, zoom adjustments only affect camera (P1)
+    session.game_mode = tdrace_app::ui::menu::GameMode::StandardRace;
+    let p2_idx_before = session.camera_p2.current_level_idx;
+    let p2_max_before = session.camera_p2.max_zoom_scale;
+
+    session.cycle_camera_zoom();
+    assert_eq!(session.camera.current_level_idx, 1);
+    assert_eq!(session.camera_p2.current_level_idx, p2_idx_before);
+
+    let p1_max_before = session.camera.max_zoom_scale;
+    session.zoom_progressive(1.0, 1.0, 0.2);
+    assert!(session.camera.max_zoom_scale > p1_max_before);
+    assert_eq!(session.camera_p2.max_zoom_scale, p2_max_before);
 }
 
 

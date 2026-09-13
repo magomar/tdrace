@@ -3,7 +3,7 @@ use macroquad::prelude::{screen_height, screen_width};
 use glam::Vec2;
 use tdrace_core::physics::car::Car;
 use tdrace_core::track::Track;
-use crate::config::{CameraConfig, ZoomLevelConfig};
+pub use crate::config::{CameraConfig, ZoomLevelConfig};
 
 pub use cabinet::fx::ScreenShake;
 
@@ -14,6 +14,54 @@ pub enum CameraMode {
     SmoothFollow,
     /// Classic GeneRally static full-track overview camera fitting the entire circuit.
     StaticOverview,
+}
+
+/// Screen layout for 2-player split screen mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+pub enum SplitLayout {
+    /// Side-by-side vertical split (Left: Player 1, Right: Player 2).
+    /// Recommended for 16:9 widescreen displays as it yields balanced ~8:9 aspect ratio viewports.
+    #[default]
+    Vertical,
+    /// Stacked horizontal split (Top: Player 1, Bottom: Player 2).
+    Horizontal,
+}
+
+impl SplitLayout {
+    /// Computes OpenGL viewport rectangles `[(vx, vy, vw, vh); 2]` for [Player 1, Player 2].
+    /// In OpenGL coordinates, (0, 0) is the bottom-left of the window.
+    pub fn viewports(&self, sw: f32, sh: f32) -> [(i32, i32, i32, i32); 2] {
+        let w = sw.max(1.0) as i32;
+        let h = sh.max(1.0) as i32;
+        match self {
+            SplitLayout::Vertical => {
+                let hw = w / 2;
+                // P1: Left pane [0 .. hw], P2: Right pane [hw .. w]
+                [(0, 0, hw, h), (hw, 0, w - hw, h)]
+            }
+            SplitLayout::Horizontal => {
+                let hh = h / 2;
+                // In OpenGL, (0, hh) is bottom of top half, (0, 0) is bottom of bottom half
+                // P1: Top pane, P2: Bottom pane
+                [(0, hh, w, h - hh), (0, 0, w, hh)]
+            }
+        }
+    }
+
+    /// Computes screen-space 2D bounding boxes `[(x, y, w, h); 2]` in standard window coords
+    /// where (0, 0) is top-left, suitable for HUD drawing with default full-screen camera.
+    pub fn screen_rects(&self, sw: f32, sh: f32) -> [(f32, f32, f32, f32); 2] {
+        match self {
+            SplitLayout::Vertical => {
+                let hw = (sw * 0.5).floor();
+                [(0.0, 0.0, hw, sh), (hw, 0.0, sw - hw, sh)]
+            }
+            SplitLayout::Horizontal => {
+                let hh = (sh * 0.5).floor();
+                [(0.0, 0.0, sw, hh), (0.0, hh, sw, sh - hh)]
+            }
+        }
+    }
 }
 
 /// Advanced 2D arcade race camera system supporting multi-level zoom perspectives.
@@ -375,6 +423,29 @@ impl RaceCamera {
         }
     }
 
+    /// Computes current camera view for an explicit viewport scissor rectangle `(vx, vy, vw, vh)`.
+    pub fn camera_2d_with_rect(&self, viewport: Option<(i32, i32, i32, i32)>) -> Camera2D {
+        let (sw, sh) = if let Some((_, _, vw, vh)) = viewport {
+            (vw as f32, vh as f32)
+        } else {
+            Self::get_screen_dimensions_safe()
+        };
+        let (shake_offset, _rot) = self.shake.sample_shake();
+
+        let view_center = self.current_pos + shake_offset;
+        let zoom_x = (2.0 * self.current_zoom) / sw;
+        let zoom_y = (-2.0 * self.current_zoom) / sh;
+
+        Camera2D {
+            target: macroquad::prelude::Vec2::new(view_center.x, view_center.y),
+            zoom: macroquad::prelude::Vec2::new(zoom_x, zoom_y),
+            offset: macroquad::prelude::Vec2::ZERO,
+            rotation: 0.0,
+            render_target: None,
+            viewport,
+        }
+    }
+
     /// Computes current camera view including screen shake offset.
     pub fn camera_2d(&self) -> Camera2D {
         let (sw, sh) = Self::get_screen_dimensions_safe();
@@ -384,6 +455,11 @@ impl RaceCamera {
     /// Activates this camera in Macroquad.
     pub fn apply(&self) {
         set_camera(&self.camera_2d());
+    }
+
+    /// Activates this camera in Macroquad with an optional scissor/viewport rect.
+    pub fn apply_with_viewport(&self, viewport: Option<(i32, i32, i32, i32)>) {
+        set_camera(&self.camera_2d_with_rect(viewport));
     }
 
     /// Resets back to screen-space default camera (for HUD/UI rendering).

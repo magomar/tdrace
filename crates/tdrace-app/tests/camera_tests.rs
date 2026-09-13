@@ -1,5 +1,5 @@
 use glam::Vec2;
-use tdrace_app::camera::{CameraMode, RaceCamera};
+use tdrace_app::camera::{CameraMode, RaceCamera, SplitLayout};
 use tdrace_core::{Car, CarConfig};
 use tdrace_core::track::presets::{classic_grand_prix, oval_speedway};
 
@@ -318,5 +318,38 @@ fn test_camera_cabinet_screen_shake_integration() {
 
     let (_offset2, angle2) = camera.shake.sample_shake();
     assert!(angle2.abs() > 0.0);
+}
+
+#[test]
+fn test_camera_split_layout_viewports_and_rects() {
+    let sw = 1280.0;
+    let sh = 720.0;
+
+    // 1. Vertical Split (Left/Right)
+    let v_vps = SplitLayout::Vertical.viewports(sw, sh);
+    assert_eq!(v_vps[0], (0, 0, 640, 720));
+    assert_eq!(v_vps[1], (640, 0, 640, 720));
+
+    let v_rects = SplitLayout::Vertical.screen_rects(sw, sh);
+    assert_eq!(v_rects[0], (0.0, 0.0, 640.0, 720.0));
+    assert_eq!(v_rects[1], (640.0, 0.0, 640.0, 720.0));
+
+    // 2. Horizontal Split (Top/Bottom)
+    let h_vps = SplitLayout::Horizontal.viewports(sw, sh);
+    assert_eq!(h_vps[0], (0, 360, 1280, 360));
+    assert_eq!(h_vps[1], (0, 0, 1280, 360));
+
+    let h_rects = SplitLayout::Horizontal.screen_rects(sw, sh);
+    assert_eq!(h_rects[0], (0.0, 0.0, 1280.0, 360.0));
+    assert_eq!(h_rects[1], (0.0, 360.0, 1280.0, 360.0));
+
+    // 3. Camera2D with explicit viewport scissor
+    let mut camera = RaceCamera::new();
+    camera.current_zoom = 20.0;
+    let p2_vp = v_vps[1];
+    let cam2d = camera.camera_2d_with_rect(Some(p2_vp));
+    assert_eq!(cam2d.viewport, Some((640, 0, 640, 720)));
+    assert!((cam2d.zoom.x - (2.0 * 20.0 / 640.0)).abs() < 1e-4);
+    assert!((cam2d.zoom.y - (-2.0 * 20.0 / 720.0)).abs() < 1e-4);
 }
 

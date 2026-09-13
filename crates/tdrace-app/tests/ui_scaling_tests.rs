@@ -123,7 +123,17 @@ fn test_game_mode_specifications_and_transitions() {
     assert!(!er.has_ghost());
     assert!(er.has_bots());
     assert!(!er.is_time_attack());
-    assert_eq!(er.next(), GameMode::TimeTrial);
+    assert_eq!(er.next(), GameMode::SplitScreen);
+
+    // 5. SplitScreen
+    let ss = GameMode::SplitScreen;
+    assert_eq!(ss.title(), "2P Split Screen");
+    assert!(ss.allows_car_change());
+    assert!(!ss.has_ghost());
+    assert!(ss.has_bots());
+    assert!(!ss.is_time_attack());
+    assert!(ss.is_split_screen());
+    assert_eq!(ss.next(), GameMode::TimeTrial);
 }
 
 #[test]

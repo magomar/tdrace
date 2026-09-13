@@ -133,6 +133,172 @@ impl InputController {
         self.process_inputs((raw_steer, raw_throttle, raw_brake, kb_handbrake), dt, current_speed_fwd)
     }
 
+    /// Polls Player 1 driving controls strictly from Keyboard keys (zero Gamepad blending).
+    pub fn poll_keyboard_controls(&mut self, dt: f32, current_speed_fwd: f32) -> CarControls {
+        let mut raw_steer = 0.0f32;
+        let mut raw_throttle = 0.0f32;
+        let mut raw_brake = 0.0f32;
+
+        if self.input_map.is_key_down(ArcadeAction::Left) {
+            raw_steer -= 1.0;
+        }
+        if self.input_map.is_key_down(ArcadeAction::Right) {
+            raw_steer += 1.0;
+        }
+        if self.input_map.is_key_down(ArcadeAction::Up) {
+            raw_throttle = 1.0;
+        }
+        if self.input_map.is_key_down(ArcadeAction::Down) {
+            raw_brake = 1.0;
+        }
+
+        let kb_handbrake = self.input_map.is_key_down(ArcadeAction::Action3)
+            || self.input_map.is_key_down(ArcadeAction::Primary);
+
+        let speed_abs = current_speed_fwd.abs();
+        let (steer, mut throttle, mut brake) =
+            self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
+        let mut reverse = false;
+
+        if current_speed_fwd <= 0.1 && brake > 0.0 && throttle == 0.0 {
+            reverse = true;
+            throttle = brake;
+            brake = 0.0;
+        }
+
+        CarControls {
+            throttle,
+            steer,
+            brake,
+            handbrake: kb_handbrake,
+            reverse,
+        }
+    }
+
+    /// Polls Player 2 driving controls strictly from Gamepad analog axes and buttons (zero Keyboard blending).
+    pub fn poll_gamepad_controls(&mut self, _dt: f32, current_speed_fwd: f32) -> CarControls {
+        let gp = &self.gamepad.snapshot;
+
+        let gp_digital_steer: f32 = if self.input_map.is_gamepad_btn_down(ArcadeAction::Left, gp) {
+            -1.0
+        } else if self.input_map.is_gamepad_btn_down(ArcadeAction::Right, gp) {
+            1.0
+        } else {
+            0.0
+        };
+
+        let steer = if gp.steer.abs() > 0.001 {
+            gp.steer.clamp(-1.0, 1.0)
+        } else {
+            gp_digital_steer.clamp(-1.0, 1.0)
+        };
+
+        let gp_btn_throttle: f32 = if self.input_map.is_gamepad_btn_down(ArcadeAction::Up, gp) {
+            1.0
+        } else {
+            0.0
+        };
+
+        let gp_btn_brake: f32 = if self.input_map.is_gamepad_btn_down(ArcadeAction::Down, gp) {
+            1.0
+        } else {
+            0.0
+        };
+
+        let mut throttle = gp.throttle.max(gp_btn_throttle).clamp(0.0, 1.0);
+        let mut brake = gp.brake.max(gp_btn_brake).clamp(0.0, 1.0);
+        let handbrake = gp.handbrake
+            || self.input_map.is_gamepad_btn_down(ArcadeAction::Action3, gp)
+            || self.input_map.is_gamepad_btn_down(ArcadeAction::Primary, gp);
+        let mut reverse = gp.reverse;
+
+        if current_speed_fwd <= 0.1 && brake > 0.0 && throttle == 0.0 {
+            reverse = true;
+            throttle = brake;
+            brake = 0.0;
+        }
+
+        CarControls {
+            throttle,
+            steer,
+            brake,
+            handbrake,
+            reverse,
+        }
+    }
+
+    /// Fallback secondary keyboard controls for Player 2 when no physical gamepad is connected.
+    /// Uses Arrow keys (`Up/Down/Left/Right`) and `RightControl`/`RightShift` for handbrake.
+    pub fn poll_keyboard_p2_fallback(
+        &mut self,
+        filter_p2: &mut DigitalInputFilter,
+        dt: f32,
+        current_speed_fwd: f32,
+    ) -> CarControls {
+        let mut raw_steer = 0.0f32;
+        let mut raw_throttle = 0.0f32;
+        let mut raw_brake = 0.0f32;
+
+        let left_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Left)).unwrap_or(false);
+        let right_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Right)).unwrap_or(false);
+        let up_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Up)).unwrap_or(false);
+        let down_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Down)).unwrap_or(false);
+        let rctrl_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::RightControl)).unwrap_or(false)
+            || std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::RightShift)).unwrap_or(false)
+            || std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Slash)).unwrap_or(false);
+
+        if left_down {
+            raw_steer -= 1.0;
+        }
+        if right_down {
+            raw_steer += 1.0;
+        }
+        if up_down {
+            raw_throttle = 1.0;
+        }
+        if down_down {
+            raw_brake = 1.0;
+        }
+
+        let speed_abs = current_speed_fwd.abs();
+        let (steer, mut throttle, mut brake) =
+            filter_p2.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
+        let mut reverse = false;
+
+        if current_speed_fwd <= 0.1 && brake > 0.0 && throttle == 0.0 {
+            reverse = true;
+            throttle = brake;
+            brake = 0.0;
+        }
+
+        CarControls {
+            throttle,
+            steer,
+            brake,
+            handbrake: rctrl_down,
+            reverse,
+        }
+    }
+
+    /// Polls isolated controls for both players in Split Mode.
+    /// Player 1 receives strictly keyboard input.
+    /// Player 2 receives Gamepad if connected, or secondary keyboard fallback.
+    pub fn poll_split_player_controls(
+        &mut self,
+        filter_p2: &mut DigitalInputFilter,
+        dt: f32,
+        p1_speed: f32,
+        p2_speed: f32,
+    ) -> (CarControls, CarControls) {
+        let p1 = self.poll_keyboard_controls(dt, p1_speed);
+        let p2 = if self.gamepad.snapshot.is_connected {
+            self.poll_gamepad_controls(dt, p2_speed)
+        } else {
+            self.poll_keyboard_p2_fallback(filter_p2, dt, p2_speed)
+        };
+        (p1, p2)
+    }
+
     /// Pure input processing & blending pipeline between keyboard digital ramps and gamepad analog axes.
     pub fn process_inputs(
         &mut self,
@@ -511,5 +677,39 @@ mod tests {
         let blended = controller.process_inputs((0.0, 0.0, 0.0, false), 0.016, 10.0);
         assert!((blended.steer - (-0.65)).abs() < 1e-3);
         assert_eq!(blended.throttle, 1.0);
+    }
+
+    #[test]
+    fn test_split_input_isolation_keyboard_and_gamepad() {
+        let mut controller = InputController::new();
+
+        // Configure gamepad snapshot with distinct active values
+        controller.gamepad.snapshot.is_connected = true;
+        controller.gamepad.snapshot.steer = 0.75;
+        controller.gamepad.snapshot.throttle = 0.90;
+        controller.gamepad.snapshot.brake = 0.10;
+        controller.gamepad.snapshot.handbrake = true;
+
+        // 1. Keyboard poll should NOT be affected by gamepad snapshot
+        let kb = controller.poll_keyboard_controls(0.016, 15.0);
+        assert_eq!(kb.steer, 0.0);
+        assert_eq!(kb.throttle, 0.0);
+        assert_eq!(kb.brake, 0.0);
+        assert!(!kb.handbrake);
+
+        // 2. Gamepad poll should accurately reflect gamepad inputs
+        let gp = controller.poll_gamepad_controls(0.016, 15.0);
+        assert!((gp.steer - 0.75).abs() < 1e-3);
+        assert!((gp.throttle - 0.90).abs() < 1e-3);
+        assert!((gp.brake - 0.10).abs() < 1e-3);
+        assert!(gp.handbrake);
+
+        // 3. Combined split polling gives isolated pairs
+        let mut filter_p2 = DigitalInputFilter::default();
+        let (p1, p2) = controller.poll_split_player_controls(&mut filter_p2, 0.016, 10.0, 10.0);
+        assert_eq!(p1.steer, 0.0);
+        assert_eq!(p1.throttle, 0.0);
+        assert!((p2.steer - 0.75).abs() < 1e-3);
+        assert!((p2.throttle - 0.90).abs() < 1e-3);
     }
 }

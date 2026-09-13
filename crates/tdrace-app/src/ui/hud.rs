@@ -770,3 +770,216 @@ fn render_visibility_toast(
     );
 }
 
+/// Renders the complete split-screen HUD tailored for 2 simultaneous players.
+#[allow(clippy::too_many_arguments)]
+pub fn render_split_hud(
+    fonts: &Fonts,
+    track: &Track,
+    all_cars: &[Car],
+    color_schemes: &[CarColorScheme],
+    p1_car: &Car,
+    p1_progress: &TrackProgressTracker,
+    p1_position: usize,
+    p2_car: &Car,
+    p2_progress: &TrackProgressTracker,
+    p2_position: usize,
+    total_racers: usize,
+    total_laps: u32,
+    countdown_timer: Option<f32>,
+    gamepad_connected: bool,
+    layout: crate::camera::SplitLayout,
+) {
+    let sw = screen_width();
+    let sh = screen_height();
+    let [r1, r2] = layout.screen_rects(sw, sh);
+
+    // 1. Draw sleek divider bar between viewports
+    match layout {
+        crate::camera::SplitLayout::Vertical => {
+            let div_x = r1.2;
+            draw_rectangle(div_x - 3.0, 0.0, 6.0, sh, Color::new(0.04, 0.06, 0.10, 0.98));
+            draw_line(div_x - 2.0, 0.0, div_x - 2.0, sh, 1.5, Palette::NEON_CYAN);
+            draw_line(div_x + 2.0, 0.0, div_x + 2.0, sh, 1.5, Palette::NEON_GOLD);
+        }
+        crate::camera::SplitLayout::Horizontal => {
+            let div_y = r1.3;
+            draw_rectangle(0.0, div_y - 3.0, sw, 6.0, Color::new(0.04, 0.06, 0.10, 0.98));
+            draw_line(0.0, div_y - 2.0, sw, div_y - 2.0, 1.5, Palette::NEON_CYAN);
+            draw_line(0.0, div_y + 2.0, sw, div_y + 2.0, 1.5, Palette::NEON_GOLD);
+        }
+    }
+
+    // 2. Player 1 Pane HUD
+    let scaler1 = UiScaler::new(r1.2, r1.3);
+    render_split_player_panel(
+        fonts,
+        &scaler1,
+        track,
+        all_cars,
+        color_schemes,
+        r1.0,
+        r1.1,
+        r1.2,
+        r1.3,
+        "P1 • KEYS",
+        Palette::NEON_CYAN,
+        p1_car,
+        p1_progress,
+        p1_position,
+        total_racers,
+        total_laps,
+        false,
+    );
+
+    // 3. Player 2 Pane HUD
+    let scaler2 = UiScaler::new(r2.2, r2.3);
+    let p2_tag = if gamepad_connected {
+        "P2 • GAMEPAD"
+    } else {
+        "P2 • GAMEPAD (FALLBACK KEYS)"
+    };
+    render_split_player_panel(
+        fonts,
+        &scaler2,
+        track,
+        all_cars,
+        color_schemes,
+        r2.0,
+        r2.1,
+        r2.2,
+        r2.3,
+        p2_tag,
+        Palette::NEON_GOLD,
+        p2_car,
+        p2_progress,
+        p2_position,
+        total_racers,
+        total_laps,
+        gamepad_connected,
+    );
+
+    // 4. Shared Center Countdown
+    if let Some(cd) = countdown_timer {
+        let global_scaler = UiScaler::new(sw, sh);
+        render_countdown(fonts, &global_scaler, sw, sh, cd);
+    }
+}
+
+/// Draws an individual player cockpit HUD inside their allocated split-screen rectangle.
+#[allow(clippy::too_many_arguments)]
+fn render_split_player_panel(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    track: &Track,
+    all_cars: &[Car],
+    color_schemes: &[CarColorScheme],
+    px: f32,
+    py: f32,
+    pw: f32,
+    ph: f32,
+    tag: &str,
+    accent: Color,
+    car: &Car,
+    progress: &TrackProgressTracker,
+    pos: usize,
+    total_racers: usize,
+    total_laps: u32,
+    is_gamepad: bool,
+) {
+    let pad_x = scaler.safe_pad_x.clamp(8.0, 24.0);
+    let pad_y = scaler.safe_pad_y.clamp(8.0, 24.0);
+
+    // Top-Left: Player Badge, Position, Lap
+    let card_w = scaler.s(165.0).min(pw * 0.40);
+    let card_h = scaler.s(74.0);
+    let card_x = px + pad_x;
+    let card_y = py + pad_y;
+
+    scaler.draw_glass_card(card_x, card_y, card_w, card_h, Palette::UI_CARD_BG, accent, 1.8);
+    fonts.draw_ui_bold(
+        tag,
+        card_x + scaler.s(10.0),
+        card_y + scaler.s(18.0),
+        scaler.font_s(11.5),
+        accent,
+    );
+
+    let pos_str = format!("P{}", pos);
+    let pos_color = match pos {
+        1 => Palette::NEON_GOLD,
+        2 => Color::new(0.88, 0.92, 0.98, 1.0),
+        _ => Palette::WHITE,
+    };
+    fonts.draw_display(
+        &pos_str,
+        card_x + scaler.s(10.0),
+        card_y + scaler.s(48.0),
+        scaler.font_s(28.0),
+        pos_color,
+    );
+
+    let total_str = format!("/ {}", total_racers);
+    fonts.draw_ui_bold(
+        &total_str,
+        card_x + scaler.s(52.0),
+        card_y + scaler.s(44.0),
+        scaler.font_s(15.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    let lap_str = format!("LAP {} / {}", progress.current_lap.min(total_laps), total_laps);
+    fonts.draw_ui_bold(
+        &lap_str,
+        card_x + scaler.s(10.0),
+        card_y + scaler.s(67.0),
+        scaler.font_s(12.5),
+        Palette::WHITE,
+    );
+
+    // Top-Right: Lap Timing
+    let timer_w = scaler.s(170.0).min(pw * 0.40);
+    let timer_h = scaler.s(60.0);
+    let timer_x = px + pw - timer_w - pad_x;
+    let timer_y = py + pad_y;
+
+    scaler.draw_glass_card(timer_x, timer_y, timer_w, timer_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
+    fonts.draw_ui_regular(
+        "CURRENT LAP",
+        timer_x + scaler.s(10.0),
+        timer_y + scaler.s(16.0),
+        scaler.font_s(10.5),
+        Palette::UI_TEXT_MUTED,
+    );
+    let lap_time_str = format_lap_time(progress.lap_time);
+    fonts.draw_display(
+        &lap_time_str,
+        timer_x + scaler.s(10.0),
+        timer_y + scaler.s(42.0),
+        scaler.font_s(22.0),
+        Palette::WHITE,
+    );
+    let best_str = progress.best_lap_time.map(|b| format!("BEST {}", format_lap_time(b))).unwrap_or_else(|| "BEST --:--.--".to_string());
+    fonts.draw_ui_bold(
+        &best_str,
+        timer_x + scaler.s(10.0),
+        timer_y + scaler.s(54.0),
+        scaler.font_s(10.5),
+        Palette::NEON_CYAN,
+    );
+
+    // Bottom-Left: Mini-Map Radar
+    let map_w = scaler.s(130.0).min(pw * 0.32);
+    let map_h = scaler.s(105.0).min(ph * 0.28);
+    let map_x = px + pad_x;
+    let map_y = py + ph - map_h - pad_y;
+    render_minimap(fonts, scaler, map_x, map_y, map_w, map_h, track, all_cars, color_schemes);
+
+    // Bottom-Right: Speedometer Cluster
+    let speedo_cx = px + pw - scaler.s(75.0) - pad_x;
+    let speedo_cy = py + ph - scaler.s(75.0) - pad_y;
+    render_speedometer(fonts, scaler, speedo_cx, speedo_cy, car, is_gamepad);
+
+    // Warnings (Wrong Way, Off Track)
+    render_warning_alerts(fonts, scaler, pw, ph, progress);
+}
+
