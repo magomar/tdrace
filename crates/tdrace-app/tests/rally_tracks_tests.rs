@@ -8,6 +8,7 @@ use tdrace_core::track::presets::{
     catalunya_rx, dirt_figure_eight, estering_rx, hell_rx, holjes_rx, kouvola_rx, loheac_rx,
     lydden_hill, montalegre_rx, nyirad_rx,
 };
+use tdrace_core::track::geometry::JumpRampCarExt;
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
 #[test]

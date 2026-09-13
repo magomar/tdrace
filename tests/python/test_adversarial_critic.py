@@ -255,7 +255,7 @@ def test_anti_exploit_wall_grinding_penalty():
     # Ram into outer barrier / wall
     wall_reward = 0.0
     wall_hits = 0
-    for _ in range(120):
+    for _ in range(150):
         obs, rew, term, trunc, info = env.step(np.array([-0.9, 1.0, 0.0], dtype=np.float32))
         wall_reward += rew
         if info["wall_hit"]:

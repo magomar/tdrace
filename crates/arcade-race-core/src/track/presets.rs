@@ -8,7 +8,7 @@ use super::geometry::{
 };
 use super::spline::{TrackSpline, TrackWaypoint};
 use super::{Track, TrackCategory};
-use crate::physics::surface::SurfaceType;
+use wheelbase::SurfaceType;
 
 /// Trims local self-intersecting loops (swallowtail singularities) from an offset boundary polyline.
 pub fn untangle_polyline(pts: &mut Vec<Vec2>, closed: bool) {

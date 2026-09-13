@@ -1,7 +1,7 @@
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use crate::physics::surface::SurfaceType;
+use wheelbase::SurfaceType;
 
 /// 2D Line Segment defined by two endpoints.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -805,6 +805,24 @@ impl JumpRamp {
             (current_len * factor).clamp(2.0, 100.0),
             (current_wid * factor).clamp(1.0, 100.0),
         );
+    }
+}
+
+/// Extension trait allowing Car to trigger jump ramps directly.
+pub trait JumpRampCarExt {
+    /// Attempts to launch the vehicle off the specified jump ramp.
+    fn try_trigger_jump_ramp(&mut self, ramp: &JumpRamp) -> bool;
+}
+
+impl JumpRampCarExt for wheelbase::Car {
+    fn try_trigger_jump_ramp(&mut self, ramp: &JumpRamp) -> bool {
+        let is_on_ramp = ramp.contains(self.state.position);
+        let props = wheelbase::JumpRampProperties {
+            direction: ramp.direction,
+            launch_speed: ramp.launch_speed,
+            ramp_angle_deg: ramp.ramp_angle_deg,
+        };
+        self.try_trigger_jump(is_on_ramp, &props)
     }
 }
 

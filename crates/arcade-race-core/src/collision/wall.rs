@@ -2,7 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use super::sat::OrientedBox;
-use crate::physics::car::Car;
+use wheelbase::Car;
 use crate::track::geometry::{Obstacle, ObstacleShape, WallBarrier};
 
 /// Detailed telemetry and physics result of a vehicle-wall collision impact.
@@ -371,7 +371,7 @@ pub fn resolve_all_wall_collisions(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::physics::config::CarConfig;
+    use wheelbase::CarConfig;
     use crate::track::geometry::BarrierType;
 
     #[test]

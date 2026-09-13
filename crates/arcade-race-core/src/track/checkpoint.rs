@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::geometry::LineSegment;
 use super::spline::TrackSpline;
-use crate::physics::car::Car;
+use wheelbase::Car;
 
 /// Directional crossing result when testing car trajectory across a checkpoint gate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -358,7 +358,7 @@ impl TrackProgressTracker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::physics::config::CarConfig;
+    use wheelbase::CarConfig;
 
     #[test]
     fn test_checkpoint_crossing() {

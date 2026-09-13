@@ -3,7 +3,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use super::config::CarConfig;
-use super::surface::SurfaceType;
+use super::surface::{SurfaceSampler, SurfaceType};
 use super::tire::{
     compute_skid_telemetry, pacejka_lateral_force, solve_combined_slip_forces, WheelId,
     WheelTelemetry,
@@ -400,6 +400,30 @@ impl Car {
         self.step_per_wheel(controls, [surface; 4], dt);
     }
 
+    /// Steps the physics simulation forward using an arbitrary terrain `SurfaceSampler`.
+    ///
+    /// Evaluates contact patches for all 4 wheels in world coordinates and queries the sampler.
+    pub fn step_with_sampler<S: SurfaceSampler>(
+        &mut self,
+        controls: &CarControls,
+        sampler: &S,
+        dt: f32,
+    ) {
+        let wheel_positions = self.wheel_positions_world();
+        let surfaces = [
+            sampler.sample_surface(wheel_positions[0]).surface_type,
+            sampler.sample_surface(wheel_positions[1]).surface_type,
+            sampler.sample_surface(wheel_positions[2]).surface_type,
+            sampler.sample_surface(wheel_positions[3]).surface_type,
+        ];
+        let center_props = sampler.sample_surface(self.state.position);
+        self.state.road_elevation = center_props.elevation;
+        self.state.road_bank_angle = center_props.bank_angle;
+        self.state.track_right = center_props.track_right;
+
+        self.step_per_wheel(controls, surfaces, dt);
+    }
+
     /// Steps the physics simulation forward with independent surface types per wheel.
     pub fn step_per_wheel(
         &mut self,
@@ -677,7 +701,7 @@ impl Car {
                     let max_fx_abs = max_friction * (1.0f32 - target_lat_reserve * target_lat_reserve).sqrt();
                     if wheel_brake_force > max_fx_abs {
                         let excess = wheel_brake_force - max_fx_abs;
-                        wheel_brake_force = wheel_brake_force - excess * self.config.assists.abs_strength;
+                        wheel_brake_force -= excess * self.config.assists.abs_strength;
                         abs_active = true;
                     }
                 }
@@ -887,8 +911,12 @@ impl Car {
     }
 
     /// Checks if car can launch off the given jump ramp.
-    pub fn try_trigger_jump_ramp(&mut self, ramp: &crate::track::geometry::JumpRamp) -> bool {
-        if self.state.elevation <= 0.1 && ramp.contains(self.state.position) {
+    pub fn try_trigger_jump(
+        &mut self,
+        is_on_ramp: bool,
+        ramp: &JumpRampProperties,
+    ) -> bool {
+        if self.state.elevation <= 0.1 && is_on_ramp {
             let speed_along_dir = self.state.velocity.dot(ramp.direction);
             if speed_along_dir > 3.5 {
                 self.launch_jump(ramp.direction, ramp.launch_speed, ramp.ramp_angle_deg);
@@ -898,6 +926,15 @@ impl Car {
         false
     }
 }
+
+/// Minimal kinematic properties required to trigger a jump ramp launch.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct JumpRampProperties {
+    pub direction: Vec2,
+    pub launch_speed: f32,
+    pub ramp_angle_deg: f32,
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -964,4 +1001,21 @@ mod tests {
         car.set_state(saved.clone());
         assert_eq!(car.state(), &saved);
     }
+
+    #[test]
+    fn test_step_with_sampler() {
+        let mut car_uniform = Car::new(CarConfig::sports_car());
+        let mut car_sampler = Car::new(CarConfig::sports_car());
+        let sampler = crate::surface::UniformSurface(SurfaceType::Asphalt);
+        let ctrl = CarControls::new(1.0, 0.1, 0.0, false);
+
+        for _ in 0..60 {
+            car_uniform.step(&ctrl, SurfaceType::Asphalt, 1.0 / 60.0);
+            car_sampler.step_with_sampler(&ctrl, &sampler, 1.0 / 60.0);
+        }
+
+        assert!((car_uniform.state.position - car_sampler.state.position).length() < 1e-4);
+        assert!((car_uniform.state.speed - car_sampler.state.speed).abs() < 1e-4);
+    }
 }
+

@@ -3,7 +3,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use crate::collision::sat::OrientedBox;
-use crate::physics::car::Car;
+use wheelbase::Car;
 use crate::track::Track;
 
 /// Target classification for LIDAR beam impacts.
@@ -393,7 +393,7 @@ fn intersect_ray_obb(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::physics::config::CarConfig;
+    use wheelbase::CarConfig;
     use crate::track::presets::classic_grand_prix;
 
     #[test]

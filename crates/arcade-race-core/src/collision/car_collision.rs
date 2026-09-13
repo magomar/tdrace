@@ -2,7 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use super::sat::{collide_obb_obb, OrientedBox};
-use crate::physics::car::Car;
+use wheelbase::Car;
 
 /// Telemetry record of an elastic/inelastic collision between two racing vehicles.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -177,7 +177,7 @@ pub fn resolve_multi_car_collisions(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::physics::config::CarConfig;
+    use wheelbase::CarConfig;
 
     #[test]
     fn test_head_on_car_car_elastic_collision() {

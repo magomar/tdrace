@@ -1,7 +1,7 @@
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use crate::physics::surface::SurfaceType;
+use wheelbase::SurfaceType;
 use crate::track::curve::{
     evaluate_curve_approach, extract_curves_from_samples, CurveApproachStatus, TrackCurve,
 };

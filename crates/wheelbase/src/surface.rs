@@ -1,9 +1,11 @@
+use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 /// Surface types representing different racing track terrain and hazards.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub enum SurfaceType {
     /// Standard dry asphalt track: optimal grip and tire smoke on slip.
+    #[default]
     Asphalt,
     /// Playable compacted dirt / gravel rally track: good controllable slide grip.
     Dirt,
@@ -21,11 +23,6 @@ pub enum SurfaceType {
     Ice,
 }
 
-impl Default for SurfaceType {
-    fn default() -> Self {
-        Self::Asphalt
-    }
-}
 
 impl SurfaceType {
     /// Friction coefficient (mu) scaling available tire traction.
@@ -127,6 +124,70 @@ impl SurfaceType {
     }
 }
 
+/// Comprehensive physical properties of a ground contact patch.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct SurfaceProperties {
+    /// Categorical classification for particle and audio FX.
+    pub surface_type: SurfaceType,
+    /// Friction coefficient multiplier (1.0 = baseline dry asphalt).
+    pub friction: f32,
+    /// Rolling resistance / drag multiplier.
+    pub rolling_resistance: f32,
+    /// Additional viscous/aerodynamic surface deceleration drag.
+    pub drag_multiplier: f32,
+    /// Ground elevation in meters (z >= 0.0) beneath the contact patch.
+    pub elevation: f32,
+    /// Cross-slope road banking angle in degrees (+ = right side elevated).
+    pub bank_angle: f32,
+    /// Track transverse right vector in world space for resolving banking incline gravity.
+    pub track_right: Vec2,
+}
+
+impl Default for SurfaceProperties {
+    fn default() -> Self {
+        Self::from_type(SurfaceType::Asphalt)
+    }
+}
+
+impl SurfaceProperties {
+    /// Creates default flat surface properties for a given categorical surface type.
+    pub const fn from_type(surface_type: SurfaceType) -> Self {
+        Self {
+            surface_type,
+            friction: surface_type.friction_coefficient(),
+            rolling_resistance: surface_type.rolling_resistance_multiplier(),
+            drag_multiplier: surface_type.surface_drag_multiplier(),
+            elevation: 0.0,
+            bank_angle: 0.0,
+            track_right: Vec2::ZERO,
+        }
+    }
+}
+
+impl From<SurfaceType> for SurfaceProperties {
+    #[inline]
+    fn from(surface_type: SurfaceType) -> Self {
+        Self::from_type(surface_type)
+    }
+}
+
+/// Abstract interface for sampling terrain properties beneath vehicle contact patches.
+pub trait SurfaceSampler {
+    /// Queries the surface properties at a specific 2D world coordinate.
+    fn sample_surface(&self, world_pos: Vec2) -> SurfaceProperties;
+}
+
+/// A uniform surface sampler that returns identical properties everywhere.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct UniformSurface(pub SurfaceType);
+
+impl SurfaceSampler for UniformSurface {
+    #[inline]
+    fn sample_surface(&self, _world_pos: Vec2) -> SurfaceProperties {
+        SurfaceProperties::from_type(self.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -144,5 +205,13 @@ mod tests {
         assert!(SurfaceType::Dirt.produces_debris_particles());
         assert!(SurfaceType::Water.produces_water_splash());
         assert!(!SurfaceType::Asphalt.produces_water_splash());
+    }
+
+    #[test]
+    fn test_uniform_surface_sampler() {
+        let sampler = UniformSurface(SurfaceType::Dirt);
+        let props = sampler.sample_surface(Vec2::new(100.0, -50.0));
+        assert_eq!(props.surface_type, SurfaceType::Dirt);
+        assert_eq!(props.friction, SurfaceType::Dirt.friction_coefficient());
     }
 }

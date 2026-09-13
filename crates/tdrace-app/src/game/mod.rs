@@ -63,7 +63,7 @@ use tdrace_core::physics::car::Car;
 use tdrace_core::physics::config::AssistProfile;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::geometry::SpawnPose;
+use tdrace_core::track::geometry::{JumpRampCarExt, SpawnPose};
 use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::{Track, TrackCategory};
 

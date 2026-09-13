@@ -1,7 +1,7 @@
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use crate::physics::car::Car;
+use wheelbase::Car;
 use crate::track::geometry::LineSegment;
 
 /// 2D Oriented Bounding Box (OBB) representing a car chassis or rectangular obstacle.

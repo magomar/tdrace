@@ -4,7 +4,7 @@ use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceShape, WallBarrier};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, JumpRampCarExt, SurfaceShape, WallBarrier};
 use tdrace_core::track::presets::{dune_raid, oasis_rally, outlaw_pass, ramp_raceway, sahara_dunes};
 
 #[test]

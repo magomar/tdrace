@@ -1,0 +1,13 @@
+[package]
+name = "arcade-race-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Course geometry, continuous SAT collision solver, sector gates, and racing LIDAR"
+
+[dependencies]
+wheelbase = { path = "../wheelbase" }
+glam = { version = "0.29", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

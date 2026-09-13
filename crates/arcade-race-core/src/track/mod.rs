@@ -11,8 +11,8 @@ pub use curve::{
     CurveApproachStatus, CurveDirection, TrackCurve,
 };
 pub use geometry::{
-    BarrierType, JumpRamp, LineSegment, Obstacle, ObstacleShape, SpawnPose, SurfaceLayer,
-    SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
+    BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, SpawnPose,
+    SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
 pub use presets::{
     bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, classic_grand_prix,
@@ -34,8 +34,8 @@ use std::path::Path;
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use crate::physics::car::Car;
-use crate::physics::surface::SurfaceType;
+use wheelbase::Car;
+use wheelbase::SurfaceType;
 
 /// Error type for track parsing, serialization, and file I/O operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -218,7 +218,17 @@ impl Track {
         // 5. Default terrain
         self.default_surface
     }
+}
 
+impl wheelbase::SurfaceSampler for Track {
+    #[inline]
+    fn sample_surface(&self, world_pos: Vec2) -> wheelbase::SurfaceProperties {
+        let surface_type = self.sample_surface(world_pos);
+        wheelbase::SurfaceProperties::from_type(surface_type)
+    }
+}
+
+impl Track {
     /// Tests if a car's center is currently inside the pit box servicing zone.
     pub fn is_in_pit_box(&self, car: &Car) -> bool {
         if let Some(pit_shape) = &self.pit_box_area {
@@ -382,7 +392,7 @@ impl Track {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::physics::config::CarConfig;
+    use wheelbase::CarConfig;
 
     #[test]
     fn test_track_presets_creation() {

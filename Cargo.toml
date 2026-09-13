@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/wheelbase",
+    "crates/arcade-race-core",
     "crates/tdrace-core",
     "crates/tdrace-app",
     "crates/tdrace-py",
