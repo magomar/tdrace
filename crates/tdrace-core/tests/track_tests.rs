@@ -917,8 +917,8 @@ fn test_prototypical_track_templates_all_combinations() {
 fn test_nascar_track_presets_and_validation() {
     use tdrace_core::track::presets::{
         bristol_motor_speedway, charlotte_motor_speedway, darlington_raceway,
-        daytona_superspeedway, martinsville_speedway, talladega_superspeedway,
-        watkins_glen_nascar,
+        daytona_superspeedway, indianapolis_motor_speedway, martinsville_speedway,
+        talladega_superspeedway, watkins_glen_nascar,
     };
     use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
@@ -930,6 +930,7 @@ fn test_nascar_track_presets_and_validation() {
         ("martinsville.json", martinsville_speedway()),
         ("darlington.json", darlington_raceway()),
         ("charlotte.json", charlotte_motor_speedway()),
+        ("indianapolis.json", indianapolis_motor_speedway()),
     ];
 
     let nascar_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks/nascar");

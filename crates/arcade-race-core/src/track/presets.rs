@@ -2767,5 +2767,79 @@ pub fn charlotte_motor_speedway() -> Track {
     }
 }
 
+/// Preset: Indianapolis Motor Speedway (The Brickyard)
+/// Legendary 2.5-mile rectangular speedway surveyed from OpenStreetMap (OSM):
+/// four distinct 90-degree banked corners at 9.2° banking, long 5/8-mile straights,
+/// 1/8-mile short chutes, and the iconic Yard of Bricks start/finish line.
+pub fn indianapolis_motor_speedway() -> Track {
+    let waypoints = vec![
+        // Frontstretch & Yard of Bricks (Start/Finish line at WP 0)
+        TrackWaypoint::new(Vec2::new(0.0, -180.0), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(83.8, -180.0), 20.0).with_bank_angle(0.0),
+        // Turn 1 (Southeast 90° curve, 9.2° banking)
+        TrackWaypoint::new(Vec2::new(167.6, -178.4), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(241.1, -141.7), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(277.6, -68.2), 20.0).with_bank_angle(9.2),
+        // South Short Chute
+        TrackWaypoint::new(Vec2::new(278.5, 15.6), 20.0).with_bank_angle(0.0),
+        // Turn 2 (Northeast 90° curve, 9.2° banking)
+        TrackWaypoint::new(Vec2::new(269.4, 98.2), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(215.6, 160.7), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(135.0, 178.4), 20.0).with_bank_angle(9.2),
+        // Backstretch
+        TrackWaypoint::new(Vec2::new(51.2, 178.6), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-32.6, 178.4), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-116.4, 178.1), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-200.2, 177.9), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-284.0, 177.7), 20.0).with_bank_angle(0.0),
+        // Turn 3 (Northwest 90° curve, 9.2° banking)
+        TrackWaypoint::new(Vec2::new(-367.8, 176.5), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-441.4, 139.8), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-477.9, 66.3), 20.0).with_bank_angle(9.2),
+        // North Short Chute
+        TrackWaypoint::new(Vec2::new(-478.8, -17.5), 20.0).with_bank_angle(0.0),
+        // Turn 4 (Southwest 90° curve, 9.2° banking)
+        TrackWaypoint::new(Vec2::new(-469.7, -100.1), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-415.9, -162.3), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-335.3, -180.4), 20.0).with_bank_angle(9.2),
+        // Approach to Start/Finish line
+        TrackWaypoint::new(Vec2::new(-251.5, -180.0), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-167.6, -180.0), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-83.8, -180.0), 20.0).with_bank_angle(0.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 1.5, BarrierType::Concrete);
+
+    let checkpoints = generate_checkpoints(&spline, 12, 3);
+    let grid_positions = generate_grid_positions(&spline, 16, 9.0, 3.5);
+
+    Track {
+        name: "Indianapolis Motor Speedway".to_string(),
+        description: "The Brickyard: 2.5-mile historic rectangular speedway with 9.2° banked turns, long drafting straights, and the famous Yard of Bricks start/finish line.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("stock_car".to_string()),
+        module_id: Some("nascar".to_string()),
+        modules: vec!["nascar".to_string()],
+    }
+}
+
+
 
 

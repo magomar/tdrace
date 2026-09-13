@@ -1158,6 +1158,7 @@ impl RaceSession {
             vec![
                 "daytona_superspeedway".to_string(),
                 "talladega_superspeedway".to_string(),
+                "indianapolis_motor_speedway".to_string(),
                 "charlotte_motor_speedway".to_string(),
                 "darlington_raceway".to_string(),
                 "bristol_motor_speedway".to_string(),

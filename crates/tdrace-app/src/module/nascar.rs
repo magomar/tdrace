@@ -3,7 +3,8 @@ use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
     bristol_motor_speedway, charlotte_motor_speedway, darlington_raceway, daytona_superspeedway,
-    martinsville_speedway, talladega_superspeedway, watkins_glen_nascar,
+    indianapolis_motor_speedway, martinsville_speedway, talladega_superspeedway,
+    watkins_glen_nascar,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -174,6 +175,15 @@ impl GameModule for NascarGameModule {
                 category: "Intermediate Oval",
                 default_laps: 4,
                 generator: charlotte_motor_speedway,
+            },
+            TrackDefinition {
+                id: "indianapolis_motor_speedway",
+                title: "Indianapolis Motor Speedway",
+                tag: "THE BRICKYARD 9° BANK",
+                description: "The Brickyard: 2.5-mile historic rectangular speedway with 9.2° banked turns, long drafting straights, and the famous Yard of Bricks start/finish line.",
+                category: "Superspeedway",
+                default_laps: 4,
+                generator: indianapolis_motor_speedway,
             },
         ]
     }
@@ -483,6 +493,7 @@ impl GameModule for NascarGameModule {
                 track_ids: vec![
                     "daytona_superspeedway".to_string(),
                     "talladega_superspeedway".to_string(),
+                    "indianapolis_motor_speedway".to_string(),
                     "charlotte_motor_speedway".to_string(),
                     "darlington_raceway".to_string(),
                     "bristol_motor_speedway".to_string(),
@@ -499,6 +510,7 @@ impl GameModule for NascarGameModule {
                 point_system: PointSystem::NascarCup { stage_win_bonus: false },
                 track_ids: vec![
                     "watkins_glen_nascar".to_string(),
+                    "indianapolis_motor_speedway".to_string(),
                     "charlotte_motor_speedway".to_string(),
                     "darlington_raceway".to_string(),
                     "daytona_superspeedway".to_string(),
