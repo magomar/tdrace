@@ -1043,10 +1043,54 @@ mod tests {
         for _ in 0..120 {
             car.step(&ctrl, SurfaceType::Asphalt, dt);
         }
-
         assert!(car.state.local_velocity.x < -3.0, "Car should accelerate backward, was {}", car.state.local_velocity.x);
         assert!(car.state.steer_angle.abs() < 1e-3, "Steer angle should remain zero without input");
-        assert!(car.state.angle.abs() < 0.02, "Car should not deviate or force turning, angle was {}", car.state.angle);
+        assert!(car.state.angle.abs() < 1e-3, "Car should not deviate or force turning, angle was {}", car.state.angle);
+
+        // Active steering in reverse turns the car
+        let mut car_steer = Car::new(CarConfig::sports_car());
+        let mut ctrl_steer = CarControls::new(1.0, 0.3, 0.0, false);
+        ctrl_steer.reverse = true;
+        for _ in 0..120 {
+            car_steer.step(&ctrl_steer, SurfaceType::Asphalt, dt);
+        }
+        assert!(car_steer.state.angular_velocity.abs() > 0.1, "Steering in reverse should turn the car");
+
+        // Transition from forward turning to stopping to reverse without steering
+        let mut car_turn = Car::new(CarConfig::sports_car());
+        let ctrl_fwd_turn = CarControls::new(0.8, 0.5, 0.0, false);
+        for _ in 0..40 {
+            car_turn.step(&ctrl_fwd_turn, SurfaceType::Asphalt, dt);
+        }
+        
+        let ctrl_brake = CarControls::new(0.0, 0.0, 1.0, false);
+        while car_turn.state.local_velocity.x > 0.25 {
+            car_turn.step(&ctrl_brake, SurfaceType::Asphalt, dt);
+        }
+        let angle_at_stop = car_turn.state.angle;
+
+        // Reversing with neutral steer maintains heading angle without drifting
+        let mut ctrl_rev = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl_rev.reverse = true;
+        for _ in 0..60 {
+            car_turn.step(&ctrl_rev, SurfaceType::Asphalt, dt);
+        }
+        assert!((car_turn.state.angle - angle_at_stop).abs() < 0.01, "Car should reverse straight along stopped heading");
+        assert!(car_turn.state.angular_velocity.abs() < 1e-3, "Angular velocity should settle to zero");
+
+        // After turning in reverse, releasing steer straightens out trajectory
+        let mut car_straighten = Car::new(CarConfig::sports_car());
+        let mut ctrl_turn_rev = CarControls::new(1.0, 0.5, 0.0, false);
+        ctrl_turn_rev.reverse = true;
+        for _ in 0..60 {
+            car_straighten.step(&ctrl_turn_rev, SurfaceType::Asphalt, dt);
+        }
+        let mut ctrl_neutral_rev = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl_neutral_rev.reverse = true;
+        for _ in 0..60 {
+            car_straighten.step(&ctrl_neutral_rev, SurfaceType::Asphalt, dt);
+        }
+        assert!(car_straighten.state.angular_velocity.abs() < 1e-3, "Releasing steering in reverse must eliminate yaw rate");
     }
 
     #[test]
