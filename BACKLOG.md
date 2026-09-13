@@ -65,3 +65,19 @@ The current active milestone is tracked in Beads:
   - `tdrace-downstream-cabinet-integration-uqq.2`: Arcade Screen Transitions across Game Menus and Racing View
   - `tdrace-downstream-cabinet-integration-uqq.3`: CRT & Retro Scanline Post-Processing in Racing Viewport
   - `tdrace-downstream-cabinet-integration-uqq.4`: Floating Split-Time and Combo Popups in Racing HUD
+
+---
+
+## 5. Ecosystem Spin-Off Titles (Powered by `wheelbase` & `arcade-race-core`)
+
+### 5.1 `tdbikes` (Top-Down 2D Superbike & Motocross Racer)
+- **Single-Track Physics Engine**: 2-wheel vehicle dynamics with dynamic lean angle kinematics ($\tan \phi = \frac{v^2}{Rg}$) and camber thrust from rounded tire cross-sections.
+- **Pitch Dynamics (Wheelies & Stoppies)**: Full front-wheel lift under heavy acceleration and rear-wheel lift under hard braking.
+- **Crash Mechanics**: Dynamic lowside (loss of grip while banked) and highside (violent traction regain snap) crash state machines.
+- **Ecosystem Reuse**: Powered by `wheelbase::Motorbike` + `arcade-race-core` (Catmull-Rom track splines, directional timing gates, SAT collisions) + `cabinet` (arcade shell, UI, and audio).
+
+### 5.2 `tdopenworld` (Top-Down 2D Urban Vehicular / Heist Action)
+- **Tilemap Surface Sampler**: Decouple vehicle physics from circuits by implementing `SurfaceSampler` over 2D tilemaps / NavMeshes (streets, alleys, sidewalks, grassy parks, construction sand).
+- **Urban Driving Mechanics**: Responsive arcade drifting, 180° handbrake reverse flips, vehicle-to-vehicle ramming, and destructible prop collisions.
+- **Ecosystem Reuse**: Powered by `wheelbase::Car` (Pacejka 4-wheel chassis, weight transfer, assists) + `cabinet` (arcade shell, UI, gamepad mapper), completely free of circuit spline constraints.
+
