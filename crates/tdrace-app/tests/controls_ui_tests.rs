@@ -346,5 +346,40 @@ fn test_menu_state_settings_modal_integration() {
     }
 }
 
+#[test]
+fn test_module_select_state_settings_modal_integration() {
+    use tdrace_app::game::{GameState, RaceSession};
+
+    let orig_config = std::fs::read_to_string("config.toml").ok();
+
+    let mut session = RaceSession::new();
+    assert!(matches!(session.state, GameState::ModuleSelect { selected_idx: 0 }));
+    assert!(!session.is_settings_modal_open());
+
+    // Open settings from Grand Hub / ModuleSelect state
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+
+    // Mutate and save
+    if let Some(ref mut modal) = session.settings_modal {
+        modal.resolution_dropdown.set_selected(4); // 3840x2160 4K UHD
+        modal.display_mode_dropdown.set_selected(1); // Fullscreen
+    }
+    session.close_settings_modal(true);
+    assert!(!session.is_settings_modal_open());
+    assert_eq!(session.config.display.window_width, 3840);
+    assert_eq!(session.config.display.window_height, 2160);
+    assert!(session.config.display.fullscreen);
+
+    // Verify session remained in ModuleSelect state
+    assert!(matches!(session.state, GameState::ModuleSelect { selected_idx: 0 }));
+
+    // Restore original disk config so tests leave workspace clean
+    if let Some(ref content) = orig_config {
+        let _ = std::fs::write("config.toml", content);
+    }
+}
+
+
 
 

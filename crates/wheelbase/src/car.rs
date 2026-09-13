@@ -474,9 +474,11 @@ impl Car {
         // Check if player is counter-steering against a drift (opposite to lateral velocity / yaw)
         let is_counter_steering = (clamped_ctrl.steer * v_lat) < -0.05;
 
-        // Counter-steer / self-aligning drift recovery assist
+        // Counter-steer / self-aligning drift recovery assist (forward motion only)
         if self.config.assists.counter_steer_assist_enabled
             && !clamped_ctrl.handbrake
+            && !clamped_ctrl.reverse
+            && v_long > 1.0
             && self.state.speed > 2.0
             && self.state.sideslip_angle.abs() > 0.04
         {
@@ -628,15 +630,23 @@ impl Car {
         } else if clamped_ctrl.throttle > 0.0 {
             clamped_ctrl.throttle * self.config.max_engine_force * engine_taper * drive_torque_multiplier
         } else if self.config.engine_braking_coefficient > 0.0 && v_long.abs() > 0.05 {
-            // Engine braking opposes motion on throttle release, creating realistic coast-down and turn-in pitch
-            -self.config.engine_braking_coefficient * total_weight * (v_long / 1.5).tanh()
+            // Enhanced generic motor brake: opposes motion on throttle release, causing the car to lose speed
+            // noticeably quicker for crisp corner entry and realistic lift-off weight transfer.
+            let generic_motor_brake_boost = 1.85f32;
+            -self.config.engine_braking_coefficient * generic_motor_brake_boost * total_weight * (v_long / 1.5).tanh()
         } else {
             0.0
         };
 
-        // Brake force opposing motion
-        let total_brake_force = clamped_ctrl.brake * self.config.max_brake_force;
+        // Progressive, non-linear service brake input mapping:
+        // Soft, progressive response at light-to-medium pedal travel for delicate trail-braking and apex adjustments,
+        // smoothly ramping up to maximum deceleration on full brake application.
+        let raw_brake = clamped_ctrl.brake;
+        let progressive_brake = raw_brake.powf(1.4);
+        let total_brake_force = progressive_brake * self.config.max_brake_force;
         let mut abs_active = false;
+
+        let total_normal_load: f32 = normal_loads.iter().sum();
 
         for i in 0..4 {
             let wheel_id = WheelId::ALL[i];
@@ -666,17 +676,38 @@ impl Car {
             let max_friction = mu * fz;
 
             // Longitudinal demand: Drive + Brake + Handbrake + Rolling Resistance
-            let drive_share = if wheel_id.is_front() {
-                self.config.drive_bias * 0.5
+            let drive_share = if clamped_ctrl.reverse || total_drive_force >= 0.0 {
+                if wheel_id.is_front() {
+                    self.config.drive_bias * 0.5
+                } else {
+                    (1.0 - self.config.drive_bias) * 0.5
+                }
             } else {
-                (1.0 - self.config.drive_bias) * 0.5
+                // Engine braking coast-down is distributed across both axles to maintain pitch stability
+                // and front tire bite into corners without inducing sudden rear slip.
+                let front_eb_bias = 0.35 + 0.30 * self.config.drive_bias;
+                if wheel_id.is_front() {
+                    front_eb_bias * 0.5
+                } else {
+                    (1.0 - front_eb_bias) * 0.5
+                }
             };
 
-            let brake_share = if wheel_id.is_front() {
+            // Dynamic Electronic Brakeforce Distribution (EBD):
+            // Blends nominal brake bias with dynamic normal load fraction.
+            // As weight transfers forward under deceleration, front brake share increases and rear decreases,
+            // preventing the unloaded rear wheels from locking up and inducing snap oversteer.
+            let static_share = if wheel_id.is_front() {
                 self.config.brake_bias * 0.5
             } else {
                 (1.0 - self.config.brake_bias) * 0.5
             };
+            let dynamic_load_share = if total_normal_load > 1e-3 {
+                fz / total_normal_load
+            } else {
+                0.25
+            };
+            let brake_share = 0.40 * static_share + 0.60 * dynamic_load_share;
 
             let mut fx_demand = total_drive_force * drive_share;
 
@@ -689,13 +720,22 @@ impl Car {
                 };
                 let mut wheel_brake_force = total_brake_force * brake_share;
 
-                // ABS (Anti-lock Braking System): modulate brake force to preserve steering authority and avoid lockup
+                // Anti-lock Braking & Lateral Stability Reservation:
+                // Preserves lateral cornering authority and directional stability during braking.
+                let is_cornering = wheel_steer_angles[i].abs() > 0.01
+                    || clamped_ctrl.steer.abs() > 0.02
+                    || self.state.sideslip_angle.abs() > 0.02
+                    || omega.abs() > 0.08;
+
                 if self.config.assists.abs_enabled && w_v_long.abs() > 0.5 {
-                    let is_steering_wheel = wheel_steer_angles[i].abs() > 0.01 || clamped_ctrl.steer.abs() > 0.02;
-                    let target_lat_reserve: f32 = if is_steering_wheel {
-                        0.70 // Reserve 70% friction circle radius for lateral cornering
+                    let target_lat_reserve: f32 = if is_cornering {
+                        if wheel_id.is_front() {
+                            0.75 // Reserve 75% friction circle for responsive steering authority
+                        } else {
+                            0.55 // Reserve 55% friction circle for rear yaw stability
+                        }
                     } else {
-                        0.20 // Reserve 20% for directional stability
+                        0.15 // Straight-line: prioritize 98% longitudinal stopping power
                     };
 
                     let max_fx_abs = max_friction * (1.0f32 - target_lat_reserve * target_lat_reserve).sqrt();
@@ -704,6 +744,13 @@ impl Car {
                         wheel_brake_force -= excess * self.config.assists.abs_strength;
                         abs_active = true;
                     }
+                }
+
+                // Generically cap wheel braking force near the tire traction envelope so excessive brake
+                // force never completely wipes out lateral cornering forces in the combined slip solver.
+                let max_traction_cap = max_friction * 1.05;
+                if wheel_brake_force > max_traction_cap {
+                    wheel_brake_force = max_traction_cap;
                 }
 
                 fx_demand += wheel_brake_force * brake_dir;
@@ -799,6 +846,8 @@ impl Car {
 
         if self.config.assists.esc_enabled
             && self.state.speed > 2.5
+            && v_long > 0.5
+            && !clamped_ctrl.reverse
             && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake)
         {
             let wheelbase = self.config.wheelbase;
@@ -982,6 +1031,48 @@ mod tests {
         assert!(car.state.speed > 5.0, "Car should accelerate forward, speed is {}", car.state.speed);
         assert!(car.state.position.x > 1.0, "Car should move in +X");
         assert!(car.state.position.y.abs() < 1e-3, "Car should not deviate laterally");
+    }
+
+    #[test]
+    fn test_reverse_straight_line_neutral_steer() {
+        let mut car = Car::new(CarConfig::sports_car());
+        let dt = 1.0 / 60.0;
+        let mut ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl.reverse = true;
+
+        for _ in 0..120 {
+            car.step(&ctrl, SurfaceType::Asphalt, dt);
+        }
+
+        assert!(car.state.local_velocity.x < -3.0, "Car should accelerate backward, was {}", car.state.local_velocity.x);
+        assert!(car.state.steer_angle.abs() < 1e-3, "Steer angle should remain zero without input");
+        assert!(car.state.angle.abs() < 0.02, "Car should not deviate or force turning, angle was {}", car.state.angle);
+    }
+
+    #[test]
+    fn test_reverse_drive_bias_distribution() {
+        let sports = Car::new(CarConfig::sports_car()); // RWD: drive_bias = 0.0
+        let rally = Car::new(CarConfig::rally_car());   // AWD: drive_bias = 0.5
+        let dt = 1.0 / 60.0;
+
+        let mut ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl.reverse = true;
+
+        let mut sports_step = sports;
+        sports_step.step(&ctrl, SurfaceType::Asphalt, dt);
+        // Sports car RWD: front wheels have 0 longitudinal drive demand, rear wheels have full drive demand
+        assert_eq!(sports_step.state.wheels[0].longitudinal_force, 0.0, "RWD front left wheel should have no drive force");
+        assert_eq!(sports_step.state.wheels[1].longitudinal_force, 0.0, "RWD front right wheel should have no drive force");
+        assert!(sports_step.state.wheels[2].longitudinal_force < 0.0, "RWD rear left wheel must have reverse drive force");
+        assert!(sports_step.state.wheels[3].longitudinal_force < 0.0, "RWD rear right wheel must have reverse drive force");
+
+        let mut rally_step = rally;
+        rally_step.step(&ctrl, SurfaceType::Asphalt, dt);
+        // Rally car AWD: all 4 wheels receive reverse drive torque
+        assert!(rally_step.state.wheels[0].longitudinal_force < 0.0, "AWD front left wheel must receive reverse drive");
+        assert!(rally_step.state.wheels[1].longitudinal_force < 0.0, "AWD front right wheel must receive reverse drive");
+        assert!(rally_step.state.wheels[2].longitudinal_force < 0.0, "AWD rear left wheel must receive reverse drive");
+        assert!(rally_step.state.wheels[3].longitudinal_force < 0.0, "AWD rear right wheel must receive reverse drive");
     }
 
     #[test]

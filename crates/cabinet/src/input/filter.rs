@@ -28,7 +28,7 @@ impl Default for DigitalInputConfig {
             speed_sensitive_factor: 0.0025,
             min_speed_steer_limit: 0.70,
             throttle_rise_rate: 9.5,
-            brake_rise_rate: 16.0,
+            brake_rise_rate: 6.5,
         }
     }
 }

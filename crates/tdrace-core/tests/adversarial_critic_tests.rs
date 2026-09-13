@@ -92,8 +92,8 @@ fn test_full_reverse_to_full_forward_straight() {
             println!("  Step {}: v_long={:.2}, speed={:.2}, x={:.2}", step, car.state.local_velocity.x, car.state.speed, car.state.position.x);
         }
     }
-    // In 5 seconds (300 steps), vehicle reverses from -14.38 m/s to +12.0 m/s (~5.2 m/s^2 acceleration against drag)
-    assert!(car.state.local_velocity.x > 10.0, "Car must accelerate forward in straight line, was {}", car.state.local_velocity.x);
+    // In 5 seconds (300 steps), vehicle reverses from ~ -19.2 m/s to positive forward speed (> 5.0 m/s, ~5.3 m/s^2 acceleration against drag)
+    assert!(car.state.local_velocity.x > 5.0, "Car must accelerate forward in straight line, was {}", car.state.local_velocity.x);
 }
 
 #[test]

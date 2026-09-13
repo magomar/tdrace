@@ -48,7 +48,7 @@ impl SurfaceType {
             Self::Curb => 1.3,
             Self::Dirt => 1.2,
             Self::Grass => 18.0,
-            Self::Sand => 45.0,
+            Self::Sand => 30.0,
             Self::Water => 3.5,
             Self::Oil => 0.8,
             Self::Ice => 0.4,

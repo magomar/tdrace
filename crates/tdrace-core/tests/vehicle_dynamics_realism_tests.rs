@@ -5,11 +5,11 @@ use tdrace_core::physics::config::DriverAssistsConfig;
 fn test_off_throttle_engine_braking_deceleration_across_all_presets() {
     let dt = 1.0 / 60.0;
     let presets = [
-        ("SportsCar", CarConfig::sports_car(), 0.10, 0.22),
-        ("DriftCar", CarConfig::drift_car(), 0.08, 0.20),
-        ("Kart", CarConfig::kart(), 0.12, 0.30),
-        ("RallyCar", CarConfig::rally_car(), 0.10, 0.24),
-        ("StockCarTA1", CarConfig::stock_car_ta1(), 0.10, 0.25),
+        ("SportsCar", CarConfig::sports_car(), 0.18, 0.32),
+        ("DriftCar", CarConfig::drift_car(), 0.16, 0.30),
+        ("Kart", CarConfig::kart(), 0.20, 0.48),
+        ("RallyCar", CarConfig::rally_car(), 0.18, 0.35),
+        ("StockCarTA1", CarConfig::stock_car_ta1(), 0.18, 0.42),
     ];
 
     for (name, config, min_g, max_g) in presets {
@@ -265,3 +265,90 @@ fn test_aerodynamic_drafting_and_slipstream_velocity_boost() {
         "Car in slipstream wake draft must achieve higher speed than solo car"
     );
 }
+
+#[test]
+fn test_progressive_non_linear_braking_curve() {
+    let dt = 1.0 / 60.0;
+
+    // Helper to accelerate car to 80 km/h and measure deceleration at specific brake input over 30 frames
+    let measure_decel = |brake_input: f32| -> f32 {
+        let mut car = Car::new(CarConfig::sports_car());
+        while car.speed_kmh() < 80.0 {
+            car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+        }
+        let init_speed = car.speed_kmh();
+        let ctrl = CarControls::new(0.0, 0.0, brake_input, false);
+        for _ in 0..30 {
+            car.step(&ctrl, SurfaceType::Asphalt, dt);
+        }
+        let end_speed = car.speed_kmh();
+        (init_speed - end_speed) / 3.6 / 0.5 // m/s^2 over 0.5s
+    };
+
+    let decel_0 = measure_decel(0.0);
+    let decel_20 = measure_decel(0.2);
+    let decel_50 = measure_decel(0.5);
+    let decel_100 = measure_decel(1.0);
+
+    let net_brake_20 = (decel_20 - decel_0).max(0.0);
+    let net_brake_50 = (decel_50 - decel_0).max(0.0);
+    let net_brake_100 = (decel_100 - decel_0).max(0.0);
+
+    println!(
+        "Progressive Braking: Coast={:.2} m/s² | Net 20%={:.2} m/s², Net 50%={:.2} m/s², Net 100%={:.2} m/s²",
+        decel_0, net_brake_20, net_brake_50, net_brake_100
+    );
+
+    // Non-linear progressive response: 20% pedal produces only ~10-15% of full net brake force
+    let ratio_20 = net_brake_20 / net_brake_100;
+    assert!(
+        ratio_20 < 0.18,
+        "20% net brake force ratio ({ratio_20:.3}) must be progressive (< 0.18, expected ~0.11)"
+    );
+
+    // 50% pedal produces ~40-55% of full net brake force (well below linear saturation)
+    let ratio_50 = net_brake_50 / net_brake_100;
+    assert!(
+        ratio_50 > 0.35 && ratio_50 < 0.60,
+        "50% net brake force ratio ({ratio_50:.3}) must be progressive (0.35 - 0.60, got {ratio_50:.3})"
+    );
+
+    // Total 100% braking deceleration achieves strong stopping power
+    assert!(
+        decel_100 > 8.0,
+        "100% total deceleration ({decel_100:.2} m/s²) must achieve strong stopping power (> 8.0 m/s²)"
+    );
+}
+
+#[test]
+fn test_braking_stability_and_rear_lockup_prevention() {
+    let dt = 1.0 / 60.0;
+    let mut car = Car::new(CarConfig::sports_car());
+
+    // Accelerate to ~90 km/h
+    while car.speed_kmh() < 90.0 {
+        car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+
+    // Apply simultaneous medium steer (0.4) and 100% brake
+    let ctrl = CarControls::new(0.0, 0.4, 1.0, false);
+    for _ in 0..40 {
+        car.step(&ctrl, SurfaceType::Asphalt, dt);
+    }
+
+    // Verify rear wheels did not lose lateral stability into a spinout
+    let rear_left_load = car.state.wheels[2].normal_load;
+    let rear_right_load = car.state.wheels[3].normal_load;
+    let sideslip = car.state.sideslip_angle.abs();
+
+    println!(
+        "Braking Turn Stability: Rear Loads=({:.1} N, {:.1} N), Final Sideslip={:.3} rad ({:.1}°)",
+        rear_left_load, rear_right_load, sideslip, sideslip.to_degrees()
+    );
+
+    assert!(
+        sideslip < 0.22,
+        "Dynamic EBD and ABS must prevent rear lockup and keep vehicle stable in corner (sideslip={sideslip:.3} rad)"
+    );
+}
+

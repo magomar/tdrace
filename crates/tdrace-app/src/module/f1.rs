@@ -974,7 +974,7 @@ impl GtWorldChallengeModule {
             cg_height: 0.28,
 
             max_engine_force: 9500.0, // ~600 BHP FIA GT3 naturally aspirated / biturbo
-            max_reverse_force: 3500.0,
+            max_reverse_force: 6175.0,
             max_brake_force: 22000.0,
             handbrake_force: 7000.0,
             brake_bias: 0.60,
@@ -1018,6 +1018,7 @@ impl GtWorldChallengeModule {
         cfg.mass = 1390.0;
         cfg.inertia = 1750.0;
         cfg.max_engine_force = 11200.0; // ~707 BHP SRO GT2 Biturbo V8
+        cfg.max_reverse_force = 7280.0;
         cfg.top_speed_mps = 91.0; // ~328 km/h
         cfg.downforce_coefficient = 1.40; // Lower downforce than GT3
         cfg.air_drag_coefficient = 0.58;
@@ -1036,7 +1037,7 @@ impl GtWorldChallengeModule {
             cg_height: 0.20,
 
             max_engine_force: 13500.0, // ~1000+ BHP Hybrid Power Unit
-            max_reverse_force: 4000.0,
+            max_reverse_force: 8775.0,
             max_brake_force: 28000.0, // Carbon-carbon brake discs (up to 5.5G deceleration)
             handbrake_force: 8000.0,
             brake_bias: 0.58,

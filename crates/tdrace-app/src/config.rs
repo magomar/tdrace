@@ -123,7 +123,7 @@ impl Default for InputConfig {
             speed_sensitive_factor: 0.018,
             min_speed_steer_limit: 0.38,
             throttle_rise_rate: 10.0,
-            brake_rise_rate: 14.0,
+            brake_rise_rate: 6.5,
         }
     }
 }

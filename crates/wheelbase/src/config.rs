@@ -280,7 +280,7 @@ impl CarConfig {
             cg_height: 0.35,
 
             max_engine_force: 6800.0,
-            max_reverse_force: 3200.0,
+            max_reverse_force: 4420.0,
             max_brake_force: 11500.0,
             handbrake_force: 7500.0,
             brake_bias: 0.60,
@@ -315,6 +315,7 @@ impl CarConfig {
         cfg.mass = 980.0;
         cfg.inertia = 1250.0;
         cfg.max_engine_force = 8200.0;
+        cfg.max_reverse_force = 5330.0;
         cfg.max_steer_angle = 0.78; // ~45 deg wide drift lock
         cfg.counter_steer_assist = 1.6;
         cfg.speed_sensitive_steer_factor = 0.0015;
@@ -339,7 +340,7 @@ impl CarConfig {
             cg_height: 0.18,
 
             max_engine_force: 2200.0,
-            max_reverse_force: 800.0,
+            max_reverse_force: 1430.0,
             max_brake_force: 2400.0,
             handbrake_force: 1800.0,
             brake_bias: 0.50,
@@ -383,6 +384,7 @@ impl CarConfig {
         cfg.drive_bias = 0.5; // AWD
         cfg.cg_height = 0.42;
         cfg.max_engine_force = 7500.0;
+        cfg.max_reverse_force = 4875.0;
         cfg.engine_braking_coefficient = 0.14;
         cfg.downforce_coefficient = 0.70;
         cfg.tire.stiffness_b = 8.0;
@@ -407,7 +409,7 @@ impl CarConfig {
             cg_height: 0.32,
 
             max_engine_force: 11800.0, // ~850 BHP pushrod V8
-            max_reverse_force: 3600.0,
+            max_reverse_force: 7670.0,
             max_brake_force: 21000.0,
             handbrake_force: 7000.0,
             brake_bias: 0.62,

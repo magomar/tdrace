@@ -170,7 +170,7 @@ fn test_dirt_and_water_dynamics() {
 
     // Sand provides strong deceleration power
     let sand_res = SurfaceType::Sand.rolling_resistance_multiplier();
-    assert!(sand_res >= 40.0, "Sand must act as an aggressive stopping trap");
+    assert!(sand_res >= 25.0, "Sand must act as an aggressive stopping trap");
 }
 
 #[test]

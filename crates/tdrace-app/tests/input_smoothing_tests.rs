@@ -119,3 +119,34 @@ fn test_vehicle_high_speed_turn_stability_with_smoothed_input() {
     assert!(sideslip < 0.35, "Vehicle sideslip must remain controlled ({sideslip} rad)");
     assert!(yaw_rate < 1.5, "Vehicle yaw rate must not exceed stability limit ({yaw_rate} rad/s)");
 }
+
+#[test]
+fn test_keyboard_progressive_brake_tap_vs_hold() {
+    let mut filter = DigitalInputFilter::default();
+    let dt = 1.0 / 60.0;
+
+    // A quick tap (4 frames = ~66ms): should produce gentle/medium progressive braking, not instant 1.0 lock
+    let mut tap_brake = 0.0;
+    for _ in 0..4 {
+        let (_, _, b) = filter.update(0.0, 0.0, 1.0, 20.0, dt);
+        tap_brake = b;
+    }
+    println!("Quick 66ms tap brake value: {:.3}", tap_brake);
+    assert!(
+        tap_brake >= 0.30 && tap_brake <= 0.55,
+        "Quick tap must allow light-to-medium modulation (expected 0.30-0.55, got {tap_brake:.3})"
+    );
+
+    // Release key: brake resets to 0.0
+    let (_, _, b_rel) = filter.update(0.0, 0.0, 0.0, 20.0, dt);
+    assert_eq!(b_rel, 0.0, "Releasing brake key must return to 0.0");
+
+    // Sustained hold (15 frames = 250ms): smoothly reaches full 1.0 saturation
+    let mut hold_brake = 0.0;
+    for _ in 0..15 {
+        let (_, _, b) = filter.update(0.0, 0.0, 1.0, 20.0, dt);
+        hold_brake = b;
+    }
+    println!("Sustained 250ms hold brake value: {:.3}", hold_brake);
+    assert_eq!(hold_brake, 1.0, "Sustained brake key press must saturate at 1.0 full braking");
+}
