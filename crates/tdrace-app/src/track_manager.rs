@@ -1029,6 +1029,7 @@ impl TrackManager {
                     .save_to_file(&git_file)
                     .map_err(|e| format!("Failed to save git-tracked preset: {}", e))?;
                 let _ = self.scan_custom_tracks();
+                crate::ui::menu::clear_menu_track_cache();
                 return Ok(git_file.to_string_lossy().to_string());
             }
         }
@@ -1186,6 +1187,7 @@ impl TrackManager {
                 self.save_deleted_presets();
 
                 let _ = self.scan_custom_tracks();
+                crate::ui::menu::clear_menu_track_cache();
                 return Ok(());
             }
         }
@@ -1223,6 +1225,7 @@ impl TrackManager {
         self.save_deleted_presets();
 
         let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
         Ok(())
     }
 
@@ -1278,6 +1281,7 @@ impl TrackManager {
         self.save_deleted_presets();
 
         let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
         Ok(())
     }
 
@@ -1303,6 +1307,7 @@ impl TrackManager {
                     .map_err(|e| format!("Failed to save git preset: {}", e))?;
 
                 let _ = self.scan_custom_tracks();
+                crate::ui::menu::clear_menu_track_cache();
                 return Ok(());
             }
         }
@@ -1327,6 +1332,7 @@ impl TrackManager {
             .map_err(|e| format!("Failed to save updated track metadata: {}", e))?;
 
         let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
         Ok(())
     }
 
@@ -1650,6 +1656,7 @@ impl TrackManager {
         self.save_deleted_presets();
 
         let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
         Ok(target_path)
     }
 
@@ -1702,6 +1709,7 @@ impl TrackManager {
         }
 
         let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
         Ok(target_path)
     }
 }

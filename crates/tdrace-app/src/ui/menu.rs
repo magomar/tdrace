@@ -220,6 +220,23 @@ fn resolve_track_for_menu_with_dir_uncached(
     choice: &TrackChoice,
     dir: &std::path::Path,
 ) -> Option<tdrace_core::track::Track> {
+    // In developer mode, official git presets or custom tracks saved into the repository's tracks/
+    // directory take precedence so edited/overwritten presets immediately reflect on menu thumbnails.
+    if crate::storage::is_dev_mode() {
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+            let id = choice.track_id();
+            let file_name = format!("{}.json", id);
+            for m in ["classic", "rally", "kart", "f1", "nascar"] {
+                let p = git_tracks_dir.join(m).join(&file_name);
+                if p.exists() {
+                    if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
+                        return Some(t);
+                    }
+                }
+            }
+        }
+    }
+
     // If this is an official preset and we are NOT in dev mode, skip user disk candidate overrides
     // and load strictly from official procedural generators or git preset files.
     if choice.is_official_preset() && !crate::storage::is_dev_mode() {
@@ -249,6 +266,37 @@ fn resolve_track_for_menu_with_dir_uncached(
                 return Some(t);
             }
         }
+        if file_path.with_extension("json").exists() {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file(&file_path.with_extension("json")) {
+                return Some(t);
+            }
+        }
+        let rel_in_dir = dir.join(path);
+        if rel_in_dir.exists() {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_dir) {
+                return Some(t);
+            }
+        }
+        let rel_in_dir_json = dir.join(format!("{}.json", path));
+        if rel_in_dir_json.exists() {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_dir_json) {
+                return Some(t);
+            }
+        }
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+            let rel_in_git = git_tracks_dir.join(path);
+            if rel_in_git.exists() {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_git) {
+                    return Some(t);
+                }
+            }
+            let rel_in_git_json = git_tracks_dir.join(format!("{}.json", path));
+            if rel_in_git_json.exists() {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_git_json) {
+                    return Some(t);
+                }
+            }
+        }
     }
 
     // 2. Check disk candidate paths across module subdirectories and drafts
@@ -267,6 +315,24 @@ fn resolve_track_for_menu_with_dir_uncached(
         if p.exists() {
             if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
                 return Some(t);
+            }
+        }
+    }
+
+    if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+        let git_candidates = [
+            git_tracks_dir.join("classic").join(&file_name),
+            git_tracks_dir.join("f1").join(&file_name),
+            git_tracks_dir.join("rally").join(&file_name),
+            git_tracks_dir.join("kart").join(&file_name),
+            git_tracks_dir.join("nascar").join(&file_name),
+            git_tracks_dir.join(&file_name),
+        ];
+        for p in &git_candidates {
+            if p.exists() {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                    return Some(t);
+                }
             }
         }
     }

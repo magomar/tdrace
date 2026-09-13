@@ -7,6 +7,9 @@ pub const ENV_USER_DATA_DIR: &str = "TDRACE_USER_DATA_DIR";
 /// Environment variable to override the user circuits/tracks directory.
 pub const ENV_USER_TRACKS_DIR: &str = "TDRACE_USER_TRACKS_DIR";
 
+/// Environment variable to override the git tracks directory (e.g. in tests).
+pub const ENV_GIT_TRACKS_DIR: &str = "TDRACE_GIT_TRACKS_DIR";
+
 /// Environment variable indicating developer mode execution.
 pub const ENV_DEV_MODE: &str = "TDRACE_DEV";
 
@@ -27,6 +30,14 @@ pub fn is_dev_mode() -> bool {
 /// Resolves the repository's git-tracked `tracks/` directory when running in dev mode.
 /// Checks current working directory (`tracks`), parent directory, or relative paths.
 pub fn resolve_git_tracks_dir() -> Option<PathBuf> {
+    if let Ok(val) = std::env::var(ENV_GIT_TRACKS_DIR) {
+        if !val.trim().is_empty() {
+            let p = PathBuf::from(val);
+            if p.is_dir() {
+                return p.canonicalize().ok().or_else(|| Some(p));
+            }
+        }
+    }
     let candidates = [
         PathBuf::from("tracks"),
         PathBuf::from("../tracks"),

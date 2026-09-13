@@ -126,6 +126,9 @@ fn test_dev_mode_permits_preset_category_and_metadata_updates() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
+    let canonical_backup = tdrace_app::storage::resolve_git_tracks_dir()
+        .and_then(|git_dir| fs::read(git_dir.join("classic").join("classic_grand_prix.json")).ok());
+
     // In dev mode, reassigning categories of an official preset succeeds
     let res = manager.promote_track_to_modules("classic_grand_prix", &["classic", "f1"]);
     assert!(res.is_ok(), "Dev mode must allow updating preset modules: {:?}", res);
@@ -138,13 +141,10 @@ fn test_dev_mode_permits_preset_category_and_metadata_updates() {
     );
     assert!(meta_res.is_ok(), "Dev mode must allow updating preset metadata: {:?}", meta_res);
 
-    // Revert metadata back to canonical
-    let _ = manager.update_track_metadata(
-        "classic_grand_prix",
-        "Classic Grand Prix".to_string(),
-        "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.".to_string(),
-    );
-    let _ = manager.promote_track_to_modules("classic_grand_prix", &["classic", "f1"]);
+    // Restore canonical backup
+    if let (Some(git_dir), Some(data)) = (tdrace_app::storage::resolve_git_tracks_dir(), canonical_backup) {
+        let _ = fs::write(git_dir.join("classic").join("classic_grand_prix.json"), data);
+    }
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

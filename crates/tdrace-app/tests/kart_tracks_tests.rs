@@ -87,7 +87,11 @@ fn test_pfi_flyover_bridge_elevation() {
 
 #[test]
 fn test_famous_kart_tracks_in_track_manager_and_menu_resolution() {
-    let tm = TrackManager::default();
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_kart_test_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let tm = TrackManager::new(&temp_dir);
     let kart_catalog = tm.module_catalog_tracks("kart");
 
     assert!(kart_catalog.len() >= 10);

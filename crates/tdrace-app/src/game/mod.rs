@@ -5830,6 +5830,7 @@ impl RaceSession {
                 self.start_editor_test_drive();
             }
             EditorAction::ExitToMenu => {
+                crate::ui::menu::clear_menu_track_cache();
                 self.state = GameState::Menu;
             }
             EditorAction::NewTrack { shape, direction, module_id } => {
@@ -5910,8 +5911,11 @@ impl RaceSession {
                             }
                             self.audio.play_sfx(SfxType::UiSelect);
 
-                            // Rescan custom tracks
+                            // Rescan custom tracks & clear thumbnail cache
                             let _ = self.track_manager.scan_custom_tracks();
+                            crate::ui::menu::clear_menu_track_cache();
+
+                            self.track = state.track.clone();
 
                             if exit_after {
                                 self.state = GameState::Menu;
