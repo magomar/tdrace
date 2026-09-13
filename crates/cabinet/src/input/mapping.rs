@@ -89,6 +89,7 @@ pub enum ArcadeKey {
     R,
     F,
     H,
+    K,
     O,
     P,
     Num1,
@@ -131,6 +132,7 @@ impl ArcadeKey {
             ArcadeKey::R => Some(KeyCode::R),
             ArcadeKey::F => Some(KeyCode::F),
             ArcadeKey::H => Some(KeyCode::H),
+            ArcadeKey::K => Some(KeyCode::K),
             ArcadeKey::O => Some(KeyCode::O),
             ArcadeKey::P => Some(KeyCode::P),
             ArcadeKey::Num1 => Some(KeyCode::Key1),
@@ -173,6 +175,7 @@ impl ArcadeKey {
             KeyCode::R => ArcadeKey::R,
             KeyCode::F => ArcadeKey::F,
             KeyCode::H => ArcadeKey::H,
+            KeyCode::K => ArcadeKey::K,
             KeyCode::O => ArcadeKey::O,
             KeyCode::P => ArcadeKey::P,
             KeyCode::Key1 => ArcadeKey::Num1,
@@ -215,6 +218,7 @@ impl ArcadeKey {
             ArcadeKey::R => "R",
             ArcadeKey::F => "F",
             ArcadeKey::H => "H",
+            ArcadeKey::K => "K",
             ArcadeKey::O => "O",
             ArcadeKey::P => "P",
             ArcadeKey::Num1 => "1",
@@ -272,6 +276,19 @@ pub enum GamepadAxis {
     RightStickY,
     Throttle,
     Brake,
+}
+
+impl GamepadAxis {
+    pub fn label(&self) -> &'static str {
+        match self {
+            GamepadAxis::LeftStickX => "Left Stick X",
+            GamepadAxis::LeftStickY => "Left Stick Y",
+            GamepadAxis::RightStickX => "Right Stick X",
+            GamepadAxis::RightStickY => "Right Stick Y",
+            GamepadAxis::Throttle => "RT / R2",
+            GamepadAxis::Brake => "LT / L2",
+        }
+    }
 }
 
 /// Abstract input source that can bind to an action.
@@ -375,6 +392,16 @@ impl InputSource {
                 GamepadAxis::LeftStickY => gp.nav_up,
                 _ => false,
             },
+        }
+    }
+
+    /// Returns human-readable label for this input source.
+    pub fn label(&self) -> String {
+        match self {
+            InputSource::Key(k) => k.label().to_string(),
+            InputSource::GamepadBtn(b) => b.label().to_string(),
+            InputSource::GamepadAxisPos(a) => format!("{}+", a.label()),
+            InputSource::GamepadAxisNeg(a) => format!("{}-", a.label()),
         }
     }
 }
@@ -494,6 +521,298 @@ impl InputMap {
         Self { bindings }
     }
 
+    /// Standard racing layout supporting Q/A/O/P, Arrow keys, WASD, and gamepad triggers/sticks.
+    pub fn default_racing() -> Self {
+        let mut bindings = HashMap::new();
+
+        bindings.insert(
+            ArcadeAction::Up,
+            vec![
+                InputSource::Key(ArcadeKey::Q),
+                InputSource::Key(ArcadeKey::Up),
+                InputSource::Key(ArcadeKey::W),
+                InputSource::GamepadAxisPos(GamepadAxis::Throttle),
+                InputSource::GamepadBtn(GamepadButton::DpadUp),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Down,
+            vec![
+                InputSource::Key(ArcadeKey::A),
+                InputSource::Key(ArcadeKey::Down),
+                InputSource::Key(ArcadeKey::S),
+                InputSource::GamepadAxisPos(GamepadAxis::Brake),
+                InputSource::GamepadBtn(GamepadButton::DpadDown),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Left,
+            vec![
+                InputSource::Key(ArcadeKey::O),
+                InputSource::Key(ArcadeKey::Left),
+                InputSource::Key(ArcadeKey::A),
+                InputSource::GamepadAxisNeg(GamepadAxis::LeftStickX),
+                InputSource::GamepadBtn(GamepadButton::DpadLeft),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Right,
+            vec![
+                InputSource::Key(ArcadeKey::P),
+                InputSource::Key(ArcadeKey::Right),
+                InputSource::Key(ArcadeKey::D),
+                InputSource::GamepadAxisPos(GamepadAxis::LeftStickX),
+                InputSource::GamepadBtn(GamepadButton::DpadRight),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Action3,
+            vec![
+                InputSource::Key(ArcadeKey::Space),
+                InputSource::GamepadBtn(GamepadButton::South),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Primary,
+            vec![
+                InputSource::Key(ArcadeKey::Space),
+                InputSource::GamepadBtn(GamepadButton::South),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Secondary,
+            vec![
+                InputSource::Key(ArcadeKey::LeftShift),
+                InputSource::Key(ArcadeKey::E),
+                InputSource::GamepadBtn(GamepadButton::West),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Pause,
+            vec![
+                InputSource::Key(ArcadeKey::Escape),
+                InputSource::GamepadBtn(GamepadButton::Start),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Menu,
+            vec![
+                InputSource::Key(ArcadeKey::K),
+                InputSource::Key(ArcadeKey::Tab),
+                InputSource::GamepadBtn(GamepadButton::Back),
+            ],
+        );
+
+        Self { bindings }
+    }
+
+    /// WASD racing preset (W=Gas, S=Brake, A=Left, D=Right, Space=Handbrake).
+    pub fn wasd_racing() -> Self {
+        let mut bindings = HashMap::new();
+        bindings.insert(
+            ArcadeAction::Up,
+            vec![
+                InputSource::Key(ArcadeKey::W),
+                InputSource::GamepadAxisPos(GamepadAxis::Throttle),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Down,
+            vec![
+                InputSource::Key(ArcadeKey::S),
+                InputSource::GamepadAxisPos(GamepadAxis::Brake),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Left,
+            vec![
+                InputSource::Key(ArcadeKey::A),
+                InputSource::GamepadAxisNeg(GamepadAxis::LeftStickX),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Right,
+            vec![
+                InputSource::Key(ArcadeKey::D),
+                InputSource::GamepadAxisPos(GamepadAxis::LeftStickX),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Action3,
+            vec![
+                InputSource::Key(ArcadeKey::Space),
+                InputSource::GamepadBtn(GamepadButton::South),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Primary,
+            vec![
+                InputSource::Key(ArcadeKey::Space),
+                InputSource::GamepadBtn(GamepadButton::South),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Secondary,
+            vec![
+                InputSource::Key(ArcadeKey::LeftShift),
+                InputSource::GamepadBtn(GamepadButton::West),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Pause,
+            vec![
+                InputSource::Key(ArcadeKey::Escape),
+                InputSource::GamepadBtn(GamepadButton::Start),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Menu,
+            vec![
+                InputSource::Key(ArcadeKey::K),
+                InputSource::GamepadBtn(GamepadButton::Back),
+            ],
+        );
+        Self { bindings }
+    }
+
+    /// Arrow keys racing preset.
+    pub fn arrows_racing() -> Self {
+        let mut bindings = HashMap::new();
+        bindings.insert(
+            ArcadeAction::Up,
+            vec![
+                InputSource::Key(ArcadeKey::Up),
+                InputSource::GamepadAxisPos(GamepadAxis::Throttle),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Down,
+            vec![
+                InputSource::Key(ArcadeKey::Down),
+                InputSource::GamepadAxisPos(GamepadAxis::Brake),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Left,
+            vec![
+                InputSource::Key(ArcadeKey::Left),
+                InputSource::GamepadAxisNeg(GamepadAxis::LeftStickX),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Right,
+            vec![
+                InputSource::Key(ArcadeKey::Right),
+                InputSource::GamepadAxisPos(GamepadAxis::LeftStickX),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Action3,
+            vec![
+                InputSource::Key(ArcadeKey::Space),
+                InputSource::GamepadBtn(GamepadButton::South),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Primary,
+            vec![
+                InputSource::Key(ArcadeKey::Space),
+                InputSource::GamepadBtn(GamepadButton::South),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Secondary,
+            vec![
+                InputSource::Key(ArcadeKey::RightControl),
+                InputSource::GamepadBtn(GamepadButton::West),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Pause,
+            vec![
+                InputSource::Key(ArcadeKey::Escape),
+                InputSource::GamepadBtn(GamepadButton::Start),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Menu,
+            vec![
+                InputSource::Key(ArcadeKey::K),
+                InputSource::GamepadBtn(GamepadButton::Back),
+            ],
+        );
+        Self { bindings }
+    }
+
+    /// Classic QAOP racing preset (Q=Gas, A=Brake, O=Left, P=Right, Space=Handbrake).
+    pub fn classic_racing() -> Self {
+        let mut bindings = HashMap::new();
+        bindings.insert(
+            ArcadeAction::Up,
+            vec![
+                InputSource::Key(ArcadeKey::Q),
+                InputSource::GamepadAxisPos(GamepadAxis::Throttle),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Down,
+            vec![
+                InputSource::Key(ArcadeKey::A),
+                InputSource::GamepadAxisPos(GamepadAxis::Brake),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Left,
+            vec![
+                InputSource::Key(ArcadeKey::O),
+                InputSource::GamepadAxisNeg(GamepadAxis::LeftStickX),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Right,
+            vec![
+                InputSource::Key(ArcadeKey::P),
+                InputSource::GamepadAxisPos(GamepadAxis::LeftStickX),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Action3,
+            vec![
+                InputSource::Key(ArcadeKey::Space),
+                InputSource::GamepadBtn(GamepadButton::South),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Primary,
+            vec![
+                InputSource::Key(ArcadeKey::Space),
+                InputSource::GamepadBtn(GamepadButton::South),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Secondary,
+            vec![
+                InputSource::Key(ArcadeKey::LeftShift),
+                InputSource::GamepadBtn(GamepadButton::West),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Pause,
+            vec![
+                InputSource::Key(ArcadeKey::Escape),
+                InputSource::GamepadBtn(GamepadButton::Start),
+            ],
+        );
+        bindings.insert(
+            ArcadeAction::Menu,
+            vec![
+                InputSource::Key(ArcadeKey::K),
+                InputSource::GamepadBtn(GamepadButton::Back),
+            ],
+        );
+        Self { bindings }
+    }
+
     /// Queries if any bound input source for `action` is currently active.
     pub fn is_down(&self, action: ArcadeAction, gp: &GamepadSnapshot) -> bool {
         self.bindings
@@ -501,11 +820,79 @@ impl InputMap {
             .map_or(false, |sources| sources.iter().any(|s| s.is_down(gp)))
     }
 
+    /// Queries if any bound keyboard key for `action` is currently held down.
+    pub fn is_key_down(&self, action: ArcadeAction) -> bool {
+        self.bindings
+            .get(&action)
+            .map_or(false, |sources| {
+                sources.iter().any(|s| match s {
+                    InputSource::Key(k) => k.to_key_code().map_or(false, safe_key_down),
+                    _ => false,
+                })
+            })
+    }
+
     /// Queries if any bound input source for `action` was triggered this frame.
     pub fn is_pressed(&self, action: ArcadeAction, gp: &GamepadSnapshot) -> bool {
         self.bindings
             .get(&action)
             .map_or(false, |sources| sources.iter().any(|s| s.is_pressed(gp)))
+    }
+
+    /// Queries if any bound keyboard key for `action` was pressed this frame.
+    pub fn is_key_pressed(&self, action: ArcadeAction) -> bool {
+        self.bindings
+            .get(&action)
+            .map_or(false, |sources| {
+                sources.iter().any(|s| match s {
+                    InputSource::Key(k) => k.to_key_code().map_or(false, safe_key_pressed),
+                    _ => false,
+                })
+            })
+    }
+
+    /// Queries if any bound gamepad digital button for `action` is currently held down.
+    pub fn is_gamepad_btn_down(&self, action: ArcadeAction, gp: &GamepadSnapshot) -> bool {
+        self.bindings
+            .get(&action)
+            .map_or(false, |sources| {
+                sources.iter().any(|s| match s {
+                    InputSource::GamepadBtn(b) => InputSource::GamepadBtn(*b).is_down(gp),
+                    _ => false,
+                })
+            })
+    }
+
+    /// Queries if any bound gamepad digital button for `action` was pressed this frame.
+    pub fn is_gamepad_btn_pressed(&self, action: ArcadeAction, gp: &GamepadSnapshot) -> bool {
+        self.bindings
+            .get(&action)
+            .map_or(false, |sources| {
+                sources.iter().any(|s| match s {
+                    InputSource::GamepadBtn(b) => InputSource::GamepadBtn(*b).is_pressed(gp),
+                    _ => false,
+                })
+            })
+    }
+
+    /// Returns a human-friendly string representing the primary keyboard/gamepad key(s) bound to this action.
+    pub fn primary_binding_label(&self, action: ArcadeAction) -> String {
+        if let Some(sources) = self.bindings.get(&action) {
+            let key_labels: Vec<_> = sources
+                .iter()
+                .filter_map(|s| match s {
+                    InputSource::Key(k) => Some(k.label()),
+                    _ => None,
+                })
+                .collect();
+            if !key_labels.is_empty() {
+                return key_labels.join(" / ");
+            }
+            if let Some(first) = sources.first() {
+                return first.label();
+            }
+        }
+        "Unbound".to_string()
     }
 
     /// Computes a composite 2D axis vector (e.g. for steering or character motion).
@@ -634,5 +1021,27 @@ mod tests {
             &gp,
         );
         assert!((v_gp.x - 0.75).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_racing_presets_and_labels() {
+        let racing = InputMap::default_racing();
+        let wasd = InputMap::wasd_racing();
+        let arrows = InputMap::arrows_racing();
+        let classic = InputMap::classic_racing();
+
+        assert!(!racing.get_bindings(ArcadeAction::Up).is_empty());
+        assert_eq!(wasd.primary_binding_label(ArcadeAction::Up), "W");
+        assert_eq!(arrows.primary_binding_label(ArcadeAction::Up), "Up Arrow");
+        assert_eq!(classic.primary_binding_label(ArcadeAction::Up), "Q");
+
+        // Verify headless query safety
+        assert!(!racing.is_key_down(ArcadeAction::Up));
+        assert!(!racing.is_key_pressed(ArcadeAction::Up));
+
+        // Serialization roundtrip for racing map
+        let json = racing.to_json().expect("Serialize racing map");
+        let decoded = InputMap::from_json(&json).expect("Deserialize racing map");
+        assert_eq!(racing, decoded);
     }
 }

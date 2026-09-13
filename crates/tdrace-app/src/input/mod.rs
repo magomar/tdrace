@@ -9,11 +9,6 @@ use macroquad::input::KeyCode;
 fn is_key_pressed(k: KeyCode) -> bool {
     std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)).unwrap_or(false)
 }
-
-#[inline]
-fn is_key_down(k: KeyCode) -> bool {
-    std::panic::catch_unwind(|| macroquad::input::is_key_down(k)).unwrap_or(false)
-}
 use macroquad::shapes::{draw_circle, draw_line, draw_rectangle, draw_rectangle_lines};
 use macroquad::text::draw_text;
 use tdrace_core::collision::sat::OrientedBox;
@@ -24,7 +19,9 @@ use tdrace_core::track::Track;
 
 use crate::ai::BotAiDriver;
 use crate::render::color::Palette;
-pub use cabinet::input::NavGrid2D;
+pub use cabinet::input::{
+    ArcadeAction, ArcadeKey, GamepadAxis, GamepadButton, InputMap, InputSource, NavGrid2D,
+};
 pub use filter::{DigitalInputConfig, DigitalInputFilter};
 pub use gamepad::{GamepadConfig, GamepadController, GamepadSnapshot};
 pub use touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
@@ -45,6 +42,7 @@ pub struct InputController {
     pub lidar_scanner: LidarScanner,
     pub filter: DigitalInputFilter,
     pub gamepad: GamepadController,
+    pub input_map: InputMap,
 }
 
 impl Default for InputController {
@@ -55,11 +53,14 @@ impl Default for InputController {
 
 impl InputController {
     pub fn new() -> Self {
+        let input_map = crate::storage::load_input_bindings()
+            .unwrap_or_else(InputMap::default_racing);
         Self {
             debug: DebugOverlays::default(),
             lidar_scanner: LidarScanner::new(LidarConfig::surround_32()),
             filter: DigitalInputFilter::default(),
             gamepad: GamepadController::new(),
+            input_map,
         }
     }
 
@@ -68,38 +69,66 @@ impl InputController {
         self.filter.reset();
     }
 
+    /// Saves current input bindings to user storage directory.
+    pub fn save_bindings(&self) -> Result<(), std::io::Error> {
+        crate::storage::save_input_bindings(&self.input_map)
+    }
+
+    /// Cycles between predefined control scheme presets (Default Hybrid -> WASD -> Arrow Keys -> Classic QAOP).
+    pub fn cycle_control_preset(&mut self) {
+        if self.input_map == InputMap::default_racing() {
+            self.input_map = InputMap::wasd_racing();
+        } else if self.input_map == InputMap::wasd_racing() {
+            self.input_map = InputMap::arrows_racing();
+        } else if self.input_map == InputMap::arrows_racing() {
+            self.input_map = InputMap::classic_racing();
+        } else {
+            self.input_map = InputMap::default_racing();
+        }
+    }
+
+    /// Returns human-readable name of active control preset.
+    pub fn active_preset_name(&self) -> &'static str {
+        if self.input_map == InputMap::default_racing() {
+            "Hybrid (Q/A/O/P + Arrows + Gamepad)"
+        } else if self.input_map == InputMap::wasd_racing() {
+            "WASD Layout"
+        } else if self.input_map == InputMap::arrows_racing() {
+            "Arrow Keys Layout"
+        } else if self.input_map == InputMap::classic_racing() {
+            "Classic QAOP Layout"
+        } else {
+            "Custom User Bindings"
+        }
+    }
+
     /// Polls player driving controls (Keyboard + Gamepad with progressive smoothing & analog precision).
     pub fn poll_player_controls(&mut self, dt: f32, current_speed_fwd: f32) -> CarControls {
         // 1. Update Gamepad inputs & events
         self.gamepad.update();
 
-        // 2. Poll keyboard raw inputs
+        // 2. Poll digital raw inputs via InputMap
         let mut raw_steer = 0.0f32;
         let mut raw_throttle = 0.0f32;
         let mut raw_brake = 0.0f32;
 
-        let is_down = is_key_down;
-
-        // Steering: O / Left = Steer Left (-1.0), P / Right = Steer Right (+1.0)
-        if is_down(KeyCode::O) || is_down(KeyCode::Left) {
+        if self.input_map.is_key_down(ArcadeAction::Left) {
             raw_steer -= 1.0;
         }
-        if is_down(KeyCode::P) || is_down(KeyCode::Right) {
+        if self.input_map.is_key_down(ArcadeAction::Right) {
             raw_steer += 1.0;
         }
 
-        // Throttle: Q / Up
-        if is_down(KeyCode::Q) || is_down(KeyCode::Up) {
+        if self.input_map.is_key_down(ArcadeAction::Up) {
             raw_throttle = 1.0;
         }
 
-        // Brake / Reverse at stop: A / Down
-        if is_down(KeyCode::A) || is_down(KeyCode::Down) {
+        if self.input_map.is_key_down(ArcadeAction::Down) {
             raw_brake = 1.0;
         }
 
-        // Handbrake: Space
-        let kb_handbrake = is_down(KeyCode::Space);
+        let kb_handbrake = self.input_map.is_key_down(ArcadeAction::Action3)
+            || self.input_map.is_key_down(ArcadeAction::Primary);
 
         self.process_inputs((raw_steer, raw_throttle, raw_brake, kb_handbrake), dt, current_speed_fwd)
     }
@@ -119,14 +148,40 @@ impl InputController {
 
         // Blend Keyboard and Analog Gamepad controls seamlessly
         let gp = &self.gamepad.snapshot;
+        let gp_digital_steer: f32 = if self.input_map.is_gamepad_btn_down(ArcadeAction::Left, gp) {
+            -1.0
+        } else if self.input_map.is_gamepad_btn_down(ArcadeAction::Right, gp) {
+            1.0
+        } else {
+            0.0
+        };
+
         let steer = if gp.steer.abs() > 0.001 {
             (kb_steer + gp.steer).clamp(-1.0, 1.0)
+        } else if gp_digital_steer.abs() > 0.001 {
+            (kb_steer + gp_digital_steer).clamp(-1.0, 1.0)
         } else {
             kb_steer
         };
-        let mut throttle = kb_throttle.max(gp.throttle).clamp(0.0, 1.0);
-        let mut brake = kb_brake.max(gp.brake).clamp(0.0, 1.0);
-        let handbrake = kb_handbrake || gp.handbrake;
+
+        let gp_btn_throttle: f32 = if self.input_map.is_gamepad_btn_down(ArcadeAction::Up, gp) {
+            1.0
+        } else {
+            0.0
+        };
+
+        let gp_btn_brake: f32 = if self.input_map.is_gamepad_btn_down(ArcadeAction::Down, gp) {
+            1.0
+        } else {
+            0.0
+        };
+
+        let mut throttle = kb_throttle.max(gp.throttle).max(gp_btn_throttle).clamp(0.0, 1.0);
+        let mut brake = kb_brake.max(gp.brake).max(gp_btn_brake).clamp(0.0, 1.0);
+        let handbrake = kb_handbrake
+            || gp.handbrake
+            || self.input_map.is_gamepad_btn_down(ArcadeAction::Action3, gp)
+            || self.input_map.is_gamepad_btn_down(ArcadeAction::Primary, gp);
         let mut reverse = gp.reverse;
 
         // When stationary / stopped or moving backward (forward speed <= 0.1 m/s),
@@ -370,5 +425,91 @@ impl InputController {
             draw_text(t, x + 10.0, row_y, 14.0, Color::new(0.9, 0.92, 0.95, 1.0));
             row_y += line_h;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_input_controller_initialization_and_default_preset() {
+        let controller = InputController::new();
+        assert_eq!(controller.input_map, InputMap::default_racing());
+        assert_eq!(
+            controller.active_preset_name(),
+            "Hybrid (Q/A/O/P + Arrows + Gamepad)"
+        );
+
+        // Headless polling safety check
+        let mut ctrl = InputController::new();
+        let controls = ctrl.poll_player_controls(0.016, 0.0);
+        assert_eq!(controls.throttle, 0.0);
+        assert_eq!(controls.steer, 0.0);
+        assert_eq!(controls.brake, 0.0);
+        assert!(!controls.handbrake);
+    }
+
+    #[test]
+    fn test_input_controller_preset_cycling() {
+        let mut controller = InputController::new();
+        assert_eq!(controller.input_map, InputMap::default_racing());
+
+        controller.cycle_control_preset();
+        assert_eq!(controller.input_map, InputMap::wasd_racing());
+        assert_eq!(controller.active_preset_name(), "WASD Layout");
+
+        controller.cycle_control_preset();
+        assert_eq!(controller.input_map, InputMap::arrows_racing());
+        assert_eq!(controller.active_preset_name(), "Arrow Keys Layout");
+
+        controller.cycle_control_preset();
+        assert_eq!(controller.input_map, InputMap::classic_racing());
+        assert_eq!(controller.active_preset_name(), "Classic QAOP Layout");
+
+        controller.cycle_control_preset();
+        assert_eq!(controller.input_map, InputMap::default_racing());
+    }
+
+    #[test]
+    fn test_input_controller_save_and_reload_bindings() {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "tdrace_input_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let _ = std::fs::remove_dir_all(&temp_dir);
+        std::env::set_var(crate::storage::ENV_USER_DATA_DIR, &temp_dir);
+
+        let mut controller = InputController::new();
+        controller.input_map = InputMap::wasd_racing();
+        controller.save_bindings().expect("Save bindings");
+
+        let reloaded = InputController::new();
+        assert_eq!(reloaded.input_map, InputMap::wasd_racing());
+        assert_eq!(reloaded.active_preset_name(), "WASD Layout");
+
+        std::env::remove_var(crate::storage::ENV_USER_DATA_DIR);
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_input_controller_process_inputs_and_gamepad_blend() {
+        let mut controller = InputController::new();
+
+        // 1. Digital steering ramp from raw inputs
+        let controls = controller.process_inputs((1.0, 0.8, 0.0, false), 0.016, 10.0);
+        assert!(controls.steer > 0.0);
+        assert!(controls.throttle > 0.0);
+        assert_eq!(controls.brake, 0.0);
+
+        // 2. Gamepad analog blend overrides digital steering
+        controller.gamepad.snapshot.steer = -0.65;
+        controller.gamepad.snapshot.throttle = 1.0;
+        let blended = controller.process_inputs((0.0, 0.0, 0.0, false), 0.016, 10.0);
+        assert!((blended.steer - (-0.65)).abs() < 1e-3);
+        assert_eq!(blended.throttle, 1.0);
     }
 }

@@ -132,6 +132,28 @@ pub fn resolve_user_tracks_dir() -> PathBuf {
     p
 }
 
+/// Loads custom input mappings from `<user_data_dir>/input_bindings.json`, if present.
+pub fn load_input_bindings() -> Option<cabinet::input::mapping::InputMap> {
+    let path = resolve_user_data_dir().join("input_bindings.json");
+    if path.exists() {
+        if let Ok(content) = fs::read_to_string(&path) {
+            if let Ok(map) = cabinet::input::mapping::InputMap::from_json(&content) {
+                return Some(map);
+            }
+        }
+    }
+    None
+}
+
+/// Saves custom input mappings to `<user_data_dir>/input_bindings.json`.
+pub fn save_input_bindings(map: &cabinet::input::mapping::InputMap) -> Result<(), std::io::Error> {
+    let dir = resolve_user_data_dir();
+    let _ = fs::create_dir_all(&dir);
+    let path = dir.join("input_bindings.json");
+    let json = map.to_json().map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+    fs::write(path, json)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

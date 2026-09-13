@@ -484,4 +484,32 @@ fn test_personal_best_notification_struct_and_delta() {
     assert_eq!(notif_initial.delta, None);
 }
 
+#[test]
+fn test_race_session_input_map_integration_and_rebinding() {
+    use cabinet::input::{ArcadeAction, ArcadeKey, InputMap, InputSource};
+
+    let mut session = RaceSession::new();
+    session.init_race();
+
+    // Verify initial input map is default racing
+    assert_eq!(session.input.input_map, InputMap::default_racing());
+
+    // Switch to WASD layout
+    session.input.cycle_control_preset();
+    assert_eq!(session.input.input_map, InputMap::wasd_racing());
+    assert_eq!(session.input.input_map.primary_binding_label(ArcadeAction::Up), "W");
+
+    // Custom rebinding
+    session.input.input_map.set_bindings(
+        ArcadeAction::Up,
+        vec![InputSource::Key(ArcadeKey::Num1)],
+    );
+    assert_eq!(session.input.input_map.primary_binding_label(ArcadeAction::Up), "1");
+
+    // Serialization and reload roundtrip
+    let json = session.input.input_map.to_json().expect("Serialize input map");
+    let loaded = InputMap::from_json(&json).expect("Deserialize input map");
+    assert_eq!(session.input.input_map, loaded);
+}
+
 

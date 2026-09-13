@@ -155,7 +155,8 @@ impl TrackChoice {
             | Self::OasisRally
             | Self::OutlawPass => true,
             Self::Custom { id, path, .. } => {
-                !std::path::Path::new(path).is_absolute()
+                let is_demoted = crate::track_manager::TrackManager::is_preset_slug_demoted_in_path(id, path);
+                !is_demoted
                     && (crate::track_manager::TrackManager::is_preset_slug(id)
                         || path.starts_with("f1/")
                         || path.starts_with("rally/")
@@ -1143,7 +1144,7 @@ pub fn render_track_select_menu(
     let btn_y = sh - btn_h - scaler.s(14.0);
 
     fonts.draw_ui_regular_centered(
-        "[Left / Right] Presets / Custom  •  [Up / Down] Select Track  •  [T] Track Manager  •  [E] CAD Studio  •  [C] Clone  •  [ESC] Back",
+        "[Left / Right] Presets / Custom  •  [Up / Down] Select Track  •  [T] Track Manager  •  [E] CAD Studio  •  [C] Clone  •  [K] Controls  •  [ESC] Back",
         sw * 0.5,
         btn_y - scaler.s(10.0),
         scaler.font_s(11.0),
@@ -1353,7 +1354,7 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         audio_item,
         "O / Y : Arcade Settings & Preferences".to_string(),
         "D : Driver Cards & Opponents Dossier".to_string(),
-        "C / K : Controls Guide | R : Restart Race".to_string(),
+        "K : Controls Guide | R : Restart Race".to_string(),
         "TAB / Left Stick Click : Camera View".to_string(),
         "Q/A/O/P / Arrows / Stick & Triggers : Drive".to_string(),
         "SPACE / B : Handbrake | Hold Brake at Stop : Reverse".to_string(),
@@ -1480,6 +1481,8 @@ pub fn render_controls_screen(
     assist_profile: AssistProfile,
     gamepad_connected: bool,
     gamepad_name: &str,
+    input_map: &cabinet::input::InputMap,
+    preset_name: &str,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -1500,7 +1503,7 @@ pub fn render_controls_screen(
         scaler.s(2.0),
     );
 
-    let subtitle = "Keyboard & Gamepad Mappings | Electronic Vehicle Dynamics Configuration";
+    let subtitle = "Configurable Controls & Gamepad Mappings | Electronic Vehicle Dynamics Configuration";
     fonts.draw_ui_regular_centered(
         subtitle,
         sw * 0.5,
@@ -1536,18 +1539,28 @@ pub fn render_controls_screen(
     scaler.draw_glass_card(col1_x, col_y, col_w, col_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.8);
     fonts.draw_ui_bold("KEYBOARD CONTROLS", col1_x + scaler.s(16.0), col_y + scaler.s(26.0), scaler.font_s(18.0), Palette::NEON_CYAN);
 
+    let throttle_label = input_map.primary_binding_label(cabinet::input::ArcadeAction::Up);
+    let brake_label = input_map.primary_binding_label(cabinet::input::ArcadeAction::Down);
+    let steer_label = format!(
+        "{} / {}",
+        input_map.primary_binding_label(cabinet::input::ArcadeAction::Left),
+        input_map.primary_binding_label(cabinet::input::ArcadeAction::Right)
+    );
+    let handbrake_label = input_map.primary_binding_label(cabinet::input::ArcadeAction::Action3);
+
     let kb_rows = [
-        ("Accelerate / Gas", "Q / Up Arrow"),
-        ("Brake / Reverse (at stop)", "A / Down Arrow"),
-        ("Steer Left / Right", "O / P or Left / Right"),
-        ("Handbrake & Drift", "Spacebar"),
+        ("Accelerate / Gas", throttle_label.as_str()),
+        ("Brake / Reverse (at stop)", brake_label.as_str()),
+        ("Steer Left / Right", steer_label.as_str()),
+        ("Handbrake & Drift", handbrake_label.as_str()),
+        ("Active Key Layout", preset_name),
+        ("Cycle Controls Preset", "Tab / C"),
         ("Cycle Assist Profile", "H"),
-        ("Controls & Assists Guide", "C / K"),
-        ("Camera Zoom In / Out", "+ / - or Tab"),
+        ("Controls & Assists Guide", "K"),
+        ("Camera Zoom In / Out", "+ / -"),
         ("Instant Session Reset", "R"),
         ("Pause / Resume", "Escape / Pause"),
         ("Audio Mute / Volume", "M / [ and ]"),
-        ("Debug Overlays", "F1 - F5"),
     ];
 
     let mut row_y = col_y + scaler.s(52.0);
@@ -1555,7 +1568,7 @@ pub fn render_controls_screen(
         fonts.draw_ui_regular(action, col1_x + scaler.s(16.0), row_y, scaler.font_s(13.0), Color::new(0.80, 0.85, 0.92, 1.0));
         let km = fonts.measure_ui_bold(key, scaler.font_s(13.0));
         fonts.draw_ui_bold(key, col1_x + col_w - km.width - scaler.s(16.0), row_y, scaler.font_s(13.0), Palette::NEON_GOLD);
-        row_y += scaler.s(21.0);
+        row_y += scaler.s(20.0);
     }
 
     // Right Column: Gamepad Controls
@@ -1600,7 +1613,7 @@ pub fn render_controls_screen(
     fonts.draw_ui_regular("Press [H] on keyboard or [R3 / Select] on Gamepad to switch assist difficulty profile anytime!", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
 
     // Footer Return Prompt
-    let back_prompt = "PRESS [ESC], [C], [SPACE] OR GAMEPAD [B / A] TO RETURN";
+    let back_prompt = "PRESS [TAB / C] CYCLE PRESET  •  [H / R3] ASSISTS  •  [ESC / K / SPACE] RETURN";
     fonts.draw_ui_bold_centered(
         back_prompt,
         sw * 0.5,
@@ -1710,7 +1723,7 @@ pub fn render_module_select_menu(
     }
 
     // Footer prompt
-    let prompt = "USE [UP/DOWN] TO SELECT MODULE | [ENTER/SPACE] OPEN MENU | [P] SWITCH PROFILE | [N] NEW PROFILE | [C] CONTROLS | [ESC] QUIT";
+    let prompt = "USE [UP/DOWN] TO SELECT MODULE | [ENTER/SPACE] OPEN MENU | [P] SWITCH PROFILE | [N] NEW PROFILE | [K] CONTROLS | [ESC] QUIT";
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,

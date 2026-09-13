@@ -1679,8 +1679,8 @@ impl RaceSession {
             }
         }
 
-        // Open Controls & Driving Assists Screen (C or K key)
-        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+        // Open Controls & Driving Assists Screen (K key)
+        if is_key_pressed(KeyCode::K) {
             self.audio.play_sfx(SfxType::UiSelect);
             let from_paused = matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_));
             self.state = GameState::ControlsHelp(from_paused);
@@ -1829,8 +1829,8 @@ impl RaceSession {
                     return;
                 }
 
-                // Controls Help (C / K key)
-                if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+                // Controls Help (K key)
+                if is_key_pressed(KeyCode::K) {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::ControlsHelp(false);
                     return;
@@ -2311,7 +2311,7 @@ impl RaceSession {
                     }
                     return;
                 }
-                if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+                if is_key_pressed(KeyCode::K) {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.state = GameState::ControlsHelp(true);
                 }
@@ -2364,8 +2364,16 @@ impl RaceSession {
                     }
                 }
 
-                if is_key_pressed(KeyCode::Escape)
+                if is_key_pressed(KeyCode::Tab)
                     || is_key_pressed(KeyCode::C)
+                    || self.input.gamepad.snapshot.btn_x_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.input.cycle_control_preset();
+                    let _ = self.input.save_bindings();
+                }
+
+                if is_key_pressed(KeyCode::Escape)
                     || is_key_pressed(KeyCode::K)
                     || is_key_pressed(KeyCode::Space)
                     || is_key_pressed(KeyCode::Enter)
@@ -2404,7 +2412,6 @@ impl RaceSession {
                     || is_key_pressed(KeyCode::Space)
                     || is_key_pressed(KeyCode::Enter)
                     || is_key_pressed(KeyCode::KpEnter)
-                    || is_key_pressed(KeyCode::C)
                     || self.input.gamepad.snapshot.btn_confirm_pressed
                     || self.input.gamepad.snapshot.btn_a_pressed
                     || self.input.gamepad.snapshot.btn_cancel_pressed
@@ -2789,8 +2796,8 @@ impl RaceSession {
             return;
         }
 
-        // Open Controls & Gamepad Screen (C / K key)
-        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::K) {
+        // Open Controls & Gamepad Screen (K key)
+        if is_key_pressed(KeyCode::K) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::ControlsHelp(false);
             return;
@@ -4470,6 +4477,8 @@ impl RaceSession {
                     self.assist_profile,
                     self.input.gamepad.snapshot.is_connected,
                     &self.input.gamepad.snapshot.gamepad_name,
+                    &self.input.input_map,
+                    self.input.active_preset_name(),
                 );
             }
             GameState::DriverCards(_) => {
