@@ -4533,12 +4533,29 @@ impl RaceSession {
             self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
         }
 
-        // Trigger Jump Ramps & Landing SFX/FX
+        // Continuous Jump Ramp Traversal, Lip Takeoff & Landing SFX/FX
         let mut player_jump_air_time = None;
         for (i, car) in self.cars.iter_mut().enumerate() {
-            for ramp in &self.track.geometry.jump_ramps {
-                if car.try_trigger_jump_ramp(ramp) {
-                    break;
+            let was_airborne = car.state.is_airborne;
+            let mut on_any_ramp = false;
+
+            if !was_airborne {
+                for ramp in &self.track.geometry.jump_ramps {
+                    if ramp.contains(car.state.position) {
+                        on_any_ramp = true;
+                        if car.step_ramp_interaction(ramp, dt) {
+                            break;
+                        }
+                    }
+                }
+                if !on_any_ramp {
+                    if car.state.ramp_elevation > 0.10 {
+                        // Rolled off an elevated ramp edge without launching at speed
+                        car.state.elevation = car.state.ramp_elevation;
+                        car.state.is_airborne = true;
+                        car.state.vertical_velocity = 0.0;
+                    }
+                    car.state.ramp_elevation = 0.0;
                 }
             }
             if car.state.just_landed {

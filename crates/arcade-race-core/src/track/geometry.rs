@@ -832,12 +832,35 @@ impl JumpRamp {
             self.height
         }
     }
+    /// Returns the local instantaneous pitch angle in radians of the ramp surface at the given point.
+    /// On a parabolic / clothoid curve, the slope starts at 0 rad at the ground entrance (s=0)
+    /// and smoothly transitions to the takeoff lip angle at s = s_incline.
+    pub fn surface_slope_angle_rad_at(&self, point: Vec2) -> f32 {
+        let s = self.progress_along_ramp(point);
+        let len = self.length().max(0.1);
+        let incline_len = self.incline_length().min(len);
+        let s_incline = (incline_len / len).clamp(0.01, 1.0);
+
+        if s <= s_incline {
+            let t = s / s_incline;
+            let slope_tan = (2.0 * self.height / incline_len.max(0.1)) * t;
+            let max_slope = self.ramp_angle_deg.to_radians().max(0.05);
+            slope_tan.atan().clamp(0.0, max_slope)
+        } else {
+            0.0
+        }
+    }
 }
 
-/// Extension trait allowing Car to trigger jump ramps directly.
+/// Extension trait allowing Car to interact with and trigger jump ramps.
 pub trait JumpRampCarExt {
     /// Attempts to launch the vehicle off the specified jump ramp.
     fn try_trigger_jump_ramp(&mut self, ramp: &JumpRamp) -> bool;
+
+    /// Updates vehicle traversal along the ramp surface, applying grade deceleration,
+    /// and triggers takeoff if reaching the takeoff lip at launch speed.
+    /// Returns true if a jump launch was triggered.
+    fn step_ramp_interaction(&mut self, ramp: &JumpRamp, dt: f32) -> bool;
 }
 
 impl JumpRampCarExt for wheelbase::Car {
@@ -850,6 +873,47 @@ impl JumpRampCarExt for wheelbase::Car {
             height: ramp.height,
         };
         self.try_trigger_jump(is_on_ramp, &props)
+    }
+
+    fn step_ramp_interaction(&mut self, ramp: &JumpRamp, dt: f32) -> bool {
+        if self.state.is_airborne {
+            return false;
+        }
+
+        if !ramp.contains(self.state.position) {
+            return false;
+        }
+
+        let s = ramp.progress_along_ramp(self.state.position);
+        let speed_along = self.state.velocity.dot(ramp.direction);
+
+        // Takeoff lip trigger:
+        // When vehicle reaches the lip (s >= 0.85) at launch speed (> 3.5 m/s)
+        if s >= 0.85 && speed_along > 3.5 {
+            let props = wheelbase::JumpRampProperties {
+                direction: ramp.direction,
+                launch_speed: ramp.launch_speed,
+                ramp_angle_deg: ramp.ramp_angle_deg,
+                height: ramp.height,
+            };
+            let triggered = self.try_trigger_jump(true, &props);
+            if triggered {
+                self.state.ramp_elevation = 0.0;
+                return true;
+            }
+        }
+
+        // On-ramp continuous surface traversal:
+        self.state.ramp_elevation = ramp.surface_elevation_at(self.state.position);
+        let slope = ramp.surface_slope_angle_rad_at(self.state.position);
+        // Downhill slope gravity (grade resistance):
+        let grade_decel = 9.81 * slope.sin();
+        if speed_along > 0.0 {
+            self.state.velocity -= ramp.direction * (grade_decel * dt).min(speed_along);
+            self.state.speed = self.state.velocity.length();
+        }
+
+        false
     }
 }
 

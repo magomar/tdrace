@@ -156,6 +156,9 @@ pub struct CarState {
     /// Road surface elevation underneath the vehicle in meters (z >= 0.0).
     #[serde(default)]
     pub road_elevation: f32,
+    /// Ramp surface elevation underneath the vehicle while climbing an on-track jump ramp in meters (z >= 0.0).
+    #[serde(default)]
+    pub ramp_elevation: f32,
     /// Road cross-slope banking angle in degrees (default: 0.0; + = right side elevated / banked left, - = left side elevated / banked right).
     #[serde(default)]
     pub road_bank_angle: f32,
@@ -205,6 +208,7 @@ impl Default for CarState {
             esc_active: false,
             abs_active: false,
             road_elevation: 0.0,
+            ramp_elevation: 0.0,
             road_bank_angle: 0.0,
             track_right: Vec2::ZERO,
             elevation: 0.0,
@@ -242,10 +246,10 @@ impl Car {
         self
     }
 
-    /// Returns total vehicle vertical altitude above ground (road elevation + jump height).
+    /// Returns total vehicle vertical altitude above ground (road elevation + ramp elevation + jump height).
     #[inline]
     pub fn total_elevation(&self) -> f32 {
-        self.state.road_elevation + self.state.elevation
+        self.state.road_elevation + self.state.ramp_elevation + self.state.elevation
     }
 
     /// Gets an immutable reference to the car's current state.
@@ -970,6 +974,7 @@ impl Car {
 
         self.state.vertical_velocity = v_z;
         self.state.elevation = takeoff_elevation.max(0.05);
+        self.state.ramp_elevation = 0.0;
         self.state.is_airborne = true;
         self.state.air_time = 0.0;
         self.state.jump_count += 1;

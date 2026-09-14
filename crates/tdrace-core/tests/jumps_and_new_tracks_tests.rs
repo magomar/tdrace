@@ -57,6 +57,103 @@ fn test_car_jump_launch_and_gravity_arc() {
 }
 
 #[test]
+fn test_continuous_curved_ramp_traversal_and_lip_takeoff() {
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(1.0, 0.0), 0.0);
+    car.state.velocity = Vec2::new(20.0, 0.0);
+
+    let mut ramp = JumpRamp::new(
+        1,
+        SurfaceShape::Aabb {
+            min: Vec2::new(0.0, -3.0),
+            max: Vec2::new(20.0, 3.0),
+        },
+        Vec2::new(1.0, 0.0),
+        4.0,
+        15.0,
+        2.0,
+        "Curved Test Ramp",
+    );
+    // Fit pitch so the continuous transition runs smoothly all the way to the takeoff lip
+    ramp.ramp_angle_deg = ramp.fitted_pitch_deg();
+
+    let dt = 1.0 / 60.0;
+
+    // 1. Entrance at s = 0.05: car must NOT launch into the air
+    let launched = car.step_ramp_interaction(&ramp, dt);
+    assert!(!launched, "Car at ramp entrance must not launch into the air");
+    assert!(!car.state.is_airborne, "Car must remain grounded on ramp entrance");
+    assert!(
+        car.state.ramp_elevation > 0.0 && car.state.ramp_elevation < 0.02,
+        "Entrance elevation must follow smooth parabolic transition (tangent to flat ground), got {}",
+        car.state.ramp_elevation
+    );
+    assert_eq!(car.state.elevation, 0.0);
+
+    // 2. Mid-ramp progression at s = 0.50 (x = 10.0)
+    car.state.position = Vec2::new(10.0, 0.0);
+    let pre_v = car.state.velocity.x;
+    let launched_mid = car.step_ramp_interaction(&ramp, dt);
+    assert!(!launched_mid, "Car at mid-ramp must not launch");
+    assert!(!car.state.is_airborne);
+    assert!(
+        (car.state.ramp_elevation - 0.50).abs() < 0.05,
+        "Mid-ramp elevation on parabolic curve H*s^2 should be ~0.50m, got {}",
+        car.state.ramp_elevation
+    );
+    assert!(
+        car.state.velocity.x < pre_v,
+        "Downhill grade resistance must decelerate vehicle climbing the slope"
+    );
+    assert!(
+        (car.total_elevation() - car.state.ramp_elevation).abs() < 1e-4,
+        "total_elevation() must reflect on-ramp surface elevation"
+    );
+
+    // 3. Takeoff lip at s = 0.90 (x = 18.0): reaching the lip at speed triggers launch
+    car.state.position = Vec2::new(18.0, 0.0);
+    let launched_lip = car.step_ramp_interaction(&ramp, dt);
+    assert!(launched_lip, "Car reaching lip at speed must trigger launch");
+    assert!(car.state.is_airborne, "Car must become airborne upon lip takeoff");
+    assert!(
+        car.state.elevation >= 2.0,
+        "Takeoff elevation must match ramp height (2.0m), got {}",
+        car.state.elevation
+    );
+    assert_eq!(
+        car.state.ramp_elevation, 0.0,
+        "ramp_elevation must be cleared upon takeoff to transfer elevation smoothly"
+    );
+    assert!(
+        car.state.vertical_velocity > 1.0,
+        "Lip takeoff must impart vertical launch velocity"
+    );
+}
+
+#[test]
+fn test_low_speed_crawling_does_not_launch_at_lip() {
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(18.0, 0.0), 0.0);
+    car.state.velocity = Vec2::new(2.0, 0.0); // Crawling under 3.5 m/s launch threshold
+
+    let ramp = JumpRamp::new(
+        1,
+        SurfaceShape::Aabb {
+            min: Vec2::new(0.0, -3.0),
+            max: Vec2::new(20.0, 3.0),
+        },
+        Vec2::new(1.0, 0.0),
+        4.0,
+        15.0,
+        2.0,
+        "Curved Test Ramp",
+    );
+
+    let launched = car.step_ramp_interaction(&ramp, 1.0 / 60.0);
+    assert!(!launched, "Crawling car must not launch off lip");
+    assert!(!car.state.is_airborne, "Crawling car remains grounded");
+    assert!(car.state.ramp_elevation > 1.5, "Ramp elevation reflects surface height at lip");
+}
+
+#[test]
 fn test_airborne_grip_attenuation() {
     let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::ZERO, 0.0);
     car.state.velocity = Vec2::new(20.0, 0.0);

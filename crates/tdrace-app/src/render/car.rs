@@ -33,16 +33,18 @@ pub fn render_car_with_visual_type(
     let fwd = car.forward_vector();
     let right = car.right_vector();
     let z_jump = car.state.elevation.max(0.0);
+    let z_ramp = car.state.ramp_elevation.max(0.0);
+    let z_lift = z_jump + z_ramp;
     let z_road = car.state.road_elevation.max(0.0);
-    let z_total = z_jump + z_road;
+    let z_total = z_lift + z_road;
 
     // Body roll and squat/dive offsets from local accelerations
     let roll_offset_lat = (-car.state.acceleration_local.y * 0.015).clamp(-0.18, 0.18);
     let pitch_offset_long = (car.state.acceleration_local.x * 0.012).clamp(-0.15, 0.15);
 
-    // 2.5D Elevation: airborne car rises along -Y screen projection and scales up slightly
-    let elevation_lift = Vec2::new(0.0, -z_jump * 1.6);
-    let air_scale = 1.0 + (z_jump * 0.07).min(0.35);
+    // 2.5D Elevation: airborne or on-ramp car rises along -Y screen projection and scales up slightly
+    let elevation_lift = Vec2::new(0.0, -z_lift * 1.6);
+    let air_scale = 1.0 + (z_lift * 0.07).min(0.35);
 
     let chassis_center = pos + right * roll_offset_lat + fwd * pitch_offset_long + elevation_lift;
 
