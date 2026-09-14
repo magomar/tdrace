@@ -1,6 +1,15 @@
 #[cfg(feature = "gamepad")]
-use gilrs::{Axis, Button, Event, EventType, GamepadId, Gilrs};
+use gilrs::{Axis, Button, Event, EventType, GamepadId, Gilrs, GilrsBuilder};
 use serde::{Deserialize, Serialize};
+
+/// Supplemental SDL gamecontrollerdb mappings for generic controllers and adapter revisions
+/// not bundled in Gilrs' default database.
+pub const SUPPLEMENTAL_SDL_MAPPINGS: &str = "\
+03000000100800000100000010010000,Twin USB PS2 Adapter,a:b2,b:b1,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b10,lefttrigger:b4,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b11,righttrigger:b5,rightx:a3,righty:a2,start:b9,x:b3,y:b0,platform:Linux,\n\
+03000000100800000100000011010000,Twin USB PS2 Adapter,a:b2,b:b1,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b10,lefttrigger:b4,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b11,righttrigger:b5,rightx:a3,righty:a2,start:b9,x:b3,y:b0,platform:Linux,\n\
+03000000100800000100000010010000,shanwan Twin USB Joystick,a:b2,b:b1,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b10,lefttrigger:b4,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b11,righttrigger:b5,rightx:a3,righty:a2,start:b9,x:b3,y:b0,platform:Linux,\n\
+03000000100800000100000011010000,shanwan Twin USB Joystick,a:b2,b:b1,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b10,lefttrigger:b4,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b11,righttrigger:b5,rightx:a3,righty:a2,start:b9,x:b3,y:b0,platform:Linux,\n\
+";
 
 /// Configuration for Gamepad analog stick deadzones, trigger thresholds, and sensitivity curves.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -108,6 +117,7 @@ pub struct GamepadManager {
     prev_thumb_l: bool,
     prev_rb: bool,
     prev_lb: bool,
+    raw_codes_held: Vec<u32>,
 }
 
 impl Default for GamepadManager {
@@ -120,7 +130,10 @@ impl GamepadManager {
     /// Creates a new GamepadManager, attempting to initialize the native subsystem.
     pub fn new() -> Self {
         #[cfg(feature = "gamepad")]
-        let (gilrs, active_gamepad, gamepad_name, is_connected) = match Gilrs::new() {
+        let (gilrs, active_gamepad, gamepad_name, is_connected) = match GilrsBuilder::default()
+            .add_mappings(SUPPLEMENTAL_SDL_MAPPINGS)
+            .build()
+        {
             Ok(g) => {
                 let first_gamepad = g
                     .gamepads()
@@ -152,6 +165,7 @@ impl GamepadManager {
             active_gamepad,
             snapshot,
             raw_buttons_held: Vec::new(),
+            raw_codes_held: Vec::new(),
             prev_buttons_held: Vec::new(),
             prev_stick_x: 0.0,
             prev_stick_y: 0.0,
@@ -240,6 +254,8 @@ impl GamepadManager {
             let mut dpad_r = false;
             let mut thumb_r = false;
             let mut thumb_l = false;
+            let mut btn_rb = false;
+            let mut btn_lb = false;
 
             while let Some(Event { id, event, .. }) = gilrs.next_event() {
                 self.active_gamepad = Some(id);
@@ -250,10 +266,14 @@ impl GamepadManager {
 
                 match event {
                     EventType::ButtonPressed(btn, code) => {
+                        let raw_code = code.into_u32();
+                        if !self.raw_codes_held.contains(&raw_code) {
+                            self.raw_codes_held.push(raw_code);
+                        }
                         let code_str = if btn != Button::Unknown {
                             format!("{btn:?}")
                         } else {
-                            format!("Btn_{code}")
+                            format!("Btn_{raw_code}")
                         };
                         if !self.raw_buttons_held.contains(&code_str) {
                             self.raw_buttons_held.push(code_str.clone());
@@ -273,14 +293,31 @@ impl GamepadManager {
                             Button::DPadRight => dpad_r = true,
                             Button::RightThumb => thumb_r = true,
                             Button::LeftThumb => thumb_l = true,
+                            Button::RightTrigger => btn_rb = true,
+                            Button::LeftTrigger => btn_lb = true,
+                            _ => {}
+                        }
+
+                        // Linux evdev fallback for generic unmapped controllers
+                        match raw_code {
+                            290 | 304 => btn_south = true,
+                            289 | 305 => btn_east = true,
+                            291 | 308 => btn_west = true,
+                            288 | 307 => btn_north = true,
+                            297 | 315 => btn_start = true,
+                            296 | 314 => btn_select = true,
+                            293 | 311 => btn_rb = true,
+                            292 | 310 => btn_lb = true,
                             _ => {}
                         }
                     }
                     EventType::ButtonReleased(btn, code) => {
+                        let raw_code = code.into_u32();
+                        self.raw_codes_held.retain(|&c| c != raw_code);
                         let code_str = if btn != Button::Unknown {
                             format!("{btn:?}")
                         } else {
-                            format!("Btn_{code}")
+                            format!("Btn_{raw_code}")
                         };
                         self.raw_buttons_held.retain(|b| b != &code_str);
                     }
@@ -314,9 +351,7 @@ impl GamepadManager {
             let mut dpad_down_down = false;
             let mut dpad_left_down = false;
             let mut dpad_right_down = false;
-            let mut btn_rb = false;
             let mut btn_rb_down = false;
-            let mut btn_lb = false;
             let mut btn_lb_down = false;
             let mut stick_y = 0.0;
 
@@ -329,12 +364,24 @@ impl GamepadManager {
                     self.snapshot.is_connected = true;
                     self.snapshot.gamepad_name = gp.name().to_string();
 
-                    let curr_south = gp.is_pressed(Button::South);
-                    let curr_east = gp.is_pressed(Button::East);
-                    let curr_west = gp.is_pressed(Button::West);
-                    let curr_north = gp.is_pressed(Button::North);
-                    let curr_start = gp.is_pressed(Button::Start);
-                    let curr_select = gp.is_pressed(Button::Select);
+                    let curr_south = gp.is_pressed(Button::South)
+                        || self.raw_codes_held.contains(&290)
+                        || self.raw_codes_held.contains(&304);
+                    let curr_east = gp.is_pressed(Button::East)
+                        || self.raw_codes_held.contains(&289)
+                        || self.raw_codes_held.contains(&305);
+                    let curr_west = gp.is_pressed(Button::West)
+                        || self.raw_codes_held.contains(&291)
+                        || self.raw_codes_held.contains(&308);
+                    let curr_north = gp.is_pressed(Button::North)
+                        || self.raw_codes_held.contains(&288)
+                        || self.raw_codes_held.contains(&307);
+                    let curr_start = gp.is_pressed(Button::Start)
+                        || self.raw_codes_held.contains(&297)
+                        || self.raw_codes_held.contains(&315);
+                    let curr_select = gp.is_pressed(Button::Select)
+                        || self.raw_codes_held.contains(&296)
+                        || self.raw_codes_held.contains(&314);
                     let dpad_y_axis = gp.axis_data(Axis::DPadY).map(|d| d.value()).unwrap_or(0.0);
                     let dpad_x_axis = gp.axis_data(Axis::DPadX).map(|d| d.value()).unwrap_or(0.0);
                     let curr_dpad_u = gp.is_pressed(Button::DPadUp) || dpad_y_axis > 0.5;
@@ -343,8 +390,12 @@ impl GamepadManager {
                     let curr_dpad_r = gp.is_pressed(Button::DPadRight) || dpad_x_axis > 0.5;
                     let curr_thumb_r = gp.is_pressed(Button::RightThumb);
                     let curr_thumb_l = gp.is_pressed(Button::LeftThumb);
-                    let curr_rb = gp.is_pressed(Button::RightTrigger);
-                    let curr_lb = gp.is_pressed(Button::LeftTrigger);
+                    let curr_rb = gp.is_pressed(Button::RightTrigger)
+                        || self.raw_codes_held.contains(&293)
+                        || self.raw_codes_held.contains(&311);
+                    let curr_lb = gp.is_pressed(Button::LeftTrigger)
+                        || self.raw_codes_held.contains(&292)
+                        || self.raw_codes_held.contains(&310);
 
                     if curr_south && !self.prev_south { btn_south = true; }
                     if curr_east && !self.prev_east { btn_east = true; }
