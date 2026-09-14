@@ -947,13 +947,29 @@ impl Car {
     }
 
     /// Initiates a ballistic jump launch with given launch direction, speed, and ramp angle.
-    pub fn launch_jump(&mut self, direction: Vec2, launch_speed: f32, ramp_angle_deg: f32) {
+    pub fn launch_jump(&mut self, direction: Vec2, _launch_speed: f32, ramp_angle_deg: f32) {
+        self.launch_jump_with_height(direction, ramp_angle_deg, 0.05);
+    }
+
+    /// Initiates a realistic ballistic jump launch off a ramp lip of specified height.
+    pub fn launch_jump_with_height(&mut self, direction: Vec2, ramp_angle_deg: f32, takeoff_elevation: f32) {
         let dir = direction.normalize_or_zero();
         let speed_along_dir = self.state.velocity.dot(dir).max(0.0);
         let angle_rad = ramp_angle_deg.to_radians();
-        let v_z = speed_along_dir * angle_rad.sin() * 0.75 + launch_speed;
-        self.state.vertical_velocity = v_z.max(3.0);
-        self.state.elevation = 0.05;
+        let (sin_theta, cos_theta) = angle_rad.sin_cos();
+
+        // Realistic vertical launch velocity from incline angle and suspension compliance:
+        // Long-travel chassis suspension absorbs ~25% of vertical impulse upon climbing the curve.
+        let suspension_efficiency = 0.75f32;
+        let v_z = speed_along_dir * sin_theta * suspension_efficiency;
+
+        // Partition forward momentum along ramp incline (conserving kinetic energy):
+        let lateral_v = self.state.velocity - dir * speed_along_dir;
+        self.state.velocity = dir * (speed_along_dir * cos_theta) + lateral_v;
+        self.state.speed = self.state.velocity.length();
+
+        self.state.vertical_velocity = v_z;
+        self.state.elevation = takeoff_elevation.max(0.05);
         self.state.is_airborne = true;
         self.state.air_time = 0.0;
         self.state.jump_count += 1;
@@ -965,10 +981,10 @@ impl Car {
         is_on_ramp: bool,
         ramp: &JumpRampProperties,
     ) -> bool {
-        if self.state.elevation <= 0.1 && is_on_ramp {
+        if !self.state.is_airborne && is_on_ramp {
             let speed_along_dir = self.state.velocity.dot(ramp.direction);
             if speed_along_dir > 3.5 {
-                self.launch_jump(ramp.direction, ramp.launch_speed, ramp.ramp_angle_deg);
+                self.launch_jump_with_height(ramp.direction, ramp.ramp_angle_deg, ramp.height);
                 return true;
             }
         }
@@ -980,8 +996,11 @@ impl Car {
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct JumpRampProperties {
     pub direction: Vec2,
+    #[serde(default)]
     pub launch_speed: f32,
     pub ramp_angle_deg: f32,
+    #[serde(default)]
+    pub height: f32,
 }
 
 

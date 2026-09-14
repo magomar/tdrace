@@ -806,6 +806,32 @@ impl JumpRamp {
             (current_wid * factor).clamp(1.0, 100.0),
         );
     }
+
+    /// Returns the normalized progress [0.0, 1.0] from entrance (0.0) to takeoff lip (1.0).
+    pub fn progress_along_ramp(&self, point: Vec2) -> f32 {
+        let center = self.shape.center();
+        let half_len = self.half_extents().x;
+        let delta = point - center;
+        let u = delta.dot(self.direction);
+        ((u + half_len) / (2.0 * half_len)).clamp(0.0, 1.0)
+    }
+
+    /// Returns the natural curved surface elevation at a given point on the ramp.
+    /// Rather than a rigid triangular wedge, natural ramps feature a smooth progressive
+    /// concave transition curve from 0.0 at the ground entrance up to height H at the takeoff lip.
+    pub fn surface_elevation_at(&self, point: Vec2) -> f32 {
+        let s = self.progress_along_ramp(point);
+        let len = self.length().max(0.1);
+        let incline_len = self.incline_length().min(len);
+        let s_incline = (incline_len / len).clamp(0.01, 1.0);
+
+        if s <= s_incline {
+            let t = s / s_incline;
+            (self.height * t * t).clamp(0.0, self.height)
+        } else {
+            self.height
+        }
+    }
 }
 
 /// Extension trait allowing Car to trigger jump ramps directly.
@@ -821,6 +847,7 @@ impl JumpRampCarExt for wheelbase::Car {
             direction: ramp.direction,
             launch_speed: ramp.launch_speed,
             ramp_angle_deg: ramp.ramp_angle_deg,
+            height: ramp.height,
         };
         self.try_trigger_jump(is_on_ramp, &props)
     }

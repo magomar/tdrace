@@ -4538,9 +4538,6 @@ impl RaceSession {
         for (i, car) in self.cars.iter_mut().enumerate() {
             for ramp in &self.track.geometry.jump_ramps {
                 if car.try_trigger_jump_ramp(ramp) {
-                    if i == 0 || (i == 1 && is_split) {
-                        self.audio.play_sfx(SfxType::JumpLaunch);
-                    }
                     break;
                 }
             }

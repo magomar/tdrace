@@ -350,28 +350,11 @@ pub fn generate_offroad_sound(sample_rate: u32) -> Vec<u8> {
     encode_wav_16bit_mono(&samples, sample_rate)
 }
 
-/// Generates an arcade jump launch aerodynamic whoosh and pitch rise (~0.18s).
+/// Generates a neutral sound buffer for jump launch (no arcade pitch sweep).
 pub fn generate_jump_launch_sound(sample_rate: u32) -> Vec<u8> {
-    let duration = 0.18;
+    let duration = 0.08;
     let total_samples = (duration * sample_rate as f32).round() as usize;
-    let mut samples = vec![0.0f32; total_samples];
-    let mut filter = BiquadLowPass::new(sample_rate, 1800.0, 1.1);
-
-    for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
-        let t = i as f32 / sample_rate as f32;
-        let env = if t < 0.02 {
-            t / 0.02
-        } else {
-            (1.0 - (t - 0.02) / (duration - 0.02)).max(0.0).powi(2)
-        };
-
-        let pitch = 180.0 + (t / duration).powi(2) * 320.0;
-        let tone = Oscillator::sine(t * pitch) * 0.60 + Oscillator::saw(t * (pitch * 0.5)) * 0.40;
-        let filtered = filter.process(tone);
-
-        *sample = soft_saturate(filtered * env, 1.2) * 0.80;
-    }
-
+    let samples = vec![0.0f32; total_samples];
     encode_wav_16bit_mono(&samples, sample_rate)
 }
 

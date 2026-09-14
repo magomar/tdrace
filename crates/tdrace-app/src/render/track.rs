@@ -122,43 +122,43 @@ pub fn render_surface_zones(track: &Track) {
         render_surface_shape(&zone.shape, fill_col, border_col);
     }
 }
-/// Helper returning base color, border rail color, and chevron color for a jump ramp according to its surface type.
+/// Helper returning base color, border rail color, and natural contour ridge color for a jump ramp according to its surface type.
 pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, Color) {
     match surface {
         SurfaceType::Asphalt => (
-            Color::new(0.18, 0.20, 0.24, 1.0),
-            Some(Color::new(0.85, 0.85, 0.90, 1.0)),
-            Palette::NEON_GOLD,
+            Color::new(0.20, 0.22, 0.26, 1.0),
+            Some(Color::new(0.70, 0.72, 0.78, 0.85)),
+            Color::new(0.80, 0.82, 0.88, 0.75),
         ),
         SurfaceType::Dirt => (
             Palette::DIRT,
             Some(Palette::DIRT_EDGE),
-            Palette::NEON_GOLD,
+            Color::new(0.68, 0.50, 0.32, 0.85),
         ),
         SurfaceType::Sand => (
             Palette::SAND,
             Some(Palette::SAND_DARK),
-            Color::new(0.20, 0.22, 0.28, 1.0),
+            Color::new(0.72, 0.58, 0.38, 0.85),
         ),
         SurfaceType::Grass => (
             Palette::GRASS_DARK,
             Some(Palette::GRASS),
-            Palette::NEON_GOLD,
+            Color::new(0.38, 0.65, 0.32, 0.85),
         ),
         SurfaceType::Ice => (
             Color::new(0.78, 0.88, 0.96, 1.0),
             Some(Color::new(0.92, 0.96, 1.0, 1.0)),
-            Color::new(0.15, 0.35, 0.65, 1.0),
+            Color::new(0.45, 0.68, 0.88, 0.85),
         ),
         SurfaceType::Water => (
             Palette::WATER,
             Some(Palette::WATER_BORDER),
-            Palette::NEON_GOLD,
+            Color::new(0.40, 0.75, 0.90, 0.85),
         ),
         SurfaceType::Oil => (
             Color::new(0.12, 0.12, 0.15, 1.0),
             Some(Color::new(0.28, 0.24, 0.35, 1.0)),
-            Palette::NEON_GOLD,
+            Color::new(0.35, 0.30, 0.45, 0.85),
         ),
         SurfaceType::Curb => (
             Palette::CURB_RED,
@@ -170,7 +170,7 @@ pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, C
 
 pub fn render_jump_ramps(track: &Track) {
     for ramp in &track.geometry.jump_ramps {
-        let (ramp_base_col, border_opt, chevron_col) = get_ramp_surface_colors(ramp.surface);
+        let (ramp_base_col, border_opt, contour_col) = get_ramp_surface_colors(ramp.surface);
         match &ramp.shape {
             SurfaceShape::OrientedBox {
                 center,
@@ -194,58 +194,86 @@ pub fn render_jump_ramps(track: &Track) {
                 // 2. Base metallic/surface ramp quad
                 draw_quad(p0, p1, p2, p3, ramp_base_col);
 
-                // 3. Directional hazard chevron arrows (pointing forward in launch direction)
-                let num_chevrons = if half_len >= 8.0 {
+                // 3. Natural curved elevation contour arcs across the ramp width (showing progressive mound incline)
+                let num_contours = if half_len >= 8.0 {
+                    4
+                } else if half_len >= 4.0 {
                     3
-                } else if half_len >= 3.5 {
-                    2
                 } else {
-                    1
+                    2
                 };
 
-                let arrow_half_w = (half_wid * 0.72).max(0.6);
-                let chevron_depth = (half_len * 0.35).min(arrow_half_w * 0.85);
-                let chevron_thick = (half_len * 0.20).min(arrow_half_w * 0.45);
+                let arc_w = (half_wid * 0.82).max(0.6);
+                let arc_bulge = (half_len * 0.22).min(arc_w * 0.40);
 
-                for s in 0..num_chevrons {
-                    let t = (s as f32 + 1.0) / (num_chevrons as f32 + 1.0);
-                    let x_tip = -half_len * 0.60 + t * (half_len * 1.20);
+                for s in 0..num_contours {
+                    let t = (s as f32 + 1.0) / (num_contours as f32 + 1.0);
+                    let x_center = -half_len * 0.70 + t * (half_len * 1.35);
 
-                    let tip = *center + fwd * x_tip;
-                    let notch = tip - fwd * chevron_thick;
-                    let l_out = tip - fwd * chevron_depth - right * arrow_half_w;
-                    let l_in = l_out - fwd * chevron_thick;
-                    let r_out = tip - fwd * chevron_depth + right * arrow_half_w;
-                    let r_in = r_out - fwd * chevron_thick;
+                    // Draw smooth curved contour arc across the ramp width (12 segments)
+                    let num_segments = 12;
+                    let mut prev_pt: Option<Vec2> = None;
 
-                    draw_quad(l_in, l_out, tip, notch, chevron_col);
-                    draw_quad(r_in, notch, tip, r_out, chevron_col);
+                    for seg in 0..=num_segments {
+                        let frac = (seg as f32 / num_segments as f32) * 2.0 - 1.0; // [-1.0, 1.0]
+                        let y_offset = frac * arc_w;
+                        let curve_offset = (1.0 - frac * frac) * arc_bulge;
+                        let pt = *center + fwd * (x_center + curve_offset) + right * y_offset;
+
+                        if let Some(prev) = prev_pt {
+                            draw_line(prev.x, prev.y, pt.x, pt.y, 0.35, contour_col);
+                        }
+                        prev_pt = Some(pt);
+                    }
                 }
 
-                // 4. Elevated launch lip line at exit edge (bright cyan glow)
-                let launch_edge_col = Color::new(0.30, 0.95, 1.0, 1.0);
-                draw_line(p1.x, p1.y, p2.x, p2.y, 0.45, launch_edge_col);
+                // 4. Elevated natural curved takeoff lip at exit edge
+                let lip_bulge = (half_len * 0.12).min(0.45);
+                let mut prev_lip: Option<Vec2> = None;
+                let num_lip_segs = 12;
+                for seg in 0..=num_lip_segs {
+                    let frac = (seg as f32 / num_lip_segs as f32) * 2.0 - 1.0;
+                    let y_offset = frac * half_wid;
+                    let curve_offset = (1.0 - frac * frac) * lip_bulge;
+                    let pt = *center + fwd * (half_len + curve_offset) + right * y_offset;
+
+                    if let Some(prev) = prev_lip {
+                        draw_line(prev.x, prev.y, pt.x, pt.y, 0.40, Color::new(0.95, 0.95, 0.98, 0.95));
+                    }
+                    prev_lip = Some(pt);
+                }
 
                 // 5. Ramp side border rails & entrance edge
                 let rail_col = border_opt.unwrap_or(Color::new(0.85, 0.85, 0.90, 1.0));
                 draw_line(p0.x, p0.y, p1.x, p1.y, 0.30, rail_col);
                 draw_line(p3.x, p3.y, p2.x, p2.y, 0.30, rail_col);
-                draw_line(p0.x, p0.y, p3.x, p3.y, 0.30, Color::new(0.60, 0.60, 0.65, 1.0));
+                draw_line(p0.x, p0.y, p3.x, p3.y, 0.25, Color::new(0.55, 0.55, 0.60, 0.60));
             }
             _ => {
                 render_surface_shape(&ramp.shape, ramp_base_col, border_opt);
                 let center = ramp.shape.center();
                 let dir = ramp.direction;
                 let right = Vec2::new(-dir.y, dir.x);
-                let arrow_len = 5.0;
-                let arrow_w = 3.0;
-                let tip = center + dir * (arrow_len * 0.5);
-                let base = center - dir * (arrow_len * 0.5);
-                let l_wing = tip - dir * (arrow_len * 0.4) - right * (arrow_w * 0.5);
-                let r_wing = tip - dir * (arrow_len * 0.4) + right * (arrow_w * 0.5);
-                draw_line(base.x, base.y, tip.x, tip.y, 0.45, chevron_col);
-                draw_line(tip.x, tip.y, l_wing.x, l_wing.y, 0.45, chevron_col);
-                draw_line(tip.x, tip.y, r_wing.x, r_wing.y, 0.45, chevron_col);
+                let half_len = ramp.half_extents().x.max(2.0);
+                let half_wid = ramp.half_extents().y.max(1.5);
+                let arc_w = half_wid * 0.75;
+                let arc_bulge = (half_len * 0.20).min(arc_w * 0.35);
+
+                for s in 0..3 {
+                    let t = (s as f32 + 1.0) / 4.0;
+                    let x_c = -half_len * 0.5 + t * half_len;
+                    let mut prev_pt: Option<Vec2> = None;
+                    for seg in 0..=10 {
+                        let frac = (seg as f32 / 10.0) * 2.0 - 1.0;
+                        let y = frac * arc_w;
+                        let bulge = (1.0 - frac * frac) * arc_bulge;
+                        let pt = center + dir * (x_c + bulge) + right * y;
+                        if let Some(prev) = prev_pt {
+                            draw_line(prev.x, prev.y, pt.x, pt.y, 0.35, contour_col);
+                        }
+                        prev_pt = Some(pt);
+                    }
+                }
             }
         }
     }

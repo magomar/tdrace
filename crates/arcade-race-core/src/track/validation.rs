@@ -660,20 +660,20 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
 
     // 9. Jump Ramp Checks
     for (i, ramp) in track.geometry.jump_ramps.iter().enumerate() {
-        if ramp.launch_speed < 2.0 {
-            diagnostics.push(
-                TrackValidationError::warning(
-                    "WARN_LOW_RAMP_SPEED",
-                    format!("Jump ramp #{} '{}' launch speed is low ({:.1} m/s).", i + 1, ramp.name, ramp.launch_speed),
-                )
-                .with_index(i),
-            );
-        }
         if ramp.height <= 0.0 {
             diagnostics.push(
                 TrackValidationError::warning(
                     "WARN_ZERO_RAMP_HEIGHT",
                     format!("Jump ramp #{} '{}' height is {:.1}m.", i + 1, ramp.name, ramp.height),
+                )
+                .with_index(i),
+            );
+        }
+        if ramp.ramp_angle_deg <= 0.0 {
+            diagnostics.push(
+                TrackValidationError::warning(
+                    "WARN_ZERO_RAMP_PITCH",
+                    format!("Jump ramp #{} '{}' pitch angle is {:.1}°.", i + 1, ramp.name, ramp.ramp_angle_deg),
                 )
                 .with_index(i),
             );

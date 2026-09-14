@@ -1492,35 +1492,6 @@ fn render_inspector(
                 ) {
                     tools.set_selected_jump_ramp_pitch_deg(state, new_p);
                 }
-                curr_y += row_h + scaler.s(10.0);
-
-                // 6. LAUNCH SPEED (1.0m/s – 20.0m/s)
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                let l_spd = ramp.launch_speed;
-                fonts.draw_ui_bold("Launch Speed Boost:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
-                curr_y += scaler.s(16.0);
-
-                let spd_str = format!("{:.1}m/s", l_spd);
-                if let Some(new_spd) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "ramp_speed",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    row_w,
-                    row_h,
-                    l_spd,
-                    1.0,
-                    20.0,
-                    0.5,
-                    &spd_str,
-                    true,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.set_selected_jump_ramp_launch_speed(state, new_spd);
-                }
                 curr_y += row_h + scaler.s(12.0);
 
                 // 6. AUTO-FIT BUTTONS: FIT PITCH & FIT HEIGHT
