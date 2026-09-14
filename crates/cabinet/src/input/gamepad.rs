@@ -91,6 +91,87 @@ pub struct GamepadSnapshot {
     pub btn_cancel_pressed: bool,  // Universal Cancel (East / South / Back)
 }
 
+/// Optional loaded gamepad profile mapping from `gamepad-mapper`.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct CustomGamepadProfile {
+    #[serde(default)]
+    pub device_name: String,
+    #[serde(default, alias = "left_stick_x")]
+    pub steering: Option<CustomAxisBinding>,
+    #[serde(default, alias = "left_stick_y")]
+    pub stick_y: Option<CustomAxisBinding>,
+    #[serde(default, alias = "right_trigger")]
+    pub throttle: Option<CustomTriggerBinding>,
+    #[serde(default, alias = "left_trigger")]
+    pub brake: Option<CustomTriggerBinding>,
+    #[serde(default, alias = "btn_a")]
+    pub btn_south: Option<CustomButtonBinding>,
+    #[serde(default, alias = "btn_b")]
+    pub btn_east: Option<CustomButtonBinding>,
+    #[serde(default, alias = "btn_x")]
+    pub btn_west: Option<CustomButtonBinding>,
+    #[serde(default, alias = "btn_y")]
+    pub btn_north: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub bumper_left: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub bumper_right: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub dpad_up: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub dpad_down: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub dpad_left: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub dpad_right: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub btn_start: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub btn_select: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub stick_l3: Option<CustomButtonBinding>,
+    #[serde(default)]
+    pub stick_r3: Option<CustomButtonBinding>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct CustomAxisBinding {
+    #[serde(default)]
+    pub axis_name: String,
+    #[serde(default)]
+    pub inverted: bool,
+    #[serde(default)]
+    pub deadzone: f32,
+    #[serde(default)]
+    pub scale: f32,
+    #[serde(default)]
+    pub fallback_btn_pos: Option<String>,
+    #[serde(default)]
+    pub fallback_btn_neg: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct CustomTriggerBinding {
+    #[serde(default)]
+    pub primary_code: String,
+    #[serde(default)]
+    pub is_axis: bool,
+    #[serde(default)]
+    pub inverted: bool,
+    #[serde(default)]
+    pub deadzone: f32,
+    #[serde(default)]
+    pub alternate_code: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct CustomButtonBinding {
+    #[serde(default)]
+    pub code: String,
+    #[serde(default)]
+    pub alternate: Option<String>,
+}
+
 /// Cross-platform Gamepad Manager supporting hot-plugging, analog axes, and button events.
 pub struct GamepadManager {
     #[cfg(feature = "gamepad")]
@@ -99,6 +180,7 @@ pub struct GamepadManager {
     #[cfg(feature = "gamepad")]
     pub active_gamepad: Option<GamepadId>,
     pub snapshot: GamepadSnapshot,
+    pub custom_profile: Option<CustomGamepadProfile>,
     pub raw_buttons_held: Vec<String>,
     prev_buttons_held: Vec<String>,
     prev_stick_x: f32,
@@ -157,6 +239,8 @@ impl GamepadManager {
         snapshot.is_connected = is_connected;
         snapshot.gamepad_name = gamepad_name;
 
+        let custom_profile = Self::find_and_load_profile();
+
         Self {
             #[cfg(feature = "gamepad")]
             gilrs,
@@ -164,6 +248,7 @@ impl GamepadManager {
             #[cfg(feature = "gamepad")]
             active_gamepad,
             snapshot,
+            custom_profile,
             raw_buttons_held: Vec::new(),
             raw_codes_held: Vec::new(),
             prev_buttons_held: Vec::new(),
@@ -184,6 +269,77 @@ impl GamepadManager {
             prev_rb: false,
             prev_lb: false,
         }
+    }
+
+    /// Candidate search paths for gamepad mapping profiles in order of priority.
+    pub fn candidate_profile_paths() -> Vec<std::path::PathBuf> {
+        let mut paths = Vec::new();
+        // 1. Current working directory
+        paths.push(std::path::PathBuf::from("gamepad_profile.json"));
+        // 2. Sibling directories
+        paths.push(std::path::PathBuf::from("../gamepad-mapper/gamepad_profile.json"));
+        paths.push(std::path::PathBuf::from("../tdrace/gamepad_profile.json"));
+        paths.push(std::path::PathBuf::from("../asteroids/gamepad_profile.json"));
+        // 3. User config directories
+        if let Some(home) = std::env::var_os("HOME") {
+            let h = std::path::PathBuf::from(home);
+            paths.push(h.join(".config").join("gamepad-mapper").join("gamepad_profile.json"));
+            paths.push(h.join(".config").join("tdrace").join("gamepad_profile.json"));
+            paths.push(h.join(".config").join("asteroids").join("gamepad_profile.json"));
+        }
+        paths
+    }
+
+    /// Finds and parses the most recently modified profile among candidate locations.
+    pub fn find_and_load_profile() -> Option<CustomGamepadProfile> {
+        for path in Self::candidate_profile_paths() {
+            if path.exists() {
+                if let Ok(content) = std::fs::read_to_string(&path) {
+                    if let Ok(profile) = serde_json::from_str::<CustomGamepadProfile>(&content) {
+                        return Some(profile);
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Checks if a custom button binding is currently held down.
+    pub fn is_binding_active(
+        binding: &Option<CustomButtonBinding>,
+        raw_buttons_held: &[String],
+    ) -> bool {
+        if let Some(b) = binding {
+            if raw_buttons_held.iter().any(|raw| {
+                raw == &b.code
+                    || raw.trim_start_matches("Btn_") == b.code.trim_start_matches("Btn_")
+                    || b.alternate.as_ref().map_or(false, |alt| {
+                        raw == alt || raw.trim_start_matches("Btn_") == alt.trim_start_matches("Btn_")
+                    })
+            }) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Checks if a custom button binding was pressed this frame.
+    pub fn is_binding_pressed(
+        binding: &Option<CustomButtonBinding>,
+        pressed_codes: &[String],
+    ) -> bool {
+        if let Some(b) = binding {
+            if pressed_codes.iter().any(|p| {
+                p == &b.code
+                    || p.trim_start_matches("Btn_") == b.code.trim_start_matches("Btn_")
+                    || b.alternate.as_ref().map_or(false, |alt| {
+                        p == alt || p.trim_start_matches("Btn_") == alt.trim_start_matches("Btn_")
+                    })
+            }) {
+                return true;
+            }
+        }
+        false
     }
 
     /// Clears per-frame button press events.
@@ -267,18 +423,31 @@ impl GamepadManager {
                 match event {
                     EventType::ButtonPressed(btn, code) => {
                         let raw_code = code.into_u32();
+                        let evdev_code = (raw_code & 0xFFFF) as u32;
+                        if !self.raw_codes_held.contains(&evdev_code) {
+                            self.raw_codes_held.push(evdev_code);
+                        }
                         if !self.raw_codes_held.contains(&raw_code) {
                             self.raw_codes_held.push(raw_code);
                         }
-                        let code_str = if btn != Button::Unknown {
-                            format!("{btn:?}")
-                        } else {
-                            format!("Btn_{raw_code}")
-                        };
-                        if !self.raw_buttons_held.contains(&code_str) {
-                            self.raw_buttons_held.push(code_str.clone());
+
+                        let code_str = format!("Btn_{code}");
+                        let raw_str = format!("Btn_{evdev_code}");
+                        let display_code = format!("{code}");
+                        for s in [&code_str, &raw_str, &display_code] {
+                            if !self.raw_buttons_held.contains(s) {
+                                self.raw_buttons_held.push(s.clone());
+                            }
+                            pressed_codes.push(s.clone());
                         }
-                        pressed_codes.push(code_str);
+
+                        if btn != Button::Unknown {
+                            let btn_str = format!("{btn:?}");
+                            if !self.raw_buttons_held.contains(&btn_str) {
+                                self.raw_buttons_held.push(btn_str.clone());
+                            }
+                            pressed_codes.push(btn_str);
+                        }
 
                         match btn {
                             Button::Start => btn_start = true,
@@ -299,27 +468,90 @@ impl GamepadManager {
                         }
 
                         // Linux evdev fallback for generic unmapped controllers
-                        match raw_code {
+                        match evdev_code {
                             290 | 304 => btn_south = true,
                             289 | 305 => btn_east = true,
                             291 | 308 => btn_west = true,
                             288 | 307 => btn_north = true,
                             297 | 315 => btn_start = true,
                             296 | 314 => btn_select = true,
-                            293 | 311 => btn_rb = true,
-                            292 | 310 => btn_lb = true,
+                            295 => btn_rb = true,
+                            294 => btn_lb = true,
                             _ => {}
                         }
                     }
                     EventType::ButtonReleased(btn, code) => {
                         let raw_code = code.into_u32();
-                        self.raw_codes_held.retain(|&c| c != raw_code);
-                        let code_str = if btn != Button::Unknown {
-                            format!("{btn:?}")
-                        } else {
-                            format!("Btn_{raw_code}")
-                        };
-                        self.raw_buttons_held.retain(|b| b != &code_str);
+                        let evdev_code = (raw_code & 0xFFFF) as u32;
+                        self.raw_codes_held.retain(|&c| c != evdev_code && c != raw_code);
+
+                        let code_str = format!("Btn_{code}");
+                        let raw_str = format!("Btn_{evdev_code}");
+                        let display_code = format!("{code}");
+                        let btn_str = format!("{btn:?}");
+                        self.raw_buttons_held.retain(|b| b != &code_str && b != &raw_str && b != &display_code && b != &btn_str);
+                    }
+                    EventType::ButtonChanged(btn, val, code) => {
+                        let raw_code = code.into_u32();
+                        let evdev_code = (raw_code & 0xFFFF) as u32;
+                        let code_str = format!("Btn_{code}");
+                        let raw_str = format!("Btn_{evdev_code}");
+                        let display_code = format!("{code}");
+                        let btn_str = format!("{btn:?}");
+
+                        if val > 0.5 {
+                            if !self.raw_codes_held.contains(&evdev_code) {
+                                self.raw_codes_held.push(evdev_code);
+                            }
+                            if !self.raw_codes_held.contains(&raw_code) {
+                                self.raw_codes_held.push(raw_code);
+                            }
+                            for s in [&code_str, &raw_str, &display_code] {
+                                if !self.raw_buttons_held.contains(s) {
+                                    self.raw_buttons_held.push(s.clone());
+                                }
+                                pressed_codes.push(s.clone());
+                            }
+                            if btn != Button::Unknown {
+                                if !self.raw_buttons_held.contains(&btn_str) {
+                                    self.raw_buttons_held.push(btn_str.clone());
+                                }
+                                pressed_codes.push(btn_str);
+                            }
+
+                            match btn {
+                                Button::Start => btn_start = true,
+                                Button::Select => btn_select = true,
+                                Button::South => btn_south = true,
+                                Button::East => btn_east = true,
+                                Button::West => btn_west = true,
+                                Button::North => btn_north = true,
+                                Button::DPadUp => dpad_u = true,
+                                Button::DPadDown => dpad_d = true,
+                                Button::DPadLeft => dpad_l = true,
+                                Button::DPadRight => dpad_r = true,
+                                Button::RightThumb => thumb_r = true,
+                                Button::LeftThumb => thumb_l = true,
+                                Button::RightTrigger => btn_rb = true,
+                                Button::LeftTrigger => btn_lb = true,
+                                _ => {}
+                            }
+
+                            match evdev_code {
+                                290 | 304 => btn_south = true,
+                                289 | 305 => btn_east = true,
+                                291 | 308 => btn_west = true,
+                                288 | 307 => btn_north = true,
+                                297 | 315 => btn_start = true,
+                                296 | 314 => btn_select = true,
+                                295 => btn_rb = true,
+                                294 => btn_lb = true,
+                                _ => {}
+                            }
+                        } else if val < 0.2 {
+                            self.raw_codes_held.retain(|&c| c != evdev_code && c != raw_code);
+                            self.raw_buttons_held.retain(|b| b != &code_str && b != &raw_str && b != &display_code && b != &btn_str);
+                        }
                     }
                     _ => {}
                 }
@@ -331,6 +563,21 @@ impl GamepadManager {
                 }
             }
             self.prev_buttons_held = self.raw_buttons_held.clone();
+
+            if let Some(ref prof) = self.custom_profile {
+                if Self::is_binding_pressed(&prof.btn_south, &pressed_codes) { btn_south = true; }
+                if Self::is_binding_pressed(&prof.btn_east, &pressed_codes) { btn_east = true; }
+                if Self::is_binding_pressed(&prof.btn_west, &pressed_codes) { btn_west = true; }
+                if Self::is_binding_pressed(&prof.btn_north, &pressed_codes) { btn_north = true; }
+                if Self::is_binding_pressed(&prof.btn_start, &pressed_codes) { btn_start = true; }
+                if Self::is_binding_pressed(&prof.btn_select, &pressed_codes) { btn_select = true; }
+                if Self::is_binding_pressed(&prof.bumper_right, &pressed_codes) { btn_rb = true; }
+                if Self::is_binding_pressed(&prof.bumper_left, &pressed_codes) { btn_lb = true; }
+                if Self::is_binding_pressed(&prof.dpad_up, &pressed_codes) { dpad_u = true; }
+                if Self::is_binding_pressed(&prof.dpad_down, &pressed_codes) { dpad_d = true; }
+                if Self::is_binding_pressed(&prof.dpad_left, &pressed_codes) { dpad_l = true; }
+                if Self::is_binding_pressed(&prof.dpad_right, &pressed_codes) { dpad_r = true; }
+            }
 
             let config = self.config;
             let mut steer = 0.0;
@@ -364,22 +611,22 @@ impl GamepadManager {
                     self.snapshot.is_connected = true;
                     self.snapshot.gamepad_name = gp.name().to_string();
 
-                    let curr_south = gp.is_pressed(Button::South)
+                    let mut curr_south = gp.is_pressed(Button::South)
                         || self.raw_codes_held.contains(&290)
                         || self.raw_codes_held.contains(&304);
-                    let curr_east = gp.is_pressed(Button::East)
+                    let mut curr_east = gp.is_pressed(Button::East)
                         || self.raw_codes_held.contains(&289)
                         || self.raw_codes_held.contains(&305);
-                    let curr_west = gp.is_pressed(Button::West)
+                    let mut curr_west = gp.is_pressed(Button::West)
                         || self.raw_codes_held.contains(&291)
                         || self.raw_codes_held.contains(&308);
-                    let curr_north = gp.is_pressed(Button::North)
+                    let mut curr_north = gp.is_pressed(Button::North)
                         || self.raw_codes_held.contains(&288)
                         || self.raw_codes_held.contains(&307);
-                    let curr_start = gp.is_pressed(Button::Start)
+                    let mut curr_start = gp.is_pressed(Button::Start)
                         || self.raw_codes_held.contains(&297)
                         || self.raw_codes_held.contains(&315);
-                    let curr_select = gp.is_pressed(Button::Select)
+                    let mut curr_select = gp.is_pressed(Button::Select)
                         || self.raw_codes_held.contains(&296)
                         || self.raw_codes_held.contains(&314);
                     let dpad_y_axis = gp.axis_data(Axis::DPadY).map(|d| d.value()).unwrap_or(0.0);
@@ -390,12 +637,23 @@ impl GamepadManager {
                     let curr_dpad_r = gp.is_pressed(Button::DPadRight) || dpad_x_axis > 0.5;
                     let curr_thumb_r = gp.is_pressed(Button::RightThumb);
                     let curr_thumb_l = gp.is_pressed(Button::LeftThumb);
-                    let curr_rb = gp.is_pressed(Button::RightTrigger)
-                        || self.raw_codes_held.contains(&293)
+                    let mut curr_rb = gp.is_pressed(Button::RightTrigger)
+                        || self.raw_codes_held.contains(&295)
                         || self.raw_codes_held.contains(&311);
-                    let curr_lb = gp.is_pressed(Button::LeftTrigger)
-                        || self.raw_codes_held.contains(&292)
+                    let mut curr_lb = gp.is_pressed(Button::LeftTrigger)
+                        || self.raw_codes_held.contains(&294)
                         || self.raw_codes_held.contains(&310);
+
+                    if let Some(ref prof) = self.custom_profile {
+                        if Self::is_binding_active(&prof.btn_south, &self.raw_buttons_held) { curr_south = true; }
+                        if Self::is_binding_active(&prof.btn_east, &self.raw_buttons_held) { curr_east = true; }
+                        if Self::is_binding_active(&prof.btn_west, &self.raw_buttons_held) { curr_west = true; }
+                        if Self::is_binding_active(&prof.btn_north, &self.raw_buttons_held) { curr_north = true; }
+                        if Self::is_binding_active(&prof.btn_start, &self.raw_buttons_held) { curr_start = true; }
+                        if Self::is_binding_active(&prof.btn_select, &self.raw_buttons_held) { curr_select = true; }
+                        if Self::is_binding_active(&prof.bumper_right, &self.raw_buttons_held) { curr_rb = true; }
+                        if Self::is_binding_active(&prof.bumper_left, &self.raw_buttons_held) { curr_lb = true; }
+                    }
 
                     if curr_south && !self.prev_south { btn_south = true; }
                     if curr_east && !self.prev_east { btn_east = true; }
@@ -453,11 +711,41 @@ impl GamepadManager {
 
                     let raw_rt_btn = gp.button_data(Button::RightTrigger2).map(|d| d.value()).unwrap_or(0.0);
                     let is_rt_pressed = if gp.is_pressed(Button::RightTrigger2) { 1.0 } else { 0.0 };
-                    throttle = Self::process_trigger_deadzone(raw_rt_btn.max(is_rt_pressed), config.trigger_deadzone).clamp(0.0, 1.0);
+                    let is_rt_evdev = if self.raw_codes_held.contains(&293) { 1.0 } else { 0.0 };
+                    let is_rt_profile = if let Some(ref prof) = self.custom_profile {
+                        if let Some(ref th) = prof.throttle {
+                            if self.raw_buttons_held.iter().any(|b| b == &th.primary_code || b.trim_start_matches("Btn_") == th.primary_code.trim_start_matches("Btn_")) {
+                                1.0
+                            } else {
+                                0.0
+                            }
+                        } else {
+                            0.0
+                        }
+                    } else {
+                        0.0
+                    };
+                    let raw_rt = raw_rt_btn.max(is_rt_pressed).max(is_rt_evdev).max(is_rt_profile);
+                    throttle = Self::process_trigger_deadzone(raw_rt, config.trigger_deadzone).clamp(0.0, 1.0);
 
                     let raw_lt_btn = gp.button_data(Button::LeftTrigger2).map(|d| d.value()).unwrap_or(0.0);
                     let is_lt_pressed = if gp.is_pressed(Button::LeftTrigger2) { 1.0 } else { 0.0 };
-                    brake = Self::process_trigger_deadzone(raw_lt_btn.max(is_lt_pressed), config.trigger_deadzone).clamp(0.0, 1.0);
+                    let is_lt_evdev = if self.raw_codes_held.contains(&292) { 1.0 } else { 0.0 };
+                    let is_lt_profile = if let Some(ref prof) = self.custom_profile {
+                        if let Some(ref br) = prof.brake {
+                            if self.raw_buttons_held.iter().any(|b| b == &br.primary_code || b.trim_start_matches("Btn_") == br.primary_code.trim_start_matches("Btn_")) {
+                                1.0
+                            } else {
+                                0.0
+                            }
+                        } else {
+                            0.0
+                        }
+                    } else {
+                        0.0
+                    };
+                    let raw_lt = raw_lt_btn.max(is_lt_pressed).max(is_lt_evdev).max(is_lt_profile);
+                    brake = Self::process_trigger_deadzone(raw_lt, config.trigger_deadzone).clamp(0.0, 1.0);
 
                     handbrake = curr_south;
                     reverse = curr_west;
@@ -551,3 +839,46 @@ impl GamepadManager {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_custom_gamepad_profile_loading() {
+        let profile = GamepadManager::find_and_load_profile();
+        assert!(profile.is_some(), "Custom profile should be found in candidate paths");
+        let prof = profile.unwrap();
+        assert_eq!(prof.device_name, "shanwan Twin USB Joystick");
+        assert!(prof.btn_south.is_some());
+        assert_eq!(prof.btn_south.as_ref().unwrap().code, "Btn_KEY(290)");
+    }
+
+    #[test]
+    fn test_binding_active_matching() {
+        let binding = Some(CustomButtonBinding {
+            code: "Btn_KEY(290)".to_string(),
+            alternate: None,
+        });
+        // Test matching with Btn_KEY(290)
+        assert!(GamepadManager::is_binding_active(&binding, &["Btn_KEY(290)".to_string()]));
+        // Test matching with KEY(290)
+        assert!(GamepadManager::is_binding_active(&binding, &["KEY(290)".to_string()]));
+    }
+
+    #[test]
+    fn test_hardware_gamepad_presence() {
+        let gm = GamepadManager::new();
+        println!("GM is_connected: {}", gm.snapshot.is_connected);
+        println!("GM gamepad_name: {}", gm.snapshot.gamepad_name);
+        println!("GM custom_profile: {:?}", gm.custom_profile.as_ref().map(|p| &p.device_name));
+        #[cfg(feature = "gamepad")]
+        if let Some(ref g) = gm.gilrs {
+            for (id, gp) in g.gamepads() {
+                println!("Found gamepad {:?}: name='{}', connected={}, power_info={:?}", id, gp.name(), gp.is_connected(), gp.power_info());
+            }
+        }
+    }
+}
+
+
