@@ -159,6 +159,7 @@ impl TrackChoice {
                 !is_demoted
                     && (crate::track_manager::TrackManager::is_preset_slug(id)
                         || path.starts_with("f1/")
+                        || path.starts_with("gt/")
                         || path.starts_with("rally/")
                         || path.starts_with("kart/")
                         || path.starts_with("nascar/")
@@ -220,42 +221,45 @@ fn resolve_track_for_menu_with_dir_uncached(
     choice: &TrackChoice,
     dir: &std::path::Path,
 ) -> Option<tdrace_core::track::Track> {
-    // In developer mode, official git presets or custom tracks saved into the repository's tracks/
-    // directory take precedence so edited/overwritten presets immediately reflect on menu thumbnails.
-    if crate::storage::is_dev_mode() {
-        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-            let id = choice.track_id();
-            let file_name = format!("{}.json", id);
-            for m in ["classic", "rally", "kart", "f1", "nascar"] {
-                let p = git_tracks_dir.join(m).join(&file_name);
-                if p.exists() {
-                    if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
-                        return Some(t);
-                    }
-                }
+    let choice_module = match choice {
+        TrackChoice::Custom { path, .. } => {
+            if path.starts_with("gt/") {
+                Some("gt")
+            } else if path.starts_with("f1/") {
+                Some("f1")
+            } else if path.starts_with("nascar/") {
+                Some("nascar")
+            } else if path.starts_with("rally/") {
+                Some("rally")
+            } else if path.starts_with("kart/") {
+                Some("kart")
+            } else if path.starts_with("classic/") {
+                Some("classic")
+            } else {
+                None
+            }
+        }
+        _ => None,
+    };
+
+    // If git_tracks_dir exists, official git presets or custom tracks saved into the repository's
+    // tracks/ directory take precedence so edited/overwritten presets immediately reflect on menu thumbnails.
+    if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+        if let Some(p) = crate::track_manager::TrackManager::resolve_preset_git_file_with_dir(
+            &git_tracks_dir,
+            choice.track_id(),
+            choice_module,
+        ) {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
+                return Some(t);
             }
         }
     }
 
     // If this is an official preset and we are NOT in dev mode, skip user disk candidate overrides
-    // and load strictly from official procedural generators or git preset files.
+    // and load strictly from official procedural generators.
     if choice.is_official_preset() && !crate::storage::is_dev_mode() {
-        if let Some(t) = TrackChoice::resolve_procedural_preset(choice) {
-            return Some(t);
-        }
-        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-            let id = choice.track_id();
-            let file_name = format!("{}.json", id);
-            for m in ["classic", "rally", "kart", "f1", "nascar"] {
-                let p = git_tracks_dir.join(m).join(&file_name);
-                if p.exists() {
-                    if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
-                        return Some(t);
-                    }
-                }
-            }
-        }
-        return None;
+        return TrackChoice::resolve_procedural_preset(choice);
     }
 
     // 1. If custom choice and path directly exists on disk, load it
@@ -305,6 +309,7 @@ fn resolve_track_for_menu_with_dir_uncached(
     let candidate_paths = [
         dir.join("classic").join(&file_name),
         dir.join("f1").join(&file_name),
+        dir.join("gt").join(&file_name),
         dir.join("rally").join(&file_name),
         dir.join("kart").join(&file_name),
         dir.join("nascar").join(&file_name),
@@ -323,6 +328,7 @@ fn resolve_track_for_menu_with_dir_uncached(
         let git_candidates = [
             git_tracks_dir.join("classic").join(&file_name),
             git_tracks_dir.join("f1").join(&file_name),
+            git_tracks_dir.join("gt").join(&file_name),
             git_tracks_dir.join("rally").join(&file_name),
             git_tracks_dir.join("kart").join(&file_name),
             git_tracks_dir.join("nascar").join(&file_name),

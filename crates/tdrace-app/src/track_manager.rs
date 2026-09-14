@@ -760,14 +760,9 @@ impl TrackManager {
             "outlaw_pass" => TrackChoice::OutlawPass,
             custom_id => {
                 // If it exists in git_tracks_dir, load directly from the git preset file
-                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    for m in ["classic", "rally", "kart", "f1", "nascar"] {
-                        let git_file = git_tracks_dir.join(m).join(format!("{}.json", custom_id));
-                        if git_file.exists() {
-                            return Track::load_from_file(&git_file)
-                                .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
-                        }
-                    }
+                if let Some(git_file) = self.resolve_preset_git_file(custom_id, None) {
+                    return Track::load_from_file(&git_file)
+                        .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
                 }
                 let path = self.track_path_for_slug(custom_id).to_string_lossy().to_string();
                 TrackChoice::Custom {
@@ -789,34 +784,41 @@ impl TrackManager {
 
     /// Loads a `Track` from a `TrackChoice`.
     pub fn load_track(&self, choice: &TrackChoice) -> Result<Track, String> {
-        // In normal user mode, official presets are strictly immutable and always load
-        // directly from their canonical procedural generators or git preset files.
-        if choice.is_official_preset() {
-            if !crate::storage::is_dev_mode() {
-                if let Ok(t) = self.load_procedural_preset(choice) {
-                    return Ok(t);
-                }
-                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    let slug = choice.track_id();
-                    let mod_id = Self::preset_module(slug).unwrap_or("classic");
-                    let git_file = git_tracks_dir.join(mod_id).join(format!("{}.json", slug));
-                    if git_file.exists() {
-                        if let Ok(t) = Track::load_from_file(&git_file) {
-                            return Ok(t);
-                        }
-                    }
-                }
-                return self.load_procedural_preset(choice);
-            } else if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                let slug = choice.track_id();
-                let mod_id = Self::preset_module(slug).unwrap_or("classic");
-                let git_file = git_tracks_dir.join(mod_id).join(format!("{}.json", slug));
-                if git_file.exists() {
-                    if let Ok(t) = Track::load_from_file(&git_file) {
-                        return Ok(t);
-                    }
+        let choice_module = match choice {
+            TrackChoice::Custom { path, .. } => {
+                if path.starts_with("gt/") {
+                    Some("gt")
+                } else if path.starts_with("f1/") {
+                    Some("f1")
+                } else if path.starts_with("nascar/") {
+                    Some("nascar")
+                } else if path.starts_with("rally/") {
+                    Some("rally")
+                } else if path.starts_with("kart/") {
+                    Some("kart")
+                } else if path.starts_with("classic/") {
+                    Some("classic")
+                } else {
+                    None
                 }
             }
+            _ => None,
+        };
+
+        // Official presets load from git preset files first, then user directory, then procedural generator.
+        if choice.is_official_preset() {
+            if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
+                if let Ok(t) = Track::load_from_file(&git_file) {
+                    return Ok(t);
+                }
+            }
+            let user_path = self.track_path_for_slug(choice.track_id());
+            if user_path.exists() && user_path.starts_with(&self.tracks_dir) {
+                if let Ok(t) = Track::load_from_file(&user_path) {
+                    return Ok(t);
+                }
+            }
+            return self.load_procedural_preset(choice);
         }
 
         match choice {
@@ -880,6 +882,25 @@ impl TrackManager {
                 let file_path = Path::new(path);
                 if file_path.exists() {
                     if let Ok(t) = Track::load_from_file(file_path) {
+                        return Ok(t);
+                    }
+                }
+                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                    let git_rel = git_tracks_dir.join(path);
+                    if git_rel.exists() {
+                        if let Ok(t) = Track::load_from_file(&git_rel) {
+                            return Ok(t);
+                        }
+                    }
+                    let git_rel_json = git_tracks_dir.join(format!("{}.json", path));
+                    if git_rel_json.exists() {
+                        if let Ok(t) = Track::load_from_file(&git_rel_json) {
+                            return Ok(t);
+                        }
+                    }
+                }
+                if let Some(git_file) = self.resolve_preset_git_file(id, choice_module) {
+                    if let Ok(t) = Track::load_from_file(&git_file) {
                         return Ok(t);
                     }
                 }
@@ -949,13 +970,14 @@ impl TrackManager {
             "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" => Some("nascar"),
             _ => {
                 if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    for m in ["classic", "rally", "kart", "f1", "nascar"] {
+                    for m in ["classic", "rally", "kart", "f1", "gt", "nascar"] {
                         if git_tracks_dir.join(m).join(format!("{}.json", slug)).exists() {
                             return match m {
                                 "classic" => Some("classic"),
                                 "rally" => Some("rally"),
                                 "kart" => Some("kart"),
                                 "f1" => Some("f1"),
+                                "gt" => Some("gt"),
                                 "nascar" => Some("nascar"),
                                 _ => None,
                             };
@@ -992,6 +1014,84 @@ impl TrackManager {
         }
     }
 
+    /// Returns all known alias variations for a preset track slug (including short filenames and long catalog IDs).
+    pub fn preset_slug_aliases(slug: &str) -> &'static [&'static str] {
+        match slug {
+            "daytona" | "daytona_superspeedway" => &["daytona", "daytona_superspeedway"],
+            "talladega" | "talladega_superspeedway" => &["talladega", "talladega_superspeedway"],
+            "watkins_glen" | "watkins_glen_nascar" => &["watkins_glen", "watkins_glen_nascar"],
+            "bristol" | "bristol_motor_speedway" => &["bristol", "bristol_motor_speedway"],
+            "martinsville" | "martinsville_speedway" => &["martinsville", "martinsville_speedway"],
+            "darlington" | "darlington_raceway" => &["darlington", "darlington_raceway"],
+            "charlotte" | "charlotte_motor_speedway" => &["charlotte", "charlotte_motor_speedway"],
+            "indianapolis" | "indianapolis_motor_speedway" => &["indianapolis", "indianapolis_motor_speedway"],
+            "sahara" | "sahara_dunes" => &["sahara_dunes", "sahara"],
+            "dirt_eight" | "dirt_figure_eight" => &["dirt_figure_eight", "dirt_eight"],
+            "holjes" | "holjes_rx" => &["holjes_rx", "holjes"],
+            "lydden" | "lydden_hill" => &["lydden_hill", "lydden"],
+            "hell" | "hell_rx" => &["hell_rx", "hell"],
+            "loheac" | "loheac_rx" => &["loheac_rx", "loheac"],
+            "estering" | "estering_rx" => &["estering_rx", "estering"],
+            "montalegre" | "montalegre_rx" => &["montalegre_rx", "montalegre"],
+            "nyirad" | "nyirad_rx" => &["nyirad_rx", "nyirad"],
+            "kouvola" | "kouvola_rx" => &["kouvola_rx", "kouvola"],
+            "dirty_oval" | "dirty_oval_speedway" => &["dirty_oval_speedway", "dirty_oval"],
+            "figure_8" | "figure_eight" => &["figure_eight", "figure_8"],
+            _ => &[],
+        }
+    }
+
+    /// Resolves the canonical file path in `git_tracks_dir` for a preset track slug,
+    /// checking module directories and slug aliases.
+    pub fn resolve_preset_git_file_with_dir(
+        git_tracks_dir: &Path,
+        slug: &str,
+        module_hint: Option<&str>,
+    ) -> Option<PathBuf> {
+        let mut modules: Vec<&str> = Vec::new();
+        if let Some(hint) = module_hint {
+            modules.push(hint);
+        }
+        if let Some(m) = Self::preset_module(slug) {
+            if !modules.contains(&m) {
+                modules.push(m);
+            }
+        }
+        for m in ["classic", "f1", "gt", "rally", "kart", "nascar"] {
+            if !modules.contains(&m) {
+                modules.push(m);
+            }
+        }
+
+        let aliases = Self::preset_slug_aliases(slug);
+        let mut candidates: Vec<&str> = Vec::new();
+        candidates.push(slug);
+        for a in aliases {
+            if !candidates.contains(a) {
+                candidates.push(a);
+            }
+        }
+
+        for m in modules {
+            for c in &candidates {
+                let p = git_tracks_dir.join(m).join(format!("{}.json", c));
+                if p.exists() {
+                    return Some(p);
+                }
+            }
+        }
+        None
+    }
+
+    /// Resolves the canonical file path in the repository's `tracks/` directory for a preset track slug, if present.
+    pub fn resolve_preset_git_file(&self, slug: &str, module_hint: Option<&str>) -> Option<PathBuf> {
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+            Self::resolve_preset_git_file_with_dir(&git_tracks_dir, slug, module_hint)
+        } else {
+            None
+        }
+    }
+
     /// Checks if the given slug corresponds to a known preset circuit.
     pub fn is_preset_slug(slug: &str) -> bool {
         Self::preset_module(slug).is_some()
@@ -1022,9 +1122,11 @@ impl TrackManager {
             || self.tracks_dir.join("drafts").join(&file_name).exists()
             || self.tracks_dir.join("classic").join(&file_name).exists()
             || self.tracks_dir.join("f1").join(&file_name).exists()
+            || self.tracks_dir.join("gt").join(&file_name).exists()
             || self.tracks_dir.join("rally").join(&file_name).exists()
             || self.tracks_dir.join("kart").join(&file_name).exists()
             || self.tracks_dir.join("nascar").join(&file_name).exists()
+            || self.resolve_preset_git_file(slug, None).is_some()
     }
 
     /// Resolves the destination path for a given slug, checking existing files first.
@@ -1037,6 +1139,7 @@ impl TrackManager {
         let candidates = [
             self.tracks_dir.join("classic").join(&file_name),
             self.tracks_dir.join("f1").join(&file_name),
+            self.tracks_dir.join("gt").join(&file_name),
             self.tracks_dir.join("rally").join(&file_name),
             self.tracks_dir.join("kart").join(&file_name),
             self.tracks_dir.join("nascar").join(&file_name),
@@ -1075,19 +1178,39 @@ impl TrackManager {
                     base_slug
                 ));
             } else if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                let mod_id = Self::preset_module(&base_slug).unwrap_or("classic");
-                let git_dir = git_tracks_dir.join(mod_id);
-                let _ = fs::create_dir_all(&git_dir);
-                let git_file = git_dir.join(format!("{}.json", base_slug));
+                let mod_hint = track_to_save.module_id.clone().or_else(|| {
+                    if track_to_save.modules.iter().any(|m| m == "gt") {
+                        Some("gt".to_string())
+                    } else {
+                        None
+                    }
+                });
+                let target_git_file = self.resolve_preset_git_file(&base_slug, mod_hint.as_deref()).unwrap_or_else(|| {
+                    let mod_id = mod_hint
+                        .as_deref()
+                        .or_else(|| Self::preset_module(&base_slug))
+                        .unwrap_or("classic");
+                    let git_dir = git_tracks_dir.join(mod_id);
+                    let _ = fs::create_dir_all(&git_dir);
+                    git_dir.join(format!("{}.json", base_slug))
+                });
+
+                let mod_id = mod_hint
+                    .as_deref()
+                    .or_else(|| Self::preset_module(&base_slug))
+                    .unwrap_or("classic")
+                    .to_string();
                 track_to_save.category = TrackCategory::Main;
-                track_to_save.module_id = Some(mod_id.to_string());
-                track_to_save.modules = vec![mod_id.to_string()];
+                track_to_save.module_id = Some(mod_id.clone());
+                if !track_to_save.modules.contains(&mod_id) {
+                    track_to_save.modules.push(mod_id);
+                }
                 track_to_save
-                    .save_to_file(&git_file)
+                    .save_to_file(&target_git_file)
                     .map_err(|e| format!("Failed to save git-tracked preset: {}", e))?;
                 let _ = self.scan_custom_tracks();
                 crate::ui::menu::clear_menu_track_cache();
-                return Ok(git_file.to_string_lossy().to_string());
+                return Ok(target_git_file.to_string_lossy().to_string());
             }
         }
 

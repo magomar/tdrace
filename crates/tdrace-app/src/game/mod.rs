@@ -3426,7 +3426,14 @@ impl RaceSession {
                             Some(candidate.to_string_lossy().to_string())
                         }
                     }
-                    _ => None,
+                    preset => {
+                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                        if candidate.exists() {
+                            Some(candidate.to_string_lossy().to_string())
+                        } else {
+                            None
+                        }
+                    }
                 };
                 let track = self.load_track_for_session(&chosen);
                 self.enter_track_editor_with_path(track, file_path);
@@ -5929,7 +5936,11 @@ impl RaceSession {
                         }
                         preset => {
                             let candidate = self.track_manager.track_path_for_slug(preset.track_id());
-                            Some(candidate.to_string_lossy().to_string())
+                            if candidate.exists() {
+                                Some(candidate.to_string_lossy().to_string())
+                            } else {
+                                None
+                            }
                         }
                     };
                     self.enter_track_editor_with_path(track, file_path);

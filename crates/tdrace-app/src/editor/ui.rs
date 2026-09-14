@@ -3257,10 +3257,18 @@ fn render_save_modal(
         TrackManager::sanitize_slug(input_name)
     };
 
+    let is_preset = TrackManager::is_preset_slug(&slug) && !track_manager.is_preset_demoted(&slug);
+    let dev_mode_blocked = *overwrite && is_preset && !crate::storage::is_dev_mode();
     let is_filename_conflict = !*overwrite && track_manager.track_file_exists(&slug);
 
     let target_display_path = if *overwrite {
-        let p = track_manager.track_path_for_slug(&slug);
+        let p = if is_preset {
+            track_manager
+                .resolve_preset_git_file(&slug, None)
+                .unwrap_or_else(|| track_manager.track_path_for_slug(&slug))
+        } else {
+            track_manager.track_path_for_slug(&slug)
+        };
         if let Ok(cwd) = std::env::current_dir() {
             let cwd_str = cwd.to_string_lossy();
             let p_str = p.to_string_lossy();
@@ -3277,7 +3285,15 @@ fn render_save_modal(
     };
 
     let info_y = f3_box_y + f3_h + scaler.s(12.0);
-    if *overwrite {
+    if dev_mode_blocked {
+        fonts.draw_ui_bold(
+            "⚠️ Official presets require Dev Mode to overwrite directly. Change filename to Save As Copy.",
+            inp_x,
+            info_y,
+            scaler.font_s(11.0),
+            Palette::YELLOW,
+        );
+    } else if *overwrite {
         fonts.draw_ui_bold(
             &format!("Target: {} (Will overwrite existing file)", target_display_path),
             inp_x,
@@ -3354,7 +3370,13 @@ fn render_save_modal(
     let btn_y = my + mh - scaler.s(48.0);
     let btn_h = scaler.s(36.0);
 
-    let (btn_title, btn_color, btn_border) = if *overwrite {
+    let (btn_title, btn_color, btn_border) = if dev_mode_blocked {
+        (
+            "DEV MODE REQUIRED TO OVERWRITE PRESET",
+            Color::new(0.35, 0.08, 0.08, 0.95),
+            Palette::RED,
+        )
+    } else if *overwrite {
         if exit_on_save {
             (
                 "OVERWRITE & EXIT [Enter]",
@@ -3389,7 +3411,7 @@ fn render_save_modal(
     };
 
     let mut action_to_dispatch = None;
-    let can_submit = *overwrite || !is_filename_conflict;
+    let can_submit = (!dev_mode_blocked) && (*overwrite || !is_filename_conflict);
 
     let save_clicked = draw_ui_btn(
         fonts,

@@ -16,6 +16,8 @@ use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 use tdrace_core::track::Track;
 
+static DEV_MODE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[test]
 fn test_all_seven_presets_json_roundtrip_and_validation() {
     let presets: Vec<(&str, Track)> = vec![
@@ -737,6 +739,7 @@ fn test_editor_camera_progressive_zoom_in_out() {
 
 #[test]
 fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
+    let _dev_mutex_guard = DEV_MODE_TEST_MUTEX.lock().unwrap();
     let temp_dir = std::env::temp_dir().join(format!(
         "tdrace_test_editor_overwrite_{}",
         std::time::SystemTime::now()
@@ -1974,5 +1977,166 @@ fn test_track_editor_new_track_action_and_templates_modal() {
     assert_eq!(session.track.predefined_car.as_deref(), Some("rally_car"));
     let start_sample_rally = session.track.spline.sample_at_distance(0.0);
     assert!(start_sample_rally.tangent.x > 0.0, "Right direction must start with positive X tangent");
+}
+
+#[test]
+fn test_preset_circuits_overwrite_and_persistence_in_editor() {
+    let _dev_mutex_guard = DEV_MODE_TEST_MUTEX.lock().unwrap();
+    use std::fs;
+    use std::path::Path;
+    use tdrace_app::editor::EditorAction;
+
+    let repo_tracks_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks");
+    if !repo_tracks_dir.exists() {
+        return;
+    }
+
+    // Backup canonical tracks before mutating
+    let classic_file = repo_tracks_dir.join("classic").join("classic_grand_prix.json");
+    let daytona_file = repo_tracks_dir.join("nascar").join("daytona.json");
+    let monza_file = repo_tracks_dir.join("gt").join("monza.json");
+
+    let classic_backup = fs::read_to_string(&classic_file).ok();
+    let daytona_backup = fs::read_to_string(&daytona_file).ok();
+    let monza_backup = fs::read_to_string(&monza_file).ok();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_editor_preset_overwrite_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::create_dir_all(&temp_dir);
+
+    let test_body = || {
+        // --- Test 1: ClassicGrandPrix overwrite in Dev Mode ---
+        {
+            std::env::set_var(tdrace_app::storage::ENV_DEV_MODE, "1");
+            let mut session = RaceSession::new();
+            session.audio.settings.ui_volume = 0.0;
+            session.audio.settings.master_volume = 0.0;
+            session.track_manager = TrackManager::new(&temp_dir);
+
+            // Open ClassicGrandPrix in editor
+            let choice = TrackChoice::ClassicGrandPrix;
+            let loaded = session.track_manager.load_track(&choice).expect("Load preset");
+            let canonical_file = session.track_manager.resolve_preset_git_file(choice.track_id(), None);
+            assert!(canonical_file.is_some());
+            let canonical_file_str = canonical_file.unwrap().to_string_lossy().to_string();
+
+            session.enter_track_editor_with_path(loaded, Some(canonical_file_str.clone()));
+            assert_eq!(session.state, GameState::TrackEditor);
+
+            // Mutate track in editor and save with overwrite: true
+            let modified_name = "Classic Grand Prix Custom Tuned";
+            let modified_desc = "Tuned apex corners and custom curbs.";
+            session.handle_editor_action(EditorAction::SaveTrack {
+                name: modified_name.to_string(),
+                filename: "classic_grand_prix".to_string(),
+                description: modified_desc.to_string(),
+                overwrite: true,
+                exit_after: false,
+            });
+
+            assert_eq!(session.editor_state.as_ref().unwrap().track.name, modified_name);
+            assert_eq!(session.track.name, modified_name);
+
+            // Verify the file on disk was overwritten
+            let on_disk = Track::load_from_file(&canonical_file_str).expect("Load overwritten file");
+            assert_eq!(on_disk.name, modified_name);
+            assert_eq!(on_disk.description, modified_desc);
+
+            // Verify TrackManager reloads the modified track
+            let reloaded = session.track_manager.load_track(&choice).expect("Reload preset");
+            assert_eq!(reloaded.name, modified_name);
+            assert_eq!(reloaded.description, modified_desc);
+
+            // Verify Menu track resolver returns the modified track
+            let menu_resolved = tdrace_app::ui::menu::resolve_track_for_menu(&choice).expect("Menu resolved");
+            assert_eq!(menu_resolved.name, modified_name);
+
+            std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
+        }
+
+        // --- Test 2: NASCAR Daytona preset with alias resolution ---
+        if daytona_file.exists() {
+            std::env::set_var(tdrace_app::storage::ENV_DEV_MODE, "1");
+            let mut session = RaceSession::new();
+            session.audio.settings.ui_volume = 0.0;
+            session.audio.settings.master_volume = 0.0;
+            session.track_manager = TrackManager::new(&temp_dir);
+
+            let choice = TrackChoice::Custom {
+                id: "daytona_superspeedway".to_string(),
+                title: "Daytona International Speedway".to_string(),
+                description: "Famous tri-oval".to_string(),
+                path: "nascar/daytona".to_string(),
+            };
+
+            let loaded = session.track_manager.load_track(&choice).expect("Load NASCAR preset");
+            let canonical_file = session.track_manager.resolve_preset_git_file("daytona_superspeedway", Some("nascar"));
+            assert!(canonical_file.is_some(), "Must resolve daytona_superspeedway to nascar/daytona.json");
+            let canonical_file_str = canonical_file.unwrap().to_string_lossy().to_string();
+
+            session.enter_track_editor_with_path(loaded, Some(canonical_file_str.clone()));
+
+            let modified_desc = "Overwritten high-banked turns.";
+            session.handle_editor_action(EditorAction::SaveTrack {
+                name: "Daytona International Speedway".to_string(),
+                filename: "daytona".to_string(),
+                description: modified_desc.to_string(),
+                overwrite: true,
+                exit_after: false,
+            });
+
+            let on_disk = Track::load_from_file(&canonical_file_str).expect("Load Daytona on disk");
+            assert_eq!(on_disk.description, modified_desc);
+
+            let reloaded = session.track_manager.load_track(&choice).expect("Reload NASCAR preset");
+            assert_eq!(reloaded.description, modified_desc);
+
+            std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
+        }
+
+        // --- Test 3: Standard mode rejects preset overwrite ---
+        {
+            std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
+            let mut session = RaceSession::new();
+            session.audio.settings.ui_volume = 0.0;
+            session.audio.settings.master_volume = 0.0;
+            session.track_manager = TrackManager::new(&temp_dir);
+
+            let choice = TrackChoice::ClassicGrandPrix;
+            let loaded = session.track_manager.load_track(&choice).expect("Load preset in standard mode");
+            let canonical_file = session.track_manager.resolve_preset_git_file(choice.track_id(), None);
+            let canonical_file_str = canonical_file.unwrap().to_string_lossy().to_string();
+
+            session.enter_track_editor_with_path(loaded, Some(canonical_file_str));
+
+            session.handle_editor_action(EditorAction::SaveTrack {
+                name: "Hacked Preset Name".to_string(),
+                filename: "classic_grand_prix".to_string(),
+                description: "Should fail".to_string(),
+                overwrite: true,
+                exit_after: false,
+            });
+
+            assert!(session.editor_save_toast_msg.contains("cannot be modified directly"));
+        }
+    };
+
+    test_body();
+
+    // Clean up & restore canonical files
+    if let Some(data) = classic_backup {
+        let _ = fs::write(&classic_file, data);
+    }
+    if let Some(data) = daytona_backup {
+        let _ = fs::write(&daytona_file, data);
+    }
+    if let Some(data) = monza_backup {
+        let _ = fs::write(&monza_file, data);
+    }
+    let _ = fs::remove_dir_all(&temp_dir);
+    std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
+    tdrace_app::ui::menu::clear_menu_track_cache();
 }
 
