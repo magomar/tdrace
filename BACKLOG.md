@@ -42,6 +42,26 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
 - **Compact Telemetry Recording**: Store player hot-lap waypoints, velocity vectors, and steering angles as lightweight JSON/binary recordings.
 - **Ghost Car Playback**: Render a semi-transparent ghost vehicle during Time Trial sessions to assist with apex optimization and racing line analysis.
 
+### 2.5 Vehicle Roster & Archetype Expansions (Buggies, Trucks, Superkarts, Novelty Specials)
+- **Detailed Design Specification**: See [`docs/vehicle_roster_expansion_ideas.md`](file:///home/mario/workspace/games/tdrace/docs/vehicle_roster_expansion_ideas.md) for full physics levers, surface interactions, visual archetypes, and parameter tables.
+- **Off-Road & Bashing**:
+  - *Baja Sand Buggy*: Lightweight rear-engine RWD buggy with dirt/sand immunity and high jump compliance.
+  - *Stadium Super Truck (SST)*: Long-travel suspension truck cornering aggressively on 3 wheels with bouncy ramp landings.
+  - *Monster Truck ("Crusher V8")*: High-mass 4WD giant with oversized tires bulldozing straight through grass/gravel shortcuts and pushing opponents aside.
+- **Kart & Micro-Racer Variants**:
+  - *250cc Superkart*: Aerodynamic pod fairings, 240+ km/h top speed, and razor-sharp 3.5G lateral grip for full-sized GP circuits.
+  - *Racing Lawnmower*: Narrow-track, high-CG single-cylinder tractor with lift-off oversteer and bumpy curb hopping.
+  - *Drift Trike / Slick Kart*: Low-friction rear slide rings for effortless continuous pendulum drifting and 360° entries.
+- **Sport, GT & Classic Variants**:
+  - *Trackday Ultralight*: Featherweight exoskeleton (~520 kg) prioritizing mechanical grip and trail-braking agility.
+  - *Group 5 "Super Silhouette" Turbo*: Late 70s DRM/IMSA monster with extreme box flares, turbo boost lag, and overrun flames.
+  - *Electric Hypercar (AWD)*: Instant 0-100 km/h acceleration (<1.9s) with heavy battery mass requiring disciplined braking points.
+  - *Classic Muscle Cruiser*: 427 Big Block V8 with dramatic pitch/squat weight transfer and lazy, controllable power slides.
+- **Novelty & Party Specials**:
+  - *Tuned Kei Micro-Van*: High-CG body roll, front-heavy brake dive, and slipstream drafting dependence.
+  - *European Racing Super Truck*: 5-ton 1200 BHP cab-over semi-truck acting as an unstoppable moving fortress.
+- **Implementation Status**: TBD selection of prioritized vehicles for future milestone integration into `crates/wheelbase` and `crates/tdrace-app`.
+
 ---
 
 ## 3. Audio & Soundtrack Expansions
