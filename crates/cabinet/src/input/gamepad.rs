@@ -57,6 +57,21 @@ pub struct GamepadSnapshot {
     pub dpad_right_pressed: bool,
     pub btn_assist_toggle_pressed: bool,
     pub btn_cam_toggle_pressed: bool,
+    pub btn_rb_pressed: bool,      // Right Bumper / R1
+    pub btn_lb_pressed: bool,      // Left Bumper / L1
+
+    // Button held states (continuous)
+    pub btn_a_down: bool,
+    pub btn_b_down: bool,
+    pub btn_x_down: bool,
+    pub btn_y_down: bool,
+    pub dpad_up_down: bool,
+    pub dpad_down_down: bool,
+    pub dpad_left_down: bool,
+    pub dpad_right_down: bool,
+    pub btn_rb_down: bool,
+    pub btn_lb_down: bool,
+    pub stick_y: f32,
 
     // Navigational triggers (D-Pad OR Analog Stick flicks)
     pub nav_up: bool,
@@ -91,6 +106,8 @@ pub struct GamepadManager {
     prev_dpad_right: bool,
     prev_thumb_r: bool,
     prev_thumb_l: bool,
+    prev_rb: bool,
+    prev_lb: bool,
 }
 
 impl Default for GamepadManager {
@@ -150,6 +167,8 @@ impl GamepadManager {
             prev_dpad_right: false,
             prev_thumb_r: false,
             prev_thumb_l: false,
+            prev_rb: false,
+            prev_lb: false,
         }
     }
 
@@ -167,6 +186,8 @@ impl GamepadManager {
         self.snapshot.dpad_right_pressed = false;
         self.snapshot.btn_assist_toggle_pressed = false;
         self.snapshot.btn_cam_toggle_pressed = false;
+        self.snapshot.btn_rb_pressed = false;
+        self.snapshot.btn_lb_pressed = false;
         self.snapshot.nav_up = false;
         self.snapshot.nav_down = false;
         self.snapshot.nav_left = false;
@@ -285,6 +306,20 @@ impl GamepadManager {
             let mut stick_left = false;
             let mut stick_right = false;
 
+            let mut btn_a_down = false;
+            let mut btn_b_down = false;
+            let mut btn_x_down = false;
+            let mut btn_y_down = false;
+            let mut dpad_up_down = false;
+            let mut dpad_down_down = false;
+            let mut dpad_left_down = false;
+            let mut dpad_right_down = false;
+            let mut btn_rb = false;
+            let mut btn_rb_down = false;
+            let mut btn_lb = false;
+            let mut btn_lb_down = false;
+            let mut stick_y = 0.0;
+
             if let Some(id) = self.active_gamepad {
                 let maybe_gp = gilrs.connected_gamepad(id).or_else(|| {
                     gilrs.gamepads().find(|(gid, _)| *gid == id).map(|(_, gp)| gp)
@@ -308,6 +343,8 @@ impl GamepadManager {
                     let curr_dpad_r = gp.is_pressed(Button::DPadRight) || dpad_x_axis > 0.5;
                     let curr_thumb_r = gp.is_pressed(Button::RightThumb);
                     let curr_thumb_l = gp.is_pressed(Button::LeftThumb);
+                    let curr_rb = gp.is_pressed(Button::RightTrigger);
+                    let curr_lb = gp.is_pressed(Button::LeftTrigger);
 
                     if curr_south && !self.prev_south { btn_south = true; }
                     if curr_east && !self.prev_east { btn_east = true; }
@@ -321,6 +358,8 @@ impl GamepadManager {
                     if curr_dpad_r && !self.prev_dpad_right { dpad_r = true; }
                     if curr_thumb_r && !self.prev_thumb_r { thumb_r = true; }
                     if curr_thumb_l && !self.prev_thumb_l { thumb_l = true; }
+                    if curr_rb && !self.prev_rb { btn_rb = true; }
+                    if curr_lb && !self.prev_lb { btn_lb = true; }
 
                     self.prev_south = curr_south;
                     self.prev_east = curr_east;
@@ -334,6 +373,8 @@ impl GamepadManager {
                     self.prev_dpad_right = curr_dpad_r;
                     self.prev_thumb_r = curr_thumb_r;
                     self.prev_thumb_l = curr_thumb_l;
+                    self.prev_rb = curr_rb;
+                    self.prev_lb = curr_lb;
 
                     let raw_stick_x = gp.axis_data(Axis::LeftStickX).map(|d| d.value()).unwrap_or(0.0);
                     let raw_stick_y = gp.axis_data(Axis::LeftStickY).map(|d| d.value()).unwrap_or(0.0);
@@ -369,6 +410,18 @@ impl GamepadManager {
 
                     handbrake = curr_south;
                     reverse = curr_west;
+
+                    btn_a_down = curr_south;
+                    btn_b_down = curr_east;
+                    btn_x_down = curr_west;
+                    btn_y_down = curr_north;
+                    dpad_up_down = curr_dpad_u;
+                    dpad_down_down = curr_dpad_d;
+                    dpad_left_down = curr_dpad_l;
+                    dpad_right_down = curr_dpad_r;
+                    btn_rb_down = curr_rb;
+                    btn_lb_down = curr_lb;
+                    stick_y = raw_stick_y;
                 }
             }
 
@@ -377,6 +430,20 @@ impl GamepadManager {
             self.snapshot.brake = brake;
             self.snapshot.handbrake = handbrake;
             self.snapshot.reverse = reverse;
+
+            self.snapshot.btn_a_down = btn_a_down;
+            self.snapshot.btn_b_down = btn_b_down;
+            self.snapshot.btn_x_down = btn_x_down;
+            self.snapshot.btn_y_down = btn_y_down;
+            self.snapshot.dpad_up_down = dpad_up_down;
+            self.snapshot.dpad_down_down = dpad_down_down;
+            self.snapshot.dpad_left_down = dpad_left_down;
+            self.snapshot.dpad_right_down = dpad_right_down;
+            self.snapshot.btn_rb_pressed = btn_rb;
+            self.snapshot.btn_rb_down = btn_rb_down;
+            self.snapshot.btn_lb_pressed = btn_lb;
+            self.snapshot.btn_lb_down = btn_lb_down;
+            self.snapshot.stick_y = stick_y;
 
             self.snapshot.btn_start_pressed = btn_start;
             self.snapshot.btn_back_pressed = btn_select;
@@ -398,6 +465,19 @@ impl GamepadManager {
             self.snapshot.btn_confirm_pressed = btn_south || btn_start;
             self.snapshot.btn_cancel_pressed = btn_east || btn_select;
         }
+    }
+
+    /// Checks whether a Gilrs button is currently held down on the active gamepad.
+    pub fn is_button_down(&self, btn: Button) -> bool {
+        #[cfg(feature = "gamepad")]
+        {
+            if let (Some(ref gilrs), Some(id)) = (&self.gilrs, self.active_gamepad) {
+                if let Some(gp) = gilrs.connected_gamepad(id) {
+                    return gp.is_pressed(btn);
+                }
+            }
+        }
+        false
     }
 
     /// Applies inner deadzone and non-linear power curve to analog stick [-1.0 .. 1.0].
