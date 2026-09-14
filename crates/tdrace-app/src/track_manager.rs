@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tdrace_core::physics::surface::SurfaceType;
@@ -153,6 +154,7 @@ pub struct TrackManager {
     pub tracks_dir: PathBuf,
     pub custom_tracks: Vec<CustomTrackInfo>,
     pub deleted_presets: Vec<String>,
+    pub preset_order: HashMap<String, Vec<String>>,
 }
 
 impl Default for TrackManager {
@@ -165,10 +167,12 @@ impl TrackManager {
     pub fn new(tracks_dir: impl AsRef<Path>) -> Self {
         let dir = tracks_dir.as_ref().to_path_buf();
         let deleted_presets = Self::load_deleted_presets(&dir);
+        let preset_order = Self::load_preset_order(&dir);
         let mut manager = Self {
             tracks_dir: dir,
             custom_tracks: Vec::new(),
             deleted_presets,
+            preset_order,
         };
         let _ = manager.scan_custom_tracks();
         manager
@@ -190,6 +194,46 @@ impl TrackManager {
         let path = self.tracks_dir.join(".deleted_tracks.json");
         if let Ok(data) = serde_json::to_string_pretty(&self.deleted_presets) {
             let _ = fs::write(path, data);
+        }
+    }
+
+    fn load_preset_order(tracks_dir: &Path) -> HashMap<String, Vec<String>> {
+        let path = tracks_dir.join(".track_order.json");
+        if path.exists() {
+            if let Ok(data) = fs::read_to_string(&path) {
+                if let Ok(order) = serde_json::from_str::<HashMap<String, Vec<String>>>(&data) {
+                    return order;
+                }
+            }
+        }
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+            let git_path = git_tracks_dir.join(".track_order.json");
+            if git_path.exists() {
+                if let Ok(data) = fs::read_to_string(&git_path) {
+                    if let Ok(order) = serde_json::from_str::<HashMap<String, Vec<String>>>(&data) {
+                        return order;
+                    }
+                }
+            }
+        }
+        HashMap::new()
+    }
+
+    pub fn save_preset_order(&self) {
+        if let Ok(data) = serde_json::to_string_pretty(&self.preset_order) {
+            let path = self.tracks_dir.join(".track_order.json");
+            let _ = fs::write(&path, &data);
+            if crate::storage::is_dev_mode() {
+                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                    let git_path = git_tracks_dir.join(".track_order.json");
+                    if git_path != path
+                        && (std::env::var(crate::storage::ENV_GIT_TRACKS_DIR).is_ok()
+                            || self.tracks_dir == crate::storage::resolve_user_tracks_dir())
+                    {
+                        let _ = fs::write(git_path, &data);
+                    }
+                }
+            }
         }
     }
 
@@ -464,8 +508,49 @@ impl TrackManager {
         choices
     }
 
+    /// Normalizes a motorsport module string identifier into a canonical module key.
+    pub fn normalize_module_id(module_id: &str) -> &'static str {
+        match module_id.to_ascii_lowercase().as_str() {
+            "gt" | "gt_challenge" | "f1" => "f1",
+            "rally" => "rally",
+            "kart" => "kart",
+            "nascar" => "nascar",
+            _ => "classic",
+        }
+    }
+
+    fn sort_preset_choices(list: &mut Vec<TrackChoice>, order: Option<&Vec<String>>) {
+        if let Some(order_ids) = order {
+            if !order_ids.is_empty() {
+                list.sort_by_key(|c| {
+                    let tid = c.track_id();
+                    order_ids
+                        .iter()
+                        .position(|id| id == tid || Self::canonical_preset_id(id) == Self::canonical_preset_id(tid))
+                        .unwrap_or(usize::MAX)
+                });
+            }
+        }
+    }
+
     /// Returns official built-in preset circuits for a given module.
     pub fn preset_track_choices(&self, module_id: &str) -> Vec<TrackChoice> {
+        if module_id == "all" {
+            let mut list: Vec<TrackChoice> = Vec::new();
+            let mut seen_ids = std::collections::HashSet::new();
+            for m in ["classic", "f1", "rally", "kart", "nascar"] {
+                for choice in self.preset_track_choices(m) {
+                    if seen_ids.insert(choice.track_id().to_string()) {
+                        list.push(choice);
+                    }
+                }
+            }
+            if let Some(order) = self.preset_order.get("all") {
+                Self::sort_preset_choices(&mut list, Some(order));
+            }
+            return list;
+        }
+
         let raw: Vec<TrackChoice> = match module_id {
             "gt" | "gt_challenge" | "f1" => {
                 let f1_module = F1GameModule::new();
@@ -499,43 +584,6 @@ impl TrackManager {
                     .map(|def| Self::track_choice_from_def(def, "nascar"))
                     .collect()
             }
-            "all" => {
-                let classic_module = ClassicGameModule::new();
-                let f1_module = F1GameModule::new();
-                let rally_module = RallyGameModule::new();
-                let kart_module = KartGameModule::new();
-                let nascar_module = NascarGameModule::new();
-
-                let mut list: Vec<TrackChoice> = Vec::new();
-                let mut seen_ids = std::collections::HashSet::new();
-
-                for def in classic_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "classic"));
-                    }
-                }
-                for def in f1_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "f1"));
-                    }
-                }
-                for def in rally_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "rally"));
-                    }
-                }
-                for def in kart_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "kart"));
-                    }
-                }
-                for def in nascar_module.tracks() {
-                    if seen_ids.insert(def.id) {
-                        list.push(Self::track_choice_from_def(&def, "nascar"));
-                    }
-                }
-                list
-            }
             _ => {
                 let classic_module = ClassicGameModule::new();
                 classic_module
@@ -550,10 +598,9 @@ impl TrackManager {
 
         // In dev mode or when git_tracks_dir exists, discover promoted presets
         if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-            let scan_modules: Vec<&str> = if module_id == "all" {
-                vec!["classic", "rally", "kart", "f1", "nascar"]
-            } else {
-                vec![module_id]
+            let scan_modules: Vec<&str> = match module_id {
+                "gt" | "gt_challenge" | "f1" => vec!["f1", "gt"],
+                _ => vec![module_id],
             };
 
             for mod_name in scan_modules {
@@ -585,9 +632,19 @@ impl TrackManager {
             }
         }
 
-        list.into_iter()
+        let mut filtered: Vec<TrackChoice> = list
+            .into_iter()
             .filter(|choice| !self.is_preset_deleted_for_module(choice.track_id(), module_id))
-            .collect()
+            .collect();
+
+        let norm_mod = Self::normalize_module_id(module_id);
+        let order = self
+            .preset_order
+            .get(norm_mod)
+            .or_else(|| self.preset_order.get(module_id));
+        Self::sort_preset_choices(&mut filtered, order);
+
+        filtered
     }
 
     /// Returns all available track choices appearing in main menu (Main category tracks).
@@ -1711,6 +1768,62 @@ impl TrackManager {
         let _ = self.scan_custom_tracks();
         crate::ui::menu::clear_menu_track_cache();
         Ok(target_path)
+    }
+
+    /// Manually moves a preset track up or down within its module's preset order (developer mode only).
+    pub fn reorder_preset_track(
+        &mut self,
+        track_id: &str,
+        module_id: &str,
+        move_up: bool,
+    ) -> Result<bool, String> {
+        if !crate::storage::is_dev_mode() {
+            return Err("Reordering preset tracks is only allowed in developer mode.".to_string());
+        }
+
+        let norm_mod = Self::normalize_module_id(module_id);
+        let choices = self.preset_track_choices(norm_mod);
+        let current_ids: Vec<String> = choices.iter().map(|c| c.track_id().to_string()).collect();
+
+        let pos = current_ids
+            .iter()
+            .position(|id| id == track_id || Self::canonical_preset_id(id) == Self::canonical_preset_id(track_id))
+            .ok_or_else(|| format!("Preset track '{}' not found in module '{}'.", track_id, norm_mod))?;
+
+        let target_pos = if move_up {
+            if pos == 0 {
+                return Ok(false); // Already at top
+            }
+            pos - 1
+        } else {
+            if pos + 1 >= current_ids.len() {
+                return Ok(false); // Already at bottom
+            }
+            pos + 1
+        };
+
+        let mut new_order = current_ids;
+        new_order.swap(pos, target_pos);
+
+        self.preset_order.insert(norm_mod.to_string(), new_order);
+        self.save_preset_order();
+        crate::ui::menu::clear_menu_track_cache();
+
+        Ok(true)
+    }
+
+    /// Resets the preset track order for a specific module back to default (developer mode only).
+    pub fn reset_preset_order(&mut self, module_id: &str) -> Result<bool, String> {
+        if !crate::storage::is_dev_mode() {
+            return Err("Resetting preset track order is only allowed in developer mode.".to_string());
+        }
+        let norm_mod = Self::normalize_module_id(module_id);
+        let removed = self.preset_order.remove(norm_mod).is_some();
+        if removed {
+            self.save_preset_order();
+            crate::ui::menu::clear_menu_track_cache();
+        }
+        Ok(removed)
     }
 }
 

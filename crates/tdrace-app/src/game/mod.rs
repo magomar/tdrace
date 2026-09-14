@@ -4084,19 +4084,69 @@ impl RaceSession {
             selected_idx = list_len.saturating_sub(1);
         }
 
-        // 3. Up/Down Track Selection
-        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
-            self.audio.play_sfx(SfxType::UiMove);
-            if selected_idx == 0 {
-                selected_idx = list_len.saturating_sub(1);
-            } else {
-                selected_idx -= 1;
+        // 3. Up/Down Track Selection or Dev-Mode Preset Reordering
+        let is_dev = crate::storage::is_dev_mode();
+        let shift_or_alt = is_key_down(KeyCode::LeftShift)
+            || is_key_down(KeyCode::RightShift)
+            || is_key_down(KeyCode::LeftAlt)
+            || is_key_down(KeyCode::RightAlt);
+
+        let want_reorder_up = is_dev
+            && ((shift_or_alt && (is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W)))
+                || is_key_pressed(KeyCode::PageUp));
+
+        let want_reorder_down = is_dev
+            && ((shift_or_alt && (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)))
+                || is_key_pressed(KeyCode::PageDown));
+
+        if want_reorder_up {
+            if let Some(track_choice) = current_list.get(selected_idx) {
+                if track_choice.is_official_preset() {
+                    let tid = track_choice.track_id().to_string();
+                    let mod_id = module_filter.id().unwrap_or("classic");
+                    if let Ok(moved) = self.track_manager.reorder_preset_track(&tid, mod_id, true) {
+                        if moved {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            selected_idx = selected_idx.saturating_sub(1);
+                        } else {
+                            self.audio.play_sfx(SfxType::UiMove);
+                        }
+                    }
+                } else {
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
             }
-        }
-        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
-            self.audio.play_sfx(SfxType::UiMove);
-            if list_len > 0 {
-                selected_idx = (selected_idx + 1) % list_len;
+        } else if want_reorder_down {
+            if let Some(track_choice) = current_list.get(selected_idx) {
+                if track_choice.is_official_preset() {
+                    let tid = track_choice.track_id().to_string();
+                    let mod_id = module_filter.id().unwrap_or("classic");
+                    if let Ok(moved) = self.track_manager.reorder_preset_track(&tid, mod_id, false) {
+                        if moved {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            selected_idx = (selected_idx + 1).min(list_len.saturating_sub(1));
+                        } else {
+                            self.audio.play_sfx(SfxType::UiMove);
+                        }
+                    }
+                } else {
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+            }
+        } else {
+            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                self.audio.play_sfx(SfxType::UiMove);
+                if selected_idx == 0 {
+                    selected_idx = list_len.saturating_sub(1);
+                } else {
+                    selected_idx -= 1;
+                }
+            }
+            if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                self.audio.play_sfx(SfxType::UiMove);
+                if list_len > 0 {
+                    selected_idx = (selected_idx + 1) % list_len;
+                }
             }
         }
 

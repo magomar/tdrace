@@ -1490,3 +1490,200 @@ fn test_custom_circuit_promoted_to_preset_classified_as_official_preset() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_dev_mode_reorder_preset_tracks_up_and_down() {
+    let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    std::env::remove_var("TDRACE_DEV");
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_reorder_dev_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // Initial order check
+    let initial_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    assert!(initial_tracks.len() >= 2);
+    let first_id = initial_tracks[0].track_id().to_string();
+    let second_id = initial_tracks[1].track_id().to_string();
+    assert_ne!(first_id, second_id);
+
+    // 1. Enter dev mode
+    {
+        let _dev_guard = DevModeGuard::enter();
+
+        // Move second track UP
+        let moved = manager
+            .reorder_preset_track(&second_id, "classic", true)
+            .expect("Reorder up in dev mode must succeed");
+        assert!(moved);
+
+        let reordered_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+        assert_eq!(reordered_tracks[0].track_id(), second_id);
+        assert_eq!(reordered_tracks[1].track_id(), first_id);
+
+        // Move it back DOWN
+        let moved_back = manager
+            .reorder_preset_track(&second_id, "classic", false)
+            .expect("Reorder down in dev mode must succeed");
+        assert!(moved_back);
+
+        let restored_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+        assert_eq!(restored_tracks[0].track_id(), first_id);
+        assert_eq!(restored_tracks[1].track_id(), second_id);
+    }
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_standard_mode_rejects_preset_reordering() {
+    let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    std::env::remove_var("TDRACE_DEV");
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_reorder_std_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+    let initial_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    let second_id = initial_tracks[1].track_id().to_string();
+
+    let err = manager
+        .reorder_preset_track(&second_id, "classic", true)
+        .expect_err("Standard mode must reject preset reordering");
+    assert!(err.contains("developer mode"));
+
+    let err_reset = manager
+        .reset_preset_order("classic")
+        .expect_err("Standard mode must reject resetting preset order");
+    assert!(err_reset.contains("developer mode"));
+
+    let after_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    assert_eq!(initial_tracks[0].track_id(), after_tracks[0].track_id());
+    assert_eq!(initial_tracks[1].track_id(), after_tracks[1].track_id());
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_preset_reordering_persistence() {
+    let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    std::env::remove_var("TDRACE_DEV");
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_reorder_persist_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+    let initial_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    let first_id = initial_tracks[0].track_id().to_string();
+    let second_id = initial_tracks[1].track_id().to_string();
+
+    {
+        let _dev_guard = DevModeGuard::enter();
+        manager
+            .reorder_preset_track(&second_id, "classic", true)
+            .expect("Reorder in dev mode");
+    }
+
+    assert!(temp_dir.join(".track_order.json").exists(), ".track_order.json must be written to disk");
+
+    // Load fresh manager from disk
+    let reloaded_manager = TrackManager::new(&temp_dir);
+    let reloaded_tracks = reloaded_manager.filtered_main_track_choices(ModuleFilter::Classic);
+    assert_eq!(reloaded_tracks[0].track_id(), second_id);
+    assert_eq!(reloaded_tracks[1].track_id(), first_id);
+
+    // Reset order
+    {
+        let _dev_guard = DevModeGuard::enter();
+        let mut reset_manager = reloaded_manager;
+        let reset_result = reset_manager.reset_preset_order("classic").expect("Reset order");
+        assert!(reset_result);
+
+        let final_tracks = reset_manager.filtered_main_track_choices(ModuleFilter::Classic);
+        assert_eq!(final_tracks[0].track_id(), first_id);
+        assert_eq!(final_tracks[1].track_id(), second_id);
+    }
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_reordering_boundary_conditions() {
+    let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    std::env::remove_var("TDRACE_DEV");
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_reorder_bounds_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+    let initial_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    let first_id = initial_tracks.first().unwrap().track_id().to_string();
+    let last_id = initial_tracks.last().unwrap().track_id().to_string();
+
+    {
+        let _dev_guard = DevModeGuard::enter();
+
+        // Moving first track UP returns Ok(false)
+        let moved_top = manager.reorder_preset_track(&first_id, "classic", true).unwrap();
+        assert!(!moved_top, "Top track cannot move up");
+
+        // Moving last track DOWN returns Ok(false)
+        let moved_bottom = manager.reorder_preset_track(&last_id, "classic", false).unwrap();
+        assert!(!moved_bottom, "Bottom track cannot move down");
+
+        // Non-existent track returns Err
+        let err = manager.reorder_preset_track("non_existent_track_xyz", "classic", true);
+        assert!(err.is_err());
+    }
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_session_active_module_tracks_reflects_reordered_presets() {
+    let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    std::env::remove_var("TDRACE_DEV");
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_session_reorder_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::default();
+    session.track_manager = TrackManager::new(&temp_dir);
+    session.active_module_id = "classic";
+
+    let initial_tracks = session.active_module_tracks();
+    let first_id = initial_tracks[0].track_id().to_string();
+    let second_id = initial_tracks[1].track_id().to_string();
+
+    {
+        let _dev_guard = DevModeGuard::enter();
+        let moved = session
+            .track_manager
+            .reorder_preset_track(&second_id, "classic", true)
+            .expect("Reorder in dev mode");
+        assert!(moved);
+
+        let reordered_tracks = session.active_module_tracks();
+        assert_eq!(reordered_tracks[0].track_id(), second_id);
+        assert_eq!(reordered_tracks[1].track_id(), first_id);
+    }
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+

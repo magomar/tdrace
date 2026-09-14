@@ -91,6 +91,10 @@ pub enum TrackManagerAction {
         track_title: String,
     },
     ConfirmDelete(String),
+    ReorderPreset {
+        track_id: String,
+        move_up: bool,
+    },
     CreateNewDraft,
     BackToMenu,
 }
@@ -264,8 +268,9 @@ pub fn render_track_manager_screen(
             );
 
             // Title
+            let item_title = format!("{}. {}", i + 1, track_choice.title());
             fonts.draw_ui_bold(
-                track_choice.title(),
+                &item_title,
                 col1_x + scaler.s(14.0),
                 item_y + scaler.s(34.0),
                 scaler.font_s(14.5),
@@ -301,7 +306,8 @@ pub fn render_track_manager_screen(
         // Header: Category Pill & Title
         let (badge_str, badge_col) = resolve_track_module_badge(selected_track, active_tab, module_filter, track_manager, true);
 
-        fonts.draw_ui_bold(&badge_str, pad_x, d_y, scaler.font_s(11.5), badge_col);
+        let header_badge = format!("{} • TRACK #{} OF {}", badge_str, selected_idx + 1, tracks_list.len());
+        fonts.draw_ui_bold(&header_badge, pad_x, d_y, scaler.font_s(11.5), badge_col);
         d_y += scaler.s(20.0);
 
         fonts.draw_display(
@@ -468,7 +474,7 @@ pub fn render_track_manager_screen(
         let (expl_text, expl_bg, expl_border) = if is_preset {
             if is_dev {
                 (
-                    "Built-in official preset circuit. [DEV] [P] Demote to Custom • [Ctrl+P] Categories • [C] Clone",
+                    "Built-in official preset circuit. [DEV] [Shift+Up/Down] Reorder • [P] Demote to Custom • [Ctrl+P] Categories • [C] Clone",
                     Color::new(0.20, 0.16, 0.05, 0.80),
                     Palette::NEON_GOLD,
                 )
@@ -510,7 +516,7 @@ pub fn render_track_manager_screen(
     let action_str = if let Some(choice) = tracks_list.get(selected_idx) {
         if choice.is_official_preset() {
             if is_dev {
-                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [P] DEMOTE TO CUSTOM | [Ctrl+P] ASSIGN CATEGORIES | [I] EDIT INFO | [Backspace] DELETE | [Esc] BACK"
+                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [Shift+Up/Down] REORDER | [E] STUDIO | [C] CLONE | [P] DEMOTE TO CUSTOM | [Ctrl+P] ASSIGN CATEGORIES | [I] EDIT INFO | [Backspace] DELETE | [Esc] BACK"
             } else {
                 "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] CLONE & EDIT | [C] CLONE | [Esc] BACK"
             }
