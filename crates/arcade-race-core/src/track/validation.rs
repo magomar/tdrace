@@ -776,13 +776,13 @@ mod tests {
         let wall1 = WallBarrier::with_elevation(
             Vec2::new(100.0, 50.0),
             Vec2::new(120.0, 50.0),
-            BarrierType::Armco,
+            BarrierType::Steel,
             0.0,
         );
         let wall2 = WallBarrier::with_elevation(
             Vec2::new(110.0, 40.0),
             Vec2::new(110.0, 60.0),
-            BarrierType::Armco,
+            BarrierType::Steel,
             0.0,
         );
         track.geometry.inner_walls.push(wall1);

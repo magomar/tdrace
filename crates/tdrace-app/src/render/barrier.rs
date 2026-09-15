@@ -118,7 +118,7 @@ fn render_wall_shadow(wall: &WallBarrier) {
 
     let thickness = match wall.barrier_type {
         BarrierType::Concrete => 0.70,
-        BarrierType::Armco => 0.50,
+        BarrierType::Steel => 0.50,
         BarrierType::TireWall => 0.85,
         BarrierType::CurbWall => 0.40,
     };
@@ -140,24 +140,24 @@ fn render_wall_body(wall: &WallBarrier) {
     let norm = wall.segment.normal();
 
     match wall.barrier_type {
-        BarrierType::Armco => {
+        BarrierType::Steel => {
             // Metallic beam with support posts
             let half_w = 0.20;
             let a = p0 + norm * half_w;
             let b = p1 + norm * half_w;
             let c = p1 - norm * half_w;
             let d = p0 - norm * half_w;
-            draw_quad(a, b, c, d, Palette::ARMCO_RAIL);
+            draw_quad(a, b, c, d, Palette::STEEL_RAIL);
 
             // Center metallic groove
-            draw_line(p0.x, p0.y, p1.x, p1.y, 0.08, Palette::ARMCO_POST);
+            draw_line(p0.x, p0.y, p1.x, p1.y, 0.08, Palette::STEEL_POST);
 
             // Support posts every ~2.5m
             let post_count = (len / 2.5).max(1.0) as usize;
             for i in 0..=post_count {
                 let t = i as f32 / post_count as f32;
                 let post_pos = p0 + dir * t;
-                draw_circle(post_pos.x, post_pos.y, 0.22, Palette::ARMCO_POST);
+                draw_circle(post_pos.x, post_pos.y, 0.22, Palette::STEEL_POST);
             }
         }
         BarrierType::Concrete => {

@@ -42,7 +42,7 @@ pub fn export_track_to_rust_code(track: &Track, fn_name: &str) -> String {
 
     out.push_str("    let spline = TrackSpline::new(waypoints, true);\n");
     out.push_str("    let (left_walls, right_walls, left_poly, right_poly) =\n");
-    out.push_str("        generate_walls_from_spline(&spline, 5.0, BarrierType::Armco);\n\n");
+    out.push_str("        generate_walls_from_spline(&spline, 5.0, BarrierType::Steel);\n\n");
 
     out.push_str(&format!(
         "    let checkpoints = generate_checkpoints(&spline, {}, 3);\n",

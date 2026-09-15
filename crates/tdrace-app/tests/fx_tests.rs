@@ -97,6 +97,7 @@ fn test_effects_manager_integration() {
         impact_speed: 6.5,
         normal_impulse: 500.0,
         friction_impulse: 50.0,
+        barrier_type: tdrace_core::track::geometry::BarrierType::Concrete,
     }];
 
     let car_events = vec![CarCarCollisionEvent {

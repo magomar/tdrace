@@ -792,7 +792,7 @@ fn test_waypoint_custom_wall_type_generation_and_json_roundtrip() {
     assert_eq!(last_sample.wall_type, Some(BarrierType::TireWall));
 
     let (left_walls, right_walls, _, _) =
-        generate_walls_from_spline(&spline, 3.0, BarrierType::Armco);
+        generate_walls_from_spline(&spline, 3.0, BarrierType::Steel);
 
     assert!(!left_walls.is_empty());
     assert!(!right_walls.is_empty());
@@ -933,10 +933,7 @@ fn test_nascar_track_presets_and_validation() {
         ("indianapolis.json", indianapolis_motor_speedway()),
     ];
 
-    let nascar_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks/nascar");
-    let _ = std::fs::create_dir_all(&nascar_dir);
-
-    for (filename, track) in &track_pairs {
+    for (_filename, track) in &track_pairs {
         assert!(!track.name.is_empty());
         assert!(!track.checkpoints.is_empty());
         assert!(track.checkpoints[0].is_finish_line);
@@ -959,7 +956,8 @@ fn test_nascar_track_presets_and_validation() {
         );
 
         let json = serde_json::to_string_pretty(track).expect("Serialize NASCAR track");
-        let _ = std::fs::write(nascar_dir.join(filename), json);
+        let deserialized: tdrace_core::track::Track = serde_json::from_str(&json).expect("Deserialize NASCAR track");
+        assert_eq!(deserialized.name, track.name);
     }
 }
 

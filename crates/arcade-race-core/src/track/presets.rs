@@ -540,7 +540,7 @@ pub fn classic_grand_prix() -> Track {
 
     let spline = TrackSpline::new(waypoints, true);
     let (left_walls, right_walls, left_poly, right_poly) =
-        generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
+        generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
     let mut surface_zones = Vec::new();
     // Sand trap outside the hairpin (around x: 200..290, y: 315..360)
@@ -888,7 +888,7 @@ pub fn ramp_raceway() -> Track {
 
     let spline = TrackSpline::new(waypoints, true);
     let (left_walls, right_walls, left_poly, right_poly) =
-        generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
+        generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
     let jump_ramps = vec![
         // Ramp 1: Back Straight Tabletop Jump
@@ -1079,7 +1079,7 @@ pub fn outlaw_pass() -> Track {
 
     let spline = TrackSpline::new(waypoints, true);
     let (left_walls, right_walls, left_poly, right_poly) =
-        generate_walls_from_spline(&spline, 2.8, BarrierType::Armco);
+        generate_walls_from_spline(&spline, 2.8, BarrierType::Steel);
 
     let checkpoints = generate_checkpoints(&spline, 12, 3);
     let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
@@ -2209,7 +2209,7 @@ pub fn create_prototypical_track(
             SurfaceType::Asphalt,
             SurfaceType::Grass,
             "f1_car",
-            BarrierType::Armco,
+            BarrierType::Steel,
             4.0,
             15.0,
             5,
@@ -2504,7 +2504,7 @@ pub fn watkins_glen_nascar() -> Track {
 
     let spline = TrackSpline::new(waypoints, true);
     let (left_walls, right_walls, left_poly, right_poly) =
-        generate_walls_from_spline(&spline, 3.0, BarrierType::Armco);
+        generate_walls_from_spline(&spline, 3.0, BarrierType::Steel);
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
     let grid_positions = generate_grid_positions(&spline, 16, 8.5, 3.0);

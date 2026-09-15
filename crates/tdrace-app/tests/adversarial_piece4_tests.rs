@@ -34,6 +34,7 @@ fn test_long_race_fx_memory_boundedness() {
         impact_speed: 15.0,
         normal_impulse: 1000.0,
         friction_impulse: 100.0,
+        barrier_type: tdrace_core::track::geometry::BarrierType::Concrete,
     }];
 
     let car_events = vec![CarCarCollisionEvent {

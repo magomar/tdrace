@@ -58,8 +58,8 @@ impl Palette {
     pub const GRID_LINE: Color = Color::new(0.98, 0.98, 1.0, 0.90);
 
     // Barriers & Shadows
-    pub const ARMCO_POST: Color = Color::new(0.40, 0.44, 0.48, 1.0);
-    pub const ARMCO_RAIL: Color = Color::new(0.75, 0.78, 0.85, 1.0);
+    pub const STEEL_POST: Color = Color::new(0.40, 0.44, 0.48, 1.0);
+    pub const STEEL_RAIL: Color = Color::new(0.75, 0.78, 0.85, 1.0);
     pub const CONCRETE_WALL: Color = Color::new(0.80, 0.82, 0.82, 1.0);
     pub const CONCRETE_TOP: Color = Color::new(0.94, 0.94, 0.94, 1.0);
     pub const TIRE_WALL: Color = Color::new(0.14, 0.15, 0.17, 1.0);

@@ -179,7 +179,7 @@ fn test_jump_over_low_wall_no_collision() {
     car.state.velocity = Vec2::new(20.0, 0.0);
     car.state.elevation = 2.0; // Airborne above wall
 
-    let wall = WallBarrier::new(Vec2::new(10.0, -5.0), Vec2::new(10.0, 5.0), BarrierType::Armco);
+    let wall = WallBarrier::new(Vec2::new(10.0, -5.0), Vec2::new(10.0, 5.0), BarrierType::Steel);
     let hit = resolve_car_wall_collision(&mut car, &wall);
     assert!(hit.is_none(), "Airborne car above 1.2m should clear ground barriers");
 }

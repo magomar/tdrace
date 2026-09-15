@@ -292,7 +292,7 @@ fn test_thumbnail_refresh_when_overwriting_custom_circuit() {
         glam::Vec2::new(9999.0, 8888.0),
         16.0,
     ));
-    modified_track.rebuild_geometry(2.5, tdrace_core::track::geometry::BarrierType::Armco);
+    modified_track.rebuild_geometry(2.5, tdrace_core::track::geometry::BarrierType::Steel);
     modified_track.name = "Overwritten Thumbnail Circuit".to_string();
 
     // 4. Overwrite existing track
@@ -367,7 +367,7 @@ fn test_thumbnail_refresh_when_overwriting_preset_in_dev_mode() {
         glam::Vec2::new(7777.0, 7777.0),
         20.0,
     ));
-    modified_preset.rebuild_geometry(2.5, tdrace_core::track::geometry::BarrierType::Armco);
+    modified_preset.rebuild_geometry(2.5, tdrace_core::track::geometry::BarrierType::Steel);
     modified_preset.description = "Dev Mode Overwritten Circuit Preset".to_string();
 
     // 3. Overwrite official preset in dev mode

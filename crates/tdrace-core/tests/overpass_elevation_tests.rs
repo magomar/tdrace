@@ -44,7 +44,7 @@ fn test_wall_elevation_filtering_underpass_and_overpass() {
     let bridge_wall = WallBarrier::with_elevation(
         Vec2::new(40.0, 50.0),
         Vec2::new(60.0, 50.0),
-        BarrierType::Armco,
+        BarrierType::Steel,
         5.0,
     );
 
@@ -64,7 +64,7 @@ fn test_wall_elevation_filtering_underpass_and_overpass() {
     let ground_wall = WallBarrier::with_elevation(
         Vec2::new(40.0, 50.0),
         Vec2::new(60.0, 50.0),
-        BarrierType::Armco,
+        BarrierType::Steel,
         0.0,
     );
     let col_overpass = resolve_car_wall_collision(&mut car_bridge, &ground_wall);
@@ -112,7 +112,7 @@ fn test_lidar_elevation_filtering() {
     let elevated_wall = WallBarrier::with_elevation(
         Vec2::new(20.0, -10.0),
         Vec2::new(20.0, 10.0),
-        BarrierType::Armco,
+        BarrierType::Steel,
         5.0,
     );
 
@@ -197,7 +197,7 @@ fn test_silverstone_pass_over_clearance() {
     ];
 
     let spline = TrackSpline::new(waypoints, true);
-    let (left_walls, right_walls, _, _) = generate_walls_from_spline(&spline, 5.0, BarrierType::Armco);
+    let (left_walls, right_walls, _, _) = generate_walls_from_spline(&spline, 5.0, BarrierType::Steel);
 
     // Ground position on Abbey/Farm curve under the bridge (waypoint 2)
     let ground_sample = &spline.samples[2 * 24];

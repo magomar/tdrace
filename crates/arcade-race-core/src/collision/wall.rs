@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::sat::OrientedBox;
 use wheelbase::Car;
-use crate::track::geometry::{Obstacle, ObstacleShape, WallBarrier};
+use crate::track::geometry::{BarrierType, Obstacle, ObstacleShape, WallBarrier};
 
 /// Detailed telemetry and physics result of a vehicle-wall collision impact.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -20,6 +20,23 @@ pub struct WallCollisionEvent {
     pub normal_impulse: f32,
     /// Tangential friction impulse delivered along the barrier (N*s).
     pub friction_impulse: f32,
+    /// Barrier material type involved in the collision.
+    #[serde(default = "default_barrier_type")]
+    pub barrier_type: BarrierType,
+}
+
+const fn default_barrier_type() -> BarrierType {
+    BarrierType::Concrete
+}
+
+impl WallCollisionEvent {
+    /// Computes estimated raw mechanical damage energy for vehicle damage simulation.
+    /// Incorporates the barrier's structural energy absorption factor (e.g. TireWall absorbs 75%, Concrete absorbs 10%).
+    pub fn estimated_damage_energy(&self) -> f32 {
+        let absorbed = self.barrier_type.energy_absorption_factor();
+        let raw_energy = 0.5 * (self.normal_impulse * self.impact_speed + self.friction_impulse * 0.5);
+        (raw_energy * (1.0 - absorbed)).max(0.0)
+    }
 }
 
 /// Resolves collision between a vehicle and a static line barrier.
@@ -207,12 +224,7 @@ pub fn resolve_car_wall_collision(
         let max_impact_friction = wall.friction * j_n;
 
         // Contact wall resistance acting as brakes when running next to or touching the wall
-        let brake_decel = match wall.barrier_type {
-            crate::track::geometry::BarrierType::TireWall => 22.0, // High rubber grip and compression drag (~2.2g)
-            crate::track::geometry::BarrierType::Concrete => 9.5,  // Solid concrete scraping resistance (~0.95g)
-            crate::track::geometry::BarrierType::Armco => 11.5,    // Steel Armco barrier resistance (~1.15g)
-            crate::track::geometry::BarrierType::CurbWall => 7.5,  // Low curb wall resistance (~0.75g)
-        };
+        let brake_decel = wall.barrier_type.scraping_deceleration();
         // resolve_all_wall_collisions runs 2 sub-iterations per 60Hz frame (dt_sub ~ 0.01667 / 2 = 0.00833s)
         // Scale contact brake impulse at very low speed (< 1.0 m/s) to prevent velocity-lock at corners and rest
         let speed_scale = (v_t_mag / 1.0).clamp(0.0, 1.0);
@@ -230,7 +242,8 @@ pub fn resolve_car_wall_collision(
 
         let impulse_t = tangent * j_t;
         car.state.velocity += impulse_t / mass;
-        let torque_fraction = impact_ratio + (1.0 - impact_ratio) * 0.15;
+        let base_snag = wall.barrier_type.snag_torque_factor();
+        let torque_fraction = impact_ratio + (1.0 - impact_ratio) * base_snag;
         car.state.angular_velocity += ((r.x * impulse_t.y - r.y * impulse_t.x) / inertia) * torque_fraction;
     }
 
@@ -241,6 +254,7 @@ pub fn resolve_car_wall_collision(
         impact_speed: (-v_n).max(0.0),
         normal_impulse: j_n,
         friction_impulse: j_t_applied,
+        barrier_type: wall.barrier_type,
     })
 }
 
@@ -341,6 +355,7 @@ pub fn resolve_car_obstacle_collision(
         impact_speed: (-v_n).max(0.0),
         normal_impulse: j_n,
         friction_impulse: j_t_applied,
+        barrier_type: BarrierType::Concrete,
     })
 }
 
@@ -407,7 +422,7 @@ mod tests {
         let wall = WallBarrier::with_physics(
             Vec2::new(-5.0, 0.6),
             Vec2::new(5.0, 0.6),
-            BarrierType::Armco,
+            BarrierType::Steel,
             0.5,
             0.4,
         );

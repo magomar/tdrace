@@ -57,7 +57,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 4.5, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 4.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -127,7 +127,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 4.5, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 4.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -195,7 +195,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -259,7 +259,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -331,7 +331,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.8, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.8, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -397,7 +397,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -527,7 +527,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -593,7 +593,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.5, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -659,7 +659,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -727,7 +727,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.8, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.8, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -795,7 +795,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 3.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 3.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -863,7 +863,7 @@ impl GtWorldChallengeModule {
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 4.0, BarrierType::Armco);
+            generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);

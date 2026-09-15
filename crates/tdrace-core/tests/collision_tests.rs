@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 use glam::Vec2;
 use tdrace_core::collision::{
     collide_obb_obb, resolve_car_car_collision, resolve_car_obstacle_collision,
-    resolve_car_wall_collision, resolve_multi_car_collisions, OrientedBox,
+    resolve_car_wall_collision, resolve_multi_car_collisions, OrientedBox, WallCollisionEvent,
 };
 use tdrace_core::physics::{Car, CarConfig, CarControls, SurfaceType};
 use tdrace_core::track::geometry::{BarrierType, Obstacle, WallBarrier};
@@ -52,7 +52,7 @@ fn test_oblique_wall_bounce_angle_and_friction() {
     let wall = WallBarrier::with_physics(
         Vec2::new(1.0, -10.0),
         Vec2::new(1.0, 10.0),
-        BarrierType::Armco,
+        BarrierType::Steel,
         0.60,
         0.40,
     );
@@ -82,7 +82,7 @@ fn test_corner_clip_yaw_deflection() {
     let wall = WallBarrier::new(
         Vec2::new(-5.0, 0.65),
         Vec2::new(5.0, 0.65),
-        BarrierType::Armco,
+        BarrierType::Steel,
     );
 
     let res = resolve_car_wall_collision(&mut car, &wall);
@@ -308,4 +308,154 @@ fn test_corner_turn_does_not_freeze_car() {
         "Car must maintain forward driving momentum and not get permanently pinned at corner, speed was {}",
         speed
     );
+}
+
+#[test]
+fn test_barrier_type_physical_properties_distinct() {
+    let types = [
+        BarrierType::Concrete,
+        BarrierType::Steel,
+        BarrierType::TireWall,
+        BarrierType::CurbWall,
+    ];
+
+    for bt in types {
+        assert!(!bt.name().is_empty());
+        assert!(bt.default_restitution() > 0.0 && bt.default_restitution() <= 1.0);
+        assert!(bt.default_friction() > 0.0 && bt.default_friction() <= 1.0);
+        assert!(bt.scraping_deceleration() > 0.0);
+        assert!(bt.snag_torque_factor() > 0.0 && bt.snag_torque_factor() <= 1.0);
+        assert!(bt.energy_absorption_factor() > 0.0 && bt.energy_absorption_factor() < 1.0);
+    }
+
+    // Restitution hierarchy: Concrete (rigid) > Steel (deformable) > CurbWall > TireWall (dead stop)
+    assert!(BarrierType::Concrete.default_restitution() > BarrierType::Steel.default_restitution());
+    assert!(BarrierType::Steel.default_restitution() > BarrierType::CurbWall.default_restitution());
+    assert!(BarrierType::CurbWall.default_restitution() > BarrierType::TireWall.default_restitution());
+
+    // Scraping deceleration hierarchy: TireWall (intense rubber drag) > Steel (corrugated snag) > Concrete (smooth) > CurbWall
+    assert!(BarrierType::TireWall.scraping_deceleration() > BarrierType::Steel.scraping_deceleration());
+    assert!(BarrierType::Steel.scraping_deceleration() > BarrierType::Concrete.scraping_deceleration());
+    assert!(BarrierType::Concrete.scraping_deceleration() > BarrierType::CurbWall.scraping_deceleration());
+
+    // Energy absorption for future damage simulation: TireWall cushions most, Concrete stiffest
+    assert!(BarrierType::TireWall.energy_absorption_factor() > BarrierType::Steel.energy_absorption_factor());
+    assert!(BarrierType::Steel.energy_absorption_factor() > BarrierType::Concrete.energy_absorption_factor());
+}
+
+#[test]
+fn test_steel_wall_collision_intermediate_restitution() {
+    // Test head-on collision against Concrete, Steel, and TireWall
+    let run_head_on = |barrier_type: BarrierType| -> f32 {
+        let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+        car.state.velocity = Vec2::new(20.0, 0.0);
+        let wall = WallBarrier::new(
+            Vec2::new(1.0, -10.0),
+            Vec2::new(1.0, 10.0),
+            barrier_type,
+        );
+        let _ = resolve_car_wall_collision(&mut car, &wall);
+        -car.state.velocity.x // Rebound speed backwards (-X)
+    };
+
+    let rebound_concrete = run_head_on(BarrierType::Concrete);
+    let rebound_steel = run_head_on(BarrierType::Steel);
+    let rebound_tire = run_head_on(BarrierType::TireWall);
+
+    assert!(
+        rebound_concrete > rebound_steel,
+        "Concrete rebound ({}) must exceed Steel rebound ({})",
+        rebound_concrete,
+        rebound_steel
+    );
+    assert!(
+        rebound_steel > rebound_tire,
+        "Steel rebound ({}) must exceed TireWall rebound ({})",
+        rebound_steel,
+        rebound_tire
+    );
+}
+
+#[test]
+fn test_wall_scraping_deceleration_hierarchy() {
+    let run_scraping = |barrier_type: BarrierType| -> f32 {
+        let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+        car.state.velocity = Vec2::new(25.0, 0.0);
+        let wall = WallBarrier::new(
+            Vec2::new(-20.0, 0.82),
+            Vec2::new(20.0, 0.82),
+            barrier_type,
+        );
+        let _ = resolve_car_wall_collision(&mut car, &wall);
+        25.0 - car.state.velocity.x // Speed loss
+    };
+
+    let loss_tire = run_scraping(BarrierType::TireWall);
+    let loss_steel = run_scraping(BarrierType::Steel);
+    let loss_concrete = run_scraping(BarrierType::Concrete);
+
+    assert!(
+        loss_tire > loss_steel,
+        "Rubber Tyres speed loss ({}) must exceed Steel ({})",
+        loss_tire,
+        loss_steel
+    );
+    assert!(
+        loss_steel > loss_concrete,
+        "Steel speed loss ({}) must exceed Concrete ({})",
+        loss_steel,
+        loss_concrete
+    );
+}
+
+#[test]
+fn test_future_damage_estimation_by_wall_type() {
+    let make_event = |barrier_type: BarrierType| -> WallCollisionEvent {
+        WallCollisionEvent {
+            contact_point: Vec2::new(0.0, 0.0),
+            normal: Vec2::new(-1.0, 0.0),
+            penetration: 0.05,
+            impact_speed: 20.0,
+            normal_impulse: 1500.0,
+            friction_impulse: 200.0,
+            barrier_type,
+        }
+    };
+
+    let damage_concrete = make_event(BarrierType::Concrete).estimated_damage_energy();
+    let damage_steel = make_event(BarrierType::Steel).estimated_damage_energy();
+    let damage_tire = make_event(BarrierType::TireWall).estimated_damage_energy();
+
+    assert!(
+        damage_concrete > damage_steel,
+        "Concrete vehicle damage ({}) must exceed Steel ({}) due to barrier yielding",
+        damage_concrete,
+        damage_steel
+    );
+    assert!(
+        damage_steel > damage_tire,
+        "Steel vehicle damage ({}) must exceed TireWall ({}) due to tire compression absorption",
+        damage_steel,
+        damage_tire
+    );
+}
+
+#[test]
+fn test_barrier_type_serde_roundtrip() {
+    let variants = [
+        BarrierType::Concrete,
+        BarrierType::Steel,
+        BarrierType::TireWall,
+        BarrierType::CurbWall,
+    ];
+
+    for bt in variants {
+        let json = serde_json::to_string(&bt).expect("Serializing BarrierType");
+        let deserialized: BarrierType = serde_json::from_str(&json).expect("Deserializing BarrierType");
+        assert_eq!(bt, deserialized);
+    }
+
+    assert_eq!(serde_json::to_string(&BarrierType::Steel).unwrap(), "\"Steel\"");
+    let steel: BarrierType = serde_json::from_str("\"Steel\"").unwrap();
+    assert_eq!(steel, BarrierType::Steel);
 }

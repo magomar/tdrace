@@ -9290,7 +9290,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9306,7 +9306,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9322,7 +9322,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9338,7 +9338,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9354,7 +9354,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9370,7 +9370,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9386,7 +9386,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9402,7 +9402,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9418,7 +9418,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9434,7 +9434,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9450,7 +9450,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9466,7 +9466,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9482,7 +9482,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9498,7 +9498,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9514,7 +9514,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9530,7 +9530,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9546,7 +9546,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9562,7 +9562,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9578,7 +9578,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9594,7 +9594,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9610,7 +9610,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9626,7 +9626,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9642,7 +9642,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9658,7 +9658,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9674,7 +9674,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9690,7 +9690,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9706,7 +9706,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9722,7 +9722,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9738,7 +9738,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9754,7 +9754,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9770,7 +9770,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9786,7 +9786,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9802,7 +9802,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9818,7 +9818,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9834,7 +9834,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9850,7 +9850,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9866,7 +9866,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9882,7 +9882,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9898,7 +9898,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9914,7 +9914,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9930,7 +9930,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9946,7 +9946,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9962,7 +9962,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9978,7 +9978,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -9994,7 +9994,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10010,7 +10010,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10026,7 +10026,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10042,7 +10042,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10058,7 +10058,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10074,7 +10074,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10090,7 +10090,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10106,7 +10106,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10122,7 +10122,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10138,7 +10138,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10154,7 +10154,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10170,7 +10170,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10186,7 +10186,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10202,7 +10202,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10218,7 +10218,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10234,7 +10234,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10250,7 +10250,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10266,7 +10266,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10282,7 +10282,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10298,7 +10298,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10314,7 +10314,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10330,7 +10330,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10346,7 +10346,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10362,7 +10362,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10378,7 +10378,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10394,7 +10394,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10410,7 +10410,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10426,7 +10426,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10442,7 +10442,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10458,7 +10458,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10474,7 +10474,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10490,7 +10490,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10506,7 +10506,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10522,7 +10522,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10538,7 +10538,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10554,7 +10554,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10570,7 +10570,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10586,7 +10586,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10602,7 +10602,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10618,7 +10618,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10634,7 +10634,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10650,7 +10650,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10666,7 +10666,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10682,7 +10682,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10698,7 +10698,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10714,7 +10714,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10730,7 +10730,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10746,7 +10746,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10762,7 +10762,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10778,7 +10778,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10794,7 +10794,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10810,7 +10810,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10826,7 +10826,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10842,7 +10842,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10858,7 +10858,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10874,7 +10874,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10890,7 +10890,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10906,7 +10906,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10922,7 +10922,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10938,7 +10938,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10954,7 +10954,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10970,7 +10970,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -10986,7 +10986,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11002,7 +11002,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11018,7 +11018,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11034,7 +11034,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11050,7 +11050,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11066,7 +11066,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11082,7 +11082,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11098,7 +11098,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11114,7 +11114,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11130,7 +11130,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11146,7 +11146,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11162,7 +11162,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11178,7 +11178,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11194,7 +11194,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11210,7 +11210,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11226,7 +11226,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11242,7 +11242,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11258,7 +11258,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11274,7 +11274,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11290,7 +11290,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11306,7 +11306,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11322,7 +11322,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11338,7 +11338,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11354,7 +11354,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11370,7 +11370,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11386,7 +11386,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11402,7 +11402,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11418,7 +11418,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11434,7 +11434,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11450,7 +11450,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11466,7 +11466,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11482,7 +11482,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11498,7 +11498,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11514,7 +11514,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11530,7 +11530,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11546,7 +11546,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11562,7 +11562,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11578,7 +11578,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11594,7 +11594,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11610,7 +11610,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11626,7 +11626,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11642,7 +11642,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11658,7 +11658,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11674,7 +11674,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11690,7 +11690,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11706,7 +11706,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11722,7 +11722,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11738,7 +11738,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11754,7 +11754,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11770,7 +11770,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11786,7 +11786,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11802,7 +11802,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11818,7 +11818,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11834,7 +11834,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11850,7 +11850,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11866,7 +11866,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11882,7 +11882,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11898,7 +11898,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11914,7 +11914,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11930,7 +11930,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11946,7 +11946,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11962,7 +11962,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11978,7 +11978,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -11994,7 +11994,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12010,7 +12010,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12026,7 +12026,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12042,7 +12042,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12058,7 +12058,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12074,7 +12074,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12090,7 +12090,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12106,7 +12106,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12122,7 +12122,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12138,7 +12138,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12154,7 +12154,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12170,7 +12170,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12186,7 +12186,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12202,7 +12202,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12218,7 +12218,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12234,7 +12234,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12250,7 +12250,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12266,7 +12266,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12282,7 +12282,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12298,7 +12298,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12314,7 +12314,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12330,7 +12330,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12346,7 +12346,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12362,7 +12362,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12378,7 +12378,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12394,7 +12394,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12410,7 +12410,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12426,7 +12426,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12442,7 +12442,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12458,7 +12458,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12474,7 +12474,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12490,7 +12490,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12506,7 +12506,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12522,7 +12522,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12538,7 +12538,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12554,7 +12554,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12570,7 +12570,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12586,7 +12586,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12602,7 +12602,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12618,7 +12618,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12634,7 +12634,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12650,7 +12650,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12666,7 +12666,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12682,7 +12682,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12698,7 +12698,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12714,7 +12714,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12730,7 +12730,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12746,7 +12746,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12762,7 +12762,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12778,7 +12778,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12794,7 +12794,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12810,7 +12810,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12826,7 +12826,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12842,7 +12842,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12858,7 +12858,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12874,7 +12874,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12890,7 +12890,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12906,7 +12906,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12922,7 +12922,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12938,7 +12938,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12954,7 +12954,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12970,7 +12970,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -12986,7 +12986,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13002,7 +13002,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13018,7 +13018,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13034,7 +13034,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13050,7 +13050,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13066,7 +13066,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13082,7 +13082,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13098,7 +13098,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13114,7 +13114,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13130,7 +13130,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13146,7 +13146,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13162,7 +13162,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13178,7 +13178,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13194,7 +13194,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13210,7 +13210,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13226,7 +13226,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13242,7 +13242,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13258,7 +13258,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13274,7 +13274,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13290,7 +13290,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13306,7 +13306,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13322,7 +13322,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13338,7 +13338,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13354,7 +13354,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13370,7 +13370,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13386,7 +13386,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13402,7 +13402,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13418,7 +13418,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13434,7 +13434,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13450,7 +13450,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13466,7 +13466,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13482,7 +13482,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13498,7 +13498,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13514,7 +13514,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13530,7 +13530,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13546,7 +13546,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13562,7 +13562,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13578,7 +13578,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13594,7 +13594,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13610,7 +13610,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13626,7 +13626,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13642,7 +13642,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13658,7 +13658,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13674,7 +13674,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13690,7 +13690,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13706,7 +13706,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13722,7 +13722,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13738,7 +13738,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13754,7 +13754,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13770,7 +13770,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13786,7 +13786,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13802,7 +13802,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13818,7 +13818,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13834,7 +13834,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13850,7 +13850,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13866,7 +13866,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13882,7 +13882,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13898,7 +13898,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13914,7 +13914,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13930,7 +13930,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13946,7 +13946,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13962,7 +13962,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13978,7 +13978,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -13994,7 +13994,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14010,7 +14010,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14026,7 +14026,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14042,7 +14042,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14058,7 +14058,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14074,7 +14074,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14090,7 +14090,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14106,7 +14106,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14122,7 +14122,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14138,7 +14138,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14154,7 +14154,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14170,7 +14170,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14186,7 +14186,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14202,7 +14202,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14218,7 +14218,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14234,7 +14234,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14250,7 +14250,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14266,7 +14266,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14282,7 +14282,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14298,7 +14298,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14314,7 +14314,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14330,7 +14330,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14346,7 +14346,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14362,7 +14362,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14378,7 +14378,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14394,7 +14394,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14410,7 +14410,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14426,7 +14426,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14442,7 +14442,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14458,7 +14458,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14474,7 +14474,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14490,7 +14490,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14506,7 +14506,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14522,7 +14522,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14538,7 +14538,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14554,7 +14554,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14570,7 +14570,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14586,7 +14586,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14602,7 +14602,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14618,7 +14618,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14634,7 +14634,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14650,7 +14650,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14666,7 +14666,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14682,7 +14682,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14698,7 +14698,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14714,7 +14714,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14730,7 +14730,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14746,7 +14746,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14762,7 +14762,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14778,7 +14778,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14794,7 +14794,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14810,7 +14810,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14826,7 +14826,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14842,7 +14842,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14858,7 +14858,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14874,7 +14874,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14890,7 +14890,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14906,7 +14906,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14922,7 +14922,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       }
     ],
@@ -14940,7 +14940,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14956,7 +14956,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14972,7 +14972,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -14988,7 +14988,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15004,7 +15004,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15020,7 +15020,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15036,7 +15036,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15052,7 +15052,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15068,7 +15068,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15084,7 +15084,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15100,7 +15100,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15116,7 +15116,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15132,7 +15132,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15148,7 +15148,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15164,7 +15164,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15180,7 +15180,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15196,7 +15196,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15212,7 +15212,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15228,7 +15228,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15244,7 +15244,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15260,7 +15260,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15276,7 +15276,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15292,7 +15292,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15308,7 +15308,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15324,7 +15324,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15340,7 +15340,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15356,7 +15356,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15372,7 +15372,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15388,7 +15388,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15404,7 +15404,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15420,7 +15420,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15436,7 +15436,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15452,7 +15452,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15468,7 +15468,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15484,7 +15484,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15500,7 +15500,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15516,7 +15516,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15532,7 +15532,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15548,7 +15548,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15564,7 +15564,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15580,7 +15580,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15596,7 +15596,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15612,7 +15612,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15628,7 +15628,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15644,7 +15644,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15660,7 +15660,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15676,7 +15676,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15692,7 +15692,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15708,7 +15708,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15724,7 +15724,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15740,7 +15740,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15756,7 +15756,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15772,7 +15772,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15788,7 +15788,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15804,7 +15804,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15820,7 +15820,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15836,7 +15836,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15852,7 +15852,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15868,7 +15868,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15884,7 +15884,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15900,7 +15900,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15916,7 +15916,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15932,7 +15932,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15948,7 +15948,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15964,7 +15964,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15980,7 +15980,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -15996,7 +15996,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16012,7 +16012,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16028,7 +16028,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16044,7 +16044,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16060,7 +16060,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16076,7 +16076,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16092,7 +16092,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16108,7 +16108,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16124,7 +16124,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16140,7 +16140,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16156,7 +16156,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16172,7 +16172,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16188,7 +16188,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16204,7 +16204,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16220,7 +16220,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16236,7 +16236,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16252,7 +16252,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16268,7 +16268,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16284,7 +16284,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16300,7 +16300,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16316,7 +16316,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16332,7 +16332,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16348,7 +16348,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16364,7 +16364,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16380,7 +16380,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16396,7 +16396,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16412,7 +16412,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16428,7 +16428,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16444,7 +16444,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16460,7 +16460,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16476,7 +16476,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16492,7 +16492,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16508,7 +16508,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16524,7 +16524,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16540,7 +16540,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16556,7 +16556,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16572,7 +16572,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16588,7 +16588,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16604,7 +16604,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16620,7 +16620,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16636,7 +16636,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16652,7 +16652,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16668,7 +16668,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16684,7 +16684,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16700,7 +16700,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16716,7 +16716,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16732,7 +16732,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16748,7 +16748,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16764,7 +16764,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16780,7 +16780,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16796,7 +16796,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16812,7 +16812,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16828,7 +16828,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16844,7 +16844,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16860,7 +16860,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16876,7 +16876,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16892,7 +16892,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16908,7 +16908,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16924,7 +16924,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16940,7 +16940,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16956,7 +16956,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16972,7 +16972,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -16988,7 +16988,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17004,7 +17004,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17020,7 +17020,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17036,7 +17036,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17052,7 +17052,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17068,7 +17068,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17084,7 +17084,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17100,7 +17100,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17116,7 +17116,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17132,7 +17132,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17148,7 +17148,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17164,7 +17164,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17180,7 +17180,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17196,7 +17196,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17212,7 +17212,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17228,7 +17228,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17244,7 +17244,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17260,7 +17260,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17276,7 +17276,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17292,7 +17292,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17308,7 +17308,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17324,7 +17324,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17340,7 +17340,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17356,7 +17356,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17372,7 +17372,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17388,7 +17388,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17404,7 +17404,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17420,7 +17420,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17436,7 +17436,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17452,7 +17452,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17468,7 +17468,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17484,7 +17484,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17500,7 +17500,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17516,7 +17516,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17532,7 +17532,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17548,7 +17548,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17564,7 +17564,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17580,7 +17580,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17596,7 +17596,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17612,7 +17612,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17628,7 +17628,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17644,7 +17644,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17660,7 +17660,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17676,7 +17676,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17692,7 +17692,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17708,7 +17708,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17724,7 +17724,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17740,7 +17740,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17756,7 +17756,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17772,7 +17772,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17788,7 +17788,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17804,7 +17804,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17820,7 +17820,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17836,7 +17836,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17852,7 +17852,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17868,7 +17868,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17884,7 +17884,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17900,7 +17900,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17916,7 +17916,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17932,7 +17932,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17948,7 +17948,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17964,7 +17964,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17980,7 +17980,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -17996,7 +17996,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18012,7 +18012,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18028,7 +18028,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18044,7 +18044,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18060,7 +18060,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18076,7 +18076,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18092,7 +18092,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18108,7 +18108,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18124,7 +18124,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18140,7 +18140,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18156,7 +18156,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18172,7 +18172,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18188,7 +18188,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18204,7 +18204,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18220,7 +18220,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18236,7 +18236,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18252,7 +18252,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18268,7 +18268,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18284,7 +18284,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18300,7 +18300,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18316,7 +18316,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18332,7 +18332,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18348,7 +18348,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18364,7 +18364,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18380,7 +18380,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18396,7 +18396,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18412,7 +18412,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18428,7 +18428,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18444,7 +18444,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18460,7 +18460,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18476,7 +18476,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18492,7 +18492,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18508,7 +18508,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18524,7 +18524,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18540,7 +18540,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18556,7 +18556,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18572,7 +18572,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18588,7 +18588,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18604,7 +18604,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18620,7 +18620,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18636,7 +18636,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18652,7 +18652,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18668,7 +18668,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18684,7 +18684,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18700,7 +18700,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18716,7 +18716,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18732,7 +18732,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18748,7 +18748,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18764,7 +18764,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18780,7 +18780,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18796,7 +18796,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18812,7 +18812,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18828,7 +18828,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18844,7 +18844,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18860,7 +18860,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18876,7 +18876,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18892,7 +18892,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18908,7 +18908,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18924,7 +18924,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18940,7 +18940,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18956,7 +18956,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18972,7 +18972,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -18988,7 +18988,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19004,7 +19004,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19020,7 +19020,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19036,7 +19036,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19052,7 +19052,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19068,7 +19068,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19084,7 +19084,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19100,7 +19100,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19116,7 +19116,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19132,7 +19132,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19148,7 +19148,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19164,7 +19164,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19180,7 +19180,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19196,7 +19196,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19212,7 +19212,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19228,7 +19228,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19244,7 +19244,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19260,7 +19260,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19276,7 +19276,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19292,7 +19292,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19308,7 +19308,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19324,7 +19324,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19340,7 +19340,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19356,7 +19356,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19372,7 +19372,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19388,7 +19388,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19404,7 +19404,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19420,7 +19420,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19436,7 +19436,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19452,7 +19452,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19468,7 +19468,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19484,7 +19484,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19500,7 +19500,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19516,7 +19516,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19532,7 +19532,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19548,7 +19548,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19564,7 +19564,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19580,7 +19580,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19596,7 +19596,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19612,7 +19612,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19628,7 +19628,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19644,7 +19644,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19660,7 +19660,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19676,7 +19676,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19692,7 +19692,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19708,7 +19708,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19724,7 +19724,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19740,7 +19740,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19756,7 +19756,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19772,7 +19772,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19788,7 +19788,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19804,7 +19804,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19820,7 +19820,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19836,7 +19836,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19852,7 +19852,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19868,7 +19868,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19884,7 +19884,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19900,7 +19900,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19916,7 +19916,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19932,7 +19932,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19948,7 +19948,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19964,7 +19964,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19980,7 +19980,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -19996,7 +19996,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20012,7 +20012,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20028,7 +20028,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20044,7 +20044,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20060,7 +20060,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20076,7 +20076,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20092,7 +20092,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20108,7 +20108,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20124,7 +20124,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20140,7 +20140,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20156,7 +20156,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20172,7 +20172,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20188,7 +20188,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20204,7 +20204,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20220,7 +20220,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20236,7 +20236,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20252,7 +20252,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20268,7 +20268,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20284,7 +20284,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20300,7 +20300,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20316,7 +20316,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20332,7 +20332,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20348,7 +20348,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20364,7 +20364,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20380,7 +20380,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20396,7 +20396,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20412,7 +20412,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20428,7 +20428,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20444,7 +20444,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20460,7 +20460,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20476,7 +20476,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20492,7 +20492,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20508,7 +20508,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20524,7 +20524,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20540,7 +20540,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20556,7 +20556,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20572,7 +20572,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20588,7 +20588,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20604,7 +20604,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20620,7 +20620,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20636,7 +20636,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20652,7 +20652,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20668,7 +20668,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       },
       {
@@ -20684,7 +20684,7 @@
         },
         "restitution": 0.45,
         "friction": 0.4,
-        "barrier_type": "Armco",
+        "barrier_type": "Steel",
         "elevation": 0.0
       }
     ],

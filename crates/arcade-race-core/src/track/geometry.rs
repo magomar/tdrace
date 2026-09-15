@@ -146,32 +146,75 @@ impl LineSegment {
 /// Physical classification of track barriers and walls.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum BarrierType {
-    /// Rigid concrete wall (high restitution, moderate friction).
+    /// Rigid concrete wall (high restitution, low-to-moderate sliding friction).
     Concrete,
-    /// Armco steel barrier (medium restitution, steel friction).
-    Armco,
-    /// Energy-absorbing tire stack barrier (low restitution, high friction).
+    /// Steel barrier (medium restitution, deformable, moderate friction & bodywork snagging).
+    Steel,
+    /// Energy-absorbing tire stack barrier (low restitution, high rubber friction).
     TireWall,
     /// Low track-edge curb wall.
     CurbWall,
 }
 
 impl BarrierType {
-    pub const fn default_restitution(self) -> f32 {
+    /// Human-readable display name.
+    pub const fn name(self) -> &'static str {
         match self {
-            Self::Concrete => 0.65,
-            Self::Armco => 0.45,
-            Self::TireWall => 0.20,
-            Self::CurbWall => 0.35,
+            Self::Concrete => "Concrete",
+            Self::Steel => "Steel",
+            Self::TireWall => "Rubber Tyres",
+            Self::CurbWall => "Curb Wall",
         }
     }
 
+    /// Normal restitution coefficient ($e \in [0, 1]$) determining bounce elasticity on impact.
+    pub const fn default_restitution(self) -> f32 {
+        match self {
+            Self::Concrete => 0.65,
+            Self::Steel => 0.42,
+            Self::TireWall => 0.18,
+            Self::CurbWall => 0.30,
+        }
+    }
+
+    /// Surface Coulomb friction coefficient ($\mu$) when tires or bodywork slide against the barrier.
     pub const fn default_friction(self) -> f32 {
         match self {
-            Self::Concrete => 0.35,
-            Self::Armco => 0.40,
-            Self::TireWall => 0.70,
-            Self::CurbWall => 0.50,
+            Self::Concrete => 0.32,
+            Self::Steel => 0.45,
+            Self::TireWall => 0.80,
+            Self::CurbWall => 0.40,
+        }
+    }
+
+    /// Tangential deceleration rate (m/s²) applied as scraping braking resistance when rubbing against the wall.
+    pub const fn scraping_deceleration(self) -> f32 {
+        match self {
+            Self::Concrete => 9.0,   // Smooth concrete grinding (~0.9g)
+            Self::Steel => 14.0,     // Corrugated steel beam and post catching (~1.4g)
+            Self::TireWall => 24.0,  // Soft high-grip rubber compression drag (~2.4g)
+            Self::CurbWall => 7.0,   // Low curb wall resistance (~0.7g)
+        }
+    }
+
+    /// Rotational snag factor ($[0, 1]$) controlling yaw torque induced when vehicle scrapes along barrier.
+    pub const fn snag_torque_factor(self) -> f32 {
+        match self {
+            Self::Concrete => 0.12,  // Flat plane allows smooth sliding with minimal yaw deflection
+            Self::Steel => 0.25,     // Corrugations and upright posts snag corners and induce moderate yaw
+            Self::TireWall => 0.45,  // Aggressive rubber bite grips corners and spins car into barrier
+            Self::CurbWall => 0.10,  // Low curb redirects car with little torque
+        }
+    }
+
+    /// Structural impact energy absorption factor ($[0, 1]$) for vehicle damage simulation.
+    /// Higher values mean the barrier yields/cushions more, transferring less kinetic energy into vehicle chassis damage.
+    pub const fn energy_absorption_factor(self) -> f32 {
+        match self {
+            Self::Concrete => 0.10,  // Stiffest structure: 90% of impact energy transferred to vehicle
+            Self::Steel => 0.40,     // Deformable steel beam yields, absorbing 40% of impact energy
+            Self::TireWall => 0.75,  // Compressive tire stacks absorb 75% of impact energy
+            Self::CurbWall => 0.25,  // Low barrier absorption
         }
     }
 }

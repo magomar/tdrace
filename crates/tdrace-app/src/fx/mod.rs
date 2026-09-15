@@ -10,6 +10,7 @@ use tdrace_core::collision::car_collision::CarCarCollisionEvent;
 use tdrace_core::collision::wall::WallCollisionEvent;
 use tdrace_core::physics::car::Car;
 use tdrace_core::physics::surface::SurfaceType;
+use tdrace_core::track::geometry::BarrierType;
 
 /// Unified visual effects coordinator managing skidmarks, smoke, dirt, collision sparks, and drift popups.
 #[derive(Debug, Clone)]
@@ -102,11 +103,26 @@ impl EffectsManager {
             self.prev_drifting[i] = is_drifting;
         }
 
-        // 3. Collision sparks for wall impacts
+        // 3. Collision sparks and particles for wall impacts
         for ev in wall_collisions {
             if ev.impact_speed > 2.5 {
-                self.particles
-                    .emit_sparks(ev.contact_point, ev.normal, ev.impact_speed);
+                match ev.barrier_type {
+                    BarrierType::Steel => {
+                        self.particles
+                            .emit_sparks(ev.contact_point, ev.normal, ev.impact_speed * 1.3);
+                    }
+                    BarrierType::TireWall => {
+                        self.particles.emit_tire_smoke(
+                            ev.contact_point,
+                            ev.normal * -2.0,
+                            (ev.impact_speed / 10.0).clamp(0.4, 1.2),
+                        );
+                    }
+                    BarrierType::Concrete | BarrierType::CurbWall => {
+                        self.particles
+                            .emit_sparks(ev.contact_point, ev.normal, ev.impact_speed);
+                    }
+                }
             }
         }
 

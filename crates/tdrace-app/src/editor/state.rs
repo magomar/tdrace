@@ -529,7 +529,7 @@ impl EditorState {
             current_file_path: None,
             diagnostics,
             barrier_offset: 4.0,
-            barrier_type: BarrierType::Armco,
+            barrier_type: BarrierType::Steel,
         }
     }
 

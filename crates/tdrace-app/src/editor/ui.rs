@@ -956,18 +956,15 @@ fn render_inspector(
 
                 // Wall Type selector
                 let current_wt = state.track.spline.waypoints[idx].wall_type.unwrap_or(state.barrier_type);
-                let wt_name = match current_wt {
-                    BarrierType::Concrete => "Concrete",
-                    BarrierType::TireWall => "Rubber Tyres",
-                    BarrierType::Armco => "Armco Steel",
-                    BarrierType::CurbWall => "Curb Wall",
-                };
+                let wt_name = current_wt.name();
                 fonts.draw_ui_bold(&format!("Wall Type: {}", wt_name), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(20.0);
 
                 let is_conc = current_wt == BarrierType::Concrete;
+                let is_steel = current_wt == BarrierType::Steel;
                 let is_tire = current_wt == BarrierType::TireWall;
 
+                // Row 1: Concrete & Steel
                 if draw_ui_btn(
                     fonts,
                     scaler,
@@ -993,6 +990,27 @@ fn render_inspector(
                     x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
                     curr_y,
                     half_btn_w,
+                    scaler.s(22.0),
+                    "Steel",
+                    if is_steel { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_steel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    state.record_undo();
+                    state.track.spline.waypoints[idx].wall_type = Some(BarrierType::Steel);
+                    tools.new_waypoint_wall_type = Some(BarrierType::Steel);
+                    state.rebuild_geometry();
+                }
+                curr_y += scaler.s(26.0);
+
+                // Row 2: Rubber Tyres (full width)
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    w - scaler.s(24.0),
                     scaler.s(22.0),
                     "Rubber Tyres",
                     if is_tire { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
@@ -1190,10 +1208,14 @@ fn render_inspector(
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(24.0), "Concrete", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                 tools.batch_set_wall_type(state, Some(BarrierType::Concrete));
             }
-            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "Rubber Tyres", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(24.0), "Steel", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                tools.batch_set_wall_type(state, Some(BarrierType::Steel));
+            }
+            curr_y += scaler.s(28.0);
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(24.0), "Rubber Tyres", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                 tools.batch_set_wall_type(state, Some(BarrierType::TireWall));
             }
-            curr_y += scaler.s(30.0);
+            curr_y += scaler.s(32.0);
 
             fonts.draw_ui_bold("BATCH SURFACE:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
             curr_y += scaler.s(18.0);
@@ -2016,12 +2038,7 @@ fn render_inspector(
 
                 // Placement Wall Type
                 let cur_placement_wt = tools.new_waypoint_wall_type.unwrap_or(state.barrier_type);
-                let wt_name = match cur_placement_wt {
-                    BarrierType::Concrete => "Concrete",
-                    BarrierType::TireWall => "Rubber Tyres",
-                    BarrierType::Armco => "Armco Steel",
-                    BarrierType::CurbWall => "Curb Wall",
-                };
+                let wt_name = cur_placement_wt.name();
                 fonts.draw_ui_bold(
                     &format!("Placement Wall Type: {}", wt_name),
                     x + scaler.s(12.0),
@@ -2032,9 +2049,11 @@ fn render_inspector(
                 curr_y += scaler.s(20.0);
 
                 let is_conc = cur_placement_wt == BarrierType::Concrete;
+                let is_steel = cur_placement_wt == BarrierType::Steel;
                 let is_tire = cur_placement_wt == BarrierType::TireWall;
                 let half_btn_w = (w - scaler.s(30.0)) * 0.5;
 
+                // Row 1: Concrete & Steel
                 if draw_ui_btn(
                     fonts,
                     scaler,
@@ -2057,6 +2076,24 @@ fn render_inspector(
                     x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
                     curr_y,
                     half_btn_w,
+                    scaler.s(22.0),
+                    "Steel",
+                    if is_steel { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_steel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    tools.new_waypoint_wall_type = Some(BarrierType::Steel);
+                }
+                curr_y += scaler.s(26.0);
+
+                // Row 2: Rubber Tyres (full width)
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    x + scaler.s(12.0),
+                    curr_y,
+                    w - scaler.s(24.0),
                     scaler.s(22.0),
                     "Rubber Tyres",
                     if is_tire { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
@@ -2203,12 +2240,7 @@ fn render_inspector(
             curr_y += scaler.s(28.0);
 
             // Global Wall Type (Default Circuit Barrier Type)
-            let g_wt_name = match state.barrier_type {
-                BarrierType::Concrete => "Concrete",
-                BarrierType::TireWall => "Rubber Tyres",
-                BarrierType::Armco => "Armco Steel",
-                BarrierType::CurbWall => "Curb Wall",
-            };
+            let g_wt_name = state.barrier_type.name();
             fonts.draw_ui_bold(
                 &format!("Global Wall Type: {}", g_wt_name),
                 x + scaler.s(12.0),
@@ -2219,9 +2251,11 @@ fn render_inspector(
             curr_y += scaler.s(20.0);
 
             let is_g_conc = state.barrier_type == BarrierType::Concrete;
+            let is_g_steel = state.barrier_type == BarrierType::Steel;
             let is_g_tire = state.barrier_type == BarrierType::TireWall;
             let half_btn_w = (w - scaler.s(30.0)) * 0.5;
 
+            // Row 1: Concrete & Steel
             if draw_ui_btn(
                 fonts,
                 scaler,
@@ -2244,6 +2278,24 @@ fn render_inspector(
                 x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
                 curr_y,
                 half_btn_w,
+                scaler.s(22.0),
+                "Steel",
+                if is_g_steel { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                if is_g_steel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                mouse_pos,
+                clicked,
+            ) {
+                tools.set_global_barrier_type(state, BarrierType::Steel);
+            }
+            curr_y += scaler.s(26.0);
+
+            // Row 2: Rubber Tyres (full width)
+            if draw_ui_btn(
+                fonts,
+                scaler,
+                x + scaler.s(12.0),
+                curr_y,
+                w - scaler.s(24.0),
                 scaler.s(22.0),
                 "Rubber Tyres",
                 if is_g_tire { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },

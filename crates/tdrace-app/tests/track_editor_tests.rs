@@ -116,7 +116,7 @@ fn test_track_editor_custom_circuit_lifecycle_and_io() {
     // Auto-generate checkpoints and grid
     track.auto_generate_checkpoints(8, 3);
     track.auto_generate_grid(6, 8.0, 3.0);
-    track.rebuild_geometry(2.5, BarrierType::Armco);
+    track.rebuild_geometry(2.5, BarrierType::Steel);
 
     // Validate
     let errors: Vec<_> = validate_track(&track)
@@ -1867,9 +1867,16 @@ fn test_track_editor_wall_type_selection_and_batch_operations() {
     assert_eq!(state.track.spline.waypoints[0].wall_type, Some(BarrierType::TireWall));
     assert_eq!(state.track.spline.waypoints[1].wall_type, Some(BarrierType::TireWall));
 
-    // 3. Road spline tool placement inherits or uses new_waypoint_wall_type
+    // Batch set to steel walls (BarrierType::Steel)
+    state.select(Selection::MultipleWaypoints(vec![0, 1]));
+    let applied_steel = tools.batch_set_wall_type(&mut state, Some(BarrierType::Steel));
+    assert!(applied_steel);
+    assert_eq!(state.track.spline.waypoints[0].wall_type, Some(BarrierType::Steel));
+    assert_eq!(state.track.spline.waypoints[1].wall_type, Some(BarrierType::Steel));
+
+    // 3. Road spline tool placement inherits or uses new_waypoint_wall_type (Steel)
     tools.active_tool = EditorToolType::RoadSpline;
-    tools.new_waypoint_wall_type = Some(BarrierType::TireWall);
+    tools.new_waypoint_wall_type = Some(BarrierType::Steel);
     let initial_count = state.track.spline.waypoints.len();
     state.selection = Selection::None;
     state.last_selected_waypoint = None;
@@ -1877,9 +1884,11 @@ fn test_track_editor_wall_type_selection_and_batch_operations() {
     tools.handle_secondary_up(&mut state, Vec2::new(999.0, 999.0));
     assert_eq!(state.track.spline.waypoints.len(), initial_count + 1);
     let new_wp = state.track.spline.waypoints.last().unwrap();
-    assert_eq!(new_wp.wall_type, Some(BarrierType::TireWall));
+    assert_eq!(new_wp.wall_type, Some(BarrierType::Steel));
 
-    // 4. Global barrier type setting
+    // 4. Global barrier type setting (Steel, TireWall, Concrete)
+    tools.set_global_barrier_type(&mut state, BarrierType::Steel);
+    assert_eq!(state.barrier_type, BarrierType::Steel);
     tools.set_global_barrier_type(&mut state, BarrierType::TireWall);
     assert_eq!(state.barrier_type, BarrierType::TireWall);
     tools.set_global_barrier_type(&mut state, BarrierType::Concrete);
