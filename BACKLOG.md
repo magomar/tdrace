@@ -25,6 +25,7 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
 ### 2.1 Track Roster & OSM Circuit Builder
 - **New Real-World Circuits**: Ingest OpenStreetMap track survey data and FIA homologation dimensions for iconic tracks (e.g. Nürburgring GP, Spa-Francorchamps, Yas Marina, Brands Hatch).
 - **Rallycross Stadium Venues**: Design dedicated mixed-surface arenas featuring gravel switchbacks, jump ramps, and split joker laps.
+- **Road Split Segments & Branching Splines (Alternative Circuits & Joker Laps)**: See detailed specification in [`docs/spec_road_split_and_branching_tracks.md`](docs/spec_road_split_and_branching_tracks.md) for topological Directed Ribbon Graph (`TrackNetwork`), $C^1$ spline stitching at branch sockets, multi-route progress tracking, and editor branch extension workflows.
 - **Dynamic Track Grip & Rubbering-In**: Surface grip evolution where the racing line rubbers in over laps, while off-line sections collect marbles and lose traction.
 
 ### 2.2 Advanced AI Opponents
