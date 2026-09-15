@@ -2644,6 +2644,30 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                 let r_wing = arrow_tip - dir * 1.8 + right * 1.2;
                 draw_line(arrow_tip.x, arrow_tip.y, l_wing.x, l_wing.y, 0.5, Palette::NEON_GOLD);
                 draw_line(arrow_tip.x, arrow_tip.y, r_wing.x, r_wing.y, 0.5, Palette::NEON_GOLD);
+
+                // Progressive curved contour arcs across ramp width showing the curved surface
+                let half_len = half_extents.x;
+                let half_wid = half_extents.y;
+                let arc_w = (half_wid * 0.82).max(0.6);
+                let arc_bulge = (half_len * 0.22).min(arc_w * 0.40);
+                let contour_col = Color::new(Palette::NEON_CYAN.r, Palette::NEON_CYAN.g, Palette::NEON_CYAN.b, 0.6);
+
+                for s in 0..3 {
+                    let t = (s as f32 + 1.0) / 4.0;
+                    let x_center = -half_len * 0.70 + t * (half_len * 1.35);
+                    let num_segments = 10;
+                    let mut prev_pt: Option<Vec2> = None;
+                    for seg in 0..=num_segments {
+                        let frac = (seg as f32 / num_segments as f32) * 2.0 - 1.0;
+                        let y_offset = frac * arc_w;
+                        let curve_offset = (1.0 - frac * frac) * arc_bulge;
+                        let pt = center + dir * (x_center + curve_offset) + right * y_offset;
+                        if let Some(prev) = prev_pt {
+                            draw_line(prev.x, prev.y, pt.x, pt.y, 0.35, contour_col);
+                        }
+                        prev_pt = Some(pt);
+                    }
+                }
             }
             EditorToolType::Obstacle => {
                 let min = Vec2::new(

@@ -2140,3 +2140,39 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
     tdrace_app::ui::menu::clear_menu_track_cache();
 }
 
+#[test]
+fn test_jump_ramp_curved_profile_elevation_and_slope() {
+    use tdrace_core::track::geometry::{JumpRamp, SurfaceShape};
+    use glam::Vec2;
+
+    let shape = SurfaceShape::OrientedBox {
+        center: Vec2::new(50.0, 50.0),
+        half_extents: Vec2::new(10.0, 4.0),
+        angle: 0.0, // facing +X
+    };
+    let ramp = JumpRamp::new(1, shape, Vec2::X, 5.0, 15.0, 2.0, "Curved Test Ramp");
+
+    let entry_pt = Vec2::new(40.0, 50.0); // s = 0.0
+    let lip_pt = Vec2::new(60.0, 50.0);   // s = 1.0
+    let mid_pt = Vec2::new(50.0, 50.0);   // s = 0.5
+
+    // 1. At entrance, elevation and slope are smoothly tangent to the ground (0.0)
+    assert_eq!(ramp.surface_elevation_at(entry_pt), 0.0);
+    assert_eq!(ramp.surface_slope_angle_rad_at(entry_pt), 0.0);
+
+    // 2. Midpoint along the curve has quadratic progression (t^2 = 0.25 * height),
+    // proving it is the actual concave curve and NOT a straight triangular incline (which would be 0.5 * height)
+    let s_incline = (ramp.incline_length() / ramp.length()).clamp(0.01, 1.0);
+    if s_incline >= 0.5 {
+        let t_mid = 0.5 / s_incline;
+        let expected_mid_elevation = 2.0 * t_mid * t_mid;
+        let actual_mid = ramp.surface_elevation_at(mid_pt);
+        assert!((actual_mid - expected_mid_elevation).abs() < 1e-4);
+        // Specifically verify it's strictly concave (less than the linear midpoint of 1.0m if s_incline=1.0)
+        assert!(actual_mid < 1.0 || s_incline < 0.5);
+    }
+
+    // 3. At lip / exit, elevation reaches full height (2.0m)
+    assert!((ramp.surface_elevation_at(lip_pt) - 2.0).abs() < 1e-4);
+}
+

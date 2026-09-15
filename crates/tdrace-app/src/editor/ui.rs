@@ -2069,6 +2069,89 @@ fn render_inspector(
                 curr_y += scaler.s(26.0);
             }
 
+            if tools.active_tool == EditorToolType::JumpRamp {
+                fonts.draw_ui_bold("Jump Ramp Tool", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
+                curr_y += scaler.s(24.0);
+
+                fonts.draw_ui_regular("Click & drag on track to place a launch ramp.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
+                curr_y += scaler.s(22.0);
+
+                fonts.draw_ui_bold(&format!("Surface: {}", tools.active_surface.name()), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(18.0);
+
+                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+                let surfaces = [
+                    (SurfaceType::Asphalt, "Asphalt"),
+                    (SurfaceType::Dirt, "Dirt"),
+                    (SurfaceType::Sand, "Sand"),
+                    (SurfaceType::Grass, "Grass"),
+                    (SurfaceType::Ice, "Ice"),
+                    (SurfaceType::Water, "Water"),
+                ];
+
+                for chunk in surfaces.chunks(2) {
+                    let (st1, label1) = chunk[0];
+                    let is_active1 = tools.active_surface == st1;
+                    if draw_ui_btn(
+                        fonts,
+                        scaler,
+                        x + scaler.s(12.0),
+                        curr_y,
+                        half_btn_w,
+                        scaler.s(22.0),
+                        label1,
+                        if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                        if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                        mouse_pos,
+                        clicked,
+                    ) {
+                        tools.active_surface = st1;
+                    }
+
+                    if chunk.len() > 1 {
+                        let (st2, label2) = chunk[1];
+                        let is_active2 = tools.active_surface == st2;
+                        if draw_ui_btn(
+                            fonts,
+                            scaler,
+                            x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
+                            curr_y,
+                            half_btn_w,
+                            scaler.s(22.0),
+                            label2,
+                            if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                            if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                            mouse_pos,
+                            clicked,
+                        ) {
+                            tools.active_surface = st2;
+                        }
+                    }
+                    curr_y += scaler.s(26.0);
+                }
+                curr_y += scaler.s(8.0);
+
+                let row_w = w - scaler.s(24.0);
+                fonts.draw_ui_bold("Curved Ramp Profile Preview:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(16.0);
+
+                let preview_ramp = JumpRamp::new(
+                    0,
+                    SurfaceShape::OrientedBox {
+                        center: Vec2::ZERO,
+                        half_extents: Vec2::new(6.0, 4.0),
+                        angle: 0.0,
+                    },
+                    Vec2::X,
+                    4.0,
+                    15.0,
+                    1.8,
+                    "Preview Ramp",
+                ).with_surface(tools.active_surface);
+                draw_ramp_lateral_view(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, scaler.s(80.0), &preview_ramp);
+                curr_y += scaler.s(88.0);
+            }
+
             // Global Barrier Offset (Default Wall Distance)
             fonts.draw_ui_bold(
                 &format!("Global Wall Offset: {:.1}m", state.barrier_offset),
@@ -2762,37 +2845,62 @@ fn draw_ramp_lateral_view(
     // Ground line
     macroquad::shapes::draw_line(origin_x - scaler.s(6.0), ground_y, origin_x + draw_w + scaler.s(6.0), ground_y, scaler.s(1.2), Palette::UI_TEXT_MUTED);
 
-    // Draw ramp cross-section body fill
-    if flat_len > 0.05 && inc_w < draw_w - scaler.s(1.0) {
-        // Triangle incline
-        let p_inc_base = Vec2::new(origin_x + inc_w, ground_y);
+    // Draw ramp cross-section body fill with smooth progressive concave curve (t^2)
+    let num_curve_segs = 32;
+    let slope_col = border_opt.unwrap_or(Palette::NEON_GOLD);
+
+    // 1. Incline curve body fill (sliced trapezoids under the quadratic curve)
+    for i in 0..num_curve_segs {
+        let t0 = i as f32 / num_curve_segs as f32;
+        let t1 = (i + 1) as f32 / num_curve_segs as f32;
+        let x0 = origin_x + t0 * inc_w;
+        let y0 = ground_y - draw_h * (t0 * t0);
+        let x1 = origin_x + t1 * inc_w;
+        let y1 = ground_y - draw_h * (t1 * t1);
+
         macroquad::shapes::draw_triangle(
-            macroquad::prelude::Vec2::new(p0.x, p0.y),
-            macroquad::prelude::Vec2::new(p_inc.x, p_inc.y),
-            macroquad::prelude::Vec2::new(p_inc_base.x, p_inc_base.y),
+            macroquad::prelude::Vec2::new(x0, ground_y),
+            macroquad::prelude::Vec2::new(x0, y0),
+            macroquad::prelude::Vec2::new(x1, y1),
             base_col,
         );
-        // Tabletop rectangle
-        macroquad::shapes::draw_rectangle(origin_x + inc_w, ground_y - draw_h, draw_w - inc_w, draw_h, base_col);
-    } else {
         macroquad::shapes::draw_triangle(
-            macroquad::prelude::Vec2::new(p0.x, p0.y),
-            macroquad::prelude::Vec2::new(p_top_exit.x, p_top_exit.y),
-            macroquad::prelude::Vec2::new(p_bot_exit.x, p_bot_exit.y),
+            macroquad::prelude::Vec2::new(x0, ground_y),
+            macroquad::prelude::Vec2::new(x1, y1),
+            macroquad::prelude::Vec2::new(x1, ground_y),
             base_col,
         );
     }
 
-    // Incline slope stroke
-    let slope_col = border_opt.unwrap_or(Palette::NEON_GOLD);
-    macroquad::shapes::draw_line(p0.x, p0.y, p_inc.x, p_inc.y, scaler.s(2.0), slope_col);
+    // 2. Tabletop flat rectangle body fill (if present)
+    if flat_len > 0.05 && inc_w < draw_w - scaler.s(1.0) {
+        macroquad::shapes::draw_rectangle(origin_x + inc_w, ground_y - draw_h, draw_w - inc_w, draw_h, base_col);
+    }
 
-    // Tabletop stroke (if flat portion exists)
+    // 3. Subtle vertical guide contours along curved incline
+    for div in [0.25f32, 0.50, 0.75] {
+        let gx = origin_x + div * inc_w;
+        let gy = ground_y - draw_h * (div * div);
+        macroquad::shapes::draw_line(gx, ground_y, gx, gy, scaler.s(1.0), macroquad::color::Color::new(1.0, 1.0, 1.0, 0.12));
+    }
+
+    // 4. Smooth curved incline slope stroke
+    for i in 0..num_curve_segs {
+        let t0 = i as f32 / num_curve_segs as f32;
+        let t1 = (i + 1) as f32 / num_curve_segs as f32;
+        let x0 = origin_x + t0 * inc_w;
+        let y0 = ground_y - draw_h * (t0 * t0);
+        let x1 = origin_x + t1 * inc_w;
+        let y1 = ground_y - draw_h * (t1 * t1);
+        macroquad::shapes::draw_line(x0, y0, x1, y1, scaler.s(2.2), slope_col);
+    }
+
+    // 5. Tabletop stroke (if flat portion exists)
     if flat_len > 0.05 && inc_w < draw_w - scaler.s(1.0) {
         macroquad::shapes::draw_line(p_inc.x, p_inc.y, p_top_exit.x, p_top_exit.y, scaler.s(2.0), Palette::NEON_CYAN);
     }
 
-    // Exit launch lip (vertical drop line)
+    // 6. Exit launch lip (vertical drop line)
     macroquad::shapes::draw_line(p_top_exit.x, p_top_exit.y, p_bot_exit.x, p_bot_exit.y, scaler.s(2.0), Palette::NEON_CYAN);
 
     // Annotations text
@@ -2805,7 +2913,7 @@ fn draw_ramp_lateral_view(
     fonts.draw_ui_regular(&h_str, (p_top_exit.x - scaler.s(36.0)).max(origin_x), ground_y - draw_h * 0.5 + scaler.s(3.0), scaler.font_s(9.5), Palette::NEON_GOLD);
 
     // Pitch (along slope)
-    let pitch_str = format!("{:.0}°", ramp.ramp_angle_deg);
+    let pitch_str = format!("{:.0}° (Curved)", ramp.ramp_angle_deg);
     fonts.draw_ui_bold(&pitch_str, p0.x + scaler.s(8.0), ground_y - scaler.s(4.0), scaler.font_s(9.5), Palette::NEON_GOLD);
 
     // Flat label if present
