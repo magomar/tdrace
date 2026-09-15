@@ -4,7 +4,7 @@ use tdrace_app::ui::curve_indicator::{
 };
 use tdrace_core::physics::car::Car;
 use tdrace_core::physics::config::CarConfig;
-use tdrace_core::track::curve::CurveDirection;
+use tdrace_core::track::curve::{evaluate_curve_approach, CurveDirection, TrackCurve};
 use tdrace_core::track::presets::classic_grand_prix;
 
 #[test]
@@ -190,5 +190,66 @@ fn test_curve_arrow_positioning_horizontal_and_clearance() {
     let pos_compat = compute_smart_curve_arrow_position(&track, &[], &player_car, CurveDirection::Right, 5, zoom);
     assert_eq!(pos_compat, pos_5);
 }
+
+#[test]
+fn test_chained_curve_hud_preemption_updates_arrow_and_color() {
+    let curve1 = TrackCurve {
+        id: 0,
+        direction: CurveDirection::Right,
+        degree: 1,
+        entry_distance: 100.0,
+        apex_distance: 130.0,
+        exit_distance: 160.0,
+        min_radius: 120.0,
+        peak_curvature: 1.0 / 120.0,
+        total_turn_angle: 0.25,
+        safe_apex_speed_mps: 65.0,
+        bank_angle: 0.0,
+    };
+    let curve2 = TrackCurve {
+        id: 1,
+        direction: CurveDirection::Left,
+        degree: 5,
+        entry_distance: 180.0,
+        apex_distance: 205.0,
+        exit_distance: 230.0,
+        min_radius: 14.0,
+        peak_curvature: 1.0 / 14.0,
+        total_turn_angle: 2.5,
+        safe_apex_speed_mps: 12.0,
+        bank_angle: 0.0,
+    };
+    let curves = vec![curve1, curve2];
+    let total_len = 1000.0;
+    let closed = true;
+
+    let car = Car::new(CarConfig::sports_car()).with_pose(glam::Vec2::new(50.0, 50.0), 0.0);
+    let zoom = 12.0;
+
+    // Phase 1: On far approach (dist = 0m, speed = 40 m/s):
+    // Turn 1 is returned (Right, Degree 1, Cruise Green)
+    let s_far = evaluate_curve_approach(&curves, 0.0, total_len, closed, 40.0, 200.0).unwrap();
+    assert_eq!(s_far.curve.id, 0);
+    assert_eq!(s_far.curve.direction, CurveDirection::Right);
+    let pos_far = compute_curve_arrow_position(&car, s_far.curve.direction, s_far.curve.degree, zoom);
+    assert!(pos_far.x > car.state.position.x, "Far approach shows Right arrow to right of car");
+    let (col_far, _) = compute_curve_colors(CurveColorScheme::Traffic, s_far.urgency, s_far.curve.degree, 1.0);
+    assert!(col_far.g > col_far.r, "Far approach on mild turn has green cruise color");
+
+    // Phase 2: Approaching Turn 1 / before Turn 1 apex (dist = 80m, speed = 40 m/s):
+    // Turn 2 is much harder and enters yellow/red braking zone!
+    // Turn 2 immediately preempts Turn 1!
+    let s_preempt = evaluate_curve_approach(&curves, 80.0, total_len, closed, 40.0, 200.0).unwrap();
+    assert_eq!(s_preempt.curve.id, 1, "Turn 2 must preempt Turn 1 before Turn 1 apex");
+    assert_eq!(s_preempt.curve.direction, CurveDirection::Left);
+    assert_eq!(s_preempt.curve.degree, 5);
+    let pos_preempt = compute_curve_arrow_position(&car, s_preempt.curve.direction, s_preempt.curve.degree, zoom);
+    assert!(pos_preempt.x < car.state.position.x, "Preempted arrow updates to Left side of car");
+    let alpha_preempt = compute_indicator_alpha(s_preempt.distance_to_entry, s_preempt.distance_to_apex, s_preempt.is_inside_curve);
+    assert!((alpha_preempt - 1.0).abs() < 1e-3, "Turn 2 alert is fully visible");
+    let (col_preempt, _) = compute_curve_colors(CurveColorScheme::Traffic, s_preempt.urgency, s_preempt.curve.degree, alpha_preempt);
+    assert!(col_preempt.r > 0.8, "Turn 2 alert is urgent warning/red color");
+}
+
 
 

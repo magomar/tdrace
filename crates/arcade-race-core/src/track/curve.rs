@@ -311,6 +311,124 @@ pub fn extract_curves_from_samples(
 }
 
 /// Evaluates upcoming curve proximity, required braking distance, and dynamic urgency for the car.
+/// Evaluates upcoming curve proximity, required braking distance, and dynamic urgency for a single curve.
+pub fn evaluate_single_curve_approach(
+    curve: &TrackCurve,
+    current_dist: f32,
+    total_length: f32,
+    closed: bool,
+    car_speed_mps: f32,
+) -> CurveApproachStatus {
+    let a_brake = 7.2f32; // Nominal safe deceleration rate (m/s²)
+    let warning_buffer = 35.0f32; // Buffer distance for smooth green -> yellow -> red transition (meters)
+
+    let dist_to_entry = if closed {
+        let mut d = curve.entry_distance - current_dist;
+        if d < 0.0 {
+            d += total_length;
+        }
+        d
+    } else {
+        curve.entry_distance - current_dist
+    };
+
+    let dist_to_exit = if closed {
+        let mut d = curve.exit_distance - current_dist;
+        if d < 0.0 {
+            d += total_length;
+        }
+        d
+    } else {
+        curve.exit_distance - current_dist
+    };
+
+    let dist_to_apex = if closed {
+        let mut d = curve.apex_distance - current_dist;
+        if d < 0.0 {
+            d += total_length;
+        }
+        d
+    } else {
+        curve.apex_distance - current_dist
+    };
+
+    // Determine if currently inside this curve
+    let curve_span = if curve.exit_distance >= curve.entry_distance {
+        curve.exit_distance - curve.entry_distance
+    } else {
+        (total_length - curve.entry_distance) + curve.exit_distance
+    };
+
+    let is_inside = if closed {
+        dist_to_exit <= curve_span && dist_to_entry > (total_length - curve_span)
+    } else {
+        current_dist >= curve.entry_distance && current_dist <= curve.exit_distance
+    };
+
+    let signed_apex_dist = if closed {
+        if dist_to_apex > total_length * 0.5 {
+            dist_to_apex - total_length
+        } else {
+            dist_to_apex
+        }
+    } else {
+        dist_to_apex
+    };
+
+    // Compute braking distance required
+    let required_braking_distance = if car_speed_mps > curve.safe_apex_speed_mps {
+        (car_speed_mps * car_speed_mps - curve.safe_apex_speed_mps * curve.safe_apex_speed_mps)
+            / (2.0 * a_brake)
+    } else {
+        0.0
+    };
+
+    // Compute dynamic urgency factor [0.0 to 1.0]
+    let (urgency, must_brake) = if is_inside {
+        // If inside before apex and still over-speeding: critical
+        if signed_apex_dist >= 0.0 && car_speed_mps > curve.safe_apex_speed_mps {
+            (1.0, true)
+        } else {
+            (0.0, false)
+        }
+    } else if required_braking_distance <= 0.0 {
+        // Already traveling at or below safe cornering speed!
+        (0.0, false)
+    } else if dist_to_entry <= required_braking_distance {
+        // Inside the hard braking zone!
+        (1.0, true)
+    } else if dist_to_entry <= required_braking_distance + warning_buffer {
+        // Approaching braking zone: smooth ramp 0.0 -> 1.0
+        let t = (required_braking_distance + warning_buffer - dist_to_entry) / warning_buffer;
+        (t.clamp(0.0, 1.0), t >= 0.85)
+    } else {
+        // Plenty of runway ahead
+        (0.0, false)
+    };
+
+    let signed_entry_dist = if is_inside {
+        -(curve_span - dist_to_exit)
+    } else {
+        dist_to_entry
+    };
+
+    CurveApproachStatus {
+        curve: curve.clone(),
+        distance_to_entry: signed_entry_dist,
+        distance_to_apex: signed_apex_dist,
+        is_inside_curve: is_inside,
+        required_braking_distance,
+        urgency,
+        must_brake,
+    }
+}
+
+/// Evaluates upcoming curve proximity, required braking distance, and dynamic urgency for the car.
+///
+/// When navigating chained turns, always checks forward for the next two turns:
+/// if Turn 2 deserves a red state and is harder than Turn 1, or is yellow but much harder
+/// than Turn 1, Turn 2 immediately takes priority and is returned independently of the
+/// status of the indicator in relation to Turn 1.
 pub fn evaluate_curve_approach(
     curves: &[TrackCurve],
     current_dist: f32,
@@ -323,130 +441,81 @@ pub fn evaluate_curve_approach(
         return None;
     }
 
-    let a_brake = 7.2f32; // Nominal safe deceleration rate (m/s²)
-    let warning_buffer = 35.0f32; // Buffer distance for smooth green -> yellow -> red transition (meters)
-
+    let mut best_idx: Option<usize> = None;
     let mut best_status: Option<CurveApproachStatus> = None;
     let mut best_forward_dist = f32::INFINITY;
 
-    for curve in curves {
-        // Compute forward track distance from current_dist to curve entry and exit
-        let dist_to_entry = if closed {
-            let mut d = curve.entry_distance - current_dist;
-            if d < 0.0 {
-                d += total_length;
-            }
-            d
-        } else {
-            curve.entry_distance - current_dist
-        };
-
-        let dist_to_exit = if closed {
-            let mut d = curve.exit_distance - current_dist;
-            if d < 0.0 {
-                d += total_length;
-            }
-            d
-        } else {
-            curve.exit_distance - current_dist
-        };
-
-        let dist_to_apex = if closed {
-            let mut d = curve.apex_distance - current_dist;
-            if d < 0.0 {
-                d += total_length;
-            }
-            d
-        } else {
-            curve.apex_distance - current_dist
-        };
-
-        // Determine if currently inside this curve
-        let curve_span = if curve.exit_distance >= curve.entry_distance {
-            curve.exit_distance - curve.entry_distance
-        } else {
-            (total_length - curve.entry_distance) + curve.exit_distance
-        };
-
-        let is_inside = if closed {
-            dist_to_exit <= curve_span && dist_to_entry > (total_length - curve_span)
-        } else {
-            current_dist >= curve.entry_distance && current_dist <= curve.exit_distance
-        };
-
-        let signed_apex_dist = if closed {
-            if dist_to_apex > total_length * 0.5 {
-                dist_to_apex - total_length
-            } else {
-                dist_to_apex
-            }
-        } else {
-            dist_to_apex
-        };
+    for (idx, curve) in curves.iter().enumerate() {
+        let status = evaluate_single_curve_approach(
+            curve,
+            current_dist,
+            total_length,
+            closed,
+            car_speed_mps,
+        );
 
         // If the car is inside this curve but has already traversed past the apex / inflexion point by > 10m,
         // it has finished the turn and we should allow the next upcoming curve to be targeted.
-        if is_inside && signed_apex_dist < -10.0 {
+        if status.is_inside_curve && status.distance_to_apex < -10.0 {
             continue;
         }
 
-        let forward_check_dist = if is_inside { 0.0 } else { dist_to_entry };
+        let forward_check_dist = if status.is_inside_curve {
+            0.0
+        } else {
+            status.distance_to_entry
+        };
 
-        if forward_check_dist > max_lookahead && !is_inside {
+        if forward_check_dist > max_lookahead && !status.is_inside_curve {
             continue;
         }
 
         if forward_check_dist < best_forward_dist {
             best_forward_dist = forward_check_dist;
-
-            // Compute braking distance required
-            let required_braking_distance = if car_speed_mps > curve.safe_apex_speed_mps {
-                (car_speed_mps * car_speed_mps - curve.safe_apex_speed_mps * curve.safe_apex_speed_mps)
-                    / (2.0 * a_brake)
-            } else {
-                0.0
-            };
-
-            // Compute dynamic urgency factor [0.0 to 1.0]
-            let (urgency, must_brake) = if is_inside {
-                // If inside before apex and still over-speeding: critical
-                if signed_apex_dist >= 0.0 && car_speed_mps > curve.safe_apex_speed_mps {
-                    (1.0, true)
-                } else {
-                    (0.0, false)
-                }
-            } else if required_braking_distance <= 0.0 {
-                // Already traveling at or below safe cornering speed!
-                (0.0, false)
-            } else if dist_to_entry <= required_braking_distance {
-                // Inside the hard braking zone!
-                (1.0, true)
-            } else if dist_to_entry <= required_braking_distance + warning_buffer {
-                // Approaching braking zone: smooth ramp 0.0 -> 1.0
-                let t = (required_braking_distance + warning_buffer - dist_to_entry) / warning_buffer;
-                (t.clamp(0.0, 1.0), t >= 0.85)
-            } else {
-                // Plenty of runway ahead
-                (0.0, false)
-            };
-
-            let signed_entry_dist = if is_inside {
-                -(curve_span - dist_to_exit)
-            } else {
-                dist_to_entry
-            };
-
-            best_status = Some(CurveApproachStatus {
-                curve: curve.clone(),
-                distance_to_entry: signed_entry_dist,
-                distance_to_apex: signed_apex_dist,
-                is_inside_curve: is_inside,
-                required_braking_distance,
-                urgency,
-                must_brake,
-            });
+            best_idx = Some(idx);
+            best_status = Some(status);
         }
     }
 
-    best_status
+    let (c1_idx, status1) = match (best_idx, best_status) {
+        (Some(idx), Some(status)) => (idx, status),
+        _ => return None,
+    };
+
+    // Always check forward for the second upcoming turn (c2)
+    if curves.len() > 1 && (closed || c1_idx + 1 < curves.len()) {
+        let c2_idx = (c1_idx + 1) % curves.len();
+        let c2 = &curves[c2_idx];
+        let status2 = evaluate_single_curve_approach(
+            c2,
+            current_dist,
+            total_length,
+            closed,
+            car_speed_mps,
+        );
+
+        let is_harder = status2.curve.degree > status1.curve.degree
+            || status2.curve.safe_apex_speed_mps < status1.curve.safe_apex_speed_mps - 1.0;
+
+        let is_much_harder = status2.curve.degree >= status1.curve.degree + 2
+            || (status2.curve.degree > status1.curve.degree
+                && status2.curve.safe_apex_speed_mps + 7.0 <= status1.curve.safe_apex_speed_mps)
+            || (status2.curve.degree >= 4 && status1.curve.degree <= 2);
+
+        let is_red = status2.urgency >= 0.70 || status2.must_brake;
+        let is_yellow = status2.urgency >= 0.35;
+
+        // If turn 2 deserves a red state and is harder than turn 1,
+        // or is yellow but much harder than turn 1, immediately show turn 2.
+        if (is_red && is_harder) || (is_yellow && is_much_harder) {
+            if status2.distance_to_entry <= max_lookahead
+                || status2.is_inside_curve
+                || status2.must_brake
+            {
+                return Some(status2);
+            }
+        }
+    }
+
+    Some(status1)
 }

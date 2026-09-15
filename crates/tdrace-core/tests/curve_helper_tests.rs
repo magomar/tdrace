@@ -236,3 +236,197 @@ fn test_apex_inflexion_traversal_and_clearance() {
     assert!((s_next.distance_to_entry - 75.0).abs() < 1e-3);
 }
 
+#[test]
+fn test_chained_turn_red_preemption_when_harder() {
+    let curve1 = TrackCurve {
+        id: 0,
+        direction: CurveDirection::Right,
+        degree: 2,
+        entry_distance: 100.0,
+        apex_distance: 130.0,
+        exit_distance: 160.0,
+        min_radius: 65.0,
+        peak_curvature: 1.0 / 65.0,
+        total_turn_angle: 0.6,
+        safe_apex_speed_mps: 40.0,
+        bank_angle: 0.0,
+    };
+    let curve2 = TrackCurve {
+        id: 1,
+        direction: CurveDirection::Left,
+        degree: 4,
+        entry_distance: 180.0,
+        apex_distance: 205.0,
+        exit_distance: 230.0,
+        min_radius: 24.0,
+        peak_curvature: 1.0 / 24.0,
+        total_turn_angle: 1.5,
+        safe_apex_speed_mps: 15.0,
+        bank_angle: 0.0,
+    };
+    let curves = vec![curve1, curve2];
+    let total_len = 1000.0;
+    let closed = true;
+
+    let car_speed = 35.0; // 126 km/h
+    // Required braking for curve2: (35^2 - 15^2) / 14.4 = (1225 - 225) / 14.4 = 69.44m
+    // Warning buffer: 35m. Red zone begins when dist_to_entry <= 69.44 + 0.3 * 35 = ~80m.
+
+    // 1. Far away (current_dist = 0.0m):
+    // Curve 1 entry is 100m away, Curve 2 entry is 180m away.
+    // Curve 2 is well outside braking zone (180m > 69.44 + 35 = 104.44m) -> urgency 0.0.
+    // Player first sees arrows for the first turn!
+    let s_far = evaluate_curve_approach(&curves, 0.0, total_len, closed, car_speed, 200.0).unwrap();
+    assert_eq!(s_far.curve.id, 0, "Far away player must see Turn 1 first");
+    assert_eq!(s_far.curve.direction, CurveDirection::Right);
+    assert_eq!(s_far.curve.degree, 2);
+
+    // 2. Approaching/entering Turn 1 before apex (current_dist = 110.0m, apex = 130.0m):
+    // Car is inside Turn 1, 20m before Turn 1 apex!
+    // Curve 2 entry is 180.0 - 110.0 = 70.0m away.
+    // Curve 2 is inside the red braking zone (70m <= 69.44 + 10.5m = 79.94m)!
+    // Turn 2 is harder (degree 4 > degree 2) and deserves red state!
+    // Turn 2 immediately preempts Turn 1 before Turn 1's apex!
+    let s_preempt = evaluate_curve_approach(&curves, 110.0, total_len, closed, car_speed, 200.0).unwrap();
+    assert_eq!(
+        s_preempt.curve.id, 1,
+        "Turn 2 must preempt Turn 1 before Turn 1 apex when Turn 2 deserves red and is harder"
+    );
+    assert_eq!(s_preempt.curve.direction, CurveDirection::Left);
+    assert_eq!(s_preempt.curve.degree, 4);
+    assert!(s_preempt.urgency >= 0.70, "Preempting Turn 2 must be in red state");
+}
+
+#[test]
+fn test_chained_turn_yellow_preemption_when_much_harder() {
+    let curve1 = TrackCurve {
+        id: 0,
+        direction: CurveDirection::Right,
+        degree: 1, // Gentle kink
+        entry_distance: 100.0,
+        apex_distance: 130.0,
+        exit_distance: 160.0,
+        min_radius: 120.0,
+        peak_curvature: 1.0 / 120.0,
+        total_turn_angle: 0.25,
+        safe_apex_speed_mps: 65.0,
+        bank_angle: 0.0,
+    };
+    let curve2 = TrackCurve {
+        id: 1,
+        direction: CurveDirection::Left,
+        degree: 5, // Hairpin (+4 degrees harder!)
+        entry_distance: 180.0,
+        apex_distance: 205.0,
+        exit_distance: 230.0,
+        min_radius: 14.0,
+        peak_curvature: 1.0 / 14.0,
+        total_turn_angle: 2.5,
+        safe_apex_speed_mps: 12.0,
+        bank_angle: 0.0,
+    };
+    let curves = vec![curve1, curve2];
+    let total_len = 1000.0;
+    let closed = true;
+
+    let car_speed = 40.0; // 144 km/h
+    // Required braking for curve2: (1600 - 144) / 14.4 = 101.1m
+    // Yellow zone begins when dist_to_entry <= 101.1 + 35 = 136.1m (urgency >= 0.35 when dist <= 124m).
+
+    // 1. Far away (current_dist = 0.0m):
+    // Dist to curve2 entry is 180m > 136.1m -> urgency 0.0.
+    // Shows Turn 1 first.
+    let s_far = evaluate_curve_approach(&curves, 0.0, total_len, closed, car_speed, 200.0).unwrap();
+    assert_eq!(s_far.curve.id, 0);
+    assert_eq!(s_far.curve.degree, 1);
+
+    // 2. Approaching Turn 1 (current_dist = 70.0m, 30m before Turn 1 entry):
+    // Dist to curve2 entry is 180.0 - 70.0 = 110.0m.
+    // Curve 2 urgency: (101.1 + 35 - 110) / 35 = 26.1 / 35 = 0.74 (entering red)!
+    // Curve 2 is much harder (+4 degrees) and yellow/red -> immediately shows Turn 2!
+    let s_mid = evaluate_curve_approach(&curves, 70.0, total_len, closed, car_speed, 200.0).unwrap();
+    assert_eq!(s_mid.curve.id, 1, "Much harder Turn 2 preempts Turn 1 when yellow/red");
+    assert_eq!(s_mid.curve.degree, 5);
+}
+
+#[test]
+fn test_chained_turn_not_harder_does_not_preempt_turn1() {
+    let curve1 = TrackCurve {
+        id: 0,
+        direction: CurveDirection::Right,
+        degree: 4, // Sharp turn
+        entry_distance: 100.0,
+        apex_distance: 130.0,
+        exit_distance: 160.0,
+        min_radius: 25.0,
+        peak_curvature: 1.0 / 25.0,
+        total_turn_angle: 1.2,
+        safe_apex_speed_mps: 15.0,
+        bank_angle: 0.0,
+    };
+    let curve2 = TrackCurve {
+        id: 1,
+        direction: CurveDirection::Left,
+        degree: 2, // Mild curve (easier!)
+        entry_distance: 180.0,
+        apex_distance: 205.0,
+        exit_distance: 230.0,
+        min_radius: 70.0,
+        peak_curvature: 1.0 / 70.0,
+        total_turn_angle: 0.5,
+        safe_apex_speed_mps: 45.0,
+        bank_angle: 0.0,
+    };
+    let curves = vec![curve1, curve2];
+    let total_len = 1000.0;
+    let closed = true;
+
+    // Inside curve1 approaching apex (current_dist = 115.0m, apex = 130.0m)
+    let s = evaluate_curve_approach(&curves, 115.0, total_len, closed, 25.0, 200.0).unwrap();
+    assert_eq!(
+        s.curve.id, 0,
+        "Turn 1 must NOT be preempted when upcoming Turn 2 is easier than Turn 1"
+    );
+}
+
+#[test]
+fn test_equal_severity_turns_do_not_preempt_before_apex() {
+    let curve1 = TrackCurve {
+        id: 0,
+        direction: CurveDirection::Right,
+        degree: 4,
+        entry_distance: 100.0,
+        apex_distance: 130.0,
+        exit_distance: 160.0,
+        min_radius: 25.0,
+        peak_curvature: 1.0 / 25.0,
+        total_turn_angle: 1.2,
+        safe_apex_speed_mps: 15.0,
+        bank_angle: 0.0,
+    };
+    let curve2 = TrackCurve {
+        id: 1,
+        direction: CurveDirection::Left,
+        degree: 4, // Equal severity
+        entry_distance: 180.0,
+        apex_distance: 205.0,
+        exit_distance: 230.0,
+        min_radius: 25.0,
+        peak_curvature: 1.0 / 25.0,
+        total_turn_angle: 1.2,
+        safe_apex_speed_mps: 15.0,
+        bank_angle: 0.0,
+    };
+    let curves = vec![curve1, curve2];
+    let total_len = 1000.0;
+    let closed = true;
+
+    // Inside curve1 approaching apex (current_dist = 115.0m, apex = 130.0m)
+    let s = evaluate_curve_approach(&curves, 115.0, total_len, closed, 25.0, 200.0).unwrap();
+    assert_eq!(
+        s.curve.id, 0,
+        "Equal severity turn must retain priority until navigated"
+    );
+}
+
+
