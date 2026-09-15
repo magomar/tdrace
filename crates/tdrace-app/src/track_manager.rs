@@ -805,16 +805,16 @@ impl TrackManager {
             _ => None,
         };
 
-        // Official presets load from git preset files first, then user directory, then procedural generator.
+        // Official presets load from user storage overrides first, then git preset files, then procedural generator.
         if choice.is_official_preset() {
-            if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
-                if let Ok(t) = Track::load_from_file(&git_file) {
-                    return Ok(t);
-                }
-            }
             let user_path = self.track_path_for_slug(choice.track_id());
             if user_path.exists() && user_path.starts_with(&self.tracks_dir) {
                 if let Ok(t) = Track::load_from_file(&user_path) {
+                    return Ok(t);
+                }
+            }
+            if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
+                if let Ok(t) = Track::load_from_file(&git_file) {
                     return Ok(t);
                 }
             }
@@ -1169,49 +1169,58 @@ impl TrackManager {
             Self::sanitize_slug(&track_to_save.name)
         };
 
-        // Official presets are strictly immutable for end-users.
-        // In dev mode, they are saved directly into the repository's git-tracked tracks/<module>/ directory.
+        // Official presets are immutable for standard users.
+        // In dev mode, we dual-persist to user storage (`self.tracks_dir`) AND the repository's git-tracked directory.
+        // Saving to user storage ensures edits are immune to git branch changes, checkouts, and test runs.
         if Self::is_preset_slug(&base_slug) && !self.is_preset_demoted(&base_slug) {
             if !crate::storage::is_dev_mode() {
                 return Err(format!(
                     "'{}' is an official preset and cannot be modified directly. Please clone it to My Circuits / Drafts.",
                     base_slug
                 ));
-            } else if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                let mod_hint = track_to_save.module_id.clone().or_else(|| {
-                    if track_to_save.modules.iter().any(|m| m == "gt") {
-                        Some("gt".to_string())
-                    } else {
-                        None
-                    }
-                });
-                let target_git_file = self.resolve_preset_git_file(&base_slug, mod_hint.as_deref()).unwrap_or_else(|| {
-                    let mod_id = mod_hint
-                        .as_deref()
-                        .or_else(|| Self::preset_module(&base_slug))
-                        .unwrap_or("classic");
-                    let git_dir = git_tracks_dir.join(mod_id);
+            }
+
+            let mod_hint = track_to_save.module_id.clone().or_else(|| {
+                if track_to_save.modules.iter().any(|m| m == "gt") {
+                    Some("gt".to_string())
+                } else {
+                    None
+                }
+            });
+            let mod_id = mod_hint
+                .as_deref()
+                .or_else(|| Self::preset_module(&base_slug))
+                .unwrap_or("classic")
+                .to_string();
+
+            track_to_save.category = TrackCategory::Main;
+            track_to_save.module_id = Some(mod_id.clone());
+            if !track_to_save.modules.contains(&mod_id) {
+                track_to_save.modules.push(mod_id.clone());
+            }
+
+            // 1. Dual persistence: save a copy to user storage (immune to git operations, branch changes, and tests)
+            let _ = fs::create_dir_all(&self.tracks_dir);
+            let user_file = self.track_path_for_slug(&base_slug);
+            let _ = track_to_save.save_to_file(&user_file);
+
+            // 2. Save directly to the repository's git-tracked tracks/<module>/ directory
+            let mut saved_path = user_file.to_string_lossy().to_string();
+            if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                let target_git_file = self.resolve_preset_git_file(&base_slug, Some(&mod_id)).unwrap_or_else(|| {
+                    let git_dir = git_tracks_dir.join(&mod_id);
                     let _ = fs::create_dir_all(&git_dir);
                     git_dir.join(format!("{}.json", base_slug))
                 });
-
-                let mod_id = mod_hint
-                    .as_deref()
-                    .or_else(|| Self::preset_module(&base_slug))
-                    .unwrap_or("classic")
-                    .to_string();
-                track_to_save.category = TrackCategory::Main;
-                track_to_save.module_id = Some(mod_id.clone());
-                if !track_to_save.modules.contains(&mod_id) {
-                    track_to_save.modules.push(mod_id);
-                }
                 track_to_save
                     .save_to_file(&target_git_file)
                     .map_err(|e| format!("Failed to save git-tracked preset: {}", e))?;
-                let _ = self.scan_custom_tracks();
-                crate::ui::menu::clear_menu_track_cache();
-                return Ok(target_git_file.to_string_lossy().to_string());
+                saved_path = target_git_file.to_string_lossy().to_string();
             }
+
+            let _ = self.scan_custom_tracks();
+            crate::ui::menu::clear_menu_track_cache();
+            return Ok(saved_path);
         }
 
         // If file already exists and was Main category, keep its category and module when overwriting.

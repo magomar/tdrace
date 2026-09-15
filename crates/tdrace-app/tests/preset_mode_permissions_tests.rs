@@ -6,16 +6,33 @@ use tdrace_core::track::TrackCategory;
 
 static PERM_TEST_MUTEX: Mutex<()> = Mutex::new(());
 
-struct DevModeGuard;
+struct DevModeGuard {
+    temp_dir: std::path::PathBuf,
+}
 impl DevModeGuard {
     fn enter() -> Self {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "tdrace_perm_dev_guard_{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let mock_git = temp_dir.join("git_tracks");
+        let _ = fs::create_dir_all(mock_git.join("classic"));
+        let _ = fs::create_dir_all(mock_git.join("f1"));
+        let _ = fs::create_dir_all(mock_git.join("gt"));
+        let _ = fs::create_dir_all(mock_git.join("rally"));
+        let _ = fs::create_dir_all(mock_git.join("kart"));
+        let _ = fs::create_dir_all(mock_git.join("nascar"));
+
         std::env::set_var("TDRACE_DEV", "1");
-        Self
+        std::env::set_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR, &mock_git);
+        Self { temp_dir }
     }
 }
 impl Drop for DevModeGuard {
     fn drop(&mut self) {
         std::env::remove_var("TDRACE_DEV");
+        std::env::remove_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR);
+        let _ = fs::remove_dir_all(&self.temp_dir);
     }
 }
 

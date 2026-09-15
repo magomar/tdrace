@@ -3453,6 +3453,14 @@ fn render_save_modal(
             scaler.font_s(11.0),
             Palette::YELLOW,
         );
+    } else if *overwrite && is_preset {
+        fonts.draw_ui_bold(
+            &format!("Target: {} (Dev Mode: Updating repository preset & user storage)", target_display_path),
+            inp_x,
+            info_y,
+            scaler.font_s(11.0),
+            Palette::NEON_CYAN,
+        );
     } else if *overwrite {
         fonts.draw_ui_bold(
             &format!("Target: {} (Will overwrite existing file)", target_display_path),

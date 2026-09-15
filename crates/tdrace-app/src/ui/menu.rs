@@ -242,8 +242,30 @@ fn resolve_track_for_menu_with_dir_uncached(
         _ => None,
     };
 
-    // If git_tracks_dir exists, official git presets or custom tracks saved into the repository's
-    // tracks/ directory take precedence so edited/overwritten presets immediately reflect on menu thumbnails.
+    // 0. Check user storage first: if the user customized this track (preset or custom),
+    // their local saved version in `dir` takes highest priority.
+    let id = choice.track_id();
+    let file_name = format!("{}.json", id);
+    let user_candidates = [
+        dir.join(&file_name),
+        dir.join("classic").join(&file_name),
+        dir.join("f1").join(&file_name),
+        dir.join("gt").join(&file_name),
+        dir.join("rally").join(&file_name),
+        dir.join("kart").join(&file_name),
+        dir.join("nascar").join(&file_name),
+        dir.join("drafts").join(&file_name),
+    ];
+    for p in &user_candidates {
+        if p.exists() {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                return Some(t);
+            }
+        }
+    }
+
+    // 1. If git_tracks_dir exists, official git presets or custom tracks saved into the repository's
+    // tracks/ directory take second precedence.
     if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
         if let Some(p) = crate::track_manager::TrackManager::resolve_preset_git_file_with_dir(
             &git_tracks_dir,
@@ -254,12 +276,6 @@ fn resolve_track_for_menu_with_dir_uncached(
                 return Some(t);
             }
         }
-    }
-
-    // If this is an official preset and we are NOT in dev mode, skip user disk candidate overrides
-    // and load strictly from official procedural generators.
-    if choice.is_official_preset() && !crate::storage::is_dev_mode() {
-        return TrackChoice::resolve_procedural_preset(choice);
     }
 
     // 1. If custom choice and path directly exists on disk, load it
@@ -303,26 +319,7 @@ fn resolve_track_for_menu_with_dir_uncached(
         }
     }
 
-    // 2. Check disk candidate paths across module subdirectories and drafts
-    let id = choice.track_id();
-    let file_name = format!("{}.json", id);
-    let candidate_paths = [
-        dir.join("classic").join(&file_name),
-        dir.join("f1").join(&file_name),
-        dir.join("gt").join(&file_name),
-        dir.join("rally").join(&file_name),
-        dir.join("kart").join(&file_name),
-        dir.join("nascar").join(&file_name),
-        dir.join("drafts").join(&file_name),
-        dir.join(&file_name),
-    ];
-    for p in &candidate_paths {
-        if p.exists() {
-            if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
-                return Some(t);
-            }
-        }
-    }
+    // 2. Check git fallback candidates across module subdirectories
 
     if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
         let git_candidates = [

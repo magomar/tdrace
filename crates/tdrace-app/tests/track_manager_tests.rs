@@ -9,16 +9,33 @@ use tdrace_core::track::TrackCategory;
 
 static DEV_MODE_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-struct DevModeGuard;
+struct DevModeGuard {
+    temp_dir: std::path::PathBuf,
+}
 impl DevModeGuard {
     fn enter() -> Self {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "tdrace_dev_guard_{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let mock_git = temp_dir.join("git_tracks");
+        let _ = fs::create_dir_all(mock_git.join("classic"));
+        let _ = fs::create_dir_all(mock_git.join("f1"));
+        let _ = fs::create_dir_all(mock_git.join("gt"));
+        let _ = fs::create_dir_all(mock_git.join("rally"));
+        let _ = fs::create_dir_all(mock_git.join("kart"));
+        let _ = fs::create_dir_all(mock_git.join("nascar"));
+
         std::env::set_var("TDRACE_DEV", "1");
-        Self
+        std::env::set_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR, &mock_git);
+        Self { temp_dir }
     }
 }
 impl Drop for DevModeGuard {
     fn drop(&mut self) {
         std::env::remove_var("TDRACE_DEV");
+        std::env::remove_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR);
+        let _ = fs::remove_dir_all(&self.temp_dir);
     }
 }
 
@@ -861,6 +878,9 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
 
     // 3. In Developer Mode (TDRACE_DEV=1), official presets can be modified directly
     {
+        let mock_git = temp_dir.join("mock_git");
+        let _ = fs::create_dir_all(mock_git.join("classic"));
+        std::env::set_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR, &mock_git);
         let _dev_guard = DevModeGuard::enter();
         assert!(tdrace_app::storage::is_dev_mode());
 
@@ -870,6 +890,7 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
         // Revert preset back to canonical
         let canonical_oval = oval_speedway();
         let _ = manager.save_custom_track_with_options(&canonical_oval, Some("oval_speedway"), true);
+        std::env::remove_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR);
     }
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -1259,6 +1280,7 @@ fn test_workspace_rally_deletion_preserves_classic() {
 }
 
 #[test]
+#[ignore = "Manual export tool: cargo test --test track_manager_tests test_export_canonical_presets_to_git_repo -- --ignored"]
 fn test_export_canonical_presets_to_git_repo() {
     use tdrace_app::module::{
         classic::ClassicGameModule, f1::F1GameModule, kart::KartGameModule, rally::RallyGameModule,
