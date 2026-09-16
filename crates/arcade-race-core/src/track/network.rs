@@ -679,6 +679,111 @@ impl RoadSegment {
             bank_angle,
         }
     }
+
+    /// Projects a 2D world position onto this road segment centerline with continuity constraint around `prev_progress`.
+    /// Restricts candidate segments to within `max_dist_delta` of `prev_progress` to avoid skipping ahead
+    /// or snapping to opposing track loops.
+    pub fn project_point_continuity(
+        &self,
+        pos: Vec2,
+        prev_progress: f32,
+        max_dist_delta: f32,
+    ) -> SplineProjection {
+        if self.samples.len() < 2 {
+            return self.project_point(pos);
+        }
+
+        let mut best_dist_sq = f32::INFINITY;
+        let mut best_point = Vec2::ZERO;
+        let mut best_progress = 0.0f32;
+        let mut best_sample_idx = 0;
+        let mut best_t = 0.0f32;
+        let mut found_candidate = false;
+
+        for i in 0..self.samples.len() - 1 {
+            let seg_dist = self.samples[i].distance;
+            let delta = (seg_dist - prev_progress).abs();
+
+            if delta > max_dist_delta {
+                continue;
+            }
+
+            let p0 = self.samples[i].point;
+            let p1 = self.samples[i + 1].point;
+            let seg = LineSegment::new(p0, p1);
+            let cp = seg.closest_point(pos);
+            let d_sq = (pos - cp).length_squared();
+
+            if d_sq < best_dist_sq {
+                best_dist_sq = d_sq;
+                best_point = cp;
+                best_sample_idx = i;
+                let seg_len = seg.length();
+                best_t = if seg_len > 1e-4 {
+                    (cp - p0).length() / seg_len
+                } else {
+                    0.0
+                };
+                best_progress = self.samples[i].distance + best_t * seg_len;
+                found_candidate = true;
+            }
+        }
+
+        if !found_candidate {
+            return self.project_point(pos);
+        }
+
+        let s0 = &self.samples[best_sample_idx];
+        let s1 = &self.samples[(best_sample_idx + 1).min(self.samples.len() - 1)];
+        let tangent = s0.tangent.lerp(s1.tangent, best_t).normalize_or_zero();
+        let normal = Vec2::new(-tangent.y, tangent.x);
+        let track_width = s0.width + (s1.width - s0.width) * best_t;
+        let elevation = s0.elevation + (s1.elevation - s0.elevation) * best_t;
+        let bank_angle = s0.bank_angle + (s1.bank_angle - s0.bank_angle) * best_t;
+
+        let delta = pos - best_point;
+        let dist = delta.length();
+        let cross = tangent.x * delta.y - tangent.y * delta.x;
+        let lateral_offset = if cross >= 0.0 { -dist } else { dist };
+
+        let half_w = track_width * 0.5;
+        let curb_w = TrackSpline::DEFAULT_CURB_WIDTH;
+        let left_curb = if best_t < 0.5 { s0.left_curb } else { s1.left_curb };
+        let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
+
+        let is_on_track = dist <= half_w;
+        let is_on_curb = if is_on_track {
+            false
+        } else if lateral_offset < 0.0 {
+            left_curb && dist <= half_w + curb_w
+        } else {
+            right_curb && dist <= half_w + curb_w
+        };
+
+        let norm_prog = if self.length > 1e-4 {
+            (best_progress / self.length).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+
+        SplineProjection {
+            closest_point: best_point,
+            distance_to_spline: dist,
+            lateral_offset,
+            progress_distance: best_progress,
+            normalized_progress: norm_prog,
+            tangent,
+            normal,
+            track_width,
+            left_curb,
+            right_curb,
+            is_on_track,
+            is_on_curb,
+            base_surface: s0.surface,
+            elevation,
+            bank_angle,
+        }
+    }
 }
 
 /// A named circuit layout formed by an ordered sequence of connected road segments.
@@ -730,9 +835,26 @@ impl TrackLayout {
         self
     }
 
+    pub const fn with_total_length(mut self, length: f32) -> Self {
+        self.total_lap_length = length;
+        self
+    }
+
     pub fn with_checkpoints(mut self, checkpoint_ids: Vec<usize>) -> Self {
         self.checkpoint_ids = checkpoint_ids;
         self
+    }
+
+    /// Computes and caches total lap length by summing lengths of all constituent segments.
+    pub fn recompute_lap_length(&mut self, network: &TrackNetwork) -> f32 {
+        let len: f32 = self
+            .segment_sequence
+            .iter()
+            .filter_map(|&sid| network.get_segment(sid))
+            .map(|s| s.length)
+            .sum();
+        self.total_lap_length = len;
+        len
     }
 }
 

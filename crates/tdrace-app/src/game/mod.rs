@@ -5020,12 +5020,21 @@ impl RaceSession {
 
         // 6. Update race progression, lap tracking, sector splits, anti-cheat
         for i in 0..n_cars {
-            self.trackers[i].update(
-                &self.cars[i],
-                &self.track.spline,
-                &self.track.checkpoints,
-                dt,
-            );
+            if let Some(network) = &self.track.network {
+                self.trackers[i].update_network(
+                    &self.cars[i],
+                    network,
+                    &self.track.checkpoints,
+                    dt,
+                );
+            } else {
+                self.trackers[i].update(
+                    &self.cars[i],
+                    &self.track.spline,
+                    &self.track.checkpoints,
+                    dt,
+                );
+            }
         }
 
         // Lap and sector split audio feedback

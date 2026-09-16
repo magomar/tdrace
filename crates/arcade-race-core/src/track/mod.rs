@@ -6,7 +6,9 @@ pub mod presets;
 pub mod spline;
 pub mod validation;
 
-pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
+pub use checkpoint::{
+    Checkpoint, CheckpointCrossResult, MultiRouteProgressTracker, TrackProgressTracker,
+};
 pub use curve::{
     classify_curve_degree, compute_safe_apex_speed, evaluate_curve_approach,
     CurveApproachStatus, CurveDirection, TrackCurve,
