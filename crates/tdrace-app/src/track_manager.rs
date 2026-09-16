@@ -469,6 +469,11 @@ impl TrackManager {
         }
     }
 
+    /// Returns metadata for a custom track by ID, if present.
+    pub fn custom_track_info(&self, id: &str) -> Option<&CustomTrackInfo> {
+        self.custom_tracks.iter().find(|t| t.id == id)
+    }
+
     /// Returns all user-created / custom circuits.
     pub fn custom_track_choices(&self) -> Vec<TrackChoice> {
         let mut choices = Vec::new();
@@ -1306,12 +1311,10 @@ impl TrackManager {
             let is_demoted = self.is_preset_demoted(&custom.id);
             let is_active = custom.category == TrackCategory::Main || is_demoted;
             if is_active
+                && (!Self::is_preset_slug(&custom.id) || is_demoted)
                 && custom.belongs_to_module(module_id)
                 && !self.is_custom_track_deleted_for_module(&custom.id, module_id)
             {
-                if !is_demoted && Self::is_preset_slug(&custom.id) {
-                    continue;
-                }
                 choices.push(TrackChoice::Custom {
                     id: custom.id.clone(),
                     title: custom.title.clone(),
