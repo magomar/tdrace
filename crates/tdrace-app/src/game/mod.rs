@@ -363,6 +363,7 @@ pub struct RaceSession {
     pub editor_save_toast_timer: f32,
     pub editor_save_toast_msg: String,
     pub return_to_editor_on_exit: bool,
+    pub editor_return_track_manager: Option<(TrackManagerTab, ModuleFilter, usize)>,
 
     // Audio System
     pub audio: AudioManager,
@@ -608,6 +609,7 @@ impl RaceSession {
             editor_save_toast_timer: 0.0,
             editor_save_toast_msg: String::new(),
             return_to_editor_on_exit: false,
+            editor_return_track_manager: None,
             audio,
             engine_rpm: EngineRpmModel::default(),
             engine_rpm_p2: EngineRpmModel::default(),
@@ -720,6 +722,34 @@ impl RaceSession {
                 self.hof_entries = entries;
             }
         }
+    }
+
+    /// Clears all historical records (Hall of Fame leaderboards, race history, personal bests, ghost lap)
+    /// for a specific circuit when it is modified or reset.
+    pub fn clear_circuit_history(&mut self, track_id: &str) {
+        if let Some(db) = &self.hof_db {
+            let _ = db.clear_track_history(track_id);
+        }
+
+        // Clean in-memory caches
+        self.hof_entries.retain(|e| e.track_id != track_id);
+        self.profile_history.retain(|r| r.track_id != track_id);
+        self.active_profile_stats.best_times.remove(track_id);
+        self.active_profile_stats.best_circuit_times.remove(track_id);
+
+        if self.ghost_recorder.best_ghost_lap.as_ref().map_or(false, |g| g.track_choice.track_id() == track_id) {
+            self.ghost_recorder.best_ghost_lap = None;
+        }
+
+        if let Some(id) = self.recent_hof_id {
+            if !self.hof_entries.iter().any(|e| e.id == Some(id)) {
+                self.recent_hof_id = None;
+            }
+        }
+
+        // Re-sync active Hall of Fame and profile stats with database if available
+        self.refresh_hof_entries();
+        self.refresh_profiles_and_stats();
     }
 
     /// Asynchronously initializes audio banks and plays the synthwave menu theme.
@@ -3432,14 +3462,14 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiSelect);
             let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
             let has_drafts = !self.track_manager.draft_track_choices().is_empty();
-            let target_tab = if !has_module_customs && has_drafts {
-                TrackManagerTab::Drafts
+            let (target_tab, target_filter) = if !has_module_customs && has_drafts {
+                (TrackManagerTab::Drafts, ModuleFilter::Drafts)
             } else {
-                TrackManagerTab::Main
+                (TrackManagerTab::Main, ModuleFilter::for_module(self.active_module_id))
             };
             self.state = GameState::TrackManager {
                 active_tab: target_tab,
-                module_filter: ModuleFilter::for_module(self.active_module_id),
+                module_filter: target_filter,
                 selected_idx: 0,
                 modal: TrackManagerModal::None,
             };
@@ -3703,20 +3733,30 @@ impl RaceSession {
                     .unwrap_or(false);
             let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
             let has_drafts = !self.track_manager.draft_track_choices().is_empty();
-            let (target_tab, target_idx) = if self.menu_track_filter == TrackCatalogFilter::Custom && (is_on_draft || (!has_module_customs && has_drafts)) {
+            let (target_tab, target_filter, target_idx) = if self.menu_track_filter == TrackCatalogFilter::Custom && (is_on_draft || (!has_module_customs && has_drafts)) {
                 let sel_idx = if is_on_draft {
                     let track_id = available_tracks[self.menu_track_idx].track_id();
                     self.track_manager.draft_track_choices().iter().position(|t| t.track_id() == track_id).unwrap_or(0)
                 } else {
                     0
                 };
-                (TrackManagerTab::Drafts, sel_idx)
+                (TrackManagerTab::Drafts, ModuleFilter::Drafts, sel_idx)
             } else {
-                (TrackManagerTab::Main, 0)
+                let mod_filter = ModuleFilter::for_module(self.active_module_id);
+                let sel_idx = if self.menu_track_idx < available_tracks.len() {
+                    let track_id = available_tracks[self.menu_track_idx].track_id();
+                    self.track_manager.filtered_main_track_choices(mod_filter)
+                        .iter()
+                        .position(|t| t.track_id() == track_id)
+                        .unwrap_or(0)
+                } else {
+                    0
+                };
+                (TrackManagerTab::Main, mod_filter, sel_idx)
             };
             self.state = GameState::TrackManager {
                 active_tab: target_tab,
-                module_filter: ModuleFilter::for_module(self.active_module_id),
+                module_filter: target_filter,
                 selected_idx: target_idx,
                 modal: TrackManagerModal::None,
             };
@@ -3757,14 +3797,14 @@ impl RaceSession {
             } else if has_tm_entry {
                 let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
                 let has_drafts = !self.track_manager.draft_track_choices().is_empty();
-                let target_tab = if !has_module_customs && has_drafts {
-                    TrackManagerTab::Drafts
+                let (target_tab, target_filter) = if !has_module_customs && has_drafts {
+                    (TrackManagerTab::Drafts, ModuleFilter::Drafts)
                 } else {
-                    TrackManagerTab::Main
+                    (TrackManagerTab::Main, ModuleFilter::for_module(self.active_module_id))
                 };
                 self.state = GameState::TrackManager {
                     active_tab: target_tab,
-                    module_filter: ModuleFilter::for_module(self.active_module_id),
+                    module_filter: target_filter,
                     selected_idx: 0,
                     modal: TrackManagerModal::None,
                 };
@@ -3928,6 +3968,7 @@ impl RaceSession {
                     } else {
                         let _ = self.track_manager.delete_custom_track(&tid);
                     }
+                    self.clear_circuit_history(&tid);
                     self.audio.play_sfx(SfxType::UiSelect);
                     let list_len = if is_dev_workbench {
                         self.track_manager.filtered_main_track_choices(module_filter).len()
@@ -4119,32 +4160,27 @@ impl RaceSession {
                         };
                         self.track_choice = track_choice.clone();
                         self.track = track.clone();
+                        self.editor_return_track_manager = Some((active_tab, module_filter, selected_idx));
                         self.enter_track_editor_with_path(track, file_path);
                         return;
                     } else {
-                        // Clone track with active category
-                        if let Ok((mut cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
-                            let active_mod = module_filter.id().unwrap_or(self.active_module_id);
-                            cloned_track.category = TrackCategory::Main;
-                            if cloned_track.modules.is_empty() {
-                                let orig_mod = TrackManager::preset_module(track_choice.track_id()).unwrap_or(active_mod);
-                                cloned_track.module_id = Some(orig_mod.to_string());
-                                cloned_track.modules = vec![orig_mod.to_string()];
-                            }
-                            let _ = cloned_track.save_to_file(std::path::Path::new(&file_path));
-                            let _ = self.track_manager.scan_custom_tracks();
+                        // Clone track to Drafts and open in editor
+                        if let Ok((cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
                             let file_stem = std::path::Path::new(&file_path)
                                 .file_stem()
                                 .and_then(|s| s.to_str())
                                 .unwrap_or("cloned_track")
                                 .to_string();
                             self.track_choice = TrackChoice::Custom {
-                                id: file_stem,
+                                id: file_stem.clone(),
                                 title: cloned_track.name.clone(),
                                 description: cloned_track.description.clone(),
                                 path: file_path.clone(),
                             };
                             self.track = cloned_track.clone();
+                            let drafts = self.track_manager.draft_track_choices();
+                            let sel = drafts.iter().position(|t| t.track_id() == file_stem).unwrap_or(0);
+                            self.editor_return_track_manager = Some((TrackManagerTab::Drafts, ModuleFilter::Drafts, sel));
                             self.enter_track_editor_with_path(cloned_track, Some(file_path));
                             return;
                         }
@@ -4303,10 +4339,14 @@ impl RaceSession {
             || self.input.gamepad.snapshot.nav_left
         {
             self.audio.play_sfx(SfxType::UiMove);
-            if active_tab == TrackManagerTab::Drafts {
-                active_tab = TrackManagerTab::Main;
-            }
             module_filter = module_filter.prev();
+            active_tab = if module_filter == ModuleFilter::Drafts {
+                TrackManagerTab::Drafts
+            } else if active_tab == TrackManagerTab::Drafts {
+                TrackManagerTab::Main
+            } else {
+                active_tab
+            };
             selected_idx = 0;
         }
         if is_key_pressed(KeyCode::Right)
@@ -4315,15 +4355,19 @@ impl RaceSession {
             || self.input.gamepad.snapshot.nav_right
         {
             self.audio.play_sfx(SfxType::UiMove);
-            if active_tab == TrackManagerTab::Drafts {
-                active_tab = TrackManagerTab::Main;
-            }
             module_filter = module_filter.next();
+            active_tab = if module_filter == ModuleFilter::Drafts {
+                TrackManagerTab::Drafts
+            } else if active_tab == TrackManagerTab::Drafts {
+                TrackManagerTab::Main
+            } else {
+                active_tab
+            };
             selected_idx = 0;
         }
 
-        // Direct module selection via number keys 1-5
-        if is_key_pressed(KeyCode::Key1) {
+        // Direct module/category selection via number keys 1-5, 9
+        if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Kp1) {
             if active_tab == TrackManagerTab::Drafts || module_filter != ModuleFilter::Classic {
                 self.audio.play_sfx(SfxType::UiMove);
                 active_tab = TrackManagerTab::Main;
@@ -4331,7 +4375,7 @@ impl RaceSession {
                 selected_idx = 0;
             }
         }
-        if is_key_pressed(KeyCode::Key2) {
+        if is_key_pressed(KeyCode::Key2) || is_key_pressed(KeyCode::Kp2) {
             if active_tab == TrackManagerTab::Drafts || module_filter != ModuleFilter::Rally {
                 self.audio.play_sfx(SfxType::UiMove);
                 active_tab = TrackManagerTab::Main;
@@ -4339,7 +4383,7 @@ impl RaceSession {
                 selected_idx = 0;
             }
         }
-        if is_key_pressed(KeyCode::Key3) {
+        if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::Kp3) {
             if active_tab == TrackManagerTab::Drafts || module_filter != ModuleFilter::Kart {
                 self.audio.play_sfx(SfxType::UiMove);
                 active_tab = TrackManagerTab::Main;
@@ -4347,7 +4391,7 @@ impl RaceSession {
                 selected_idx = 0;
             }
         }
-        if is_key_pressed(KeyCode::Key4) {
+        if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
             if active_tab == TrackManagerTab::Drafts || module_filter != ModuleFilter::F1 {
                 self.audio.play_sfx(SfxType::UiMove);
                 active_tab = TrackManagerTab::Main;
@@ -4355,7 +4399,7 @@ impl RaceSession {
                 selected_idx = 0;
             }
         }
-        if is_key_pressed(KeyCode::Key5) {
+        if is_key_pressed(KeyCode::Key5) || is_key_pressed(KeyCode::Kp5) {
             if active_tab == TrackManagerTab::Drafts || module_filter != ModuleFilter::Nascar {
                 self.audio.play_sfx(SfxType::UiMove);
                 active_tab = TrackManagerTab::Main;
@@ -4363,40 +4407,50 @@ impl RaceSession {
                 selected_idx = 0;
             }
         }
+        if is_key_pressed(KeyCode::Key9) || is_key_pressed(KeyCode::Kp9) {
+            if active_tab != TrackManagerTab::Drafts || module_filter != ModuleFilter::Drafts {
+                self.audio.play_sfx(SfxType::UiMove);
+                active_tab = TrackManagerTab::Drafts;
+                module_filter = ModuleFilter::Drafts;
+                selected_idx = 0;
+            }
+        }
 
         // Module cycling shortcuts (M / F)
         if is_key_pressed(KeyCode::M) || is_key_pressed(KeyCode::F) {
             self.audio.play_sfx(SfxType::UiMove);
-            if active_tab == TrackManagerTab::Drafts {
-                active_tab = TrackManagerTab::Main;
-            }
             module_filter = module_filter.next();
+            active_tab = if module_filter == ModuleFilter::Drafts {
+                TrackManagerTab::Drafts
+            } else {
+                TrackManagerTab::Main
+            };
             selected_idx = 0;
         }
 
         // Toggle between Approved Modules and Workshop Drafts (Tab key)
         if is_key_pressed(KeyCode::Tab) {
             self.audio.play_sfx(SfxType::UiMove);
-            active_tab = match active_tab {
-                TrackManagerTab::Main => TrackManagerTab::Drafts,
-                TrackManagerTab::Drafts => TrackManagerTab::Main,
-                TrackManagerTab::DevWorkbench => TrackManagerTab::Main,
-            };
+            if module_filter == ModuleFilter::Drafts || active_tab == TrackManagerTab::Drafts {
+                active_tab = TrackManagerTab::Main;
+                module_filter = ModuleFilter::Classic;
+            } else {
+                active_tab = TrackManagerTab::Drafts;
+                module_filter = ModuleFilter::Drafts;
+            }
             selected_idx = 0;
         }
 
         // Re-evaluate list after potential module/tab switch:
-        // Player mode gets custom tracks (or drafts), Dev Workbench gets presets
+        // Re-evaluate list after potential module/tab switch:
+        // Returns all circuits for the active module (presets first, then custom), or drafts
         let is_dev = crate::storage::is_dev_mode();
         let is_dev_workbench = is_dev && active_tab == TrackManagerTab::DevWorkbench;
 
-        let current_list = if is_dev_workbench {
-            self.track_manager.filtered_main_track_choices(module_filter)
-        } else if active_tab == TrackManagerTab::Drafts {
+        let current_list = if active_tab == TrackManagerTab::Drafts || module_filter == ModuleFilter::Drafts {
             self.track_manager.draft_track_choices()
         } else {
-            let mod_id = module_filter.id().unwrap_or("classic");
-            self.track_manager.module_custom_tracks(mod_id)
+            self.track_manager.filtered_main_track_choices(module_filter)
         };
         let list_len = current_list.len();
 
@@ -4432,11 +4486,11 @@ impl RaceSession {
             || is_key_down(KeyCode::LeftAlt)
             || is_key_down(KeyCode::RightAlt);
 
-        let want_reorder_up = is_dev_workbench
+        let want_reorder_up = is_dev
             && ((shift_or_alt && (is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W)))
                 || is_key_pressed(KeyCode::PageUp));
 
-        let want_reorder_down = is_dev_workbench
+        let want_reorder_down = is_dev
             && ((shift_or_alt && (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)))
                 || is_key_pressed(KeyCode::PageDown));
 
@@ -4509,26 +4563,46 @@ impl RaceSession {
             }
         }
 
-        // 5. Edit in Track Editor (Enter or E in My Circuits, or E in Dev Workbench)
+        // 5. Edit in Track Editor (Enter or E)
         if (!is_dev_workbench && (is_confirm_pressed || is_edit_pressed)) || (is_dev_workbench && is_edit_pressed) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
                 if track_choice.is_official_preset() {
-                    self.state = GameState::TrackManager {
-                        active_tab,
-                        module_filter,
-                        selected_idx,
-                        modal: TrackManagerModal::CloneBeforeEdit {
-                            track_choice: track_choice.clone(),
-                            track_title: track_choice.title().to_string(),
-                            is_dev_mode: crate::storage::is_dev_mode(),
-                            dev_choice: 0,
-                        },
-                    };
-                    return;
+                    if is_dev {
+                        // In dev mode, open preset directly in Track Editor
+                        let track = self
+                            .track_manager
+                            .load_track(track_choice)
+                            .unwrap_or_else(|_| classic_grand_prix());
+                        let file_path = if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                            let mod_id = TrackManager::preset_module(track_choice.track_id()).unwrap_or("classic");
+                            Some(git_tracks_dir.join(mod_id).join(format!("{}.json", track_choice.track_id())).to_string_lossy().to_string())
+                        } else {
+                            None
+                        };
+                        self.track_choice = track_choice.clone();
+                        self.track = track.clone();
+                        self.editor_return_track_manager = Some((active_tab, module_filter, selected_idx));
+                        self.enter_track_editor_with_path(track, file_path);
+                        return;
+                    } else {
+                        // Normal player: official presets cannot be edited directly, prompt to clone to Drafts
+                        self.state = GameState::TrackManager {
+                            active_tab,
+                            module_filter,
+                            selected_idx,
+                            modal: TrackManagerModal::CloneBeforeEdit {
+                                track_choice: track_choice.clone(),
+                                track_title: track_choice.title().to_string(),
+                                is_dev_mode: false,
+                                dev_choice: 0,
+                            },
+                        };
+                        return;
+                    }
                 }
 
-                // If user custom track, open directly in Track Editor
+                // If user custom track or draft, open directly in Track Editor
                 self.track_choice = track_choice.clone();
                 let file_path = match track_choice {
                     TrackChoice::Custom { path, .. } => {
@@ -4548,38 +4622,32 @@ impl RaceSession {
                     .load_track(track_choice)
                     .unwrap_or_else(|_| classic_grand_prix());
                 self.track = track.clone();
+                self.editor_return_track_manager = Some((active_tab, module_filter, selected_idx));
                 self.enter_track_editor_with_path(track, file_path);
                 return;
             }
         }
 
-        // 6. Clone Circuit and Open in Track Editor (C key)
+        // 6. Clone Circuit to Drafts (C key)
         if is_key_pressed(KeyCode::C) {
             if let Some(track_choice) = current_list.get(selected_idx) {
-                if let Ok((mut cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
-                    let active_mod = module_filter.id().unwrap_or(self.active_module_id);
-                    cloned_track.category = TrackCategory::Main;
-                    if cloned_track.modules.is_empty() {
-                        let orig_mod = TrackManager::preset_module(track_choice.track_id()).unwrap_or(active_mod);
-                        cloned_track.module_id = Some(orig_mod.to_string());
-                        cloned_track.modules = vec![orig_mod.to_string()];
-                    }
-                    let _ = cloned_track.save_to_file(std::path::Path::new(&file_path));
-                    let _ = self.track_manager.scan_custom_tracks();
+                if let Ok((_cloned_track, file_path)) = self.track_manager.clone_track(track_choice) {
                     self.audio.play_sfx(SfxType::UiSelect);
+                    active_tab = TrackManagerTab::Drafts;
+                    module_filter = ModuleFilter::Drafts;
                     let file_stem = std::path::Path::new(&file_path)
                         .file_stem()
                         .and_then(|s| s.to_str())
                         .unwrap_or("cloned_track")
                         .to_string();
-                    self.track_choice = TrackChoice::Custom {
-                        id: file_stem,
-                        title: cloned_track.name.clone(),
-                        description: cloned_track.description.clone(),
-                        path: file_path.clone(),
+                    let drafts = self.track_manager.draft_track_choices();
+                    selected_idx = drafts.iter().position(|t| t.track_id() == file_stem).unwrap_or(0);
+                    self.state = GameState::TrackManager {
+                        active_tab,
+                        module_filter,
+                        selected_idx,
+                        modal: TrackManagerModal::None,
                     };
-                    self.track = cloned_track.clone();
-                    self.enter_track_editor_with_path(cloned_track, Some(file_path));
                     return;
                 }
             }
@@ -4712,21 +4780,29 @@ impl RaceSession {
             }
         }
 
-        // 8. Create New Custom Track (N key)
+        // 8. Create New Custom Track / Draft (N key)
         if is_key_pressed(KeyCode::N) {
             self.audio.play_sfx(SfxType::UiSelect);
-            let effective_module = module_filter.id().unwrap_or(self.active_module_id);
-            let count = self.track_manager.module_custom_tracks(effective_module).len() + 1;
-            let name = format!("Custom Track {}", count);
-            let desc = format!("Custom circuit for {} module.", effective_module);
-            let _ = self.track_manager.create_new_custom_track_with_template(
-                &name,
-                &desc,
-                effective_module,
-                tdrace_core::track::presets::TrackShape::Oval,
-                tdrace_core::track::presets::RaceDirection::Right,
-            );
-            selected_idx = self.track_manager.module_custom_tracks(effective_module).len().saturating_sub(1);
+            if module_filter == ModuleFilter::Drafts || active_tab == TrackManagerTab::Drafts {
+                let count = self.track_manager.draft_track_choices().len() + 1;
+                let name = format!("Draft Track {}", count);
+                let desc = "Work in progress draft circuit.".to_string();
+                let _ = self.track_manager.create_new_draft_track(&name, &desc);
+                selected_idx = self.track_manager.draft_track_choices().len().saturating_sub(1);
+            } else {
+                let effective_module = module_filter.id().unwrap_or(self.active_module_id);
+                let count = self.track_manager.module_custom_tracks(effective_module).len() + 1;
+                let name = format!("Custom Track {}", count);
+                let desc = format!("Custom circuit for {} module.", effective_module);
+                let _ = self.track_manager.create_new_custom_track_with_template(
+                    &name,
+                    &desc,
+                    effective_module,
+                    tdrace_core::track::presets::TrackShape::Oval,
+                    tdrace_core::track::presets::RaceDirection::Right,
+                );
+                selected_idx = self.track_manager.filtered_main_track_choices(module_filter).len().saturating_sub(1);
+            }
         }
 
         // 9. Edit Metadata (I key)
@@ -5925,6 +6001,69 @@ impl RaceSession {
         self.state = GameState::TrackEditor;
     }
 
+    /// Exits Track Studio editor and navigates cleanly back to the Track Manager screen,
+    /// restoring the previous active tab, module filter, and track cursor.
+    pub fn return_to_track_manager(&mut self) {
+        crate::ui::menu::clear_menu_track_cache();
+        let _ = self.track_manager.scan_custom_tracks();
+
+        let (target_tab, target_filter, fallback_idx) = self
+            .editor_return_track_manager
+            .take()
+            .unwrap_or_else(|| {
+                // If not previously recorded, deduce sensible defaults from module customs/drafts
+                let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
+                let has_drafts = !self.track_manager.draft_track_choices().is_empty();
+                if !has_module_customs && has_drafts {
+                    (TrackManagerTab::Drafts, ModuleFilter::Drafts, 0)
+                } else {
+                    (TrackManagerTab::Main, ModuleFilter::for_module(self.active_module_id), 0)
+                }
+            });
+
+        // Determine list for the target tab
+        let current_list = if target_tab == TrackManagerTab::Drafts || target_filter == ModuleFilter::Drafts {
+            self.track_manager.draft_track_choices()
+        } else {
+            self.track_manager.filtered_main_track_choices(target_filter)
+        };
+
+        // Try to position cursor on the track that was open/saved in the editor
+        let mut selected_idx = fallback_idx;
+        let track_slug = if let Some(ref state) = self.editor_state {
+            if let Some(ref p) = state.current_file_path {
+                std::path::Path::new(p)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .map(|s| s.to_string())
+            } else {
+                Some(TrackManager::sanitize_slug(&state.track.name))
+            }
+        } else {
+            None
+        };
+
+        if let Some(ref slug) = track_slug {
+            if let Some(pos) = current_list.iter().position(|t| t.track_id() == slug) {
+                selected_idx = pos;
+            }
+        }
+
+        // Clamp selected_idx within current list bounds
+        if current_list.is_empty() {
+            selected_idx = 0;
+        } else if selected_idx >= current_list.len() {
+            selected_idx = current_list.len() - 1;
+        }
+
+        self.state = GameState::TrackManager {
+            active_tab: target_tab,
+            module_filter: target_filter,
+            selected_idx,
+            modal: TrackManagerModal::None,
+        };
+    }
+
     /// Launches a Time Trial race session from the Track Studio editor using the circuit's default car.
     pub fn start_editor_test_drive(&mut self) {
         if let Some(state) = &mut self.editor_state {
@@ -6383,9 +6522,8 @@ impl RaceSession {
             EditorAction::StartTestDrive => {
                 self.start_editor_test_drive();
             }
-            EditorAction::ExitToMenu => {
-                crate::ui::menu::clear_menu_track_cache();
-                self.state = GameState::Menu;
+            EditorAction::ExitToMenu | EditorAction::ExitToTrackManager => {
+                self.return_to_track_manager();
             }
             EditorAction::NewTrack { shape, direction, module_id } => {
                 let track = tdrace_core::track::presets::create_prototypical_track(&module_id, shape, direction);
@@ -6430,7 +6568,7 @@ impl RaceSession {
                 }
             }
             EditorAction::SaveTrack { name, filename, description, overwrite, exit_after } => {
-                if let Some(state) = &mut self.editor_state {
+                let save_outcome = if let Some(state) = &mut self.editor_state {
                     state.track.name = name;
                     state.track.description = description;
                     state.rebuild_geometry();
@@ -6452,15 +6590,46 @@ impl RaceSession {
                         Some(TrackManager::sanitize_slug(&state.track.name))
                     };
 
+                    let was_existing = if overwrite {
+                        if let Some(slug) = target_slug.as_deref() {
+                            self.track_manager.is_existing_track(slug) || state.current_file_path.is_some()
+                        } else {
+                            state.current_file_path.is_some()
+                        }
+                    } else {
+                        false
+                    };
+
+                    let track_clone = state.track.clone();
+                    Some((target_slug, was_existing, track_clone))
+                } else {
+                    None
+                };
+
+                if let Some((target_slug, was_existing, track_to_save)) = save_outcome {
                     let result = self.track_manager.save_custom_track_with_options(
-                        &state.track,
+                        &track_to_save,
                         target_slug.as_deref(),
                         overwrite,
                     );
                     match result {
                         Ok(path) => {
-                            state.current_file_path = Some(path.clone());
-                            state.is_dirty = false;
+                            let saved_slug = std::path::Path::new(&path)
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .map(|s| s.to_string())
+                                .or_else(|| target_slug.clone());
+
+                            if was_existing {
+                                if let Some(ref slug) = saved_slug {
+                                    self.clear_circuit_history(slug);
+                                }
+                            }
+
+                            if let Some(state) = &mut self.editor_state {
+                                state.current_file_path = Some(path.clone());
+                                state.is_dirty = false;
+                            }
                             self.editor_save_toast_timer = 2.5;
                             if overwrite {
                                 self.editor_save_toast_msg = format!("Track overwritten: {}", path);
@@ -6473,10 +6642,10 @@ impl RaceSession {
                             let _ = self.track_manager.scan_custom_tracks();
                             crate::ui::menu::clear_menu_track_cache();
 
-                            self.track = state.track.clone();
+                            self.track = track_to_save;
 
                             if exit_after {
-                                self.state = GameState::Menu;
+                                self.return_to_track_manager();
                             }
                         }
                         Err(err) => {
@@ -6488,6 +6657,7 @@ impl RaceSession {
             }
             EditorAction::DeleteTrack(id) => {
                 let _ = self.track_manager.delete_custom_track(&id);
+                self.clear_circuit_history(&id);
                 self.audio.play_sfx(SfxType::UiSelect);
             }
             _ => {}

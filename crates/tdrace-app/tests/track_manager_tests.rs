@@ -441,10 +441,12 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     assert_eq!(ModuleFilter::Rally.next(), ModuleFilter::Kart);
     assert_eq!(ModuleFilter::Kart.next(), ModuleFilter::F1);
     assert_eq!(ModuleFilter::F1.next(), ModuleFilter::Nascar);
-    assert_eq!(ModuleFilter::Nascar.next(), ModuleFilter::Classic);
+    assert_eq!(ModuleFilter::Nascar.next(), ModuleFilter::Drafts);
+    assert_eq!(ModuleFilter::Drafts.next(), ModuleFilter::Classic);
 
     // Verify filter cycle (.prev())
-    assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::Nascar);
+    assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::Drafts);
+    assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::Nascar);
     assert_eq!(ModuleFilter::Nascar.prev(), ModuleFilter::F1);
     assert_eq!(ModuleFilter::F1.prev(), ModuleFilter::Kart);
     assert_eq!(ModuleFilter::Kart.prev(), ModuleFilter::Rally);
@@ -529,9 +531,13 @@ fn test_track_manager_tab_and_module_cycling() {
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Nascar);
     module_filter = module_filter.next();
+    assert_eq!(module_filter, ModuleFilter::Drafts);
+    module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Classic);
 
     // Module cycling backward (Left arrow)
+    module_filter = module_filter.prev();
+    assert_eq!(module_filter, ModuleFilter::Drafts);
     module_filter = module_filter.prev();
     assert_eq!(module_filter, ModuleFilter::Nascar);
     module_filter = module_filter.prev();
@@ -1706,6 +1712,61 @@ fn test_session_active_module_tracks_reflects_reordered_presets() {
         assert_eq!(reordered_tracks[0].track_id(), second_id);
         assert_eq!(reordered_tracks[1].track_id(), first_id);
     }
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
+    // 1. Verify ModuleFilter metadata
+    assert_eq!(ModuleFilter::ALL.len(), 6);
+    assert_eq!(ModuleFilter::Drafts.id(), Some("drafts"));
+    assert_eq!(ModuleFilter::Drafts.label(), "DRAFTS");
+    assert_eq!(ModuleFilter::Drafts.shortcut_number(), 9);
+    assert_eq!(ModuleFilter::for_module("drafts"), ModuleFilter::Drafts);
+
+    // 2. Verify navigation cycle
+    assert_eq!(ModuleFilter::Nascar.next(), ModuleFilter::Drafts);
+    assert_eq!(ModuleFilter::Drafts.next(), ModuleFilter::Classic);
+    assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::Drafts);
+    assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::Nascar);
+
+    // 3. Verify track resolution for Drafts category
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_tm_drafts_cat_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::default();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    // Create a draft track
+    session
+        .track_manager
+        .create_new_draft_track("Super Prototype", "Experimental aerodynamics")
+        .expect("Create draft");
+
+    assert_eq!(session.track_manager.draft_track_choices().len(), 1);
+    assert_eq!(session.track_manager.filtered_main_track_choices(ModuleFilter::Drafts).len(), 1);
+    assert_eq!(session.track_manager.module_custom_tracks("drafts").len(), 1);
+
+    // 4. Verify initial state and cycling into Drafts
+    let mut filter = ModuleFilter::Classic;
+    // Step forward 5 times: Classic -> Rally -> Kart -> F1 -> Nascar -> Drafts
+    for _ in 0..5 {
+        filter = filter.next();
+    }
+    assert_eq!(filter, ModuleFilter::Drafts);
+
+    // Step backward 1 time from Classic: Classic -> Drafts
+    let mut filter2 = ModuleFilter::Classic;
+    filter2 = filter2.prev();
+    assert_eq!(filter2, ModuleFilter::Drafts);
+
+    // 5. Direct jump to Drafts via shortcut number 9
+    let jump_filter = ModuleFilter::Drafts;
+    assert_eq!(jump_filter.shortcut_number(), 9);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

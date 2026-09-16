@@ -190,8 +190,11 @@ fn test_validate_all_circuits_and_presets() {
     assert_eq!(total_errors, 0, "Total validation errors across all tracks: {}", total_errors);
 }
 
+static DEV_MODE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[test]
 fn test_menu_track_cache_performance_and_consistency() {
+    let _lock = DEV_MODE_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
     use tdrace_app::ui::menu::clear_menu_track_cache;
     use std::time::Instant;
 
@@ -224,16 +227,29 @@ fn test_menu_track_cache_performance_and_consistency() {
     clear_menu_track_cache();
 }
 
-static DEV_MODE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
-
 struct DevModeTestGuard {
     git_dir_set: bool,
+    user_tracks_dir_set: bool,
 }
 impl DevModeTestGuard {
+    #[allow(dead_code)]
     fn enter_with_git_dir(git_dir: &std::path::Path) -> Self {
         std::env::set_var(tdrace_app::storage::ENV_DEV_MODE, "1");
         std::env::set_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR, git_dir);
-        DevModeTestGuard { git_dir_set: true }
+        DevModeTestGuard {
+            git_dir_set: true,
+            user_tracks_dir_set: false,
+        }
+    }
+
+    fn enter_with_git_and_user_dir(git_dir: &std::path::Path, user_dir: &std::path::Path) -> Self {
+        std::env::set_var(tdrace_app::storage::ENV_DEV_MODE, "1");
+        std::env::set_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR, git_dir);
+        std::env::set_var(tdrace_app::storage::ENV_USER_TRACKS_DIR, user_dir);
+        DevModeTestGuard {
+            git_dir_set: true,
+            user_tracks_dir_set: true,
+        }
     }
 }
 impl Drop for DevModeTestGuard {
@@ -241,6 +257,9 @@ impl Drop for DevModeTestGuard {
         std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
         if self.git_dir_set {
             std::env::remove_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR);
+        }
+        if self.user_tracks_dir_set {
+            std::env::remove_var(tdrace_app::storage::ENV_USER_TRACKS_DIR);
         }
     }
 }
@@ -349,7 +368,7 @@ fn test_thumbnail_refresh_when_overwriting_preset_in_dev_mode() {
     let mock_git_tracks = temp_dir.join("git_tracks");
     fs::create_dir_all(&mock_git_tracks.join("classic")).unwrap();
 
-    let _dev_guard = DevModeTestGuard::enter_with_git_dir(&mock_git_tracks);
+    let _dev_guard = DevModeTestGuard::enter_with_git_and_user_dir(&mock_git_tracks, &temp_dir);
     assert!(tdrace_app::storage::is_dev_mode());
 
     let mut manager = TrackManager::new(&temp_dir);

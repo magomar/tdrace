@@ -120,28 +120,28 @@ pub fn render_track_manager_screen(
     let is_dev = crate::storage::is_dev_mode();
     let is_dev_workbench = is_dev && active_tab == TrackManagerTab::DevWorkbench;
 
-    let is_drafts_tab = !is_dev_workbench && active_tab == TrackManagerTab::Drafts;
+    let is_drafts = !is_dev_workbench && (active_tab == TrackManagerTab::Drafts || module_filter == ModuleFilter::Drafts);
 
     // Header Title & Subtitle based on role and active tab
     let (title, subtitle) = if is_dev_workbench {
         (
             "DEV CIRCUIT WORKBENCH",
-            "Developer Mode • Manage Git Presets & Author Canonical Circuits • [Ctrl+D] My Circuits",
+            "Developer Mode • Manage Git Presets & Author Canonical Circuits • [Ctrl+D] Circuit Manager",
         )
-    } else if is_drafts_tab {
+    } else if is_drafts {
         (
             "WORKSHOP DRAFTS",
-            "Work in progress & newly cloned circuits • [Tab] Approved Circuits • [1-5 / Left / Right] Module",
+            "Work in progress & newly cloned circuits • [1-5, 9 / Left / Right] Module",
         )
     } else if is_dev {
         (
-            "MY CIRCUITS [DEV ACTIVE]",
-            "Manage your custom racing circuits • [Tab] Drafts • [Ctrl+D] Dev Workbench • [Left / Right] Module",
+            "CIRCUIT MANAGER [DEV ACTIVE]",
+            "Developer Mode • Manage Official Presets & Custom Circuits • [1-5, 9 / Left / Right] Module",
         )
     } else {
         (
-            "MY CIRCUITS",
-            "Browse and manage your custom racing circuits • [Tab] Workshop Drafts • [Left / Right] Motorsport Module",
+            "CIRCUIT MANAGER",
+            "Browse, clone, and manage racing circuits • [1-5, 9 / Left / Right] Module",
         )
     };
 
@@ -152,7 +152,7 @@ pub fn render_track_manager_screen(
         scaler.font_s(28.0),
         if is_dev_workbench {
             Palette::NEON_GOLD
-        } else if is_drafts_tab {
+        } else if is_drafts {
             Palette::NEON_GOLD
         } else {
             Palette::WHITE
@@ -177,22 +177,35 @@ pub fn render_track_manager_screen(
 
     scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.8);
 
-    // Motorsport Modules Bar at top of card (with Workshop Drafts chip in player mode)
+    // Motorsport Modules & Categories Bar at top of card
     let tab_h = scaler.s(36.0);
     let tab_y = box_y + scaler.s(12.0);
     let filters = ModuleFilter::ALL;
-    let total_chips = if is_dev_workbench { filters.len() } else { filters.len() + 1 };
+    let total_chips = filters.len();
     let spacing = scaler.s(8.0);
     let total_spacing = spacing * (total_chips as f32 - 1.0);
     let chip_w = (box_w - scaler.s(24.0) - total_spacing) / total_chips as f32;
 
-    for (idx, filter) in filters.iter().enumerate() {
+    for filter in filters.iter() {
+        let idx = match filter {
+            ModuleFilter::Classic => 0,
+            ModuleFilter::Rally => 1,
+            ModuleFilter::Kart => 2,
+            ModuleFilter::F1 => 3,
+            ModuleFilter::Nascar => 4,
+            ModuleFilter::Drafts => 5,
+        };
         let chip_x = box_x + scaler.s(12.0) + idx as f32 * (chip_w + spacing);
-        let is_chip_active = !is_drafts_tab && *filter == module_filter;
-        let count = if is_dev_workbench {
-            track_manager.filtered_main_track_choices(*filter).len()
+        let is_filter_drafts = *filter == ModuleFilter::Drafts;
+        let is_chip_active = if is_filter_drafts {
+            is_drafts
         } else {
-            track_manager.module_custom_tracks(filter.id().unwrap_or("classic")).len()
+            !is_drafts && *filter == module_filter
+        };
+        let count = if is_filter_drafts {
+            track_manager.draft_track_choices().len()
+        } else {
+            track_manager.filtered_main_track_choices(*filter).len()
         };
 
         let chip_border = match filter {
@@ -201,46 +214,24 @@ pub fn render_track_manager_screen(
             ModuleFilter::Kart => Palette::NEON_MAGENTA,
             ModuleFilter::F1 => Palette::RED,
             ModuleFilter::Nascar => Palette::NEON_ORANGE,
+            ModuleFilter::Drafts => Palette::NEON_GOLD,
         };
 
         let (chip_bg, border_col, text_col) = if is_chip_active {
-            (
-                Color::new(0.14, 0.20, 0.30, 0.95),
-                chip_border,
-                Palette::WHITE,
-            )
-        } else {
-            (
-                Color::new(0.06, 0.08, 0.12, 0.70),
-                Palette::UI_CARD_BORDER,
-                Palette::UI_TEXT_MUTED,
-            )
-        };
-
-        scaler.draw_glass_card(chip_x, tab_y, chip_w, tab_h, chip_bg, border_col, if is_chip_active { 2.0 } else { 1.0 });
-
-        let shortcut_num = idx + 1;
-        let label = format!("{} [{}] [{}]", filter.label(), count, shortcut_num);
-        fonts.draw_ui_bold_centered(
-            &label,
-            chip_x + chip_w * 0.5,
-            tab_y + scaler.s(23.0),
-            scaler.font_s(11.5),
-            text_col,
-        );
-    }
-
-    // 6th chip in Player mode: Workshop Drafts tab
-    if !is_dev_workbench {
-        let draft_count = track_manager.draft_track_choices().len();
-        let chip_x = box_x + scaler.s(12.0) + filters.len() as f32 * (chip_w + spacing);
-        let (chip_bg, border_col, text_col) = if is_drafts_tab {
-            (
-                Color::new(0.24, 0.18, 0.08, 0.95),
-                Palette::NEON_GOLD,
-                Palette::WHITE,
-            )
-        } else if draft_count > 0 {
+            if is_filter_drafts {
+                (
+                    Color::new(0.24, 0.18, 0.08, 0.95),
+                    Palette::NEON_GOLD,
+                    Palette::WHITE,
+                )
+            } else {
+                (
+                    Color::new(0.14, 0.20, 0.30, 0.95),
+                    chip_border,
+                    Palette::WHITE,
+                )
+            }
+        } else if is_filter_drafts && count > 0 {
             (
                 Color::new(0.12, 0.10, 0.05, 0.70),
                 Palette::NEON_GOLD,
@@ -254,8 +245,10 @@ pub fn render_track_manager_screen(
             )
         };
 
-        scaler.draw_glass_card(chip_x, tab_y, chip_w, tab_h, chip_bg, border_col, if is_drafts_tab { 2.0 } else { 1.0 });
-        let label = format!("DRAFTS [{}] [Tab]", draft_count);
+        scaler.draw_glass_card(chip_x, tab_y, chip_w, tab_h, chip_bg, border_col, if is_chip_active { 2.0 } else { 1.0 });
+
+        let shortcut_num = filter.shortcut_number();
+        let label = format!("{} [{}] [{}]", filter.label(), count, shortcut_num);
         fonts.draw_ui_bold_centered(
             &label,
             chip_x + chip_w * 0.5,
@@ -273,13 +266,11 @@ pub fn render_track_manager_screen(
     let col1_x = box_x + scaler.s(12.0);
     let col2_x = col1_x + col1_w + scaler.s(12.0);
 
-    // Get current tracks for active view: Player sees custom tracks (or drafts), Dev Workbench sees presets
-    let tracks_list = if is_dev_workbench {
-        track_manager.filtered_main_track_choices(module_filter)
-    } else if active_tab == TrackManagerTab::Drafts {
+    // Get current tracks for active view: Player and Dev both see all circuits for the module (presets + customs), or drafts
+    let tracks_list = if is_drafts {
         track_manager.draft_track_choices()
     } else {
-        track_manager.module_custom_tracks(module_filter.id().unwrap_or("classic"))
+        track_manager.filtered_main_track_choices(module_filter)
     };
 
     // --- LEFT COLUMN: TRACK LIST ---
@@ -298,7 +289,7 @@ pub fn render_track_manager_screen(
                 scaler.font_s(13.0),
                 Palette::UI_TEXT_MUTED,
             );
-        } else if is_drafts_tab {
+        } else if is_drafts {
             fonts.draw_ui_bold(
                 "NO DRAFT CIRCUITS IN WORKSHOP",
                 col1_x + scaler.s(16.0),
@@ -324,7 +315,7 @@ pub fn render_track_manager_screen(
             let draft_count = track_manager.draft_track_choices().len();
             let hint = if draft_count > 0 {
                 format!(
-                    "No approved circuits assigned to this module.\n\nPress [Tab] to view Workshop Drafts ({} available),\n[N] to create a new circuit, or [Esc] to return.",
+                    "No approved circuits assigned to this module.\n\nPress [9] or [Left/Right] to view Workshop Drafts ({} available),\n[N] to create a new circuit, or [Esc] to return.",
                     draft_count
                 )
             } else {
@@ -593,13 +584,13 @@ pub fn render_track_manager_screen(
         let (expl_text, expl_bg, expl_border) = if is_preset {
             if is_dev {
                 (
-                    "Built-in official preset circuit. [DEV] [Shift+Up/Down] Reorder • [P] Demote • [Ctrl+P] Categories • [C] Clone",
+                    "Official preset circuit. [DEV] [Enter / E] Studio • [Shift+Up/Down] Reorder • [P] Demote • [C] Clone to Drafts",
                     Color::new(0.20, 0.16, 0.05, 0.80),
                     Palette::NEON_GOLD,
                 )
             } else {
                 (
-                    "Built-in official preset circuit (Read-only). Press [E] to Clone & Edit, or [C] to clone.",
+                    "Official preset circuit (Read-only). [C] Clone to Drafts • [Enter / E] Clone & Edit",
                     Color::new(0.08, 0.12, 0.18, 0.70),
                     Palette::NEON_CYAN,
                 )
@@ -607,11 +598,11 @@ pub fn render_track_manager_screen(
         } else {
             if is_dev {
                 (
-                    "Custom circuit. [P] Promote to Git Preset • [E] Studio • [C] Clone • [I] Rename • [Delete] Delete",
+                    "Custom circuit. [P] Promote to Git Preset • [Enter / E] Studio • [C] Clone to Drafts • [I] Rename • [Delete] Delete",
                     Color::new(0.08, 0.18, 0.12, 0.70),
                     Palette::NEON_GREEN,
                 )
-            } else if is_drafts_tab {
+            } else if is_drafts {
                 (
                     "Workshop draft circuit. [P] Assign Modules • [Enter / E] Studio • [C] Clone • [I] Rename • [Delete] Delete",
                     Color::new(0.18, 0.14, 0.06, 0.70),
@@ -619,7 +610,7 @@ pub fn render_track_manager_screen(
                 )
             } else {
                 (
-                    "User custom circuit. [P] Assign Modules • [Enter / E] Edit in Studio • [C] Clone • [I] Rename • [Delete] Delete",
+                    "User custom circuit. [P] Assign Modules • [Enter / E] Studio • [C] Clone to Drafts • [I] Rename • [Delete] Delete",
                     Color::new(0.08, 0.18, 0.12, 0.70),
                     Palette::NEON_GREEN,
                 )
@@ -663,22 +654,29 @@ pub fn render_track_manager_screen(
     let bar_y = sh - scaler.s(32.0);
     let action_str = if is_dev_workbench {
         if tracks_list.is_empty() {
-            "[Left/Right] SWITCH MODULE | [Ctrl+D] MY CIRCUITS | [Esc] BACK".to_string()
+            "[Left/Right / 1-5,9] MODULE | [Ctrl+D] CIRCUIT MANAGER | [Esc] BACK".to_string()
         } else {
-            "[Enter] RACE | [Shift+Up/Down] REORDER | [E] STUDIO | [C] CLONE | [P] DEMOTE | [Ctrl+P] CATEGORIES | [I] EDIT INFO | [Ctrl+D] MY CIRCUITS | [Esc] BACK".to_string()
+            "[Enter] RACE | [Shift+Up/Down] REORDER | [E] STUDIO | [C] CLONE | [P] DEMOTE | [Ctrl+P] CATEGORIES | [I] EDIT INFO | [Ctrl+D] CIRCUIT MANAGER | [Esc] BACK".to_string()
         }
     } else {
         let dev_suffix = if is_dev { " | [Ctrl+D] DEV WORKBENCH" } else { "" };
+        let is_sel_preset = tracks_list.get(selected_idx).map(|t| t.is_official_preset()).unwrap_or(false);
         if tracks_list.is_empty() {
-            if is_drafts_tab {
-                format!("[Tab] APPROVED CIRCUITS | [N] NEW DRAFT | [Esc] BACK{}", dev_suffix)
+            if is_drafts {
+                format!("[1-5, 9 / Left/Right] MODULE | [N] NEW DRAFT | [Esc] BACK{}", dev_suffix)
             } else {
-                format!("[Left/Right] SWITCH MODULE | [Tab] DRAFTS | [N] NEW CIRCUIT | [Esc] BACK{}", dev_suffix)
+                format!("[1-5, 9 / Left/Right] MODULE | [N] NEW CIRCUIT | [Esc] BACK{}", dev_suffix)
             }
-        } else if is_drafts_tab {
-            format!("[Enter] RACE | [Tab] APPROVED CIRCUITS | [Left/Right] MODULE | [E] STUDIO | [C] CLONE | [P] ASSIGN MODULES | [I] RENAME | [N] NEW DRAFT | [Delete] DELETE | [Esc] BACK{}", dev_suffix)
+        } else if is_sel_preset {
+            if is_dev {
+                format!("[Enter / E] STUDIO | [C] CLONE TO DRAFTS | [Shift+Up/Down] REORDER | [P] DEMOTE | [1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
+            } else {
+                format!("[C] CLONE TO DRAFTS | [Enter / E] CLONE & EDIT | [1-5, 9 / Left/Right] MODULE | [Esc] BACK{}", dev_suffix)
+            }
+        } else if is_drafts {
+            format!("[Enter / E] STUDIO | [C] CLONE | [P] ASSIGN MODULES | [I] RENAME | [N] NEW DRAFT | [Delete] DELETE | [1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
         } else {
-            format!("[Enter / E] EDIT | [Tab] DRAFTS | [Left/Right] SWITCH MODULE | [C] CLONE | [P] ASSIGN MODULES | [I] RENAME | [N] NEW CIRCUIT | [Delete] DELETE | [Esc] BACK{}", dev_suffix)
+            format!("[Enter / E] STUDIO | [C] CLONE TO DRAFTS | [P] ASSIGN MODULES | [I] RENAME | [N] NEW CIRCUIT | [Delete] DELETE | [1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
         }
     };
 
@@ -996,7 +994,7 @@ fn resolve_track_module_badge(
     _track_manager: &TrackManager,
     is_dossier: bool,
 ) -> (String, Color) {
-    if active_tab == TrackManagerTab::Drafts {
+    if active_tab == TrackManagerTab::Drafts || module_filter == ModuleFilter::Drafts {
         return (
             if is_dossier { "WORKSHOP DRAFT • UNDER CONSTRUCTION".to_string() } else { "WORKSHOP DRAFT".to_string() },
             Palette::NEON_GOLD,

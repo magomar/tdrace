@@ -95,7 +95,7 @@ stateDiagram-v2
     TrackManager --> TrackEditor: [E / N / C] (Edit, New Spline, or Clone)
     TrackManager --> Menu: [ESC / B]
     TrackEditor --> StartingGrid: [SPACE / P] (Launch Time Trial Test Drive)
-    TrackEditor --> Menu: [ESC] (Exit Studio)
+    TrackEditor --> TrackManager: [ESC] (Exit Studio)
 
     %% Controls Help fallback
     ControlsHelp --> Menu: [ESC / ENTER / K / B] (if opened from Menu)
@@ -437,7 +437,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `Space` / `P` | Test Drive Track | Launches full Time Trial race with default car -> `GameState::StartingGrid` (returns to Studio on exit) |
 | `1` - `8` | Tool Selection | Selects active drawing/editing tool |
 | `Ctrl+S` / `S` | Save Track | Serializes track to JSON |
-| `Escape` | Exit Studio | Returns to `GameState::Menu` (with unsaved changes prompt if dirty) |
+| `Escape` | Exit Studio | Returns to `GameState::TrackManager` (with unsaved changes prompt if dirty) |
 
 ---
 

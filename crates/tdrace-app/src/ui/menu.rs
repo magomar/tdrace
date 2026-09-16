@@ -768,7 +768,7 @@ pub fn render_track_select_menu(
         1.2,
     );
     fonts.draw_ui_bold_centered(
-        "[T] TRACK MANAGER",
+        "[T] CIRCUIT MANAGER",
         tm_badge_x + tm_badge_w * 0.5,
         curr_y + scaler.s(13.0),
         scaler.font_s(10.5),
@@ -777,12 +777,12 @@ pub fn render_track_select_menu(
 
     curr_y += scaler.s(20.0);
 
-    // Filter Tabs: [ OFFICIAL (P) ]  [ MY CIRCUITS (C) ]
+    // Filter Tabs: [ OFFICIAL (P) ]  [ CUSTOM (C) ]
     let tab_h = scaler.s(25.0);
     let tab_gap = scaler.s(6.0);
     let filter_tabs = [
         (TrackCatalogFilter::Presets, format!("OFFICIAL [{}]", filter_counts.0)),
-        (TrackCatalogFilter::Custom, format!("MY CIRCUITS [{}]", filter_counts.1)),
+        (TrackCatalogFilter::Custom, format!("CUSTOM [{}]", filter_counts.1)),
     ];
     let tab_count = filter_tabs.len() as f32;
     let tab_w = (col_w - tab_gap * (tab_count - 1.0)) / tab_count;
@@ -940,7 +940,7 @@ pub fn render_track_select_menu(
                 scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, tm_bg, tm_border, if is_sel { 2.4 } else { 1.5 });
 
                 fonts.draw_ui_bold(
-                    "CIRCUIT HUB & WORKSHOP [T]",
+                    "CIRCUIT MANAGER [T]",
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(16.0),
                     scaler.font_s(10.5),
@@ -948,7 +948,7 @@ pub fn render_track_select_menu(
                 );
 
                 fonts.draw_ui_bold(
-                    "Track Manager",
+                    "Circuit Manager",
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(34.0),
                     scaler.font_s(15.5),
@@ -956,7 +956,7 @@ pub fn render_track_select_menu(
                 );
 
                 fonts.draw_ui_regular(
-                    "Manage custom tracks, organize modules & edit info. Press [T]",
+                    "Manage circuits, workshop drafts, clone & edit. Press [T]",
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(49.0),
                     scaler.font_s(10.5),
@@ -1198,7 +1198,7 @@ pub fn render_track_select_menu(
         if track_opt.is_user_custom() {
             let footer_btn_y = sh - scaler.s(40.0) - scaler.s(14.0);
             fonts.draw_ui_bold(
-                "[E] Edit Circuit in CAD  •  [C] Clone  •  [T] Track Manager",
+                "[T] Circuit Manager",
                 col2_x,
                 footer_btn_y - scaler.s(26.0),
                 scaler.font_s(11.0),
@@ -1206,9 +1206,9 @@ pub fn render_track_select_menu(
             );
         }
     } else if has_tm_entry && selected_track_idx == total_tracks {
-        // Dedicated Track Manager / Studio view on right panel
+        // Dedicated Circuit Manager / Studio view on right panel
         fonts.draw_ui_bold(
-            "CIRCUIT STUDIO & WORKSHOP [T]",
+            "CIRCUIT MANAGER & WORKSHOP [T]",
             col2_x,
             c2_y + scaler.s(13.0),
             scaler.font_s(15.0),
@@ -1220,14 +1220,14 @@ pub fn render_track_select_menu(
         scaler.draw_glass_card(col2_x, c2_y, col_w, studio_h, Palette::UI_CARD_BG, Palette::NEON_MAGENTA, 1.5);
 
         fonts.draw_ui_bold(
-            "TRACK MANAGER & CAD DESIGNER",
+            "CIRCUIT MANAGER & CAD DESIGNER",
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(20.0),
             scaler.font_s(15.0),
             Palette::NEON_GOLD,
         );
         fonts.draw_ui_regular(
-            "Create, edit, organize and test custom racing circuits with spline geometry, surface zoning, jump ramps, and module promotion.",
+            "Create, edit, organize, clone, and test racing circuits with spline geometry, surface zoning, and module assignments.",
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(40.0),
             scaler.font_s(11.5),
@@ -1239,7 +1239,7 @@ pub fn render_track_select_menu(
             "• Multi-surface painting (Asphalt, Dirt, Sand, Water, Ice)",
             "• Jump ramps, obstacles & custom checkpoint gates",
             "• Predefined car assignment & lap balancing",
-            "• Press [Enter / Space] or [T] to launch Track Manager",
+            "• Press [Enter / Space] or [T] to launch Circuit Manager",
         ];
         let mut feat_y = c2_y + scaler.s(86.0);
         for feat in &features {
@@ -1250,7 +1250,7 @@ pub fn render_track_select_menu(
         c2_y += studio_h + scaler.s(14.0);
 
         fonts.draw_ui_bold(
-            "CIRCUIT MANAGEMENT ACTIONS",
+            "CIRCUIT MANAGEMENT FEATURES",
             col2_x,
             c2_y + scaler.s(13.0),
             scaler.font_s(15.0),
@@ -1262,14 +1262,14 @@ pub fn render_track_select_menu(
         scaler.draw_glass_card(col2_x, c2_y, col_w, actions_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.3);
 
         fonts.draw_ui_bold(
-            "Custom Circuit Tools",
+            "Circuit Manager Overview",
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(20.0),
             scaler.font_s(15.0),
             Palette::WHITE,
         );
         fonts.draw_ui_regular(
-            "Press [T] anywhere in the menu to open Track Manager directly, or press [E] to launch the CAD Studio on any track.",
+            "Press [T] anywhere in the menu or press [Enter] on this card to open Circuit Manager directly.",
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(38.0),
             scaler.font_s(11.0),
@@ -1277,10 +1277,10 @@ pub fn render_track_select_menu(
         );
 
         let classes = [
-            ("[T] Track Manager", "Full screen circuit organizer, promotion & file manager"),
-            ("[E] CAD Studio", "Direct spline vector circuit layout and surface designer"),
-            ("[C] Clone Circuit", "Duplicate any built-in preset or custom circuit"),
-            ("[N] Prototypical", "Generate a new baseline track in CAD editor"),
+            ("[T] Circuit Manager", "Full screen circuit organizer, drafts & file manager"),
+            ("CAD Studio", "Direct spline vector circuit layout and surface designer"),
+            ("Clone to Drafts", "Safely duplicate any built-in preset or custom circuit"),
+            ("Module Distribution", "Assign custom circuits to Classic, Rally, Kart, F1, Nascar"),
         ];
         let mut cl_y = c2_y + scaler.s(70.0);
         for (tag, desc) in &classes {
@@ -1309,7 +1309,7 @@ pub fn render_track_select_menu(
             Palette::UI_TEXT_MUTED,
         );
         fonts.draw_ui_regular_centered(
-            "Press [T] to manage and design circuits in Track Manager",
+            "Press [T] to manage and design circuits in Circuit Manager",
             col2_x + col_w * 0.5,
             c2_y + empty_dossier_h * 0.55,
             scaler.font_s(11.0),
@@ -1320,11 +1320,11 @@ pub fn render_track_select_menu(
     // Footer Launch prompt button
     let is_tm_selected = has_tm_entry && selected_track_idx == total_tracks;
     let start_prompt = if is_tm_selected {
-        "PRESS [SPACE / ENTER] OR [T] TO OPEN TRACK MANAGER"
+        "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER"
     } else if total_tracks > 0 {
         "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE"
     } else {
-        "PRESS [SPACE / ENTER] OR [T] TO OPEN TRACK MANAGER"
+        "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER"
     };
     let btn_w = scaler.s(460.0);
     let btn_h = scaler.s(40.0);
@@ -1332,9 +1332,9 @@ pub fn render_track_select_menu(
     let btn_y = sh - btn_h - scaler.s(14.0);
 
     let footer_text = if crate::storage::is_dev_mode() {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Track Manager  •  [Ctrl+D] Dev Workbench  •  [O] Settings  •  [ESC] Back"
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [O] Settings  •  [ESC] Back"
     } else {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Track Manager  •  [O] Settings  •  [K] Controls  •  [ESC] Back"
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [O] Settings  •  [K] Controls  •  [ESC] Back"
     };
 
     fonts.draw_ui_regular_centered(

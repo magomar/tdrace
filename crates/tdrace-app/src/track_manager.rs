@@ -15,7 +15,7 @@ use crate::module::rally::RallyGameModule;
 use crate::module::{GameModule, TrackDefinition};
 use crate::ui::menu::TrackChoice;
 
-/// Filter for selecting tracks by motorsport module in the Track Manager.
+/// Filter for selecting tracks by motorsport module or drafts category in the Track Manager.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ModuleFilter {
     #[default]
@@ -24,15 +24,17 @@ pub enum ModuleFilter {
     Kart,
     F1,
     Nascar,
+    Drafts,
 }
 
 impl ModuleFilter {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 6] = [
         Self::Classic,
         Self::Rally,
         Self::Kart,
         Self::F1,
         Self::Nascar,
+        Self::Drafts,
     ];
 
     pub fn id(&self) -> Option<&'static str> {
@@ -42,6 +44,7 @@ impl ModuleFilter {
             Self::Kart => Some("kart"),
             Self::F1 => Some("gt"),
             Self::Nascar => Some("nascar"),
+            Self::Drafts => Some("drafts"),
         }
     }
 
@@ -52,6 +55,18 @@ impl ModuleFilter {
             Self::Kart => "KARTING",
             Self::F1 => "GT WORLD CHALLENGE",
             Self::Nascar => "NASCAR",
+            Self::Drafts => "DRAFTS",
+        }
+    }
+
+    pub fn shortcut_number(&self) -> u8 {
+        match self {
+            Self::Classic => 1,
+            Self::Rally => 2,
+            Self::Kart => 3,
+            Self::F1 => 4,
+            Self::Nascar => 5,
+            Self::Drafts => 9,
         }
     }
 
@@ -61,17 +76,19 @@ impl ModuleFilter {
             Self::Rally => Self::Kart,
             Self::Kart => Self::F1,
             Self::F1 => Self::Nascar,
-            Self::Nascar => Self::Classic,
+            Self::Nascar => Self::Drafts,
+            Self::Drafts => Self::Classic,
         }
     }
 
     pub fn prev(&self) -> Self {
         match self {
-            Self::Classic => Self::Nascar,
+            Self::Classic => Self::Drafts,
             Self::Rally => Self::Classic,
             Self::Kart => Self::Rally,
             Self::F1 => Self::Kart,
             Self::Nascar => Self::F1,
+            Self::Drafts => Self::Nascar,
         }
     }
 
@@ -81,6 +98,7 @@ impl ModuleFilter {
             "rally" => Self::Rally,
             "kart" => Self::Kart,
             "nascar" => Self::Nascar,
+            "drafts" => Self::Drafts,
             _ => Self::Classic,
         }
     }
@@ -466,6 +484,7 @@ impl TrackManager {
             ModuleFilter::Rally => self.module_catalog_tracks("rally"),
             ModuleFilter::Kart => self.module_catalog_tracks("kart"),
             ModuleFilter::Nascar => self.module_catalog_tracks("nascar"),
+            ModuleFilter::Drafts => self.draft_track_choices(),
         }
     }
 
@@ -1143,6 +1162,13 @@ impl TrackManager {
             || self.resolve_preset_git_file(slug, None).is_some()
     }
 
+    /// Checks whether a track slug represents an already existing track (either official preset or user circuit on disk).
+    pub fn is_existing_track(&self, slug: &str) -> bool {
+        (Self::is_preset_slug(slug) && !self.is_preset_demoted(slug))
+            || self.track_file_exists(slug)
+            || self.track_path_for_slug(slug).exists()
+    }
+
     /// Resolves the destination path for a given slug, checking existing files first.
     pub fn track_path_for_slug(&self, slug: &str) -> PathBuf {
         let file_name = format!("{}.json", slug);
@@ -1306,6 +1332,9 @@ impl TrackManager {
 
     /// Returns custom tracks assigned to a specific module.
     pub fn module_custom_tracks(&self, module_id: &str) -> Vec<TrackChoice> {
+        if module_id == "drafts" {
+            return self.draft_track_choices();
+        }
         let mut choices = Vec::new();
         for custom in &self.custom_tracks {
             let is_demoted = self.is_preset_demoted(&custom.id);

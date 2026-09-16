@@ -1,5 +1,7 @@
 use tdrace_app::db::{HallOfFameDb, HallOfFameEntry};
+use tdrace_app::editor::EditorAction;
 use tdrace_app::game::{FinishedScreenView, GameState, RaceSession};
+use tdrace_app::profile::RaceHistoryEntry;
 use tdrace_app::ui::menu::TrackChoice;
 
 #[test]
@@ -197,4 +199,197 @@ fn test_race_session_hof_automatic_logging_and_congratulations() {
     assert_eq!(congrats.race_position, Some(1));
     assert!(congrats.has_achievements());
 }
+
+#[test]
+fn test_hall_of_fame_clear_track_history_isolation() {
+    let db = HallOfFameDb::open_in_memory().expect("In-memory SQLite should initialize");
+    let profile = db.seed_default_profile_if_empty().unwrap();
+    let pid = profile.id.unwrap();
+
+    // 1. Insert records for two different tracks: "track_alpha" and "track_beta"
+    let hof_a = HallOfFameEntry {
+        id: None,
+        track_id: "track_alpha".to_string(),
+        player_name: "Racer A".to_string(),
+        car_name: "Sports Coupe".to_string(),
+        total_time: 60.0,
+        best_lap: Some(20.0),
+        laps: 3,
+        created_at: "2026-09-01 10:00".to_string(),
+    };
+    let hof_b = HallOfFameEntry {
+        id: None,
+        track_id: "track_beta".to_string(),
+        player_name: "Racer B".to_string(),
+        car_name: "Sports Coupe".to_string(),
+        total_time: 80.0,
+        best_lap: Some(26.0),
+        laps: 3,
+        created_at: "2026-09-01 11:00".to_string(),
+    };
+    db.insert_entry(&hof_a).unwrap();
+    db.insert_entry(&hof_b).unwrap();
+
+    let race_a = RaceHistoryEntry {
+        id: None,
+        profile_id: pid,
+        track_id: "track_alpha".to_string(),
+        car_name: "Sports Coupe".to_string(),
+        position: 1,
+        total_cars: 4,
+        total_time: 60.0,
+        best_lap: Some(20.0),
+        laps: 3,
+        is_time_attack: false,
+        created_at: "2026-09-01 10:00".to_string(),
+    };
+    let race_b = RaceHistoryEntry {
+        id: None,
+        profile_id: pid,
+        track_id: "track_beta".to_string(),
+        car_name: "Sports Coupe".to_string(),
+        position: 2,
+        total_cars: 4,
+        total_time: 80.0,
+        best_lap: Some(26.0),
+        laps: 3,
+        is_time_attack: false,
+        created_at: "2026-09-01 11:00".to_string(),
+    };
+    db.insert_race_history(&race_a).unwrap();
+    db.insert_race_history(&race_b).unwrap();
+
+    // Verify both tracks exist
+    assert_eq!(db.get_top_10("track_alpha").unwrap().len(), 1);
+    assert_eq!(db.get_top_10("track_beta").unwrap().len(), 1);
+    let stats_before = db.get_stats_for_profile(pid).unwrap();
+    assert_eq!(stats_before.total_races, 2);
+    assert!(stats_before.best_times.contains_key("track_alpha"));
+    assert!(stats_before.best_times.contains_key("track_beta"));
+
+    // 2. Clear history for track_alpha only
+    db.clear_track_history("track_alpha").expect("Clear should succeed");
+
+    // 3. Verify track_alpha is cleared but track_beta is untouched
+    assert!(db.get_top_10("track_alpha").unwrap().is_empty());
+    assert_eq!(db.get_top_10("track_beta").unwrap().len(), 1);
+
+    let history_after = db.get_history_for_profile(pid, 10).unwrap();
+    assert_eq!(history_after.len(), 1);
+    assert_eq!(history_after[0].track_id, "track_beta");
+
+    let stats_after = db.get_stats_for_profile(pid).unwrap();
+    assert_eq!(stats_after.total_races, 1);
+    assert!(!stats_after.best_times.contains_key("track_alpha"));
+    assert_eq!(stats_after.best_times.get("track_beta"), Some(&26.0));
+}
+
+#[test]
+fn test_race_session_circuit_history_cleared_on_editor_modify() {
+    let mut session = RaceSession::new();
+    let mem_db = HallOfFameDb::open_in_memory().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    // 1. Create a custom track in session and save it
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_hist_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    session.track_manager.tracks_dir = temp_dir.clone();
+
+    let custom_track = tdrace_core::track::presets::oval_speedway();
+    let saved_path = session.track_manager.save_custom_track(&custom_track, Some("my_oval")).expect("Save track");
+    let track_id = "my_oval";
+
+    session.track_choice = TrackChoice::Custom {
+        id: track_id.to_string(),
+        title: "My Oval".to_string(),
+        description: "Custom oval".to_string(),
+        path: saved_path.clone(),
+    };
+    session.init_race();
+    assert_eq!(session.track_choice_id(), track_id);
+
+    // 2. Complete race and record history
+    session.session_time = 38.0;
+    session.trackers[0].current_lap = session.total_laps + 1;
+    session.trackers[0].best_lap_time = Some(12.5);
+    session.check_race_finish();
+
+    // Verify history and Hall of Fame exist
+    assert_eq!(session.hof_entries.len(), 8);
+    assert_eq!(session.active_profile_stats.best_times.get(track_id), Some(&12.5));
+    assert!(session.profile_history.iter().any(|r| r.track_id == track_id));
+
+    // 3. Load track into editor
+    session.enter_track_editor_with_path(custom_track.clone(), Some(saved_path));
+
+    // 4. Modify circuit and save with overwrite = true
+    let mut modified_track = custom_track.clone();
+    modified_track.name = "My Modified Oval".to_string();
+    session.handle_editor_action(EditorAction::SaveTrack {
+        name: modified_track.name.clone(),
+        filename: "my_oval".to_string(),
+        description: "Updated oval circuit".to_string(),
+        overwrite: true,
+        exit_after: false,
+    });
+
+    // 5. Verify that circuit history has been cleared!
+    assert!(session.hof_entries.is_empty(), "Hall of Fame entries for modified circuit should be empty");
+    assert!(!session.active_profile_stats.best_times.contains_key(track_id), "Best lap time for modified circuit should be removed");
+    assert!(!session.active_profile_stats.best_circuit_times.contains_key(track_id), "Best circuit time for modified circuit should be removed");
+    assert!(!session.profile_history.iter().any(|r| r.track_id == track_id), "Race history logs for modified circuit should be removed");
+
+    // Clean up temporary directory
+    let _ = std::fs::remove_dir_all(temp_dir);
+}
+
+#[test]
+fn test_race_session_save_new_circuit_does_not_clear_other_tracks() {
+    let mut session = RaceSession::new();
+    let mem_db = HallOfFameDb::open_in_memory().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    let temp_dir = std::env::temp_dir().join(format!("tdrace_test_new_track_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    session.track_manager.tracks_dir = temp_dir.clone();
+
+    // 1. Establish records on track_existing
+    let track_existing = tdrace_core::track::presets::oval_speedway();
+    let saved_path_a = session.track_manager.save_custom_track(&track_existing, Some("track_existing")).expect("Save track");
+    session.track_choice = TrackChoice::Custom {
+        id: "track_existing".to_string(),
+        title: "Track Existing".to_string(),
+        description: "Existing track".to_string(),
+        path: saved_path_a,
+    };
+    session.init_race();
+    session.session_time = 40.0;
+    session.trackers[0].current_lap = session.total_laps + 1;
+    session.trackers[0].best_lap_time = Some(13.0);
+    session.check_race_finish();
+
+    assert_eq!(session.active_profile_stats.best_times.get("track_existing"), Some(&13.0));
+
+    // 2. Open editor with a new track and save as "track_brand_new" (overwrite = false)
+    let new_track = tdrace_core::track::presets::kart_arena();
+    session.enter_track_editor_with_path(new_track.clone(), None);
+
+    session.handle_editor_action(EditorAction::SaveTrack {
+        name: "Brand New Track".to_string(),
+        filename: "track_brand_new".to_string(),
+        description: "Freshly minted circuit".to_string(),
+        overwrite: false,
+        exit_after: false,
+    });
+
+    // 3. Verify that track_existing's records remain intact
+    assert_eq!(session.active_profile_stats.best_times.get("track_existing"), Some(&13.0));
+    assert!(session.profile_history.iter().any(|r| r.track_id == "track_existing"));
+
+    let _ = std::fs::remove_dir_all(temp_dir);
+}
+
+
 

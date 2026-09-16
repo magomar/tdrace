@@ -283,3 +283,63 @@ fn test_ui_copy_and_error_messages_are_strictly_in_english() {
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_circuit_manager_preset_visibility_and_cloning_to_drafts() {
+    let _lock = ROLE_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    std::env::remove_var("TDRACE_DEV");
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_cm_visibility_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let mut manager = TrackManager::new(&temp_dir);
+
+    // 1. In Circuit Manager, filtered_main_track_choices returns presets for the module
+    let classic_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    assert!(!classic_tracks.is_empty(), "Classic module must have presets visible in Circuit Manager");
+    assert!(classic_tracks.iter().any(|t| t.track_id() == "classic_grand_prix"));
+    assert!(classic_tracks.iter().any(|t| t.is_official_preset()));
+
+    // Add a custom circuit for Classic
+    let mut custom = classic_grand_prix();
+    custom.name = "Custom Speed Ring".to_string();
+    custom.category = TrackCategory::Main;
+    custom.modules = vec!["classic".to_string()];
+    manager.save_custom_track(&custom, Some("custom_speed_ring")).expect("Save custom circuit");
+
+    // Both preset and custom are visible in Circuit Manager
+    let updated_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    assert!(updated_tracks.iter().any(|t| t.track_id() == "classic_grand_prix"));
+    assert!(updated_tracks.iter().any(|t| t.track_id() == "custom_speed_ring"));
+
+    // 2. Cloning an official preset creates a Draft in Drafts category
+    let preset_choice = classic_tracks.iter().find(|t| t.track_id() == "classic_grand_prix").unwrap();
+    let (cloned_preset, preset_path) = manager.clone_track(preset_choice).expect("Clone preset must succeed");
+    assert_eq!(cloned_preset.category, TrackCategory::Draft, "Cloned preset must have category Draft");
+    assert!(cloned_preset.modules.is_empty(), "Cloned preset modules must be cleared for Drafts");
+    assert!(std::path::Path::new(&preset_path).exists());
+
+    // 3. Cloning a custom circuit also creates a Draft in Drafts category
+    let custom_choice = updated_tracks.iter().find(|t| t.track_id() == "custom_speed_ring").unwrap();
+    let (cloned_custom, custom_path) = manager.clone_track(custom_choice).expect("Clone custom track must succeed");
+    assert_eq!(cloned_custom.category, TrackCategory::Draft, "Cloned custom track must have category Draft");
+    assert!(std::path::Path::new(&custom_path).exists());
+
+    // 4. Drafts list contains both clones, and neither leaks into module_custom_tracks
+    let drafts = manager.draft_track_choices();
+    assert_eq!(drafts.len(), 2, "Both cloned circuits must be in Drafts category");
+    assert!(drafts.iter().any(|t| t.title() == "Classic Grand Prix (clone)"));
+    assert!(drafts.iter().any(|t| t.title() == "Custom Speed Ring (clone)"));
+
+    let module_approved = manager.module_custom_tracks("classic");
+    assert_eq!(module_approved.len(), 1, "Only approved custom track must be in module_custom_tracks");
+    assert_eq!(module_approved[0].track_id(), "custom_speed_ring");
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}

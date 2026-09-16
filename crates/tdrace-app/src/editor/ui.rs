@@ -111,6 +111,7 @@ pub enum EditorAction {
     FocusCamera,
     ToggleHelp,
     ExitToMenu,
+    ExitToTrackManager,
 }
 
 /// Helper to drain any unconsumed characters from macroquad input buffer.
@@ -338,7 +339,7 @@ pub fn render_editor_ui(
         if state.is_dirty {
             *active_modal = EditorModal::UnsavedChanges;
         } else {
-            dispatched_action = EditorAction::ExitToMenu;
+            dispatched_action = EditorAction::ExitToTrackManager;
         }
     }
 
@@ -660,7 +661,7 @@ pub fn render_editor_ui(
             if state.is_dirty {
                 *active_modal = EditorModal::UnsavedChanges;
             } else {
-                dispatched_action = EditorAction::ExitToMenu;
+                dispatched_action = EditorAction::ExitToTrackManager;
             }
         }
     }
@@ -4159,7 +4160,7 @@ fn render_unsaved_changes_modal(
     }
 
     if discard_pressed {
-        return Some(EditorAction::ExitToMenu);
+        return Some(EditorAction::ExitToTrackManager);
     }
 
     if cancel_pressed {
@@ -4383,6 +4384,9 @@ mod tests {
 
         let act_exit = EditorAction::ExitToMenu;
         assert_eq!(act_exit, EditorAction::ExitToMenu);
+
+        let act_exit_tm = EditorAction::ExitToTrackManager;
+        assert_eq!(act_exit_tm, EditorAction::ExitToTrackManager);
     }
 
     #[test]
