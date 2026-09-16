@@ -351,6 +351,9 @@ pub struct RaceSession {
     pub show_exit_confirm: bool,
     pub exit_confirm_modal: Option<UniversalConfirmModal>,
     pub settings_modal: Option<ArcadeSettingsModal>,
+    pub selected_layout_id: Option<String>,
+    pub show_layout_modal: bool,
+    pub layout_modal_idx: usize,
 
     // Track Editor & Test Drive state
     pub editor_state: Option<EditorState>,
@@ -595,6 +598,9 @@ impl RaceSession {
             show_exit_confirm: false,
             exit_confirm_modal: None,
             settings_modal: None,
+            selected_layout_id: None,
+            show_layout_modal: false,
+            layout_modal_idx: 0,
             editor_state: None,
             editor_camera,
             editor_tools: ToolSettings::default(),
@@ -1563,7 +1569,21 @@ impl RaceSession {
             self.cars.push(bot_car);
             self.color_schemes.push(character.color_scheme);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
-            self.ai_drivers.push(BotAiDriver::new(character.profile));
+            let mut bot_ai = BotAiDriver::new(character.profile);
+            if character.stats.aggression > 0.8 {
+                bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::RallycrossJoker {
+                    planned_joker_lap: 2,
+                    adaptive_traffic_undercut: true,
+                });
+            } else if character.stats.precision > 0.85 {
+                bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::RallycrossJoker {
+                    planned_joker_lap: 3,
+                    adaptive_traffic_undercut: false,
+                });
+            } else {
+                bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::DynamicTrafficAvoidance);
+            }
+            self.ai_drivers.push(bot_ai);
         }
     }
 
@@ -1580,6 +1600,18 @@ impl RaceSession {
         // 1. Build selected track (preserve in-memory track if launched from editor)
         if !self.return_to_editor_on_exit {
             self.track = self.load_track_for_session(&self.track_choice);
+        }
+
+        // Apply selected circuit layout if specified
+        if let Some(ref layout_id) = self.selected_layout_id {
+            if let Some(ref mut network) = self.track.network {
+                if network.get_layout(layout_id).is_some() {
+                    network.default_layout_id = layout_id.clone();
+                    if let Some(composite_spline) = network.build_composite_spline_for_layout(layout_id) {
+                        self.track.spline = composite_spline;
+                    }
+                }
+            }
         }
 
         // Predefined balanced lap count from track
@@ -3430,6 +3462,41 @@ impl RaceSession {
         }
 
         let available_tracks = self.filtered_menu_tracks();
+        // Handle Layout Selection Modal inputs if open
+        if self.show_layout_modal {
+            if let Some(track_opt) = available_tracks.get(self.menu_track_idx) {
+                if let Some(mut tr) = resolve_track_for_menu(track_opt) {
+                    let net = tr.ensure_network();
+                    let num_layouts = net.layouts.len();
+                    if num_layouts > 0 {
+                        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.layout_modal_idx = self.layout_modal_idx.saturating_sub(1);
+                        }
+                        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            if self.layout_modal_idx + 1 < num_layouts {
+                                self.layout_modal_idx += 1;
+                            }
+                        }
+                        if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::Space) || self.input.gamepad.snapshot.btn_confirm_pressed {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            self.selected_layout_id = Some(net.layouts[self.layout_modal_idx].id.clone());
+                            self.show_layout_modal = false;
+                            return;
+                        }
+                        if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::L) || self.input.gamepad.snapshot.btn_b_pressed {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            self.show_layout_modal = false;
+                            return;
+                        }
+                        return;
+                    }
+                }
+            }
+            self.show_layout_modal = false;
+        }
+
         let has_tm_entry = self.menu_track_filter == TrackCatalogFilter::Custom;
         let total_items = if has_tm_entry {
             available_tracks.len() + 1
@@ -3451,6 +3518,9 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_track_filter = self.menu_track_filter.prev();
             self.menu_track_idx = 0;
+            self.selected_layout_id = None;
+            self.show_layout_modal = false;
+            self.layout_modal_idx = 0;
         }
         if is_key_pressed(KeyCode::Right)
             || is_key_pressed(KeyCode::D)
@@ -3460,6 +3530,9 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_track_filter = self.menu_track_filter.next();
             self.menu_track_idx = 0;
+            self.selected_layout_id = None;
+            self.show_layout_modal = false;
+            self.layout_modal_idx = 0;
         }
 
         // Tab key also cycles filter tabs
@@ -3467,6 +3540,9 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_track_filter = self.menu_track_filter.next();
             self.menu_track_idx = 0;
+            self.selected_layout_id = None;
+            self.show_layout_modal = false;
+            self.layout_modal_idx = 0;
         }
 
         // 2. Active Column Track Navigation (Up/Down: Arrows / W/S / Gamepad D-pad / Left Stick Y)
@@ -3478,10 +3554,16 @@ impl RaceSession {
                 } else {
                     self.menu_track_idx -= 1;
                 }
+                self.selected_layout_id = None;
+                self.show_layout_modal = false;
+                self.layout_modal_idx = 0;
             }
             if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
                 self.audio.play_sfx(SfxType::UiMove);
                 self.menu_track_idx = (self.menu_track_idx + 1) % total_items;
+                self.selected_layout_id = None;
+                self.show_layout_modal = false;
+                self.layout_modal_idx = 0;
             }
         }
 
@@ -3531,6 +3613,22 @@ impl RaceSession {
             self.audio.settings.sfx_volume = vol;
             self.audio.settings.music_volume = vol;
             self.audio.play_sfx(SfxType::UiSelect);
+        }
+
+        // Circuit Layout Selector Modal (L key)
+        if is_key_pressed(KeyCode::L) && self.menu_track_idx < available_tracks.len() {
+            let chosen = &available_tracks[self.menu_track_idx];
+            if let Some(mut tr) = resolve_track_for_menu(chosen) {
+                let net = tr.ensure_network();
+                if net.layouts.len() > 1 {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let cur_id = self.selected_layout_id.as_deref().unwrap_or(&net.default_layout_id);
+                    let cur_idx = net.layouts.iter().position(|l| l.id == cur_id).unwrap_or(0);
+                    self.layout_modal_idx = cur_idx;
+                    self.show_layout_modal = true;
+                    return;
+                }
+            }
         }
 
         // Quick Track Editor Launcher (E key)
@@ -4736,6 +4834,15 @@ impl RaceSession {
                     .collect();
 
                 let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
+                    if let Some(tracker) = self.trackers.get(i) {
+                        if tracker.current_lap > ai.current_lap {
+                            if ai.was_in_joker {
+                                ai.joker_laps_taken += 1;
+                                ai.was_in_joker = false;
+                            }
+                            ai.current_lap = tracker.current_lap;
+                        }
+                    }
                     ai.compute_controls(
                         &self.cars[i],
                         &self.track,
@@ -4770,6 +4877,15 @@ impl RaceSession {
                     .collect();
 
                 let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
+                    if let Some(tracker) = self.trackers.get(i) {
+                        if tracker.current_lap > ai.current_lap {
+                            if ai.was_in_joker {
+                                ai.joker_laps_taken += 1;
+                                ai.was_in_joker = false;
+                            }
+                            ai.current_lap = tracker.current_lap;
+                        }
+                    }
                     ai.compute_controls(
                         &self.cars[i],
                         &self.track,
@@ -5530,6 +5646,9 @@ impl RaceSession {
                     &self.active_profile_stats,
                     self.menu_track_filter,
                     filter_counts,
+                    self.selected_layout_id.as_deref(),
+                    self.show_layout_modal,
+                    self.layout_modal_idx,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {

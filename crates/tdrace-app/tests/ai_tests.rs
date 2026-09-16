@@ -1,7 +1,11 @@
 use glam::Vec2;
-use tdrace_app::ai::{BotAiDriver, BotProfile};
-use tdrace_core::{Car, CarConfig};
+use tdrace_app::ai::{BotAiDriver, BotProfile, BotRouteStrategy};
 use tdrace_core::track::presets::{classic_grand_prix, oval_speedway};
+use tdrace_core::track::{
+    RoadSegment, SegmentId, Track, TrackCategory, TrackGeometry, TrackLayout, TrackNetwork,
+    TrackWaypoint,
+};
+use tdrace_core::{Car, CarConfig, SurfaceType};
 
 #[test]
 fn test_bot_profiles_creation() {
@@ -102,5 +106,191 @@ fn test_bot_ai_slipstream_drafting_and_slingshot_pack_racing() {
         slingshot_ctrl.steer.abs() > 0.01,
         "Bot closing in under draft should steer to initiate slingshot pass"
     );
+}
+
+fn create_test_branching_track() -> Track {
+    let seg0 = RoadSegment::new(
+        SegmentId(0),
+        "Trunk Entry",
+        vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(60.0, 0.0), 12.0),
+        ],
+    );
+
+    let seg1 = RoadSegment::new(
+        SegmentId(1),
+        "Main Branch",
+        vec![
+            TrackWaypoint::new(Vec2::new(60.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(110.0, -25.0), 12.0),
+            TrackWaypoint::new(Vec2::new(160.0, 0.0), 12.0),
+        ],
+    );
+
+    let seg2 = RoadSegment::new(
+        SegmentId(2),
+        "Joker Branch",
+        vec![
+            TrackWaypoint::new(Vec2::new(60.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(110.0, 35.0), 12.0),
+            TrackWaypoint::new(Vec2::new(160.0, 0.0), 12.0),
+        ],
+    );
+
+    let seg3 = RoadSegment::new(
+        SegmentId(3),
+        "Common Return",
+        vec![
+            TrackWaypoint::new(Vec2::new(160.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(220.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(220.0, -60.0), 12.0),
+            TrackWaypoint::new(Vec2::new(0.0, -60.0), 12.0),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
+        ],
+    );
+
+    let layout_main = TrackLayout::new(
+        "main",
+        "Grand Prix Circuit",
+        vec![SegmentId(0), SegmentId(1), SegmentId(3)],
+        SegmentId(0),
+    );
+
+    let layout_joker = TrackLayout::new(
+        "joker",
+        "Rallycross Joker Route",
+        vec![SegmentId(0), SegmentId(2), SegmentId(3)],
+        SegmentId(0),
+    );
+
+    let network = TrackNetwork {
+        junctions: Vec::new(),
+        segments: vec![seg0, seg1, seg2, seg3],
+        layouts: vec![layout_main, layout_joker],
+        default_layout_id: "main".to_string(),
+    };
+
+    let spline = network.build_composite_spline_for_layout("main").unwrap();
+
+    Track {
+        name: "Test Branching Circuit".to_string(),
+        description: "Test circuit with split and merge junctions".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        network: Some(network),
+        geometry: TrackGeometry::default(),
+        checkpoints: Vec::new(),
+        grid_positions: Vec::new(),
+        default_surface: SurfaceType::Asphalt,
+        pit_box_area: None,
+        default_laps: 3,
+        predefined_car: None,
+        module_id: None,
+        modules: Vec::new(),
+    }
+}
+
+#[test]
+fn test_bot_ai_multi_route_split_junction_navigation() {
+    let track = create_test_branching_track();
+    let mut bot_main = BotAiDriver::new(BotProfile::pro())
+        .with_route_strategy(BotRouteStrategy::FixedLayout("main".to_string()));
+    let mut bot_joker = BotAiDriver::new(BotProfile::pro())
+        .with_route_strategy(BotRouteStrategy::FixedLayout("joker".to_string()));
+
+    // Cars approach split junction at x=45.0 heading along trunk towards x=60.0
+    let car_main = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(45.0, 0.0), 0.0);
+    let car_joker = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(45.0, 0.0), 0.0);
+
+    let ctrl_main = bot_main.compute_controls(&car_main, &track, &[], 0.016);
+    let ctrl_joker = bot_joker.compute_controls(&car_joker, &track, &[], 0.016);
+
+    // Both bots should accelerate positively along the trunk
+    assert!(ctrl_main.throttle > 0.5);
+    assert!(ctrl_joker.throttle > 0.5);
+
+    // Steering commands across the split bifurcation must steer into their respective branch
+    assert!(
+        ctrl_main.steer != ctrl_joker.steer,
+        "Main and Joker routes must produce distinct steering angles at split junction"
+    );
+    assert!(
+        ctrl_main.steer * ctrl_joker.steer < 0.0,
+        "Main (diverging right) and Joker (diverging left) steering commands must have opposite signs"
+    );
+}
+
+#[test]
+fn test_bot_ai_strategic_joker_lap_decision() {
+    let track = create_test_branching_track();
+    let mut bot = BotAiDriver::new(BotProfile::pro()).with_route_strategy(
+        BotRouteStrategy::RallycrossJoker {
+            planned_joker_lap: 2,
+            adaptive_traffic_undercut: true,
+        },
+    );
+
+    // Lap 1: main layout chosen
+    bot.current_lap = 1;
+    let layout1 = bot.decide_active_layout(&track, &[]);
+    assert_eq!(layout1, Some("main".to_string()));
+
+    // Lap 2: planned joker lap reached -> joker layout chosen
+    bot.current_lap = 2;
+    let layout2 = bot.decide_active_layout(&track, &[]);
+    assert_eq!(layout2, Some("joker".to_string()));
+
+    // Completed joker lap; now on Lap 3: return to main layout
+    bot.joker_laps_taken = 1;
+    bot.current_lap = 3;
+    let layout3 = bot.decide_active_layout(&track, &[]);
+    assert_eq!(layout3, Some("main".to_string()));
+}
+
+#[test]
+fn test_bot_ai_dynamic_traffic_avoidance() {
+    let track = create_test_branching_track();
+    let mut bot = BotAiDriver::new(BotProfile::pro())
+        .with_route_strategy(BotRouteStrategy::DynamicTrafficAvoidance);
+
+    // Place 3 opponent cars along the main branch (around x=110, y=-25)
+    let opp1 = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(100.0, -25.0), 0.0);
+    let opp2 = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(110.0, -25.0), 0.0);
+    let opp3 = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(120.0, -25.0), 0.0);
+
+    let chosen = bot.decide_active_layout(&track, &[&opp1, &opp2, &opp3]);
+    // The joker branch has 0 opponents, so traffic avoidance chooses "joker"
+    assert_eq!(chosen, Some("joker".to_string()));
+}
+
+#[test]
+fn test_multi_bot_branching_race_simulation() {
+    let track = create_test_branching_track();
+    let mut bot_main = BotAiDriver::new(BotProfile::pro())
+        .with_route_strategy(BotRouteStrategy::FixedLayout("main".to_string()));
+    let mut bot_joker = BotAiDriver::new(BotProfile::pro())
+        .with_route_strategy(BotRouteStrategy::FixedLayout("joker".to_string()));
+
+    let mut car_main = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(15.0, -2.0), 0.0);
+    let mut car_joker = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(10.0, 2.0), 0.0);
+
+    let dt = 0.016;
+    for _ in 0..200 {
+        let ctrl_m = bot_main.compute_controls(&car_main, &track, &[&car_joker], dt);
+        let ctrl_j = bot_joker.compute_controls(&car_joker, &track, &[&car_main], dt);
+
+        car_main.step(&ctrl_m, SurfaceType::Asphalt, dt);
+        car_joker.step(&ctrl_j, SurfaceType::Asphalt, dt);
+
+        assert!(bot_main.stuck_timer < 0.5, "Main bot must not get stuck");
+        assert!(bot_joker.stuck_timer < 0.5, "Joker bot must not get stuck");
+    }
+
+    // Both cars have progressed down the track
+    assert!(car_main.state.position.x > 30.0);
+    assert!(car_joker.state.position.x > 30.0);
+    assert!(car_main.state.speed > 8.0);
+    assert!(car_joker.state.speed > 8.0);
 }
 

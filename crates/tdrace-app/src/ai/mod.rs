@@ -3,8 +3,9 @@ pub mod driver;
 pub use driver::{DriverCharacter, DriverStats};
 
 use glam::Vec2;
+use serde::{Deserialize, Serialize};
 use tdrace_core::physics::car::{normalize_angle, Car, CarControls};
-use tdrace_core::track::Track;
+use tdrace_core::track::{Track, TrackSpline};
 
 
 /// Personality and tuning settings for an AI bot driver.
@@ -87,6 +88,28 @@ impl BotProfile {
     }
 }
 
+/// Strategy guiding AI route choices across multi-branch circuit networks.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum BotRouteStrategy {
+    /// Always follow a fixed, pre-selected track layout.
+    FixedLayout(String),
+    /// Rallycross: take the standard line except on designated joker lap(s).
+    RallycrossJoker {
+        /// Target lap number on which the bot plans to take the joker lap (1-indexed).
+        planned_joker_lap: u32,
+        /// Adaptive trigger: take joker early if stuck behind slower traffic.
+        adaptive_traffic_undercut: bool,
+    },
+    /// Dynamic fork selection (e.g. choose path with fewer opponent cars).
+    DynamicTrafficAvoidance,
+}
+
+impl Default for BotRouteStrategy {
+    fn default() -> Self {
+        Self::DynamicTrafficAvoidance
+    }
+}
+
 /// Multi-car Bot Racing AI Controller.
 #[derive(Debug, Clone)]
 pub struct BotAiDriver {
@@ -98,6 +121,20 @@ pub struct BotAiDriver {
     pub stuck_timer: f32,
     pub reverse_recovery_timer: f32,
     pub last_pos: Option<Vec2>,
+    /// Active route strategy for multi-branch track navigation.
+    pub route_strategy: BotRouteStrategy,
+    /// Identifier of the currently active circuit layout.
+    pub active_layout_id: Option<String>,
+    /// Cache of previously resolved layout ID.
+    pub cached_layout_id: Option<String>,
+    /// Precomputed composite spline for active layout to prevent per-frame allocations.
+    pub cached_layout_spline: Option<TrackSpline>,
+    /// Current lap tracked by this bot.
+    pub current_lap: u32,
+    /// Number of joker laps completed by this bot.
+    pub joker_laps_taken: u32,
+    /// Flag indicating whether the bot is currently executing a Joker lap.
+    pub was_in_joker: bool,
 }
 
 impl BotAiDriver {
@@ -111,6 +148,113 @@ impl BotAiDriver {
             stuck_timer: 0.0,
             reverse_recovery_timer: 0.0,
             last_pos: None,
+            route_strategy: BotRouteStrategy::default(),
+            active_layout_id: None,
+            cached_layout_id: None,
+            cached_layout_spline: None,
+            current_lap: 1,
+            joker_laps_taken: 0,
+            was_in_joker: false,
+        }
+    }
+
+    pub fn with_route_strategy(mut self, strategy: BotRouteStrategy) -> Self {
+        self.route_strategy = strategy;
+        self
+    }
+
+    pub fn with_active_layout(mut self, layout_id: impl Into<String>) -> Self {
+        self.active_layout_id = Some(layout_id.into());
+        self
+    }
+
+    /// Evaluates route strategy against the track network and opponent cars to select
+    /// the active circuit layout.
+    pub fn decide_active_layout(&mut self, track: &Track, other_cars: &[&Car]) -> Option<String> {
+        let network = track.network.as_ref()?;
+        if network.layouts.is_empty() {
+            return None;
+        }
+
+        match &self.route_strategy {
+            BotRouteStrategy::FixedLayout(ref layout_id) => {
+                if network.get_layout(layout_id).is_some() {
+                    Some(layout_id.clone())
+                } else {
+                    Some(network.default_layout_id.clone())
+                }
+            }
+            BotRouteStrategy::RallycrossJoker {
+                planned_joker_lap,
+                adaptive_traffic_undercut,
+            } => {
+                let joker_layout = network
+                    .layouts
+                    .iter()
+                    .find(|l| l.id.to_lowercase().contains("joker") || l.display_name.to_lowercase().contains("joker"));
+                let main_layout_id = if network.default_layout_id.to_lowercase().contains("joker") {
+                    network
+                        .layouts
+                        .iter()
+                        .find(|l| !l.id.to_lowercase().contains("joker") && !l.display_name.to_lowercase().contains("joker"))
+                        .map(|l| l.id.clone())
+                        .unwrap_or_else(|| network.default_layout_id.clone())
+                } else {
+                    network.default_layout_id.clone()
+                };
+
+                let joker_id = match joker_layout {
+                    Some(j) => j.id.clone(),
+                    None => return Some(main_layout_id),
+                };
+
+                if self.joker_laps_taken >= 1 {
+                    return Some(main_layout_id);
+                }
+
+                let mut take_joker = self.current_lap == *planned_joker_lap;
+                if !take_joker && *adaptive_traffic_undercut && self.current_lap >= 2 {
+                    if let Some(pos) = self.last_pos {
+                        let heavy_traffic = other_cars.iter().any(|opp| {
+                            let dist = (opp.state.position - pos).length();
+                            dist < 20.0
+                        });
+                        if heavy_traffic {
+                            take_joker = true;
+                        }
+                    }
+                }
+
+                if take_joker {
+                    Some(joker_id)
+                } else {
+                    Some(main_layout_id)
+                }
+            }
+            BotRouteStrategy::DynamicTrafficAvoidance => {
+                if network.layouts.len() <= 1 {
+                    return Some(network.default_layout_id.clone());
+                }
+                let mut best_layout = network.default_layout_id.clone();
+                let mut min_traffic = usize::MAX;
+
+                for layout in &network.layouts {
+                    let mut traffic_count = 0;
+                    if let Some(comp_spline) = network.build_composite_spline_for_layout(&layout.id) {
+                        for opp in other_cars {
+                            let proj = comp_spline.project_point(opp.state.position);
+                            if proj.is_on_track && proj.distance_to_spline < 8.0 {
+                                traffic_count += 1;
+                            }
+                        }
+                    }
+                    if traffic_count < min_traffic {
+                        min_traffic = traffic_count;
+                        best_layout = layout.id.clone();
+                    }
+                }
+                Some(best_layout)
+            }
         }
     }
 
@@ -123,7 +267,23 @@ impl BotAiDriver {
         other_cars: &[&Car],
         dt: f32,
     ) -> CarControls {
-        let spline = &track.spline;
+        // 0. Resolve active layout and composite spline caching
+        let active_layout_opt = self.decide_active_layout(track, other_cars);
+        if let Some(ref target_layout) = active_layout_opt {
+            if self.cached_layout_id.as_deref() != Some(target_layout.as_str())
+                || self.cached_layout_spline.is_none()
+            {
+                if let Some(network) = &track.network {
+                    if let Some(composite) = network.build_composite_spline_for_layout(target_layout) {
+                        self.cached_layout_spline = Some(composite);
+                        self.cached_layout_id = Some(target_layout.clone());
+                        self.active_layout_id = Some(target_layout.clone());
+                    }
+                }
+            }
+        }
+
+        let spline = self.cached_layout_spline.as_ref().unwrap_or(&track.spline);
         if spline.samples.is_empty() {
             return CarControls::default();
         }
@@ -144,7 +304,23 @@ impl BotAiDriver {
         // 2. Dynamic lookahead based on speed and profile
         let lookahead_dist = (10.0 + car_speed * (self.profile.lookahead_time + 0.10)).clamp(9.0, 45.0);
         let target_dist = (curr_dist + lookahead_dist) % spline.total_length();
+        let prev_target_dist = self.current_target_dist;
         self.current_target_dist = target_dist;
+
+        // Lap wrap detection for untracked/standalone execution
+        let total_len = spline.total_length();
+        if prev_target_dist > total_len * 0.75 && target_dist < total_len * 0.25 {
+            self.current_lap += 1;
+            if self.was_in_joker {
+                self.joker_laps_taken += 1;
+                self.was_in_joker = false;
+            }
+        }
+        if let Some(ref l_id) = self.active_layout_id {
+            if l_id.to_lowercase().contains("joker") {
+                self.was_in_joker = true;
+            }
+        }
 
         let target_sample = spline.sample_at_distance(target_dist);
         let mut target_point = target_sample.point;
