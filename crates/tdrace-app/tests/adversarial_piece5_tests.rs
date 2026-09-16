@@ -226,6 +226,9 @@ fn test_touch_layout_toggle_during_active_touches() {
 
 #[test]
 fn test_5000_step_fuzzed_replay_determinism_all_tracks_and_cars() {
+    let _ = std::fs::create_dir_all("/tmp/tdrace_test_empty_tracks");
+    std::env::set_var("TDRACE_USER_TRACKS_DIR", "/tmp/tdrace_test_empty_tracks");
+
     let tracks = [
         (TrackChoice::ClassicGrandPrix, classic_grand_prix()),
         (TrackChoice::OvalSpeedway, oval_speedway()),

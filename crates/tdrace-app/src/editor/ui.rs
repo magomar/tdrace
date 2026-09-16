@@ -148,9 +148,13 @@ pub fn is_mouse_over_editor_ui(
     // Left tool palette (and active sub-palette if applicable)
     let tool_w = scaler.s(165.0);
     let tool_y = top_h + scaler.s(12.0);
-    let tool_h = scaler.s(410.0);
+    let tool_h = scaler.s(455.0);
     let tool_bottom = if active_tool == EditorToolType::SurfaceZone {
         let sub_h = scaler.s(180.0);
+        let sub_y = tool_y + tool_h + scaler.s(8.0);
+        sub_y + sub_h
+    } else if active_tool == EditorToolType::RoadSplit {
+        let sub_h = scaler.s(160.0);
         let sub_y = tool_y + tool_h + scaler.s(8.0);
         sub_y + sub_h
     } else {
@@ -341,11 +345,11 @@ pub fn render_editor_ui(
     // 2. LEFT TOOL PALETTE
     let tool_w = scaler.s(165.0);
     let tool_y = top_h + scaler.s(12.0);
-    let tool_h = scaler.s(410.0);
+    let tool_h = scaler.s(455.0);
     scaler.draw_glass_card(scaler.s(12.0), tool_y, tool_w, tool_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
     fonts.draw_ui_bold(
-        "TOOLS [1-8]",
+        "TOOLS [1-9]",
         scaler.s(22.0),
         tool_y + scaler.s(20.0),
         scaler.font_s(13.0),
@@ -355,12 +359,13 @@ pub fn render_editor_ui(
     let tools_list = [
         (EditorToolType::Select, "[1] Select & Move"),
         (EditorToolType::RoadSpline, "[2] Road Spline"),
-        (EditorToolType::SurfaceZone, "[3] Surface Zone"),
-        (EditorToolType::JumpRamp, "[4] Jump Ramp"),
-        (EditorToolType::Obstacle, "[5] Obstacle Prop"),
-        (EditorToolType::Checkpoint, "[6] Checkpoint Gate"),
-        (EditorToolType::StartingGrid, "[7] Grid Slot"),
-        (EditorToolType::PitLane, "[8] Pit Lane"),
+        (EditorToolType::RoadSplit, "[3] Road Split"),
+        (EditorToolType::SurfaceZone, "[4] Surface Zone"),
+        (EditorToolType::JumpRamp, "[5] Jump Ramp"),
+        (EditorToolType::Obstacle, "[6] Obstacle Prop"),
+        (EditorToolType::Checkpoint, "[7] Checkpoint Gate"),
+        (EditorToolType::StartingGrid, "[8] Grid Slot"),
+        (EditorToolType::PitLane, "[9] Pit Lane"),
     ];
 
     let mut item_y = tool_y + scaler.s(32.0);
@@ -375,7 +380,50 @@ pub fn render_editor_ui(
         item_y += scaler.s(44.0);
     }
 
-    // 2b. Surface Zone Active Sub-Palette (when Surface Zone tool is active)
+    // 2b. Road Split Active Sub-Palette (when Road Split tool is active)
+    if tools.active_tool == EditorToolType::RoadSplit {
+        let sub_h = scaler.s(160.0);
+        let sub_y = tool_y + tool_h + scaler.s(8.0);
+        scaler.draw_glass_card(scaler.s(12.0), sub_y, tool_w, sub_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+        fonts.draw_ui_bold("ROAD SPLIT", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_CYAN);
+
+        let mut curr_sub_y = sub_y + scaler.s(22.0);
+        fonts.draw_ui_regular(&format!("Angle: {:.0}°", tools.split_divergence_angle), scaler.s(22.0), curr_sub_y + scaler.s(12.0), scaler.font_s(10.5), Palette::WHITE);
+        curr_sub_y += scaler.s(16.0);
+
+        let angles = [15.0, 30.0, 45.0, 60.0];
+        let btn_w = (tool_w - scaler.s(24.0) - scaler.s(6.0)) * 0.5;
+        for chunk in angles.chunks(2) {
+            let a1 = chunk[0];
+            let is_a1 = (tools.split_divergence_angle - a1).abs() < 1.0;
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0), curr_sub_y, btn_w, scaler.s(20.0), &format!("{:.0}°", a1), if is_a1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if is_a1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                tools.split_divergence_angle = a1;
+            }
+            if chunk.len() > 1 {
+                let a2 = chunk[1];
+                let is_a2 = (tools.split_divergence_angle - a2).abs() < 1.0;
+                if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + btn_w + scaler.s(6.0), curr_sub_y, btn_w, scaler.s(20.0), &format!("{:.0}°", a2), if is_a2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if is_a2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                    tools.split_divergence_angle = a2;
+                }
+            }
+            curr_sub_y += scaler.s(24.0);
+        }
+
+        if let Some(sock) = tools.active_branch_socket {
+            fonts.draw_ui_bold(&format!("Branch J{}#{}", sock.junction_id.0, sock.socket_index), scaler.s(22.0), curr_sub_y + scaler.s(12.0), scaler.font_s(10.5), Palette::NEON_GOLD);
+            curr_sub_y += scaler.s(16.0);
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0), curr_sub_y, tool_w - scaler.s(12.0), scaler.s(22.0), "Deselect Branch [Esc]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, bg_mouse_clicked) {
+                tools.active_branch_socket = None;
+            }
+        } else {
+            fonts.draw_ui_regular("Right-Click: Split", scaler.s(22.0), curr_sub_y + scaler.s(12.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
+            curr_sub_y += scaler.s(14.0);
+            fonts.draw_ui_regular("Click Socket: Extend", scaler.s(22.0), curr_sub_y + scaler.s(12.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
+        }
+    }
+
+    // 2c. Surface Zone Active Sub-Palette (when Surface Zone tool is active)
     if tools.active_tool == EditorToolType::SurfaceZone {
         let sub_h = scaler.s(180.0);
         let sub_y = tool_y + tool_h + scaler.s(8.0);
@@ -2104,6 +2152,35 @@ fn render_inspector(
                     tools.new_waypoint_wall_type = Some(BarrierType::TireWall);
                 }
                 curr_y += scaler.s(26.0);
+            }
+
+            if tools.active_tool == EditorToolType::RoadSplit {
+                fonts.draw_ui_bold("Road Split & Branches", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
+                curr_y += scaler.s(24.0);
+
+                fonts.draw_ui_regular("1. Right-click track to insert split.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
+                curr_y += scaler.s(20.0);
+
+                fonts.draw_ui_regular("2. Left-click socket to select branch.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
+                curr_y += scaler.s(20.0);
+
+                fonts.draw_ui_regular("3. Right-click space to extend branch.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
+                curr_y += scaler.s(20.0);
+
+                fonts.draw_ui_regular("4. Right-click near track to snap merge.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(24.0);
+
+                fonts.draw_ui_bold(&format!("Branch Count: {}", tools.split_branch_count), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+                curr_y += scaler.s(18.0);
+
+                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "2 Branches", if tools.split_branch_count == 2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if tools.split_branch_count == 2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                    tools.split_branch_count = 2;
+                }
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0) + half_btn_w + scaler.s(6.0), curr_y, half_btn_w, scaler.s(22.0), "3 Branches", if tools.split_branch_count == 3 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if tools.split_branch_count == 3 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                    tools.split_branch_count = 3;
+                }
+                curr_y += scaler.s(28.0);
             }
 
             if tools.active_tool == EditorToolType::JumpRamp {

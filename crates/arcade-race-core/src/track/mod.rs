@@ -171,6 +171,21 @@ impl Track {
             return SurfaceType::Curb;
         }
 
+        // 2b. Also check network branch segments if present
+        if let Some(ref net) = self.network {
+            for seg in &net.segments {
+                if seg.id.0 != 0 && seg.samples.len() >= 2 {
+                    let seg_proj = seg.project_point(point);
+                    if seg_proj.is_on_track {
+                        return seg_proj.base_surface;
+                    }
+                    if seg_proj.is_on_curb {
+                        return SurfaceType::Curb;
+                    }
+                }
+            }
+        }
+
         // 3. Check below-track ground zones (e.g. sand traps, asphalt runoff, dirt base beneath road)
         for zone in &self.geometry.surface_zones {
             if !zone.is_above_track() && zone.contains(point) {

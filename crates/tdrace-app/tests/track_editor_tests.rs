@@ -14,6 +14,7 @@ use tdrace_core::track::presets::{
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
+use tdrace_core::track::network::{JunctionKind, SocketId};
 use tdrace_core::track::Track;
 
 static DEV_MODE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -2195,4 +2196,114 @@ fn test_jump_ramp_curved_profile_elevation_and_slope() {
     // 3. At lip / exit, elevation reaches full height (2.0m)
     assert!((ramp.surface_elevation_at(lip_pt) - 2.0).abs() < 1e-4);
 }
+
+#[test]
+fn test_road_split_insert_split_junction_and_branch_seeding() {
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    tools.active_tool = EditorToolType::RoadSplit;
+    tools.split_branch_count = 2;
+    tools.split_divergence_angle = 30.0;
+
+    let target_wp = state.track.spline.waypoints[2].point;
+
+    // Secondary click (Right Click) near waypoint 2 to insert split
+    tools.handle_secondary_down(&mut state, target_wp);
+
+    let network = state.track.ensure_network();
+    assert_eq!(network.junctions.len(), 1, "Should have created 1 split junction");
+    assert!(tools.active_branch_socket.is_some(), "Active branch socket should be set");
+
+    let junction = &network.junctions[0];
+    if let JunctionKind::Split { ingress_socket, egress_sockets, gore_config } = &junction.kind {
+        assert_eq!(egress_sockets.len(), 2, "Should have 2 egress branch sockets");
+        assert!((ingress_socket.point - target_wp).length() < 1.0);
+        assert!(gore_config.is_some(), "Gore config should be initialized");
+    } else {
+        panic!("Created junction should be of kind Split");
+    }
+
+    // A branch segment should have been automatically seeded
+    assert_eq!(network.segments.len(), 2, "Trunk segment + seeded branch segment");
+    let branch_seg = network.segments.iter().find(|s| s.id.0 != 0).unwrap();
+    assert_eq!(branch_seg.entry_junction, tools.active_branch_socket);
+    assert_eq!(branch_seg.waypoints.len(), 2);
+    assert!(branch_seg.length > 10.0);
+}
+
+#[test]
+fn test_road_split_append_waypoints_and_extend_branch() {
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    tools.active_tool = EditorToolType::RoadSplit;
+    let target_wp = state.track.spline.waypoints[2].point;
+
+    // 1. Insert split
+    tools.handle_secondary_down(&mut state, target_wp);
+    let active_sock = tools.active_branch_socket.expect("Should have active socket");
+
+    // 2. Click in open space (away from track) to append waypoints
+    let ext_pt1 = target_wp + Vec2::new(50.0, 50.0);
+    tools.handle_secondary_down(&mut state, ext_pt1);
+
+    let ext_pt2 = target_wp + Vec2::new(100.0, 80.0);
+    tools.handle_secondary_down(&mut state, ext_pt2);
+
+    let network = state.track.ensure_network();
+    let branch_seg = network.segments.iter().find(|s| s.entry_junction == Some(active_sock)).unwrap();
+    assert_eq!(branch_seg.waypoints.len(), 4, "2 seeded + 2 appended waypoints");
+    assert!(branch_seg.length > 50.0);
+
+    // Drivable surface check on branch segment
+    let mid_sample = branch_seg.samples[branch_seg.samples.len() / 2].point;
+    let sampled = state.track.sample_surface(mid_sample);
+    assert_eq!(sampled, SurfaceType::Asphalt, "Branch road surface must be sampled as Asphalt");
+}
+
+#[test]
+fn test_road_split_snap_to_merge_and_layout_generation() {
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    tools.active_tool = EditorToolType::RoadSplit;
+    let target_wp = state.track.spline.waypoints[2].point;
+
+    // 1. Insert split
+    tools.handle_secondary_down(&mut state, target_wp);
+    let active_sock = tools.active_branch_socket.unwrap();
+
+    // 2. Extend branch waypoint
+    let ext_pt = target_wp + Vec2::new(40.0, 30.0);
+    tools.handle_secondary_down(&mut state, ext_pt);
+
+    // 3. Snap to merge near waypoint 5
+    let merge_wp = state.track.spline.waypoints[5].point;
+    let click_near_merge = merge_wp + Vec2::new(2.0, 1.0); // Within 10.0m snap threshold
+    tools.handle_secondary_down(&mut state, click_near_merge);
+
+    let network = state.track.ensure_network();
+    assert_eq!(network.junctions.len(), 2, "Should have 1 Split and 1 Merge junction");
+    assert_eq!(tools.active_branch_socket, None, "Branch socket should reset after merge");
+
+    let merge_j = network.junctions.iter().find(|j| matches!(j.kind, JunctionKind::Merge { .. })).unwrap();
+    if let JunctionKind::Merge { ingress_sockets, egress_socket, .. } = &merge_j.kind {
+        assert_eq!(ingress_sockets.len(), 1);
+        assert!((egress_socket.point - merge_wp).length() < 1e-4);
+    }
+
+    // Branch segment should have exit_junction connected to the merge
+    let branch_seg = network.segments.iter().find(|s| s.entry_junction == Some(active_sock)).unwrap();
+    assert_eq!(branch_seg.exit_junction, Some(SocketId::new(merge_j.id, 0)));
+
+    // Alternative layout should have been registered
+    assert_eq!(network.layouts.len(), 2, "Default layout + Alternative Route");
+    let alt_layout = network.get_layout("alternative").expect("Alternative layout should exist");
+    assert!(alt_layout.segment_sequence.contains(&branch_seg.id));
+}
+
 

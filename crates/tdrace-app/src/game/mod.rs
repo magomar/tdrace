@@ -5903,12 +5903,13 @@ impl RaceSession {
 
         if is_key_pressed(KeyCode::Key1) { self.editor_tools.active_tool = EditorToolType::Select; }
         if is_key_pressed(KeyCode::Key2) { self.editor_tools.active_tool = EditorToolType::RoadSpline; }
-        if is_key_pressed(KeyCode::Key3) { self.editor_tools.active_tool = EditorToolType::SurfaceZone; }
-        if is_key_pressed(KeyCode::Key4) { self.editor_tools.active_tool = EditorToolType::JumpRamp; }
-        if is_key_pressed(KeyCode::Key5) { self.editor_tools.active_tool = EditorToolType::Obstacle; }
-        if is_key_pressed(KeyCode::Key6) { self.editor_tools.active_tool = EditorToolType::Checkpoint; }
-        if is_key_pressed(KeyCode::Key7) { self.editor_tools.active_tool = EditorToolType::StartingGrid; }
-        if is_key_pressed(KeyCode::Key8) { self.editor_tools.active_tool = EditorToolType::PitLane; }
+        if is_key_pressed(KeyCode::Key3) { self.editor_tools.active_tool = EditorToolType::RoadSplit; }
+        if is_key_pressed(KeyCode::Key4) { self.editor_tools.active_tool = EditorToolType::SurfaceZone; }
+        if is_key_pressed(KeyCode::Key5) { self.editor_tools.active_tool = EditorToolType::JumpRamp; }
+        if is_key_pressed(KeyCode::Key6) { self.editor_tools.active_tool = EditorToolType::Obstacle; }
+        if is_key_pressed(KeyCode::Key7) { self.editor_tools.active_tool = EditorToolType::Checkpoint; }
+        if is_key_pressed(KeyCode::Key8) { self.editor_tools.active_tool = EditorToolType::StartingGrid; }
+        if is_key_pressed(KeyCode::Key9) { self.editor_tools.active_tool = EditorToolType::PitLane; }
 
         if (is_key_down(KeyCode::LeftControl)
             || is_key_down(KeyCode::RightControl)

@@ -52,6 +52,16 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
     render_curbs_pass(&track.spline, false, view_bounds);
     render_surface_pass(&track.spline, false, view_bounds);
 
+    // 3b. Render network branch segments if present
+    if let Some(ref net) = track.network {
+        for seg in &net.segments {
+            if seg.id.0 != 0 && seg.samples.len() >= 2 {
+                render_samples_curbs(&seg.samples, false, false, view_bounds);
+                render_samples_surface(&seg.samples, false, false, view_bounds);
+            }
+        }
+    }
+
     // 4. Render on-top surface zones (AboveTrack: water puddles, oil slicks, sand/grass/dirt overlays)
     render_surface_zones_layer(track, SurfaceLayer::AboveTrack);
 
@@ -72,11 +82,23 @@ pub fn render_elevated_track(track: &Track) {
 
 /// Renders elevated overpass bridges with camera viewport culling.
 pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
-    let has_elevated = track.spline.samples.iter().any(|s| s.elevation >= 0.6);
+    let has_elevated = track.spline.samples.iter().any(|s| s.elevation >= 0.6)
+        || track.network.as_ref().map_or(false, |net| {
+            net.segments.iter().any(|seg| seg.id.0 != 0 && seg.samples.iter().any(|s| s.elevation >= 0.6))
+        });
     if has_elevated {
         render_bridge_structure_pass(&track.spline, view_bounds);
         render_curbs_pass(&track.spline, true, view_bounds);
         render_surface_pass(&track.spline, true, view_bounds);
+
+        if let Some(ref net) = track.network {
+            for seg in &net.segments {
+                if seg.id.0 != 0 && seg.samples.len() >= 2 {
+                    render_samples_curbs(&seg.samples, false, true, view_bounds);
+                    render_samples_surface(&seg.samples, false, true, view_bounds);
+                }
+            }
+        }
     }
 }
 
@@ -413,11 +435,18 @@ fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2,
 }
 
 /// Draws curb rumble strips for either ground or elevated bridge segments.
-fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
-    let samples = &spline.samples;
+pub fn render_samples_curbs(
+    samples: &[SplineSample],
+    closed: bool,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+) {
     let n = samples.len();
+    if n < 2 {
+        return;
+    }
     let curb_extra_width = 1.35;
-    let seg_count = if spline.closed { n } else { n - 1 };
+    let seg_count = if closed { n } else { n - 1 };
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -460,11 +489,22 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
     }
 }
 
+fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+    render_samples_curbs(&spline.samples, spline.closed, elevated, view_bounds);
+}
+
 /// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments.
-fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
-    let samples = &spline.samples;
+pub fn render_samples_surface(
+    samples: &[SplineSample],
+    closed: bool,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+) {
     let n = samples.len();
-    let seg_count = if spline.closed { n } else { n - 1 };
+    if n < 2 {
+        return;
+    }
+    let seg_count = if closed { n } else { n - 1 };
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -611,6 +651,10 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
             }
         }
     }
+}
+
+fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+    render_samples_surface(&spline.samples, spline.closed, elevated, view_bounds);
 }
 
 /// Renders the start/finish timing line with a classic black/white checkered pattern.

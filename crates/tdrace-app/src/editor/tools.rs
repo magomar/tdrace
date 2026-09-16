@@ -4,6 +4,7 @@ use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangl
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone};
+use tdrace_core::track::network::{GoreConfig, JunctionId, JunctionKind, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout};
 use tdrace_core::track::spline::TrackWaypoint;
 
 use super::camera::EditorCamera;
@@ -15,6 +16,7 @@ use crate::render::color::Palette;
 pub enum EditorToolType {
     Select,
     RoadSpline,
+    RoadSplit,
     SurfaceZone,
     JumpRamp,
     Obstacle,
@@ -24,9 +26,10 @@ pub enum EditorToolType {
 }
 
 impl EditorToolType {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::Select,
         Self::RoadSpline,
+        Self::RoadSplit,
         Self::SurfaceZone,
         Self::JumpRamp,
         Self::Obstacle,
@@ -39,12 +42,13 @@ impl EditorToolType {
         match self {
             Self::Select => "Select & Move [1]",
             Self::RoadSpline => "Road Spline [2]",
-            Self::SurfaceZone => "Surfaces & Hazards [3]",
-            Self::JumpRamp => "Jump Ramp [4]",
-            Self::Obstacle => "Obstacle Prop [5]",
-            Self::Checkpoint => "Checkpoint Gate [6]",
-            Self::StartingGrid => "Starting Grid [7]",
-            Self::PitLane => "Pit Lane [8]",
+            Self::RoadSplit => "Road Split [3]",
+            Self::SurfaceZone => "Surfaces & Hazards [4]",
+            Self::JumpRamp => "Jump Ramp [5]",
+            Self::Obstacle => "Obstacle Prop [6]",
+            Self::Checkpoint => "Checkpoint Gate [7]",
+            Self::StartingGrid => "Starting Grid [8]",
+            Self::PitLane => "Pit Lane [9]",
         }
     }
 
@@ -52,12 +56,13 @@ impl EditorToolType {
         match self {
             Self::Select => "1",
             Self::RoadSpline => "2",
-            Self::SurfaceZone => "3",
-            Self::JumpRamp => "4",
-            Self::Obstacle => "5",
-            Self::Checkpoint => "6",
-            Self::StartingGrid => "7",
-            Self::PitLane => "8",
+            Self::RoadSplit => "3",
+            Self::SurfaceZone => "4",
+            Self::JumpRamp => "5",
+            Self::Obstacle => "6",
+            Self::Checkpoint => "7",
+            Self::StartingGrid => "8",
+            Self::PitLane => "9",
         }
     }
 }
@@ -101,6 +106,11 @@ pub struct ToolSettings {
     // Bar control selection and inline manual text editing
     pub selected_bar: Option<String>,
     pub editing_bar: Option<(String, String)>,
+
+    // Road split and branching track settings
+    pub active_branch_socket: Option<SocketId>,
+    pub split_divergence_angle: f32,
+    pub split_branch_count: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -153,6 +163,9 @@ impl Default for ToolSettings {
             drag_initial_pit_box: None,
             selected_bar: None,
             editing_bar: None,
+            active_branch_socket: None,
+            split_divergence_angle: 30.0,
+            split_branch_count: 2,
         }
     }
 }
@@ -205,6 +218,10 @@ impl ToolSettings {
                 )
             }
             EditorToolType::RoadSpline => {
+                let waypoints = (0..state.track.spline.waypoints.len()).collect();
+                Selection::from_multi(waypoints, vec![], vec![], vec![], vec![], vec![], false)
+            }
+            EditorToolType::RoadSplit => {
                 let waypoints = (0..state.track.spline.waypoints.len()).collect();
                 Selection::from_multi(waypoints, vec![], vec![], vec![], vec![], vec![], false)
             }
@@ -1167,6 +1184,23 @@ impl ToolSettings {
             return;
         }
 
+        // In RoadSplit mode, check if clicking near any branch socket to activate it for extension
+        if self.active_tool == EditorToolType::RoadSplit {
+            let network = state.track.ensure_network();
+            for j in &network.junctions {
+                if let JunctionKind::Split { egress_sockets, .. } = &j.kind {
+                    for (idx, socket) in egress_sockets.iter().enumerate() {
+                        if (socket.point - mouse_world).length() <= 3.5 {
+                            self.active_branch_socket = Some(SocketId::new(j.id, idx));
+                            self.is_box_selecting = false;
+                            self.is_dragging = false;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         if let Some(sel) = find_closest_entity(state, mouse_world) {
             self.is_box_selecting = false;
             if is_multi_key {
@@ -1397,6 +1431,9 @@ impl ToolSettings {
                 state.rebuild_geometry();
                 state.select(Selection::Waypoint(insert_idx));
                 self.active_surface = inherited_surface;
+            }
+            EditorToolType::RoadSplit => {
+                self.handle_road_split_placement(state, snapped_mouse);
             }
             EditorToolType::SurfaceZone => {
                 match self.active_surface_shape {
@@ -1636,6 +1673,219 @@ impl ToolSettings {
         }
     }
 
+    /// Handles RoadSplit tool placement action:
+    /// - If no active branch socket: inserts a RoadJunction::Split on the closest track point with customizable egress branches,
+    ///   seeds a branch segment on the divergent branch, and sets it as the active branch socket.
+    /// - If an active branch socket is selected:
+    ///   - If clicking near an existing segment/waypoint: snaps and merges into a RoadJunction::Merge.
+    ///   - If clicking in open space: appends a new waypoint to the active branch segment with smooth C¹ continuity.
+    pub fn handle_road_split_placement(&mut self, state: &mut EditorState, snapped_mouse: Vec2) {
+        state.record_undo();
+
+        if let Some(active_sock) = self.active_branch_socket {
+            let merge_snap_dist = 10.0;
+            let mut merge_target: Option<(Vec2, Vec2, f32)> = None;
+
+            // 1. Check if clicking near any waypoint of the main spline
+            for wp in &state.track.spline.waypoints {
+                if (wp.point - snapped_mouse).length() <= merge_snap_dist {
+                    let sample = state.track.spline.samples.iter().min_by(|a, b| {
+                        (a.point - wp.point)
+                            .length_squared()
+                            .total_cmp(&(b.point - wp.point).length_squared())
+                    });
+                    let tangent = sample.map(|s| s.tangent).unwrap_or(Vec2::X);
+                    merge_target = Some((wp.point, tangent, wp.width));
+                    break;
+                }
+            }
+
+            // 2. Check other network segments (not current branch)
+            if merge_target.is_none() {
+                if let Some(ref net) = state.track.network {
+                    for seg in &net.segments {
+                        if seg.entry_junction == Some(active_sock) {
+                            continue;
+                        }
+                        for wp in &seg.waypoints {
+                            if (wp.point - snapped_mouse).length() <= merge_snap_dist {
+                                let sample = seg.samples.iter().min_by(|a, b| {
+                                    (a.point - wp.point)
+                                        .length_squared()
+                                        .total_cmp(&(b.point - wp.point).length_squared())
+                                });
+                                let tangent = sample.map(|s| s.tangent).unwrap_or(Vec2::X);
+                                merge_target = Some((wp.point, tangent, wp.width));
+                                break;
+                            }
+                        }
+                        if merge_target.is_some() {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            let network = state.track.ensure_network();
+
+            if let Some((merge_pt, merge_tangent, merge_width)) = merge_target {
+                // SNAP TO MERGE: Create RoadJunction::Merge
+                let next_jid = JunctionId(network.junctions.iter().map(|j| j.id.0).max().unwrap_or(0) + 1);
+                let ing_socket = SplineSocket::new(merge_pt, merge_tangent, merge_width);
+                let eg_socket = SplineSocket::new(merge_pt, merge_tangent, merge_width);
+                let merge_cfg = MergeConfig {
+                    convergence_point: merge_pt,
+                    merge_angle: self.split_divergence_angle * 0.7,
+                    merge_length: 15.0,
+                };
+                let merge_j = RoadJunction::merge(
+                    next_jid,
+                    format!("Merge {}", next_jid.0),
+                    vec![ing_socket],
+                    eg_socket,
+                    Some(merge_cfg),
+                );
+                network.junctions.push(merge_j);
+
+                // Retrieve entry socket for C1 continuity
+                let entry_sock_obj = network.junctions.iter()
+                    .find(|j| j.id == active_sock.junction_id)
+                    .and_then(|j| j.egress_socket(active_sock.socket_index))
+                    .copied();
+
+                if let Some(branch_seg) = network.segments.iter_mut().find(|s| s.entry_junction == Some(active_sock)) {
+                    branch_seg.exit_junction = Some(SocketId::new(next_jid, 0));
+                    branch_seg.waypoints.push(TrackWaypoint::new(merge_pt, merge_width));
+                    branch_seg.recompute_samples(entry_sock_obj.as_ref(), Some(&eg_socket));
+                }
+
+                // If no alternative layout exists yet, create one linking the branch
+                if network.layouts.len() <= 1 {
+                    if let Some(branch_seg) = network.segments.iter().find(|s| s.entry_junction == Some(active_sock)) {
+                        let alt_seq = vec![SegmentId(0), branch_seg.id];
+                        let alt_layout = TrackLayout::new(
+                            "alternative",
+                            "Alternative Route",
+                            alt_seq,
+                            SegmentId(0),
+                        );
+                        network.layouts.push(alt_layout);
+                    }
+                }
+
+                self.active_branch_socket = None;
+            } else {
+                // Append waypoint to the active branch
+                let entry_sock_obj = network.junctions.iter()
+                    .find(|j| j.id == active_sock.junction_id)
+                    .and_then(|j| j.egress_socket(active_sock.socket_index))
+                    .copied();
+
+                let width = entry_sock_obj.as_ref().map(|s| s.width).unwrap_or(10.0);
+                let mut new_wp = TrackWaypoint::new(snapped_mouse, width);
+                new_wp.surface = Some(self.active_surface);
+
+                if let Some(branch_seg) = network.segments.iter_mut().find(|s| s.entry_junction == Some(active_sock)) {
+                    branch_seg.waypoints.push(new_wp);
+                    branch_seg.recompute_samples(entry_sock_obj.as_ref(), None);
+                } else {
+                    let next_sid = SegmentId(network.segments.iter().map(|s| s.id.0).max().unwrap_or(0) + 1);
+                    let wp0 = if let Some(ref sock) = entry_sock_obj {
+                        TrackWaypoint::new(sock.point, sock.width)
+                    } else {
+                        TrackWaypoint::new(snapped_mouse, width)
+                    };
+                    let mut seg = RoadSegment::new(next_sid, format!("Branch {}", next_sid.0), vec![wp0, new_wp]);
+                    seg.entry_junction = Some(active_sock);
+                    seg.recompute_samples(entry_sock_obj.as_ref(), None);
+                    network.segments.push(seg);
+                }
+            }
+        } else {
+            // No active branch socket: Insert a new RoadJunction::Split
+            let mut split_pt = snapped_mouse;
+            let mut split_tangent = Vec2::X;
+            let mut split_width = 10.0;
+
+            if let Some(idx) = find_closest_waypoint(state, snapped_mouse, 8.0) {
+                let wp = &state.track.spline.waypoints[idx];
+                split_pt = wp.point;
+                split_width = wp.width;
+                if let Some(s) = state.track.spline.samples.iter().min_by(|a, b| {
+                    (a.point - wp.point)
+                        .length_squared()
+                        .total_cmp(&(b.point - wp.point).length_squared())
+                }) {
+                    split_tangent = s.tangent;
+                }
+            } else {
+                let proj = state.track.spline.project_point(snapped_mouse);
+                if (proj.closest_point - snapped_mouse).length() <= 12.0 {
+                    split_pt = proj.closest_point;
+                    split_tangent = proj.tangent;
+                    split_width = proj.track_width;
+                }
+            }
+
+            let network = state.track.ensure_network();
+
+            let tangent = split_tangent.normalize_or_zero();
+            let normal = Vec2::new(-tangent.y, tangent.x);
+            let half_angle = (self.split_divergence_angle * 0.5).to_radians();
+
+            let count = self.split_branch_count.max(2);
+            let mut egress_sockets = Vec::with_capacity(count);
+            let branch_w = (split_width * 0.75).max(6.0);
+
+            for i in 0..count {
+                let t = (i as f32 / (count - 1) as f32) * 2.0 - 1.0;
+                let angle = t * half_angle;
+                let dir = Vec2::new(
+                    tangent.x * angle.cos() - tangent.y * angle.sin(),
+                    tangent.x * angle.sin() + tangent.y * angle.cos(),
+                )
+                .normalize_or_zero();
+                let lateral_offset = -t * (split_width * 0.35).max(3.0);
+                let pt = split_pt + normal * lateral_offset;
+                egress_sockets.push(SplineSocket::new(pt, dir, branch_w));
+            }
+
+            let ingress = SplineSocket::new(split_pt, tangent, split_width);
+            let gore = GoreConfig::new(
+                split_pt,
+                self.split_divergence_angle,
+                15.0,
+                BarrierType::TireWall,
+            );
+
+            let next_jid = JunctionId(network.junctions.iter().map(|j| j.id.0).max().unwrap_or(0) + 1);
+            let split_j = RoadJunction::split(
+                next_jid,
+                format!("Split {}", next_jid.0),
+                ingress,
+                egress_sockets.clone(),
+                Some(gore),
+            );
+            network.junctions.push(split_j);
+
+            // Automatically seed a branch segment on the divergent branch (last egress socket)
+            let target_sock_idx = count - 1;
+            let sock = &egress_sockets[target_sock_idx];
+            let next_sid = SegmentId(network.segments.iter().map(|s| s.id.0).max().unwrap_or(0) + 1);
+            let wp0 = TrackWaypoint::new(sock.point, sock.width);
+            let wp1 = TrackWaypoint::new(sock.point + sock.tangent * 15.0, sock.width);
+            let mut branch_b = RoadSegment::new(next_sid, format!("Branch {}", next_sid.0), vec![wp0, wp1]);
+            branch_b.entry_junction = Some(SocketId::new(next_jid, target_sock_idx));
+            branch_b.recompute_samples(Some(sock), None);
+            network.segments.push(branch_b);
+
+            self.active_branch_socket = Some(SocketId::new(next_jid, target_sock_idx));
+        }
+
+        state.revalidate();
+        state.is_dirty = true;
+    }
+
     /// Handles mouse down event in world space (routes to primary or secondary action based on tool & entity proximity).
     pub fn handle_mouse_down(&mut self, state: &mut EditorState, mouse_world: Vec2) {
         self.handle_mouse_down_with_mods(state, mouse_world, false);
@@ -1649,6 +1899,23 @@ impl ToolSettings {
             }
             EditorToolType::RoadSpline => {
                 if find_closest_waypoint(state, mouse_world, 8.0).is_some() {
+                    self.handle_primary_down(state, mouse_world, is_multi_key);
+                } else {
+                    self.handle_secondary_down(state, mouse_world);
+                }
+            }
+            EditorToolType::RoadSplit => {
+                let is_near_socket = {
+                    let network = state.track.ensure_network();
+                    network.junctions.iter().any(|j| {
+                        if let JunctionKind::Split { egress_sockets, .. } = &j.kind {
+                            egress_sockets.iter().any(|s| (s.point - mouse_world).length() <= 4.0)
+                        } else {
+                            false
+                        }
+                    })
+                };
+                if is_near_socket {
                     self.handle_primary_down(state, mouse_world, is_multi_key);
                 } else {
                     self.handle_secondary_down(state, mouse_world);
@@ -2434,6 +2701,104 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
         }
     }
 
+    // 1b. Render Road Junctions (Split & Merge) & Branch Segments
+    let network = state.track.active_network();
+    for junction in &network.junctions {
+        match &junction.kind {
+            JunctionKind::Split { ingress_socket, egress_sockets, gore_config } => {
+                // Ingress directional indicator
+                let in_fwd = ingress_socket.tangent * 3.5;
+                draw_line(
+                    ingress_socket.point.x - in_fwd.x,
+                    ingress_socket.point.y - in_fwd.y,
+                    ingress_socket.point.x,
+                    ingress_socket.point.y,
+                    0.4,
+                    Palette::NEON_CYAN,
+                );
+
+                // Render egress branch sockets
+                for (sock_idx, socket) in egress_sockets.iter().enumerate() {
+                    let is_active = tools.active_branch_socket == Some(SocketId::new(junction.id, sock_idx));
+                    let sock_col = if is_active { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+
+                    // Socket ring
+                    draw_circle_lines(socket.point.x, socket.point.y, 2.0, 0.45, sock_col);
+                    if is_active {
+                        draw_circle_lines(socket.point.x, socket.point.y, 2.8, 0.35, Palette::NEON_GOLD);
+                        draw_circle(socket.point.x, socket.point.y, 1.0, Palette::NEON_GOLD);
+                    }
+
+                    // Direction arrow
+                    let arrow_end = socket.point + socket.tangent * 4.0;
+                    draw_line(socket.point.x, socket.point.y, arrow_end.x, arrow_end.y, 0.5, sock_col);
+
+                    // Barb lines
+                    let barb_l = arrow_end - socket.tangent * 1.2 + socket.normal * 0.8;
+                    let barb_r = arrow_end - socket.tangent * 1.2 - socket.normal * 0.8;
+                    draw_line(arrow_end.x, arrow_end.y, barb_l.x, barb_l.y, 0.45, sock_col);
+                    draw_line(arrow_end.x, arrow_end.y, barb_r.x, barb_r.y, 0.45, sock_col);
+                }
+
+                // Render Gore Wedge & Nose Barrier
+                if let Some(gore) = gore_config {
+                    draw_circle(gore.apex_point.x, gore.apex_point.y, 1.2, Palette::CURB_RED);
+                    draw_line(
+                        gore.nose_barrier.segment.start.x,
+                        gore.nose_barrier.segment.start.y,
+                        gore.nose_barrier.segment.end.x,
+                        gore.nose_barrier.segment.end.y,
+                        0.7,
+                        Palette::CURB_RED,
+                    );
+                    if gore.has_chevrons {
+                        let fwd = ingress_socket.tangent;
+                        let norm = ingress_socket.normal;
+                        for step in 1..=3 {
+                            let ch_pt = gore.apex_point - fwd * (step as f32 * 3.0);
+                            let ch_w = step as f32 * 1.5;
+                            let l = ch_pt + norm * ch_w - fwd * 1.0;
+                            let r = ch_pt - norm * ch_w - fwd * 1.0;
+                            draw_line(ch_pt.x, ch_pt.y, l.x, l.y, 0.35, Palette::WHITE_LINE);
+                            draw_line(ch_pt.x, ch_pt.y, r.x, r.y, 0.35, Palette::WHITE_LINE);
+                        }
+                    }
+                }
+            }
+            JunctionKind::Merge { ingress_sockets, egress_socket, merge_config } => {
+                let conv_pt = merge_config.as_ref().map(|c| c.convergence_point).unwrap_or(egress_socket.point);
+                draw_circle_lines(conv_pt.x, conv_pt.y, 2.5, 0.5, Palette::NEON_GOLD);
+                draw_circle(conv_pt.x, conv_pt.y, 1.0, Palette::NEON_GOLD);
+
+                let arrow_end = egress_socket.point + egress_socket.tangent * 4.0;
+                draw_line(egress_socket.point.x, egress_socket.point.y, arrow_end.x, arrow_end.y, 0.5, Palette::NEON_GOLD);
+
+                for in_sock in ingress_sockets {
+                    draw_line(in_sock.point.x, in_sock.point.y, conv_pt.x, conv_pt.y, 0.35, Color::new(1.0, 0.85, 0.2, 0.6));
+                }
+            }
+            JunctionKind::Terminal { socket } => {
+                draw_circle_lines(socket.point.x, socket.point.y, 2.0, 0.4, Palette::RED);
+            }
+        }
+    }
+
+    // Render branch segments (id != 0)
+    for seg in &network.segments {
+        if seg.id.0 != 0 && !seg.waypoints.is_empty() {
+            let n_bwp = seg.waypoints.len();
+            for (w_i, wp) in seg.waypoints.iter().enumerate() {
+                draw_circle(wp.point.x, wp.point.y, 1.2, Palette::NEON_MAGENTA);
+                draw_circle_lines(wp.point.x, wp.point.y, 1.2, 0.25, Color::new(0.05, 0.05, 0.08, 0.9));
+
+                if w_i + 1 < n_bwp {
+                    let next_p = seg.waypoints[w_i + 1].point;
+                    draw_line(wp.point.x, wp.point.y, next_p.x, next_p.y, 0.4, Color::new(0.9, 0.2, 0.9, 0.5));
+                }
+            }
+        }
+    }
+
     // 2. Render Checkpoint Gates & Sector Tags
     for cp in &state.track.checkpoints {
         let is_selected = state.selection.is_checkpoint_selected(cp.id);
@@ -2704,6 +3069,50 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
         if tools.active_polygon_vertices.len() >= 3 {
             let first = tools.active_polygon_vertices[0];
             draw_circle_lines(first.x, first.y, 1.5, 0.35, Palette::NEON_GOLD);
+        }
+    }
+
+    // 10. Render RoadSplit Snap-to-Merge Target
+    if tools.active_tool == EditorToolType::RoadSplit {
+        if let Some(active_sock) = tools.active_branch_socket {
+            let last_wp_point = network
+                .segments
+                .iter()
+                .find(|s| s.entry_junction == Some(active_sock))
+                .and_then(|s| s.waypoints.last().map(|w| w.point));
+
+            let check_pt = tools.drag_current_world;
+            let mut snap_pt: Option<Vec2> = None;
+            for wp in &state.track.spline.waypoints {
+                if (wp.point - check_pt).length() <= 10.0 {
+                    snap_pt = Some(wp.point);
+                    break;
+                }
+            }
+            if snap_pt.is_none() {
+                for seg in &network.segments {
+                    if seg.entry_junction == Some(active_sock) {
+                        continue;
+                    }
+                    for wp in &seg.waypoints {
+                        if (wp.point - check_pt).length() <= 10.0 {
+                            snap_pt = Some(wp.point);
+                            break;
+                        }
+                    }
+                    if snap_pt.is_some() {
+                        break;
+                    }
+                }
+            }
+
+            if let Some(target) = snap_pt {
+                draw_circle_lines(target.x, target.y, 3.0, 0.6, Palette::NEON_GOLD);
+                draw_circle_lines(target.x, target.y, 4.5, 0.35, Color::new(1.0, 0.85, 0.2, 0.4));
+                if let Some(lwp) = last_wp_point {
+                    draw_line(lwp.x, lwp.y, target.x, target.y, 0.4, Palette::NEON_GOLD);
+                }
+            }
         }
     }
 }
