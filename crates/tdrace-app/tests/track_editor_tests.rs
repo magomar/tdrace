@@ -4,8 +4,9 @@ use tdrace_app::editor::{
     is_mouse_over_editor_ui, EditorCamera, EditorState, EditorToolType, Selection, ToolSettings,
 };
 use tdrace_app::game::{GameState, RaceSession};
-use tdrace_app::track_manager::TrackManager;
+use tdrace_app::track_manager::{ModuleFilter, TrackManager};
 use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
+use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceShape, SurfaceZone};
 use tdrace_core::track::presets::{
@@ -847,9 +848,9 @@ fn test_track_editor_unsaved_changes_exit_flow() {
     assert_eq!(session.editor_modal, tdrace_app::editor::EditorModal::None);
     assert!(!session.editor_state.as_ref().unwrap().is_dirty);
 
-    // 1. If clean, exiting transitions directly to Menu
+    // 1. If clean, exiting transitions directly to TrackManager
     session.handle_editor_action(tdrace_app::editor::EditorAction::ExitToMenu);
-    assert_eq!(session.state, GameState::Menu);
+    assert!(matches!(session.state, GameState::TrackManager { .. }));
 
     // 2. Re-enter and modify track to make state dirty
     let track = classic_grand_prix();
@@ -880,7 +881,7 @@ fn test_track_editor_unsaved_changes_exit_flow() {
         overwrite: false,
         exit_after: true,
     });
-    assert_eq!(session.state, GameState::Menu);
+    assert!(matches!(session.state, GameState::TrackManager { .. }));
     assert!(!session.editor_state.as_ref().unwrap().is_dirty);
 
     let _ = std::fs::remove_dir_all(&temp_dir);
@@ -920,7 +921,7 @@ fn test_track_editing_snapshot_regeneration_and_persistence() {
         overwrite: false,
         exit_after: true,
     });
-    assert_eq!(session.state, GameState::Menu);
+    assert!(matches!(session.state, GameState::TrackManager { .. }));
 
     // 4. Verify TrackManager custom tracks metadata and bounds updated
     let custom_choices = session.track_manager.module_custom_tracks("classic");
@@ -2194,5 +2195,86 @@ fn test_jump_ramp_curved_profile_elevation_and_slope() {
 
     // 3. At lip / exit, elevation reaches full height (2.0m)
     assert!((ramp.surface_elevation_at(lip_pt) - 2.0).abs() < 1e-4);
+}
+
+#[test]
+fn test_track_editor_exit_returns_to_track_manager() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_editor_return_tm_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::new();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    // 1. Enter editor from TrackManager with specific tab, module filter, and track index
+    session.state = GameState::TrackManager {
+        active_tab: TrackManagerTab::Main,
+        module_filter: ModuleFilter::Rally,
+        selected_idx: 2,
+        modal: TrackManagerModal::None,
+    };
+    session.editor_return_track_manager = Some((TrackManagerTab::Main, ModuleFilter::Rally, 2));
+
+    let track = classic_grand_prix();
+    session.enter_track_editor(track);
+    assert_eq!(session.state, GameState::TrackEditor);
+
+    // 2. Exit editor via ExitToTrackManager action
+    session.handle_editor_action(tdrace_app::editor::EditorAction::ExitToTrackManager);
+
+    // 3. Verify session transitioned back to TrackManager with restored tab, filter, and index
+    if let GameState::TrackManager { active_tab, module_filter, selected_idx, modal } = &session.state {
+        assert_eq!(*active_tab, TrackManagerTab::Main);
+        assert_eq!(*module_filter, ModuleFilter::Rally);
+        assert_eq!(*selected_idx, 2);
+        assert_eq!(*modal, TrackManagerModal::None);
+    } else {
+        panic!("Expected GameState::TrackManager, got {:?}", session.state);
+    }
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_track_editor_clone_to_drafts_exit_returns_to_drafts_tab() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_clone_draft_exit_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    let mut session = RaceSession::new();
+    session.track_manager = TrackManager::new(&temp_dir);
+
+    // Clone a preset to drafts
+    let preset_choice = tdrace_app::ui::menu::TrackChoice::ClassicGrandPrix;
+    let (cloned_track, file_path) = session.track_manager.clone_track(&preset_choice).expect("Clone track");
+    let file_stem = std::path::Path::new(&file_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap()
+        .to_string();
+
+    let drafts = session.track_manager.draft_track_choices();
+    let sel = drafts.iter().position(|t| t.track_id() == file_stem).unwrap_or(0);
+    session.editor_return_track_manager = Some((TrackManagerTab::Drafts, ModuleFilter::Drafts, sel));
+    session.enter_track_editor_with_path(cloned_track, Some(file_path));
+    assert_eq!(session.state, GameState::TrackEditor);
+
+    // Exit editor
+    session.handle_editor_action(tdrace_app::editor::EditorAction::ExitToTrackManager);
+
+    // Must return to Drafts tab and have the cloned track selected
+    if let GameState::TrackManager { active_tab, module_filter, selected_idx, .. } = &session.state {
+        assert_eq!(*active_tab, TrackManagerTab::Drafts);
+        assert_eq!(*module_filter, ModuleFilter::Drafts);
+        assert_eq!(*selected_idx, sel);
+    } else {
+        panic!("Expected GameState::TrackManager, got {:?}", session.state);
+    }
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
 }
 

@@ -360,6 +360,7 @@ pub struct RaceSession {
     pub editor_save_toast_timer: f32,
     pub editor_save_toast_msg: String,
     pub return_to_editor_on_exit: bool,
+    pub editor_return_track_manager: Option<(TrackManagerTab, ModuleFilter, usize)>,
 
     // Audio System
     pub audio: AudioManager,
@@ -602,6 +603,7 @@ impl RaceSession {
             editor_save_toast_timer: 0.0,
             editor_save_toast_msg: String::new(),
             return_to_editor_on_exit: false,
+            editor_return_track_manager: None,
             audio,
             engine_rpm: EngineRpmModel::default(),
             engine_rpm_p2: EngineRpmModel::default(),
@@ -3969,6 +3971,7 @@ impl RaceSession {
                         };
                         self.track_choice = track_choice.clone();
                         self.track = track.clone();
+                        self.editor_return_track_manager = Some((active_tab, module_filter, selected_idx));
                         self.enter_track_editor_with_path(track, file_path);
                         return;
                     } else {
@@ -3980,12 +3983,15 @@ impl RaceSession {
                                 .unwrap_or("cloned_track")
                                 .to_string();
                             self.track_choice = TrackChoice::Custom {
-                                id: file_stem,
+                                id: file_stem.clone(),
                                 title: cloned_track.name.clone(),
                                 description: cloned_track.description.clone(),
                                 path: file_path.clone(),
                             };
                             self.track = cloned_track.clone();
+                            let drafts = self.track_manager.draft_track_choices();
+                            let sel = drafts.iter().position(|t| t.track_id() == file_stem).unwrap_or(0);
+                            self.editor_return_track_manager = Some((TrackManagerTab::Drafts, ModuleFilter::Drafts, sel));
                             self.enter_track_editor_with_path(cloned_track, Some(file_path));
                             return;
                         }
@@ -4387,6 +4393,7 @@ impl RaceSession {
                         };
                         self.track_choice = track_choice.clone();
                         self.track = track.clone();
+                        self.editor_return_track_manager = Some((active_tab, module_filter, selected_idx));
                         self.enter_track_editor_with_path(track, file_path);
                         return;
                     } else {
@@ -4426,6 +4433,7 @@ impl RaceSession {
                     .load_track(track_choice)
                     .unwrap_or_else(|_| classic_grand_prix());
                 self.track = track.clone();
+                self.editor_return_track_manager = Some((active_tab, module_filter, selected_idx));
                 self.enter_track_editor_with_path(track, file_path);
                 return;
             }
@@ -5774,6 +5782,69 @@ impl RaceSession {
         self.state = GameState::TrackEditor;
     }
 
+    /// Exits Track Studio editor and navigates cleanly back to the Track Manager screen,
+    /// restoring the previous active tab, module filter, and track cursor.
+    pub fn return_to_track_manager(&mut self) {
+        crate::ui::menu::clear_menu_track_cache();
+        let _ = self.track_manager.scan_custom_tracks();
+
+        let (target_tab, target_filter, fallback_idx) = self
+            .editor_return_track_manager
+            .take()
+            .unwrap_or_else(|| {
+                // If not previously recorded, deduce sensible defaults from module customs/drafts
+                let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
+                let has_drafts = !self.track_manager.draft_track_choices().is_empty();
+                if !has_module_customs && has_drafts {
+                    (TrackManagerTab::Drafts, ModuleFilter::Drafts, 0)
+                } else {
+                    (TrackManagerTab::Main, ModuleFilter::for_module(self.active_module_id), 0)
+                }
+            });
+
+        // Determine list for the target tab
+        let current_list = if target_tab == TrackManagerTab::Drafts || target_filter == ModuleFilter::Drafts {
+            self.track_manager.draft_track_choices()
+        } else {
+            self.track_manager.filtered_main_track_choices(target_filter)
+        };
+
+        // Try to position cursor on the track that was open/saved in the editor
+        let mut selected_idx = fallback_idx;
+        let track_slug = if let Some(ref state) = self.editor_state {
+            if let Some(ref p) = state.current_file_path {
+                std::path::Path::new(p)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .map(|s| s.to_string())
+            } else {
+                Some(TrackManager::sanitize_slug(&state.track.name))
+            }
+        } else {
+            None
+        };
+
+        if let Some(ref slug) = track_slug {
+            if let Some(pos) = current_list.iter().position(|t| t.track_id() == slug) {
+                selected_idx = pos;
+            }
+        }
+
+        // Clamp selected_idx within current list bounds
+        if current_list.is_empty() {
+            selected_idx = 0;
+        } else if selected_idx >= current_list.len() {
+            selected_idx = current_list.len() - 1;
+        }
+
+        self.state = GameState::TrackManager {
+            active_tab: target_tab,
+            module_filter: target_filter,
+            selected_idx,
+            modal: TrackManagerModal::None,
+        };
+    }
+
     /// Launches a Time Trial race session from the Track Studio editor using the circuit's default car.
     pub fn start_editor_test_drive(&mut self) {
         if let Some(state) = &mut self.editor_state {
@@ -6231,9 +6302,8 @@ impl RaceSession {
             EditorAction::StartTestDrive => {
                 self.start_editor_test_drive();
             }
-            EditorAction::ExitToMenu => {
-                crate::ui::menu::clear_menu_track_cache();
-                self.state = GameState::Menu;
+            EditorAction::ExitToMenu | EditorAction::ExitToTrackManager => {
+                self.return_to_track_manager();
             }
             EditorAction::NewTrack { shape, direction, module_id } => {
                 let track = tdrace_core::track::presets::create_prototypical_track(&module_id, shape, direction);
@@ -6283,19 +6353,13 @@ impl RaceSession {
                     state.track.description = description;
                     state.rebuild_geometry();
 
-                    let target_slug = if overwrite {
-                        if let Some(ref p) = state.current_file_path {
-                            std::path::Path::new(p)
-                                .file_stem()
-                                .and_then(|s| s.to_str())
-                                .map(|s| s.to_string())
-                        } else if !filename.trim().is_empty() {
-                            Some(TrackManager::sanitize_slug(&filename))
-                        } else {
-                            Some(TrackManager::sanitize_slug(&state.track.name))
-                        }
-                    } else if !filename.trim().is_empty() {
+                    let target_slug = if !filename.trim().is_empty() {
                         Some(TrackManager::sanitize_slug(&filename))
+                    } else if let Some(ref p) = state.current_file_path {
+                        std::path::Path::new(p)
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .map(|s| s.to_string())
                     } else {
                         Some(TrackManager::sanitize_slug(&state.track.name))
                     };
@@ -6324,7 +6388,7 @@ impl RaceSession {
                             self.track = state.track.clone();
 
                             if exit_after {
-                                self.state = GameState::Menu;
+                                self.return_to_track_manager();
                             }
                         }
                         Err(err) => {
