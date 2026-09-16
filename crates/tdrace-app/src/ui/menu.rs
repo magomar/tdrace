@@ -752,12 +752,12 @@ pub fn render_track_select_menu(
     );
     curr_y += scaler.s(20.0);
 
-    // Filter Tabs: [ PRESETS (P) ]  [ CUSTOM (C) ]
+    // Filter Tabs: [ OFFICIAL (P) ]  [ MY CIRCUITS (C) ]
     let tab_h = scaler.s(25.0);
     let tab_gap = scaler.s(6.0);
     let filter_tabs = [
-        (TrackCatalogFilter::Presets, format!("PRESETS [{}]", filter_counts.0)),
-        (TrackCatalogFilter::Custom, format!("CUSTOM [{}]", filter_counts.1)),
+        (TrackCatalogFilter::Presets, format!("OFFICIAL [{}]", filter_counts.0)),
+        (TrackCatalogFilter::Custom, format!("MY CIRCUITS [{}]", filter_counts.1)),
     ];
     let tab_count = filter_tabs.len() as f32;
     let tab_w = (col_w - tab_gap * (tab_count - 1.0)) / tab_count;
@@ -792,152 +792,118 @@ pub fn render_track_select_menu(
     curr_y += tab_h + scaler.s(8.0);
 
     let total_tracks = available_tracks.len();
-    let has_tm_entry = active_filter == TrackCatalogFilter::Custom;
-    let total_items = if has_tm_entry { total_tracks + 1 } else { total_tracks };
 
-    if total_items == 0 {
+    if total_tracks == 0 {
         let empty_h = scaler.s(150.0);
         scaler.draw_glass_card(col1_x, curr_y, col_w, empty_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
         fonts.draw_ui_bold_centered(
-            "No Circuits Found",
+            if active_filter == TrackCatalogFilter::Custom {
+                "No Custom Circuits Found"
+            } else {
+                "No Official Circuits Found"
+            },
             col1_x + col_w * 0.5,
-            curr_y + scaler.s(60.0),
+            curr_y + scaler.s(55.0),
             scaler.font_s(15.0),
             Palette::WHITE,
         );
         fonts.draw_ui_regular_centered(
-            "Press [Left / Right] to switch filter",
+            if active_filter == TrackCatalogFilter::Custom {
+                "Press [T] to open My Circuits library or create new tracks"
+            } else {
+                "Press [Left / Right] to switch category"
+            },
             col1_x + col_w * 0.5,
-            curr_y + scaler.s(85.0),
+            curr_y + scaler.s(80.0),
             scaler.font_s(11.0),
             Palette::UI_TEXT_MUTED,
         );
     } else {
         let max_visible = 7;
-        let start_idx = if total_items <= max_visible {
+        let start_idx = if total_tracks <= max_visible {
             0
         } else {
             selected_track_idx
                 .saturating_sub(max_visible / 2)
-                .min(total_items - max_visible)
+                .min(total_tracks - max_visible)
         };
-        let end_idx = (start_idx + max_visible).min(total_items);
+        let end_idx = (start_idx + max_visible).min(total_tracks);
 
         for i in start_idx..end_idx {
             let is_sel = i == selected_track_idx;
             let box_h = scaler.s(58.0);
 
-            if i < total_tracks {
-                let track_opt = &available_tracks[i];
-                let loaded_track = resolve_track_for_menu(track_opt);
+            let track_opt = &available_tracks[i];
+            let loaded_track = resolve_track_for_menu(track_opt);
 
-                let bg_col = if is_sel {
-                    Palette::UI_CARD_BG_HOVER
-                } else {
-                    Palette::UI_CARD_BG
-                };
-                let border_col = if is_sel {
-                    module_accent
-                } else {
-                    Palette::UI_CARD_BORDER
-                };
-
-                scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
-
-                // Small Track Vector Thumbnail on right side of card
-                let thumb_w = scaler.s(58.0);
-                let thumb_h = scaler.s(44.0);
-                let thumb_x = col1_x + col_w - thumb_w - scaler.s(8.0);
-                let thumb_y = curr_y + scaler.s(7.0);
-
-                if let Some(ref tr) = loaded_track {
-                    super::track_preview::render_track_thumbnail(&scaler, thumb_x, thumb_y, thumb_w, thumb_h, tr, is_sel);
-                }
-
-                // Tag pill & metrics badge (Length + Surface breakdown)
-                let is_custom = track_opt.is_user_custom();
-                let tag_col = if is_custom {
-                    Palette::NEON_GOLD
-                } else if is_sel {
-                    module_accent
-                } else {
-                    Palette::UI_TEXT_MUTED
-                };
-                let tag_prefix = if is_custom {
-                    "CUSTOM CIRCUIT"
-                } else {
-                    track_opt.tag_for_module(active_module_id)
-                };
-                let tag_label = if let Some(ref tr) = loaded_track {
-                    format!("{} • {:.0}m • {}", tag_prefix, tr.total_length_m(), tr.surface_summary_string())
-                } else {
-                    tag_prefix.to_string()
-                };
-                fonts.draw_ui_bold(
-                    &tag_label,
-                    col1_x + scaler.s(14.0),
-                    curr_y + scaler.s(16.0),
-                    scaler.font_s(10.0),
-                    tag_col,
-                );
-
-                // Track title
-                let title_col = if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) };
-                fonts.draw_ui_bold(
-                    track_opt.title(),
-                    col1_x + scaler.s(14.0),
-                    curr_y + scaler.s(34.0),
-                    scaler.font_s(15.5),
-                    title_col,
-                );
-
-                // Description
-                fonts.draw_ui_regular(
-                    track_opt.description(),
-                    col1_x + scaler.s(14.0),
-                    curr_y + scaler.s(49.0),
-                    scaler.font_s(10.5),
-                    Palette::UI_TEXT_MUTED,
-                );
+            let bg_col = if is_sel {
+                Palette::UI_CARD_BG_HOVER
             } else {
-                // Dedicated Track Manager Card with distinct purple / magenta theme
-                let tm_bg = if is_sel {
-                    Color::new(0.32, 0.12, 0.52, 0.95)
-                } else {
-                    Color::new(0.18, 0.08, 0.30, 0.88)
-                };
-                let tm_border = if is_sel {
-                    Palette::NEON_GOLD
-                } else {
-                    Palette::NEON_MAGENTA
-                };
+                Palette::UI_CARD_BG
+            };
+            let border_col = if is_sel {
+                module_accent
+            } else {
+                Palette::UI_CARD_BORDER
+            };
 
-                scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, tm_bg, tm_border, if is_sel { 2.4 } else { 1.5 });
+            scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
 
-                fonts.draw_ui_bold(
-                    "CIRCUIT HUB & WORKSHOP [T]",
-                    col1_x + scaler.s(14.0),
-                    curr_y + scaler.s(16.0),
-                    scaler.font_s(10.5),
-                    if is_sel { Palette::NEON_GOLD } else { Palette::NEON_MAGENTA },
-                );
+            // Small Track Vector Thumbnail on right side of card
+            let thumb_w = scaler.s(58.0);
+            let thumb_h = scaler.s(44.0);
+            let thumb_x = col1_x + col_w - thumb_w - scaler.s(8.0);
+            let thumb_y = curr_y + scaler.s(7.0);
 
-                fonts.draw_ui_bold(
-                    "Track Manager",
-                    col1_x + scaler.s(14.0),
-                    curr_y + scaler.s(34.0),
-                    scaler.font_s(15.5),
-                    Palette::WHITE,
-                );
-
-                fonts.draw_ui_regular(
-                    "Manage custom tracks, organize modules & edit info. Press [T]",
-                    col1_x + scaler.s(14.0),
-                    curr_y + scaler.s(49.0),
-                    scaler.font_s(10.5),
-                    if is_sel { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
-                );
+            if let Some(ref tr) = loaded_track {
+                super::track_preview::render_track_thumbnail(&scaler, thumb_x, thumb_y, thumb_w, thumb_h, tr, is_sel);
             }
+
+            // Tag pill & metrics badge (Length + Surface breakdown)
+            let is_custom = track_opt.is_user_custom();
+            let tag_col = if is_custom {
+                Palette::NEON_GOLD
+            } else if is_sel {
+                module_accent
+            } else {
+                Palette::UI_TEXT_MUTED
+            };
+            let tag_prefix = if is_custom {
+                "CUSTOM CIRCUIT"
+            } else {
+                track_opt.tag_for_module(active_module_id)
+            };
+            let tag_label = if let Some(ref tr) = loaded_track {
+                format!("{} • {:.0}m • {}", tag_prefix, tr.total_length_m(), tr.surface_summary_string())
+            } else {
+                tag_prefix.to_string()
+            };
+            fonts.draw_ui_bold(
+                &tag_label,
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(16.0),
+                scaler.font_s(10.0),
+                tag_col,
+            );
+
+            // Track title
+            let title_col = if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) };
+            fonts.draw_ui_bold(
+                track_opt.title(),
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(34.0),
+                scaler.font_s(15.5),
+                title_col,
+            );
+
+            // Description
+            fonts.draw_ui_regular(
+                track_opt.description(),
+                col1_x + scaler.s(14.0),
+                curr_y + scaler.s(49.0),
+                scaler.font_s(10.5),
+                Palette::UI_TEXT_MUTED,
+            );
 
             curr_y += box_h + scaler.s(6.0);
         }
@@ -1126,89 +1092,6 @@ pub fn render_track_select_menu(
         // Chip 4 (Aero / Dynamics)
         scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
         fonts.draw_ui_bold(spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
-    } else if has_tm_entry && selected_track_idx == total_tracks {
-        // Dedicated Track Manager / Studio view on right panel
-        fonts.draw_ui_bold(
-            "CIRCUIT STUDIO & WORKSHOP [T]",
-            col2_x,
-            c2_y + scaler.s(13.0),
-            scaler.font_s(15.0),
-            Palette::NEON_MAGENTA,
-        );
-        c2_y += scaler.s(22.0);
-
-        let studio_h = scaler.s(220.0);
-        scaler.draw_glass_card(col2_x, c2_y, col_w, studio_h, Palette::UI_CARD_BG, Palette::NEON_MAGENTA, 1.5);
-
-        fonts.draw_ui_bold(
-            "TRACK MANAGER & CAD DESIGNER",
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(20.0),
-            scaler.font_s(15.0),
-            Palette::NEON_GOLD,
-        );
-        fonts.draw_ui_regular(
-            "Create, edit, organize and test custom racing circuits with spline geometry, surface zoning, jump ramps, and module promotion.",
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(40.0),
-            scaler.font_s(11.5),
-            Palette::WHITE,
-        );
-
-        let features = [
-            "• Spline CAD editor with elevation & banking bridges",
-            "• Multi-surface painting (Asphalt, Dirt, Sand, Water, Ice)",
-            "• Jump ramps, obstacles & custom checkpoint gates",
-            "• Predefined car assignment & lap balancing",
-            "• Press [Enter / Space] or [T] to launch Track Manager",
-        ];
-        let mut feat_y = c2_y + scaler.s(86.0);
-        for feat in &features {
-            fonts.draw_ui_regular(feat, col2_x + scaler.s(14.0), feat_y, scaler.font_s(11.0), Palette::NEON_CYAN);
-            feat_y += scaler.s(18.0);
-        }
-
-        c2_y += studio_h + scaler.s(14.0);
-
-        fonts.draw_ui_bold(
-            "CIRCUIT MANAGEMENT ACTIONS",
-            col2_x,
-            c2_y + scaler.s(13.0),
-            scaler.font_s(15.0),
-            Palette::NEON_GOLD,
-        );
-        c2_y += scaler.s(22.0);
-
-        let actions_h = scaler.s(170.0);
-        scaler.draw_glass_card(col2_x, c2_y, col_w, actions_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.3);
-
-        fonts.draw_ui_bold(
-            "Custom Circuit Tools",
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(20.0),
-            scaler.font_s(15.0),
-            Palette::WHITE,
-        );
-        fonts.draw_ui_regular(
-            "Press [T] anywhere in the menu to open Track Manager directly, or press [E] to launch the CAD Studio on any track.",
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(38.0),
-            scaler.font_s(11.0),
-            Palette::UI_TEXT_MUTED,
-        );
-
-        let classes = [
-            ("[T] Track Manager", "Full screen circuit organizer, promotion & file manager"),
-            ("[E] CAD Studio", "Direct spline vector circuit layout and surface designer"),
-            ("[C] Clone Circuit", "Duplicate any built-in preset or custom circuit"),
-            ("[N] Prototypical", "Generate a new baseline track in CAD editor"),
-        ];
-        let mut cl_y = c2_y + scaler.s(70.0);
-        for (tag, desc) in &classes {
-            fonts.draw_ui_bold(tag, col2_x + scaler.s(14.0), cl_y, scaler.font_s(10.0), Palette::NEON_CYAN);
-            fonts.draw_ui_regular(desc, col2_x + scaler.s(130.0), cl_y, scaler.font_s(10.0), Palette::WHITE);
-            cl_y += scaler.s(18.0);
-        }
     } else {
         // Empty state on right column when no tracks match filter
         fonts.draw_ui_bold(
@@ -1225,18 +1108,24 @@ pub fn render_track_select_menu(
         fonts.draw_ui_bold_centered(
             "No circuit selected",
             col2_x + col_w * 0.5,
-            c2_y + empty_dossier_h * 0.5,
+            c2_y + empty_dossier_h * 0.45,
             scaler.font_s(14.0),
+            Palette::UI_TEXT_MUTED,
+        );
+        fonts.draw_ui_regular_centered(
+            "Press [T] to manage and design circuits in My Circuits",
+            col2_x + col_w * 0.5,
+            c2_y + empty_dossier_h * 0.55,
+            scaler.font_s(11.0),
             Palette::UI_TEXT_MUTED,
         );
     }
 
     // Footer Launch prompt button
-    let is_tm_selected = has_tm_entry && selected_track_idx == total_tracks;
-    let start_prompt = if is_tm_selected {
-        "PRESS [SPACE / ENTER] OR [T] TO OPEN TRACK MANAGER"
-    } else {
+    let start_prompt = if total_tracks > 0 {
         "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE"
+    } else {
+        "PRESS [SPACE / ENTER] OR [T] TO OPEN MY CIRCUITS"
     };
     let btn_w = scaler.s(460.0);
     let btn_h = scaler.s(40.0);
@@ -1244,22 +1133,22 @@ pub fn render_track_select_menu(
     let btn_y = sh - btn_h - scaler.s(14.0);
 
     fonts.draw_ui_regular_centered(
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Track Manager  •  [O] Settings  •  [K] Controls  •  [ESC] Back",
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] My Circuits  •  [O] Settings  •  [K] Controls  •  [ESC] Back",
         sw * 0.5,
         btn_y - scaler.s(10.0),
         scaler.font_s(11.0),
         Palette::UI_TEXT_MUTED,
     );
 
-    let btn_bg = if is_tm_selected {
-        Color::new(0.32, 0.12, 0.52, 0.95)
-    } else {
+    let btn_bg = if total_tracks > 0 {
         Color::new(0.12, 0.65, 0.32, 0.95)
-    };
-    let btn_border = if is_tm_selected {
-        Palette::NEON_MAGENTA
     } else {
+        Color::new(0.08, 0.28, 0.40, 0.95)
+    };
+    let btn_border = if total_tracks > 0 {
         Palette::NEON_GREEN
+    } else {
+        Palette::NEON_CYAN
     };
 
     draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);

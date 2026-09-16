@@ -268,7 +268,7 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
 }
 
 #[test]
-fn test_custom_tracks_track_manager_entry_and_shortcut() {
+fn test_custom_tracks_pure_selection_and_shortcut() {
     use tdrace_app::game::GameState;
     use tdrace_app::ui::menu::TrackCatalogFilter;
 
@@ -277,15 +277,11 @@ fn test_custom_tracks_track_manager_entry_and_shortcut() {
     session.menu_track_filter = TrackCatalogFilter::Custom;
 
     let available = session.filtered_menu_tracks();
-    let has_tm_entry = session.menu_track_filter == TrackCatalogFilter::Custom;
-    let total_items = if has_tm_entry { available.len() + 1 } else { available.len() };
-    assert_eq!(total_items, available.len() + 1);
+    // Track selection list is pure: exactly available tracks, zero virtual elements
+    let total_items = available.len();
+    assert_eq!(total_items, available.len());
 
-    // Track Manager entry is indexed at available.len()
-    session.menu_track_idx = available.len();
-    assert_eq!(session.menu_track_idx, available.len());
-
-    // Verify transition to Track Manager
+    // Verify dedicated transition to Track Manager / My Circuits
     session.state = GameState::TrackManager {
         active_tab: tdrace_app::ui::TrackManagerTab::Main,
         module_filter: tdrace_app::track_manager::ModuleFilter::for_module(session.active_module_id),

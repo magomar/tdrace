@@ -3424,12 +3424,7 @@ impl RaceSession {
         }
 
         let available_tracks = self.filtered_menu_tracks();
-        let has_tm_entry = self.menu_track_filter == TrackCatalogFilter::Custom;
-        let total_items = if has_tm_entry {
-            available_tracks.len() + 1
-        } else {
-            available_tracks.len()
-        };
+        let total_items = available_tracks.len();
         if total_items == 0 {
             self.menu_track_idx = 0;
         } else if self.menu_track_idx >= total_items {
@@ -3527,57 +3522,7 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiSelect);
         }
 
-        // Quick Track Editor Launcher (E key)
-        if is_key_pressed(KeyCode::E) {
-            self.audio.play_sfx(SfxType::UiSelect);
-            if self.menu_track_idx < available_tracks.len() {
-                let chosen = available_tracks[self.menu_track_idx].clone();
-                let file_path = match &chosen {
-                    TrackChoice::Custom { path, .. } => {
-                        let candidate = self.track_manager.track_path_for_slug(chosen.track_id());
-                        if candidate.exists() {
-                            Some(candidate.to_string_lossy().to_string())
-                        } else if std::path::Path::new(path).exists() {
-                            Some(path.clone())
-                        } else {
-                            Some(candidate.to_string_lossy().to_string())
-                        }
-                    }
-                    preset => {
-                        let candidate = self.track_manager.track_path_for_slug(preset.track_id());
-                        if candidate.exists() {
-                            Some(candidate.to_string_lossy().to_string())
-                        } else {
-                            None
-                        }
-                    }
-                };
-                let track = self.load_track_for_session(&chosen);
-                self.enter_track_editor_with_path(track, file_path);
-                return;
-            } else {
-                // If cursor is on the Track Manager entry, open Track Manager
-                self.state = GameState::TrackManager {
-                    active_tab: TrackManagerTab::Main,
-                    module_filter: ModuleFilter::for_module(self.active_module_id),
-                    selected_idx: 0,
-                    modal: TrackManagerModal::None,
-                };
-                return;
-            }
-        }
-
-        // Clone highlighted circuit into custom and open in editor (C key)
-        if is_key_pressed(KeyCode::C) && self.menu_track_idx < available_tracks.len() {
-            self.audio.play_sfx(SfxType::UiSelect);
-            let chosen = available_tracks[self.menu_track_idx].clone();
-            if let Ok((cloned_track, file_path)) = self.track_manager.clone_track(&chosen) {
-                self.enter_track_editor_with_path(cloned_track, Some(file_path));
-                return;
-            }
-        }
-
-        // Direct Track Manager shortcut (T key)
+        // Direct My Circuits shortcut (T key)
         if is_key_pressed(KeyCode::T) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::TrackManager {
@@ -3589,19 +3534,7 @@ impl RaceSession {
             return;
         }
 
-        // Create New Track in CAD Studio (N key)
-        if is_key_pressed(KeyCode::N) {
-            self.audio.play_sfx(SfxType::UiSelect);
-            let track = tdrace_core::track::presets::create_prototypical_track(
-                self.active_module_id,
-                tdrace_core::track::presets::TrackShape::Oval,
-                tdrace_core::track::presets::RaceDirection::Right,
-            );
-            self.enter_track_editor_with_path(track, None);
-            return;
-        }
-
-        // Start race or open Track Manager (Space, Enter, or Gamepad Confirm [A / South / Start])
+        // Start race or open My Circuits when empty (Space, Enter, or Gamepad Confirm [A / South / Start])
         if is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
@@ -3609,22 +3542,19 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_a_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            if total_items > 0 && self.menu_track_idx < total_items {
-                if self.menu_track_idx < available_tracks.len() {
-                    self.track_choice = available_tracks[self.menu_track_idx].clone();
-                    let loaded = resolve_track_for_menu(&self.track_choice);
-                    self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
-                    self.init_race();
-                } else {
-                    // Track Manager entry selected
-                    self.state = GameState::TrackManager {
-                        active_tab: TrackManagerTab::Main,
-                        module_filter: ModuleFilter::for_module(self.active_module_id),
-                        selected_idx: 0,
-                        modal: TrackManagerModal::None,
-                    };
-                    return;
-                }
+            if self.menu_track_idx < available_tracks.len() {
+                self.track_choice = available_tracks[self.menu_track_idx].clone();
+                let loaded = resolve_track_for_menu(&self.track_choice);
+                self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
+                self.init_race();
+            } else if available_tracks.is_empty() && self.menu_track_filter == TrackCatalogFilter::Custom {
+                self.state = GameState::TrackManager {
+                    active_tab: TrackManagerTab::Main,
+                    module_filter: ModuleFilter::for_module(self.active_module_id),
+                    selected_idx: 0,
+                    modal: TrackManagerModal::None,
+                };
+                return;
             }
         }
     }
