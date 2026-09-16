@@ -597,6 +597,7 @@ pub fn classic_grand_prix() -> Track {
         description: "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -652,6 +653,7 @@ pub fn oval_speedway() -> Track {
         description: "Full-throttle banked superspeedway surrounded by concrete barriers.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -704,6 +706,7 @@ pub fn dirty_oval_speedway() -> Track {
         description: "High-sliding dirt superspeedway oval with 18-degree banked curves and loose gravel cushion.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -784,6 +787,7 @@ pub fn drift_park() -> Track {
         description: "Tight technical drift arena with sweeping corners and generous asphalt runoff.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -838,6 +842,7 @@ pub fn kart_arena() -> Track {
         description: "Short, high-density karting circuit with fast transitions and chicanes.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -926,6 +931,7 @@ pub fn ramp_raceway() -> Track {
         description: "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1022,6 +1028,7 @@ pub fn oasis_rally() -> Track {
         description: "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1089,6 +1096,7 @@ pub fn outlaw_pass() -> Track {
         description: "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1208,6 +1216,7 @@ pub fn dirt_figure_eight() -> Track {
         description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1332,6 +1341,7 @@ pub fn holjes_rx() -> Track {
         description: "The Holy Grail of Rallycross in Sweden featuring the legendary Höljes Jump, banked Velodrome & mixed gravel sliding.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1419,6 +1429,7 @@ pub fn lydden_hill() -> Track {
         description: "The historic birthplace of Rallycross featuring the iconic Chessons Drift gravel slide, North Bend & Devil's Elbow.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1522,6 +1533,7 @@ pub fn hell_rx() -> Track {
         description: "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1625,6 +1637,7 @@ pub fn loheac_rx() -> Track {
         description: "The French Rallycross classic in Brittany with long asphalt drag straight, gravel tabletop jump & tight switchbacks.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1690,6 +1703,7 @@ pub fn estering_rx() -> Track {
         description: "The cathedral of German Rallycross featuring the iconic Turn 1 hairpin dive, high-speed forest drag and technical gravel carousel.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1773,6 +1787,7 @@ pub fn montalegre_rx() -> Track {
         description: "High-altitude mountain thriller in Portugal featuring an undulating drag straight, gravel stadium section and fast table crest.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1842,6 +1857,7 @@ pub fn nyirad_rx() -> Track {
         description: "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -1925,6 +1941,7 @@ pub fn kouvola_rx() -> Track {
         description: "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkimäki dirt crest.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2008,6 +2025,7 @@ pub fn catalunya_rx() -> Track {
         description: "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2299,6 +2317,7 @@ pub fn create_prototypical_track(
         description,
         category: TrackCategory::Draft,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2385,6 +2404,7 @@ pub fn daytona_superspeedway() -> Track {
         description: "Premier 2.5-mile high-banked tri-oval with 31° banking and intense 3-wide pack drafting.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2446,6 +2466,7 @@ pub fn talladega_superspeedway() -> Track {
         description: "The biggest, fastest superspeedway with 33° banking and flat-out unrestricted slipstream battles.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2514,6 +2535,7 @@ pub fn watkins_glen_nascar() -> Track {
         description: "Legendary NASCAR road course featuring The Esses, the Bus Stop chicane, and the high-speed Carousel.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2570,6 +2592,7 @@ pub fn bristol_motor_speedway() -> Track {
         description: "The Last Great Colosseum: 0.533-mile steep concrete short track with 30° banking and bumper-to-bumper racing.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2628,6 +2651,7 @@ pub fn martinsville_speedway() -> Track {
         description: "The Paperclip: 0.526-mile flat short track with tight 12° concrete corners, heavy curb-hopping, and brutal paint-trading.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2687,6 +2711,7 @@ pub fn darlington_raceway() -> Track {
         description: "The Lady in Black: 1.366-mile egg-shaped asymmetrical oval with 25° high banks and the famous wall-scraping 'Darlington Stripe'.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2747,6 +2772,7 @@ pub fn charlotte_motor_speedway() -> Track {
         description: "The Beast of the Southeast: 1.5-mile quad-oval with 24° banking, frontstretch dogleg, and high-speed pack drafting battles.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,
@@ -2820,6 +2846,7 @@ pub fn indianapolis_motor_speedway() -> Track {
         description: "The Brickyard: 2.5-mile historic rectangular speedway with 9.2° banked turns, long drafting straights, and the famous Yard of Bricks start/finish line.".to_string(),
         category: TrackCategory::Main,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,

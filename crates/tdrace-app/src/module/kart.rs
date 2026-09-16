@@ -73,6 +73,7 @@ impl KartGameModule {
             description: "The global Mecca of Karting featuring Curva del Paddock, Pettine hairpin, and Variante Nuova.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -141,6 +142,7 @@ impl KartGameModule {
             description: "The Temple of Speed under Mount Vesuvius with massive full-throttle straights and technical Esses.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -207,6 +209,7 @@ impl KartGameModule {
             description: "Legendary Belgian proving grounds featuring the high-G G-Curve carousel, Europabocht, and Champions Chicane.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -275,6 +278,7 @@ impl KartGameModule {
             description: "Britain's premier FIA kart venue featuring the world-famous elevated flyover crossover bridge and underpass.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -343,6 +347,7 @@ impl KartGameModule {
             description: "Ultra-fast Spanish supertrack with enormous drafting straights, Curva del Cierzo, and wide passing sweepers.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -409,6 +414,7 @@ impl KartGameModule {
             description: "Alain Prost circuit at the Le Mans 24 Hours complex with Dunlop chicane, Bugatti Esses, and Courbe des 24H.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -477,6 +483,7 @@ impl KartGameModule {
             description: "Undulating Portuguese rollercoaster circuit with dramatic elevation drops, sweeping downhill turns, and Curva do Sol.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -543,6 +550,7 @@ impl KartGameModule {
             description: "Modern premier Italian world championship venue with technical switchback chicanes and trail-braking hairpins.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,

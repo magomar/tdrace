@@ -67,6 +67,7 @@ impl GtWorldChallengeModule {
             description: "High-speed Italian Grand Prix temple of speed.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -137,6 +138,7 @@ impl GtWorldChallengeModule {
             description: "Belgian Ardennes rollercoaster featuring Eau Rouge and Pouhon.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -205,6 +207,7 @@ impl GtWorldChallengeModule {
             description: "High-speed sweeping esses through Maggotts, Becketts and Chapel.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -269,6 +272,7 @@ impl GtWorldChallengeModule {
             description: "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -341,6 +345,7 @@ impl GtWorldChallengeModule {
             description: "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -407,6 +412,7 @@ impl GtWorldChallengeModule {
             description: "Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -473,6 +479,7 @@ impl GtWorldChallengeModule {
             description: "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -537,6 +544,7 @@ impl GtWorldChallengeModule {
             description: "High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -603,6 +611,7 @@ impl GtWorldChallengeModule {
             description: "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -669,6 +678,7 @@ impl GtWorldChallengeModule {
             description: "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -737,6 +747,7 @@ impl GtWorldChallengeModule {
             description: "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -805,6 +816,7 @@ impl GtWorldChallengeModule {
             description: "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -873,6 +885,7 @@ impl GtWorldChallengeModule {
             description: "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,
@@ -941,6 +954,7 @@ impl GtWorldChallengeModule {
             description: "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.".to_string(),
             category: TrackCategory::Main,
             spline,
+            network: None,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
                 outer_walls: right_walls,

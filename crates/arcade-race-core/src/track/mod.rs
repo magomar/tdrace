@@ -1,6 +1,7 @@
 pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
+pub mod network;
 pub mod presets;
 pub mod spline;
 pub mod validation;
@@ -13,6 +14,10 @@ pub use curve::{
 pub use geometry::{
     BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, SpawnPose,
     SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
+};
+pub use network::{
+    compute_split_width_envelope, GoreConfig, JunctionId, JunctionKind, MergeConfig,
+    RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout, TrackNetwork,
 };
 pub use presets::{
     bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, classic_grand_prix,
@@ -85,6 +90,8 @@ pub struct Track {
     #[serde(default)]
     pub category: TrackCategory,
     pub spline: TrackSpline,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub network: Option<TrackNetwork>,
     pub geometry: TrackGeometry,
     pub checkpoints: Vec<Checkpoint>,
     pub grid_positions: Vec<SpawnPose>,
@@ -101,6 +108,21 @@ pub struct Track {
 }
 
 impl Track {
+    /// Ensures that the track network exists, promoting the legacy single spline if needed.
+    pub fn ensure_network(&mut self) -> &mut TrackNetwork {
+        if self.network.is_none() {
+            self.network = Some(TrackNetwork::from_single_spline(&self.spline));
+        }
+        self.network.as_mut().unwrap()
+    }
+
+    /// Returns the active track network, falling back to a synthesized single-spline network.
+    pub fn active_network(&self) -> TrackNetwork {
+        self.network
+            .clone()
+            .unwrap_or_else(|| TrackNetwork::from_single_spline(&self.spline))
+    }
+
     /// Returns true if this track belongs to the specified motorsport module ID.
     pub fn belongs_to_module(&self, mod_id: &str) -> bool {
         if self.modules.iter().any(|m| m.eq_ignore_ascii_case(mod_id)) {
