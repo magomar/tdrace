@@ -226,11 +226,35 @@ fn test_touch_layout_toggle_during_active_touches() {
 
 #[test]
 fn test_5000_step_fuzzed_replay_determinism_all_tracks_and_cars() {
+    let temp_tracks = std::env::temp_dir().join(format!(
+        "tdrace_test_fuzz_tracks_{}",
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_tracks);
+    std::env::set_var(tdrace_app::storage::ENV_USER_TRACKS_DIR, &temp_tracks);
+    tdrace_app::ui::menu::clear_menu_track_cache();
+
     let tracks = [
-        (TrackChoice::ClassicGrandPrix, classic_grand_prix()),
-        (TrackChoice::OvalSpeedway, oval_speedway()),
-        (TrackChoice::DriftPark, drift_park()),
-        (TrackChoice::KartArena, kart_arena()),
+        (
+            TrackChoice::ClassicGrandPrix,
+            tdrace_app::ui::menu::resolve_track_for_menu(&TrackChoice::ClassicGrandPrix)
+                .unwrap_or_else(classic_grand_prix),
+        ),
+        (
+            TrackChoice::OvalSpeedway,
+            tdrace_app::ui::menu::resolve_track_for_menu(&TrackChoice::OvalSpeedway)
+                .unwrap_or_else(oval_speedway),
+        ),
+        (
+            TrackChoice::DriftPark,
+            tdrace_app::ui::menu::resolve_track_for_menu(&TrackChoice::DriftPark)
+                .unwrap_or_else(drift_park),
+        ),
+        (
+            TrackChoice::KartArena,
+            tdrace_app::ui::menu::resolve_track_for_menu(&TrackChoice::KartArena)
+                .unwrap_or_else(kart_arena),
+        ),
     ];
 
     let cars = [
@@ -293,6 +317,10 @@ fn test_5000_step_fuzzed_replay_determinism_all_tracks_and_cars() {
             );
         }
     }
+
+    std::env::remove_var(tdrace_app::storage::ENV_USER_TRACKS_DIR);
+    tdrace_app::ui::menu::clear_menu_track_cache();
+    let _ = std::fs::remove_dir_all(&temp_tracks);
 }
 
 #[test]

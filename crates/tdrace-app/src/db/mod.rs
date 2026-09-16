@@ -497,6 +497,25 @@ impl HallOfFameDb {
         Ok(())
     }
 
+    /// Clears all Hall of Fame leaderboard entries for a specific track.
+    pub fn clear_hall_of_fame_for_track(&self, track_id: &str) -> Result<()> {
+        self.conn.execute("DELETE FROM hall_of_fame WHERE track_id = ?1", params![track_id])?;
+        Ok(())
+    }
+
+    /// Clears all race history logs for a specific track across all player profiles.
+    pub fn clear_race_history_for_track(&self, track_id: &str) -> Result<()> {
+        self.conn.execute("DELETE FROM race_history WHERE track_id = ?1", params![track_id])?;
+        Ok(())
+    }
+
+    /// Clears all Hall of Fame records and race history logs for a specific track.
+    pub fn clear_track_history(&self, track_id: &str) -> Result<()> {
+        self.clear_hall_of_fame_for_track(track_id)?;
+        self.clear_race_history_for_track(track_id)?;
+        Ok(())
+    }
+
     /// Seeds default records if needed (currently a clean no-op, preserving real race records).
     pub fn seed_defaults_if_empty(&self, _track_id: &str) -> Result<()> {
         // Real race results are logged dynamically on session completion.
@@ -681,6 +700,24 @@ impl HallOfFameDb {
     pub fn clear_hall_of_fame(&self) -> Result<()> {
         let mut guard = self.hof.lock().unwrap();
         guard.clear();
+        Ok(())
+    }
+
+    pub fn clear_hall_of_fame_for_track(&self, track_id: &str) -> Result<()> {
+        let mut guard = self.hof.lock().unwrap();
+        guard.retain(|e| e.track_id != track_id);
+        Ok(())
+    }
+
+    pub fn clear_race_history_for_track(&self, track_id: &str) -> Result<()> {
+        let mut guard = self.history.lock().unwrap();
+        guard.retain(|r| r.track_id != track_id);
+        Ok(())
+    }
+
+    pub fn clear_track_history(&self, track_id: &str) -> Result<()> {
+        self.clear_hall_of_fame_for_track(track_id)?;
+        self.clear_race_history_for_track(track_id)?;
         Ok(())
     }
 

@@ -718,6 +718,34 @@ impl RaceSession {
         }
     }
 
+    /// Clears all historical records (Hall of Fame leaderboards, race history, personal bests, ghost lap)
+    /// for a specific circuit when it is modified or reset.
+    pub fn clear_circuit_history(&mut self, track_id: &str) {
+        if let Some(db) = &self.hof_db {
+            let _ = db.clear_track_history(track_id);
+        }
+
+        // Clean in-memory caches
+        self.hof_entries.retain(|e| e.track_id != track_id);
+        self.profile_history.retain(|r| r.track_id != track_id);
+        self.active_profile_stats.best_times.remove(track_id);
+        self.active_profile_stats.best_circuit_times.remove(track_id);
+
+        if self.ghost_recorder.best_ghost_lap.as_ref().map_or(false, |g| g.track_choice.track_id() == track_id) {
+            self.ghost_recorder.best_ghost_lap = None;
+        }
+
+        if let Some(id) = self.recent_hof_id {
+            if !self.hof_entries.iter().any(|e| e.id == Some(id)) {
+                self.recent_hof_id = None;
+            }
+        }
+
+        // Re-sync active Hall of Fame and profile stats with database if available
+        self.refresh_hof_entries();
+        self.refresh_profiles_and_stats();
+    }
+
     /// Asynchronously initializes audio banks and plays the synthwave menu theme.
     pub async fn init_audio(&mut self) {
         self.audio.init_async().await;
@@ -3780,6 +3808,7 @@ impl RaceSession {
                     } else {
                         let _ = self.track_manager.delete_custom_track(&tid);
                     }
+                    self.clear_circuit_history(&tid);
                     self.audio.play_sfx(SfxType::UiSelect);
                     let list_len = if is_dev_workbench {
                         self.track_manager.filtered_main_track_choices(module_filter).len()
@@ -6348,31 +6377,68 @@ impl RaceSession {
                 }
             }
             EditorAction::SaveTrack { name, filename, description, overwrite, exit_after } => {
-                if let Some(state) = &mut self.editor_state {
+                let save_outcome = if let Some(state) = &mut self.editor_state {
                     state.track.name = name;
                     state.track.description = description;
                     state.rebuild_geometry();
 
-                    let target_slug = if !filename.trim().is_empty() {
+                    let target_slug = if overwrite {
+                        if let Some(ref p) = state.current_file_path {
+                            std::path::Path::new(p)
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .map(|s| s.to_string())
+                        } else if !filename.trim().is_empty() {
+                            Some(TrackManager::sanitize_slug(&filename))
+                        } else {
+                            Some(TrackManager::sanitize_slug(&state.track.name))
+                        }
+                    } else if !filename.trim().is_empty() {
                         Some(TrackManager::sanitize_slug(&filename))
-                    } else if let Some(ref p) = state.current_file_path {
-                        std::path::Path::new(p)
-                            .file_stem()
-                            .and_then(|s| s.to_str())
-                            .map(|s| s.to_string())
                     } else {
                         Some(TrackManager::sanitize_slug(&state.track.name))
                     };
 
+                    let was_existing = if overwrite {
+                        if let Some(slug) = target_slug.as_deref() {
+                            self.track_manager.is_existing_track(slug) || state.current_file_path.is_some()
+                        } else {
+                            state.current_file_path.is_some()
+                        }
+                    } else {
+                        false
+                    };
+
+                    let track_clone = state.track.clone();
+                    Some((target_slug, was_existing, track_clone))
+                } else {
+                    None
+                };
+
+                if let Some((target_slug, was_existing, track_to_save)) = save_outcome {
                     let result = self.track_manager.save_custom_track_with_options(
-                        &state.track,
+                        &track_to_save,
                         target_slug.as_deref(),
                         overwrite,
                     );
                     match result {
                         Ok(path) => {
-                            state.current_file_path = Some(path.clone());
-                            state.is_dirty = false;
+                            let saved_slug = std::path::Path::new(&path)
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .map(|s| s.to_string())
+                                .or_else(|| target_slug.clone());
+
+                            if was_existing {
+                                if let Some(ref slug) = saved_slug {
+                                    self.clear_circuit_history(slug);
+                                }
+                            }
+
+                            if let Some(state) = &mut self.editor_state {
+                                state.current_file_path = Some(path.clone());
+                                state.is_dirty = false;
+                            }
                             self.editor_save_toast_timer = 2.5;
                             if overwrite {
                                 self.editor_save_toast_msg = format!("Track overwritten: {}", path);
@@ -6385,7 +6451,7 @@ impl RaceSession {
                             let _ = self.track_manager.scan_custom_tracks();
                             crate::ui::menu::clear_menu_track_cache();
 
-                            self.track = state.track.clone();
+                            self.track = track_to_save;
 
                             if exit_after {
                                 self.return_to_track_manager();
@@ -6400,6 +6466,7 @@ impl RaceSession {
             }
             EditorAction::DeleteTrack(id) => {
                 let _ = self.track_manager.delete_custom_track(&id);
+                self.clear_circuit_history(&id);
                 self.audio.play_sfx(SfxType::UiSelect);
             }
             _ => {}

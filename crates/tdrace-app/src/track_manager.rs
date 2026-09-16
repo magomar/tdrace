@@ -1162,6 +1162,13 @@ impl TrackManager {
             || self.resolve_preset_git_file(slug, None).is_some()
     }
 
+    /// Checks whether a track slug represents an already existing track (either official preset or user circuit on disk).
+    pub fn is_existing_track(&self, slug: &str) -> bool {
+        (Self::is_preset_slug(slug) && !self.is_preset_demoted(slug))
+            || self.track_file_exists(slug)
+            || self.track_path_for_slug(slug).exists()
+    }
+
     /// Resolves the destination path for a given slug, checking existing files first.
     pub fn track_path_for_slug(&self, slug: &str) -> PathBuf {
         let file_name = format!("{}.json", slug);
