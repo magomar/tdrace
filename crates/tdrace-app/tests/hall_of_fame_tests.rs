@@ -1,5 +1,5 @@
 use tdrace_app::db::{HallOfFameDb, HallOfFameEntry};
-use tdrace_app::game::{GameState, RaceSession};
+use tdrace_app::game::{FinishedScreenView, GameState, RaceSession};
 use tdrace_app::ui::menu::TrackChoice;
 
 #[test]
@@ -177,9 +177,10 @@ fn test_race_session_hof_automatic_logging_and_congratulations() {
     // Check race finish transition
     session.check_race_finish();
 
-    // Verify automatic transition to Finished state without manual name entry
+    // Verify automatic transition to Finished state displaying Results first
     assert_eq!(session.state, GameState::Finished);
-    assert!(session.show_hall_of_fame);
+    assert_eq!(session.finished_view, FinishedScreenView::Results);
+    assert!(!session.show_hall_of_fame);
 
     // Verify Hall of Fame table was populated with the actual race result
     assert!(!session.hof_entries.is_empty());

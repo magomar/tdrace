@@ -5,6 +5,7 @@ pub mod hall_of_fame;
 pub mod hud;
 pub mod menu;
 pub mod profile_ui;
+pub mod race_stats;
 pub mod scaler;
 pub mod starting_grid;
 pub mod track_manager_ui;
@@ -18,6 +19,7 @@ pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
 pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, PlayerCongrats};
 pub use hud::{format_lap_time, render_hud, PersonalBestNotification};
+pub use race_stats::render_race_stats_screen;
 pub use menu::{
     pause_menu_layout, render_controls_screen, render_pause_menu, render_results_screen,
     render_track_select_menu, CarChoice, GameMode, GameModeChoice, MenuPanelFocus,

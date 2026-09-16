@@ -2,6 +2,7 @@ use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::input::KeyCode;
 use macroquad::prelude::{get_frame_time, screen_height, screen_width};
+use serde::{Deserialize, Serialize};
 
 #[inline]
 fn is_key_pressed(k: KeyCode) -> bool {
@@ -102,6 +103,7 @@ use crate::track_manager::TrackManager;
 use crate::ui::driver_card::render_driver_cards_screen;
 use crate::ui::font::Fonts;
 use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
+use crate::ui::race_stats::render_race_stats_screen;
 use crate::ui::hud::{format_lap_time, render_hud, render_split_hud, PersonalBestNotification, VisibilityToast};
 use crate::ui::menu::{
     render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
@@ -165,6 +167,47 @@ pub enum GameState {
         modal: TrackManagerModal,
     },
     TrackEditor,
+}
+
+/// Active view within the post-race Finished state.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FinishedScreenView {
+    #[default]
+    Results,
+    HallOfFame,
+    Statistics,
+}
+
+/// Telemetry metrics for a single completed lap.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LapTelemetry {
+    pub lap_number: u32,
+    pub lap_time: f32,
+    pub sector_times: Vec<f32>,
+    pub is_personal_best: bool,
+}
+
+/// Acrobatic stunt performance metrics accumulated during a race.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct AcrobaticStats {
+    pub total_drift_points: u32,
+    pub drift_count: u32,
+    pub max_single_drift_score: f32,
+    pub total_air_time: f32,
+    pub jump_count: u32,
+    pub longest_jump_time: f32,
+    pub jump_points: u32,
+    pub max_combo: u32,
+    pub total_stunt_score: u32,
+}
+
+/// Comprehensive telemetry summary for the human player in a race session.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct PlayerRaceTelemetry {
+    pub laps: Vec<LapTelemetry>,
+    pub best_lap_idx: Option<usize>,
+    pub top_speed_mps: f32,
+    pub stunt_stats: AcrobaticStats,
 }
 
 
@@ -290,6 +333,9 @@ pub struct RaceSession {
     pub recent_hof_id: Option<i64>,
     pub recent_congrats: Option<PlayerCongrats>,
     pub show_hall_of_fame: bool,
+    pub finished_view: FinishedScreenView,
+    pub finished_prev_view: FinishedScreenView,
+    pub player_race_stats: PlayerRaceTelemetry,
 
     // Menu selection cursor & 2D navigation state
     pub menu_focused_panel: MenuPanelFocus,
@@ -532,7 +578,10 @@ impl RaceSession {
             hof_entries: Vec::new(),
             recent_hof_id: None,
             recent_congrats: None,
-            show_hall_of_fame: true,
+            show_hall_of_fame: false,
+            finished_view: FinishedScreenView::Results,
+            finished_prev_view: FinishedScreenView::Results,
+            player_race_stats: PlayerRaceTelemetry::default(),
 
             menu_focused_panel: MenuPanelFocus::LeftTracks,
             menu_track_filter: TrackCatalogFilter::Presets,
@@ -1523,7 +1572,10 @@ impl RaceSession {
     pub fn init_race(&mut self) {
         self.recent_hof_id = None;
         self.recent_congrats = None;
-        self.show_hall_of_fame = true;
+        self.show_hall_of_fame = false;
+        self.finished_view = FinishedScreenView::Results;
+        self.finished_prev_view = FinishedScreenView::Results;
+        self.player_race_stats = PlayerRaceTelemetry::default();
         self.refresh_hof_entries();
 
         // 1. Build selected track (preserve in-memory track if launched from editor)
@@ -2743,44 +2795,7 @@ impl RaceSession {
                 }
             }
             GameState::Finished => {
-                self.audio.stop_all_loops();
-                if is_key_pressed(KeyCode::Tab)
-                    || is_key_pressed(KeyCode::Left)
-                    || is_key_pressed(KeyCode::Right)
-                    || is_key_pressed(KeyCode::A)
-                    || is_key_pressed(KeyCode::D)
-                    || self.input.gamepad.snapshot.btn_x_pressed
-                    || self.input.gamepad.snapshot.nav_left
-                    || self.input.gamepad.snapshot.nav_right
-                {
-                    self.audio.play_sfx(SfxType::UiMove);
-                    self.show_hall_of_fame = !self.show_hall_of_fame;
-                }
-                if is_key_pressed(KeyCode::Space)
-                    || is_key_pressed(KeyCode::Enter)
-                    || is_key_pressed(KeyCode::KpEnter)
-                    || self.input.gamepad.snapshot.btn_confirm_pressed
-                    || self.input.gamepad.snapshot.btn_a_pressed
-                {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.init_race();
-                    self.transition_iris_to(GameState::Countdown(3.5), 0.45);
-                    return;
-                }
-                if is_key_pressed(KeyCode::Escape)
-                    || self.input.gamepad.snapshot.btn_cancel_pressed
-                    || self.input.gamepad.snapshot.btn_back_pressed
-                    || self.input.gamepad.snapshot.btn_b_pressed
-                {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    if self.return_to_editor_on_exit {
-                        self.return_to_editor_on_exit = false;
-                        self.transition_fade_to(GameState::TrackEditor, 0.35);
-                    } else {
-                        self.transition_fade_to(GameState::Menu, 0.35);
-                    }
-                    return;
-                }
+                self.update_finished_screen();
             }
 
             GameState::ControlsHelp(from_paused) => {
@@ -2859,6 +2874,108 @@ impl RaceSession {
             | GameState::TrackManager { .. }
             | GameState::TrackEditor => {}
 
+        }
+    }
+
+    /// Updates input and state progression when in the post-race Finished state.
+    pub fn update_finished_screen(&mut self) {
+        self.audio.stop_all_loops();
+
+        // Synchronize legacy `show_hall_of_fame` boolean if modified externally
+        let current_view = if self.finished_view == FinishedScreenView::Statistics {
+            FinishedScreenView::Statistics
+        } else if self.show_hall_of_fame || self.finished_view == FinishedScreenView::HallOfFame {
+            FinishedScreenView::HallOfFame
+        } else {
+            FinishedScreenView::Results
+        };
+
+        // 1. [R] Key / Gamepad Y: Restart Race
+        if is_key_pressed(KeyCode::R) || self.input.gamepad.snapshot.btn_y_pressed {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.init_race();
+            self.transition_iris_to(GameState::Countdown(3.5), 0.45);
+            return;
+        }
+
+        // 2. [TAB] Key / Gamepad X: Toggle Detailed Race Statistics
+        if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_x_pressed {
+            if current_view == FinishedScreenView::Statistics {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.finished_view = self.finished_prev_view;
+                self.show_hall_of_fame = self.finished_view == FinishedScreenView::HallOfFame;
+            } else {
+                self.audio.play_sfx(SfxType::UiSelect);
+                self.finished_prev_view = current_view;
+                self.finished_view = FinishedScreenView::Statistics;
+                self.show_hall_of_fame = false;
+            }
+            return;
+        }
+
+        // 3. [SPACE] / [ENTER] / Gamepad Confirm / A: Sequential forward progression
+        // Order: Race Results -> Hall of Fame -> Main Menu
+        if is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            match current_view {
+                FinishedScreenView::Results => {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.finished_view = FinishedScreenView::HallOfFame;
+                    self.show_hall_of_fame = true;
+                }
+                FinishedScreenView::HallOfFame => {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if self.return_to_editor_on_exit {
+                        self.return_to_editor_on_exit = false;
+                        self.transition_fade_to(GameState::TrackEditor, 0.35);
+                    } else {
+                        self.transition_fade_to(GameState::Menu, 0.35);
+                    }
+                    return;
+                }
+                FinishedScreenView::Statistics => {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.finished_view = self.finished_prev_view;
+                    self.show_hall_of_fame = self.finished_view == FinishedScreenView::HallOfFame;
+                }
+            }
+            return;
+        }
+
+        // 4. [ESC] / Gamepad Cancel / Back / B: Step backward one screen
+        // Order: Hall of Fame -> Race Results -> Main Menu / Editor
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_cancel_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+        {
+            match current_view {
+                FinishedScreenView::Statistics => {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.finished_view = self.finished_prev_view;
+                    self.show_hall_of_fame = self.finished_view == FinishedScreenView::HallOfFame;
+                }
+                FinishedScreenView::HallOfFame => {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.finished_view = FinishedScreenView::Results;
+                    self.show_hall_of_fame = false;
+                }
+                FinishedScreenView::Results => {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if self.return_to_editor_on_exit {
+                        self.return_to_editor_on_exit = false;
+                        self.transition_fade_to(GameState::TrackEditor, 0.35);
+                    } else {
+                        self.transition_fade_to(GameState::Menu, 0.35);
+                    }
+                    return;
+                }
+            }
+            return;
         }
     }
 
@@ -4540,6 +4657,11 @@ impl RaceSession {
             self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
         }
 
+        // Track human player top speed
+        if let Some(player_car) = self.cars.first() {
+            self.player_race_stats.top_speed_mps = self.player_race_stats.top_speed_mps.max(player_car.state.speed);
+        }
+
         // Continuous Jump Ramp Traversal, Lip Takeoff & Landing SFX/FX
         let mut player_jump_air_time = None;
         for (i, car) in self.cars.iter_mut().enumerate() {
@@ -4582,8 +4704,14 @@ impl RaceSession {
         }
 
         if let Some(air_time) = player_jump_air_time {
+            let pts = (air_time * 250.0).round() as u32;
+            self.player_race_stats.stunt_stats.jump_count += 1;
+            self.player_race_stats.stunt_stats.total_air_time += air_time;
+            self.player_race_stats.stunt_stats.longest_jump_time = self.player_race_stats.stunt_stats.longest_jump_time.max(air_time);
+            self.player_race_stats.stunt_stats.jump_points += pts;
+            self.player_race_stats.stunt_stats.total_stunt_score += pts;
+
             if let Some(player_car) = self.cars.first() {
-                let pts = (air_time * 250.0).round() as u32;
                 let sw = screen_width_safe();
                 let sh = screen_height_safe();
                 let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
@@ -4594,6 +4722,7 @@ impl RaceSession {
 
                 self.drift_combo_count += 1;
                 self.drift_combo_timer = 4.0;
+                self.player_race_stats.stunt_stats.max_combo = self.player_race_stats.stunt_stats.max_combo.max(self.drift_combo_count);
 
                 if air_time >= 0.70 {
                     self.floating_text.spawn_alert(
@@ -4813,6 +4942,27 @@ impl RaceSession {
             // 7b. Check and notify Personal Best lap achievement
             if lap_changed {
                 if let Some(last_lap_time) = tracker.last_lap_time {
+                    let completed_lap = tracker.current_lap.saturating_sub(1).max(1);
+                    let sec_times = tracker.last_lap_sector_times.clone();
+                    let is_fastest_so_far = self.player_race_stats.laps.iter().all(|l| last_lap_time <= l.lap_time);
+
+                    self.player_race_stats.laps.push(LapTelemetry {
+                        lap_number: completed_lap,
+                        lap_time: last_lap_time,
+                        sector_times: sec_times,
+                        is_personal_best: is_fastest_so_far,
+                    });
+
+                    let mut min_t = f32::MAX;
+                    let mut best_idx = None;
+                    for (idx, l) in self.player_race_stats.laps.iter().enumerate() {
+                        if l.lap_time < min_t {
+                            min_t = l.lap_time;
+                            best_idx = Some(idx);
+                        }
+                    }
+                    self.player_race_stats.best_lap_idx = best_idx;
+
                     let track_id = self.track_choice_id().to_string();
                     let prev_best = self.active_profile_stats.best_times.get(&track_id).copied();
                     let is_pb = prev_best.map_or(true, |best| last_lap_time < best);
@@ -4898,6 +5048,13 @@ impl RaceSession {
             if was_drifting && !is_drifting && player_car.state.drift_score > 50.0 {
                 self.drift_combo_count += 1;
                 self.drift_combo_timer = 4.0;
+                let pts = player_car.state.drift_score.round() as u32;
+
+                self.player_race_stats.stunt_stats.drift_count += 1;
+                self.player_race_stats.stunt_stats.total_drift_points += pts;
+                self.player_race_stats.stunt_stats.max_single_drift_score = self.player_race_stats.stunt_stats.max_single_drift_score.max(player_car.state.drift_score);
+                self.player_race_stats.stunt_stats.total_stunt_score += pts;
+                self.player_race_stats.stunt_stats.max_combo = self.player_race_stats.stunt_stats.max_combo.max(self.drift_combo_count);
 
                 let sw = screen_width_safe();
                 let sh = screen_height_safe();
@@ -4907,7 +5064,6 @@ impl RaceSession {
                     (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
                 );
 
-                let pts = player_car.state.drift_score.round() as u32;
                 self.floating_text.spawn_score(pts, anchor);
 
                 if self.drift_combo_count >= 2 {
@@ -5083,7 +5239,24 @@ impl RaceSession {
                 return;
             }
 
-            self.show_hall_of_fame = true;
+            // Populate fallback telemetry if synthetic test or laps empty
+            if self.player_race_stats.laps.is_empty() {
+                let best = self.trackers.first().and_then(|t| t.best_lap_time).unwrap_or(self.session_time / self.total_laps.max(1) as f32);
+                let sectors = self.trackers.first().map(|t| t.last_lap_sector_times.clone()).unwrap_or_default();
+                for lap_idx in 1..=self.total_laps {
+                    self.player_race_stats.laps.push(LapTelemetry {
+                        lap_number: lap_idx,
+                        lap_time: best,
+                        sector_times: sectors.clone(),
+                        is_personal_best: lap_idx == 1,
+                    });
+                }
+                self.player_race_stats.best_lap_idx = Some(0);
+            }
+
+            self.show_hall_of_fame = false;
+            self.finished_view = FinishedScreenView::Results;
+            self.finished_prev_view = FinishedScreenView::Results;
             self.state = GameState::Finished;
         }
     }
@@ -5325,16 +5498,37 @@ impl RaceSession {
             }
             GameState::Finished => {
                 self.render_world();
-                if self.show_hall_of_fame {
-                    render_hall_of_fame_screen(
-                        &self.fonts,
-                        &self.track.name,
-                        &self.hof_entries,
-                        self.recent_hof_id,
-                        self.recent_congrats.as_ref(),
-                    );
+                let current_view = if self.finished_view == FinishedScreenView::Statistics {
+                    FinishedScreenView::Statistics
+                } else if self.show_hall_of_fame || self.finished_view == FinishedScreenView::HallOfFame {
+                    FinishedScreenView::HallOfFame
                 } else {
-                    render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack);
+                    FinishedScreenView::Results
+                };
+
+                match current_view {
+                    FinishedScreenView::Results => {
+                        render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack);
+                    }
+                    FinishedScreenView::HallOfFame => {
+                        render_hall_of_fame_screen(
+                            &self.fonts,
+                            &self.track.name,
+                            &self.hof_entries,
+                            self.recent_hof_id,
+                            self.recent_congrats.as_ref(),
+                        );
+                    }
+                    FinishedScreenView::Statistics => {
+                        render_race_stats_screen(
+                            &self.fonts,
+                            &self.track.name,
+                            self.car_choice.title(),
+                            &self.player_race_stats,
+                            self.session_time,
+                            self.finished_prev_view == FinishedScreenView::HallOfFame,
+                        );
+                    }
                 }
             }
             GameState::ControlsHelp(from_paused) => {

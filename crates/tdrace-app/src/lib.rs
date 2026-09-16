@@ -25,7 +25,10 @@ pub use camera::{CameraMode, RaceCamera, SplitLayout};
 pub use config::{AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, ZoomLevelConfig};
 pub use db::{HallOfFameDb, HallOfFameEntry};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
-pub use game::{DriverCardsOrigin, GameState, GridParticipant, RaceSession};
+pub use game::{
+    AcrobaticStats, DriverCardsOrigin, FinishedScreenView, GameState, GridParticipant, LapTelemetry,
+    PlayerRaceTelemetry, RaceSession,
+};
 pub use module::{
     ClassicGameModule, EngineAudioProfile, F1GameModule, GameModule, KartGameModule, ModuleTheme,
     NascarGameModule, RallyGameModule, TrackDefinition, VehicleModelDefinition, VehicleVisualType,

@@ -1546,7 +1546,7 @@ pub fn render_results_screen(
     }
 
     // Bottom action prompt
-    let prompt = "Press [SPACE] or [R] to Restart | [TAB] Hall of Fame | [ESC] Main Menu";
+    let prompt = "Press [SPACE / ENTER] Hall of Fame | [TAB] Detailed Stats | [R] Restart Race | [ESC] Main Menu";
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
