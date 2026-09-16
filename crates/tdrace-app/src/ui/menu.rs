@@ -345,6 +345,25 @@ fn resolve_track_for_menu_with_dir_uncached(
 }
 
 impl TrackChoice {
+    pub fn resolve_procedural_preset_by_slug(slug: &str) -> Option<tdrace_core::track::Track> {
+        let choice = match slug {
+            "classic_grand_prix" => Self::ClassicGrandPrix,
+            "oval_speedway" => Self::OvalSpeedway,
+            "drift_park" => Self::DriftPark,
+            "kart_arena" => Self::KartArena,
+            "ramp_raceway" => Self::RampRaceway,
+            "oasis_rally" => Self::OasisRally,
+            "outlaw_pass" => Self::OutlawPass,
+            other => Self::Custom {
+                id: other.to_string(),
+                title: other.to_string(),
+                description: String::new(),
+                path: String::new(),
+            },
+        };
+        Self::resolve_procedural_preset(&choice)
+    }
+
     pub fn resolve_procedural_preset(choice: &TrackChoice) -> Option<tdrace_core::track::Track> {
     match choice {
         TrackChoice::ClassicGrandPrix => Some(tdrace_core::track::presets::classic_grand_prix()),

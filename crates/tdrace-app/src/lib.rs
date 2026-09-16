@@ -15,9 +15,11 @@ pub mod replay;
 pub mod storage;
 pub mod tournament;
 pub mod track_manager;
+pub mod tracks;
 pub mod ui;
 
 pub use storage::{resolve_user_data_dir, resolve_user_tracks_dir};
+pub use tracks::{DevTrackStore, PresetCatalog, UserTrackStore};
 
 pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverStats};
 pub use audio::{AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType};

@@ -326,6 +326,9 @@ impl TrackManager {
                         .and_then(|s| s.to_str())
                         .unwrap_or("")
                         .to_string();
+                    if subdir_name.starts_with('.') {
+                        continue;
+                    }
                     if let Ok(sub_entries) = fs::read_dir(&path) {
                         for sub_entry in sub_entries.flatten() {
                             let sub_path = sub_entry.path();
@@ -652,7 +655,7 @@ impl TrackManager {
         self.main_track_choices()
     }
 
-    fn track_choice_from_def(def: &TrackDefinition, mod_id: &str) -> TrackChoice {
+    pub fn track_choice_from_def(def: &TrackDefinition, mod_id: &str) -> TrackChoice {
         match def.id {
             "classic_grand_prix" => TrackChoice::ClassicGrandPrix,
             "oval_speedway" => TrackChoice::OvalSpeedway,
@@ -907,6 +910,12 @@ impl TrackManager {
                 let alt_path = self.track_path_for_slug(id);
                 if alt_path.exists() {
                     if let Ok(t) = Track::load_from_file(&alt_path) {
+                        return Ok(t);
+                    }
+                }
+                let backup_path = self.tracks_dir.join(".backup").join(format!("{}.json", id));
+                if backup_path.exists() {
+                    if let Ok(t) = Track::load_from_file(&backup_path) {
                         return Ok(t);
                     }
                 }
@@ -1270,6 +1279,7 @@ impl TrackManager {
         };
 
         let target_path = if overwrite && existing_path.exists() {
+            Self::backup_track_file(&existing_path, &self.tracks_dir);
             existing_path
         } else {
             self.tracks_dir.join(format!("{}.json", file_slug))
@@ -1712,14 +1722,16 @@ impl TrackManager {
                     }
                 }
 
-                // If legacy file in <mod_id>/<id>.json exists, remove it
+                // If legacy file in <mod_id>/<id>.json exists, backup and remove it
                 let mod_path = self.tracks_dir.join(mod_id).join(&file_name);
                 if mod_path.exists() {
+                    Self::backup_track_file(&mod_path, &self.tracks_dir);
                     let _ = fs::remove_file(&mod_path);
                     deleted_any = true;
                 }
                 let mod_tdtrack = self.tracks_dir.join(mod_id).join(format!("{}.tdtrack", id));
                 if mod_tdtrack.exists() {
+                    Self::backup_track_file(&mod_tdtrack, &self.tracks_dir);
                     let _ = fs::remove_file(&mod_tdtrack);
                     deleted_any = true;
                 }
@@ -1748,12 +1760,14 @@ impl TrackManager {
                 ];
                 for cand in &candidates {
                     if cand.exists() {
+                        Self::backup_track_file(cand, &self.tracks_dir);
                         let _ = fs::remove_file(cand);
                         deleted_any = true;
                     }
                 }
                 let tdtrack = self.tracks_dir.join(format!("{}.tdtrack", id));
                 if tdtrack.exists() {
+                    Self::backup_track_file(&tdtrack, &self.tracks_dir);
                     let _ = fs::remove_file(&tdtrack);
                     deleted_any = true;
                 }
@@ -1785,8 +1799,15 @@ impl TrackManager {
         self.delete_track_from_module(id, None)
     }
 
+    /// Safely archives a track file into `.backup/` before deletion or overwrite.
+    /// Preserves both `<filename>` (latest backup) and a timestamped `<stem>_<unix_secs>.<ext>`.
+    pub fn backup_track_file(file: &Path, tracks_dir: &Path) {
+        let store = crate::tracks::UserTrackStore::new(tracks_dir);
+        store.backup_file(file);
+    }
+
     /// Promotes a custom track to an official git-tracked preset (dev mode only).
-    /// Saves the track JSON into `tracks/<module>/<slug>.json` and cleans up the local custom copy.
+    /// Saves the track JSON into `tracks/<module>/<slug>.json` while retaining a persistent user copy.
     pub fn promote_custom_track_to_git_preset(&mut self, id: &str) -> Result<PathBuf, String> {
         if !crate::storage::is_dev_mode() {
             return Err("Promoting tracks to preset circuits is only allowed in developer mode.".to_string());
@@ -1823,18 +1844,23 @@ impl TrackManager {
         track.save_to_file(&target_path)
             .map_err(|e| format!("Failed to save git preset '{}': {}", target_path.display(), e))?;
 
-        // Remove local custom copy if exists
+        // DUAL PERSISTENCE: Maintain a persistent copy in user storage with Main category.
+        // This guarantees that if git operations, branch changes, or automated tests clean the repo,
+        // the user's hard work is never destroyed.
+        let user_file = self.tracks_dir.join(format!("{}.json", id));
+        let _ = track.save_to_file(&user_file);
+        Self::backup_track_file(&user_file, &self.tracks_dir);
+
+        // If a separate draft copy existed in drafts/ or elsewhere, back it up and clean the drafts folder
         if let Some(p) = local_path {
-            if p.exists() {
+            if p != user_file && p.exists() {
+                Self::backup_track_file(&p, &self.tracks_dir);
                 let _ = fs::remove_file(p);
             }
         }
-        let cand = self.tracks_dir.join(format!("{}.json", id));
-        if cand.exists() {
-            let _ = fs::remove_file(cand);
-        }
         let draft_cand = self.tracks_dir.join("drafts").join(format!("{}.json", id));
-        if draft_cand.exists() {
+        if draft_cand != user_file && draft_cand.exists() {
+            Self::backup_track_file(&draft_cand, &self.tracks_dir);
             let _ = fs::remove_file(draft_cand);
         }
 
