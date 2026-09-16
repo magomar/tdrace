@@ -24106,7 +24106,7 @@
       "grid_slot": 7
     }
   ],
-  "default_surface": "Grass",
+  "default_surface": "Dirt",
   "pit_box_area": null,
   "default_laps": 3,
   "predefined_car": "sports_car",
