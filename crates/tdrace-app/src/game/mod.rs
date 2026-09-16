@@ -3534,6 +3534,24 @@ impl RaceSession {
             return;
         }
 
+        // Developer Mode: Direct Dev Workbench shortcut (Ctrl+D or F12)
+        let ctrl_down = is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper);
+        if crate::storage::is_dev_mode()
+            && (is_key_pressed(KeyCode::F12) || (ctrl_down && is_key_pressed(KeyCode::D)))
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.state = GameState::TrackManager {
+                active_tab: TrackManagerTab::DevWorkbench,
+                module_filter: ModuleFilter::for_module(self.active_module_id),
+                selected_idx: 0,
+                modal: TrackManagerModal::None,
+            };
+            return;
+        }
+
         // Start race or open My Circuits when empty (Space, Enter, or Gamepad Confirm [A / South / Start])
         if is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::Enter)

@@ -1132,8 +1132,14 @@ pub fn render_track_select_menu(
     let btn_x = (sw - btn_w) * 0.5;
     let btn_y = sh - btn_h - scaler.s(14.0);
 
+    let footer_text = if crate::storage::is_dev_mode() {
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] My Circuits  •  [Ctrl+D] Dev Workbench  •  [O] Settings  •  [ESC] Back"
+    } else {
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] My Circuits  •  [O] Settings  •  [K] Controls  •  [ESC] Back"
+    };
+
     fonts.draw_ui_regular_centered(
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] My Circuits  •  [O] Settings  •  [K] Controls  •  [ESC] Back",
+        footer_text,
         sw * 0.5,
         btn_y - scaler.s(10.0),
         scaler.font_s(11.0),

@@ -1124,7 +1124,7 @@ fn render_promote_to_preset_modal(
     );
 
     let info_msg = format!(
-        "Promote custom circuit \"{}\" to an official git preset?\n\nTarget Module: {}\nOutput File:   tracks/{}/{}.json\n\nThis will move the circuit to repository presets and remove the local copy.",
+        "Promote custom circuit \"{}\" to an official git preset?\n\nTarget Module: {}\nOutput File:   tracks/{}/{}.json\n\nSafe dual-persistence: your local circuit will be preserved in user storage with an auto-backup snapshot.",
         track_title,
         target_module.to_uppercase(),
         target_module,
