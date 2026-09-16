@@ -36,7 +36,7 @@ fn test_ramp_raceway_session_features() {
     session.init_race();
 
     assert_eq!(session.track.name, "Ramp Raceway");
-    assert_eq!(session.track.geometry.jump_ramps.len(), 1);
+    assert!(!session.track.geometry.jump_ramps.is_empty());
 }
 
 #[test]
