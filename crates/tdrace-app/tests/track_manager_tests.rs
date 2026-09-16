@@ -508,12 +508,14 @@ fn test_track_manager_tab_and_module_cycling() {
     active_tab = match active_tab {
         TrackManagerTab::Main => TrackManagerTab::Drafts,
         TrackManagerTab::Drafts => TrackManagerTab::Main,
+        TrackManagerTab::DevWorkbench => TrackManagerTab::Main,
     };
     assert_eq!(active_tab, TrackManagerTab::Drafts);
 
     active_tab = match active_tab {
         TrackManagerTab::Main => TrackManagerTab::Drafts,
         TrackManagerTab::Drafts => TrackManagerTab::Main,
+        TrackManagerTab::DevWorkbench => TrackManagerTab::Main,
     };
     assert_eq!(active_tab, TrackManagerTab::Main);
 

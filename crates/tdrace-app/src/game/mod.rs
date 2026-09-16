@@ -3707,10 +3707,20 @@ impl RaceSession {
 
                 if confirm_clicked || (is_confirmed && cursor_idx == 1) || is_key_pressed(KeyCode::Y) {
                     let tid = track_id.clone();
-                    let target_module = module_filter.id();
-                    let _ = self.track_manager.delete_track_from_module(&tid, target_module);
+                    let is_dev_workbench = crate::storage::is_dev_mode() && active_tab == TrackManagerTab::DevWorkbench;
+                    if is_dev_workbench {
+                        let target_module = module_filter.id();
+                        let _ = self.track_manager.delete_track_from_module(&tid, target_module);
+                    } else {
+                        let _ = self.track_manager.delete_custom_track(&tid);
+                    }
                     self.audio.play_sfx(SfxType::UiSelect);
-                    let list_len = self.track_manager.filtered_main_track_choices(module_filter).len();
+                    let list_len = if is_dev_workbench {
+                        self.track_manager.filtered_main_track_choices(module_filter).len()
+                    } else {
+                        let mod_id = module_filter.id().unwrap_or("classic");
+                        self.track_manager.module_custom_tracks(mod_id).len()
+                    };
                     if selected_idx >= list_len && list_len > 0 {
                         selected_idx = list_len - 1;
                     }
@@ -4130,26 +4140,56 @@ impl RaceSession {
             selected_idx = 0;
         }
 
-        // Re-evaluate list after potential module switch
-        let current_list = self.track_manager.filtered_main_track_choices(module_filter);
+        // Re-evaluate list after potential module switch:
+        // Player mode gets strictly custom tracks, Dev Workbench gets presets
+        let is_dev = crate::storage::is_dev_mode();
+        let is_dev_workbench = is_dev && active_tab == TrackManagerTab::DevWorkbench;
+
+        let current_list = if is_dev_workbench {
+            self.track_manager.filtered_main_track_choices(module_filter)
+        } else {
+            let mod_id = module_filter.id().unwrap_or("classic");
+            self.track_manager.module_custom_tracks(mod_id)
+        };
         let list_len = current_list.len();
 
         if list_len > 0 && selected_idx >= list_len {
             selected_idx = list_len.saturating_sub(1);
         }
 
+        // Toggle Dev Workbench via Ctrl+D or F12 (Developer Mode only)
+        let ctrl_down = is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper);
+
+        if is_dev && (is_key_pressed(KeyCode::F12) || (ctrl_down && is_key_pressed(KeyCode::D))) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let next_tab = if active_tab == TrackManagerTab::DevWorkbench {
+                TrackManagerTab::Main
+            } else {
+                TrackManagerTab::DevWorkbench
+            };
+            self.state = GameState::TrackManager {
+                active_tab: next_tab,
+                module_filter,
+                selected_idx: 0,
+                modal: TrackManagerModal::None,
+            };
+            return;
+        }
+
         // 3. Up/Down Track Selection or Dev-Mode Preset Reordering
-        let is_dev = crate::storage::is_dev_mode();
         let shift_or_alt = is_key_down(KeyCode::LeftShift)
             || is_key_down(KeyCode::RightShift)
             || is_key_down(KeyCode::LeftAlt)
             || is_key_down(KeyCode::RightAlt);
 
-        let want_reorder_up = is_dev
+        let want_reorder_up = is_dev_workbench
             && ((shift_or_alt && (is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W)))
                 || is_key_pressed(KeyCode::PageUp));
 
-        let want_reorder_down = is_dev
+        let want_reorder_down = is_dev_workbench
             && ((shift_or_alt && (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)))
                 || is_key_pressed(KeyCode::PageDown));
 
@@ -4204,13 +4244,16 @@ impl RaceSession {
             }
         }
 
-        // 4. Race Track (Enter / Space / Gamepad A / Confirm)
-        if is_key_pressed(KeyCode::Enter)
+        let is_confirm_pressed = is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
             || is_key_pressed(KeyCode::Space)
             || self.input.gamepad.snapshot.btn_confirm_pressed
-            || self.input.gamepad.snapshot.btn_a_pressed
-        {
+            || self.input.gamepad.snapshot.btn_a_pressed;
+
+        let is_edit_pressed = is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_x_pressed;
+
+        // 4. In Dev Workbench, Enter races track
+        if is_dev_workbench && is_confirm_pressed {
             if let Some(track_choice) = current_list.get(selected_idx).cloned() {
                 self.audio.play_sfx(SfxType::UiSelect);
                 self.track_choice = track_choice;
@@ -4219,8 +4262,8 @@ impl RaceSession {
             }
         }
 
-        // 5. Edit in Track Editor (E key / Gamepad X)
-        if is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_x_pressed {
+        // 5. Edit in Track Editor (Enter or E in My Circuits, or E in Dev Workbench)
+        if (!is_dev_workbench && (is_confirm_pressed || is_edit_pressed)) || (is_dev_workbench && is_edit_pressed) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
                 if track_choice.is_official_preset() {
@@ -4388,7 +4431,7 @@ impl RaceSession {
         if is_key_pressed(KeyCode::N) {
             self.audio.play_sfx(SfxType::UiSelect);
             let effective_module = module_filter.id().unwrap_or(self.active_module_id);
-            let count = self.track_manager.filtered_main_track_choices(module_filter).len() + 1;
+            let count = self.track_manager.module_custom_tracks(effective_module).len() + 1;
             let name = format!("Custom Track {}", count);
             let desc = format!("Custom circuit for {} module.", effective_module);
             let _ = self.track_manager.create_new_custom_track_with_template(
@@ -4398,7 +4441,7 @@ impl RaceSession {
                 tdrace_core::track::presets::TrackShape::Oval,
                 tdrace_core::track::presets::RaceDirection::Right,
             );
-            selected_idx = self.track_manager.filtered_main_track_choices(module_filter).len().saturating_sub(1);
+            selected_idx = self.track_manager.module_custom_tracks(effective_module).len().saturating_sub(1);
         }
 
         // 9. Edit Metadata (I key)
@@ -4426,8 +4469,8 @@ impl RaceSession {
             }
         }
 
-        // 10. Delete Track (Delete / Backspace / X key)
-        if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) || is_key_pressed(KeyCode::X) {
+        // 10. Delete Track (Delete / Backspace key)
+        if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) {
             if let Some(track_choice) = current_list.get(selected_idx) {
                 if track_choice.is_official_preset() && !crate::storage::is_dev_mode() {
                     self.audio.play_sfx(SfxType::UiMove);

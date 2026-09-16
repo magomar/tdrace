@@ -12,10 +12,12 @@ pub use crate::track_manager::{ModuleFilter, TrackManager};
 use crate::ui::menu::TrackChoice;
 
 /// Available category tabs in the Track Manager.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TrackManagerTab {
+    #[default]
     Main,
     Drafts,
+    DevWorkbench,
 }
 
 /// Modals that can be displayed as overlays in the Track Manager.
@@ -115,19 +117,37 @@ pub fn render_track_manager_screen(
     // Deep motorsport backdrop
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
 
-    // Header Title
-    let title = "MY CIRCUITS & TRACK LIBRARY";
+    let is_dev = crate::storage::is_dev_mode();
+    let is_dev_workbench = is_dev && active_tab == TrackManagerTab::DevWorkbench;
+
+    // Header Title & Subtitle based on role and active tab
+    let (title, subtitle) = if is_dev_workbench {
+        (
+            "DEV CIRCUIT WORKBENCH",
+            "Developer Mode • Manage Git Presets & Author Canonical Circuits • [Ctrl+D] My Circuits",
+        )
+    } else if is_dev {
+        (
+            "MY CIRCUITS [DEV ACTIVE]",
+            "Manage your custom racing circuits • [Ctrl+D] Dev Workbench • [Left / Right] Module",
+        )
+    } else {
+        (
+            "MY CIRCUITS",
+            "Browse and manage your custom racing circuits • [Left / Right] Motorsport Module",
+        )
+    };
+
     fonts.draw_display_centered_with_shadow(
         title,
         sw * 0.5,
         scaler.s(34.0),
         scaler.font_s(28.0),
-        Palette::NEON_GOLD,
+        if is_dev_workbench { Palette::NEON_GOLD } else { Palette::WHITE },
         Color::new(0.0, 0.0, 0.0, 0.6),
         scaler.s(2.0),
     );
 
-    let subtitle = "Browse and organize circuits across motorsport modules • [Left / Right] Switch Module";
     fonts.draw_ui_regular_centered(
         subtitle,
         sw * 0.5,
@@ -155,7 +175,11 @@ pub fn render_track_manager_screen(
     for (idx, filter) in filters.iter().enumerate() {
         let chip_x = box_x + scaler.s(12.0) + idx as f32 * (chip_w + spacing);
         let is_chip_active = *filter == module_filter;
-        let count = track_manager.filtered_main_track_choices(*filter).len();
+        let count = if is_dev_workbench {
+            track_manager.filtered_main_track_choices(*filter).len()
+        } else {
+            track_manager.module_custom_tracks(filter.id().unwrap_or("classic")).len()
+        };
 
         let chip_border = match filter {
             ModuleFilter::Classic => Palette::NEON_CYAN,
@@ -200,8 +224,12 @@ pub fn render_track_manager_screen(
     let col1_x = box_x + scaler.s(12.0);
     let col2_x = col1_x + col1_w + scaler.s(12.0);
 
-    // Get current tracks for active module filter
-    let tracks_list = track_manager.filtered_main_track_choices(module_filter);
+    // Get current tracks for active view: Player sees strictly custom tracks, Dev Workbench sees presets
+    let tracks_list = if is_dev_workbench {
+        track_manager.filtered_main_track_choices(module_filter)
+    } else {
+        track_manager.module_custom_tracks(module_filter.id().unwrap_or("classic"))
+    };
 
     // --- LEFT COLUMN: TRACK LIST ---
     scaler.draw_glass_card(col1_x, content_y, col1_w, content_h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.2);
@@ -211,13 +239,30 @@ pub fn render_track_manager_screen(
     let item_h = scaler.s(60.0);
 
     if tracks_list.is_empty() {
-        fonts.draw_ui_regular(
-            "No tracks found for this module.\nPress [N] to create a new circuit or [C] to clone a track!",
-            col1_x + scaler.s(16.0),
-            content_y + scaler.s(40.0),
-            scaler.font_s(13.0),
-            Palette::UI_TEXT_MUTED,
-        );
+        if is_dev_workbench {
+            fonts.draw_ui_regular(
+                "No preset circuits found for this module.",
+                col1_x + scaler.s(16.0),
+                content_y + scaler.s(40.0),
+                scaler.font_s(13.0),
+                Palette::UI_TEXT_MUTED,
+            );
+        } else {
+            fonts.draw_ui_bold(
+                "NO CUSTOM CIRCUITS SAVED",
+                col1_x + scaler.s(16.0),
+                content_y + scaler.s(36.0),
+                scaler.font_s(14.0),
+                Palette::WHITE,
+            );
+            fonts.draw_ui_regular(
+                "No custom tracks saved for this module.\n\nPress [N] to create a new circuit from template\nor [Esc] to return to Race Menu.",
+                col1_x + scaler.s(16.0),
+                content_y + scaler.s(60.0),
+                scaler.font_s(12.0),
+                Palette::UI_TEXT_MUTED,
+            );
+        }
     } else {
         // Scroll / Windowing if more than fits
         let visible_items = 6;
@@ -468,13 +513,12 @@ pub fn render_track_manager_screen(
         d_y = grid_y2 + card_h + scaler.s(12.0);
 
         // Category Status Explanation Box
-        let is_dev = crate::storage::is_dev_mode();
         let is_preset = selected_track.is_official_preset();
 
         let (expl_text, expl_bg, expl_border) = if is_preset {
             if is_dev {
                 (
-                    "Built-in official preset circuit. [DEV] [Shift+Up/Down] Reorder • [P] Demote to Custom • [Ctrl+P] Categories • [C] Clone",
+                    "Built-in official preset circuit. [DEV] [Shift+Up/Down] Reorder • [P] Demote • [Ctrl+P] Categories • [C] Clone",
                     Color::new(0.20, 0.16, 0.05, 0.80),
                     Palette::NEON_GOLD,
                 )
@@ -488,13 +532,13 @@ pub fn render_track_manager_screen(
         } else {
             if is_dev {
                 (
-                    "Custom circuit. [P] Promote to Preset • [Ctrl+P] Assign Categories • [E] Studio • [C] Clone",
+                    "Custom circuit. [P] Promote to Git Preset • [E] Studio • [C] Clone • [I] Rename • [Delete] Delete",
                     Color::new(0.08, 0.18, 0.12, 0.70),
                     Palette::NEON_GREEN,
                 )
             } else {
                 (
-                    "Custom circuit. Press [Ctrl+P] to assign categories, [E] to edit in Studio, or [C] to clone.",
+                    "User custom circuit. [Enter / E] Edit in Studio • [C] Clone • [I] Rename • [Delete] Delete",
                     Color::new(0.08, 0.18, 0.12, 0.70),
                     Palette::NEON_GREEN,
                 )
@@ -508,31 +552,51 @@ pub fn render_track_manager_screen(
             scaler.font_s(11.5),
             Palette::WHITE,
         );
+    } else {
+        let pad_x = col2_x + scaler.s(18.0);
+        let mut d_y = content_y + scaler.s(24.0);
+
+        fonts.draw_ui_bold(
+            if is_dev_workbench { "DEV PRESET REPOSITORY" } else { "CIRCUIT STUDIO & WORKSHOP" },
+            pad_x,
+            d_y,
+            scaler.font_s(18.0),
+            Palette::NEON_GOLD,
+        );
+        d_y += scaler.s(26.0);
+
+        fonts.draw_ui_regular(
+            if is_dev_workbench {
+                "Canonical git-tracked presets are stored under tracks/<module>/*.json.\nUse [P] on custom circuits to promote them to official presets."
+            } else {
+                "Create, edit, and race custom circuits with spline geometry,\nsurface painting (asphalt, dirt, ice, sand), and jump ramps.\n\nPress [N] to generate a new circuit from template."
+            },
+            pad_x,
+            d_y,
+            scaler.font_s(12.5),
+            Palette::WHITE,
+        );
     }
 
     // Bottom Action Prompt Bar
     let bar_y = sh - scaler.s(32.0);
-    let is_dev = crate::storage::is_dev_mode();
-    let action_str = if let Some(choice) = tracks_list.get(selected_idx) {
-        if choice.is_official_preset() {
-            if is_dev {
-                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [Shift+Up/Down] REORDER | [E] STUDIO | [C] CLONE | [P] DEMOTE TO CUSTOM | [Ctrl+P] ASSIGN CATEGORIES | [I] EDIT INFO | [Backspace] DELETE | [Esc] BACK"
-            } else {
-                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] CLONE & EDIT | [C] CLONE | [Esc] BACK"
-            }
+    let action_str = if is_dev_workbench {
+        if tracks_list.is_empty() {
+            "[Left/Right] SWITCH MODULE | [Ctrl+D] MY CIRCUITS | [Esc] BACK".to_string()
         } else {
-            if is_dev {
-                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [P] PROMOTE TO PRESET | [Ctrl+P] ASSIGN CATEGORIES | [I] EDIT INFO | [N] NEW CIRCUIT | [Backspace] DELETE | [Esc] BACK"
-            } else {
-                "[Enter] RACE | [Left/Right] SWITCH CATEGORY | [Up/Down] SELECT | [E] STUDIO | [C] CLONE | [Ctrl+P] ASSIGN CATEGORIES | [I] EDIT INFO | [N] NEW CIRCUIT | [Backspace] DELETE | [Esc] BACK"
-            }
+            "[Enter] RACE | [Shift+Up/Down] REORDER | [E] STUDIO | [C] CLONE | [P] DEMOTE | [Ctrl+P] CATEGORIES | [I] EDIT INFO | [Ctrl+D] MY CIRCUITS | [Esc] BACK".to_string()
         }
     } else {
-        "[Left/Right] SWITCH CATEGORY | [N] NEW CIRCUIT | [Esc] BACK"
+        let dev_suffix = if is_dev { " | [Ctrl+D] DEV WORKBENCH" } else { "" };
+        if tracks_list.is_empty() {
+            format!("[Left/Right] SWITCH MODULE | [N] NEW CIRCUIT | [Esc] BACK{}", dev_suffix)
+        } else {
+            format!("[Enter / E] EDIT | [C] CLONE | [N] NEW CIRCUIT | [I] RENAME | [Delete] DELETE | [Esc] BACK{}", dev_suffix)
+        }
     };
 
     fonts.draw_ui_bold_centered(
-        action_str,
+        &action_str,
         sw * 0.5,
         bar_y,
         scaler.font_s(12.0),
@@ -675,25 +739,35 @@ fn render_delete_modal(
     sw: f32,
     sh: f32,
     track_title: &str,
-    _active_tab: TrackManagerTab,
+    active_tab: TrackManagerTab,
     module_filter: ModuleFilter,
     cursor_idx: usize,
 ) {
     let _ = (sw, sh);
 
-    let mod_id = module_filter.id().unwrap_or("classic");
-    let mod_name = match mod_id {
-        "classic" => "Classic",
-        "rally" => "Rally Cross",
-        "kart" => "Karting",
-        "gt" | "gt_challenge" | "f1" => "GT World Challenge",
-        "nascar" => "NASCAR Cup",
-        _ => mod_id,
+    let (title_text, confirm_msg) = if active_tab == TrackManagerTab::DevWorkbench {
+        let mod_id = module_filter.id().unwrap_or("classic");
+        let mod_name = match mod_id {
+            "classic" => "Classic",
+            "rally" => "Rally Cross",
+            "kart" => "Karting",
+            "gt" | "gt_challenge" | "f1" => "GT World Challenge",
+            "nascar" => "NASCAR Cup",
+            _ => mod_id,
+        };
+        (
+            format!("REMOVE FROM {}", mod_name.to_uppercase()),
+            format!("Are you sure you want to remove\n\"{}\"\nfrom the {} module?", track_title, mod_name),
+        )
+    } else {
+        (
+            format!("DELETE \"{}\"", track_title.to_uppercase()),
+            format!("Are you sure you want to delete this circuit?\n\"{}\"\n\nA safe backup snapshot will be archived in .backup/", track_title),
+        )
     };
-    let title_text = format!("REMOVE FROM {}", mod_name.to_uppercase());
-    let confirm_msg = format!("Are you sure you want to remove\n\"{}\"\nfrom the {} module?", track_title, mod_name);
+
     let mut modal = UniversalConfirmModal::new(title_text, confirm_msg)
-        .with_labels("YES, REMOVE", "CANCEL")
+        .with_labels("YES, DELETE", "CANCEL")
         .with_accent(Palette::RED);
     modal.nav.set_focus(cursor_idx, 0);
     let theme = CabinetTheme::cyberpunk_neon();
