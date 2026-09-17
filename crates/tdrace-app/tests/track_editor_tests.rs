@@ -9,9 +9,10 @@ use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::track_manager::{ModuleFilter, TrackManager};
 use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
 use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
+use tdrace_core::collision::wall::resolve_all_wall_collisions;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, SurfaceShape, SurfaceZone};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, SurfaceShape, SurfaceZone, WallBarrier};
 use tdrace_core::track::presets::{
     classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
     ramp_raceway,
@@ -2413,13 +2414,15 @@ fn test_martinsville_clone_road_split_and_infield_short_course() {
     let eg_sock_split_0 = SplineSocket::new(split_pt, Vec2::new(1.0, 0.0), 16.0);
     let branch_in_tangent = Vec2::new(0.866, 0.5).normalize();
     let eg_sock_split_1 = SplineSocket::new(Vec2::new(30.0, -32.0), branch_in_tangent, 14.0);
-    let gore = GoreConfig::new(split_pt, 30.0, 15.0, BarrierType::TireWall);
+    let gore_apex = Vec2::new(45.4, -27.0);
+    let mut gore = GoreConfig::new(gore_apex, 30.0, 15.0, BarrierType::TireWall);
+    gore.nose_barrier = WallBarrier::new(Vec2::new(45.0, -27.2), Vec2::new(45.8, -26.8), BarrierType::TireWall);
     let split_j = RoadJunction::split(
         split_jid,
         "Backstretch Infield Split",
         in_sock_split,
         vec![eg_sock_split_0, eg_sock_split_1],
-        Some(gore),
+        Some(gore.clone()),
     );
 
     let merge_jid = JunctionId(2);
@@ -2542,13 +2545,21 @@ fn test_martinsville_clone_road_split_and_infield_short_course() {
         track.checkpoints.push(cp8);
     }
 
-    // 7. Prune inner walls that cross the split and merge openings
-    track.geometry.inner_walls.retain(|wall| {
-        let mid = (wall.segment.start + wall.segment.end) * 0.5;
-        let in_split_opening = mid.x >= 22.0 && mid.x <= 42.0 && mid.y < 0.0;
-        let in_merge_opening = mid.x >= 42.0 && mid.x <= 62.0 && mid.y > 0.0;
-        !in_split_opening && !in_merge_opening
-    });
+    // 7. Prune inner walls that cross the split and merge openings using automated network trimming
+    track.trim_walls_for_network();
+    track.geometry.inner_walls.push(gore.nose_barrier);
+
+    // Verify zero wall collisions when driving through the split entrance and along the infield shortcut
+    let seg2_samples = &track.network.as_ref().unwrap().segments[2].samples;
+    for (idx, sample) in seg2_samples.iter().enumerate().step_by(4) {
+        let mut car_test = Car::new(CarConfig::stock_car_ta1()).with_pose(sample.point, sample.tangent.y.atan2(sample.tangent.x));
+        let hits = resolve_all_wall_collisions(&mut car_test, &track.geometry.inner_walls, &[]);
+        assert!(
+            hits.is_empty(),
+            "Collision detected with inner wall at sample {} pt {:?}: {:?}",
+            idx, sample.point, hits
+        );
+    }
 
     // 8. Verify AI navigation across the split
     let mut bot_main = BotAiDriver::new(BotProfile::pro())
@@ -2581,6 +2592,69 @@ fn test_martinsville_clone_road_split_and_infield_short_course() {
         assert_eq!(net.segments.len(), 3);
         assert_eq!(net.layouts[0].id, "main");
         assert_eq!(net.layouts[1].id, "infield_short");
+
+        // Verify zero wall collisions on reloaded track along the shortcut
+        for (idx, sample) in reloaded.network.as_ref().unwrap().segments[2].samples.iter().enumerate().step_by(4) {
+            let mut car_test = Car::new(CarConfig::stock_car_ta1()).with_pose(sample.point, sample.tangent.y.atan2(sample.tangent.x));
+            let hits = resolve_all_wall_collisions(&mut car_test, &reloaded.geometry.inner_walls, &[]);
+            assert!(
+                hits.is_empty(),
+                "Collision detected on reloaded track at sample {} pt {:?}: {:?}",
+                idx, sample.point, hits
+            );
+        }
+
+        // Verify surface sampling along the shortcut: all wheels and center must be Asphalt/Curb, never Grass
+        for (idx, sample) in reloaded.network.as_ref().unwrap().segments[2].samples.iter().enumerate().step_by(2) {
+            let car_test = Car::new(CarConfig::stock_car_ta1()).with_pose(sample.point, sample.tangent.y.atan2(sample.tangent.x));
+
+            // 1. Direct surface sample
+            let surf = reloaded.sample_surface(sample.point);
+            assert_eq!(
+                surf,
+                SurfaceType::Asphalt,
+                "Sample {} at {:?} must be Asphalt, got {:?}",
+                idx, sample.point, surf
+            );
+
+            // 2. Hinted surface sample (as used by physics loop)
+            let surf_near = reloaded.sample_surface_near(sample.point, 0.0);
+            assert_eq!(
+                surf_near,
+                SurfaceType::Asphalt,
+                "Sample_near {} at {:?} must be Asphalt, got {:?}",
+                idx, sample.point, surf_near
+            );
+
+            // 3. Four-wheel surface sampling
+            let wheel_surfs = reloaded.sample_car_surfaces(&car_test);
+            for (w_idx, &w_surf) in wheel_surfs.iter().enumerate() {
+                assert!(
+                    w_surf == SurfaceType::Asphalt || w_surf == SurfaceType::Curb,
+                    "Wheel {} of car at sample {} {:?} must be Asphalt or Curb, got {:?}",
+                    w_idx, idx, sample.point, w_surf
+                );
+            }
+
+            // 4. Four-wheel surface sampling with hint (actual in-game physics query)
+            let wheel_surfs_hint = reloaded.sample_car_surfaces_with_hint(&car_test, 0.0);
+            for (w_idx, &w_surf) in wheel_surfs_hint.iter().enumerate() {
+                assert!(
+                    w_surf == SurfaceType::Asphalt || w_surf == SurfaceType::Curb,
+                    "Wheel hint {} of car at sample {} {:?} must be Asphalt or Curb, got {:?}",
+                    w_idx, idx, sample.point, w_surf
+                );
+            }
+
+            // 5. Track project_point_near
+            let proj = reloaded.project_point_near(sample.point, 0.0);
+            assert!(
+                proj.is_on_track,
+                "Car at sample {} {:?} must be on track according to project_point_near",
+                idx, sample.point
+            );
+        }
+
         println!("Successfully updated martinsville_speedway_clone.json with road split and infield short course!");
         println!("Oval distance: {:.1}m, Infield Short Course distance: {:.1}m", len_main, len_short);
     }

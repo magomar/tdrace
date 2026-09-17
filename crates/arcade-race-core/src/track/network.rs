@@ -1021,6 +1021,93 @@ impl TrackNetwork {
             Err(errors)
         }
     }
+
+    /// Samples surface type at a 2D world point across all road segments and junction throat/gore areas.
+    pub fn sample_surface(&self, point: Vec2) -> Option<SurfaceType> {
+        // 1. Check road segments (drivable ribbon and curbs)
+        for seg in &self.segments {
+            if seg.samples.len() >= 2 {
+                let seg_proj = seg.project_point(point);
+                if seg_proj.is_on_track {
+                    return Some(seg_proj.base_surface);
+                }
+                if seg_proj.is_on_curb {
+                    return Some(SurfaceType::Curb);
+                }
+            }
+        }
+
+        // 2. Check junction throat polygons & gore triangles
+        for junction in &self.junctions {
+            match &junction.kind {
+                JunctionKind::Split {
+                    ingress_socket,
+                    egress_sockets,
+                    gore_config,
+                } => {
+                    if egress_sockets.len() >= 2 {
+                        let in_l = ingress_socket.left_edge();
+                        let in_r = ingress_socket.right_edge();
+                        let e0_l = egress_sockets[0].left_edge();
+                        let e0_r = egress_sockets[0].right_edge();
+                        let e1_l = egress_sockets[1].left_edge();
+                        let e1_r = egress_sockets[1].right_edge();
+
+                        if point_in_triangle_2d(point, in_l, e0_l, e1_l)
+                            || point_in_triangle_2d(point, in_r, e0_r, e1_r)
+                            || point_in_quad_2d(point, in_l, in_r, e0_r, e0_l)
+                            || point_in_quad_2d(point, in_l, in_r, e1_r, e1_l)
+                        {
+                            return Some(ingress_socket.surface);
+                        }
+                    }
+                    if let Some(gore) = gore_config {
+                        let p_apex = gore.apex_point;
+                        let v0 = egress_sockets.get(0).map_or(ingress_socket.tangent, |s| s.tangent);
+                        let v1 = egress_sockets.get(1).map_or(ingress_socket.tangent, |s| s.tangent);
+                        let gore_len = gore.gore_length.max(6.0);
+                        let p0 = p_apex + v0 * gore_len;
+                        let p1 = p_apex + v1 * gore_len;
+                        if point_in_triangle_2d(point, p_apex, p0, p1) {
+                            return Some(SurfaceType::Asphalt);
+                        }
+                    }
+                }
+                JunctionKind::Merge {
+                    ingress_sockets,
+                    egress_socket,
+                    ..
+                } => {
+                    let eg_l = egress_socket.left_edge();
+                    let eg_r = egress_socket.right_edge();
+                    for in_sock in ingress_sockets {
+                        let in_l = in_sock.left_edge();
+                        let in_r = in_sock.right_edge();
+                        if point_in_quad_2d(point, in_l, in_r, eg_r, eg_l) {
+                            return Some(egress_socket.surface);
+                        }
+                    }
+                }
+                JunctionKind::Terminal { .. } => {}
+            }
+        }
+
+        None
+    }
+}
+
+#[inline]
+fn point_in_triangle_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> bool {
+    let cross1 = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+    let cross2 = (c.x - b.x) * (p.y - b.y) - (c.y - b.y) * (p.x - b.x);
+    let cross3 = (a.x - c.x) * (p.y - c.y) - (a.y - c.y) * (p.x - c.x);
+    (cross1 >= -1e-3 && cross2 >= -1e-3 && cross3 >= -1e-3)
+        || (cross1 <= 1e-3 && cross2 <= 1e-3 && cross3 <= 1e-3)
+}
+
+#[inline]
+fn point_in_quad_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> bool {
+    point_in_triangle_2d(p, a, b, c) || point_in_triangle_2d(p, a, c, d)
 }
 
 impl Default for TrackNetwork {

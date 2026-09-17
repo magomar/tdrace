@@ -3,9 +3,11 @@ use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangl
 use glam::Vec2;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{SurfaceLayer, SurfaceShape};
+use tdrace_core::track::network::{JunctionKind, RoadSegment};
 use tdrace_core::track::spline::{SplineSample, TrackSpline};
 use tdrace_core::track::Track;
 
+use super::barrier;
 use super::color::Palette;
 
 #[inline]
@@ -49,18 +51,63 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
     }
 
     // 3. Render ground curbs and ground surface quads
-    render_curbs_pass(&track.spline, false, view_bounds);
-    render_surface_pass(&track.spline, false, view_bounds);
-
-    // 3b. Render network branch segments if present
     if let Some(ref net) = track.network {
+        let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
+        let main_suppressions = compute_segment_edge_suppressions(
+            &track.spline.samples,
+            track.spline.closed,
+            &branch_segs,
+            None,
+        );
+
+        render_samples_curbs_filtered(
+            &track.spline.samples,
+            track.spline.closed,
+            false,
+            view_bounds,
+            Some(&main_suppressions),
+        );
+        render_samples_surface_filtered(
+            &track.spline.samples,
+            track.spline.closed,
+            false,
+            view_bounds,
+            Some(&main_suppressions),
+        );
+
         for seg in &net.segments {
             if seg.id.0 != 0 && seg.samples.len() >= 2 {
-                render_samples_curbs(&seg.samples, false, false, view_bounds);
-                render_samples_surface(&seg.samples, false, false, view_bounds);
+                let other_branches: Vec<&RoadSegment> =
+                    net.segments.iter().filter(|s| s.id != seg.id).collect();
+                let branch_suppressions = compute_segment_edge_suppressions(
+                    &seg.samples,
+                    false,
+                    &other_branches,
+                    Some(&track.spline),
+                );
+                render_samples_curbs_filtered(
+                    &seg.samples,
+                    false,
+                    false,
+                    view_bounds,
+                    Some(&branch_suppressions),
+                );
+                render_samples_surface_filtered(
+                    &seg.samples,
+                    false,
+                    false,
+                    view_bounds,
+                    Some(&branch_suppressions),
+                );
             }
         }
+    } else {
+        render_curbs_pass(&track.spline, false, view_bounds);
+        render_surface_pass(&track.spline, false, view_bounds);
     }
+
+    // 3b. Render network junctions (paved throat wedges, gore triangles, chevrons, nose attenuators)
+    render_network_junctions_pass(track, false, view_bounds);
 
     // 4. Render on-top surface zones (AboveTrack: water puddles, oil slicks, sand/grass/dirt overlays)
     render_surface_zones_layer(track, SurfaceLayer::AboveTrack);
@@ -88,17 +135,63 @@ pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Ve
         });
     if has_elevated {
         render_bridge_structure_pass(&track.spline, view_bounds);
-        render_curbs_pass(&track.spline, true, view_bounds);
-        render_surface_pass(&track.spline, true, view_bounds);
 
         if let Some(ref net) = track.network {
+            let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
+            let main_suppressions = compute_segment_edge_suppressions(
+                &track.spline.samples,
+                track.spline.closed,
+                &branch_segs,
+                None,
+            );
+
+            render_samples_curbs_filtered(
+                &track.spline.samples,
+                track.spline.closed,
+                true,
+                view_bounds,
+                Some(&main_suppressions),
+            );
+            render_samples_surface_filtered(
+                &track.spline.samples,
+                track.spline.closed,
+                true,
+                view_bounds,
+                Some(&main_suppressions),
+            );
+
             for seg in &net.segments {
                 if seg.id.0 != 0 && seg.samples.len() >= 2 {
-                    render_samples_curbs(&seg.samples, false, true, view_bounds);
-                    render_samples_surface(&seg.samples, false, true, view_bounds);
+                    let other_branches: Vec<&RoadSegment> =
+                        net.segments.iter().filter(|s| s.id != seg.id).collect();
+                    let branch_suppressions = compute_segment_edge_suppressions(
+                        &seg.samples,
+                        false,
+                        &other_branches,
+                        Some(&track.spline),
+                    );
+                    render_samples_curbs_filtered(
+                        &seg.samples,
+                        false,
+                        true,
+                        view_bounds,
+                        Some(&branch_suppressions),
+                    );
+                    render_samples_surface_filtered(
+                        &seg.samples,
+                        false,
+                        true,
+                        view_bounds,
+                        Some(&branch_suppressions),
+                    );
                 }
             }
+        } else {
+            render_curbs_pass(&track.spline, true, view_bounds);
+            render_surface_pass(&track.spline, true, view_bounds);
         }
+
+        render_network_junctions_pass(track, true, view_bounds);
     }
 }
 
@@ -434,12 +527,96 @@ fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2,
     }
 }
 
-/// Draws curb rumble strips for either ground or elevated bridge segments.
+/// Flags indicating if outer/inner road edge boundaries are suppressed (e.g. inside a junction mouth).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct EdgeSuppression {
+    pub suppress_left: bool,
+    pub suppress_right: bool,
+}
+
+/// Computes edge suppression masks for a segment against other segments/splines to prevent boundary lines
+/// and curbs from slicing across open junction throats.
+pub fn compute_segment_edge_suppressions(
+    samples: &[SplineSample],
+    closed: bool,
+    other_segments: &[&RoadSegment],
+    other_spline: Option<&TrackSpline>,
+) -> Vec<EdgeSuppression> {
+    let n = samples.len();
+    if n < 2 {
+        return Vec::new();
+    }
+    let seg_count = if closed { n } else { n - 1 };
+    let mut suppressions = Vec::with_capacity(seg_count);
+
+    for i in 0..seg_count {
+        let s0 = &samples[i];
+        let s1 = &samples[(i + 1) % n];
+
+        let hw0 = s0.width * 0.5;
+        let hw1 = s1.width * 0.5;
+
+        let left0 = s0.point + s0.normal * hw0;
+        let left1 = s1.point + s1.normal * hw1;
+        let right0 = s0.point - s0.normal * hw0;
+        let right1 = s1.point - s1.normal * hw1;
+
+        let left_mid = (left0 + left1) * 0.5;
+        let right_mid = (right0 + right1) * 0.5;
+        let elev = (s0.elevation + s1.elevation) * 0.5;
+
+        let is_in_ribbon = |pt: Vec2| -> bool {
+            if let Some(sp) = other_spline {
+                if sp.samples.len() >= 2 {
+                    let proj = sp.project_point(pt);
+                    if (elev - proj.elevation).abs() < 1.5 {
+                        let half_w = proj.track_width * 0.5;
+                        if proj.lateral_offset.abs() < (half_w - 0.25) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            for o_seg in other_segments {
+                if o_seg.samples.len() >= 2 {
+                    let proj = o_seg.project_point(pt);
+                    if (elev - proj.elevation).abs() < 1.5 {
+                        let half_w = proj.track_width * 0.5;
+                        if proj.lateral_offset.abs() < (half_w - 0.25) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            false
+        };
+
+        suppressions.push(EdgeSuppression {
+            suppress_left: is_in_ribbon(left_mid),
+            suppress_right: is_in_ribbon(right_mid),
+        });
+    }
+
+    suppressions
+}
+
+/// Draws curb rumble strips for either ground or elevated bridge segments with optional edge suppression.
 pub fn render_samples_curbs(
     samples: &[SplineSample],
     closed: bool,
     elevated: bool,
     view_bounds: Option<(Vec2, Vec2)>,
+) {
+    render_samples_curbs_filtered(samples, closed, elevated, view_bounds, None);
+}
+
+/// Draws curb rumble strips with edge suppression across open junction throats.
+pub fn render_samples_curbs_filtered(
+    samples: &[SplineSample],
+    closed: bool,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+    suppressions: Option<&[EdgeSuppression]>,
 ) {
     let n = samples.len();
     if n < 2 {
@@ -456,6 +633,9 @@ pub fn render_samples_curbs(
             continue;
         }
 
+        let supp_l = suppressions.map_or(false, |s| s.get(i).map_or(false, |m| m.suppress_left));
+        let supp_r = suppressions.map_or(false, |s| s.get(i).map_or(false, |m| m.suppress_right));
+
         let stripe_idx = (s0.distance / 1.5).floor() as usize;
         let curb_color = if stripe_idx.is_multiple_of(2) {
             Palette::CURB_RED
@@ -464,7 +644,7 @@ pub fn render_samples_curbs(
         };
 
         // Left curb
-        if s0.left_curb || s1.left_curb {
+        if !supp_l && (s0.left_curb || s1.left_curb) {
             let hw0 = s0.width * 0.5;
             let hw1 = s1.width * 0.5;
             let p0_inner = s0.point + s0.normal * hw0;
@@ -476,7 +656,7 @@ pub fn render_samples_curbs(
         }
 
         // Right curb
-        if s0.right_curb || s1.right_curb {
+        if !supp_r && (s0.right_curb || s1.right_curb) {
             let hw0 = s0.width * 0.5;
             let hw1 = s1.width * 0.5;
             let p0_inner = s0.point - s0.normal * hw0;
@@ -500,6 +680,17 @@ pub fn render_samples_surface(
     elevated: bool,
     view_bounds: Option<(Vec2, Vec2)>,
 ) {
+    render_samples_surface_filtered(samples, closed, elevated, view_bounds, None);
+}
+
+/// Draws track surface quads with boundary line suppression across open junction throats.
+pub fn render_samples_surface_filtered(
+    samples: &[SplineSample],
+    closed: bool,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+    suppressions: Option<&[EdgeSuppression]>,
+) {
     let n = samples.len();
     if n < 2 {
         return;
@@ -513,6 +704,9 @@ pub fn render_samples_surface(
         if is_seg_elevated != elevated || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
+
+        let supp_l = suppressions.map_or(false, |s| s.get(i).map_or(false, |m| m.suppress_left));
+        let supp_r = suppressions.map_or(false, |s| s.get(i).map_or(false, |m| m.suppress_right));
 
         let hw0 = s0.width * 0.5;
         let hw1 = s1.width * 0.5;
@@ -546,29 +740,34 @@ pub fn render_samples_surface(
         match s0.surface {
             SurfaceType::Dirt => {
                 if is_banked {
-                    // Split dirt into 3 gradient bands across banking (low apron, mid slide, high cushion)
                     let mid_l0 = s0.point + s0.normal * (hw0 * 0.30);
                     let mid_l1 = s1.point + s1.normal * (hw1 * 0.30);
                     let mid_r0 = s0.point - s0.normal * (hw0 * 0.30);
                     let mid_r1 = s1.point - s1.normal * (hw1 * 0.30);
 
                     if avg_bank > 0.0 {
-                        // Banked left: left is lower (moist bottom groove), right is higher (dry top cushion)
                         draw_quad(left0, left1, mid_l1, mid_l0, Palette::DIRT_DARK);
                         draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::DIRT);
                         draw_quad(mid_r0, mid_r1, right1, right0, Color::new(0.60, 0.44, 0.28, 1.0));
                     } else {
-                        // Banked right: right is lower, left is higher
                         draw_quad(left0, left1, mid_l1, mid_l0, Color::new(0.60, 0.44, 0.28, 1.0));
                         draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::DIRT);
                         draw_quad(mid_r0, mid_r1, right1, right0, Palette::DIRT_DARK);
                     }
-                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
-                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
+                    if !supp_l {
+                        draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
+                    }
+                    if !supp_r {
+                        draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
+                    }
                 } else {
                     draw_quad(left0, left1, right1, right0, Palette::DIRT);
-                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
-                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
+                    if !supp_l {
+                        draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::DIRT_EDGE);
+                    }
+                    if !supp_r {
+                        draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::DIRT_EDGE);
+                    }
 
                     let groove_l0 = s0.point + s0.normal * (hw0 * 0.45);
                     let groove_l1 = s1.point + s1.normal * (hw1 * 0.45);
@@ -581,42 +780,60 @@ pub fn render_samples_surface(
             }
             SurfaceType::Sand => {
                 draw_quad(left0, left1, right1, right0, Palette::SAND);
-                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::SAND_DARK);
-                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::SAND_DARK);
+                if !supp_l {
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::SAND_DARK);
+                }
+                if !supp_r {
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::SAND_DARK);
+                }
             }
             SurfaceType::Grass => {
                 draw_quad(left0, left1, right1, right0, Palette::GRASS_DARK);
-                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::GRASS);
-                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::GRASS);
+                if !supp_l {
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::GRASS);
+                }
+                if !supp_r {
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::GRASS);
+                }
             }
             SurfaceType::Ice => {
                 draw_quad(left0, left1, right1, right0, Color::new(0.85, 0.92, 0.98, 0.95));
-                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Color::new(0.65, 0.82, 0.95, 0.8));
-                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Color::new(0.65, 0.82, 0.95, 0.8));
+                if !supp_l {
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Color::new(0.65, 0.82, 0.95, 0.8));
+                }
+                if !supp_r {
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Color::new(0.65, 0.82, 0.95, 0.8));
+                }
             }
             SurfaceType::Water => {
                 draw_quad(left0, left1, right1, right0, Palette::WATER);
-                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::WATER_BORDER);
-                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::WATER_BORDER);
+                if !supp_l {
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::WATER_BORDER);
+                }
+                if !supp_r {
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::WATER_BORDER);
+                }
             }
             SurfaceType::Oil => {
                 draw_quad(left0, left1, right1, right0, Color::new(0.12, 0.12, 0.15, 0.95));
-                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Color::new(0.35, 0.25, 0.40, 0.85));
-                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Color::new(0.35, 0.25, 0.40, 0.85));
+                if !supp_l {
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Color::new(0.35, 0.25, 0.40, 0.85));
+                }
+                if !supp_r {
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Color::new(0.35, 0.25, 0.40, 0.85));
+                }
             }
             SurfaceType::Curb => {
                 draw_quad(left0, left1, right1, right0, Palette::CURB_RED);
             }
             SurfaceType::Asphalt => {
                 if is_banked {
-                    // Split asphalt into 3 gradient lighting bands across banking
                     let mid_l0 = s0.point + s0.normal * (hw0 * 0.33);
                     let mid_l1 = s1.point + s1.normal * (hw1 * 0.33);
                     let mid_r0 = s0.point - s0.normal * (hw0 * 0.33);
                     let mid_r1 = s1.point - s1.normal * (hw1 * 0.33);
 
                     if avg_bank > 0.0 {
-                        // Left is lower apron, right is higher wall rim
                         draw_quad(left0, left1, mid_l1, mid_l0, Color::new(0.12, 0.13, 0.16, 1.0));
                         draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::ASPHALT);
                         draw_quad(mid_r0, mid_r1, right1, right0, Color::new(0.24, 0.25, 0.29, 1.0));
@@ -625,16 +842,24 @@ pub fn render_samples_surface(
                         draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::ASPHALT);
                         draw_quad(mid_r0, mid_r1, right1, right0, Color::new(0.12, 0.13, 0.16, 1.0));
                     }
-                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
-                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+                    if !supp_l {
+                        draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+                    }
+                    if !supp_r {
+                        draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+                    }
 
                     // High-speed racing lane seam lines along banking
                     draw_line(mid_l0.x, mid_l0.y, mid_l1.x, mid_l1.y, 0.12, Color::new(0.40, 0.42, 0.46, 0.4));
                     draw_line(mid_r0.x, mid_r0.y, mid_r1.x, mid_r1.y, 0.12, Color::new(0.40, 0.42, 0.46, 0.4));
                 } else {
                     draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
-                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
-                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+                    if !supp_l {
+                        draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+                    }
+                    if !supp_r {
+                        draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+                    }
 
                     let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
                     if center_stripe {
@@ -655,6 +880,127 @@ pub fn render_samples_surface(
 
 fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
     render_samples_surface(&spline.samples, spline.closed, elevated, view_bounds);
+}
+
+/// Renders network junction geometry: paved throat wedges, gore triangles, painted chevrons, and nose crash cushions.
+pub fn render_network_junctions_pass(
+    track: &Track,
+    elevated: bool,
+    _view_bounds: Option<(Vec2, Vec2)>,
+) {
+    let Some(ref net) = track.network else { return; };
+
+    for junction in &net.junctions {
+        match &junction.kind {
+            JunctionKind::Split {
+                ingress_socket,
+                egress_sockets,
+                gore_config,
+            } => {
+                let is_junc_elev = ingress_socket.elevation >= 0.6;
+                if is_junc_elev != elevated {
+                    continue;
+                }
+
+                // 1. Paved Bifurcation Throat Wedge
+                if egress_sockets.len() >= 2 {
+                    let in_l = ingress_socket.left_edge();
+                    let in_r = ingress_socket.right_edge();
+                    let e0_l = egress_sockets[0].left_edge();
+                    let e0_r = egress_sockets[0].right_edge();
+                    let e1_l = egress_sockets[1].left_edge();
+                    let e1_r = egress_sockets[1].right_edge();
+
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(in_l.x, in_l.y),
+                        macroquad::prelude::Vec2::new(e0_l.x, e0_l.y),
+                        macroquad::prelude::Vec2::new(e1_l.x, e1_l.y),
+                        Palette::ASPHALT,
+                    );
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(in_r.x, in_r.y),
+                        macroquad::prelude::Vec2::new(e0_r.x, e0_r.y),
+                        macroquad::prelude::Vec2::new(e1_r.x, e1_r.y),
+                        Palette::ASPHALT,
+                    );
+                    draw_quad(in_l, in_r, e0_r, e0_l, Palette::ASPHALT);
+                    draw_quad(in_l, in_r, e1_r, e1_l, Palette::ASPHALT);
+                }
+
+                // 2. Gore Triangle & Markings
+                if let Some(gore) = gore_config {
+                    let p_apex = gore.apex_point;
+                    let v0 = egress_sockets.get(0).map_or(ingress_socket.tangent, |s| s.tangent);
+                    let v1 = egress_sockets.get(1).map_or(ingress_socket.tangent, |s| s.tangent);
+
+                    let gore_len = gore.gore_length.max(6.0);
+                    let p0 = p_apex + v0 * gore_len;
+                    let p1 = p_apex + v1 * gore_len;
+
+                    // A. Paved asphalt gore triangle
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(p_apex.x, p_apex.y),
+                        macroquad::prelude::Vec2::new(p0.x, p0.y),
+                        macroquad::prelude::Vec2::new(p1.x, p1.y),
+                        Palette::RUNOFF_ASPHALT,
+                    );
+
+                    // B. White gore perimeter lines
+                    draw_line(p_apex.x, p_apex.y, p0.x, p0.y, 0.35, Palette::WHITE_LINE);
+                    draw_line(p_apex.x, p_apex.y, p1.x, p1.y, 0.35, Palette::WHITE_LINE);
+                    draw_line(p0.x, p0.y, p1.x, p1.y, 0.35, Palette::WHITE_LINE);
+
+                    // C. Painted Chevrons (V-stripes) pointing toward incoming traffic
+                    if gore.has_chevrons {
+                        let num_chevrons = (gore_len / 2.8).floor() as usize;
+                        let bisect = (v0 + v1).normalize_or_zero();
+                        for step in 1..=num_chevrons {
+                            let d = step as f32 * 2.8;
+                            if d >= gore_len - 0.5 { break; }
+                            let a = p_apex + v0 * d;
+                            let b = p_apex + v1 * d;
+                            let apex_chevron = p_apex + bisect * (d - 1.2).max(0.2);
+                            draw_line(apex_chevron.x, apex_chevron.y, a.x, a.y, 0.32, Palette::WHITE_LINE);
+                            draw_line(apex_chevron.x, apex_chevron.y, b.x, b.y, 0.32, Palette::WHITE_LINE);
+                        }
+                    }
+
+                    // D. Attenuator Nose Barrier & Hazard Cap
+                    let w_len = (gore.nose_barrier.segment.end - gore.nose_barrier.segment.start).length();
+                    if w_len > 0.05 {
+                        barrier::render_wall_shadow(&gore.nose_barrier);
+                        barrier::render_wall_body(&gore.nose_barrier);
+                    }
+                    // High-visibility impact attenuator nose cap at apex
+                    draw_circle(p_apex.x, p_apex.y, 0.9, Palette::CURB_RED);
+                    draw_circle(p_apex.x, p_apex.y, 0.6, Palette::CURB_WHITE);
+                    draw_circle(p_apex.x, p_apex.y, 0.3, Palette::CURB_RED);
+                }
+            }
+            JunctionKind::Merge {
+                ingress_sockets,
+                egress_socket,
+                merge_config: _,
+            } => {
+                let is_junc_elev = egress_socket.elevation >= 0.6;
+                if is_junc_elev != elevated {
+                    continue;
+                }
+
+                // Smooth asphalt merge taper patch
+                if !ingress_sockets.is_empty() {
+                    let eg_l = egress_socket.left_edge();
+                    let eg_r = egress_socket.right_edge();
+                    for in_sock in ingress_sockets {
+                        let in_l = in_sock.left_edge();
+                        let in_r = in_sock.right_edge();
+                        draw_quad(in_l, in_r, eg_r, eg_l, Palette::ASPHALT);
+                    }
+                }
+            }
+            JunctionKind::Terminal { .. } => {}
+        }
+    }
 }
 
 /// Renders the start/finish timing line with a classic black/white checkered pattern.

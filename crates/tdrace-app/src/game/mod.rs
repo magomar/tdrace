@@ -5001,7 +5001,7 @@ impl RaceSession {
         // 3. Step individual vehicle dynamics and update road elevation & cross-slope banking
         for i in 0..n_cars {
             let prev_prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
-            let proj = self.track.spline.project_point_continuity(self.cars[i].state.position, prev_prog, 50.0);
+            let proj = self.track.project_point_near(self.cars[i].state.position, prev_prog);
             self.cars[i].state.road_elevation = proj.elevation;
             self.cars[i].state.road_bank_angle = proj.bank_angle;
             self.cars[i].state.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);

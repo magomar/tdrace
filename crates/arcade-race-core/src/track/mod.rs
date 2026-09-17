@@ -173,18 +173,10 @@ impl Track {
             return SurfaceType::Curb;
         }
 
-        // 2b. Also check network branch segments if present
+        // 2b. Also check network branch segments and junction areas if present
         if let Some(ref net) = self.network {
-            for seg in &net.segments {
-                if seg.id.0 != 0 && seg.samples.len() >= 2 {
-                    let seg_proj = seg.project_point(point);
-                    if seg_proj.is_on_track {
-                        return seg_proj.base_surface;
-                    }
-                    if seg_proj.is_on_curb {
-                        return SurfaceType::Curb;
-                    }
-                }
+            if let Some(surf) = net.sample_surface(point) {
+                return surf;
             }
         }
 
@@ -248,6 +240,13 @@ impl Track {
             return SurfaceType::Curb;
         }
 
+        // 3b. Also check network branch segments and junction areas if present
+        if let Some(ref net) = self.network {
+            if let Some(surf) = net.sample_surface(point) {
+                return surf;
+            }
+        }
+
         // 4. Check below-track ground zones
         for zone in &self.geometry.surface_zones {
             if !zone.is_above_track() && zone.contains(point) {
@@ -257,6 +256,63 @@ impl Track {
 
         // 5. Default terrain
         self.default_surface
+    }
+
+    /// Projects a 2D world position onto the track centerline or any of its network segments.
+    pub fn project_point(&self, point: Vec2) -> SplineProjection {
+        let proj = self.spline.project_point(point);
+        if proj.is_on_track || proj.is_on_curb {
+            return proj;
+        }
+
+        if let Some(ref net) = self.network {
+            let mut best_proj = proj;
+            let mut best_dist = proj.distance_to_spline;
+            for seg in &net.segments {
+                if seg.samples.len() >= 2 {
+                    let seg_proj = seg.project_point(point);
+                    if seg_proj.is_on_track || seg_proj.is_on_curb {
+                        return seg_proj;
+                    }
+                    if seg_proj.distance_to_spline < best_dist {
+                        best_dist = seg_proj.distance_to_spline;
+                        best_proj = seg_proj;
+                    }
+                }
+            }
+            return best_proj;
+        }
+
+        proj
+    }
+
+    /// Projects a 2D world position onto the track centerline with continuity constraint around `hint_dist`,
+    /// automatically falling back to check any active network segments if off the primary spline.
+    pub fn project_point_near(&self, point: Vec2, hint_dist: f32) -> SplineProjection {
+        let proj = self.spline.project_point_continuity(point, hint_dist, 45.0);
+        if proj.is_on_track || proj.is_on_curb {
+            return proj;
+        }
+
+        if let Some(ref net) = self.network {
+            let mut best_proj = proj;
+            let mut best_dist = proj.distance_to_spline;
+            for seg in &net.segments {
+                if seg.samples.len() >= 2 {
+                    let seg_proj = seg.project_point(point);
+                    if seg_proj.is_on_track || seg_proj.is_on_curb {
+                        return seg_proj;
+                    }
+                    if seg_proj.distance_to_spline < best_dist {
+                        best_dist = seg_proj.distance_to_spline;
+                        best_proj = seg_proj;
+                    }
+                }
+            }
+            return best_proj;
+        }
+
+        proj
     }
 }
 
@@ -287,6 +343,9 @@ impl Track {
                 track.spline.total_length,
                 track.spline.closed,
             );
+        }
+        if track.network.is_some() {
+            track.trim_walls_for_network();
         }
         Ok(track)
     }
@@ -337,7 +396,55 @@ impl Track {
             self.geometry.outer_walls = right_walls;
             self.geometry.left_boundary_polyline = left_poly;
             self.geometry.right_boundary_polyline = right_poly;
+            if self.network.is_some() {
+                self.trim_walls_for_network();
+            }
         }
+    }
+
+    /// Prunes or removes any wall barriers in `inner_walls` and `outer_walls` that penetrate
+    /// or cross within the drivable road ribbon of any segment in `self.network`.
+    pub fn trim_walls_for_network(&mut self) {
+        let Some(net) = &self.network else { return; };
+        if net.segments.is_empty() { return; }
+
+        let should_keep_wall = |wall: &WallBarrier| -> bool {
+            let p0 = wall.segment.start;
+            let p1 = wall.segment.end;
+            let p_mid = (p0 + p1) * 0.5;
+
+            for seg in &net.segments {
+                if seg.samples.len() < 2 { continue; }
+
+                // Check endpoints and midpoint against this segment
+                for pt in [p0, p1, p_mid] {
+                    let proj = seg.project_point(pt);
+                    if (wall.elevation - proj.elevation).abs() < 2.0 {
+                        let half_w = proj.track_width * 0.5;
+                        if proj.lateral_offset.abs() < (half_w - 0.2) {
+                            return false; // Point inside drivable road surface
+                        }
+                    }
+                }
+
+                // Check centerline intersections
+                for i in 0..seg.samples.len() - 1 {
+                    let s0 = &seg.samples[i];
+                    let s1 = &seg.samples[i + 1];
+                    let seg_elev = (s0.elevation + s1.elevation) * 0.5;
+                    if (wall.elevation - seg_elev).abs() < 2.0 {
+                        let center_seg = LineSegment::new(s0.point, s1.point);
+                        if wall.segment.intersect_segment(&center_seg).is_some() {
+                            return false; // Intersects road centerline
+                        }
+                    }
+                }
+            }
+            true
+        };
+
+        self.geometry.inner_walls.retain(should_keep_wall);
+        self.geometry.outer_walls.retain(should_keep_wall);
     }
 
     /// Regenerates checkpoints evenly spaced along the spline.

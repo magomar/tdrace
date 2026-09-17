@@ -109,7 +109,7 @@ pub fn render_elevated_barriers_and_obstacles_culled(track: &Track, view_bounds:
 }
 
 /// Draws 2.5D shadow cast by a wall barrier.
-fn render_wall_shadow(wall: &WallBarrier) {
+pub(crate) fn render_wall_shadow(wall: &WallBarrier) {
     let p0 = wall.segment.start;
     let p1 = wall.segment.end;
     let s_off = SHADOW_OFFSET * (1.0 + wall.elevation * 0.45);
@@ -129,7 +129,7 @@ fn render_wall_shadow(wall: &WallBarrier) {
 }
 
 /// Draws the actual barrier geometry based on its barrier type.
-fn render_wall_body(wall: &WallBarrier) {
+pub(crate) fn render_wall_body(wall: &WallBarrier) {
     let p0 = wall.segment.start;
     let p1 = wall.segment.end;
     let dir = p1 - p0;
