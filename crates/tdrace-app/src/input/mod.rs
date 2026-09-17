@@ -539,6 +539,9 @@ impl InputController {
 
     /// F4: AI Lookahead Targets & Planned Trajectory.
     fn render_ai_paths(&self, cars: &[Car], track: &Track, ai_drivers: &[BotAiDriver]) {
+        if track.spline.samples.is_empty() {
+            return;
+        }
         for (i, ai) in ai_drivers.iter().enumerate() {
             if let Some(bot_car) = cars.get(i + 1) {
                 let target_sample = track.spline.sample_at_distance(ai.current_target_dist);

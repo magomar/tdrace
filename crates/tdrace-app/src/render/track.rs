@@ -370,7 +370,10 @@ pub fn render_surface_shape(shape: &SurfaceShape, fill_col: Color, border_col: O
 fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2, Vec2)>) {
     let samples = &spline.samples;
     let n = samples.len();
-    let seg_count = if spline.closed { n } else { n - 1 };
+    if n < 2 {
+        return;
+    }
+    let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
 
     // Pass A: Bridge drop shadow on the ground / underpass beneath
     for i in 0..seg_count {
@@ -430,8 +433,11 @@ fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2,
 fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
     let samples = &spline.samples;
     let n = samples.len();
+    if n < 2 {
+        return;
+    }
     let curb_extra_width = 1.35;
-    let seg_count = if spline.closed { n } else { n - 1 };
+    let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -478,7 +484,10 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
 fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
     let samples = &spline.samples;
     let n = samples.len();
-    let seg_count = if spline.closed { n } else { n - 1 };
+    if n < 2 {
+        return;
+    }
+    let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -730,4 +739,44 @@ pub fn draw_quad(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, color: Color) {
         macroquad::prelude::Vec2::new(p3.x, p3.y),
         color,
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty_and_insufficient_spline_rendering_does_not_panic() {
+        let empty_spline = TrackSpline::empty();
+        render_curbs_pass(&empty_spline, false, None);
+        render_curbs_pass(&empty_spline, true, None);
+        render_surface_pass(&empty_spline, false, None);
+        render_surface_pass(&empty_spline, true, None);
+        render_bridge_structure_pass(&empty_spline, None);
+
+        // Spline with 1 sample
+        let mut single_spline = TrackSpline::empty();
+        single_spline.samples.push(SplineSample {
+            point: Vec2::ZERO,
+            tangent: Vec2::X,
+            normal: Vec2::Y,
+            distance: 0.0,
+            width: 10.0,
+            left_curb: true,
+            right_curb: true,
+            surface: SurfaceType::Asphalt,
+            elevation: 1.0,
+            bank_angle: 0.0,
+            left_wall: false,
+            right_wall: false,
+            left_wall_distance: None,
+            right_wall_distance: None,
+            wall_type: None,
+        });
+        render_curbs_pass(&single_spline, false, None);
+        render_curbs_pass(&single_spline, true, None);
+        render_surface_pass(&single_spline, false, None);
+        render_surface_pass(&single_spline, true, None);
+        render_bridge_structure_pass(&single_spline, None);
+    }
 }
