@@ -8,7 +8,7 @@ use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, Obstacle, TrackGeometry, WallBarrier};
 use tdrace_core::track::presets::generate_walls_from_spline;
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
-use tdrace_core::track::{Track, TrackCategory};
+use tdrace_core::track::{Track, TrackCategory, TrackKind};
 
 #[test]
 fn test_spline_smooth_elevation_interpolation() {
@@ -120,6 +120,7 @@ fn test_lidar_elevation_filtering() {
         name: "Test Overpass".to_string(),
         description: "Test".to_string(),
         category: TrackCategory::Main,
+        kind: TrackKind::Circuit,
         spline: TrackSpline::new(
             vec![
                 TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),

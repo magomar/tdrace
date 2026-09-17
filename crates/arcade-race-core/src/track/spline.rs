@@ -183,13 +183,38 @@ pub struct TrackSpline {
     pub curves: Vec<TrackCurve>,
 }
 
+impl Default for TrackSpline {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
 impl TrackSpline {
     /// Standard curb strip width in meters.
     pub const DEFAULT_CURB_WIDTH: f32 = 1.4;
 
+    /// An empty track spline with no waypoints or samples.
+    pub fn empty() -> Self {
+        Self {
+            waypoints: Vec::new(),
+            closed: false,
+            samples: Vec::new(),
+            total_length: 0.0,
+            curves: Vec::new(),
+        }
+    }
+
     /// Builds a smooth track spline from a list of waypoints with uniform arc-length resampling.
     pub fn new(waypoints: Vec<TrackWaypoint>, closed: bool) -> Self {
-        assert!(waypoints.len() >= 3, "TrackSpline requires at least 3 waypoints");
+        if waypoints.len() < 3 {
+            return Self {
+                waypoints,
+                closed,
+                samples: Vec::new(),
+                total_length: 0.0,
+                curves: Vec::new(),
+            };
+        }
 
         let mut samples = Vec::new();
         let num_wp = waypoints.len();
