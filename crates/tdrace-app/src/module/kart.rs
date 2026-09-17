@@ -562,6 +562,333 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
+
+    /// Prokart Raceland Wackersdorf (Wackersdorf, Germany): CIK-FIA World Championship Circuit
+    pub fn track_wackersdorf() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(39.1, -2.7), 9.2),
+            TrackWaypoint::new(Vec2::new(78.7, -4.3), 9.2),
+            TrackWaypoint::new(Vec2::new(118.2, -6.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(130.6, 19.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(91.3, 20.1), 8.5),
+            TrackWaypoint::new(Vec2::new(51.8, 16.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(28.5, 32.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(66.5, 38.5), 8.5),
+            TrackWaypoint::new(Vec2::new(106.1, 36.4), 8.5),
+            TrackWaypoint::new(Vec2::new(145.1, 30.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(157.6, -1.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(126.5, -24.5), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(87.0, -24.8), 8.5),
+            TrackWaypoint::new(Vec2::new(47.3, -23.2), 8.5),
+            TrackWaypoint::new(Vec2::new(8.5, -28.0), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-24.3, -50.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-63.4, -55.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-99.8, -45.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-113.9, -8.9), 8.5),
+            TrackWaypoint::new(Vec2::new(-124.7, 29.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-100.6, 23.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-93.5, -15.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-60.5, -31.2), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-21.2, -26.4), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-35.1, -9.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-71.8, -5.1), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-72.9, 34.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-39.4, 44.8), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1.6, 36.6), 8.0).with_curbs(false, true),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+
+        Track {
+            name: "Prokart Raceland Wackersdorf".to_string(),
+            description: "Premier German CIK-FIA World Championship kart venue featuring fast chicane sweeps, long drafting straights, and technical hairpins.".to_string(),
+            category: TrackCategory::Main,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 6,
+            predefined_car: Some("shifter_kart_125".to_string()),
+            module_id: Some("kart".to_string()),
+            modules: vec!["kart".to_string()],
+        }
+    }
+
+    /// Kristianstad Karting Klubb (Åsum Ring, Sweden): Scandinavian World Championship Circuit
+    pub fn track_kristianstad() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(38.1, 9.6), 8.5),
+            TrackWaypoint::new(Vec2::new(78.7, 8.3), 9.2),
+            TrackWaypoint::new(Vec2::new(119.4, 7.2), 9.2),
+            TrackWaypoint::new(Vec2::new(160.1, 6.9), 8.5),
+            TrackWaypoint::new(Vec2::new(200.8, 6.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(227.9, -19.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(223.6, -60.1), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(191.8, -74.1), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(186.9, -113.6), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(198.3, -152.3), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(193.3, -183.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(160.8, -164.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(162.0, -132.1), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(149.6, -93.7), 8.5),
+            TrackWaypoint::new(Vec2::new(133.5, -57.1), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(109.0, -82.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(106.3, -122.6), 8.5),
+            TrackWaypoint::new(Vec2::new(102.0, -163.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(78.0, -159.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(81.1, -118.7), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(66.8, -81.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(46.5, -94.3), 8.5),
+            TrackWaypoint::new(Vec2::new(23.4, -111.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(15.7, -71.6), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(31.7, -42.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(70.3, -55.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(95.2, -33.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(68.1, -15.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(27.8, -21.6), 8.0).with_curbs(false, true),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+
+        Track {
+            name: "Kristianstad Karting Klubb (Åsum Ring)".to_string(),
+            description: "Historic Swedish European and World Championship circuit famous for technical rhythm sections, elevation sweeps, and high-G esses.".to_string(),
+            category: TrackCategory::Main,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 6,
+            predefined_car: Some("shifter_kart_125".to_string()),
+            module_id: Some("kart".to_string()),
+            modules: vec!["kart".to_string()],
+        }
+    }
+
+    /// Circuito Internazionale 7 Laghi (Castelletto di Branduzzo, Italy): Technical Proving Ground
+    pub fn track_seven_laghi() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(40.9, 4.5), 9.2),
+            TrackWaypoint::new(Vec2::new(82.8, 4.6), 9.2),
+            TrackWaypoint::new(Vec2::new(124.7, 4.6), 9.2),
+            TrackWaypoint::new(Vec2::new(166.5, 4.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(203.1, -6.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(203.5, -48.6), 8.5),
+            TrackWaypoint::new(Vec2::new(209.4, -89.5), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(182.6, -77.4), 8.5),
+            TrackWaypoint::new(Vec2::new(146.4, -64.6), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(104.6, -63.3), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(71.0, -48.6), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(108.3, -40.6), 8.5),
+            TrackWaypoint::new(Vec2::new(150.2, -42.4), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(178.6, -26.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(140.9, -17.8), 8.5),
+            TrackWaypoint::new(Vec2::new(99.0, -17.3), 8.5),
+            TrackWaypoint::new(Vec2::new(57.2, -17.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(37.4, -48.6), 8.5),
+            TrackWaypoint::new(Vec2::new(19.7, -83.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-22.0, -84.0), 8.5),
+            TrackWaypoint::new(Vec2::new(-63.9, -83.5), 8.5),
+            TrackWaypoint::new(Vec2::new(-105.7, -82.9), 8.5),
+            TrackWaypoint::new(Vec2::new(-144.5, -73.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-133.1, -36.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-105.5, -6.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-64.7, -7.1), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-69.2, -43.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-36.2, -56.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-3.5, -40.3), 8.0).with_curbs(true, false),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+
+        Track {
+            name: "Circuito Internazionale 7 Laghi (Castelletto)".to_string(),
+            description: "Demanding Italian proving ground in Castelletto di Branduzzo featuring technical switchbacks, heavy trail-braking hairpins, and undulating sweepers.".to_string(),
+            category: TrackCategory::Main,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 6,
+            predefined_car: Some("shifter_kart_125".to_string()),
+            module_id: Some("kart".to_string()),
+            modules: vec!["kart".to_string()],
+        }
+    }
+
+    /// Schweppermannring Ampfing (Ampfing, Germany): Outdoor Kartring Arena
+    pub fn track_ampfing() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.5),
+            TrackWaypoint::new(Vec2::new(37.5, -4.4), 9.2),
+            TrackWaypoint::new(Vec2::new(75.4, -6.6), 8.5),
+            TrackWaypoint::new(Vec2::new(111.8, 1.7), 9.2),
+            TrackWaypoint::new(Vec2::new(147.4, 13.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(173.1, -7.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(144.2, -17.8), 8.5),
+            TrackWaypoint::new(Vec2::new(111.2, -24.1), 8.5),
+            TrackWaypoint::new(Vec2::new(75.2, -28.3), 8.5),
+            TrackWaypoint::new(Vec2::new(37.4, -25.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(23.8, -52.9), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(41.1, -81.9), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(56.0, -49.9), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(71.2, -71.4), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(70.4, -104.2), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(100.6, -85.5), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(120.9, -54.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(150.4, -44.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(141.4, -76.9), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(115.4, -104.6), 8.5),
+            TrackWaypoint::new(Vec2::new(83.9, -124.7), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(49.0, -121.4), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(25.6, -105.4), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(8.1, -76.0), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-0.2, -39.0), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-21.9, -10.8), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-54.6, 7.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-32.9, 19.0), 8.0).with_curbs(false, true),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+
+        Track {
+            name: "Schweppermannring Ampfing".to_string(),
+            description: "Famous Bavarian outdoor kart arena with flowing mid-speed esses, double-apex hairpin turns, and high-speed drafting straights.".to_string(),
+            category: TrackCategory::Main,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 6,
+            predefined_car: Some("shifter_kart_125".to_string()),
+            module_id: Some("kart".to_string()),
+            modules: vec!["kart".to_string()],
+        }
+    }
+
+    /// Silverstone National Karting Circuit (Silverstone, UK): Agile National Sprint Complex
+    pub fn track_silverstone_national_kart() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(20.9, -2.5), 8.0),
+            TrackWaypoint::new(Vec2::new(42.4, 0.4), 8.8),
+            TrackWaypoint::new(Vec2::new(64.0, 1.7), 8.8),
+            TrackWaypoint::new(Vec2::new(85.7, 2.6), 8.0),
+            TrackWaypoint::new(Vec2::new(106.0, -1.5), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(103.6, -20.9), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(93.3, -40.0), 8.0),
+            TrackWaypoint::new(Vec2::new(78.9, -56.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(60.1, -66.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(54.0, -85.1), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(63.2, -104.5), 8.0),
+            TrackWaypoint::new(Vec2::new(74.0, -122.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(63.3, -138.5), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(42.3, -135.4), 8.0),
+            TrackWaypoint::new(Vec2::new(21.5, -129.2), 8.0),
+            TrackWaypoint::new(Vec2::new(0.7, -123.3), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-2.0, -103.8), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(2.4, -87.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-16.7, -90.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-28.6, -73.7), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-20.0, -54.0), 8.0),
+            TrackWaypoint::new(Vec2::new(-6.7, -37.0), 8.8),
+            TrackWaypoint::new(Vec2::new(5.7, -19.4), 8.0).with_curbs(true, false),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
+
+        let checkpoints = generate_checkpoints(&spline, 16, 3);
+        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+
+        Track {
+            name: "Silverstone National Karting Circuit".to_string(),
+            description: "The agile National sprint layout at the premier Kart Silverstone complex, featuring snappy switchbacks, Priory hairpin, and tight apex rumble curbs.".to_string(),
+            category: TrackCategory::Main,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 6,
+            predefined_car: Some("shifter_kart_125".to_string()),
+            module_id: Some("kart".to_string()),
+            modules: vec!["kart".to_string()],
+        }
+    }
 }
 
 impl Default for KartGameModule {
@@ -691,6 +1018,51 @@ impl GameModule for KartGameModule {
                 category: "World Championship",
                 default_laps: 6,
                 generator: Self::track_franciacorta,
+            },
+            TrackDefinition {
+                id: "wackersdorf",
+                title: "Prokart Raceland Wackersdorf",
+                tag: "GERMAN ARENA",
+                description: "Premier German CIK-FIA World Championship kart venue featuring fast chicane sweeps, long drafting straights, and technical hairpins.",
+                category: "World Championship",
+                default_laps: 6,
+                generator: Self::track_wackersdorf,
+            },
+            TrackDefinition {
+                id: "kristianstad",
+                title: "Kristianstad Karting Klubb (Åsum Ring)",
+                tag: "SWEDISH WORLD CIRCUIT",
+                description: "Historic Swedish European and World Championship circuit famous for technical rhythm sections, elevation sweeps, and high-G esses.",
+                category: "World Championship",
+                default_laps: 6,
+                generator: Self::track_kristianstad,
+            },
+            TrackDefinition {
+                id: "seven_laghi",
+                title: "Circuito Internazionale 7 Laghi",
+                tag: "PAVIA SWITCHBACKS",
+                description: "Demanding Italian proving ground in Castelletto di Branduzzo featuring technical switchbacks, heavy trail-braking hairpins, and undulating sweepers.",
+                category: "World Championship",
+                default_laps: 6,
+                generator: Self::track_seven_laghi,
+            },
+            TrackDefinition {
+                id: "ampfing",
+                title: "Schweppermannring Ampfing",
+                tag: "BAVARIAN OUTDOOR",
+                description: "Famous Bavarian outdoor kart arena with flowing mid-speed esses, double-apex hairpin turns, and high-speed drafting straights.",
+                category: "World Championship",
+                default_laps: 6,
+                generator: Self::track_ampfing,
+            },
+            TrackDefinition {
+                id: "silverstone_national_kart",
+                title: "Silverstone National Karting Circuit",
+                tag: "NATIONAL SPRINT",
+                description: "The agile National sprint layout at the premier Kart Silverstone complex, featuring snappy switchbacks, Priory hairpin, and tight apex rumble curbs.",
+                category: "Sprint Arena",
+                default_laps: 6,
+                generator: Self::track_silverstone_national_kart,
             },
             TrackDefinition {
                 id: "kart_arena",
@@ -907,6 +1279,11 @@ impl GameModule for KartGameModule {
                     "le_mans_kart".to_string(),
                     "portimao_kart".to_string(),
                     "franciacorta".to_string(),
+                    "wackersdorf".to_string(),
+                    "kristianstad".to_string(),
+                    "seven_laghi".to_string(),
+                    "ampfing".to_string(),
+                    "silverstone_national_kart".to_string(),
                     "kart_arena".to_string(),
                     "drift_park".to_string(),
                 ],

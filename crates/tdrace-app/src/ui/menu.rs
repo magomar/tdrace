@@ -64,7 +64,7 @@ impl TrackChoice {
                     "RALLY CROSS"
                 } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring") {
                     "GT WORLD CHALLENGE"
-                } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta") {
+                } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart") {
                     "KARTING"
                 } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course") {
                     "NASCAR CUP"
@@ -91,7 +91,7 @@ impl TrackChoice {
                     "RALLY CROSS"
                 } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring") {
                     "GT WORLD CHALLENGE"
-                } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta") {
+                } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart") {
                     "KARTING"
                 } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course") {
                     "NASCAR CUP"
@@ -414,6 +414,11 @@ impl TrackChoice {
             "le_mans_kart" => Some(crate::module::kart::KartGameModule::track_le_mans()),
             "portimao_kart" => Some(crate::module::kart::KartGameModule::track_portimao()),
             "franciacorta" => Some(crate::module::kart::KartGameModule::track_franciacorta()),
+            "wackersdorf" | "prokart_wackersdorf" => Some(crate::module::kart::KartGameModule::track_wackersdorf()),
+            "kristianstad" | "asum_ring" => Some(crate::module::kart::KartGameModule::track_kristianstad()),
+            "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" => Some(crate::module::kart::KartGameModule::track_seven_laghi()),
+            "ampfing" | "schweppermannring" => Some(crate::module::kart::KartGameModule::track_ampfing()),
+            "silverstone_national_kart" | "silverstone_kart" => Some(crate::module::kart::KartGameModule::track_silverstone_national_kart()),
             "daytona" | "daytona_superspeedway" => Some(tdrace_core::track::presets::daytona_superspeedway()),
             "talladega" | "talladega_superspeedway" => Some(tdrace_core::track::presets::talladega_superspeedway()),
             "watkins_glen" | "watkins_glen_nascar" => Some(tdrace_core::track::presets::watkins_glen_nascar()),

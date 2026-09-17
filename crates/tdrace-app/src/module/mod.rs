@@ -321,7 +321,7 @@ mod tests {
         assert!(!kart.vehicles().is_empty());
         assert!(kart.vehicles().len() >= 1);
         assert!(!kart.tracks().is_empty());
-        assert_eq!(kart.tracks().len(), 10); // 8 world-famous + 2 sprint presets
+        assert_eq!(kart.tracks().len(), 15); // 13 world-famous + 2 sprint presets
         assert_eq!(kart.drivers().len(), 7);
         assert_eq!(kart.default_vehicle_id(), "shifter_kart_125");
         assert_eq!(kart.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);

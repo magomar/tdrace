@@ -984,6 +984,11 @@ impl TrackManager {
                     "le_mans_kart" => Ok(crate::module::kart::KartGameModule::track_le_mans()),
                     "portimao_kart" => Ok(crate::module::kart::KartGameModule::track_portimao()),
                     "franciacorta" => Ok(crate::module::kart::KartGameModule::track_franciacorta()),
+                    "wackersdorf" | "prokart_wackersdorf" => Ok(crate::module::kart::KartGameModule::track_wackersdorf()),
+                    "kristianstad" | "asum_ring" => Ok(crate::module::kart::KartGameModule::track_kristianstad()),
+                    "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" => Ok(crate::module::kart::KartGameModule::track_seven_laghi()),
+                    "ampfing" | "schweppermannring" => Ok(crate::module::kart::KartGameModule::track_ampfing()),
+                    "silverstone_national_kart" | "silverstone_kart" => Ok(crate::module::kart::KartGameModule::track_silverstone_national_kart()),
                     "daytona" | "daytona_superspeedway" => Ok(tdrace_core::track::presets::daytona_superspeedway()),
                     "talladega" | "talladega_superspeedway" => Ok(tdrace_core::track::presets::talladega_superspeedway()),
                     "watkins_glen" | "watkins_glen_nascar" => Ok(tdrace_core::track::presets::watkins_glen_nascar()),
@@ -1007,7 +1012,7 @@ impl TrackManager {
         match slug {
             "classic_grand_prix" | "oval_speedway" | "dirty_oval_speedway" | "figure_eight" | "dirt_figure_eight" | "dirt_eight" | "drift_park" | "ramp_raceway" => Some("classic"),
             "oasis_rally" | "outlaw_pass" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina" | "sahara" | "sahara_dunes" => Some("rally"),
-            "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" => Some("kart"),
+            "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart" => Some("kart"),
             "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring" => Some("f1"),
             "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course" => Some("nascar"),
             _ => {
@@ -1095,6 +1100,11 @@ impl TrackManager {
             "yas_marina" | "yas_marina_rx" => &["yas_marina_rx", "yas_marina"],
             "dirty_oval" | "dirty_oval_speedway" => &["dirty_oval_speedway", "dirty_oval"],
             "figure_8" | "figure_eight" => &["figure_eight", "figure_8"],
+            "wackersdorf" | "prokart_wackersdorf" => &["wackersdorf", "prokart_wackersdorf"],
+            "kristianstad" | "asum_ring" => &["kristianstad", "asum_ring"],
+            "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" => &["seven_laghi", "7laghi", "castelletto_kart", "castelletto"],
+            "ampfing" | "schweppermannring" => &["ampfing", "schweppermannring"],
+            "silverstone_national_kart" | "silverstone_kart" => &["silverstone_national_kart", "silverstone_kart"],
             _ => &[],
         }
     }
@@ -2059,7 +2069,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 59); // 10 classic + 14 f1 + 15 rally unique + 8 famous kart + 12 nascar
+        assert_eq!(choices.len(), 64); // 10 classic + 14 f1 + 15 rally unique + 13 famous kart + 12 nascar
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();
@@ -2071,8 +2081,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 59, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 59);
+        // Since gp was saved as Draft, main choices is still 64, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 64);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -2081,7 +2091,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 60);
+        assert_eq!(manager.main_track_choices().len(), 65);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -2092,18 +2102,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[59]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[64]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 59);
+        assert_eq!(manager.main_track_choices().len(), 64);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 59);
+        assert_eq!(manager.main_track_choices().len(), 64);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -2197,7 +2207,7 @@ mod tests {
 
         // Kart tracks
         let kart_tracks = manager.module_catalog_tracks("kart");
-        assert_eq!(kart_tracks.len(), 10);
+        assert_eq!(kart_tracks.len(), 15);
         assert!(kart_tracks.iter().any(|t| t.title().contains("Lonato")));
         assert!(kart_tracks.iter().any(|t| t.title().contains("Sarno")));
         assert!(kart_tracks.iter().any(|t| t.title().contains("Genk")));
@@ -2216,7 +2226,7 @@ mod tests {
 
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 59);
+        assert_eq!(all_tracks.len(), 64);
 
         // Save a custom circuit assigned to classic and rally
         let mut custom_circuit = classic_grand_prix();
@@ -2248,7 +2258,7 @@ mod tests {
         assert!(!f1_after.iter().any(|t| t.title() == "Custom Category Circuit"));
 
         let kart_after = manager.module_catalog_tracks("kart");
-        assert_eq!(kart_after.len(), 10);
+        assert_eq!(kart_after.len(), 15);
         assert!(!kart_after.iter().any(|t| t.title() == "Custom Category Circuit"));
 
         let _ = fs::remove_dir_all(&temp_dir);
@@ -2277,9 +2287,9 @@ mod tests {
         assert!(cloned_gp.modules.is_empty());
         assert!(Path::new(&path_gp).exists());
 
-        // Cloned track must appear in drafts, and main count stays 59
+        // Cloned track must appear in drafts, and main count stays 64
         assert_eq!(manager.draft_track_choices().len(), 1);
-        assert_eq!(manager.main_track_choices().len(), 59);
+        assert_eq!(manager.main_track_choices().len(), 64);
         assert_eq!(manager.draft_track_choices()[0].title(), "Classic Grand Prix (clone)");
 
         // 2. Clone a module preset by slug

@@ -63,6 +63,37 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
   - *European Racing Super Truck*: 5-ton 1200 BHP cab-over semi-truck acting as an unstoppable moving fortress.
 - **Implementation Status**: TBD selection of prioritized vehicles for future milestone integration into `crates/wheelbase` and `crates/tdrace-app`.
 
+### 2.6 Arcade Damage Modelling & Pitstop Repairs
+- **Vehicle Durability & Health Bar**:
+  - Track vehicle structural integrity (0–100% HP) in simulation state (`wheelbase` / `tdrace-app`).
+  - Damage calculated from normal impact velocities ($v_{\text{rel}} \cdot \mathbf{n}$) against course barriers and during car-to-car SAT collisions.
+- **Progressive Arcade Degradation**:
+  - *Minor Damage (>25%)*: Visual collision sparks, surface scrapes, and subtle chassis rattling audio.
+  - *Moderate Damage (>50%)*: Light exhaust/engine smoke particles, subtle top-speed handicap (-10%), and slight steering pull.
+  - *Critical Damage (>75%)*: Dark engine smoke and flame particles, flashing red HUD warning alarm, and limp-mode acceleration penalty (-25%).
+  - *Totalled / Wrecked (100%)*: Exaggerated arcade spinout / explosion into debris, followed by a short respawn countdown and fresh car reset.
+- **Pit Lane & Pitstop Repairs**:
+  - Dedicated branching pit lane spline or designated drive-through service bay along the start/finish straight.
+  - Rapid arcade pit stop sequence: coming to a halt in the pit box triggers a 2–3 second pit crew service countdown with air-ratchet wrench audio, welding sparkle bursts, and floating "+REPAIRED" juice popups.
+  - High-stakes tactical trade-off: pitting costs ~3–5s track position delta versus racing with degraded top-speed or risking a full wreck penalty.
+  - AI awareness: AI drivers monitor their health telemetry and autonomously divert into the pit lane when damage exceeds a critical threshold (>65%).
+
+### 2.7 Arcade Power-Ups & Track Pickups
+- **Track Spawners & Pickups**:
+  - Rotating holographic 2D crates / glowing pads placed along track ribbons with timed respawn intervals.
+  - Game mode ruleset toggle: selectable between "Pure Racing" and "Arcade Action / Battle" modes.
+- **Power-Up Roster**:
+  - *Boost / Nitro Surge*: Immediate forward propulsion burst with blue exhaust flames, camera FOV punch, screen shake, and top-speed overrun.
+  - *Kinetic Shield*: Temporary energy bubble deflecting opponent rams, wall impacts, and hazard effects.
+  - *Oil Slick / Hazard Drop*: Deployed behind vehicle to trigger immediate zero-friction spinout for trailing opponents.
+  - *Pulse Blast / EMP Wave*: Radial shockwave knocking surrounding vehicles outward and briefly cutting throttle/steering.
+  - *Field Repair Wrench*: Emergency instant repair (+50% HP) on the fly without entering the pit lane.
+  - *Super Grip (Sticky Tires)*: Temporary traction multiplier granting immunity to off-track grass/gravel slowdowns.
+- **HUD, Input & Audio Wiring**:
+  - Item inventory slot on HUD featuring a roulette roll animation upon box collection.
+  - Dedicated trigger action mapped through `cabinet::input::InputMap` (Keyboard Space, Gamepad B/Right Trigger, Mobile touch button).
+  - Audio and visual juice: distinct pickup jingles, activation swooshes, and floating feedback text.
+
 ---
 
 ## 3. Audio & Soundtrack Expansions

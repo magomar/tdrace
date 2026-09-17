@@ -112,6 +112,70 @@ KART_TRACK_SPECS = {
         "num_waypoints": 30,
         "elevation_fn": None,
     },
+    "wackersdorf": {
+        "name": "Prokart Raceland Wackersdorf",
+        "description": "Premier German CIK-FIA World Championship kart venue featuring fast chicane sweeps, long drafting straights, and technical hairpins.",
+        "bbox": (12.210, 49.324, 12.220, 49.329),
+        "ways": [156019609],
+        "fia_length": 1190.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 30,
+        "elevation_fn": None,
+    },
+    "kristianstad": {
+        "name": "Kristianstad Karting Klubb (Åsum Ring)",
+        "description": "Historic Swedish European and World Championship circuit famous for technical rhythm sections, elevation sweeps, and high-G esses.",
+        "bbox": (14.118, 55.983, 14.128, 55.989),
+        "ways": [87888593],
+        "fia_length": 1221.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 30,
+        "elevation_fn": None,
+    },
+    "seven_laghi": {
+        "name": "Circuito Internazionale 7 Laghi (Castelletto)",
+        "description": "Demanding Italian proving ground in Castelletto di Branduzzo featuring technical switchbacks, heavy trail-braking hairpins, and undulating sweepers.",
+        "bbox": (9.095, 45.061, 9.105, 45.068),
+        "ways": [80905675],
+        "fia_length": 1256.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 30,
+        "elevation_fn": None,
+    },
+    "ampfing": {
+        "name": "Schweppermannring Ampfing",
+        "description": "Famous Bavarian outdoor kart arena with flowing mid-speed esses, double-apex hairpin turns, and high-speed drafting straights.",
+        "bbox": (12.438, 48.243, 12.448, 48.249),
+        "ways": [110580562],
+        "fia_length": 1063.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 28,
+        "elevation_fn": None,
+    },
+    "silverstone_national_kart": {
+        "name": "Silverstone National Karting Circuit",
+        "description": "The agile National sprint layout at the premier Kart Silverstone complex, featuring snappy switchbacks, Priory hairpin, and tight apex rumble curbs.",
+        "bbox": (-1.022, 52.073, -1.014, 52.079),
+        "ways": [],
+        "nodes_cycle": [
+            13912520266, 13912520264, 13912520267, 13148241482, 13912520268, 13912520265, 13912520269,
+            13912520270, 13912520271, 13912520222, 13912520223, 13912520224, 13613991005, 13912520225,
+            13912520226, 13912520227, 13148241490, 13148241489, 13148241488, 13912520263, 13912520262,
+            13912520261, 13912520260, 13912520259, 13912520258, 13912520257, 13912520251, 13912520250,
+            13912520249, 13912520248, 13912520247, 13912520246, 13912520433, 13912520245, 13912520388,
+            13912520387, 13912520386, 13912520385, 13912520384, 13912520234, 13912520256, 13912520233,
+            13912520232, 13912520231
+        ],
+        "fia_length": 520.0,
+        "default_width": 8.0,
+        "straight_width": 8.8,
+        "num_waypoints": 24,
+        "elevation_fn": None,
+    },
 }
 
 
@@ -265,16 +329,19 @@ def process_kart_track(track_id):
     ways = {e["id"]: e for e in data["elements"] if e["type"] == "way"}
 
     raw_node_ids = []
-    for wid in spec["ways"]:
-        w = ways[wid]
-        w_nodes = w["nodes"]
-        if not raw_node_ids:
-            raw_node_ids.extend(w_nodes[:-1] if w_nodes[0] == w_nodes[-1] else w_nodes)
-        else:
-            if raw_node_ids[-1] == w_nodes[0]:
-                raw_node_ids.extend(w_nodes[1:-1] if w_nodes[0] == w_nodes[-1] else w_nodes[1:])
+    if "nodes_cycle" in spec:
+        raw_node_ids = list(spec["nodes_cycle"])
+    else:
+        for wid in spec["ways"]:
+            w = ways[wid]
+            w_nodes = w["nodes"]
+            if not raw_node_ids:
+                raw_node_ids.extend(w_nodes[:-1] if w_nodes[0] == w_nodes[-1] else w_nodes)
             else:
-                raw_node_ids.extend(w_nodes)
+                if raw_node_ids[-1] == w_nodes[0]:
+                    raw_node_ids.extend(w_nodes[1:-1] if w_nodes[0] == w_nodes[-1] else w_nodes[1:])
+                else:
+                    raw_node_ids.extend(w_nodes)
 
     raw_pts = [nodes[nid] for nid in raw_node_ids]
     if spec.get("reverse", False):

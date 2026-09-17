@@ -10,7 +10,7 @@ fn test_kart_module_tracks_integrity_and_validation() {
     let module = KartGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 10, "Kart module should have 10 tracks (8 famous + 2 presets)");
+    assert_eq!(tracks.len(), 15, "Kart module should have 15 tracks (13 famous + 2 presets)");
 
     let expected_ids = [
         "lonato",
@@ -21,6 +21,11 @@ fn test_kart_module_tracks_integrity_and_validation() {
         "le_mans_kart",
         "portimao_kart",
         "franciacorta",
+        "wackersdorf",
+        "kristianstad",
+        "seven_laghi",
+        "ampfing",
+        "silverstone_national_kart",
         "kart_arena",
         "drift_park",
     ];
@@ -94,7 +99,7 @@ fn test_famous_kart_tracks_in_track_manager_and_menu_resolution() {
     let tm = TrackManager::new(&temp_dir);
     let kart_catalog = tm.module_catalog_tracks("kart");
 
-    assert!(kart_catalog.len() >= 10);
+    assert!(kart_catalog.len() >= 15);
 
     let famous_ids = [
         "lonato",
@@ -105,6 +110,11 @@ fn test_famous_kart_tracks_in_track_manager_and_menu_resolution() {
         "le_mans_kart",
         "portimao_kart",
         "franciacorta",
+        "wackersdorf",
+        "kristianstad",
+        "seven_laghi",
+        "ampfing",
+        "silverstone_national_kart",
     ];
 
     for id in &famous_ids {
