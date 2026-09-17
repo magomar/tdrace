@@ -1146,11 +1146,13 @@ fn test_track_editor_default_offtrack_surface_mutation_and_cycling() {
     assert!(state.redo());
     assert_eq!(state.track.default_surface, SurfaceType::Sand);
 
-    // 5. Test cycling off-track types: Grass -> Sand -> Dirt -> Asphalt -> Grass
+    // 5. Test cycling off-track types: Grass -> Sand -> Dirt -> Asphalt -> Mud -> Snow -> Grass
     tools.set_track_default_surface(&mut state, SurfaceType::Grass);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Sand);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Dirt);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Asphalt);
+    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Mud);
+    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Snow);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Grass);
 
     // 6. JSON serialization roundtrip preserves default_surface
@@ -2277,4 +2279,124 @@ fn test_track_editor_clone_to_drafts_exit_returns_to_drafts_tab() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_arena_floor_tool_hull_closure_and_wall_synthesis() {
+    use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::geometry::BarrierType;
+    use tdrace_core::track::presets::classic_grand_prix;
+    use tdrace_core::track::TrackKind;
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    tools.active_tool = EditorToolType::ArenaFloor;
+    tools.active_surface = SurfaceType::Mud;
+    tools.active_arena_barrier = Some(BarrierType::Concrete);
+
+    // 1. Place 4 vertices for an arena perimeter rectangle
+    tools.handle_secondary_down(&mut state, Vec2::new(0.0, 0.0));
+    tools.handle_secondary_down(&mut state, Vec2::new(100.0, 0.0));
+    tools.handle_secondary_down(&mut state, Vec2::new(100.0, 80.0));
+    tools.handle_secondary_down(&mut state, Vec2::new(0.0, 80.0));
+    assert_eq!(tools.active_polygon_vertices.len(), 4);
+
+    // 2. Click near first vertex (< 3.0m) to finalize arena hull
+    let initial_walls = state.track.geometry.outer_walls.len();
+    tools.handle_secondary_down(&mut state, Vec2::new(1.0, 1.0));
+    assert!(tools.active_polygon_vertices.is_empty(), "Vertices should be taken on closure");
+    assert!(state.track.is_arena());
+
+    match &state.track.kind {
+        TrackKind::Arena { boundary_hull, floor_surface, perimeter_barrier } => {
+            assert_eq!(boundary_hull.len(), 4);
+            assert_eq!(*floor_surface, SurfaceType::Mud);
+            assert_eq!(*perimeter_barrier, Some(BarrierType::Concrete));
+        }
+        _ => panic!("Expected TrackKind::Arena, got {:?}", state.track.kind),
+    }
+
+    // 3. Four perimeter walls synthesized
+    assert_eq!(state.track.geometry.outer_walls.len(), initial_walls + 4);
+    assert!(state.track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Mud));
+
+    // 4. Test Undo / Redo
+    assert!(state.undo());
+    assert!(!state.track.is_arena());
+    assert!(state.redo());
+    assert!(state.track.is_arena());
+}
+
+#[test]
+fn test_whoop_section_tool_placement_and_spacing() {
+    use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::geometry::SurfaceShape;
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    tools.active_tool = EditorToolType::WhoopSection;
+    tools.active_surface = SurfaceType::Dirt;
+    tools.whoop_spacing = 5.0;
+    tools.whoop_height = 0.85;
+    tools.whoop_width = 14.0;
+
+    let initial_ramps = state.track.geometry.jump_ramps.len();
+
+    // Drag 40m along X axis -> should create 40 / 5 = 8 whoop moguls
+    tools.handle_secondary_down(&mut state, Vec2::new(10.0, 10.0));
+    assert!(tools.is_placing);
+    tools.handle_secondary_drag(&mut state, Vec2::new(50.0, 10.0));
+    tools.handle_secondary_up(&mut state, Vec2::new(50.0, 10.0));
+    assert!(!tools.is_placing);
+
+    assert_eq!(state.track.geometry.jump_ramps.len(), initial_ramps + 8);
+    for ramp in &state.track.geometry.jump_ramps[initial_ramps..] {
+        assert_eq!(ramp.height, 0.85);
+        assert_eq!(ramp.surface, SurfaceType::Dirt);
+        if let SurfaceShape::OrientedBox { half_extents, .. } = ramp.shape {
+            assert!((half_extents.y - 7.0).abs() < 0.1, "Half width should be 7.0m");
+        } else {
+            panic!("Expected OrientedBox shape for whoop");
+        }
+    }
+
+    // Select all for active tool selects all jump ramps
+    assert!(tools.select_all_for_active_tool(&mut state));
+}
+
+#[test]
+fn test_stunt_ramp_tool_high_launch_and_multiplier() {
+    use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    tools.active_tool = EditorToolType::StuntRamp;
+    tools.active_surface = SurfaceType::Sand;
+    tools.stunt_ramp_height = 4.5;
+    tools.stunt_ramp_multiplier = 1.8;
+
+    let initial_ramps = state.track.geometry.jump_ramps.len();
+
+    // Drag from (20, 20) to (45, 20)
+    tools.handle_secondary_down(&mut state, Vec2::new(20.0, 20.0));
+    tools.handle_secondary_up(&mut state, Vec2::new(45.0, 20.0));
+
+    assert_eq!(state.track.geometry.jump_ramps.len(), initial_ramps + 1);
+    let ramp = &state.track.geometry.jump_ramps[initial_ramps];
+    assert_eq!(ramp.height, 4.5);
+    assert!((ramp.launch_speed - 28.0 * 1.8).abs() < 0.1);
+    assert_eq!(ramp.surface, SurfaceType::Sand);
+    assert!(ramp.name.starts_with("Stunt Mega Ramp"));
+}
+
 

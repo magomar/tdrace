@@ -6078,6 +6078,9 @@ impl RaceSession {
         if is_key_pressed(KeyCode::Key6) { self.editor_tools.active_tool = EditorToolType::Checkpoint; }
         if is_key_pressed(KeyCode::Key7) { self.editor_tools.active_tool = EditorToolType::StartingGrid; }
         if is_key_pressed(KeyCode::Key8) { self.editor_tools.active_tool = EditorToolType::PitLane; }
+        if is_key_pressed(KeyCode::Key9) { self.editor_tools.active_tool = EditorToolType::ArenaFloor; }
+        if is_key_pressed(KeyCode::Key0) { self.editor_tools.active_tool = EditorToolType::WhoopSection; }
+        if is_key_pressed(KeyCode::Minus) { self.editor_tools.active_tool = EditorToolType::StuntRamp; }
 
         if (is_key_down(KeyCode::LeftControl)
             || is_key_down(KeyCode::RightControl)
