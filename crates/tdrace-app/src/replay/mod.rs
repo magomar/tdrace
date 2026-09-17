@@ -323,6 +323,7 @@ impl ReplayPlayer {
             CarChoice::GT3Car => crate::module::f1::GtWorldChallengeModule::car_gt3_evo(),
             CarChoice::F1Car => crate::module::f1::GtWorldChallengeModule::car_f1_hybrid(),
             CarChoice::StockCar => CarConfig::stock_car_ta1(),
+            CarChoice::SandRail => CarConfig::sand_rail(),
         };
 
         let initial_pose = track

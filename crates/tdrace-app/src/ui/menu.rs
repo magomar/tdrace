@@ -459,10 +459,11 @@ pub enum CarChoice {
     GT3Car,
     F1Car,
     StockCar,
+    SandRail,
 }
 
 impl CarChoice {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::SportsCar,
         Self::DriftCar,
         Self::Kart,
@@ -470,6 +471,7 @@ impl CarChoice {
         Self::GT3Car,
         Self::F1Car,
         Self::StockCar,
+        Self::SandRail,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -481,6 +483,7 @@ impl CarChoice {
             Self::GT3Car => "600 BHP GT3 Evo Racer",
             Self::F1Car => "1050 BHP Hybrid F1 Turbo (Experimental)",
             Self::StockCar => "850 BHP NASCAR Cup V8",
+            Self::SandRail => "300 BHP Sand Rail Buggy",
         }
     }
 
@@ -493,6 +496,7 @@ impl CarChoice {
             Self::GT3Car => "FIA GT3 SPEC",
             Self::F1Car => "EXPERIMENTAL OPEN-WHEEL",
             Self::StockCar => "850 BHP SPACEFRAME V8",
+            Self::SandRail => "300 BHP RWD ULTRALIGHT",
         }
     }
 
@@ -505,6 +509,7 @@ impl CarChoice {
             Self::GT3Car => "4.0L V8, 600 BHP, high aerodynamic downforce (Cl=2.1), carbon brakes, ABS & TC.",
             Self::F1Car => "Experimental 1050 BHP hybrid open-wheel test bench, 346 km/h, extreme downforce (Cl=3.4).",
             Self::StockCar => "High-compression 5.9L pushrod V8, 850 BHP, 1260 kg, quick-ratio steering, 320 km/h superspeedway pack racer.",
+            Self::SandRail => "Ultralight chromoly tube chassis, 300 BHP rear turbo boxer, paddle tires, and long-travel off-road suspension.",
         }
     }
 
@@ -518,6 +523,7 @@ impl CarChoice {
             Self::GT3Car => (0.92, 0.94, 0.95, 0.50),
             Self::F1Car => (0.99, 0.99, 0.99, 0.30),
             Self::StockCar => (0.97, 0.90, 0.86, 0.88),
+            Self::SandRail => (0.88, 0.96, 0.82, 0.94),
         }
     }
 
@@ -531,6 +537,7 @@ impl CarChoice {
             Self::GT3Car => ("RWD GT3 Spec", "1,260 kg Mass", "297 km/h Top Speed", "Cl 2.10 Downforce"),
             Self::F1Car => ("Hybrid V6 Turbo", "798 kg Mass", "346 km/h Top Speed", "Cl 3.40 Downforce"),
             Self::StockCar => ("RWD Spaceframe V8", "1,260 kg Mass", "320 km/h Top Speed", "Pack Draft Dynamic"),
+            Self::SandRail => ("RWD Long-Travel", "680 kg Mass", "215 km/h Top Speed", "Paddle Sand Tires"),
         }
     }
 }
@@ -551,12 +558,14 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
             Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
             Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1") => CarChoice::StockCar,
+            Some("sand_rail" | "sand_rail_buggy" | "buggy") => CarChoice::SandRail,
             Some("sports_car") => CarChoice::SportsCar,
             _ => match tr.module_id.as_deref().unwrap_or(module_id) {
                 "gt" | "gt_challenge" | "f1" => CarChoice::GT3Car,
                 "rally" => CarChoice::RallyCar,
                 "kart" => CarChoice::Kart,
                 "nascar" => CarChoice::StockCar,
+                "extreme_offroad" => CarChoice::SandRail,
                 _ => CarChoice::SportsCar,
             },
         }
@@ -566,6 +575,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             "rally" => CarChoice::RallyCar,
             "kart" => CarChoice::Kart,
             "nascar" => CarChoice::StockCar,
+            "extreme_offroad" => CarChoice::SandRail,
             _ => CarChoice::SportsCar,
         }
     }

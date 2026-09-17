@@ -526,6 +526,7 @@ impl GameConfig {
             CarChoice::GT3Car => "gt3_car",
             CarChoice::F1Car => "f1_car",
             CarChoice::StockCar => "stock_car",
+            CarChoice::SandRail => "sand_rail_buggy",
         };
 
         if let Some(cfg) = self.cars.get(key) {
@@ -539,6 +540,7 @@ impl GameConfig {
                 CarChoice::GT3Car => crate::module::f1::GtWorldChallengeModule::car_gt3_evo(),
                 CarChoice::F1Car => crate::module::f1::GtWorldChallengeModule::car_f1_hybrid(),
                 CarChoice::StockCar => CarConfig::stock_car_ta1(),
+                CarChoice::SandRail => CarConfig::sand_rail(),
             }
         }
     }

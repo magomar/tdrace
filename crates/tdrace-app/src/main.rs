@@ -47,10 +47,14 @@ async fn main() {
             session.switch_to_rally();
         } else if clean_arg == "kart" {
             session.switch_to_kart();
+        } else if clean_arg == "extreme-offroad" || clean_arg == "offroad" || clean_arg == "buggy" {
+            session.switch_to_extreme_offroad();
         } else if clean_arg == "classic" {
             session.switch_to_classic();
         } else if clean_arg == "nascar-championship" {
             session.start_nascar_championship();
+        } else if clean_arg == "offroad-championship" || clean_arg == "extreme-offroad-championship" {
+            session.start_extreme_offroad_championship();
         } else if clean_arg == "championship" || clean_arg == "gt-championship" || clean_arg == "f1-championship" {
             session.start_gt_championship();
         } else if clean_arg == "split" || clean_arg == "splitscreen" || clean_arg == "s" {

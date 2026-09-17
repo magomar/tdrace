@@ -193,7 +193,8 @@ pub fn render_track_manager_screen(
             ModuleFilter::Kart => 2,
             ModuleFilter::F1 => 3,
             ModuleFilter::Nascar => 4,
-            ModuleFilter::Drafts => 5,
+            ModuleFilter::ExtremeOffRoad => 5,
+            ModuleFilter::Drafts => 6,
         };
         let chip_x = box_x + scaler.s(12.0) + idx as f32 * (chip_w + spacing);
         let is_filter_drafts = *filter == ModuleFilter::Drafts;
@@ -214,6 +215,7 @@ pub fn render_track_manager_screen(
             ModuleFilter::Kart => Palette::NEON_MAGENTA,
             ModuleFilter::F1 => Palette::RED,
             ModuleFilter::Nascar => Palette::NEON_ORANGE,
+            ModuleFilter::ExtremeOffRoad => Color::new(1.0, 0.40, 0.05, 1.0),
             ModuleFilter::Drafts => Palette::NEON_GOLD,
         };
 
