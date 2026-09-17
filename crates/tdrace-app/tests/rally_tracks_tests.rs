@@ -5,8 +5,9 @@ use tdrace_app::track_manager::TrackManager;
 use tdrace_app::ui::menu::{resolve_track_for_menu, CarChoice, TrackChoice};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    catalunya_rx, dirt_figure_eight, estering_rx, hell_rx, holjes_rx, kouvola_rx, loheac_rx,
-    lydden_hill, montalegre_rx, nyirad_rx,
+    catalunya_rx, dirt_figure_eight, estering_rx, hell_rx, holjes_rx, killarney_rx, kouvola_rx,
+    loheac_rx, lydden_hill, mettet_rx, montalegre_rx, nyirad_rx, riga_rx, silverstone_rx,
+    yas_marina_rx,
 };
 use tdrace_core::track::geometry::JumpRampCarExt;
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
@@ -16,7 +17,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 12, "Rally module should have 12 tracks (10 RX + 2 classic rally)");
+    assert_eq!(tracks.len(), 17, "Rally module should have 17 tracks (14 RX + 3 classic rally)");
 
     let expected_ids = [
         "holjes_rx",
@@ -28,6 +29,11 @@ fn test_rally_module_tracks_integrity_and_validation() {
         "nyirad_rx",
         "kouvola_rx",
         "catalunya_rx",
+        "mettet_rx",
+        "silverstone_rx",
+        "riga_rx",
+        "killarney_rx",
+        "yas_marina_rx",
         "oasis_rally",
         "outlaw_pass",
         "sahara_dunes",
@@ -232,6 +238,36 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
     let catalunya_breakdown = catalunya.surface_breakdown();
     assert!(catalunya_breakdown.len() >= 2, "Catalunya RX must be mixed surface");
 
+    let mettet = mettet_rx();
+    assert_eq!(mettet.name, "Circuit Jules Tacheny Mettet (World RX Belgium)");
+    assert!(!mettet.geometry.jump_ramps.is_empty(), "Mettet must have jump ramp");
+    let mettet_breakdown = mettet.surface_breakdown();
+    assert!(mettet_breakdown.len() >= 2, "Mettet must be mixed surface");
+
+    let silverstone = silverstone_rx();
+    assert_eq!(silverstone.name, "Silverstone Circuit RX (World RX Great Britain)");
+    assert!(!silverstone.geometry.jump_ramps.is_empty(), "Silverstone RX must have jump ramp");
+    let silverstone_breakdown = silverstone.surface_breakdown();
+    assert!(silverstone_breakdown.len() >= 2, "Silverstone RX must be mixed surface");
+
+    let riga = riga_rx();
+    assert_eq!(riga.name, "Biķernieku Trase (World RX Latvia)");
+    assert!(!riga.geometry.jump_ramps.is_empty(), "Riga RX must have jump ramp");
+    let riga_breakdown = riga.surface_breakdown();
+    assert!(riga_breakdown.len() >= 2, "Riga RX must be mixed surface");
+
+    let killarney = killarney_rx();
+    assert_eq!(killarney.name, "Killarney International Raceway (World RX South Africa)");
+    assert!(!killarney.geometry.jump_ramps.is_empty(), "Killarney must have jump ramp");
+    let killarney_breakdown = killarney.surface_breakdown();
+    assert!(killarney_breakdown.len() >= 2, "Killarney must be mixed surface");
+
+    let yas_marina = yas_marina_rx();
+    assert_eq!(yas_marina.name, "Yas Marina RX Arena (World RX Abu Dhabi)");
+    assert!(!yas_marina.geometry.jump_ramps.is_empty(), "Yas Marina RX must have jump ramp");
+    let yas_marina_breakdown = yas_marina.surface_breakdown();
+    assert!(yas_marina_breakdown.len() >= 2, "Yas Marina RX must be mixed surface");
+
     // Verify 1:1 scale lengths based on OpenStreetMap & FIA homologation standards
     assert!(
         holjes.spline.total_length() >= 1150.0 && holjes.spline.total_length() <= 1250.0,
@@ -278,6 +314,31 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
         "Catalunya RX 1:1 FIA length expected ~1125m, got {:.1}m",
         catalunya.spline.total_length()
     );
+    assert!(
+        mettet.spline.total_length() >= 1100.0 && mettet.spline.total_length() <= 1200.0,
+        "Mettet 1:1 FIA length expected ~1149m, got {:.1}m",
+        mettet.spline.total_length()
+    );
+    assert!(
+        silverstone.spline.total_length() >= 920.0 && silverstone.spline.total_length() <= 1020.0,
+        "Silverstone RX 1:1 FIA length expected ~972m, got {:.1}m",
+        silverstone.spline.total_length()
+    );
+    assert!(
+        riga.spline.total_length() >= 1250.0 && riga.spline.total_length() <= 1400.0,
+        "Riga RX 1:1 FIA length expected ~1294m, got {:.1}m",
+        riga.spline.total_length()
+    );
+    assert!(
+        killarney.spline.total_length() >= 1020.0 && killarney.spline.total_length() <= 1120.0,
+        "Killarney 1:1 FIA length expected ~1067m, got {:.1}m",
+        killarney.spline.total_length()
+    );
+    assert!(
+        yas_marina.spline.total_length() >= 950.0 && yas_marina.spline.total_length() <= 1100.0,
+        "Yas Marina RX 1:1 FIA length expected ~1050m, got {:.1}m",
+        yas_marina.spline.total_length()
+    );
 }
 
 #[test]
@@ -295,6 +356,11 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
         ("montalegre_rx", montalegre_rx()),
         ("kouvola_rx", kouvola_rx()),
         ("catalunya_rx", catalunya_rx()),
+        ("mettet_rx", mettet_rx()),
+        ("silverstone_rx", silverstone_rx()),
+        ("riga_rx", riga_rx()),
+        ("killarney_rx", killarney_rx()),
+        ("yas_marina_rx", yas_marina_rx()),
     ];
 
     for (slug, track) in &tracks {
@@ -425,7 +491,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
     let _ = std::fs::create_dir_all(&temp_dir);
     let tm = TrackManager::new(&temp_dir);
     let rally_catalog = tm.module_catalog_tracks("rally");
-    assert_eq!(rally_catalog.len(), 12);
+    assert_eq!(rally_catalog.len(), 17);
 
     let rally_ids = [
         "holjes_rx",
@@ -437,6 +503,11 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
         "nyirad_rx",
         "kouvola_rx",
         "catalunya_rx",
+        "mettet_rx",
+        "silverstone_rx",
+        "riga_rx",
+        "killarney_rx",
+        "yas_marina_rx",
         "oasis_rally",
         "outlaw_pass",
         "sahara_dunes",
@@ -483,6 +554,11 @@ fn test_rally_race_session_simulation_on_new_tracks() {
         "nyirad_rx",
         "kouvola_rx",
         "catalunya_rx",
+        "mettet_rx",
+        "silverstone_rx",
+        "riga_rx",
+        "killarney_rx",
+        "yas_marina_rx",
     ];
 
     for id in &test_tracks {
@@ -548,6 +624,7 @@ fn test_rally_tracks_centerline_driving_and_no_wall_obstructions() {
             let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
 
             let displacement = (car.state.position - initial_pos).length();
+
             assert!(
                 hit_inner.is_empty() && hit_outer.is_empty() && displacement < 0.01,
                 "Track '{}' ({}) Slot #{} spawned in collision with walls! (hit_inner={}, hit_outer={}, disp={:.3}m)",

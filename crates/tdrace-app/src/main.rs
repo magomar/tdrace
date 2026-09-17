@@ -7,6 +7,12 @@ fn window_conf() -> Conf {
     let height = cfg.display.window_height.max(360) as i32;
     let fullscreen = cfg.display.fullscreen;
 
+    let icon = Some(macroquad::miniquad::conf::Icon {
+        small: *include_bytes!("../../../assets/icons/icon_16.rgba"),
+        medium: *include_bytes!("../../../assets/icons/icon_32.rgba"),
+        big: *include_bytes!("../../../assets/icons/icon_64.rgba"),
+    });
+
     Conf {
         window_title: "TDRace - Modular Arcade Motorsport Platform".to_string(),
         window_width: width,
@@ -15,6 +21,7 @@ fn window_conf() -> Conf {
         window_resizable: true,
         high_dpi: true,
         sample_count: 4,
+        icon,
         ..Default::default()
     }
 }

@@ -163,6 +163,101 @@ TRACK_SPECS = {
             "surface": "Dirt",
         },
     },
+    "mettet_rx": {
+        "name": "Circuit Jules Tacheny Mettet (World RX Belgium)",
+        "description": "Belgian World RX showdown featuring rapid asphalt sweeps, banked dirt esses, and the notorious Mettet tabletop jump.",
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](50.295,4.640,50.310,4.665););out body;>;out skel qt;',
+        "way_ids": [178384323, 178384334, 178384335, 178384337, 178384345, 178384346, 178384349, 178384356, 178384358, 178384360, 178384364, 178384367, 178384383, 178384386],
+        "fia_length": 1149.0,
+        "default_width": 13.0,
+        "straight_width": 14.0,
+        "num_waypoints": 28,
+        "jump": {
+            "name": "Mettet Arena Dirt Jump",
+            "at_fraction": 0.42,
+            "height": 1.3,
+            "angle_deg": 5.5,
+            "launch_speed": 2.2,
+            "dist": 16.0,
+            "surface": "Dirt",
+        },
+    },
+    "silverstone_rx": {
+        "name": "Silverstone Circuit RX (World RX Great Britain)",
+        "description": "Speedmachine Festival circuit carved into the legendary Silverstone Stowe complex, featuring high-speed tarmac drifts and loose gravel switchbacks.",
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](52.060,-1.035,52.075,-1.005););out body;>;out skel qt;',
+        "way_ids": [169851260, 227310197, 259160216, 227339144],
+        "fia_length": 972.0,
+        "default_width": 13.0,
+        "straight_width": 14.0,
+        "num_waypoints": 28,
+        "jump": {
+            "name": "Silverstone Arena Dirt Jump",
+            "at_fraction": 0.55,
+            "height": 1.3,
+            "angle_deg": 5.5,
+            "launch_speed": 2.2,
+            "dist": 16.0,
+            "surface": "Dirt",
+        },
+    },
+    "riga_rx": {
+        "name": "Biķernieku Trase (World RX Latvia)",
+        "description": "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.",
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](56.955,24.215,56.975,24.245););out body;>;out skel qt;',
+        "way_ids": [256784387, 945640986, 588947722, 588947720, 588947717, 588947719, 588947714],
+        "fia_length": 1294.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 30,
+        "jump": {
+            "name": "Biķernieki Double Jump Crest",
+            "at_fraction": 0.60,
+            "height": 1.3,
+            "angle_deg": 5.5,
+            "launch_speed": 2.2,
+            "dist": 16.0,
+            "surface": "Dirt",
+        },
+    },
+    "killarney_rx": {
+        "name": "Killarney International Raceway (World RX South Africa)",
+        "description": "Scenic Cape Town thriller in the shadow of Table Mountain, featuring a rapid asphalt drag, loose dirt jumps and high-drift hairpin transitions.",
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](-33.840,18.520,-33.825,18.535););out body;>;out skel qt;',
+        "way_ids": [42125321, 1214903811, 1214903812, 1214903813, 1214903814, 1214903816, 1214903817, 42481058],
+        "fia_length": 1067.0,
+        "default_width": 13.0,
+        "straight_width": 14.0,
+        "num_waypoints": 28,
+        "jump": {
+            "name": "Killarney Dirt Kicker Jump",
+            "at_fraction": 0.82,
+            "height": 1.3,
+            "angle_deg": 5.5,
+            "launch_speed": 2.2,
+            "dist": 16.0,
+            "surface": "Dirt",
+        },
+    },
+    "yas_marina_rx": {
+        "name": "Yas Marina RX Arena (World RX Abu Dhabi)",
+        "description": "Spectacular twilight rallycross inside the Yas Marina amphitheater, featuring stadium dirt jumps, tight desert hairpins and high-speed grandstand sweeps.",
+        "query": '[out:json][timeout:25];(way["highway"="raceway"](24.460,54.595,24.475,54.615););out body;>;out skel qt;',
+        "way_ids": [1083519983, 1083519984, 1083519985, 1083519986, 1083519987],
+        "fia_length": 1050.0,
+        "default_width": 13.0,
+        "straight_width": 14.0,
+        "num_waypoints": 28,
+        "jump": {
+            "name": "Yas Marina Arena Dirt Jump",
+            "at_fraction": 0.58,
+            "height": 1.3,
+            "angle_deg": 5.5,
+            "launch_speed": 2.2,
+            "dist": 16.0,
+            "surface": "Dirt",
+        },
+    },
 }
 
 
@@ -360,6 +455,24 @@ def process_track(track_id):
             raw_nodes_surf.append((nodes[nid], "Asphalt"))
         for nid in reversed(ways[921317981]["nodes"][1:-1]):
             raw_nodes_surf.append((nodes[nid], "Dirt"))
+    elif track_id == "killarney_rx":
+        w42_nodes = ways[42125321]["nodes"]
+        w_cut = ways[42481058]["nodes"]
+        join_idx = w_cut.index(ways[1214903817]["nodes"][-1])
+        segments = [
+            (w42_nodes[24:45], "Asphalt"),
+            (ways[1214903811]["nodes"][1:], "Dirt"),
+            (ways[1214903812]["nodes"][1:], "Asphalt"),
+            (w42_nodes[54:57][1:], "Asphalt"),
+            (ways[1214903813]["nodes"][1:], "Asphalt"),
+            (ways[1214903814]["nodes"][1:], "Dirt"),
+            (ways[1214903816]["nodes"][1:], "Dirt"),
+            (ways[1214903817]["nodes"][1:], "Asphalt"),
+            (w_cut[join_idx:][1:], "Asphalt"),
+        ]
+        for nds, surf in segments:
+            for nid in nds:
+                raw_nodes_surf.append((nodes[nid], surf))
     else:
         for wid in spec["way_ids"]:
             w = ways[wid]

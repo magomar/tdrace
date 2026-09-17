@@ -2059,7 +2059,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 54); // 10 classic + 14 f1 + 10 rally unique + 8 famous kart + 12 nascar
+        assert_eq!(choices.len(), 59); // 10 classic + 14 f1 + 15 rally unique + 8 famous kart + 12 nascar
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();
@@ -2071,8 +2071,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 54, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 54);
+        // Since gp was saved as Draft, main choices is still 59, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 59);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -2081,7 +2081,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 55);
+        assert_eq!(manager.main_track_choices().len(), 60);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -2092,18 +2092,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[54]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[59]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 54);
+        assert_eq!(manager.main_track_choices().len(), 59);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 54);
+        assert_eq!(manager.main_track_choices().len(), 59);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -2191,7 +2191,7 @@ mod tests {
 
         // Rally tracks
         let rally_tracks = manager.module_catalog_tracks("rally");
-        assert_eq!(rally_tracks.len(), 12);
+        assert_eq!(rally_tracks.len(), 17);
         assert!(rally_tracks.iter().any(|t| t.title().contains("Sahara")));
         assert!(rally_tracks.iter().any(|t| t.title().contains("Höljes")));
 
@@ -2216,7 +2216,7 @@ mod tests {
 
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 54);
+        assert_eq!(all_tracks.len(), 59);
 
         // Save a custom circuit assigned to classic and rally
         let mut custom_circuit = classic_grand_prix();
@@ -2233,14 +2233,14 @@ mod tests {
         assert!(classic_after[10].is_user_custom(), "Custom circuit must appear after presets");
         assert_eq!(classic_after[10].title(), "Custom Category Circuit");
 
-        // Rally category: 12 presets first, then 1 custom track
+        // Rally category: 17 presets first, then 1 custom track
         let rally_after = manager.module_catalog_tracks("rally");
-        assert_eq!(rally_after.len(), 13);
-        for track in &rally_after[..12] {
+        assert_eq!(rally_after.len(), 18);
+        for track in &rally_after[..17] {
             assert!(track.is_official_preset(), "Presets must appear first in rally: {}", track.title());
         }
-        assert!(rally_after[12].is_user_custom(), "Custom circuit must appear after presets");
-        assert_eq!(rally_after[12].title(), "Custom Category Circuit");
+        assert!(rally_after[17].is_user_custom(), "Custom circuit must appear after presets");
+        assert_eq!(rally_after[17].title(), "Custom Category Circuit");
 
         // F1 and Kart: Must not contain this custom track
         let f1_after = manager.module_catalog_tracks("f1");
@@ -2277,9 +2277,9 @@ mod tests {
         assert!(cloned_gp.modules.is_empty());
         assert!(Path::new(&path_gp).exists());
 
-        // Cloned track must appear in drafts, and main count stays 54
+        // Cloned track must appear in drafts, and main count stays 59
         assert_eq!(manager.draft_track_choices().len(), 1);
-        assert_eq!(manager.main_track_choices().len(), 54);
+        assert_eq!(manager.main_track_choices().len(), 59);
         assert_eq!(manager.draft_track_choices()[0].title(), "Classic Grand Prix (clone)");
 
         // 2. Clone a module preset by slug
