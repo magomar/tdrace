@@ -33,7 +33,7 @@ fn test_nascar_game_module_identity_and_vehicles() {
 fn test_nascar_tracks_and_geometry_validation() {
     let nascar = NascarGameModule::new();
     let tracks = nascar.tracks();
-    assert_eq!(tracks.len(), 8, "Expected 8 NASCAR tracks");
+    assert_eq!(tracks.len(), 12, "Expected 12 NASCAR tracks");
 
     let expected_ids = [
         "daytona_superspeedway",
@@ -44,6 +44,10 @@ fn test_nascar_tracks_and_geometry_validation() {
         "darlington_raceway",
         "charlotte_motor_speedway",
         "indianapolis_motor_speedway",
+        "eldora_speedway",
+        "iowa_speedway",
+        "road_america",
+        "chicago_street_course",
     ];
 
     for (idx, def) in tracks.iter().enumerate() {
@@ -102,7 +106,7 @@ fn test_nascar_tournament_formats_and_points() {
         })
         .expect("NASCAR Cup Series Championship must be present");
 
-    assert_eq!(cup_champ.2.len(), 8);
+    assert_eq!(cup_champ.2.len(), 12);
     assert_eq!(*cup_champ.3, 4);
     assert!(matches!(cup_champ.1, PointSystem::NascarCup { stage_win_bonus: true }));
 
@@ -131,7 +135,7 @@ fn test_nascar_tournament_formats_and_points() {
         &initial_drivers,
     );
     assert_eq!(session.current_round, 0);
-    assert_eq!(session.total_rounds(), 8);
+    assert_eq!(session.total_rounds(), 12);
 
     let round_results = vec![
         RoundDriverResult {
@@ -263,7 +267,7 @@ fn test_nascar_phase2_championship_lifecycle() {
     {
         let champ = session.championship_session.as_ref().unwrap();
         assert_eq!(champ.name, "NASCAR Cup Series Championship 2026");
-        assert_eq!(champ.total_rounds(), 8);
+        assert_eq!(champ.total_rounds(), 12);
         assert_eq!(champ.current_round, 0);
         assert_eq!(champ.current_track_id(), Some("daytona_superspeedway"));
         assert!(matches!(champ.point_system, PointSystem::NascarCup { stage_win_bonus: true }));

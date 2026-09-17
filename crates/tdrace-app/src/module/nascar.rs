@@ -2,9 +2,9 @@ use macroquad::color::Color;
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    bristol_motor_speedway, charlotte_motor_speedway, darlington_raceway, daytona_superspeedway,
-    indianapolis_motor_speedway, martinsville_speedway, talladega_superspeedway,
-    watkins_glen_nascar,
+    bristol_motor_speedway, charlotte_motor_speedway, chicago_street_course, darlington_raceway,
+    daytona_superspeedway, eldora_speedway, indianapolis_motor_speedway, iowa_speedway,
+    martinsville_speedway, road_america, talladega_superspeedway, watkins_glen_nascar,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -184,6 +184,42 @@ impl GameModule for NascarGameModule {
                 category: "Superspeedway",
                 default_laps: 4,
                 generator: indianapolis_motor_speedway,
+            },
+            TrackDefinition {
+                id: "eldora_speedway",
+                title: "Eldora Speedway",
+                tag: "DIRT TRACK 24° BANK",
+                description: "The Big E: 0.5-mile high-banked clay oval featuring 24° banking, throttle-steered dirt sliding, and bumper-to-bumper racing.",
+                category: "Short Track (Dirt Oval)",
+                default_laps: 5,
+                generator: eldora_speedway,
+            },
+            TrackDefinition {
+                id: "iowa_speedway",
+                title: "Iowa Speedway",
+                tag: "D-SHAPED OVAL 14° BANK",
+                description: "The Fastest Short Track on the Planet: 7/8-mile D-shaped oval with progressive 12°-14° banking and intense multi-groove pack racing.",
+                category: "Short Track",
+                default_laps: 5,
+                generator: iowa_speedway,
+            },
+            TrackDefinition {
+                id: "road_america",
+                title: "Road America",
+                tag: "ELKHART LAKE ROAD COURSE",
+                description: "Legendary 4.0-mile natural-terrain road course featuring the sweeping Carousel, The Kink, and heavy braking into Canada Corner.",
+                category: "Road Course",
+                default_laps: 3,
+                generator: road_america,
+            },
+            TrackDefinition {
+                id: "chicago_street_course",
+                title: "Chicago Street Course",
+                tag: "GRANT PARK STREET COURSE",
+                description: "NASCAR's premier 2.2-mile downtown street circuit through Grant Park navigating 12 tight 90-degree corners between concrete canyon walls.",
+                category: "Street Course",
+                default_laps: 4,
+                generator: chicago_street_course,
             },
         ]
     }
@@ -493,11 +529,15 @@ impl GameModule for NascarGameModule {
                 track_ids: vec![
                     "daytona_superspeedway".to_string(),
                     "talladega_superspeedway".to_string(),
+                    "eldora_speedway".to_string(),
+                    "iowa_speedway".to_string(),
                     "indianapolis_motor_speedway".to_string(),
                     "charlotte_motor_speedway".to_string(),
                     "darlington_raceway".to_string(),
                     "bristol_motor_speedway".to_string(),
                     "martinsville_speedway".to_string(),
+                    "road_america".to_string(),
+                    "chicago_street_course".to_string(),
                     "watkins_glen_nascar".to_string(),
                 ],
                 laps_per_round: 4,
@@ -510,6 +550,8 @@ impl GameModule for NascarGameModule {
                 point_system: PointSystem::NascarCup { stage_win_bonus: false },
                 track_ids: vec![
                     "watkins_glen_nascar".to_string(),
+                    "road_america".to_string(),
+                    "chicago_street_course".to_string(),
                     "indianapolis_motor_speedway".to_string(),
                     "charlotte_motor_speedway".to_string(),
                     "darlington_raceway".to_string(),

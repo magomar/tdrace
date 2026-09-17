@@ -381,7 +381,7 @@ mod tests {
         assert_eq!(nascar.id(), "nascar");
         assert!(!nascar.title().is_empty());
         assert_eq!(nascar.vehicles().len(), 2);
-        assert_eq!(nascar.tracks().len(), 8);
+        assert_eq!(nascar.tracks().len(), 12);
         assert_eq!(nascar.drivers().len(), 12);
         assert_eq!(nascar.default_vehicle_id(), "nascar_cup_v8");
         assert_eq!(nascar.default_track_id(), "daytona_superspeedway");

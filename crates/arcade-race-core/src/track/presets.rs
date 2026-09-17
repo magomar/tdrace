@@ -2028,6 +2028,423 @@ pub fn catalunya_rx() -> Track {
     }
 }
 
+/// Preset: Circuit Jules Tacheny Mettet (World RX Belgium)
+/// Belgian Rallycross classic in Wallonia featuring the high-speed downhill plunge, technical gravel carousel and the flying Mettet dirt jump.
+/// 1:1 metric reconstruction from OpenStreetMap survey data (FIA length: 1149m).
+pub fn mettet_rx() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(35.2, -16.5), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(70.4, 4.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(93.7, 36.6), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(76.4, 72.3), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(50.0, 103.8), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(19.1, 129.8), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-20.6, 125.5), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-59.4, 113.1), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-95.5, 130.4), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-127.4, 156.2), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-159.3, 181.9), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-191.3, 207.7), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-223.2, 233.5), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-255.1, 259.3), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-287.0, 285.1), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-309.6, 298.8), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-337.4, 278.4), 11.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-318.9, 258.3), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-287.0, 232.4), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-255.1, 206.6), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-223.3, 180.7), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-191.4, 154.9), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-159.5, 129.1), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-127.6, 103.3), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-95.7, 77.5), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-63.8, 51.6), 14.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-31.9, 25.8), 14.5).with_surface(SurfaceType::Dirt),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(-310.5, 251.1),
+                half_extents: Vec2::new(3.8, 5.5),
+                angle: -0.69,
+            },
+            Vec2::new(0.77, -0.63),
+            2.2,
+            5.5,
+            1.3,
+            "Mettet Dirt Jump Crest",
+        ).with_surface(SurfaceType::Dirt),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 24, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Circuit Jules Tacheny Mettet (World RX Belgium)".to_string(),
+        description: "Belgian Rallycross classic in Wallonia featuring the high-speed downhill plunge, technical gravel carousel and the flying Mettet dirt jump.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Preset: Silverstone Circuit RX (World RX Great Britain)
+/// The Speedmachine World RX arena at Silverstone featuring sweeping asphalt entries, technical loose dirt hairpin switches and the arena jump crest.
+/// 1:1 metric reconstruction from OpenStreetMap survey data (FIA length: 972m).
+pub fn silverstone_rx() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(34.3, 0.9), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(68.8, -2.4), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(103.3, -5.7), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(137.9, -8.2), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(172.6, -10.5), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(205.7, -3.3), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(236.4, -15.5), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(271.0, -17.8), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(300.0, -1.5), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(301.3, 31.7), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(283.5, 61.5), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(266.1, 91.5), 11.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(281.6, 119.1), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(293.4, 146.7), 11.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(272.0, 174.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(250.4, 201.2), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(225.3, 224.1), 11.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(194.2, 212.8), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(167.0, 191.3), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(139.8, 169.7), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(112.6, 148.2), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(85.3, 126.7), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(58.1, 105.1), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(30.9, 83.6), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(3.7, 62.0), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-23.4, 40.4), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-31.7, 12.1), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(180.6, 202.0),
+                half_extents: Vec2::new(3.8, 5.5),
+                angle: -2.47,
+            },
+            Vec2::new(-0.78, -0.62),
+            2.2,
+            5.5,
+            1.3,
+            "Silverstone Arena Dirt Jump",
+        ).with_surface(SurfaceType::Dirt),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 24, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Silverstone Circuit RX (World RX Great Britain)".to_string(),
+        description: "The Speedmachine World RX arena at Silverstone featuring sweeping asphalt entries, technical loose dirt hairpin switches and the arena jump crest.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Preset: Biķernieku Trase (World RX Latvia)
+/// The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.
+/// 1:1 metric reconstruction from OpenStreetMap survey data (FIA length: 1294m).
+pub fn riga_rx() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(-90.6, -120.8), 13.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-45.5, -125.8), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-3.4, -144.0), 13.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(36.0, -155.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(83.0, -147.0), 14.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(136.2, -136.2), 13.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(179.7, -123.2), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(193.7, -85.3), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(189.8, -38.5), 13.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(191.3, 10.5), 13.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(200.3, 52.1), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(163.3, 82.9), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(139.3, 57.0), 13.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(101.6, 33.1), 12.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(58.2, 41.6), 12.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(26.9, 76.9), 12.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-8.0, 97.2), 12.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-52.0, 102.9), 14.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-101.8, 108.4), 14.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-154.2, 113.7), 14.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-196.8, 117.7), 12.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-223.7, 90.4), 12.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-189.0, 66.2), 12.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-144.2, 56.6), 13.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-94.4, 51.9), 13.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-52.6, 42.8), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-59.8, 0.1), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-80.9, -39.0), 14.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-102.5, -80.9), 14.5).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-127.8, -124.0), 12.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(-76.9, 105.7),
+                half_extents: Vec2::new(3.8, 5.5),
+                angle: 3.03,
+            },
+            Vec2::new(-0.99, 0.11),
+            2.2,
+            5.5,
+            1.3,
+            "Biķernieki Double Jump Crest",
+        ).with_surface(SurfaceType::Dirt),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 24, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Biķernieku Trase (World RX Latvia)".to_string(),
+        description: "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Preset: Killarney International Raceway (World RX South Africa)
+/// Scenic Cape Town thriller in the shadow of Table Mountain, featuring a rapid asphalt drag, loose dirt jumps and high-drift hairpin transitions.
+/// 1:1 metric reconstruction from OpenStreetMap survey data (FIA length: 1067m).
+pub fn killarney_rx() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 11.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(34.7, 8.3), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(42.3, 43.7), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(25.2, 77.8), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(8.1, 111.8), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(21.3, 134.3), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(7.7, 123.9), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(28.6, 99.6), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(55.1, 72.2), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(85.0, 49.6), 11.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(76.0, 17.3), 11.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(55.3, 47.5), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(38.5, 81.7), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(21.4, 115.7), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-5.7, 142.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-34.8, 166.7), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-63.8, 191.3), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-92.8, 216.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-121.9, 240.7), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-150.9, 265.4), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-161.0, 256.6), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-147.9, 220.9), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-127.3, 188.9), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-106.5, 157.0), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-85.7, 125.0), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-64.9, 93.1), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-44.5, 60.9), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-24.2, 28.7), 14.0).with_surface(SurfaceType::Asphalt),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(-49.3, 179.0),
+                half_extents: Vec2::new(3.8, 5.5),
+                angle: 2.44,
+            },
+            Vec2::new(-0.76, 0.65),
+            2.2,
+            5.5,
+            1.3,
+            "Killarney Dirt Kicker Jump",
+        ).with_surface(SurfaceType::Dirt),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 24, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Killarney International Raceway (World RX South Africa)".to_string(),
+        description: "Scenic Cape Town thriller in the shadow of Table Mountain, featuring a rapid asphalt drag, loose dirt jumps and high-drift hairpin transitions.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
+/// Preset: Yas Marina RX Arena (World RX Abu Dhabi)
+/// Spectacular twilight rallycross inside the Yas Marina amphitheater, featuring stadium dirt jumps, tight desert hairpins and high-speed grandstand sweeps.
+/// 1:1 metric reconstruction from OpenStreetMap survey data (FIA length: 1050m).
+pub fn yas_marina_rx() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 11.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(31.2, 11.8), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(12.6, 42.1), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-16.0, 66.4), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-43.8, 91.5), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-71.0, 117.3), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-98.2, 143.2), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-125.2, 169.2), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-152.2, 195.2), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-165.2, 170.5), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-175.0, 134.3), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-157.8, 119.2), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-136.6, 119.3), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-108.7, 94.4), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-86.0, 67.0), 12.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-68.0, 32.0), 11.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-56.0, 36.0), 11.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-60.0, 78.0), 12.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-68.0, 111.5), 11.5).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-105.5, 134.4), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-138.7, 148.3), 11.5).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-145.9, 179.0), 11.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-139.8, 176.3), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-116.5, 146.9), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-93.2, 117.5), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-69.9, 88.2), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-46.6, 58.8), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-23.3, 29.4), 14.0).with_surface(SurfaceType::Asphalt),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(-122.6, 106.8),
+                half_extents: Vec2::new(3.8, 5.5),
+                angle: -0.73,
+            },
+            Vec2::new(0.75, -0.67),
+            2.2,
+            5.5,
+            1.3,
+            "Yas Marina Arena Dirt Jump",
+        ).with_surface(SurfaceType::Dirt),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 24, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Yas Marina RX Arena (World RX Abu Dhabi)".to_string(),
+        description: "Spectacular twilight rallycross inside the Yas Marina amphitheater, featuring stadium dirt jumps, tight desert hairpins and high-speed grandstand sweeps.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string(), "classic".to_string()],
+    }
+}
+
 /// Layout shape options for prototypical circuit generation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TrackShape {
@@ -2839,6 +3256,328 @@ pub fn indianapolis_motor_speedway() -> Track {
         modules: vec!["nascar".to_string()],
     }
 }
+
+/// Preset: Eldora Speedway (Dirt Track Oval)
+/// Historic 0.5-mile high-banked clay oval surveyed from OpenStreetMap (OSM):
+/// 24° banking in turns, 8° on straights, full dirt surface, and relentless slide control.
+pub fn eldora_speedway() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(8.0),
+        TrackWaypoint::new(Vec2::new(57.4, -3.3), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(8.0),
+        TrackWaypoint::new(Vec2::new(113.2, 7.3), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(154.2, 46.4), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(165.9, 101.2), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(140.1, 151.9), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(91.0, 180.7), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(8.0),
+        TrackWaypoint::new(Vec2::new(35.1, 193.0), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(8.0),
+        TrackWaypoint::new(Vec2::new(-22.3, 193.7), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(8.0),
+        TrackWaypoint::new(Vec2::new(-78.2, 182.4), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-118.7, 143.0), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-128.4, 87.3), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-106.0, 35.3), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-57.0, 6.7), 18.0).with_surface(SurfaceType::Dirt).with_bank_angle(8.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 1.2, BarrierType::Concrete);
+
+    let checkpoints = generate_checkpoints(&spline, 8, 2);
+    let grid_positions = generate_grid_positions(&spline, 16, 7.5, 3.0);
+
+    Track {
+        name: "Eldora Speedway".to_string(),
+        description: "Historic 0.5-mile high-banked clay oval featuring 24° banking, relentless dirt sliding, and close-quarters pack racing.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Dirt,
+        pit_box_area: None,
+        default_laps: 5,
+        predefined_car: Some("stock_car".to_string()),
+        module_id: Some("nascar".to_string()),
+        modules: vec!["nascar".to_string()],
+    }
+}
+
+/// Preset: Iowa Speedway (The Fastest Short Track on the Planet)
+/// 7/8-mile D-shaped asphalt oval surveyed from OpenStreetMap (OSM):
+/// 12°-14° progressive banking in turns, 10° frontstretch tri-oval dogleg, and high-speed drafting.
+pub fn iowa_speedway() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 20.0).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(86.7, -14.9), 20.0).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(174.4, -12.5), 20.0).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(256.3, 15.0), 20.0).with_bank_angle(14.0),
+        TrackWaypoint::new(Vec2::new(305.6, 86.0), 20.0).with_bank_angle(14.0),
+        TrackWaypoint::new(Vec2::new(303.6, 172.2), 20.0).with_bank_angle(14.0),
+        TrackWaypoint::new(Vec2::new(247.6, 237.3), 20.0).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(165.7, 268.2), 20.0).with_bank_angle(4.0),
+        TrackWaypoint::new(Vec2::new(80.5, 290.3), 20.0).with_bank_angle(4.0),
+        TrackWaypoint::new(Vec2::new(-4.8, 312.2), 20.0).with_bank_angle(4.0),
+        TrackWaypoint::new(Vec2::new(-91.3, 324.7), 20.0).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(-173.1, 297.2), 20.0).with_bank_angle(14.0),
+        TrackWaypoint::new(Vec2::new(-222.3, 226.3), 20.0).with_bank_angle(14.0),
+        TrackWaypoint::new(Vec2::new(-214.5, 139.8), 20.0).with_bank_angle(14.0),
+        TrackWaypoint::new(Vec2::new(-159.2, 72.7), 20.0).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(-82.7, 29.8), 20.0).with_bank_angle(10.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 1.5, BarrierType::Concrete);
+
+    let checkpoints = generate_checkpoints(&spline, 10, 3);
+    let grid_positions = generate_grid_positions(&spline, 16, 8.5, 3.2);
+
+    Track {
+        name: "Iowa Speedway".to_string(),
+        description: "The Fastest Short Track on the Planet: 7/8-mile D-shaped oval with progressive 12°-14° banking and intense multi-groove racing.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 5,
+        predefined_car: Some("stock_car".to_string()),
+        module_id: Some("nascar".to_string()),
+        modules: vec!["nascar".to_string()],
+    }
+}
+
+/// Preset: Road America (Elkhart Lake)
+/// Legendary 4.048-mile natural-terrain road course surveyed from OpenStreetMap (OSM) scaled to 0.5x (3257.5m):
+/// Turn 1, Turn 3, Moraine Sweep, Turn 5, Hurry Downs, the Carousel, The Kink, Canada Corner, and Bill Mitchell Bend.
+pub fn road_america() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 15.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(101.8, -0.2), 15.0),
+        TrackWaypoint::new(Vec2::new(203.6, -0.2), 15.0),
+        TrackWaypoint::new(Vec2::new(305.4, -0.0), 15.0),
+        TrackWaypoint::new(Vec2::new(407.2, 0.2), 15.0),
+        TrackWaypoint::new(Vec2::new(509.0, 0.5), 15.0),
+        TrackWaypoint::new(Vec2::new(610.8, 0.4), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(664.7, -70.0), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(679.0, -170.7), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(641.4, -246.1), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(540.7, -232.2), 14.0),
+        TrackWaypoint::new(Vec2::new(441.1, -211.5), 14.0),
+        TrackWaypoint::new(Vec2::new(344.3, -179.8), 14.0),
+        TrackWaypoint::new(Vec2::new(249.8, -142.0), 14.0),
+        TrackWaypoint::new(Vec2::new(151.3, -116.8), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(91.8, -156.6), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(98.6, -257.3), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(198.5, -260.6), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(271.3, -325.1), 14.0),
+        TrackWaypoint::new(Vec2::new(333.6, -405.6), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(416.5, -382.7), 14.0),
+        TrackWaypoint::new(Vec2::new(507.4, -395.9), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(496.0, -487.0), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(398.9, -514.5), 14.0),
+        TrackWaypoint::new(Vec2::new(298.6, -532.3), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(210.4, -488.7), 14.0),
+        TrackWaypoint::new(Vec2::new(136.0, -419.5), 14.0),
+        TrackWaypoint::new(Vec2::new(49.8, -366.0), 14.0),
+        TrackWaypoint::new(Vec2::new(-45.0, -329.8), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-76.2, -257.5), 14.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-17.4, -175.9), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-33.1, -77.1), 14.0).with_curbs(false, true),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 2.0, BarrierType::Steel);
+
+    let checkpoints = generate_checkpoints(&spline, 16, 3);
+    let grid_positions = generate_grid_positions(&spline, 16, 9.0, 3.2);
+
+    Track {
+        name: "Road America".to_string(),
+        description: "Historic 4.0-mile natural-terrain road course featuring the Carousel, The Kink, and Canada Corner.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 3,
+        predefined_car: Some("stock_car".to_string()),
+        module_id: Some("nascar".to_string()),
+        modules: vec!["nascar".to_string()],
+    }
+}
+
+/// Preset: Chicago Street Course (Grant Park 220)
+/// NASCAR's premier 2.2-mile 12-turn downtown street circuit surveyed from OpenStreetMap (OSM) scaled to 0.5x (1770m):
+/// tight 90° corners between concrete barrier walls along Columbus Drive, Balbo Drive, DuSable Lake Shore Drive, and Michigan Avenue.
+pub fn chicago_street_course() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.0),
+        TrackWaypoint::new(Vec2::new(4.8, -101.3), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(97.5, -108.9), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(171.1, -55.5), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(228.9, 27.8), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(267.0, 120.8), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(269.9, 221.9), 13.0),
+        TrackWaypoint::new(Vec2::new(268.1, 323.3), 13.0),
+        TrackWaypoint::new(Vec2::new(266.5, 424.7), 13.0),
+        TrackWaypoint::new(Vec2::new(256.1, 518.1), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(154.8, 516.9), 13.0),
+        TrackWaypoint::new(Vec2::new(53.4, 515.8), 12.5).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-8.3, 563.7), 12.5).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-8.3, 665.0), 13.0),
+        TrackWaypoint::new(Vec2::new(-9.7, 766.4), 13.0),
+        TrackWaypoint::new(Vec2::new(-11.7, 867.7), 13.0),
+        TrackWaypoint::new(Vec2::new(-14.3, 969.1), 13.0),
+        TrackWaypoint::new(Vec2::new(-16.9, 1070.4), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-103.9, 1082.9), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-205.2, 1081.3), 13.0),
+        TrackWaypoint::new(Vec2::new(-306.6, 1079.8), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-304.5, 979.1), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-268.3, 891.6), 13.0),
+        TrackWaypoint::new(Vec2::new(-231.8, 799.6), 12.5).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-260.4, 704.4), 12.5).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-303.6, 621.5), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-301.4, 520.2), 12.5).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-212.0, 509.9), 13.0),
+        TrackWaypoint::new(Vec2::new(-110.7, 512.3), 13.0),
+        TrackWaypoint::new(Vec2::new(-13.6, 504.2), 12.5).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-7.4, 405.4), 13.0),
+        TrackWaypoint::new(Vec2::new(-5.9, 304.0), 13.0),
+        TrackWaypoint::new(Vec2::new(-4.1, 202.7), 13.0),
+        TrackWaypoint::new(Vec2::new(-1.9, 101.3), 13.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 1.2, BarrierType::Concrete);
+
+    let checkpoints = generate_checkpoints(&spline, 12, 3);
+    let grid_positions = generate_grid_positions(&spline, 16, 8.5, 3.2);
+
+    Track {
+        name: "Chicago Street Course".to_string(),
+        description: "NASCAR's premier 2.2-mile downtown street circuit through Grant Park with 12 tight 90-degree corners between concrete barrier walls.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("stock_car".to_string()),
+        module_id: Some("nascar".to_string()),
+        modules: vec!["nascar".to_string()],
+    }
+}
+
+/// Preset: Circuit of the Americas (COTA)
+/// Austin Texas Grand Prix venue surveyed from OpenStreetMap (OSM) scaled to 0.5x FIA length (2756.5m):
+/// steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.
+pub fn cota() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(91.9, -0.0), 13.5).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(183.8, -0.3), 15.0).with_surface(SurfaceType::Asphalt).with_elevation(2.0),
+        TrackWaypoint::new(Vec2::new(275.6, -0.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(4.5),
+        TrackWaypoint::new(Vec2::new(367.5, 1.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(2.5),
+        TrackWaypoint::new(Vec2::new(330.9, 51.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(298.3, 127.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(328.7, 213.9), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(336.7, 300.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(325.2, 387.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(404.7, 424.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(431.8, 508.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(505.4, 544.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(538.9, 625.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(541.5, 717.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(518.0, 768.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(465.6, 692.9), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(410.3, 619.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(351.7, 548.9), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(290.1, 480.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(225.2, 415.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(159.5, 351.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(209.6, 312.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(214.3, 264.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(129.9, 270.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(205.3, 229.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(231.4, 153.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(158.5, 109.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(69.9, 133.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(13.8, 71.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
+
+    let checkpoints = generate_checkpoints(&spline, 20, 3);
+    let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+
+    Track {
+        name: "Circuit of the Americas (COTA)".to_string(),
+        description: "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.".to_string(),
+        category: TrackCategory::Main,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+        },
+        checkpoints,
+        grid_positions: starting_grid,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("gt3_car".to_string()),
+        module_id: Some("gt".to_string()),
+        modules: vec!["gt".to_string(), "f1".to_string()],
+    }
+}
+
 
 
 

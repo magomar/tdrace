@@ -313,7 +313,7 @@ pub fn render_profile_manager_screen(
     }
 
     // Footer Navigation & Actions
-    let action_prompt = "[ENTER / A] Set Active  |  [E] Edit Profile  |  [N / X] New Profile  |  [DEL / Y] Delete Profile  |  [ESC / B] Main Menu";
+    let action_prompt = "[ENTER / A] Set Active  |  [E] Edit Profile  |  [C] Clear History  |  [N / X] New Profile  |  [DEL / Y] Delete Profile  |  [ESC / B] Main Menu";
     fonts.draw_ui_bold_centered(
         action_prompt,
         sw * 0.5,

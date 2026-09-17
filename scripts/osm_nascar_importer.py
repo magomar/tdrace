@@ -2,11 +2,10 @@
 """
 OSM NASCAR Track Importer for tdrace
 
-Extracts real-world NASCAR raceway waypoints from OpenStreetMap (OSM) via direct OSM API,
-projects them to metric 2D Cartesian coordinates, aligns the start/finish straight with
-the +X axis, scales them to 0.5x official length (standard for tdrace Grand Prix & superspeedways),
-assigns authentic turn banking, and outputs ready-to-use Rust track definitions for
-crates/arcade-race-core/src/track/presets.rs.
+Extracts real-world motorsport raceway waypoints from OpenStreetMap (OSM),
+projects them to metric 2D Cartesian coordinates, scales them to target NASCAR lengths
+(road courses scaled to 0.5x), aligns the start/finish straight with the +X axis,
+adds apex curbs, banking angles, and generates ready-to-use Rust track definitions.
 """
 
 import math
@@ -17,134 +16,208 @@ import xml.etree.ElementTree as ET
 CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "target", "osm_cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-IMS_BBOX = (-86.242, 39.785, -86.228, 39.807)
 
-# 10 contiguous ways in counter-clockwise order forming the 2.500-mile rectangular oval:
-# Start/finish line at Yard of Bricks is node 654509391 on the Main Straight.
-IMS_WAY_SEQUENCE = [
-    "588780349",  # Main Straight: from Yard of Bricks south to Turn 1 entry
-    "51308226",   # Turn 1: 90° left turn, 9° 12' banking
-    "588780333",  # South Straight (South Short Chute)
-    "588780334",  # Turn 2: 90° left turn, 9° 12' banking
-    "588780335",  # Backstretch Part 1
-    "588780332",  # Backstretch Part 2
-    "588780343",  # Turn 3: 90° left turn, 9° 12' banking
-    "588780345",  # North Straight (North Short Chute)
-    "588780347",  # Turn 4: 90° left turn, 9° 12' banking
-    "588780351",  # Main Straight: Turn 4 exit back to Yard of Bricks
-]
-
-TURN_WAYS = {"51308226", "588780334", "588780343", "588780347"}
+def latlon_to_meters(lat, lon, lat0, lon0):
+    r = 6378137.0
+    x = (math.radians(lon) - math.radians(lon0)) * math.cos(math.radians(lat0)) * r
+    y = (math.radians(lat) - math.radians(lat0)) * r
+    return x, y
 
 
-def fetch_or_load_osm(cache_path: str, bbox: tuple) -> bytes:
-    if os.path.exists(cache_path) and os.path.getsize(cache_path) > 0:
-        with open(cache_path, "rb") as f:
+def polyline_length(pts, closed=True):
+    total = 0.0
+    n = len(pts)
+    for i in range(n if closed else n - 1):
+        p0 = pts[i]
+        p1 = pts[(i + 1) % n]
+        total += math.hypot(p1[0] - p0[0], p1[1] - p0[1])
+    return total
+
+
+def resample_polyline(pts, target_count):
+    n = len(pts)
+    cum_dists = [0.0]
+    for i in range(n):
+        p0 = pts[i]
+        p1 = pts[(i + 1) % n]
+        cum_dists.append(cum_dists[-1] + math.hypot(p1[0] - p0[0], p1[1] - p0[1]))
+    total_len = cum_dists[-1]
+    step = total_len / target_count
+    resampled = []
+    seg_idx = 0
+    for k in range(target_count):
+        d = k * step
+        while seg_idx < n and cum_dists[seg_idx + 1] < d:
+            seg_idx += 1
+        d0 = cum_dists[seg_idx]
+        d1 = cum_dists[seg_idx + 1]
+        t = (d - d0) / (d1 - d0) if (d1 - d0) > 1e-6 else 0.0
+        p0 = pts[seg_idx]
+        p1 = pts[(seg_idx + 1) % n]
+        x = p0[0] + t * (p1[0] - p0[0])
+        y = p0[1] + t * (p1[1] - p0[1])
+        resampled.append((x, y))
+    return resampled, total_len
+
+
+def fetch_osm_xml(filename, url):
+    cache_path = os.path.join(CACHE_DIR, filename)
+    if os.path.exists(cache_path):
+        with open(cache_path, "r", encoding="utf-8") as f:
             return f.read()
-
-    min_lon, min_lat, max_lon, max_lat = bbox
-    url = f"https://api.openstreetmap.org/api/0.6/map?bbox={min_lon},{min_lat},{max_lon},{max_lat}"
     req = urllib.request.Request(url, headers={"User-Agent": "tdrace-osm-tool/1.0"})
-    with urllib.request.urlopen(req) as resp:
-        content = resp.read()
-
-    with open(cache_path, "wb") as f:
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        content = resp.read().decode("utf-8")
+    with open(cache_path, "w", encoding="utf-8") as f:
         f.write(content)
     return content
 
 
-def build_indianapolis_waypoints(num_waypoints: int = 24):
-    osm_path = os.path.join(CACHE_DIR, "indianapolis.osm")
-    content = fetch_or_load_osm(osm_path, IMS_BBOX)
-    root = ET.fromstring(content)
+def get_eldora_points():
+    xml_str = fetch_osm_xml(
+        "eldora_speedway.osm",
+        "https://api.openstreetmap.org/api/0.6/map?bbox=-84.637,40.316,-84.628,40.322",
+    )
+    tree = ET.fromstring(xml_str)
+    nodes = {int(n.get("id")): (float(n.get("lat")), float(n.get("lon"))) for n in tree.findall("node")}
+    for w in tree.findall("way"):
+        if w.get("id") == "608397609":
+            way_nodes = [int(nd.get("ref")) for nd in w.findall("nd")][:-1]
+            return [nodes[nid] for nid in way_nodes]
+    raise RuntimeError("Eldora way 608397609 not found")
 
-    nodes = {nd.get("id"): (float(nd.get("lat")), float(nd.get("lon"))) for nd in root.findall("node")}
-    ways = {w.get("id"): w for w in root.findall("way")}
 
-    node_seq = []
-    way_id_per_node = []
-    for wid in IMS_WAY_SEQUENCE:
-        w = ways[wid]
-        nds = [nd.get("ref") for nd in w.findall("nd")]
-        if node_seq:
-            assert node_seq[-1] == nds[0], f"Topology break between {node_seq[-1]} and {nds[0]}"
-            node_seq.extend(nds[1:])
-            way_id_per_node.extend([wid] * (len(nds) - 1))
+def get_iowa_points():
+    xml_str = fetch_osm_xml(
+        "iowa_speedway.osm",
+        "https://api.openstreetmap.org/api/0.6/map?bbox=-93.022,41.666,-93.006,41.678",
+    )
+    tree = ET.fromstring(xml_str)
+    nodes = {int(n.get("id")): (float(n.get("lat")), float(n.get("lon"))) for n in tree.findall("node")}
+    for w in tree.findall("way"):
+        if w.get("id") == "119238784":
+            way_nodes = [int(nd.get("ref")) for nd in w.findall("nd")][:-1]
+            return [nodes[nid] for nid in way_nodes]
+    raise RuntimeError("Iowa way 119238784 not found")
+
+
+def get_road_america_points():
+    xml_str = fetch_osm_xml(
+        "road_america_rel.osm",
+        "https://api.openstreetmap.org/api/0.6/relation/6432758/full",
+    )
+    tree = ET.fromstring(xml_str)
+    nodes = {int(n.get("id")): (float(n.get("lat")), float(n.get("lon"))) for n in tree.findall("node")}
+    ways = {int(w.get("id")): [int(nd.get("ref")) for nd in w.findall("nd")] for w in tree.findall("way")}
+    rel = tree.find("relation")
+    member_way_ids = [int(m.get("ref")) for m in rel.findall("member") if m.get("type") == "way"]
+
+    ordered_nodes = []
+    for wid in member_way_ids:
+        wnodes = ways.get(wid, [])
+        if not wnodes:
+            continue
+        if not ordered_nodes:
+            ordered_nodes.extend(wnodes)
         else:
-            node_seq.extend(nds)
-            way_id_per_node.extend([wid] * len(nds))
+            if ordered_nodes[-1] == wnodes[0]:
+                ordered_nodes.extend(wnodes[1:])
+            elif ordered_nodes[-1] == wnodes[-1]:
+                ordered_nodes.extend(list(reversed(wnodes))[1:])
+            else:
+                p_curr = nodes[ordered_nodes[-1]]
+                p_start = nodes[wnodes[0]]
+                p_end = nodes[wnodes[-1]]
+                d_start = math.hypot(p_curr[0] - p_start[0], p_curr[1] - p_start[1])
+                d_end = math.hypot(p_curr[0] - p_end[0], p_curr[1] - p_end[1])
+                if d_start < d_end:
+                    ordered_nodes.extend(wnodes[1:])
+                else:
+                    ordered_nodes.extend(list(reversed(wnodes))[1:])
+    return [nodes[nid] for nid in ordered_nodes]
 
-    assert node_seq[0] == node_seq[-1], "Loop must close back to start node"
 
-    pts_latlon = [nodes[nid] for nid in node_seq]
-    lat0, lon0 = pts_latlon[0]
-    r = 6378137.0  # WGS84 Earth radius
+def get_chicago_points():
+    xml_str = fetch_osm_xml(
+        "chicago_rel.osm",
+        "https://api.openstreetmap.org/api/0.6/relation/16546690/full",
+    )
+    tree = ET.fromstring(xml_str)
+    nodes = {int(n.get("id")): (float(n.get("lat")), float(n.get("lon"))) for n in tree.findall("node")}
+    ways = {int(w.get("id")): [int(nd.get("ref")) for nd in w.findall("nd")] for w in tree.findall("way")}
+    rel = tree.find("relation")
+    member_way_ids = [int(m.get("ref")) for m in rel.findall("member") if m.get("type") == "way"]
 
-    # Metric equirectangular tangent projection
-    pts_m = []
-    for lat, lon in pts_latlon:
-        x = (math.radians(lon) - math.radians(lon0)) * math.cos(math.radians(lat0)) * r
-        y = (math.radians(lat) - math.radians(lat0)) * r
-        pts_m.append((x, y))
+    ordered_nodes = []
+    for wid in member_way_ids:
+        wnodes = ways.get(wid, [])
+        if not wnodes:
+            continue
+        if not ordered_nodes:
+            ordered_nodes.extend(wnodes)
+        else:
+            if ordered_nodes[-1] == wnodes[0]:
+                ordered_nodes.extend(wnodes[1:])
+            elif ordered_nodes[-1] == wnodes[-1]:
+                ordered_nodes.extend(list(reversed(wnodes))[1:])
+            else:
+                p_curr = nodes[ordered_nodes[-1]]
+                p_start = nodes[wnodes[0]]
+                p_end = nodes[wnodes[-1]]
+                d_start = math.hypot(p_curr[0] - p_start[0], p_curr[1] - p_start[1])
+                d_end = math.hypot(p_curr[0] - p_end[0], p_curr[1] - p_end[1])
+                if d_start < d_end:
+                    ordered_nodes.extend(wnodes[1:])
+                else:
+                    ordered_nodes.extend(list(reversed(wnodes))[1:])
+    return [nodes[nid] for nid in ordered_nodes]
 
-    # Align frontstretch heading along +X
-    dx0 = pts_m[3][0] - pts_m[0][0]
-    dy0 = pts_m[3][1] - pts_m[0][1]
-    heading = math.atan2(dy0, dx0)
-    rot = -heading
-    cos_r = math.cos(rot)
-    sin_r = math.sin(rot)
 
-    pts_rot = []
-    for x, y in pts_m:
-        xr = x * cos_r - y * sin_r
-        yr = x * sin_r + y * cos_r
-        pts_rot.append((xr, yr))
+def process_circuit(raw_latlons, target_length, target_waypoints, is_dirt=False):
+    lat0 = sum(p[0] for p in raw_latlons) / len(raw_latlons)
+    lon0 = sum(p[1] for p in raw_latlons) / len(raw_latlons)
 
-    # Calculate raw perimeter and scale to 0.5x FIA length (2011.68m)
-    total_len = 0.0
-    seg_lens = []
-    for i in range(len(pts_rot) - 1):
-        d = math.hypot(pts_rot[i + 1][0] - pts_rot[i][0], pts_rot[i + 1][1] - pts_rot[i][1])
-        seg_lens.append(d)
-        total_len += d
+    metric_pts = [latlon_to_meters(p[0], p[1], lat0, lon0) for p in raw_latlons]
 
-    target_len = 2011.68
-    scale = target_len / total_len
+    # Find longest straight segment for start/finish alignment
+    n = len(metric_pts)
+    best_heading = 0.0
+    p_start = metric_pts[0]
+    p_next = metric_pts[min(5, n - 1)]
+    best_heading = math.atan2(p_next[1] - p_start[1], p_next[0] - p_start[0])
 
-    # Center Y coordinate so frontstretch is at Y = -180.0 (matching NASCAR conventions)
-    pts_scaled = [(x * scale, (y * scale) - 180.0) for x, y in pts_rot]
+    cos_a = math.cos(-best_heading)
+    sin_a = math.sin(-best_heading)
+    rotated = []
+    for x, y in metric_pts:
+        rx = x * cos_a - y * sin_a
+        ry = x * sin_a + y * cos_a
+        rotated.append((rx, ry))
 
-    cum_dist = [0.0]
-    for d in seg_lens:
-        cum_dist.append(cum_dist[-1] + d * scale)
+    # Scale to target length
+    cur_len = polyline_length(rotated, closed=True)
+    scale = target_length / cur_len if cur_len > 0 else 1.0
+    scaled = [(x * scale, y * scale) for x, y in rotated]
 
-    # Uniform resampling along cumulative arc length
-    step = target_len / num_waypoints
-    waypoints = []
-    for i in range(num_waypoints):
-        target_d = i * step
-        idx = 0
-        while idx < len(cum_dist) - 2 and cum_dist[idx + 1] < target_d:
-            idx += 1
-        t = (target_d - cum_dist[idx]) / (cum_dist[idx + 1] - cum_dist[idx])
-        p1 = pts_scaled[idx]
-        p2 = pts_scaled[idx + 1]
-        rx = p1[0] + t * (p2[0] - p1[0])
-        ry = p1[1] + t * (p2[1] - p1[1])
-        wid = way_id_per_node[idx]
+    # Translate so WP 0 is at (0, 0)
+    x0, y0 = scaled[0]
+    aligned = [(x - x0, y - y0) for x, y in scaled]
 
-        # Authentic banking: 9.2° (9° 12') on turns, 0.0° on straights and short chutes
-        # Short chutes (South Straight around WP 05, North Straight around WP 17) are flat
-        in_turn = wid in TURN_WAYS and not (wid == "588780343" and ry < 30.0 and ry > -60.0)
-        bank = 9.2 if in_turn else 0.0
-        waypoints.append((round(rx, 1), round(ry, 1), bank, wid))
-
-    return waypoints
+    # Resample
+    resampled, final_len = resample_polyline(aligned, target_waypoints)
+    return resampled, final_len
 
 
 if __name__ == "__main__":
-    wps = build_indianapolis_waypoints(24)
-    print(f"Generated {len(wps)} waypoints for Indianapolis Motor Speedway:")
-    for i, (x, y, bank, wid) in enumerate(wps):
-        print(f"    TrackWaypoint::new(Vec2::new({x:6.1f}, {y:6.1f}), 20.0).with_bank_angle({bank:.1f}), // WP {i:02d}")
+    print("Fetching and processing circuits...")
+    eldora_pts, l_e = process_circuit(get_eldora_points(), 805.0, 14, is_dirt=True)
+    print(f"Eldora: {len(eldora_pts)} wps, len={l_e:.1f}m")
+
+    iowa_pts, l_i = process_circuit(get_iowa_points(), 1408.0, 16)
+    print(f"Iowa: {len(iowa_pts)} wps, len={l_i:.1f}m")
+
+    ra_pts, l_ra = process_circuit(get_road_america_points(), 3257.5, 32)
+    print(f"Road America: {len(ra_pts)} wps, len={l_ra:.1f}m")
+
+    chi_pts, l_chi = process_circuit(get_chicago_points(), 1770.0, 28)
+    print(f"Chicago: {len(chi_pts)} wps, len={l_chi:.1f}m")

@@ -15,16 +15,16 @@ pub use geometry::{
     SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
 pub use presets::{
-    bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, classic_grand_prix,
-    classic_template, create_prototypical_track, darlington_raceway, daytona_superspeedway,
-    dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park, dune_raid,
-    estering_rx, f1_template, figure_eight, generate_checkpoints, generate_grid_positions,
-    generate_grid_positions_at_distance, generate_horizontal_eight_waypoints,
+    bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, chicago_street_course,
+    classic_grand_prix, classic_template, cota, create_prototypical_track, darlington_raceway,
+    daytona_superspeedway, dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park,
+    dune_raid, eldora_speedway, estering_rx, f1_template, figure_eight, generate_checkpoints,
+    generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints,
     generate_oval_waypoints, generate_walls_from_spline, hell_rx, holjes_rx,
-    indianapolis_motor_speedway, kart_arena, kart_template, kouvola_rx, loheac_rx, lydden_hill,
-    martinsville_speedway, montalegre_rx, nyirad_rx, oasis_rally, outlaw_pass, oval_speedway,
-    rally_template, ramp_raceway, sahara_dunes, talladega_superspeedway, watkins_glen_nascar,
-    RaceDirection, TrackShape,
+    indianapolis_motor_speedway, iowa_speedway, kart_arena, kart_template, killarney_rx, kouvola_rx, loheac_rx,
+    lydden_hill, martinsville_speedway, mettet_rx, montalegre_rx, nyirad_rx, oasis_rally, outlaw_pass,
+    oval_speedway, rally_template, ramp_raceway, riga_rx, road_america, sahara_dunes,
+    silverstone_rx, talladega_superspeedway, watkins_glen_nascar, yas_marina_rx, RaceDirection, TrackShape,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 pub use validation::{validate_track, TrackValidationError, ValidationSeverity};

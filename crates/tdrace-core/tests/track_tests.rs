@@ -916,9 +916,10 @@ fn test_prototypical_track_templates_all_combinations() {
 #[test]
 fn test_nascar_track_presets_and_validation() {
     use tdrace_core::track::presets::{
-        bristol_motor_speedway, charlotte_motor_speedway, darlington_raceway,
-        daytona_superspeedway, indianapolis_motor_speedway, martinsville_speedway,
-        talladega_superspeedway, watkins_glen_nascar,
+        bristol_motor_speedway, charlotte_motor_speedway, chicago_street_course,
+        darlington_raceway, daytona_superspeedway, eldora_speedway, indianapolis_motor_speedway,
+        iowa_speedway, martinsville_speedway, road_america, talladega_superspeedway,
+        watkins_glen_nascar,
     };
     use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
@@ -931,6 +932,10 @@ fn test_nascar_track_presets_and_validation() {
         ("darlington.json", darlington_raceway()),
         ("charlotte.json", charlotte_motor_speedway()),
         ("indianapolis.json", indianapolis_motor_speedway()),
+        ("eldora.json", eldora_speedway()),
+        ("iowa.json", iowa_speedway()),
+        ("road_america.json", road_america()),
+        ("chicago.json", chicago_street_course()),
     ];
 
     for (_filename, track) in &track_pairs {

@@ -391,5 +391,75 @@ fn test_race_session_save_new_circuit_does_not_clear_other_tracks() {
     let _ = std::fs::remove_dir_all(temp_dir);
 }
 
+#[test]
+fn test_clear_bot_hall_of_fame_preserves_human_records() {
+    let db = HallOfFameDb::open_in_memory().expect("In-memory SQLite should initialize");
 
+    // 1. Seed human profile ("Racer One" / "Apex Legend")
+    let profile = db.seed_default_profile_if_empty().expect("Seed profile");
+    assert_eq!(profile.alias, "Apex Legend");
 
+    // 2. Insert mix of human and AI bot records
+    let entries = [
+        ("Apex Legend", 65.0),
+        ("Apex Legend (P1)", 66.2),
+        ("Viper Frost", 67.0),
+        ("Thunder Rossi", 68.5),
+        ("Der Meister", 70.0),
+    ];
+
+    for (name, total_time) in entries {
+        db.insert_entry(&HallOfFameEntry {
+            id: None,
+            track_id: "classic_grand_prix".to_string(),
+            player_name: name.to_string(),
+            car_name: "GT Sports Coupe".to_string(),
+            total_time,
+            best_lap: Some(total_time / 3.0),
+            laps: 3,
+            created_at: "2026-09-01 10:00".to_string(),
+        }).unwrap();
+    }
+
+    let top_before = db.get_top_10("classic_grand_prix").unwrap();
+    assert_eq!(top_before.len(), 5);
+
+    // 3. Clear bot records
+    db.clear_bot_hall_of_fame().unwrap();
+
+    // 4. Verify only human records remain
+    let top_after = db.get_top_10("classic_grand_prix").unwrap();
+    assert_eq!(top_after.len(), 2);
+    assert_eq!(top_after[0].player_name, "Apex Legend");
+    assert_eq!(top_after[1].player_name, "Apex Legend (P1)");
+
+    // 5. Test RaceSession integration
+    let mut session = RaceSession::new();
+    session.hof_db = Some(db);
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+    session.refresh_profiles_and_stats();
+    session.refresh_hof_entries();
+
+    assert_eq!(session.hof_entries.len(), 2);
+
+    // Add a bot entry to DB and refresh
+    if let Some(db_ref) = &session.hof_db {
+        db_ref.insert_entry(&HallOfFameEntry {
+            id: None,
+            track_id: "classic_grand_prix".to_string(),
+            player_name: "Oversteer Reed".to_string(),
+            car_name: "GT Sports Coupe".to_string(),
+            total_time: 69.0,
+            best_lap: Some(23.0),
+            laps: 3,
+            created_at: "2026-09-01 10:05".to_string(),
+        }).unwrap();
+    }
+    session.refresh_hof_entries();
+    assert_eq!(session.hof_entries.len(), 3);
+
+    // Run clear_bot_history
+    session.clear_bot_history();
+    assert_eq!(session.hof_entries.len(), 2);
+    assert!(session.hof_entries.iter().all(|e| e.player_name.starts_with("Apex Legend")));
+}

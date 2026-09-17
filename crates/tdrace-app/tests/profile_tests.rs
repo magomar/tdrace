@@ -303,3 +303,156 @@ fn test_profile_editing_workflow() {
         updated_scheme.to_hex_strings()
     );
 }
+
+#[test]
+fn test_clear_profile_history_and_hall_of_fame() {
+    use tdrace_app::db::HallOfFameEntry;
+
+    let db = HallOfFameDb::open_in_memory().expect("In-memory database should initialize");
+
+    // 1. Seed default profile and create a secondary profile
+    let p1 = db.seed_default_profile_if_empty().expect("Seed default profile");
+    let p1_id = p1.id.expect("Profile 1 ID");
+
+    let p2 = PlayerProfile {
+        id: None,
+        name: "Carlos Sainz".to_string(),
+        alias: "Smooth Operator".to_string(),
+        country: Some("ESP".to_string()),
+        color_scheme: CarColorScheme::from_index(3),
+        is_active: false,
+        created_at: "2026-09-01 10:00".to_string(),
+    };
+    let p2_id = db.create_profile(&p2).expect("Insert profile 2");
+
+    // 2. Insert race history logs for both profiles
+    let race_p1 = RaceHistoryEntry {
+        id: None,
+        profile_id: p1_id,
+        track_id: "classic_grand_prix".to_string(),
+        car_name: "GT Sports Coupe".to_string(),
+        position: 1,
+        total_cars: 8,
+        total_time: 75.0,
+        best_lap: Some(24.0),
+        laps: 3,
+        is_time_attack: false,
+        created_at: "2026-09-01 10:10".to_string(),
+    };
+    db.insert_race_history(&race_p1).unwrap();
+
+    let race_p2 = RaceHistoryEntry {
+        id: None,
+        profile_id: p2_id,
+        track_id: "classic_grand_prix".to_string(),
+        car_name: "AWD Turbo Rally".to_string(),
+        position: 2,
+        total_cars: 8,
+        total_time: 78.0,
+        best_lap: Some(25.5),
+        laps: 3,
+        is_time_attack: false,
+        created_at: "2026-09-01 10:15".to_string(),
+    };
+    db.insert_race_history(&race_p2).unwrap();
+
+    // 3. Insert Hall of Fame records for P1 (solo + split-screen), P2, and a Bot
+    db.insert_entry(&HallOfFameEntry {
+        id: None,
+        track_id: "classic_grand_prix".to_string(),
+        player_name: "Apex Legend".to_string(),
+        car_name: "GT Sports Coupe".to_string(),
+        total_time: 75.0,
+        best_lap: Some(24.0),
+        laps: 3,
+        created_at: "2026-09-01 10:10".to_string(),
+    }).unwrap();
+    db.insert_entry(&HallOfFameEntry {
+        id: None,
+        track_id: "classic_grand_prix".to_string(),
+        player_name: "Apex Legend (P1)".to_string(),
+        car_name: "GT Sports Coupe".to_string(),
+        total_time: 76.5,
+        best_lap: Some(24.5),
+        laps: 3,
+        created_at: "2026-09-01 10:20".to_string(),
+    }).unwrap();
+    db.insert_entry(&HallOfFameEntry {
+        id: None,
+        track_id: "classic_grand_prix".to_string(),
+        player_name: "Smooth Operator".to_string(),
+        car_name: "AWD Turbo Rally".to_string(),
+        total_time: 78.0,
+        best_lap: Some(25.5),
+        laps: 3,
+        created_at: "2026-09-01 10:15".to_string(),
+    }).unwrap();
+    db.insert_entry(&HallOfFameEntry {
+        id: None,
+        track_id: "classic_grand_prix".to_string(),
+        player_name: "The Stig".to_string(),
+        car_name: "GT Sports Coupe".to_string(),
+        total_time: 80.0,
+        best_lap: Some(26.0),
+        laps: 3,
+        created_at: "2026-09-01 10:10".to_string(),
+    }).unwrap();
+
+    // Verify stats before clearing
+    let stats_before = db.get_stats_for_profile(p1_id).unwrap();
+    assert_eq!(stats_before.total_races, 1);
+    assert_eq!(stats_before.wins, 1);
+
+    // 4. Clear historical data for Profile 1 only
+    db.clear_profile_historical_data(p1_id, &p1.alias).unwrap();
+
+    // Verify Profile 1 historical data is wiped
+    let p1_history = db.get_history_for_profile(p1_id, 10).unwrap();
+    assert!(p1_history.is_empty(), "Profile 1 history should be empty");
+    let stats_after = db.get_stats_for_profile(p1_id).unwrap();
+    assert_eq!(stats_after.total_races, 0);
+    assert_eq!(stats_after.wins, 0);
+    assert!(stats_after.best_times.is_empty());
+
+    // Verify Profile 1 identity remains intact
+    let p1_fetched = db.get_profile_by_id(p1_id).unwrap().unwrap();
+    assert_eq!(p1_fetched.name, "Racer One");
+    assert_eq!(p1_fetched.alias, "Apex Legend");
+
+    // Verify Profile 2 history and HOF remain intact
+    let p2_history = db.get_history_for_profile(p2_id, 10).unwrap();
+    assert_eq!(p2_history.len(), 1, "Profile 2 history should remain intact");
+
+    // Verify Hall of Fame: Apex Legend entries removed, Smooth Operator & The Stig preserved
+    let top = db.get_top_10("classic_grand_prix").unwrap();
+    assert_eq!(top.len(), 2);
+    assert_eq!(top[0].player_name, "Smooth Operator");
+    assert_eq!(top[1].player_name, "The Stig");
+
+    // 5. Verify RaceSession integration
+    let mut session = RaceSession::new();
+    session.hof_db = Some(db);
+    session.refresh_profiles_and_stats();
+    assert_eq!(session.active_profile.id, Some(p1_id));
+
+    // Simulate winning race to populate in-memory session caches
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+    session.init_race();
+    session.trackers[0].current_lap = 4;
+    session.trackers[0].best_lap_time = Some(23.0);
+    session.session_time = 70.0;
+    session.check_race_finish();
+
+    assert_eq!(session.profile_history.len(), 1);
+    assert_eq!(session.active_profile_stats.total_races, 1);
+    assert!(session.hof_entries.iter().any(|e| e.player_name == "Apex Legend"));
+
+    // Clear active profile history via session method
+    session.clear_profile_history(p1_id);
+
+    assert!(session.profile_history.is_empty(), "Session profile history should be empty");
+    assert_eq!(session.active_profile_stats.total_races, 0, "Session career stats should reset");
+    assert!(!session.hof_entries.iter().any(|e| e.player_name == "Apex Legend"), "Session HOF should not have Apex Legend");
+    assert_eq!(session.active_profile.alias, "Apex Legend", "Active profile identity preserved");
+}
+

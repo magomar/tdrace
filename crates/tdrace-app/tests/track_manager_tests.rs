@@ -46,11 +46,11 @@ fn test_track_categories_initial_presets() {
 
     let manager = TrackManager::new(&temp_dir);
 
-    // 1. Initial state: 50 main presets across modules (10 Classic + 14 unique F1 + 10 unique Rally + 8 famous Kart + 8 Nascar), 0 drafts
+    // 1. Initial state: 54 main presets across modules (10 Classic + 14 unique F1 + 10 unique Rally + 8 famous Kart + 12 Nascar), 0 drafts
     let main_tracks = manager.main_track_choices();
     let draft_tracks = manager.draft_track_choices();
 
-    assert_eq!(main_tracks.len(), 50, "All 50 presets across modules should be Main tracks");
+    assert_eq!(main_tracks.len(), 54, "All 54 presets across modules should be Main tracks");
     assert_eq!(draft_tracks.len(), 0, "Initial draft tracks list should be empty");
 
     for choice in &main_tracks {
@@ -79,7 +79,7 @@ fn test_draft_creation_and_isolation_from_main_menu() {
     // 2. Verify isolation: Should appear in drafts, NOT in main
     // 3. Verify main menu list still contains only main tracks
     let main_tracks = manager.main_track_choices();
-    assert_eq!(main_tracks.len(), 50, "Main menu should only contain approved circuits");
+    assert_eq!(main_tracks.len(), 54, "Main menu should only contain approved circuits");
     let draft_tracks = manager.draft_track_choices();
     assert_eq!(draft_tracks.len(), 1, "Drafts list should contain the newly created draft");
 
@@ -124,13 +124,13 @@ fn test_promotion_and_demotion_lifecycle() {
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save proto");
 
-    assert_eq!(manager.main_track_choices().len(), 50);
+    assert_eq!(manager.main_track_choices().len(), 54);
     assert_eq!(manager.draft_track_choices().len(), 1);
 
     // Promote to F1 Module
     manager.promote_track_to_module(track_id, "f1").expect("Must promote to F1");
 
-    assert_eq!(manager.main_track_choices().len(), 51, "Promoted track must appear in Main");
+    assert_eq!(manager.main_track_choices().len(), 55, "Promoted track must appear in Main");
     assert_eq!(manager.draft_track_choices().len(), 0, "Promoted track must be removed from Drafts");
 
     let promoted_choice = manager.main_track_choices().into_iter().find(|t| t.track_id() == track_id).unwrap();
@@ -150,7 +150,7 @@ fn test_promotion_and_demotion_lifecycle() {
     // Demote back to Draft (Under testing)
     manager.demote_track(track_id).expect("Must demote to Draft");
 
-    assert_eq!(manager.main_track_choices().len(), 50, "Demoted track must be removed from Main");
+    assert_eq!(manager.main_track_choices().len(), 54, "Demoted track must be removed from Main");
     assert_eq!(manager.draft_track_choices().len(), 1, "Demoted track must reappear in Drafts");
     assert_eq!(manager.module_custom_tracks("f1").len(), 0);
 
@@ -409,8 +409,8 @@ fn test_module_filter_filtering_and_presets_in_classic() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial state: 50 tracks across all modules (10 Classic + 14 unique F1 + 10 unique Rally + 8 famous Kart + 8 Nascar)
-    assert_eq!(manager.main_track_choices().len(), 50);
+    // Initial state: 54 tracks across all modules (10 Classic + 14 unique F1 + 10 unique Rally + 8 famous Kart + 12 Nascar)
+    assert_eq!(manager.main_track_choices().len(), 54);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 15);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 12);
@@ -429,12 +429,12 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     manager.promote_track_to_module("dune_safari", "rally").unwrap();
 
     // Verify filtered counts
-    assert_eq!(manager.main_track_choices().len(), 52);
+    assert_eq!(manager.main_track_choices().len(), 56);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 16);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 13);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 10);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Nascar).len(), 8);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Nascar).len(), 12);
 
     // Verify filter cycle (.next())
     assert_eq!(ModuleFilter::Classic.next(), ModuleFilter::Rally);
@@ -495,7 +495,7 @@ fn test_module_subdirectories_and_file_movement() {
 
     // 5. Test scanner on fresh TrackManager instance
     let new_scanner = TrackManager::new(&temp_dir);
-    assert_eq!(new_scanner.main_track_choices().len(), 51); // 50 presets + 1 custom
+    assert_eq!(new_scanner.main_track_choices().len(), 55); // 54 presets + 1 custom
     assert_eq!(new_scanner.module_custom_tracks("rally").len(), 1);
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -1080,8 +1080,8 @@ fn test_track_manager_clone_preset_to_drafts() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial check: 50 main tracks, 0 drafts
-    assert_eq!(manager.main_track_choices().len(), 50);
+    // Initial check: 54 main tracks, 0 drafts
+    assert_eq!(manager.main_track_choices().len(), 54);
     assert_eq!(manager.draft_track_choices().len(), 0);
 
     // Clone Classic Grand Prix
@@ -1095,8 +1095,8 @@ fn test_track_manager_clone_preset_to_drafts() {
     assert!(Path::new(&saved_path).exists());
     assert!(saved_path.ends_with(".json"));
 
-    // Verify drafts list has 1 track, main still has 50
-    assert_eq!(manager.main_track_choices().len(), 50);
+    // Verify drafts list has 1 track, main still has 54
+    assert_eq!(manager.main_track_choices().len(), 54);
     let drafts = manager.draft_track_choices();
     assert_eq!(drafts.len(), 1);
     assert_eq!(drafts[0].title(), "Classic Grand Prix (clone)");
@@ -1291,8 +1291,8 @@ fn test_workspace_rally_deletion_preserves_classic() {
 #[ignore = "Manual export tool: cargo test --test track_manager_tests test_export_canonical_presets_to_git_repo -- --ignored"]
 fn test_export_canonical_presets_to_git_repo() {
     use tdrace_app::module::{
-        classic::ClassicGameModule, f1::F1GameModule, kart::KartGameModule, rally::RallyGameModule,
-        GameModule,
+        classic::ClassicGameModule, f1::F1GameModule, kart::KartGameModule,
+        nascar::NascarGameModule, rally::RallyGameModule, GameModule,
     };
     use tdrace_core::track::TrackCategory;
 
@@ -1306,6 +1306,7 @@ fn test_export_canonical_presets_to_git_repo() {
         Box::new(F1GameModule::new()),
         Box::new(RallyGameModule::new()),
         Box::new(KartGameModule::new()),
+        Box::new(NascarGameModule::new()),
     ];
 
     let mut total_exported = 0;
@@ -1321,7 +1322,25 @@ fn test_export_canonical_presets_to_git_repo() {
             if !track.modules.contains(&mod_id.to_string()) {
                 track.modules.push(mod_id.to_string());
             }
-            let file_path = target_dir.join(format!("{}.json", track_def.id));
+            let filename = if mod_id == "nascar" {
+                match track_def.id {
+                    "daytona_superspeedway" => "daytona",
+                    "talladega_superspeedway" => "talladega",
+                    "watkins_glen_nascar" => "watkins_glen",
+                    "bristol_motor_speedway" => "bristol",
+                    "martinsville_speedway" => "martinsville",
+                    "darlington_raceway" => "darlington",
+                    "charlotte_motor_speedway" => "charlotte",
+                    "indianapolis_motor_speedway" => "indianapolis",
+                    "eldora_speedway" => "eldora",
+                    "iowa_speedway" => "iowa",
+                    "chicago_street_course" => "chicago",
+                    other => other,
+                }
+            } else {
+                track_def.id
+            };
+            let file_path = target_dir.join(format!("{}.json", filename));
             track.save_to_file(&file_path).expect("Failed to export canonical preset");
 
             // Verify load
@@ -1332,7 +1351,7 @@ fn test_export_canonical_presets_to_git_repo() {
             total_exported += 1;
         }
     }
-    assert!(total_exported >= 42, "Must export all 42 preset track definitions across modules");
+    assert!(total_exported >= 59, "Must export all preset track definitions across modules");
 }
 
 #[test]
