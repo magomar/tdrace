@@ -44,6 +44,13 @@ pub enum VehicleVisualType {
         roof_fins: bool,
         window_net: bool,
     },
+    /// Extreme Off-Road Sand Rail Buggy: open tubular chromoly roll cage, paddle sand tires,
+    /// exposed rear flat-4 turbo engine, safety pennant whip antenna, 4-pod roof lightbar.
+    SandRail {
+        lightbar: bool,
+        whip_antenna: bool,
+        paddle_tires: bool,
+    },
 }
 
 impl Default for VehicleVisualType {
@@ -195,6 +202,19 @@ impl EngineAudioProfile {
             harmonic_ratio: 4.0,
             turbo_flutter: false,
             anti_lag_pops: false,
+        }
+    }
+
+    pub fn sand_rail_boxer() -> Self {
+        Self {
+            sound_type: EngineSoundType::SandRailBoxer,
+            idle_rpm: 1250.0,
+            max_rpm: 8800.0,
+            base_pitch: 70.0,
+            pitch_scale: 0.044,
+            harmonic_ratio: 2.5,
+            turbo_flutter: true,
+            anti_lag_pops: true,
         }
     }
 }

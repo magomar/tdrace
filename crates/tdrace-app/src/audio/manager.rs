@@ -26,7 +26,7 @@ use crate::audio::sfx::{
     generate_f1_v6_rpm_band, generate_gear_shift_pop, generate_generic_engine_rpm_band,
     generate_jump_launch_sound, generate_kart_125cc_rpm_band, generate_landing_sound,
     generate_lap_chime, generate_nascar_v8_rpm_band, generate_offroad_sound, generate_race_finish,
-    generate_rally_turbo_rpm_band, generate_sector_ping, generate_skid_sound,
+    generate_rally_turbo_rpm_band, generate_sand_rail_boxer_rpm_band, generate_sector_ping, generate_skid_sound,
     generate_sport_gt_rpm_band, generate_ui_move, generate_ui_select, generate_wall_crash_sound,
     generate_water_splash_sound,
 };
@@ -54,6 +54,8 @@ pub enum EngineSoundType {
     RallyTurbo,
     /// Roaring 5.9L (358 cu in) Pushrod V8 Stock Car / Trans-Am TA1 (open boom-tube side pipes, thunderous roar)
     NascarV8,
+    /// 300 BHP 2.5L Turbo Flat-4 Boxer Sand Rail Buggy (raspy off-beat boxer thrum, overrun pops, blow-off hiss)
+    SandRailBoxer,
 }
 
 impl Default for EngineSoundType {
@@ -125,6 +127,7 @@ pub struct SoundBank {
     pub engine_f1: [Option<Sound>; NUM_RPM_BANDS],
     pub engine_rally: [Option<Sound>; NUM_RPM_BANDS],
     pub engine_nascar: [Option<Sound>; NUM_RPM_BANDS],
+    pub engine_sand_rail: [Option<Sound>; NUM_RPM_BANDS],
     pub sfx_shift_pop: Option<Sound>,
     pub sfx_engine: Option<Sound>,
     pub sfx_skid: Option<Sound>,
@@ -158,6 +161,7 @@ impl SoundBank {
             engine_f1: [const { None }; NUM_RPM_BANDS],
             engine_rally: [const { None }; NUM_RPM_BANDS],
             engine_nascar: [const { None }; NUM_RPM_BANDS],
+            engine_sand_rail: [const { None }; NUM_RPM_BANDS],
             sfx_shift_pop: None,
             sfx_engine: None,
             sfx_skid: None,
@@ -194,6 +198,7 @@ impl SoundBank {
         let mut f1_bands = [const { None }; NUM_RPM_BANDS];
         let mut rally_bands = [const { None }; NUM_RPM_BANDS];
         let mut nascar_bands = [const { None }; NUM_RPM_BANDS];
+        let mut sand_rail_bands = [const { None }; NUM_RPM_BANDS];
 
         for (idx, &freq) in RPM_BAND_FREQS.iter().enumerate() {
             let gen_wav = generate_generic_engine_rpm_band(sample_rate, freq);
@@ -213,6 +218,9 @@ impl SoundBank {
 
             let nascar_wav = generate_nascar_v8_rpm_band(sample_rate, freq);
             nascar_bands[idx] = safe_load_sound_from_bytes(&nascar_wav).await;
+
+            let sand_rail_wav = generate_sand_rail_boxer_rpm_band(sample_rate, freq);
+            sand_rail_bands[idx] = safe_load_sound_from_bytes(&sand_rail_wav).await;
         }
 
         let shift_pop_wav = generate_gear_shift_pop(sample_rate);
@@ -279,6 +287,7 @@ impl SoundBank {
             engine_f1: f1_bands,
             engine_rally: rally_bands,
             engine_nascar: nascar_bands,
+            engine_sand_rail: sand_rail_bands,
             sfx_shift_pop: safe_load_sound_from_bytes(&shift_pop_wav).await,
             sfx_engine: safe_load_sound_from_bytes(&engine_wav).await,
             sfx_skid: safe_load_sound_from_bytes(&skid_wav).await,
@@ -315,6 +324,7 @@ impl SoundBank {
             EngineSoundType::F1V6Turbo => self.engine_f1[idx].as_ref(),
             EngineSoundType::RallyTurbo => self.engine_rally[idx].as_ref(),
             EngineSoundType::NascarV8 => self.engine_nascar[idx].as_ref(),
+            EngineSoundType::SandRailBoxer => self.engine_sand_rail[idx].as_ref(),
         };
 
         specific
@@ -853,6 +863,7 @@ impl AudioManager {
             EngineSoundType::F1V6Turbo,
             EngineSoundType::RallyTurbo,
             EngineSoundType::NascarV8,
+            EngineSoundType::SandRailBoxer,
         ] {
             for idx in 0..NUM_RPM_BANDS {
                 if let Some(sound) = self.bank.get_engine_band(engine_type, idx) {

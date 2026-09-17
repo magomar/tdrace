@@ -1,6 +1,6 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line};
+use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_triangle};
 use tdrace_core::physics::car::Car;
 
 use super::color::{CarColorScheme, Palette};
@@ -121,6 +121,42 @@ pub fn render_car_with_visual_type(
                 tall_wing,
                 roof_fins,
                 window_net,
+                is_braking,
+            );
+        }
+        VehicleVisualType::SandRail {
+            lightbar,
+            whip_antenna,
+            paddle_tires,
+        } => {
+            let rear_half_w = half_w * 1.08;
+            let sand_rail_wheels = [
+                chassis_center + fwd * lf - right * half_w,
+                chassis_center + fwd * lf + right * half_w,
+                chassis_center - fwd * lr - right * rear_half_w,
+                chassis_center - fwd * lr + right * rear_half_w,
+            ];
+
+            render_sand_rail_suspension(chassis_center, &sand_rail_wheels, fwd, right);
+
+            // Front wheels (knobby / ribbed)
+            render_sand_rail_wheel(sand_rail_wheels[0], angle + wheel_steers[0], false);
+            render_sand_rail_wheel(sand_rail_wheels[1], angle + wheel_steers[1], false);
+            // Rear wheels (paddles or knobbies)
+            render_sand_rail_wheel(sand_rail_wheels[2], angle, paddle_tires);
+            render_sand_rail_wheel(sand_rail_wheels[3], angle, paddle_tires);
+
+            render_sand_rail_body(
+                car,
+                chassis_center,
+                fwd,
+                right,
+                body_half_len,
+                body_half_w,
+                color_scheme,
+                lightbar,
+                whip_antenna,
+                paddle_tires,
                 is_braking,
             );
         }
@@ -934,4 +970,330 @@ fn render_stock_car_body(
     let fuel_cap_pos = pos - fwd * (half_len * 0.65) - right * (half_w * 0.86);
     draw_circle(fuel_cap_pos.x, fuel_cap_pos.y, 0.07, Color::new(0.85, 0.12, 0.12, 0.95));
     draw_circle_lines(fuel_cap_pos.x, fuel_cap_pos.y, 0.07, 0.02, Color::new(0.2, 0.2, 0.2, 0.9));
+}
+
+/// Draws an individual wheel for a sand rail buggy (paddle tire rear or knobby/ribbed front).
+fn render_sand_rail_wheel(pos: Vec2, angle: f32, is_paddle: bool) {
+    let tire_fwd = Vec2::new(angle.cos(), angle.sin());
+    let tire_right = Vec2::new(angle.sin(), -angle.cos());
+
+    let (tire_half_len, tire_half_w) = if is_paddle {
+        (0.40, 0.20)
+    } else {
+        (0.34, 0.13)
+    };
+
+    let p0 = pos + tire_fwd * tire_half_len - tire_right * tire_half_w;
+    let p1 = pos + tire_fwd * tire_half_len + tire_right * tire_half_w;
+    let p2 = pos - tire_fwd * tire_half_len + tire_right * tire_half_w;
+    let p3 = pos - tire_fwd * tire_half_len - tire_right * tire_half_w;
+
+    // Tire shadow
+    let s_off = Vec2::new(0.08, 0.10);
+    draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
+
+    // Tire rubber
+    draw_quad(p0, p1, p2, p3, Color::new(0.12, 0.12, 0.14, 1.0));
+
+    if is_paddle {
+        // Sand paddle ribs across the tire tread
+        for step in [-0.28, -0.14, 0.0, 0.14, 0.28] {
+            let rib_c = pos + tire_fwd * step;
+            let rib_l = rib_c - tire_right * (tire_half_w * 0.95);
+            let rib_r = rib_c + tire_right * (tire_half_w * 0.95);
+            draw_line(rib_l.x, rib_l.y, rib_r.x, rib_r.y, 0.045, Color::new(0.30, 0.30, 0.35, 1.0));
+        }
+    } else {
+        // Front knobby / ribbed center line
+        let rib_f = pos + tire_fwd * (tire_half_len * 0.9);
+        let rib_b = pos - tire_fwd * (tire_half_len * 0.9);
+        draw_line(rib_f.x, rib_f.y, rib_b.x, rib_b.y, 0.035, Color::new(0.28, 0.28, 0.32, 1.0));
+    }
+
+    // Beadlock rim center
+    let hub_len = tire_half_len * 0.45;
+    let hub_w = tire_half_w * 0.50;
+    let h0 = pos + tire_fwd * hub_len - tire_right * hub_w;
+    let h1 = pos + tire_fwd * hub_len + tire_right * hub_w;
+    let h2 = pos - tire_fwd * hub_len + tire_right * hub_w;
+    let h3 = pos - tire_fwd * hub_len - tire_right * hub_w;
+    draw_quad(h0, h1, h2, h3, Palette::TIRE_RIM);
+    // Beadlock ring bolts
+    draw_circle_lines(pos.x, pos.y, hub_len.min(hub_w) * 0.85, 0.02, Palette::NEON_GOLD);
+}
+
+/// Renders exposed long-travel suspension A-arms and coilover shocks for sand rail buggy.
+fn render_sand_rail_suspension(chassis: Vec2, wheels: &[Vec2; 4], fwd: Vec2, right: Vec2) {
+    let arm_col = Color::new(0.22, 0.24, 0.28, 1.0);
+    let shock_body = Color::new(0.85, 0.18, 0.15, 1.0); // Bright red coilover spring
+    let shock_res = Color::new(0.95, 0.80, 0.10, 1.0); // Anodized gold piggyback reservoir
+
+    // Front long-travel A-arms (dual wishbones)
+    let front_bulkhead = chassis + fwd * 0.75;
+    for (side, idx) in [(-1.0f32, 0), (1.0f32, 1)] {
+        let wh = wheels[idx];
+        let inner_upper = front_bulkhead + right * (side * 0.20) + fwd * 0.10;
+        let inner_lower = front_bulkhead + right * (side * 0.18) - fwd * 0.10;
+        draw_line(inner_upper.x, inner_upper.y, wh.x, wh.y, 0.05, arm_col);
+        draw_line(inner_lower.x, inner_lower.y, wh.x, wh.y, 0.05, arm_col);
+
+        // Coilover shock from shock tower to lower arm
+        let shock_mount = front_bulkhead + right * (side * 0.12) + fwd * 0.05;
+        let shock_end = wh * 0.65 + inner_lower * 0.35;
+        draw_line(shock_mount.x, shock_mount.y, shock_end.x, shock_end.y, 0.07, shock_body);
+        let res_pos = shock_mount * 0.6 + shock_end * 0.4 + right * (side * 0.05);
+        draw_circle(res_pos.x, res_pos.y, 0.04, shock_res);
+    }
+
+    // Rear trailing arms
+    let mid_chassis = chassis - fwd * 0.10;
+    for (side, idx) in [(-1.0f32, 2), (1.0f32, 3)] {
+        let wh = wheels[idx];
+        let pivot = mid_chassis + right * (side * 0.35);
+        draw_line(pivot.x, pivot.y, wh.x, wh.y, 0.065, arm_col);
+
+        // Giant rear bypass / coilover shock
+        let rear_shock_tower = chassis - fwd * 0.45 + right * (side * 0.25);
+        draw_line(rear_shock_tower.x, rear_shock_tower.y, wh.x, wh.y, 0.08, shock_body);
+        let res_pos = rear_shock_tower * 0.5 + wh * 0.5 + right * (side * 0.06);
+        draw_circle(res_pos.x, res_pos.y, 0.05, shock_res);
+    }
+}
+
+/// Renders an Extreme Off-Road Sand Rail Buggy with tubular chromoly spaceframe,
+/// exposed rear flat-4 turbo engine, safety pennant whip antenna, and roof lightbar.
+fn render_sand_rail_body(
+    car: &Car,
+    pos: Vec2,
+    fwd: Vec2,
+    right: Vec2,
+    half_len: f32,
+    half_w: f32,
+    color_scheme: &CarColorScheme,
+    lightbar: bool,
+    whip_antenna: bool,
+    _paddle_tires: bool,
+    is_braking: bool,
+) {
+    let tube_shadow = Color::new(0.08, 0.08, 0.10, 1.0);
+    let tube_color = color_scheme.primary;
+    let tube_highlight = Color::new(
+        (color_scheme.primary.r * 1.3).min(1.0),
+        (color_scheme.primary.g * 1.3).min(1.0),
+        (color_scheme.primary.b * 1.3).min(1.0),
+        1.0,
+    );
+
+    let draw_tube = |p1: Vec2, p2: Vec2, thickness: f32| {
+        draw_line(p1.x, p1.y, p2.x, p2.y, thickness + 0.03, tube_shadow);
+        draw_line(p1.x, p1.y, p2.x, p2.y, thickness, tube_color);
+        draw_line(p1.x, p1.y, p2.x, p2.y, thickness * 0.35, tube_highlight);
+    };
+
+    // 1. --- Aluminum Belly Pan & Floor Tub ---
+    let tub_f = pos + fwd * (half_len * 0.40);
+    let tub_r = pos - fwd * (half_len * 0.45);
+    let tub_hw = half_w * 0.58;
+    draw_quad(
+        tub_f - right * (tub_hw * 0.85),
+        tub_f + right * (tub_hw * 0.85),
+        tub_r + right * tub_hw,
+        tub_r - right * tub_hw,
+        Color::new(0.18, 0.20, 0.24, 0.98),
+    );
+    // Aluminum side panels with secondary color accent
+    let side_w = tub_hw * 0.16;
+    draw_quad(
+        tub_f - right * tub_hw,
+        tub_f - right * (tub_hw - side_w),
+        tub_r - right * (tub_hw - side_w),
+        tub_r - right * tub_hw,
+        color_scheme.secondary,
+    );
+    draw_quad(
+        tub_f + right * (tub_hw - side_w),
+        tub_f + right * tub_hw,
+        tub_r + right * tub_hw,
+        tub_r + right * (tub_hw - side_w),
+        color_scheme.secondary,
+    );
+
+    // 2. --- Front Prerunner Bumper & Skid Plate ---
+    let nose_tip = pos + fwd * (half_len * 0.95);
+    let skid_base = pos + fwd * (half_len * 0.45);
+    let skid_hw = half_w * 0.32;
+    // Angled brushed aluminum skid plate
+    draw_quad(
+        nose_tip - right * (skid_hw * 0.6),
+        nose_tip + right * (skid_hw * 0.6),
+        skid_base + right * skid_hw,
+        skid_base - right * skid_hw,
+        Color::new(0.65, 0.68, 0.74, 0.95),
+    );
+    // Front prerunner bumper tubular loop
+    let bmp_l = nose_tip - right * (skid_hw * 0.75) - fwd * 0.05;
+    let bmp_r = nose_tip + right * (skid_hw * 0.75) - fwd * 0.05;
+    let bmp_c = nose_tip + fwd * 0.12;
+    draw_tube(bmp_l, bmp_c, 0.06);
+    draw_tube(bmp_c, bmp_r, 0.06);
+    draw_tube(bmp_l, skid_base - right * (skid_hw * 0.8), 0.05);
+    draw_tube(bmp_r, skid_base + right * (skid_hw * 0.8), 0.05);
+    // Dual front bumper amber fog lamps
+    draw_circle((nose_tip - right * 0.10).x, (nose_tip - right * 0.10).y, 0.06, Color::new(1.0, 0.75, 0.10, 0.95));
+    draw_circle((nose_tip + right * 0.10).x, (nose_tip + right * 0.10).y, 0.06, Color::new(1.0, 0.75, 0.10, 0.95));
+
+    // 3. --- Tubular Chromoly Roll Cage Geometry ---
+    let brow_l = pos + fwd * (half_len * 0.22) - right * (half_w * 0.45);
+    let brow_r = pos + fwd * (half_len * 0.22) + right * (half_w * 0.45);
+    let hoop_l = pos - fwd * (half_len * 0.28) - right * (half_w * 0.52);
+    let hoop_r = pos - fwd * (half_len * 0.28) + right * (half_w * 0.52);
+    let rear_cradle_l = pos - fwd * (half_len * 0.88) - right * (half_w * 0.42);
+    let rear_cradle_r = pos - fwd * (half_len * 0.88) + right * (half_w * 0.42);
+
+    // Front cage down-tubes to nose
+    draw_tube(brow_l, skid_base - right * (skid_hw * 0.8), 0.06);
+    draw_tube(brow_r, skid_base + right * (skid_hw * 0.8), 0.06);
+
+    // Side intrusion bars
+    draw_tube(skid_base - right * (skid_hw * 0.8), hoop_l, 0.06);
+    draw_tube(skid_base + right * (skid_hw * 0.8), hoop_r, 0.06);
+
+    // Roof lateral hoops
+    draw_tube(brow_l, brow_r, 0.07);
+    draw_tube(hoop_l, hoop_r, 0.07);
+    draw_tube(brow_l, hoop_l, 0.07);
+    draw_tube(brow_r, hoop_r, 0.07);
+
+    // Roof 'X' cross-brace
+    draw_tube(brow_l, hoop_r, 0.045);
+    draw_tube(brow_r, hoop_l, 0.045);
+
+    // Rear engine cradle down-tubes
+    draw_tube(hoop_l, rear_cradle_l, 0.065);
+    draw_tube(hoop_r, rear_cradle_r, 0.065);
+    draw_tube(rear_cradle_l, rear_cradle_r, 0.065);
+
+    // 4. --- Open Cockpit: Driver & Harness ---
+    let cockpit_pos = pos - fwd * (half_len * 0.05);
+    let seat_f = cockpit_pos + fwd * 0.20;
+    let seat_r = cockpit_pos - fwd * 0.22;
+    let seat_hw = half_w * 0.30;
+    draw_quad(
+        seat_f - right * seat_hw,
+        seat_f + right * seat_hw,
+        seat_r + right * seat_hw,
+        seat_r - right * seat_hw,
+        Color::new(0.12, 0.12, 0.14, 1.0),
+    );
+    // Steering wheel
+    let wheel_pos = cockpit_pos + fwd * 0.26;
+    draw_circle_lines(wheel_pos.x, wheel_pos.y, 0.11, 0.03, Color::new(0.25, 0.25, 0.30, 1.0));
+    draw_circle(wheel_pos.x, wheel_pos.y, 0.03, Palette::RED);
+
+    // Driver helmet with dark visor
+    draw_circle(cockpit_pos.x, cockpit_pos.y, 0.18, color_scheme.helmet);
+    let visor_pos = cockpit_pos + fwd * 0.07;
+    let v_l = visor_pos - right * 0.12;
+    let v_r = visor_pos + right * 0.12;
+    draw_line(v_l.x, v_l.y, v_r.x, v_r.y, 0.07, Color::new(0.08, 0.08, 0.10, 0.95));
+
+    // 5-point safety harness straps across shoulders
+    let strap_col = Palette::NEON_ORANGE;
+    draw_line((cockpit_pos - fwd * 0.15 - right * 0.08).x, (cockpit_pos - fwd * 0.15 - right * 0.08).y,
+              (cockpit_pos + fwd * 0.06 - right * 0.05).x, (cockpit_pos + fwd * 0.06 - right * 0.05).y, 0.04, strap_col);
+    draw_line((cockpit_pos - fwd * 0.15 + right * 0.08).x, (cockpit_pos - fwd * 0.15 + right * 0.08).y,
+              (cockpit_pos + fwd * 0.06 + right * 0.05).x, (cockpit_pos + fwd * 0.06 + right * 0.05).y, 0.04, strap_col);
+
+    // 5. --- Exposed Rear Flat-4 Turbocharged Boxer Engine ---
+    let engine_pos = pos - fwd * (half_len * 0.58);
+    let eng_hw = half_w * 0.32;
+    let eng_len = 0.24;
+    draw_quad(
+        engine_pos + fwd * eng_len - right * eng_hw,
+        engine_pos + fwd * eng_len + right * eng_hw,
+        engine_pos - fwd * eng_len + right * eng_hw,
+        engine_pos - fwd * eng_len - right * eng_hw,
+        Color::new(0.35, 0.38, 0.42, 1.0),
+    );
+    // Finned boxer cylinder heads (horizontally opposed)
+    let fin_col = Color::new(0.50, 0.54, 0.60, 1.0);
+    draw_line((engine_pos - right * (eng_hw + 0.10)).x, (engine_pos - right * (eng_hw + 0.10)).y,
+              (engine_pos - right * eng_hw).x, (engine_pos - right * eng_hw).y, 0.12, fin_col);
+    draw_line((engine_pos + right * eng_hw).x, (engine_pos + right * eng_hw).y,
+              (engine_pos + right * (eng_hw + 0.10)).x, (engine_pos + right * (eng_hw + 0.10)).y, 0.12, fin_col);
+
+    // Turbocharger turbine housing & intercooler
+    let turbo_pos = engine_pos + fwd * 0.10;
+    draw_circle(turbo_pos.x, turbo_pos.y, 0.09, Color::new(0.60, 0.62, 0.68, 1.0));
+    draw_circle(turbo_pos.x, turbo_pos.y, 0.05, Color::new(0.20, 0.20, 0.25, 1.0));
+
+    // High-mount upward stinger exhaust pipes
+    let stinger_tip_l = rear_cradle_l - fwd * 0.22 + right * 0.10;
+    let stinger_tip_r = rear_cradle_r - fwd * 0.22 - right * 0.10;
+
+    // Chrome header tubes merging into stingers
+    draw_line(engine_pos.x - (eng_hw * 0.8), engine_pos.y, stinger_tip_l.x, stinger_tip_l.y, 0.05, Color::new(0.80, 0.82, 0.88, 1.0));
+    draw_line(engine_pos.x + (eng_hw * 0.8), engine_pos.y, stinger_tip_r.x, stinger_tip_r.y, 0.05, Color::new(0.80, 0.82, 0.88, 1.0));
+
+    // Hot glowing exhaust tips
+    let tip_glow = if is_braking || car.state.speed > 25.0 {
+        Color::new(1.0, 0.35, 0.10, 0.95)
+    } else {
+        Color::new(0.40, 0.42, 0.48, 1.0)
+    };
+    draw_circle(stinger_tip_l.x, stinger_tip_l.y, 0.045, tip_glow);
+    draw_circle(stinger_tip_r.x, stinger_tip_r.y, 0.045, tip_glow);
+
+    // Stinger exhaust backfire flames on deceleration / braking
+    if is_braking && car.state.speed > 8.0 {
+        for tip in [stinger_tip_l, stinger_tip_r] {
+            let flame_len = 0.38 + (pos.x * 15.0).sin().abs() * 0.20;
+            let flame_end = tip - fwd * flame_len;
+            draw_line(tip.x, tip.y, flame_end.x, flame_end.y, 0.08, Color::new(1.0, 0.40, 0.05, 0.90));
+            draw_line(tip.x, tip.y, (tip - fwd * (flame_len * 0.6)).x, (tip - fwd * (flame_len * 0.6)).y, 0.05, Color::new(1.0, 0.95, 0.30, 0.98));
+        }
+    }
+
+    // 6. --- High-Intensity 4-Pod Roof Lightbar ---
+    if lightbar {
+        let bar_center = (brow_l + brow_r) * 0.5 + fwd * 0.04;
+        let bar_hw = half_w * 0.40;
+        draw_line((bar_center - right * bar_hw).x, (bar_center - right * bar_hw).y,
+                  (bar_center + right * bar_hw).x, (bar_center + right * bar_hw).y, 0.05, Color::new(0.12, 0.12, 0.15, 1.0));
+
+        for step in [-0.75, -0.25, 0.25, 0.75] {
+            let pod_pos = bar_center + right * (bar_hw * step);
+            draw_circle(pod_pos.x, pod_pos.y, 0.055, Color::new(0.18, 0.18, 0.22, 1.0));
+            draw_circle(pod_pos.x, pod_pos.y, 0.038, Color::new(1.0, 0.98, 0.80, 0.98));
+            let bloom_center = pod_pos + fwd * 0.08;
+            draw_circle(bloom_center.x, bloom_center.y, 0.09, Color::new(1.0, 0.95, 0.70, 0.28));
+        }
+    }
+
+    // 7. --- Dynamic Whip Antenna with Neon Safety Pennant ---
+    if whip_antenna {
+        let whip_mount = hoop_l + right * 0.06 - fwd * 0.05;
+        let speed_drag = (car.state.speed * 0.022).clamp(0.0, 0.55);
+        let lat_deflection = (-car.state.angular_velocity * 0.12).clamp(-0.40, 0.40);
+        let whip_len = 0.85;
+        let whip_tip = whip_mount - fwd * (whip_len + speed_drag) + right * lat_deflection;
+
+        draw_circle(whip_mount.x, whip_mount.y, 0.035, Color::new(0.25, 0.25, 0.28, 1.0));
+
+        let mid_point = (whip_mount + whip_tip) * 0.5 - fwd * (speed_drag * 0.4);
+        draw_line(whip_mount.x, whip_mount.y, mid_point.x, mid_point.y, 0.025, Color::new(0.85, 0.88, 0.92, 0.95));
+        draw_line(mid_point.x, mid_point.y, whip_tip.x, whip_tip.y, 0.02, Color::new(0.85, 0.88, 0.92, 0.95));
+
+        let flag_len = 0.26;
+        let flag_w = 0.14;
+        let flag_tip = whip_tip - fwd * flag_len;
+        let flag_p1 = whip_tip + right * (flag_w * 0.5);
+        let flag_p2 = whip_tip - right * (flag_w * 0.5);
+        draw_triangle(
+            macroquad::prelude::Vec2::new(flag_p1.x, flag_p1.y),
+            macroquad::prelude::Vec2::new(flag_p2.x, flag_p2.y),
+            macroquad::prelude::Vec2::new(flag_tip.x, flag_tip.y),
+            Palette::NEON_ORANGE,
+        );
+    }
 }

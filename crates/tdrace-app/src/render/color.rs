@@ -139,6 +139,22 @@ impl Palette {
     pub const CUP_GOLD: Color = Color::new(1.0, 0.82, 0.08, 1.0);
     pub const INTIMIDATOR_BLACK: Color = Color::new(0.10, 0.10, 0.12, 1.0);
     pub const CAROLINA_BLUE: Color = Color::new(0.20, 0.65, 0.95, 1.0);
+
+    // Off-Road & Winter Terrain Surfaces
+    pub const MUD: Color = Color::new(0.32, 0.22, 0.12, 1.0);
+    pub const MUD_DARK: Color = Color::new(0.24, 0.16, 0.08, 1.0);
+    pub const BACKDROP_MUD: Color = Color::new(0.36, 0.25, 0.15, 1.0);
+    pub const SNOW: Color = Color::new(0.92, 0.94, 0.97, 1.0);
+    pub const SNOW_EDGE: Color = Color::new(0.82, 0.86, 0.92, 1.0);
+    pub const BACKDROP_SNOW: Color = Color::new(0.90, 0.93, 0.96, 1.0);
+
+    // Sand Rail / Extreme Off-Road Colors
+    pub const DUNE_ORANGE: Color = Color::new(1.0, 0.38, 0.05, 1.0);
+    pub const MOJAVE_TAN: Color = Color::new(0.82, 0.72, 0.54, 1.0);
+    pub const BAJA_MINT: Color = Color::new(0.15, 0.92, 0.65, 1.0);
+    pub const ACID_YELLOW: Color = Color::new(0.88, 1.0, 0.05, 1.0);
+    pub const POLAR_WHITE: Color = Color::new(0.96, 0.98, 1.0, 1.0);
+    pub const SEDONA_RED: Color = Color::new(0.80, 0.20, 0.12, 1.0);
 }
 
 
@@ -198,6 +214,31 @@ impl CarColorScheme {
     /// Classic American Stock Car - Carolina Petty Blue / White / Red
     pub const fn stock_car_carolina_blue() -> Self {
         Self::new(Palette::CAROLINA_BLUE, Palette::WHITE, Palette::RACING_RED)
+    }
+
+    /// Extreme Off-Road Sand Rail - Dune Blaze: Neon Orange / Midnight Black / Acid Yellow
+    pub const fn sand_rail_dune_blaze() -> Self {
+        Self::new(Palette::DUNE_ORANGE, Palette::INTIMIDATOR_BLACK, Palette::ACID_YELLOW)
+    }
+
+    /// Extreme Off-Road Sand Rail - Mojave Sand: Desert Tan / Coyote Brown / High-Vis Orange
+    pub const fn sand_rail_mojave_sand() -> Self {
+        Self::new(Palette::MOJAVE_TAN, Palette::DIRT_DARK, Palette::NEON_ORANGE)
+    }
+
+    /// Extreme Off-Road Sand Rail - Baja Mint: Bright Mint / Acid Yellow / White
+    pub const fn sand_rail_baja_mint() -> Self {
+        Self::new(Palette::BAJA_MINT, Palette::ACID_YELLOW, Palette::WHITE)
+    }
+
+    /// Extreme Off-Road Sand Rail - Arctic Frost: Ice Blue / Polar White / Neon Cyan
+    pub const fn sand_rail_arctic_frost() -> Self {
+        Self::new(Palette::BLUE, Palette::POLAR_WHITE, Palette::NEON_CYAN)
+    }
+
+    /// Extreme Off-Road Sand Rail - Red Rock Terror: Sedona Red / Dark Slate / Gold
+    pub const fn sand_rail_red_rock() -> Self {
+        Self::new(Palette::SEDONA_RED, Palette::TIRE_RIM, Palette::NEON_GOLD)
     }
 
     pub fn to_hex_strings(&self) -> (String, String, String) {

@@ -22,6 +22,8 @@ pub fn surface_preview_color(surface: SurfaceType) -> Color {
         SurfaceType::Water => Color::new(0.20, 0.60, 0.95, 0.95),   // Azure Water Blue
         SurfaceType::Oil => Color::new(0.40, 0.28, 0.50, 0.95),     // Deep Hazard Violet
         SurfaceType::Ice => Color::new(0.85, 0.95, 1.00, 0.95),     // Glacial White / Pale Blue
+        SurfaceType::Mud => Color::new(0.55, 0.38, 0.20, 0.95),     // Deep Mud Brown
+        SurfaceType::Snow => Color::new(0.95, 0.98, 1.00, 0.95),    // Pure Snow White
     }
 }
 

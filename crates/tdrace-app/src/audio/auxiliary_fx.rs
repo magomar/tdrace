@@ -168,7 +168,10 @@ impl AuxiliaryAudioLayer {
         master_vol: f32,
         backend: &mut AudioBackend,
     ) -> f32 {
-        let has_turbo = matches!(engine_type, EngineSoundType::F1V6Turbo | EngineSoundType::RallyTurbo);
+        let has_turbo = matches!(
+            engine_type,
+            EngineSoundType::F1V6Turbo | EngineSoundType::RallyTurbo | EngineSoundType::SandRailBoxer
+        );
         let tween_dur = Duration::from_millis(10);
 
         // 1. Straight-Cut Transmission Gear Whine
@@ -221,7 +224,10 @@ impl AuxiliaryAudioLayer {
         // 3. High-RPM Overrun Pops & Crackles
         let allows_crackle = matches!(
             engine_type,
-            EngineSoundType::NascarV8 | EngineSoundType::RallyTurbo | EngineSoundType::SportGT
+            EngineSoundType::NascarV8
+                | EngineSoundType::RallyTurbo
+                | EngineSoundType::SportGT
+                | EngineSoundType::SandRailBoxer
         );
         if allows_crackle && throttle < 0.08 && rpm > 5600.0 {
             self.overrun_timer += dt;

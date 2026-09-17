@@ -5,7 +5,7 @@ use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, TrackGeometry};
 use tdrace_core::track::presets::{classic_grand_prix, generate_checkpoints, generate_grid_positions, generate_walls_from_spline};
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
-use tdrace_core::track::{Track, TrackCategory};
+use tdrace_core::track::{Track, TrackCategory, TrackKind};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
 use crate::ai::{BotProfile, DriverCharacter, DriverStats};
@@ -66,6 +66,7 @@ impl GtWorldChallengeModule {
             name: "Monza Autodromo Nazionale".to_string(),
             description: "High-speed Italian Grand Prix temple of speed.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -136,6 +137,7 @@ impl GtWorldChallengeModule {
             name: "Circuit de Spa-Francorchamps".to_string(),
             description: "Belgian Ardennes rollercoaster featuring Eau Rouge and Pouhon.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -204,6 +206,7 @@ impl GtWorldChallengeModule {
             name: "Silverstone Grand Prix Circuit".to_string(),
             description: "High-speed sweeping esses through Maggotts, Becketts and Chapel.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -268,6 +271,7 @@ impl GtWorldChallengeModule {
             name: "Circuit de Monaco".to_string(),
             description: "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -340,6 +344,7 @@ impl GtWorldChallengeModule {
             name: "Suzuka International Racing Course".to_string(),
             description: "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -406,6 +411,7 @@ impl GtWorldChallengeModule {
             name: "Autodromo Jose Carlos Pace (Interlagos)".to_string(),
             description: "Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -472,6 +478,7 @@ impl GtWorldChallengeModule {
             name: "Circuit Gilles Villeneuve (Montreal)".to_string(),
             description: "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -536,6 +543,7 @@ impl GtWorldChallengeModule {
             name: "Red Bull Ring (Spielberg)".to_string(),
             description: "High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -602,6 +610,7 @@ impl GtWorldChallengeModule {
             name: "Circuit de Barcelona-Catalunya".to_string(),
             description: "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -668,6 +677,7 @@ impl GtWorldChallengeModule {
             name: "Circuit Zandvoort".to_string(),
             description: "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -736,6 +746,7 @@ impl GtWorldChallengeModule {
             name: "Bahrain International Circuit (Sakhir)".to_string(),
             description: "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -804,6 +815,7 @@ impl GtWorldChallengeModule {
             name: "Marina Bay Street Circuit (Singapore)".to_string(),
             description: "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -872,6 +884,7 @@ impl GtWorldChallengeModule {
             name: "Circuit of the Americas (COTA)".to_string(),
             description: "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -940,6 +953,7 @@ impl GtWorldChallengeModule {
             name: "MadRing Circuito de Madrid".to_string(),
             description: "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,

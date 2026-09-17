@@ -56,7 +56,7 @@ pub fn export_track_to_rust_code(track: &Track, fn_name: &str) -> String {
     out.push_str("    Track {\n");
     out.push_str(&format!("        name: \"{}\".to_string(),\n", track.name));
     out.push_str(&format!("        description: \"{}\".to_string(),\n", track.description));
-    out.push_str("        category: TrackCategory::Main,\n");
+    out.push_str("        category: TrackCategory::Main,\n        kind: TrackKind::Circuit,\n");
     out.push_str("        spline,\n");
     out.push_str("        geometry: TrackGeometry {\n");
     out.push_str("            inner_walls: left_walls,\n");

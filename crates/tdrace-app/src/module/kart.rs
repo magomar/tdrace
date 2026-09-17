@@ -7,7 +7,7 @@ use tdrace_core::track::presets::{
     drift_park, generate_checkpoints, generate_grid_positions, generate_walls_from_spline, kart_arena,
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
-use tdrace_core::track::{Track, TrackCategory};
+use tdrace_core::track::{Track, TrackCategory, TrackKind};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
 use crate::ai::{BotProfile, DriverCharacter, DriverStats};
@@ -72,6 +72,7 @@ impl KartGameModule {
             name: "South Garda Karting (Lonato)".to_string(),
             description: "The global Mecca of Karting featuring Curva del Paddock, Pettine hairpin, and Variante Nuova.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -140,6 +141,7 @@ impl KartGameModule {
             name: "Circuito Internazionale Napoli (Sarno)".to_string(),
             description: "The Temple of Speed under Mount Vesuvius with massive full-throttle straights and technical Esses.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -206,6 +208,7 @@ impl KartGameModule {
             name: "Karting Genk (Home of Champions)".to_string(),
             description: "Legendary Belgian proving grounds featuring the high-G G-Curve carousel, Europabocht, and Champions Chicane.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -274,6 +277,7 @@ impl KartGameModule {
             name: "PF International Kart Circuit (PFI)".to_string(),
             description: "Britain's premier FIA kart venue featuring the world-famous elevated flyover crossover bridge and underpass.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -342,6 +346,7 @@ impl KartGameModule {
             name: "Circuito Internacional de Zuera".to_string(),
             description: "Ultra-fast Spanish supertrack with enormous drafting straights, Curva del Cierzo, and wide passing sweepers.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -408,6 +413,7 @@ impl KartGameModule {
             name: "Le Mans Karting International".to_string(),
             description: "Alain Prost circuit at the Le Mans 24 Hours complex with Dunlop chicane, Bugatti Esses, and Courbe des 24H.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -476,6 +482,7 @@ impl KartGameModule {
             name: "Kartodromo Internacional do Algarve".to_string(),
             description: "Undulating Portuguese rollercoaster circuit with dramatic elevation drops, sweeping downhill turns, and Curva do Sol.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
@@ -542,6 +549,7 @@ impl KartGameModule {
             name: "Franciacorta Karting Track".to_string(),
             description: "Modern premier Italian world championship venue with technical switchback chicanes and trail-braking hairpins.".to_string(),
             category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
             spline,
             geometry: TrackGeometry {
                 inner_walls: left_walls,
