@@ -21,6 +21,10 @@ pub enum SurfaceType {
     Oil,
     /// Frozen icy patch: near zero friction, almost zero stopping power.
     Ice,
+    /// Deep viscous mud: high rolling resistance, low lateral slide friction, heavy spray plumes.
+    Mud,
+    /// Loose / packed snow: moderate rolling resistance, low traction, powder roost trails.
+    Snow,
 }
 
 
@@ -32,7 +36,9 @@ impl SurfaceType {
             Self::Asphalt => 1.0,
             Self::Curb => 0.88,
             Self::Dirt => 0.78,
+            Self::Mud => 0.52,
             Self::Grass => 0.45,
+            Self::Snow => 0.34,
             Self::Sand => 0.30,
             Self::Water => 0.22,
             Self::Oil => 0.12,
@@ -49,6 +55,8 @@ impl SurfaceType {
             Self::Dirt => 1.2,
             Self::Grass => 18.0,
             Self::Sand => 30.0,
+            Self::Mud => 6.5,
+            Self::Snow => 3.0,
             Self::Water => 3.5,
             Self::Oil => 0.8,
             Self::Ice => 0.4,
@@ -64,6 +72,8 @@ impl SurfaceType {
             Self::Dirt => 1.10,
             Self::Grass => 2.2,
             Self::Sand => 4.5,
+            Self::Mud => 3.2,
+            Self::Snow => 1.6,
             Self::Water => 2.0,
             Self::Oil => 0.95,
             Self::Ice => 0.90,
@@ -79,7 +89,7 @@ impl SurfaceType {
     /// Whether this surface kicks up dust/grass/gravel particles.
     #[inline]
     pub const fn produces_debris_particles(self) -> bool {
-        matches!(self, Self::Grass | Self::Sand | Self::Dirt)
+        matches!(self, Self::Grass | Self::Sand | Self::Dirt | Self::Mud | Self::Snow)
     }
 
     /// Whether this surface produces water splash and spray plumes.
@@ -88,25 +98,30 @@ impl SurfaceType {
         matches!(self, Self::Water)
     }
 
-    /// Whether this surface acts as an on-track hazard overlay (e.g. water puddle, oil slick, ice patch)
+    /// Whether this surface acts as an on-track hazard overlay (e.g. water puddle, oil slick, ice patch, mud bog)
     /// that sits on top of the road ribbon and overrides the underlying surface.
     #[inline]
     pub const fn is_on_track_hazard(self) -> bool {
-        matches!(self, Self::Water | Self::Oil | Self::Ice)
+        matches!(self, Self::Water | Self::Oil | Self::Ice | Self::Mud | Self::Snow)
     }
 
     /// All valid global off-track terrain types that can be selected as a track's default surface.
-    pub const OFF_TRACK_TYPES: [SurfaceType; 4] = [
+    pub const OFF_TRACK_TYPES: [SurfaceType; 6] = [
         SurfaceType::Grass,
         SurfaceType::Sand,
         SurfaceType::Dirt,
         SurfaceType::Asphalt,
+        SurfaceType::Mud,
+        SurfaceType::Snow,
     ];
 
     /// Whether this surface can serve as a global off-track default terrain.
     #[inline]
     pub const fn is_valid_off_track(self) -> bool {
-        matches!(self, Self::Grass | Self::Sand | Self::Dirt | Self::Asphalt)
+        matches!(
+            self,
+            Self::Grass | Self::Sand | Self::Dirt | Self::Asphalt | Self::Mud | Self::Snow
+        )
     }
 
     /// Display name of the surface type.
@@ -120,6 +135,8 @@ impl SurfaceType {
             Self::Water => "Water",
             Self::Oil => "Oil",
             Self::Ice => "Ice",
+            Self::Mud => "Mud",
+            Self::Snow => "Snow",
         }
     }
 }
