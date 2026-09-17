@@ -10,8 +10,11 @@ use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceShape, SurfaceZone};
 use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
-    ramp_raceway,
+    alpine_snow_ridge, arctic_frozen_lake, atacama_sand_basin, baja_500_desert_scrub,
+    classic_grand_prix, dirt_figure_eight, drift_park, glacier_crest_pass, gravel_quarry_chasm,
+    kart_arena, louisiana_mud_swampland, monster_colosseum, mud_slough_arena, oasis_rally,
+    outlaw_pass, oval_speedway, ramp_raceway, red_rock_canyon, rovaniemi_ice_ring,
+    sahara_dune_crossing, stunt_city_megastructure, supercross_stadium_arena,
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
@@ -47,6 +50,82 @@ fn test_all_seven_presets_json_roundtrip_and_validation() {
         assert_eq!(track.geometry.jump_ramps.len(), roundtrip_track.geometry.jump_ramps.len());
 
         // 2. Validation Engine
+        let diagnostics = validate_track(&roundtrip_track);
+        let errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|e| e.severity == ValidationSeverity::Error)
+            .collect();
+        assert!(
+            errors.is_empty(),
+            "Preset {} contained validation errors: {:?}",
+            name,
+            errors
+        );
+    }
+}
+
+#[test]
+fn test_all_fifteen_extreme_offroad_presets_json_roundtrip_and_validation() {
+    let presets: Vec<(&str, &str, Track)> = vec![
+        ("sahara_dune_crossing", "Sahara Dune Crossing", sahara_dune_crossing()),
+        ("dirt_figure_eight", "Dirt Figure-8 Arena", dirt_figure_eight()),
+        ("atacama_sand_basin", "Atacama Sand Basin", atacama_sand_basin()),
+        ("red_rock_canyon", "Red Rock Canyon", red_rock_canyon()),
+        ("baja_500_desert_scrub", "Baja 500 Desert Scrub", baja_500_desert_scrub()),
+        ("mud_slough_arena", "Mud Slough Arena", mud_slough_arena()),
+        ("gravel_quarry_chasm", "Gravel Quarry Chasm", gravel_quarry_chasm()),
+        ("louisiana_mud_swampland", "Louisiana Mud Swampland", louisiana_mud_swampland()),
+        ("arctic_frozen_lake", "Arctic Frozen Lake", arctic_frozen_lake()),
+        ("alpine_snow_ridge", "Alpine Snow Ridge", alpine_snow_ridge()),
+        ("rovaniemi_ice_ring", "Rovaniemi Ice Ring", rovaniemi_ice_ring()),
+        ("glacier_crest_pass", "Glacier Crest Pass", glacier_crest_pass()),
+        ("supercross_stadium_arena", "Supercross Stadium Arena", supercross_stadium_arena()),
+        ("monster_colosseum", "Monster Colosseum", monster_colosseum()),
+        ("stunt_city_megastructure", "Stunt City Megastructure", stunt_city_megastructure()),
+    ];
+
+    assert_eq!(presets.len(), 15);
+
+    for (slug, name, track) in presets {
+        // 1. JSON Roundtrip
+        let json_str = track.to_json().expect("Failed to serialize track preset to JSON");
+        assert!(!json_str.is_empty(), "Serialized JSON for {} was empty", name);
+
+        let roundtrip_track = Track::from_json(&json_str)
+            .unwrap_or_else(|e| panic!("Failed to deserialize track JSON for {}: {}", name, e));
+
+        assert_eq!(track.name, roundtrip_track.name);
+        assert_eq!(track.spline.waypoints.len(), roundtrip_track.spline.waypoints.len());
+        assert_eq!(track.checkpoints.len(), roundtrip_track.checkpoints.len());
+        assert_eq!(track.grid_positions.len(), roundtrip_track.grid_positions.len());
+        assert_eq!(track.geometry.surface_zones.len(), roundtrip_track.geometry.surface_zones.len());
+        assert_eq!(track.geometry.jump_ramps.len(), roundtrip_track.geometry.jump_ramps.len());
+        assert_eq!(track.kind, roundtrip_track.kind);
+
+        // 2. Module Association
+        assert!(
+            roundtrip_track.belongs_to_module("extreme_offroad"),
+            "Preset {} should belong to extreme_offroad module",
+            name
+        );
+        if slug != "dirt_figure_eight" {
+            assert_eq!(
+                TrackManager::preset_module(slug),
+                Some("extreme_offroad"),
+                "TrackManager should identify {} as extreme_offroad",
+                slug
+            );
+        }
+
+        // 3. Catalog Resolution
+        let resolved = TrackChoice::resolve_procedural_preset_by_slug(slug);
+        assert!(
+            resolved.is_some(),
+            "TrackChoice::resolve_procedural_preset_by_slug failed for {}",
+            slug
+        );
+
+        // 4. Validation Engine (Zero Errors)
         let diagnostics = validate_track(&roundtrip_track);
         let errors: Vec<_> = diagnostics
             .iter()

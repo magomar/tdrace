@@ -95,12 +95,15 @@ impl TrackChoice {
                     "KARTING"
                 } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course") {
                     "NASCAR CUP"
+                } else if path.contains("/extreme_offroad/") || path.starts_with("extreme_offroad/") || matches!(id.as_str(), "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city") {
+                    "EXTREME OFF-ROAD"
                 } else {
                     match mod_id {
                         "gt" | "gt_challenge" | "f1" => "GT WORLD CHALLENGE",
                         "rally" => "RALLY CROSS",
                         "kart" => "KARTING",
                         "nascar" => "NASCAR CUP",
+                        "extreme_offroad" => "EXTREME OFF-ROAD",
                         _ => "CLASSIC MOTORSPORT",
                     }
                 }
@@ -426,6 +429,20 @@ impl TrackChoice {
             "iowa" | "iowa_speedway" => Some(tdrace_core::track::presets::iowa_speedway()),
             "road_america" => Some(tdrace_core::track::presets::road_america()),
             "chicago" | "chicago_street_course" => Some(tdrace_core::track::presets::chicago_street_course()),
+            "sahara_dune_crossing" => Some(tdrace_core::track::presets::sahara_dune_crossing()),
+            "atacama_sand_basin" | "atacama" => Some(tdrace_core::track::presets::atacama_sand_basin()),
+            "red_rock_canyon" | "red_rock" => Some(tdrace_core::track::presets::red_rock_canyon()),
+            "baja_500_desert_scrub" | "baja_500" | "baja" => Some(tdrace_core::track::presets::baja_500_desert_scrub()),
+            "mud_slough_arena" | "mud_slough" => Some(tdrace_core::track::presets::mud_slough_arena()),
+            "gravel_quarry_chasm" | "gravel_quarry" => Some(tdrace_core::track::presets::gravel_quarry_chasm()),
+            "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" => Some(tdrace_core::track::presets::louisiana_mud_swampland()),
+            "arctic_frozen_lake" | "frozen_lake" => Some(tdrace_core::track::presets::arctic_frozen_lake()),
+            "alpine_snow_ridge" | "alpine_snow" => Some(tdrace_core::track::presets::alpine_snow_ridge()),
+            "rovaniemi_ice_ring" | "rovaniemi" => Some(tdrace_core::track::presets::rovaniemi_ice_ring()),
+            "glacier_crest_pass" | "glacier_crest" => Some(tdrace_core::track::presets::glacier_crest_pass()),
+            "supercross_stadium_arena" | "supercross_stadium" | "supercross" => Some(tdrace_core::track::presets::supercross_stadium_arena()),
+            "monster_colosseum" => Some(tdrace_core::track::presets::monster_colosseum()),
+            "stunt_city_megastructure" | "stunt_city" => Some(tdrace_core::track::presets::stunt_city_megastructure()),
             _ => None,
         },
     }

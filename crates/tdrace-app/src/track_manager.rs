@@ -825,6 +825,8 @@ impl TrackManager {
                     Some("kart")
                 } else if path.starts_with("classic/") {
                     Some("classic")
+                } else if path.starts_with("extreme_offroad/") {
+                    Some("extreme_offroad")
                 } else {
                     None
                 }
@@ -1010,9 +1012,10 @@ impl TrackManager {
             "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" => Some("kart"),
             "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring" => Some("f1"),
             "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course" => Some("nascar"),
+            "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city" => Some("extreme_offroad"),
             _ => {
                 if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    for m in ["classic", "rally", "kart", "f1", "gt", "nascar"] {
+                    for m in ["classic", "rally", "kart", "f1", "gt", "nascar", "extreme_offroad"] {
                         if git_tracks_dir.join(m).join(format!("{}.json", slug)).exists() {
                             return match m {
                                 "classic" => Some("classic"),
@@ -1021,6 +1024,7 @@ impl TrackManager {
                                 "f1" => Some("f1"),
                                 "gt" => Some("gt"),
                                 "nascar" => Some("nascar"),
+                                "extreme_offroad" => Some("extreme_offroad"),
                                 _ => None,
                             };
                         }
@@ -1059,6 +1063,18 @@ impl TrackManager {
             "riga" | "bikernieki" => "riga_rx",
             "killarney" => "killarney_rx",
             "yas_marina" => "yas_marina_rx",
+            "atacama" => "atacama_sand_basin",
+            "red_rock" => "red_rock_canyon",
+            "baja" | "baja_500" => "baja_500_desert_scrub",
+            "mud_slough" => "mud_slough_arena",
+            "gravel_quarry" => "gravel_quarry_chasm",
+            "louisiana" | "louisiana_swampland" => "louisiana_mud_swampland",
+            "frozen_lake" => "arctic_frozen_lake",
+            "alpine_snow" => "alpine_snow_ridge",
+            "rovaniemi" => "rovaniemi_ice_ring",
+            "glacier_crest" => "glacier_crest_pass",
+            "supercross" | "supercross_stadium" => "supercross_stadium_arena",
+            "stunt_city" => "stunt_city_megastructure",
             other => other,
         }
     }
@@ -1095,6 +1111,20 @@ impl TrackManager {
             "yas_marina" | "yas_marina_rx" => &["yas_marina_rx", "yas_marina"],
             "dirty_oval" | "dirty_oval_speedway" => &["dirty_oval_speedway", "dirty_oval"],
             "figure_8" | "figure_eight" => &["figure_eight", "figure_8"],
+            "sahara_dune_crossing" => &["sahara_dune_crossing"],
+            "atacama" | "atacama_sand_basin" => &["atacama_sand_basin", "atacama"],
+            "red_rock" | "red_rock_canyon" => &["red_rock_canyon", "red_rock"],
+            "baja" | "baja_500" | "baja_500_desert_scrub" => &["baja_500_desert_scrub", "baja_500", "baja"],
+            "mud_slough" | "mud_slough_arena" => &["mud_slough_arena", "mud_slough"],
+            "gravel_quarry" | "gravel_quarry_chasm" => &["gravel_quarry_chasm", "gravel_quarry"],
+            "louisiana" | "louisiana_swampland" | "louisiana_mud_swampland" => &["louisiana_mud_swampland", "louisiana_swampland", "louisiana"],
+            "frozen_lake" | "arctic_frozen_lake" => &["arctic_frozen_lake", "frozen_lake"],
+            "alpine_snow" | "alpine_snow_ridge" => &["alpine_snow_ridge", "alpine_snow"],
+            "rovaniemi" | "rovaniemi_ice_ring" => &["rovaniemi_ice_ring", "rovaniemi"],
+            "glacier_crest" | "glacier_crest_pass" => &["glacier_crest_pass", "glacier_crest"],
+            "supercross" | "supercross_stadium" | "supercross_stadium_arena" => &["supercross_stadium_arena", "supercross_stadium", "supercross"],
+            "monster_colosseum" => &["monster_colosseum"],
+            "stunt_city" | "stunt_city_megastructure" => &["stunt_city_megastructure", "stunt_city"],
             _ => &[],
         }
     }
