@@ -1,21 +1,27 @@
 use glam::Vec2;
+use tdrace_app::ai::{BotAiDriver, BotProfile, BotRouteStrategy};
 use tdrace_app::config::{CameraConfig, ZoomLevelConfig};
 use tdrace_app::editor::{
     is_mouse_over_editor_ui, EditorCamera, EditorState, EditorToolType, Selection, ToolSettings,
 };
+use tdrace_core::{Car, CarConfig};
 use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::track_manager::{ModuleFilter, TrackManager};
 use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
 use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceShape, SurfaceZone};
+use tdrace_core::track::checkpoint::Checkpoint;
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, SurfaceShape, SurfaceZone};
 use tdrace_core::track::presets::{
     classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
     ramp_raceway,
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
-use tdrace_core::track::network::{JunctionKind, SocketId};
+use tdrace_core::track::network::{
+    GoreConfig, JunctionId, JunctionKind, MergeConfig, RoadJunction, RoadSegment, SegmentId,
+    SocketId, SplineSocket, TrackLayout, TrackNetwork,
+};
 use tdrace_core::track::Track;
 
 static DEV_MODE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -2386,4 +2392,196 @@ fn test_track_editor_clone_to_drafts_exit_returns_to_drafts_tab() {
     }
 
     let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_martinsville_clone_road_split_and_infield_short_course() {
+    let path = std::path::Path::new("/home/mario/.local/share/tdrace/tracks/martinsville_speedway_clone.json");
+    let mut track = if path.exists() {
+        Track::load_from_file(path).expect("Load clone track")
+    } else {
+        Track::load_from_file("tracks/nascar/martinsville.json").expect("Load preset track")
+    };
+
+    // 1. Define split and merge points
+    let split_pt = Vec2::new(30.0, -35.0);
+    let merge_pt = Vec2::new(50.0, 65.0);
+
+    // 2. Define Junctions
+    let split_jid = JunctionId(1);
+    let in_sock_split = SplineSocket::new(split_pt, Vec2::new(1.0, 0.0), 16.0);
+    let eg_sock_split_0 = SplineSocket::new(split_pt, Vec2::new(1.0, 0.0), 16.0);
+    let branch_in_tangent = Vec2::new(0.866, 0.5).normalize();
+    let eg_sock_split_1 = SplineSocket::new(Vec2::new(30.0, -32.0), branch_in_tangent, 14.0);
+    let gore = GoreConfig::new(split_pt, 30.0, 15.0, BarrierType::TireWall);
+    let split_j = RoadJunction::split(
+        split_jid,
+        "Backstretch Infield Split",
+        in_sock_split,
+        vec![eg_sock_split_0, eg_sock_split_1],
+        Some(gore),
+    );
+
+    let merge_jid = JunctionId(2);
+    let in_sock_merge_0 = SplineSocket::new(merge_pt, Vec2::new(-1.0, 0.0), 16.0);
+    let branch_out_tangent = Vec2::new(-0.866, 0.5).normalize();
+    let in_sock_merge_1 = SplineSocket::new(Vec2::new(50.0, 62.0), branch_out_tangent, 14.0);
+    let eg_sock_merge = SplineSocket::new(merge_pt, Vec2::new(-1.0, 0.0), 16.0);
+    let merge_cfg = MergeConfig {
+        convergence_point: merge_pt,
+        merge_angle: 25.0,
+        merge_length: 15.0,
+    };
+    let merge_j = RoadJunction::merge(
+        merge_jid,
+        "Frontstretch Merge",
+        vec![in_sock_merge_0, in_sock_merge_1],
+        eg_sock_merge,
+        Some(merge_cfg),
+    );
+
+    // 3. Define Segments
+    // Segment 0: Common Trunk (from merge_pt [50, 65] -> around west loop -> past Start/Finish -> split_pt [30, -35])
+    let mut seg0_wp = Vec::new();
+    seg0_wp.push(TrackWaypoint::new(merge_pt, 16.0));
+    seg0_wp.push(TrackWaypoint::new(Vec2::new(0.0, 65.0), 16.0));
+    seg0_wp.push(TrackWaypoint::new(Vec2::new(-100.0, 65.0), 16.0));
+    let mut wp_t1 = TrackWaypoint::new(Vec2::new(-140.0, 55.0), 16.0); wp_t1.bank_angle = 8.0; wp_t1.left_curb = true; seg0_wp.push(wp_t1);
+    let mut wp_t2a = TrackWaypoint::new(Vec2::new(-160.0, 30.0), 16.0); wp_t2a.bank_angle = 12.0; wp_t2a.left_curb = true; seg0_wp.push(wp_t2a);
+    let mut wp_t2b = TrackWaypoint::new(Vec2::new(-160.0, 0.0), 16.0); wp_t2b.bank_angle = 12.0; wp_t2b.left_curb = true; seg0_wp.push(wp_t2b);
+    let mut wp_t2c = TrackWaypoint::new(Vec2::new(-140.0, -25.0), 16.0); wp_t2c.bank_angle = 8.0; wp_t2c.left_curb = true; seg0_wp.push(wp_t2c);
+    seg0_wp.push(TrackWaypoint::new(Vec2::new(-100.0, -35.0), 16.0));
+    seg0_wp.push(TrackWaypoint::new(Vec2::new(0.0, -35.0), 16.0)); // S/F line
+    seg0_wp.push(TrackWaypoint::new(split_pt, 16.0));
+
+    let mut seg0 = RoadSegment::new(SegmentId(0), "Common Oval & S/F Trunk", seg0_wp)
+        .with_junctions(Some(SocketId::new(merge_jid, 0)), Some(SocketId::new(split_jid, 0)));
+    seg0.recompute_samples(Some(&eg_sock_merge), Some(&in_sock_split));
+
+    // Segment 1: Outer Oval Turn 3-4 (from split_pt [30, -35] -> east loop -> merge_pt [50, 65])
+    let mut seg1_wp = Vec::new();
+    seg1_wp.push(TrackWaypoint::new(split_pt, 16.0));
+    seg1_wp.push(TrackWaypoint::new(Vec2::new(100.0, -35.0), 16.0));
+    let mut wp_t3a = TrackWaypoint::new(Vec2::new(140.0, -25.0), 16.0); wp_t3a.bank_angle = 8.0; wp_t3a.left_curb = true; seg1_wp.push(wp_t3a);
+    let mut wp_t3b = TrackWaypoint::new(Vec2::new(160.0, 0.0), 16.0); wp_t3b.bank_angle = 12.0; wp_t3b.left_curb = true; seg1_wp.push(wp_t3b);
+    let mut wp_t4a = TrackWaypoint::new(Vec2::new(160.0, 30.0), 16.0); wp_t4a.bank_angle = 12.0; wp_t4a.left_curb = true; seg1_wp.push(wp_t4a);
+    let mut wp_t4b = TrackWaypoint::new(Vec2::new(140.0, 55.0), 16.0); wp_t4b.bank_angle = 8.0; wp_t4b.left_curb = true; seg1_wp.push(wp_t4b);
+    seg1_wp.push(TrackWaypoint::new(Vec2::new(100.0, 65.0), 16.0));
+    seg1_wp.push(TrackWaypoint::new(merge_pt, 16.0));
+
+    let mut seg1 = RoadSegment::new(SegmentId(1), "Outer Oval Turn 3-4", seg1_wp)
+        .with_junctions(Some(SocketId::new(split_jid, 0)), Some(SocketId::new(merge_jid, 0)));
+    seg1.recompute_samples(Some(&eg_sock_split_0), Some(&in_sock_merge_0));
+
+    // Segment 2: Infield Technical Shortcut (5 additional turns!)
+    let mut seg2_wp = Vec::new();
+    seg2_wp.push(TrackWaypoint::new(split_pt, 14.0));
+    let mut wp_c1 = TrackWaypoint::new(Vec2::new(45.0, -18.0), 14.0); wp_c1.bank_angle = 2.0; wp_c1.left_curb = true; seg2_wp.push(wp_c1);
+    let mut wp_c2 = TrackWaypoint::new(Vec2::new(65.0, -5.0), 14.0); wp_c2.right_curb = true; seg2_wp.push(wp_c2);
+    let mut wp_c3 = TrackWaypoint::new(Vec2::new(78.0, 15.0), 14.0); wp_c3.bank_angle = 4.0; wp_c3.left_curb = true; seg2_wp.push(wp_c3);
+    let mut wp_c4 = TrackWaypoint::new(Vec2::new(75.0, 38.0), 14.0); wp_c4.right_curb = true; seg2_wp.push(wp_c4);
+    let mut wp_c5 = TrackWaypoint::new(Vec2::new(62.0, 58.0), 14.0); wp_c5.left_curb = true; seg2_wp.push(wp_c5);
+    seg2_wp.push(TrackWaypoint::new(merge_pt, 14.0));
+
+    let mut seg2 = RoadSegment::new(SegmentId(2), "Infield Technical Shortcut", seg2_wp)
+        .with_junctions(Some(SocketId::new(split_jid, 1)), Some(SocketId::new(merge_jid, 1)));
+    seg2.recompute_samples(Some(&eg_sock_split_1), Some(&in_sock_merge_1));
+
+    // 4. Layouts
+    let mut layout_main = TrackLayout::new(
+        "main",
+        "The Paperclip (Default Oval)",
+        vec![SegmentId(0), SegmentId(1)],
+        SegmentId(0),
+    ).with_checkpoints(vec![0, 1, 2, 3, 4, 5, 6, 7]);
+
+    let mut layout_short = TrackLayout::new(
+        "infield_short",
+        "Infield Short Course",
+        vec![SegmentId(0), SegmentId(2)],
+        SegmentId(0),
+    ).with_checkpoints(vec![0, 8, 4, 5, 6, 7]);
+
+    let mut network = TrackNetwork {
+        junctions: vec![split_j, merge_j],
+        segments: vec![seg0, seg1, seg2],
+        layouts: vec![layout_main.clone(), layout_short.clone()],
+        default_layout_id: "main".to_string(),
+    };
+
+    let len_main = layout_main.recompute_lap_length(&network);
+    let len_short = layout_short.recompute_lap_length(&network);
+    network.layouts = vec![layout_main.clone(), layout_short.clone()];
+
+    assert!(network.validate().is_ok(), "Network validation failed: {:?}", network.validate());
+    assert!(len_short < len_main, "Short course ({len_short}m) must be shorter than oval ({len_main}m)");
+
+    // 5. Update track spline to composite of main layout
+    let composite_main = network.build_composite_spline_for_layout("main").expect("Build composite main");
+    let composite_short = network.build_composite_spline_for_layout("infield_short").expect("Build composite short");
+    assert!(composite_main.closed);
+    assert!(composite_short.closed);
+    assert!(composite_short.total_length < composite_main.total_length);
+    track.spline = composite_main;
+    track.network = Some(network);
+
+    // 6. Add Checkpoint 8 in the infield for the short course
+    let cp8_pt = Vec2::new(78.0, 15.0);
+    let cp8_gate = LineSegment::new(cp8_pt + Vec2::new(-8.0, 0.0), cp8_pt + Vec2::new(8.0, 0.0));
+    let cp8 = Checkpoint::new(8, cp8_gate, Vec2::new(0.0, 1.0), 1, false).with_segment(SegmentId(2));
+
+    // Assign segment IDs to existing checkpoints
+    for cp in &mut track.checkpoints {
+        match cp.id {
+            0 | 4 | 5 | 6 | 7 => cp.segment_id = Some(SegmentId(0)),
+            1 | 2 | 3 => cp.segment_id = Some(SegmentId(1)),
+            _ => {}
+        }
+    }
+    if !track.checkpoints.iter().any(|c| c.id == 8) {
+        track.checkpoints.push(cp8);
+    }
+
+    // 7. Prune inner walls that cross the split and merge openings
+    track.geometry.inner_walls.retain(|wall| {
+        let mid = (wall.segment.start + wall.segment.end) * 0.5;
+        let in_split_opening = mid.x >= 22.0 && mid.x <= 42.0 && mid.y < 0.0;
+        let in_merge_opening = mid.x >= 42.0 && mid.x <= 62.0 && mid.y > 0.0;
+        !in_split_opening && !in_merge_opening
+    });
+
+    // 8. Verify AI navigation across the split
+    let mut bot_main = BotAiDriver::new(BotProfile::pro())
+        .with_route_strategy(BotRouteStrategy::FixedLayout("main".to_string()));
+    let mut bot_short = BotAiDriver::new(BotProfile::pro())
+        .with_route_strategy(BotRouteStrategy::FixedLayout("infield_short".to_string()));
+
+    let car_main = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(20.0, -35.0), 0.0);
+    let car_short = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(20.0, -35.0), 0.0);
+
+    let ctrl_main = bot_main.compute_controls(&car_main, &track, &[], 0.016);
+    let ctrl_short = bot_short.compute_controls(&car_short, &track, &[], 0.016);
+
+    assert!(ctrl_main.throttle > 0.5);
+    assert!(ctrl_short.throttle > 0.5);
+    assert!(
+        ctrl_short.steer > ctrl_main.steer,
+        "Infield shortcut bot must steer left into the infield at split, got main: {}, short: {}",
+        ctrl_main.steer, ctrl_short.steer
+    );
+
+    // 9. Save updated track to martinsville_speedway_clone.json if running on host with the file
+    if path.exists() {
+        track.save_to_file(path).expect("Save updated track clone");
+        let reloaded = Track::load_from_file(path).expect("Reload saved track");
+        assert!(reloaded.network.is_some());
+        let net = reloaded.network.as_ref().unwrap();
+        assert_eq!(net.layouts.len(), 2);
+        assert_eq!(net.junctions.len(), 2);
+        assert_eq!(net.segments.len(), 3);
+        assert_eq!(net.layouts[0].id, "main");
+        assert_eq!(net.layouts[1].id, "infield_short");
+        println!("Successfully updated martinsville_speedway_clone.json with road split and infield short course!");
+        println!("Oval distance: {:.1}m, Infield Short Course distance: {:.1}m", len_main, len_short);
+    }
 }
