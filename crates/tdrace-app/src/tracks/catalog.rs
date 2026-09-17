@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use tdrace_core::track::Track;
 use crate::module::{
     classic::ClassicGameModule,
+    extreme_offroad::ExtremeOffRoadModule,
     f1::F1GameModule,
     kart::KartGameModule,
     nascar::NascarGameModule,
@@ -91,6 +92,13 @@ impl PresetCatalog {
                 m.tracks()
                     .iter()
                     .map(|def| crate::track_manager::TrackManager::track_choice_from_def(def, "nascar"))
+                    .collect()
+            }
+            "extreme_offroad" => {
+                let m = ExtremeOffRoadModule::new();
+                m.tracks()
+                    .iter()
+                    .map(|def| crate::track_manager::TrackManager::track_choice_from_def(def, "extreme_offroad"))
                     .collect()
             }
             _ => {

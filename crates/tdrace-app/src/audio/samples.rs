@@ -52,6 +52,7 @@ impl ArchetypeSampleBank {
             EngineSoundType::F1V6Turbo => EngineSoundConfig::f1_v6_turbo(),
             EngineSoundType::RallyTurbo => EngineSoundConfig::rally_turbo(),
             EngineSoundType::NascarV8 => EngineSoundConfig::nascar_v8(),
+            EngineSoundType::SandRailBoxer => EngineSoundConfig::sand_rail_boxer(),
         };
 
         let idle_wav = generate_steady_engine_loop(sample_rate, IDLE_RPM, false, &config);
@@ -110,6 +111,7 @@ impl ArchetypeSampleBank {
             EngineSoundType::F1V6Turbo => "f1_v6_turbo",
             EngineSoundType::RallyTurbo => "rally_turbo",
             EngineSoundType::NascarV8 => "nascar_v8",
+            EngineSoundType::SandRailBoxer => "sand_rail",
         }
     }
 

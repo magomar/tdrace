@@ -163,3 +163,58 @@ fn test_stock_car_visual_archetype_and_liveries() {
     assert_eq!(car.config.mass, 1260.0);
 }
 
+#[test]
+fn test_sand_rail_visual_archetype_and_liveries() {
+    use tdrace_app::module::{EngineAudioProfile, VehicleVisualType};
+    use tdrace_app::audio::EngineSoundType;
+
+    // Verify palette constants
+    assert_eq!(Palette::DUNE_ORANGE.a, 1.0);
+    assert_eq!(Palette::MOJAVE_TAN.a, 1.0);
+    assert_eq!(Palette::BAJA_MINT.a, 1.0);
+    assert_eq!(Palette::ACID_YELLOW.a, 1.0);
+    assert_eq!(Palette::POLAR_WHITE.a, 1.0);
+    assert_eq!(Palette::SEDONA_RED.a, 1.0);
+    assert_eq!(Palette::MUD.a, 1.0);
+    assert_eq!(Palette::SNOW.a, 1.0);
+
+    // Verify color schemes
+    let dune_blaze = CarColorScheme::sand_rail_dune_blaze();
+    assert_eq!(dune_blaze.primary, Palette::DUNE_ORANGE);
+    assert_eq!(dune_blaze.helmet, Palette::ACID_YELLOW);
+
+    let mojave = CarColorScheme::sand_rail_mojave_sand();
+    assert_eq!(mojave.primary, Palette::MOJAVE_TAN);
+
+    let baja = CarColorScheme::sand_rail_baja_mint();
+    assert_eq!(baja.primary, Palette::BAJA_MINT);
+
+    let arctic = CarColorScheme::sand_rail_arctic_frost();
+    assert_eq!(arctic.primary, Palette::BLUE);
+
+    let red_rock = CarColorScheme::sand_rail_red_rock();
+    assert_eq!(red_rock.primary, Palette::SEDONA_RED);
+
+    // Verify SandRail visual archetype
+    let sand_rail_stunt = VehicleVisualType::SandRail {
+        lightbar: true,
+        whip_antenna: true,
+        paddle_tires: true,
+    };
+
+    match sand_rail_stunt {
+        VehicleVisualType::SandRail { lightbar, whip_antenna, paddle_tires } => {
+            assert!(lightbar);
+            assert!(whip_antenna);
+            assert!(paddle_tires);
+        }
+        _ => panic!("Expected SandRail visual type"),
+    }
+
+    // Verify engine audio profile
+    let audio = EngineAudioProfile::sand_rail_boxer();
+    assert_eq!(audio.sound_type, EngineSoundType::SandRailBoxer);
+    assert!(audio.turbo_flutter);
+    assert!(audio.anti_lag_pops);
+}
+

@@ -91,6 +91,8 @@ pub fn get_surface_zone_colors(surface: SurfaceType) -> (Color, Option<Color>) {
         SurfaceType::Curb => (Palette::CURB_RED, None),
         SurfaceType::Ice => (Color::new(0.85, 0.92, 0.98, 0.8), None),
         SurfaceType::Oil => (Color::new(0.12, 0.12, 0.15, 0.85), None),
+        SurfaceType::Mud => (Palette::MUD, Some(Palette::MUD_DARK)),
+        SurfaceType::Snow => (Palette::SNOW, Some(Palette::SNOW_EDGE)),
     }
 }
 
@@ -101,6 +103,8 @@ pub fn get_track_backdrop_color(surface: SurfaceType) -> Color {
         SurfaceType::Dirt => Palette::BACKDROP_DIRT,
         SurfaceType::Sand => Palette::BACKDROP_SAND,
         SurfaceType::Asphalt => Palette::BACKDROP_ASPHALT,
+        SurfaceType::Mud => Palette::BACKDROP_MUD,
+        SurfaceType::Snow => Palette::BACKDROP_SNOW,
         _ => Palette::BACKDROP_GRASS,
     }
 }
@@ -164,6 +168,16 @@ pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, C
             Palette::CURB_RED,
             Some(Palette::CURB_WHITE),
             Palette::WHITE,
+        ),
+        SurfaceType::Mud => (
+            Palette::MUD,
+            Some(Palette::MUD_DARK),
+            Color::new(0.42, 0.30, 0.18, 0.85),
+        ),
+        SurfaceType::Snow => (
+            Palette::SNOW,
+            Some(Palette::SNOW_EDGE),
+            Color::new(0.80, 0.85, 0.92, 0.85),
         ),
     }
 }
@@ -566,6 +580,30 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
             }
             SurfaceType::Curb => {
                 draw_quad(left0, left1, right1, right0, Palette::CURB_RED);
+            }
+            SurfaceType::Mud => {
+                draw_quad(left0, left1, right1, right0, Palette::MUD);
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.34, Palette::MUD_DARK);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.34, Palette::MUD_DARK);
+
+                let rut_l0 = s0.point + s0.normal * (hw0 * 0.40);
+                let rut_l1 = s1.point + s1.normal * (hw1 * 0.40);
+                let rut_r0 = s0.point - s0.normal * (hw0 * 0.40);
+                let rut_r1 = s1.point - s1.normal * (hw1 * 0.40);
+                draw_line(rut_l0.x, rut_l0.y, rut_l1.x, rut_l1.y, 0.26, Palette::MUD_DARK);
+                draw_line(rut_r0.x, rut_r0.y, rut_r1.x, rut_r1.y, 0.26, Palette::MUD_DARK);
+            }
+            SurfaceType::Snow => {
+                draw_quad(left0, left1, right1, right0, Palette::SNOW);
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::SNOW_EDGE);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::SNOW_EDGE);
+
+                let track_l0 = s0.point + s0.normal * (hw0 * 0.42);
+                let track_l1 = s1.point + s1.normal * (hw1 * 0.42);
+                let track_r0 = s0.point - s0.normal * (hw0 * 0.42);
+                let track_r1 = s1.point - s1.normal * (hw1 * 0.42);
+                draw_line(track_l0.x, track_l0.y, track_l1.x, track_l1.y, 0.20, Color::new(0.85, 0.90, 0.96, 0.90));
+                draw_line(track_r0.x, track_r0.y, track_r1.x, track_r1.y, 0.20, Color::new(0.85, 0.90, 0.96, 0.90));
             }
             SurfaceType::Asphalt => {
                 if is_banked {

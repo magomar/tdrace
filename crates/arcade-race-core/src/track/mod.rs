@@ -11,8 +11,8 @@ pub use curve::{
     CurveApproachStatus, CurveDirection, TrackCurve,
 };
 pub use geometry::{
-    BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, SpawnPose,
-    SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
+    point_in_polygon, BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape,
+    SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
 pub use presets::{
     bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, chicago_street_course,
@@ -76,6 +76,37 @@ impl Default for TrackCategory {
     }
 }
 
+/// Topological classification of a racing circuit: Circuit, Arena, or Hybrid.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", tag = "type")]
+pub enum TrackKind {
+    /// Traditional 1D continuous spline ribbon with extruded drivable width.
+    Circuit,
+    /// Bounded 2D open enclosure with fully playable interior floor.
+    Arena {
+        /// Polygon vertices defining the perimeter boundary enclosure.
+        boundary_hull: Vec<Vec2>,
+        /// Primary surface type across the entire arena floor (e.g. Dirt, Mud, Ice).
+        floor_surface: SurfaceType,
+        /// Perimeter barrier specification enclosing the arena.
+        #[serde(default)]
+        perimeter_barrier: Option<BarrierType>,
+    },
+    /// Hybrid venue: A stadium bowl enclosing both a defined rhythm track and open infield.
+    Hybrid {
+        boundary_hull: Vec<Vec2>,
+        floor_surface: SurfaceType,
+        #[serde(default)]
+        perimeter_barrier: Option<BarrierType>,
+    },
+}
+
+impl Default for TrackKind {
+    fn default() -> Self {
+        Self::Circuit
+    }
+}
+
 /// Complete racing circuit specification including spline, boundaries, surfaces, obstacles, and checkpoints.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Track {
@@ -84,6 +115,8 @@ pub struct Track {
     pub description: String,
     #[serde(default)]
     pub category: TrackCategory,
+    #[serde(default)]
+    pub kind: TrackKind,
     pub spline: TrackSpline,
     pub geometry: TrackGeometry,
     pub checkpoints: Vec<Checkpoint>,
@@ -101,6 +134,20 @@ pub struct Track {
 }
 
 impl Track {
+    /// Returns true if this track is an open arena or hybrid stadium venue.
+    pub fn is_arena(&self) -> bool {
+        matches!(self.kind, TrackKind::Arena { .. } | TrackKind::Hybrid { .. })
+    }
+
+    /// Returns the perimeter boundary hull vertices if this track has an arena enclosure.
+    pub fn arena_hull(&self) -> Option<&[Vec2]> {
+        match &self.kind {
+            TrackKind::Arena { boundary_hull, .. } => Some(boundary_hull),
+            TrackKind::Hybrid { boundary_hull, .. } => Some(boundary_hull),
+            TrackKind::Circuit => None,
+        }
+    }
+
     /// Returns true if this track belongs to the specified motorsport module ID.
     pub fn belongs_to_module(&self, mod_id: &str) -> bool {
         if self.modules.iter().any(|m| m.eq_ignore_ascii_case(mod_id)) {
@@ -122,9 +169,11 @@ impl Track {
     /// 2. Track spline projection:
     ///    - Main drivable track ribbon (`SurfaceType::Dirt`, `SurfaceType::Asphalt`).
     ///    - Apex / exit curbs (`SurfaceType::Curb`).
-    /// 3. Off-track surface zones (e.g. `SurfaceType::Sand` traps, runoff areas):
+    /// 3. Arena / Hybrid open floor surface:
+    ///    - Full-floor drivable ground inside perimeter boundary hull.
+    /// 4. Off-track surface zones (e.g. `SurfaceType::Sand` traps, runoff areas):
     ///    Located underneath the track ribbon, only affecting the vehicle when running off track.
-    /// 4. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::Sand`).
+    /// 5. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::Sand`).
     pub fn sample_surface(&self, point: Vec2) -> SurfaceType {
         // 1. Check jump ramps (elevated platforms)
         for ramp in &self.geometry.jump_ramps {
@@ -140,23 +189,40 @@ impl Track {
             }
         }
 
-        // 2. Project onto spline: drivable ribbon (Dirt / Asphalt) and curbs take precedence over underlying ground
-        let proj = self.spline.project_point(point);
-        if proj.is_on_track {
-            return proj.base_surface;
-        }
-        if proj.is_on_curb {
-            return SurfaceType::Curb;
+        // 3. Project onto spline (if waypoints exist):
+        if self.spline.waypoints.len() >= 2 {
+            let proj = self.spline.project_point(point);
+            if proj.is_on_track {
+                return proj.base_surface;
+            }
+            if proj.is_on_curb {
+                return SurfaceType::Curb;
+            }
         }
 
-        // 3. Check below-track ground zones (e.g. sand traps, asphalt runoff, dirt base beneath road)
+        // 4. Check Arena / Hybrid floor surface inside boundary hull:
+        match &self.kind {
+            TrackKind::Arena { boundary_hull, floor_surface, .. } => {
+                if point_in_polygon(point, boundary_hull) {
+                    return *floor_surface;
+                }
+            }
+            TrackKind::Hybrid { boundary_hull, floor_surface, .. } => {
+                if point_in_polygon(point, boundary_hull) {
+                    return *floor_surface;
+                }
+            }
+            TrackKind::Circuit => {}
+        }
+
+        // 5. Check below-track ground zones (e.g. sand traps, asphalt runoff, dirt base beneath road)
         for zone in &self.geometry.surface_zones {
             if !zone.is_above_track() && zone.contains(point) {
                 return zone.surface;
             }
         }
 
-        // 4. Default terrain (e.g. Grass or Sand)
+        // 6. Default terrain (e.g. Grass or Sand)
         self.default_surface
     }
 

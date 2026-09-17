@@ -2,8 +2,10 @@ use tdrace_core::track::validation::{validate_track, TrackValidationError, Valid
 use tdrace_core::track::Track;
 
 use crate::module::classic::ClassicGameModule;
+use crate::module::extreme_offroad::ExtremeOffRoadModule;
 use crate::module::f1::F1GameModule;
 use crate::module::kart::KartGameModule;
+use crate::module::nascar::NascarGameModule;
 use crate::module::rally::RallyGameModule;
 use crate::module::GameModule;
 
@@ -56,7 +58,7 @@ pub fn export_track_to_rust_code(track: &Track, fn_name: &str) -> String {
     out.push_str("    Track {\n");
     out.push_str(&format!("        name: \"{}\".to_string(),\n", track.name));
     out.push_str(&format!("        description: \"{}\".to_string(),\n", track.description));
-    out.push_str("        category: TrackCategory::Main,\n");
+    out.push_str("        category: TrackCategory::Main,\n        kind: TrackKind::Circuit,\n");
     out.push_str("        spline,\n");
     out.push_str("        geometry: TrackGeometry {\n");
     out.push_str("            inner_walls: left_walls,\n");
@@ -105,6 +107,8 @@ pub fn validate_all_official_presets() -> Vec<(String, Vec<TrackValidationError>
         Box::new(F1GameModule::new()),
         Box::new(RallyGameModule::new()),
         Box::new(KartGameModule::new()),
+        Box::new(NascarGameModule::new()),
+        Box::new(ExtremeOffRoadModule::new()),
     ];
 
     for module in &modules {

@@ -149,8 +149,15 @@ pub fn is_mouse_over_editor_ui(
     // Left tool palette (and active sub-palette if applicable)
     let tool_w = scaler.s(165.0);
     let tool_y = top_h + scaler.s(12.0);
-    let tool_h = scaler.s(410.0);
-    let tool_bottom = if active_tool == EditorToolType::SurfaceZone {
+    let tool_h = scaler.s(520.0);
+    let has_sub = matches!(
+        active_tool,
+        EditorToolType::SurfaceZone
+            | EditorToolType::ArenaFloor
+            | EditorToolType::WhoopSection
+            | EditorToolType::StuntRamp
+    );
+    let tool_bottom = if has_sub {
         let sub_h = scaler.s(180.0);
         let sub_y = tool_y + tool_h + scaler.s(8.0);
         sub_y + sub_h
@@ -342,13 +349,13 @@ pub fn render_editor_ui(
     // 2. LEFT TOOL PALETTE
     let tool_w = scaler.s(165.0);
     let tool_y = top_h + scaler.s(12.0);
-    let tool_h = scaler.s(410.0);
+    let tool_h = scaler.s(520.0);
     scaler.draw_glass_card(scaler.s(12.0), tool_y, tool_w, tool_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
     fonts.draw_ui_bold(
-        "TOOLS [1-8]",
+        "TOOLS [1-0/-]",
         scaler.s(22.0),
-        tool_y + scaler.s(20.0),
+        tool_y + scaler.s(18.0),
         scaler.font_s(13.0),
         Palette::NEON_CYAN,
     );
@@ -362,9 +369,12 @@ pub fn render_editor_ui(
         (EditorToolType::Checkpoint, "[6] Checkpoint Gate"),
         (EditorToolType::StartingGrid, "[7] Grid Slot"),
         (EditorToolType::PitLane, "[8] Pit Lane"),
+        (EditorToolType::ArenaFloor, "[9] Arena Floor"),
+        (EditorToolType::WhoopSection, "[0] Whoops Moguls"),
+        (EditorToolType::StuntRamp, "[-] Stunt Mega Ramp"),
     ];
 
-    let mut item_y = tool_y + scaler.s(32.0);
+    let mut item_y = tool_y + scaler.s(28.0);
     for (tool_type, label) in tools_list {
         let is_active = tools.active_tool == tool_type;
         let bg_col = if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG };
@@ -408,6 +418,115 @@ pub fn render_editor_ui(
         let layer_border = if is_front { Palette::NEON_GREEN } else { Palette::NEON_CYAN };
         if draw_ui_btn(fonts, &scaler, scaler.s(20.0), btn_y + scaler.s(4.0), tool_w - scaler.s(16.0), scaler.s(26.0), layer_label, Palette::UI_CARD_BG, layer_border, mouse_pos, bg_mouse_clicked) {
             tools.active_surface_layer = if is_front { SurfaceLayer::BelowTrack } else { SurfaceLayer::AboveTrack };
+        }
+    }
+
+    // 2c. Arena Floor Active Sub-Palette
+    if tools.active_tool == EditorToolType::ArenaFloor {
+        let sub_h = scaler.s(180.0);
+        let sub_y = tool_y + tool_h + scaler.s(8.0);
+        scaler.draw_glass_card(scaler.s(12.0), sub_y, tool_w, sub_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+        fonts.draw_ui_bold("ARENA FLOOR", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_GOLD);
+
+        let surfaces = [
+            (SurfaceType::Dirt, "Dirt"),
+            (SurfaceType::Mud, "Mud"),
+            (SurfaceType::Sand, "Sand"),
+            (SurfaceType::Snow, "Snow"),
+            (SurfaceType::Ice, "Ice"),
+            (SurfaceType::Asphalt, "Asphalt"),
+        ];
+        let half_w = (tool_w - scaler.s(22.0)) * 0.5;
+        let mut btn_y = sub_y + scaler.s(22.0);
+        for chunk in surfaces.chunks(2) {
+            let (st1, l1) = chunk[0];
+            let active1 = tools.active_surface == st1;
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0), btn_y, half_w, scaler.s(22.0), l1, if active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                tools.active_surface = st1;
+            }
+            if chunk.len() > 1 {
+                let (st2, l2) = chunk[1];
+                let active2 = tools.active_surface == st2;
+                if draw_ui_btn(fonts, &scaler, scaler.s(20.0) + half_w, btn_y, half_w, scaler.s(22.0), l2, if active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                    tools.active_surface = st2;
+                }
+            }
+            btn_y += scaler.s(25.0);
+        }
+
+        if tools.active_polygon_vertices.len() >= 3 {
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0), btn_y + scaler.s(4.0), tool_w - scaler.s(16.0), scaler.s(22.0), "Close Arena Hull", Palette::UI_CARD_BG, Palette::NEON_GREEN, mouse_pos, bg_mouse_clicked) {
+                tools.finalize_arena_hull(state);
+            }
+            btn_y += scaler.s(24.0);
+        }
+        if !tools.active_polygon_vertices.is_empty() {
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0), btn_y + scaler.s(4.0), tool_w - scaler.s(16.0), scaler.s(22.0), "Clear Vertices", Palette::UI_CARD_BG, Palette::RED, mouse_pos, bg_mouse_clicked) {
+                tools.active_polygon_vertices.clear();
+            }
+        }
+    }
+
+    // 2d. Whoop Section Active Sub-Palette
+    if tools.active_tool == EditorToolType::WhoopSection {
+        let sub_h = scaler.s(160.0);
+        let sub_y = tool_y + tool_h + scaler.s(8.0);
+        scaler.draw_glass_card(scaler.s(12.0), sub_y, tool_w, sub_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+        fonts.draw_ui_bold("WHOOPS CONFIG", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_CYAN);
+
+        fonts.draw_ui_regular(&format!("Spacing: {:.1}m", tools.whoop_spacing), scaler.s(22.0), sub_y + scaler.s(32.0), scaler.font_s(10.5), Palette::WHITE);
+        let third_w = (tool_w - scaler.s(26.0)) / 3.0;
+        let mut btn_y = sub_y + scaler.s(38.0);
+        let spacings = [3.5, 5.0, 6.5];
+        for (i, &sp) in spacings.iter().enumerate() {
+            let active = (tools.whoop_spacing - sp).abs() < 0.1;
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", sp), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                tools.whoop_spacing = sp;
+            }
+        }
+
+        btn_y += scaler.s(25.0);
+        fonts.draw_ui_regular(&format!("Height: {:.2}m", tools.whoop_height), scaler.s(22.0), btn_y + scaler.s(10.0), scaler.font_s(10.5), Palette::WHITE);
+        btn_y += scaler.s(16.0);
+        let heights = [0.5, 0.7, 1.0];
+        for (i, &h) in heights.iter().enumerate() {
+            let active = (tools.whoop_height - h).abs() < 0.05;
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", h), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                tools.whoop_height = h;
+            }
+        }
+    }
+
+    // 2e. Stunt Mega Ramp Active Sub-Palette
+    if tools.active_tool == EditorToolType::StuntRamp {
+        let sub_h = scaler.s(160.0);
+        let sub_y = tool_y + tool_h + scaler.s(8.0);
+        scaler.draw_glass_card(scaler.s(12.0), sub_y, tool_w, sub_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+        fonts.draw_ui_bold("STUNT MEGA RAMP", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_MAGENTA);
+
+        fonts.draw_ui_regular(&format!("Height: {:.1}m", tools.stunt_ramp_height), scaler.s(22.0), sub_y + scaler.s(32.0), scaler.font_s(10.5), Palette::WHITE);
+        let third_w = (tool_w - scaler.s(26.0)) / 3.0;
+        let mut btn_y = sub_y + scaler.s(38.0);
+        let heights = [2.5, 3.5, 5.0];
+        for (i, &h) in heights.iter().enumerate() {
+            let active = (tools.stunt_ramp_height - h).abs() < 0.1;
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", h), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_MAGENTA } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                tools.stunt_ramp_height = h;
+            }
+        }
+
+        btn_y += scaler.s(25.0);
+        fonts.draw_ui_regular(&format!("Boost: {:.1}x", tools.stunt_ramp_multiplier), scaler.s(22.0), btn_y + scaler.s(10.0), scaler.font_s(10.5), Palette::WHITE);
+        btn_y += scaler.s(16.0);
+        let boosts = [1.2, 1.5, 1.8];
+        for (i, &b) in boosts.iter().enumerate() {
+            let active = (tools.stunt_ramp_multiplier - b).abs() < 0.05;
+            if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}x", b), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_MAGENTA } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                tools.stunt_ramp_multiplier = b;
+            }
         }
     }
 

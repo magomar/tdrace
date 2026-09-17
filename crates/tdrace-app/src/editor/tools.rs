@@ -3,8 +3,9 @@ use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle_lines};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
 use tdrace_core::track::spline::TrackWaypoint;
+use tdrace_core::track::TrackKind;
 
 use super::camera::EditorCamera;
 use super::state::{EditorState, Selection};
@@ -21,10 +22,13 @@ pub enum EditorToolType {
     Checkpoint,
     StartingGrid,
     PitLane,
+    ArenaFloor,
+    WhoopSection,
+    StuntRamp,
 }
 
 impl EditorToolType {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 11] = [
         Self::Select,
         Self::RoadSpline,
         Self::SurfaceZone,
@@ -33,6 +37,9 @@ impl EditorToolType {
         Self::Checkpoint,
         Self::StartingGrid,
         Self::PitLane,
+        Self::ArenaFloor,
+        Self::WhoopSection,
+        Self::StuntRamp,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -45,6 +52,9 @@ impl EditorToolType {
             Self::Checkpoint => "Checkpoint Gate [6]",
             Self::StartingGrid => "Starting Grid [7]",
             Self::PitLane => "Pit Lane [8]",
+            Self::ArenaFloor => "Arena Floor [9]",
+            Self::WhoopSection => "Whoop Section [0]",
+            Self::StuntRamp => "Stunt Mega Ramp [-]",
         }
     }
 
@@ -58,6 +68,9 @@ impl EditorToolType {
             Self::Checkpoint => "6",
             Self::StartingGrid => "7",
             Self::PitLane => "8",
+            Self::ArenaFloor => "9",
+            Self::WhoopSection => "0",
+            Self::StuntRamp => "-",
         }
     }
 }
@@ -80,6 +93,14 @@ pub struct ToolSettings {
     pub new_waypoint_right_wall_distance: Option<f32>,
     pub new_waypoint_wall_type: Option<BarrierType>,
     pub new_waypoint_bank_angle: f32,
+
+    // Arena & Stunt settings
+    pub active_arena_barrier: Option<BarrierType>,
+    pub whoop_spacing: f32,
+    pub whoop_height: f32,
+    pub whoop_width: f32,
+    pub stunt_ramp_height: f32,
+    pub stunt_ramp_multiplier: f32,
 
     // Dragging / selection interaction state
     pub is_dragging: bool,
@@ -136,6 +157,12 @@ impl Default for ToolSettings {
             new_waypoint_right_wall_distance: None,
             new_waypoint_wall_type: None,
             new_waypoint_bank_angle: 0.0,
+            active_arena_barrier: Some(BarrierType::Concrete),
+            whoop_spacing: 5.0,
+            whoop_height: 0.70,
+            whoop_width: 14.0,
+            stunt_ramp_height: 3.5,
+            stunt_ramp_multiplier: 1.5,
             is_dragging: false,
             is_box_selecting: false,
             is_placing: false,
@@ -183,6 +210,39 @@ impl ToolSettings {
         self.editing_bar = None;
     }
 
+    /// Finalizes the current polygon vertices as an Arena perimeter boundary hull and floor.
+    pub fn finalize_arena_hull(&mut self, state: &mut EditorState) -> bool {
+        if self.active_polygon_vertices.len() < 3 {
+            return false;
+        }
+        state.record_undo();
+        let boundary_hull = std::mem::take(&mut self.active_polygon_vertices);
+        let perimeter_barrier = self.active_arena_barrier;
+        state.track.kind = TrackKind::Arena {
+            boundary_hull: boundary_hull.clone(),
+            floor_surface: self.active_surface,
+            perimeter_barrier,
+        };
+        if let Some(barrier_type) = perimeter_barrier {
+            for i in 0..boundary_hull.len() {
+                let start = boundary_hull[i];
+                let end = boundary_hull[(i + 1) % boundary_hull.len()];
+                state.track.geometry.outer_walls.push(WallBarrier::new(start, end, barrier_type));
+            }
+        }
+        let zone_name = format!("{:?} Arena Floor", self.active_surface);
+        let floor_zone = SurfaceZone::new(
+            SurfaceShape::Polygon { vertices: boundary_hull },
+            self.active_surface,
+            zone_name,
+        )
+        .with_layer(SurfaceLayer::BelowTrack);
+        state.track.geometry.surface_zones.push(floor_zone);
+        state.selection = Selection::None;
+        state.revalidate();
+        true
+    }
+
     /// Selects all elements matching the active tool (or all track elements if Select tool is active).
     pub fn select_all_for_active_tool(&mut self, state: &mut EditorState) -> bool {
         let selection = match self.active_tool {
@@ -212,7 +272,7 @@ impl ToolSettings {
                 let surface_zones = (0..state.track.geometry.surface_zones.len()).collect();
                 Selection::from_multi(vec![], surface_zones, vec![], vec![], vec![], vec![], false)
             }
-            EditorToolType::JumpRamp => {
+            EditorToolType::JumpRamp | EditorToolType::WhoopSection | EditorToolType::StuntRamp => {
                 let jump_ramps = (0..state.track.geometry.jump_ramps.len()).collect();
                 Selection::from_multi(vec![], vec![], vec![], jump_ramps, vec![], vec![], false)
             }
@@ -231,6 +291,9 @@ impl ToolSettings {
             EditorToolType::PitLane => {
                 let pit_box = state.track.pit_box_area.is_some();
                 Selection::from_multi(vec![], vec![], vec![], vec![], vec![], vec![], pit_box)
+            }
+            EditorToolType::ArenaFloor => {
+                Selection::None
             }
         };
 
@@ -1482,6 +1545,25 @@ impl ToolSettings {
                 self.drag_start_world = snapped_mouse;
                 self.drag_current_world = snapped_mouse;
             }
+            EditorToolType::ArenaFloor => {
+                if self.active_polygon_vertices.len() >= 3
+                    && (self.active_polygon_vertices[0] - snapped_mouse).length() < 3.0
+                {
+                    self.finalize_arena_hull(state);
+                } else {
+                    self.active_polygon_vertices.push(snapped_mouse);
+                }
+            }
+            EditorToolType::WhoopSection => {
+                self.is_placing = true;
+                self.drag_start_world = snapped_mouse;
+                self.drag_current_world = snapped_mouse;
+            }
+            EditorToolType::StuntRamp => {
+                self.is_placing = true;
+                self.drag_start_world = snapped_mouse;
+                self.drag_current_world = snapped_mouse;
+            }
         }
     }
 
@@ -1631,6 +1713,70 @@ impl ToolSettings {
                     state.selection = Selection::PitBox;
                     state.revalidate();
                 }
+            }
+            EditorToolType::WhoopSection => {
+                let v = snapped_mouse - self.drag_start_world;
+                let total_len = v.length();
+                if total_len >= self.whoop_spacing {
+                    state.record_undo();
+                    let dir = v.normalize();
+                    let angle = dir.y.atan2(dir.x);
+                    let count = (total_len / self.whoop_spacing).floor() as usize;
+                    let ramp_start_id = state.track.geometry.jump_ramps.len();
+                    for i in 0..count {
+                        let ramp_id = ramp_start_id + i + 1;
+                        let center = self.drag_start_world + dir * (self.whoop_spacing * (i as f32 + 0.5));
+                        let half_len = (self.whoop_spacing * 0.42).max(1.0);
+                        let half_wid = (self.whoop_width * 0.5).max(2.0);
+                        let shape = SurfaceShape::OrientedBox {
+                            center,
+                            half_extents: Vec2::new(half_len, half_wid),
+                            angle,
+                        };
+                        let whoop = JumpRamp::new(
+                            ramp_id,
+                            shape,
+                            dir,
+                            20.0,
+                            16.0,
+                            self.whoop_height,
+                            format!("Whoop Mogul {}", ramp_id),
+                        )
+                        .with_surface(self.active_surface);
+                        state.track.geometry.jump_ramps.push(whoop);
+                    }
+                    if count > 0 {
+                        state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
+                    }
+                    state.revalidate();
+                }
+            }
+            EditorToolType::StuntRamp => {
+                let v = snapped_mouse - self.drag_start_world;
+                let length = v.length().max(10.0);
+                let dir = if v.length() > 0.1 { v.normalize() } else { Vec2::X };
+                let center = (self.drag_start_world + snapped_mouse) * 0.5;
+                let angle = dir.y.atan2(dir.x);
+                state.record_undo();
+                let ramp_id = state.track.geometry.jump_ramps.len() + 1;
+                let shape = SurfaceShape::OrientedBox {
+                    center,
+                    half_extents: Vec2::new(length * 0.5, 6.0),
+                    angle,
+                };
+                let ramp = JumpRamp::new(
+                    ramp_id,
+                    shape,
+                    dir,
+                    28.0 * self.stunt_ramp_multiplier,
+                    35.0,
+                    self.stunt_ramp_height,
+                    format!("Stunt Mega Ramp {}", ramp_id),
+                )
+                .with_surface(self.active_surface);
+                state.track.geometry.jump_ramps.push(ramp);
+                state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
+                state.revalidate();
             }
             _ => {}
         }
@@ -2682,13 +2828,65 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                 let h = max.y - min.y;
                 draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_MAGENTA);
             }
+            EditorToolType::WhoopSection => {
+                let start = tools.drag_start_world;
+                let current = tools.drag_current_world;
+                let v = current - start;
+                let total_len = v.length();
+                draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_CYAN);
+                if total_len >= tools.whoop_spacing {
+                    let dir = v.normalize();
+                    let angle = dir.y.atan2(dir.x);
+                    let count = (total_len / tools.whoop_spacing).floor() as usize;
+                    for i in 0..count {
+                        let center = start + dir * (tools.whoop_spacing * (i as f32 + 0.5));
+                        let half_len = (tools.whoop_spacing * 0.42).max(1.0);
+                        let half_wid = (tools.whoop_width * 0.5).max(2.0);
+                        draw_oriented_box_lines(center, Vec2::new(half_len, half_wid), angle, 0.4, Palette::NEON_GOLD);
+                        draw_circle(center.x, center.y, 0.6, Palette::NEON_CYAN);
+                    }
+                }
+            }
+            EditorToolType::StuntRamp => {
+                let start = tools.drag_start_world;
+                let current = tools.drag_current_world;
+                let v = current - start;
+                let length = v.length().max(10.0);
+                let dir = if v.length() > 0.1 { v.normalize() } else { Vec2::X };
+                let center = (start + current) * 0.5;
+                let angle = dir.y.atan2(dir.x);
+                let half_extents = Vec2::new(length * 0.5, 6.0);
+                draw_oriented_box_lines(center, half_extents, angle, 0.5, Palette::NEON_MAGENTA);
+                draw_line(start.x, start.y, current.x, current.y, 0.6, Palette::NEON_MAGENTA);
+
+                // Projected ballistic trajectory envelope
+                let launch_tip = center + dir * half_extents.x;
+                let v0 = 26.0 * tools.stunt_ramp_multiplier;
+                let num_steps = 18;
+                let dt = 0.08;
+                let mut prev = launch_tip;
+                for step in 1..=num_steps {
+                    let t = step as f32 * dt;
+                    let fwd_dist = v0 * t;
+                    let height_offset = tools.stunt_ramp_height + 8.5 * t - 0.5 * 9.81 * t * t;
+                    if height_offset < 0.0 {
+                        break;
+                    }
+                    let next = launch_tip + dir * fwd_dist;
+                    draw_line(prev.x, prev.y, next.x, next.y, 0.45, Palette::NEON_GOLD);
+                    prev = next;
+                }
+                draw_circle(prev.x, prev.y, 1.2, Palette::NEON_GREEN);
+            }
             _ => {}
         }
     }
 
     // 9. Render In-progress Polygon / Triangle Construction vertices
     if !tools.active_polygon_vertices.is_empty() {
-        let col = if tools.active_tool == EditorToolType::SurfaceZone {
+        let col = if tools.active_tool == EditorToolType::ArenaFloor {
+            Palette::NEON_GOLD
+        } else if tools.active_tool == EditorToolType::SurfaceZone {
             Palette::NEON_CYAN
         } else {
             Palette::NEON_MAGENTA
@@ -2703,7 +2901,21 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
         // Snap closing ring around first vertex if >= 3 vertices
         if tools.active_polygon_vertices.len() >= 3 {
             let first = tools.active_polygon_vertices[0];
-            draw_circle_lines(first.x, first.y, 1.5, 0.35, Palette::NEON_GOLD);
+            let last = *tools.active_polygon_vertices.last().unwrap();
+            draw_circle_lines(first.x, first.y, 3.0, 0.4, Palette::NEON_GOLD);
+            draw_line(last.x, last.y, first.x, first.y, 0.25, Color::new(col.r, col.g, col.b, 0.4));
+        }
+    }
+
+    // 10. Render Arena Perimeter Hull if track is an Arena
+    if let Some(hull) = state.track.arena_hull() {
+        if hull.len() >= 3 {
+            for i in 0..hull.len() {
+                let p1 = hull[i];
+                let p2 = hull[(i + 1) % hull.len()];
+                draw_line(p1.x, p1.y, p2.x, p2.y, 0.5, Palette::NEON_CYAN);
+                draw_circle(p1.x, p1.y, 0.8, Palette::NEON_GOLD);
+            }
         }
     }
 }

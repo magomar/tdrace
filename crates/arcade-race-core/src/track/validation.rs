@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use super::Track;
-use crate::track::geometry::{LineSegment, ObstacleShape, SurfaceShape};
+use super::{Track, TrackKind};
+use crate::track::geometry::{point_in_polygon, LineSegment, ObstacleShape, SurfaceShape};
 
 /// Severity level of a track validation diagnostic finding.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -72,89 +72,91 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
     let n_wp = waypoints.len();
 
     if n_wp < 3 {
-        diagnostics.push(
-            TrackValidationError::error(
-                "ERR_INSUFFICIENT_WAYPOINTS",
-                format!("Track requires at least 3 waypoints (currently {}).", n_wp),
-            )
-            .with_details("Add more waypoints to define a drivable centerline curve."),
-        );
-        return diagnostics; // Cannot perform further spline tests if < 3 waypoints
-    }
-
-    // Check consecutive waypoint distances and widths
-    for i in 0..n_wp {
-        let next_i = if track.spline.closed {
-            (i + 1) % n_wp
-        } else if i + 1 < n_wp {
-            i + 1
-        } else {
-            continue;
-        };
-
-        let p0 = waypoints[i].point;
-        let p1 = waypoints[next_i].point;
-        let dist = (p1 - p0).length();
-
-        if dist < 3.0 {
+        if !track.is_arena() {
             diagnostics.push(
                 TrackValidationError::error(
-                    "ERR_WAYPOINT_TOO_CLOSE",
-                    format!(
-                        "Waypoints #{} and #{} are only {:.1}m apart (minimum is 3.0m).",
-                        i + 1,
-                        next_i + 1,
-                        dist
-                    ),
+                    "ERR_INSUFFICIENT_WAYPOINTS",
+                    format!("Track requires at least 3 waypoints (currently {}).", n_wp),
                 )
-                .with_index(i)
-                .with_details("Move waypoints further apart or delete redundant node."),
+                .with_details("Add more waypoints to define a drivable centerline curve."),
             );
-        } else if dist > 350.0 {
-            diagnostics.push(
-                TrackValidationError::warning(
-                    "WARN_WAYPOINT_TOO_FAR",
-                    format!(
-                        "Waypoints #{} and #{} are {:.1}m apart (recommended <= 300m for smooth spline interpolation).",
-                        i + 1,
-                        next_i + 1,
-                        dist
-                    ),
-                )
-                .with_index(i),
-            );
+            return diagnostics; // Cannot perform further spline tests if < 3 waypoints
+        }
+    } else {
+        // Check consecutive waypoint distances and widths
+        for i in 0..n_wp {
+            let next_i = if track.spline.closed {
+                (i + 1) % n_wp
+            } else if i + 1 < n_wp {
+                i + 1
+            } else {
+                continue;
+            };
+
+            let p0 = waypoints[i].point;
+            let p1 = waypoints[next_i].point;
+            let dist = (p1 - p0).length();
+
+            if dist < 3.0 {
+                diagnostics.push(
+                    TrackValidationError::error(
+                        "ERR_WAYPOINT_TOO_CLOSE",
+                        format!(
+                            "Waypoints #{} and #{} are only {:.1}m apart (minimum is 3.0m).",
+                            i + 1,
+                            next_i + 1,
+                            dist
+                        ),
+                    )
+                    .with_index(i)
+                    .with_details("Move waypoints further apart or delete redundant node."),
+                );
+            } else if dist > 350.0 {
+                diagnostics.push(
+                    TrackValidationError::warning(
+                        "WARN_WAYPOINT_TOO_FAR",
+                        format!(
+                            "Waypoints #{} and #{} are {:.1}m apart (recommended <= 300m for smooth spline interpolation).",
+                            i + 1,
+                            next_i + 1,
+                            dist
+                        ),
+                    )
+                    .with_index(i),
+                );
+            }
+
+            let w = waypoints[i].width;
+            if w < 4.0 {
+                diagnostics.push(
+                    TrackValidationError::error(
+                        "ERR_TRACK_TOO_NARROW",
+                        format!("Waypoint #{} width is {:.1}m (minimum drivable width is 4.0m).", i + 1, w),
+                    )
+                    .with_index(i),
+                );
+            } else if w > 50.0 {
+                diagnostics.push(
+                    TrackValidationError::warning(
+                        "WARN_TRACK_VERY_WIDE",
+                        format!("Waypoint #{} width is {:.1}m (unusually wide).", i + 1, w),
+                    )
+                    .with_index(i),
+                );
+            }
         }
 
-        let w = waypoints[i].width;
-        if w < 4.0 {
+        // Spline total length check
+        let total_len = track.spline.total_length();
+        if total_len < 60.0 {
             diagnostics.push(
                 TrackValidationError::error(
-                    "ERR_TRACK_TOO_NARROW",
-                    format!("Waypoint #{} width is {:.1}m (minimum drivable width is 4.0m).", i + 1, w),
+                    "ERR_TRACK_TOO_SHORT",
+                    format!("Total track length is only {:.1}m (minimum 60m).", total_len),
                 )
-                .with_index(i),
-            );
-        } else if w > 50.0 {
-            diagnostics.push(
-                TrackValidationError::warning(
-                    "WARN_TRACK_VERY_WIDE",
-                    format!("Waypoint #{} width is {:.1}m (unusually wide).", i + 1, w),
-                )
-                .with_index(i),
+                .with_details("Extend the circuit length for proper racing dynamics and timing."),
             );
         }
-    }
-
-    // Spline total length check
-    let total_len = track.spline.total_length();
-    if total_len < 60.0 {
-        diagnostics.push(
-            TrackValidationError::error(
-                "ERR_TRACK_TOO_SHORT",
-                format!("Total track length is only {:.1}m (minimum 60m).", total_len),
-            )
-            .with_details("Extend the circuit length for proper racing dynamics and timing."),
-        );
     }
 
     // 2. Spline Centerline Crossover / Overpass Clearance Checks
@@ -232,7 +234,7 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
     let all_walls: Vec<_> = track.geometry.all_walls().copied().collect();
     let n_walls = all_walls.len();
 
-    if n_samples >= 2 && n_walls > 0 {
+    if !matches!(track.kind, TrackKind::Arena { .. }) && n_samples >= 2 && n_walls > 0 {
         let n_segs = if track.spline.closed { n_samples } else { n_samples - 1 };
 
         // For each wall, test intersection against centerline and drivable ribbon
@@ -360,16 +362,18 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
     // 5. Checkpoint Checks
     let checkpoints = &track.checkpoints;
     if checkpoints.is_empty() {
-        diagnostics.push(
-            TrackValidationError::error(
-                "ERR_NO_CHECKPOINTS",
-                "Track has no checkpoints defined.",
-            )
-            .with_details("Use Auto-Generate Checkpoints in the editor to create timing gates."),
-        );
+        if !track.is_arena() {
+            diagnostics.push(
+                TrackValidationError::error(
+                    "ERR_NO_CHECKPOINTS",
+                    "Track has no checkpoints defined.",
+                )
+                .with_details("Use Auto-Generate Checkpoints in the editor to create timing gates."),
+            );
+        }
     } else {
         let finish_count = checkpoints.iter().filter(|cp| cp.is_finish_line).count();
-        if finish_count == 0 {
+        if finish_count == 0 && !track.is_arena() {
             diagnostics.push(
                 TrackValidationError::error(
                     "ERR_NO_FINISH_LINE",
@@ -386,7 +390,7 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
             );
         }
 
-        if track.spline.closed && checkpoints.len() < 4 {
+        if track.spline.closed && checkpoints.len() < 4 && !track.is_arena() {
             diagnostics.push(
                 TrackValidationError::warning(
                     "WARN_FEW_CHECKPOINTS",
@@ -473,23 +477,26 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         // Check grid slots against track boundaries and walls
         for (i, pose) in grid.iter().enumerate() {
             let proj = track.spline.project_point(pose.position);
-            let half_track_w = proj.track_width * 0.5 + if proj.left_curb || proj.right_curb { 1.4 } else { 0.0 };
 
-            if proj.distance_to_spline > half_track_w + 0.5 {
-                diagnostics.push(
-                    TrackValidationError::error(
-                        "ERR_GRID_SLOT_OFF_TRACK",
-                        format!(
-                            "Starting grid slot #{} at ({:.1}, {:.1}) is off the drivable track ({:.1}m from centerline, width {:.1}m).",
-                            i + 1,
-                            pose.position.x,
-                            pose.position.y,
-                            proj.distance_to_spline,
-                            proj.track_width
-                        ),
-                    )
-                    .with_index(i),
-                );
+            if !track.is_arena() {
+                let half_track_w = proj.track_width * 0.5 + if proj.left_curb || proj.right_curb { 1.4 } else { 0.0 };
+
+                if proj.distance_to_spline > half_track_w + 0.5 {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_GRID_SLOT_OFF_TRACK",
+                            format!(
+                                "Starting grid slot #{} at ({:.1}, {:.1}) is off the drivable track ({:.1}m from centerline, width {:.1}m).",
+                                i + 1,
+                                pose.position.x,
+                                pose.position.y,
+                                proj.distance_to_spline,
+                                proj.track_width
+                            ),
+                        )
+                        .with_index(i),
+                    );
+                }
             }
 
             // Check clearance to walls (car half-width ~ 1.0m, require >= 0.8m)
@@ -524,7 +531,7 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         let proj = track.spline.project_point(center);
         let elev_diff = (obs.elevation - proj.elevation).abs();
 
-        if elev_diff < 2.5 {
+        if !matches!(track.kind, TrackKind::Arena { .. }) && elev_diff < 2.5 {
             let half_w = proj.track_width * 0.5;
             let curb_w = half_w + if proj.left_curb || proj.right_curb { 1.4 } else { 0.0 };
 
@@ -605,6 +612,16 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                     }
                 }
             }
+        } else if let ObstacleShape::Polygon { vertices } = &obs.shape {
+            if vertices.len() < 3 {
+                diagnostics.push(
+                    TrackValidationError::error(
+                        "ERR_INVALID_OBSTACLE_POLYGON",
+                        format!("Obstacle #{} '{}' has fewer than 3 vertices.", i + 1, obs.name),
+                    )
+                    .with_index(i),
+                );
+            }
         }
     }
 
@@ -680,16 +697,87 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         }
     }
 
+    // 10. Arena Boundary Hull Checks
+    if let Some(hull) = track.arena_hull() {
+        if hull.len() < 3 {
+            diagnostics.push(
+                TrackValidationError::error(
+                    "ERR_ARENA_INVALID_HULL",
+                    format!("Arena boundary hull must have at least 3 vertices (found {}).", hull.len()),
+                )
+                .with_details("Define a valid closed polygon for the arena perimeter."),
+            );
+        } else {
+            // Check that starting grid positions are within the arena boundary
+            for (idx, slot) in track.grid_positions.iter().enumerate() {
+                if !point_in_polygon(slot.position, hull) {
+                    diagnostics.push(
+                        TrackValidationError::warning(
+                            "WARN_GRID_OUTSIDE_ARENA",
+                            format!(
+                                "Starting grid slot #{} at ({:.1}, {:.1}) is outside the arena boundary enclosure.",
+                                idx + 1, slot.position.x, slot.position.y
+                            ),
+                        )
+                        .with_details("Reposition starting grid slots inside the arena floor boundary."),
+                    );
+                }
+            }
+        }
+    }
+
     diagnostics
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::track::geometry::{BarrierType, Obstacle, WallBarrier};
+    use crate::track::geometry::{BarrierType, Obstacle, WallBarrier, TrackGeometry, SpawnPose};
     use crate::track::presets::classic_grand_prix;
     use crate::track::spline::TrackWaypoint;
     use glam::Vec2;
+
+    #[test]
+    fn test_arena_track_validation_clean() {
+        let hull = vec![
+            Vec2::new(-50.0, -50.0),
+            Vec2::new(50.0, -50.0),
+            Vec2::new(50.0, 50.0),
+            Vec2::new(-50.0, 50.0),
+        ];
+        let mut track = Track {
+            name: "Test Arena".to_string(),
+            description: "Test stunt arena".to_string(),
+            category: crate::track::TrackCategory::Main,
+            kind: TrackKind::Arena {
+                boundary_hull: hull,
+                floor_surface: wheelbase::SurfaceType::Dirt,
+                perimeter_barrier: Some(BarrierType::Concrete),
+            },
+            spline: crate::track::TrackSpline::new(vec![], false),
+            geometry: TrackGeometry::default(),
+            checkpoints: vec![],
+            grid_positions: vec![
+                SpawnPose::new(Vec2::new(0.0, 0.0), 0.0, 0),
+                SpawnPose::new(Vec2::new(0.0, 5.0), 0.0, 1),
+            ],
+            default_surface: wheelbase::SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 3,
+            predefined_car: None,
+            module_id: Some("extreme_offroad".to_string()),
+            modules: vec!["extreme_offroad".to_string()],
+        };
+
+        let diags = validate_track(&track);
+        let errors: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Error).collect();
+        assert!(errors.is_empty(), "Arena track should have 0 errors: {:?}", errors);
+
+        // Test grid outside arena warning
+        track.grid_positions[0].position = Vec2::new(100.0, 100.0);
+        let diags2 = validate_track(&track);
+        assert!(diags2.iter().any(|d| d.code == "WARN_GRID_OUTSIDE_ARENA"));
+    }
 
     #[test]
     fn test_preset_track_validation_passes_cleanly() {

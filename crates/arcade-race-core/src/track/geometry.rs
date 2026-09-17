@@ -302,25 +302,7 @@ impl SurfaceShape {
                 let local_y = (-d.x * sin_a + d.y * cos_a).abs();
                 local_x <= half_extents.x && local_y <= half_extents.y
             }
-            Self::Polygon { vertices } => {
-                if vertices.len() < 3 {
-                    return false;
-                }
-                // Standard ray casting point-in-polygon test
-                let mut inside = false;
-                let mut j = vertices.len() - 1;
-                for i in 0..vertices.len() {
-                    let vi = vertices[i];
-                    let vj = vertices[j];
-                    if ((vi.y > p.y) != (vj.y > p.y))
-                        && (p.x < (vj.x - vi.x) * (p.y - vi.y) / (vj.y - vi.y) + vi.x)
-                    {
-                        inside = !inside;
-                    }
-                    j = i;
-                }
-                inside
-            }
+            Self::Polygon { vertices } => point_in_polygon(p, vertices),
         }
     }
 
@@ -345,6 +327,26 @@ impl SurfaceShape {
             vertices: vec![v0, v1, v2],
         }
     }
+}
+
+/// Standard ray-casting 2D point-in-polygon containment test.
+pub fn point_in_polygon(p: Vec2, vertices: &[Vec2]) -> bool {
+    if vertices.len() < 3 {
+        return false;
+    }
+    let mut inside = false;
+    let mut j = vertices.len() - 1;
+    for i in 0..vertices.len() {
+        let vi = vertices[i];
+        let vj = vertices[j];
+        if ((vi.y > p.y) != (vj.y > p.y))
+            && (p.x < (vj.x - vi.x) * (p.y - vi.y) / (vj.y - vi.y) + vi.x)
+        {
+            inside = !inside;
+        }
+        j = i;
+    }
+    inside
 }
 
 /// Layering depth of a surface zone relative to the drivable track ribbon.

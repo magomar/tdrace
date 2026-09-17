@@ -451,6 +451,57 @@ impl CarConfig {
     pub fn trans_am_ta1() -> Self {
         Self::stock_car_ta1()
     }
+
+    /// 300 BHP Sand Rail Buggy: ultralight chromoly spaceframe, pure RWD, wide stance,
+    /// rear-biased weight, high-travel suspension compliance, and paddle tire grip.
+    pub fn sand_rail() -> Self {
+        Self {
+            mass: 590.0,
+            inertia: 720.0,
+            wheelbase: 2.40,
+            track_width: 1.75,
+            cg_to_front: 1.44,
+            cg_to_rear: 0.96,
+            cg_height: 0.46,
+
+            max_engine_force: 8800.0, // 300 BHP explosive power-to-weight
+            max_reverse_force: 5000.0,
+            max_brake_force: 11500.0,
+            handbrake_force: 8200.0,
+            brake_bias: 0.55,
+            drive_bias: 0.0, // Pure RWD
+            top_speed_mps: 55.5, // ~200 km/h
+
+            max_steer_angle: 0.75, // ~43 deg responsive off-road lock
+            steer_speed: 8.5,
+            steer_return_speed: 9.5,
+            counter_steer_assist: 1.55,
+            speed_sensitive_steer_factor: 0.001,
+
+            air_drag_coefficient: 0.48,
+            lateral_drag_coefficient: 1.40,
+            rolling_resistance_coefficient: 0.018,
+            angular_damping: 140.0,
+
+            weight_transfer_longitudinal: 1.5,
+            weight_transfer_lateral: 1.3,
+
+            engine_braking_coefficient: 0.14,
+            downforce_coefficient: 0.35,
+
+            tire: TireConfig {
+                stiffness_b: 8.2,
+                shape_c: 1.35,
+                peak_d: 1.12,
+                curvature_e: -0.15,
+                drift_slide_friction: 0.94,
+                handbrake_lateral_friction_multiplier: 0.35,
+                skid_threshold: 0.08,
+                skid_full_threshold: 0.28,
+            },
+            assists: DriverAssistsConfig::sport(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -464,6 +515,7 @@ mod tests {
         let kart = CarConfig::kart();
         let rally = CarConfig::rally_car();
         let stock = CarConfig::stock_car_ta1();
+        let sand = CarConfig::sand_rail();
 
         assert_eq!(sports.drive_bias, 0.0);
         assert_eq!(rally.drive_bias, 0.5);
@@ -475,5 +527,12 @@ mod tests {
         assert!(stock.top_speed_mps * 3.6 > 310.0);
         assert!(stock.mass > sports.mass);
         assert_eq!(CarConfig::trans_am_ta1(), stock);
+
+        // Sand rail verification
+        assert_eq!(sand.drive_bias, 0.0);
+        assert_eq!(sand.mass, 590.0);
+        assert_eq!(sand.max_engine_force, 8800.0);
+        assert!(sand.top_speed_mps * 3.6 > 195.0);
+        assert!(sand.track_width > sports.track_width);
     }
 }

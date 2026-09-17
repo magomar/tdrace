@@ -157,6 +157,25 @@ impl EngineSoundConfig {
             saturation_drive: 1.40, // Rich analog drive saturation
         }
     }
+
+    /// 300 BHP 2.5L Turbocharged Flat-4 Boxer Engine (Extreme Off-Road Sand Rail Buggy)
+    /// Distinctive off-beat boxer rumble, high-RPM open-header bark, turbo spool,
+    /// and aggressive wastegate/exhaust resonance.
+    pub const fn sand_rail_boxer() -> Self {
+        Self {
+            cylinder_count: 4,
+            is_two_stroke: false,
+            crank_lumpiness: 0.44, // Characteristic boxer uneven pulse thrum
+            combustion_asymmetry: 0.54, // Sharp combustion crackle
+            intake_growl_intensity: 0.36,
+            turbo_whine_level: 0.28, // High-boost turbocharger spool
+            mechanical_buzz: 0.22,
+            formant_f1_hz: 160.0, // Low-end boxer rumble
+            formant_f2_hz: 1850.0, // Open stinger exhaust header bark
+            formant_q: 2.2,
+            saturation_drive: 1.35,
+        }
+    }
 }
 
 /// Generates an integer-cycle seamless looping engine harmonic sound for a specific configuration and RPM frequency.
@@ -300,6 +319,11 @@ pub fn generate_rally_turbo_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> 
 /// Generates roaring 5.9L Pushrod V8 stock car engine sound loop band.
 pub fn generate_nascar_v8_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
     generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::nascar_v8())
+}
+
+/// Generates raspy 2.5L Turbo Flat-4 boxer sand rail engine sound loop band.
+pub fn generate_sand_rail_boxer_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
+    generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::sand_rail_boxer())
 }
 
 /// Legacy / Standard engine RPM band generator (aliases to generic procedural engine band).
@@ -513,6 +537,7 @@ mod tests {
             ("f1", generate_f1_v6_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("rally", generate_rally_turbo_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("nascar", generate_nascar_v8_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
+            ("sand_rail", generate_sand_rail_boxer_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
         ];
 
         for (name, wav) in presets {

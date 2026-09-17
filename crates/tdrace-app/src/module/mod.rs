@@ -1,4 +1,5 @@
 pub mod classic;
+pub mod extreme_offroad;
 pub mod f1;
 pub mod kart;
 pub mod rally;
@@ -43,6 +44,13 @@ pub enum VehicleVisualType {
         tall_wing: bool,
         roof_fins: bool,
         window_net: bool,
+    },
+    /// Extreme Off-Road Sand Rail Buggy: open tubular chromoly roll cage, paddle sand tires,
+    /// exposed rear flat-4 turbo engine, safety pennant whip antenna, 4-pod roof lightbar.
+    SandRail {
+        lightbar: bool,
+        whip_antenna: bool,
+        paddle_tires: bool,
     },
 }
 
@@ -197,6 +205,19 @@ impl EngineAudioProfile {
             anti_lag_pops: false,
         }
     }
+
+    pub fn sand_rail_boxer() -> Self {
+        Self {
+            sound_type: EngineSoundType::SandRailBoxer,
+            idle_rpm: 1250.0,
+            max_rpm: 8800.0,
+            base_pitch: 70.0,
+            pitch_scale: 0.044,
+            harmonic_ratio: 2.5,
+            turbo_flutter: true,
+            anti_lag_pops: true,
+        }
+    }
 }
 
 /// The core `GameModule` trait. Any standalone game subproject implements this trait.
@@ -236,6 +257,7 @@ pub trait GameModule: Send + Sync + 'static {
 }
 
 pub use classic::ClassicGameModule;
+pub use extreme_offroad::ExtremeOffRoadModule;
 pub use f1::{F1GameModule, GtWorldChallengeModule};
 pub use kart::KartGameModule;
 pub use nascar::NascarGameModule;
@@ -403,6 +425,44 @@ mod tests {
             assert!(
                 errors.is_empty(),
                 "NASCAR track '{}' ({}) had validation errors: {:?}",
+                track.name,
+                track_def.id,
+                errors
+            );
+        }
+    }
+
+    #[test]
+    fn test_extreme_offroad_game_module() {
+        let offroad = ExtremeOffRoadModule::new();
+        assert_eq!(offroad.id(), "extreme_offroad");
+        assert_eq!(offroad.title(), "EXTREME OFF-ROAD & STUNT ARENAS");
+        assert_eq!(offroad.vehicles().len(), 1);
+        assert_eq!(offroad.tracks().len(), 15);
+        assert_eq!(offroad.drivers().len(), 8);
+        assert_eq!(offroad.default_vehicle_id(), "sand_rail_buggy");
+        assert_eq!(offroad.default_track_id(), "sahara_dune_crossing");
+        assert_eq!(offroad.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
+
+        let buggy = ExtremeOffRoadModule::car_sand_rail();
+        assert_eq!(buggy.mass, 590.0);
+        assert_eq!(buggy.drive_bias, 0.0);
+        assert_eq!(buggy.max_engine_force, 8800.0);
+
+        for track_def in offroad.tracks() {
+            assert!(track_def.default_laps >= 2 && track_def.default_laps <= 5);
+            let track = (track_def.generator)();
+            assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
+            assert!(track.grid_positions.len() >= 8, "Grid slots check for {}", track_def.id);
+
+            let diagnostics = tdrace_core::track::validation::validate_track(&track);
+            let errors: Vec<_> = diagnostics
+                .into_iter()
+                .filter(|d| d.severity == tdrace_core::track::validation::ValidationSeverity::Error)
+                .collect();
+            assert!(
+                errors.is_empty(),
+                "Extreme Off-Road track '{}' ({}) had validation errors: {:?}",
                 track.name,
                 track_def.id,
                 errors

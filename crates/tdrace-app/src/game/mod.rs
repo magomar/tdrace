@@ -78,7 +78,8 @@ use crate::input::touch::TouchController;
 use crate::input::{DigitalInputFilter, InputController, NavGrid2D};
 pub use crate::module::VehicleVisualType;
 use crate::module::{
-    GameModule, GtWorldChallengeModule, KartGameModule, NascarGameModule, RallyGameModule,
+    ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule, NascarGameModule,
+    RallyGameModule,
 };
 use crate::profile::{CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::car::render_car_with_visual_type;
@@ -931,9 +932,11 @@ impl RaceSession {
             Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
             Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
             Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1") => CarChoice::StockCar,
+            Some("sand_rail" | "sand_rail_buggy" | "buggy") => CarChoice::SandRail,
             Some("sports_car") => CarChoice::SportsCar,
             _ => match self.track.module_id.as_deref().unwrap_or(self.active_module_id) {
                 "nascar" => CarChoice::StockCar,
+                "extreme_offroad" => CarChoice::SandRail,
                 "gt" | "gt_challenge" | "f1" => CarChoice::GT3Car,
                 "rally" => CarChoice::RallyCar,
                 "kart" => CarChoice::Kart,
@@ -993,6 +996,7 @@ impl RaceSession {
             "rally" => RallyGameModule::new().drivers(),
             "kart" => KartGameModule::new().drivers(),
             "nascar" => NascarGameModule::new().drivers(),
+            "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
             _ => DriverCharacter::all().to_vec(),
         }
     }
@@ -1016,6 +1020,9 @@ impl RaceSession {
             "nascar" => vec![
                 (CarChoice::StockCar.title(), CarChoice::StockCar.tag(), CarChoice::StockCar.description(), CarChoice::StockCar.stats()),
                 ("Trans-Am TA1 Spaceframe V8", "850 BHP SPACEFRAME", "Pure American road racing silhouette monster: tube-frame chassis, high-mount carbon GT wing, side boom tubes.", (0.95, 0.92, 0.91, 0.85)),
+            ],
+            "extreme_offroad" => vec![
+                (CarChoice::SandRail.title(), CarChoice::SandRail.tag(), CarChoice::SandRail.description(), CarChoice::SandRail.stats()),
             ],
             _ => vec![
                 (CarChoice::SportsCar.title(), CarChoice::SportsCar.tag(), CarChoice::SportsCar.description(), CarChoice::SportsCar.stats()),
@@ -1083,13 +1090,14 @@ impl RaceSession {
         };
     }
 
-    /// Switches the active motorsport game module (nascar, gt, rally, kart, classic).
+    /// Switches the active motorsport game module (nascar, gt, rally, kart, classic, extreme_offroad).
     pub fn switch_to_module(&mut self, mod_id: &str) {
         match mod_id {
             "nascar" => self.switch_to_nascar(),
             "gt" | "gt_challenge" | "f1" => self.switch_to_gt(),
             "rally" => self.switch_to_rally(),
             "kart" => self.switch_to_kart(),
+            "extreme_offroad" | "offroad" => self.switch_to_extreme_offroad(),
             _ => self.switch_to_classic(),
         }
     }
@@ -1123,6 +1131,44 @@ impl RaceSession {
         }
         self.track = self.load_track_for_session(&self.track_choice);
         self.car_choice = CarChoice::StockCar;
+        if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
+            self.total_laps = 3;
+        }
+        self.camera.setup_for_track(&self.track);
+        self.camera_p2.setup_for_track(&self.track);
+        self.rebuild_roster_participants();
+        self.state = GameState::Menu;
+    }
+
+    /// Activates the Extreme Off-Road & Stunt Arenas module.
+    pub fn switch_to_extreme_offroad(&mut self) {
+        self.apply_module_config("extreme_offroad");
+        self.active_module_id = "extreme_offroad";
+        self.menu_track_idx = 0;
+        self.menu_car_idx = 0;
+        self.current_visual_type = VehicleVisualType::SandRail {
+            lightbar: true,
+            whip_antenna: true,
+            paddle_tires: true,
+        };
+        let tracks = self.active_module_tracks();
+        if let Some((idx, choice)) = tracks
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.track_id() == self.config.gameplay.default_track)
+        {
+            self.menu_track_idx = idx;
+            self.track_choice = choice.clone();
+        } else {
+            self.track_choice = tracks.first().cloned().unwrap_or_else(|| TrackChoice::Custom {
+                id: "sahara_dune_crossing".to_string(),
+                title: "Sahara Dune Crossing".to_string(),
+                description: "High-speed sweeping desert crossing over cresting sand dunes.".to_string(),
+                path: "extreme_offroad/sahara_dune_crossing".to_string(),
+            });
+        }
+        self.track = self.load_track_for_session(&self.track_choice);
+        self.car_choice = CarChoice::SandRail;
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
             self.total_laps = 3;
         }
@@ -1343,6 +1389,46 @@ impl RaceSession {
         self.init_race();
     }
 
+    /// Starts a full Extreme Off-Road & Stunt Arenas Championship Season.
+    pub fn start_extreme_offroad_championship(&mut self) {
+        let champ = ChampionshipSession::new(
+            "Extreme Off-Road World Series 2026",
+            PointSystem::F1Standard { fastest_lap_bonus: false },
+            vec![
+                "sahara_dune_crossing".to_string(),
+                "dirt_figure_eight".to_string(),
+                "atacama_sand_basin".to_string(),
+                "red_rock_canyon".to_string(),
+                "mud_slough_arena".to_string(),
+                "baja_500_desert_scrub".to_string(),
+                "arctic_frozen_lake".to_string(),
+                "alpine_snow_ridge".to_string(),
+                "rovaniemi_ice_ring".to_string(),
+                "supercross_stadium_arena".to_string(),
+                "gravel_quarry_chasm".to_string(),
+                "louisiana_mud_swampland".to_string(),
+                "monster_colosseum".to_string(),
+                "glacier_crest_pass".to_string(),
+                "stunt_city_megastructure".to_string(),
+            ],
+            3,
+            &[
+                ("player", "Player", "Sand Rail Dynamics"),
+                ("wyatt_cole", "Wyatt 'Dust Devil' Cole", "Mojave Sandworks"),
+                ("jaxson_rivera", "Jaxson 'Baja King' Rivera", "Baja Trophy Racing"),
+                ("astrid_lindholm", "Astrid 'Ice Queen' Lindholm", "Nordic Glacier Works"),
+                ("bubba_beauregard", "Bubba 'Mud Slinger' Beauregard", "Bayou Heavy Traction"),
+                ("travis_mcgrath", "Travis 'Nitro' McGrath", "Redline Freestyle"),
+                ("roxie_vance", "Roxie 'Rock Hound' Vance", "Canyon Crawler Team"),
+                ("sven_lindqvist", "Sven 'Blizzard' Lindqvist", "Arctic Circle Rally"),
+                ("cruz_morales", "Cruz 'Chasm Jumper' Morales", "Quarry Stunt Squad"),
+            ],
+        );
+        self.switch_to_extreme_offroad();
+        self.championship_session = Some(champ);
+        self.init_race();
+    }
+
     /// Advances to the next round in an active championship season.
     pub fn advance_championship_round(&mut self) {
         if let Some(champ) = &self.championship_session {
@@ -1396,6 +1482,7 @@ impl RaceSession {
                 "rally" => RallyGameModule::new().drivers(),
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
+                "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
                 _ => Vec::new(),
             };
 
@@ -1451,6 +1538,14 @@ impl RaceSession {
                     window_net: true,
                 };
                 NascarGameModule::car_stock_car()
+            }
+            CarChoice::SandRail => {
+                self.current_visual_type = VehicleVisualType::SandRail {
+                    lightbar: true,
+                    whip_antenna: true,
+                    paddle_tires: true,
+                };
+                ExtremeOffRoadModule::car_sand_rail()
             }
             CarChoice::DriftCar => {
                 self.current_visual_type = VehicleVisualType::TouringGT {
@@ -1664,6 +1759,7 @@ impl RaceSession {
                 CarChoice::RallyCar => RallyGameModule::car_wrc_rally(),
                 CarChoice::Kart => KartGameModule::car_shifter_kart(),
                 CarChoice::StockCar => NascarGameModule::car_stock_car(),
+                CarChoice::SandRail => ExtremeOffRoadModule::car_sand_rail(),
                 CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(bot_car_choice),
             };
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
@@ -1747,8 +1843,10 @@ impl RaceSession {
             "f1" => EngineSoundType::SportGT,
             "rally" => EngineSoundType::RallyTurbo,
             "kart" => EngineSoundType::Kart125cc,
+            "extreme_offroad" => EngineSoundType::SandRailBoxer,
             _ => match active_car {
                 CarChoice::StockCar => EngineSoundType::NascarV8,
+                CarChoice::SandRail => EngineSoundType::SandRailBoxer,
                 CarChoice::GT3Car => EngineSoundType::SportGT,
                 CarChoice::F1Car => EngineSoundType::F1V6Turbo,
                 CarChoice::Kart => EngineSoundType::Kart125cc,
@@ -1857,7 +1955,8 @@ impl RaceSession {
                         1 => self.switch_to_rally(),
                         2 => self.switch_to_kart(),
                         3 => self.switch_to_gt(),
-                        _ => self.switch_to_nascar(),
+                        4 => self.switch_to_nascar(),
+                        _ => self.switch_to_extreme_offroad(),
                     }
                 }
                 self.audio.play_music(MusicTrack::NeonMenu);
@@ -2329,7 +2428,7 @@ impl RaceSession {
                     return;
                 }
 
-                let num_modules = 5;
+                let num_modules = 6;
                 if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
                     self.audio.play_sfx(SfxType::UiMove);
                     if *selected_idx == 0 {
@@ -3488,6 +3587,7 @@ impl RaceSession {
                 "kart" => 2,
                 "gt" | "gt_challenge" | "f1" => 3,
                 "nascar" => 4,
+                "extreme_offroad" => 5,
                 _ => 0,
             };
             self.transition_fade_to(GameState::ModuleSelect { selected_idx: cur_mod_idx }, 0.3);
@@ -3514,6 +3614,13 @@ impl RaceSession {
         if self.active_module_id == "nascar" && is_key_pressed(KeyCode::F) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.start_nascar_championship();
+            return;
+        }
+
+        // Quick Championship trigger for Extreme Off-Road & Stunt Arenas (F key)
+        if self.active_module_id == "extreme_offroad" && is_key_pressed(KeyCode::F) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.start_extreme_offroad_championship();
             return;
         }
 
@@ -3617,6 +3724,10 @@ impl RaceSession {
                 }
                 "nascar" => {
                     self.start_nascar_championship();
+                    return;
+                }
+                "extreme_offroad" => {
+                    self.start_extreme_offroad_championship();
                     return;
                 }
                 "rally" => {
@@ -5613,6 +5724,7 @@ impl RaceSession {
                     "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
                     "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
+                    "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                     _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
                 };
                 render_track_select_menu(
@@ -5662,6 +5774,7 @@ impl RaceSession {
                     ("kart", "Karting World Cup", "125CC SHIFTER KARTS", "Direct 1:1 steering, 3.5G cornering bites, and elimination tournament heats.", Palette::NEON_GREEN),
                     ("gt", "GT World Challenge", "FIA GT3 & SRO GT2 WORLD TOUR", "High-downforce 600 BHP GT3 Evo & 707 BHP GT2 Biturbo racers on Monza, Spa, and Silverstone.", Palette::RED),
                     ("nascar", "NASCAR Cup Series & Trans-Am TA1", "850 BHP V8 & SUPERSPEEDWAYS", "850 BHP pushrod V8 stock cars, pack drafting, high-banked tri-ovals and road courses.", Color::new(1.0, 0.82, 0.08, 1.0)),
+                    ("extreme_offroad", "Extreme Off-Road & Stunt Arenas", "300 BHP SAND RAIL & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas with 300 BHP Sand Rail Buggy.", Color::new(1.0, 0.40, 0.05, 1.0)),
                 ];
                 render_module_select_menu(
                     &self.fonts,
@@ -6078,6 +6191,9 @@ impl RaceSession {
         if is_key_pressed(KeyCode::Key6) { self.editor_tools.active_tool = EditorToolType::Checkpoint; }
         if is_key_pressed(KeyCode::Key7) { self.editor_tools.active_tool = EditorToolType::StartingGrid; }
         if is_key_pressed(KeyCode::Key8) { self.editor_tools.active_tool = EditorToolType::PitLane; }
+        if is_key_pressed(KeyCode::Key9) { self.editor_tools.active_tool = EditorToolType::ArenaFloor; }
+        if is_key_pressed(KeyCode::Key0) { self.editor_tools.active_tool = EditorToolType::WhoopSection; }
+        if is_key_pressed(KeyCode::Minus) { self.editor_tools.active_tool = EditorToolType::StuntRamp; }
 
         if (is_key_down(KeyCode::LeftControl)
             || is_key_down(KeyCode::RightControl)

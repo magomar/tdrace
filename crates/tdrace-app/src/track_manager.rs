@@ -8,6 +8,7 @@ use tdrace_core::track::presets::{
 use tdrace_core::track::{Track, TrackCategory};
 
 use crate::module::classic::ClassicGameModule;
+use crate::module::extreme_offroad::ExtremeOffRoadModule;
 use crate::module::f1::F1GameModule;
 use crate::module::kart::KartGameModule;
 use crate::module::nascar::NascarGameModule;
@@ -24,16 +25,18 @@ pub enum ModuleFilter {
     Kart,
     F1,
     Nascar,
+    ExtremeOffRoad,
     Drafts,
 }
 
 impl ModuleFilter {
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 7] = [
         Self::Classic,
         Self::Rally,
         Self::Kart,
         Self::F1,
         Self::Nascar,
+        Self::ExtremeOffRoad,
         Self::Drafts,
     ];
 
@@ -44,6 +47,7 @@ impl ModuleFilter {
             Self::Kart => Some("kart"),
             Self::F1 => Some("gt"),
             Self::Nascar => Some("nascar"),
+            Self::ExtremeOffRoad => Some("extreme_offroad"),
             Self::Drafts => Some("drafts"),
         }
     }
@@ -55,6 +59,7 @@ impl ModuleFilter {
             Self::Kart => "KARTING",
             Self::F1 => "GT WORLD CHALLENGE",
             Self::Nascar => "NASCAR",
+            Self::ExtremeOffRoad => "EXTREME OFF-ROAD",
             Self::Drafts => "DRAFTS",
         }
     }
@@ -66,6 +71,7 @@ impl ModuleFilter {
             Self::Kart => 3,
             Self::F1 => 4,
             Self::Nascar => 5,
+            Self::ExtremeOffRoad => 6,
             Self::Drafts => 9,
         }
     }
@@ -76,7 +82,8 @@ impl ModuleFilter {
             Self::Rally => Self::Kart,
             Self::Kart => Self::F1,
             Self::F1 => Self::Nascar,
-            Self::Nascar => Self::Drafts,
+            Self::Nascar => Self::ExtremeOffRoad,
+            Self::ExtremeOffRoad => Self::Drafts,
             Self::Drafts => Self::Classic,
         }
     }
@@ -88,7 +95,8 @@ impl ModuleFilter {
             Self::Kart => Self::Rally,
             Self::F1 => Self::Kart,
             Self::Nascar => Self::F1,
-            Self::Drafts => Self::Nascar,
+            Self::ExtremeOffRoad => Self::Nascar,
+            Self::Drafts => Self::ExtremeOffRoad,
         }
     }
 
@@ -98,6 +106,7 @@ impl ModuleFilter {
             "rally" => Self::Rally,
             "kart" => Self::Kart,
             "nascar" => Self::Nascar,
+            "extreme_offroad" | "offroad" => Self::ExtremeOffRoad,
             "drafts" => Self::Drafts,
             _ => Self::Classic,
         }
@@ -484,6 +493,7 @@ impl TrackManager {
             ModuleFilter::Rally => self.module_catalog_tracks("rally"),
             ModuleFilter::Kart => self.module_catalog_tracks("kart"),
             ModuleFilter::Nascar => self.module_catalog_tracks("nascar"),
+            ModuleFilter::ExtremeOffRoad => self.module_catalog_tracks("extreme_offroad"),
             ModuleFilter::Drafts => self.draft_track_choices(),
         }
     }
@@ -542,6 +552,7 @@ impl TrackManager {
             "rally" => "rally",
             "kart" => "kart",
             "nascar" => "nascar",
+            "extreme_offroad" | "offroad" => "extreme_offroad",
             _ => "classic",
         }
     }
@@ -565,7 +576,7 @@ impl TrackManager {
         if module_id == "all" {
             let mut list: Vec<TrackChoice> = Vec::new();
             let mut seen_ids = std::collections::HashSet::new();
-            for m in ["classic", "f1", "rally", "kart", "nascar"] {
+            for m in ["classic", "f1", "rally", "kart", "nascar", "extreme_offroad"] {
                 for choice in self.preset_track_choices(m) {
                     if seen_ids.insert(choice.track_id().to_string()) {
                         list.push(choice);
@@ -609,6 +620,14 @@ impl TrackManager {
                     .tracks()
                     .iter()
                     .map(|def| Self::track_choice_from_def(def, "nascar"))
+                    .collect()
+            }
+            "extreme_offroad" => {
+                let offroad_module = ExtremeOffRoadModule::new();
+                offroad_module
+                    .tracks()
+                    .iter()
+                    .map(|def| Self::track_choice_from_def(def, "extreme_offroad"))
                     .collect()
             }
             _ => {
@@ -825,6 +844,8 @@ impl TrackManager {
                     Some("kart")
                 } else if path.starts_with("classic/") {
                     Some("classic")
+                } else if path.starts_with("extreme_offroad/") {
+                    Some("extreme_offroad")
                 } else {
                     None
                 }
@@ -1015,9 +1036,10 @@ impl TrackManager {
             "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart" => Some("kart"),
             "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring" => Some("f1"),
             "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course" => Some("nascar"),
+            "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city" => Some("extreme_offroad"),
             _ => {
                 if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    for m in ["classic", "rally", "kart", "f1", "gt", "nascar"] {
+                    for m in ["classic", "rally", "kart", "f1", "gt", "nascar", "extreme_offroad"] {
                         if git_tracks_dir.join(m).join(format!("{}.json", slug)).exists() {
                             return match m {
                                 "classic" => Some("classic"),
@@ -1026,6 +1048,7 @@ impl TrackManager {
                                 "f1" => Some("f1"),
                                 "gt" => Some("gt"),
                                 "nascar" => Some("nascar"),
+                                "extreme_offroad" => Some("extreme_offroad"),
                                 _ => None,
                             };
                         }
@@ -1064,6 +1087,18 @@ impl TrackManager {
             "riga" | "bikernieki" => "riga_rx",
             "killarney" => "killarney_rx",
             "yas_marina" => "yas_marina_rx",
+            "atacama" => "atacama_sand_basin",
+            "red_rock" => "red_rock_canyon",
+            "baja" | "baja_500" => "baja_500_desert_scrub",
+            "mud_slough" => "mud_slough_arena",
+            "gravel_quarry" => "gravel_quarry_chasm",
+            "louisiana" | "louisiana_swampland" => "louisiana_mud_swampland",
+            "frozen_lake" => "arctic_frozen_lake",
+            "alpine_snow" => "alpine_snow_ridge",
+            "rovaniemi" => "rovaniemi_ice_ring",
+            "glacier_crest" => "glacier_crest_pass",
+            "supercross" | "supercross_stadium" => "supercross_stadium_arena",
+            "stunt_city" => "stunt_city_megastructure",
             other => other,
         }
     }
@@ -1105,6 +1140,20 @@ impl TrackManager {
             "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" => &["seven_laghi", "7laghi", "castelletto_kart", "castelletto"],
             "ampfing" | "schweppermannring" => &["ampfing", "schweppermannring"],
             "silverstone_national_kart" | "silverstone_kart" => &["silverstone_national_kart", "silverstone_kart"],
+            "sahara_dune_crossing" => &["sahara_dune_crossing"],
+            "atacama" | "atacama_sand_basin" => &["atacama_sand_basin", "atacama"],
+            "red_rock" | "red_rock_canyon" => &["red_rock_canyon", "red_rock"],
+            "baja" | "baja_500" | "baja_500_desert_scrub" => &["baja_500_desert_scrub", "baja_500", "baja"],
+            "mud_slough" | "mud_slough_arena" => &["mud_slough_arena", "mud_slough"],
+            "gravel_quarry" | "gravel_quarry_chasm" => &["gravel_quarry_chasm", "gravel_quarry"],
+            "louisiana" | "louisiana_swampland" | "louisiana_mud_swampland" => &["louisiana_mud_swampland", "louisiana_swampland", "louisiana"],
+            "frozen_lake" | "arctic_frozen_lake" => &["arctic_frozen_lake", "frozen_lake"],
+            "alpine_snow" | "alpine_snow_ridge" => &["alpine_snow_ridge", "alpine_snow"],
+            "rovaniemi" | "rovaniemi_ice_ring" => &["rovaniemi_ice_ring", "rovaniemi"],
+            "glacier_crest" | "glacier_crest_pass" => &["glacier_crest_pass", "glacier_crest"],
+            "supercross" | "supercross_stadium" | "supercross_stadium_arena" => &["supercross_stadium_arena", "supercross_stadium", "supercross"],
+            "monster_colosseum" => &["monster_colosseum"],
+            "stunt_city" | "stunt_city_megastructure" => &["stunt_city_megastructure", "stunt_city"],
             _ => &[],
         }
     }
@@ -2069,7 +2118,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 64); // 10 classic + 14 f1 + 15 rally unique + 13 famous kart + 12 nascar
+        assert_eq!(choices.len(), 78); // 10 classic + 14 f1 + 15 rally unique + 13 famous kart + 12 nascar + 14 extreme off-road
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();
@@ -2081,8 +2130,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 64, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 64);
+        // Since gp was saved as Draft, main choices is still 78, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 78);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -2091,7 +2140,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 65);
+        assert_eq!(manager.main_track_choices().len(), 79);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -2102,18 +2151,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[64]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[78]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 64);
+        assert_eq!(manager.main_track_choices().len(), 78);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 64);
+        assert_eq!(manager.main_track_choices().len(), 78);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -2224,9 +2273,15 @@ mod tests {
         assert!(nascar_tracks.iter().any(|t| t.title().contains("Darlington")));
         assert!(nascar_tracks.iter().any(|t| t.title().contains("Charlotte")));
 
+        // Extreme Off-Road tracks
+        let offroad_tracks = manager.module_catalog_tracks("extreme_offroad");
+        assert_eq!(offroad_tracks.len(), 15);
+        assert!(offroad_tracks.iter().any(|t| t.title().contains("Sahara")));
+        assert!(offroad_tracks.iter().any(|t| t.title().contains("Baja")));
+
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 64);
+        assert_eq!(all_tracks.len(), 78);
 
         // Save a custom circuit assigned to classic and rally
         let mut custom_circuit = classic_grand_prix();
@@ -2287,9 +2342,9 @@ mod tests {
         assert!(cloned_gp.modules.is_empty());
         assert!(Path::new(&path_gp).exists());
 
-        // Cloned track must appear in drafts, and main count stays 64
+        // Cloned track must appear in drafts, and main count stays 78
         assert_eq!(manager.draft_track_choices().len(), 1);
-        assert_eq!(manager.main_track_choices().len(), 64);
+        assert_eq!(manager.main_track_choices().len(), 78);
         assert_eq!(manager.draft_track_choices()[0].title(), "Classic Grand Prix (clone)");
 
         // 2. Clone a module preset by slug
