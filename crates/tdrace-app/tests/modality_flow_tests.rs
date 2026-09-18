@@ -1,5 +1,5 @@
-use tdrace_app::game::{GameState, RaceSession};
-use tdrace_app::ui::menu::{GameMode, ModalityCategory, ModalityModal};
+use tdrace_app::game::{GameState, GarageOrigin, RaceSession, StartingGridFocus};
+use tdrace_app::ui::menu::{CarChoice, GameMode, ModalityCategory, ModalityModal};
 
 #[test]
 fn test_grand_hub_to_modality_select_transition() {
@@ -343,33 +343,170 @@ fn test_modality_select_backward_transition_to_hub() {
 }
 
 #[test]
-fn test_starting_grid_card_0_modality_toggle() {
+fn test_starting_grid_card_0_opens_garage() {
     let mut session = RaceSession::new();
-    session.game_mode = GameMode::StandardRace;
-    session.free_car_selection = false;
+    session.state = GameState::StartingGrid;
+    session.starting_grid_focus = StartingGridFocus::LeftSetup;
     session.starting_grid_card_idx = 0;
 
-    // Tab toggles from Standard (Preset) to Experimental (Custom)
-    session.input.gamepad.snapshot.btn_x_pressed = true;
-    // Simulate line in StartingGrid update
-    if session.game_mode == GameMode::StandardRace {
-        session.game_mode = GameMode::ExperimentalRace;
-    } else {
-        session.game_mode = GameMode::StandardRace;
-    }
-    session.free_car_selection = session.game_mode.allows_car_change();
+    // Card 0 action opens the Garage Showroom
+    session.garage_origin = GarageOrigin::StartingGrid;
+    session.garage_tier = session.current_race_required_tier();
+    session.garage_car_idx = 0;
+    session.state = GameState::Garage(GarageOrigin::StartingGrid);
 
-    assert_eq!(session.game_mode, GameMode::ExperimentalRace);
-    assert!(session.free_car_selection);
-
-    // Toggle back
-    if session.game_mode == GameMode::StandardRace {
-        session.game_mode = GameMode::ExperimentalRace;
-    } else {
-        session.game_mode = GameMode::StandardRace;
-    }
-    session.free_car_selection = session.game_mode.allows_car_change();
-
-    assert_eq!(session.game_mode, GameMode::StandardRace);
-    assert!(!session.free_car_selection);
+    assert_eq!(session.state, GameState::Garage(GarageOrigin::StartingGrid));
+    assert_eq!(session.garage_origin, GarageOrigin::StartingGrid);
+    assert_eq!(session.garage_car_idx, 0);
 }
+
+#[test]
+fn test_modality_select_column_3_garage_navigation() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::Multiplayer,
+        selected_idx: 0,
+        modal: None,
+    };
+
+    // Right moves from Multiplayer (col 2) to Garage (col 3)
+    session.input.gamepad.snapshot.dpad_right_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.dpad_right_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Garage,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+
+    // Down moves to Tier 1 card (index 1)
+    session.input.gamepad.snapshot.dpad_down_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.dpad_down_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Garage,
+            selected_idx: 1,
+            modal: None,
+        }
+    );
+
+    // Confirm (A / Enter) opens Garage focused on Tier 1
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::Garage(GarageOrigin::ModalitySelect)
+    );
+    assert_eq!(session.garage_tier, 1);
+}
+
+#[test]
+fn test_garage_lifecycle_and_return() {
+    let mut session = RaceSession::new();
+    session.state = GameState::Garage(GarageOrigin::ModalitySelect);
+    session.garage_tier = 2;
+
+    // View mode toggle
+    assert_eq!(session.garage_view_mode, tdrace_app::ui::GarageViewMode::Lateral);
+    session.input.gamepad.snapshot.btn_y_pressed = true;
+    session.update_garage(GarageOrigin::ModalitySelect, 0.016);
+    session.input.gamepad.snapshot.btn_y_pressed = false;
+    assert_eq!(session.garage_view_mode, tdrace_app::ui::GarageViewMode::TopDownTurntable);
+
+    // Escape returns to ModalitySelect
+    session.input.gamepad.snapshot.btn_cancel_pressed = true;
+    session.update_garage(GarageOrigin::ModalitySelect, 0.016);
+    session.input.gamepad.snapshot.btn_cancel_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Garage,
+            selected_idx: 2,
+            modal: None,
+        }
+    );
+}
+
+#[test]
+fn test_category_based_race_eligibility_enforcement() {
+    // Normal mode: only car.tier <= required_tier is eligible
+    let gt4 = CarChoice::GT4Clubsport; // tier 1
+    let gt3 = CarChoice::GT3Car;       // tier 2
+    let hyper = CarChoice::HypercarPrototype; // tier 5
+
+    // In a Tier 2 race (e.g. GT3):
+    let race_tier = 2;
+    assert!(gt4.is_eligible_for_race_tier(race_tier, false), "Lower tier (Tier 1 GT4) is eligible for Tier 2 race");
+    assert!(gt3.is_eligible_for_race_tier(race_tier, false), "Matching tier (Tier 2 GT3) is eligible for Tier 2 race");
+    assert!(!hyper.is_eligible_for_race_tier(race_tier, false), "Higher tier (Tier 5 Hypercar) is NOT eligible for Tier 2 race");
+
+    // In dev mode: all cars are eligible regardless of tier
+    assert!(hyper.is_eligible_for_race_tier(race_tier, true), "Dev mode unlocks all categories");
+}
+
+#[test]
+fn test_modality_single_selected_menu_isolation() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::SinglePlayer,
+        selected_idx: 0,
+        modal: None,
+    };
+
+    // 1. Single player menu has 5 distinct modalities
+    assert_eq!(ModalityCategory::SinglePlayer.items().len(), 5);
+
+    // 2. Switch to Multiplayer menu via Tab
+    session.input.gamepad.snapshot.btn_rb_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_rb_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Multiplayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+    assert_eq!(ModalityCategory::Multiplayer.items().len(), 3);
+
+    // 3. Switch to Garage menu via Key3
+    session.input.gamepad.snapshot.btn_rb_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_rb_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Garage,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+
+    // 4. Wrapping within Garage menu (6 items: 1 hero showroom card + 5 tier cards)
+    session.input.gamepad.snapshot.dpad_up_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.dpad_up_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Garage,
+            selected_idx: 5,
+            modal: None,
+        }
+    );
+}
+

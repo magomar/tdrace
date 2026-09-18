@@ -7,11 +7,11 @@ use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::audio::AudioSettings;
-use crate::render::color::Palette;
+use crate::render::color::{CarColorScheme, Palette};
 use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
-use tdrace_core::physics::config::AssistProfile;
+use tdrace_core::physics::config::{AssistProfile, CarConfig};
 
 /// Available track options in track selection menu.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -587,6 +587,42 @@ impl CarChoice {
             Self::GT1Legend => 4,
             Self::HypercarPrototype => 5,
             _ => 1,
+        }
+    }
+
+    /// Returns the motorsport category tier for this vehicle choice (Tier 1..=5).
+    pub fn tier(&self) -> u8 {
+        match self {
+            Self::GT4Clubsport | Self::SportsCar | Self::SandRail => 1,
+            Self::GT3Car | Self::RallyCar | Self::DriftCar => 2,
+            Self::GT2Biturbo | Self::Kart => 3,
+            Self::GT1Legend => 4,
+            Self::HypercarPrototype | Self::F1Car | Self::StockCar => 5,
+        }
+    }
+
+    /// Checks whether this vehicle is eligible for a race that requires `required_tier`.
+    /// Rule: Selectable iff car.tier <= required_tier || dev_mode.
+    #[inline]
+    pub fn is_eligible_for_race_tier(&self, required_tier: u8, dev_mode: bool) -> bool {
+        dev_mode || self.tier() <= required_tier
+    }
+
+    /// Returns the vehicle physics specification for this vehicle choice.
+    pub fn config(&self) -> CarConfig {
+        match self {
+            Self::SportsCar => CarConfig::sports_car(),
+            Self::DriftCar => CarConfig::drift_car(),
+            Self::Kart => CarConfig::kart(),
+            Self::RallyCar => CarConfig::rally_car(),
+            Self::GT4Clubsport => crate::module::f1::GtWorldChallengeModule::car_gt4_clubsport(),
+            Self::GT3Car => crate::module::f1::GtWorldChallengeModule::car_gt3_evo(),
+            Self::GT2Biturbo => crate::module::f1::GtWorldChallengeModule::car_gt2_biturbo(),
+            Self::GT1Legend => crate::module::f1::GtWorldChallengeModule::car_gt1_legend(),
+            Self::HypercarPrototype => crate::module::f1::GtWorldChallengeModule::car_hypercar_prototype(),
+            Self::F1Car => crate::module::f1::GtWorldChallengeModule::car_f1_hybrid(),
+            Self::StockCar => CarConfig::stock_car_ta1(),
+            Self::SandRail => CarConfig::sand_rail(),
         }
     }
 }
@@ -2067,7 +2103,7 @@ pub fn render_module_select_menu(
     }
 
     // Footer prompt
-    let prompt = "USE [UP/DOWN] TO SELECT MODULE | [ENTER/SPACE] OPEN MENU | [O/X] SETTINGS | [P] SWITCH PROFILE | [N] NEW PROFILE | [K] CONTROLS | [ESC] QUIT";
+    let prompt = "USE [UP/DOWN] TO SELECT MODULE | [ENTER/SPACE] OPEN MENU | [X] SETTINGS | [P] SWITCH PROFILE | [N] NEW PROFILE | [K] CONTROLS | [ESC] QUIT";
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
@@ -2184,15 +2220,17 @@ pub fn render_exit_confirm_modal(fonts: &Fonts) {
 pub enum ModalityCategory {
     SinglePlayer,
     Multiplayer,
+    Garage,
 }
 
 impl ModalityCategory {
-    pub const ALL: [Self; 2] = [Self::SinglePlayer, Self::Multiplayer];
+    pub const ALL: [Self; 3] = [Self::SinglePlayer, Self::Multiplayer, Self::Garage];
 
     pub fn title(&self) -> &'static str {
         match self {
             Self::SinglePlayer => "SINGLE PLAYER",
             Self::Multiplayer => "MULTIPLAYER",
+            Self::Garage => "VEHICLE ROSTER & GARAGE",
         }
     }
 
@@ -2210,6 +2248,7 @@ impl ModalityCategory {
                 ModalityItem::LanPlay,
                 ModalityItem::CloudPlay,
             ],
+            Self::Garage => &[],
         }
     }
 }
@@ -2309,15 +2348,18 @@ impl ModalityModal {
 }
 
 /// Renders the Race Modality Selection stage inserted between the Grand Hub and Circuit Selection.
+/// Layout: 3 Columns (Col 1: Single Player, Col 2: Multiplayer, Col 3: Vehicle Roster & Garage Showroom).
 pub fn render_modality_select_screen(
     fonts: &Fonts,
     active_module_title: &str,
+    active_module_id: &str,
     active_module_accent: Color,
     category: ModalityCategory,
     selected_idx: usize,
     modal: Option<&ModalityModal>,
     _active_profile: &PlayerProfile,
-    _active_stats: &ProfileCareerStats,
+    active_stats: &ProfileCareerStats,
+    dev_mode: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2327,36 +2369,36 @@ pub fn render_modality_select_screen(
 
     // Header Title & Breadcrumb
     fonts.draw_display_centered_with_shadow(
-        &format!("{} • SELECT MODALITY", active_module_title),
+        &format!("{} • SELECT RACING MODALITY", active_module_title),
         sw * 0.5,
-        scaler.s(32.0),
-        scaler.font_s(26.0),
+        scaler.s(28.0),
+        scaler.font_s(24.0),
         active_module_accent,
         Color::new(0.0, 0.0, 0.0, 0.6),
         scaler.s(2.0),
     );
 
     fonts.draw_ui_regular_centered(
-        "Choose your race session format: Single Player vs Multiplayer",
+        "Choose session format: Single Player vs Multiplayer  •  Or inspect the active module's vehicle roster",
         sw * 0.5,
-        scaler.s(52.0),
-        scaler.font_s(13.0),
+        scaler.s(48.0),
+        scaler.font_s(12.5),
         Palette::UI_TEXT_MUTED,
     );
 
-    // Pill Tab Bar for Category Selection
-    let tab_w = scaler.s(200.0);
-    let tab_h = scaler.s(32.0);
-    let tab_gap = scaler.s(16.0);
-    let total_tabs_w = tab_w * 2.0 + tab_gap;
+    // 3 Category Tabs at Top
+    let tab_w = (sw * 0.28).clamp(scaler.s(180.0), scaler.s(280.0));
+    let tab_h = scaler.s(30.0);
+    let tab_gap = scaler.s(14.0);
+    let total_tabs_w = tab_w * 3.0 + tab_gap * 2.0;
     let tabs_start_x = (sw - total_tabs_w) * 0.5;
-    let tab_y = scaler.s(70.0);
+    let tab_y = scaler.s(64.0);
 
-    for (cat_idx, cat) in [ModalityCategory::SinglePlayer, ModalityCategory::Multiplayer].iter().enumerate() {
+    for (cat_idx, cat) in ModalityCategory::ALL.iter().enumerate() {
         let is_cat_active = *cat == category;
-        let tx = tabs_start_x + cat_idx as f32 * (tab_w + tab_gap);
+        let tx = tabs_start_x + (cat_idx as f32) * (tab_w + tab_gap);
         let tab_bg = if is_cat_active {
-            Color::new(0.12, 0.16, 0.24, 0.95)
+            Color::new(0.12, 0.16, 0.26, 0.95)
         } else {
             Color::new(0.06, 0.08, 0.12, 0.60)
         };
@@ -2368,9 +2410,14 @@ pub fn render_modality_select_screen(
 
         scaler.draw_glass_card(tx, tab_y, tab_w, tab_h, tab_bg, tab_border, if is_cat_active { 2.0 } else { 1.0 });
 
+        if is_cat_active {
+            draw_rectangle(tx, tab_y + tab_h - scaler.s(2.5), tab_w, scaler.s(2.5), active_module_accent);
+        }
+
         let tab_label = match cat {
             ModalityCategory::SinglePlayer => "[ 1. SINGLE PLAYER ]",
             ModalityCategory::Multiplayer => "[ 2. MULTIPLAYER ]",
+            ModalityCategory::Garage => "[ 3. VEHICLE ROSTER ]",
         };
         let tab_text_col = if is_cat_active {
             Palette::WHITE
@@ -2380,99 +2427,362 @@ pub fn render_modality_select_screen(
         fonts.draw_ui_bold_centered(
             tab_label,
             tx + tab_w * 0.5,
-            tab_y + scaler.s(20.0),
-            scaler.font_s(12.5),
+            tab_y + scaler.s(19.0),
+            scaler.font_s(11.5),
             tab_text_col,
         );
     }
 
-    // Modality Cards
-    let items = category.items();
-    let card_w = (sw * 0.72).clamp(scaler.s(480.0), scaler.s(740.0));
-    let card_x = (sw - card_w) * 0.5;
-    let start_y = scaler.s(116.0);
-    let card_gap = scaler.s(8.0);
-    let available_h = (sh - start_y - scaler.s(42.0)).max(scaler.s(240.0));
-    let card_h = ((available_h - card_gap * (items.len() as f32 - 1.0)) / items.len() as f32)
-        .clamp(scaler.s(56.0), scaler.s(82.0));
+    // Selected Menu Content Layout (Centered single-menu view)
+    let col_w = total_tabs_w;
+    let col_x = tabs_start_x;
+    let start_y = scaler.s(104.0);
+    let available_h = (sh - start_y - scaler.s(36.0)).max(scaler.s(300.0));
 
-    let mut curr_y = start_y;
+    match category {
+        ModalityCategory::SinglePlayer => {
+            let sp_items = ModalityCategory::SinglePlayer.items();
+            let card_gap = scaler.s(8.0);
+            let sp_card_h = ((available_h - card_gap * (sp_items.len() as f32 - 1.0)) / sp_items.len() as f32)
+                .clamp(scaler.s(54.0), scaler.s(88.0));
 
-    for (i, item) in items.iter().enumerate() {
-        let is_sel = i == selected_idx;
-        let accent = item.accent_color();
-        let is_avail = item.is_available();
+            let mut curr_y = start_y;
+            for (i, item) in sp_items.iter().enumerate() {
+                let is_sel = i == selected_idx;
+                let accent = item.accent_color();
 
-        let bg_col = if is_sel {
-            Palette::UI_CARD_BG_HOVER
-        } else {
-            Palette::UI_CARD_BG
-        };
-        let border_col = if is_sel {
-            accent
-        } else {
-            Palette::UI_CARD_BORDER
-        };
+                let bg_col = if is_sel {
+                    Palette::UI_CARD_BG_HOVER
+                } else {
+                    Color::new(0.06, 0.08, 0.12, 0.70)
+                };
+                let border_col = if is_sel {
+                    accent
+                } else {
+                    Palette::UI_CARD_BORDER
+                };
 
-        scaler.draw_glass_card(card_x, curr_y, card_w, card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.2 });
+                scaler.draw_glass_card(col_x, curr_y, col_w, sp_card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.0 });
 
-        // Left accent bar
-        if is_sel {
-            draw_rectangle(card_x, curr_y, scaler.s(6.0), card_h, accent);
+                if is_sel {
+                    draw_rectangle(col_x, curr_y, scaler.s(6.0), sp_card_h, accent);
+                }
+
+                fonts.draw_ui_bold(
+                    item.tag(),
+                    col_x + scaler.s(18.0),
+                    curr_y + sp_card_h * 0.25,
+                    scaler.font_s(9.5),
+                    if is_sel { accent } else { Palette::UI_TEXT_MUTED },
+                );
+
+                let title_str = if is_sel {
+                    format!("▶ {}", item.title())
+                } else {
+                    item.title().to_string()
+                };
+                fonts.draw_display(
+                    &title_str,
+                    col_x + scaler.s(18.0),
+                    curr_y + sp_card_h * 0.55,
+                    scaler.font_s(16.0),
+                    if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+                );
+
+                fonts.draw_ui_regular(
+                    item.description(),
+                    col_x + scaler.s(18.0),
+                    curr_y + sp_card_h * 0.84,
+                    scaler.font_s(11.0),
+                    if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
+                );
+
+                if is_sel {
+                    fonts.draw_ui_bold(
+                        "PRESS [ENTER] TO SELECT ▶",
+                        col_x + col_w - scaler.s(190.0),
+                        curr_y + sp_card_h * 0.55,
+                        scaler.font_s(11.0),
+                        accent,
+                    );
+                }
+
+                curr_y += sp_card_h + card_gap;
+            }
         }
+        ModalityCategory::Multiplayer => {
+            let mp_items = ModalityCategory::Multiplayer.items();
+            let card_gap = scaler.s(12.0);
+            let mp_card_h = ((available_h - card_gap * (mp_items.len() as f32 - 1.0)) / mp_items.len() as f32)
+                .clamp(scaler.s(68.0), scaler.s(110.0));
 
-        // Tag (Top-left)
-        fonts.draw_ui_bold(
-            item.tag(),
-            card_x + scaler.s(20.0),
-            curr_y + card_h * 0.26,
-            scaler.font_s(10.5),
-            if is_sel { accent } else { Palette::UI_TEXT_MUTED },
-        );
+            let mut curr_y = start_y;
+            for (i, item) in mp_items.iter().enumerate() {
+                let is_sel = i == selected_idx;
+                let accent = item.accent_color();
+                let is_avail = item.is_available();
 
-        // Status Badge (Top-right)
-        if !is_avail {
-            fonts.draw_ui_bold(
-                "🔒 COMING SOON",
-                card_x + card_w - scaler.s(130.0),
-                curr_y + card_h * 0.26,
-                scaler.font_s(10.0),
-                Palette::NEON_GOLD,
+                let bg_col = if is_sel {
+                    Palette::UI_CARD_BG_HOVER
+                } else {
+                    Color::new(0.06, 0.08, 0.12, 0.70)
+                };
+                let border_col = if is_sel {
+                    accent
+                } else {
+                    Palette::UI_CARD_BORDER
+                };
+
+                scaler.draw_glass_card(col_x, curr_y, col_w, mp_card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.0 });
+
+                if is_sel {
+                    draw_rectangle(col_x, curr_y, scaler.s(6.0), mp_card_h, accent);
+                }
+
+                fonts.draw_ui_bold(
+                    item.tag(),
+                    col_x + scaler.s(18.0),
+                    curr_y + mp_card_h * 0.25,
+                    scaler.font_s(9.5),
+                    if is_sel { accent } else { Palette::UI_TEXT_MUTED },
+                );
+
+                if !is_avail {
+                    fonts.draw_ui_bold(
+                        "🔒 COMING SOON",
+                        col_x + col_w - scaler.s(120.0),
+                        curr_y + mp_card_h * 0.25,
+                        scaler.font_s(10.0),
+                        Palette::NEON_GOLD,
+                    );
+                } else {
+                    fonts.draw_ui_bold(
+                        "✓ READY TO PLAY",
+                        col_x + col_w - scaler.s(120.0),
+                        curr_y + mp_card_h * 0.25,
+                        scaler.font_s(10.0),
+                        Palette::NEON_GREEN,
+                    );
+                }
+
+                let title_str = if is_sel {
+                    format!("▶ {}", item.title())
+                } else {
+                    item.title().to_string()
+                };
+                fonts.draw_display(
+                    &title_str,
+                    col_x + scaler.s(18.0),
+                    curr_y + mp_card_h * 0.55,
+                    scaler.font_s(17.0),
+                    if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+                );
+
+                fonts.draw_ui_regular(
+                    item.description(),
+                    col_x + scaler.s(18.0),
+                    curr_y + mp_card_h * 0.84,
+                    scaler.font_s(11.5),
+                    if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
+                );
+
+                if is_sel {
+                    let prompt_str = if is_avail {
+                        "PRESS [ENTER] TO LAUNCH ▶"
+                    } else {
+                        "PRESS [ENTER] FOR INFO ▶"
+                    };
+                    fonts.draw_ui_bold(
+                        prompt_str,
+                        col_x + col_w - scaler.s(200.0),
+                        curr_y + mp_card_h * 0.55,
+                        scaler.font_s(11.0),
+                        accent,
+                    );
+                }
+
+                curr_y += mp_card_h + card_gap;
+            }
+        }
+        ModalityCategory::Garage => {
+            // Hero Action Card at Top: "ENTER GARAGE SHOWROOM"
+            let hero_btn_h = scaler.s(56.0);
+            let is_hero_sel = selected_idx == 0;
+            scaler.draw_glass_card(
+                col_x,
+                start_y,
+                col_w,
+                hero_btn_h,
+                if is_hero_sel { Color::new(0.18, 0.24, 0.38, 0.95) } else { Color::new(0.08, 0.12, 0.18, 0.85) },
+                if is_hero_sel { Palette::NEON_GOLD } else { active_module_accent },
+                if is_hero_sel { 2.4 } else { 1.2 },
             );
+
+            if is_hero_sel {
+                draw_rectangle(col_x, start_y, scaler.s(6.0), hero_btn_h, Palette::NEON_GOLD);
+            }
+
+            fonts.draw_display(
+                "🏛️ ENTER GARAGE SHOWROOM",
+                col_x + scaler.s(18.0),
+                start_y + scaler.s(22.0),
+                scaler.font_s(15.5),
+                if is_hero_sel { Palette::WHITE } else { Palette::NEON_GOLD },
+            );
+            fonts.draw_ui_regular(
+                "PRESS [ENTER] OR [G] FOR FULLSCREEN 360° TURNTABLE, TECHNICAL SPECS & REV STAGE",
+                col_x + scaler.s(18.0),
+                start_y + scaler.s(42.0),
+                scaler.font_s(10.0),
+                Palette::NEON_CYAN,
+            );
+
+            if is_hero_sel {
+                fonts.draw_ui_bold(
+                    "OPEN SHOWROOM ▶",
+                    col_x + col_w - scaler.s(160.0),
+                    start_y + scaler.s(32.0),
+                    scaler.font_s(12.0),
+                    Palette::NEON_GOLD,
+                );
+            }
+
+            // Active Module Roster (5 Progression Tiers)
+            let card_gap = scaler.s(7.0);
+            let roster_start_y = start_y + hero_btn_h + card_gap;
+            let roster_available_h = available_h - hero_btn_h - card_gap;
+            let tier_card_h = ((roster_available_h - card_gap * 4.0) / 5.0).clamp(scaler.s(46.0), scaler.s(74.0));
+
+            for tier in 1..=5 {
+                let tier_idx = tier as usize;
+                let is_tier_sel = selected_idx == tier_idx;
+                let card_y = roster_start_y + ((tier - 1) as f32) * (tier_card_h + card_gap);
+
+                let unlocked_tier = if dev_mode {
+                    5
+                } else {
+                    let wins = active_stats.wins;
+                    if wins >= 10 {
+                        5
+                    } else if wins >= 5 {
+                        4
+                    } else if wins >= 2 {
+                        3
+                    } else if wins >= 1 {
+                        2
+                    } else {
+                        1
+                    }
+                };
+                let is_unlocked = tier <= unlocked_tier;
+                let models = crate::catalog::get_models_for_module_and_tier(active_module_id, tier);
+                let featured_car = models.first().copied();
+
+                scaler.draw_glass_card(
+                    col_x,
+                    card_y,
+                    col_w,
+                    tier_card_h,
+                    if is_tier_sel { Color::new(0.14, 0.18, 0.28, 0.95) } else { Color::new(0.06, 0.08, 0.12, 0.70) },
+                    if is_tier_sel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    if is_tier_sel { 2.2 } else { 1.0 },
+                );
+
+                if is_tier_sel {
+                    draw_rectangle(col_x, card_y, scaler.s(6.0), tier_card_h, Palette::NEON_GOLD);
+                }
+
+                // Tier Header & Category Title
+                let cat_title = crate::catalog::get_tier_name(active_module_id, tier);
+                fonts.draw_ui_bold(
+                    cat_title,
+                    col_x + scaler.s(16.0),
+                    card_y + tier_card_h * 0.28,
+                    scaler.font_s(10.0),
+                    if is_tier_sel { Palette::NEON_GOLD } else { Palette::NEON_CYAN },
+                );
+
+                // Unlock Status Indicator Badge
+                if is_unlocked {
+                    fonts.draw_ui_bold(
+                        "✓ UNLOCKED",
+                        col_x + col_w - scaler.s(170.0),
+                        card_y + tier_card_h * 0.28,
+                        scaler.font_s(9.5),
+                        Palette::NEON_GREEN,
+                    );
+                } else {
+                    let req_str = format!("🔒 TIER {}", tier);
+                    fonts.draw_ui_bold(
+                        &req_str,
+                        col_x + col_w - scaler.s(170.0),
+                        card_y + tier_card_h * 0.28,
+                        scaler.font_s(9.5),
+                        Palette::NEON_GOLD,
+                    );
+                }
+
+                // Featured Model Name
+                if let Some(car) = featured_car {
+                    let name_str = if is_tier_sel {
+                        format!("▶ {}", car.name)
+                    } else {
+                        car.name.to_string()
+                    };
+                    fonts.draw_display(
+                        &name_str,
+                        col_x + scaler.s(16.0),
+                        card_y + tier_card_h * 0.60,
+                        scaler.font_s(14.5),
+                        if is_tier_sel { Palette::WHITE } else { Color::new(0.85, 0.88, 0.94, 1.0) },
+                    );
+
+                    let spec_str = format!("{} BHP • {} kg • {}", car.bhp, car.weight_kg, car.drivetrain);
+                    fonts.draw_ui_regular(
+                        &spec_str,
+                        col_x + scaler.s(16.0),
+                        card_y + tier_card_h * 0.86,
+                        scaler.font_s(10.0),
+                        Palette::UI_TEXT_MUTED,
+                    );
+
+                    if is_tier_sel {
+                        fonts.draw_ui_bold(
+                            "[ENTER] INSPECT",
+                            col_x + col_w - scaler.s(220.0),
+                            card_y + tier_card_h * 0.62,
+                            scaler.font_s(10.0),
+                            Palette::NEON_GOLD,
+                        );
+                    }
+
+                    // Mini lateral profile silhouette rendered on right edge of card
+                    let mini_scheme = CarColorScheme {
+                        primary: car.primary_color,
+                        secondary: car.secondary_color,
+                        helmet: Palette::WHITE,
+                    };
+                    crate::render::render_lateral_car(
+                        col_x + col_w - scaler.s(60.0),
+                        card_y + tier_card_h - scaler.s(10.0),
+                        scaler.s(0.44),
+                        car.visual_type,
+                        &mini_scheme,
+                        0.0,
+                        false,
+                        false,
+                    );
+                }
+            }
         }
-
-        // Title (Middle)
-        let title_str = if is_sel {
-            format!("▶ {}", item.title())
-        } else {
-            item.title().to_string()
-        };
-        fonts.draw_display(
-            &title_str,
-            card_x + scaler.s(20.0),
-            curr_y + card_h * 0.56,
-            scaler.font_s(18.0),
-            if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
-        );
-
-        // Description (Bottom)
-        fonts.draw_ui_regular(
-            item.description(),
-            card_x + scaler.s(20.0),
-            curr_y + card_h * 0.84,
-            scaler.font_s(11.5),
-            if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
-        );
-
-        curr_y += card_h + card_gap;
     }
 
     // Bottom Action Prompt / Controller Hints
     fonts.draw_ui_regular_centered(
-        "[W/S or UP/DOWN] Navigate  •  [TAB / 1 / 2] Switch Tab  •  [ENTER / SPACE] Select  •  [ESC] Back to Hub",
+        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [ENTER/SPACE] Select  •  [ESC] Hub",
         sw * 0.5,
-        sh - scaler.s(16.0),
-        scaler.font_s(12.0),
+        sh - scaler.s(14.0),
+        scaler.font_s(11.5),
         Palette::UI_TEXT_MUTED,
     );
 

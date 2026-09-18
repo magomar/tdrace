@@ -1,6 +1,7 @@
 pub mod curve_indicator;
 pub mod driver_card;
 pub mod font;
+pub mod garage;
 pub mod hall_of_fame;
 pub mod hud;
 pub mod menu;
@@ -17,6 +18,11 @@ pub use curve_indicator::{
 };
 pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
+pub use garage::{
+    garage_car_card_rect, garage_gallery_card_rect, garage_gallery_tab_rect,
+    garage_select_button_rect, gallery_filter_to_module, module_to_gallery_filter,
+    render_garage_screen, GALLERY_MODULES, GarageViewMode,
+};
 pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, PlayerCongrats};
 pub use hud::{format_lap_time, render_hud, PersonalBestNotification};
 pub use race_stats::render_race_stats_screen;
@@ -29,7 +35,7 @@ pub use menu::{
 pub use profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use scaler::UiScaler;
 pub use starting_grid::{
-    render_starting_grid_screen, starting_grid_launch_button_rect, StartingGridFocus,
+    render_starting_grid_screen, starting_grid_garage_button_rect, starting_grid_launch_button_rect, StartingGridFocus,
 };
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,

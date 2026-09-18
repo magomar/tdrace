@@ -48,7 +48,7 @@ stateDiagram-v2
     ModuleSelect --> ProfileManager: [P / Y]
     ModuleSelect --> ProfileCreate: [N / X]
     ModuleSelect --> ControlsHelp: [K]
-    ModuleSelect --> ArcadeSettingsModal: [O / X]
+    ModuleSelect --> ArcadeSettingsModal: [X]
     ArcadeSettingsModal --> ModuleSelect: [ESC / B / Save] (if opened from Hub)
 
     %% Modality Selection transitions
@@ -173,7 +173,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | :--- | :--- | :--- |
 | `Up` / `Down` / `W` / `S` / `D-pad` | Select module | Changes `selected_idx` (0: Classic, 1: Rally, 2: Kart, 3: GT, 4: NASCAR) |
 | `Enter` / `Space` / Gamepad `A` | Confirm module | Transitions to `GameState::ModalitySelect` configured for selected module |
-| `O` / `X` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
+| `X` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
 | `P` / Gamepad `Y` | Open Profile Manager | Transitions to `GameState::ProfileManager` |
 | `N` / Gamepad `X` | Create Profile | Transitions to `GameState::ProfileCreate` |
 | `K` | Controls Help | Transitions to `GameState::ControlsHelp(false)` |
@@ -579,7 +579,7 @@ The system supports four distinct operational game modes selectable from the pre
 | Modal Name | Host Screen | Trigger Input | Dismiss Input | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
 | **Exit Confirm Dialog** | `ModuleSelect` | `Escape` / Gamepad `B` | `Escape` / `N` / Gamepad `B` | Prevents accidental application close |
-| **Arcade Settings Modal** | `ModuleSelect`, `Menu`, `Paused` | `O` / `X` (Hub), `O` (Menu), `O` / Gamepad `Y` (Paused) | `Escape` / Gamepad `B` / Click Save/Cancel | Full cabinet arcade settings modal: Master/Music/SFX volume, stereo balance, audio mute, screen resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), display mode (Windowed / Fullscreen), UI scaling, CRT scanline presets, color themes, and driving assists |
+| **Arcade Settings Modal** | `ModuleSelect`, `Menu`, `Paused` | `X` (Hub), `O` (Menu), `O` / Gamepad `Y` (Paused) | `Escape` / Gamepad `B` / Click Save/Cancel | Full cabinet arcade settings modal: Master/Music/SFX volume, stereo balance, audio mute, screen resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), display mode (Windowed / Fullscreen), UI scaling, CRT scanline presets, color themes, and driving assists |
 | **Hall of Fame Overlay** | `Finished` | `Tab` / Gamepad `X` | `Tab` / Gamepad `X` | Toggles all-time leaderboard records vs session podium |
 | **Edit Track Metadata** | `TrackManager` | `I` (on custom track) | `Enter` (save) / `Escape` (cancel) | Edits circuit title and description |
 | **Select Module Promotion** | `TrackManager` | `P` / Gamepad `Y` | `Enter` / Gamepad `A` (confirm) / `Escape` / `B` (cancel) | Promotes track or adds/removes module distribution |

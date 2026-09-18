@@ -114,7 +114,8 @@ use crate::ui::menu::{
     ModalityModal, RaceResultEntry, TrackCatalogFilter, TrackChoice,
 };
 use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
-use crate::ui::starting_grid::{render_starting_grid_screen, StartingGridFocus};
+use crate::ui::starting_grid::render_starting_grid_screen;
+pub use crate::ui::starting_grid::StartingGridFocus;
 use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
@@ -135,6 +136,14 @@ pub enum DriverCardsOrigin {
     Paused,
 }
 
+/// Source screen that launched the Garage showroom view.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GarageOrigin {
+    ModalitySelect,
+    Menu,
+    StartingGrid,
+}
+
 /// High-level game flow state machine.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameState {
@@ -147,6 +156,7 @@ pub enum GameState {
         selected_idx: usize,
         modal: Option<ModalityModal>,
     },
+    Garage(GarageOrigin),
     ChampionshipStandings,
     StartingGrid,
     Countdown(f32),
@@ -304,6 +314,19 @@ pub struct RaceSession {
     pub opponent_drivers: Vec<DriverCharacter>,
     pub grid_participants: Vec<GridParticipant>,
     pub driver_cards_idx: usize,
+
+    // Interactive Garage Showroom state
+    pub garage_origin: GarageOrigin,
+    pub garage_tier: u8,
+    pub garage_car_idx: usize,
+    pub garage_view_mode: crate::ui::GarageViewMode,
+    pub garage_turntable_angle: f32,
+    pub garage_brake_heat: f32,
+    pub garage_rev_rpm: f32,
+    pub garage_revving: bool,
+    pub garage_gallery_mode: bool,
+    pub garage_gallery_filter: usize,
+    pub garage_gallery_sel: usize,
 
     // Active Player Profile & Career History
     pub active_profile: PlayerProfile,
@@ -557,6 +580,18 @@ impl RaceSession {
             opponent_drivers: Vec::new(),
             grid_participants: Vec::new(),
             driver_cards_idx: 0,
+
+            garage_origin: GarageOrigin::ModalitySelect,
+            garage_tier: 1,
+            garage_car_idx: 0,
+            garage_view_mode: crate::ui::GarageViewMode::Lateral,
+            garage_turntable_angle: 0.0,
+            garage_brake_heat: 0.0,
+            garage_rev_rpm: 0.0,
+            garage_revving: false,
+            garage_gallery_mode: false,
+            garage_gallery_filter: 0,
+            garage_gallery_sel: 0,
 
             active_profile: PlayerProfile::default(),
             active_profile_stats: ProfileCareerStats::default(),
@@ -997,9 +1032,15 @@ impl RaceSession {
         }
     }
 
-    /// Returns available vehicle choices for the active motorsport game module.
+    /// Returns the required motorsport category tier (1..=5) for the current race.
+    pub fn current_race_required_tier(&self) -> u8 {
+        self.resolve_predefined_car().tier()
+    }
+
+    /// Returns available vehicle choices for the active motorsport game module,
+    /// filtered by the race's category requirement (tier <= required_tier || dev_mode).
     pub fn active_module_car_choices(&self) -> Vec<CarChoice> {
-        match self.active_module_id {
+        let base_choices = match self.active_module_id {
             "gt" | "gt_challenge" | "f1" => vec![
                 CarChoice::GT4Clubsport,
                 CarChoice::GT3Car,
@@ -1018,7 +1059,12 @@ impl RaceSession {
                 CarChoice::Kart,
                 CarChoice::RallyCar,
             ],
-        }
+        };
+        let req_tier = self.current_race_required_tier();
+        base_choices
+            .into_iter()
+            .filter(|c| c.is_eligible_for_race_tier(req_tier, self.is_dev_mode()))
+            .collect()
     }
 
     /// Returns the active vehicle model for the player, respecting track enforcement or free selection.
@@ -2115,7 +2161,13 @@ impl RaceSession {
 
     /// Applies the state swap when transition reaches holding point.
     fn apply_transition_target(&mut self, target: GameState) {
+        if matches!(self.state, GameState::Garage(_)) {
+            self.audio.stop_all_loops();
+        }
         match &target {
+            GameState::Garage(_) => {
+                self.audio.stop_music();
+            }
             GameState::Countdown(_) => {
                 self.audio.stop_all_loops();
                 self.audio.play_sfx(SfxType::UiSelect);
@@ -2507,7 +2559,7 @@ impl RaceSession {
         }
 
         // Open Driver Cards Dossier Screen (D key)
-        if is_key_pressed(KeyCode::D) {
+        if is_key_pressed(KeyCode::D) && !matches!(self.state, GameState::Garage(_) | GameState::ModalitySelect { .. }) {
             self.audio.play_sfx(SfxType::UiSelect);
             let origin = match self.state {
                 GameState::StartingGrid => DriverCardsOrigin::StartingGrid,
@@ -2546,6 +2598,10 @@ impl RaceSession {
                 self.audio.play_music(MusicTrack::NeonMenu);
                 self.update_modality_select();
             }
+            GameState::Garage(origin) => {
+                self.audio.stop_music();
+                self.update_garage(origin, frame_dt);
+            }
             GameState::ModuleSelect { .. } => {
                 self.update_module_select();
             }
@@ -2568,6 +2624,7 @@ impl RaceSession {
             GameState::StartingGrid => {
                 let (sw, sh) = (screen_width_safe(), screen_height_safe());
                 let (btn_x, btn_y, btn_w, btn_h) = crate::ui::starting_grid_launch_button_rect(sw, sh);
+                let (g_btn_x, g_btn_y, g_btn_w, g_btn_h) = crate::ui::starting_grid_garage_button_rect(sw, sh);
                 let (mx, my) = mouse_position_safe();
                 let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
                 let launch_btn_clicked = mouse_clicked
@@ -2575,6 +2632,20 @@ impl RaceSession {
                     && mx <= btn_x + btn_w
                     && my >= btn_y
                     && my <= btn_y + btn_h;
+                let garage_btn_clicked = mouse_clicked
+                    && mx >= g_btn_x
+                    && mx <= g_btn_x + g_btn_w
+                    && my >= g_btn_y
+                    && my <= g_btn_y + g_btn_h;
+
+                if garage_btn_clicked {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.garage_origin = GarageOrigin::StartingGrid;
+                    self.garage_tier = self.current_race_required_tier();
+                    self.garage_car_idx = 0;
+                    self.state = GameState::Garage(GarageOrigin::StartingGrid);
+                    return;
+                }
 
                 // 1. Panel Switching (Left / Right / A / D / D-pad Left/Right / Nav Left/Right)
                 if is_key_pressed(KeyCode::Left)
@@ -2601,7 +2672,7 @@ impl RaceSession {
                 // 2. Navigation & Actions within Active Panel
                 match self.starting_grid_focus {
                     StartingGridFocus::LeftSetup => {
-                        let num_cards = 4; // 0 = Game Mode, 1 = Vehicle Choice, 2 = Grid / Bot Count, 3 = Launch Race Button
+                        let num_cards = 4; // 0 = Garage Access, 1 = Vehicle Choice, 2 = Grid / Bot Count, 3 = Launch Race Button
 
                         // Up / Down to navigate between setup cards
                         if is_key_pressed(KeyCode::Up)
@@ -2625,67 +2696,55 @@ impl RaceSession {
                             self.starting_grid_card_idx = (self.starting_grid_card_idx + 1) % num_cards;
                         }
 
-                        // Tab / Gamepad X fallback for mode toggle
-                        if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_x_pressed {
-                            if self.game_mode == GameMode::StandardRace {
-                                self.game_mode = GameMode::ExperimentalRace;
-                            } else if self.game_mode == GameMode::ExperimentalRace {
-                                self.game_mode = GameMode::StandardRace;
-                            } else {
-                                self.game_mode = self.game_mode.next();
-                            }
-                            self.is_time_attack = self.game_mode.is_time_attack();
-                            self.free_car_selection = self.game_mode.allows_car_change();
-                            self.rebuild_roster_participants();
-                            self.audio.play_sfx(SfxType::UiSelect);
-                        }
-
                         // Modify active card setting on Enter / Space / bracket / etc.
                         match self.starting_grid_card_idx {
                             0 => {
-                                // Card 0: Modality Card (toggle Standard preset vs Experimental custom race)
+                                // Card 0: Motorsport Garage Access Card
                                 if is_key_pressed(KeyCode::Enter)
                                     || is_key_pressed(KeyCode::KpEnter)
-                                    || is_key_pressed(KeyCode::RightBracket)
-                                    || is_key_pressed(KeyCode::LeftBracket)
+                                    || is_key_pressed(KeyCode::Space)
+                                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                                    || self.input.gamepad.snapshot.btn_a_pressed
                                 {
-                                    if self.game_mode == GameMode::StandardRace {
-                                        self.game_mode = GameMode::ExperimentalRace;
-                                    } else if self.game_mode == GameMode::ExperimentalRace {
-                                        self.game_mode = GameMode::StandardRace;
-                                    } else {
-                                        self.game_mode = self.game_mode.next();
-                                    }
-                                    self.is_time_attack = self.game_mode.is_time_attack();
-                                    self.free_car_selection = self.game_mode.allows_car_change();
-                                    self.rebuild_roster_participants();
                                     self.audio.play_sfx(SfxType::UiSelect);
+                                    self.garage_origin = GarageOrigin::StartingGrid;
+                                    self.garage_tier = self.current_race_required_tier();
+                                    self.garage_car_idx = 0;
+                                    self.state = GameState::Garage(GarageOrigin::StartingGrid);
+                                    return;
                                 }
                             }
                             1 => {
                                 // Card 1: Vehicle Selection Card
-                                if self.game_mode.allows_car_change() {
-                                    let choices = self.active_module_car_choices();
-                                    if !choices.is_empty() {
-                                        if is_key_pressed(KeyCode::Enter)
-                                            || is_key_pressed(KeyCode::KpEnter)
-                                            || is_key_pressed(KeyCode::RightBracket)
-                                        {
-                                            self.audio.play_sfx(SfxType::UiMove);
-                                            self.menu_car_idx = (self.menu_car_idx + 1) % choices.len();
-                                            self.car_choice = choices[self.menu_car_idx];
-                                            self.rebuild_roster_participants();
+                                if is_key_pressed(KeyCode::Enter)
+                                    || is_key_pressed(KeyCode::KpEnter)
+                                {
+                                    self.audio.play_sfx(SfxType::UiSelect);
+                                    self.garage_origin = GarageOrigin::StartingGrid;
+                                    self.garage_tier = self.current_race_required_tier();
+                                    self.garage_car_idx = 0;
+                                    self.state = GameState::Garage(GarageOrigin::StartingGrid);
+                                    return;
+                                }
+                                let choices = self.active_module_car_choices();
+                                if !choices.is_empty() {
+                                    if is_key_pressed(KeyCode::RightBracket) {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        self.menu_car_idx = (self.menu_car_idx + 1) % choices.len();
+                                        self.car_choice = choices[self.menu_car_idx];
+                                        self.free_car_selection = true;
+                                        self.rebuild_roster_participants();
+                                    }
+                                    if is_key_pressed(KeyCode::LeftBracket) {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        if self.menu_car_idx == 0 {
+                                            self.menu_car_idx = choices.len() - 1;
+                                        } else {
+                                            self.menu_car_idx -= 1;
                                         }
-                                        if is_key_pressed(KeyCode::LeftBracket) {
-                                            self.audio.play_sfx(SfxType::UiMove);
-                                            if self.menu_car_idx == 0 {
-                                                self.menu_car_idx = choices.len() - 1;
-                                            } else {
-                                                self.menu_car_idx -= 1;
-                                            }
-                                            self.car_choice = choices[self.menu_car_idx];
-                                            self.rebuild_roster_participants();
-                                        }
+                                        self.car_choice = choices[self.menu_car_idx];
+                                        self.free_car_selection = true;
+                                        self.rebuild_roster_participants();
                                     }
                                 }
                             }
@@ -2726,7 +2785,8 @@ impl RaceSession {
                                     || self.input.gamepad.snapshot.btn_a_pressed
                                 {
                                     let player_car = self.active_player_car_choice();
-                                    if !self.is_car_unlocked(player_car) {
+                                    let req_tier = self.current_race_required_tier();
+                                    if !player_car.is_eligible_for_race_tier(req_tier, self.is_dev_mode()) || !self.is_car_unlocked(player_car) {
                                         self.audio.play_sfx(SfxType::UiMove);
                                         return;
                                     }
@@ -2774,19 +2834,30 @@ impl RaceSession {
                     }
                 }
 
-                // Global Launch race countdown (Space, Launch button clicked, Gamepad Start, Gamepad Confirm)
+                // Global Launch race countdown (Space, Launch button clicked, Gamepad Start)
                 if is_key_pressed(KeyCode::Space)
                     || self.input.gamepad.snapshot.btn_start_pressed
                     || launch_btn_clicked
-                    || (self.starting_grid_focus == StartingGridFocus::LeftSetup && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
+                    || (self.starting_grid_focus == StartingGridFocus::LeftSetup && self.starting_grid_card_idx == 3 && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
                 {
                     let player_car = self.active_player_car_choice();
-                    if !self.is_car_unlocked(player_car) {
+                    let req_tier = self.current_race_required_tier();
+                    if !player_car.is_eligible_for_race_tier(req_tier, self.is_dev_mode()) || !self.is_car_unlocked(player_car) {
                         self.audio.play_sfx(SfxType::UiMove);
                         return;
                     }
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.transition_iris_to(GameState::Countdown(3.5), 0.45);
+                    return;
+                }
+
+                // View Interactive Garage direct key shortcut (G key)
+                if is_key_pressed(KeyCode::G) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.garage_origin = GarageOrigin::StartingGrid;
+                    self.garage_tier = self.current_race_required_tier();
+                    self.garage_car_idx = 0;
+                    self.state = GameState::Garage(GarageOrigin::StartingGrid);
                     return;
                 }
 
@@ -3696,8 +3767,8 @@ impl RaceSession {
             return;
         }
 
-        // Arcade Settings Modal (O or X key)
-        if is_key_pressed(KeyCode::O) || is_key_pressed(KeyCode::X) {
+        // Arcade Settings Modal (X key)
+        if is_key_pressed(KeyCode::X) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.open_settings_modal();
             return;
@@ -3758,7 +3829,40 @@ impl RaceSession {
             return;
         }
 
-        // Category Tab Switching (Left / Right / Tab / 1 / 2 / Gamepad D-pad / Bumpers)
+        // Direct Garage Showroom shortcut (G key)
+        if is_key_pressed(KeyCode::G) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.garage_origin = GarageOrigin::ModalitySelect;
+            self.state = GameState::Garage(GarageOrigin::ModalitySelect);
+            return;
+        }
+
+        // Category Column/Menu Switching (Left / Right / Tab / 1 / 2 / 3 / Gamepad D-pad / Bumpers / Mouse Tab Click)
+        let (sw, sh) = (screen_width_safe(), screen_height_safe());
+        let scaler = UiScaler::new(sw, sh);
+        let tab_w = (sw * 0.28).clamp(scaler.s(180.0), scaler.s(280.0));
+        let tab_h = scaler.s(30.0);
+        let tab_gap = scaler.s(14.0);
+        let total_tabs_w = tab_w * 3.0 + tab_gap * 2.0;
+        let tabs_start_x = (sw - total_tabs_w) * 0.5;
+        let tab_y = scaler.s(64.0);
+
+        let (mx, my) = mouse_position_safe();
+        let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+        if mouse_clicked && my >= tab_y && my <= tab_y + tab_h {
+            for (cat_idx, cat) in ModalityCategory::ALL.iter().enumerate() {
+                let tx = tabs_start_x + (cat_idx as f32) * (tab_w + tab_gap);
+                if mx >= tx && mx <= tx + tab_w {
+                    if category != *cat {
+                        category = *cat;
+                        selected_idx = 0;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                    break;
+                }
+            }
+        }
+
         if is_key_pressed(KeyCode::Key1) {
             if category != ModalityCategory::SinglePlayer {
                 category = ModalityCategory::SinglePlayer;
@@ -3771,19 +3875,34 @@ impl RaceSession {
                 selected_idx = 0;
                 self.audio.play_sfx(SfxType::UiMove);
             }
+        } else if is_key_pressed(KeyCode::Key3) {
+            if category != ModalityCategory::Garage {
+                category = ModalityCategory::Garage;
+                selected_idx = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
         } else if is_key_pressed(KeyCode::Tab)
-            || is_key_pressed(KeyCode::Left)
             || is_key_pressed(KeyCode::Right)
-            || is_key_pressed(KeyCode::A)
             || is_key_pressed(KeyCode::D)
-            || self.input.gamepad.snapshot.dpad_left_pressed
             || self.input.gamepad.snapshot.dpad_right_pressed
-            || self.input.gamepad.snapshot.btn_lb_pressed
             || self.input.gamepad.snapshot.btn_rb_pressed
         {
             category = match category {
                 ModalityCategory::SinglePlayer => ModalityCategory::Multiplayer,
+                ModalityCategory::Multiplayer => ModalityCategory::Garage,
+                ModalityCategory::Garage => ModalityCategory::SinglePlayer,
+            };
+            selected_idx = 0;
+            self.audio.play_sfx(SfxType::UiMove);
+        } else if is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
+            || self.input.gamepad.snapshot.dpad_left_pressed
+            || self.input.gamepad.snapshot.btn_lb_pressed
+        {
+            category = match category {
+                ModalityCategory::SinglePlayer => ModalityCategory::Garage,
                 ModalityCategory::Multiplayer => ModalityCategory::SinglePlayer,
+                ModalityCategory::Garage => ModalityCategory::Multiplayer,
             };
             selected_idx = 0;
             self.audio.play_sfx(SfxType::UiMove);
@@ -3791,6 +3910,11 @@ impl RaceSession {
 
         // Modality Card Navigation (Up / Down / W / S / Gamepad D-pad)
         let items = category.items();
+        let items_len = if category == ModalityCategory::Garage {
+            6 // 0 is Hero card, 1..=5 are Tiers 1..=5
+        } else {
+            items.len()
+        };
         if is_key_pressed(KeyCode::Up)
             || is_key_pressed(KeyCode::W)
             || self.input.gamepad.snapshot.dpad_up_pressed
@@ -3798,7 +3922,7 @@ impl RaceSession {
         {
             self.audio.play_sfx(SfxType::UiMove);
             if selected_idx == 0 {
-                selected_idx = items.len().saturating_sub(1);
+                selected_idx = items_len.saturating_sub(1);
             } else {
                 selected_idx -= 1;
             }
@@ -3809,8 +3933,8 @@ impl RaceSession {
             || self.input.gamepad.snapshot.nav_down
         {
             self.audio.play_sfx(SfxType::UiMove);
-            if !items.is_empty() {
-                selected_idx = (selected_idx + 1) % items.len();
+            if items_len > 0 {
+                selected_idx = (selected_idx + 1) % items_len;
             }
         }
 
@@ -3821,6 +3945,16 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_confirm_pressed
             || self.input.gamepad.snapshot.btn_a_pressed
         {
+            if category == ModalityCategory::Garage {
+                self.audio.play_sfx(SfxType::UiSelect);
+                if selected_idx >= 1 && selected_idx <= 5 {
+                    self.garage_tier = selected_idx as u8;
+                    self.garage_car_idx = 0;
+                }
+                self.garage_origin = GarageOrigin::ModalitySelect;
+                self.state = GameState::Garage(GarageOrigin::ModalitySelect);
+                return;
+            }
             if let Some(&item) = items.get(selected_idx) {
                 match item {
                     ModalityItem::QuickRace => {
@@ -3927,6 +4061,363 @@ impl RaceSession {
         }
     }
 
+    /// Updates inputs, vehicle selection, and turntable/rev stage animations for the Interactive Garage (`GameState::Garage`).
+    pub fn update_garage(&mut self, origin: GarageOrigin, frame_dt: f32) {
+        // 1. Turntable rotation & Revving state
+        self.garage_turntable_angle += frame_dt * 0.45;
+
+        self.garage_revving = is_key_down(KeyCode::Space) || self.input.gamepad.snapshot.btn_a_pressed;
+        if self.garage_revving {
+            self.garage_rev_rpm = (self.garage_rev_rpm + frame_dt * 3.5).min(1.0);
+            self.garage_brake_heat = (self.garage_brake_heat + frame_dt * 0.4).min(1.0);
+        } else {
+            self.garage_rev_rpm = (self.garage_rev_rpm - frame_dt * 2.2).max(0.0);
+            self.garage_brake_heat = (self.garage_brake_heat - frame_dt * 0.15).max(0.0);
+        }
+
+        // Active vehicle engine acoustic archetype & live telemetry
+        let models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
+        let active_car = models.get(self.garage_car_idx);
+        let sound_type = match self.active_module_id {
+            "nascar" => EngineSoundType::NascarV8,
+            "rally" => EngineSoundType::RallyTurbo,
+            "kart" => EngineSoundType::Kart125cc,
+            "extreme_offroad" => EngineSoundType::SandRailBoxer,
+            "f1" => EngineSoundType::F1V6Turbo,
+            "gt" | "gt_challenge" => EngineSoundType::SportGT,
+            _ => match active_car.map(|c| c.base_car_choice).unwrap_or(self.car_choice) {
+                CarChoice::StockCar => EngineSoundType::NascarV8,
+                CarChoice::SandRail => EngineSoundType::SandRailBoxer,
+                CarChoice::F1Car => EngineSoundType::F1V6Turbo,
+                CarChoice::Kart => EngineSoundType::Kart125cc,
+                CarChoice::RallyCar => EngineSoundType::RallyTurbo,
+                _ => EngineSoundType::SportGT,
+            },
+        };
+        self.audio.set_engine_type(sound_type);
+
+        let current_rpm = 1100.0 + self.garage_rev_rpm * 7400.0;
+        let throttle = if self.garage_revving { 1.0 } else { 0.0 };
+        self.audio.update_engine_telemetry(current_rpm, throttle, false, 0.0, 1, frame_dt);
+
+        // 2. Return to Origin (Escape / Gamepad B / Back)
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_cancel_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            if self.garage_gallery_mode {
+                self.garage_gallery_mode = false;
+                return;
+            }
+            self.audio.stop_all_loops();
+            match origin {
+                GarageOrigin::ModalitySelect => {
+                    self.state = GameState::ModalitySelect {
+                        category: ModalityCategory::Garage,
+                        selected_idx: (self.garage_tier as usize).clamp(1, 5),
+                        modal: None,
+                    };
+                }
+                GarageOrigin::Menu => {
+                    self.state = GameState::Menu;
+                }
+                GarageOrigin::StartingGrid => {
+                    self.state = GameState::StartingGrid;
+                }
+            }
+            return;
+        }
+
+        // 3. Toggle View Mode (Tab / Gamepad Y) - only when not in gallery mode
+        if !self.garage_gallery_mode && (is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_y_pressed) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.garage_view_mode = match self.garage_view_mode {
+                crate::ui::GarageViewMode::Lateral => crate::ui::GarageViewMode::TopDownTurntable,
+                crate::ui::GarageViewMode::TopDownTurntable => crate::ui::GarageViewMode::Lateral,
+            };
+        }
+
+        // 4. Toggle Fleet Gallery (C / F / Gamepad X)
+        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::F) || self.input.gamepad.snapshot.btn_x_pressed {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.garage_gallery_mode = !self.garage_gallery_mode;
+            if self.garage_gallery_mode {
+                self.garage_gallery_filter = crate::ui::garage::module_to_gallery_filter(self.active_module_id);
+                let filtered_models = crate::catalog::get_models_for_module(self.active_module_id);
+                let tier_models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
+                if let Some(target_car) = tier_models.get(self.garage_car_idx) {
+                    if let Some(pos) = filtered_models.iter().position(|m| m.id == target_car.id) {
+                        self.garage_gallery_sel = pos;
+                    } else {
+                        self.garage_gallery_sel = 0;
+                    }
+                } else {
+                    self.garage_gallery_sel = 0;
+                }
+            }
+        }
+
+        if self.garage_gallery_mode {
+            let total_tabs = crate::ui::garage::GALLERY_MODULES.len();
+            self.garage_gallery_filter = self.garage_gallery_filter.min(total_tabs - 1);
+            let mut mod_changed = false;
+
+            // Direct module selection via number keys 1..=5
+            if is_key_pressed(KeyCode::Key1) {
+                self.garage_gallery_filter = 0;
+                mod_changed = true;
+            } else if is_key_pressed(KeyCode::Key2) {
+                self.garage_gallery_filter = 1;
+                mod_changed = true;
+            } else if is_key_pressed(KeyCode::Key3) {
+                self.garage_gallery_filter = 2;
+                mod_changed = true;
+            } else if is_key_pressed(KeyCode::Key4) {
+                self.garage_gallery_filter = 3;
+                mod_changed = true;
+            } else if is_key_pressed(KeyCode::Key5) {
+                self.garage_gallery_filter = 4;
+                mod_changed = true;
+            }
+
+            // Tab / Shift-Tab cycle module tabs
+            if is_key_pressed(KeyCode::Tab) {
+                let shift = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+                if shift {
+                    self.garage_gallery_filter = (self.garage_gallery_filter + total_tabs - 1) % total_tabs;
+                } else {
+                    self.garage_gallery_filter = (self.garage_gallery_filter + 1) % total_tabs;
+                }
+                mod_changed = true;
+            }
+
+            // Q / E or Gamepad LB / RB cycle module tabs
+            if is_key_pressed(KeyCode::Q) || self.input.gamepad.snapshot.btn_lb_pressed {
+                self.garage_gallery_filter = (self.garage_gallery_filter + total_tabs - 1) % total_tabs;
+                mod_changed = true;
+            } else if is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_rb_pressed {
+                self.garage_gallery_filter = (self.garage_gallery_filter + 1) % total_tabs;
+                mod_changed = true;
+            }
+
+            let (sw, sh) = (screen_width_safe(), screen_height_safe());
+            let (mx, my) = mouse_position_safe();
+            let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+
+            // Mouse click on module tabs
+            if mouse_clicked {
+                for i in 0..total_tabs {
+                    let (tx, ty, tw, th) = crate::ui::garage::garage_gallery_tab_rect(sw, sh, i);
+                    if mx >= tx && mx <= tx + tw && my >= ty && my <= ty + th {
+                        if self.garage_gallery_filter != i {
+                            self.garage_gallery_filter = i;
+                            mod_changed = true;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if mod_changed {
+                self.garage_gallery_sel = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+
+            let target_mod = crate::ui::garage::gallery_filter_to_module(self.garage_gallery_filter);
+            let filtered_models = crate::catalog::get_models_for_module(target_mod);
+            let n = filtered_models.len();
+
+            let mut confirm_selection = is_key_pressed(KeyCode::Enter)
+                || is_key_pressed(KeyCode::KpEnter)
+                || self.input.gamepad.snapshot.btn_confirm_pressed;
+
+            // Mouse click on car cards in gallery
+            if mouse_clicked && !mod_changed {
+                for i in 0..n {
+                    let (cx, cy, cw, ch) = crate::ui::garage::garage_gallery_card_rect(sw, sh, i);
+                    if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
+                        if self.garage_gallery_sel == i {
+                            confirm_selection = true;
+                        } else {
+                            self.garage_gallery_sel = i;
+                            self.audio.play_sfx(SfxType::UiMove);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if n > 0 {
+                if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
+                    self.garage_gallery_sel = (self.garage_gallery_sel + n - 1) % n;
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+                if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
+                    self.garage_gallery_sel = (self.garage_gallery_sel + 1) % n;
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+                if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
+                    if self.garage_gallery_sel >= 4 {
+                        self.garage_gallery_sel -= 4;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                }
+                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
+                    if self.garage_gallery_sel + 4 < n {
+                        self.garage_gallery_sel += 4;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                }
+                if confirm_selection {
+                    if let Some(car) = filtered_models.get(self.garage_gallery_sel) {
+                        self.active_module_id = car.module_id;
+                        self.garage_tier = car.tier;
+                        let tier_models = crate::catalog::get_models_for_module_and_tier(car.module_id, car.tier);
+                        if let Some(pos) = tier_models.iter().position(|m| m.id == car.id) {
+                            self.garage_car_idx = pos;
+                        }
+                        self.garage_gallery_mode = false;
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                }
+            }
+            return;
+        }
+
+        // 5. Switching active module (1..=5)
+        let prev_mod = self.active_module_id;
+        if is_key_pressed(KeyCode::Key1) {
+            self.active_module_id = "gt";
+        } else if is_key_pressed(KeyCode::Key2) {
+            self.active_module_id = "rally";
+        } else if is_key_pressed(KeyCode::Key3) {
+            self.active_module_id = "kart";
+        } else if is_key_pressed(KeyCode::Key4) {
+            self.active_module_id = "nascar";
+        } else if is_key_pressed(KeyCode::Key5) {
+            self.active_module_id = "extreme_offroad";
+        }
+        if self.active_module_id != prev_mod {
+            self.garage_car_idx = 0;
+            self.audio.play_sfx(SfxType::UiMove);
+        }
+
+        // 6. Tier Navigation (Q / E or Up / Down or Gamepad D-pad Up / Down or LB / RB)
+        if is_key_pressed(KeyCode::Q)
+            || is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
+            || self.input.gamepad.snapshot.dpad_up_pressed
+            || self.input.gamepad.snapshot.btn_lb_pressed
+        {
+            if self.garage_tier > 1 {
+                self.garage_tier -= 1;
+                self.garage_car_idx = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        } else if is_key_pressed(KeyCode::E)
+            || is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
+            || self.input.gamepad.snapshot.dpad_down_pressed
+            || self.input.gamepad.snapshot.btn_rb_pressed
+        {
+            if self.garage_tier < 5 {
+                self.garage_tier += 1;
+                self.garage_car_idx = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        }
+
+        // 7. Car Navigation within Tier (A / D or Left / Right or Gamepad D-pad Left / Right)
+        let models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
+        let num_models = models.len();
+        if num_models > 0 {
+            if is_key_pressed(KeyCode::Left)
+                || is_key_pressed(KeyCode::A)
+                || self.input.gamepad.snapshot.dpad_left_pressed
+            {
+                self.garage_car_idx = (self.garage_car_idx + num_models - 1) % num_models;
+                self.audio.play_sfx(SfxType::UiMove);
+            } else if is_key_pressed(KeyCode::Right)
+                || is_key_pressed(KeyCode::D)
+                || self.input.gamepad.snapshot.dpad_right_pressed
+            {
+                self.garage_car_idx = (self.garage_car_idx + 1) % num_models;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        }
+
+        // 8. Confirm / Select Car for Race (Enter / Gamepad A / Mouse Click)
+        let (sw, sh) = (screen_width_safe(), screen_height_safe());
+        let (sel_bx, sel_by, sel_bw, sel_bh) = crate::ui::garage_select_button_rect(sw, sh);
+        let (mx, my) = mouse_position_safe();
+        let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+        let select_btn_clicked = mouse_clicked && mx >= sel_bx && mx <= sel_bx + sel_bw && my >= sel_by && my <= sel_by + sel_bh;
+
+        // Also allow clicking directly on car cards in bottom carousel
+        if mouse_clicked {
+            for i in 0..num_models {
+                let (cx, cy, cw, ch) = crate::ui::garage_car_card_rect(sw, sh, i, num_models);
+                if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
+                    if self.garage_car_idx != i {
+                        self.garage_car_idx = i;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                    break;
+                }
+            }
+        }
+
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || select_btn_clicked
+        {
+            if let Some(active_car) = models.get(self.garage_car_idx) {
+                let unlocked_tier = if self.is_dev_mode() {
+                    5
+                } else {
+                    let wins = self.active_profile_stats.wins;
+                    if wins >= 10 {
+                        5
+                    } else if wins >= 5 {
+                        4
+                    } else if wins >= 2 {
+                        3
+                    } else if wins >= 1 {
+                        2
+                    } else {
+                        1
+                    }
+                };
+                let is_unlocked = self.garage_tier <= unlocked_tier;
+                if is_unlocked {
+                    self.car_choice = active_car.base_car_choice;
+                    self.current_visual_type = active_car.visual_type;
+                    self.free_car_selection = true;
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    match origin {
+                        GarageOrigin::StartingGrid => {
+                            self.audio.stop_all_loops();
+                            self.rebuild_roster_participants();
+                            self.state = GameState::StartingGrid;
+                        }
+                        GarageOrigin::Menu => {
+                            self.audio.stop_all_loops();
+                            self.state = GameState::Menu;
+                        }
+                        GarageOrigin::ModalitySelect => {
+                            // Stay or return
+                        }
+                    }
+                } else {
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+            }
+        }
+    }
+
     /// Menu input navigation (Keyboard + Gamepad D-pad/Analog Sticks/buttons).
     pub fn update_menu(&mut self) {
         // Check for gamepad mapping changes on disk when in/reloading the main menu
@@ -4009,9 +4500,18 @@ impl RaceSession {
             return;
         }
 
-        // Return to Modality Selection Screen (Escape key or Gamepad B / Cancel / Back / G / Tab)
+        // Direct Garage Showroom shortcut (G key)
+        if is_key_pressed(KeyCode::G) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.garage_origin = GarageOrigin::Menu;
+            self.garage_tier = self.current_race_required_tier();
+            self.garage_car_idx = 0;
+            self.state = GameState::Garage(GarageOrigin::Menu);
+            return;
+        }
+
+        // Return to Modality Selection Screen (Escape key or Gamepad B / Cancel / Back / Tab)
         if is_key_pressed(KeyCode::Escape)
-            || is_key_pressed(KeyCode::G)
             || is_key_pressed(KeyCode::Tab)
             || self.input.gamepad.snapshot.btn_cancel_pressed
             || self.input.gamepad.snapshot.btn_b_pressed
@@ -6223,12 +6723,48 @@ impl RaceSession {
                 render_modality_select_screen(
                     &self.fonts,
                     mod_title,
+                    self.active_module_id,
                     mod_accent,
                     category,
                     selected_idx,
                     modal.as_ref(),
                     &self.active_profile,
                     &self.active_profile_stats,
+                    self.is_dev_mode(),
+                );
+            }
+            GameState::Garage(_) => {
+                let unlocked_tier = if self.is_dev_mode() {
+                    5
+                } else {
+                    let wins = self.active_profile_stats.wins;
+                    if wins >= 10 {
+                        5
+                    } else if wins >= 5 {
+                        4
+                    } else if wins >= 2 {
+                        3
+                    } else if wins >= 1 {
+                        2
+                    } else {
+                        1
+                    }
+                };
+                crate::ui::render_garage_screen(
+                    &self.fonts,
+                    self.active_module_id,
+                    self.garage_tier,
+                    self.garage_car_idx,
+                    self.garage_view_mode,
+                    self.garage_turntable_angle,
+                    self.garage_brake_heat,
+                    self.garage_revving,
+                    self.garage_rev_rpm,
+                    self.garage_gallery_mode,
+                    self.garage_gallery_filter,
+                    self.garage_gallery_sel,
+                    self.is_dev_mode(),
+                    unlocked_tier as u32,
                 );
             }
             GameState::Menu => {

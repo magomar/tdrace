@@ -28,11 +28,9 @@ stateDiagram-v2
     }
 
     state "Race Modality Selection (ModalitySelect)" as ModalitySelect {
-        [*] --> SinglePlayerTab
-        SinglePlayerTab --> MultiplayerTab: TAB / 1 / 2 / RIGHT / LB / RB
-        MultiplayerTab --> SinglePlayerTab: TAB / 1 / 2 / LEFT / LB / RB
+        [*] --> ColumnNavigation
         
-        state SinglePlayerTab {
+        state "Column 1: Single Player" as SinglePlayerCol {
             [*] --> QuickRace
             QuickRace --> CustomRace: DOWN
             CustomRace --> CareerMode: DOWN
@@ -40,15 +38,30 @@ stateDiagram-v2
             TimeTrial --> FreeRide: DOWN
         }
         
-        state MultiplayerTab {
+        state "Column 2: Multiplayer" as MultiplayerCol {
             [*] --> SplitScreen
             SplitScreen --> LanPlay: DOWN
             LanPlay --> CloudPlay: DOWN
         }
 
+        state "Column 3: Vehicle Roster & Garage" as GarageCol {
+            [*] --> BrowseRoster
+            BrowseRoster --> OpenGarage: ENTER / G
+        }
+
+        SinglePlayerCol --> MultiplayerCol: RIGHT / TAB / 2
+        MultiplayerCol --> GarageCol: RIGHT / TAB / 3
+        GarageCol --> SinglePlayerCol: RIGHT / TAB / 1
+        MultiplayerCol --> SinglePlayerCol: LEFT
+        GarageCol --> MultiplayerCol: LEFT
+
         state ComingSoonModal {
             [*] --> DisplayNotice
         }
+    }
+
+    state "Garage Showroom (Garage)" as Garage {
+        [*] --> FullscreenInspection
     }
 
     state "Circuit Selection (Menu)" as Menu {
@@ -61,6 +74,8 @@ stateDiagram-v2
 
     ModuleSelect --> ModalitySelect: [ENTER / SPACE / A] (Select Module)
     ModalitySelect --> ModuleSelect: [ESC / B] (Back to Grand Hub)
+    ModalitySelect --> Garage: [ENTER on Col 3 / G] (Open Garage Showroom)
+    Garage --> ModalitySelect: [ESC / B] (Return from Garage)
 
     ModalitySelect --> Menu: [ENTER / A] (Quick Race, Custom Race, Time Trial, Free Ride, Split Screen)
     ModalitySelect --> ChampionshipStandings: [ENTER / A] (Career Mode)
@@ -69,28 +84,39 @@ stateDiagram-v2
 
     Menu --> ModalitySelect: [ESC / B / TAB] (Return to Modality Selection)
     Menu --> StartingGrid: [ENTER / SPACE / A] (Confirm Circuit)
+    Menu --> Garage: [G] (Open Garage)
+    Garage --> Menu: [ESC / B] (Return from Garage)
 
     StartingGrid --> Menu: [ESC / B] (Return to Circuit Selection)
+    StartingGrid --> Garage: [G] (Inspect Car)
+    Garage --> StartingGrid: [ESC / B] (Return from Garage)
     StartingGrid --> Racing: [ENTER / SPACE / A] (Launch Race)
 ```
 
-### 2. Modality Categories & Session Options
+### 2. 3-Column Modality & Roster Architecture
 
-#### Single Player Tab
-1. **Quick Race (`ModalityItem::QuickRace`)**: Standard race using the track's official preset vehicle.
-2. **Custom Race (`ModalityItem::CustomRace`)**: Unrestricted race with free vehicle selection, custom bot count, and tuning.
+#### Column 1: Single Player Modalities
+1. **Quick Race (`ModalityItem::QuickRace`)**: Standard race using the track's official required category vehicle.
+2. **Custom Race (`ModalityItem::CustomRace`)**: Unrestricted race with vehicle selection (eligible tier or below), custom bot count, and tuning.
 3. **Career Mode (`ModalityItem::CareerMode`)**: Direct gateway into multi-tier championship progression.
 4. **Time Trial (`ModalityItem::TimeTrial`)**: Solo session against the clock and ghost shadow.
 5. **Free Ride (`ModalityItem::FreeRide`)**: Open practice session with no opponent pressure or lap timers.
 
-#### Multiplayer Tab
+#### Column 2: Multiplayer Modalities
 1. **2P Split Screen (`ModalityItem::SplitScreen`)**: Local head-to-head split screen on a single display.
 2. **LAN Multiplayer (`ModalityItem::LanPlay`)**: Local network matchmaking (*Coming Soon notice modal*).
 3. **Cloud Online (`ModalityItem::CloudPlay`)**: Worldwide matchmaking and server lobbies (*Coming Soon notice modal*).
 
+#### Column 3: Vehicle Roster & Garage Column
+1. **Roster Display**: Directly showcases the active module's 5 tiers of vehicles.
+2. **Visual Specs**: Renders mini 2D side-profile silhouettes, real-world model names, horsepower (BHP), mass, and drivetrain layout.
+3. **Unlock Status**: Clearly differentiates between unlocked cars and locked cars (marked with `🔒 Requires Career Level X`).
+4. **Interactive Entry to Garage**: Pressing `[ENTER]` or `[G]` with Column 3 focused opens `GameState::Garage` for full-screen inspection, 360° turntable viewing, historical dossier, and sound-stage rev sampling.
+
 ### 3. UI Design Tokens & Starting Grid Card 0
-- **Pill Tabs**: Top centered category selector (`[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`) with neon highlights.
-- **Glass Cards**: Vertical stack of translucent glass cards with 1px border accents, category icon, title, description, and status tags (`OFFICIAL`, `CUSTOMIZABLE`, `CHAMPIONSHIP`, `SOLO`, `LOCAL`, `COMING SOON`).
+- **3 Balanced Columns**: Screen partitioned cleanly into three vertical glass columns across the viewport.
+- **Header Pill Tabs**: Top category indicator (`[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, `[ 3. VEHICLE ROSTER ]`) with active neon accents.
+- **Glass Cards**: Vertical stack of translucent glass cards with 1px border accents, category icon, title, description, and status tags (`OFFICIAL`, `CUSTOMIZABLE`, `CHAMPIONSHIP`, `SOLO`, `LOCAL`, `COMING SOON`, `ROSTER`).
 - **Starting Grid Card 0 Refinement**: Card 0 prominently displays the active modality (e.g. `RACING MODALITY: QUICK RACE [PRESET]` or `RACING MODALITY: CUSTOM RACE [CUSTOMIZABLE]`), ensuring full session context before race start.
 
 ---

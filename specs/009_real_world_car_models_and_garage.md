@@ -106,15 +106,16 @@ stateDiagram-v2
 * **Dual-View Toggle:** `Tab` toggles between 2D Lateral Profile and 360° Top-Down Turntable view.
 * **Sound Stage Rev Sampler:** Holding `Space` revs the engine, moves the tachometer needle, emits exhaust backfires, and glows the brake calipers.
 
-### 4. "All Cars" Fleet Gallery & Global Catalog Mode (`[C]` Toggle)
-In addition to the single-car turntable inspection stage, the Garage includes an interactive **Fleet Gallery Grid** allowing players to browse and compare all 80+ vehicles across the entire game:
-- **Panoramic Fleet Matrix (`[C]` / `[F]`):** Toggles from the single-car hero stage into a multi-car scrollable gallery displaying 2D lateral silhouettes of all cars across all modules.
-- **Global Filters:**
-  - `Module Filter`: `[ ALL ]`, `[ GT ]`, `[ NASCAR ]`, `[ RALLY ]`, `[ OFF-ROAD ]`, `[ KART ]`.
-  - `Manufacturer Filter`: Porsche, Ferrari, BMW, Audi, Chevrolet, Ford, Toyota, etc.
-  - `Drivetrain Filter`: RWD, AWD, FWD.
-- **Sorting Options:** Sort collection by Power (BHP), Mass (kg), Top Speed (km/h), or Career Tier Level (1–5).
-- **Instant Focus & Race Selection:** Selecting any car in the Fleet Gallery instantly focuses it on the central turntable stage for deep telemetry analysis, audio rev testing, and race selection.
+### 4. Fleet Gallery & Module Catalog Mode (`[C]` Toggle)
+In addition to the single-car turntable inspection stage, the Garage includes an interactive **Fleet Gallery Grid** allowing players to browse and compare vehicles by motorsport module across the entire game:
+- **Panoramic Fleet Matrix (`[C]` / `[F]`):** Toggles from the single-car hero stage into a multi-car gallery displaying 2D lateral silhouettes of cars organized by module.
+- **Module-Specific Tabs (`1..5`, `Tab` / `Shift+Tab`, `Q` / `E`):**
+  - `Module Tabs`: `[ GT ]`, `[ RALLY ]`, `[ KART ]`, `[ NASCAR ]`, `[ OFF-ROAD ]` (module-specific tabs only, with no generic "ALL" tab).
+- **Navigation & Selection:**
+  - `1`..=`5` directly selects module tabs; `Tab` / `Q` / `E` / Gamepad Bumpers cycle tabs.
+  - Arrow keys / `WASD` navigate vehicle cards within the selected module.
+  - Mouse clicks on tabs or cards directly focus and select cars.
+  - `Enter` or confirming selection focuses the car on the central turntable stage for deep telemetry analysis, audio rev testing, and race selection.
 
 ---
 
@@ -305,13 +306,19 @@ Target: All cars in a given category must achieve lap times within a **$\pm 0.35
 - **Mid-Engine (Ferrari 296, Cayman GT4):** Lowest polar inertia, razor-sharp turn-in, higher mid-corner steady-state lateral G.
 - **Front-Engine (BMW M4, Aston Martin):** Highest stability over rumble strips and curbs, explosive straight-line torque, requiring trail-braking to manage understeer.
 
----
-
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
 
 ### 1. Career Progression & Vehicle Gating
 - **Tier 1 Unlocked by Default:** Every player begins with immediate access to Tier 1 vehicles (GT4 Clubsport, Street Stock, Rally Junior, Sand Rail, 60cc Cadet Karts).
 - **Tier 2–5 XP & Trophy Gating:** Higher tiers require accumulating Module Career XP and completing championship events, displaying progression lock indicators in the Garage.
+
+### 2. Category-Based Race Eligibility Rule
+- **Race Category Requirement:** Instead of defining a single fixed prototypical car, every race defines the **Required Category (Tier 1..=5)**.
+- **Eligibility Ceiling:** The player may select **any car within that required category or below it**, but **never a car from a superior category**:
+  $$\text{Selectable} \iff \text{car.tier} \le \text{race.required\_tier} \lor \text{dev\_mode}$$
+  *Example:* In a Tier 2 (FIA GT3) race, the player can choose any GT3 car or any Tier 1 (GT4) car, but Tier 3 (GT2), Tier 4 (GT1), and Tier 5 (Hypercar) are strictly disabled.
+- **Dev Mode Bypass:** In `dev_mode: true`, all category ceilings and lock gates are bypassed, unlocking every vehicle across all categories unconditionally.
+- **Multi-Model AI Grids:** Opponent AI cars are randomly or deterministically drawn from models belonging to the required race category, producing realistic single-class endurance grids.
 
 ---
 

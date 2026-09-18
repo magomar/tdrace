@@ -11,11 +11,25 @@ use crate::profile::{draw_country_banner, PlayerProfile};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::ui::menu::{CarChoice, GameMode};
 
+use crate::render::lateral::render_car_lateral;
+
 /// Selected active column/panel in StartingGrid pre-race setup.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StartingGridFocus {
     LeftSetup,
     RightRoster,
+}
+
+/// Returns the rectangle (x, y, w, h) of the Garage access card on the Starting Grid.
+pub fn starting_grid_garage_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
+    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let panel_y = scaler.s(60.0);
+    let p1_h = scaler.s(88.0);
+    let garage_h = scaler.s(60.0);
+    let curr_y = panel_y + p1_h + scaler.s(8.0);
+    (col1_x, curr_y, col_w, garage_h)
 }
 
 /// Returns the rectangle (x, y, w, h) of the high-visibility Launch Race button on the Starting Grid.
@@ -26,12 +40,12 @@ pub fn starting_grid_launch_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32
     let panel_y = scaler.s(60.0);
 
     let p1_h = scaler.s(88.0);
-    let mode_h = scaler.s(72.0);
-    let car_card_h = scaler.s(188.0);
+    let garage_h = scaler.s(60.0);
+    let car_card_h = scaler.s(256.0);
     let grid_h = scaler.s(48.0);
     let launch_h = scaler.s(48.0);
 
-    let curr_y = panel_y + p1_h + scaler.s(8.0) + mode_h + scaler.s(8.0) + car_card_h + scaler.s(8.0) + grid_h + scaler.s(10.0);
+    let curr_y = panel_y + p1_h + scaler.s(8.0) + garage_h + scaler.s(8.0) + car_card_h + scaler.s(8.0) + grid_h + scaler.s(10.0);
     (col1_x, curr_y, col_w, launch_h)
 }
 
@@ -165,69 +179,65 @@ pub fn render_starting_grid_screen(
 
     curr_y += p1_h + scaler.s(8.0);
 
-    // Card 2: Game Mode Selector Card
-    let is_mode_active = is_left_focused && active_card_idx == 0;
-    let mode_h = scaler.s(72.0);
-    let mode_border = if is_mode_active {
+    // Card 2 (Index 0): Motorsport Garage Access Card
+    let is_garage_active = is_left_focused && active_card_idx == 0;
+    let garage_h = scaler.s(60.0);
+    let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
+    let is_garage_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + garage_h;
+    let is_garage_highlighted = is_garage_active || is_garage_hovered;
+
+    let garage_border = if is_garage_highlighted {
         Palette::NEON_GOLD
     } else {
         Palette::UI_CARD_BORDER
     };
-    let mode_bg = if is_mode_active {
+    let garage_bg = if is_garage_highlighted {
         Palette::UI_CARD_BG_HOVER
     } else {
         Palette::UI_CARD_BG
     };
-    scaler.draw_glass_card(col1_x, curr_y, col_w, mode_h, mode_bg, mode_border, if is_mode_active { 2.4 } else { 1.2 });
+    scaler.draw_glass_card(col1_x, curr_y, col_w, garage_h, garage_bg, garage_border, if is_garage_highlighted { 2.4 } else { 1.2 });
 
-    let mode_header_label = if is_mode_active {
-        "RACING MODALITY [ACTIVE • ENTER / SPACE to switch]"
+    let garage_header_label = if is_garage_highlighted {
+        "GARAGE & SHOWROOM [ACTIVE • ENTER / SPACE / CLICK to open]"
     } else {
-        "RACING MODALITY: [Up/Down to select card]"
+        "GARAGE & SHOWROOM: [Up/Down to select card]"
     };
     fonts.draw_ui_bold(
-        mode_header_label,
+        garage_header_label,
         col1_x + scaler.s(12.0),
         curr_y + scaler.s(16.0),
         scaler.font_s(11.0),
-        if is_mode_active { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
+        if is_garage_highlighted { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
     );
-    let modality_tag = match game_mode {
-        GameMode::StandardRace => "QUICK RACE [PRESET]",
-        GameMode::ExperimentalRace => "CUSTOM RACE [CUSTOM]",
-        GameMode::Career => "CAREER CHAMPIONSHIP",
-        GameMode::TimeTrial => "TIME TRIAL [SOLO]",
-        GameMode::FreeRide => "FREE RIDE [PRACTICE]",
-        GameMode::SplitScreen => "2P SPLIT SCREEN [LOCAL]",
-    };
     fonts.draw_ui_bold(
-        modality_tag,
-        col1_x + col_w - scaler.s(180.0),
+        "OPEN GARAGE [G]",
+        col1_x + col_w - scaler.s(130.0),
         curr_y + scaler.s(16.0),
-        scaler.font_s(9.5),
+        scaler.font_s(10.0),
         Palette::NEON_CYAN,
     );
 
     fonts.draw_ui_bold(
-        game_mode.title(),
+        "Motorsport Garage & Showroom",
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(36.0),
-        scaler.font_s(16.0),
+        curr_y + scaler.s(34.0),
+        scaler.font_s(15.0),
         Palette::WHITE,
     );
     fonts.draw_ui_regular(
-        game_mode.description(),
+        "Browse all module vehicles, inspect 2D side profiles & select unlocked cars.",
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(54.0),
-        scaler.font_s(11.0),
+        curr_y + scaler.s(48.0),
+        scaler.font_s(10.5),
         Palette::UI_TEXT_MUTED,
     );
 
-    curr_y += mode_h + scaler.s(8.0);
+    curr_y += garage_h + scaler.s(8.0);
 
-    // Card 3: Vehicle Selection & Specs Card
+    // Card 3 (Index 1): Vehicle Selection & Specs Card (with 2D Lateral View)
     let is_car_active = is_left_focused && active_card_idx == 1;
-    let car_card_h = scaler.s(214.0);
+    let car_card_h = scaler.s(256.0);
     let car_border_col = if !is_car_unlocked {
         Palette::RED
     } else if is_car_active {
@@ -249,16 +259,12 @@ pub fn render_starting_grid_screen(
         &locked_header_str
     } else if is_car_active {
         if game_mode.allows_car_change() {
-            "CAR SELECTION [ACTIVE • ENTER / < / > to switch]"
+            "ACTIVE CAR [ENTER / G to open Garage • [ / ] to switch]"
         } else {
-            "CAR SPEC: ENFORCED PREDEFINED [Locked]"
+            "ACTIVE CAR: ENFORCED PREDEFINED [Locked]"
         }
     } else {
-        if game_mode.allows_car_change() {
-            "CAR SELECTION: [Up/Down to select card]"
-        } else {
-            "CAR SPEC: ENFORCED PREDEFINED [Locked]"
-        }
+        "ACTIVE CAR SPEC: [Up/Down to select card]"
     };
     let car_header_col = if !is_car_unlocked {
         Palette::RED
@@ -295,34 +301,55 @@ pub fn render_starting_grid_screen(
     fonts.draw_ui_bold(
         active_car.title(),
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(34.0),
-        scaler.font_s(16.5),
+        curr_y + scaler.s(32.0),
+        scaler.font_s(15.5),
         Palette::WHITE,
     );
     fonts.draw_ui_regular(
         active_car.description(),
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(49.0),
-        scaler.font_s(11.0),
+        curr_y + scaler.s(46.0),
+        scaler.font_s(10.5),
         Palette::UI_TEXT_MUTED,
+    );
+
+    // 2D Lateral View Blueprint Showcase Box
+    let stat_base_x = col1_x + scaler.s(12.0);
+    let stat_bar_w = col_w - scaler.s(24.0);
+    let lateral_box_y = curr_y + scaler.s(56.0);
+    let lateral_box_h = scaler.s(58.0);
+    scaler.draw_glass_card(
+        stat_base_x,
+        lateral_box_y,
+        stat_bar_w,
+        lateral_box_h,
+        Color::new(0.03, 0.05, 0.08, 0.65),
+        Color::new(0.18, 0.25, 0.35, 0.50),
+        1.0,
+    );
+    render_car_lateral(
+        active_car,
+        &player_profile.color_scheme,
+        stat_base_x + stat_bar_w * 0.50,
+        lateral_box_y + lateral_box_h * 0.52,
+        scaler.s(0.95),
+        0.0,
+        true,
     );
 
     // 4 Performance Stat Bars
     let (spd, acc, grip, drift) = active_car.stats();
-    let stat_bar_w = col_w - scaler.s(24.0);
-    let stat_base_x = col1_x + scaler.s(12.0);
-
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(64.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(79.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(94.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(109.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(122.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(137.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(152.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(167.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
 
     // 4 Engineering / Dynamic Specs Chips
     let (spec1, spec2, spec3, spec4) = active_car.specs();
     let spec_chip_w = (col_w - scaler.s(32.0)) * 0.5;
     let spec_chip_h = scaler.s(22.0);
-    let chip_y1 = curr_y + scaler.s(134.0);
-    let chip_y2 = curr_y + scaler.s(160.0);
+    let chip_y1 = curr_y + scaler.s(188.0);
+    let chip_y2 = curr_y + scaler.s(214.0);
 
     scaler.draw_glass_card(stat_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
     fonts.draw_ui_bold(spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
@@ -335,6 +362,17 @@ pub fn render_starting_grid_screen(
 
     scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
     fonts.draw_ui_bold(spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
+
+    // Prompt hint at bottom of card
+    if is_car_active && game_mode.allows_car_change() {
+        fonts.draw_ui_regular(
+            "Press [ENTER] or [G] to open Garage showroom and select vehicle",
+            col1_x + scaler.s(12.0),
+            curr_y + scaler.s(244.0),
+            scaler.font_s(9.5),
+            Palette::NEON_GOLD,
+        );
+    }
 
     curr_y += car_card_h + scaler.s(8.0);
 

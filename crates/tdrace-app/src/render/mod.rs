@@ -2,6 +2,7 @@ pub mod barrier;
 pub mod car;
 pub mod color;
 pub mod ghost;
+pub mod lateral;
 pub mod marker;
 pub mod track;
 
@@ -11,6 +12,7 @@ pub use barrier::{
     render_ground_barriers_and_obstacles_culled,
 };
 pub use car::render_car;
+pub use lateral::{render_car_lateral, render_lateral_car};
 pub use color::{CarColorScheme, Palette};
 pub use ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
 pub use marker::{
