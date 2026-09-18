@@ -49,11 +49,18 @@ stateDiagram-v2
             BrowseRoster --> OpenGarage: ENTER / G
         }
 
+        state "Column 4: Circuit Catalogue" as CircuitCol {
+            [*] --> BrowseCircuits
+            BrowseCircuits --> OpenTrackManager: ENTER / T
+        }
+
         SinglePlayerCol --> MultiplayerCol: RIGHT / TAB / 2
         MultiplayerCol --> GarageCol: RIGHT / TAB / 3
-        GarageCol --> SinglePlayerCol: RIGHT / TAB / 1
+        GarageCol --> CircuitCol: RIGHT / TAB / 4
+        CircuitCol --> SinglePlayerCol: RIGHT / TAB / 1
         MultiplayerCol --> SinglePlayerCol: LEFT
         GarageCol --> MultiplayerCol: LEFT
+        CircuitCol --> GarageCol: LEFT
 
         state ComingSoonModal {
             [*] --> DisplayNotice
@@ -62,6 +69,10 @@ stateDiagram-v2
 
     state "Garage Showroom (Garage)" as Garage {
         [*] --> FullscreenInspection
+    }
+
+    state "Circuit Catalogue & Manager (TrackManager)" as TrackManager {
+        [*] --> FullscreenManager
     }
 
     state "Circuit Selection (Menu)" as Menu {
@@ -75,7 +86,9 @@ stateDiagram-v2
     ModuleSelect --> ModalitySelect: [ENTER / SPACE / A] (Select Module)
     ModalitySelect --> ModuleSelect: [ESC / B] (Back to Grand Hub)
     ModalitySelect --> Garage: [ENTER on Col 3 / G] (Open Garage Showroom)
+    ModalitySelect --> TrackManager: [ENTER on Col 4 / T] (Open Circuit Catalogue)
     Garage --> ModalitySelect: [ESC / B] (Return from Garage)
+    TrackManager --> ModalitySelect: [ESC / B] (Return from Track Manager)
 
     ModalitySelect --> Menu: [ENTER / A] (Quick Race, Custom Race, Time Trial, Free Ride, Split Screen)
     ModalitySelect --> ChampionshipStandings: [ENTER / A] (Career Mode)
@@ -93,7 +106,7 @@ stateDiagram-v2
     StartingGrid --> Racing: [ENTER / SPACE / A] (Launch Race)
 ```
 
-### 2. 3-Column Modality & Roster Architecture
+### 2. 4-Column Modality, Roster & Circuit Architecture
 
 #### Column 1: Single Player Modalities
 1. **Quick Race (`ModalityItem::QuickRace`)**: Standard race using the track's official required category vehicle.
@@ -113,10 +126,15 @@ stateDiagram-v2
 3. **Unlock Status**: Clearly differentiates between unlocked cars and locked cars (marked with `🔒 Requires Career Level X`).
 4. **Interactive Entry to Garage**: Pressing `[ENTER]` or `[G]` with Column 3 focused opens `GameState::Garage` for full-screen inspection, 360° turntable viewing, historical dossier, and sound-stage rev sampling.
 
+#### Column 4: Circuit Catalogue & Track Manager Column
+1. **Catalogue Entry Card**: Direct hero card to open the Circuit Catalogue and Manager (`GameState::TrackManager`).
+2. **Module Track Showcase**: Lists official presets and custom circuits available for the active module with discipline tags and preset badges.
+3. **Interactive Inspection**: Pressing `[ENTER]` on the hero card or a track card opens `GameState::TrackManager` focused on that circuit.
+4. **Direct Shortcut**: Pressing `[T]` or `[4]` immediately accesses the circuit catalogue from any modality tab.
+
 ### 3. UI Design Tokens & Starting Grid Card 0
-- **3 Balanced Columns**: Screen partitioned cleanly into three vertical glass columns across the viewport.
-- **Header Pill Tabs**: Top category indicator (`[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, `[ 3. VEHICLE ROSTER ]`) with active neon accents.
-- **Glass Cards**: Vertical stack of translucent glass cards with 1px border accents, category icon, title, description, and status tags (`OFFICIAL`, `CUSTOMIZABLE`, `CHAMPIONSHIP`, `SOLO`, `LOCAL`, `COMING SOON`, `ROSTER`).
+- **4 Balanced Columns**: Top tabs partitioned cleanly (`[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, `[ 3. VEHICLE ROSTER ]`, `[ 4. CIRCUIT CATALOGUE ]`).
+- **Glass Cards**: Translucent glass cards with 1px border accents, category icon, title, description, and status tags (`OFFICIAL PRESET`, `CUSTOM CIRCUIT`, `OFFICIAL`, `CUSTOMIZABLE`, `CHAMPIONSHIP`, `SOLO`, `LOCAL`, `COMING SOON`, `ROSTER`).
 - **Starting Grid Card 0 Refinement**: Card 0 prominently displays the active modality (e.g. `RACING MODALITY: QUICK RACE [PRESET]` or `RACING MODALITY: CUSTOM RACE [CUSTOMIZABLE]`), ensuring full session context before race start.
 
 ---

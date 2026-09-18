@@ -2221,16 +2221,23 @@ pub enum ModalityCategory {
     SinglePlayer,
     Multiplayer,
     Garage,
+    CircuitCatalogue,
 }
 
 impl ModalityCategory {
-    pub const ALL: [Self; 3] = [Self::SinglePlayer, Self::Multiplayer, Self::Garage];
+    pub const ALL: [Self; 4] = [
+        Self::SinglePlayer,
+        Self::Multiplayer,
+        Self::Garage,
+        Self::CircuitCatalogue,
+    ];
 
     pub fn title(&self) -> &'static str {
         match self {
             Self::SinglePlayer => "SINGLE PLAYER",
             Self::Multiplayer => "MULTIPLAYER",
             Self::Garage => "VEHICLE ROSTER & GARAGE",
+            Self::CircuitCatalogue => "CIRCUIT CATALOGUE",
         }
     }
 
@@ -2248,7 +2255,7 @@ impl ModalityCategory {
                 ModalityItem::LanPlay,
                 ModalityItem::CloudPlay,
             ],
-            Self::Garage => &[],
+            Self::Garage | Self::CircuitCatalogue => &[],
         }
     }
 }
@@ -2348,7 +2355,7 @@ impl ModalityModal {
 }
 
 /// Renders the Race Modality Selection stage inserted between the Grand Hub and Circuit Selection.
-/// Layout: 3 Columns (Col 1: Single Player, Col 2: Multiplayer, Col 3: Vehicle Roster & Garage Showroom).
+/// Layout: 4 Columns (Col 1: Single Player, Col 2: Multiplayer, Col 3: Vehicle Roster, Col 4: Circuit Catalogue).
 pub fn render_modality_select_screen(
     fonts: &Fonts,
     active_module_title: &str,
@@ -2360,6 +2367,7 @@ pub fn render_modality_select_screen(
     _active_profile: &PlayerProfile,
     active_stats: &ProfileCareerStats,
     dev_mode: bool,
+    available_tracks: &[TrackChoice],
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2379,18 +2387,18 @@ pub fn render_modality_select_screen(
     );
 
     fonts.draw_ui_regular_centered(
-        "Choose session format: Single Player vs Multiplayer  •  Or inspect the active module's vehicle roster",
+        "Choose session format: Single Player vs Multiplayer  •  Or inspect vehicle roster & circuit catalogue",
         sw * 0.5,
         scaler.s(48.0),
         scaler.font_s(12.5),
         Palette::UI_TEXT_MUTED,
     );
 
-    // 3 Category Tabs at Top
-    let tab_w = (sw * 0.28).clamp(scaler.s(180.0), scaler.s(280.0));
+    // 4 Category Tabs at Top
+    let tab_w = (sw * 0.22).clamp(scaler.s(140.0), scaler.s(225.0));
     let tab_h = scaler.s(30.0);
-    let tab_gap = scaler.s(14.0);
-    let total_tabs_w = tab_w * 3.0 + tab_gap * 2.0;
+    let tab_gap = scaler.s(10.0);
+    let total_tabs_w = tab_w * 4.0 + tab_gap * 3.0;
     let tabs_start_x = (sw - total_tabs_w) * 0.5;
     let tab_y = scaler.s(64.0);
 
@@ -2418,6 +2426,7 @@ pub fn render_modality_select_screen(
             ModalityCategory::SinglePlayer => "[ 1. SINGLE PLAYER ]",
             ModalityCategory::Multiplayer => "[ 2. MULTIPLAYER ]",
             ModalityCategory::Garage => "[ 3. VEHICLE ROSTER ]",
+            ModalityCategory::CircuitCatalogue => "[ 4. CIRCUITS ]",
         };
         let tab_text_col = if is_cat_active {
             Palette::WHITE
@@ -2775,11 +2784,144 @@ pub fn render_modality_select_screen(
                 }
             }
         }
+        ModalityCategory::CircuitCatalogue => {
+            // Hero Action Card at Top: "ENTER CIRCUIT CATALOGUE"
+            let hero_btn_h = scaler.s(56.0);
+            let is_hero_sel = selected_idx == 0;
+            scaler.draw_glass_card(
+                col_x,
+                start_y,
+                col_w,
+                hero_btn_h,
+                if is_hero_sel { Color::new(0.18, 0.24, 0.38, 0.95) } else { Color::new(0.08, 0.12, 0.18, 0.85) },
+                if is_hero_sel { Palette::NEON_CYAN } else { active_module_accent },
+                if is_hero_sel { 2.4 } else { 1.2 },
+            );
+
+            if is_hero_sel {
+                draw_rectangle(col_x, start_y, scaler.s(6.0), hero_btn_h, Palette::NEON_CYAN);
+            }
+
+            fonts.draw_display(
+                "🏁 ENTER CIRCUIT CATALOGUE",
+                col_x + scaler.s(18.0),
+                start_y + scaler.s(22.0),
+                scaler.font_s(15.5),
+                if is_hero_sel { Palette::WHITE } else { Palette::NEON_CYAN },
+            );
+            fonts.draw_ui_regular(
+                "PRESS [ENTER] OR [T] TO BROWSE, TEST DRIVE, CLONE & EDIT CIRCUITS",
+                col_x + scaler.s(18.0),
+                start_y + scaler.s(42.0),
+                scaler.font_s(10.0),
+                Palette::NEON_GOLD,
+            );
+
+            if is_hero_sel {
+                fonts.draw_ui_bold(
+                    "OPEN CATALOGUE ▶",
+                    col_x + col_w - scaler.s(180.0),
+                    start_y + scaler.s(32.0),
+                    scaler.font_s(12.0),
+                    Palette::NEON_CYAN,
+                );
+            }
+
+            // Active Module Track Cards (Up to 5 tracks)
+            let card_gap = scaler.s(7.0);
+            let tracks_start_y = start_y + hero_btn_h + card_gap;
+            let tracks_available_h = available_h - hero_btn_h - card_gap;
+            let max_tracks = available_tracks.len().min(5);
+            let track_card_h = if max_tracks > 0 {
+                ((tracks_available_h - card_gap * 4.0) / 5.0).clamp(scaler.s(46.0), scaler.s(74.0))
+            } else {
+                scaler.s(60.0)
+            };
+
+            for (idx, track) in available_tracks.iter().take(5).enumerate() {
+                let card_idx = idx + 1;
+                let is_card_sel = selected_idx == card_idx;
+                let card_y = tracks_start_y + (idx as f32) * (track_card_h + card_gap);
+
+                scaler.draw_glass_card(
+                    col_x,
+                    card_y,
+                    col_w,
+                    track_card_h,
+                    if is_card_sel { Color::new(0.14, 0.18, 0.28, 0.95) } else { Color::new(0.06, 0.08, 0.12, 0.70) },
+                    if is_card_sel { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+                    if is_card_sel { 2.2 } else { 1.0 },
+                );
+
+                if is_card_sel {
+                    draw_rectangle(col_x, card_y, scaler.s(6.0), track_card_h, Palette::NEON_CYAN);
+                }
+
+                let tag_str = track.tag_for_module(active_module_id);
+                fonts.draw_ui_bold(
+                    tag_str,
+                    col_x + scaler.s(16.0),
+                    card_y + track_card_h * 0.28,
+                    scaler.font_s(10.0),
+                    if is_card_sel { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
+                );
+
+                let is_official = track.is_official_preset();
+                if is_official {
+                    fonts.draw_ui_bold(
+                        "✓ OFFICIAL PRESET",
+                        col_x + col_w - scaler.s(170.0),
+                        card_y + track_card_h * 0.28,
+                        scaler.font_s(9.5),
+                        Palette::NEON_GREEN,
+                    );
+                } else {
+                    fonts.draw_ui_bold(
+                        "★ CUSTOM CIRCUIT",
+                        col_x + col_w - scaler.s(170.0),
+                        card_y + track_card_h * 0.28,
+                        scaler.font_s(9.5),
+                        Palette::NEON_GOLD,
+                    );
+                }
+
+                let title_str = if is_card_sel {
+                    format!("▶ {}", track.title())
+                } else {
+                    track.title().to_string()
+                };
+                fonts.draw_display(
+                    &title_str,
+                    col_x + scaler.s(16.0),
+                    card_y + track_card_h * 0.60,
+                    scaler.font_s(14.5),
+                    if is_card_sel { Palette::WHITE } else { Color::new(0.85, 0.88, 0.94, 1.0) },
+                );
+
+                fonts.draw_ui_regular(
+                    track.description(),
+                    col_x + scaler.s(16.0),
+                    card_y + track_card_h * 0.86,
+                    scaler.font_s(10.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+
+                if is_card_sel {
+                    fonts.draw_ui_bold(
+                        "[ENTER] INSPECT",
+                        col_x + col_w - scaler.s(220.0),
+                        card_y + track_card_h * 0.62,
+                        scaler.font_s(10.0),
+                        Palette::NEON_CYAN,
+                    );
+                }
+            }
+        }
     }
 
     // Bottom Action Prompt / Controller Hints
     fonts.draw_ui_regular_centered(
-        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [ENTER/SPACE] Select  •  [ESC] Hub",
+        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3/4] Switch Menu  •  [G] Garage  •  [T] Circuits  •  [ENTER/SPACE] Select  •  [ESC] Hub",
         sw * 0.5,
         sh - scaler.s(14.0),
         scaler.font_s(11.5),

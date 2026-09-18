@@ -65,15 +65,50 @@ fn test_modality_category_switching_and_wrapping() {
         }
     );
 
-    // 3. Switch via bumper LB/RB
+    // 3. Switch through all 4 categories via bumper RB (SinglePlayer -> Multiplayer -> Garage -> CircuitCatalogue -> SinglePlayer)
     session.input.gamepad.snapshot.btn_rb_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_rb_pressed = false;
-
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
             category: ModalityCategory::Multiplayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+
+    session.input.gamepad.snapshot.btn_rb_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_rb_pressed = false;
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Garage,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+
+    session.input.gamepad.snapshot.btn_rb_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_rb_pressed = false;
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::CircuitCatalogue,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+
+    session.input.gamepad.snapshot.btn_rb_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_rb_pressed = false;
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
             selected_idx: 0,
             modal: None,
         }
@@ -508,5 +543,109 @@ fn test_modality_single_selected_menu_isolation() {
             modal: None,
         }
     );
+
+    // 5. Switch to Circuit Catalogue menu via Tab
+    session.input.gamepad.snapshot.btn_rb_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_rb_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::CircuitCatalogue,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
 }
+
+#[test]
+fn test_modality_select_column_4_circuit_catalogue_navigation() {
+    let mut session = RaceSession::new();
+    session.active_module_id = "classic";
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::CircuitCatalogue,
+        selected_idx: 0,
+        modal: None,
+    };
+
+    let module_tracks = session.track_manager.module_catalog_tracks(session.active_module_id);
+    let expected_items_len = 1 + module_tracks.len().min(5);
+
+    // Up from 0 wraps to last track card
+    session.input.gamepad.snapshot.dpad_up_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.dpad_up_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::CircuitCatalogue,
+            selected_idx: expected_items_len - 1,
+            modal: None,
+        }
+    );
+
+    // Down from last wraps back to 0 (Hero card)
+    session.input.gamepad.snapshot.dpad_down_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.dpad_down_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::CircuitCatalogue,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+}
+
+#[test]
+fn test_modality_select_column_4_circuit_catalogue_launch_track_manager() {
+    let mut session = RaceSession::new();
+    session.active_module_id = "rally";
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::CircuitCatalogue,
+        selected_idx: 0, // Hero Card
+        modal: None,
+    };
+
+    // Confirm on Hero Card (idx 0) opens TrackManager at index 0
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert!(matches!(
+        session.state,
+        GameState::TrackManager {
+            active_tab: tdrace_app::ui::TrackManagerTab::Main,
+            selected_idx: 0,
+            modal: tdrace_app::ui::TrackManagerModal::None,
+            ..
+        }
+    ));
+
+    // Confirm on Track Card 1 (idx 1) opens TrackManager focused on track 0
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::CircuitCatalogue,
+        selected_idx: 2, // Second track in list
+        modal: None,
+    };
+
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert!(matches!(
+        session.state,
+        GameState::TrackManager {
+            active_tab: tdrace_app::ui::TrackManagerTab::Main,
+            selected_idx: 1, // 2 - 1 = 1
+            modal: tdrace_app::ui::TrackManagerModal::None,
+            ..
+        }
+    ));
+}
+
 

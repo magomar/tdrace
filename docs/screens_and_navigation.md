@@ -182,20 +182,22 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 ---
 
 ### 3.2. Race Modality Selection (`GameState::ModalitySelect`)
-* **Purpose**: Modality selection stage separating Single Player (Quick Race, Custom Race, Career Mode, Time Trial, Free Ride) and Multiplayer (2P Split Screen, LAN, Cloud) before circuit selection.
+* **Purpose**: Modality selection stage separating Single Player (Quick Race, Custom Race, Career Mode, Time Trial, Free Ride), Multiplayer (2P Split Screen, LAN, Cloud), Vehicle Roster & Garage, and Circuit Catalogue before circuit selection.
 * **State Struct**: `GameState::ModalitySelect { category: ModalityCategory, selected_idx: usize, modal: Option<ModalityModal> }`
 * **Components**:
   - Top Breadcrumbs: Active motorsport module name and discipline badge.
-  - Centered Category Tabs: `[ 1. SINGLE PLAYER ]` and `[ 2. MULTIPLAYER ]`.
+  - Centered Category Tabs: `[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, `[ 3. VEHICLE ROSTER ]`, and `[ 4. CIRCUITS ]`.
   - Translucent Glass Modality Cards: Displaying title, badge tag, description, and selection highlight.
   - In-Development Notification Modal: Informational dialog for LAN and Cloud online play.
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Left` / `Right` / `Tab` / `1` / `2` / Gamepad `LB`/`RB` | Switch Category | Toggles between Single Player and Multiplayer |
-| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Cards | Selects modality card within active category |
-| `Enter` / `Space` / Gamepad `A` | Confirm Modality | Transitions to `GameState::Menu` (or `ChampionshipStandings` for Career, or opens modal for LAN/Cloud) |
+| `Left` / `Right` / `Tab` / `1` / `2` / `3` / `4` / Gamepad `LB`/`RB` | Switch Category | Cycles across Single Player, Multiplayer, Vehicle Roster, and Circuit Catalogue |
+| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Cards | Selects card within active category |
+| `Enter` / `Space` / Gamepad `A` | Confirm Selection | Transitions to `GameState::Menu`, `ChampionshipStandings`, `GameState::Garage`, or `GameState::TrackManager` |
+| `G` | Garage Showroom | Opens full-screen Garage showroom -> `GameState::Garage` |
+| `T` | Circuit Catalogue | Opens Circuit Catalogue & Manager -> `GameState::TrackManager` |
 | `Escape` / Gamepad `B` | Back / Dismiss | Dismisses modal if open, otherwise returns to Grand Hub -> `GameState::ModuleSelect` |
 
 ---

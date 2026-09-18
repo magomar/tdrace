@@ -3860,13 +3860,26 @@ impl RaceSession {
             return;
         }
 
-        // Category Column/Menu Switching (Left / Right / Tab / 1 / 2 / 3 / Gamepad D-pad / Bumpers / Mouse Tab Click)
+        // Direct Circuit Catalogue / Track Manager shortcut (T key)
+        if is_key_pressed(KeyCode::T) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let mod_filter = ModuleFilter::for_module(self.active_module_id);
+            self.state = GameState::TrackManager {
+                active_tab: TrackManagerTab::Main,
+                module_filter: mod_filter,
+                selected_idx: 0,
+                modal: TrackManagerModal::None,
+            };
+            return;
+        }
+
+        // Category Column/Menu Switching (Left / Right / Tab / 1 / 2 / 3 / 4 / Gamepad D-pad / Bumpers / Mouse Tab Click)
         let (sw, sh) = (screen_width_safe(), screen_height_safe());
         let scaler = UiScaler::new(sw, sh);
-        let tab_w = (sw * 0.28).clamp(scaler.s(180.0), scaler.s(280.0));
+        let tab_w = (sw * 0.22).clamp(scaler.s(140.0), scaler.s(225.0));
         let tab_h = scaler.s(30.0);
-        let tab_gap = scaler.s(14.0);
-        let total_tabs_w = tab_w * 3.0 + tab_gap * 2.0;
+        let tab_gap = scaler.s(10.0);
+        let total_tabs_w = tab_w * 4.0 + tab_gap * 3.0;
         let tabs_start_x = (sw - total_tabs_w) * 0.5;
         let tab_y = scaler.s(64.0);
 
@@ -3904,6 +3917,12 @@ impl RaceSession {
                 selected_idx = 0;
                 self.audio.play_sfx(SfxType::UiMove);
             }
+        } else if is_key_pressed(KeyCode::Key4) {
+            if category != ModalityCategory::CircuitCatalogue {
+                category = ModalityCategory::CircuitCatalogue;
+                selected_idx = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
         } else if is_key_pressed(KeyCode::Tab)
             || is_key_pressed(KeyCode::Right)
             || is_key_pressed(KeyCode::D)
@@ -3913,7 +3932,8 @@ impl RaceSession {
             category = match category {
                 ModalityCategory::SinglePlayer => ModalityCategory::Multiplayer,
                 ModalityCategory::Multiplayer => ModalityCategory::Garage,
-                ModalityCategory::Garage => ModalityCategory::SinglePlayer,
+                ModalityCategory::Garage => ModalityCategory::CircuitCatalogue,
+                ModalityCategory::CircuitCatalogue => ModalityCategory::SinglePlayer,
             };
             selected_idx = 0;
             self.audio.play_sfx(SfxType::UiMove);
@@ -3923,9 +3943,10 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_lb_pressed
         {
             category = match category {
-                ModalityCategory::SinglePlayer => ModalityCategory::Garage,
+                ModalityCategory::SinglePlayer => ModalityCategory::CircuitCatalogue,
                 ModalityCategory::Multiplayer => ModalityCategory::SinglePlayer,
                 ModalityCategory::Garage => ModalityCategory::Multiplayer,
+                ModalityCategory::CircuitCatalogue => ModalityCategory::Garage,
             };
             selected_idx = 0;
             self.audio.play_sfx(SfxType::UiMove);
@@ -3933,8 +3954,11 @@ impl RaceSession {
 
         // Modality Card Navigation (Up / Down / W / S / Gamepad D-pad)
         let items = category.items();
+        let module_tracks = self.track_manager.module_catalog_tracks(self.active_module_id);
         let items_len = if category == ModalityCategory::Garage {
             6 // 0 is Hero card, 1..=5 are Tiers 1..=5
+        } else if category == ModalityCategory::CircuitCatalogue {
+            1 + module_tracks.len().min(5)
         } else {
             items.len()
         };
@@ -3976,6 +4000,22 @@ impl RaceSession {
                 }
                 self.garage_origin = GarageOrigin::ModalitySelect;
                 self.state = GameState::Garage(GarageOrigin::ModalitySelect);
+                return;
+            }
+            if category == ModalityCategory::CircuitCatalogue {
+                self.audio.play_sfx(SfxType::UiSelect);
+                let mod_filter = ModuleFilter::for_module(self.active_module_id);
+                let track_sel_idx = if selected_idx == 0 {
+                    0
+                } else {
+                    selected_idx - 1
+                };
+                self.state = GameState::TrackManager {
+                    active_tab: TrackManagerTab::Main,
+                    module_filter: mod_filter,
+                    selected_idx: track_sel_idx,
+                    modal: TrackManagerModal::None,
+                };
                 return;
             }
             if let Some(&item) = items.get(selected_idx) {
@@ -6737,6 +6777,7 @@ impl RaceSession {
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_CYAN),
                 };
+                let active_tracks = self.track_manager.module_catalog_tracks(self.active_module_id);
                 render_modality_select_screen(
                     &self.fonts,
                     mod_title,
@@ -6748,6 +6789,7 @@ impl RaceSession {
                     &self.active_profile,
                     &self.active_profile_stats,
                     self.is_dev_mode(),
+                    &active_tracks,
                 );
             }
             GameState::Garage(_) => {
