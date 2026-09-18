@@ -176,7 +176,7 @@ impl Default for GameplayConfig {
             default_laps: 3,
             default_num_bots: 7,
             default_assist_profile: "arcade".to_string(),
-            dev_mode: false,
+            dev_mode: crate::storage::is_dev_mode(),
         }
     }
 }

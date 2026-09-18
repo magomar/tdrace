@@ -30,22 +30,29 @@ fn test_f1_tracks_predefined_car_and_resolve_predefined_car() {
     assert_eq!(track_defs.len(), 15);
 
     for t_def in &track_defs {
-        if t_def.id != "classic_grand_prix" {
-            let track = (t_def.generator)();
-            assert_eq!(
-                track.predefined_car.as_deref(),
-                Some("gt3_car"),
-                "Track '{}' must define predefined_car = 'gt3_car'",
-                t_def.id
-            );
-        }
+        let track = (t_def.generator)();
+        let expected_car = match t_def.id {
+            "monza" | "red_bull_ring" | "nurburgring_gp" => "gt4_clubsport",
+            "silverstone" | "catalunya" | "bathurst" => "gt3_evo",
+            "spa" | "zandvoort" | "portimao_gp" => "gt2_biturbo",
+            "suzuka" | "interlagos" | "le_mans_sarthe" => "gt1_legend",
+            "monaco" | "madring" | "marina_bay" => "hypercar_prototype",
+            other => panic!("Unexpected GT track ID: {}", other),
+        };
+        assert_eq!(
+            track.predefined_car.as_deref(),
+            Some(expected_car),
+            "Track '{}' must define career level predefined_car = '{}'",
+            t_def.id,
+            expected_car
+        );
     }
 
     let mut session = RaceSession::new();
     session.switch_to_gt();
 
-    assert_eq!(session.resolve_predefined_car(), CarChoice::GT3Car);
-    assert_eq!(session.active_player_car_choice(), CarChoice::GT3Car);
+    assert_eq!(session.resolve_predefined_car(), CarChoice::GT4Clubsport);
+    assert_eq!(session.active_player_car_choice(), CarChoice::GT4Clubsport);
 }
 
 #[test]
@@ -59,41 +66,40 @@ fn test_f1_race_roster_car_assignment_and_display_titles() {
     assert_eq!(session.state, GameState::StartingGrid);
     assert_eq!(session.grid_participants.len(), 8); // 1 Player + 7 GT opponents
 
-    // Player car title on roster screen
+    // Player car title on roster screen (Monza defaults to GT4 Clubsport)
     assert_eq!(
         session.grid_participants[0].car_title,
-        "600 BHP GT3 Evo Racer",
-        "Player car title must be '600 BHP GT3 Evo Racer'"
+        "420 BHP GT4 Clubsport",
+        "Player car title must be '420 BHP GT4 Clubsport'"
     );
 
-    // All AI opponents on roster screen must have '600 BHP GT3 Evo Racer'
+    // All AI opponents on roster screen must have '420 BHP GT4 Clubsport'
     for participant in &session.grid_participants {
         assert_eq!(
             participant.car_title,
-            "600 BHP GT3 Evo Racer",
-            "Participant '{}' must be assigned '600 BHP GT3 Evo Racer' on roster",
+            "420 BHP GT4 Clubsport",
+            "Participant '{}' must be assigned '420 BHP GT4 Clubsport' on roster",
             participant.name
         );
     }
 
-    // Verify visual archetype is TouringGT (aerodynamic GT body)
+    // Verify visual archetype is TouringGT
     match session.current_visual_type {
-        VehicleVisualType::TouringGT { gt_wing, diffuser, .. } => {
+        VehicleVisualType::TouringGT { gt_wing, .. } => {
             assert!(gt_wing);
-            assert!(diffuser);
         }
         _ => panic!("Expected TouringGT vehicle visual type in GT World Challenge race"),
     }
 
-    // Verify all cars in session are tuned with GT3 physics (~295 km/h top speed, downforce ~2.1)
+    // Verify all cars in session are tuned with GT4 physics (~272 km/h top speed, downforce ~0.85)
     for car in &session.cars {
         assert!(
-            car.config.top_speed_mps * 3.6 > 280.0,
-            "Car top speed must exceed 280 km/h for GT3 spec"
+            car.config.top_speed_mps * 3.6 > 260.0,
+            "Car top speed must exceed 260 km/h for GT4 spec"
         );
         assert!(
-            car.config.downforce_coefficient > 2.0,
-            "Car downforce must exceed 2.0 for GT3 spec"
+            car.config.downforce_coefficient >= 0.85,
+            "Car downforce must be at least 0.85 for GT4 spec"
         );
     }
 }
@@ -105,8 +111,8 @@ fn test_f1_free_car_selection_toggle_in_roster() {
     session.num_bots = 3;
     session.init_race();
 
-    assert_eq!(session.resolve_predefined_car(), CarChoice::GT3Car);
-    assert_eq!(session.active_player_car_choice(), CarChoice::GT3Car);
+    assert_eq!(session.resolve_predefined_car(), CarChoice::GT4Clubsport);
+    assert_eq!(session.active_player_car_choice(), CarChoice::GT4Clubsport);
 
     // Enable free car selection and choose experimental F1Car for player
     session.free_car_selection = true;
@@ -142,7 +148,7 @@ fn test_f1_championship_roster_and_car_assignment() {
     assert_eq!(session.grid_participants.len(), 8);
 
     for p in &session.grid_participants {
-        assert_eq!(p.car_title, "600 BHP GT3 Evo Racer");
+        assert_eq!(p.car_title, "420 BHP GT4 Clubsport");
     }
 }
 
@@ -152,9 +158,9 @@ fn test_all_disciplines_car_assignment_integrity() {
 
     // 1. GT World Challenge Module
     session.switch_to_gt();
-    assert_eq!(session.resolve_predefined_car(), CarChoice::GT3Car);
-    assert_eq!(session.active_player_car_choice(), CarChoice::GT3Car);
-    assert_eq!(session.active_player_car_choice().title(), "600 BHP GT3 Evo Racer");
+    assert_eq!(session.resolve_predefined_car(), CarChoice::GT4Clubsport);
+    assert_eq!(session.active_player_car_choice(), CarChoice::GT4Clubsport);
+    assert_eq!(session.active_player_car_choice().title(), "420 BHP GT4 Clubsport");
 
     // 2. Rally Module
     session.switch_to_rally();
@@ -183,3 +189,4 @@ fn test_all_disciplines_car_assignment_integrity() {
     assert_eq!(session.active_player_car_choice(), CarChoice::DriftCar);
     assert_eq!(session.active_player_car_choice().title(), "Tuned Drift Spec");
 }
+

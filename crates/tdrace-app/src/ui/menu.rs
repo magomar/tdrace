@@ -596,14 +596,15 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             Some("gt2" | "gt2_biturbo") => CarChoice::GT2Biturbo,
             Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
             Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
-            Some("gt") => CarChoice::GT3Car,
-            Some("f1" | "f1_car" | "f1_hybrid_26" | "open_wheel") => {
+            Some("gt") => CarChoice::GT4Clubsport,
+            Some("f1" | "f1_car" | "open_wheel") => {
                 if tr.module_id.as_deref().unwrap_or(module_id) == "gt" || module_id == "gt" {
-                    CarChoice::GT3Car
+                    CarChoice::GT4Clubsport
                 } else {
                     CarChoice::F1Car
                 }
             }
+            Some("f1_hybrid_26") => CarChoice::F1Car,
             Some("drift_car") => CarChoice::DriftCar,
             Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
             Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
@@ -611,7 +612,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             Some("sand_rail" | "sand_rail_buggy" | "buggy") => CarChoice::SandRail,
             Some("sports_car") => CarChoice::SportsCar,
             _ => match tr.module_id.as_deref().unwrap_or(module_id) {
-                "gt" | "gt_challenge" | "f1" => CarChoice::GT3Car,
+                "gt" | "gt_challenge" | "f1" => CarChoice::GT4Clubsport,
                 "rally" => CarChoice::RallyCar,
                 "kart" => CarChoice::Kart,
                 "nascar" => CarChoice::StockCar,
@@ -621,7 +622,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
         }
     } else {
         match module_id {
-            "gt" | "gt_challenge" | "f1" => CarChoice::GT3Car,
+            "gt" | "gt_challenge" | "f1" => CarChoice::GT4Clubsport,
             "rally" => CarChoice::RallyCar,
             "kart" => CarChoice::Kart,
             "nascar" => CarChoice::StockCar,

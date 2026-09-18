@@ -617,3 +617,53 @@ fn test_gt_career_session_gating_and_cup_launch() {
     }
 }
 
+#[test]
+fn test_circuit_defaults_unlocked_and_dev_mode_unblocks_all() {
+    use tdrace_app::ui::menu::CarChoice;
+
+    let mut session = RaceSession::new();
+    let mem_db = HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    // At Level 1, switch to GT
+    session.switch_to_gt();
+    assert_eq!(session.active_career_progress.level, 1);
+
+    // Initial default circuit Monza must have an UNBLOCKED predefined car (GT4 Clubsport)
+    let monza_car = session.resolve_predefined_car();
+    assert_eq!(monza_car, CarChoice::GT4Clubsport);
+    assert_eq!(session.active_player_car_choice(), CarChoice::GT4Clubsport);
+    assert!(
+        session.is_car_unlocked(monza_car),
+        "Initially open circuit Monza's predefined car must NOT be blocked at Level 1"
+    );
+
+    // Dev mode bypass verification via session.config.gameplay.dev_mode
+    session.config.gameplay.dev_mode = false;
+    assert!(!session.is_car_unlocked(CarChoice::GT3Car));
+    assert!(!session.is_car_unlocked(CarChoice::HypercarPrototype));
+    assert!(!session.is_track_unlocked("silverstone"));
+    assert!(!session.is_track_unlocked("monaco"));
+
+    session.config.gameplay.dev_mode = true;
+    assert!(session.is_dev_mode());
+    assert!(session.is_car_unlocked(CarChoice::GT3Car));
+    assert!(session.is_car_unlocked(CarChoice::HypercarPrototype));
+    assert!(session.is_track_unlocked("silverstone"));
+    assert!(session.is_track_unlocked("monaco"));
+
+    // Dev mode bypass verification via environment variable TDRACE_DEV
+    session.config.gameplay.dev_mode = false;
+    std::env::set_var("TDRACE_DEV", "1");
+    assert!(session.is_dev_mode());
+    assert!(session.is_car_unlocked(CarChoice::GT3Car));
+    assert!(session.is_car_unlocked(CarChoice::HypercarPrototype));
+    assert!(session.is_track_unlocked("silverstone"));
+    assert!(session.is_track_unlocked("monaco"));
+    std::env::remove_var("TDRACE_DEV");
+    assert!(!session.is_dev_mode());
+}
+
+

@@ -82,7 +82,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt4_clubsport".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -153,7 +153,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 3,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt2_biturbo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -222,7 +222,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -287,7 +287,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("hypercar_prototype".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -360,7 +360,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt1_legend".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -427,7 +427,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt1_legend".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -494,7 +494,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -559,7 +559,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt4_clubsport".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -626,7 +626,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -693,7 +693,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt2_biturbo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -762,7 +762,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -831,7 +831,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("hypercar_prototype".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -900,7 +900,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -969,7 +969,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("hypercar_prototype".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -1031,7 +1031,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt4_clubsport".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -1092,7 +1092,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -1149,7 +1149,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 5,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt2_biturbo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
@@ -1209,7 +1209,7 @@ impl GtWorldChallengeModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 4,
-            predefined_car: Some("gt3_car".to_string()),
+            predefined_car: Some("gt1_legend".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }

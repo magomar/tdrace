@@ -922,6 +922,12 @@ impl RaceSession {
         next
     }
 
+    /// Returns true if developer mode is enabled via config or environment / CLI flags.
+    #[inline]
+    pub fn is_dev_mode(&self) -> bool {
+        self.config.gameplay.dev_mode || crate::storage::is_dev_mode()
+    }
+
     /// Resolves the track's predefined vehicle model as a `CarChoice`.
     pub fn resolve_predefined_car(&self) -> CarChoice {
         match self.track.predefined_car.as_deref() {
@@ -930,14 +936,15 @@ impl RaceSession {
             Some("gt2" | "gt2_biturbo") => CarChoice::GT2Biturbo,
             Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
             Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
-            Some("gt") => CarChoice::GT3Car,
-            Some("f1" | "f1_car" | "f1_hybrid_26" | "open_wheel") => {
+            Some("gt") => CarChoice::GT4Clubsport,
+            Some("f1" | "f1_car" | "open_wheel") => {
                 if matches!(self.active_module_id, "gt" | "gt_challenge") {
-                    CarChoice::GT3Car
+                    CarChoice::GT4Clubsport
                 } else {
                     CarChoice::F1Car
                 }
             }
+            Some("f1_hybrid_26") => CarChoice::F1Car,
             Some("drift_car") => CarChoice::DriftCar,
             Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
             Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
@@ -947,7 +954,7 @@ impl RaceSession {
             _ => match self.track.module_id.as_deref().unwrap_or(self.active_module_id) {
                 "nascar" => CarChoice::StockCar,
                 "extreme_offroad" => CarChoice::SandRail,
-                "gt" | "gt_challenge" | "f1" => CarChoice::GT3Car,
+                "gt" | "gt_challenge" | "f1" => CarChoice::GT4Clubsport,
                 "rally" => CarChoice::RallyCar,
                 "kart" => CarChoice::Kart,
                 _ => CarChoice::SportsCar,
@@ -957,7 +964,7 @@ impl RaceSession {
 
     /// Checks whether the specified car is unlocked under the active profile's career progress.
     pub fn is_car_unlocked(&self, car: CarChoice) -> bool {
-        if self.config.gameplay.dev_mode {
+        if self.is_dev_mode() {
             return true;
         }
         let car_id = match car {
@@ -969,16 +976,16 @@ impl RaceSession {
             CarChoice::F1Car => "f1_hybrid_26",
             _ => return true,
         };
-        self.active_career_progress.is_car_unlocked(car_id, self.config.gameplay.dev_mode)
+        self.active_career_progress.is_car_unlocked(car_id, self.is_dev_mode())
     }
 
     /// Checks whether the specified track is unlocked under the active profile's career progress.
     pub fn is_track_unlocked(&self, track_id: &str) -> bool {
-        if self.config.gameplay.dev_mode {
+        if self.is_dev_mode() {
             return true;
         }
         if self.active_module_id == "gt" || self.active_module_id == "f1" {
-            self.active_career_progress.is_track_unlocked(track_id, self.config.gameplay.dev_mode)
+            self.active_career_progress.is_track_unlocked(track_id, self.is_dev_mode())
         } else {
             true
         }
@@ -1251,9 +1258,9 @@ impl RaceSession {
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::TouringGT {
-            widebody: true,
+            widebody: false,
             gt_wing: true,
-            diffuser: true,
+            diffuser: false,
         };
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
@@ -1272,7 +1279,7 @@ impl RaceSession {
             });
         }
         self.track = self.load_track_for_session(&self.track_choice);
-        self.car_choice = CarChoice::GT3Car;
+        self.car_choice = self.resolve_predefined_car();
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
             self.total_laps = 5;
         }
@@ -5961,7 +5968,7 @@ impl RaceSession {
                     self.menu_track_filter,
                     filter_counts,
                     cp_ref,
-                    self.config.gameplay.dev_mode,
+                    self.is_dev_mode(),
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {
