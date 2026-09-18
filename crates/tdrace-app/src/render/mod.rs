@@ -12,7 +12,7 @@ pub use barrier::{
     render_ground_barriers_and_obstacles_culled,
 };
 pub use car::render_car;
-pub use lateral::{render_car_lateral, render_lateral_car};
+pub use lateral::{render_car_lateral, render_lateral_car, render_real_car_lateral_by_id};
 pub use color::{CarColorScheme, Palette};
 pub use ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
 pub use marker::{

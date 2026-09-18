@@ -48,7 +48,7 @@ pub use input::touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchCont
 pub use input::{DebugOverlays, InputController};
 pub use profile::{draw_country_banner, CountryInfo, CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 pub use render::color::{CarColorScheme, Palette};
-pub use render::lateral::render_car_lateral;
+pub use render::lateral::{render_car_lateral, render_real_car_lateral_by_id};
 pub use render::ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
 pub use render::{compute_adaptive_alpha, PlayerVisibilityOptions};
 pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer, ReplayRecorder};

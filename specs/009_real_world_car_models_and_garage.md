@@ -222,7 +222,7 @@ In addition to the single-car turntable inspection stage, the Garage includes an
 * **Tier 5: Stadium Super Truck / SST (650 BHP, RWD / Pesado)**
   - *Focus:* Dramatic body roll, 3-wheel cornering, metal ramp jumps.
   - *Models:* SST V8 Truck Standard Spec (LS3 V8, 1,350 kg), Robby Gordon Edition SST Spec (1,350 kg).
-  - *Tier Circuits (3):* Barcelona-Catalunya RX Stadium, Oasis Desert Rally, Yas Marina RX Arena.
+  - *Tier Circuits (3):* Barcelona-Catalunya RX Stadium, Circuit de Spa-Francorchamps RX, Yas Marina RX Arena.
 
 ---
 

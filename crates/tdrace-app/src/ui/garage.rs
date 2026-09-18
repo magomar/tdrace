@@ -7,7 +7,7 @@ use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::catalog::{get_models_for_module, get_models_for_module_and_tier, RealCarModel};
 use crate::render::color::{CarColorScheme, Palette};
-use crate::render::lateral::render_car_lateral;
+use crate::render::lateral::render_real_car_lateral_by_id;
 
 /// Viewing projection in the Garage showroom.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -179,8 +179,8 @@ pub fn render_garage_screen(
             GarageViewMode::Lateral => {
                 let lateral_scale = scaler.s(1.65);
                 let rev_factor = if garage_revving { garage_rev_rpm } else { garage_brake_heat };
-                render_car_lateral(
-                    model.base_car_choice,
+                render_real_car_lateral_by_id(
+                    model.id,
                     &scheme,
                     center_x,
                     center_y,
@@ -195,8 +195,8 @@ pub fn render_garage_screen(
                 draw_circle_lines(center_x, center_y + scaler.s(10.0), scaler.s(60.0), 1.5, Color::new(0.25, 0.35, 0.50, 0.50));
 
                 let turntable_scale = scaler.s(1.10);
-                render_car_lateral(
-                    model.base_car_choice,
+                render_real_car_lateral_by_id(
+                    model.id,
                     &scheme,
                     center_x,
                     center_y,
@@ -561,7 +561,7 @@ fn render_fleet_gallery(
             secondary: model.secondary_color,
             helmet: Palette::NEON_GOLD,
         };
-        render_car_lateral(model.base_car_choice, &scheme, cx + cell_w * 0.5, cy + scaler.s(28.0), scaler.s(0.65), 0.0, false);
+        render_real_car_lateral_by_id(model.id, &scheme, cx + cell_w * 0.5, cy + scaler.s(28.0), scaler.s(0.65), 0.0, false);
 
         // Name and stats
         fonts.draw_ui_bold(model.name, cx + scaler.s(8.0), cy + scaler.s(62.0), scaler.font_s(10.0), Palette::WHITE);
