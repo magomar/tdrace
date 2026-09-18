@@ -53,6 +53,8 @@ pub fn render_starting_grid_screen(
     focused_panel: StartingGridFocus,
     active_card_idx: usize,
     active_roster_idx: usize,
+    is_car_unlocked: bool,
+    unlock_level: u32,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -218,19 +220,26 @@ pub fn render_starting_grid_screen(
     // Card 3: Vehicle Selection & Specs Card
     let is_car_active = is_left_focused && active_card_idx == 1;
     let car_card_h = scaler.s(214.0);
-    let car_border_col = if is_car_active {
+    let car_border_col = if !is_car_unlocked {
+        Palette::RED
+    } else if is_car_active {
         if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::NEON_CYAN }
     } else {
         Palette::UI_CARD_BORDER
     };
-    let car_bg = if is_car_active {
+    let car_bg = if !is_car_unlocked {
+        Color::new(0.12, 0.04, 0.04, 0.85)
+    } else if is_car_active {
         Palette::UI_CARD_BG_HOVER
     } else {
         Palette::UI_CARD_BG
     };
-    scaler.draw_glass_card(col1_x, curr_y, col_w, car_card_h, car_bg, car_border_col, if is_car_active { 2.4 } else { 1.2 });
+    scaler.draw_glass_card(col1_x, curr_y, col_w, car_card_h, car_bg, car_border_col, if is_car_active || !is_car_unlocked { 2.4 } else { 1.2 });
 
-    let car_header_title = if is_car_active {
+    let locked_header_str = format!("CAR SELECTION: 🔒 LOCKED [LEVEL {} REQUIRED]", unlock_level);
+    let car_header_title = if !is_car_unlocked {
+        &locked_header_str
+    } else if is_car_active {
         if game_mode.allows_car_change() {
             "CAR SELECTION [ACTIVE • ENTER / < / > to switch]"
         } else {
@@ -243,7 +252,9 @@ pub fn render_starting_grid_screen(
             "CAR SPEC: ENFORCED PREDEFINED [Locked]"
         }
     };
-    let car_header_col = if is_car_active {
+    let car_header_col = if !is_car_unlocked {
+        Palette::RED
+    } else if is_car_active {
         if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::NEON_CYAN }
     } else {
         Palette::UI_TEXT_MUTED
@@ -255,12 +266,22 @@ pub fn render_starting_grid_screen(
         scaler.font_s(11.0),
         car_header_col,
     );
+    let car_tag_str = if !is_car_unlocked {
+        "🔒 LOCKED"
+    } else {
+        active_car.tag()
+    };
+    let car_tag_col = if !is_car_unlocked {
+        Palette::RED
+    } else {
+        Palette::NEON_GOLD
+    };
     fonts.draw_ui_bold(
-        active_car.tag(),
+        car_tag_str,
         col1_x + col_w - scaler.s(160.0),
         curr_y + scaler.s(16.0),
         scaler.font_s(10.0),
-        Palette::NEON_GOLD,
+        car_tag_col,
     );
 
     fonts.draw_ui_bold(
@@ -392,15 +413,27 @@ pub fn render_starting_grid_screen(
     let is_launch_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + launch_h;
     let is_launch_active = is_launch_card || is_launch_hovered;
 
-    let launch_bg = if is_launch_active {
-        Color::new(0.12, 0.68, 0.32, 0.98)
+    let (launch_bg, launch_border, launch_title, launch_sub) = if !is_car_unlocked {
+        (
+            Color::new(0.35, 0.10, 0.10, 0.95),
+            Palette::RED,
+            "🔒 VEHICLE LOCKED",
+            format!("Advance Career to Level {} to Unlock", unlock_level),
+        )
+    } else if is_launch_active {
+        (
+            Color::new(0.12, 0.68, 0.32, 0.98),
+            Palette::NEON_GREEN,
+            "▶ LAUNCH RACE  [ENTER / SPACE / CLICK]",
+            "SPACE / Gamepad A".to_string(),
+        )
     } else {
-        Color::new(0.08, 0.44, 0.22, 0.92)
-    };
-    let launch_border = if is_launch_active {
-        Palette::NEON_GREEN
-    } else {
-        Color::new(0.20, 0.78, 0.40, 0.85)
+        (
+            Color::new(0.08, 0.44, 0.22, 0.92),
+            Color::new(0.20, 0.78, 0.40, 0.85),
+            "▶ LAUNCH RACE",
+            "SPACE / Gamepad A".to_string(),
+        )
     };
 
     draw_rectangle(col1_x, curr_y, col_w, launch_h, launch_bg);
@@ -409,15 +442,10 @@ pub fn render_starting_grid_screen(
         curr_y,
         col_w,
         launch_h,
-        if is_launch_active { 2.8 * scaler.scale } else { 1.6 * scaler.scale },
+        if is_launch_active || !is_car_unlocked { 2.8 * scaler.scale } else { 1.6 * scaler.scale },
         launch_border,
     );
 
-    let launch_title = if is_launch_active {
-        "▶ LAUNCH RACE  [ENTER / SPACE / CLICK]"
-    } else {
-        "▶ LAUNCH RACE"
-    };
     fonts.draw_ui_bold_centered(
         launch_title,
         col1_x + col_w * 0.5,
@@ -426,11 +454,11 @@ pub fn render_starting_grid_screen(
         Palette::WHITE,
     );
     fonts.draw_ui_regular_centered(
-        "SPACE / Gamepad A",
+        &launch_sub,
         col1_x + col_w * 0.5,
         curr_y + scaler.s(37.0),
         scaler.font_s(13.5),
-        Color::new(0.85, 1.0, 0.90, 0.95),
+        if !is_car_unlocked { Color::new(1.0, 0.8, 0.8, 0.95) } else { Color::new(0.85, 1.0, 0.90, 0.95) },
     );
 
     // =========================================================================
@@ -440,6 +468,7 @@ pub fn render_starting_grid_screen(
         GameMode::TimeTrial => "TIME TRIAL • ROSTER & SHADOW CAR",
         GameMode::FreeRide => "FREE RIDE • PRACTICE ROSTER",
         GameMode::StandardRace | GameMode::ExperimentalRace => "STARTING GRID & ROSTER",
+        GameMode::Career => "CAREER CHAMPIONSHIP • STARTING GRID",
         GameMode::SplitScreen => "2P SPLIT SCREEN • KEYS VS GAMEPAD",
     };
     let roster_header = if is_right_focused {
@@ -562,7 +591,7 @@ pub fn render_starting_grid_screen(
                 tip_y += scaler.s(24.0);
             }
         }
-        GameMode::StandardRace | GameMode::ExperimentalRace | GameMode::SplitScreen => {
+        GameMode::StandardRace | GameMode::ExperimentalRace | GameMode::SplitScreen | GameMode::Career => {
             for (i, participant) in grid_participants.iter().enumerate() {
                 let slot = i + 1;
                 let is_row_sel = is_right_focused && i == active_roster_idx;

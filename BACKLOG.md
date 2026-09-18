@@ -43,8 +43,9 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
 - **Compact Telemetry Recording**: Store player hot-lap waypoints, velocity vectors, and steering angles as lightweight JSON/binary recordings.
 - **Ghost Car Playback**: Render a semi-transparent ghost vehicle during Time Trial sessions to assist with apex optimization and racing line analysis.
 
-### 2.5 Vehicle Roster & Archetype Expansions (Buggies, Trucks, Superkarts, Novelty Specials)
-- **Detailed Design Specification**: See [`docs/vehicle_roster_expansion_ideas.md`](file:///home/mario/workspace/games/tdrace/docs/vehicle_roster_expansion_ideas.md) for full physics levers, surface interactions, visual archetypes, and parameter tables.
+### 2.5 Vehicle Roster & Archetype Expansions (Real-World Migration & Interactive Garage)
+- **Real-World Models & Interactive Garage Specification**: See [`docs/spec_real_world_car_models_and_garage.md`](docs/spec_real_world_car_models_and_garage.md) for the complete roadmap migrating prototypical cars to authentic models across all 11 categories (Porsche Cayman GT4 / 911 GT3 R, BMW M4 GT4 / GT3, Ferrari 296 GT3, etc.), Balance of Performance (BoP) calibration, dual-view graphics pipeline (accurate top-down + high-detail 2D lateral view), and the Interactive Garage Showroom.
+- **Novelty Archetypes & Experimental Classes**: See [`docs/vehicle_roster_expansion_ideas.md`](docs/vehicle_roster_expansion_ideas.md) for full physics levers, surface interactions, visual archetypes, and parameter tables.
 - **Off-Road & Bashing**:
   - *Baja Sand Buggy*: Lightweight rear-engine RWD buggy with dirt/sand immunity and high jump compliance.
   - *Stadium Super Truck (SST)*: Long-travel suspension truck cornering aggressively on 3 wheels with bouncy ramp landings.
@@ -61,7 +62,7 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
 - **Novelty & Party Specials**:
   - *Tuned Kei Micro-Van*: High-CG body roll, front-heavy brake dive, and slipstream drafting dependence.
   - *European Racing Super Truck*: 5-ton 1200 BHP cab-over semi-truck acting as an unstoppable moving fortress.
-- **Implementation Status**: TBD selection of prioritized vehicles for future milestone integration into `crates/wheelbase` and `crates/tdrace-app`.
+- **Implementation Status**: Specification completed in [`docs/spec_real_world_car_models_and_garage.md`](docs/spec_real_world_car_models_and_garage.md); scheduled for phased catalog, rendering, and garage screen implementation.
 
 ### 2.6 Arcade Damage Modelling & Pitstop Repairs
 - **Vehicle Durability & Health Bar**:
@@ -92,7 +93,22 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
 - **HUD, Input & Audio Wiring**:
   - Item inventory slot on HUD featuring a roulette roll animation upon box collection.
   - Dedicated trigger action mapped through `cabinet::input::InputMap` (Keyboard Space, Gamepad B/Right Trigger, Mobile touch button).
-  - Audio and visual juice: distinct pickup jingles, activation swooshes, and floating feedback text.
+
+### 2.8 Networked Multiplayer Racing
+- **Client-Server Architecture**: Dedicated lightweight authoritative game relay / room host using UDP or WebSockets (with WebRTC data channels for browser builds).
+- **Lobby & Matchmaking System**:
+  - Module-specific open and private lobby rooms with customizable rulesets (laps, collision modes, vehicle restrictions).
+  - Synchronized car and livery selection phase before green light countdown.
+  - Spectator camera slots and race director replay feeds.
+- **State Synchronization & Netcode**:
+  - High-frequency delta compression of vehicle telemetry (position, velocity, orientation, steering, throttle/brake inputs).
+  - Client-side prediction and dead-reckoning interpolation to mask latency spikes.
+  - Server-arbitrated collision resolution with rollback compensation to prevent rubber-banding on door-to-door passes.
+
+### 2.9 Classic Arcade Tournaments & Retro Career Ladder
+- **Heritage Arcade Ladder**: Dedicated tournament cup system for the all-in-one Classic Game Module.
+- **Multi-Class Grand Prix**: Progression series spanning Grassroots Clubman, Tuning Drift Spec, 125cc Karting, and Supercar Pro Tour.
+- **Retro High-Score Coin-Op Style**: Timed checkpoint stages with classic timer countdown ("Time Extended!") and nostalgic leaderboard ceremonies.
 
 ---
 

@@ -275,22 +275,34 @@ mod tests {
         assert_eq!(gt.id(), "gt");
         assert_eq!(gt.title(), "GT WORLD CHALLENGE");
         assert!(!gt.vehicles().is_empty());
-        assert!(gt.vehicles().len() >= 3);
+        assert_eq!(gt.vehicles().len(), 6);
         assert!(!gt.tracks().is_empty());
         assert_eq!(gt.tracks().len(), 15);
         assert_eq!(gt.drivers().len(), 7);
         assert!(!gt.supported_game_modes().is_empty());
 
-        assert_eq!(gt.default_vehicle_id(), "gt3_evo");
+        assert_eq!(gt.default_vehicle_id(), "gt4_clubsport");
         assert_eq!(gt.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
 
         let monza = GtWorldChallengeModule::track_monza();
         assert_eq!(monza.name, "Monza Autodromo Nazionale");
         assert!(!monza.checkpoints.is_empty());
 
+        let gt4 = GtWorldChallengeModule::car_gt4_clubsport();
+        assert_eq!(gt4.mass, 1320.0);
+        assert!(gt4.downforce_coefficient < 1.0);
+
         let gt3 = GtWorldChallengeModule::car_gt3_evo();
         assert!(gt3.downforce_coefficient >= 2.0);
         assert!(gt3.top_speed_mps * 3.6 > 280.0);
+
+        let gt1 = GtWorldChallengeModule::car_gt1_legend();
+        assert_eq!(gt1.mass, 1120.0);
+        assert!(gt1.top_speed_mps * 3.6 > 330.0);
+
+        let hypercar = GtWorldChallengeModule::car_hypercar_prototype();
+        assert_eq!(hypercar.mass, 1030.0);
+        assert!(hypercar.downforce_coefficient >= 3.0);
 
         let f1 = GtWorldChallengeModule::car_f1_hybrid();
         assert!(f1.downforce_coefficient > 3.0);

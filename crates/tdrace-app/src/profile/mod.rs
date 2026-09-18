@@ -156,4 +156,173 @@ pub struct RaceHistoryEntry {
     pub created_at: String,
 }
 
+/// Persistent career progression record for a specific motorsport module (e.g. "gt", "rally", etc.).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ModuleCareerProgress {
+    pub profile_id: i64,
+    pub module_id: String,
+    pub xp: u64,
+    pub level: u32,
+    pub unlocked_cars: Vec<String>,
+    pub unlocked_tracks: Vec<String>,
+    pub completed_events: Vec<String>,
+    pub trophies_gold: u32,
+    pub trophies_silver: u32,
+    pub trophies_bronze: u32,
+    pub updated_at: String,
+}
+
+impl ModuleCareerProgress {
+    /// Initial starter career record for Gran Turismo & Endurance GT module.
+    pub fn default_for_gt(profile_id: i64) -> Self {
+        let mut progress = Self {
+            profile_id,
+            module_id: "gt".to_string(),
+            xp: 0,
+            level: 1,
+            unlocked_cars: Vec::new(),
+            unlocked_tracks: Vec::new(),
+            completed_events: Vec::new(),
+            trophies_gold: 0,
+            trophies_silver: 0,
+            trophies_bronze: 0,
+            updated_at: String::new(),
+        };
+        progress.sync_unlocks_for_level();
+        progress
+    }
+
+    /// XP requirement thresholds for levels 1 through 5.
+    pub fn xp_threshold_for_level(level: u32) -> u64 {
+        match level {
+            1 => 0,
+            2 => 1500,
+            3 => 3500,
+            4 => 6500,
+            _ => 10000,
+        }
+    }
+
+    /// Base XP of the current level.
+    pub fn current_level_base_xp(&self) -> u64 {
+        Self::xp_threshold_for_level(self.level)
+    }
+
+    /// Target XP needed to reach next level, or None if at max level 5.
+    pub fn next_level_target_xp(&self) -> Option<u64> {
+        if self.level >= 5 {
+            None
+        } else {
+            Some(Self::xp_threshold_for_level(self.level + 1))
+        }
+    }
+
+    /// Progress ratio [0.0..1.0] towards next level.
+    pub fn level_progress_ratio(&self) -> f32 {
+        if self.level >= 5 {
+            return 1.0;
+        }
+        let base = self.current_level_base_xp();
+        let target = self.next_level_target_xp().unwrap_or(base);
+        if target <= base {
+            1.0
+        } else {
+            let cur = (self.xp.saturating_sub(base)) as f32;
+            let total = (target - base) as f32;
+            (cur / total).clamp(0.0, 1.0)
+        }
+    }
+
+    /// Awards XP and calculates level up. Returns Some(new_level) if level increased.
+    pub fn add_xp(&mut self, amount: u64) -> Option<u32> {
+        self.xp = self.xp.saturating_add(amount);
+        let old_level = self.level;
+        let mut new_level = old_level;
+
+        while new_level < 5 && self.xp >= Self::xp_threshold_for_level(new_level + 1) {
+            new_level += 1;
+        }
+
+        if new_level > old_level {
+            self.level = new_level;
+            self.sync_unlocks_for_level();
+            Some(new_level)
+        } else {
+            None
+        }
+    }
+
+    /// Ensures unlocked cars and tracks match or exceed current level.
+    pub fn sync_unlocks_for_level(&mut self) {
+        if self.module_id == "gt" || self.module_id == "f1" {
+            // Level 1 Starter
+            self.ensure_car("gt4_clubsport");
+            self.ensure_car("f1_hybrid_26");
+            self.ensure_track("monza");
+            self.ensure_track("red_bull_ring");
+            self.ensure_track("nurburgring_gp");
+
+            // Level 2 (FIA GT3)
+            if self.level >= 2 {
+                self.ensure_car("gt3_evo");
+                self.ensure_track("silverstone");
+                self.ensure_track("catalunya");
+                self.ensure_track("bathurst");
+            }
+
+            // Level 3 (SRO GT2)
+            if self.level >= 3 {
+                self.ensure_car("gt2_biturbo");
+                self.ensure_track("spa");
+                self.ensure_track("zandvoort");
+                self.ensure_track("portimao_gp");
+            }
+
+            // Level 4 (90s Le Mans GT1)
+            if self.level >= 4 {
+                self.ensure_car("gt1_legend");
+                self.ensure_track("suzuka");
+                self.ensure_track("interlagos");
+                self.ensure_track("le_mans_sarthe");
+            }
+
+            // Level 5 (LMH Hypercar Prototype)
+            if self.level >= 5 {
+                self.ensure_car("hypercar_prototype");
+                self.ensure_track("monaco");
+                self.ensure_track("madring");
+                self.ensure_track("marina_bay");
+            }
+        }
+    }
+
+    fn ensure_car(&mut self, id: &str) {
+        if !self.unlocked_cars.iter().any(|c| c == id) {
+            self.unlocked_cars.push(id.to_string());
+        }
+    }
+
+    fn ensure_track(&mut self, id: &str) {
+        if !self.unlocked_tracks.iter().any(|t| t == id) {
+            self.unlocked_tracks.push(id.to_string());
+        }
+    }
+
+    /// Checks if a vehicle is unlocked for this profile.
+    pub fn is_car_unlocked(&self, car_id: &str, dev_mode: bool) -> bool {
+        if dev_mode || car_id == "f1_hybrid_26" {
+            return true;
+        }
+        self.unlocked_cars.iter().any(|c| c == car_id)
+    }
+
+    /// Checks if a circuit is unlocked for this profile.
+    pub fn is_track_unlocked(&self, track_id: &str, dev_mode: bool) -> bool {
+        if dev_mode {
+            return true;
+        }
+        self.unlocked_tracks.iter().any(|t| t == track_id)
+    }
+}
+
 

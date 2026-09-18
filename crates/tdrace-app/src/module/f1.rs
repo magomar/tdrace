@@ -3,7 +3,7 @@ use macroquad::color::Color;
 use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, TrackGeometry};
-use tdrace_core::track::presets::{classic_grand_prix, generate_checkpoints, generate_grid_positions, generate_walls_from_spline};
+use tdrace_core::track::presets::{generate_checkpoints, generate_grid_positions, generate_walls_from_spline};
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{Track, TrackCategory, TrackKind};
 
@@ -975,6 +975,246 @@ impl GtWorldChallengeModule {
         }
     }
 
+    /// Nürburgring GP-Strecke: High-speed German circuit with Castrol-S, Mercedes Arena, Dunlop hairpin, and Schumacher S.
+    pub fn track_nurburgring_gp() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(120.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(220.0, -10.0), 14.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(280.0, -40.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(270.0, -100.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(210.0, -140.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(140.0, -160.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(110.0, -220.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(160.0, -270.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(240.0, -280.0), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(320.0, -320.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(340.0, -390.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(300.0, -460.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(220.0, -470.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(160.0, -430.0), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(100.0, -380.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(40.0, -350.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-20.0, -370.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-90.0, -380.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-160.0, -330.0), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-200.0, -250.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-180.0, -170.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-130.0, -100.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-60.0, -40.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+
+        Track {
+            name: "Nurburgring GP-Strecke".to_string(),
+            description: "Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.".to_string(),
+            category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 5,
+            predefined_car: Some("gt3_car".to_string()),
+            module_id: Some("gt".to_string()),
+            modules: vec!["gt".to_string(), "f1".to_string()],
+        }
+    }
+
+    /// Mount Panorama Circuit (Bathurst): Legendary Australian undulating mountain circuit featuring Hell Corner, Mountain Straight, The Cutting, Skyline, and Conrod Straight.
+    pub fn track_bathurst() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(130.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(210.0, -10.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(250.0, 50.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(240.0, 160.0), 13.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(230.0, 280.0), 13.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(220.0, 400.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(260.0, 480.0), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(230.0, 540.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(160.0, 560.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(80.0, 570.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(0.0, 580.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-80.0, 560.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-140.0, 500.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-170.0, 420.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-160.0, 340.0), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-190.0, 260.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-200.0, 150.0), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-210.0, 40.0), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-210.0, -70.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-170.0, -110.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-110.0, -90.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-50.0, -50.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+
+        Track {
+            name: "Mount Panorama (Bathurst)".to_string(),
+            description: "The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.".to_string(),
+            category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 4,
+            predefined_car: Some("gt3_car".to_string()),
+            module_id: Some("gt".to_string()),
+            modules: vec!["gt".to_string(), "f1".to_string()],
+        }
+    }
+
+    /// Autódromo Internacional do Algarve (Portimão): Rollercoaster Portuguese circuit featuring Torre VIP, downhill plunge, and Galp curve.
+    pub fn track_portimao_gp() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(140.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(240.0, -10.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(310.0, -60.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(330.0, -140.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(280.0, -200.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(190.0, -190.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(140.0, -250.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(120.0, -330.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(160.0, -400.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(110.0, -460.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(30.0, -430.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-20.0, -360.0), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-90.0, -320.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-160.0, -340.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-210.0, -290.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-200.0, -200.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-150.0, -130.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-80.0, -70.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+
+        Track {
+            name: "Autodromo Internacional do Algarve".to_string(),
+            description: "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.".to_string(),
+            category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 5,
+            predefined_car: Some("gt3_car".to_string()),
+            module_id: Some("gt".to_string()),
+            modules: vec!["gt".to_string(), "f1".to_string()],
+        }
+    }
+
+    /// Circuit de la Sarthe (24 Hours of Le Mans): Legendary French endurance course with Dunlop Chicane, Tertre Rouge, Mulsanne Straight, and Porsche Curves.
+    pub fn track_le_mans_sarthe() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(120.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(190.0, 20.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(260.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(310.0, -50.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(340.0, -140.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(330.0, -260.0), 14.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(300.0, -380.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(320.0, -480.0), 14.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(290.0, -600.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(290.0, -740.0), 14.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(240.0, -820.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(140.0, -800.0), 14.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(40.0, -780.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-20.0, -820.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-60.0, -760.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-80.0, -640.0), 14.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-90.0, -500.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-130.0, -380.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-110.0, -260.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-80.0, -150.0), 14.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-50.0, -50.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 4.5, BarrierType::Steel);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+
+        Track {
+            name: "Circuit de la Sarthe (Le Mans)".to_string(),
+            description: "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.".to_string(),
+            category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 4,
+            predefined_car: Some("gt3_car".to_string()),
+            module_id: Some("gt".to_string()),
+            modules: vec!["gt".to_string(), "f1".to_string()],
+        }
+    }
+
 
     /// FIA GT3 Competition Vehicle Spec (paradigmatic endurance benchmark)
     pub fn car_gt3_evo() -> CarConfig {
@@ -1036,6 +1276,53 @@ impl GtWorldChallengeModule {
         cfg.top_speed_mps = 91.0; // ~328 km/h
         cfg.downforce_coefficient = 1.40; // Lower downforce than GT3
         cfg.air_drag_coefficient = 0.58;
+        cfg
+    }
+
+    /// GT4 Clubsport Spec: 420 BHP, RWD, lightweight, low aero (Cl=0.85)
+    pub fn car_gt4_clubsport() -> CarConfig {
+        let mut cfg = Self::car_gt3_evo();
+        cfg.mass = 1320.0;
+        cfg.inertia = 1620.0;
+        cfg.max_engine_force = 7200.0; // ~420 BHP GT4
+        cfg.max_reverse_force = 4680.0;
+        cfg.max_brake_force = 18000.0;
+        cfg.top_speed_mps = 75.5; // ~272 km/h
+        cfg.downforce_coefficient = 0.85; // Low aero downforce
+        cfg.air_drag_coefficient = 0.52;
+        cfg.assists = DriverAssistsConfig::arcade();
+        cfg
+    }
+
+    /// 90s Le Mans GT1 Legend Spec: 650 BHP, raw RWD, twin-turbo, high aero (Cl=2.60), analog zero assists
+    pub fn car_gt1_legend() -> CarConfig {
+        let mut cfg = Self::car_gt3_evo();
+        cfg.mass = 1120.0;
+        cfg.inertia = 1380.0;
+        cfg.max_engine_force = 10400.0; // ~650 BHP GT1 Twin-Turbo
+        cfg.max_reverse_force = 6760.0;
+        cfg.max_brake_force = 24000.0;
+        cfg.top_speed_mps = 93.0; // ~335 km/h
+        cfg.downforce_coefficient = 2.60; // High Le Mans GT1 wing aero
+        cfg.air_drag_coefficient = 0.60;
+        cfg.assists = DriverAssistsConfig::raw(); // Pure analog, zero electronic assists
+        cfg
+    }
+
+    /// LMH & LMDh Hypercar Prototype Spec: 800 BHP, hybrid deploy, ground-effect tunnels (Cl=3.10)
+    pub fn car_hypercar_prototype() -> CarConfig {
+        let mut cfg = Self::car_gt3_evo();
+        cfg.mass = 1030.0;
+        cfg.inertia = 1250.0;
+        cfg.wheelbase = 3.15;
+        cfg.track_width = 2.00;
+        cfg.max_engine_force = 12200.0; // ~800 BHP LMH Hybrid
+        cfg.max_reverse_force = 7930.0;
+        cfg.max_brake_force = 26000.0;
+        cfg.top_speed_mps = 95.0; // ~342 km/h
+        cfg.downforce_coefficient = 3.10; // Extreme ground-effect aero tunnels
+        cfg.air_drag_coefficient = 0.68;
+        cfg.assists = DriverAssistsConfig::sport();
         cfg
     }
 
@@ -1132,6 +1419,25 @@ impl GameModule for GtWorldChallengeModule {
     fn vehicles(&self) -> Vec<VehicleModelDefinition> {
         vec![
             VehicleModelDefinition {
+                id: "gt4_clubsport",
+                name: "420 BHP GT4 Clubsport",
+                tag: "GT4 ENTRY SPEC",
+                description: "Agile 420 BHP lightweight RWD racer, agile cornering, gentle aero (Cl=0.85).",
+                config: Self::car_gt4_clubsport(),
+                visual_type: VehicleVisualType::TouringGT {
+                    widebody: false,
+                    gt_wing: true,
+                    diffuser: false,
+                },
+                stats: (0.78, 0.82, 0.85, 0.70),
+                default_schemes: vec![
+                    CarColorScheme::from_index(2), // Rosso Corsa GT
+                    CarColorScheme::from_index(4), // Sapphire Racing Blue
+                    CarColorScheme::from_index(3), // Sunburst Orange
+                    CarColorScheme::from_index(0), // Gunmetal Platinum
+                ],
+            },
+            VehicleModelDefinition {
                 id: "gt3_evo",
                 name: "600 BHP GT3 Evo Racer",
                 tag: "FIA GT3 SPEC",
@@ -1169,10 +1475,46 @@ impl GameModule for GtWorldChallengeModule {
                 ],
             },
             VehicleModelDefinition {
+                id: "gt1_legend",
+                name: "650 BHP GT1 Le Mans Legend",
+                tag: "90s GT1 LEGEND",
+                description: "Raw 650 BHP twin-turbo beast with high downforce (Cl=2.60) and pure analog handling (zero electronic assists).",
+                config: Self::car_gt1_legend(),
+                visual_type: VehicleVisualType::TouringGT {
+                    widebody: true,
+                    gt_wing: true,
+                    diffuser: true,
+                },
+                stats: (0.98, 0.98, 0.93, 0.40),
+                default_schemes: vec![
+                    CarColorScheme::from_index(0), // Gunmetal & Silver
+                    CarColorScheme::from_index(2), // Rosso Heritage
+                    CarColorScheme::from_index(6), // Stealth Carbon
+                ],
+            },
+            VehicleModelDefinition {
+                id: "hypercar_prototype",
+                name: "800 BHP LMH Hypercar Prototype",
+                tag: "LE MANS HYPERCAR",
+                description: "Cutting-edge 800 BHP hybrid prototype with ground-effect aero tunnels (Cl=3.10) and hybrid boost.",
+                config: Self::car_hypercar_prototype(),
+                visual_type: VehicleVisualType::TouringGT {
+                    widebody: true,
+                    gt_wing: true,
+                    diffuser: true,
+                },
+                stats: (0.99, 0.99, 0.98, 0.35),
+                default_schemes: vec![
+                    CarColorScheme::from_index(2), // Factory Racing Red
+                    CarColorScheme::from_index(6), // Carbon Black / Gold
+                    CarColorScheme::from_index(1), // Electric Aero Cyan
+                ],
+            },
+            VehicleModelDefinition {
                 id: "f1_hybrid_26",
                 name: "1050 BHP Hybrid F1 Turbo (Experimental)",
                 tag: "EXPERIMENTAL OPEN-WHEEL",
-                description: "Experimental 1050 BHP hybrid open-wheel test bench, 346 km/h, extreme downforce (Cl=3.4).",
+                description: "Experimental 1050 BHP hybrid open-wheel test bench, 346 km/h, extreme downforce (Cl=3.4). Available from Level 1.",
                 config: Self::car_f1_hybrid(),
                 visual_type: VehicleVisualType::OpenWheel {
                     front_wing_span: 1.80,
@@ -1191,11 +1533,12 @@ impl GameModule for GtWorldChallengeModule {
     }
 
     fn default_vehicle_id(&self) -> &'static str {
-        "gt3_evo"
+        "gt4_clubsport"
     }
 
     fn tracks(&self) -> Vec<TrackDefinition> {
         vec![
+            // Level 1: Fluid Speed & Classic Flow
             TrackDefinition {
                 id: "monza",
                 title: "Monza Autodromo Nazionale",
@@ -1206,14 +1549,24 @@ impl GameModule for GtWorldChallengeModule {
                 generator: Self::track_monza,
             },
             TrackDefinition {
-                id: "spa",
-                title: "Circuit de Spa-Francorchamps",
-                tag: "ARDENNES ROLLERCOASTER",
-                description: "Legendary 7km Belgian circuit featuring Eau Rouge, Kemmel Straight, and Pouhon.",
+                id: "red_bull_ring",
+                title: "Red Bull Ring",
+                tag: "AUSTRIAN ALPS",
+                description: "Undulating Austrian alpine sprint circuit with steep climbs and heavy braking into Remus.",
                 category: "Official GP Circuit",
-                default_laps: 3,
-                generator: Self::track_spa,
+                default_laps: 5,
+                generator: Self::track_red_bull_ring,
             },
+            TrackDefinition {
+                id: "nurburgring_gp",
+                title: "Nurburgring Grand Prix-Strecke",
+                tag: "EIFEL MOTORSPORT MECCA",
+                description: "Modern German GP circuit featuring the Castrol-S, Dunlop hairpin, and Schumacher S.",
+                category: "Official GP Circuit",
+                default_laps: 4,
+                generator: Self::track_nurburgring_gp,
+            },
+            // Level 2: GT Temples & Medium Downforce
             TrackDefinition {
                 id: "silverstone",
                 title: "Silverstone Grand Prix Circuit",
@@ -1224,14 +1577,52 @@ impl GameModule for GtWorldChallengeModule {
                 generator: Self::track_silverstone,
             },
             TrackDefinition {
-                id: "monaco",
-                title: "Circuit de Monaco",
-                tag: "JEWEL IN THE CROWN",
-                description: "Prestigious Monte Carlo street circuit with Loews Hairpin, the Tunnel, and Swimming Pool.",
+                id: "catalunya",
+                title: "Circuit de Barcelona-Catalunya",
+                tag: "SPANISH GP BENCHMARK",
+                description: "Premier aerodynamic benchmark testing high-speed downforce and technical precision.",
                 category: "Official GP Circuit",
-                default_laps: 6,
-                generator: Self::track_monaco,
+                default_laps: 5,
+                generator: Self::track_catalunya,
             },
+            TrackDefinition {
+                id: "bathurst",
+                title: "Mount Panorama Circuit (Bathurst)",
+                tag: "MOUNTAIN ROLLERCOASTER",
+                description: "Legendary Australian mountain course through the Cutting, Skyline, the Dipper, and Conrod Straight.",
+                category: "Official GP Circuit",
+                default_laps: 4,
+                generator: Self::track_bathurst,
+            },
+            // Level 3: High Speed & Elevation Rollercoasters
+            TrackDefinition {
+                id: "spa",
+                title: "Circuit de Spa-Francorchamps",
+                tag: "ARDENNES ROLLERCOASTER",
+                description: "Legendary 7km Belgian circuit featuring Eau Rouge, Kemmel Straight, and Pouhon.",
+                category: "Official GP Circuit",
+                default_laps: 3,
+                generator: Self::track_spa,
+            },
+            TrackDefinition {
+                id: "zandvoort",
+                title: "Circuit Zandvoort",
+                tag: "DUTCH DUNES",
+                description: "Seaside rollercoaster featuring high-banked Hugenholtz and Arie Luyendyk curves.",
+                category: "Official GP Circuit",
+                default_laps: 5,
+                generator: Self::track_zandvoort,
+            },
+            TrackDefinition {
+                id: "portimao_gp",
+                title: "Autodromo Internacional do Algarve",
+                tag: "PORTUGUESE ROLLERCOASTER",
+                description: "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.",
+                category: "Official GP Circuit",
+                default_laps: 4,
+                generator: Self::track_portimao_gp,
+            },
+            // Level 4: Legendary Technical Benchmarks
             TrackDefinition {
                 id: "suzuka",
                 title: "Suzuka International Racing Course",
@@ -1251,67 +1642,23 @@ impl GameModule for GtWorldChallengeModule {
                 generator: Self::track_interlagos,
             },
             TrackDefinition {
-                id: "montreal",
-                title: "Circuit Gilles Villeneuve",
-                tag: "ILE NOTRE-DAME",
-                description: "Canadian island circuit with Virage Senna, L'Epingle hairpin, and Wall of Champions.",
-                category: "Official GP Circuit",
-                default_laps: 5,
-                generator: Self::track_montreal,
-            },
-            TrackDefinition {
-                id: "red_bull_ring",
-                title: "Red Bull Ring",
-                tag: "AUSTRIAN ALPS",
-                description: "Undulating Austrian alpine sprint circuit with steep climbs and heavy braking into Remus.",
-                category: "Official GP Circuit",
-                default_laps: 5,
-                generator: Self::track_red_bull_ring,
-            },
-            TrackDefinition {
-                id: "catalunya",
-                title: "Circuit de Barcelona-Catalunya",
-                tag: "SPANISH GP BENCHMARK",
-                description: "Premier aerodynamic benchmark testing high-speed downforce and technical precision.",
-                category: "Official GP Circuit",
-                default_laps: 5,
-                generator: Self::track_catalunya,
-            },
-            TrackDefinition {
-                id: "zandvoort",
-                title: "Circuit Zandvoort",
-                tag: "DUTCH DUNES",
-                description: "Seaside rollercoaster featuring high-banked Hugenholtz and Arie Luyendyk curves.",
-                category: "Official GP Circuit",
-                default_laps: 5,
-                generator: Self::track_zandvoort,
-            },
-            TrackDefinition {
-                id: "bahrain",
-                title: "Bahrain International Circuit",
-                tag: "DESERT GRAND PRIX",
-                description: "Sakhir desert circuit with heavy Turn 1 braking and technical off-camber Turns 9-10.",
+                id: "le_mans_sarthe",
+                title: "Circuit de la Sarthe (Le Mans)",
+                tag: "24 HOURS OF LE MANS",
+                description: "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.",
                 category: "Official GP Circuit",
                 default_laps: 4,
-                generator: Self::track_bahrain,
+                generator: Self::track_le_mans_sarthe,
             },
+            // Level 5: Street Circuits & Maximum Aero Prototypes
             TrackDefinition {
-                id: "marina_bay",
-                title: "Marina Bay Street Circuit",
-                tag: "SINGAPORE NIGHT RACE",
-                description: "Spectacular floodlit street race navigating tight harbor chicanes and city avenues.",
+                id: "monaco",
+                title: "Circuit de Monaco",
+                tag: "JEWEL IN THE CROWN",
+                description: "Prestigious Monte Carlo street circuit with Loews Hairpin, the Tunnel, and Swimming Pool.",
                 category: "Official GP Circuit",
-                default_laps: 4,
-                generator: Self::track_marina_bay,
-            },
-            TrackDefinition {
-                id: "cota",
-                title: "Circuit of the Americas",
-                tag: "AUSTIN SPECTACLE",
-                description: "Grand Prix venue featuring steep uphill Turn 1 blind crest and high-speed Esses.",
-                category: "Official GP Circuit",
-                default_laps: 4,
-                generator: Self::track_cota,
+                default_laps: 6,
+                generator: Self::track_monaco,
             },
             TrackDefinition {
                 id: "madring",
@@ -1323,13 +1670,13 @@ impl GameModule for GtWorldChallengeModule {
                 generator: Self::track_madring,
             },
             TrackDefinition {
-                id: "classic_grand_prix",
-                title: "Classic Grand Prix Circuit",
-                tag: "FIA TEST TRACK",
-                description: "Technical GP testing circuit with high-speed chicanes and strategic pit lane.",
-                category: "FIA Test Circuit",
-                default_laps: 5,
-                generator: classic_grand_prix,
+                id: "marina_bay",
+                title: "Marina Bay Street Circuit",
+                tag: "SINGAPORE NIGHT RACE",
+                description: "Spectacular floodlit street race navigating tight harbor chicanes and city avenues.",
+                category: "Official GP Circuit",
+                default_laps: 4,
+                generator: Self::track_marina_bay,
             },
         ]
     }

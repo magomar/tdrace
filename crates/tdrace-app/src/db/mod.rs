@@ -6,7 +6,7 @@ use rusqlite::{params, Connection, Result};
 pub type Result<T> = std::result::Result<T, String>;
 use serde::{Deserialize, Serialize};
 
-use crate::profile::{PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::color::CarColorScheme;
 
 /// Record entry stored in the Hall of Fame.
@@ -95,7 +95,24 @@ impl HallOfFameDb {
                 created_at TEXT NOT NULL,
                 FOREIGN KEY(profile_id) REFERENCES player_profiles(id) ON DELETE CASCADE
             );
-            CREATE INDEX IF NOT EXISTS idx_race_history_profile ON race_history(profile_id, created_at DESC);",
+            CREATE INDEX IF NOT EXISTS idx_race_history_profile ON race_history(profile_id, created_at DESC);
+
+            CREATE TABLE IF NOT EXISTS profile_module_progress (
+                profile_id INTEGER NOT NULL,
+                module_id TEXT NOT NULL,
+                xp INTEGER NOT NULL DEFAULT 0,
+                level INTEGER NOT NULL DEFAULT 1,
+                unlocked_cars TEXT NOT NULL DEFAULT '[]',
+                unlocked_tracks TEXT NOT NULL DEFAULT '[]',
+                completed_events TEXT NOT NULL DEFAULT '[]',
+                trophies_gold INTEGER NOT NULL DEFAULT 0,
+                trophies_silver INTEGER NOT NULL DEFAULT 0,
+                trophies_bronze INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (profile_id, module_id),
+                FOREIGN KEY(profile_id) REFERENCES player_profiles(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_module_progress_profile ON profile_module_progress(profile_id, module_id);",
         )?;
         Ok(())
     }
@@ -563,6 +580,107 @@ impl HallOfFameDb {
         // Real race results are logged dynamically on session completion.
         Ok(())
     }
+
+    // =========================================================================
+    // Module Career Progress Management
+    // =========================================================================
+
+    /// Retrieves module career progress for a given player profile and module ID.
+    pub fn get_module_progress(&self, profile_id: i64, module_id: &str) -> Result<Option<ModuleCareerProgress>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
+                    trophies_gold, trophies_silver, trophies_bronze, updated_at
+             FROM profile_module_progress
+             WHERE profile_id = ?1 AND module_id = ?2",
+        )?;
+
+        let mut rows = stmt.query_map(params![profile_id, module_id], |row| {
+            let cars_json: String = row.get(4)?;
+            let tracks_json: String = row.get(5)?;
+            let events_json: String = row.get(6)?;
+
+            let unlocked_cars: Vec<String> = serde_json::from_str(&cars_json).unwrap_or_default();
+            let unlocked_tracks: Vec<String> = serde_json::from_str(&tracks_json).unwrap_or_default();
+            let completed_events: Vec<String> = serde_json::from_str(&events_json).unwrap_or_default();
+
+            Ok(ModuleCareerProgress {
+                profile_id: row.get(0)?,
+                module_id: row.get(1)?,
+                xp: row.get::<_, i64>(2)? as u64,
+                level: row.get::<_, i64>(3)? as u32,
+                unlocked_cars,
+                unlocked_tracks,
+                completed_events,
+                trophies_gold: row.get::<_, i64>(7)? as u32,
+                trophies_silver: row.get::<_, i64>(8)? as u32,
+                trophies_bronze: row.get::<_, i64>(9)? as u32,
+                updated_at: row.get(10)?,
+            })
+        })?;
+
+        if let Some(res) = rows.next() {
+            Ok(Some(res?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Saves or updates module career progress for a player profile.
+    pub fn save_module_progress(&self, progress: &ModuleCareerProgress) -> Result<()> {
+        let now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        let cars_json = serde_json::to_string(&progress.unlocked_cars).unwrap_or_else(|_| "[]".to_string());
+        let tracks_json = serde_json::to_string(&progress.unlocked_tracks).unwrap_or_else(|_| "[]".to_string());
+        let events_json = serde_json::to_string(&progress.completed_events).unwrap_or_else(|_| "[]".to_string());
+
+        self.conn.execute(
+            "INSERT INTO profile_module_progress (
+                profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
+                trophies_gold, trophies_silver, trophies_bronze, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+            ON CONFLICT(profile_id, module_id) DO UPDATE SET
+                xp = excluded.xp,
+                level = excluded.level,
+                unlocked_cars = excluded.unlocked_cars,
+                unlocked_tracks = excluded.unlocked_tracks,
+                completed_events = excluded.completed_events,
+                trophies_gold = excluded.trophies_gold,
+                trophies_silver = excluded.trophies_silver,
+                trophies_bronze = excluded.trophies_bronze,
+                updated_at = excluded.updated_at",
+            params![
+                progress.profile_id,
+                progress.module_id,
+                progress.xp as i64,
+                progress.level as i64,
+                cars_json,
+                tracks_json,
+                events_json,
+                progress.trophies_gold as i64,
+                progress.trophies_silver as i64,
+                progress.trophies_bronze as i64,
+                now
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// Returns existing career progress for profile and module, or creates and persists default starter progress.
+    pub fn get_or_create_module_progress(&self, profile_id: i64, module_id: &str) -> Result<ModuleCareerProgress> {
+        if let Some(p) = self.get_module_progress(profile_id, module_id)? {
+            Ok(p)
+        } else {
+            let def = match module_id {
+                "gt" | "f1" => ModuleCareerProgress::default_for_gt(profile_id),
+                _ => {
+                    let mut p = ModuleCareerProgress::default_for_gt(profile_id);
+                    p.module_id = module_id.to_string();
+                    p
+                }
+            };
+            self.save_module_progress(&def)?;
+            Ok(def)
+        }
+    }
 }
 
 /// In-memory fallback persistence manager for WebAssembly targets.
@@ -571,6 +689,7 @@ pub struct HallOfFameDb {
     profiles: std::sync::Mutex<Vec<PlayerProfile>>,
     history: std::sync::Mutex<Vec<RaceHistoryEntry>>,
     hof: std::sync::Mutex<Vec<HallOfFameEntry>>,
+    progress: std::sync::Mutex<Vec<ModuleCareerProgress>>,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -594,6 +713,7 @@ impl HallOfFameDb {
             profiles: std::sync::Mutex::new(Vec::new()),
             history: std::sync::Mutex::new(Vec::new()),
             hof: std::sync::Mutex::new(Vec::new()),
+            progress: std::sync::Mutex::new(Vec::new()),
         }
     }
 
@@ -800,6 +920,42 @@ impl HallOfFameDb {
 
     pub fn seed_defaults_if_empty(&self, _track_id: &str) -> Result<()> {
         Ok(())
+    }
+
+    pub fn get_module_progress(&self, profile_id: i64, module_id: &str) -> Result<Option<ModuleCareerProgress>> {
+        let guard = self.progress.lock().unwrap();
+        let res = guard
+            .iter()
+            .find(|p| p.profile_id == profile_id && p.module_id == module_id)
+            .cloned();
+        Ok(res)
+    }
+
+    pub fn save_module_progress(&self, progress: &ModuleCareerProgress) -> Result<()> {
+        let mut guard = self.progress.lock().unwrap();
+        if let Some(pos) = guard.iter().position(|p| p.profile_id == progress.profile_id && p.module_id == progress.module_id) {
+            guard[pos] = progress.clone();
+        } else {
+            guard.push(progress.clone());
+        }
+        Ok(())
+    }
+
+    pub fn get_or_create_module_progress(&self, profile_id: i64, module_id: &str) -> Result<ModuleCareerProgress> {
+        if let Some(p) = self.get_module_progress(profile_id, module_id)? {
+            Ok(p)
+        } else {
+            let def = match module_id {
+                "gt" | "f1" => ModuleCareerProgress::default_for_gt(profile_id),
+                _ => {
+                    let mut p = ModuleCareerProgress::default_for_gt(profile_id);
+                    p.module_id = module_id.to_string();
+                    p
+                }
+            };
+            self.save_module_progress(&def)?;
+            Ok(def)
+        }
     }
 }
 

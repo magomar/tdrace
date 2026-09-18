@@ -41,6 +41,7 @@ stateDiagram-v2
     state "Race Results & Podium (Finished)" as Finished
     state "Championship Standings (ChampionshipStandings)" as ChampionshipStandings
     state "Arcade Settings Modal (ArcadeSettingsModal)" as ArcadeSettingsModal
+    state "Garage Showroom (Garage)" as Garage
 
     %% Grand Hub transitions
     ModuleSelect --> Menu: [ENTER / SPACE / A] (Load Classic/Rally/Kart/GT/NASCAR)
@@ -51,8 +52,10 @@ stateDiagram-v2
     ArcadeSettingsModal --> ModuleSelect: [ESC / B / Save] (if opened from Hub)
 
     %% Menu transitions
-    Menu --> ModuleSelect: [ESC / TAB / G]
+    Menu --> ModuleSelect: [ESC / TAB]
     Menu --> StartingGrid: [SPACE / ENTER / A]
+    Menu --> Garage: [G] (Open Garage Showroom)
+    Garage --> Menu: [ESC / B / Select]
     Menu --> TrackManager: [T] or select Track Manager card
     Menu --> TrackEditor: [E] (Launch Editor with Selected Track)
     Menu --> ChampionshipStandings: [F] (GT World Challenge / NASCAR Cup Championship Mode)
@@ -65,6 +68,8 @@ stateDiagram-v2
     StartingGrid --> Countdown: [SPACE / ENTER / A]
     StartingGrid --> DriverCards: [D / Y]
     DriverCards --> StartingGrid: [ESC / ENTER / B]
+    StartingGrid --> Garage: [G] (Inspect Car Details)
+    Garage --> StartingGrid: [ESC / B]
     StartingGrid --> Menu: [ESC / B]
 
     %% Race Loop transitions
@@ -462,6 +467,29 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `Left` / `Right` (Bottom button row) | Select Bottom Button | Toggles between **[RESTORE DEFAULTS]** and **[SAVE & CLOSE]** |
 | `Enter` / `Space` / Gamepad `A` (Bottom row) | Execute Action | Restores default preferences or saves and closes modal |
 | `Escape` / Gamepad `B` | Cancel & Close | Discards uncommitted changes and closes modal |
+
+---
+
+### 3.16. Garage Showroom (`GameState::Garage`)
+* **Purpose**: Vehicle inspection showroom providing dual-view graphics (2D lateral profile & top-down turntable), vehicle historical dossier, real-world engineering specifications, performance radar, and live engine rev audio testing.
+* **State Struct**: `GameState::Garage { category_idx: usize, car_idx: usize, view_mode: GarageViewMode, is_revving: bool }`
+* **Components**:
+  - **Showroom Stage**: 2D Lateral profile vector model with brake calipers, spoke alloys, rim detailing, and polished floor mirror reflection; toggleable to Top-Down 360° turntable view.
+  - **Historical Dossier Panel**: Motorsport lineage, championship titles, technical innovations, and manufacturer heritage.
+  - **Engineering Telemetry Panel**: Weight (kg), F/R weight balance, BHP, Torque (Nm), Top Speed (km/h & mph), 0-100 km/h sprint, Downforce ($C_l \cdot A$), Braking force (N), and electronic assists.
+  - **Performance Radar**: Hexagonal comparative stat chart (Speed, Acceleration, Grip, Drift, Braking, Downforce).
+  - **Audio Rev Sampler**: Interactive engine throttle revving audio stage with animated tachometer, exhaust backfires, and glowing brake calipers.
+* **Navigation & Shortcuts**:
+
+| Key / Input | Action | Target / Result |
+| :--- | :--- | :--- |
+| `Q` / `E` / Gamepad `LB` / `RB` | Switch Category | Cycles motorsport class (GT4, GT3, GT2, GT1, Hypercar, F1, Rally, Kart, etc.) |
+| `A` / `D` / `Left` / `Right` | Cycle Vehicle | Cycles authentic real-world car models in active category |
+| `Tab` / Gamepad `X` | Toggle Dual-View | Swaps between 2D Lateral Profile and Top-Down Turntable view |
+| `Space` / Gamepad `RT` (Hold) | Rev Engine | Plays dynamic engine rev audio, moves tachometer, animates exhaust backfires & brake heat glow |
+| `L` / Gamepad `Y` | Cycle Livery | Cycles factory race liveries and sponsor colorways |
+| `Enter` / Gamepad `A` | Select Vehicle | Confirms vehicle selection and returns to Menu / Starting Grid |
+| `Escape` / Gamepad `B` | Return to Menu | Exits Garage without changing vehicle -> `GameState::Menu` |
 
 ---
 

@@ -114,9 +114,19 @@ fn test_game_mode_specifications_and_transitions() {
     assert!(!sr.has_ghost());
     assert!(sr.has_bots());
     assert!(!sr.is_time_attack());
-    assert_eq!(sr.next(), GameMode::ExperimentalRace);
+    assert_eq!(sr.next(), GameMode::Career);
 
-    // 4. ExperimentalRace
+    // 4. Career
+    let cr = GameMode::Career;
+    assert_eq!(cr.title(), "Career Mode");
+    assert!(!cr.allows_car_change());
+    assert!(!cr.has_ghost());
+    assert!(cr.has_bots());
+    assert!(!cr.is_time_attack());
+    assert!(cr.is_career());
+    assert_eq!(cr.next(), GameMode::ExperimentalRace);
+
+    // 5. ExperimentalRace
     let er = GameMode::ExperimentalRace;
     assert_eq!(er.title(), "Experimental Race");
     assert!(er.allows_car_change());

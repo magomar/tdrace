@@ -1,6 +1,6 @@
 use tdrace_app::db::HallOfFameDb;
 use tdrace_app::game::{GameState, RaceSession};
-use tdrace_app::profile::{CountryRegistry, PlayerProfile, RaceHistoryEntry};
+use tdrace_app::profile::{CountryRegistry, ModuleCareerProgress, PlayerProfile, RaceHistoryEntry};
 use tdrace_app::render::color::CarColorScheme;
 use tdrace_app::ui::menu::TrackChoice;
 
@@ -454,5 +454,166 @@ fn test_clear_profile_history_and_hall_of_fame() {
     assert_eq!(session.active_profile_stats.total_races, 0, "Session career stats should reset");
     assert!(!session.hof_entries.iter().any(|e| e.player_name == "Apex Legend"), "Session HOF should not have Apex Legend");
     assert_eq!(session.active_profile.alias, "Apex Legend", "Active profile identity preserved");
+}
+
+#[test]
+fn test_module_career_progress_persistence_and_xp_leveling() {
+    let db = HallOfFameDb::open_in_memory().expect("In-memory database should initialize");
+    let profile = db.seed_default_profile_if_empty().expect("Seed default profile");
+    let pid = profile.id.expect("Profile ID must exist");
+
+    // 1. Initial get_or_create for GT should return Level 1 starter progress
+    let mut progress: ModuleCareerProgress = db.get_or_create_module_progress(pid, "gt").expect("Query or create progress");
+    assert_eq!(progress.profile_id, pid);
+    assert_eq!(progress.module_id, "gt");
+    assert_eq!(progress.level, 1);
+    assert_eq!(progress.xp, 0);
+    assert!(progress.is_car_unlocked("gt4_clubsport", false));
+    assert!(progress.is_car_unlocked("f1_hybrid_26", false));
+    assert!(!progress.is_car_unlocked("gt3_evo", false));
+    assert!(!progress.is_car_unlocked("gt2_biturbo", false));
+    assert!(!progress.is_car_unlocked("gt1_legend", false));
+    assert!(!progress.is_car_unlocked("hypercar_prototype", false));
+
+    // In dev mode, everything is unlocked
+    assert!(progress.is_car_unlocked("gt3_evo", true));
+    assert!(progress.is_track_unlocked("monaco", true));
+
+    // Check Starter circuits
+    assert!(progress.is_track_unlocked("monza", false));
+    assert!(progress.is_track_unlocked("red_bull_ring", false));
+    assert!(progress.is_track_unlocked("nurburgring_gp", false));
+    assert!(!progress.is_track_unlocked("silverstone", false));
+    assert!(!progress.is_track_unlocked("spa", false));
+
+    // 2. Add XP to reach Level 2 (1,500 XP required)
+    let lvl_up = progress.add_xp(1500);
+    assert_eq!(lvl_up, Some(2));
+    assert_eq!(progress.level, 2);
+    assert!(progress.is_car_unlocked("gt3_evo", false));
+    assert!(progress.is_track_unlocked("silverstone", false));
+    assert!(progress.is_track_unlocked("catalunya", false));
+    assert!(progress.is_track_unlocked("bathurst", false));
+    assert!(!progress.is_car_unlocked("gt2_biturbo", false));
+
+    // Save and verify persistence in SQLite
+    db.save_module_progress(&progress).expect("Save progress");
+    let fetched = db.get_module_progress(pid, "gt").expect("Fetch progress").expect("Must exist");
+    assert_eq!(fetched.level, 2);
+    assert_eq!(fetched.xp, 1500);
+    assert!(fetched.is_car_unlocked("gt3_evo", false));
+    assert!(fetched.is_track_unlocked("bathurst", false));
+
+    // 3. Level all the way up to Level 5 (10,000 XP)
+    let lvl_up_max = progress.add_xp(8500);
+    assert_eq!(lvl_up_max, Some(5));
+    assert_eq!(progress.level, 5);
+    assert_eq!(progress.xp, 10000);
+    assert!(progress.is_car_unlocked("gt2_biturbo", false));
+    assert!(progress.is_car_unlocked("gt1_legend", false));
+    assert!(progress.is_car_unlocked("hypercar_prototype", false));
+    assert!(progress.is_track_unlocked("spa", false));
+    assert!(progress.is_track_unlocked("suzuka", false));
+    assert!(progress.is_track_unlocked("le_mans_sarthe", false));
+    assert!(progress.is_track_unlocked("monaco", false));
+    assert!(progress.is_track_unlocked("marina_bay", false));
+
+    // 4. Verify module independence: progress in rally is completely separate
+    let rally_progress = db.get_or_create_module_progress(pid, "rally").expect("Rally progress");
+    assert_eq!(rally_progress.module_id, "rally");
+    assert_eq!(rally_progress.level, 1);
+    assert_eq!(rally_progress.xp, 0);
+}
+
+#[test]
+fn test_gt_career_session_gating_and_cup_launch() {
+    use tdrace_app::ui::menu::{CarChoice, GameMode};
+
+    let mut session = RaceSession::new();
+    let mem_db = HallOfFameDb::open_in_memory().unwrap();
+    let profile = mem_db.seed_default_profile_if_empty().unwrap();
+    let pid = profile.id.unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    assert_eq!(session.active_profile.id, Some(pid));
+    assert_eq!(session.active_career_progress.level, 1);
+    assert_eq!(session.active_career_progress.xp, 0);
+
+    // Switch to GT module
+    session.switch_to_gt();
+    assert_eq!(session.active_module_id, "gt");
+
+    // Level 1 vehicle gating checks: GT4 & F1 unlocked, GT3/GT2/GT1/Hypercar locked
+    assert!(session.is_car_unlocked(CarChoice::GT4Clubsport));
+    assert!(session.is_car_unlocked(CarChoice::F1Car));
+    assert!(!session.is_car_unlocked(CarChoice::GT3Car));
+    assert!(!session.is_car_unlocked(CarChoice::GT2Biturbo));
+    assert!(!session.is_car_unlocked(CarChoice::GT1Legend));
+    assert!(!session.is_car_unlocked(CarChoice::HypercarPrototype));
+
+    // Level 1 circuit gating checks
+    assert!(session.is_track_unlocked("monza"));
+    assert!(session.is_track_unlocked("red_bull_ring"));
+    assert!(session.is_track_unlocked("nurburgring_gp"));
+    assert!(!session.is_track_unlocked("silverstone"));
+    assert!(!session.is_track_unlocked("bathurst"));
+    assert!(!session.is_track_unlocked("le_mans_sarthe"));
+    assert!(!session.is_track_unlocked("monaco"));
+
+    // Dev mode bypass: all cars and circuits unlocked immediately
+    session.config.gameplay.dev_mode = true;
+    assert!(session.is_car_unlocked(CarChoice::GT3Car));
+    assert!(session.is_car_unlocked(CarChoice::HypercarPrototype));
+    assert!(session.is_track_unlocked("silverstone"));
+    assert!(session.is_track_unlocked("bathurst"));
+    assert!(session.is_track_unlocked("monaco"));
+
+    // Reset dev mode
+    session.config.gameplay.dev_mode = false;
+    assert!(!session.is_car_unlocked(CarChoice::GT3Car));
+    assert!(!session.is_track_unlocked("silverstone"));
+
+    // Verify GT Career Tier launch (Tier 1 ..= 5)
+    session.start_gt_career_tier(1);
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert_eq!(session.car_choice, CarChoice::GT4Clubsport);
+    assert!(session.championship_session.is_some());
+    let champ1 = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ1.track_ids, vec!["monza", "red_bull_ring", "nurburgring_gp"]);
+
+    session.start_gt_career_tier(2);
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert_eq!(session.car_choice, CarChoice::GT3Car);
+    let champ2 = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ2.track_ids, vec!["silverstone", "catalunya", "bathurst"]);
+
+    session.start_gt_career_tier(4);
+    assert_eq!(session.car_choice, CarChoice::GT1Legend);
+    let champ4 = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ4.track_ids, vec!["suzuka", "interlagos", "le_mans_sarthe"]);
+
+    session.start_gt_career_tier(5);
+    assert_eq!(session.car_choice, CarChoice::HypercarPrototype);
+    let champ5 = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ5.track_ids, vec!["monaco", "madring", "marina_bay"]);
+
+    // Test winning race in GT awards XP and persists
+    session.start_gt_career_tier(1);
+    session.total_laps = 3;
+    session.trackers[0].current_lap = 4; // finished 3 laps
+    session.trackers[0].best_lap_time = Some(21.0);
+    session.session_time = 65.0;
+    session.check_race_finish();
+
+    assert!(session.active_career_progress.xp > 0);
+    assert_eq!(session.active_career_progress.trophies_gold, 1);
+
+    // Verify persisted to DB
+    if let Some(db) = &session.hof_db {
+        let saved = db.get_module_progress(pid, "gt").unwrap().unwrap();
+        assert_eq!(saved.xp, session.active_career_progress.xp);
+        assert_eq!(saved.trophies_gold, 1);
+    }
 }
 

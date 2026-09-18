@@ -81,7 +81,7 @@ use crate::module::{
     ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule, NascarGameModule,
     RallyGameModule,
 };
-use crate::profile::{CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+use crate::profile::{CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::car::render_car_with_visual_type;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
@@ -302,6 +302,7 @@ pub struct RaceSession {
     // Active Player Profile & Career History
     pub active_profile: PlayerProfile,
     pub active_profile_stats: ProfileCareerStats,
+    pub active_career_progress: ModuleCareerProgress,
     pub profile_list: Vec<PlayerProfile>,
     pub profile_history: Vec<RaceHistoryEntry>,
 
@@ -553,6 +554,7 @@ impl RaceSession {
 
             active_profile: PlayerProfile::default(),
             active_profile_stats: ProfileCareerStats::default(),
+            active_career_progress: ModuleCareerProgress::default_for_gt(1),
             profile_list: Vec::new(),
             profile_history: Vec::new(),
 
@@ -690,6 +692,9 @@ impl RaceSession {
                 }
                 if let Ok(hist) = db.get_history_for_profile(pid, 20) {
                     self.profile_history = hist;
+                }
+                if let Ok(progress) = db.get_or_create_module_progress(pid, "gt") {
+                    self.active_career_progress = progress;
                 }
             }
         }
@@ -920,7 +925,12 @@ impl RaceSession {
     /// Resolves the track's predefined vehicle model as a `CarChoice`.
     pub fn resolve_predefined_car(&self) -> CarChoice {
         match self.track.predefined_car.as_deref() {
-            Some("gt3" | "gt3_car" | "gt3_evo" | "gt2" | "gt2_biturbo" | "gt") => CarChoice::GT3Car,
+            Some("gt4" | "gt4_clubsport") => CarChoice::GT4Clubsport,
+            Some("gt3" | "gt3_car" | "gt3_evo") => CarChoice::GT3Car,
+            Some("gt2" | "gt2_biturbo") => CarChoice::GT2Biturbo,
+            Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
+            Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
+            Some("gt") => CarChoice::GT3Car,
             Some("f1" | "f1_car" | "f1_hybrid_26" | "open_wheel") => {
                 if matches!(self.active_module_id, "gt" | "gt_challenge") {
                     CarChoice::GT3Car
@@ -942,6 +952,59 @@ impl RaceSession {
                 "kart" => CarChoice::Kart,
                 _ => CarChoice::SportsCar,
             },
+        }
+    }
+
+    /// Checks whether the specified car is unlocked under the active profile's career progress.
+    pub fn is_car_unlocked(&self, car: CarChoice) -> bool {
+        if self.config.gameplay.dev_mode {
+            return true;
+        }
+        let car_id = match car {
+            CarChoice::GT4Clubsport => "gt4_clubsport",
+            CarChoice::GT3Car => "gt3_evo",
+            CarChoice::GT2Biturbo => "gt2_biturbo",
+            CarChoice::GT1Legend => "gt1_legend",
+            CarChoice::HypercarPrototype => "hypercar_prototype",
+            CarChoice::F1Car => "f1_hybrid_26",
+            _ => return true,
+        };
+        self.active_career_progress.is_car_unlocked(car_id, self.config.gameplay.dev_mode)
+    }
+
+    /// Checks whether the specified track is unlocked under the active profile's career progress.
+    pub fn is_track_unlocked(&self, track_id: &str) -> bool {
+        if self.config.gameplay.dev_mode {
+            return true;
+        }
+        if self.active_module_id == "gt" || self.active_module_id == "f1" {
+            self.active_career_progress.is_track_unlocked(track_id, self.config.gameplay.dev_mode)
+        } else {
+            true
+        }
+    }
+
+    /// Returns available vehicle choices for the active motorsport game module.
+    pub fn active_module_car_choices(&self) -> Vec<CarChoice> {
+        match self.active_module_id {
+            "gt" | "gt_challenge" | "f1" => vec![
+                CarChoice::GT4Clubsport,
+                CarChoice::GT3Car,
+                CarChoice::GT2Biturbo,
+                CarChoice::GT1Legend,
+                CarChoice::HypercarPrototype,
+                CarChoice::F1Car,
+            ],
+            "nascar" => vec![CarChoice::StockCar],
+            "extreme_offroad" => vec![CarChoice::SandRail],
+            "rally" => vec![CarChoice::RallyCar],
+            "kart" => vec![CarChoice::Kart],
+            _ => vec![
+                CarChoice::SportsCar,
+                CarChoice::DriftCar,
+                CarChoice::Kart,
+                CarChoice::RallyCar,
+            ],
         }
     }
 
@@ -1005,8 +1068,11 @@ impl RaceSession {
     pub fn active_module_vehicles(&self) -> Vec<(&'static str, &'static str, &'static str, (f32, f32, f32, f32))> {
         match self.active_module_id {
             "gt" | "gt_challenge" | "f1" => vec![
+                (CarChoice::GT4Clubsport.title(), CarChoice::GT4Clubsport.tag(), CarChoice::GT4Clubsport.description(), CarChoice::GT4Clubsport.stats()),
                 (CarChoice::GT3Car.title(), CarChoice::GT3Car.tag(), CarChoice::GT3Car.description(), CarChoice::GT3Car.stats()),
-                ("707 BHP GT2 Biturbo Sprint", "SRO GT2 SPRINT", "High-power 707 BHP biturbo straight-line missile, 328 km/h top speed, lower downforce (Cl=1.4).", (0.96, 0.97, 0.89, 0.65)),
+                (CarChoice::GT2Biturbo.title(), CarChoice::GT2Biturbo.tag(), CarChoice::GT2Biturbo.description(), CarChoice::GT2Biturbo.stats()),
+                (CarChoice::GT1Legend.title(), CarChoice::GT1Legend.tag(), CarChoice::GT1Legend.description(), CarChoice::GT1Legend.stats()),
+                (CarChoice::HypercarPrototype.title(), CarChoice::HypercarPrototype.tag(), CarChoice::HypercarPrototype.description(), CarChoice::HypercarPrototype.stats()),
                 (CarChoice::F1Car.title(), CarChoice::F1Car.tag(), CarChoice::F1Car.description(), CarChoice::F1Car.stats()),
             ],
             "rally" => vec![
@@ -1344,6 +1410,59 @@ impl RaceSession {
         self.init_race();
     }
 
+    /// Launches a GT Career Championship Cup for the given tier (1..=5).
+    pub fn start_gt_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids, car_choice) = match tier {
+            1 => (
+                "GT4 Clubman Sprint Cup (Tier 1)",
+                vec!["monza".to_string(), "red_bull_ring".to_string(), "nurburgring_gp".to_string()],
+                CarChoice::GT4Clubsport,
+            ),
+            2 => (
+                "FIA GT3 European Challenge (Tier 2)",
+                vec!["silverstone".to_string(), "catalunya".to_string(), "bathurst".to_string()],
+                CarChoice::GT3Car,
+            ),
+            3 => (
+                "SRO GT2 Power Masters (Tier 3)",
+                vec!["spa".to_string(), "zandvoort".to_string(), "portimao_gp".to_string()],
+                CarChoice::GT2Biturbo,
+            ),
+            4 => (
+                "Le Mans 90s Heritage Trophy (Tier 4)",
+                vec!["suzuka".to_string(), "interlagos".to_string(), "le_mans_sarthe".to_string()],
+                CarChoice::GT1Legend,
+            ),
+            _ => (
+                "World Endurance Hypercar Grand Prix (Tier 5)",
+                vec!["monaco".to_string(), "madring".to_string(), "marina_bay".to_string()],
+                CarChoice::HypercarPrototype,
+            ),
+        };
+
+        let champ = ChampionshipSession::new(
+            cup_name,
+            PointSystem::F1Standard { fastest_lap_bonus: true },
+            track_ids,
+            4,
+            &[
+                ("player", "Player", "Apex GT Racing"),
+                ("max_hunter", "Max Hunter", "Red Bull GT"),
+                ("charles_laurent", "Charles Laurent", "Scuderia GT"),
+                ("lewis_vance", "Lewis Vance", "Scuderia GT"),
+                ("fernando_toro", "Fernando Toro", "Aston GT"),
+                ("bot_5", "George Speed", "Mercedes-AMG GT"),
+                ("bot_6", "Lando Vance", "McLaren GT"),
+                ("bot_7", "Oscar Rocket", "McLaren GT"),
+            ],
+        );
+        self.switch_to_gt();
+        self.game_mode = GameMode::Career;
+        self.car_choice = car_choice;
+        self.championship_session = Some(champ);
+        self.init_race();
+    }
+
     /// Backwards-compatible alias for GT World Challenge championship.
     pub fn start_f1_championship(&mut self) {
         self.start_gt_championship();
@@ -1500,6 +1619,14 @@ impl RaceSession {
 
         let player_car_choice = self.active_player_car_choice();
         let mut base_config = match player_car_choice {
+            CarChoice::GT4Clubsport => {
+                self.current_visual_type = VehicleVisualType::TouringGT {
+                    widebody: false,
+                    gt_wing: true,
+                    diffuser: false,
+                };
+                GtWorldChallengeModule::car_gt4_clubsport()
+            }
             CarChoice::GT3Car => {
                 self.current_visual_type = VehicleVisualType::TouringGT {
                     widebody: true,
@@ -1507,6 +1634,30 @@ impl RaceSession {
                     diffuser: true,
                 };
                 GtWorldChallengeModule::car_gt3_evo()
+            }
+            CarChoice::GT2Biturbo => {
+                self.current_visual_type = VehicleVisualType::TouringGT {
+                    widebody: true,
+                    gt_wing: true,
+                    diffuser: true,
+                };
+                GtWorldChallengeModule::car_gt2_biturbo()
+            }
+            CarChoice::GT1Legend => {
+                self.current_visual_type = VehicleVisualType::TouringGT {
+                    widebody: true,
+                    gt_wing: true,
+                    diffuser: true,
+                };
+                GtWorldChallengeModule::car_gt1_legend()
+            }
+            CarChoice::HypercarPrototype => {
+                self.current_visual_type = VehicleVisualType::TouringGT {
+                    widebody: true,
+                    gt_wing: true,
+                    diffuser: true,
+                };
+                GtWorldChallengeModule::car_hypercar_prototype()
             }
             CarChoice::F1Car => {
                 self.current_visual_type = VehicleVisualType::OpenWheel {
@@ -1754,7 +1905,11 @@ impl RaceSession {
             };
 
             let bot_config = match bot_car_choice {
+                CarChoice::GT4Clubsport => GtWorldChallengeModule::car_gt4_clubsport(),
                 CarChoice::GT3Car => GtWorldChallengeModule::car_gt3_evo(),
+                CarChoice::GT2Biturbo => GtWorldChallengeModule::car_gt2_biturbo(),
+                CarChoice::GT1Legend => GtWorldChallengeModule::car_gt1_legend(),
+                CarChoice::HypercarPrototype => GtWorldChallengeModule::car_hypercar_prototype(),
                 CarChoice::F1Car => GtWorldChallengeModule::car_f1_hybrid(),
                 CarChoice::RallyCar => RallyGameModule::car_wrc_rally(),
                 CarChoice::Kart => KartGameModule::car_shifter_kart(),
@@ -1847,7 +2002,11 @@ impl RaceSession {
             _ => match active_car {
                 CarChoice::StockCar => EngineSoundType::NascarV8,
                 CarChoice::SandRail => EngineSoundType::SandRailBoxer,
-                CarChoice::GT3Car => EngineSoundType::SportGT,
+                CarChoice::GT4Clubsport
+                | CarChoice::GT3Car
+                | CarChoice::GT2Biturbo
+                | CarChoice::GT1Legend
+                | CarChoice::HypercarPrototype => EngineSoundType::SportGT,
                 CarChoice::F1Car => EngineSoundType::F1V6Turbo,
                 CarChoice::Kart => EngineSoundType::Kart125cc,
                 CarChoice::RallyCar => EngineSoundType::RallyTurbo,
@@ -2611,24 +2770,27 @@ impl RaceSession {
                             1 => {
                                 // Card 1: Vehicle Selection Card
                                 if self.game_mode.allows_car_change() {
-                                    if is_key_pressed(KeyCode::Enter)
-                                        || is_key_pressed(KeyCode::KpEnter)
-                                        || is_key_pressed(KeyCode::RightBracket)
-                                    {
-                                        self.audio.play_sfx(SfxType::UiMove);
-                                        self.menu_car_idx = (self.menu_car_idx + 1) % CarChoice::ALL.len();
-                                        self.car_choice = CarChoice::ALL[self.menu_car_idx];
-                                        self.rebuild_roster_participants();
-                                    }
-                                    if is_key_pressed(KeyCode::LeftBracket) {
-                                        self.audio.play_sfx(SfxType::UiMove);
-                                        if self.menu_car_idx == 0 {
-                                            self.menu_car_idx = CarChoice::ALL.len() - 1;
-                                        } else {
-                                            self.menu_car_idx -= 1;
+                                    let choices = self.active_module_car_choices();
+                                    if !choices.is_empty() {
+                                        if is_key_pressed(KeyCode::Enter)
+                                            || is_key_pressed(KeyCode::KpEnter)
+                                            || is_key_pressed(KeyCode::RightBracket)
+                                        {
+                                            self.audio.play_sfx(SfxType::UiMove);
+                                            self.menu_car_idx = (self.menu_car_idx + 1) % choices.len();
+                                            self.car_choice = choices[self.menu_car_idx];
+                                            self.rebuild_roster_participants();
                                         }
-                                        self.car_choice = CarChoice::ALL[self.menu_car_idx];
-                                        self.rebuild_roster_participants();
+                                        if is_key_pressed(KeyCode::LeftBracket) {
+                                            self.audio.play_sfx(SfxType::UiMove);
+                                            if self.menu_car_idx == 0 {
+                                                self.menu_car_idx = choices.len() - 1;
+                                            } else {
+                                                self.menu_car_idx -= 1;
+                                            }
+                                            self.car_choice = choices[self.menu_car_idx];
+                                            self.rebuild_roster_participants();
+                                        }
                                     }
                                 }
                             }
@@ -2668,6 +2830,11 @@ impl RaceSession {
                                     || self.input.gamepad.snapshot.btn_confirm_pressed
                                     || self.input.gamepad.snapshot.btn_a_pressed
                                 {
+                                    let player_car = self.active_player_car_choice();
+                                    if !self.is_car_unlocked(player_car) {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        return;
+                                    }
                                     self.audio.play_sfx(SfxType::UiSelect);
                                     self.transition_iris_to(GameState::Countdown(3.5), 0.45);
                                     return;
@@ -2718,6 +2885,11 @@ impl RaceSession {
                     || launch_btn_clicked
                     || (self.starting_grid_focus == StartingGridFocus::LeftSetup && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
                 {
+                    let player_car = self.active_player_car_choice();
+                    if !self.is_car_unlocked(player_car) {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        return;
+                    }
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.transition_iris_to(GameState::Countdown(3.5), 0.45);
                     return;
@@ -3831,9 +4003,15 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_confirm_pressed
             || self.input.gamepad.snapshot.btn_a_pressed
         {
-            self.audio.play_sfx(SfxType::UiSelect);
             if self.menu_track_idx < available_tracks.len() {
-                self.track_choice = available_tracks[self.menu_track_idx].clone();
+                let track_choice = &available_tracks[self.menu_track_idx];
+                let track_id = track_choice.track_id();
+                if !self.is_track_unlocked(track_id) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    return;
+                }
+                self.audio.play_sfx(SfxType::UiSelect);
+                self.track_choice = track_choice.clone();
                 let loaded = resolve_track_for_menu(&self.track_choice);
                 self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
                 self.init_race();
@@ -5589,6 +5767,44 @@ impl RaceSession {
                 None
             };
 
+            // 7. Career XP Award (GT World Challenge / Career mode)
+            if self.active_module_id == "gt" || self.active_module_id == "f1" || self.game_mode == GameMode::Career {
+                let base_xp = (self.total_laps as u64) * 100;
+                let pos_bonus: u64 = match player_pos {
+                    1 => 300,
+                    2 => 200,
+                    3 => 150,
+                    _ => 50,
+                };
+                let fastest_lap_bonus: u64 = if is_pb || player_pos == 1 { 75 } else { 0 };
+                let clean_race_bonus: u64 = 100;
+                let total_xp = base_xp + pos_bonus + fastest_lap_bonus + clean_race_bonus;
+
+                let leveled_up = self.active_career_progress.add_xp(total_xp);
+                if player_pos == 1 {
+                    self.active_career_progress.trophies_gold += 1;
+                } else if player_pos == 2 {
+                    self.active_career_progress.trophies_silver += 1;
+                } else if player_pos == 3 {
+                    self.active_career_progress.trophies_bronze += 1;
+                }
+                if let Some(db) = &self.hof_db {
+                    let _ = db.save_module_progress(&self.active_career_progress);
+                }
+
+                if let Some(new_lvl) = leveled_up {
+                    self.spawn_hud_alert(
+                        format!("LEVEL UP! REACHED LEVEL {}! NEW CAR & CIRCUITS UNLOCKED!", new_lvl),
+                        Palette::NEON_GOLD,
+                    );
+                } else {
+                    self.spawn_hud_alert(
+                        format!("+{} XP (TOTAL: {})", total_xp, self.active_career_progress.xp),
+                        Palette::NEON_CYAN,
+                    );
+                }
+            }
+
             // If an active championship season is underway, submit round results and show standings
             if let Some(champ) = &mut self.championship_session {
                 let mut round_results = Vec::new();
@@ -5727,6 +5943,11 @@ impl RaceSession {
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                     _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
                 };
+                let cp_ref = if self.active_module_id == "gt" || self.active_module_id == "f1" {
+                    Some(&self.active_career_progress)
+                } else {
+                    None
+                };
                 render_track_select_menu(
                     &self.fonts,
                     self.active_module_id,
@@ -5739,6 +5960,8 @@ impl RaceSession {
                     &self.active_profile_stats,
                     self.menu_track_filter,
                     filter_counts,
+                    cp_ref,
+                    self.config.gameplay.dev_mode,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {
@@ -5828,6 +6051,8 @@ impl RaceSession {
                     .find(|p| p.is_player)
                     .and_then(|p| p.best_lap)
                     .or_else(|| self.ghost_recorder.best_ghost_lap.as_ref().map(|g| g.lap_time));
+                let is_unlocked = self.is_car_unlocked(active_car);
+                let unlock_level = active_car.unlock_level();
                 render_starting_grid_screen(
                     &self.fonts,
                     &self.track,
@@ -5844,6 +6069,8 @@ impl RaceSession {
                     self.starting_grid_focus,
                     self.starting_grid_card_idx,
                     self.starting_grid_roster_idx,
+                    is_unlocked,
+                    unlock_level,
                 );
             }
             GameState::Countdown(remaining) => {

@@ -164,6 +164,8 @@ pub struct GameplayConfig {
     pub default_num_bots: usize,
     /// Default driver assist profile: "arcade", "sport", "pro".
     pub default_assist_profile: String,
+    /// When true, unlocks all circuits and vehicles for testing.
+    pub dev_mode: bool,
 }
 
 impl Default for GameplayConfig {
@@ -174,6 +176,7 @@ impl Default for GameplayConfig {
             default_laps: 3,
             default_num_bots: 7,
             default_assist_profile: "arcade".to_string(),
+            dev_mode: false,
         }
     }
 }
@@ -523,7 +526,11 @@ impl GameConfig {
             CarChoice::DriftCar => "drift_car",
             CarChoice::Kart => "kart",
             CarChoice::RallyCar => "rally_car",
+            CarChoice::GT4Clubsport => "gt4_clubsport",
             CarChoice::GT3Car => "gt3_car",
+            CarChoice::GT2Biturbo => "gt2_biturbo",
+            CarChoice::GT1Legend => "gt1_legend",
+            CarChoice::HypercarPrototype => "hypercar_prototype",
             CarChoice::F1Car => "f1_car",
             CarChoice::StockCar => "stock_car",
             CarChoice::SandRail => "sand_rail_buggy",
@@ -537,7 +544,11 @@ impl GameConfig {
                 CarChoice::DriftCar => CarConfig::drift_car(),
                 CarChoice::Kart => CarConfig::kart(),
                 CarChoice::RallyCar => CarConfig::rally_car(),
+                CarChoice::GT4Clubsport => crate::module::f1::GtWorldChallengeModule::car_gt4_clubsport(),
                 CarChoice::GT3Car => crate::module::f1::GtWorldChallengeModule::car_gt3_evo(),
+                CarChoice::GT2Biturbo => crate::module::f1::GtWorldChallengeModule::car_gt2_biturbo(),
+                CarChoice::GT1Legend => crate::module::f1::GtWorldChallengeModule::car_gt1_legend(),
+                CarChoice::HypercarPrototype => crate::module::f1::GtWorldChallengeModule::car_hypercar_prototype(),
                 CarChoice::F1Car => crate::module::f1::GtWorldChallengeModule::car_f1_hybrid(),
                 CarChoice::StockCar => CarConfig::stock_car_ta1(),
                 CarChoice::SandRail => CarConfig::sand_rail(),

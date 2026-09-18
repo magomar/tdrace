@@ -461,19 +461,27 @@ pub enum CarChoice {
     DriftCar,
     Kart,
     RallyCar,
+    GT4Clubsport,
     GT3Car,
+    GT2Biturbo,
+    GT1Legend,
+    HypercarPrototype,
     F1Car,
     StockCar,
     SandRail,
 }
 
 impl CarChoice {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 12] = [
         Self::SportsCar,
         Self::DriftCar,
         Self::Kart,
         Self::RallyCar,
+        Self::GT4Clubsport,
         Self::GT3Car,
+        Self::GT2Biturbo,
+        Self::GT1Legend,
+        Self::HypercarPrototype,
         Self::F1Car,
         Self::StockCar,
         Self::SandRail,
@@ -485,7 +493,11 @@ impl CarChoice {
             Self::DriftCar => "Tuned Drift Spec",
             Self::Kart => "125cc Shifter Kart",
             Self::RallyCar => "AWD Turbo Rally",
+            Self::GT4Clubsport => "420 BHP GT4 Clubsport",
             Self::GT3Car => "600 BHP GT3 Evo Racer",
+            Self::GT2Biturbo => "707 BHP GT2 Biturbo Sprint",
+            Self::GT1Legend => "650 BHP GT1 Le Mans Legend",
+            Self::HypercarPrototype => "800 BHP LMH Hypercar Prototype",
             Self::F1Car => "1050 BHP Hybrid F1 Turbo (Experimental)",
             Self::StockCar => "850 BHP NASCAR Cup V8",
             Self::SandRail => "300 BHP Sand Rail Buggy",
@@ -498,7 +510,11 @@ impl CarChoice {
             Self::DriftCar => "PRO SLIDE",
             Self::Kart => "APEX GRIP",
             Self::RallyCar => "AWD ALL-TERRAIN",
+            Self::GT4Clubsport => "GT4 ENTRY SPEC",
             Self::GT3Car => "FIA GT3 SPEC",
+            Self::GT2Biturbo => "SRO GT2 SPRINT",
+            Self::GT1Legend => "90s GT1 LEGEND",
+            Self::HypercarPrototype => "LE MANS HYPERCAR",
             Self::F1Car => "EXPERIMENTAL OPEN-WHEEL",
             Self::StockCar => "850 BHP SPACEFRAME V8",
             Self::SandRail => "300 BHP RWD ULTRALIGHT",
@@ -511,7 +527,11 @@ impl CarChoice {
             Self::DriftCar => "High-power slide machine with loose rear, wide lock & snappy counter-steer.",
             Self::Kart => "Ultra-lightweight direct steering with extreme apex cornering grip.",
             Self::RallyCar => "All-wheel-drive traction with compliant suspension for mixed surfaces.",
+            Self::GT4Clubsport => "Agile 420 BHP lightweight RWD racer, agile cornering, gentle aero (Cl=0.85).",
             Self::GT3Car => "4.0L V8, 600 BHP, high aerodynamic downforce (Cl=2.1), carbon brakes, ABS & TC.",
+            Self::GT2Biturbo => "High-power 707 BHP biturbo straight-line missile, 328 km/h top speed, lower downforce (Cl=1.4).",
+            Self::GT1Legend => "Raw 650 BHP twin-turbo beast with high downforce (Cl=2.60) and pure analog handling (zero electronic assists).",
+            Self::HypercarPrototype => "Cutting-edge 800 BHP hybrid prototype with ground-effect aero tunnels (Cl=3.10) and hybrid boost.",
             Self::F1Car => "Experimental 1050 BHP hybrid open-wheel test bench, 346 km/h, extreme downforce (Cl=3.4).",
             Self::StockCar => "High-compression 5.9L pushrod V8, 850 BHP, 1260 kg, quick-ratio steering, 320 km/h superspeedway pack racer.",
             Self::SandRail => "Ultralight chromoly tube chassis, 300 BHP rear turbo boxer, paddle tires, and long-travel off-road suspension.",
@@ -525,7 +545,11 @@ impl CarChoice {
             Self::DriftCar => (0.80, 0.85, 0.50, 0.98),
             Self::Kart => (0.65, 0.95, 0.95, 0.40),
             Self::RallyCar => (0.78, 0.90, 0.85, 0.75),
+            Self::GT4Clubsport => (0.78, 0.82, 0.85, 0.70),
             Self::GT3Car => (0.92, 0.94, 0.95, 0.50),
+            Self::GT2Biturbo => (0.96, 0.97, 0.89, 0.65),
+            Self::GT1Legend => (0.98, 0.98, 0.93, 0.40),
+            Self::HypercarPrototype => (0.99, 0.99, 0.98, 0.35),
             Self::F1Car => (0.99, 0.99, 0.99, 0.30),
             Self::StockCar => (0.97, 0.90, 0.86, 0.88),
             Self::SandRail => (0.88, 0.96, 0.82, 0.94),
@@ -539,10 +563,26 @@ impl CarChoice {
             Self::DriftCar => ("RWD Drift Spec", "980 kg Mass", "45° Wide Drift Lock", "High-Slip Balance"),
             Self::Kart => ("Direct Rear Axle", "180 kg Mass", "115 km/h Top Speed", "1:1 Direct Rack"),
             Self::RallyCar => ("AWD 50:50 Split", "1,240 kg Mass", "Long-Travel Setup", "Cl 0.70 Downforce"),
+            Self::GT4Clubsport => ("RWD GT4 Spec", "1,320 kg Mass", "272 km/h Top Speed", "Cl 0.85 Downforce"),
             Self::GT3Car => ("RWD GT3 Spec", "1,260 kg Mass", "297 km/h Top Speed", "Cl 2.10 Downforce"),
+            Self::GT2Biturbo => ("RWD GT2 Spec", "1,390 kg Mass", "328 km/h Top Speed", "Cl 1.40 Downforce"),
+            Self::GT1Legend => ("RWD GT1 Analog", "1,120 kg Mass", "335 km/h Top Speed", "Cl 2.60 Downforce"),
+            Self::HypercarPrototype => ("Hybrid Ground-Effect", "1,030 kg Mass", "342 km/h Top Speed", "Cl 3.10 Downforce"),
             Self::F1Car => ("Hybrid V6 Turbo", "798 kg Mass", "346 km/h Top Speed", "Cl 3.40 Downforce"),
             Self::StockCar => ("RWD Spaceframe V8", "1,260 kg Mass", "320 km/h Top Speed", "Pack Draft Dynamic"),
             Self::SandRail => ("RWD Long-Travel", "680 kg Mass", "215 km/h Top Speed", "Paddle Sand Tires"),
+        }
+    }
+
+    /// Returns the GT career unlock level required for this car (Level 1-5).
+    pub fn unlock_level(&self) -> u32 {
+        match self {
+            Self::GT4Clubsport | Self::F1Car => 1,
+            Self::GT3Car => 2,
+            Self::GT2Biturbo => 3,
+            Self::GT1Legend => 4,
+            Self::HypercarPrototype => 5,
+            _ => 1,
         }
     }
 }
@@ -551,7 +591,12 @@ impl CarChoice {
 pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track>, module_id: &str) -> CarChoice {
     if let Some(tr) = track {
         match tr.predefined_car.as_deref() {
-            Some("gt3" | "gt3_car" | "gt3_evo" | "gt2" | "gt2_biturbo" | "gt") => CarChoice::GT3Car,
+            Some("gt4" | "gt4_clubsport") => CarChoice::GT4Clubsport,
+            Some("gt3" | "gt3_car" | "gt3_evo") => CarChoice::GT3Car,
+            Some("gt2" | "gt2_biturbo") => CarChoice::GT2Biturbo,
+            Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
+            Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
+            Some("gt") => CarChoice::GT3Car,
             Some("f1" | "f1_car" | "f1_hybrid_26" | "open_wheel") => {
                 if tr.module_id.as_deref().unwrap_or(module_id) == "gt" || module_id == "gt" {
                     CarChoice::GT3Car
@@ -589,23 +634,26 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
 /// Racing game modes supported across single-player practice, time trial, and grid racing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameMode {
-    /// Time Trial: race against your personal best time, shown as a shadow / ghost car. Allows changing car.
-    TimeTrial,
-    /// Free Ride: solo practice to test the circuit or/and the car. Allows changing car.
-    FreeRide,
     /// Standard Race: all drivers use the circuit's predefined car.
     StandardRace,
+    /// Career Mode: 5-tier GT championship campaign with XP, level progression, and car/circuit unlocks.
+    Career,
     /// Experimental Race: all drivers use the car model specified by the user. Allows changing car.
     ExperimentalRace,
     /// Split Screen: 2 simultaneous local players (P1 on Keyboard vs P2 on Gamepad).
     SplitScreen,
+    /// Time Trial: race against your personal best time, shown as a shadow / ghost car. Allows changing car.
+    TimeTrial,
+    /// Free Ride: solo practice to test the circuit or/and the car. Allows changing car.
+    FreeRide,
 }
 
 pub type GameModeChoice = GameMode;
 
 impl GameMode {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 6] = [
         Self::StandardRace,
+        Self::Career,
         Self::ExperimentalRace,
         Self::SplitScreen,
         Self::TimeTrial,
@@ -615,6 +663,7 @@ impl GameMode {
     pub fn title(&self) -> &'static str {
         match self {
             Self::StandardRace => "Standard Race",
+            Self::Career => "Career Mode",
             Self::ExperimentalRace => "Experimental Race",
             Self::SplitScreen => "2P Split Screen",
             Self::TimeTrial => "Time Trial",
@@ -625,6 +674,7 @@ impl GameMode {
     pub fn tag(&self) -> &'static str {
         match self {
             Self::StandardRace => "PREDEFINED CAR • GRID",
+            Self::Career => "5-TIER CAMPAIGN • XP & UNLOCKS",
             Self::ExperimentalRace => "CUSTOM CAR SPEC • MULTI-CAR",
             Self::SplitScreen => "LOCAL 2-PLAYER • KEYS VS GAMEPAD",
             Self::TimeTrial => "VS GHOST SHADOW CAR",
@@ -635,6 +685,7 @@ impl GameMode {
     pub fn description(&self) -> &'static str {
         match self {
             Self::StandardRace => "All drivers compete using the circuit's official predefined car.",
+            Self::Career => "5-tier GT championship campaign. Earn XP across official cups to unlock vehicles and circuits.",
             Self::ExperimentalRace => "All drivers compete using the car model specified by the player.",
             Self::SplitScreen => "Simultaneous 2-player split screen: Player 1 on Keyboard vs Player 2 on Gamepad.",
             Self::TimeTrial => "Race against your personal best time shown as a shadow car.",
@@ -644,14 +695,14 @@ impl GameMode {
 
     pub fn allows_car_change(&self) -> bool {
         match self {
-            Self::StandardRace => false,
+            Self::StandardRace | Self::Career => false,
             Self::ExperimentalRace | Self::SplitScreen | Self::TimeTrial | Self::FreeRide => true,
         }
     }
 
     pub fn has_bots(&self) -> bool {
         match self {
-            Self::StandardRace | Self::ExperimentalRace | Self::SplitScreen => true,
+            Self::StandardRace | Self::Career | Self::ExperimentalRace | Self::SplitScreen => true,
             Self::TimeTrial | Self::FreeRide => false,
         }
     }
@@ -659,7 +710,7 @@ impl GameMode {
     pub fn is_time_attack(&self) -> bool {
         match self {
             Self::TimeTrial | Self::FreeRide => true,
-            Self::StandardRace | Self::ExperimentalRace | Self::SplitScreen => false,
+            Self::StandardRace | Self::Career | Self::ExperimentalRace | Self::SplitScreen => false,
         }
     }
 
@@ -671,9 +722,14 @@ impl GameMode {
         matches!(self, Self::SplitScreen)
     }
 
+    pub fn is_career(&self) -> bool {
+        matches!(self, Self::Career)
+    }
+
     pub fn next(&self) -> Self {
         match self {
-            Self::StandardRace => Self::ExperimentalRace,
+            Self::StandardRace => Self::Career,
+            Self::Career => Self::ExperimentalRace,
             Self::ExperimentalRace => Self::SplitScreen,
             Self::SplitScreen => Self::TimeTrial,
             Self::TimeTrial => Self::FreeRide,
@@ -693,7 +749,7 @@ pub struct RaceResultEntry {
     pub delta_to_leader: f32,
 }
 
-use crate::profile::{PlayerProfile, ProfileCareerStats};
+use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats};
 use super::profile_ui::render_profile_badge;
 
 /// Selected focus column/panel in the Track & Setup Selection Menu (kept for backwards compatibility).
@@ -738,6 +794,8 @@ pub fn render_track_select_menu(
     active_stats: &ProfileCareerStats,
     active_filter: TrackCatalogFilter,
     filter_counts: (usize, usize),
+    career_progress: Option<&ModuleCareerProgress>,
+    dev_mode: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -778,8 +836,45 @@ pub fn render_track_select_menu(
     let badge_h = scaler.s(48.0);
     render_profile_badge(fonts, &scaler, badge_x, badge_y, badge_w, badge_h, active_profile, active_stats);
 
-    // Explicit spacing between Profile Panel and Track / Car selection columns
-    let menu_content_y = badge_y + badge_h + scaler.s(18.0);
+    // Optional Career Progression Bar Banner
+    let cp_h = if career_progress.is_some() { scaler.s(26.0) } else { 0.0 };
+    if let Some(cp) = career_progress {
+        let cp_y = badge_y + badge_h + scaler.s(4.0);
+        scaler.draw_glass_card(badge_x, cp_y, badge_w, cp_h, Color::new(0.06, 0.08, 0.12, 0.92), Palette::NEON_CYAN, 1.2);
+
+        // Driver Level Tag
+        let lvl_str = format!("DRIVER LEVEL {}", cp.level);
+        fonts.draw_ui_bold(&lvl_str, badge_x + scaler.s(12.0), cp_y + scaler.s(17.0), scaler.font_s(12.5), Palette::NEON_GOLD);
+
+        // XP Progress text
+        let xp_str = if let Some(target) = cp.next_level_target_xp() {
+            format!("XP: {} / {}", cp.xp, target)
+        } else {
+            format!("XP: {} (MAX LEVEL)", cp.xp)
+        };
+        fonts.draw_ui_regular(&xp_str, badge_x + scaler.s(140.0), cp_y + scaler.s(17.0), scaler.font_s(11.0), Palette::WHITE);
+
+        // Progress bar in center
+        let bar_x = badge_x + scaler.s(260.0);
+        let bar_y = cp_y + scaler.s(7.0);
+        let bar_w = (badge_w - scaler.s(520.0)).clamp(scaler.s(100.0), scaler.s(320.0));
+        let bar_h = scaler.s(11.0);
+        draw_rectangle(bar_x, bar_y, bar_w, bar_h, Color::new(0.08, 0.12, 0.18, 0.95));
+        draw_rectangle(bar_x, bar_y, bar_w * cp.level_progress_ratio(), bar_h, Palette::NEON_CYAN);
+        draw_rectangle_lines(bar_x, bar_y, bar_w, bar_h, 1.0, Palette::NEON_CYAN);
+
+        // Mode indicator on right
+        let mode_tag = if dev_mode {
+            "[DEV MODE: ALL UNLOCKED]"
+        } else {
+            "CAREER PROGRESSION ACTIVE"
+        };
+        let tag_col = if dev_mode { Palette::NEON_MAGENTA } else { Palette::NEON_GREEN };
+        fonts.draw_ui_bold(mode_tag, badge_x + badge_w - scaler.s(200.0), cp_y + scaler.s(17.0), scaler.font_s(11.0), tag_col);
+    }
+
+    // Spacing between Profile/Career Panel and Catalog columns
+    let menu_content_y = badge_y + badge_h + cp_h + scaler.s(14.0);
 
     // Left Column: Track Selection Cards & Filter Tabs
     let mut curr_y = menu_content_y;
@@ -875,7 +970,11 @@ pub fn render_track_select_menu(
             Palette::UI_TEXT_MUTED,
         );
     } else {
-        let max_visible = 7;
+        let btn_h = scaler.s(40.0);
+        let btn_y = sh - btn_h - scaler.s(14.0);
+        let available_catalog_h = (btn_y - curr_y - scaler.s(24.0)).max(scaler.s(180.0));
+        let max_visible = ((available_catalog_h / scaler.s(64.0)).floor() as usize).clamp(4, 7);
+
         let start_idx = if total_items <= max_visible {
             0
         } else {
@@ -892,13 +991,30 @@ pub fn render_track_select_menu(
             if i < total_tracks {
                 let track_opt = &available_tracks[i];
                 let loaded_track = resolve_track_for_menu(track_opt);
+                let is_locked = if let Some(cp) = career_progress {
+                    !cp.is_track_unlocked(track_opt.track_id(), dev_mode)
+                } else {
+                    false
+                };
 
-                let bg_col = if is_sel {
+                let bg_col = if is_locked {
+                    if is_sel {
+                        Color::new(0.20, 0.06, 0.06, 0.95)
+                    } else {
+                        Color::new(0.08, 0.04, 0.04, 0.85)
+                    }
+                } else if is_sel {
                     Palette::UI_CARD_BG_HOVER
                 } else {
                     Palette::UI_CARD_BG
                 };
-                let border_col = if is_sel {
+                let border_col = if is_locked {
+                    if is_sel {
+                        Palette::RED
+                    } else {
+                        Color::new(0.45, 0.15, 0.15, 0.70)
+                    }
+                } else if is_sel {
                     module_accent
                 } else {
                     Palette::UI_CARD_BORDER
@@ -918,22 +1034,23 @@ pub fn render_track_select_menu(
 
                 // Tag pill & metrics badge (Length + Surface breakdown)
                 let is_custom = track_opt.is_user_custom();
-                let tag_col = if is_custom {
-                    Palette::NEON_GOLD
-                } else if is_sel {
-                    module_accent
+                let (tag_label, tag_col) = if is_locked {
+                    ("🔒 LOCKED • ADVANCE CAREER LEVEL".to_string(), Palette::RED)
+                } else if is_custom {
+                    let lbl = if let Some(ref tr) = loaded_track {
+                        format!("CUSTOM CIRCUIT • {:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
+                    } else {
+                        "CUSTOM CIRCUIT".to_string()
+                    };
+                    (lbl, Palette::NEON_GOLD)
                 } else {
-                    Palette::UI_TEXT_MUTED
-                };
-                let tag_prefix = if is_custom {
-                    "CUSTOM CIRCUIT"
-                } else {
-                    track_opt.tag_for_module(active_module_id)
-                };
-                let tag_label = if let Some(ref tr) = loaded_track {
-                    format!("{} • {:.0}m • {}", tag_prefix, tr.total_length_m(), tr.surface_summary_string())
-                } else {
-                    tag_prefix.to_string()
+                    let tag_prefix = track_opt.tag_for_module(active_module_id);
+                    let lbl = if let Some(ref tr) = loaded_track {
+                        format!("{} • {:.0}m • {}", tag_prefix, tr.total_length_m(), tr.surface_summary_string())
+                    } else {
+                        tag_prefix.to_string()
+                    };
+                    (lbl, if is_sel { module_accent } else { Palette::UI_TEXT_MUTED })
                 };
                 fonts.draw_ui_bold(
                     &tag_label,
@@ -944,9 +1061,13 @@ pub fn render_track_select_menu(
                 );
 
                 // Track title
-                let title_col = if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) };
+                let (title_str, title_col) = if is_locked {
+                    (format!("🔒 {}", track_opt.title()), if is_sel { Color::new(1.0, 0.75, 0.75, 1.0) } else { Color::new(0.70, 0.50, 0.50, 0.85) })
+                } else {
+                    (track_opt.title().to_string(), if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) })
+                };
                 fonts.draw_ui_bold(
-                    track_opt.title(),
+                    &title_str,
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(34.0),
                     scaler.font_s(15.5),
@@ -959,7 +1080,7 @@ pub fn render_track_select_menu(
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(49.0),
                     scaler.font_s(10.5),
-                    Palette::UI_TEXT_MUTED,
+                    if is_locked { Color::new(0.60, 0.45, 0.45, 0.70) } else { Palette::UI_TEXT_MUTED },
                 );
             } else {
                 // Dedicated Track Manager Card with distinct purple / magenta theme
@@ -1009,6 +1130,17 @@ pub fn render_track_select_menu(
     // Right Column: Circuit Dossier & Predefined Vehicle Specs
     let mut c2_y = menu_content_y;
 
+    let is_sel_locked = if selected_track_idx < total_tracks {
+        let track_opt = &available_tracks[selected_track_idx];
+        if let Some(cp) = career_progress {
+            !cp.is_track_unlocked(track_opt.track_id(), dev_mode)
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+
     if selected_track_idx < total_tracks {
         let track_opt = &available_tracks[selected_track_idx];
         let loaded_track = resolve_track_for_menu(track_opt);
@@ -1021,9 +1153,21 @@ pub fn render_track_select_menu(
             col2_x,
             c2_y + scaler.s(13.0),
             scaler.font_s(15.0),
-            module_accent,
+            if is_sel_locked { Palette::RED } else { module_accent },
         );
         c2_y += scaler.s(22.0);
+
+        if is_sel_locked {
+            scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.30, 0.08, 0.08, 0.90), Palette::RED, 1.2);
+            fonts.draw_ui_bold_centered(
+                "🔒 CIRCUIT LOCKED — ADVANCE CAREER LEVEL TO UNLOCK",
+                col2_x + col_w * 0.5,
+                c2_y + scaler.s(15.0),
+                scaler.font_s(11.0),
+                Palette::WHITE,
+            );
+            c2_y += scaler.s(26.0);
+        }
 
         // Detailed Vector Map Preview Card
         let preview_h = scaler.s(145.0);
@@ -1313,12 +1457,30 @@ pub fn render_track_select_menu(
 
     // Footer Launch prompt button
     let is_tm_selected = has_tm_entry && selected_track_idx == total_tracks;
-    let start_prompt = if is_tm_selected {
-        "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER"
+    let (btn_bg, btn_border, start_prompt) = if is_tm_selected {
+        (
+            Color::new(0.32, 0.12, 0.52, 0.95),
+            Palette::NEON_MAGENTA,
+            "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER".to_string(),
+        )
+    } else if is_sel_locked {
+        (
+            Color::new(0.35, 0.10, 0.10, 0.95),
+            Palette::RED,
+            "🔒 CIRCUIT LOCKED • REACH REQUIRED CAREER LEVEL TO UNLOCK".to_string(),
+        )
     } else if total_tracks > 0 {
-        "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE"
+        (
+            Color::new(0.12, 0.65, 0.32, 0.95),
+            Palette::NEON_GREEN,
+            "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE".to_string(),
+        )
     } else {
-        "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER"
+        (
+            Color::new(0.08, 0.28, 0.40, 0.95),
+            Palette::NEON_CYAN,
+            "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER".to_string(),
+        )
     };
     let btn_w = scaler.s(460.0);
     let btn_h = scaler.s(40.0);
@@ -1339,26 +1501,11 @@ pub fn render_track_select_menu(
         Palette::UI_TEXT_MUTED,
     );
 
-    let btn_bg = if is_tm_selected {
-        Color::new(0.32, 0.12, 0.52, 0.95)
-    } else if total_tracks > 0 {
-        Color::new(0.12, 0.65, 0.32, 0.95)
-    } else {
-        Color::new(0.08, 0.28, 0.40, 0.95)
-    };
-    let btn_border = if is_tm_selected {
-        Palette::NEON_MAGENTA
-    } else if total_tracks > 0 {
-        Palette::NEON_GREEN
-    } else {
-        Palette::NEON_CYAN
-    };
-
     draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
     draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, btn_border);
 
     fonts.draw_ui_bold_centered(
-        start_prompt,
+        &start_prompt,
         sw * 0.5,
         btn_y + scaler.s(25.0),
         scaler.font_s(16.0),
