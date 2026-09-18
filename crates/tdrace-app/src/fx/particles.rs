@@ -106,8 +106,11 @@ impl ParticleSystem {
 
         let (base_col, col_var) = match surface {
             SurfaceType::Dirt => (Palette::DIRT, Palette::DIRT_DARK),
+            SurfaceType::Gravel => (Palette::GRAVEL, Palette::GRAVEL_DARK),
             SurfaceType::Grass => (Palette::GRASS_DARK, Color::new(0.35, 0.25, 0.12, 0.9)),
             SurfaceType::Sand => (Palette::SAND, Palette::SAND_DARK),
+            SurfaceType::Mud => (Palette::MUD, Palette::MUD_DARK),
+            SurfaceType::Snow => (Palette::SNOW, Palette::SNOW_EDGE),
             _ => return,
         };
 
@@ -241,6 +244,9 @@ impl ParticleSystem {
         let (base_col, col_var) = match surface {
             SurfaceType::Sand => (Palette::SAND, Palette::SAND_DARK),
             SurfaceType::Dirt => (Palette::DIRT, Palette::DIRT_DARK),
+            SurfaceType::Gravel => (Palette::GRAVEL, Palette::GRAVEL_DARK),
+            SurfaceType::Mud => (Palette::MUD, Palette::MUD_DARK),
+            SurfaceType::Snow => (Palette::SNOW, Palette::SNOW_EDGE),
             SurfaceType::Water => (Palette::WATER_BORDER, Palette::WATER),
             SurfaceType::Grass => (Palette::GRASS_DARK, Palette::CURB_RED),
             SurfaceType::Asphalt => (Palette::TIRE_SMOKE, Color::new(0.70, 0.70, 0.75, 0.35)),

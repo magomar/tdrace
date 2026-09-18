@@ -1225,13 +1225,14 @@ fn test_track_editor_default_offtrack_surface_mutation_and_cycling() {
     assert!(state.redo());
     assert_eq!(state.track.default_surface, SurfaceType::Sand);
 
-    // 5. Test cycling off-track types: Grass -> Sand -> Dirt -> Asphalt -> Mud -> Snow -> Grass
+    // 5. Test cycling off-track types: Grass -> Sand -> Dirt -> Asphalt -> Mud -> Snow -> Gravel -> Grass
     tools.set_track_default_surface(&mut state, SurfaceType::Grass);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Sand);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Dirt);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Asphalt);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Mud);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Snow);
+    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Gravel);
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Grass);
 
     // 6. JSON serialization roundtrip preserves default_surface

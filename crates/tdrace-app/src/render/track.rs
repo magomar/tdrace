@@ -93,6 +93,7 @@ pub fn get_surface_zone_colors(surface: SurfaceType) -> (Color, Option<Color>) {
         SurfaceType::Oil => (Color::new(0.12, 0.12, 0.15, 0.85), None),
         SurfaceType::Mud => (Palette::MUD, Some(Palette::MUD_DARK)),
         SurfaceType::Snow => (Palette::SNOW, Some(Palette::SNOW_EDGE)),
+        SurfaceType::Gravel => (Palette::GRAVEL, Some(Palette::GRAVEL_DARK)),
     }
 }
 
@@ -105,6 +106,7 @@ pub fn get_track_backdrop_color(surface: SurfaceType) -> Color {
         SurfaceType::Asphalt => Palette::BACKDROP_ASPHALT,
         SurfaceType::Mud => Palette::BACKDROP_MUD,
         SurfaceType::Snow => Palette::BACKDROP_SNOW,
+        SurfaceType::Gravel => Palette::BACKDROP_GRAVEL,
         _ => Palette::BACKDROP_GRASS,
     }
 }
@@ -178,6 +180,11 @@ pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, C
             Palette::SNOW,
             Some(Palette::SNOW_EDGE),
             Color::new(0.80, 0.85, 0.92, 0.85),
+        ),
+        SurfaceType::Gravel => (
+            Palette::GRAVEL,
+            Some(Palette::GRAVEL_EDGE),
+            Color::new(0.70, 0.68, 0.64, 0.85),
         ),
     }
 }
@@ -613,6 +620,18 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let track_r1 = s1.point - s1.normal * (hw1 * 0.42);
                 draw_line(track_l0.x, track_l0.y, track_l1.x, track_l1.y, 0.20, Color::new(0.85, 0.90, 0.96, 0.90));
                 draw_line(track_r0.x, track_r0.y, track_r1.x, track_r1.y, 0.20, Color::new(0.85, 0.90, 0.96, 0.90));
+            }
+            SurfaceType::Gravel => {
+                draw_quad(left0, left1, right1, right0, Palette::GRAVEL);
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.32, Palette::GRAVEL_EDGE);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.32, Palette::GRAVEL_EDGE);
+
+                let track_l0 = s0.point + s0.normal * (hw0 * 0.44);
+                let track_l1 = s1.point + s1.normal * (hw1 * 0.44);
+                let track_r0 = s0.point - s0.normal * (hw0 * 0.44);
+                let track_r1 = s1.point - s1.normal * (hw1 * 0.44);
+                draw_line(track_l0.x, track_l0.y, track_l1.x, track_l1.y, 0.22, Palette::GRAVEL_DARK);
+                draw_line(track_r0.x, track_r0.y, track_r1.x, track_r1.y, 0.22, Palette::GRAVEL_DARK);
             }
             SurfaceType::Asphalt => {
                 if is_banked {

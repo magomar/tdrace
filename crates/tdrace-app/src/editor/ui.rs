@@ -431,6 +431,7 @@ pub fn render_editor_ui(
 
         let surfaces = [
             (SurfaceType::Dirt, "Dirt"),
+            (SurfaceType::Gravel, "Gravel"),
             (SurfaceType::Mud, "Mud"),
             (SurfaceType::Sand, "Sand"),
             (SurfaceType::Snow, "Snow"),
@@ -1153,6 +1154,7 @@ fn render_inspector(
                 let surfaces = [
                     (SurfaceType::Asphalt, "Asphalt"),
                     (SurfaceType::Dirt, "Dirt"),
+                    (SurfaceType::Gravel, "Gravel"),
                     (SurfaceType::Sand, "Sand"),
                     (SurfaceType::Grass, "Grass"),
                     (SurfaceType::Ice, "Ice"),
@@ -1343,6 +1345,7 @@ fn render_inspector(
             let surfaces = [
                 (SurfaceType::Asphalt, "Asphalt"),
                 (SurfaceType::Dirt, "Dirt"),
+                (SurfaceType::Gravel, "Gravel"),
                 (SurfaceType::Sand, "Sand"),
                 (SurfaceType::Grass, "Grass"),
                 (SurfaceType::Ice, "Ice"),
@@ -1434,7 +1437,8 @@ fn render_inspector(
                 curr_y += scaler.s(18.0);
 
                 let surfaces = [
-                    (SurfaceType::Dirt, "Dirt / Gravel Runoff"),
+                    (SurfaceType::Dirt, "Dirt"),
+                    (SurfaceType::Gravel, "Gravel Runoff"),
                     (SurfaceType::Sand, "Deep Sand Trap"),
                     (SurfaceType::Grass, "Grass Field"),
                     (SurfaceType::Water, "Water Puddle Hazard"),
@@ -1662,6 +1666,7 @@ fn render_inspector(
                 let surfaces = [
                     (SurfaceType::Asphalt, "Asphalt"),
                     (SurfaceType::Dirt, "Dirt / Rally"),
+                    (SurfaceType::Gravel, "Gravel"),
                     (SurfaceType::Sand, "Sand"),
                     (SurfaceType::Grass, "Grass"),
                     (SurfaceType::Ice, "Ice"),
@@ -1958,6 +1963,7 @@ fn render_inspector(
                 let surfaces = [
                     (SurfaceType::Asphalt, "Asphalt"),
                     (SurfaceType::Dirt, "Dirt"),
+                    (SurfaceType::Gravel, "Gravel"),
                     (SurfaceType::Sand, "Sand"),
                     (SurfaceType::Grass, "Grass"),
                     (SurfaceType::Ice, "Ice"),

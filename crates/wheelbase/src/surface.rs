@@ -25,6 +25,8 @@ pub enum SurfaceType {
     Mud,
     /// Loose / packed snow: moderate rolling resistance, low traction, powder roost trails.
     Snow,
+    /// Loose stone gravel track / rally runoff: moderate grip, high stone debris roost.
+    Gravel,
 }
 
 
@@ -36,6 +38,7 @@ impl SurfaceType {
             Self::Asphalt => 1.0,
             Self::Curb => 0.88,
             Self::Dirt => 0.78,
+            Self::Gravel => 0.70,
             Self::Mud => 0.52,
             Self::Grass => 0.45,
             Self::Snow => 0.34,
@@ -53,6 +56,7 @@ impl SurfaceType {
             Self::Asphalt => 1.0,
             Self::Curb => 1.3,
             Self::Dirt => 1.2,
+            Self::Gravel => 2.5,
             Self::Grass => 18.0,
             Self::Sand => 30.0,
             Self::Mud => 6.5,
@@ -70,6 +74,7 @@ impl SurfaceType {
             Self::Asphalt => 1.0,
             Self::Curb => 1.05,
             Self::Dirt => 1.10,
+            Self::Gravel => 1.25,
             Self::Grass => 2.2,
             Self::Sand => 4.5,
             Self::Mud => 3.2,
@@ -89,7 +94,10 @@ impl SurfaceType {
     /// Whether this surface kicks up dust/grass/gravel particles.
     #[inline]
     pub const fn produces_debris_particles(self) -> bool {
-        matches!(self, Self::Grass | Self::Sand | Self::Dirt | Self::Mud | Self::Snow)
+        matches!(
+            self,
+            Self::Grass | Self::Sand | Self::Dirt | Self::Mud | Self::Snow | Self::Gravel
+        )
     }
 
     /// Whether this surface produces water splash and spray plumes.
@@ -106,13 +114,14 @@ impl SurfaceType {
     }
 
     /// All valid global off-track terrain types that can be selected as a track's default surface.
-    pub const OFF_TRACK_TYPES: [SurfaceType; 6] = [
+    pub const OFF_TRACK_TYPES: [SurfaceType; 7] = [
         SurfaceType::Grass,
         SurfaceType::Sand,
         SurfaceType::Dirt,
         SurfaceType::Asphalt,
         SurfaceType::Mud,
         SurfaceType::Snow,
+        SurfaceType::Gravel,
     ];
 
     /// Whether this surface can serve as a global off-track default terrain.
@@ -120,7 +129,7 @@ impl SurfaceType {
     pub const fn is_valid_off_track(self) -> bool {
         matches!(
             self,
-            Self::Grass | Self::Sand | Self::Dirt | Self::Asphalt | Self::Mud | Self::Snow
+            Self::Grass | Self::Sand | Self::Dirt | Self::Asphalt | Self::Mud | Self::Snow | Self::Gravel
         )
     }
 
@@ -137,6 +146,7 @@ impl SurfaceType {
             Self::Ice => "Ice",
             Self::Mud => "Mud",
             Self::Snow => "Snow",
+            Self::Gravel => "Gravel",
         }
     }
 }
@@ -212,7 +222,10 @@ mod tests {
     #[test]
     fn test_surface_properties() {
         assert!(SurfaceType::Asphalt.friction_coefficient() > SurfaceType::Dirt.friction_coefficient());
-        assert!(SurfaceType::Dirt.friction_coefficient() > SurfaceType::Grass.friction_coefficient());
+        assert!(SurfaceType::Dirt.friction_coefficient() > SurfaceType::Gravel.friction_coefficient());
+        assert!(SurfaceType::Gravel.friction_coefficient() > SurfaceType::Grass.friction_coefficient());
+        assert!(SurfaceType::Gravel.rolling_resistance_multiplier() > SurfaceType::Dirt.rolling_resistance_multiplier());
+        assert!(SurfaceType::Gravel.produces_debris_particles());
         assert!(SurfaceType::Grass.friction_coefficient() > SurfaceType::Water.friction_coefficient());
         assert!(SurfaceType::Water.friction_coefficient() > SurfaceType::Ice.friction_coefficient());
         assert!(SurfaceType::Sand.rolling_resistance_multiplier() > SurfaceType::Dirt.rolling_resistance_multiplier());

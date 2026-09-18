@@ -43,12 +43,16 @@ impl Palette {
     pub const WATER: Color = Color::new(0.18, 0.58, 0.88, 0.80);
     pub const WATER_BORDER: Color = Color::new(0.40, 0.82, 1.0, 0.90);
     pub const PIT_LANE: Color = Color::new(0.15, 0.16, 0.19, 1.0);
+    pub const GRAVEL: Color = Color::new(0.52, 0.50, 0.46, 1.0);
+    pub const GRAVEL_DARK: Color = Color::new(0.40, 0.38, 0.35, 1.0);
+    pub const GRAVEL_EDGE: Color = Color::new(0.65, 0.63, 0.58, 0.85);
 
     // Pallid / Light Off-Track Backdrops (softer/lighter base for global off-track terrain)
     pub const BACKDROP_GRASS: Color = Color::new(0.24, 0.54, 0.30, 1.0);
     pub const BACKDROP_DIRT: Color = Color::new(0.56, 0.44, 0.32, 1.0);
     pub const BACKDROP_SAND: Color = Color::new(0.88, 0.80, 0.58, 1.0);
     pub const BACKDROP_ASPHALT: Color = Color::new(0.26, 0.28, 0.32, 1.0);
+    pub const BACKDROP_GRAVEL: Color = Color::new(0.58, 0.56, 0.52, 1.0);
 
     // Modern Track Markings & Curbs
     pub const CURB_RED: Color = Color::new(0.92, 0.15, 0.18, 1.0);
