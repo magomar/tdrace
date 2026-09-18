@@ -379,6 +379,7 @@ pub struct RaceSession {
     pub pause_nav: NavGrid2D,
     pub pause_selected_btn: usize,
     pub assist_profile: AssistProfile,
+    pub assist_profile_p2: AssistProfile,
     pub show_exit_confirm: bool,
     pub exit_confirm_modal: Option<UniversalConfirmModal>,
     pub settings_modal: Option<ArcadeSettingsModal>,
@@ -522,11 +523,8 @@ impl RaceSession {
             "rally_car" => CarChoice::RallyCar,
             _ => CarChoice::SportsCar,
         };
-        let assist_profile = match config.gameplay.default_assist_profile.to_lowercase().as_str() {
-            "sport" => AssistProfile::Sport,
-            "pro" => AssistProfile::Pro,
-            _ => AssistProfile::Arcade,
-        };
+        let assist_profile = AssistProfile::Arcade;
+        let assist_profile_p2 = AssistProfile::Arcade;
 
         let track_manager = TrackManager::default();
         let track = track_manager.load_track(&track_choice).unwrap_or_else(|_| classic_grand_prix());
@@ -559,6 +557,7 @@ impl RaceSession {
             free_car_selection: false,
             game_mode: GameMode::StandardRace,
             assist_profile,
+            assist_profile_p2,
             is_time_attack: false,
             num_bots: config.gameplay.default_num_bots,
             total_laps: config.gameplay.default_laps,
@@ -723,6 +722,10 @@ impl RaceSession {
             let _ = db.seed_default_profile_if_empty();
             if let Ok(active) = db.get_active_profile() {
                 self.active_profile = active;
+                self.assist_profile = self.active_profile.last_mode;
+                if let Some(player_car) = self.cars.first_mut() {
+                    player_car.config.assists = self.assist_profile.to_config();
+                }
             }
             if let Ok(all) = db.get_all_profiles() {
                 self.profile_list = all;
@@ -738,6 +741,20 @@ impl RaceSession {
                     self.active_career_progress = progress;
                 }
             }
+        }
+    }
+
+    /// Sets the active driver assist profile, updating the car configuration, active profile state, and database.
+    pub fn set_assist_profile(&mut self, profile: AssistProfile) {
+        self.assist_profile = profile;
+        self.active_profile.last_mode = profile;
+        if let Some(pid) = self.active_profile.id {
+            if let Some(db) = &self.hof_db {
+                let _ = db.update_profile_last_mode(pid, profile);
+            }
+        }
+        if let Some(player_car) = self.cars.first_mut() {
+            player_car.config.assists = profile.to_config();
         }
     }
 
@@ -908,11 +925,12 @@ impl RaceSession {
                 modal.apply_to_gamepad(&mut self.input.gamepad.config);
                 let selected_mode = ScanlineMode::from_index(modal.scanlines_dropdown.selected_index);
                 self.set_scanline_mode(selected_mode);
-                self.assist_profile = match modal.assist_dropdown.selected_index {
+                let chosen_assist = match modal.assist_dropdown.selected_index {
                     0 => AssistProfile::Arcade,
                     1 => AssistProfile::Sport,
                     _ => AssistProfile::Pro,
                 };
+                self.set_assist_profile(chosen_assist);
 
                 // Apply and persist display settings (resolution & fullscreen)
                 modal.apply_display_settings();
@@ -1208,11 +1226,9 @@ impl RaceSession {
         // Apply gameplay settings
         self.num_bots = self.config.gameplay.default_num_bots;
         self.total_laps = self.config.gameplay.default_laps;
-        self.assist_profile = match self.config.gameplay.default_assist_profile.to_lowercase().as_str() {
-            "sport" => AssistProfile::Sport,
-            "pro" => AssistProfile::Pro,
-            _ => AssistProfile::Arcade,
-        };
+        // Driving assist mode belongs to the player: any player starts in Arcade mode,
+        // and for any new race it starts with the last mode the player used.
+        // We preserve self.assist_profile across module changes.
     }
 
     /// Switches the active motorsport game module (nascar, gt, rally, kart, classic, extreme_offroad).
@@ -1928,7 +1944,9 @@ impl RaceSession {
             } else {
                 CarColorScheme::from_index(1)
             };
-            let p2_car = Car::new(base_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
+            let mut p2_config = base_config;
+            p2_config.assists = self.assist_profile_p2.to_config();
+            let p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
             self.cars.push(p2_car);
             self.color_schemes.push(p2_scheme);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
@@ -2570,14 +2588,27 @@ impl RaceSession {
             return;
         }
 
-        // Cycle Driver Assists Profile (H key or Gamepad Right Stick Click / Select)
-        if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
-            self.assist_profile = self.assist_profile.next();
-            if let Some(player_car) = self.cars.first_mut() {
-                player_car.config.assists = self.assist_profile.to_config();
+        // Cycle Driver Assists Profile (H key for P1, Gamepad Right Stick Click for P1 in single-player or P2 in split-screen)
+        if is_key_pressed(KeyCode::H) || (!self.is_split_screen() && self.input.gamepad.snapshot.btn_assist_toggle_pressed) {
+            let next_mode = self.assist_profile.next();
+            self.set_assist_profile(next_mode);
+            self.audio.play_sfx(SfxType::UiMove);
+            if let Some(player_car) = self.cars.first() {
                 self.fx.drift_popups.spawn_text(
                     player_car.state.position,
                     &format!("ASSISTS: {}", self.assist_profile.short_name()),
+                    Color::new(0.3, 0.9, 1.0, 1.0),
+                );
+            }
+        }
+        if self.is_split_screen() && self.input.gamepad.snapshot.btn_assist_toggle_pressed {
+            self.assist_profile_p2 = self.assist_profile_p2.next();
+            self.audio.play_sfx(SfxType::UiMove);
+            if let Some(p2_car) = self.cars.get_mut(1) {
+                p2_car.config.assists = self.assist_profile_p2.to_config();
+                self.fx.drift_popups.spawn_text(
+                    p2_car.state.position,
+                    &format!("P2 ASSISTS: {}", self.assist_profile_p2.short_name()),
                     Color::new(0.3, 0.9, 1.0, 1.0),
                 );
             }
@@ -3143,14 +3174,6 @@ impl RaceSession {
             }
 
             GameState::ControlsHelp(from_paused) => {
-                if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
-                    self.audio.play_sfx(SfxType::UiMove);
-                    self.assist_profile = self.assist_profile.next();
-                    if let Some(player_car) = self.cars.first_mut() {
-                        player_car.config.assists = self.assist_profile.to_config();
-                    }
-                }
-
                 if is_key_pressed(KeyCode::Tab)
                     || is_key_pressed(KeyCode::C)
                     || self.input.gamepad.snapshot.btn_x_pressed
@@ -4692,12 +4715,6 @@ impl RaceSession {
         // Toggle Mode (Time Attack vs Race vs AI - X key or Gamepad X)
         if is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
             self.is_time_attack = !self.is_time_attack;
-            self.audio.play_sfx(SfxType::UiSelect);
-        }
-
-        // Cycle Driving Assists Profile (H key)
-        if is_key_pressed(KeyCode::H) {
-            self.assist_profile = self.assist_profile.next();
             self.audio.play_sfx(SfxType::UiSelect);
         }
 

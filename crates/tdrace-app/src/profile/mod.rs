@@ -2,10 +2,11 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::render::color::CarColorScheme;
+use tdrace_core::physics::config::AssistProfile;
 
 pub use cabinet::profile::country::{draw_country_banner, CountryInfo, CountryRegistry};
 
-/// Player Profile representing driver identity, livery customizations, and nationality.
+/// Player Profile representing driver identity, livery customizations, nationality, and driving mode.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PlayerProfile {
     pub id: Option<i64>,
@@ -15,6 +16,7 @@ pub struct PlayerProfile {
     pub color_scheme: CarColorScheme,
     pub is_active: bool,
     pub created_at: String,
+    pub last_mode: AssistProfile,
 }
 
 impl Default for PlayerProfile {
@@ -27,6 +29,7 @@ impl Default for PlayerProfile {
             color_scheme: CarColorScheme::from_index(0),
             is_active: true,
             created_at: String::new(),
+            last_mode: AssistProfile::Arcade,
         }
     }
 }
@@ -41,6 +44,7 @@ impl PlayerProfile {
             color_scheme,
             is_active: false,
             created_at: String::new(),
+            last_mode: AssistProfile::Arcade,
         }
     }
 

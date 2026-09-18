@@ -197,6 +197,7 @@ fn test_arcade_settings_modal_integration_and_bindings() {
     let orig_config = std::fs::read_to_string("config.toml").ok();
 
     let mut session = RaceSession::new();
+    session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
     assert!(!session.is_settings_modal_open());
     assert!(session.settings_modal.is_none());
 
@@ -379,6 +380,108 @@ fn test_module_select_state_settings_modal_integration() {
         let _ = std::fs::write("config.toml", content);
     }
 }
+
+#[test]
+fn test_player_starts_in_arcade_and_preserves_last_used_mode_across_new_races() {
+    let mut session = RaceSession::new();
+    session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
+    // 1. Any player starts in Arcade mode
+    assert_eq!(session.assist_profile, AssistProfile::Arcade);
+
+    // Initial race car assists match Arcade profile
+    session.init_race();
+    assert_eq!(session.assist_profile, AssistProfile::Arcade);
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Arcade.to_config());
+
+    // 2. Player changes assist mode to Sport
+    session.set_assist_profile(AssistProfile::Sport);
+    assert_eq!(session.assist_profile, AssistProfile::Sport);
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Sport.to_config());
+
+    // 3. New race launched via init_race() preserves last used mode (Sport)
+    session.init_race();
+    assert_eq!(session.assist_profile, AssistProfile::Sport);
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Sport.to_config());
+
+    // 4. Switching modules preserves last used mode
+    session.switch_to_gt();
+    assert_eq!(session.assist_profile, AssistProfile::Sport);
+    session.switch_to_rally();
+    assert_eq!(session.assist_profile, AssistProfile::Sport);
+    session.switch_to_kart();
+    assert_eq!(session.assist_profile, AssistProfile::Sport);
+    session.switch_to_nascar();
+    assert_eq!(session.assist_profile, AssistProfile::Sport);
+
+    // 5. Change to Pro and verify new race retains Pro
+    session.set_assist_profile(AssistProfile::Pro);
+    assert_eq!(session.assist_profile, AssistProfile::Pro);
+    session.init_race();
+    assert_eq!(session.assist_profile, AssistProfile::Pro);
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Pro.to_config());
+}
+
+#[test]
+fn test_split_screen_players_independent_mode_preservation() {
+    use tdrace_app::ui::menu::GameMode;
+
+    let mut session = RaceSession::new();
+    session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
+    session.game_mode = GameMode::SplitScreen;
+
+    // Both players start in Arcade mode
+    assert_eq!(session.assist_profile, AssistProfile::Arcade);
+    assert_eq!(session.assist_profile_p2, AssistProfile::Arcade);
+
+    session.init_race();
+    assert!(session.cars.len() >= 2);
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Arcade.to_config());
+    assert_eq!(session.cars[1].config.assists, AssistProfile::Arcade.to_config());
+
+    // P1 changes to Sport, P2 changes to Pro
+    session.set_assist_profile(AssistProfile::Sport);
+    session.assist_profile_p2 = AssistProfile::Pro;
+    if let Some(p2_car) = session.cars.get_mut(1) {
+        p2_car.config.assists = session.assist_profile_p2.to_config();
+    }
+
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Sport.to_config());
+    assert_eq!(session.cars[1].config.assists, AssistProfile::Pro.to_config());
+
+    // New race launched preserves both players' last used modes independently
+    session.init_race();
+    assert_eq!(session.assist_profile, AssistProfile::Sport);
+    assert_eq!(session.assist_profile_p2, AssistProfile::Pro);
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Sport.to_config());
+    assert_eq!(session.cars[1].config.assists, AssistProfile::Pro.to_config());
+}
+
+#[test]
+fn test_profile_switch_restores_last_used_mode() {
+    use tdrace_app::profile::PlayerProfile;
+    use tdrace_app::render::color::CarColorScheme;
+
+    let mut session = RaceSession::new();
+    session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
+    // Default active profile has last_mode Arcade
+    assert_eq!(session.active_profile.last_mode, AssistProfile::Arcade);
+    assert_eq!(session.assist_profile, AssistProfile::Arcade);
+
+    // Player switches mode to Sport
+    session.set_assist_profile(AssistProfile::Sport);
+    assert_eq!(session.active_profile.last_mode, AssistProfile::Sport);
+    assert_eq!(session.assist_profile, AssistProfile::Sport);
+
+    // If active profile has last_mode Pro, refreshing/switching restores Pro
+    let mut pro_profile = PlayerProfile::new("ProDriver", "PRO", None, CarColorScheme::from_index(0));
+    pro_profile.last_mode = AssistProfile::Pro;
+    session.active_profile = pro_profile;
+    session.assist_profile = session.active_profile.last_mode;
+    session.init_race();
+    assert_eq!(session.assist_profile, AssistProfile::Pro);
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Pro.to_config());
+}
+
 
 
 

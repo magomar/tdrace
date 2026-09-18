@@ -295,6 +295,7 @@ default_num_bots = 7
 
     let base_cfg: GameConfig = toml::from_str(toml_str).unwrap();
     let mut session = RaceSession::new_with_config(base_cfg);
+    session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
 
     // Initial state (classic)
     assert_eq!(session.active_module_id, "classic");
@@ -305,13 +306,16 @@ default_num_bots = 7
     session.switch_to_gt();
     assert_eq!(session.active_module_id, "gt");
     assert_eq!(session.total_laps, 5, "GT/F1 specific laps configured in config.f1.toml");
-    assert_eq!(session.assist_profile, AssistProfile::Pro, "GT/F1 specific assist configured");
+    assert_eq!(session.assist_profile, AssistProfile::Arcade, "Player assist profile remains Arcade across module switch");
     assert!((session.camera.velocity_lookahead_time - 0.50).abs() < 1e-4, "GT/F1 specific camera lookahead configured");
+
+    // Player changes assist mode to Sport
+    session.set_assist_profile(AssistProfile::Sport);
 
     // Switch to Rally (loads config.rally.toml overrides)
     session.switch_to_rally();
     assert_eq!(session.active_module_id, "rally");
-    assert_eq!(session.assist_profile, AssistProfile::Sport, "Rally specific assist profile configured");
+    assert_eq!(session.assist_profile, AssistProfile::Sport, "Player's last used mode persists across module switch");
     assert!((session.camera.trauma_decay - 1.8).abs() < 1e-4, "Rally specific trauma decay configured");
     assert!((session.audio.settings.master_volume - 0.80).abs() < 1e-4, "Rally inherits general master volume");
 
@@ -319,7 +323,7 @@ default_num_bots = 7
     session.switch_to_classic();
     assert_eq!(session.active_module_id, "classic");
     assert!((session.audio.settings.master_volume - 0.80).abs() < 1e-4);
-    assert_eq!(session.assist_profile, AssistProfile::Arcade);
+    assert_eq!(session.assist_profile, AssistProfile::Sport, "Player's last used mode persists back to Classic");
 }
 
 #[test]

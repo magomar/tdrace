@@ -8,6 +8,23 @@ use serde::{Deserialize, Serialize};
 
 use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::color::CarColorScheme;
+use tdrace_core::physics::config::AssistProfile;
+
+fn mode_to_str(mode: AssistProfile) -> &'static str {
+    match mode {
+        AssistProfile::Arcade => "arcade",
+        AssistProfile::Sport => "sport",
+        AssistProfile::Pro => "pro",
+    }
+}
+
+fn mode_from_str(s: &str) -> AssistProfile {
+    match s.to_lowercase().as_str() {
+        "sport" => AssistProfile::Sport,
+        "pro" => AssistProfile::Pro,
+        _ => AssistProfile::Arcade,
+    }
+}
 
 /// Record entry stored in the Hall of Fame.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -78,7 +95,8 @@ impl HallOfFameDb {
                 secondary_color TEXT NOT NULL,
                 helmet_color TEXT NOT NULL,
                 is_active INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                last_mode TEXT NOT NULL DEFAULT 'arcade'
             );
 
             CREATE TABLE IF NOT EXISTS race_history (
@@ -114,6 +132,13 @@ impl HallOfFameDb {
             );
             CREATE INDEX IF NOT EXISTS idx_module_progress_profile ON profile_module_progress(profile_id, module_id);",
         )?;
+
+        // Ensure backward-compatibility migration for pre-existing player_profiles tables
+        let _ = self.conn.execute(
+            "ALTER TABLE player_profiles ADD COLUMN last_mode TEXT NOT NULL DEFAULT 'arcade'",
+            [],
+        );
+
         Ok(())
     }
 
@@ -124,7 +149,7 @@ impl HallOfFameDb {
     /// Retrieves all player profiles ordered by active status descending, then creation date ascending.
     pub fn get_all_profiles(&self) -> Result<Vec<PlayerProfile>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at
+            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade')
              FROM player_profiles
              ORDER BY is_active DESC, id ASC",
         )?;
@@ -134,6 +159,7 @@ impl HallOfFameDb {
             let s_hex: String = row.get(5)?;
             let h_hex: String = row.get(6)?;
             let is_active_int: i32 = row.get(7)?;
+            let mode_str: String = row.get(9)?;
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -143,6 +169,7 @@ impl HallOfFameDb {
                 color_scheme: CarColorScheme::from_hex_strings(&p_hex, &s_hex, &h_hex),
                 is_active: is_active_int != 0,
                 created_at: row.get(8)?,
+                last_mode: mode_from_str(&mode_str),
             })
         })?;
 
@@ -156,7 +183,7 @@ impl HallOfFameDb {
     /// Retrieves the currently active player profile or creates a default if none exists.
     pub fn get_active_profile(&self) -> Result<PlayerProfile> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at
+            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade')
              FROM player_profiles
              WHERE is_active = 1
              LIMIT 1",
@@ -166,6 +193,7 @@ impl HallOfFameDb {
             let p_hex: String = row.get(4)?;
             let s_hex: String = row.get(5)?;
             let h_hex: String = row.get(6)?;
+            let mode_str: String = row.get(9)?;
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -175,6 +203,7 @@ impl HallOfFameDb {
                 color_scheme: CarColorScheme::from_hex_strings(&p_hex, &s_hex, &h_hex),
                 is_active: true,
                 created_at: row.get(8)?,
+                last_mode: mode_from_str(&mode_str),
             })
         })?;
 
@@ -189,7 +218,7 @@ impl HallOfFameDb {
     /// Fetches a profile by ID.
     pub fn get_profile_by_id(&self, id: i64) -> Result<Option<PlayerProfile>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at
+            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade')
              FROM player_profiles
              WHERE id = ?1",
         )?;
@@ -199,6 +228,7 @@ impl HallOfFameDb {
             let s_hex: String = row.get(5)?;
             let h_hex: String = row.get(6)?;
             let is_active_int: i32 = row.get(7)?;
+            let mode_str: String = row.get(9)?;
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -208,6 +238,7 @@ impl HallOfFameDb {
                 color_scheme: CarColorScheme::from_hex_strings(&p_hex, &s_hex, &h_hex),
                 is_active: is_active_int != 0,
                 created_at: row.get(8)?,
+                last_mode: mode_from_str(&mode_str),
             })
         })?;
 
@@ -233,8 +264,8 @@ impl HallOfFameDb {
         }
 
         self.conn.execute(
-            "INSERT INTO player_profiles (name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO player_profiles (name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, last_mode)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
                 profile.name.trim(),
                 profile.alias.trim(),
@@ -244,6 +275,7 @@ impl HallOfFameDb {
                 h_hex,
                 if profile.is_active { 1 } else { 0 },
                 created_at,
+                mode_to_str(profile.last_mode),
             ],
         )?;
 
@@ -259,8 +291,8 @@ impl HallOfFameDb {
             }
             self.conn.execute(
                 "UPDATE player_profiles
-                 SET name = ?1, alias = ?2, country = ?3, primary_color = ?4, secondary_color = ?5, helmet_color = ?6, is_active = ?7
-                 WHERE id = ?8",
+                 SET name = ?1, alias = ?2, country = ?3, primary_color = ?4, secondary_color = ?5, helmet_color = ?6, is_active = ?7, last_mode = ?8
+                 WHERE id = ?9",
                 params![
                     profile.name.trim(),
                     profile.alias.trim(),
@@ -269,10 +301,20 @@ impl HallOfFameDb {
                     s_hex,
                     h_hex,
                     if profile.is_active { 1 } else { 0 },
+                    mode_to_str(profile.last_mode),
                     id,
                 ],
             )?;
         }
+        Ok(())
+    }
+
+    /// Updates only the last used mode for an existing profile.
+    pub fn update_profile_last_mode(&self, profile_id: i64, mode: AssistProfile) -> Result<()> {
+        self.conn.execute(
+            "UPDATE player_profiles SET last_mode = ?1 WHERE id = ?2",
+            params![mode_to_str(mode), profile_id],
+        )?;
         Ok(())
     }
 
@@ -328,6 +370,7 @@ impl HallOfFameDb {
                 color_scheme: CarColorScheme::from_index(0),
                 is_active: true,
                 created_at: Utc::now().format("%Y-%m-%d %H:%M").to_string(),
+                last_mode: AssistProfile::Arcade,
             };
             let new_id = self.create_profile(&default_profile)?;
             let mut seeded = default_profile;
@@ -788,6 +831,14 @@ impl HallOfFameDb {
         Ok(())
     }
 
+    pub fn update_profile_last_mode(&self, profile_id: i64, mode: AssistProfile) -> Result<()> {
+        let mut guard = self.profiles.lock().unwrap();
+        if let Some(p) = guard.iter_mut().find(|p| p.id == Some(profile_id)) {
+            p.last_mode = mode;
+        }
+        Ok(())
+    }
+
     pub fn seed_default_profile_if_empty(&self) -> Result<PlayerProfile> {
         let mut guard = self.profiles.lock().unwrap();
         if guard.is_empty() {
@@ -799,6 +850,7 @@ impl HallOfFameDb {
                 color_scheme: CarColorScheme::from_index(0),
                 is_active: true,
                 created_at: Utc::now().format("%Y-%m-%d %H:%M").to_string(),
+                last_mode: AssistProfile::Arcade,
             };
             guard.push(default_profile.clone());
             Ok(default_profile)

@@ -3,6 +3,7 @@ use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::profile::{CountryRegistry, ModuleCareerProgress, PlayerProfile, RaceHistoryEntry};
 use tdrace_app::render::color::CarColorScheme;
 use tdrace_app::ui::menu::TrackChoice;
+use tdrace_core::physics::config::AssistProfile;
 
 #[test]
 fn test_profile_schema_and_crud() {
@@ -29,6 +30,7 @@ fn test_profile_schema_and_crud() {
         color_scheme: CarColorScheme::from_index(4),
         is_active: true,
         created_at: "2026-08-27 10:00".to_string(),
+        last_mode: AssistProfile::Arcade,
     };
     let p2_id = db.create_profile(&p2).expect("Insert profile 2");
 
@@ -198,6 +200,7 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
         color_scheme: custom_livery,
         is_active: true,
         created_at: "2026-08-27 11:00".to_string(),
+        last_mode: AssistProfile::Arcade,
     };
 
     if let Some(db) = &session.hof_db {
@@ -322,6 +325,7 @@ fn test_clear_profile_history_and_hall_of_fame() {
         color_scheme: CarColorScheme::from_index(3),
         is_active: false,
         created_at: "2026-09-01 10:00".to_string(),
+        last_mode: AssistProfile::Arcade,
     };
     let p2_id = db.create_profile(&p2).expect("Insert profile 2");
 
