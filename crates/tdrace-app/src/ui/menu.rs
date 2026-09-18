@@ -1725,9 +1725,10 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     );
 
     let assist_item = format!("H / R3 : Toggle Assists [{}]", assist_profile.short_name());
-    let mute_text = if audio_settings.is_muted { "MUTED" } else { "ACTIVE" };
+    let music_status = if audio_settings.is_muted || audio_settings.is_music_muted { "MUTED" } else { "ON" };
+    let sfx_status = if audio_settings.is_muted || audio_settings.is_sfx_muted { "MUTED" } else { "ON" };
     let vol_pct = (audio_settings.master_volume * 100.0).round() as i32;
-    let audio_item = format!("M : Toggle Audio [{}] | [ / ] : Vol {}%", mute_text, vol_pct);
+    let audio_item = format!("M : Music [{}] | S : Sound [{}] | [ / ] : Vol {}%", music_status, sfx_status, vol_pct);
 
     let items = [
         assist_item,

@@ -512,6 +512,20 @@ impl AudioManager {
         }
     }
 
+    /// Toggles background music mute state and synchronizes active music channel volume.
+    pub fn toggle_music(&mut self) {
+        self.settings.toggle_music_mute();
+        self.sync_music_volume();
+    }
+
+    /// Toggles sound effects / engine mute state and halts active loops if muted.
+    pub fn toggle_sfx(&mut self) {
+        self.settings.toggle_sfx_mute();
+        if self.settings.is_muted || self.settings.is_sfx_muted {
+            self.stop_all_loops();
+        }
+    }
+
     /// Adjusts master volume level.
     pub fn set_master_volume(&mut self, vol: f32) {
         self.settings.master_volume = vol.clamp(0.0, 1.0);
@@ -649,7 +663,7 @@ impl AudioManager {
         gear: usize,
         dt: f32,
     ) {
-        if self.settings.is_muted {
+        if self.settings.is_muted || self.settings.is_sfx_muted {
             self.stop_all_loops();
             return;
         }
@@ -781,7 +795,7 @@ impl AudioManager {
         gear: usize,
         dt: f32,
     ) {
-        if self.settings.is_muted {
+        if self.settings.is_muted || self.settings.is_sfx_muted {
             self.stop_player2_engine();
             return;
         }
@@ -911,16 +925,55 @@ mod tests {
             sfx_volume: 0.9,
             ui_volume: 0.95,
             is_muted: false,
+            ..Default::default()
         };
 
         assert!((settings.effective_music_volume() - 0.4).abs() < 0.01);
         assert!((settings.effective_sfx_volume_scaled(1.0) - 0.72).abs() < 0.01);
         assert!((settings.effective_ui_volume() - 0.76).abs() < 0.01);
 
+        // Test independent music mute
+        settings.toggle_music_mute();
+        assert_eq!(settings.effective_music_volume(), 0.0);
+        assert!((settings.effective_sfx_volume_scaled(1.0) - 0.72).abs() < 0.01);
+        assert!((settings.effective_ui_volume() - 0.76).abs() < 0.01);
+        settings.toggle_music_mute();
+
+        // Test independent SFX mute
+        settings.toggle_sfx_mute();
+        assert!((settings.effective_music_volume() - 0.4).abs() < 0.01);
+        assert_eq!(settings.effective_sfx_volume_scaled(1.0), 0.0);
+        assert_eq!(settings.effective_ui_volume(), 0.0);
+        settings.toggle_sfx_mute();
+
+        // Test master mute
         settings.toggle_mute();
         assert_eq!(settings.effective_music_volume(), 0.0);
         assert_eq!(settings.effective_sfx_volume_scaled(1.0), 0.0);
         assert_eq!(settings.effective_ui_volume(), 0.0);
+    }
+
+    #[test]
+    fn test_audio_manager_independent_music_and_sfx_toggles() {
+        let mut mgr = AudioManager::new();
+        assert!(!mgr.settings.is_music_muted);
+        assert!(!mgr.settings.is_sfx_muted);
+
+        mgr.toggle_music();
+        assert!(mgr.settings.is_music_muted);
+        assert!(!mgr.settings.is_sfx_muted);
+
+        mgr.toggle_sfx();
+        assert!(mgr.settings.is_music_muted);
+        assert!(mgr.settings.is_sfx_muted);
+
+        mgr.toggle_music();
+        assert!(!mgr.settings.is_music_muted);
+        assert!(mgr.settings.is_sfx_muted);
+
+        mgr.toggle_sfx();
+        assert!(!mgr.settings.is_music_muted);
+        assert!(!mgr.settings.is_sfx_muted);
     }
 
     #[test]

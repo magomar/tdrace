@@ -327,6 +327,7 @@ pub struct RaceSession {
     pub garage_gallery_mode: bool,
     pub garage_gallery_filter: usize,
     pub garage_gallery_sel: usize,
+    pub in_garage_state: bool,
 
     // Active Player Profile & Career History
     pub active_profile: PlayerProfile,
@@ -591,6 +592,7 @@ impl RaceSession {
             garage_gallery_mode: false,
             garage_gallery_filter: 0,
             garage_gallery_sel: 0,
+            in_garage_state: false,
 
             active_profile: PlayerProfile::default(),
             active_profile_stats: ProfileCareerStats::default(),
@@ -2264,14 +2266,46 @@ impl RaceSession {
         // Handle touch controls update
         self.touch.update_from_macroquad(sw, sh, frame_dt);
 
-        // Toggle audio mute (M key) - only when not typing and not in Track Manager
-        let is_typing_or_tm = matches!(
-            self.state,
-            GameState::ProfileCreate { .. }
-                | GameState::TrackManager { .. }
-        );
+        // Handle entering garage state: stop music once on entry so engine sound is clear
+        let is_in_garage = matches!(self.state, GameState::Garage(_));
+        if is_in_garage && !self.in_garage_state {
+            self.in_garage_state = true;
+            self.audio.stop_music();
+        } else if !is_in_garage {
+            self.in_garage_state = false;
+        }
+
+        // Toggle audio: M switches music, S switches other sounds (SFX / engine)
+        // (only when not typing, not in Track Manager, and not Ctrl/Cmd hotkey)
+        let ctrl_down = is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper);
+        let is_typing_or_tm = ctrl_down
+            || matches!(
+                self.state,
+                GameState::ProfileCreate { .. }
+                    | GameState::TrackManager { .. }
+            )
+            || (matches!(self.state, GameState::TrackEditor) && self.editor_modal != EditorModal::None);
+
         if !is_typing_or_tm && is_key_pressed(KeyCode::M) {
-            self.audio.toggle_mute();
+            self.audio.toggle_music();
+            if !self.audio.settings.is_music_muted && !self.audio.settings.is_muted && self.audio.current_music.is_none() {
+                let track = match self.state {
+                    GameState::Racing | GameState::Countdown(_) | GameState::Paused | GameState::Finished => {
+                        MusicTrack::NightcallRace
+                    }
+                    _ => MusicTrack::NeonMenu,
+                };
+                self.audio.play_music(track);
+            }
+        }
+
+        let is_wasd_racing = matches!(self.state, GameState::Racing | GameState::Countdown(_))
+            && self.input.input_map == cabinet::input::InputMap::wasd_racing();
+        if !is_typing_or_tm && !is_wasd_racing && is_key_pressed(KeyCode::S) {
+            self.audio.toggle_sfx();
         }
 
         // Adjust Master Volume (LeftBracket / RightBracket)
@@ -2630,7 +2664,6 @@ impl RaceSession {
                 self.update_modality_select();
             }
             GameState::Garage(origin) => {
-                self.audio.stop_music();
                 self.update_garage(origin, frame_dt);
             }
             GameState::ModuleSelect { .. } => {
@@ -2719,7 +2752,6 @@ impl RaceSession {
                             }
                         }
                         if is_key_pressed(KeyCode::Down)
-                            || is_key_pressed(KeyCode::S)
                             || self.input.gamepad.snapshot.dpad_down_pressed
                             || self.input.gamepad.snapshot.nav_down
                         {
@@ -2843,7 +2875,6 @@ impl RaceSession {
                             }
                         }
                         if is_key_pressed(KeyCode::Down)
-                            || is_key_pressed(KeyCode::S)
                             || self.input.gamepad.snapshot.dpad_down_pressed
                             || self.input.gamepad.snapshot.nav_down
                         {
@@ -3088,7 +3119,6 @@ impl RaceSession {
                 if is_key_pressed(KeyCode::Up)
                     || is_key_pressed(KeyCode::Down)
                     || is_key_pressed(KeyCode::W)
-                    || is_key_pressed(KeyCode::S)
                     || self.input.gamepad.snapshot.nav_up
                     || self.input.gamepad.snapshot.nav_down
                 {
@@ -3371,7 +3401,7 @@ impl RaceSession {
             }
         }
 
-        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+        if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
             self.audio.play_sfx(SfxType::UiMove);
             if !self.profile_list.is_empty() {
                 current_idx = (current_idx + 1) % self.profile_list.len();
@@ -3737,7 +3767,7 @@ impl RaceSession {
                 selected_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+        if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
             self.audio.play_sfx(SfxType::UiMove);
             selected_idx = (selected_idx + 1) % num_modules;
         }
@@ -3975,7 +4005,6 @@ impl RaceSession {
             }
         }
         if is_key_pressed(KeyCode::Down)
-            || is_key_pressed(KeyCode::S)
             || self.input.gamepad.snapshot.dpad_down_pressed
             || self.input.gamepad.snapshot.nav_down
         {
@@ -4327,7 +4356,7 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiMove);
                     }
                 }
-                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
+                if is_key_pressed(KeyCode::Down) {
                     if self.garage_gallery_sel + 4 < n {
                         self.garage_gallery_sel += 4;
                         self.audio.play_sfx(SfxType::UiMove);
@@ -4381,7 +4410,6 @@ impl RaceSession {
             }
         } else if is_key_pressed(KeyCode::E)
             || is_key_pressed(KeyCode::Down)
-            || is_key_pressed(KeyCode::S)
             || self.input.gamepad.snapshot.dpad_down_pressed
             || self.input.gamepad.snapshot.btn_rb_pressed
         {
@@ -4718,7 +4746,7 @@ impl RaceSession {
                     self.menu_track_idx -= 1;
                 }
             }
-            if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+            if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
                 self.audio.play_sfx(SfxType::UiMove);
                 self.menu_track_idx = (self.menu_track_idx + 1) % total_items;
             }

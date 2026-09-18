@@ -8,6 +8,10 @@ pub struct AudioSettings {
     pub sfx_volume: f32,
     pub ui_volume: f32,
     pub is_muted: bool,
+    #[serde(default)]
+    pub is_music_muted: bool,
+    #[serde(default)]
+    pub is_sfx_muted: bool,
 }
 
 impl Default for AudioSettings {
@@ -18,6 +22,8 @@ impl Default for AudioSettings {
             sfx_volume: 0.90,
             ui_volume: 0.90,
             is_muted: false,
+            is_music_muted: false,
+            is_sfx_muted: false,
         }
     }
 }
@@ -29,10 +35,22 @@ impl AudioSettings {
         self.is_muted = !self.is_muted;
     }
 
+    /// Toggles background music mute.
+    #[inline]
+    pub fn toggle_music_mute(&mut self) {
+        self.is_music_muted = !self.is_music_muted;
+    }
+
+    /// Toggles sound effects and engine sound mute.
+    #[inline]
+    pub fn toggle_sfx_mute(&mut self) {
+        self.is_sfx_muted = !self.is_sfx_muted;
+    }
+
     /// Computes effective output volume for background music.
     #[inline]
     pub fn effective_music_volume(&self) -> f32 {
-        if self.is_muted {
+        if self.is_muted || self.is_music_muted {
             0.0
         } else {
             (self.master_volume * self.music_volume).clamp(0.0, 1.0)
@@ -48,7 +66,7 @@ impl AudioSettings {
     /// Computes effective output volume for in-game sound effects scaled by additional gain.
     #[inline]
     pub fn effective_sfx_volume_scaled(&self, sfx_gain: f32) -> f32 {
-        if self.is_muted {
+        if self.is_muted || self.is_sfx_muted {
             0.0
         } else {
             (self.master_volume * self.sfx_volume * sfx_gain).clamp(0.0, 1.0)
@@ -58,7 +76,7 @@ impl AudioSettings {
     /// Computes effective output volume for UI sounds.
     #[inline]
     pub fn effective_ui_volume(&self) -> f32 {
-        if self.is_muted {
+        if self.is_muted || self.is_sfx_muted {
             0.0
         } else {
             (self.master_volume * self.ui_volume).clamp(0.0, 1.0)

@@ -204,6 +204,7 @@ fn test_arcade_settings_modal_lifecycle_and_bindings() {
         sfx_volume: 0.70,
         ui_volume: 0.80,
         is_muted: false,
+        ..Default::default()
     };
     let mut gp_config = GamepadConfig {
         stick_deadzone: 0.15,

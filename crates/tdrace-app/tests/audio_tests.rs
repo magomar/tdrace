@@ -205,6 +205,41 @@ fn test_race_session_audio_wiring_and_countdown_state() {
 }
 
 #[test]
+fn test_independent_music_and_sound_separation_in_session() {
+    let mut session = RaceSession::new();
+    assert!(!session.audio.settings.is_music_muted);
+    assert!(!session.audio.settings.is_sfx_muted);
+
+    // 1. Toggle Music independently
+    session.audio.toggle_music();
+    assert!(session.audio.settings.is_music_muted);
+    assert!(!session.audio.settings.is_sfx_muted);
+    assert_eq!(session.audio.settings.effective_music_volume(), 0.0);
+    assert!(session.audio.settings.effective_sfx_volume() > 0.0);
+
+    // 2. Toggle Sound independently
+    session.audio.toggle_sfx();
+    assert!(session.audio.settings.is_music_muted);
+    assert!(session.audio.settings.is_sfx_muted);
+    assert_eq!(session.audio.settings.effective_music_volume(), 0.0);
+    assert_eq!(session.audio.settings.effective_sfx_volume(), 0.0);
+
+    // 3. Unmute Music: Music plays while Sound remains muted
+    session.audio.toggle_music();
+    assert!(!session.audio.settings.is_music_muted);
+    assert!(session.audio.settings.is_sfx_muted);
+    assert!(session.audio.settings.effective_music_volume() > 0.0);
+    assert_eq!(session.audio.settings.effective_sfx_volume(), 0.0);
+
+    // 4. Unmute Sound: Both active
+    session.audio.toggle_sfx();
+    assert!(!session.audio.settings.is_music_muted);
+    assert!(!session.audio.settings.is_sfx_muted);
+    assert!(session.audio.settings.effective_music_volume() > 0.0);
+    assert!(session.audio.settings.effective_sfx_volume() > 0.0);
+}
+
+#[test]
 fn test_engine_rpm_model_gear_shifts_and_revs() {
     let mut model = tdrace_app::game::EngineRpmModel::default();
     assert_eq!(model.current_gear, 1);

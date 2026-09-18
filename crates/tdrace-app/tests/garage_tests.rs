@@ -348,6 +348,18 @@ fn test_garage_stops_music_and_plays_engine() {
     assert!(session.garage_rev_rpm > 0.0);
     assert!(session.audio.is_engine_active);
 
+    // 3b. Muting SFX via toggle_sfx silences engine in the garage
+    session.audio.toggle_sfx();
+    assert!(session.audio.settings.is_sfx_muted);
+    session.update_garage(GarageOrigin::Menu, 0.1);
+    assert!(!session.audio.is_engine_active);
+
+    // Unmuting SFX restores engine sound in garage
+    session.audio.toggle_sfx();
+    assert!(!session.audio.settings.is_sfx_muted);
+    session.update_garage(GarageOrigin::Menu, 0.1);
+    assert!(session.audio.is_engine_active);
+
     // 4. Exiting garage stops all engine loops
     session.audio.stop_all_loops();
     assert!(!session.audio.is_engine_active);
