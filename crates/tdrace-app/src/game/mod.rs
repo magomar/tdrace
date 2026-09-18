@@ -108,9 +108,10 @@ use crate::ui::race_stats::render_race_stats_screen;
 use crate::ui::hud::{format_lap_time, render_hud, render_split_hud, PersonalBestNotification, VisibilityToast};
 use crate::ui::menu::{
     render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
-    render_module_select_menu, render_pause_menu, render_results_screen, render_track_select_menu,
-    resolve_predefined_car_for_track, resolve_track_for_menu, CarChoice, GameMode, MenuPanelFocus,
-    RaceResultEntry, TrackCatalogFilter, TrackChoice,
+    render_modality_select_screen, render_module_select_menu, render_pause_menu,
+    render_results_screen, render_track_select_menu, resolve_predefined_car_for_track,
+    resolve_track_for_menu, CarChoice, GameMode, MenuPanelFocus, ModalityCategory, ModalityItem,
+    ModalityModal, RaceResultEntry, TrackCatalogFilter, TrackChoice,
 };
 use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
 use crate::ui::starting_grid::{render_starting_grid_screen, StartingGridFocus};
@@ -140,6 +141,11 @@ pub enum GameState {
     Menu,
     ModuleSelect {
         selected_idx: usize,
+    },
+    ModalitySelect {
+        category: ModalityCategory,
+        selected_idx: usize,
+        modal: Option<ModalityModal>,
     },
     ChampionshipStandings,
     StartingGrid,
@@ -2114,6 +2120,19 @@ impl RaceSession {
                 self.audio.stop_all_loops();
                 self.audio.play_sfx(SfxType::UiSelect);
             }
+            GameState::ModalitySelect { .. } => {
+                if let GameState::ModuleSelect { selected_idx } = self.state {
+                    match selected_idx {
+                        0 => self.switch_to_classic(),
+                        1 => self.switch_to_rally(),
+                        2 => self.switch_to_kart(),
+                        3 => self.switch_to_gt(),
+                        4 => self.switch_to_nascar(),
+                        _ => self.switch_to_extreme_offroad(),
+                    }
+                }
+                self.audio.play_music(MusicTrack::NeonMenu);
+            }
             GameState::Menu => {
                 if let GameState::ModuleSelect { selected_idx } = self.state {
                     match selected_idx {
@@ -2523,155 +2542,12 @@ impl RaceSession {
                 self.audio.play_music(MusicTrack::NeonMenu);
                 self.update_menu();
             }
-            GameState::ModuleSelect { ref mut selected_idx } => {
-                // If Arcade Settings Modal is open on the Grand Hub, update it and return:
-                if let Some(ref mut modal) = self.settings_modal {
-                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
-                    let scaler = UiScaler::new(sw, sh);
-                    let theme = CabinetTheme::default();
-                    let mut ctx = CabinetContext {
-                        scaler: &scaler,
-                        fonts: &self.fonts,
-                        theme: &theme,
-                        gamepad: &self.input.gamepad.snapshot,
-                        dt: 1.0 / 60.0,
-                        audio: Some(&self.audio),
-                    };
-
-                    let action = modal.update(&mut ctx);
-                    if matches!(action, ScreenAction::Pop) {
-                        let saved = modal.is_saved;
-                        self.close_settings_modal(saved);
-                        if saved {
-                            self.audio.play_sfx(SfxType::UiSelect);
-                        }
-                    }
-                    return;
-                }
-
-                // If exit confirmation modal is currently open:
-                if self.show_exit_confirm {
-                    if self.exit_confirm_modal.is_none() {
-                        self.exit_confirm_modal = Some(UniversalConfirmModal::quit_game());
-                    }
-                    if let Some(ref mut modal) = self.exit_confirm_modal {
-                        let sw = screen_width_safe();
-                        let sh = screen_height_safe();
-                        let scaler = UiScaler::new(sw, sh);
-                        let theme = CabinetTheme::cyberpunk_neon();
-                        let mut ctx = CabinetContext::new(
-                            &scaler,
-                            &self.fonts,
-                            &theme,
-                            &self.input.gamepad.snapshot,
-                            1.0 / 60.0,
-                        )
-                        .with_audio(Some(&self.audio));
-
-                        // Direct legacy shortcuts for Y / N
-                        if is_key_pressed(KeyCode::Y) {
-                            std::process::exit(0);
-                        }
-                        if is_key_pressed(KeyCode::N) {
-                            self.audio.play_sfx(SfxType::UiSelect);
-                            self.show_exit_confirm = false;
-                            self.exit_confirm_modal = None;
-                            return;
-                        }
-
-                        let action = modal.update(&mut ctx);
-                        match action {
-                            ScreenAction::Quit => {
-                                std::process::exit(0);
-                            }
-                            ScreenAction::Pop => {
-                                self.show_exit_confirm = false;
-                                self.exit_confirm_modal = None;
-                            }
-                            _ => {}
-                        }
-                    }
-                    return;
-                }
-
-                let num_modules = 6;
-                if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
-                    self.audio.play_sfx(SfxType::UiMove);
-                    if *selected_idx == 0 {
-                        *selected_idx = num_modules - 1;
-                    } else {
-                        *selected_idx -= 1;
-                    }
-                }
-                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
-                    self.audio.play_sfx(SfxType::UiMove);
-                    *selected_idx = (*selected_idx + 1) % num_modules;
-                }
-                if is_key_pressed(KeyCode::Enter)
-                    || is_key_pressed(KeyCode::Space)
-                    || is_key_pressed(KeyCode::KpEnter)
-                    || self.input.gamepad.snapshot.btn_confirm_pressed
-                    || self.input.gamepad.snapshot.btn_a_pressed
-                {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.transition_scanline_to(GameState::Menu, 0.35);
-                    return;
-                }
-
-                // Profile Manager (P key or Gamepad Y)
-                if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.refresh_profiles_and_stats();
-                    let current_idx = self
-                        .profile_list
-                        .iter()
-                        .position(|p| p.id == self.active_profile.id)
-                        .unwrap_or(0);
-                    self.state = GameState::ProfileManager {
-                        selected_idx: current_idx,
-                    };
-                    return;
-                }
-
-                // New Profile (N key or Gamepad X)
-                if is_key_pressed(KeyCode::N) || self.input.gamepad.snapshot.btn_x_pressed {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    let next_livery = self.profile_list.len() % Palette::CAR_COLORS.len();
-                    self.state = GameState::ProfileCreate {
-                        editing_id: None,
-                        field_idx: 0,
-                        input_name: String::new(),
-                        input_alias: String::new(),
-                        country_idx: 1, // Spain default
-                        livery_idx: next_livery,
-                        cursor_timer: 0.0,
-                    };
-                    return;
-                }
-
-                // Arcade Settings Modal (O or X key)
-                if is_key_pressed(KeyCode::O) || is_key_pressed(KeyCode::X) {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.open_settings_modal();
-                    return;
-                }
-
-                // Controls Help (K key)
-                if is_key_pressed(KeyCode::K) {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.state = GameState::ControlsHelp(false);
-                    return;
-                }
-
-                // Escape / Gamepad B / Back to trigger exit dialog
-                if is_key_pressed(KeyCode::Escape)
-                    || self.input.gamepad.snapshot.btn_cancel_pressed
-                    || self.input.gamepad.snapshot.btn_b_pressed
-                    || self.input.gamepad.snapshot.btn_back_pressed
-                {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.show_exit_confirm = true;
-                }
+            GameState::ModalitySelect { .. } => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+                self.update_modality_select();
+            }
+            GameState::ModuleSelect { .. } => {
+                self.update_module_select();
             }
             GameState::ChampionshipStandings => {
                 if is_key_pressed(KeyCode::Enter)
@@ -2749,9 +2625,15 @@ impl RaceSession {
                             self.starting_grid_card_idx = (self.starting_grid_card_idx + 1) % num_cards;
                         }
 
-                        // Tab / Gamepad X fallback for mode cycling
+                        // Tab / Gamepad X fallback for mode toggle
                         if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_x_pressed {
-                            self.game_mode = self.game_mode.next();
+                            if self.game_mode == GameMode::StandardRace {
+                                self.game_mode = GameMode::ExperimentalRace;
+                            } else if self.game_mode == GameMode::ExperimentalRace {
+                                self.game_mode = GameMode::StandardRace;
+                            } else {
+                                self.game_mode = self.game_mode.next();
+                            }
                             self.is_time_attack = self.game_mode.is_time_attack();
                             self.free_car_selection = self.game_mode.allows_car_change();
                             self.rebuild_roster_participants();
@@ -2761,13 +2643,19 @@ impl RaceSession {
                         // Modify active card setting on Enter / Space / bracket / etc.
                         match self.starting_grid_card_idx {
                             0 => {
-                                // Card 0: Game Mode Card
+                                // Card 0: Modality Card (toggle Standard preset vs Experimental custom race)
                                 if is_key_pressed(KeyCode::Enter)
                                     || is_key_pressed(KeyCode::KpEnter)
                                     || is_key_pressed(KeyCode::RightBracket)
                                     || is_key_pressed(KeyCode::LeftBracket)
                                 {
-                                    self.game_mode = self.game_mode.next();
+                                    if self.game_mode == GameMode::StandardRace {
+                                        self.game_mode = GameMode::ExperimentalRace;
+                                    } else if self.game_mode == GameMode::ExperimentalRace {
+                                        self.game_mode = GameMode::StandardRace;
+                                    } else {
+                                        self.game_mode = self.game_mode.next();
+                                    }
                                     self.is_time_attack = self.game_mode.is_time_attack();
                                     self.free_car_selection = self.game_mode.allows_car_change();
                                     self.rebuild_roster_participants();
@@ -3669,8 +3557,378 @@ impl RaceSession {
     }
 
 
+    /// Updates input and navigation for Grand Hub Module Selection screen.
+    pub fn update_module_select(&mut self) {
+        let mut selected_idx = match self.state {
+            GameState::ModuleSelect { selected_idx } => selected_idx,
+            _ => return,
+        };
+
+        // If Arcade Settings Modal is open on the Grand Hub, update it and return:
+        if let Some(ref mut modal) = self.settings_modal {
+            let (sw, sh) = (screen_width_safe(), screen_height_safe());
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::default();
+            let mut ctx = CabinetContext {
+                scaler: &scaler,
+                fonts: &self.fonts,
+                theme: &theme,
+                gamepad: &self.input.gamepad.snapshot,
+                dt: 1.0 / 60.0,
+                audio: Some(&self.audio),
+            };
+
+            let action = modal.update(&mut ctx);
+            if matches!(action, ScreenAction::Pop) {
+                let saved = modal.is_saved;
+                self.close_settings_modal(saved);
+                if saved {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+            }
+            return;
+        }
+
+        // If exit confirmation modal is currently open:
+        if self.show_exit_confirm {
+            if self.exit_confirm_modal.is_none() {
+                self.exit_confirm_modal = Some(UniversalConfirmModal::quit_game());
+            }
+            if let Some(ref mut modal) = self.exit_confirm_modal {
+                let sw = screen_width_safe();
+                let sh = screen_height_safe();
+                let scaler = UiScaler::new(sw, sh);
+                let theme = CabinetTheme::cyberpunk_neon();
+                let mut ctx = CabinetContext::new(
+                    &scaler,
+                    &self.fonts,
+                    &theme,
+                    &self.input.gamepad.snapshot,
+                    1.0 / 60.0,
+                )
+                .with_audio(Some(&self.audio));
+
+                // Direct legacy shortcuts for Y / N
+                if is_key_pressed(KeyCode::Y) {
+                    std::process::exit(0);
+                }
+                if is_key_pressed(KeyCode::N) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.show_exit_confirm = false;
+                    self.exit_confirm_modal = None;
+                    return;
+                }
+
+                let action = modal.update(&mut ctx);
+                match action {
+                    ScreenAction::Quit => {
+                        std::process::exit(0);
+                    }
+                    ScreenAction::Pop => {
+                        self.show_exit_confirm = false;
+                        self.exit_confirm_modal = None;
+                    }
+                    _ => {}
+                }
+            }
+            return;
+        }
+
+        let num_modules = 6;
+        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+            self.audio.play_sfx(SfxType::UiMove);
+            if selected_idx == 0 {
+                selected_idx = num_modules - 1;
+            } else {
+                selected_idx -= 1;
+            }
+        }
+        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+            self.audio.play_sfx(SfxType::UiMove);
+            selected_idx = (selected_idx + 1) % num_modules;
+        }
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.transition_scanline_to(
+                GameState::ModalitySelect {
+                    category: ModalityCategory::SinglePlayer,
+                    selected_idx: 0,
+                    modal: None,
+                },
+                0.35,
+            );
+            return;
+        }
+
+        // Profile Manager (P key or Gamepad Y)
+        if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.refresh_profiles_and_stats();
+            let current_idx = self
+                .profile_list
+                .iter()
+                .position(|p| p.id == self.active_profile.id)
+                .unwrap_or(0);
+            self.state = GameState::ProfileManager {
+                selected_idx: current_idx,
+            };
+            return;
+        }
+
+        // New Profile (N key or Gamepad X)
+        if is_key_pressed(KeyCode::N) || self.input.gamepad.snapshot.btn_x_pressed {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let next_livery = self.profile_list.len() % Palette::CAR_COLORS.len();
+            self.state = GameState::ProfileCreate {
+                editing_id: None,
+                field_idx: 0,
+                input_name: String::new(),
+                input_alias: String::new(),
+                country_idx: 1, // Spain default
+                livery_idx: next_livery,
+                cursor_timer: 0.0,
+            };
+            return;
+        }
+
+        // Arcade Settings Modal (O or X key)
+        if is_key_pressed(KeyCode::O) || is_key_pressed(KeyCode::X) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.open_settings_modal();
+            return;
+        }
+
+        // Controls Help (K key)
+        if is_key_pressed(KeyCode::K) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.state = GameState::ControlsHelp(false);
+            return;
+        }
+
+        // Escape / Gamepad B / Back to trigger exit dialog
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_cancel_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.show_exit_confirm = true;
+        }
+
+        if matches!(self.state, GameState::ModuleSelect { .. }) {
+            self.state = GameState::ModuleSelect { selected_idx };
+        }
+    }
+
+    /// Updates input and state for the Race Modality Selection stage.
+    pub fn update_modality_select(&mut self) {
+        let (mut category, mut selected_idx, mut modal) = match self.state {
+            GameState::ModalitySelect {
+                category,
+                selected_idx,
+                ref modal,
+            } => (category, selected_idx, modal.clone()),
+            _ => return,
+        };
+
+        // If informational coming-soon modal is open, any confirm/back dismisses it
+        if modal.is_some() {
+            if is_key_pressed(KeyCode::Escape)
+                || is_key_pressed(KeyCode::Enter)
+                || is_key_pressed(KeyCode::Space)
+                || is_key_pressed(KeyCode::KpEnter)
+                || self.input.gamepad.snapshot.btn_confirm_pressed
+                || self.input.gamepad.snapshot.btn_a_pressed
+                || self.input.gamepad.snapshot.btn_b_pressed
+                || self.input.gamepad.snapshot.btn_back_pressed
+            {
+                self.audio.play_sfx(SfxType::UiSelect);
+                modal = None;
+                self.state = GameState::ModalitySelect {
+                    category,
+                    selected_idx,
+                    modal,
+                };
+            }
+            return;
+        }
+
+        // Category Tab Switching (Left / Right / Tab / 1 / 2 / Gamepad D-pad / Bumpers)
+        if is_key_pressed(KeyCode::Key1) {
+            if category != ModalityCategory::SinglePlayer {
+                category = ModalityCategory::SinglePlayer;
+                selected_idx = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        } else if is_key_pressed(KeyCode::Key2) {
+            if category != ModalityCategory::Multiplayer {
+                category = ModalityCategory::Multiplayer;
+                selected_idx = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        } else if is_key_pressed(KeyCode::Tab)
+            || is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::A)
+            || is_key_pressed(KeyCode::D)
+            || self.input.gamepad.snapshot.dpad_left_pressed
+            || self.input.gamepad.snapshot.dpad_right_pressed
+            || self.input.gamepad.snapshot.btn_lb_pressed
+            || self.input.gamepad.snapshot.btn_rb_pressed
+        {
+            category = match category {
+                ModalityCategory::SinglePlayer => ModalityCategory::Multiplayer,
+                ModalityCategory::Multiplayer => ModalityCategory::SinglePlayer,
+            };
+            selected_idx = 0;
+            self.audio.play_sfx(SfxType::UiMove);
+        }
+
+        // Modality Card Navigation (Up / Down / W / S / Gamepad D-pad)
+        let items = category.items();
+        if is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
+            || self.input.gamepad.snapshot.dpad_up_pressed
+            || self.input.gamepad.snapshot.nav_up
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            if selected_idx == 0 {
+                selected_idx = items.len().saturating_sub(1);
+            } else {
+                selected_idx -= 1;
+            }
+        }
+        if is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
+            || self.input.gamepad.snapshot.dpad_down_pressed
+            || self.input.gamepad.snapshot.nav_down
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            if !items.is_empty() {
+                selected_idx = (selected_idx + 1) % items.len();
+            }
+        }
+
+        // Confirmation (Enter / Space / Gamepad A)
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            if let Some(&item) = items.get(selected_idx) {
+                match item {
+                    ModalityItem::QuickRace => {
+                        self.game_mode = GameMode::StandardRace;
+                        self.free_car_selection = false;
+                        self.is_time_attack = false;
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.transition_scanline_to(GameState::Menu, 0.35);
+                        return;
+                    }
+                    ModalityItem::CustomRace => {
+                        self.game_mode = GameMode::ExperimentalRace;
+                        self.free_car_selection = true;
+                        self.is_time_attack = false;
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.transition_scanline_to(GameState::Menu, 0.35);
+                        return;
+                    }
+                    ModalityItem::CareerMode => {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        if self.active_module_id == "nascar" {
+                            self.start_nascar_championship();
+                        } else {
+                            let tier = self.active_career_progress.level.clamp(1, 5);
+                            self.start_gt_career_tier(tier);
+                        }
+                        return;
+                    }
+                    ModalityItem::TimeTrial => {
+                        self.game_mode = GameMode::TimeTrial;
+                        self.free_car_selection = true;
+                        self.is_time_attack = true;
+                        self.num_bots = 0;
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.transition_scanline_to(GameState::Menu, 0.35);
+                        return;
+                    }
+                    ModalityItem::FreeRide => {
+                        self.game_mode = GameMode::FreeRide;
+                        self.free_car_selection = true;
+                        self.is_time_attack = true;
+                        self.num_bots = 0;
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.transition_scanline_to(GameState::Menu, 0.35);
+                        return;
+                    }
+                    ModalityItem::SplitScreen => {
+                        self.game_mode = GameMode::SplitScreen;
+                        self.free_car_selection = true;
+                        self.is_time_attack = false;
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.transition_scanline_to(GameState::Menu, 0.35);
+                        return;
+                    }
+                    ModalityItem::LanPlay => {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        modal = Some(ModalityModal::LanComingSoon);
+                        self.state = GameState::ModalitySelect {
+                            category,
+                            selected_idx,
+                            modal,
+                        };
+                        return;
+                    }
+                    ModalityItem::CloudPlay => {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        modal = Some(ModalityModal::CloudComingSoon);
+                        self.state = GameState::ModalitySelect {
+                            category,
+                            selected_idx,
+                            modal,
+                        };
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Return to Grand Hub (Escape / Gamepad B / Back)
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            let cur_mod_idx = match self.active_module_id {
+                "classic" => 0,
+                "rally" => 1,
+                "kart" => 2,
+                "gt" | "gt_challenge" | "f1" => 3,
+                "nascar" => 4,
+                "extreme_offroad" => 5,
+                _ => 0,
+            };
+            self.transition_fade_to(GameState::ModuleSelect { selected_idx: cur_mod_idx }, 0.3);
+            return;
+        }
+
+        if matches!(self.state, GameState::ModalitySelect { .. }) {
+            self.state = GameState::ModalitySelect {
+                category,
+                selected_idx,
+                modal,
+            };
+        }
+    }
+
     /// Menu input navigation (Keyboard + Gamepad D-pad/Analog Sticks/buttons).
-    fn update_menu(&mut self) {
+    pub fn update_menu(&mut self) {
         // Check for gamepad mapping changes on disk when in/reloading the main menu
         self.input.gamepad.check_and_reload_profile();
 
@@ -3751,7 +4009,7 @@ impl RaceSession {
             return;
         }
 
-        // Return to Grand Hub Module Selection Screen (Escape key or Gamepad B / Cancel / Back / G / Tab)
+        // Return to Modality Selection Screen (Escape key or Gamepad B / Cancel / Back / G / Tab)
         if is_key_pressed(KeyCode::Escape)
             || is_key_pressed(KeyCode::G)
             || is_key_pressed(KeyCode::Tab)
@@ -3760,16 +4018,26 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            let cur_mod_idx = match self.active_module_id {
-                "classic" => 0,
-                "rally" => 1,
-                "kart" => 2,
-                "gt" | "gt_challenge" | "f1" => 3,
-                "nascar" => 4,
-                "extreme_offroad" => 5,
-                _ => 0,
+            let initial_category = match self.game_mode {
+                GameMode::SplitScreen => ModalityCategory::Multiplayer,
+                _ => ModalityCategory::SinglePlayer,
             };
-            self.transition_fade_to(GameState::ModuleSelect { selected_idx: cur_mod_idx }, 0.3);
+            let initial_idx = match self.game_mode {
+                GameMode::StandardRace => 0,
+                GameMode::ExperimentalRace => 1,
+                GameMode::Career => 2,
+                GameMode::TimeTrial => 3,
+                GameMode::FreeRide => 4,
+                GameMode::SplitScreen => 0,
+            };
+            self.transition_fade_to(
+                GameState::ModalitySelect {
+                    category: initial_category,
+                    selected_idx: initial_idx,
+                    modal: None,
+                },
+                0.3,
+            );
             return;
         }
 
@@ -5939,6 +6207,30 @@ impl RaceSession {
     /// Renders current UI state, HUD, or pause screen.
     pub fn render(&mut self) {
         match self.state {
+            GameState::ModalitySelect {
+                category,
+                selected_idx,
+                ref modal,
+            } => {
+                let (mod_title, mod_accent) = match self.active_module_id {
+                    "gt" | "gt_challenge" | "f1" => ("GT WORLD CHALLENGE", Palette::RED),
+                    "rally" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
+                    "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
+                    "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
+                    "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
+                    _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_CYAN),
+                };
+                render_modality_select_screen(
+                    &self.fonts,
+                    mod_title,
+                    mod_accent,
+                    category,
+                    selected_idx,
+                    modal.as_ref(),
+                    &self.active_profile,
+                    &self.active_profile_stats,
+                );
+            }
             GameState::Menu => {
                 let available_tracks = self.filtered_menu_tracks();
                 let filter_counts = self.menu_track_filter_counts();

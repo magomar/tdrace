@@ -44,15 +44,20 @@ stateDiagram-v2
     state "Garage Showroom (Garage)" as Garage
 
     %% Grand Hub transitions
-    ModuleSelect --> Menu: [ENTER / SPACE / A] (Load Classic/Rally/Kart/GT/NASCAR)
+    ModuleSelect --> ModalitySelect: [ENTER / SPACE / A] (Configure Discipline)
     ModuleSelect --> ProfileManager: [P / Y]
     ModuleSelect --> ProfileCreate: [N / X]
     ModuleSelect --> ControlsHelp: [K]
     ModuleSelect --> ArcadeSettingsModal: [O / X]
     ArcadeSettingsModal --> ModuleSelect: [ESC / B / Save] (if opened from Hub)
 
+    %% Modality Selection transitions
+    ModalitySelect --> ModuleSelect: [ESC / B] (Back to Grand Hub)
+    ModalitySelect --> Menu: [ENTER / SPACE / A] (Quick Race, Custom Race, Time Trial, Free Ride, Split Screen)
+    ModalitySelect --> ChampionshipStandings: [ENTER / SPACE / A] (Career Mode)
+
     %% Menu transitions
-    Menu --> ModuleSelect: [ESC / TAB]
+    Menu --> ModalitySelect: [ESC / TAB / B] (Return to Modality Selection)
     Menu --> StartingGrid: [SPACE / ENTER / A]
     Menu --> Garage: [G] (Open Garage Showroom)
     Garage --> Menu: [ESC / B / Select]
@@ -167,7 +172,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Up` / `Down` / `W` / `S` / `D-pad` | Select module | Changes `selected_idx` (0: Classic, 1: Rally, 2: Kart, 3: GT, 4: NASCAR) |
-| `Enter` / `Space` / Gamepad `A` | Confirm module | Transitions to `GameState::Menu` configured for selected module |
+| `Enter` / `Space` / Gamepad `A` | Confirm module | Transitions to `GameState::ModalitySelect` configured for selected module |
 | `O` / `X` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
 | `P` / Gamepad `Y` | Open Profile Manager | Transitions to `GameState::ProfileManager` |
 | `N` / Gamepad `X` | Create Profile | Transitions to `GameState::ProfileCreate` |
@@ -176,7 +181,26 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 ---
 
-### 3.2. Track & Setup Menu (`GameState::Menu`)
+### 3.2. Race Modality Selection (`GameState::ModalitySelect`)
+* **Purpose**: Modality selection stage separating Single Player (Quick Race, Custom Race, Career Mode, Time Trial, Free Ride) and Multiplayer (2P Split Screen, LAN, Cloud) before circuit selection.
+* **State Struct**: `GameState::ModalitySelect { category: ModalityCategory, selected_idx: usize, modal: Option<ModalityModal> }`
+* **Components**:
+  - Top Breadcrumbs: Active motorsport module name and discipline badge.
+  - Centered Category Tabs: `[ 1. SINGLE PLAYER ]` and `[ 2. MULTIPLAYER ]`.
+  - Translucent Glass Modality Cards: Displaying title, badge tag, description, and selection highlight.
+  - In-Development Notification Modal: Informational dialog for LAN and Cloud online play.
+* **Navigation & Shortcuts**:
+
+| Key / Input | Action | Target / Result |
+| :--- | :--- | :--- |
+| `Left` / `Right` / `Tab` / `1` / `2` / Gamepad `LB`/`RB` | Switch Category | Toggles between Single Player and Multiplayer |
+| `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Cards | Selects modality card within active category |
+| `Enter` / `Space` / Gamepad `A` | Confirm Modality | Transitions to `GameState::Menu` (or `ChampionshipStandings` for Career, or opens modal for LAN/Cloud) |
+| `Escape` / Gamepad `B` | Back / Dismiss | Dismisses modal if open, otherwise returns to Grand Hub -> `GameState::ModuleSelect` |
+
+---
+
+### 3.3. Track & Setup Menu (`GameState::Menu`)
 * **Purpose**: Circuit selection from a unified catalog containing official presets and user-created custom circuits, vector map preview, telemetry analysis, and predefined car specifications.
 * **State Struct**: `GameState::Menu`
 * **Components**:
@@ -199,7 +223,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `P` / Gamepad `Y` | Profile Manager | Opens `GameState::ProfileManager` |
 | `O` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
 | `K` | Controls Help | Opens `GameState::ControlsHelp(false)` |
-| `Escape` / `G` / Gamepad `B` | Return to Hub | Transitions back to Grand Hub -> `GameState::ModuleSelect` |
+| `Escape` / `G` / Gamepad `B` | Return to Modality | Transitions back to Modality Selection -> `GameState::ModalitySelect` |
 
 ---
 

@@ -181,9 +181,9 @@ pub fn render_starting_grid_screen(
     scaler.draw_glass_card(col1_x, curr_y, col_w, mode_h, mode_bg, mode_border, if is_mode_active { 2.4 } else { 1.2 });
 
     let mode_header_label = if is_mode_active {
-        "GAME MODE [ACTIVE • ENTER / SPACE to cycle]"
+        "RACING MODALITY [ACTIVE • ENTER / SPACE to switch]"
     } else {
-        "GAME MODE: [Up/Down to select card]"
+        "RACING MODALITY: [Up/Down to select card]"
     };
     fonts.draw_ui_bold(
         mode_header_label,
@@ -192,8 +192,16 @@ pub fn render_starting_grid_screen(
         scaler.font_s(11.0),
         if is_mode_active { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
     );
+    let modality_tag = match game_mode {
+        GameMode::StandardRace => "QUICK RACE [PRESET]",
+        GameMode::ExperimentalRace => "CUSTOM RACE [CUSTOM]",
+        GameMode::Career => "CAREER CHAMPIONSHIP",
+        GameMode::TimeTrial => "TIME TRIAL [SOLO]",
+        GameMode::FreeRide => "FREE RIDE [PRACTICE]",
+        GameMode::SplitScreen => "2P SPLIT SCREEN [LOCAL]",
+    };
     fonts.draw_ui_bold(
-        game_mode.tag(),
+        modality_tag,
         col1_x + col_w - scaler.s(180.0),
         curr_y + scaler.s(16.0),
         scaler.font_s(9.5),

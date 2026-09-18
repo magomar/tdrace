@@ -62,7 +62,7 @@ impl TrackChoice {
             Self::Custom { id, path, .. } => {
                 if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina") {
                     "RALLY CROSS"
-                } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring") {
+                } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "portimao" | "le_mans_sarthe" | "le_mans") {
                     "GT WORLD CHALLENGE"
                 } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart") {
                     "KARTING"
@@ -89,7 +89,7 @@ impl TrackChoice {
             Self::Custom { id, path, .. } => {
                 if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "sahara" | "sahara_dunes" | "dirt_figure_eight" | "dirt_eight" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina") {
                     "RALLY CROSS"
-                } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring") {
+                } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "portimao" | "le_mans_sarthe" | "le_mans") {
                     "GT WORLD CHALLENGE"
                 } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart") {
                     "KARTING"
@@ -390,9 +390,13 @@ impl TrackChoice {
             "catalunya" => Some(crate::module::f1::F1GameModule::track_catalunya()),
             "zandvoort" => Some(crate::module::f1::F1GameModule::track_zandvoort()),
             "bahrain" => Some(crate::module::f1::F1GameModule::track_bahrain()),
-            "marina_bay" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
+            "marina_bay" | "singapore" | "singapur" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
             "cota" => Some(crate::module::f1::F1GameModule::track_cota()),
             "madring" => Some(crate::module::f1::F1GameModule::track_madring()),
+            "nurburgring_gp" | "nurburgring" => Some(crate::module::f1::F1GameModule::track_nurburgring_gp()),
+            "bathurst" | "mount_panorama" => Some(crate::module::f1::F1GameModule::track_bathurst()),
+            "portimao_gp" | "portimao" => Some(crate::module::f1::F1GameModule::track_portimao_gp()),
+            "le_mans_sarthe" | "le_mans" => Some(crate::module::f1::F1GameModule::track_le_mans_sarthe()),
             "sahara" | "sahara_dunes" => Some(tdrace_core::track::presets::sahara_dunes()),
             "dirt_figure_eight" | "dirt_eight" => Some(tdrace_core::track::presets::dirt_figure_eight()),
             "holjes_rx" | "holjes" => Some(tdrace_core::track::presets::holjes_rx()),
@@ -2174,4 +2178,353 @@ pub fn render_exit_confirm_modal(fonts: &Fonts) {
     let ctx = CabinetContext::new(&scaler, fonts, &theme, &gp, 0.0);
     modal.draw(&ctx);
 }
+
+/// Category tab in the Modality Selection screen.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ModalityCategory {
+    SinglePlayer,
+    Multiplayer,
+}
+
+impl ModalityCategory {
+    pub const ALL: [Self; 2] = [Self::SinglePlayer, Self::Multiplayer];
+
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::SinglePlayer => "SINGLE PLAYER",
+            Self::Multiplayer => "MULTIPLAYER",
+        }
+    }
+
+    pub fn items(&self) -> &'static [ModalityItem] {
+        match self {
+            Self::SinglePlayer => &[
+                ModalityItem::QuickRace,
+                ModalityItem::CustomRace,
+                ModalityItem::CareerMode,
+                ModalityItem::TimeTrial,
+                ModalityItem::FreeRide,
+            ],
+            Self::Multiplayer => &[
+                ModalityItem::SplitScreen,
+                ModalityItem::LanPlay,
+                ModalityItem::CloudPlay,
+            ],
+        }
+    }
+}
+
+/// Distinct race modalities available for selection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ModalityItem {
+    QuickRace,
+    CustomRace,
+    CareerMode,
+    TimeTrial,
+    FreeRide,
+    SplitScreen,
+    LanPlay,
+    CloudPlay,
+}
+
+impl ModalityItem {
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::QuickRace => "Quick Race",
+            Self::CustomRace => "Custom Race",
+            Self::CareerMode => "Career Mode",
+            Self::TimeTrial => "Time Trial",
+            Self::FreeRide => "Free Ride",
+            Self::SplitScreen => "2P Split Screen",
+            Self::LanPlay => "LAN Multiplayer",
+            Self::CloudPlay => "Cloud Online",
+        }
+    }
+
+    pub fn tag(&self) -> &'static str {
+        match self {
+            Self::QuickRace => "PRESET CONFIG • INSTANT ACTION",
+            Self::CustomRace => "CUSTOM VEHICLE & GRID OPTIONS",
+            Self::CareerMode => "CHAMPIONSHIP CAMPAIGN",
+            Self::TimeTrial => "SOLO BENCHMARK VS PB SHADOW",
+            Self::FreeRide => "OPEN PRACTICE • NO PRESSURE",
+            Self::SplitScreen => "HEAD-TO-HEAD LOCAL RACING",
+            Self::LanPlay => "LOCAL NETWORK [COMING SOON]",
+            Self::CloudPlay => "WORLDWIDE LOBBIES [COMING SOON]",
+        }
+    }
+
+    pub fn description(&self) -> &'static str {
+        match self {
+            Self::QuickRace => "Jump straight onto the track with official predefined cars and full opponent grid.",
+            Self::CustomRace => "Customize your machine, grid size, AI difficulty, and racing rules freely.",
+            Self::CareerMode => "Progress through structured multi-tier championships and unlock elite vehicles.",
+            Self::TimeTrial => "Push limits against the clock and chase down your personal best ghost car.",
+            Self::FreeRide => "Open practice session without opponents, rules, or lap timers to hone your lines.",
+            Self::SplitScreen => "Battle side-by-side with a friend on a single screen using keyboard and gamepad.",
+            Self::LanPlay => "Host or join low-latency racing lobbies on your local Wi-Fi or wired network.",
+            Self::CloudPlay => "Compete globally in ranked matchmaking, custom public lobbies, and online events.",
+        }
+    }
+
+    pub fn is_available(&self) -> bool {
+        !matches!(self, Self::LanPlay | Self::CloudPlay)
+    }
+
+    pub fn accent_color(&self) -> Color {
+        match self {
+            Self::QuickRace => Palette::NEON_CYAN,
+            Self::CustomRace => Palette::NEON_GOLD,
+            Self::CareerMode => Palette::NEON_GREEN,
+            Self::TimeTrial => Palette::NEON_MAGENTA,
+            Self::FreeRide => Color::new(0.35, 0.75, 1.0, 1.0),
+            Self::SplitScreen => Palette::NEON_ORANGE,
+            Self::LanPlay => Color::new(0.60, 0.65, 0.75, 1.0),
+            Self::CloudPlay => Color::new(0.60, 0.65, 0.75, 1.0),
+        }
+    }
+}
+
+/// Modal overlay shown when interacting with an in-development modality.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ModalityModal {
+    LanComingSoon,
+    CloudComingSoon,
+}
+
+impl ModalityModal {
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::LanComingSoon => "LAN MULTIPLAYER • IN DEVELOPMENT",
+            Self::CloudComingSoon => "CLOUD MULTIPLAYER • IN DEVELOPMENT",
+        }
+    }
+
+    pub fn message(&self) -> &'static str {
+        match self {
+            Self::LanComingSoon => "Local Area Network multiplayer is currently under active development.\nDirect IP connection, auto-discovery broadcast, and dedicated headless server support are coming in an upcoming release.",
+            Self::CloudComingSoon => "Worldwide online matchmaking and cloud lobbies are currently under active development.\nGlobal leaderboards, ranked matchmaking, and cloud ghost synchronization will debut in Phase 2.",
+        }
+    }
+}
+
+/// Renders the Race Modality Selection stage inserted between the Grand Hub and Circuit Selection.
+pub fn render_modality_select_screen(
+    fonts: &Fonts,
+    active_module_title: &str,
+    active_module_accent: Color,
+    category: ModalityCategory,
+    selected_idx: usize,
+    modal: Option<&ModalityModal>,
+    _active_profile: &PlayerProfile,
+    _active_stats: &ProfileCareerStats,
+) {
+    let sw = screen_width();
+    let sh = screen_height();
+    let scaler = UiScaler::new(sw, sh);
+
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
+
+    // Header Title & Breadcrumb
+    fonts.draw_display_centered_with_shadow(
+        &format!("{} • SELECT MODALITY", active_module_title),
+        sw * 0.5,
+        scaler.s(32.0),
+        scaler.font_s(26.0),
+        active_module_accent,
+        Color::new(0.0, 0.0, 0.0, 0.6),
+        scaler.s(2.0),
+    );
+
+    fonts.draw_ui_regular_centered(
+        "Choose your race session format: Single Player vs Multiplayer",
+        sw * 0.5,
+        scaler.s(52.0),
+        scaler.font_s(13.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    // Pill Tab Bar for Category Selection
+    let tab_w = scaler.s(200.0);
+    let tab_h = scaler.s(32.0);
+    let tab_gap = scaler.s(16.0);
+    let total_tabs_w = tab_w * 2.0 + tab_gap;
+    let tabs_start_x = (sw - total_tabs_w) * 0.5;
+    let tab_y = scaler.s(70.0);
+
+    for (cat_idx, cat) in [ModalityCategory::SinglePlayer, ModalityCategory::Multiplayer].iter().enumerate() {
+        let is_cat_active = *cat == category;
+        let tx = tabs_start_x + cat_idx as f32 * (tab_w + tab_gap);
+        let tab_bg = if is_cat_active {
+            Color::new(0.12, 0.16, 0.24, 0.95)
+        } else {
+            Color::new(0.06, 0.08, 0.12, 0.60)
+        };
+        let tab_border = if is_cat_active {
+            active_module_accent
+        } else {
+            Palette::UI_CARD_BORDER
+        };
+
+        scaler.draw_glass_card(tx, tab_y, tab_w, tab_h, tab_bg, tab_border, if is_cat_active { 2.0 } else { 1.0 });
+
+        let tab_label = match cat {
+            ModalityCategory::SinglePlayer => "[ 1. SINGLE PLAYER ]",
+            ModalityCategory::Multiplayer => "[ 2. MULTIPLAYER ]",
+        };
+        let tab_text_col = if is_cat_active {
+            Palette::WHITE
+        } else {
+            Palette::UI_TEXT_MUTED
+        };
+        fonts.draw_ui_bold_centered(
+            tab_label,
+            tx + tab_w * 0.5,
+            tab_y + scaler.s(20.0),
+            scaler.font_s(12.5),
+            tab_text_col,
+        );
+    }
+
+    // Modality Cards
+    let items = category.items();
+    let card_w = (sw * 0.72).clamp(scaler.s(480.0), scaler.s(740.0));
+    let card_x = (sw - card_w) * 0.5;
+    let start_y = scaler.s(116.0);
+    let card_gap = scaler.s(8.0);
+    let available_h = (sh - start_y - scaler.s(42.0)).max(scaler.s(240.0));
+    let card_h = ((available_h - card_gap * (items.len() as f32 - 1.0)) / items.len() as f32)
+        .clamp(scaler.s(56.0), scaler.s(82.0));
+
+    let mut curr_y = start_y;
+
+    for (i, item) in items.iter().enumerate() {
+        let is_sel = i == selected_idx;
+        let accent = item.accent_color();
+        let is_avail = item.is_available();
+
+        let bg_col = if is_sel {
+            Palette::UI_CARD_BG_HOVER
+        } else {
+            Palette::UI_CARD_BG
+        };
+        let border_col = if is_sel {
+            accent
+        } else {
+            Palette::UI_CARD_BORDER
+        };
+
+        scaler.draw_glass_card(card_x, curr_y, card_w, card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.2 });
+
+        // Left accent bar
+        if is_sel {
+            draw_rectangle(card_x, curr_y, scaler.s(6.0), card_h, accent);
+        }
+
+        // Tag (Top-left)
+        fonts.draw_ui_bold(
+            item.tag(),
+            card_x + scaler.s(20.0),
+            curr_y + card_h * 0.26,
+            scaler.font_s(10.5),
+            if is_sel { accent } else { Palette::UI_TEXT_MUTED },
+        );
+
+        // Status Badge (Top-right)
+        if !is_avail {
+            fonts.draw_ui_bold(
+                "🔒 COMING SOON",
+                card_x + card_w - scaler.s(130.0),
+                curr_y + card_h * 0.26,
+                scaler.font_s(10.0),
+                Palette::NEON_GOLD,
+            );
+        }
+
+        // Title (Middle)
+        let title_str = if is_sel {
+            format!("▶ {}", item.title())
+        } else {
+            item.title().to_string()
+        };
+        fonts.draw_display(
+            &title_str,
+            card_x + scaler.s(20.0),
+            curr_y + card_h * 0.56,
+            scaler.font_s(18.0),
+            if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+        );
+
+        // Description (Bottom)
+        fonts.draw_ui_regular(
+            item.description(),
+            card_x + scaler.s(20.0),
+            curr_y + card_h * 0.84,
+            scaler.font_s(11.5),
+            if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
+        );
+
+        curr_y += card_h + card_gap;
+    }
+
+    // Bottom Action Prompt / Controller Hints
+    fonts.draw_ui_regular_centered(
+        "[W/S or UP/DOWN] Navigate  •  [TAB / 1 / 2] Switch Tab  •  [ENTER / SPACE] Select  •  [ESC] Back to Hub",
+        sw * 0.5,
+        sh - scaler.s(16.0),
+        scaler.font_s(12.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    // Modal overlay for in-development features
+    if let Some(m) = modal {
+        draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.80));
+
+        let mw = (sw * 0.65).clamp(scaler.s(480.0), scaler.s(660.0));
+        let mh = scaler.s(220.0);
+        let mx = (sw - mw) * 0.5;
+        let my = (sh - mh) * 0.5;
+
+        scaler.draw_glass_card(
+            mx,
+            my,
+            mw,
+            mh,
+            Color::new(0.07, 0.09, 0.14, 0.98),
+            Palette::NEON_GOLD,
+            2.5,
+        );
+
+        fonts.draw_display_centered_with_shadow(
+            m.title(),
+            sw * 0.5,
+            my + scaler.s(36.0),
+            scaler.font_s(17.0),
+            Palette::NEON_GOLD,
+            Color::new(0.0, 0.0, 0.0, 0.7),
+            scaler.s(2.0),
+        );
+
+        let mut line_y = my + scaler.s(76.0);
+        for line in m.message().lines() {
+            fonts.draw_ui_regular_centered(
+                line,
+                sw * 0.5,
+                line_y,
+                scaler.font_s(12.5),
+                Color::new(0.85, 0.90, 0.96, 1.0),
+            );
+            line_y += scaler.s(24.0);
+        }
+
+        fonts.draw_ui_bold_centered(
+            "PRESS [ENTER / SPACE / ESC] OR GAMEPAD [A / B] TO DISMISS",
+            sw * 0.5,
+            my + mh - scaler.s(24.0),
+            scaler.font_s(12.0),
+            Palette::NEON_CYAN,
+        );
+    }
+}
+
 
