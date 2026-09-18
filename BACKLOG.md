@@ -1,3 +1,10 @@
+---
+type: Feature Backlog
+title: "TdRace & Cabinet Platform — Project Backlog"
+description: "Consolidated idea registry for pre-development features and speculative enhancements."
+status: active
+---
+
 # TdRace & Cabinet Platform — Project Backlog
 
 This backlog records prospective features, architectural improvements, and future milestone ideas across the **TdRace** game and the **Cabinet** arcade platform crate.

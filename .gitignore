@@ -31,3 +31,7 @@ htmlcov/
 crates/tdrace-app/tracks/
 
 
+
+# br doctor per-run artifacts
+.doctor/
+.bv/

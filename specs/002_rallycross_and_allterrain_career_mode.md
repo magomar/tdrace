@@ -1,60 +1,117 @@
-# Specification: Rallycross & All-Terrain World Cup Career Mode
+---
+type: Feature Spec
+template: feature
+title: "Rallycross & All-Terrain World Cup Career Mode"
+description: "5-tier Rallycross and All-Terrain career ladder covering 15 global mixed-surface circuits, World RX tournament format, and mandatory Joker lap rules."
+status: draft
+created: 2026-09-18
+generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
+---
 
-**Document Status:** PROPOSED  
-**Author:** Antigravity Pairing Assistant & Motorsport Simulation Team  
-**Date:** September 18, 2026  
-**Primary Target Crates:**  
-1. [`crates/wheelbase`](file:///home/mario/workspace/games/tdrace/crates/wheelbase) (Mixed-Surface Friction Transitions, AWD Center Differentials, Long-Travel Jumps, Lift-off Oversteer)  
-2. [`crates/arcade-race-core`](file:///home/mario/workspace/games/tdrace/crates/arcade-race-core) (Joker Lap Split Spline Topology, Gravel/Mud/Asphalt Multi-Zone Surfaces, Jump Ramp Ballistics)  
-3. [`crates/tdrace-app`](file:///home/mario/workspace/games/tdrace/crates/tdrace-app) (World RX Tournament Format, Heats/Semi-Finals/Finals, Career Progress & XP Engine)  
+# Feature Spec: Rallycross & All-Terrain World Cup Career Mode 🏆
+
+The **Rallycross & All-Terrain World Cup Career Mode** models the progression from grassroots front-wheel-drive rally hatchbacks to ferocious 600+ BHP mixed-surface monsters, desert raid beasts, and stadium jumping trucks in **TdRace**. Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch ramps, this career model develops lift-off oversteer, anti-lag boost management, tactical Joker Lap execution, and long-travel suspension dynamics over extreme terrains.
 
 ---
 
-## 1. Executive Summary & Career Architecture
+## 🗺️ User Flow & Interface Design
 
-The **Rallycross & All-Terrain World Cup Career Mode** models the progression from grassroots front-wheel-drive rally hatchbacks to ferocious 600+ BHP mixed-surface monsters, desert raid beasts, and stadium jumping trucks in **TdRace**. 
+### 1. Interface Navigation & Screen Flow
+The Rallycross career integrates into `GameState::ModalitySelect` and `GameState::ChampionshipStandings`:
 
-Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch ramps, this career model develops:
-* **Lift-Off Oversteer & Scandinavian Flicks:** Weight transfer dynamics across slippery and high-grip surfaces.
-* **AWD Traction & Anti-Lag Boost:** Instant torque management out of slow hairpin berms.
-* **Tactical Joker Lap Execution:** Split-second strategic route choices and gap timing.
-* **High-Impact Suspension Management:** Landing stabilization and chassis roll over extreme jumps and dunes.
-
+```mermaid
+flowchart TD
+    A[Grand Hub: ModuleSelect] -->|Select Rallycross Module| B[ModalitySelect Screen]
+    B -->|Select Career Mode Tab| C[ChampionshipStandings Screen]
+    C -->|View Tier 1: Rally Junior FWD| D[StartingGrid: Tier 1 World Cup]
+    D -->|Start Race| E[Live Race: Höljes / Lydden Hill / Mettet]
+    E -->|Finish Heats, Semis & Finals| F[Podium & XP Award Sequence]
+    F -->|Synchronize Progress| C
+    C -->|1,500 XP Accumulated| G[Unlock Tier 2: RX Supercars]
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                   RALLYCROSS & ALL-TERRAIN CAREER PROGRESSION LADDER                   │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                        │
-│   [Tier 1: Rally Junior FWD] (210 BHP, FWD Hot Hatch, 1,080 kg)                        │
-│   • Trail-braking, lift-off weight transfer, learning gravel/asphalt transitions       │
-│   • Venues: Höljes (Sweden), Lydden Hill (UK), Mettet (Belgium - NEW)                  │
-│                                           │                                            │
-│                                           ▼ (Earn 1,500 XP)                            │
-│   [Tier 2: WRC / RX Turbo Supercar] (380 BHP, AWD Spaceframe/RX, 1,190 kg)             │
-│   • Explosive anti-lag acceleration, 0-100 in 2.0s, aggressive joker lap tactics       │
-│   • Venues: Hell / Lånkebanen (Norway), Lohéac (France), Silverstone RX (UK - NEW)     │
-│                                           │                                            │
-│                                           ▼ (Earn 3,500 XP)                            │
-│   [Tier 3: Group B Beast] (550 BHP, Mid-Engine Turbo Monster, 960 kg)                  │
-│   • Severe turbo lag, astronomical power-to-weight, high slip-angle pendulum drifts    │
-│   • Venues: Estering (Germany), Montalegre (Portugal), Riga / Biķernieki (Latvia - NEW)│
-│                                           │                                            │
-│                                           ▼ (Earn 6,500 XP)                            │
-│   [Tier 4: All-Terrain Rally Raid T1+] (450 BHP, Heavy Spaceframe Dakar, 2,010 kg)     │
-│   • Long-travel 350mm dampers, deep mud/sand absorption, dune climbing endurance       │
-│   • Venues: Nyirád "Red Cauldron" (Hungary), Tykkimäki (Finland), Killarney RX (NEW)   │
-│                                           │                                            │
-│                                           ▼ (Earn 10,000 XP)                           │
-│   [Tier 5: Stadium Super Truck / SST] (650 BHP, Spaceframe V8, 1,380 kg RWD)           │
-│   • High CG roll, 3-wheel cornering, 40-foot aerial jump ramps, stadium spectacle      │
-│   • Venues: Barcelona-Catalunya RX, Oasis Desert Rally, Yas Marina RX Arena (NEW)      │
-│                                                                                        │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+
+### 2. Visual & Audio Theming
+- **Palette**: Dirt Rally Orange primary accent (`Color::new(1.0, 0.55, 0.15, 1.0)`), Desert Sand Yellow secondary accent (`Color::new(0.95, 0.85, 0.20, 1.0)`).
+- **HUD Joker Indicator**: Renders `JOKER: REQUIRED` in bright red until taken, switching to `JOKER: COMPLETED` in high-visibility neon green.
+- **Surface Particles**: Generates gravel rooster tails, muddy wheel spray, and anti-lag exhaust backfire sparks.
+- **Sound Profile**: Aggressive turbocharged anti-lag pops and sequential dog-ring transmission gear whine.
+
+---
+
+## ⚙️ Backend Models & API Endpoints
+
+### 1. SQLite Data Schema & Career Progress
+Career state is persisted in SQLite via `ModuleCareerProgress` in [`crates/tdrace-app/src/profile/mod.rs`](../crates/tdrace-app/src/profile/mod.rs):
+
+```rust
+pub struct ModuleCareerProgress {
+    pub profile_id: i64,
+    pub module_id: String, // "rally"
+    pub xp: u64,
+    pub level: u32,        // 1..=5
+    pub unlocked_cars: Vec<String>,
+    pub unlocked_tracks: Vec<String>,
+    pub completed_events: Vec<String>,
+    pub trophies_gold: u32,
+    pub trophies_silver: u32,
+    pub trophies_bronze: u32,
+    pub updated_at: String,
+}
+```
+
+### 2. Campaign Launch Endpoint & Session Struct
+Implemented in [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs):
+```rust
+impl GameApp {
+    /// Launches a Rallycross Career Championship Cup for the given tier (1..=5).
+    pub fn start_rally_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids, car_id) = match tier {
+            1 => (
+                "Rally Junior FWD Cup (Tier 1)",
+                vec!["holjes_rx".to_string(), "lydden_hill".to_string(), "mettet_rx".to_string()],
+                "peugeot_208_r4",
+            ),
+            2 => (
+                "World RX Supercar Challenge (Tier 2)",
+                vec!["hell_rx".to_string(), "loheac_rx".to_string(), "silverstone_rx".to_string()],
+                "hyundai_i20_rx",
+            ),
+            3 => (
+                "Group B Heritage Masters (Tier 3)",
+                vec!["estering_rx".to_string(), "montalegre_rx".to_string(), "riga_rx".to_string()],
+                "audi_quattro_s1",
+            ),
+            4 => (
+                "Dakar Rally Raid Invitational (Tier 4)",
+                vec!["nyirad_rx".to_string(), "tykkimaki_rx".to_string(), "killarney_rx".to_string()],
+                "hilux_t1_plus",
+            ),
+            _ => (
+                "Stadium Super Truck Apex Series (Tier 5)",
+                vec!["catalunya_rx".to_string(), "oasis_desert".to_string(), "yas_marina_rx".to_string()],
+                "sst_v8_truck",
+            ),
+        };
+        // Initializes ChampionshipSession with World RX tournament format & Joker rules
+    }
+}
 ```
 
 ---
 
-## 2. 5-Tier Vehicle Hierarchy & Prototypical Engineering Specs
+## 🛡️ Security & Role-Based Access Controls (RBAC)
+
+### 1. Career License Gating & Profile Integrity
+- **Tier 1 (Rally Junior FWD)**: Unlocked by default for all profiles (`xp >= 0`).
+- **Tier 2 (RX Supercar)**: Requires Career Level 2 (`xp >= 1,500`).
+- **Tier 3 (Group B Beast)**: Requires Career Level 3 (`xp >= 3,500`).
+- **Tier 4 (Rally Raid T1+)**: Requires Career Level 4 (`xp >= 6,500`).
+- **Tier 5 (Stadium Super Truck)**: Requires Career Level 5 (`xp >= 10,000`).
+- **Dev Mode Bypass**: When `dev_mode: true` is configured, all tiers, tracks, and vehicles are unlocked for testing without modifying saved profile progress.
+
+---
+
+## 1. 5-Tier Vehicle Hierarchy & Prototypical Engineering Specs
 
 ```
                      RALLYCROSS & ALL-TERRAIN SILHOUETTES (LATERAL 2D)
@@ -75,7 +132,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
          ( O )             ( O )
 ```
 
-### 2.1 Tier 1: Rally Junior FWD (Grassroots Hot Hatch)
+### 1.1 Tier 1: Rally Junior FWD (Grassroots Hot Hatch)
 * **Design Philosophy:** Production-based lightweight front-wheel-drive hot hatches. With modest horsepower and no rear drive, drivers must master braking into corners to provoke rear-end rotation (lift-off oversteer) before pinning the throttle.
 * **Core Physics:**
   * Power: $210\,\text{BHP}$ ($157\,\text{kW}$) $1.2\,\text{L}$ Turbo 3-cylinder / $1.6\,\text{L}$ 16V.
@@ -89,7 +146,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
   2. **Ford Fiesta Rally4:** Punchy turbo low-end boost, progressive rear-end breakaway on asphalt.
   3. **Renault Clio Rally4:** Ultra-stable chassis over crests, forgiving curb compliance.
 
-### 2.2 Tier 2: WRC / RX Turbo Supercar (Modern Rallycross Benchmark)
+### 1.2 Tier 2: WRC / RX Turbo Supercar (Modern Rallycross Benchmark)
 * **Design Philosophy:** Custom tubular/monocoque all-wheel-drive supercars. Equipped with aggressive anti-lag systems (ALS), locked differentials, and sequential 6-speed gearboxes, achieving $0$–$100\,\text{km/h}$ in under $2.0\,\text{seconds}$.
 * **Core Physics:**
   * Power: $380\,\text{BHP}$ ($283\,\text{kW}$) $2.0\,\text{L}$ Turbocharged I4 with ALS ($650\,\text{Nm}$ torque).
@@ -103,7 +160,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
   2. **Volkswagen Polo RX:** Exceptional launch traction off the grid; planted stability on abrasive tarmac.
   3. **Audi S1 EKS RX:** Aggressive Quattro torque delivery, high curb-skipping tolerance.
 
-### 2.3 Tier 3: Group B Beast (1980s Homologation Monsters)
+### 1.3 Tier 3: Group B Beast (1980s Homologation Monsters)
 * **Design Philosophy:** Mid-engine, lightweight spaceframe homologation specials from the golden era. Characterized by explosive boost thresholds, high polar moment of inertia, large turbo lag, and massive rooster tails.
 * **Core Physics:**
   * Power: $550\,\text{BHP}$ ($410\,\text{kW}$) twin-charged/turbocharged monster ($8,500\,\text{RPM}$).
@@ -116,7 +173,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
   2. **Peugeot 205 T16 EVO 2:** Mid-engine balance, explosive mid-range punch, agile Scandinavian flicks.
   3. **Lancia Delta S4:** Supercharged and turbocharged twin-boost layout, ferocious low-and-high RPM response.
 
-### 2.4 Tier 4: All-Terrain Rally Raid T1+ (Cross-Country Dakar Spec)
+### 1.4 Tier 4: All-Terrain Rally Raid T1+ (Cross-Country Dakar Spec)
 * **Design Philosophy:** Purpose-built Dakar and Baja endurance prototypes designed to conquer broken terrain, washboard whoops, mud, and sand dunes. Features heavy reinforced spaceframes, 37-inch tires, and $350\,\text{mm}$ of wheel travel.
 * **Core Physics:**
   * Power: $450\,\text{BHP}$ ($335\,\text{kW}$) Twin-Turbo V6 or electric-drivetrain generator.
@@ -129,7 +186,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
   2. **Audi RS Q e-tron:** Instant electric torque delivery across all 4 wheels, silent high-speed dune surfing.
   3. **Prodrive Hunter T1+:** Aggressive Ian Callum styling, wide track width, and high-speed stability through sand ruts.
 
-### 2.5 Tier 5: Stadium Super Truck / SST (High-Flying V8 Brawler)
+### 1.5 Tier 5: Stadium Super Truck / SST (High-Flying V8 Brawler)
 * **Design Philosophy:** 650 BHP V8 tube-chassis trucks competing on courses with oversized metal jumps. High center of gravity causes dramatic body roll, frequent 3-wheel cornering, and spectacular 40-foot aerial launches.
 * **Core Physics:**
   * Power: $650\,\text{BHP}$ ($485\,\text{kW}$) naturally aspirated Chevrolet LS V8.
@@ -144,7 +201,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
 
 ---
 
-## 3. 15-Venue Championship Calendar (3 per Tier)
+## 2. 15-Venue Championship Calendar (3 per Tier)
 
 ```
                     RALLYCROSS & ALL-TERRAIN 15-VENUE CALENDAR
@@ -175,7 +232,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
  └─ [NUEVO] Yas Marina RX Arena (Abu Dhabi - Floodlit Stunt Arena)
 ```
 
-### 3.1 Tier 1 Venues: Traditional Dirt & RX Heritage
+### 2.1 Tier 1 Venues: Traditional Dirt & RX Heritage
 1. **Höljes Motorstadion (Sweden):** $1,210\,\text{m}$ (60% Tarmac, 40% Dirt). Legendary "Höljes Crest" jump where cars launch over $30\,\text{m}$ into Turn 2.
 2. **Lydden Hill (Great Britain):** $1,170\,\text{m}$ (55% Tarmac, 45% Chalk/Dirt). The cradle of rallycross featuring the high-speed Chessons Drift and North Bend.
 3. **Mettet - Circuit Jules Tacheny *(NUEVO)***:
@@ -183,7 +240,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
    * **Layout Highlights:** Ultra-technical banked dirt hairpin, tight tarmac chicanes, and a wide Joker lap loop.
    * **Pedagogy:** Perfect training ground for managing front-wheel-drive understeer transitions onto loose dirt.
 
-### 3.2 Tier 2 Venues: Mixed Ovals & Rapid RX
+### 2.2 Tier 2 Venues: Mixed Ovals & Rapid RX
 1. **Hell RX / Lånkebanen (Norway):** $1,019\,\text{m}$ (63% Tarmac, 37% Gravel). Radical $24\,\text{m}$ downhill plunge into Turn 1 and high-speed joker merge.
 2. **Circuit de Lohéac (France):** $1,150\,\text{m}$ (33% Tarmac, 67% Loose Gravel). Massive crowd favorite with the highest percentage of dirt in World RX.
 3. **Silverstone RX *(NUEVO)***:
@@ -191,7 +248,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
    * **Layout Highlights:** Situated within the historic Wing section; features a massive stadium jump table and high-camber dirt bowl turn.
    * **Racing Dynamic:** Exploits the Supercar's 0-100 acceleration down the National straight before diving into loose dirt whoops.
 
-### 3.3 Tier 3 Venues: Historic European Proving Grounds
+### 2.3 Tier 3 Venues: Historic European Proving Grounds
 1. **Estering Buxtehude (Germany):** $952\,\text{m}$ (60% Tarmac, 40% Dirt). Infamous 180-degree Turn 1 hairpin where Scandinavian flicks are mandatory.
 2. **Pista de Montalegre (Portugal):** $1,050\,\text{m}$ (60% Tarmac, 40% Dirt). High altitude ($1,000\,\text{m}$ above sea level) reduces naturally aspirated engine power, making turbo boost crucial.
 3. **Biķernieki Complex / Riga RX *(NUEVO)***:
@@ -199,7 +256,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
    * **Layout Highlights:** Extremely abrasive, high-grip tarmac banked corners juxtaposed with three technical dirt sections and parallel jump crests.
    * **Challenge:** Demands extreme throttle modulation to keep the 550 BHP Group B monster from snap-spinning into concrete barrier walls.
 
-### 3.4 Tier 4 Venues: Broken Terrain & Red Earth
+### 2.4 Tier 4 Venues: Broken Terrain & Red Earth
 1. **Nyirád Racing Center (Hungary):** $1,220\,\text{m}$ (48% Tarmac, 52% Red Clay). "The Red Cauldron" features deep ruts and red bauxite clay that punishes standard touring suspensions.
 2. **Tykkimäen Moottorirata (Finland):** $1,350\,\text{m}$ (50% Tarmac, 50% Sand/Gravel). Fast Nordic layout with rolling elevation crests and high-speed drift sweepers.
 3. **Killarney International Raceway RX *(NUEVO)***:
@@ -207,8 +264,8 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
    * **Layout Highlights:** Fast coastal venue nestled beneath Table Mountain; features a wide tarmac straight into a blind off-camber gravel switchback.
    * **Vehicle Synergy:** Tests the Raid T1+ prototype's long-travel suspension over sudden surface ruts.
 
-### 3.5 Tier 5 Venues: Monumental Stadiums & All-Terrain Extremes
-1. **Barcelona-Catalunya RX (Spain):** $1,125\,\text{m}$ (67% Tarmac, 33% Gravel). Stadium stadium environment in the stadium section of the F1 venue.
+### 2.5 Tier 5 Venues: Monumental Stadiums & All-Terrain Extremes
+1. **Barcelona-Catalunya RX (Spain):** $1,125\,\text{m}$ (67% Tarmac, 33% Gravel). Stadium environment in the stadium section of the F1 venue.
 2. **Oasis Desert Rally (North Africa):** $2,450\,\text{m}$ open cross-country stage (`SurfaceType::Sand` and `Dirt`). Dunes, dried wadi riverbeds, and zero pavement.
 3. **Yas Marina RX Arena *(NUEVO)***:
    * **Location & Country:** Abu Dhabi, UAE ($1,100\,\text{m}$, 55% Tarmac, 45% Sand/Gravel).
@@ -217,9 +274,9 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
 
 ---
 
-## 4. World RX Tournament Rules & Career Progression
+## 3. World RX Tournament Rules & Career Progression
 
-### 4.1 Career Progression & Unlock Schedule
+### 3.1 Career Progression & Unlock Schedule
 
 | Career Level | Category | Tier Name | Required XP | Car Unlocks | Circuit Unlocks |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -229,7 +286,7 @@ Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch
 | **Level 4** | Rally Raid T1+ | **Dakar Desert Master** | $6,500\,\text{XP}$ | `hilux_t1_plus`, `audi_rs_q_etron`, `hunter_t1_plus` | `nyirad_rx`, `tykkimaki_rx`, `killarney_rx` |
 | **Level 5** | Stadium Super Truck | **SST High-Flyer Champion** | $10,000\,\text{XP}$ | `sst_v8_truck`, `robby_gordon_sst` | `catalunya_rx`, `oasis_desert`, `yas_marina_rx` |
 
-### 4.2 World RX Tournament Structure & Joker Lap Rules
+### 3.2 World RX Tournament Structure & Joker Lap Rules
 Each Tier Cup consists of a realistic World RX weekend progression:
 1. **Qualifying Heats (Q1–Q4):** 4-lap sprint races (4 cars per grid). Position times are converted into intermediate ranking points.
 2. **Semi-Finals (Top 12):** Two 6-car races of 6 laps each. Top 3 from each semi-final advance to the Final.
@@ -241,28 +298,46 @@ Each Tier Cup consists of a realistic World RX weekend progression:
 
 ---
 
-## 5. Acceptance Criteria (Pseudo-Gherkin)
+## 🧪 Verification & Acceptance Criteria
 
-```gherkin
-Feature: Rallycross & All-Terrain World Cup Career Mode
+### Automated Tests
+- Command to run workspace unit tests: `cargo test --package tdrace-app --test profile_tests`
+- Command to test track branch splines: `cargo test --package arcade-race-core --test track_tests`
 
-  Scenario: Level 1 Driver starts Rally Junior FWD Career
-    Given the player selects the "rally" module with a fresh profile
-    When the player launches Career Mode
-    Then Tier 1 "Grassroots RX Rookie" is available with 0 XP
-    And cars "peugeot_208_r4", "fiesta_r4", and "clio_r4" are selectable
-    And the circuit calendar includes "holjes_rx", "lydden_hill", and "mettet_rx"
+### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-  Scenario: Mandatory Joker Lap is validated at race finish
-    Given the player is competing in the 6-lap Final at "hell_rx"
-    When the player crosses the finish line having taken 0 Joker laps
-    Then a 30-second penalty is appended to their total race time
-    And the finishing position drops accordingly
+- **Scenario: Level 1 Driver starts Rally Junior FWD Career**
+  - [ ] **Given** the player selects the "rally" module with a fresh profile
+  - [ ] **When** the player launches Career Mode
+  - [ ] **Then** Tier 1 "Grassroots RX Rookie" is available with 0 XP
+  - [ ] **And** cars "peugeot_208_r4", "fiesta_r4", and "clio_r4" are selectable
+  - [ ] **And** the circuit calendar includes "holjes_rx", "lydden_hill", and "mettet_rx"
 
-  Scenario: Completing Tier 4 unlocks Tier 5 Stadium Super Trucks
-    Given the player accumulates 10,000 XP in the Rallycross module
-    When the career progress synchronizes
-    Then Tier 5 is unlocked
-    And "catalunya_rx", "oasis_desert", and "yas_marina_rx" are unlocked in the track registry
-    And "sst_v8_truck" and "robby_gordon_sst" become available
-```
+- **Scenario: Mandatory Joker Lap is validated at race finish**
+  - [ ] **Given** the player is competing in the 6-lap Final at "hell_rx"
+  - [ ] **When** the player crosses the finish line having taken 0 Joker laps
+  - [ ] **Then** a 30-second penalty is appended to their total race time
+  - [ ] **And** the finishing position drops accordingly
+
+- **Scenario: Completing Tier 4 unlocks Tier 5 Stadium Super Trucks**
+  - [ ] **Given** the player accumulates 10,000 XP in the Rallycross module
+  - [ ] **When** the career progress synchronizes
+  - [ ] **Then** Tier 5 is unlocked
+  - [ ] **And** "catalunya_rx", "oasis_desert", and "yas_marina_rx" are unlocked in the track registry
+  - [ ] **And** "sst_v8_truck" and "robby_gordon_sst" become available
+
+---
+
+## 🔗 Traceability & Codebase Mapping
+
+### Created/Modified Files
+- `[ ]` `crates/tdrace-app/src/module/rally.rs` -> Implements Rallycross module vehicles, themes, and tracks.
+- `[ ]` `crates/tdrace-app/src/profile/mod.rs` -> Governs `ModuleCareerProgress` and unlock synchronization.
+- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Launches `start_rally_career_tier` campaign cups.
+- `[ ]` `crates/arcade-race-core/src/track/spline.rs` -> Implements Joker lap branching splines.
+
+### Verification Assertions
+- `crates/tdrace-app/src/module/rally.rs` references `specs/002_rallycross_and_allterrain_career_mode.md`.
+
+### Beads Epic Mapping
+- Governed by active parent Epic `tdrace-reyl` (*Fulfill Spec 002: Rallycross & All-Terrain World Cup Career Mode*).

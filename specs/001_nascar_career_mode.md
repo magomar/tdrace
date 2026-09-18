@@ -1,60 +1,119 @@
-# Specification: NASCAR & Trans-Am TA1 Career Mode
+---
+type: Feature Spec
+template: feature
+title: "NASCAR & Trans-Am TA1 Career Mode"
+description: "5-tier American stock car and Trans-Am TA1 career progression featuring 15 circuits, stage racing rules, pack drafting dynamics, and XP unlocks."
+status: draft
+created: 2026-09-18
+generated: { by: agent/antigravity, at: 2026-09-18T12:20:00Z }
+---
 
-**Document Status:** PROPOSED  
-**Author:** Antigravity Pairing Assistant & Motorsport Simulation Team  
-**Date:** September 18, 2026  
-**Primary Target Crates:**  
-1. [`crates/wheelbase`](file:///home/mario/workspace/games/tdrace/crates/wheelbase) (Heavy RWD Chassis Dynamics, Drafting Aerodynamics, Pushrod V8 Torque, Staggered Oval Bias)  
-2. [`crates/arcade-race-core`](file:///home/mario/workspace/games/tdrace/crates/arcade-race-core) (Banking Normalization, Dirt Oval Surface, Concrete Canyon Collisions)  
-3. [`crates/tdrace-app`](file:///home/mario/workspace/games/tdrace/crates/tdrace-app) (NASCAR Career Ladder, Stage Racing Points, 15-Circuit Season, Vehicle Visualizers)  
+# Feature Spec: NASCAR & Trans-Am TA1 Career Mode 🏁
+
+A comprehensive 5-tier American stock car and silhouette GT career mode in **TdRace**. Spanning local short-track bullrings, clay dirt ovals, intermediate D-ovals, road courses, downtown street tracks, and high-banked superspeedways, this progression teaches players the core disciplines of American closed-cockpit motorsport: inertia control in heavy rear-wheel-drive machines, lateral slip management on high banking, multi-car aerodynamic pack drafting, and raw unassisted 850 BHP spaceframe road racing.
 
 ---
 
-## 1. Executive Summary & Career Architecture
+## 🗺️ User Flow & Interface Design
 
-The **NASCAR & Trans-Am TA1 Career Mode** establishes a structured 5-tier American stock car and silhouette GT ladder in **TdRace**. Spanning local short-track bullrings, dirt ovals, intermediate D-ovals, road courses, downtown street tracks, and high-banked superspeedways, this progression teaches players the core disciplines of American closed-cockpit motorsport:
-* Inertia and contact control in heavy rear-wheel-drive machines.
-* Lateral slip and roll management on high-banked turns and clay tracks.
-* High-speed aerodynamic pack drafting (tandem bump-drafting and slingshot maneuvers).
-* Raw, unassisted 850 BHP spaceframe road racing.
+### 1. Interface Navigation & Screen Flow
+The NASCAR career integrates directly into `GameState::ModalitySelect` and `GameState::ChampionshipStandings`:
 
+```mermaid
+flowchart TD
+    A[Grand Hub: ModuleSelect] -->|Select NASCAR Module| B[ModalitySelect Screen]
+    B -->|Select Career Mode Tab| C[ChampionshipStandings Screen]
+    C -->|View Tier 1: Street Stock| D[StartingGrid: Tier 1 Cup]
+    D -->|Start Race| E[Live Race: Martinsville / Bristol / Eldora]
+    E -->|Finish Race & Stage Points| F[Podium & XP Award Sequence]
+    F -->|Synchronize Progress| C
+    C -->|1,500 XP Accumulated| G[Unlock Tier 2: Late Models]
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        NASCAR & TRANS-AM TA1 CAREER PROGRESSION LADDER                 │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                        │
-│   [Tier 1: Street Stock V8] (450 BHP, Heavy RWD, 1,420 kg)                            │
-│   • Inertia control, bumper-to-bumper rubbin' is racin', dirt/short paved bullrings    │
-│   • Venues: Martinsville, Bristol, Eldora (Dirt)                                       │
-│                                           │                                            │
-│                                           ▼ (Earn 1,500 XP)                            │
-│   [Tier 2: Late Model / Super Late Model] (550 BHP, Tubular Chassis, 1,220 kg)         │
-│   • Lightweight spaceframe, high lateral G, intermediate progressive banking           │
-│   • Venues: Charlotte, Darlington, Iowa (Short D-Oval)                                 │
-│                                           │                                            │
-│                                           ▼ (Earn 3,500 XP)                            │
-│   [Tier 3: ARCA Menards Series] (650 BHP, Heavy Gen-6 Spec, 1,480 kg)                  │
-│   • High horsepower, slipstream wake introduction, high-speed road racing              │
-│   • Venues: Watkins Glen, Sonoma, Road America (Long Road Course)                      │
-│                                           │                                            │
-│                                           ▼ (Earn 6,500 XP)                            │
-│   [Tier 4: NASCAR Craftsman Truck Series] (700 BHP, Aero Brick, 1,540 kg)              │
-│   • Flat-frontal pickup aero, turbulent wake, aggressive pack bump-drafting            │
-│   • Venues: Richmond, Daytona, Chicago Street Course (Urban Canyon)                    │
-│                                           │                                            │
-│                                           ▼ (Earn 10,000 XP)                           │
-│   [Tier 5: Trans-Am TA1 Pinnacle] (850 BHP, Carbon/Spaceframe GT, 1,250 kg)            │
-│   • Acceleration monster, high-mount GT wing downforce, quick steering, zero assists   │
-│   • Venues: Talladega, Indianapolis, Circuit of the Americas / COTA (Modern GP)        │
-│                                                                                        │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+
+### 2. Visual & Audio Theming
+- **Palette**: Golden Yellow primary accent (`Color::new(1.0, 0.82, 0.08, 1.0)`), Daytona Blue secondary accent (`Color::new(0.06, 0.42, 0.92, 1.0)`).
+- **HUD Stage Indicators**: Real-time stage lap indicators rendering `STAGE 1`, `STAGE 2`, and `FINAL STAGE` with green banner animations on stage completions.
+- **Drafting Tunnel Effect**: Blue wind-slipstream streaks rendered behind lead vehicles when trailing inside the $15.0\,\text{m}$ drafting envelope.
+- **Sound Profile**: Deep pushrod V8 rumble (`EngineAudioProfile::nascar_v8`) transitioning to high-revving side boom-tube acoustics for Trans-Am TA1.
+
+---
+
+## ⚙️ Backend Models & API Endpoints
+
+### 1. SQLite Data Schema & Career Progress
+Career state is persisted in SQLite via `ModuleCareerProgress` in [`crates/tdrace-app/src/profile/mod.rs`](../crates/tdrace-app/src/profile/mod.rs):
+
+```rust
+pub struct ModuleCareerProgress {
+    pub profile_id: i64,
+    pub module_id: String, // "nascar"
+    pub xp: u64,
+    pub level: u32,        // 1..=5
+    pub unlocked_cars: Vec<String>,
+    pub unlocked_tracks: Vec<String>,
+    pub completed_events: Vec<String>,
+    pub trophies_gold: u32,
+    pub trophies_silver: u32,
+    pub trophies_bronze: u32,
+    pub updated_at: String,
+}
+```
+
+### 2. Campaign Launch Endpoint & Session Struct
+Implemented in [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs):
+```rust
+impl GameApp {
+    /// Launches a NASCAR Career Championship Cup for the given tier (1..=5).
+    pub fn start_nascar_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids, car_id) = match tier {
+            1 => (
+                "Street Stock Grassroots Invitational (Tier 1)",
+                vec!["martinsville".to_string(), "bristol".to_string(), "eldora_dirt".to_string()],
+                "chevy_monte_carlo_ss",
+            ),
+            2 => (
+                "Late Model Short Track Shootout (Tier 2)",
+                vec!["charlotte".to_string(), "darlington".to_string(), "iowa_speedway".to_string()],
+                "super_late_camaro",
+            ),
+            3 => (
+                "ARCA Menards Road & Oval Tour (Tier 3)",
+                vec!["watkins_glen".to_string(), "sonoma".to_string(), "road_america".to_string()],
+                "arca_chevy_ss",
+            ),
+            4 => (
+                "Craftsman Truck National Series (Tier 4)",
+                vec!["richmond".to_string(), "daytona".to_string(), "chicago_street".to_string()],
+                "silverado_truck",
+            ),
+            _ => (
+                "Trans-Am TA1 Pinnacle Championship (Tier 5)",
+                vec!["talladega".to_string(), "indianapolis".to_string(), "cota_gp".to_string()],
+                "corvette_c7_ta1",
+            ),
+        };
+        // Initializes ChampionshipSession with PointSystem::NascarCup { stage_win_bonus: true }
+    }
+}
 ```
 
 ---
 
-## 2. 5-Tier Vehicle Hierarchy & Prototypical Engineering Specs
+## 🛡️ Security & Role-Based Access Controls (RBAC)
 
-Each tier features 3 iconic, prototypical American machines calibrated with authentic weight distributions, engine force outputs, aerodynamic drag profiles, and tire compliance.
+### 1. Career License Gating & Profile Integrity
+- **Tier 1 (Street Stock)**: Unlocked by default for all profiles (`xp >= 0`).
+- **Tier 2 (Late Model)**: Requires Career Level 2 (`xp >= 1,500`).
+- **Tier 3 (ARCA Menards)**: Requires Career Level 3 (`xp >= 3,500`).
+- **Tier 4 (Craftsman Truck)**: Requires Career Level 4 (`xp >= 6,500`).
+- **Tier 5 (Trans-Am TA1)**: Requires Career Level 5 (`xp >= 10,000`).
+- **Dev Mode Bypass**: When `dev_mode: true` is set in configuration, all tiers, tracks, and vehicles are unlocked for testing without modifying saved profile progress.
+
+---
+
+## 1. 5-Tier Vehicle Hierarchy & Prototypical Engineering Specs
+
+Each tier features 3 iconic American machines calibrated with authentic weight distributions, engine force outputs, aerodynamic drag profiles, and tire compliance.
 
 ```
                      STOCK CAR & TRUCK SILHOUETTES (LATERAL 2D)
@@ -75,7 +134,7 @@ Each tier features 3 iconic, prototypical American machines calibrated with auth
        (O)                  (O)  |_|
 ```
 
-### 2.1 Tier 1: Street Stock V8 (Grassroots Stock Racing)
+### 1.1 Tier 1: Street Stock V8 (Grassroots Stock Racing)
 * **Design Philosophy:** Entry-level grassroots stock car built on production steel chassis with roll cages. Heavy mass and modest mechanical grip teach momentum conservation, weight transfer, and controlled bumper contact.
 * **Core Physics:**
   * Power: $450\,\text{BHP}$ ($335\,\text{kW}$) naturally aspirated pushrod V8 ($5.7\,\text{L}$).
@@ -90,7 +149,7 @@ Each tier features 3 iconic, prototypical American machines calibrated with auth
   2. **Ford Mustang Street Stock:** Fox-body derived stock car, slightly shorter wheelbase ($2.56\,\text{m}$), quicker yaw response into corner entry.
   3. **Dodge Dart Street Stock:** High low-end torque Chrysler 360 V8, planted straight-line drive, requires earlier braking into tight bullring turns.
 
-### 2.2 Tier 2: Late Model / Super Late Model (Short-Track Specialist)
+### 1.2 Tier 2: Late Model / Super Late Model (Short-Track Specialist)
 * **Design Philosophy:** Purpose-built lightweight tubular perimeter spaceframe. Fiberglass body panels, offset chassis setup (left-side weight bias for ovals), and wide sticky slicks deliver high lateral cornering G-forces.
 * **Core Physics:**
   * Power: $550\,\text{BHP}$ ($410\,\text{kW}$) aluminum V8 engine.
@@ -105,7 +164,7 @@ Each tier features 3 iconic, prototypical American machines calibrated with auth
   2. **Super Late Model - Chevy Camaro Body:** Wedge-nose fiberglass body, high front-end bite, lively corner-exit throttle rotation.
   3. **Super Late Model - Ford Mustang / Toyota Camry Body:** High downforce decklid spoiler configuration, superior stability on high-speed intermediate ovals.
 
-### 2.3 Tier 3: ARCA Menards Series (Heavy High-Horsepower Stock)
+### 1.3 Tier 3: ARCA Menards Series (Heavy High-Horsepower Stock)
 * **Design Philosophy:** High-power steel chassis mirroring NASCAR Gen-6 platform. Acts as the critical pedagogical bridge from short-tracks to high-speed superspeedway pack drafting and technical road racing.
 * **Core Physics:**
   * Power: $650\,\text{BHP}$ ($485\,\text{kW}$) Ilmor 396 cubic-inch ($6.5\,\text{L}$) V8.
@@ -119,7 +178,7 @@ Each tier features 3 iconic, prototypical American machines calibrated with auth
   2. **Toyota Camry ARCA:** Aggressive front splitter airflow routing, exceptional straight-line acceleration out of road course hairpins.
   3. **Ford Fusion ARCA:** Low-drag nose profile engineered for high top-end speed on long drafting straights.
 
-### 2.4 Tier 4: NASCAR Craftsman Truck Series (Aero Brick & Bumping)
+### 1.4 Tier 4: NASCAR Craftsman Truck Series (Aero Brick & Bumping)
 * **Design Philosophy:** Full-sized silhouette pickup trucks built over rigid spaceframe chassis. Flat frontal area ("brick aerodynamics") generates enormous trailing turbulence and makes bump-drafting and pack cooperation mandatory for victory.
 * **Core Physics:**
   * Power: $700\,\text{BHP}$ ($522\,\text{kW}$) carbureted/EFI $5.86\,\text{L}$ pushrod V8.
@@ -132,12 +191,12 @@ Each tier features 3 iconic, prototypical American machines calibrated with auth
   2. **Ford F-150 Truck:** High-downforce cab spoiler wicker, responsive mid-corner rotation on technical D-ovals and street tracks.
   3. **Toyota Tundra TRD Pro Truck:** High torque curve between $4,500$–$7,200\,\text{RPM}$, lightning restarts on double-file grid launches.
 
-### 2.5 Tier 5: Trans-Am TA1 (Pinnacle American Silhouette GT)
+### 1.5 Tier 5: Trans-Am TA1 (Pinnacle American Silhouette GT)
 * **Design Philosophy:** The ultimate evolution of American pushrod racing: purist spaceframe chassis, carbon-composite bodywork, $850\,\text{BHP}$ naturally aspirated monster engines, huge carbon rear wings, wide tires, and zero traction control or ABS.
 * **Core Physics:**
   * Power: $850\,\text{BHP}$ ($634\,\text{kW}$) overhead-valve V8 ($8,800\,\text{RPM}$).
   * Curb Weight ($m$): $1,250.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $1,580.0\,\text{kg}\cdot\text{m}^2$.
-  * Power-to-Weight Ratio: $680\,\text{BHP/tonne}$ (Supercar acceleration: $0$–$100\,\text{km/h}$ in $2.7\,\text{s}$).
+  * Power-to-Weight Ratio: $680\,\text{BHP/tonne}$ ($0$–$100\,\text{km/h}$ in $2.7\,\text{s}$).
   * Top Speed ($v_{\text{max}}$): $90.0\,\text{m/s}$ ($\approx 324\,\text{km/h}$).
   * Aerodynamics: Large carbon front splitter, floor tunnel diffuser, high-mount rear GT wing ($C_L \cdot A = 1.85$, $C_d \cdot A = 0.72$).
   * Assists: 100% Raw (`DriverAssistsConfig::raw()`).
@@ -148,9 +207,7 @@ Each tier features 3 iconic, prototypical American machines calibrated with auth
 
 ---
 
-## 3. 15-Venue Championship Calendar (3 per Tier)
-
-Every tier features 3 tailored circuits that test the specific handling characteristics of its vehicle class.
+## 2. 15-Venue Championship Calendar (3 per Tier)
 
 ```
                       NASCAR & TRANS-AM 15-VENUE CALENDAR
@@ -181,7 +238,7 @@ Every tier features 3 tailored circuits that test the specific handling characte
  └─ [NUEVO] Circuit of the Americas / COTA (3.426 mi Modern GP Aero Test)
 ```
 
-### 3.1 Tier 1 Venues: Grassroots Bullrings & Dirt
+### 2.1 Tier 1 Venues: Grassroots Bullrings & Dirt
 1. **Martinsville Speedway:** The classic "Paperclip" ($846\,\text{m}$, $12^\circ$ concrete corners, asphalt straights). Heavy curb-hopping and brake-cooling management.
 2. **Bristol Motor Speedway:** "The Last Great Colosseum" ($858\,\text{m}$, $28^\circ$ steep banking). Extreme compression at corner entries; continuous bumper rubbing across two racing grooves.
 3. **Eldora Speedway *(NUEVO)***:
@@ -189,7 +246,7 @@ Every tier features 3 tailored circuits that test the specific handling characte
    * **Surface Physics:** Deformable clay dirt (`SurfaceType::Dirt`, $\mu = 0.72$).
    * **Racing Dynamic:** Drivers must pitch the Street Stock sideways early, steering with throttle wheelspin against the outside retaining cushion.
 
-### 3.2 Tier 2 Venues: Intermediate D-Ovals
+### 2.2 Tier 2 Venues: Intermediate D-Ovals
 1. **Charlotte Motor Speedway:** 1.5-mile quad-oval ($2,414\,\text{m}$, $24^\circ$ banking). Wide multi-groove track allowing high/low line crossover passes.
 2. **Darlington Raceway:** 1.366-mile egg-shaped oval ($2,198\,\text{m}$, Turns 1-2 at $25^\circ$, Turns 3-4 at $23^\circ$). Narrow groove hugging the outside retaining wall ("Darlington Stripe").
 3. **Iowa Speedway *(NUEVO)***:
@@ -197,7 +254,7 @@ Every tier features 3 tailored circuits that test the specific handling characte
    * **Geometry & Banking:** Progressive compound banking ($12^\circ$ bottom lane to $14^\circ$ upper lane, $10^\circ$ frontstretch tri-oval).
    * **Racing Dynamic:** Delivers constant pack side-by-side action where the high-momentum outside line battles the short-distance inside curb.
 
-### 3.3 Tier 3 Venues: Classic Natural Road Courses
+### 2.3 Tier 3 Venues: Classic Natural Road Courses
 1. **Watkins Glen International:** 5.4 km road course. Uphill Esses, Inner Loop bus-stop chicane, and the high-speed Carousel.
 2. **Sonoma Raceway:** 4.05 km California hillside road course. Dramatic $49\,\text{m}$ elevation changes, blind crests, and Turn 11 hairpin.
 3. **Road America *(NUEVO)***:
@@ -205,7 +262,7 @@ Every tier features 3 tailored circuits that test the specific handling characte
    * **Geometry & Landmarks:** Long high-speed frontstraight, the sweeping right-hand Carousel, the terrifying full-throttle Kink, and Canada Corner heavy braking zone.
    * **Racing Dynamic:** Tests the ARCA car's top-end speed, brake fade resistance from $270\,\text{km/h}$, and aerodynamic platform stability over undulating crests.
 
-### 3.4 Tier 4 Venues: National D-Ovals & Concrete Canyons
+### 2.4 Tier 4 Venues: National D-Ovals & Concrete Canyons
 1. **Richmond Raceway:** 0.75-mile D-shaped asphalt oval ($1,207\,\text{m}$, $14^\circ$ banking). Blends the close combat of a short-track with intermediate speeds.
 2. **Daytona International Speedway:** 2.5-mile tri-oval ($4,023\,\text{m}$, $31^\circ$ high banks, $18^\circ$ tri-oval). High-density pack slipstreaming and restrictor-plate physics.
 3. **Chicago Street Course *(NUEVO)***:
@@ -213,7 +270,7 @@ Every tier features 3 tailored circuits that test the specific handling characte
    * **Geometry & Hazards:** 90-degree street intersections, uneven city pavement crowns, drainage covers, and concrete K-rail canyon walls with zero runoff.
    * **Racing Dynamic:** Forces drivers to maneuver heavy $1,540\,\text{kg}$ pickup trucks through tight $90^\circ$ urban street corners with high risk of pileups.
 
-### 3.5 Tier 5 Venues: Pinnacle Superspeedways & Modern GP
+### 2.5 Tier 5 Venues: Pinnacle Superspeedways & Modern GP
 1. **Talladega Superspeedway:** 2.66-mile monster tri-oval ($4,281\,\text{m}$, $33^\circ$ banking). The fastest closed circuit in motorsport; multi-car draft lines exceeding $320\,\text{km/h}$.
 2. **Indianapolis Motor Speedway:** 2.5-mile historic rectangular speedway ($4,023\,\text{m}$, $9.2^\circ$ shallow banking, Yard of Bricks). High-speed flat entry demanding precise braking points.
 3. **Circuit of the Americas (COTA) *(NUEVO)***:
@@ -223,9 +280,9 @@ Every tier features 3 tailored circuits that test the specific handling characte
 
 ---
 
-## 4. Career Progression, XP Gating & Rules Architecture
+## 3. Career Progression & Scoring Rules
 
-### 4.1 Career Progression & Unlock Requirements
+### 3.1 Career Progression & Unlock Requirements
 
 | Career Level | Category | Tier Name | Required XP | Car Unlocks | Circuit Unlocks |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -235,7 +292,7 @@ Every tier features 3 tailored circuits that test the specific handling characte
 | **Level 4** | Craftsman Truck | **Truck Series Masters** | $6,500\,\text{XP}$ | `silverado_truck`, `f150_truck`, `tundra_truck` | `richmond`, `daytona`, `chicago_street` |
 | **Level 5** | Trans-Am TA1 | **Apex Trans-Am Champion** | $10,000\,\text{XP}$ | `corvette_c7_ta1`, `mustang_ta1`, `challenger_ta1` | `talladega`, `indianapolis`, `cota_gp` |
 
-### 4.2 NASCAR Stage Racing & Scoring Rules
+### 3.2 NASCAR Stage Racing & Scoring Rules
 In accordance with NASCAR regulations, every career race is partitioned into **3 Stages**:
 1. **Stage 1 (25% Distance):** Top 5 finishers receive bonus points ($5, 4, 3, 2, 1$) and $+50\,\text{XP}$.
 2. **Stage 2 (50% Distance):** Top 5 finishers receive bonus points ($5, 4, 3, 2, 1$) and $+50\,\text{XP}$.
@@ -248,7 +305,7 @@ In accordance with NASCAR regulations, every career race is partitioned into **3
 
 ---
 
-## 5. AI Rival Roster & Behavioral Tuning
+## 4. AI Rival Roster & Behavioral Tuning
 
 | Driver ID | Name & Nickname | Car & Team | Aggression | Drafting Discipline | Signature Move |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -260,30 +317,48 @@ In accordance with NASCAR regulations, every career race is partitioned into **3
 
 ---
 
-## 6. Acceptance Criteria (Pseudo-Gherkin)
+## 🧪 Verification & Acceptance Criteria
 
-```gherkin
-Feature: NASCAR & Trans-Am TA1 Career Mode
+### Automated Tests
+- Command to run workspace unit tests: `cargo test --package tdrace-app --test profile_tests`
+- Command to run physics tests: `cargo test --package wheelbase`
 
-  Scenario: Level 1 Player enters Dirt & Short Track Novice Cup
-    Given the player has a new profile with "nascar" module selected
-    When the player navigates to Career Mode
-    Then Tier 1 "Street Stock V8" is unlocked with 0 XP
-    And the available cars are "chevy_monte_carlo_ss", "ford_mustang_ss", and "dodge_dart_ss"
-    And the championship calendar consists of "martinsville", "bristol", and "eldora_dirt"
-    And Tiers 2, 3, 4, and 5 are locked behind XP gates
+### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-  Scenario: Drafting slipstream provides acceleration boost on superspeedways
-    Given the player is racing a Tier 3 ARCA or Tier 4 Truck at "daytona_superspeedway"
-    When the player trails within 15 meters behind an AI vehicle
-    Then the player's engine force receives a 1.35x slipstream multiplier
-    And the aerodynamic drag is reduced by 22%
-    And trailing speed increases beyond the solo top-speed limit
+- **Scenario: Level 1 Player enters Dirt & Short Track Novice Cup**
+  - [ ] **Given** the player has a new profile with "nascar" module selected
+  - [ ] **When** the player navigates to Career Mode
+  - [ ] **Then** Tier 1 "Street Stock V8" is unlocked with 0 XP
+  - [ ] **And** the available cars are "chevy_monte_carlo_ss", "ford_mustang_ss", and "dodge_dart_ss"
+  - [ ] **And** the championship calendar consists of "martinsville", "bristol", and "eldora_dirt"
+  - [ ] **And** Tiers 2, 3, 4, and 5 are locked behind XP gates
 
-  Scenario: Winning Tier 1 unlocks Tier 2 Late Models
-    Given the player completes Tier 1 with at least 1,500 XP and a podium trophy
-    When the career progress synchronizes with SQLite database
-    Then player career level increases to 2
-    And "charlotte", "darlington", and "iowa_speedway" are unlocked in the track registry
-    And Late Model and Super Late Model vehicles become selectable
-```
+- **Scenario: Drafting slipstream provides acceleration boost on superspeedways**
+  - [ ] **Given** the player is racing a Tier 3 ARCA or Tier 4 Truck at "daytona_superspeedway"
+  - [ ] **When** the player trails within 15 meters behind an AI vehicle
+  - [ ] **Then** the player's engine force receives a 1.35x slipstream multiplier
+  - [ ] **And** the aerodynamic drag is reduced by 22%
+  - [ ] **And** trailing speed increases beyond the solo top-speed limit
+
+- **Scenario: Winning Tier 1 unlocks Tier 2 Late Models**
+  - [ ] **Given** the player completes Tier 1 with at least 1,500 XP and a podium trophy
+  - [ ] **When** the career progress synchronizes with SQLite database
+  - [ ] **Then** player career level increases to 2
+  - [ ] **And** "charlotte", "darlington", and "iowa_speedway" are unlocked in the track registry
+  - [ ] **And** Late Model and Super Late Model vehicles become selectable
+
+---
+
+## 🔗 Traceability & Codebase Mapping
+
+### Created/Modified Files
+- `[ ]` `crates/tdrace-app/src/module/nascar.rs` -> Implements NASCAR module vehicles, themes, and tracks.
+- `[ ]` `crates/tdrace-app/src/profile/mod.rs` -> Governs `ModuleCareerProgress` and unlock synchronization.
+- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Launches `start_nascar_career_tier` campaign cups.
+- `[ ]` `crates/wheelbase/src/surface.rs` -> Models clay dirt surface friction and banking normal forces.
+
+### Verification Assertions
+- `crates/tdrace-app/src/module/nascar.rs` references `specs/001_nascar_career_mode.md`.
+
+### Beads Epic Mapping
+- Governed by active parent Epic `tdrace-j3io` (*Fulfill Spec 001: NASCAR & Trans-Am TA1 Career Mode*).

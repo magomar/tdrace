@@ -1,54 +1,116 @@
-# Specification: Extreme Off-Road & Stunt Arenas Career Mode
-
-**Document Status:** PROPOSED  
-**Author:** Antigravity Pairing Assistant & Extreme Simulation Team  
-**Date:** September 18, 2026  
-**Primary Target Crates:**  
-1. [`crates/wheelbase`](file:///home/mario/workspace/games/tdrace/crates/wheelbase) (Mud/Snow/Ice Dynamics, 4-Wheel Hydraulic Steering, 66-Inch Terra Tires, Long-Travel Damping)  
-2. [`crates/arcade-race-core`](file:///home/mario/workspace/games/tdrace/crates/arcade-race-core) (`TrackKind::Arena` Enclosures, Freestyle Stunt Targets, Whoops Rhythm Generation)  
-3. [`crates/tdrace-app`](file:///home/mario/workspace/games/tdrace/crates/tdrace-app) (Extreme Off-Road Career Engine, Freestyle Stunt Scoring, 15 Venues Roster)  
-
+---
+type: Feature Spec
+template: feature
+title: "Extreme Off-Road & Stunt Arenas Career Mode"
+description: "5-tier career progression combining open desert raids, ice drifting, deep mud bogs, supercross stadium whoops, and monster truck freestyle stunt arenas."
+status: draft
+created: 2026-09-18
+generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
 ---
 
-## 1. Executive Summary & Career Architecture
+# Feature Spec: Extreme Off-Road & Stunt Arenas Career Mode 🚜
 
 The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-discipline stunt, stadium, and terrain campaign in **TdRace**. Departing from pure 1D circuit ribbon racing, this career combines high-speed open-desert crossings, sub-zero ice drifting, deep clay mud bogging, supercross stadium rhythm whoops, and monumental car-crushing arena freestyle competitions.
 
+---
+
+## 🗺️ User Flow & Interface Design
+
+### 1. Interface Navigation & Screen Flow
+The Extreme Off-Road career integrates into `GameState::ModalitySelect` and `GameState::ChampionshipStandings`:
+
+```mermaid
+flowchart TD
+    A[Grand Hub: ModuleSelect] -->|Select Extreme Off-Road| B[ModalitySelect Screen]
+    B -->|Select Career Mode Tab| C[ChampionshipStandings Screen]
+    C -->|View Tier 1: Sand Rail Buggy| D[StartingGrid: Tier 1 Dunes]
+    D -->|Start Event| E[Live Event: Sahara / Figure-8 / Atacama]
+    E -->|Finish Speed or Stunt Session| F[Freestyle Score & XP Award Sequence]
+    F -->|Synchronize Progress| C
+    C -->|1,500 XP Accumulated| G[Unlock Tier 2: Trophy Trucks]
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│               EXTREME OFF-ROAD & STUNT ARENAS CAREER PROGRESSION LADDER                │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                        │
-│   [Tier 1: Sand Rail Buggy] (300 BHP Turbo, Ultralight 590 kg RWD)                     │
-│   • Dune flotation, paddle tire rooster tails, crest inertia & descent control         │
-│   • Venues: Sahara Dune Crossing, Dirt Figure Eight, Atacama Sand Basin (NEW)          │
-│                                           │                                            │
-│                                           ▼ (Earn 1,500 XP)                            │
-│   [Tier 2: Trophy Truck 4x4] (800 BHP V8, 30-inch Suspension Travel, 2,150 kg)         │
-│   • Washboard whoops at 180 km/h, deep canyon wash absorption, high-speed desert       │
-│   • Venues: Red Rock Canyon, Mud Slough Arena, Baja 500 Desert Scrub (NEW)             │
-│                                           │                                            │
-│                                           ▼ (Earn 3,500 XP)                            │
-│   [Tier 3: Arctic Ice Racer] (500 BHP Turbo AWD, Tungsten Ice Spikes, 1,220 kg)        │
-│   • Sub-zero pendulum drifting, zero-friction ice sheets, snow berm deflection         │
-│   • Venues: Arctic Frozen Lake, Alpine Snow Ridge, Rovaniemi Ice Ring (NEW)            │
-│                                           │                                            │
-│                                           ▼ (Earn 6,500 XP)                            │
-│   [Tier 4: Mud Bogger V8] (900 BHP Supercharged Big Block, 4x4 Tractor Tires, 2,400 kg)│
-│   • Deep sludge penetration, vertical snorkel exhausts, high-traction crawler torque   │
-│   • Venues: Supercross Stadium Arena, Gravel Quarry Chasm, Louisiana Swampland (NEW)   │
-│                                           │                                            │
-│                                           ▼ (Earn 10,000 XP)                           │
-│   [Tier 5: Crusher Monster Truck] (1,500 BHP Methanol V8, 66" Tires, 4WS, 4,500 kg)   │
-│   • Car crushing destruction, 4-wheel hydraulic steering, 50-foot vertical hangtime    │
-│   • Venues: Monster Colosseum, Glacier Crest Pass, Stunt City Megastructure (NEW)      │
-│                                                                                        │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+
+### 2. Visual & Audio Theming
+- **Palette**: Baja Danger Orange (`Color::new(1.0, 0.40, 0.05, 1.0)`), Electric Cyan / Ice Blue (`Color::new(0.15, 0.85, 1.0, 1.0)`).
+- **Freestyle Stunt HUD**: Dynamic popup juice FX: `+BIG AIR 2.4s (240 PTS)`, `+BARREL ROLL (1,500 PTS)`, `+CAR CRUSH x3 (900 PTS)`.
+- **Sound Profile**: Unmuffled methanol supercharged V8 whine, hydraulic steering hiss, and bone-shaking suspension compression thuds upon landing.
+
+---
+
+## ⚙️ Backend Models & API Endpoints
+
+### 1. SQLite Data Schema & Career Progress
+Career state is persisted in SQLite via `ModuleCareerProgress` in [`crates/tdrace-app/src/profile/mod.rs`](../crates/tdrace-app/src/profile/mod.rs):
+
+```rust
+pub struct ModuleCareerProgress {
+    pub profile_id: i64,
+    pub module_id: String, // "extreme_offroad"
+    pub xp: u64,
+    pub level: u32,        // 1..=5
+    pub unlocked_cars: Vec<String>,
+    pub unlocked_tracks: Vec<String>,
+    pub completed_events: Vec<String>,
+    pub trophies_gold: u32,
+    pub trophies_silver: u32,
+    pub trophies_bronze: u32,
+    pub updated_at: String,
+}
+```
+
+### 2. Campaign Launch Endpoint & Session Struct
+Implemented in [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs):
+```rust
+impl GameApp {
+    /// Launches an Extreme Off-Road Career Championship Cup for the given tier (1..=5).
+    pub fn start_extreme_offroad_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids, car_id) = match tier {
+            1 => (
+                "Dune Hopper Rookie Invitational (Tier 1)",
+                vec!["sahara_dunes".to_string(), "dirt_figure_eight".to_string(), "atacama_sand_basin".to_string()],
+                "sand_rail_buggy",
+            ),
+            2 => (
+                "Baja 500 Trophy Truck Masters (Tier 2)",
+                vec!["red_rock_canyon".to_string(), "mud_slough_arena".to_string(), "baja_500_scrub".to_string()],
+                "trophy_truck_4x4",
+            ),
+            3 => (
+                "Arctic Ice Glissade Championship (Tier 3)",
+                vec!["arctic_frozen_lake".to_string(), "alpine_snow_ridge".to_string(), "rovaniemi_ice_ring".to_string()],
+                "audi_quattro_ice",
+            ),
+            4 => (
+                "Southern Mud Bogger Sludge Series (Tier 4)",
+                vec!["supercross_stadium".to_string(), "gravel_quarry".to_string(), "louisiana_swamp".to_string()],
+                "mega_truck_v8",
+            ),
+            _ => (
+                "Monster Jam Freestyle Colosseum (Tier 5)",
+                vec!["monster_colosseum".to_string(), "glacier_crest_pass".to_string(), "stunt_city_megastructure".to_string()],
+                "grave_digger_spec",
+            ),
+        };
+        // Initializes ChampionshipSession with Dual Speed & Freestyle rules
+    }
+}
 ```
 
 ---
 
-## 2. 5-Tier Vehicle Hierarchy & Prototypical Engineering Specs
+## 🛡️ Security & Role-Based Access Controls (RBAC)
+
+### 1. Career License Gating & Profile Integrity
+- **Tier 1 (Sand Rail Buggy)**: Unlocked by default for all profiles (`xp >= 0`).
+- **Tier 2 (Trophy Truck)**: Requires Career Level 2 (`xp >= 1,500`).
+- **Tier 3 (Arctic Ice Racer)**: Requires Career Level 3 (`xp >= 3,500`).
+- **Tier 4 (Mud Bogger V8)**: Requires Career Level 4 (`xp >= 6,500`).
+- **Tier 5 (Crusher Monster Truck)**: Requires Career Level 5 (`xp >= 10,000`).
+- **Dev Mode Bypass**: When `dev_mode: true` is configured, all tiers, tracks, and vehicles are unlocked for testing without modifying saved profile progress.
+
+---
+
+## 1. 5-Tier Vehicle Hierarchy & Prototypical Engineering Specs
 
 ```
                   EXTREME OFF-ROAD & STUNT SILHOUETTES (LATERAL 2D)
@@ -72,7 +134,7 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
                 (     O       O     )  [66" Terra Tires + 4-Wheel Steer]
 ```
 
-### 2.1 Tier 1: Sand Rail Buggy (Ultralight Sand Flotation)
+### 1.1 Tier 1: Sand Rail Buggy (Ultralight Sand Flotation)
 * **Design Philosophy:** Chromoly tubular spaceframe buggy with rear-mounted turbo boxer engine and paddle tires. Ultra-low weight allows effortless skimming over fine desert sand without sinking.
 * **Core Physics:**
   * Power: $300\,\text{BHP}$ ($224\,\text{kW}$) Turbo Flat-4.
@@ -86,7 +148,7 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
   2. **Polaris RZR Pro R Tubular:** High-output 2.0L naturally aspirated 4-cylinder, balanced weight distribution.
   3. **Custom VW Sand Rail Buggy:** Classic rear air-cooled flat-four stinger exhaust, extreme rearward weight bias for wheelies.
 
-### 2.2 Tier 2: Trophy Truck 4x4 / Baja Trophy Truck (Desert Whoop Eater)
+### 1.2 Tier 2: Trophy Truck 4x4 / Baja Trophy Truck (Desert Whoop Eater)
 * **Design Philosophy:** 800 BHP desert racing monoliths engineered to swallow three-foot whoops at full throttle. Features heavy 4WD systems, $30\,\text{inches}$ of wheel travel, and trailing-arm rear links.
 * **Core Physics:**
   * Power: $800\,\text{BHP}$ ($596\,\text{kW}$) naturally aspirated $7.0\,\text{L}$ V8.
@@ -100,7 +162,7 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
   2. **Geiser Bros AWD Trophy Truck:** Master of high-torque sand washes, seamless front-axle pulling power out of deep silt.
   3. **Mason Motorsport AWD Truck:** Low-drag carbon aerodynamic shell, extreme mid-corner steering responsiveness.
 
-### 2.3 Tier 3: Arctic Ice Racer (Sub-Zero Studded Coupe)
+### 1.3 Tier 3: Arctic Ice Racer (Sub-Zero Studded Coupe)
 * **Design Philosophy:** AWD competition coupes fitted with 400+ tungsten razor studs per tire. Engineered for precision pendulum drifting across mirror-smooth frozen lakes and snowbanks.
 * **Core Physics:**
   * Power: $500\,\text{BHP}$ ($373\,\text{kW}$) Turbocharged inline-5 or boxer-4.
@@ -113,7 +175,7 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
   2. **Subaru WRX STI Ice Racer:** Symmetrical AWD, DCCD active center diff, razor-accurate yaw placement.
   3. **Mitsubishi Lancer Evo Ice Spec:** Active Yaw Control (AYC), aggressive front canards and snow deflector flaps.
 
-### 2.4 Tier 4: Mud Bogger V8 (High-Riser Sludge Monster)
+### 1.4 Tier 4: Mud Bogger V8 (High-Riser Sludge Monster)
 * **Design Philosophy:** Heavily lifted 4x4 trucks equipped with tall agricultural chevron tractor tires, dual rooftop exhaust snorkels, and water-sealed ignition. Designed to claw through thick clay mud trenches where other cars immediately sink.
 * **Core Physics:**
   * Power: $900\,\text{BHP}$ ($671\,\text{kW}$) Supercharged Big Block V8 ($9.4\,\text{L}$).
@@ -126,7 +188,7 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
   2. **Chevrolet K30 Custom Mud Bogger:** Heavy steel square-body shell, twin vertical chrome stack pipes emitting backfire flames.
   3. **Ford F-250 High Riser Mud Spec:** Heavy-duty planetary axles, unstoppable pulling torque in deep bayou clay.
 
-### 2.5 Tier 5: Crusher Monster Truck (1500 BHP Colossus)
+### 1.5 Tier 5: Crusher Monster Truck (1500 BHP Colossus)
 * **Design Philosophy:** 1,500 BHP supercharged alcohol-injected giants riding on 66-inch BKT terra tires and nitrogen charged coilovers. Features dual-axis 4-wheel hydraulic steering (4WS) for crab walking and tight donuts.
 * **Core Physics:**
   * Power: $1,500\,\text{BHP}$ ($1,118\,\text{kW}$) Supercharged 540 ci Big Block on Methanol.
@@ -142,7 +204,7 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
 
 ---
 
-## 3. 15-Venue Championship Calendar (3 per Tier)
+## 2. 15-Venue Championship Calendar (3 per Tier)
 
 ```
               EXTREME OFF-ROAD & STUNT ARENAS 15-VENUE CALENDAR
@@ -173,35 +235,35 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
  └─ [NUEVO] Stunt City Megastructure (360° Loop-the-Loop & Rooftop Aerials)
 ```
 
-### 3.1 Tier 1 Venues: Sand Dunes & Figure-8 Dirt
+### 2.1 Tier 1 Venues: Sand Dunes & Figure-8 Dirt
 1. **Sahara Dune Crossing:** Fast, undulating desert crossing with soft sand dunes and high-altitude drop-ins.
 2. **Dirt Figure Eight:** High-intensity figure-8 short track featuring an elevated center crossover jump ramp.
 3. **Atacama Sand Basin *(NUEVO)***:
    * **Location & Terrain:** Atacama Desert, Chile. Massive open desert bowl ($2,200\,\text{m}$ perimeter).
    * **Signature Challenges:** Ultra-fine sand waves, blinding salt flats, and sudden $15\,\text{m}$ rolling drops that demand throttle moderation to prevent nose-diving.
 
-### 3.2 Tier 2 Venues: Open Desert & Slough Arenas
+### 2.2 Tier 2 Venues: Open Desert & Slough Arenas
 1. **Red Rock Canyon:** Twisting canyon course carved between sheer red sandstone cliffs.
 2. **Mud Slough Arena:** Enclosed muddy basin filled with thick silt beds and water puddles.
 3. **Baja 500 Desert Scrub *(NUEVO)***:
    * **Location & Terrain:** Ensenada to San Felipe, Mexico ($3,100\,\text{m}$ stage).
    * **Signature Challenges:** Punishing 200-meter washboard whoops section, jagged desert scrub, and narrow sand wash channels designed to test Trophy Truck suspension travel.
 
-### 3.3 Tier 3 Venues: Sub-Zero Ice & Alpine Ridges
+### 2.3 Tier 3 Venues: Sub-Zero Ice & Alpine Ridges
 1. **Arctic Frozen Lake:** $240\,\text{m} \times 160\,\text{m}$ open sheet of polished blue ice ($\mu = 0.08$) with soft snow berm boundaries.
 2. **Alpine Snow Ridge:** $1,850\,\text{m}$ point-to-point hillclimb ascending a treacherous alpine pass with unprotected cliff edges.
 3. **Rovaniemi Ice Ring *(NUEVO)***:
    * **Location & Terrain:** Lapland, Finland ($1,250\,\text{m}$ circuit).
    * **Signature Challenges:** Groomed lake ice illuminated by night floodlights, bordered by compacted snow banks that reward high-angle Scandinavian flick entries.
 
-### 3.4 Tier 4 Venues: Supercross Stadiums & Deep Swamps
+### 2.4 Tier 4 Venues: Supercross Stadiums & Deep Swamps
 1. **Supercross Stadium Arena:** Indoor football arena featuring a 6-lane rhythm track, double/triple jumps, and a 14-bump washboard section.
 2. **Gravel Quarry Chasm:** Industrial excavation pit with vertical conveyor ramps and gravel runoffs.
 3. **Louisiana Mud Swampland *(NUEVO)***:
    * **Location & Terrain:** Deep Louisiana Bayou ($1,420\,\text{m}$ twisting swamp loop).
    * **Signature Challenges:** Deep stagnant bayou water, thick clay sludge trenches, and narrow wooden boardwalk bridges with missing guardrails.
 
-### 3.5 Tier 5 Venues: Colossal Arenas & Vertical Stunt Megastructures
+### 2.5 Tier 5 Venues: Colossal Arenas & Vertical Stunt Megastructures
 1. **Monster Colosseum:** Enclosed $190\,\text{m} \times 140\,\text{m}$ arena with car-crush pyramids and massive metal launch ramps.
 2. **Glacier Crest Pass:** Knife-edge glacial mountain ridge with bottomless crevasse gap jumps and zero safety walls.
 3. **Stunt City Megastructure *(NUEVO)***:
@@ -210,9 +272,9 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
 
 ---
 
-## 4. Career Progression, Dual-Mode Scoring & XP Engine
+## 3. Career Progression & Dual-Mode Scoring Engine
 
-### 4.1 Career Progression & Unlock Schedule
+### 3.1 Career Progression & Unlock Schedule
 
 | Career Level | Category | Tier Name | Required XP | Car Unlocks | Circuit Unlocks |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -222,7 +284,7 @@ The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-di
 | **Level 4** | Mud Bogger | **Swamp Crawler Elite** | $6,500\,\text{XP}$ | `mega_truck_v8`, `chevy_k30_mud`, `f250_high_riser` | `supercross_stadium`, `gravel_quarry`, `louisiana_swamp` |
 | **Level 5** | Monster Truck | **Freestyle World Titan** | $10,000\,\text{XP}$ | `grave_digger_spec`, `max_d_spec`, `bigfoot_crusher` | `monster_colosseum`, `glacier_crest_pass`, `stunt_city_megastructure` |
 
-### 4.2 Dual-Mode Scoring System
+### 3.2 Dual-Mode Scoring System
 Career events alternate between **Speed Circuit Races** and **Freestyle Stunt Arenas**:
 * **Circuit Races:** Standard finishing position points ($25, 18, 15, 12, 10\dots$) with clean air jump bonuses.
 * **Freestyle Stunt Scoring:**
@@ -234,28 +296,46 @@ Career events alternate between **Speed Circuit Races** and **Freestyle Stunt Ar
 
 ---
 
-## 5. Acceptance Criteria (Pseudo-Gherkin)
+## 🧪 Verification & Acceptance Criteria
 
-```gherkin
-Feature: Extreme Off-Road & Stunt Arenas Career Mode
+### Automated Tests
+- Command to run workspace unit tests: `cargo test --package tdrace-app --test profile_tests`
+- Command to test terrain and arena bounds: `cargo test --package arcade-race-core`
 
-  Scenario: Level 1 Player starts with Sand Rail Buggy on Dunes
-    Given the player selects "extreme_offroad" career
-    When the career state initializes
-    Then Tier 1 is unlocked with 0 XP
-    And vehicles "sand_rail_buggy", "polaris_rzr", and "vw_sand_rail" are available
-    And circuits "sahara_dunes", "dirt_figure_eight", and "atacama_sand_basin" are unlocked
+### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-  Scenario: Mud Bogger overcomes deep mud without losing momentum
-    Given the player drives "mega_truck_v8" in "louisiana_swamp"
-    When the vehicle enters a deep clay mud zone (SurfaceType::Mud)
-    Then forward viscous drag penalty is reduced by 80% compared to standard GT cars
-    And forward momentum is sustained through the swamp channel
+- **Scenario: Level 1 Player starts with Sand Rail Buggy on Dunes**
+  - [ ] **Given** the player selects "extreme_offroad" career
+  - [ ] **When** the career state initializes
+  - [ ] **Then** Tier 1 is unlocked with 0 XP
+  - [ ] **And** vehicles "sand_rail_buggy", "polaris_rzr", and "vw_sand_rail" are available
+  - [ ] **And** circuits "sahara_dunes", "dirt_figure_eight", and "atacama_sand_basin" are unlocked
 
-  Scenario: Monster Truck unlocks at Level 5 with 4-Wheel Steering
-    Given the player achieves 10,000 XP in the Extreme Off-Road module
-    When Level 5 is granted
-    Then "grave_digger_spec" is unlocked
-    And the vehicle responds to 4-wheel steering input
-    And "stunt_city_megastructure" and "monster_colosseum" become selectable
-```
+- **Scenario: Mud Bogger overcomes deep mud without losing momentum**
+  - [ ] **Given** the player drives "mega_truck_v8" in "louisiana_swamp"
+  - [ ] **When** the vehicle enters a deep clay mud zone (SurfaceType::Mud)
+  - [ ] **Then** forward viscous drag penalty is reduced by 80% compared to standard GT cars
+  - [ ] **And** forward momentum is sustained through the swamp channel
+
+- **Scenario: Monster Truck unlocks at Level 5 with 4-Wheel Steering**
+  - [ ] **Given** the player achieves 10,000 XP in the Extreme Off-Road module
+  - [ ] **When** Level 5 is granted
+  - [ ] **Then** "grave_digger_spec" is unlocked
+  - [ ] **And** the vehicle responds to 4-wheel steering input
+  - [ ] **And** "stunt_city_megastructure" and "monster_colosseum" become selectable
+
+---
+
+## 🔗 Traceability & Codebase Mapping
+
+### Created/Modified Files
+- `[ ]` `crates/tdrace-app/src/module/extreme_offroad.rs` -> Implements Extreme Off-Road module vehicles, themes, and tracks.
+- `[ ]` `crates/tdrace-app/src/profile/mod.rs` -> Governs `ModuleCareerProgress` and unlock synchronization.
+- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Launches `start_extreme_offroad_career_tier` campaign cups.
+- `[ ]` `crates/wheelbase/src/tire/pacejka.rs` -> Implements tungsten ice spike friction and 66" terra tire slip.
+
+### Verification Assertions
+- `crates/tdrace-app/src/module/extreme_offroad.rs` references `specs/003_extreme_offroad_and_stunt_arenas_career_mode.md`.
+
+### Beads Epic Mapping
+- Governed by active parent Epic `tdrace-cxsz` (*Fulfill Spec 003: Extreme Off-Road & Stunt Arenas Career Mode*).
