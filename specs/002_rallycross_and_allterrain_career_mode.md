@@ -88,7 +88,7 @@ impl GameApp {
             ),
             _ => (
                 "Stadium Super Truck Apex Series (Tier 5)",
-                vec!["catalunya_rx".to_string(), "oasis_desert".to_string(), "yas_marina_rx".to_string()],
+                vec!["catalunya_rx".to_string(), "spa_rx".to_string(), "yas_marina_rx".to_string()],
                 "sst_v8_truck",
             ),
         };
@@ -228,7 +228,7 @@ impl GameApp {
  
 [Tier 5: Monumental Stadiums & All-Terrain Extremes]
  ├─ Barcelona-Catalunya RX (Spain - Olympic Stadium RX Arena)
- ├─ Oasis Desert Rally (North Africa - Vast Sand Dunes & Raid Stage)
+ ├─ [NUEVO] Circuit de Spa-Francorchamps RX (Belgium - Raidillon Stadium Dirt Bowl)
  └─ [NUEVO] Yas Marina RX Arena (Abu Dhabi - Floodlit Stunt Arena)
 ```
 
@@ -266,7 +266,10 @@ impl GameApp {
 
 ### 2.5 Tier 5 Venues: Monumental Stadiums & All-Terrain Extremes
 1. **Barcelona-Catalunya RX (Spain):** $1,125\,\text{m}$ (67% Tarmac, 33% Gravel). Stadium environment in the stadium section of the F1 venue.
-2. **Oasis Desert Rally (North Africa):** $2,450\,\text{m}$ open cross-country stage (`SurfaceType::Sand` and `Dirt`). Dunes, dried wadi riverbeds, and zero pavement.
+2. **Circuit de Spa-Francorchamps RX *(NUEVO)***:
+   * **Location & Country:** Stavelot, Ardennes, Belgium ($1,065\,\text{m}$, 60% Tarmac, 40% Dirt).
+   * **Layout Highlights:** World-famous uphill charge through Eau Rouge and Raidillon into a massive banked gravel stadium bowl, tabletop crest jump, and technical joker chicane.
+   * **Spectacle:** High-speed compression up the steep Ardennes hill followed by blind dirt braking and high-flying jump launches.
 3. **Yas Marina RX Arena *(NUEVO)***:
    * **Location & Country:** Abu Dhabi, UAE ($1,100\,\text{m}$, 55% Tarmac, 45% Sand/Gravel).
    * **Layout Highlights:** Night-lit stadium course under high-power floodlights; features dual elevated metal launch kickers engineered specifically for Stadium Super Trucks.
@@ -284,7 +287,7 @@ impl GameApp {
 | **Level 2** | RX Supercar | **World RX Contender** | $1,500\,\text{XP}$ | `hyundai_i20_rx`, `polo_rx`, `audi_s1_rx` | `hell_rx`, `loheac_rx`, `silverstone_rx` |
 | **Level 3** | Group B Beast | **Group B Legend** | $3,500\,\text{XP}$ | `audi_quattro_s1`, `peugeot_205_t16`, `lancia_s4` | `estering_rx`, `montalegre_rx`, `riga_rx` |
 | **Level 4** | Rally Raid T1+ | **Dakar Desert Master** | $6,500\,\text{XP}$ | `hilux_t1_plus`, `audi_rs_q_etron`, `hunter_t1_plus` | `nyirad_rx`, `tykkimaki_rx`, `killarney_rx` |
-| **Level 5** | Stadium Super Truck | **SST High-Flyer Champion** | $10,000\,\text{XP}$ | `sst_v8_truck`, `robby_gordon_sst` | `catalunya_rx`, `oasis_desert`, `yas_marina_rx` |
+| **Level 5** | Stadium Super Truck | **SST High-Flyer Champion** | $10,000\,\text{XP}$ | `sst_v8_truck`, `robby_gordon_sst` | `catalunya_rx`, `spa_rx`, `yas_marina_rx` |
 
 ### 3.2 World RX Tournament Structure & Joker Lap Rules
 Each Tier Cup consists of a realistic World RX weekend progression:
@@ -323,7 +326,7 @@ Each Tier Cup consists of a realistic World RX weekend progression:
   - [ ] **Given** the player accumulates 10,000 XP in the Rallycross module
   - [ ] **When** the career progress synchronizes
   - [ ] **Then** Tier 5 is unlocked
-  - [ ] **And** "catalunya_rx", "oasis_desert", and "yas_marina_rx" are unlocked in the track registry
+  - [ ] **And** "catalunya_rx", "spa_rx", and "yas_marina_rx" are unlocked in the track registry
   - [ ] **And** "sst_v8_truck" and "robby_gordon_sst" become available
 
 ---

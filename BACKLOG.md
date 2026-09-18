@@ -31,7 +31,13 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
 
 ### 2.1 Track Roster & OSM Circuit Builder
 - **New Real-World Circuits**: Ingest OpenStreetMap track survey data and FIA homologation dimensions for iconic tracks (e.g. Nürburgring GP, Spa-Francorchamps, Yas Marina, Brands Hatch).
-- **Rallycross Stadium Venues**: Design dedicated mixed-surface arenas featuring gravel switchbacks, jump ramps, and split joker laps.
+- **Rallycross Stadium Venues & Future Expansion Roster**:
+  - *Circuit de Spa-Francorchamps RX (Belgium)*: Implemented for Tier 5 World RX (Eau Rouge/Raidillon uphill gravel stadium bowl).
+  - *Nürburgring RX / Müllenbachschleife (Germany)*: Amphitheater stadium rallycross arena with steep banked gravel turns.
+  - *Circuit Trois-Rivières / GP3R (Canada)*: Historic North American urban street & dirt jump festival circuit.
+  - *ERX Motor Park / Nitro RX Arena (USA)*: High-flying gap jumps and banked clay berms tailored for Stadium Super Trucks & Group E.
+  - *Eurocircuit da Lousada (Portugal)*: Classic twin-lane stadium arena with elevated crossover bridge.
+  - *Mondello Park RX (Ireland)*: Historic Irish rallycross circuit with fast tarmac straights and tight loose gravel hairpins.
 - **Road Split Segments & Branching Splines (Alternative Circuits & Joker Laps)**: See detailed specification in [`docs/spec_road_split_and_branching_tracks.md`](docs/spec_road_split_and_branching_tracks.md) for topological Directed Ribbon Graph (`TrackNetwork`), $C^1$ spline stitching at branch sockets, multi-route progress tracking, and editor branch extension workflows.
 - **Dynamic Track Grip & Rubbering-In**: Surface grip evolution where the racing line rubbers in over laps, while off-line sections collect marbles and lose traction.
 
