@@ -978,7 +978,7 @@ impl TrackManager {
                     "catalunya" => Ok(crate::module::f1::F1GameModule::track_catalunya()),
                     "zandvoort" => Ok(crate::module::f1::F1GameModule::track_zandvoort()),
                     "bahrain" => Ok(crate::module::f1::F1GameModule::track_bahrain()),
-                    "marina_bay" => Ok(crate::module::f1::F1GameModule::track_marina_bay()),
+                    "marina_bay" | "singapore" | "singapur" => Ok(crate::module::f1::F1GameModule::track_marina_bay()),
                     "cota" => Ok(crate::module::f1::F1GameModule::track_cota()),
                     "madring" => Ok(crate::module::f1::F1GameModule::track_madring()),
                     "nurburgring_gp" | "nurburgring" => Ok(crate::module::f1::F1GameModule::track_nurburgring_gp()),
@@ -1038,7 +1038,7 @@ impl TrackManager {
             "classic_grand_prix" | "oval_speedway" | "dirty_oval_speedway" | "figure_eight" | "dirt_figure_eight" | "dirt_eight" | "drift_park" | "ramp_raceway" => Some("classic"),
             "oasis_rally" | "outlaw_pass" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina" | "sahara" | "sahara_dunes" => Some("rally"),
             "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart" => Some("kart"),
-            "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring" => Some("f1"),
+            "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" => Some("f1"),
             "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "le_mans_sarthe" => Some("gt"),
             "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course" => Some("nascar"),
             "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city" => Some("extreme_offroad"),
@@ -1108,6 +1108,7 @@ impl TrackManager {
             "mount_panorama" => "bathurst",
             "portimao" => "portimao_gp",
             "le_mans" => "le_mans_sarthe",
+            "singapore" | "singapur" => "marina_bay",
             other => other,
         }
     }
@@ -1115,6 +1116,7 @@ impl TrackManager {
     /// Returns all known alias variations for a preset track slug (including short filenames and long catalog IDs).
     pub fn preset_slug_aliases(slug: &str) -> &'static [&'static str] {
         match slug {
+            "marina_bay" | "singapore" | "singapur" => &["marina_bay", "singapore", "singapur"],
             "nurburgring" | "nurburgring_gp" => &["nurburgring_gp", "nurburgring"],
             "bathurst" | "mount_panorama" => &["bathurst", "mount_panorama"],
             "portimao" | "portimao_gp" => &["portimao_gp", "portimao"],

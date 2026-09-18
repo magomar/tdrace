@@ -218,6 +218,10 @@ CIRCUIT_CONFIGS = {
         "default_laps": 4,
         "tag": "SINGAPORE NIGHT RACE",
         "marina_filter": True,
+        "start_node": "4281759834",
+        "predefined_car": "hypercar_prototype",
+        "module_id": "gt",
+        "modules": ["gt", "f1"],
     },
     "cota": {
         "name": "Circuit of the Americas (COTA)",

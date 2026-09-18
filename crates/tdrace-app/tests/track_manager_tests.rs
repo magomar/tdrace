@@ -1827,4 +1827,86 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_marina_bay_singapore_aliases_and_osm_calibration() {
+    let t_mb = tdrace_app::module::f1::F1GameModule::track_marina_bay();
+    assert_eq!(t_mb.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(t_mb.predefined_car.as_deref(), Some("hypercar_prototype"));
+    assert_eq!(t_mb.module_id.as_deref(), Some("gt"));
+    assert!(t_mb.modules.contains(&"gt".to_string()));
+    assert!(t_mb.modules.contains(&"f1".to_string()));
+    assert_eq!(t_mb.default_laps, 4);
+
+    // Verify 50% length scaling (FIA: 4940m -> ~2300-2480m)
+    let len = t_mb.spline.total_length();
+    assert!(
+        len >= 2300.0 && len <= 2480.0,
+        "Marina Bay length should be ~2470m (50% FIA), got {:.1}m",
+        len
+    );
+
+    // Verify start straight alignment: Waypoint 0 at (0, 0), Waypoint 1 downstream along +X
+    let wp0 = t_mb.spline.waypoints[0].point;
+    let wp1 = t_mb.spline.waypoints[1].point;
+    let wp_last = t_mb.spline.waypoints.last().unwrap().point;
+    assert_eq!(wp0.x, 0.0);
+    assert_eq!(wp0.y, 0.0);
+    assert!(wp1.x > 50.0, "Waypoint 1 should advance down straight along +X");
+    assert!(wp1.y.abs() < 1e-4, "Waypoint 1 should have Y ~ 0 along straight");
+    assert!(wp_last.x < 0.0, "Last waypoint approaches start line from -X");
+
+    // Verify aliases in canonical_preset_id
+    assert_eq!(TrackManager::canonical_preset_id("marina_bay"), "marina_bay");
+    assert_eq!(TrackManager::canonical_preset_id("singapore"), "marina_bay");
+    assert_eq!(TrackManager::canonical_preset_id("singapur"), "marina_bay");
+
+    // Verify preset_slug_aliases
+    let aliases = TrackManager::preset_slug_aliases("singapore");
+    assert!(aliases.contains(&"marina_bay"));
+    assert!(aliases.contains(&"singapore"));
+    assert!(aliases.contains(&"singapur"));
+
+    // Verify TrackManager loading via aliases
+    let temp_dir = std::env::temp_dir().join("tdrace_test_mb_alias");
+    let _ = fs::remove_dir_all(&temp_dir);
+    let manager = TrackManager::new(&temp_dir);
+
+    let choice_mb = TrackChoice::Custom {
+        id: "marina_bay".to_string(),
+        title: "Marina Bay".to_string(),
+        description: "Singapore".to_string(),
+        path: "marina_bay".to_string(),
+    };
+    let loaded_mb = manager.load_track(&choice_mb).expect("Load marina_bay");
+    assert_eq!(loaded_mb.name, "Marina Bay Street Circuit (Singapore)");
+
+    let choice_sg = TrackChoice::Custom {
+        id: "singapore".to_string(),
+        title: "Singapore".to_string(),
+        description: "Singapore".to_string(),
+        path: "singapore".to_string(),
+    };
+    let loaded_sg = manager.load_track(&choice_sg).expect("Load singapore");
+    assert_eq!(loaded_sg.name, "Marina Bay Street Circuit (Singapore)");
+
+    let choice_sp = TrackChoice::Custom {
+        id: "singapur".to_string(),
+        title: "Singapur".to_string(),
+        description: "Singapur".to_string(),
+        path: "singapur".to_string(),
+    };
+    let loaded_sp = manager.load_track(&choice_sp).expect("Load singapur");
+    assert_eq!(loaded_sp.name, "Marina Bay Street Circuit (Singapore)");
+
+    // Verify menu resolver
+    let menu_mb = tdrace_app::ui::menu::resolve_track_for_menu(&choice_mb).expect("Resolve menu marina_bay");
+    assert_eq!(menu_mb.name, "Marina Bay Street Circuit (Singapore)");
+    let menu_sg = tdrace_app::ui::menu::resolve_track_for_menu(&choice_sg).expect("Resolve menu singapore");
+    assert_eq!(menu_sg.name, "Marina Bay Street Circuit (Singapore)");
+    let menu_sp = tdrace_app::ui::menu::resolve_track_for_menu(&choice_sp).expect("Resolve menu singapur");
+    assert_eq!(menu_sp.name, "Marina Bay Street Circuit (Singapore)");
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
 
