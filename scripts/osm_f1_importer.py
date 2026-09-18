@@ -252,6 +252,102 @@ CIRCUIT_CONFIGS = {
         "tag": "SPANISH STREET GP",
         "madring_filter": True,
     },
+    "nurburgring_gp": {
+        "name": "Nürburgring Grand Prix-Strecke",
+        "description": "Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.",
+        "file": "nurburgring.osm",
+        "rel_id": 38567,
+        "fia_length": 5148.0,
+        "num_waypoints": 30,
+        "default_width": 13.5,
+        "straight_width": 15.0,
+        "barrier": "BarrierType::Steel",
+        "barrier_offset": 4.0,
+        "default_laps": 4,
+        "tag": "EIFEL MOTORSPORT MECCA",
+        "start_node": "3099078401",
+        "predefined_car": "gt4_clubsport",
+        "module_id": "gt",
+        "modules": ["gt", "f1"],
+        "elevations": {
+            # Mercedes-Arena descent & Dunlop hairpin climb
+            3: -1.0, 4: -2.0, 5: -1.5,
+            # Schumacher-S crest
+            11: 1.5, 12: 2.5, 13: 2.0,
+        },
+    },
+    "bathurst": {
+        "name": "Mount Panorama (Bathurst)",
+        "description": "The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.",
+        "file": "bathurst.osm",
+        "rel_id": 6942508,
+        "fia_length": 6213.0,
+        "num_waypoints": 32,
+        "default_width": 12.5,
+        "straight_width": 14.5,
+        "barrier": "BarrierType::Concrete",
+        "barrier_offset": 3.5,
+        "default_laps": 4,
+        "tag": "MOUNTAIN ROLLERCOASTER",
+        "start_node": "3890232203",
+        "predefined_car": "gt3_evo",
+        "module_id": "gt",
+        "modules": ["gt", "f1"],
+        "elevations": {
+            # Mountain Straight climb up to Skyline crest
+            4: 1.5, 5: 3.0, 6: 4.5, 7: 5.5, 8: 6.0, 9: 5.5, 10: 4.5, 11: 3.5,
+            # The Esses / Dipper steep descent
+            12: 2.5, 13: 1.5, 14: 0.5,
+        },
+    },
+    "portimao_gp": {
+        "name": "Autodromo Internacional do Algarve",
+        "description": "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.",
+        "file": "portimao.osm",
+        "rel_id": 7509968,
+        "fia_length": 4653.0,
+        "num_waypoints": 28,
+        "default_width": 13.5,
+        "straight_width": 15.0,
+        "barrier": "BarrierType::Steel",
+        "barrier_offset": 4.0,
+        "default_laps": 4,
+        "tag": "PORTUGUESE ROLLERCOASTER",
+        "start_node": "5006070798",
+        "predefined_car": "gt2_biturbo",
+        "module_id": "gt",
+        "modules": ["gt", "f1"],
+        "elevations": {
+            # Torre VIP hairpin crest & plunge
+            6: 2.0, 7: 4.0, 8: 3.0,
+            # Samsung crest
+            12: 2.0, 13: 3.0, 14: 2.0,
+            # Downhill plunge into Galp
+            24: 2.0, 25: 1.0,
+        },
+    },
+    "le_mans_sarthe": {
+        "name": "Circuit de la Sarthe (Le Mans)",
+        "description": "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.",
+        "file": "le_mans.osm",
+        "rel_id": 2126739,
+        "fia_length": 13626.0,
+        "num_waypoints": 36,
+        "default_width": 13.5,
+        "straight_width": 15.0,
+        "barrier": "BarrierType::Steel",
+        "barrier_offset": 4.5,
+        "default_laps": 4,
+        "tag": "24 HOURS OF LE MANS",
+        "start_node": "3599294865",
+        "predefined_car": "gt1_legend",
+        "module_id": "gt",
+        "modules": ["gt", "f1"],
+        "elevations": {
+            # Dunlop curve & bridge uphill crest
+            1: 1.5, 2: 3.0, 3: 2.0,
+        },
+    },
 }
 
 
@@ -395,6 +491,10 @@ def process_circuit(cid):
             ordered = [w for w in w_ids if not (w in seen or seen.add(w))]
             chain_nodes = stitch_ways([ways[wid] for wid in ordered], nodes)
 
+    if "start_node" in cfg and cfg["start_node"] in chain_nodes:
+        idx_start = chain_nodes.index(cfg["start_node"])
+        chain_nodes = chain_nodes[idx_start:] + chain_nodes[:idx_start]
+
     lat0 = sum(nodes[n][0] for n in chain_nodes) / len(chain_nodes)
     lon0 = sum(nodes[n][1] for n in chain_nodes) / len(chain_nodes)
     metric_pts = [latlon_to_meters(nodes[n][0], nodes[n][1], lat0, lon0) for n in chain_nodes]
@@ -523,6 +623,9 @@ def process_circuit(cid):
         "fia_length": cfg["fia_length"],
         "half_length": target_half_len,
         "final_len": round(final_len, 1),
+        "predefined_car": cfg.get("predefined_car", "f1_car"),
+        "module_id": cfg.get("module_id", "f1"),
+        "modules": cfg.get("modules", ["f1"]),
         "waypoints": waypoints,
     }
 
@@ -541,7 +644,7 @@ def generate_rust_code(cdata):
         if w["left_curb"] or w["right_curb"]:
             curb_str = f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
         elev_str = ""
-        if w["elevation"] > 0.0:
+        if w["elevation"] > 0.0 or w["elevation"] < 0.0:
             elev_str = f".with_elevation({w['elevation']:.1f})"
         wall_dist_str = ""
         if "wall_dist" in w:
@@ -564,6 +667,7 @@ def generate_rust_code(cdata):
     lines.append(f'            name: "{cdata["name"]}".to_string(),')
     lines.append(f'            description: "{cdata["description"]}".to_string(),')
     lines.append("            category: TrackCategory::Main,")
+    lines.append("            kind: TrackKind::Circuit,")
     lines.append("            spline,")
     lines.append("            geometry: TrackGeometry {")
     lines.append("                inner_walls: left_walls,")
@@ -579,9 +683,13 @@ def generate_rust_code(cdata):
     lines.append("            default_surface: SurfaceType::Grass,")
     lines.append("            pit_box_area: None,")
     lines.append(f"            default_laps: {cdata['default_laps']},")
-    lines.append('            predefined_car: Some("f1_car".to_string()),')
-    lines.append('            module_id: Some("f1".to_string()),')
-    lines.append('            modules: vec!["f1".to_string()],')
+    pred_car = cdata.get("predefined_car", "f1_car")
+    mod_id = cdata.get("module_id", "f1")
+    mods = cdata.get("modules", ["f1"])
+    mods_str = ", ".join(f'"{m}".to_string()' for m in mods)
+    lines.append(f'            predefined_car: Some("{pred_car}".to_string()),')
+    lines.append(f'            module_id: Some("{mod_id}".to_string()),')
+    lines.append(f'            modules: vec![{mods_str}],')
     lines.append("        }")
     lines.append("    }")
     return "\n".join(lines)

@@ -1325,7 +1325,7 @@ fn test_workspace_rally_deletion_preserves_classic() {
 #[ignore = "Manual export tool: cargo test --test track_manager_tests test_export_canonical_presets_to_git_repo -- --ignored"]
 fn test_export_canonical_presets_to_git_repo() {
     use tdrace_app::module::{
-        classic::ClassicGameModule, f1::F1GameModule, kart::KartGameModule,
+        classic::ClassicGameModule, f1::F1GameModule, f1::GtWorldChallengeModule, kart::KartGameModule,
         nascar::NascarGameModule, rally::RallyGameModule, GameModule,
     };
     use tdrace_core::track::TrackCategory;
@@ -1338,6 +1338,7 @@ fn test_export_canonical_presets_to_git_repo() {
     let modules: Vec<Box<dyn GameModule>> = vec![
         Box::new(ClassicGameModule::new()),
         Box::new(F1GameModule::new()),
+        Box::new(GtWorldChallengeModule::new()),
         Box::new(RallyGameModule::new()),
         Box::new(KartGameModule::new()),
         Box::new(NascarGameModule::new()),

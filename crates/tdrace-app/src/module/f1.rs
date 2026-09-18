@@ -975,33 +975,40 @@ impl GtWorldChallengeModule {
         }
     }
 
-    /// Nürburgring GP-Strecke: High-speed German circuit with Castrol-S, Mercedes Arena, Dunlop hairpin, and Schumacher S.
+    /// Nürburgring Grand Prix-Strecke: Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.
+    /// Surveyed from OpenStreetMap (OSM) scaled to 0.5x FIA length: 2574.0m (Real FIA: 5148m).
     pub fn track_nurburgring_gp() -> Track {
         let waypoints = vec![
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(120.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(220.0, -10.0), 14.0).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(280.0, -40.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(270.0, -100.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(210.0, -140.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(140.0, -160.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(110.0, -220.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(160.0, -270.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(240.0, -280.0), 13.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(320.0, -320.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(340.0, -390.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(300.0, -460.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(220.0, -470.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(160.0, -430.0), 13.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(100.0, -380.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(40.0, -350.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-20.0, -370.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-90.0, -380.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-160.0, -330.0), 13.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(-200.0, -250.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-180.0, -170.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-130.0, -100.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-60.0, -40.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(85.8, -0.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(170.9, -9.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(149.2, -46.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(-1.0),
+            TrackWaypoint::new(Vec2::new(136.9, -108.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(-2.0),
+            TrackWaypoint::new(Vec2::new(210.4, -127.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(-1.5),
+            TrackWaypoint::new(Vec2::new(211.6, -59.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(281.7, -10.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(358.0, 28.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(384.0, 96.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(425.5, 133.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(508.9, 114.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(1.5),
+            TrackWaypoint::new(Vec2::new(594.4, 116.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(2.5),
+            TrackWaypoint::new(Vec2::new(671.8, 114.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(604.0, 88.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(518.2, 89.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(456.8, 37.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(381.9, -4.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(305.5, -43.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(270.5, -103.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(272.0, -180.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(187.4, -190.9), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(101.9, -198.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(22.2, -174.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-51.5, -130.4), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-125.2, -86.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-203.9, -72.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-252.7, -13.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-171.6, 0.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-85.8, 0.3), 13.5).with_surface(SurfaceType::Asphalt),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
@@ -1012,7 +1019,7 @@ impl GtWorldChallengeModule {
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
 
         Track {
-            name: "Nurburgring GP-Strecke".to_string(),
+            name: "Nurburgring Grand Prix-Strecke".to_string(),
             description: "Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.".to_string(),
             category: TrackCategory::Main,
             kind: TrackKind::Circuit,
@@ -1030,44 +1037,54 @@ impl GtWorldChallengeModule {
             grid_positions: starting_grid,
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
-            default_laps: 5,
+            default_laps: 4,
             predefined_car: Some("gt4_clubsport".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
     }
 
-    /// Mount Panorama Circuit (Bathurst): Legendary Australian undulating mountain circuit featuring Hell Corner, Mountain Straight, The Cutting, Skyline, and Conrod Straight.
+    /// Mount Panorama (Bathurst): The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.
+    /// Surveyed from OpenStreetMap (OSM) scaled to 0.5x FIA length: 3106.5m (Real FIA: 6213m).
     pub fn track_bathurst() -> Track {
         let waypoints = vec![
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(130.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(210.0, -10.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(250.0, 50.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(240.0, 160.0), 13.0).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(230.0, 280.0), 13.0).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(220.0, 400.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(260.0, 480.0), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(230.0, 540.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(160.0, 560.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(80.0, 570.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(0.0, 580.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-80.0, 560.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-140.0, 500.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-170.0, 420.0), 12.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-160.0, 340.0), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-190.0, 260.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-200.0, 150.0), 13.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(-210.0, 40.0), 13.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(-210.0, -70.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-170.0, -110.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-110.0, -90.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-50.0, -50.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(97.1, -0.0), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(118.9, 82.3), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(119.7, 179.4), 12.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(120.6, 276.4), 12.5).with_surface(SurfaceType::Asphalt).with_elevation(1.5),
+            TrackWaypoint::new(Vec2::new(121.4, 373.5), 12.5).with_surface(SurfaceType::Asphalt).with_elevation(3.0),
+            TrackWaypoint::new(Vec2::new(122.3, 470.6), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(4.5),
+            TrackWaypoint::new(Vec2::new(129.5, 566.2), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(5.5),
+            TrackWaypoint::new(Vec2::new(219.3, 563.6), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(6.0),
+            TrackWaypoint::new(Vec2::new(311.6, 534.3), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(5.5),
+            TrackWaypoint::new(Vec2::new(332.6, 591.3), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(4.5),
+            TrackWaypoint::new(Vec2::new(307.5, 679.5), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(3.5),
+            TrackWaypoint::new(Vec2::new(365.4, 752.7), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(2.5),
+            TrackWaypoint::new(Vec2::new(401.0, 841.1), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(1.5),
+            TrackWaypoint::new(Vec2::new(353.8, 922.5), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(0.5),
+            TrackWaypoint::new(Vec2::new(275.6, 972.2), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(179.5, 958.4), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(85.3, 959.1), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(3.0, 998.3), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-76.9, 1047.7), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-132.4, 1011.0), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-148.8, 916.6), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-148.4, 819.5), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-147.0, 722.4), 12.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-145.6, 625.4), 12.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-144.2, 528.3), 12.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-142.7, 431.2), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-163.3, 336.9), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-155.2, 252.9), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-138.8, 160.2), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-137.8, 63.2), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-97.1, 0.3), 12.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
         let (left_walls, right_walls, left_poly, right_poly) =
-            generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
+            generate_walls_from_spline(&spline, 3.5, BarrierType::Concrete);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
         let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
@@ -1098,28 +1115,38 @@ impl GtWorldChallengeModule {
         }
     }
 
-    /// Autódromo Internacional do Algarve (Portimão): Rollercoaster Portuguese circuit featuring Torre VIP, downhill plunge, and Galp curve.
+    /// Autodromo Internacional do Algarve: Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.
+    /// Surveyed from OpenStreetMap (OSM) scaled to 0.5x FIA length: 2326.5m (Real FIA: 4653m).
     pub fn track_portimao_gp() -> Track {
         let waypoints = vec![
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(140.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(240.0, -10.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(310.0, -60.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(330.0, -140.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(280.0, -200.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(190.0, -190.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(140.0, -250.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(120.0, -330.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(160.0, -400.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(110.0, -460.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(30.0, -430.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-20.0, -360.0), 13.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(-90.0, -320.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-160.0, -340.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-210.0, -290.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-200.0, -200.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-150.0, -130.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-80.0, -70.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 15.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(83.1, 0.0), 15.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(166.2, 0.2), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(249.3, 0.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(332.3, 0.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(364.5, -74.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(323.0, -143.4), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(283.3, -76.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(4.0),
+            TrackWaypoint::new(Vec2::new(200.4, -74.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(3.0),
+            TrackWaypoint::new(Vec2::new(117.3, -74.5), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(34.2, -74.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(45.0, -106.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(123.8, -129.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false).with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(205.3, -113.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(3.0),
+            TrackWaypoint::new(Vec2::new(262.3, -165.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(192.3, -176.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(110.0, -165.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(40.0, -200.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-24.7, -247.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-51.0, -183.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-85.7, -115.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-157.6, -104.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-114.9, -174.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-171.1, -195.9), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-219.1, -128.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(-228.9, -49.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(1.0),
+            TrackWaypoint::new(Vec2::new(-166.2, -0.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-83.1, 0.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
         ];
 
         let spline = TrackSpline::new(waypoints, true);
@@ -1148,38 +1175,53 @@ impl GtWorldChallengeModule {
             grid_positions: starting_grid,
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
-            default_laps: 5,
+            default_laps: 4,
             predefined_car: Some("gt2_biturbo".to_string()),
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string(), "f1".to_string()],
         }
     }
 
-    /// Circuit de la Sarthe (24 Hours of Le Mans): Legendary French endurance course with Dunlop Chicane, Tertre Rouge, Mulsanne Straight, and Porsche Curves.
+    /// Circuit de la Sarthe (Le Mans): The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.
+    /// Surveyed from OpenStreetMap (OSM) scaled to 0.5x FIA length: 6813.0m (Real FIA: 13626m).
     pub fn track_le_mans_sarthe() -> Track {
         let waypoints = vec![
-            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(120.0, 0.0), 14.0).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(190.0, 20.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(260.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(310.0, -50.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(340.0, -140.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(330.0, -260.0), 14.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(300.0, -380.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(320.0, -480.0), 14.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(290.0, -600.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(290.0, -740.0), 14.5).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(240.0, -820.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(140.0, -800.0), 14.0).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(40.0, -780.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-20.0, -820.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-60.0, -760.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-80.0, -640.0), 14.0).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(-90.0, -500.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-130.0, -380.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
-            TrackWaypoint::new(Vec2::new(-110.0, -260.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
-            TrackWaypoint::new(Vec2::new(-80.0, -150.0), 14.0).with_surface(SurfaceType::Asphalt),
-            TrackWaypoint::new(Vec2::new(-50.0, -50.0), 14.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(189.2, 0.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(1.5),
+            TrackWaypoint::new(Vec2::new(351.1, -79.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(3.0),
+            TrackWaypoint::new(Vec2::new(479.8, -196.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true).with_elevation(2.0),
+            TrackWaypoint::new(Vec2::new(569.6, -348.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(688.2, -476.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(584.6, -625.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(425.6, -727.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(248.4, -793.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(71.1, -859.9), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-106.1, -926.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-280.6, -969.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-446.2, -1053.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-623.3, -1119.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-800.7, -1185.6), 13.5).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(-978.0, -1251.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-1144.7, -1329.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1316.5, -1378.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1503.7, -1403.8), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1691.9, -1423.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1880.3, -1442.2), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1944.2, -1324.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1902.9, -1139.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1840.3, -961.9), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1759.3, -791.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1653.6, -634.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1511.0, -520.1), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-1539.0, -361.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-1356.9, -309.7), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-1185.2, -232.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-1025.2, -132.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-861.9, -149.3), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-698.0, -101.5), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(-530.6, -136.9), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-344.5, -113.0), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-164.6, -54.6), 13.5).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
         ];
 
         let spline = TrackSpline::new(waypoints, true);

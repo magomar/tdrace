@@ -981,6 +981,10 @@ impl TrackManager {
                     "marina_bay" => Ok(crate::module::f1::F1GameModule::track_marina_bay()),
                     "cota" => Ok(crate::module::f1::F1GameModule::track_cota()),
                     "madring" => Ok(crate::module::f1::F1GameModule::track_madring()),
+                    "nurburgring_gp" | "nurburgring" => Ok(crate::module::f1::F1GameModule::track_nurburgring_gp()),
+                    "bathurst" | "mount_panorama" => Ok(crate::module::f1::F1GameModule::track_bathurst()),
+                    "portimao_gp" | "portimao" => Ok(crate::module::f1::F1GameModule::track_portimao_gp()),
+                    "le_mans_sarthe" | "le_mans" => Ok(crate::module::f1::F1GameModule::track_le_mans_sarthe()),
                     "sahara" | "sahara_dunes" => Ok(tdrace_core::track::presets::sahara_dunes()),
                     "dirt_figure_eight" | "dirt_eight" => Ok(tdrace_core::track::presets::dirt_figure_eight()),
                     "holjes_rx" | "holjes" => Ok(tdrace_core::track::presets::holjes_rx()),
@@ -1035,6 +1039,7 @@ impl TrackManager {
             "oasis_rally" | "outlaw_pass" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina" | "sahara" | "sahara_dunes" => Some("rally"),
             "kart_arena" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart" => Some("kart"),
             "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "cota" | "madring" => Some("f1"),
+            "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "le_mans_sarthe" => Some("gt"),
             "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course" => Some("nascar"),
             "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city" => Some("extreme_offroad"),
             _ => {
@@ -1099,6 +1104,10 @@ impl TrackManager {
             "glacier_crest" => "glacier_crest_pass",
             "supercross" | "supercross_stadium" => "supercross_stadium_arena",
             "stunt_city" => "stunt_city_megastructure",
+            "nurburgring" => "nurburgring_gp",
+            "mount_panorama" => "bathurst",
+            "portimao" => "portimao_gp",
+            "le_mans" => "le_mans_sarthe",
             other => other,
         }
     }
@@ -1106,6 +1115,10 @@ impl TrackManager {
     /// Returns all known alias variations for a preset track slug (including short filenames and long catalog IDs).
     pub fn preset_slug_aliases(slug: &str) -> &'static [&'static str] {
         match slug {
+            "nurburgring" | "nurburgring_gp" => &["nurburgring_gp", "nurburgring"],
+            "bathurst" | "mount_panorama" => &["bathurst", "mount_panorama"],
+            "portimao" | "portimao_gp" => &["portimao_gp", "portimao"],
+            "le_mans" | "le_mans_sarthe" => &["le_mans_sarthe", "le_mans"],
             "daytona" | "daytona_superspeedway" => &["daytona", "daytona_superspeedway"],
             "talladega" | "talladega_superspeedway" => &["talladega", "talladega_superspeedway"],
             "watkins_glen" | "watkins_glen_nascar" => &["watkins_glen", "watkins_glen_nascar"],
