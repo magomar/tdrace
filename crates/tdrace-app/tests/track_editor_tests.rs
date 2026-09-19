@@ -2468,4 +2468,30 @@ fn test_stunt_ramp_tool_high_launch_and_multiplier() {
     assert!(ramp.name.starts_with("Stunt Mega Ramp"));
 }
 
+#[test]
+fn test_concrete_surface_editing_and_batch_assignment() {
+    use tdrace_app::editor::{EditorState, ToolSettings};
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let track = classic_grand_prix();
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    // 1. Set track default surface to Concrete
+    assert!(tools.set_track_default_surface(&mut state, SurfaceType::Concrete));
+    assert_eq!(state.track.default_surface, SurfaceType::Concrete);
+
+    // 2. Batch apply Concrete to waypoints
+    state.selection = tdrace_app::editor::Selection::MultipleWaypoints(vec![0, 1]);
+    assert!(tools.batch_set_surface(&mut state, Some(SurfaceType::Concrete)));
+    assert_eq!(state.track.spline.waypoints[0].surface, Some(SurfaceType::Concrete));
+    assert_eq!(state.track.spline.waypoints[1].surface, Some(SurfaceType::Concrete));
+
+    // 3. Concrete surface zone
+    tools.active_surface = SurfaceType::Concrete;
+    assert_eq!(tools.active_surface, SurfaceType::Concrete);
+}
+
+
 

@@ -8,6 +8,7 @@ fn test_surface_grip_and_acceleration_scaling() {
     // Compare 2 seconds of acceleration across different surfaces
     let surfaces = [
         SurfaceType::Asphalt,
+        SurfaceType::Concrete,
         SurfaceType::Curb,
         SurfaceType::Grass,
         SurfaceType::Sand,
@@ -29,12 +30,21 @@ fn test_surface_grip_and_acceleration_scaling() {
         println!("  {:?}: {:.2} m/s ({:.2} km/h)", surf, speed, speed * 3.6);
     }
 
-    // Asphalt should achieve highest speed, Sand and Ice much lower
+    // Asphalt should achieve highest speed, followed closely by Concrete, Sand and Ice much lower
     let speed_asphalt = speeds[0].1;
-    let speed_grass = speeds[2].1;
-    let speed_sand = speeds[3].1;
-    let speed_ice = speeds[4].1;
+    let speed_concrete = speeds[1].1;
+    let speed_grass = speeds[3].1;
+    let speed_sand = speeds[4].1;
+    let speed_ice = speeds[5].1;
 
+    assert!(
+        speed_asphalt >= speed_concrete,
+        "Asphalt ({speed_asphalt}) must yield at least concrete acceleration ({speed_concrete})"
+    );
+    assert!(
+        speed_concrete > speed_grass,
+        "Concrete ({speed_concrete}) must yield higher acceleration than grass ({speed_grass})"
+    );
     assert!(
         speed_asphalt > speed_grass,
         "Asphalt ({speed_asphalt}) must yield higher acceleration than grass ({speed_grass})"

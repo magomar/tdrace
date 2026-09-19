@@ -398,7 +398,7 @@ def process_track(track_id):
             w = ways[wid]
             tags = w.get("tags", {})
             surf_tag = tags.get("surface", "")
-            surf = "Dirt" if surf_tag in ["gravel", "fine_gravel", "dirt"] else "Asphalt"
+            surf = "Dirt" if surf_tag in ["gravel", "fine_gravel", "dirt"] else ("Concrete" if surf_tag == "concrete" else "Asphalt")
             wnodes = w["nodes"]
             if wid == 599300791:
                 wnodes = wnodes[2:]  # Skip start drag lane (nodes 0, 1)
@@ -409,7 +409,7 @@ def process_track(track_id):
             w = ways[wid]
             tags = w.get("tags", {})
             surf_tag = tags.get("surface", "")
-            surf = "Dirt" if surf_tag in ["gravel", "fine_gravel", "dirt"] else "Asphalt"
+            surf = "Dirt" if surf_tag in ["gravel", "fine_gravel", "dirt"] else ("Concrete" if surf_tag == "concrete" else "Asphalt")
             wnodes = w["nodes"]
             if wid == 787615501:
                 wnodes = wnodes[2:]  # Skip start drag lane (nodes 0, 1)

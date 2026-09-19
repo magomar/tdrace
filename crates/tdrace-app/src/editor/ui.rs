@@ -436,6 +436,7 @@ pub fn render_editor_ui(
             (SurfaceType::Snow, "Snow"),
             (SurfaceType::Ice, "Ice"),
             (SurfaceType::Asphalt, "Asphalt"),
+            (SurfaceType::Concrete, "Concrete"),
         ];
         let half_w = (tool_w - scaler.s(22.0)) * 0.5;
         let mut btn_y = sub_y + scaler.s(22.0);
@@ -1152,6 +1153,7 @@ fn render_inspector(
 
                 let surfaces = [
                     (SurfaceType::Asphalt, "Asphalt"),
+                    (SurfaceType::Concrete, "Concrete"),
                     (SurfaceType::Dirt, "Dirt"),
                     (SurfaceType::Gravel, "Gravel"),
                     (SurfaceType::Sand, "Sand"),
@@ -1343,6 +1345,7 @@ fn render_inspector(
 
             let surfaces = [
                 (SurfaceType::Asphalt, "Asphalt"),
+                (SurfaceType::Concrete, "Concrete"),
                 (SurfaceType::Dirt, "Dirt"),
                 (SurfaceType::Gravel, "Gravel"),
                 (SurfaceType::Sand, "Sand"),
@@ -1443,6 +1446,7 @@ fn render_inspector(
                     (SurfaceType::Water, "Water Puddle Hazard"),
                     (SurfaceType::Ice, "Ice Patch Slick"),
                     (SurfaceType::Asphalt, "Tarmac Extension"),
+                    (SurfaceType::Concrete, "Concrete Apron"),
                 ];
 
                 let zone_surface = state.track.geometry.surface_zones[idx].surface;
@@ -1664,6 +1668,7 @@ fn render_inspector(
 
                 let surfaces = [
                     (SurfaceType::Asphalt, "Asphalt"),
+                    (SurfaceType::Concrete, "Concrete"),
                     (SurfaceType::Dirt, "Dirt / Rally"),
                     (SurfaceType::Gravel, "Gravel"),
                     (SurfaceType::Sand, "Sand"),
@@ -1951,6 +1956,7 @@ fn render_inspector(
                 let half_btn_w = (w - scaler.s(30.0)) * 0.5;
                 let surfaces = [
                     (SurfaceType::Asphalt, "Asphalt"),
+                    (SurfaceType::Concrete, "Concrete"),
                     (SurfaceType::Dirt, "Dirt"),
                     (SurfaceType::Gravel, "Gravel"),
                     (SurfaceType::Sand, "Sand"),
@@ -2234,7 +2240,9 @@ fn render_inspector(
                 let half_btn_w = (w - scaler.s(30.0)) * 0.5;
                 let surfaces = [
                     (SurfaceType::Asphalt, "Asphalt"),
+                    (SurfaceType::Concrete, "Concrete"),
                     (SurfaceType::Dirt, "Dirt"),
+                    (SurfaceType::Gravel, "Gravel"),
                     (SurfaceType::Sand, "Sand"),
                     (SurfaceType::Grass, "Grass"),
                     (SurfaceType::Ice, "Ice"),
@@ -2430,6 +2438,8 @@ fn render_inspector(
                 (SurfaceType::Sand, "Sand"),
                 (SurfaceType::Dirt, "Dirt"),
                 (SurfaceType::Asphalt, "Asphalt"),
+                (SurfaceType::Concrete, "Concrete"),
+                (SurfaceType::Gravel, "Gravel"),
             ];
 
             let half_btn_w = (w - scaler.s(30.0)) * 0.5;

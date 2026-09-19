@@ -94,7 +94,7 @@ pub fn get_surface_zone_colors(surface: SurfaceType) -> (Color, Option<Color>) {
         SurfaceType::Mud => (Palette::MUD, Some(Palette::MUD_DARK)),
         SurfaceType::Snow => (Palette::SNOW, Some(Palette::SNOW_EDGE)),
         SurfaceType::Gravel => (Palette::GRAVEL, Some(Palette::GRAVEL_DARK)),
-        SurfaceType::Concrete => (Color::new(0.72, 0.74, 0.76, 1.0), Some(Color::new(0.55, 0.57, 0.60, 1.0))),
+        SurfaceType::Concrete => (Palette::CONCRETE, Some(Palette::CONCRETE_DARK)),
     }
 }
 
@@ -108,6 +108,7 @@ pub fn get_track_backdrop_color(surface: SurfaceType) -> Color {
         SurfaceType::Mud => Palette::BACKDROP_MUD,
         SurfaceType::Snow => Palette::BACKDROP_SNOW,
         SurfaceType::Gravel => Palette::BACKDROP_GRAVEL,
+        SurfaceType::Concrete => Palette::BACKDROP_CONCRETE,
         _ => Palette::BACKDROP_GRASS,
     }
 }
@@ -682,9 +683,46 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 }
             }
             SurfaceType::Concrete => {
-                draw_quad(left0, left1, right1, right0, Color::new(0.72, 0.74, 0.76, 1.0));
-                draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
-                draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+                if is_banked {
+                    // Split concrete into 3 gradient lighting bands across banking
+                    let mid_l0 = s0.point + s0.normal * (hw0 * 0.33);
+                    let mid_l1 = s1.point + s1.normal * (hw1 * 0.33);
+                    let mid_r0 = s0.point - s0.normal * (hw0 * 0.33);
+                    let mid_r1 = s1.point - s1.normal * (hw1 * 0.33);
+
+                    if avg_bank > 0.0 {
+                        // Left is lower apron, right is higher wall rim
+                        draw_quad(left0, left1, mid_l1, mid_l0, Color::new(0.62, 0.64, 0.66, 1.0));
+                        draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::CONCRETE);
+                        draw_quad(mid_r0, mid_r1, right1, right0, Color::new(0.78, 0.80, 0.82, 1.0));
+                    } else {
+                        draw_quad(left0, left1, mid_l1, mid_l0, Color::new(0.78, 0.80, 0.82, 1.0));
+                        draw_quad(mid_l0, mid_l1, mid_r1, mid_r0, Palette::CONCRETE);
+                        draw_quad(mid_r0, mid_r1, right1, right0, Color::new(0.62, 0.64, 0.66, 1.0));
+                    }
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+
+                    // Concrete slab groove seam lines along banking
+                    draw_line(mid_l0.x, mid_l0.y, mid_l1.x, mid_l1.y, 0.12, Color::new(0.50, 0.52, 0.55, 0.45));
+                    draw_line(mid_r0.x, mid_r0.y, mid_r1.x, mid_r1.y, 0.12, Color::new(0.50, 0.52, 0.55, 0.45));
+                } else {
+                    draw_quad(left0, left1, right1, right0, Palette::CONCRETE);
+                    draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+                    draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
+
+                    let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
+                    if center_stripe {
+                        draw_line(
+                            s0.point.x,
+                            s0.point.y,
+                            s1.point.x,
+                            s1.point.y,
+                            0.16,
+                            Color::new(0.95, 0.95, 0.95, 0.35),
+                        );
+                    }
+                }
             }
         }
     }

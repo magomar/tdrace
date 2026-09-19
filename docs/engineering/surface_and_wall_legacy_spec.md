@@ -17,8 +17,8 @@ This document provides a comprehensive technical reference for all **surface typ
 
 TdRace implements a modular per-wheel physics engine ([`crates/wheelbase`](file:///home/mario/workspace/games/tdrace/crates/wheelbase/src/surface.rs)) and track geometry system ([`crates/arcade-race-core`](file:///home/mario/workspace/games/tdrace/crates/arcade-race-core/src/track/geometry.rs)) supporting:
 
-* **11 Surface Types** ([`SurfaceType`](file:///home/mario/workspace/games/tdrace/crates/wheelbase/src/surface.rs#L4-L29)): Full split-$\mu$ per-wheel sampling across tarmac, dirt, gravel, sand, mud, snow, ice, oil, water, kerbs, and grass.
-  * **7 Global Off-Track Terrains** (`OFF_TRACK_TYPES`): `Grass`, `Sand`, `Dirt`, `Asphalt`, `Mud`, `Snow`, `Gravel`.
+* **12 Surface Types** ([`SurfaceType`](file:///home/mario/workspace/games/tdrace/crates/wheelbase/src/surface.rs#L4-L32)): Full split-$\mu$ per-wheel sampling across tarmac, concrete, dirt, gravel, sand, mud, snow, ice, oil, water, kerbs, and grass.
+  * **8 Global Off-Track Terrains** (`OFF_TRACK_TYPES`): `Grass`, `Sand`, `Dirt`, `Asphalt`, `Concrete`, `Mud`, `Snow`, `Gravel`.
   * **5 On-Track Dynamic Hazards** (`is_on_track_hazard`): `Water`, `Oil`, `Ice`, `Mud`, `Snow`.
 * **4 Wall & Barrier Types** ([`BarrierType`](file:///home/mario/workspace/games/tdrace/crates/arcade-race-core/src/track/geometry.rs#L146-L157)): `Concrete`, `Steel`, `TireWall`, `CurbWall`.
 * **3 Static Obstacle Geometries** ([`ObstacleShape`](file:///home/mario/workspace/games/tdrace/crates/arcade-race-core/src/track/geometry.rs#L402-L408)): `Circle`, `Box`, `Polygon`.
@@ -34,6 +34,7 @@ Each surface defines distinct friction, rolling resistance, aerodynamic/viscous 
 | Surface Type | Friction ($\mu$) | Rolling Resistance Multiplier | Surface Drag Multiplier | Tire Smoke | Debris Roost | Water Splash | Layer Default | Role & Use Case |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | **`Asphalt`** | **`1.00`** | `1.0×` | `1.00×` | Yes | No | No | `BelowTrack` | Standard dry tarmac; optimal grip baseline, full tire smoke on slip. |
+| **`Concrete`** | **`0.95`** | `1.05×` | `1.00×` | Yes | No | No | `BelowTrack` | Solid poured concrete pavement; authentic short tracks (e.g. Bristol), arena floors, aprons. |
 | **`Curb`** | **`0.88`** | `1.3×` | `1.05×` | Yes | No | No | `BelowTrack` | Apex kerb / rumble strip; slight vibration, high grip with mild drag. |
 | **`Dirt`** | **`0.78`** | `1.2×` | `1.10×` | No | Yes | No | `BelowTrack` | Compacted clay / gravel rally track; predictable sliding and drift control. |
 | **`Gravel`** | **`0.70`** | `2.5×` | `1.25×` | No | Yes | No | `BelowTrack` | Loose stone gravel stage / runoff; moderate grip with heavy stone roost. |
@@ -103,6 +104,11 @@ Each surface defines distinct friction, rolling resistance, aerodynamic/viscous 
 * **Characteristics**: Sheet black ice ($\mu = 0.08$, $0.4\times$ rolling resistance, $0.90\times$ drag). Near zero steering or braking authority.
 * **Visual Rendering**: Glacial frost blue (`#D9EBF9` at 95% opacity) with icy highlight rim lines (`#A6D1F2`).
 * **FX**: Suppresses standard rubber smoke; creates continuous frictionless sliding.
+
+#### 12. Concrete ([`SurfaceType::Concrete`](file:///home/mario/workspace/games/tdrace/crates/wheelbase/src/surface.rs#L31))
+* **Characteristics**: Cast or poured concrete pavement ($\mu = 0.95$, $1.05\times$ rolling resistance, $1.00\times$ surface drag). Authentic short track racing surface (e.g. Bristol Motor Speedway, Martinsville hairpin turns), arena floors, and grandstand/stadium aprons.
+* **Visual Rendering**: Light architectural concrete grey (`#B8BDC2`), white boundary lines, dashed center lines on flat straights, and 3-band gradient lighting with expansion seam lines on steep banked curves.
+* **FX**: Generates rubber skid marks and dense white tire smoke clouds during hard braking or aggressive acceleration.
 
 ---
 

@@ -38,7 +38,8 @@ Real-world raceways in OSM often consist of multiple contiguous or intersecting 
 3. **Loop Closure**: Verify that the distance from the final node back to the start node is contiguous ($<15$m).
 4. **Surface Tagging**:
    - `surface in ["gravel", "dirt", "unpaved", "fine_gravel", "sand"]` $\to$ `SurfaceType::Dirt`.
-   - `surface in ["asphalt", "paved", "concrete"]` $\to$ `SurfaceType::Asphalt`.
+   - `surface in ["concrete"]` $\to$ `SurfaceType::Concrete`.
+   - `surface in ["asphalt", "paved"]` $\to$ `SurfaceType::Asphalt`.
 
 ---
 

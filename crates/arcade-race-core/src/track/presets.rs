@@ -697,7 +697,7 @@ pub fn classic_grand_prix() -> Track {
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string(), "f1".to_string()],
+        modules: vec!["classic".to_string()],
     }
 }
 
@@ -806,8 +806,8 @@ pub fn dirty_oval_speedway() -> Track {
         pit_box_area: None,
         default_laps: 5,
         predefined_car: Some("rally_car".to_string()),
-        module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        module_id: Some("classic".to_string()),
+        modules: vec!["classic".to_string()],
     }
 }
 
@@ -890,7 +890,7 @@ pub fn drift_park() -> Track {
         default_laps: 3,
         predefined_car: Some("drift_car".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string(), "kart".to_string()],
+        modules: vec!["classic".to_string()],
     }
 }
 
@@ -947,7 +947,7 @@ pub fn kart_arena() -> Track {
         default_laps: 5,
         predefined_car: Some("kart".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string(), "kart".to_string()],
+        modules: vec!["classic".to_string()],
     }
 }
 
@@ -1137,7 +1137,7 @@ pub fn oasis_rally() -> Track {
         default_laps: 3,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string(), "rally".to_string()],
+        modules: vec!["classic".to_string()],
     }
 }
 
@@ -1207,7 +1207,7 @@ pub fn outlaw_pass() -> Track {
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string(), "rally".to_string()],
+        modules: vec!["classic".to_string()],
     }
 }
 
@@ -1328,8 +1328,8 @@ pub fn dirt_figure_eight() -> Track {
         pit_box_area: None,
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
-        module_id: Some("rally".to_string()),
-        modules: vec!["extreme_offroad".to_string(), "rally".to_string(), "classic".to_string()],
+        module_id: Some("classic".to_string()),
+        modules: vec!["extreme_offroad".to_string(), "classic".to_string()],
     }
 }
 
@@ -1456,7 +1456,7 @@ pub fn holjes_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -1546,7 +1546,7 @@ pub fn lydden_hill() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -1652,7 +1652,7 @@ pub fn hell_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -1758,7 +1758,7 @@ pub fn loheac_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -1838,7 +1838,7 @@ pub fn estering_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -1924,7 +1924,7 @@ pub fn montalegre_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -1996,7 +1996,7 @@ pub fn nyirad_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -2082,7 +2082,7 @@ pub fn kouvola_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -2181,7 +2181,7 @@ pub fn catalunya_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -2267,7 +2267,7 @@ pub fn mettet_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -2353,7 +2353,7 @@ pub fn silverstone_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -2441,7 +2441,7 @@ pub fn riga_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -2527,7 +2527,7 @@ pub fn killarney_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -2620,7 +2620,110 @@ pub fn yas_marina_rx() -> Track {
         default_laps: 4,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("rally".to_string()),
-        modules: vec!["rally".to_string(), "classic".to_string()],
+        modules: vec!["rally".to_string()],
+    }
+}
+
+/// Preset: Circuit des Ducs (World RX / Euro RX France - Essay, Normandy)
+/// Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start,
+/// technical sweeping switchbacks, the iconic "La Butte" dirt jump crest, and scenic Norman woods.
+pub fn essay_rx() -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(33.4, -2.2), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(66.7, -4.4), 14.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(100.0, -5.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(125.3, 16.1), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(156.0, 27.1), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(186.7, 15.5), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(207.5, -10.2), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(195.4, -36.3), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(162.3, -40.4), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(129.0, -43.8), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(96.2, -37.7), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(64.6, -46.0), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(35.5, -62.3), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(3.3, -70.8), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-30.0, -73.7), 13.0).with_surface(SurfaceType::Asphalt),
+        TrackWaypoint::new(Vec2::new(-63.4, -75.9), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-96.8, -76.8), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-129.8, -73.8), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-161.1, -62.1), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-190.1, -45.5), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-194.2, -21.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-162.5, -29.2), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-135.5, -48.7), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-103.1, -56.1), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-69.7, -57.7), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-37.6, -52.1), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-20.3, -24.2), 14.0).with_surface(SurfaceType::Asphalt),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
+
+    let jump_ramps = vec![
+        JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(-145.0, -68.0),
+                half_extents: Vec2::new(3.8, 5.5),
+                angle: 2.78,
+            },
+            Vec2::new(-0.94, 0.35),
+            2.2,
+            5.5,
+            1.3,
+            "La Butte Dirt Jump",
+        ).with_surface(SurfaceType::Dirt),
+    ];
+
+    let checkpoints = generate_checkpoints(&spline, 20, 3);
+    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+
+    Track {
+        name: "Circuit des Ducs (Essay RX)".to_string(),
+        description: "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.".to_string(),
+        category: TrackCategory::Main,
+        kind: TrackKind::Circuit,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps,
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+            grandstands: vec![
+                Grandstand::new(1, Vec2::new(50.0, 22.0), 60.0, 14.0, 0.0)
+                    .with_style(GrandstandStyle::CoveredStadium)
+                    .with_tiers(8)
+                    .with_seat_color([0.85, 0.25, 0.20]),
+            ],
+            trees: vec![
+                Tree::new(1, Vec2::new(125.0, 38.0), TreeType::Oak).with_scale(1.3),
+                Tree::new(2, Vec2::new(165.0, 48.0), TreeType::Oak).with_scale(1.4),
+                Tree::new(3, Vec2::new(205.0, 32.0), TreeType::Pine).with_scale(1.2),
+                Tree::new(4, Vec2::new(228.0, -10.0), TreeType::Oak).with_scale(1.4),
+                Tree::new(5, Vec2::new(215.0, -55.0), TreeType::AutumnMaple).with_scale(1.3),
+                Tree::new(6, Vec2::new(-215.0, -50.0), TreeType::Oak).with_scale(1.3),
+                Tree::new(7, Vec2::new(-218.0, -20.0), TreeType::Pine).with_scale(1.2),
+                Tree::new(8, Vec2::new(-175.0, -8.0), TreeType::Oak).with_scale(1.4),
+                Tree::new(9, Vec2::new(-140.0, -12.0), TreeType::AutumnMaple).with_scale(1.3),
+                Tree::new(10, Vec2::new(-105.0, -18.0), TreeType::Oak).with_scale(1.2),
+                Tree::new(11, Vec2::new(-70.0, -22.0), TreeType::Pine).with_scale(1.1),
+            ],
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: SurfaceType::Grass,
+        pit_box_area: None,
+        default_laps: 4,
+        predefined_car: Some("rally_car".to_string()),
+        module_id: Some("rally".to_string()),
+        modules: vec!["rally".to_string()],
     }
 }
 
@@ -3148,22 +3251,22 @@ pub fn watkins_glen_nascar() -> Track {
 pub fn bristol_motor_speedway() -> Track {
     let waypoints = vec![
         // Front Straight (Finish Line at WP 0)
-        TrackWaypoint::new(Vec2::new(0.0, -45.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(10.0),
-        TrackWaypoint::new(Vec2::new(75.0, -45.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(0.0, -45.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(75.0, -45.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
         // Turn 1 & 2 (High-banked concrete East curve)
-        TrackWaypoint::new(Vec2::new(135.0, -20.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(28.0),
-        TrackWaypoint::new(Vec2::new(150.0, 25.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(30.0),
-        TrackWaypoint::new(Vec2::new(135.0, 70.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(28.0),
+        TrackWaypoint::new(Vec2::new(135.0, -20.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(28.0),
+        TrackWaypoint::new(Vec2::new(150.0, 25.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(30.0),
+        TrackWaypoint::new(Vec2::new(135.0, 70.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(28.0),
         // Back Straight
-        TrackWaypoint::new(Vec2::new(75.0, 95.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(10.0),
-        TrackWaypoint::new(Vec2::new(0.0, 95.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(10.0),
-        TrackWaypoint::new(Vec2::new(-75.0, 95.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(75.0, 95.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(0.0, 95.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(-75.0, 95.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
         // Turn 3 & 4 (High-banked concrete West curve)
-        TrackWaypoint::new(Vec2::new(-135.0, 70.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(28.0),
-        TrackWaypoint::new(Vec2::new(-150.0, 25.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(30.0),
-        TrackWaypoint::new(Vec2::new(-135.0, -20.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(28.0),
+        TrackWaypoint::new(Vec2::new(-135.0, 70.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(28.0),
+        TrackWaypoint::new(Vec2::new(-150.0, 25.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(30.0),
+        TrackWaypoint::new(Vec2::new(-135.0, -20.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(28.0),
         // Turn 4 exit to Front Straight
-        TrackWaypoint::new(Vec2::new(-75.0, -45.0), 16.0).with_surface(SurfaceType::Asphalt).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(-75.0, -45.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3210,19 +3313,19 @@ pub fn martinsville_speedway() -> Track {
         TrackWaypoint::new(Vec2::new(0.0, -35.0), 16.0).with_bank_angle(0.0),
         TrackWaypoint::new(Vec2::new(100.0, -35.0), 16.0).with_bank_angle(0.0),
         // Turns 1 & 2 (Tight East concrete hairpin, 12-degree banking)
-        TrackWaypoint::new(Vec2::new(140.0, -25.0), 16.0).with_bank_angle(8.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(160.0, 0.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(160.0, 30.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(140.0, 55.0), 16.0).with_bank_angle(8.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(140.0, -25.0), 16.0).with_bank_angle(8.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(160.0, 0.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(160.0, 30.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(140.0, 55.0), 16.0).with_bank_angle(8.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
         // Backstretch
         TrackWaypoint::new(Vec2::new(100.0, 65.0), 16.0).with_bank_angle(0.0),
         TrackWaypoint::new(Vec2::new(0.0, 65.0), 16.0).with_bank_angle(0.0),
         TrackWaypoint::new(Vec2::new(-100.0, 65.0), 16.0).with_bank_angle(0.0),
         // Turns 3 & 4 (Tight West concrete hairpin, 12-degree banking)
-        TrackWaypoint::new(Vec2::new(-140.0, 55.0), 16.0).with_bank_angle(8.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-160.0, 30.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-160.0, 0.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-140.0, -25.0), 16.0).with_bank_angle(8.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-140.0, 55.0), 16.0).with_bank_angle(8.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-160.0, 30.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-160.0, 0.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-140.0, -25.0), 16.0).with_bank_angle(8.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
         // Approach to Start/Finish
         TrackWaypoint::new(Vec2::new(-100.0, -35.0), 16.0).with_bank_angle(0.0),
     ];

@@ -50,6 +50,7 @@ impl FastRasterizer {
                 tdrace_core::physics::surface::SurfaceType::Oil => [40, 35, 45],
                 tdrace_core::physics::surface::SurfaceType::Curb => [220, 50, 50],
                 tdrace_core::physics::surface::SurfaceType::Ice => [200, 220, 240],
+                tdrace_core::physics::surface::SurfaceType::Concrete => [180, 185, 190],
                 _ => [120, 120, 120],
             };
             Self::tessellate_surface_shape(&zone.shape, color, &mut sand_triangles);
@@ -85,6 +86,7 @@ impl FastRasterizer {
         let ds = total_len / num_steps as f32;
 
         let asphalt_color = [60, 60, 65];
+        let concrete_color = [180, 185, 190];
         let dirt_color = [122, 89, 56];
         let curb_red = [220, 45, 45];
         let curb_white = [240, 240, 240];
@@ -127,10 +129,10 @@ impl FastRasterizer {
             let l_curb1 = p1 - n1 * (w1 + c1);
             let r_curb1 = p1 + n1 * (w1 + c1);
 
-            let road_color = if samp0.surface == tdrace_core::physics::surface::SurfaceType::Dirt {
-                dirt_color
-            } else {
-                asphalt_color
+            let road_color = match samp0.surface {
+                tdrace_core::physics::surface::SurfaceType::Dirt => dirt_color,
+                tdrace_core::physics::surface::SurfaceType::Concrete => concrete_color,
+                _ => asphalt_color,
             };
 
             // 1. Road quad (2 triangles)
