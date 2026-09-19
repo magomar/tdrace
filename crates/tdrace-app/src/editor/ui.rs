@@ -349,11 +349,11 @@ pub fn render_editor_ui(
     // 2. LEFT TOOL PALETTE
     let tool_w = scaler.s(165.0);
     let tool_y = top_h + scaler.s(12.0);
-    let tool_h = scaler.s(520.0);
+    let tool_h = scaler.s(476.0);
     scaler.draw_glass_card(scaler.s(12.0), tool_y, tool_w, tool_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
     fonts.draw_ui_bold(
-        "TOOLS [1-0/-]",
+        "TOOLS [1-0]",
         scaler.s(22.0),
         tool_y + scaler.s(18.0),
         scaler.font_s(13.0),
@@ -367,11 +367,10 @@ pub fn render_editor_ui(
         (EditorToolType::JumpRamp, "[4] Jump Ramp"),
         (EditorToolType::Obstacle, "[5] Obstacle Prop"),
         (EditorToolType::Checkpoint, "[6] Checkpoint Gate"),
-        (EditorToolType::StartingGrid, "[7] Grid Slot"),
-        (EditorToolType::PitLane, "[8] Pit Lane"),
-        (EditorToolType::ArenaFloor, "[9] Arena Floor"),
-        (EditorToolType::WhoopSection, "[0] Whoops Moguls"),
-        (EditorToolType::StuntRamp, "[-] Stunt Mega Ramp"),
+        (EditorToolType::PitLane, "[7] Pit Lane"),
+        (EditorToolType::ArenaFloor, "[8] Arena Floor"),
+        (EditorToolType::WhoopSection, "[9] Whoops Moguls"),
+        (EditorToolType::StuntRamp, "[0] Stunt Mega Ramp"),
     ];
 
     let mut item_y = tool_y + scaler.s(28.0);
@@ -1746,6 +1745,8 @@ fn render_inspector(
                 if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), finish_lbl, Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                     state.record_undo();
                     state.track.checkpoints[pos].is_finish_line = !is_finish;
+                    state.auto_generate_grid();
+                    state.revalidate();
                 }
             }
             curr_y += scaler.s(32.0);
@@ -1759,19 +1760,7 @@ fn render_inspector(
                 tools.delete_selected(state);
             }
         }
-        Selection::GridSlot(slot) => {
-            fonts.draw_ui_bold(&format!("Starting Grid Slot #{}", slot), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-            curr_y += scaler.s(32.0);
-
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE SLOT [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
-                tools.duplicate_selected(state);
-            }
-            curr_y += scaler.s(32.0);
-
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE SLOT [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
-                tools.delete_selected(state);
-            }
-        }
+        Selection::GridSlot(_) => {}
         Selection::PitBox => {
             fonts.draw_ui_bold("Pit Lane Box", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
             curr_y += scaler.s(24.0);
@@ -2554,22 +2543,87 @@ fn render_inspector(
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), "Auto Checkpoints", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
                 state.record_undo();
                 state.track.auto_generate_checkpoints(8, 3);
+                state.auto_generate_grid();
+                state.revalidate();
             }
             curr_y += scaler.s(32.0);
 
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), "Auto Grid Slots", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
-                if !state.track.has_finish_line() {
-                    *active_modal = EditorModal::Warning {
-                        title: "FINISH LINE REQUIRED".to_string(),
-                        message: "No finish line checkpoint exists on this circuit.\n\nPlease define a finish line before generating starting grid slots.\n(Select an existing checkpoint and mark it as Finish Line,\nor place a new checkpoint using the Checkpoint Tool)".to_string(),
-                    };
-                } else {
-                    state.record_undo();
-                    state.track.auto_generate_grid(8, 8.0, 3.0);
-                    state.revalidate();
+            // Starting Grid Positions Circuit Property
+            let grid_cnt = state.grid_count();
+            fonts.draw_ui_bold(
+                &format!("Grid Positions: {} Slots", grid_cnt),
+                x + scaler.s(12.0),
+                curr_y + scaler.s(14.0),
+                scaler.font_s(13.0),
+                Palette::NEON_CYAN,
+            );
+            curr_y += scaler.s(20.0);
+
+            let cur_count_f = grid_cnt as f32;
+            let count_str = format!("{} Slots", grid_cnt);
+            if let Some(new_val) = draw_bar_control(
+                fonts,
+                scaler,
+                tools,
+                "circuit_grid_positions",
+                x + scaler.s(12.0),
+                curr_y,
+                w - scaler.s(24.0),
+                scaler.s(20.0),
+                cur_count_f,
+                1.0,
+                24.0,
+                1.0,
+                &count_str,
+                false,
+                mouse_pos,
+                clicked,
+            ) {
+                let new_cnt = (new_val.round() as usize).clamp(1, 24);
+                if new_cnt != grid_cnt {
+                    state.set_grid_count(new_cnt);
                 }
             }
-            curr_y += scaler.s(32.0);
+            curr_y += scaler.s(24.0);
+
+            let btn_step_w = scaler.s(30.0);
+            let presets = [4, 8, 12, 16, 20];
+            let avail_w = w - scaler.s(24.0) - btn_step_w * 2.0 - scaler.s(8.0) * 2.0;
+            let chip_w = (avail_w - scaler.s(4.0) * 4.0) / 5.0;
+
+            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_step_w, scaler.s(22.0), "-1", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                if grid_cnt > 1 {
+                    state.set_grid_count(grid_cnt - 1);
+                }
+            }
+
+            let mut px = x + scaler.s(12.0) + btn_step_w + scaler.s(8.0);
+            for &cnt in &presets {
+                let is_active = grid_cnt == cnt;
+                if draw_ui_btn(
+                    fonts,
+                    scaler,
+                    px,
+                    curr_y,
+                    chip_w,
+                    scaler.s(22.0),
+                    &format!("{}", cnt),
+                    if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+                    if is_active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+                    mouse_pos,
+                    clicked,
+                ) {
+                    state.set_grid_count(cnt);
+                }
+                px += chip_w + scaler.s(4.0);
+            }
+
+            if draw_ui_btn(fonts, scaler, x + w - scaler.s(12.0) - btn_step_w, curr_y, btn_step_w, scaler.s(22.0), "+1", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
+                if grid_cnt < 24 {
+                    state.set_grid_count(grid_cnt + 1);
+                }
+            }
+            curr_y += scaler.s(30.0);
 
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), "Rebuild Geometry", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
                 state.record_undo();

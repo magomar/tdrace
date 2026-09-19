@@ -18,7 +18,7 @@ pub use presets::{
     bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, chicago_street_course,
     classic_grand_prix, classic_template, cota, create_prototypical_track, darlington_raceway,
     daytona_superspeedway, dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park,
-    dune_raid, eldora_speedway, estering_rx, f1_template, figure_eight, generate_checkpoints,
+    dune_raid, eldora_speedway, estering_rx, f1_template, figure_eight, generate_arena_grid, generate_checkpoints,
     generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints,
     generate_oval_waypoints, generate_walls_from_spline, hell_rx, holjes_rx,
     indianapolis_motor_speedway, iowa_speedway, kart_arena, kart_template, killarney_rx, kouvola_rx, loheac_rx,
@@ -384,25 +384,51 @@ impl Track {
         self.checkpoints.iter().find(|cp| cp.is_finish_line)
     }
 
-    /// Regenerates starting grid positions on the straight before the finish line.
+    /// Regenerates starting grid positions on the straight before the finish line (or spline origin/arena centroid).
     ///
-    /// If no finish line checkpoint exists in `self.checkpoints` or the spline has fewer than 2 samples,
-    /// no positions are generated and `false` is returned.
+    /// If spline samples exist (>= 2):
+    /// - Aligns slots behind the finish line checkpoint if one exists.
+    /// - Falls back to the track spline end/origin (`total_length()`) if no finish line checkpoint exists.
+    /// If an arena venue without spline:
+    /// - Aligns slots behind finish line checkpoint or at arena centroid.
     /// Returns `true` if grid positions were successfully generated.
     pub fn auto_generate_grid(&mut self, num_slots: usize, spacing: f32, stagger: f32) -> bool {
-        if self.spline.samples.len() < 2 {
-            return false;
-        }
-
         let Some(finish_cp) = self.checkpoints.iter().find(|cp| cp.is_finish_line) else {
             return false;
         };
 
-        let finish_gate_center = (finish_cp.gate.start + finish_cp.gate.end) * 0.5;
-        let finish_dist = self.spline.project_point(finish_gate_center).progress_distance;
+        if self.spline.samples.len() >= 2 {
+            let finish_gate_center = (finish_cp.gate.start + finish_cp.gate.end) * 0.5;
+            let finish_dist = self.spline.project_point(finish_gate_center).progress_distance;
+            self.grid_positions = generate_grid_positions_at_distance(&self.spline, finish_dist, num_slots, spacing, stagger);
+            return true;
+        }
 
-        self.grid_positions = generate_grid_positions_at_distance(&self.spline, finish_dist, num_slots, spacing, stagger);
+        let center = (finish_cp.gate.start + finish_cp.gate.end) * 0.5;
+        let forward = finish_cp.direction;
+        let heading = forward.y.atan2(forward.x);
+        self.grid_positions = presets::generate_arena_grid(center - forward * 15.0, heading, num_slots, spacing, stagger);
         true
+    }
+
+    /// Computes sensible default grid spacing and lateral stagger tailored for the track's module.
+    pub fn default_grid_spacing_and_stagger(&self) -> (f32, f32) {
+        if self.belongs_to_module("kart") {
+            (5.5, 1.8)
+        } else if self.belongs_to_module("f1") {
+            (10.0, 2.5)
+        } else if self.belongs_to_module("nascar") {
+            (7.0, 3.0)
+        } else {
+            (8.0, 2.5)
+        }
+    }
+
+    /// Automatically regenerates starting grid positions using current grid length (or 8) and module defaults.
+    pub fn auto_generate_grid_default(&mut self) -> bool {
+        let count = if self.grid_positions.is_empty() { 8 } else { self.grid_positions.len() };
+        let (spacing, stagger) = self.default_grid_spacing_and_stagger();
+        self.auto_generate_grid(count, spacing, stagger)
     }
 
     /// Returns total centerline track length in meters.

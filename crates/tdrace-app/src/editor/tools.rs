@@ -3,7 +3,7 @@ use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle_lines};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
 use tdrace_core::track::spline::TrackWaypoint;
 use tdrace_core::track::TrackKind;
 
@@ -20,7 +20,6 @@ pub enum EditorToolType {
     JumpRamp,
     Obstacle,
     Checkpoint,
-    StartingGrid,
     PitLane,
     ArenaFloor,
     WhoopSection,
@@ -28,14 +27,13 @@ pub enum EditorToolType {
 }
 
 impl EditorToolType {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 10] = [
         Self::Select,
         Self::RoadSpline,
         Self::SurfaceZone,
         Self::JumpRamp,
         Self::Obstacle,
         Self::Checkpoint,
-        Self::StartingGrid,
         Self::PitLane,
         Self::ArenaFloor,
         Self::WhoopSection,
@@ -50,11 +48,10 @@ impl EditorToolType {
             Self::JumpRamp => "Jump Ramp [4]",
             Self::Obstacle => "Obstacle Prop [5]",
             Self::Checkpoint => "Checkpoint Gate [6]",
-            Self::StartingGrid => "Starting Grid [7]",
-            Self::PitLane => "Pit Lane [8]",
-            Self::ArenaFloor => "Arena Floor [9]",
-            Self::WhoopSection => "Whoop Section [0]",
-            Self::StuntRamp => "Stunt Mega Ramp [-]",
+            Self::PitLane => "Pit Lane [7]",
+            Self::ArenaFloor => "Arena Floor [8]",
+            Self::WhoopSection => "Whoop Section [9]",
+            Self::StuntRamp => "Stunt Mega Ramp [0]",
         }
     }
 
@@ -66,11 +63,10 @@ impl EditorToolType {
             Self::JumpRamp => "4",
             Self::Obstacle => "5",
             Self::Checkpoint => "6",
-            Self::StartingGrid => "7",
-            Self::PitLane => "8",
-            Self::ArenaFloor => "9",
-            Self::WhoopSection => "0",
-            Self::StuntRamp => "-",
+            Self::PitLane => "7",
+            Self::ArenaFloor => "8",
+            Self::WhoopSection => "9",
+            Self::StuntRamp => "0",
         }
     }
 }
@@ -283,10 +279,6 @@ impl ToolSettings {
             EditorToolType::Checkpoint => {
                 let checkpoints = (0..state.track.checkpoints.len()).collect();
                 Selection::from_multi(vec![], vec![], vec![], vec![], checkpoints, vec![], false)
-            }
-            EditorToolType::StartingGrid => {
-                let grid_slots = (0..state.track.grid_positions.len()).collect();
-                Selection::from_multi(vec![], vec![], vec![], vec![], vec![], grid_slots, false)
             }
             EditorToolType::PitLane => {
                 let pit_box = state.track.pit_box_area.is_some();
@@ -1405,6 +1397,12 @@ impl ToolSettings {
             return;
         }
 
+        if !self.drag_initial_checkpoints.is_empty() {
+            state.auto_generate_grid();
+            self.drag_initial_checkpoints.clear();
+        }
+        self.drag_initial_grid_slots.clear();
+
         state.revalidate();
     }
 
@@ -1531,14 +1529,6 @@ impl ToolSettings {
                 self.is_placing = true;
                 self.drag_start_world = snapped_mouse;
                 self.drag_current_world = snapped_mouse;
-            }
-            EditorToolType::StartingGrid => {
-                state.record_undo();
-                let slot_idx = state.track.grid_positions.len();
-                let angle = 0.0;
-                state.track.grid_positions.push(SpawnPose::new(snapped_mouse, angle, slot_idx));
-                state.selection = Selection::GridSlot(slot_idx);
-                state.revalidate();
             }
             EditorToolType::PitLane => {
                 self.is_placing = true;
@@ -2056,14 +2046,7 @@ fn find_closest_entity(state: &EditorState, point: Vec2) -> Option<Selection> {
         }
     }
 
-    // 3. Grid Slots
-    for (idx, slot) in state.track.grid_positions.iter().enumerate() {
-        if (slot.position - point).length() < pick_dist {
-            return Some(Selection::GridSlot(idx));
-        }
-    }
-
-    // 4. Obstacles
+    // 3. Obstacles
     for (idx, obs) in state.track.geometry.obstacles.iter().enumerate() {
         match &obs.shape {
             tdrace_core::track::ObstacleShape::Circle { center, radius } => {
@@ -2439,7 +2422,6 @@ pub fn find_entities_in_box(state: &EditorState, min: Vec2, max: Vec2) -> Select
     let mut obstacles = Vec::new();
     let mut jump_ramps = Vec::new();
     let mut checkpoints = Vec::new();
-    let mut grid_slots = Vec::new();
     let mut pit_box = false;
 
     for (i, wp) in state.track.spline.waypoints.iter().enumerate() {
@@ -2451,12 +2433,6 @@ pub fn find_entities_in_box(state: &EditorState, min: Vec2, max: Vec2) -> Select
     for (i, cp) in state.track.checkpoints.iter().enumerate() {
         if line_segment_intersects_aabb(cp.gate.start, cp.gate.end, min, max) {
             checkpoints.push(i);
-        }
-    }
-
-    for (i, slot) in state.track.grid_positions.iter().enumerate() {
-        if point_in_aabb(slot.position, min, max) {
-            grid_slots.push(i);
         }
     }
 
@@ -2490,7 +2466,7 @@ pub fn find_entities_in_box(state: &EditorState, min: Vec2, max: Vec2) -> Select
         obstacles,
         jump_ramps,
         checkpoints,
-        grid_slots,
+        vec![],
         pit_box,
     )
 }
@@ -2602,8 +2578,7 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
 
     // 3. Render Starting Grid Slot gizmos
     for slot in &state.track.grid_positions {
-        let is_selected = state.selection.is_grid_slot_selected(slot.grid_slot);
-        let col = if is_selected { Palette::NEON_GOLD } else { Palette::NEON_MAGENTA };
+        let col = Palette::NEON_MAGENTA;
 
         draw_circle(slot.position.x, slot.position.y, 1.4, col);
         let fwd = Vec2::new(slot.angle.cos(), slot.angle.sin()) * 2.5;
@@ -3282,11 +3257,6 @@ mod tests {
         tools.active_tool = EditorToolType::Checkpoint;
         assert!(tools.select_all_for_active_tool(&mut state));
         assert_eq!(state.selection.selected_checkpoint_indices().len(), state.track.checkpoints.len());
-
-        // 6. StartingGrid Tool selects grid slots
-        tools.active_tool = EditorToolType::StartingGrid;
-        assert!(tools.select_all_for_active_tool(&mut state));
-        assert_eq!(state.selection.selected_grid_slot_indices().len(), state.track.grid_positions.len());
     }
 
     #[test]

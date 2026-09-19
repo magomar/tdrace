@@ -76,8 +76,11 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
   4. `Jump Ramps` (`[4]`): Directional chevron arrow indicators with 2.5D launch speed, turning angle, height, and custom length/width scaling.
   5. `Obstacles` (`[5]`): Place tire barriers, concrete blocks, and restitution physics hazards.
   6. `Checkpoints` (`[6]`): Place sector gates and configure start/finish lines.
-  7. `Starting Grid` (`[7]`): Position staggered multi-car starting slots.
-  8. `Pit Lane` (`[8]`): Define pit stop zones.
+  7. `Pit Lane` (`[7]`): Define pit stop zones.
+  8. `Arena Floor` (`[8]`): Construct enclosed stadium boundary hulls.
+  9. `Whoop Section` (`[9]`): Place rhythm sections and mogul crests.
+  10. `Stunt Mega Ramp` (`[0]`): Place extreme high-launch stunt ramps.
+- **Automatic Starting Grid**: Starting grid slots are automatically positioned along the circuit straight before the finish line; only the number of grid positions is configured as a circuit property.
 - **Circuit Diagnostics & Validation Engine**: Real-time linting for spline self-intersections, track closure, minimum width, jump landing clearance, and finish line gates.
 - **Zero-Latency Instant Test Drive**: Press `[Space]` / `[P]` to instantly spawn your vehicle on the grid and test drive your live circuit at 60Hz. Press `[Esc]` to return seamlessly to editing.
 - **Automatic Track Manager**: Automatic discovery and saving of custom circuits in `tracks/*.json` with seamless carousel integration in the Main Menu.
@@ -107,13 +110,13 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
 ### Track Studio Controls (Editor Mode)
 | Key / Mouse | Action | Description |
 | :---: | :---: | :--- |
-| **`1`–`8`** | **Tool Selector** | Switch between Select, Spline, Surface, Ramp, Obstacle, Checkpoint, Grid, Pit |
+| **`1`–`0`** | **Tool Selector** | Switch between Select, Spline, Surface, Ramp, Obstacle, Checkpoint, Pit, Arena, Whoops, Stunt Ramp |
 | **`Left Click / Drag`** | **Draw / Move** | Place or drag waypoints, zones, ramps, and obstacle nodes |
 | **`R` / `[` / `]`** | **Rotate Ramp** | Turn selected jump ramp angle (+/- 15° or Shift for reverse) |
 | **`Middle / Right Drag`** | **Pan Canvas** | Pan the 2D CAD camera viewport |
 | **`Scroll Wheel`** | **Zoom** | Zoom smoothly in/out centered at cursor |
 | **`Ctrl+Z` / `Ctrl+Y`** | **Undo / Redo** | Snapshot-based 50-step undo/redo history |
-| **`Delete` / `Backspace`** | **Delete** | Remove selected waypoint, zone, ramp, gate, or grid slot |
+| **`Delete` / `Backspace`** | **Delete** | Remove selected waypoint, zone, ramp, or gate |
 | **`F`** | **Focus** | Auto-frame entire track circuit into viewport |
 | **`G`** | **Grid Snap** | Cycle metric snap increments: Off → 1m → 2.5m → 5m → 10m |
 | **`Space` / `P`** | **Test Drive** | Launch instant playtesting mode on live track |

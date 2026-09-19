@@ -737,14 +737,14 @@ fn test_all_entity_duplications_and_undo() {
     assert!(state.undo());
     assert_eq!(state.track.checkpoints.len(), cp_count);
 
-    // 5. Grid Slot Duplication
-    let grid_count = state.track.grid_positions.len();
-    state.selection = Selection::GridSlot(0);
-    assert!(tools.duplicate_selected(&mut state));
-    assert_eq!(state.track.grid_positions.len(), grid_count + 1);
-    assert_eq!(state.selection, Selection::GridSlot(grid_count));
+    // 5. Grid Positions Circuit Property Mutation and Undo
+    let prev_count = state.grid_count();
+    assert!(state.set_grid_count(12));
+    assert_eq!(state.track.grid_positions.len(), 12);
+    assert_eq!(state.grid_count(), 12);
     assert!(state.undo());
-    assert_eq!(state.track.grid_positions.len(), grid_count);
+    assert_eq!(state.track.grid_positions.len(), prev_count);
+    assert_eq!(state.grid_count(), prev_count);
 }
 
 #[test]
@@ -1849,80 +1849,68 @@ fn test_editor_ui_hover_detection_and_inspector_click_safety() {
 }
 
 #[test]
-fn test_auto_grid_slots_finish_line_requirement_and_modal_warning() {
-    use tdrace_app::editor::{EditorModal, EditorState};
+fn test_auto_grid_placement_and_circuit_property() {
+    use tdrace_app::editor::EditorState;
     use tdrace_core::track::presets::classic_grand_prix;
 
     let mut track = classic_grand_prix();
-    // Clear checkpoints and grid positions so no finish line exists
+    // Clear checkpoints and grid positions
     track.checkpoints.clear();
     track.grid_positions.clear();
 
     let mut state = EditorState::new(track);
-    let mut active_modal = EditorModal::None;
 
+    // 1. Automatic grid generation requires finish line checkpoint
     assert!(!state.track.has_finish_line());
-
-    // 1. Trigger Auto Grid Slots logic without finish line
-    if !state.track.has_finish_line() {
-        active_modal = EditorModal::Warning {
-            title: "FINISH LINE REQUIRED".to_string(),
-            message: "No finish line checkpoint exists on this circuit.\n\nPlease define a finish line before generating starting grid slots.\n(Select an existing checkpoint and mark it as Finish Line,\nor place a new checkpoint using the Checkpoint Tool)".to_string(),
-        };
-    } else {
-        state.record_undo();
-        state.track.auto_generate_grid(8, 8.0, 3.0);
-        state.revalidate();
-    }
-
-    // Modal must be Warning with informative title & message
-    if let EditorModal::Warning { title, message } = &active_modal {
-        assert_eq!(title, "FINISH LINE REQUIRED");
-        assert!(message.contains("No finish line"));
-        assert!(message.contains("define a finish line"));
-    } else {
-        panic!("Expected EditorModal::Warning when auto grid slots clicked without finish line");
-    }
+    assert!(!state.auto_generate_grid());
     assert!(state.track.grid_positions.is_empty());
-    assert!(!state.is_dirty);
 
-    // 2. Now define a finish line and auto generate grid slots
+    // 2. Now generate checkpoints (checkpoint 0 is finish line) and auto-generate grid
     state.track.auto_generate_checkpoints(8, 3);
     assert!(state.track.has_finish_line());
-    active_modal = EditorModal::None;
-
-    if !state.track.has_finish_line() {
-        active_modal = EditorModal::Warning {
-            title: "FINISH LINE REQUIRED".to_string(),
-            message: "No finish line".to_string(),
-        };
-    } else {
-        state.record_undo();
-        let ok = state.track.auto_generate_grid(8, 8.0, 3.0);
-        assert!(ok);
-        state.revalidate();
-    }
-
-    assert_eq!(active_modal, EditorModal::None);
+    assert!(state.auto_generate_grid());
     assert_eq!(state.track.grid_positions.len(), 8);
-    assert!(state.is_dirty);
 
-    // 3. Move finish line to checkpoint 4 and regenerate
+    let finish_cp = state.track.checkpoints.iter().find(|cp| cp.is_finish_line).unwrap();
+    let finish_center = (finish_cp.gate.start + finish_cp.gate.end) * 0.5;
+    let finish_dist = state.track.spline.project_point(finish_center).progress_distance;
+    let total_len = state.track.spline.total_length();
+
+    let slot0_proj = state.track.spline.project_point(state.track.grid_positions[0].position);
+    let expected_slot0_dist = (finish_dist - 15.0 + total_len) % total_len;
+    assert!(
+        (slot0_proj.progress_distance - expected_slot0_dist).abs() < 1.0,
+        "Slot 0 should be positioned 15m behind finish line"
+    );
+
+    // 3. Move finish line to checkpoint 4 and auto regenerate
     state.track.checkpoints[0].is_finish_line = false;
     state.track.checkpoints[4].is_finish_line = true;
     let cp4_center = (state.track.checkpoints[4].gate.start + state.track.checkpoints[4].gate.end) * 0.5;
     let cp4_dist = state.track.spline.project_point(cp4_center).progress_distance;
-    let total_len = state.track.spline.total_length();
 
-    let ok = state.track.auto_generate_grid(8, 8.0, 3.0);
-    assert!(ok);
-
-    let slot0_proj = state.track.spline.project_point(state.track.grid_positions[0].position);
-    let expected_slot0_dist = (cp4_dist - 15.0 + total_len) % total_len;
+    assert!(state.auto_generate_grid());
+    let slot0_proj_cp4 = state.track.spline.project_point(state.track.grid_positions[0].position);
+    let expected_slot0_dist_cp4 = (cp4_dist - 15.0 + total_len) % total_len;
     assert!(
-        (slot0_proj.progress_distance - expected_slot0_dist).abs() < 1.0,
-        "Slot 0 should be positioned 15m behind checkpoint 4 finish line"
+        (slot0_proj_cp4.progress_distance - expected_slot0_dist_cp4).abs() < 1.0,
+        "Slot 0 should now be positioned 15m behind checkpoint 4 finish line"
     );
+
+    // 4. Test circuit property mutation: set grid count to 16
+    assert!(state.set_grid_count(16));
+    assert_eq!(state.grid_count(), 16);
+    assert_eq!(state.track.grid_positions.len(), 16);
+
+    // Test circuit property mutation: set grid count to 4
+    assert!(state.set_grid_count(4));
+    assert_eq!(state.grid_count(), 4);
+    assert_eq!(state.track.grid_positions.len(), 4);
+
+    // Undo should restore 16
+    assert!(state.undo());
+    assert_eq!(state.grid_count(), 16);
+    assert_eq!(state.track.grid_positions.len(), 16);
 }
 
 #[test]

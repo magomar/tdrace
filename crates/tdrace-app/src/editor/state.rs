@@ -515,7 +515,10 @@ pub struct EditorState {
 }
 
 impl EditorState {
-    pub fn new(track: Track) -> Self {
+    pub fn new(mut track: Track) -> Self {
+        if track.grid_positions.is_empty() && (track.spline.samples.len() >= 2 || track.is_arena()) {
+            track.auto_generate_grid_default();
+        }
         let diagnostics = validate_track(&track);
         Self {
             track,
@@ -566,10 +569,37 @@ impl EditorState {
         self.diagnostics = validate_track(&self.track);
     }
 
-    /// Rebuilds spline, boundary walls, and polylines from current waypoints.
+    /// Rebuilds spline, boundary walls, and polylines from current waypoints and updates grid.
     pub fn rebuild_geometry(&mut self) {
         self.track.rebuild_geometry(self.barrier_offset, self.barrier_type);
+        self.auto_generate_grid();
         self.revalidate();
+    }
+
+    /// Returns the current number of starting grid positions configured for the circuit.
+    pub fn grid_count(&self) -> usize {
+        if self.track.grid_positions.is_empty() {
+            8
+        } else {
+            self.track.grid_positions.len()
+        }
+    }
+
+    /// Automatically regenerates starting grid positions along the circuit.
+    pub fn auto_generate_grid(&mut self) -> bool {
+        let count = self.grid_count();
+        let (spacing, stagger) = self.track.default_grid_spacing_and_stagger();
+        self.track.auto_generate_grid(count, spacing, stagger)
+    }
+
+    /// Sets the number of grid positions as a property of the circuit and regenerates the grid.
+    pub fn set_grid_count(&mut self, count: usize) -> bool {
+        let clamped = count.clamp(1, 24);
+        self.record_undo();
+        let (spacing, stagger) = self.track.default_grid_spacing_and_stagger();
+        let res = self.track.auto_generate_grid(clamped, spacing, stagger);
+        self.revalidate();
+        res
     }
 
     /// Updates current selection and records last selected waypoint if applicable.
