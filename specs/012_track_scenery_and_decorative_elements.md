@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Track Scenery and Decorative Elements (Grades & Trees)"
 description: "Decorative track elements featuring tiered concrete grandstands and multi-species trees designed for cenital (top-down) recognition with realistic physical car interactions."
-status: in_progress
+status: implemented
 created: 2026-09-19
 generated: { by: agent/antigravity, at: 2026-09-19T20:36:00Z }
 ---
@@ -80,30 +80,30 @@ The in-game track editor integrates scenery elements into the placement toolset:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Physical collision with concrete grandstand**
-  - [ ] **Given** a vehicle driving toward a trackside concrete grandstand
-  - [ ] **When** the vehicle impacts the grandstand boundary wall
-  - [ ] **Then** the collision must be resolved using concrete restitution ($0.65$) and sliding friction ($0.32$)
-  - [ ] **And** vehicle speed must be arrested without tunneling or NaN positions
-  - [ ] **And** wall scraping deceleration must apply $9.0\,\text{m/s}^2$ resistance when sliding along the structure
+  - [x] **Given** a vehicle driving toward a trackside concrete grandstand
+  - [x] **When** the vehicle impacts the grandstand boundary wall
+  - [x] **Then** the collision must be resolved using concrete restitution ($0.65$) and sliding friction ($0.32$)
+  - [x] **And** vehicle speed must be arrested without tunneling or NaN positions
+  - [x] **And** wall scraping deceleration must apply $9.0\,\text{m/s}^2$ resistance when sliding along the structure
 
 - **Scenario: Dual-zone physical interaction with a tree**
-  - [ ] **Given** a tree positioned at $(x, y)$ with trunk radius $r_{\text{trunk}} = 0.4\,\text{m}$ and canopy radius $r_{\text{canopy}} = 3.5\,\text{m}$
-  - [ ] **When** a vehicle drives within the canopy ($d = 2.0\,\text{m}$) without striking the trunk
-  - [ ] **Then** the vehicle must pass through without a hard rigid body bounce
-  - [ ] **And** soft foliage drag deceleration must be applied to the car
-  - [ ] **And** leaf/needle roost particles must be emitted in the vehicle's wake
-  - [ ] **And** the canopy must fade to semi-transparent opacity ($0.60$) while the car is underneath
-  - [ ] **When** the vehicle strikes the central trunk ($d \le 0.4\,\text{m}$)
-  - [ ] **Then** a rigid circle collision must occur with wood restitution ($0.25$) and bark friction ($0.55$)
+  - [x] **Given** a tree positioned at $(x, y)$ with trunk radius $r_{\text{trunk}} = 0.4\,\text{m}$ and canopy radius $r_{\text{canopy}} = 3.5\,\text{m}$
+  - [x] **When** a vehicle drives within the canopy ($d = 2.0\,\text{m}$) without striking the trunk
+  - [x] **Then** the vehicle must pass through without a hard rigid body bounce
+  - [x] **And** soft foliage drag deceleration must be applied to the car
+  - [x] **And** leaf/needle roost particles must be emitted in the vehicle's wake
+  - [x] **And** the canopy must fade to semi-transparent opacity ($0.60$) while the car is underneath
+  - [x] **When** the vehicle strikes the central trunk ($d \le 0.4\,\text{m}$)
+  - [x] **Then** a rigid circle collision must occur with wood restitution ($0.25$) and bark friction ($0.55$)
 
 - **Scenario: Cenital (top-down) visual differentiation**
-  - [ ] **Given** the 6 tree species rendered on screen from a top-down camera
-  - [ ] **Then** Pine must exhibit concentric star-spoked needle tiers
-  - [ ] **And** Palm must exhibit arching radiating fronds with central crown
-  - [ ] **And** Oak must exhibit multi-lobed organic green cloud foliage
-  - [ ] **And** Cypress must exhibit a tight columnar oval crown
-  - [ ] **And** Sakura must render with distinct pink/magenta floral tones
-  - [ ] **And** Autumn Maple must render with golden-orange autumn tones
+  - [x] **Given** the 6 tree species rendered on screen from a top-down camera
+  - [x] **Then** Pine must exhibit concentric star-spoked needle tiers
+  - [x] **And** Palm must exhibit arching radiating fronds with central crown
+  - [x] **And** Oak must exhibit multi-lobed organic green cloud foliage
+  - [x] **And** Cypress must exhibit a tight columnar oval crown
+  - [x] **And** Sakura must render with distinct pink/magenta floral tones
+  - [x] **And** Autumn Maple must render with golden-orange autumn tones
 
 ---
 

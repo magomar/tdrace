@@ -22,13 +22,13 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[ ]` **[Karting Career Mode](../004_karting_career_mode.md)**: 5-tier grassroots karting, shifter, racing mower, and superkart career progression.
 
 ### Phase 2: Vehicle Roster Expansion & Garage Showroom (Priority: Medium)
-- `[ ]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
+- `[/]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
 
 ### Phase 3: Game Asset Catalogue & Reference Portals (Priority: High)
 - `[x]` **[Game Asset Catalogue & Technical Reference Portals](../011_game_asset_catalogue_and_physics_reference_portals.md)**: Dual-site Astro architecture cataloguing 25 car categories, 90 circuits, and simulation physics under a unified Google OKF v0.2 knowledge graph.
 
 ### Phase 4: Track Scenery & World Building (Priority: High)
-- `[ ]` **[Track Scenery and Decorative Elements](../012_track_scenery_and_decorative_elements.md)**: Tiered concrete grandstands and multi-species trees with cenital recognition and physical car interactions.
+- `[x]` **[Track Scenery and Decorative Elements](../012_track_scenery_and_decorative_elements.md)**: Tiered concrete grandstands and multi-species trees with cenital recognition and physical car interactions.
 
 ---
 

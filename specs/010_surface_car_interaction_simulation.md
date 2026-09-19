@@ -219,37 +219,37 @@ The simulation harness operates strictly in-memory during testing sessions or CI
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Standing start acceleration across all 12 surface types**
-  - [ ] **Given** the wheelbase physics engine is initialized without graphics or audio backends
-  - [ ] **And** all 12 surface types are configured with validated friction, rolling resistance, and drag multipliers
-  - [ ] **When** the headless simulation executes Protocol A (Acceleration) for a baseline stock car on each surface
-  - [ ] **Then** the recorded 0-100 km/h acceleration times must strictly observe the hierarchy:
+  - [x] **Given** the wheelbase physics engine is initialized without graphics or audio backends
+  - [x] **And** all 12 surface types are configured with validated friction, rolling resistance, and drag multipliers
+  - [x] **When** the headless simulation executes Protocol A (Acceleration) for a baseline stock car on each surface
+  - [x] **Then** the recorded 0-100 km/h acceleration times must strictly observe the hierarchy:
     ```
     Asphalt < Concrete < Curb < Dirt < Gravel < Mud < Grass < Snow < Sand < Water < Oil < Ice
     ```
-  - [ ] **And** the wheelspin loss index on Ice must be at least 4.0x greater than on Asphalt
-  - [ ] **And** the simulation must complete 12 benchmark runs in under 500 milliseconds of wall-clock time
+  - [x] **And** the wheelspin loss index on Ice must be at least 4.0x greater than on Asphalt
+  - [x] **And** the simulation must complete 12 benchmark runs in under 500 milliseconds of wall-clock time
 
 - **Scenario: Straight-line emergency braking distance from 100 km/h**
-  - [ ] **Given** a vehicle stabilized at 100.0 km/h on a uniform test surface
-  - [ ] **When** 100% service brake is applied until vehicle speed drops below 0.05 m/s
-  - [ ] **Then** the stopping distance must scale inversely with the surface friction coefficient mu
-  - [ ] **And** stopping distance on Asphalt must be less than 40.0 meters
-  - [ ] **And** stopping distance on Ice must exceed 300.0 meters
-  - [ ] **And** the average braking deceleration must be recorded without NaN or infinite floating point artifacts
+  - [x] **Given** a vehicle stabilized at 100.0 km/h on a uniform test surface
+  - [x] **When** 100% service brake is applied until vehicle speed drops below 0.05 m/s
+  - [x] **Then** the stopping distance must scale inversely with the surface friction coefficient mu
+  - [x] **And** stopping distance on Asphalt must be less than 40.0 meters
+  - [x] **And** stopping distance on Ice must exceed 300.0 meters
+  - [x] **And** the average braking deceleration must be recorded without NaN or infinite floating point artifacts
 
 - **Scenario: Steady-state skidpad cornering limit evaluation**
-  - [ ] **Given** a vehicle commanded along a 30-meter radius circular skidpad
-  - [ ] **When** vehicle speed is incrementally ramped until trajectory deviation exceeds 2.5 meters
-  - [ ] **Then** the maximum lateral acceleration a_y_max on Asphalt must exceed 1.05g
-  - [ ] **And** the maximum lateral acceleration on Gravel must measure between 0.75g and 0.90g
-  - [ ] **And** the maximum lateral acceleration on Ice must be below 0.15g
-  - [ ] **And** the telemetry log must capture slip angles for all 4 individual wheels
+  - [x] **Given** a vehicle commanded along a 30-meter radius circular skidpad
+  - [x] **When** vehicle speed is incrementally ramped until trajectory deviation exceeds 2.5 meters
+  - [x] **Then** the maximum lateral acceleration a_y_max on Asphalt must exceed 1.05g
+  - [x] **And** the maximum lateral acceleration on Gravel must measure between 0.75g and 0.90g
+  - [x] **And** the maximum lateral acceleration on Ice must be below 0.15g
+  - [x] **And** the telemetry log must capture slip angles for all 4 individual wheels
 
 - **Scenario: Telemetry export and cross-surface comparative reporting**
-  - [ ] **When** the comparative surface benchmark suite is triggered via cargo benchmark or CLI command
-  - [ ] **Then** it must output a structured JSON telemetry dump containing time-series wheel states
-  - [ ] **And** it must generate a Markdown comparison table normalized against the Asphalt baseline
-  - [ ] **And** all results must be bit-for-bit deterministic across consecutive runs with the same configuration
+  - [x] **When** the comparative surface benchmark suite is triggered via cargo benchmark or CLI command
+  - [x] **Then** it must output a structured JSON telemetry dump containing time-series wheel states
+  - [x] **And** it must generate a Markdown comparison table normalized against the Asphalt baseline
+  - [x] **And** all results must be bit-for-bit deterministic across consecutive runs with the same configuration
 
 ---
 

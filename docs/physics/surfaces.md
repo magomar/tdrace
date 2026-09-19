@@ -62,3 +62,12 @@ This creates genuine sand traps that safely arrest high-speed off-track excursio
   * `Mud`: Heavy thick brown clumps with slow dissipation.
 
 For details on wall collisions, see [Walls & Barriers](walls_barriers.md).
+
+---
+
+## 4. Empirical Simulation Telemetry & Realism Assessment
+
+For empirical benchmark data, stopping distance decay tables, and skidpad cornering limits across all 12 surfaces, consult:
+* [Surface Simulation Technical Report](../experiments/surface_simulation_technical_report.md): In-depth realism review, physical invariant proofs, and cross-module balance assessment.
+* [Full 1,800-Run Telemetry Report](../experiments/full_surface_simulation_report.md): Raw telemetry across 30 vehicles and 5 dynamic protocols.
+

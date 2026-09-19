@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Real-World Vehicle Rosters, Physics Balance & Interactive Garage"
 description: "Migration from prototypical archetypes to authentic real-world motorsport models across 5 modules and 25 categories, with BoP parity, dual-view 2D rendering, and interactive garage showroom."
-status: draft
+status: in_progress
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T14:15:00Z }
 ---

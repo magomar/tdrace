@@ -1,7 +1,16 @@
+---
+type: Technical Report
+title: "Empirical Benchmark: Multi-Surface Automotive Dynamics & Balance"
+description: "Empirical 1,800-run simulation benchmark, realism review, and cross-surface balance assessment across 30 vehicles and 12 surfaces."
+status: active
+category: experiments
+tags: [physics, surface, benchmark, telemetry, simulation, balance]
+---
+
 # 🔬 Empirical Benchmark Report: Surface-Car Dynamics Simulation
 
 **Experiment**: `Full 5-Tier Multi-Module & Classic Surface Dynamics Simulation`
-**Timestamp**: `2026-09-19T21:34:18.827619980+00:00`
+**Timestamp**: `2026-09-19T22:40:43.643452129+00:00`
 **Vehicles Tested**: 30
 **Surfaces Evaluated**: 12 surfaces
 

@@ -22,6 +22,7 @@ The simulation physics in **TdRace** are engineered within the zero-dependency [
 | **Surface Interactions** | [surfaces.md](surfaces.md) | 12 surface types ($\mu = 0.08 \dots 1.00$), rolling resistance multipliers ($1.0\times \dots 30.0\times$), aerodynamic/viscous surface drag, particle emitters. |
 | **Walls & Barriers** | [walls_barriers.md](walls_barriers.md) | 4 barrier collision models: Concrete, Steel Armco, Tire Wall, Curb Wall with restitution coefficients ($e = 0.10 \dots 0.45$) and friction damping. |
 | **Powertrain & Drivetrain** | [powertrain.md](powertrain.md) | Engine force output, drive bias ($0.0$ pure RWD, $0.5$ 50/50 AWD, $1.0$ pure FWD), top speed terminal limiter, and future multi-speed transmissions. |
+| **Empirical Benchmarks** | [../experiments/surface_simulation_technical_report.md](../experiments/surface_simulation_technical_report.md) | 1,800-run computational simulation benchmark, surface degradation indices, and vehicle balance assessment. |
 
 ---
 

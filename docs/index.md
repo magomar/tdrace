@@ -23,7 +23,7 @@ Comprehensive mathematical modeling of planar and 2.5D motorsport physics implem
 | [Overview](physics/index.md) | Physics Reference | `active` | Architectural overview of vehicle physics, integration pipelines, and 60 Hz update cycles. |
 | [Vehicle Dynamics](physics/vehicle_dynamics.md) | Physics Reference | `active` | Planar kinematics, center of gravity (CG), longitudinal squat/dive, lateral body roll, downforce, and aerodynamic drag. |
 | [Pacejka '96 Tire Model](physics/tire_pacejka.md) | Physics Reference | `active` | Pacejka Magic Formula coefficients ($B, C, D, E$), slip angle calculation, grip saturation, and drift slide friction. |
-| [Surface Physics Matrix](physics/surfaces.md) | Physics Reference | `active` | 11-surface simulation matrix: friction coefficients ($\mu$), rolling resistance, viscous drag, and per-wheel split-$\mu$ sampling. |
+| [Surface Physics Matrix](physics/surfaces.md) | Physics Reference | `active` | 12-surface simulation matrix: friction coefficients ($\mu$), rolling resistance, viscous drag, and per-wheel split-$\mu$ sampling. |
 | [Walls & Barriers](physics/walls_barriers.md) | Physics Reference | `active` | 4 perimeter barrier profiles: Concrete, Steel Armco, Tire Wall, Curb Wall restitution coefficients and impulse resolution. |
 | [Powertrain & Drivetrain](physics/powertrain.md) | Physics Reference | `active` | Engine tractive forces, drivetrain layouts (FWD/AWD/RWD), brake distribution, and roadmap for multi-gear transmissions and thermal tire degradation. |
 
@@ -71,3 +71,15 @@ Technical design documents, audio engine architectures, and performance profiles
 | [Circuit Rendering Performance](engineering/circuit_rendering_performance.md) | Architecture Spec | `active` | OpenGL batching, Catmull-Rom spline tessellation, and memory footprint analysis. |
 | [Surface & Wall Legacy Spec](engineering/surface_and_wall_legacy_spec.md) | Architecture Spec | `active` | Historical specifications for 12 surface types and 4 barrier collision models. |
 | [Vehicle Roster Ideas](engineering/vehicle_roster_expansion_ideas.md) | Feature Spec | `active` | Exploratory design notes on prospective vehicle variants and class archetypes. |
+
+---
+
+## 🔬 Empirical Simulation & Dynamic Benchmarks
+
+Headless physical simulation batteries, empirical surface degradation reports, and vehicle balance assessments.
+
+| Document | Type | Status | Description |
+| :--- | :--- | :---: | :--- |
+| [Surface Simulation Technical Report](experiments/surface_simulation_technical_report.md) | Technical Report | `active` | In-depth realism and balance evaluation across 30 vehicles, 12 surfaces, and 5 dynamic test protocols. |
+| [Full Surface Simulation Telemetry](experiments/full_surface_simulation_report.md) | Technical Report | `active` | Comprehensive 1,800-run empirical dataset covering all 5 vehicle tiers, classic prototypes, and 12 surfaces. |
+| [Category Dynamics Benchmark](experiments/surface_simulation_benchmark.md) | Physics Reference | `active` | Baseline empirical evaluation of 12 representative vehicle archetypes across non-classic modules. |
