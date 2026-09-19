@@ -304,81 +304,151 @@ impl Default for GameConfig {
 }
 
 impl GameConfig {
+    /// Locates the git-tracked default `config.toml` file in the repository or installation directory.
+    pub fn resolve_default_config_path() -> Option<PathBuf> {
+        if let Ok(val) = std::env::var("TDRACE_DEFAULT_CONFIG_PATH") {
+            if !val.trim().is_empty() {
+                let p = PathBuf::from(val);
+                if p.is_file() {
+                    return Some(p);
+                }
+            }
+        }
+        let candidates = [
+            PathBuf::from("config.toml"),
+            PathBuf::from("../config.toml"),
+            PathBuf::from("../../config.toml"),
+        ];
+        for c in &candidates {
+            if c.is_file() {
+                return Some(c.clone());
+            }
+        }
+        None
+    }
+
+    /// Ensures that an installed copy of `config.toml` exists in the user configuration directory.
+    ///
+    /// If `<user_config_dir>/config.toml` does not exist:
+    /// - Copies the default `config.toml` from the repository / installation package.
+    /// - If no template file exists, serializes and writes `GameConfig::default()`.
+    pub fn ensure_user_config_installed() -> Result<PathBuf, String> {
+        let user_path = crate::storage::resolve_user_config_path();
+        if user_path.is_file() {
+            return Ok(user_path);
+        }
+
+        if let Some(parent) = user_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
+        if let Some(default_path) = Self::resolve_default_config_path() {
+            match std::fs::copy(&default_path, &user_path) {
+                Ok(_) => {
+                    println!(
+                        "[Config] Installed default config from {:?} to {:?}",
+                        default_path, user_path
+                    );
+                    return Ok(user_path);
+                }
+                Err(e) => {
+                    eprintln!(
+                        "[Config] Warning: Failed to copy default config from {:?} to {:?}: {}. Falling back to default serialization.",
+                        default_path, user_path, e
+                    );
+                }
+            }
+        }
+
+        let default_config = Self::default();
+        default_config.save_to_path(&user_path)?;
+        println!("[Config] Installed generated default config to {:?}", user_path);
+        Ok(user_path)
+    }
+
     /// Candidate search paths in priority order for loading `config.toml`.
+    ///
+    /// Priority order:
+    /// 1. User installed config (`<user_config_dir>/config.toml`)
+    /// 2. Git-tracked default templates (read-only fallback)
     pub fn candidate_paths() -> Vec<PathBuf> {
         let mut paths = Vec::new();
-        // 1. Current working directory
+        // 1. User config path
+        paths.push(crate::storage::resolve_user_config_path());
+        // 2. Default template paths
         paths.push(PathBuf::from("config.toml"));
-        // 2. Workspace root relative paths (when run from inside crate subdirectories)
-        paths.push(PathBuf::from("../../config.toml"));
         paths.push(PathBuf::from("../config.toml"));
-        // 3. User config ~/.config/tdrace/config.toml
-        if let Some(home) = std::env::var_os("HOME") {
-            let mut p = PathBuf::from(home);
-            p.push(".config");
-            p.push("tdrace");
-            p.push("config.toml");
-            paths.push(p);
-        }
+        paths.push(PathBuf::from("../../config.toml"));
         paths
     }
 
     /// Candidate search paths in priority order for loading a module-specific config file (e.g. `config.f1.toml`).
     pub fn candidate_module_paths(module_id: &str) -> Vec<PathBuf> {
         let mut paths = Vec::new();
-        // 1. Root / CWD: config.<module>.toml, configs/<module>.toml
+        // 1. User config directory ~/.config/tdrace/ (overrides defaults)
+        let user_dir = crate::storage::resolve_user_config_dir();
+        paths.push(user_dir.join(format!("config.{}.toml", module_id)));
+        paths.push(user_dir.join(format!("{}.toml", module_id)));
+
+        // 2. Root / CWD: config.<module>.toml, configs/<module>.toml
         paths.push(PathBuf::from(format!("config.{}.toml", module_id)));
         paths.push(PathBuf::from(format!("configs/{}.toml", module_id)));
-        // 2. Workspace root relative paths (when run from crate subdirectories)
+        // 3. Workspace root relative paths (when run from crate subdirectories)
         paths.push(PathBuf::from(format!("../../config.{}.toml", module_id)));
         paths.push(PathBuf::from(format!("../../configs/{}.toml", module_id)));
         paths.push(PathBuf::from(format!("../config.{}.toml", module_id)));
         paths.push(PathBuf::from(format!("../configs/{}.toml", module_id)));
-        // 3. modules/<module>/config.toml, modules/<module>.toml
+        // 4. modules/<module>/config.toml, modules/<module>.toml
         paths.push(PathBuf::from(format!("modules/{}/config.toml", module_id)));
         paths.push(PathBuf::from(format!("modules/{}.toml", module_id)));
-        // 4. User config directory ~/.config/tdrace/
-        if let Some(home) = std::env::var_os("HOME") {
-            let mut p1 = PathBuf::from(&home);
-            p1.push(".config");
-            p1.push("tdrace");
-            p1.push(format!("config.{}.toml", module_id));
-            paths.push(p1);
 
-            let mut p2 = PathBuf::from(home);
-            p2.push(".config");
-            p2.push("tdrace");
-            p2.push(format!("{}.toml", module_id));
-            paths.push(p2);
-        }
         paths
     }
 
-    /// Loads the configuration from the first existing candidate file, or creates default.
+    /// Loads the configuration from the installed user copy (installing defaults if missing),
+    /// falling back to the default template if reading fails.
     pub fn load_or_default() -> Self {
-        for path in Self::candidate_paths() {
-            if path.exists() {
-                if let Ok(config) = Self::load_from_path(&path) {
-                    println!("[Config] Loaded configuration from {:?}", path);
-                    return config;
+        if let Ok(user_path) = Self::ensure_user_config_installed() {
+            if user_path.is_file() {
+                match Self::load_from_path(&user_path) {
+                    Ok(config) => {
+                        println!("[Config] Loaded configuration from {:?}", user_path);
+                        return config;
+                    }
+                    Err(e) => {
+                        eprintln!(
+                            "[Config] Warning: Failed to load user config at {:?}: {}. Falling back to default template.",
+                            user_path, e
+                        );
+                    }
                 }
             }
         }
 
-        let default_config = Self::default();
-        // Attempt to persist default config to ./config.toml for easy user editing
-        let _ = default_config.save_to_path(Path::new("config.toml"));
-        default_config
-    }
-
-    /// Saves the configuration to the first existing candidate file found, or default config.toml.
-    pub fn save_to_first_existing_or_default(&self) -> Result<(), String> {
-        for path in Self::candidate_paths() {
-            if path.exists() {
-                return self.save_to_path(&path);
+        // Fallback to git-tracked default template (read-only)
+        if let Some(default_path) = Self::resolve_default_config_path() {
+            if let Ok(config) = Self::load_from_path(&default_path) {
+                println!("[Config] Loaded default configuration from {:?}", default_path);
+                return config;
             }
         }
-        self.save_to_path(Path::new("config.toml"))
+
+        Self::default()
+    }
+
+    /// Saves the configuration to the installed user copy in `<user_config_dir>/config.toml`.
+    ///
+    /// Never modifies the git-tracked `config.toml` in the project root.
+    pub fn save_user_config(&self) -> Result<(), String> {
+        let user_path = crate::storage::resolve_user_config_path();
+        self.save_to_path(&user_path)
+    }
+
+    /// Saves the configuration to the installed user copy.
+    ///
+    /// Preserved for backwards compatibility, ensuring callers never overwrite project files.
+    pub fn save_to_first_existing_or_default(&self) -> Result<(), String> {
+        self.save_user_config()
     }
 
     /// Looks for a module-specific config file from candidate paths and parses it as a TOML Value.

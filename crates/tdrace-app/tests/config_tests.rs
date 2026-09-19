@@ -4,6 +4,8 @@ use tdrace_app::game::RaceSession;
 use tdrace_app::ui::menu::CarChoice;
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
 
+static ENV_CONFIG_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[test]
 fn test_default_config_roundtrip_toml() {
     let original = GameConfig::default();
@@ -283,6 +285,7 @@ default_laps = 10
 
 #[test]
 fn test_session_module_switching_applies_effective_config() {
+    let _guard = ENV_CONFIG_MUTEX.lock().unwrap();
     let toml_str = r#"
 [audio]
 master_volume = 0.80
@@ -328,6 +331,7 @@ default_num_bots = 7
 
 #[test]
 fn test_external_module_files_and_hierarchy_precedence() {
+    let _guard = ENV_CONFIG_MUTEX.lock().unwrap();
     let base_cfg = GameConfig::default();
 
     // 1. F1 Module loads config.f1.toml overrides
@@ -404,5 +408,103 @@ default_track = "oval_speedway"
     assert_eq!(legacy_config.display.window_height, 720);
     assert!(!legacy_config.display.fullscreen);
 }
+
+#[test]
+fn test_user_config_installation_and_project_file_protection() {
+    let _guard = ENV_CONFIG_MUTEX.lock().unwrap();
+    let temp_user_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_user_cfg_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::remove_dir_all(&temp_user_dir);
+
+    // 1. Isolate user config path via environment variable
+    std::env::set_var(tdrace_app::storage::ENV_USER_CONFIG_DIR, &temp_user_dir);
+    let user_config_file = tdrace_app::storage::resolve_user_config_path();
+    assert!(!user_config_file.exists(), "User config file must not exist initially");
+
+    // Read project default config.toml if it exists
+    let project_default = tdrace_app::config::GameConfig::resolve_default_config_path();
+    assert!(project_default.is_some(), "Default git-tracked config.toml must be resolvable");
+    let default_path = project_default.unwrap();
+    let initial_default_content = std::fs::read_to_string(&default_path).expect("Read default config");
+
+    // 2. Load configuration on first run: should auto-install from template
+    let mut loaded = GameConfig::load_or_default();
+    assert!(user_config_file.exists(), "load_or_default must install copy in user config dir");
+
+    // 3. User modifies settings (e.g. display modal / options)
+    loaded.display.window_width = 2560;
+    loaded.display.window_height = 1440;
+    loaded.display.fullscreen = true;
+    loaded.audio.master_volume = 0.25;
+
+    // 4. Save modified configuration
+    loaded.save_to_first_existing_or_default().expect("Save must succeed");
+
+    // 5. Verify the user installed copy is modified
+    let reloaded_user = GameConfig::load_from_path(&user_config_file).expect("Load saved user config");
+    assert_eq!(reloaded_user.display.window_width, 2560);
+    assert_eq!(reloaded_user.display.window_height, 1440);
+    assert!(reloaded_user.display.fullscreen);
+    assert!((reloaded_user.audio.master_volume - 0.25).abs() < 1e-4);
+
+    // 6. Verify the project git-tracked default config.toml was NOT touched at all!
+    let current_default_content = std::fs::read_to_string(&default_path).expect("Read default config after save");
+    assert_eq!(
+        initial_default_content, current_default_content,
+        "Project default config.toml must remain completely unmodified when saving settings"
+    );
+
+    // Cleanup
+    std::env::remove_var(tdrace_app::storage::ENV_USER_CONFIG_DIR);
+    let _ = std::fs::remove_dir_all(&temp_user_dir);
+}
+
+#[test]
+fn test_user_module_config_overrides_default_template() {
+    let _guard = ENV_CONFIG_MUTEX.lock().unwrap();
+    let temp_user_dir = std::env::temp_dir().join(format!(
+        "tdrace_test_mod_cfg_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_user_dir);
+    std::env::set_var(tdrace_app::storage::ENV_USER_CONFIG_DIR, &temp_user_dir);
+
+    // Write a custom module override in the user's config directory
+    let user_f1_cfg = temp_user_dir.join("config.f1.toml");
+    std::fs::write(
+        &user_f1_cfg,
+        r#"
+[gameplay]
+default_track = "silverstone"
+default_laps = 55
+"#,
+    )
+    .expect("Write user f1 module config");
+
+    let base_cfg = GameConfig::default();
+    let f1_resolved = base_cfg.for_module("f1");
+
+    assert_eq!(
+        f1_resolved.gameplay.default_track, "silverstone",
+        "User installed module config must override template defaults"
+    );
+    assert_eq!(
+        f1_resolved.gameplay.default_laps, 55,
+        "User installed module config must override template laps"
+    );
+
+    // Cleanup
+    std::env::remove_var(tdrace_app::storage::ENV_USER_CONFIG_DIR);
+    let _ = std::fs::remove_dir_all(&temp_user_dir);
+}
+
 
 

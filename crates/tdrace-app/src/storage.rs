@@ -4,6 +4,9 @@ use std::path::PathBuf;
 /// Environment variable to override the root user data directory (e.g. in tests or portable builds).
 pub const ENV_USER_DATA_DIR: &str = "TDRACE_USER_DATA_DIR";
 
+/// Environment variable to override the user configuration directory (e.g. in tests or portable builds).
+pub const ENV_USER_CONFIG_DIR: &str = "TDRACE_USER_CONFIG_DIR";
+
 /// Environment variable to override the user circuits/tracks directory.
 pub const ENV_USER_TRACKS_DIR: &str = "TDRACE_USER_TRACKS_DIR";
 
@@ -124,6 +127,90 @@ pub fn resolve_user_data_dir() -> PathBuf {
     fallback
 }
 
+/// Resolves the user-specific configuration root directory.
+///
+/// Priority order:
+/// 1. `TDRACE_USER_CONFIG_DIR` environment variable
+/// 2. If `TDRACE_USER_DATA_DIR` is set, use it (ensures test harnesses isolating data also isolate config)
+/// 3. Platform-specific user config directory:
+///    - Linux / BSD: `$XDG_CONFIG_HOME/tdrace` (or `~/.config/tdrace`)
+///    - macOS: `~/Library/Application Support/tdrace`
+///    - Windows: `%APPDATA%\tdrace` (or `%LOCALAPPDATA%\tdrace`)
+/// 4. Fallback: System temp directory (`<temp_dir>/tdrace`)
+pub fn resolve_user_config_dir() -> PathBuf {
+    if let Ok(override_dir) = std::env::var(ENV_USER_CONFIG_DIR) {
+        if !override_dir.trim().is_empty() {
+            let p = PathBuf::from(override_dir);
+            let _ = fs::create_dir_all(&p);
+            return p;
+        }
+    }
+
+    if let Ok(override_data) = std::env::var(ENV_USER_DATA_DIR) {
+        if !override_data.trim().is_empty() {
+            let p = PathBuf::from(override_data);
+            let _ = fs::create_dir_all(&p);
+            return p;
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(app_data) = std::env::var("APPDATA") {
+            if !app_data.trim().is_empty() {
+                let p = PathBuf::from(app_data).join("tdrace");
+                let _ = fs::create_dir_all(&p);
+                return p;
+            }
+        }
+        if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
+            if !local_app_data.trim().is_empty() {
+                let p = PathBuf::from(local_app_data).join("tdrace");
+                let _ = fs::create_dir_all(&p);
+                return p;
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(home) = std::env::var("HOME") {
+            if !home.trim().is_empty() {
+                let p = PathBuf::from(home).join("Library/Application Support/tdrace");
+                let _ = fs::create_dir_all(&p);
+                return p;
+            }
+        }
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    {
+        if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
+            if !xdg.trim().is_empty() {
+                let p = PathBuf::from(xdg).join("tdrace");
+                let _ = fs::create_dir_all(&p);
+                return p;
+            }
+        }
+        if let Ok(home) = std::env::var("HOME") {
+            if !home.trim().is_empty() {
+                let p = PathBuf::from(home).join(".config").join("tdrace");
+                let _ = fs::create_dir_all(&p);
+                return p;
+            }
+        }
+    }
+
+    let fallback = std::env::temp_dir().join("tdrace");
+    let _ = fs::create_dir_all(&fallback);
+    fallback
+}
+
+/// Resolves the user-specific `config.toml` path (`<resolve_user_config_dir()>/config.toml`).
+pub fn resolve_user_config_path() -> PathBuf {
+    resolve_user_config_dir().join("config.toml")
+}
+
 /// Resolves the user-specific circuits/tracks directory (`<user_data_dir>/tracks`).
 ///
 /// Priority order:
@@ -169,8 +256,11 @@ pub fn save_input_bindings(map: &cabinet::input::mapping::InputMap) -> Result<()
 mod tests {
     use super::*;
 
+    static STORAGE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn test_resolve_user_tracks_dir_env_override() {
+        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
         let temp = std::env::temp_dir().join(format!(
             "tdrace_test_storage_{}",
             std::time::SystemTime::now()
@@ -190,7 +280,32 @@ mod tests {
     }
 
     #[test]
+    fn test_resolve_user_config_dir_env_override() {
+        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
+        let temp = std::env::temp_dir().join(format!(
+            "tdrace_test_config_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let _ = fs::remove_dir_all(&temp);
+
+        std::env::set_var(ENV_USER_CONFIG_DIR, &temp);
+        let resolved_dir = resolve_user_config_dir();
+        assert_eq!(resolved_dir, temp);
+        assert!(resolved_dir.exists());
+
+        let resolved_file = resolve_user_config_path();
+        assert_eq!(resolved_file, temp.join("config.toml"));
+
+        std::env::remove_var(ENV_USER_CONFIG_DIR);
+        let _ = fs::remove_dir_all(&temp);
+    }
+
+    #[test]
     fn test_is_dev_mode_detection() {
+        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
         std::env::remove_var(ENV_DEV_MODE);
         // Defaults to false when env var is not set and no --dev arg
         assert!(!is_dev_mode());
