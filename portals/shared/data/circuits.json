@@ -1,0 +1,1263 @@
+[
+  {
+    "id": "classic_grand_prix",
+    "name": "Classic Grand Prix",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
+    "length_meters": 1221.3,
+    "turns_count": 12,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/classic_grand_prix.json"
+  },
+  {
+    "id": "dirt_figure_eight",
+    "name": "Dirt Figure-8",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.",
+    "length_meters": 800.6,
+    "turns_count": 17,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/dirt_figure_eight.json"
+  },
+  {
+    "id": "dirty_oval_speedway",
+    "name": "Dirty Oval Speedway",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "High-sliding dirt superspeedway oval with 18-degree banked curves and loose gravel cushion.",
+    "length_meters": 883.4,
+    "turns_count": 0,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/dirty_oval_speedway.json"
+  },
+  {
+    "id": "drift_park",
+    "name": "Drift Park",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "Tight technical drift arena with sweeping corners and generous asphalt runoff.",
+    "length_meters": 1172.2,
+    "turns_count": 7,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/drift_park.json"
+  },
+  {
+    "id": "figure_eight",
+    "name": "Figure 8",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "High-speed asphalt figure-8 arena featuring an at-grade flat crossover, sweeping carousels & concrete safety walls.",
+    "length_meters": 800.6,
+    "turns_count": 18,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/figure_eight.json"
+  },
+  {
+    "id": "kart_arena",
+    "name": "Kart Arena",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "Short, high-density karting circuit with fast transitions and chicanes.",
+    "length_meters": 373.3,
+    "turns_count": 9,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/kart_arena.json"
+  },
+  {
+    "id": "oasis_rally",
+    "name": "Oasis Rally",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
+    "length_meters": 990.1,
+    "turns_count": 0,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/oasis_rally.json"
+  },
+  {
+    "id": "outlaw_pass",
+    "name": "Outlaw Pass",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.",
+    "length_meters": 793.8,
+    "turns_count": 13,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/outlaw_pass.json"
+  },
+  {
+    "id": "oval_speedway",
+    "name": "Oval Speedway",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "Full-throttle banked superspeedway surrounded by concrete barriers.",
+    "length_meters": 883.4,
+    "turns_count": 6,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/classic/oval_speedway.json"
+  },
+  {
+    "id": "ramp_raceway",
+    "name": "Ramp Raceway",
+    "category": "classic",
+    "modality": "CLASSIC",
+    "description": "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.",
+    "length_meters": 1088.5,
+    "turns_count": 13,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/classic/ramp_raceway.json"
+  },
+  {
+    "id": "bahrain",
+    "name": "Bahrain International Circuit (Sakhir)",
+    "category": "f1",
+    "modality": "F1",
+    "description": "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.",
+    "length_meters": 2492.6,
+    "turns_count": 21,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/f1/bahrain.json"
+  },
+  {
+    "id": "catalunya",
+    "name": "Circuit de Barcelona-Catalunya",
+    "category": "f1",
+    "modality": "F1",
+    "description": "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.",
+    "length_meters": 2150.9,
+    "turns_count": 23,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/f1/catalunya.json"
+  },
+  {
+    "id": "classic_grand_prix",
+    "name": "Classic Grand Prix",
+    "category": "f1",
+    "modality": "F1",
+    "description": "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
+    "length_meters": 1221.3,
+    "turns_count": 12,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/f1/classic_grand_prix.json"
+  },
+  {
+    "id": "cota",
+    "name": "Circuit of the Americas (COTA)",
+    "category": "f1",
+    "modality": "F1",
+    "description": "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.",
+    "length_meters": 2519.1,
+    "turns_count": 28,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/f1/cota.json"
+  },
+  {
+    "id": "interlagos",
+    "name": "Autodromo Jose Carlos Pace (Interlagos)",
+    "category": "f1",
+    "modality": "F1",
+    "description": "Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.",
+    "length_meters": 2054.9,
+    "turns_count": 26,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/f1/interlagos.json"
+  },
+  {
+    "id": "madring",
+    "name": "MadRing Circuito de Madrid",
+    "category": "f1",
+    "modality": "F1",
+    "description": "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.",
+    "length_meters": 2578.2,
+    "turns_count": 30,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/f1/madring.json"
+  },
+  {
+    "id": "marina_bay",
+    "name": "Marina Bay Street Circuit (Singapore)",
+    "category": "f1",
+    "modality": "F1",
+    "description": "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.",
+    "length_meters": 2276.4,
+    "turns_count": 27,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/f1/marina_bay.json"
+  },
+  {
+    "id": "monaco",
+    "name": "Circuit de Monaco",
+    "category": "f1",
+    "modality": "F1",
+    "description": "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.",
+    "length_meters": 1478.1,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/f1/monaco.json"
+  },
+  {
+    "id": "montreal",
+    "name": "Circuit Gilles Villeneuve (Montreal)",
+    "category": "f1",
+    "modality": "F1",
+    "description": "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.",
+    "length_meters": 2052.6,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/f1/montreal.json"
+  },
+  {
+    "id": "monza",
+    "name": "Monza Autodromo Nazionale",
+    "category": "f1",
+    "modality": "F1",
+    "description": "High-speed Italian Grand Prix temple of speed.",
+    "length_meters": 2818.5,
+    "turns_count": 23,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/f1/monza.json"
+  },
+  {
+    "id": "red_bull_ring",
+    "name": "Red Bull Ring (Spielberg)",
+    "category": "f1",
+    "modality": "F1",
+    "description": "High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.",
+    "length_meters": 2031.4,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/f1/red_bull_ring.json"
+  },
+  {
+    "id": "silverstone",
+    "name": "Silverstone Grand Prix Circuit",
+    "category": "f1",
+    "modality": "F1",
+    "description": "High-speed sweeping esses through Maggotts, Becketts and Chapel.",
+    "length_meters": 2761.8,
+    "turns_count": 29,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/f1/silverstone.json"
+  },
+  {
+    "id": "spa",
+    "name": "Circuit de Spa-Francorchamps",
+    "category": "f1",
+    "modality": "F1",
+    "description": "Belgian Ardennes rollercoaster featuring Eau Rouge and Pouhon.",
+    "length_meters": 3290.8,
+    "turns_count": 30,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/f1/spa.json"
+  },
+  {
+    "id": "suzuka",
+    "name": "Suzuka International Racing Course",
+    "category": "f1",
+    "modality": "F1",
+    "description": "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.",
+    "length_meters": 2721.1,
+    "turns_count": 30,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/f1/suzuka.json"
+  },
+  {
+    "id": "zandvoort",
+    "name": "Circuit Zandvoort",
+    "category": "f1",
+    "modality": "F1",
+    "description": "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.",
+    "length_meters": 1955.5,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/f1/zandvoort.json"
+  },
+  {
+    "id": "bahrain",
+    "name": "Bahrain International Circuit (Sakhir)",
+    "category": "gt",
+    "modality": "GT",
+    "description": "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.",
+    "length_meters": 2492.6,
+    "turns_count": 21,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/gt/bahrain.json"
+  },
+  {
+    "id": "bathurst",
+    "name": "Mount Panorama (Bathurst)",
+    "category": "gt",
+    "modality": "GT",
+    "description": "The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.",
+    "length_meters": 2949.2,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/bathurst.json"
+  },
+  {
+    "id": "catalunya",
+    "name": "Circuit de Barcelona-Catalunya",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.",
+    "length_meters": 2150.9,
+    "turns_count": 23,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/catalunya.json"
+  },
+  {
+    "id": "classic_grand_prix",
+    "name": "Classic Grand Prix",
+    "category": "gt",
+    "modality": "GT",
+    "description": "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
+    "length_meters": 1221.3,
+    "turns_count": 12,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/gt/classic_grand_prix.json"
+  },
+  {
+    "id": "cota",
+    "name": "Circuit of the Americas (COTA)",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.",
+    "length_meters": 2519.1,
+    "turns_count": 28,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/cota.json"
+  },
+  {
+    "id": "interlagos",
+    "name": "Autodromo Jose Carlos Pace (Interlagos)",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.",
+    "length_meters": 2054.9,
+    "turns_count": 26,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/gt/interlagos.json"
+  },
+  {
+    "id": "le_mans_sarthe",
+    "name": "Circuit de la Sarthe (Le Mans)",
+    "category": "gt",
+    "modality": "GT",
+    "description": "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.",
+    "length_meters": 6551.5,
+    "turns_count": 34,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/le_mans_sarthe.json"
+  },
+  {
+    "id": "madring",
+    "name": "MadRing Circuito de Madrid",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.",
+    "length_meters": 2578.2,
+    "turns_count": 30,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/gt/madring.json"
+  },
+  {
+    "id": "marina_bay",
+    "name": "Marina Bay Street Circuit (Singapore)",
+    "category": "gt",
+    "modality": "GT",
+    "description": "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.",
+    "length_meters": 2276.4,
+    "turns_count": 27,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/gt/marina_bay.json"
+  },
+  {
+    "id": "monaco",
+    "name": "Circuit de Monaco",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.",
+    "length_meters": 1478.1,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/monaco.json"
+  },
+  {
+    "id": "montreal",
+    "name": "Circuit Gilles Villeneuve (Montreal)",
+    "category": "gt",
+    "modality": "GT",
+    "description": "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.",
+    "length_meters": 2052.6,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/gt/montreal.json"
+  },
+  {
+    "id": "monza",
+    "name": "Monza Autodromo Nazionale",
+    "category": "gt",
+    "modality": "GT",
+    "description": "High-speed Italian Grand Prix temple of speed.",
+    "length_meters": 2818.5,
+    "turns_count": 23,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/gt/monza.json"
+  },
+  {
+    "id": "nurburgring_gp",
+    "name": "Nurburgring Grand Prix-Strecke",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.",
+    "length_meters": 2361.9,
+    "turns_count": 27,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/nurburgring_gp.json"
+  },
+  {
+    "id": "portimao_gp",
+    "name": "Autodromo Internacional do Algarve",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.",
+    "length_meters": 2178.1,
+    "turns_count": 24,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/portimao_gp.json"
+  },
+  {
+    "id": "red_bull_ring",
+    "name": "Red Bull Ring (Spielberg)",
+    "category": "gt",
+    "modality": "GT",
+    "description": "High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.",
+    "length_meters": 2031.4,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/red_bull_ring.json"
+  },
+  {
+    "id": "silverstone",
+    "name": "Silverstone Grand Prix Circuit",
+    "category": "gt",
+    "modality": "GT",
+    "description": "High-speed sweeping esses through Maggotts, Becketts and Chapel.",
+    "length_meters": 2761.8,
+    "turns_count": 29,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/gt/silverstone.json"
+  },
+  {
+    "id": "spa",
+    "name": "Circuit de Spa-Francorchamps",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Belgian Ardennes rollercoaster featuring Eau Rouge and Pouhon.",
+    "length_meters": 3290.8,
+    "turns_count": 30,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/spa.json"
+  },
+  {
+    "id": "suzuka",
+    "name": "Suzuka International Racing Course",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.",
+    "length_meters": 2721.1,
+    "turns_count": 30,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/suzuka.json"
+  },
+  {
+    "id": "zandvoort",
+    "name": "Circuit Zandvoort",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.",
+    "length_meters": 1955.5,
+    "turns_count": 25,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/gt/zandvoort.json"
+  },
+  {
+    "id": "ampfing",
+    "name": "Schweppermannring Ampfing",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Famous Bavarian outdoor kart arena with flowing mid-speed esses, double-apex hairpin turns, and high-speed drafting straights.",
+    "length_meters": 964.9,
+    "turns_count": 20,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/ampfing.json"
+  },
+  {
+    "id": "drift_park",
+    "name": "Drift Park",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Tight technical drift arena with sweeping corners and generous asphalt runoff.",
+    "length_meters": 499.1,
+    "turns_count": 9,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/drift_park.json"
+  },
+  {
+    "id": "franciacorta",
+    "name": "Franciacorta Karting Track",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Modern premier Italian world championship venue with technical switchback chicanes and trail-braking hairpins.",
+    "length_meters": 1202.2,
+    "turns_count": 23,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/franciacorta.json"
+  },
+  {
+    "id": "genk",
+    "name": "Karting Genk (Home of Champions)",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Legendary Belgian proving grounds featuring the high-G G-Curve carousel, Europabocht, and Champions Chicane.",
+    "length_meters": 1257.5,
+    "turns_count": 19,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/genk.json"
+  },
+  {
+    "id": "kart_arena",
+    "name": "Kart Arena",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Short, high-density karting circuit with fast transitions and chicanes.",
+    "length_meters": 373.3,
+    "turns_count": 9,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/kart_arena.json"
+  },
+  {
+    "id": "kristianstad",
+    "name": "Kristianstad Karting Klubb (\u00c5sum Ring)",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Historic Swedish European and World Championship circuit famous for technical rhythm sections, elevation sweeps, and high-G esses.",
+    "length_meters": 1106.9,
+    "turns_count": 22,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/kristianstad.json"
+  },
+  {
+    "id": "le_mans_kart",
+    "name": "Le Mans Karting International",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Alain Prost circuit at the Le Mans 24 Hours complex with Dunlop chicane, Bugatti Esses, and Courbe des 24H.",
+    "length_meters": 1301.0,
+    "turns_count": 22,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/le_mans_kart.json"
+  },
+  {
+    "id": "lonato",
+    "name": "South Garda Karting (Lonato)",
+    "category": "kart",
+    "modality": "KART",
+    "description": "The global Mecca of Karting featuring Curva del Paddock, Pettine hairpin, and Variante Nuova.",
+    "length_meters": 1115.8,
+    "turns_count": 18,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/lonato.json"
+  },
+  {
+    "id": "pfi",
+    "name": "PF International Kart Circuit (PFI)",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Britain's premier FIA kart venue featuring the world-famous elevated flyover crossover bridge and underpass.",
+    "length_meters": 1291.4,
+    "turns_count": 21,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "rel_path": "tracks/kart/pfi.json"
+  },
+  {
+    "id": "portimao_kart",
+    "name": "Kartodromo Internacional do Algarve",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Undulating Portuguese rollercoaster circuit with dramatic elevation drops, sweeping downhill turns, and Curva do Sol.",
+    "length_meters": 1499.9,
+    "turns_count": 9,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/portimao_kart.json"
+  },
+  {
+    "id": "sarno",
+    "name": "Circuito Internazionale Napoli (Sarno)",
+    "category": "kart",
+    "modality": "KART",
+    "description": "The Temple of Speed under Mount Vesuvius with massive full-throttle straights and technical Esses.",
+    "length_meters": 1435.0,
+    "turns_count": 21,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/sarno.json"
+  },
+  {
+    "id": "seven_laghi",
+    "name": "Circuito Internazionale 7 Laghi (Castelletto)",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Demanding Italian proving ground in Castelletto di Branduzzo featuring technical switchbacks, heavy trail-braking hairpins, and undulating sweepers.",
+    "length_meters": 1180.4,
+    "turns_count": 17,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/seven_laghi.json"
+  },
+  {
+    "id": "silverstone_national_kart",
+    "name": "Silverstone National Karting Circuit",
+    "category": "kart",
+    "modality": "KART",
+    "description": "The agile National sprint layout at the premier Kart Silverstone complex, featuring snappy switchbacks, Priory hairpin, and tight apex rumble curbs.",
+    "length_meters": 498.3,
+    "turns_count": 13,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/silverstone_national_kart.json"
+  },
+  {
+    "id": "wackersdorf",
+    "name": "Prokart Raceland Wackersdorf",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Premier German CIK-FIA World Championship kart venue featuring fast chicane sweeps, long drafting straights, and technical hairpins.",
+    "length_meters": 1107.8,
+    "turns_count": 21,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/wackersdorf.json"
+  },
+  {
+    "id": "zuera",
+    "name": "Circuito Internacional de Zuera",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Ultra-fast Spanish supertrack with enormous drafting straights, Curva del Cierzo, and wide passing sweepers.",
+    "length_meters": 1591.7,
+    "turns_count": 22,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/zuera.json"
+  },
+  {
+    "id": "bristol",
+    "name": "Bristol Motor Speedway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "The Last Great Colosseum: 0.533-mile steep concrete short track with 30\u00b0 banking and bumper-to-bumper racing.",
+    "length_meters": 749.7,
+    "turns_count": 0,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/bristol.json"
+  },
+  {
+    "id": "charlotte",
+    "name": "Charlotte Motor Speedway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "The Beast of the Southeast: 1.5-mile quad-oval with 24\u00b0 banking, frontstretch dogleg, and high-speed pack drafting battles.",
+    "length_meters": 1687.5,
+    "turns_count": 0,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/charlotte.json"
+  },
+  {
+    "id": "chicago",
+    "name": "Chicago Street Course",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "NASCAR's premier 2.2-mile downtown street circuit through Grant Park with 12 tight 90-degree corners between concrete barrier walls.",
+    "length_meters": 3345.2,
+    "turns_count": 17,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/chicago.json"
+  },
+  {
+    "id": "darlington",
+    "name": "Darlington Raceway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "The Lady in Black: 1.366-mile egg-shaped asymmetrical oval with 25\u00b0 high banks and the famous wall-scraping 'Darlington Stripe'.",
+    "length_meters": 1547.0,
+    "turns_count": 0,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/darlington.json"
+  },
+  {
+    "id": "daytona",
+    "name": "Daytona Superspeedway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "Premier 2.5-mile high-banked tri-oval with 31\u00b0 banking and intense 3-wide pack drafting.",
+    "length_meters": 1945.4,
+    "turns_count": 0,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/daytona.json"
+  },
+  {
+    "id": "eldora",
+    "name": "Eldora Speedway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "Historic 0.5-mile high-banked clay oval featuring 24\u00b0 banking, relentless dirt sliding, and close-quarters pack racing.",
+    "length_meters": 796.3,
+    "turns_count": 0,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/eldora.json"
+  },
+  {
+    "id": "indianapolis",
+    "name": "Indianapolis Motor Speedway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "The Brickyard: 2.5-mile historic rectangular speedway with 9.2\u00b0 banked turns, long drafting straights, and the famous Yard of Bricks start/finish line.",
+    "length_meters": 1997.9,
+    "turns_count": 0,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/indianapolis.json"
+  },
+  {
+    "id": "iowa",
+    "name": "Iowa Speedway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "The Fastest Short Track on the Planet: 7/8-mile D-shaped oval with progressive 12\u00b0-14\u00b0 banking and intense multi-groove racing.",
+    "length_meters": 1393.7,
+    "turns_count": 0,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/iowa.json"
+  },
+  {
+    "id": "martinsville",
+    "name": "Martinsville Speedway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "The Paperclip: 0.526-mile flat short track with tight 12\u00b0 concrete corners, heavy curb-hopping, and brutal paint-trading.",
+    "length_meters": 753.0,
+    "turns_count": 8,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/martinsville.json"
+  },
+  {
+    "id": "road_america",
+    "name": "Road America",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "Historic 4.0-mile natural-terrain road course featuring the Carousel, The Kink, and Canada Corner.",
+    "length_meters": 3104.3,
+    "turns_count": 17,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/road_america.json"
+  },
+  {
+    "id": "talladega",
+    "name": "Talladega Superspeedway",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "The biggest, fastest superspeedway with 33\u00b0 banking and flat-out unrestricted slipstream battles.",
+    "length_meters": 2188.9,
+    "turns_count": 0,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/talladega.json"
+  },
+  {
+    "id": "watkins_glen",
+    "name": "Watkins Glen International",
+    "category": "nascar",
+    "modality": "NASCAR",
+    "description": "Legendary NASCAR road course featuring The Esses, the Bus Stop chicane, and the high-speed Carousel.",
+    "length_meters": 1812.6,
+    "turns_count": 14,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/nascar/watkins_glen.json"
+  },
+  {
+    "id": "catalunya_rx",
+    "name": "Circuit de Barcelona-Catalunya RX (World RX Spain)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.",
+    "length_meters": 1080.2,
+    "turns_count": 18,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/catalunya_rx.json"
+  },
+  {
+    "id": "estering_rx",
+    "name": "Estering Buxtehude (World RX Germany)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "The cathedral of German Rallycross featuring the iconic Turn 1 hairpin dive, high-speed forest drag and technical gravel carousel.",
+    "length_meters": 926.9,
+    "turns_count": 11,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/estering_rx.json"
+  },
+  {
+    "id": "hell_rx",
+    "name": "L\u00e5nkebanen (World RX Norway)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.",
+    "length_meters": 991.9,
+    "turns_count": 13,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/hell_rx.json"
+  },
+  {
+    "id": "holjes_rx",
+    "name": "H\u00f6ljes Motorstadion (World RX Sweden)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "The Holy Grail of Rallycross in Sweden featuring the legendary H\u00f6ljes Jump, banked Velodrome & mixed gravel sliding.",
+    "length_meters": 1181.5,
+    "turns_count": 15,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/holjes_rx.json"
+  },
+  {
+    "id": "killarney_rx",
+    "name": "Killarney International Raceway (World RX South Africa)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Scenic Cape Town thriller in the shadow of Table Mountain, featuring a rapid asphalt drag, loose dirt jumps and high-drift hairpin transitions.",
+    "length_meters": 1042.3,
+    "turns_count": 12,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/killarney_rx.json"
+  },
+  {
+    "id": "kouvola_rx",
+    "name": "Tykkim\u00e4en Moottorirata (World RX Finland)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkim\u00e4ki dirt crest.",
+    "length_meters": 962.5,
+    "turns_count": 15,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/kouvola_rx.json"
+  },
+  {
+    "id": "loheac_rx",
+    "name": "Circuit de Loh\u00e9ac (World RX France)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "The French Rallycross classic in Brittany with long asphalt drag straight, gravel tabletop jump & tight switchbacks.",
+    "length_meters": 1067.7,
+    "turns_count": 16,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/loheac_rx.json"
+  },
+  {
+    "id": "lydden_hill",
+    "name": "Lydden Hill Circuit (World RX Great Britain)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "The historic birthplace of Rallycross featuring the iconic Chessons Drift gravel slide, North Bend & Devil's Elbow.",
+    "length_meters": 1149.7,
+    "turns_count": 12,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/lydden_hill.json"
+  },
+  {
+    "id": "mettet_rx",
+    "name": "Circuit Jules Tacheny Mettet (World RX Belgium)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Belgian Rallycross classic in Wallonia featuring the high-speed downhill plunge, technical gravel carousel and the flying Mettet dirt jump.",
+    "length_meters": 1106.3,
+    "turns_count": 7,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/mettet_rx.json"
+  },
+  {
+    "id": "montalegre_rx",
+    "name": "Pista Autom\u00f3vel de Montalegre (World RX Portugal)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "High-altitude mountain thriller in Portugal featuring an undulating drag straight, gravel stadium section and fast table crest.",
+    "length_meters": 1011.1,
+    "turns_count": 16,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/montalegre_rx.json"
+  },
+  {
+    "id": "nyirad_rx",
+    "name": "Nyir\u00e1d Racing Center (Euro RX Hungary)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
+    "length_meters": 1156.4,
+    "turns_count": 15,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/nyirad_rx.json"
+  },
+  {
+    "id": "oasis_rally",
+    "name": "Oasis Rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
+    "length_meters": 990.1,
+    "turns_count": 0,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/oasis_rally.json"
+  },
+  {
+    "id": "outlaw_pass",
+    "name": "Outlaw Pass",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.",
+    "length_meters": 793.8,
+    "turns_count": 13,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/outlaw_pass.json"
+  },
+  {
+    "id": "riga_rx",
+    "name": "Bi\u0137ernieku Trase (World RX Latvia)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.",
+    "length_meters": 1349.7,
+    "turns_count": 16,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/riga_rx.json"
+  },
+  {
+    "id": "sahara",
+    "name": "Oasis Rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
+    "length_meters": 990.1,
+    "turns_count": 0,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/sahara.json"
+  },
+  {
+    "id": "sahara_dunes",
+    "name": "Oasis Rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
+    "length_meters": 990.1,
+    "turns_count": 0,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/sahara_dunes.json"
+  },
+  {
+    "id": "silverstone_rx",
+    "name": "Silverstone Circuit RX (World RX Great Britain)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "The Speedmachine World RX arena at Silverstone featuring sweeping asphalt entries, technical loose dirt hairpin switches and the arena jump crest.",
+    "length_meters": 949.8,
+    "turns_count": 9,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/silverstone_rx.json"
+  },
+  {
+    "id": "yas_marina_rx",
+    "name": "Yas Marina RX Arena (World RX Abu Dhabi)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Spectacular twilight rallycross inside the Yas Marina amphitheater, featuring stadium dirt jumps, tight desert hairpins and high-speed grandstand sweeps.",
+    "length_meters": 1003.5,
+    "turns_count": 14,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/yas_marina_rx.json"
+  }
+]

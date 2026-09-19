@@ -1,0 +1,111 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'TdRace Motorsport Asset Catalog & Interactive Physics Showroom' } = Astro.props;
+const pathname = new URL(Astro.request.url).pathname;
+
+const navItems = [
+  { label: 'Dashboard', href: '/' },
+  { label: 'Garage Showroom', href: '/vehicles' },
+  { label: 'Circuit Explorer', href: '/circuits' },
+  { label: 'Physics Lab', href: '/physics' },
+];
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | TdRace Portal</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
+  </head>
+  <body class="min-h-screen flex flex-col bg-racing-bg text-racing-text">
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-50 bg-racing-surface/90 backdrop-blur-md border-b border-racing-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <a href="/" class="flex items-center space-x-3 group">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-racing-blue to-racing-cyan flex items-center justify-center font-bold text-white shadow-lg shadow-racing-blue/20 group-hover:scale-105 transition-transform">
+              🏁
+            </div>
+            <div>
+              <span class="font-extrabold text-lg tracking-tight text-white group-hover:text-racing-cyan transition-colors">TdRace</span>
+              <span class="text-xs px-2 py-0.5 ml-1.5 rounded-full bg-racing-surface2 border border-racing-border text-racing-amber font-mono">OPTION B</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center space-x-1 font-medium text-sm">
+          {navItems.map((item) => {
+            const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+            return (
+              <a
+                href={item.href}
+                class={`px-3.5 py-2 rounded-md transition-colors ${
+                  isActive
+                    ? 'bg-racing-blue/15 text-racing-cyan font-semibold border border-racing-blue/30'
+                    : 'text-racing-muted hover:text-white hover:bg-racing-surface2'
+                }`}
+              >
+                {item.label}
+              </a>
+            );
+          })}
+        </nav>
+
+        <!-- Right Side Live Badges & Option Switcher -->
+        <div class="flex items-center space-x-3">
+          <div class="hidden lg:flex items-center space-x-2 text-xs font-mono bg-racing-surface2/60 border border-racing-border px-3 py-1 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-racing-green animate-pulse"></span>
+            <span class="text-racing-muted">Pacejka 60Hz Engine</span>
+          </div>
+          <a
+            href="http://localhost:4321"
+            target="_blank"
+            class="text-xs font-mono bg-racing-surface2 hover:bg-racing-border border border-racing-border text-racing-cyan px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-colors"
+            title="Open Option A (Starlight Technical Manual)"
+          >
+            <span>Option A (Docs)</span>
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Body Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-racing-surface border-t border-racing-border py-8 text-xs text-racing-muted">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <span>Single-source backed by <strong class="text-racing-text">Google OKF v0.2</strong> Markdown</span>
+          <span>•</span>
+          <span class="font-mono">89 Circuits</span>
+          <span>•</span>
+          <span class="font-mono">25 Car Classes</span>
+          <span>•</span>
+          <span class="font-mono">11 Surfaces</span>
+        </div>
+        <div class="flex items-center space-x-4">
+          <a href="https://github.com/magomar/tdrace" target="_blank" class="hover:text-racing-cyan transition-colors">GitHub</a>
+          <a href="/physics" class="hover:text-racing-cyan transition-colors">Physics Equations</a>
+          <a href="/vehicles" class="hover:text-racing-cyan transition-colors">Garage Showroom</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

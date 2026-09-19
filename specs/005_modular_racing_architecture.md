@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-13
 generated: { by: agent/antigravity, at: 2026-09-18T12:30:00Z }
 ---
-
 # Architecture Spec: Modular Motorsport Architecture (wheelbase & arcade-race-core) 🏗️
 
 A comprehensive technical architecture establishing the extraction and modularization of two reusable, independent Rust engine crates from [`crates/tdrace-core`](../crates/tdrace-core):

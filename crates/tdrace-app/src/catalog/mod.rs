@@ -37,6 +37,29 @@ impl RealCarModel {
     pub fn is_eligible_for_race(&self, race_required_tier: u8, dev_mode: bool) -> bool {
         dev_mode || self.tier <= race_required_tier
     }
+
+    /// Derives the customized `CarConfig` matching the physical attributes of this real-world car model.
+    pub fn to_car_config(&self) -> tdrace_core::physics::config::CarConfig {
+        let mut cfg = self.base_car_choice.config();
+        cfg.mass = self.weight_kg as f32;
+        cfg.top_speed_mps = (self.top_speed_kmh as f32) / 3.6;
+
+        // Realistic tractive force derived from engine BHP and drivetrain
+        let force_per_bhp = match self.module_id {
+            "kart" => 38.0,
+            "extreme_offroad" if self.tier >= 4 => 14.0,
+            _ => 17.5,
+        };
+        cfg.max_engine_force = (self.bhp as f32) * force_per_bhp;
+
+        match self.drivetrain {
+            "FWD" => cfg.drive_bias = 1.0,
+            "AWD" | "4WD" => cfg.drive_bias = 0.5,
+            _ => cfg.drive_bias = 0.0,
+        }
+
+        cfg
+    }
 }
 
 /// Master catalog of all authentic motorsport vehicles in TdRace.

@@ -1,0 +1,140 @@
+---
+interface Props {
+  car: {
+    id: string;
+    name: string;
+    manufacturer?: string;
+    year?: number;
+    module: string;
+    tier: number;
+    category: string;
+    class_badge: string;
+    mass: number;
+    power_bhp: number;
+    torque_nm?: number;
+    top_speed_kmh: number;
+    accel_0_100?: number;
+    drive_bias: number;
+    drivetrain: string;
+    engine_desc?: string;
+    downforce: number;
+    drag?: number;
+    brakes_desc?: string;
+    brakes_kn: number;
+    stats: {
+      speed: number;
+      acceleration: number;
+      grip: number;
+      agility: number;
+      downforce: number;
+    };
+    summary: string;
+  };
+}
+
+const { car } = Astro.props;
+
+const badgeColors: Record<string, string> = {
+  'Gran Turismo & Endurance': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  'NASCAR Stock Car Racing': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  'Rallycross & All-Terrain': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  'Extreme Off-Road & Arenas': 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+  'Karting & Micro-Racers': 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+};
+
+const moduleColor = badgeColors[car.module] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+---
+
+<div class="bg-racing-surface rounded-xl border border-racing-border overflow-hidden hover:border-racing-blue/50 hover:shadow-xl hover:shadow-racing-blue/5 transition-all flex flex-col justify-between group">
+  <!-- Top Header -->
+  <div class="p-5 border-b border-racing-border/60">
+    <div class="flex items-center justify-between gap-2 mb-2.5">
+      <span class={`text-xs px-2.5 py-0.5 rounded-full border font-mono font-semibold ${moduleColor}`}>
+        {car.class_badge} • Tier {car.tier}
+      </span>
+      <span class="text-xs font-mono text-racing-muted bg-racing-surface2 px-2 py-0.5 rounded border border-racing-border/40">
+        {car.drivetrain}
+      </span>
+    </div>
+    <h3 class="text-lg font-bold text-white group-hover:text-racing-cyan transition-colors tracking-tight">
+      {car.name}
+    </h3>
+    <p class="text-xs text-racing-muted mt-1 font-mono">
+      {car.manufacturer ? `${car.manufacturer} • ${car.year} • ` : ''}{car.category}
+    </p>
+  </div>
+
+  <!-- Key Specs Grid -->
+  <div class="grid grid-cols-3 gap-2 px-5 py-3.5 bg-racing-surface2/40 border-b border-racing-border/40 text-center font-mono text-xs">
+    <div>
+      <div class="text-racing-muted text-[10px] uppercase">Power</div>
+      <div class="font-bold text-racing-text mt-0.5">{car.power_bhp} BHP</div>
+    </div>
+    <div class="border-x border-racing-border/40">
+      <div class="text-racing-muted text-[10px] uppercase">Weight</div>
+      <div class="font-bold text-racing-text mt-0.5">{car.mass} kg</div>
+    </div>
+    <div>
+      <div class="text-racing-muted text-[10px] uppercase">Top Speed</div>
+      <div class="font-bold text-racing-cyan mt-0.5">{car.top_speed_kmh} km/h</div>
+    </div>
+  </div>
+
+  <!-- Engine & Acceleration Sub-Banner -->
+  {car.engine_desc && (
+    <div class="px-5 py-2 bg-racing-surface2/70 border-b border-racing-border/40 text-[11px] font-mono text-racing-muted flex justify-between items-center">
+      <span class="truncate max-w-[210px]" title={car.engine_desc}>⚙️ {car.engine_desc}</span>
+      {car.accel_0_100 && (
+        <span class="text-racing-cyan font-bold whitespace-nowrap ml-2">0-100: {car.accel_0_100}s</span>
+      )}
+    </div>
+  )}
+
+  <!-- Performance Stat Bars -->
+  <div class="p-5 space-y-2.5 flex-1 flex flex-col justify-center">
+    <div class="space-y-1">
+      <div class="flex justify-between text-[11px] font-mono">
+        <span class="text-racing-muted">Pace / Top Speed</span>
+        <span class="text-racing-text">{car.stats.speed}%</span>
+      </div>
+      <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
+        <div class="h-full bg-blue-500 rounded-full transition-all" style={`width: ${car.stats.speed}%`}></div>
+      </div>
+    </div>
+
+    <div class="space-y-1">
+      <div class="flex justify-between text-[11px] font-mono">
+        <span class="text-racing-muted">Acceleration</span>
+        <span class="text-racing-text">{car.stats.acceleration}%</span>
+      </div>
+      <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
+        <div class="h-full bg-cyan-500 rounded-full transition-all" style={`width: ${car.stats.acceleration}%`}></div>
+      </div>
+    </div>
+
+    <div class="space-y-1">
+      <div class="flex justify-between text-[11px] font-mono">
+        <span class="text-racing-muted">Apex Grip (Pacejka D)</span>
+        <span class="text-racing-text">{car.stats.grip}%</span>
+      </div>
+      <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
+        <div class="h-full bg-emerald-500 rounded-full transition-all" style={`width: ${car.stats.grip}%`}></div>
+      </div>
+    </div>
+
+    <div class="space-y-1">
+      <div class="flex justify-between text-[11px] font-mono">
+        <span class="text-racing-muted">Downforce ($C_l$)</span>
+        <span class="text-racing-text">{car.downforce.toFixed(2)}</span>
+      </div>
+      <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
+        <div class="h-full bg-amber-500 rounded-full transition-all" style={`width: ${car.stats.downforce}%`}></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Footer -->
+  <div class="px-5 py-3 bg-racing-surface2/60 border-t border-racing-border text-xs text-racing-muted italic">
+    "{car.summary}"
+  </div>
+</div>

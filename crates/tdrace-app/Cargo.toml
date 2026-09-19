@@ -1,5 +1,6 @@
 [package]
 name = "tdrace-app"
+default-run = "tdrace-app"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

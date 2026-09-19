@@ -7,7 +7,6 @@ status: draft
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
 ---
-
 # Feature Spec: Karting World Cup Career Mode 🏎️
 
 The **Karting World Cup Career Mode** establishes the foundational grassroots motorsport ladder in **TdRace**. Serving as the training crucible for all world-class circuit racers, this career tracks the journey of an aspiring driver from junior 60cc cadet karts through direct-drive senior karts, violent 6-speed KZ2 shifters, tuned novelty racing lawnmowers, and the ballistic 240 km/h 250cc Superkart division on full-sized Grand Prix tracks.

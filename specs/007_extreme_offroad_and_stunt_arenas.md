@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-17
 generated: { by: agent/antigravity, at: 2026-09-18T12:30:00Z }
 ---
-
 # Feature Spec: Extreme Off-Road & Stunt Arenas Module 🌟
 
 A comprehensive gameplay and physics module expanding **TdRace** into extreme off-road terrain, rhythm whoops, big-air jump ballistics, and open stunt arenas. Centered on the hero vehicle—an ultralight $590\,\text{kg}$ chromoly spaceframe **Sand Rail Buggy** with a 300 BHP turbo boxer engine—this module breaks the 1D spline corridor paradigm with first-class support for bounded 2D arena fields and 15 diverse real-world inspired motorsport venues.

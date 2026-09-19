@@ -1,3 +1,12 @@
+---
+type: Architecture Spec
+title: "Surface & Wall Physics Legacy Specification"
+description: "Historical engineering notes and specification for 11 surface types and 4 barrier collision models."
+status: active
+category: engineering
+tags: [physics, legacy, surfaces, walls]
+---
+
 # TdRace Surface & Wall Physics Specifications
 
 This document provides a comprehensive technical reference for all **surface types** (track, off-track, and dynamic hazards) and **wall barrier types** implemented in **TdRace**.

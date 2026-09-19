@@ -1,0 +1,118 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PacejkaGraph from '../components/PacejkaGraph.astro';
+import SurfaceMatrix from '../components/SurfaceMatrix.astro';
+---
+
+<Layout title="Simulation Physics Laboratory" description="Explore the mathematical physics engine: Pacejka '96 slip curves, chassis weight transfer, aerodynamic downforce, and 11-surface friction models.">
+  <div class="py-6 border-b border-racing-border">
+    <h1 class="text-3xl font-extrabold text-white tracking-tight">Simulation Physics Laboratory</h1>
+    <p class="text-sm text-racing-muted font-mono mt-1">
+      Mathematical modeling of tires, chassis weight transfer, split-μ terrain sampling, and barrier collision dynamics.
+    </p>
+  </div>
+
+  <!-- Interactive Pacejka Section -->
+  <section class="py-8 border-b border-racing-border">
+    <div class="mb-4">
+      <h2 class="text-xl font-bold text-white tracking-tight">1. Pacejka '96 Magic Formula & Lateral Slip Curves</h2>
+      <p class="text-xs text-racing-muted font-mono mt-1">
+        $F_y(\alpha) = \mu \cdot F_z \cdot D \cdot \sin(C \cdot \arctan(B \alpha - E(B \alpha - \arctan(B \alpha))))$
+      </p>
+    </div>
+    <PacejkaGraph />
+  </section>
+
+  <!-- Surface Physics Matrix -->
+  <section class="py-8 border-b border-racing-border">
+    <div class="mb-4">
+      <h2 class="text-xl font-bold text-white tracking-tight">2. 11-Surface Environmental Friction & Drag Matrix</h2>
+      <p class="text-xs text-racing-muted font-mono mt-1">
+        Per-wheel split-μ sampling across dry tarmac, compacted dirt, gravel, viscous mud, ice, and standing water.
+      </p>
+    </div>
+    <SurfaceMatrix />
+  </section>
+
+  <!-- Core Mathematical Equations Reference -->
+  <section class="py-8 space-y-6">
+    <div class="mb-2">
+      <h2 class="text-xl font-bold text-white tracking-tight">3. Core Mathematical Simulation Formulations</h2>
+      <p class="text-xs text-racing-muted font-mono mt-1">Exact formulas implemented in crates/wheelbase and crates/arcade-race-core.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
+      <!-- Weight Transfer -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Dynamic Chassis Load Transfer</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Normal load shifts between wheels during acceleration (pitch squat/dive) and cornering (body roll):
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-racing-cyan overflow-x-auto">
+          ΔF_z,long = m · a_x · (h_cg / L) · k_pitch<br />
+          ΔF_z,lat = m · a_y · (h_cg / w) · k_roll
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Where L = a + b is wheelbase, w is track width, and h_cg is center-of-gravity height.
+        </p>
+      </div>
+
+      <!-- Aerodynamics -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Aerodynamic Downforce & Drag</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Forces scale quadratically with longitudinal speed $v$, increasing tire vertical grip without adding inertial mass:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-racing-cyan overflow-x-auto">
+          F_downforce = C_downforce · v²<br />
+          F_drag = C_air_drag · v² + C_rolling · m · g
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Enables high-speed stability on FIA GT3, Hypercars, and Superkarts.
+        </p>
+      </div>
+
+      <!-- Barrier Collision -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Perimeter Barrier Collision Impulse</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Rigid body SAT collision response resolving normal rebound and tangential scraping friction:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-racing-amber overflow-x-auto">
+          J_n = -((1 + e) · (v_rel · n)) / (1/m + (r × n)² / I_z)<br />
+          |J_t| ≤ μ_barrier · |J_n|
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Concrete ($e=0.25$), Steel Armco ($e=0.40$), Tire Wall ($e=0.12$), Curb Wall ($e=0.30$).
+        </p>
+      </div>
+
+      <!-- Drivetrain Bias -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Powertrain Torque Distribution</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Drive bias parameter partitioning engine force between front steering and rear drive axles:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-purple-300 overflow-x-auto">
+          F_front = drive_bias · F_engine · throttle<br />
+          F_rear = (1.0 - drive_bias) · F_engine · throttle
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          RWD ($0.0$), 50/50 AWD ($0.5$), and FWD ($1.0$).
+        </p>
+      </div>
+    </div>
+  </section>
+</Layout>

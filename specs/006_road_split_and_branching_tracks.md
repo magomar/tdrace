@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-15
 generated: { by: agent/antigravity, at: 2026-09-18T12:30:00Z }
 ---
-
 # Architecture Spec: Road Split Segments, Branching Splines & Alternative Circuit Layouts 🏗️
 
 A comprehensive technical architecture introducing the **Directed Ribbon Graph (`TrackNetwork`)** in **TdRace**. This architecture replaces the legacy single-spline limitation with a flexible topological network capable of modeling road bifurcations, branching splines, Rallycross Joker Laps, pit lane loops, and multiple named track configurations within a single circuit definition.

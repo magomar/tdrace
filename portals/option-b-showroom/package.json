@@ -1,0 +1,17 @@
+{
+  "name": "@tdrace/option-b-showroom",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/tailwind": "^5.1.5",
+    "astro": "^5.4.2",
+    "katex": "^0.16.21",
+    "tailwindcss": "^3.4.17"
+  }
+}

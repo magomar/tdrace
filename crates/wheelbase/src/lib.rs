@@ -7,6 +7,7 @@
 pub mod bike;
 pub mod car;
 pub mod config;
+pub mod sim;
 pub mod surface;
 pub mod tire;
 

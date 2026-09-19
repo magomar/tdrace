@@ -1,0 +1,119 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CarCard from '../components/CarCard.astro';
+import vehiclesData from '../../../shared/data/vehicles.json';
+
+const modules = [
+  'All Modules',
+  'Gran Turismo & Endurance',
+  'NASCAR Stock Car Racing',
+  'Rallycross & All-Terrain',
+  'Extreme Off-Road & Arenas',
+  'Karting & Micro-Racers',
+];
+---
+
+<Layout title="Garage Showroom & Vehicle Catalog" description="Explore 25 progression categories across 5 motorsport modules with full specifications and telemetry radar.">
+  <div class="py-6 border-b border-racing-border">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold text-white tracking-tight">Interactive Garage Showroom</h1>
+        <p class="text-sm text-racing-muted font-mono mt-1">
+          80 authentic motorsport models across 25 progression classes with Balance of Performance (BoP) calibration.
+        </p>
+      </div>
+
+      <!-- Quick Search Input -->
+      <div class="w-full md:w-72">
+        <input
+          type="text"
+          id="car-search"
+          placeholder="Search by car name, brand, class, engine..."
+          class="w-full px-4 py-2 bg-racing-surface border border-racing-border rounded-lg text-xs font-mono text-white placeholder-racing-muted focus:outline-none focus:border-racing-blue"
+        />
+      </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="flex flex-wrap gap-2 mt-6">
+      {modules.map((m, idx) => (
+        <button
+          type="button"
+          class={`filter-btn px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
+            idx === 0
+              ? 'active bg-racing-blue text-white font-bold shadow-lg shadow-racing-blue/20'
+              : 'bg-racing-surface border border-racing-border text-racing-muted hover:text-white hover:bg-racing-surface2'
+          }`}
+          data-module={m}
+        >
+          {m}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <!-- Car Cards Grid -->
+  <div id="cars-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-8">
+    {vehiclesData.map((car) => (
+      <div class="car-item" data-module={car.module} data-search={`${car.name} ${car.manufacturer || ''} ${car.category} ${car.class_badge} ${car.drivetrain}`.toLowerCase()}>
+        <CarCard car={car} />
+      </div>
+    ))}
+  </div>
+</Layout>
+
+<script>
+  function initVehicleFilters() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const searchInput = document.getElementById('car-search') as HTMLInputElement;
+    const items = document.querySelectorAll('.car-item');
+
+    let currentModule = 'All Modules';
+    let searchQuery = '';
+
+    function applyFilter() {
+      items.forEach((el) => {
+        const item = el as HTMLElement;
+        const itemModule = item.dataset.module || '';
+        const itemSearch = item.dataset.search || '';
+
+        const matchesModule = currentModule === 'All Modules' || itemModule === currentModule;
+        const matchesSearch = searchQuery === '' || itemSearch.includes(searchQuery.toLowerCase());
+
+        if (matchesModule && matchesSearch) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    filterBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLElement;
+        filterBtns.forEach((b) => {
+          b.classList.remove('active', 'bg-racing-blue', 'text-white', 'font-bold', 'shadow-lg');
+          b.classList.add('bg-racing-surface', 'border', 'border-racing-border', 'text-racing-muted');
+        });
+        target.classList.add('active', 'bg-racing-blue', 'text-white', 'font-bold', 'shadow-lg');
+        target.classList.remove('text-racing-muted', 'bg-racing-surface');
+
+        currentModule = target.dataset.module || 'All Modules';
+        applyFilter();
+      });
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value.trim();
+        applyFilter();
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initVehicleFilters);
+  } else {
+    initVehicleFilters();
+  }
+</script>

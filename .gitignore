@@ -35,3 +35,8 @@ crates/tdrace-app/tracks/
 # br doctor per-run artifacts
 .doctor/
 .bv/
+
+# Node / Astro
+node_modules/
+.astro/
+dist/

@@ -1,3 +1,12 @@
+---
+type: Architecture Spec
+title: "Circuit Rendering & Menu Performance Optimization"
+description: "Analysis of track ribbon render batching, vertex reduction, and menu frame-time targets."
+status: active
+category: engineering
+tags: [rendering, performance, opengl, macroquad]
+---
+
 # Circuit Rendering & Menu Performance Report
 
 ## Executive Summary

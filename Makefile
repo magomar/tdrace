@@ -27,7 +27,7 @@ PYTHON   := $(VENV_DIR)/bin/python
 MATURIN  := $(VENV_DIR)/bin/maturin
 PYTEST   := $(VENV_DIR)/bin/pytest
 
-.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean
+.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean wiki showroom
 
 help: ## Display this help screen
 	@echo -e "$(CYAN)🏎️  TDRace Make Commands$(RESET)"
@@ -164,6 +164,18 @@ bench-rust: ## Run Rust physics stepping and collision benchmarks
 bench-python: ## Run Python Gymnasium throughput benchmark vs CarRacing-v3
 	@echo -e "$(CYAN)📊 Running Gymnasium benchmark (TDRace vs CarRacing-v3)...$(RESET)"
 	@$(PYTHON) benchmarks/gym_benchmark.py $(EXTRA_ARGS)
+
+# ------------------------------------------------------------------------------
+# 🌐 Documentation & Asset Portals
+# ------------------------------------------------------------------------------
+
+wiki: ## Launch Option A (Astro + Starlight Technical Reference Manual on port 4321)
+	@echo -e "$(CYAN)📚 Launching TdRace Wiki (Astro + Starlight) on http://localhost:4321...$(RESET)"
+	@cd portals/option-a-starlight && bun run dev -- --host 0.0.0.0 --port 4321
+
+showroom: ## Launch Option B (Custom Motorsport Showroom & Physics Lab on port 4322)
+	@echo -e "$(CYAN)🏎️  Launching TdRace Showroom (Custom Astro + Tailwind) on http://localhost:4322...$(RESET)"
+	@cd portals/option-b-showroom && bun run dev -- --host 0.0.0.0 --port 4322
 
 # ------------------------------------------------------------------------------
 # 🧹 Clean

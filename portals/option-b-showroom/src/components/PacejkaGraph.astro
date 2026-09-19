@@ -1,0 +1,297 @@
+---
+// PacejkaGraph.astro: Live client-side interactive Pacejka '96 tire slip curve visualizer
+---
+
+<div class="bg-racing-surface rounded-xl border border-racing-border p-6 shadow-xl space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-racing-border pb-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-racing-cyan animate-pulse"></span>
+        <h3 class="text-lg font-bold text-white tracking-tight">Interactive Pacejka '96 Magic Formula Simulator</h3>
+      </div>
+      <p class="text-xs text-racing-muted font-mono mt-1">
+        Adjust coefficients in real time to visualize tire limit behaviour and breakaway characteristics.
+      </p>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="flex flex-wrap items-center gap-1.5 font-mono text-xs">
+      <span class="text-racing-muted text-[11px] mr-1">Presets:</span>
+      <button type="button" class="preset-btn px-2.5 py-1 rounded bg-racing-surface2 hover:bg-racing-blue/20 hover:text-racing-cyan border border-racing-border transition-colors text-racing-text" data-b="13.5" data-c="1.65" data-d="1.25" data-e="0.10">
+        Kart / Superkart
+      </button>
+      <button type="button" class="preset-btn px-2.5 py-1 rounded bg-racing-surface2 hover:bg-racing-blue/20 hover:text-racing-cyan border border-racing-border transition-colors text-racing-text" data-b="11.2" data-c="1.52" data-d="1.18" data-e="-0.08">
+        GT3 Slick
+      </button>
+      <button type="button" class="preset-btn px-2.5 py-1 rounded bg-racing-surface2 hover:bg-racing-blue/20 hover:text-racing-cyan border border-racing-border transition-colors text-racing-text" data-b="9.5" data-c="1.45" data-d="1.00" data-e="-0.15">
+        Drift Spec
+      </button>
+      <button type="button" class="preset-btn px-2.5 py-1 rounded bg-racing-surface2 hover:bg-racing-blue/20 hover:text-racing-cyan border border-racing-border transition-colors text-racing-text" data-b="7.5" data-c="1.35" data-d="0.95" data-e="-0.20">
+        Gravel / Off-Road
+      </button>
+    </div>
+  </div>
+
+  <!-- Canvas Chart Area -->
+  <div class="relative w-full aspect-[2/1] min-h-[280px] bg-racing-bg rounded-lg border border-racing-border/80 overflow-hidden flex items-center justify-center">
+    <canvas id="pacejka-canvas" class="w-full h-full block"></canvas>
+    
+    <!-- Floating Telemetry Overlay -->
+    <div class="absolute top-3 right-3 font-mono text-xs bg-racing-surface/90 backdrop-blur-md border border-racing-border px-3 py-2 rounded-md shadow-lg space-y-1">
+      <div class="text-racing-muted text-[10px] uppercase">Telemetry Peak Point</div>
+      <div class="text-racing-cyan font-bold flex justify-between gap-4">
+        <span>Max Friction (D):</span>
+        <span id="readout-peak-d">1.18</span>
+      </div>
+      <div class="text-racing-amber font-bold flex justify-between gap-4">
+        <span>Optimal Slip (α):</span>
+        <span id="readout-optimal-slip">7.5°</span>
+      </div>
+      <div class="text-racing-text flex justify-between gap-4 text-[11px]">
+        <span>Initial Stiffness (B·C·D):</span>
+        <span id="readout-stiffness">20.1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Sliders Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
+    <!-- Slider B -->
+    <div class="p-3 bg-racing-surface2/50 rounded-lg border border-racing-border/60 space-y-2">
+      <div class="flex justify-between items-center">
+        <label for="slider-b" class="font-bold text-white flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+          B (Stiffness)
+        </label>
+        <span id="val-b" class="font-bold text-racing-cyan">11.2</span>
+      </div>
+      <input type="range" id="slider-b" min="4.0" max="18.0" step="0.1" value="11.2" class="w-full accent-racing-blue cursor-pointer" />
+      <div class="text-[10px] text-racing-muted font-sans">Controls linear turn-in sharpness at low angles.</div>
+    </div>
+
+    <!-- Slider C -->
+    <div class="p-3 bg-racing-surface2/50 rounded-lg border border-racing-border/60 space-y-2">
+      <div class="flex justify-between items-center">
+        <label for="slider-c" class="font-bold text-white flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          C (Shape)
+        </label>
+        <span id="val-c" class="font-bold text-racing-cyan">1.52</span>
+      </div>
+      <input type="range" id="slider-c" min="1.0" max="2.0" step="0.01" value="1.52" class="w-full accent-racing-cyan cursor-pointer" />
+      <div class="text-[10px] text-racing-muted font-sans">Governs the limit peakiness and asymptotic curve.</div>
+    </div>
+
+    <!-- Slider D -->
+    <div class="p-3 bg-racing-surface2/50 rounded-lg border border-racing-border/60 space-y-2">
+      <div class="flex justify-between items-center">
+        <label for="slider-d" class="font-bold text-white flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          D (Peak Grip)
+        </label>
+        <span id="val-d" class="font-bold text-racing-cyan">1.18</span>
+      </div>
+      <input type="range" id="slider-d" min="0.6" max="1.5" step="0.01" value="1.18" class="w-full accent-racing-green cursor-pointer" />
+      <div class="text-[10px] text-racing-muted font-sans">Maximum lateral friction multiplier μ_peak.</div>
+    </div>
+
+    <!-- Slider E -->
+    <div class="p-3 bg-racing-surface2/50 rounded-lg border border-racing-border/60 space-y-2">
+      <div class="flex justify-between items-center">
+        <label for="slider-e" class="font-bold text-white flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          E (Curvature)
+        </label>
+        <span id="val-e" class="font-bold text-racing-cyan">-0.08</span>
+      </div>
+      <input type="range" id="slider-e" min="-0.60" max="0.40" step="0.01" value="-0.08" class="w-full accent-racing-amber cursor-pointer" />
+      <div class="text-[10px] text-racing-muted font-sans">Controls post-limit cliff drop vs. progressive slide.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initPacejka() {
+    const canvas = document.getElementById('pacejka-canvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const sliderB = document.getElementById('slider-b') as HTMLInputElement;
+    const sliderC = document.getElementById('slider-c') as HTMLInputElement;
+    const sliderD = document.getElementById('slider-d') as HTMLInputElement;
+    const sliderE = document.getElementById('slider-e') as HTMLInputElement;
+
+    const valB = document.getElementById('val-b');
+    const valC = document.getElementById('val-c');
+    const valD = document.getElementById('val-d');
+    const valE = document.getElementById('val-e');
+
+    const readoutPeakD = document.getElementById('readout-peak-d');
+    const readoutOptimalSlip = document.getElementById('readout-optimal-slip');
+    const readoutStiffness = document.getElementById('readout-stiffness');
+
+    function pacejkaFormula(alphaRad: number, B: number, C: number, D: number, E: number): number {
+      const B_alpha = B * alphaRad;
+      const term = B_alpha - E * (B_alpha - Math.atan(B_alpha));
+      return D * Math.sin(C * Math.atan(term));
+    }
+
+    function render() {
+      const B = parseFloat(sliderB.value);
+      const C = parseFloat(sliderC.value);
+      const D = parseFloat(sliderD.value);
+      const E = parseFloat(sliderE.value);
+
+      if (valB) valB.textContent = B.toFixed(1);
+      if (valC) valC.textContent = C.toFixed(2);
+      if (valD) valD.textContent = D.toFixed(2);
+      if (valE) valE.textContent = E.toFixed(2);
+
+      // Handle HiDPI
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const width = rect.width;
+      const height = rect.height;
+
+      // Margins
+      const margin = { left: 55, right: 30, top: 25, bottom: 40 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+
+      // Background
+      ctx.fillStyle = '#0a0c10';
+      ctx.fillRect(0, 0, width, height);
+
+      // Grid & Axes
+      const maxSlipDeg = 40.0;
+      const maxY = 1.6;
+
+      ctx.strokeStyle = '#1e2433';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+
+      // Horizontal grid lines
+      for (let yVal = 0.0; yVal <= maxY; yVal += 0.4) {
+        const yPx = margin.top + plotHeight - (yVal / maxY) * plotHeight;
+        ctx.moveTo(margin.left, yPx);
+        ctx.lineTo(width - margin.right, yPx);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(yVal.toFixed(1) + ' μ', margin.left - 8, yPx + 3);
+      }
+
+      // Vertical grid lines
+      for (let sDeg = 0; sDeg <= maxSlipDeg; sDeg += 10) {
+        const xPx = margin.left + (sDeg / maxSlipDeg) * plotWidth;
+        ctx.moveTo(xPx, margin.top);
+        ctx.lineTo(xPx, height - margin.bottom);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(sDeg + '°', xPx, height - margin.bottom + 16);
+      }
+      ctx.stroke();
+
+      // Axis labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('Slip Angle α (degrees)', margin.left + plotWidth / 2, height - 10);
+
+      // Plot curve
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(margin.left, margin.top, plotWidth, plotHeight);
+      ctx.clip();
+
+      ctx.beginPath();
+      let maxForce = 0;
+      let peakSlipDeg = 0;
+
+      for (let sDeg = 0; sDeg <= maxSlipDeg; sDeg += 0.2) {
+        const alphaRad = (sDeg * Math.PI) / 180;
+        const fy = pacejkaFormula(alphaRad, B, C, D, E);
+
+        if (fy > maxForce) {
+          maxForce = fy;
+          peakSlipDeg = sDeg;
+        }
+
+        const xPx = margin.left + (sDeg / maxSlipDeg) * plotWidth;
+        const yPx = margin.top + plotHeight - (fy / maxY) * plotHeight;
+
+        if (sDeg === 0) {
+          ctx.moveTo(xPx, yPx);
+        } else {
+          ctx.lineTo(xPx, yPx);
+        }
+      }
+
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Fill underneath curve
+      ctx.lineTo(margin.left + plotWidth, margin.top + plotHeight);
+      ctx.lineTo(margin.left, margin.top + plotHeight);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, margin.top, 0, margin.top + plotHeight);
+      grad.addColorStop(0, 'rgba(59, 130, 246, 0.25)');
+      grad.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Draw Peak Indicator Point
+      const peakXPx = margin.left + (peakSlipDeg / maxSlipDeg) * plotWidth;
+      const peakYPx = margin.top + plotHeight - (maxForce / maxY) * plotHeight;
+
+      ctx.beginPath();
+      ctx.arc(peakXPx, peakYPx, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Update telemetry readouts
+      if (readoutPeakD) readoutPeakD.textContent = maxForce.toFixed(2) + ' μ';
+      if (readoutOptimalSlip) readoutOptimalSlip.textContent = peakSlipDeg.toFixed(1) + '°';
+      if (readoutStiffness) readoutStiffness.textContent = (B * C * D).toFixed(1);
+    }
+
+    [sliderB, sliderC, sliderD, sliderE].forEach((input) => {
+      input.addEventListener('input', render);
+    });
+
+    document.querySelectorAll('.preset-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLElement;
+        sliderB.value = target.dataset.b || '11.2';
+        sliderC.value = target.dataset.c || '1.52';
+        sliderD.value = target.dataset.d || '1.18';
+        sliderE.value = target.dataset.e || '-0.08';
+        render();
+      });
+    });
+
+    window.addEventListener('resize', render);
+    render();
+  }
+
+  // Run on mount
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPacejka);
+  } else {
+    initPacejka();
+  }
+</script>

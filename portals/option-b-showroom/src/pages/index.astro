@@ -1,0 +1,112 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CarCard from '../components/CarCard.astro';
+import CircuitCard from '../components/CircuitCard.astro';
+import PacejkaGraph from '../components/PacejkaGraph.astro';
+import vehiclesData from '../../../shared/data/vehicles.json';
+import circuitsData from '../../../shared/data/circuits.json';
+import surfacesData from '../../../shared/data/surfaces.json';
+
+const featuredCars = vehiclesData.filter((c) =>
+  ['gt_ferrari_296_gt3', 'nascar_corvette_ta1', 'rally_audi_sport_quattro_s1', 'offroad_sand_rail_buggy', 'kart_anderson_cs250'].includes(c.id)
+);
+
+const featuredCircuits = circuitsData.filter((c) =>
+  ['spa', 'daytona', 'holjes_rx', 'lonato', 'classic_grand_prix', 'sahara_dunes'].includes(c.id)
+);
+---
+
+<Layout title="Motorsport Showroom & Game Asset Portal">
+  <!-- Hero Section -->
+  <section class="py-12 border-b border-racing-border">
+    <div class="max-w-4xl">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-racing-blue/10 border border-racing-blue/30 text-racing-cyan text-xs font-mono mb-4">
+        <span>🏎️</span>
+        <span>TdRace Motorsport Knowledge Portal • Option B</span>
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
+        Authentic Motorsport Assets & <span class="bg-gradient-to-r from-racing-blue via-racing-cyan to-racing-green bg-clip-text text-transparent">Physical Simulation</span>.
+      </h1>
+      <p class="mt-4 text-base sm:text-lg text-racing-muted leading-relaxed">
+        Explore 80 authentic motorsport models across 25 progression categories, 89 homologated circuit layouts, and real-time Pacejka '96 tire and surface physics—all backed by a unified Google OKF v0.2 knowledge graph.
+      </p>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
+        <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
+          <div class="text-3xl font-extrabold text-white font-mono">{vehiclesData.length}</div>
+          <div class="text-xs text-racing-muted uppercase font-mono mt-1">Car Models</div>
+          <div class="text-[11px] text-racing-cyan mt-0.5">25 Classes in 5 Modules</div>
+        </div>
+        <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
+          <div class="text-3xl font-extrabold text-white font-mono">{circuitsData.length}</div>
+          <div class="text-xs text-racing-muted uppercase font-mono mt-1">Circuits Mapped</div>
+          <div class="text-[11px] text-racing-amber mt-0.5">F1, Ovals, RX & Karts</div>
+        </div>
+        <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
+          <div class="text-3xl font-extrabold text-white font-mono">{surfacesData.length}</div>
+          <div class="text-xs text-racing-muted uppercase font-mono mt-1">Surface Models</div>
+          <div class="text-[11px] text-racing-green mt-0.5">Split-μ per-wheel sampling</div>
+        </div>
+        <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
+          <div class="text-3xl font-extrabold text-white font-mono">60 Hz</div>
+          <div class="text-xs text-racing-muted uppercase font-mono mt-1">Physics Tick</div>
+          <div class="text-[11px] text-purple-400 mt-0.5">Pacejka '96 + Weight Transfer</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Pacejka Laboratory Preview -->
+  <section class="py-12 border-b border-racing-border">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Interactive Simulation Physics Lab</h2>
+        <p class="text-xs text-racing-muted font-mono mt-1">Live client-side Pacejka '96 curve tuning and lateral slip angle computation.</p>
+      </div>
+      <a href="/physics" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+        Full Physics Reference <span>→</span>
+      </a>
+    </div>
+
+    <PacejkaGraph />
+  </section>
+
+  <!-- Featured Vehicles Section -->
+  <section class="py-12 border-b border-racing-border">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Featured Motorsport Machinery</h2>
+        <p class="text-xs text-racing-muted font-mono mt-1">Hero benchmarks from GT, NASCAR, World RX, Off-Road, and Karting.</p>
+      </div>
+      <a href="/vehicles" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+        View All 25 Categories <span>→</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {featuredCars.slice(0, 3).map((car) => (
+        <CarCard car={car} />
+      ))}
+    </div>
+  </section>
+
+  <!-- Featured Circuits Section -->
+  <section class="py-12">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Homologated World Circuits</h2>
+        <p class="text-xs text-racing-muted font-mono mt-1">Vector splines, surface zones, barrier perimeters, and Joker Laps.</p>
+      </div>
+      <a href="/circuits" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+        View All 89 Tracks <span>→</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {featuredCircuits.slice(0, 3).map((circuit) => (
+        <CircuitCard circuit={circuit} />
+      ))}
+    </div>
+  </section>
+</Layout>

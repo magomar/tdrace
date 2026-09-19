@@ -3,11 +3,10 @@ type: Architecture Spec
 template: architecture
 title: "Systematic Computational Simulation of Surface-Car Dynamics"
 description: "Headless computational simulation harness and benchmarking suite to measure vehicle acceleration, braking, and cornering dynamics across all surface types without graphics."
-status: draft
+status: implemented
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T18:59:00Z }
 ---
-
 # Architecture Spec: Systematic Computational Simulation of Surface-Car Dynamics 🔬
 
 A purely computational, headless simulation and benchmarking suite designed to measure, evaluate, and quantify the exact physical impact of varying surface characteristics on vehicle dynamics in **TdRace**. Operating without graphical rendering or audio dependencies, this framework provides reproducible telemetry and standardized test protocols for acceleration, braking, and cornering performance across all 11 supported surface types and diverse vehicle archetypes.

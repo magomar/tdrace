@@ -1,0 +1,123 @@
+[
+  {
+    "name": "Asphalt",
+    "friction": 1.0,
+    "rolling_resistance": 1.0,
+    "surface_drag": 1.0,
+    "smoke": true,
+    "roost": false,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Standard dry tarmac; optimal grip baseline, full tire smoke on heavy slip."
+  },
+  {
+    "name": "Curb",
+    "friction": 0.88,
+    "rolling_resistance": 1.3,
+    "surface_drag": 1.05,
+    "smoke": true,
+    "roost": false,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Apex kerb / rumble strip; subtle haptic vibration, high grip with mild drag."
+  },
+  {
+    "name": "Dirt",
+    "friction": 0.78,
+    "rolling_resistance": 1.2,
+    "surface_drag": 1.1,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Compacted clay / gravel rally track; predictable sliding and drift control."
+  },
+  {
+    "name": "Gravel",
+    "friction": 0.7,
+    "rolling_resistance": 2.5,
+    "surface_drag": 1.25,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Loose stone rally stage / runoff; moderate grip with heavy stone roost."
+  },
+  {
+    "name": "Mud",
+    "friction": 0.52,
+    "rolling_resistance": 6.5,
+    "surface_drag": 3.2,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "AboveTrack",
+    "description": "Viscous mud bog; heavy deceleration drag, low lateral bite, brown roost plumes."
+  },
+  {
+    "name": "Grass",
+    "friction": 0.45,
+    "rolling_resistance": 18.0,
+    "surface_drag": 2.2,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Standard off-track runoff; heavy rolling resistance penalizing corner cuts."
+  },
+  {
+    "name": "Snow",
+    "friction": 0.34,
+    "rolling_resistance": 3.0,
+    "surface_drag": 1.6,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "AboveTrack",
+    "description": "Packed/powder snow; slippery winter rallying, white roost plumes."
+  },
+  {
+    "name": "Sand",
+    "friction": 0.3,
+    "rolling_resistance": 30.0,
+    "surface_drag": 4.5,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Deep gravel / sand trap; severe vehicle deceleration trap, sand rooster tails."
+  },
+  {
+    "name": "Water",
+    "friction": 0.22,
+    "rolling_resistance": 3.5,
+    "surface_drag": 2.0,
+    "smoke": false,
+    "roost": false,
+    "splash": true,
+    "layer": "AboveTrack",
+    "description": "Standing puddle hazard; hydroplaning risk, aqua spray plumes."
+  },
+  {
+    "name": "Oil",
+    "friction": 0.12,
+    "rolling_resistance": 0.8,
+    "surface_drag": 0.95,
+    "smoke": false,
+    "roost": false,
+    "splash": false,
+    "layer": "AboveTrack",
+    "description": "Oil slick hazard; extreme spin hazard, breaks rear traction instantly."
+  },
+  {
+    "name": "Ice",
+    "friction": 0.08,
+    "rolling_resistance": 0.4,
+    "surface_drag": 0.9,
+    "smoke": false,
+    "roost": false,
+    "splash": false,
+    "layer": "AboveTrack",
+    "description": "Frozen lake; near-zero traction, near-frictionless gliding with no braking."
+  }
+]

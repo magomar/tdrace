@@ -1,0 +1,68 @@
+---
+import surfacesData from '../../../shared/data/surfaces.json';
+---
+
+<div class="overflow-x-auto rounded-xl border border-racing-border bg-racing-surface">
+  <table class="w-full text-left text-xs">
+    <thead class="bg-racing-surface2 border-b border-racing-border font-mono text-racing-muted uppercase text-[11px]">
+      <tr>
+        <th class="py-3 px-4">Surface</th>
+        <th class="py-3 px-4">Friction ($\mu$)</th>
+        <th class="py-3 px-4">Rolling Resistance</th>
+        <th class="py-3 px-4">Viscous Drag</th>
+        <th class="py-3 px-4">Particle & Dynamic FX</th>
+        <th class="py-3 px-4">Role & Characteristics</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-racing-border/50 font-mono">
+      {surfacesData.map((s) => (
+        <tr class="hover:bg-racing-surface2/40 transition-colors">
+          <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full" style={`background-color: ${
+              s.name === 'Asphalt' ? '#3b82f6' :
+              s.name === 'Curb' ? '#ef4444' :
+              s.name === 'Dirt' ? '#b45309' :
+              s.name === 'Gravel' ? '#78716c' :
+              s.name === 'Mud' ? '#713f12' :
+              s.name === 'Grass' ? '#15803d' :
+              s.name === 'Snow' ? '#e2e8f0' :
+              s.name === 'Sand' ? '#f59e0b' :
+              s.name === 'Water' ? '#06b6d4' :
+              s.name === 'Oil' ? '#64748b' : '#38bdf8'
+            }`}></span>
+            {s.name}
+          </td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-white w-8">{s.friction.toFixed(2)}</span>
+              <div class="w-20 h-1.5 bg-racing-surface2 rounded-full overflow-hidden">
+                <div class="h-full bg-racing-blue rounded-full" style={`width: ${s.friction * 100}%`}></div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-4 text-racing-text font-bold">
+            <span class={s.rolling_resistance > 5 ? 'text-racing-red' : s.rolling_resistance > 2 ? 'text-racing-amber' : 'text-racing-muted'}>
+              {s.rolling_resistance.toFixed(1)}×
+            </span>
+          </td>
+          <td class="py-3 px-4 text-racing-text font-bold">
+            <span class={s.surface_drag > 2.0 ? 'text-racing-red' : s.surface_drag > 1.2 ? 'text-racing-amber' : 'text-racing-muted'}>
+              {s.surface_drag.toFixed(2)}×
+            </span>
+          </td>
+          <td class="py-3 px-4">
+            <div class="flex flex-wrap gap-1">
+              {s.smoke && <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-500/20 text-slate-300 border border-slate-500/30">Smoke</span>}
+              {s.roost && <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">Roost</span>}
+              {s.splash && <span class="px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Splash</span>}
+              {!s.smoke && !s.roost && !s.splash && <span class="text-racing-muted text-[10px]">—</span>}
+            </div>
+          </td>
+          <td class="py-3 px-4 font-sans text-xs text-racing-muted">
+            {s.description}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

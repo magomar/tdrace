@@ -7,7 +7,6 @@ status: draft
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T14:15:00Z }
 ---
-
 # Feature Spec: Real-World Vehicle Rosters, Physics Balance & Interactive Garage 🏎️🏛️
 
 A comprehensive motorsport simulation expansion migrating **TdRace** from generic prototypical vehicle archetypes to **authentic, real-world motorsport models across all 5 game modules and 25 progression categories**. Accompanied by an intra-class Balance of Performance (BoP) mathematical calibration framework, dual-view 2D vector graphics (live top-down racing + high-fidelity lateral side-profile), and a dedicated **Interactive Garage & Showroom (`GameState::Garage`)**.
@@ -371,5 +370,5 @@ Target: All cars in a given category must achieve lap times within a **$\pm 0.35
 - `[ ]` `crates/tdrace-app/src/render/lateral.rs` — 2D lateral side-profile vector renderer.
 - `[ ]` `crates/tdrace-app/src/render/car.rs` — Model-specific top-down silhouette rendering.
 - `[ ]` `crates/tdrace-app/src/ui/garage.rs` — `GameState::Garage` interactive showroom screen.
-- `[ ]` [`docs/screens_and_navigation.md`](../docs/screens_and_navigation.md) — Screen navigation architecture and shortcuts.
+- `[ ]` [`docs/engineering/screens_and_navigation.md`](../docs/engineering/screens_and_navigation.md) — Screen navigation architecture and shortcuts.
 - `[ ]` [`BACKLOG.md`](../BACKLOG.md) — Product backlog item 2.5.

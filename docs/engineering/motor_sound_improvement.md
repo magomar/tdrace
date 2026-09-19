@@ -1,3 +1,12 @@
+---
+type: Architecture Spec
+title: "Motor Sound Synthesis & Audio Profile Improvements"
+description: "Dynamic audio synthesis, pitch modulation, exhaust pop harmonics, and Kira audio integration."
+status: active
+category: engineering
+tags: [audio, sound, synthesis, kira]
+---
+
 # Motor Sound Improvement Analysis: Procedural Synthesis vs. Real Sampled Audio
 
 ## 1. Executive Summary & Root Cause Diagnosis

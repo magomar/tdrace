@@ -7,7 +7,6 @@ status: draft
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:20:00Z }
 ---
-
 # Feature Spec: NASCAR & Trans-Am TA1 Career Mode 🏁
 
 A comprehensive 5-tier American stock car and silhouette GT career mode in **TdRace**. Spanning local short-track bullrings, clay dirt ovals, intermediate D-ovals, road courses, downtown street tracks, and high-banked superspeedways, this progression teaches players the core disciplines of American closed-cockpit motorsport: inertia control in heavy rear-wheel-drive machines, lateral slip management on high banking, multi-car aerodynamic pack drafting, and raw unassisted 850 BHP spaceframe road racing.

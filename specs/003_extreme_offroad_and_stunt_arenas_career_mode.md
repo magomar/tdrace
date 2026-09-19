@@ -7,7 +7,6 @@ status: draft
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
 ---
-
 # Feature Spec: Extreme Off-Road & Stunt Arenas Career Mode 🚜
 
 The **Extreme Off-Road & Stunt Arenas Career Mode** introduces an open, multi-discipline stunt, stadium, and terrain campaign in **TdRace**. Departing from pure 1D circuit ribbon racing, this career combines high-speed open-desert crossings, sub-zero ice drifting, deep clay mud bogging, supercross stadium rhythm whoops, and monumental car-crushing arena freestyle competitions.

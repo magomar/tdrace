@@ -1,3 +1,12 @@
+---
+type: Feature Spec
+title: "Vehicle Roster Expansion Ideas & Archetypes"
+description: "Exploratory design notes on prospective vehicle variants, physics levers, and class archetypes."
+status: active
+category: engineering
+tags: [vehicles, exploratory, archetypes]
+---
+
 # Vehicle Roster Expansion: Ideas, Variants & Archetypes
 
 **Document Status:** PROPOSED / EXPLORATORY  

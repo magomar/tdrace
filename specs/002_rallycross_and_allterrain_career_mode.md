@@ -7,7 +7,6 @@ status: draft
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
 ---
-
 # Feature Spec: Rallycross & All-Terrain World Cup Career Mode 🏆
 
 The **Rallycross & All-Terrain World Cup Career Mode** models the progression from grassroots front-wheel-drive rally hatchbacks to ferocious 600+ BHP mixed-surface monsters, desert raid beasts, and stadium jumping trucks in **TdRace**. Combining tarmac grip, loose gravel drifting, mud spray, and massive jump launch ramps, this career model develops lift-off oversteer, anti-lag boost management, tactical Joker Lap execution, and long-travel suspension dynamics over extreme terrains.

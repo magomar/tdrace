@@ -1,3 +1,12 @@
+---
+type: Architecture Spec
+title: "Screen Architecture & Navigation Schema"
+description: "State machine diagrams, screen transitions, input mappings, and game flow schemas."
+status: active
+category: engineering
+tags: [ui, navigation, state-machine, screens]
+---
+
 # TdRace Screen Architecture & Navigation Schema
 
 This document provides a comprehensive reference for all user interface screens, state machines, transitions, and user inputs across the **TdRace** motorsport platform. It is formatted with both visual state machine diagrams and structured schemas for human developers and autonomous AI agents.

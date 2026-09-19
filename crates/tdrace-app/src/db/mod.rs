@@ -10,6 +10,7 @@ use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats, Ra
 use crate::render::color::CarColorScheme;
 use tdrace_core::physics::config::AssistProfile;
 
+#[cfg(not(target_arch = "wasm32"))]
 fn mode_to_str(mode: AssistProfile) -> &'static str {
     match mode {
         AssistProfile::Arcade => "arcade",
@@ -18,6 +19,7 @@ fn mode_to_str(mode: AssistProfile) -> &'static str {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn mode_from_str(s: &str) -> AssistProfile {
     match s.to_lowercase().as_str() {
         "sport" => AssistProfile::Sport,

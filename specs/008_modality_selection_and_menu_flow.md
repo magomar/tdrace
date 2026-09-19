@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:30:00Z }
 ---
-
 # Feature Spec: Race Modality Selection & Interface Flow Restructuring 🌟
 
 An interface and screen architecture restructuring introducing a dedicated **Race Modality Selection (`GameState::ModalitySelect`)** stage between the **Grand Hub (`ModuleSelect`)** and **Circuit Selection (`Menu`)**. This replaces the legacy friction where players had to choose a circuit before deciding what kind of session to launch, providing clear categorization between Single Player and Multiplayer racing formats.
