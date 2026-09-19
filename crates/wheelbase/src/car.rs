@@ -731,7 +731,7 @@ impl Car {
             let w_v_lat = wheel_v_world.dot(wheel_right);
 
             // Slip angle: angle between wheel direction and velocity vector
-            let slip_angle = -w_v_lat.atan2(w_v_long.abs().max(0.2));
+            let slip_angle = -w_v_lat.atan2(w_v_long.abs().max(2.5));
 
             // Surface properties
             let surf = surfaces[i];
@@ -871,14 +871,18 @@ impl Car {
             let rr_force = -rr_coeff * fz * (w_v_long / 0.5).tanh();
             fx_demand += rr_force;
 
-            // Lateral demand: Pacejka Magic Formula
+            // Lateral demand: Pacejka Magic Formula with low-speed stabilization
+            // Below ~3.0 m/s, the explicit Euler integration of Pacejka yaw damping violates
+            // the numerical stability limit (c * dt > 2 * I), causing explosive chatter and
+            // uncommanded turning. Scaling by (|w_v_long| / 3.0) cancels the 1/v singularity.
+            let low_speed_blend = (w_v_long.abs() / 3.0).clamp(0.05, 1.0);
             let fy_demand = pacejka_lateral_force(
                 slip_angle,
                 fz,
                 mu,
                 &self.config.tire,
                 is_handbraking_wheel,
-            );
+            ) * low_speed_blend;
 
             // Friction ellipse combination
             let (fx, fy) = solve_combined_slip_forces(fx_demand, fy_demand, max_friction);
@@ -1225,6 +1229,57 @@ mod tests {
             car_straighten.step(&ctrl_neutral_rev, SurfaceType::Asphalt, dt);
         }
         assert!(car_straighten.state.angular_velocity.abs() < 1e-3, "Releasing steering in reverse must eliminate yaw rate");
+    }
+
+    #[test]
+    fn test_reverse_heading_stability_and_steering_symmetry() {
+        let config = CarConfig::sports_car();
+        let dt = 1.0 / 60.0;
+
+        // 1. Reversing with arbitrary heading and zero steer maintains heading without limit-cycle chatter
+        let mut car_straight = Car::new(config);
+        car_straight.state.angle = -0.23337;
+        let mut ctrl_neutral = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl_neutral.reverse = true;
+        for _ in 0..60 {
+            car_straight.step(&ctrl_neutral, SurfaceType::Asphalt, dt);
+        }
+        assert!((car_straight.state.angle - (-0.23337)).abs() < 1e-3, "Car must not turn involuntarily in reverse");
+        assert!(car_straight.state.angular_velocity.abs() < 1e-3, "Reverse yaw rate must remain stable");
+
+        // 2. Reversing with yaw disturbance damps smoothly to zero without sign oscillations
+        let mut car_disturbed = Car::new(config);
+        car_disturbed.state.angular_velocity = 0.05;
+        for _ in 0..60 {
+            car_disturbed.step(&ctrl_neutral, SurfaceType::Asphalt, dt);
+        }
+        assert!(car_disturbed.state.angular_velocity.abs() < 1e-3, "Reverse yaw disturbance must damp out smoothly");
+
+        // 3. Symmetrical left and right steering in reverse
+        let mut car_right = Car::new(config);
+        let mut ctrl_right = CarControls::new(1.0, 0.5, 0.0, false);
+        ctrl_right.reverse = true;
+        for _ in 0..60 {
+            car_right.step(&ctrl_right, SurfaceType::Asphalt, dt);
+        }
+
+        let mut car_left = Car::new(config);
+        let mut ctrl_left = CarControls::new(1.0, -0.5, 0.0, false);
+        ctrl_left.reverse = true;
+        for _ in 0..60 {
+            car_left.step(&ctrl_left, SurfaceType::Asphalt, dt);
+        }
+
+        assert!(car_right.state.angular_velocity.abs() > 0.1, "Right steering must produce yaw in reverse");
+        assert!(car_left.state.angular_velocity.abs() > 0.1, "Left steering must produce yaw in reverse");
+        assert!(
+            (car_right.state.angular_velocity.abs() - car_left.state.angular_velocity.abs()).abs() < 1e-4,
+            "Reverse steering must be perfectly symmetric"
+        );
+        assert!(
+            (car_right.state.angle.abs() - car_left.state.angle.abs()).abs() < 1e-4,
+            "Reverse turn angles must be perfectly symmetric"
+        );
     }
 
     #[test]
