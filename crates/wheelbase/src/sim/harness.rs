@@ -102,4 +102,39 @@ impl SimulationRunner {
         }
         false
     }
+
+    /// Steps the physics simulation forward by one fixed timestep `dt` with per-wheel surfaces.
+    #[inline]
+    pub fn step_per_wheel(&mut self, controls: &CarControls, surfaces: [SurfaceType; 4]) {
+        self.car.step_per_wheel(controls, surfaces, self.dt);
+        self.time += self.dt;
+        if self.capture_telemetry {
+            self.telemetry.push(TelemetryPoint::capture(&self.car, self.time));
+        }
+    }
+
+    /// Runs the simulation until `should_terminate` returns true or `max_duration_s` is exceeded,
+    /// using per-wheel surface assignments.
+    pub fn run_per_wheel_until<F, C>(
+        &mut self,
+        max_duration_s: f32,
+        surfaces: [SurfaceType; 4],
+        mut controls_fn: F,
+        mut should_terminate: C,
+    ) -> bool
+    where
+        F: FnMut(f32, &Car) -> CarControls,
+        C: FnMut(f32, &Car) -> bool,
+    {
+        let start_time = self.time;
+        while (self.time - start_time) < max_duration_s {
+            let elapsed = self.time - start_time;
+            let controls = controls_fn(elapsed, &self.car);
+            self.step_per_wheel(&controls, surfaces);
+            if should_terminate(self.time - start_time, &self.car) {
+                return true;
+            }
+        }
+        false
+    }
 }

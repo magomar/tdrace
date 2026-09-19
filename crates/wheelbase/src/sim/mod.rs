@@ -13,11 +13,16 @@ pub mod telemetry;
 pub use harness::{SimulationRunner, DEFAULT_SIMULATION_DT};
 pub use matrix::{ExperimentDataset, VehicleBenchmarkResult};
 pub use protocols::{
-    run_protocol_a, run_protocol_b, run_protocol_c, run_protocol_d, run_protocol_e,
-    ProtocolAResult, ProtocolBResult, ProtocolCResult, ProtocolDResult, ProtocolEResult,
-    SkidpadDepartureMode, StepSteerStatus,
+    run_braking_cadence, run_braking_in_turn, run_braking_split_mu, run_braking_straight_line,
+    run_braking_surface_battery, run_protocol_a, run_protocol_b, run_protocol_c, run_protocol_d,
+    run_protocol_e, BrakingCadenceResult, BrakingCorneringResult, BrakingSplitMuResult,
+    BrakingStabilityRating, BrakingStraightLineResult, BrakingSurfaceExperimentResult,
+    CorneringBrakingBehavior, ProtocolAResult, ProtocolBResult, ProtocolCResult, ProtocolDResult,
+    ProtocolEResult, SkidpadDepartureMode, SplitMuStatus, StepSteerStatus,
 };
-pub use report::{generate_html_report, generate_markdown_report};
+pub use report::{
+    generate_braking_simulation_markdown_report, generate_html_report, generate_markdown_report,
+};
 pub use telemetry::TelemetryPoint;
 
 #[cfg(test)]
@@ -68,5 +73,37 @@ mod tests {
         let res_asphalt = run_protocol_e(&config, SurfaceType::Asphalt, 120.0, DEFAULT_SIMULATION_DT);
         let res_sand = run_protocol_e(&config, SurfaceType::Sand, 120.0, DEFAULT_SIMULATION_DT);
         assert!(res_asphalt.coast_distance_m > res_sand.coast_distance_m);
+    }
+
+    #[test]
+    fn test_braking_straight_line_simulation() {
+        let config = CarConfig::sports_car();
+        let res_asphalt = run_braking_straight_line(&config, SurfaceType::Asphalt, 120.0, true, DEFAULT_SIMULATION_DT);
+        let res_ice = run_braking_straight_line(&config, SurfaceType::Ice, 120.0, true, DEFAULT_SIMULATION_DT);
+        assert!(res_asphalt.stopping_distance_m < res_ice.stopping_distance_m);
+        assert!(res_asphalt.avg_decel_g > res_ice.avg_decel_g);
+        assert_eq!(res_asphalt.stability_rating, BrakingStabilityRating::Stable);
+    }
+
+    #[test]
+    fn test_braking_split_mu_simulation() {
+        let config = CarConfig::sports_car();
+        let res = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Grass, 100.0, DEFAULT_SIMULATION_DT);
+        assert!(res.stopping_distance_m > 20.0);
+        assert_ne!(res.status, SplitMuStatus::SpunOut);
+    }
+
+    #[test]
+    fn test_braking_in_turn_simulation() {
+        let config = CarConfig::sports_car();
+        let res = run_braking_in_turn(&config, SurfaceType::Asphalt, 40.0, 70.0, DEFAULT_SIMULATION_DT);
+        assert_ne!(res.behavior, CorneringBrakingBehavior::SnapOversteerSpin);
+    }
+
+    #[test]
+    fn test_braking_cadence_simulation() {
+        let config = CarConfig::sports_car();
+        let res = run_braking_cadence(&config, SurfaceType::Asphalt, 120.0, DEFAULT_SIMULATION_DT);
+        assert!(res.total_pulse_cycles >= 2);
     }
 }

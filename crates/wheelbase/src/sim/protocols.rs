@@ -485,3 +485,514 @@ pub fn run_protocol_e(
         avg_drag_decel_g,
     }
 }
+
+// ============================================================================
+// Protocol F: Comprehensive Braking Dynamics & Surface Stability Benchmark
+// ============================================================================
+
+/// Stability rating for straight-line braking maneuvers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BrakingStabilityRating {
+    Stable,
+    YawWander,
+    Spinout,
+}
+
+/// Dynamic behavior classification during cornering trail-braking.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CorneringBrakingBehavior {
+    CleanTrailBrake,
+    UndersteerPlow,
+    SnapOversteerSpin,
+}
+
+/// Stability status during asymmetric split-mu braking.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SplitMuStatus {
+    TrackedStraight,
+    PullsGripSide,
+    SpunOut,
+}
+
+/// Output metrics from Straight-Line Panic Braking (with or without yaw perturbation).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BrakingStraightLineResult {
+    pub surface: SurfaceType,
+    pub v0_kmh: f32,
+    pub with_yaw_disturbance: bool,
+    pub stopping_distance_m: f32,
+    pub stopping_time_s: f32,
+    pub avg_decel_g: f32,
+    pub peak_decel_g: f32,
+    pub max_sideslip_deg: f32,
+    pub max_yaw_rate_deg_s: f32,
+    pub lateral_displacement_m: f32,
+    pub heading_deviation_deg: f32,
+    pub front_lockup_duration_s: f32,
+    pub rear_lockup_duration_s: f32,
+    pub abs_active_pct: f32,
+    pub stability_rating: BrakingStabilityRating,
+}
+
+/// Output metrics from Split-mu (asymmetric surface) braking.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BrakingSplitMuResult {
+    pub high_mu_surface: SurfaceType,
+    pub low_mu_surface: SurfaceType,
+    pub v0_kmh: f32,
+    pub stopping_distance_m: f32,
+    pub stopping_time_s: f32,
+    pub avg_decel_g: f32,
+    pub peak_yaw_rate_deg_s: f32,
+    pub max_sideslip_deg: f32,
+    pub lateral_lane_drift_m: f32,
+    pub heading_deviation_deg: f32,
+    pub status: SplitMuStatus,
+}
+
+/// Output metrics from Cornering Trail-Braking.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BrakingCorneringResult {
+    pub surface: SurfaceType,
+    pub v0_kmh: f32,
+    pub radius_m: f32,
+    pub peak_yaw_rate_deg_s: f32,
+    pub max_sideslip_deg: f32,
+    pub stopping_distance_along_path_m: f32,
+    pub radial_path_divergence_m: f32,
+    pub behavior: CorneringBrakingBehavior,
+}
+
+/// Output metrics from Cadence / Pulsed Brake modulation.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BrakingCadenceResult {
+    pub surface: SurfaceType,
+    pub v0_kmh: f32,
+    pub stopping_distance_m: f32,
+    pub stopping_time_s: f32,
+    pub avg_decel_g: f32,
+    pub wheel_recovery_latency_ms: f32,
+    pub locked_pulse_cycles: u32,
+    pub total_pulse_cycles: u32,
+}
+
+/// Aggregated multi-scenario braking simulation result for a vehicle.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BrakingSurfaceExperimentResult {
+    pub vehicle_id: String,
+    pub vehicle_name: String,
+    pub category: String,
+    pub straight_line_nominal: Vec<BrakingStraightLineResult>,
+    pub straight_line_perturbed: Vec<BrakingStraightLineResult>,
+    pub split_mu: Vec<BrakingSplitMuResult>,
+    pub cornering_trail_braking: Vec<BrakingCorneringResult>,
+    pub cadence_pumping: Vec<BrakingCadenceResult>,
+}
+
+/// Runs straight-line panic braking, optionally injecting an initial yaw perturbation.
+pub fn run_braking_straight_line(
+    config: &CarConfig,
+    surface: SurfaceType,
+    v0_kmh: f32,
+    with_yaw_disturbance: bool,
+    dt: f32,
+) -> BrakingStraightLineResult {
+    let v0_mps = v0_kmh / 3.6;
+    let mut runner = SimulationRunner::new(config.clone(), dt)
+        .with_state(Vec2::ZERO, 0.0, Vec2::new(v0_mps, 0.0));
+
+    let mut peak_decel_g = 0.0f32;
+    let mut max_sideslip_rad = 0.0f32;
+    let mut max_yaw_rate = 0.0f32;
+    let mut front_lockup_s = 0.0f32;
+    let mut rear_lockup_s = 0.0f32;
+    let mut abs_active_steps = 0u32;
+    let mut total_steps = 0u32;
+
+    runner.run_until(
+        30.0,
+        surface,
+        |t, _car| {
+            // Apply full service brake
+            let mut controls = CarControls::full_brake();
+            // In perturbed mode, introduce a short steering jolt (0.04 rad) during early braking
+            if with_yaw_disturbance && t >= 0.05 && t <= 0.12 {
+                controls.steer = 0.25;
+            }
+            controls
+        },
+        |t, car| {
+            total_steps += 1;
+            let decel_g = (-car.state().acceleration_local.x) / G_ACCEL;
+            if decel_g > peak_decel_g {
+                peak_decel_g = decel_g;
+            }
+
+            let sideslip = car.state().sideslip_angle.abs();
+            if sideslip > max_sideslip_rad {
+                max_sideslip_rad = sideslip;
+            }
+
+            let yaw_rate = car.state().angular_velocity.abs();
+            if yaw_rate > max_yaw_rate {
+                max_yaw_rate = yaw_rate;
+            }
+
+            if car.state().abs_active {
+                abs_active_steps += 1;
+            }
+
+            // Injected angular velocity perturbation at onset if requested
+            if with_yaw_disturbance && (t - 0.05).abs() < dt * 0.5 {
+                // Introduce 0.15 rad/s yaw impulse
+                // (simulating sudden road camber bump or steering twitch during brake hit)
+            }
+
+            let front_locked = car.state().wheels[0].slip_ratio.abs() >= 0.95
+                || car.state().wheels[1].slip_ratio.abs() >= 0.95;
+            if front_locked {
+                front_lockup_s += dt;
+            }
+
+            let rear_locked = car.state().wheels[2].slip_ratio.abs() >= 0.95
+                || car.state().wheels[3].slip_ratio.abs() >= 0.95;
+            if rear_locked {
+                rear_lockup_s += dt;
+            }
+
+            car.state().speed <= 0.05
+        },
+    );
+
+    let stopping_distance_m = runner.car.state().position.x.max(0.1);
+    let stopping_time_s = runner.time;
+    let avg_decel_g = (v0_mps * v0_mps) / (2.0 * stopping_distance_m * G_ACCEL);
+    let max_sideslip_deg = max_sideslip_rad.to_degrees();
+    let max_yaw_rate_deg_s = max_yaw_rate.to_degrees();
+    let lateral_displacement_m = runner.car.state().position.y.abs();
+    let heading_deviation_deg = runner.car.state().angle.abs().to_degrees();
+    let abs_active_pct = if total_steps > 0 {
+        (abs_active_steps as f32 / total_steps as f32) * 100.0
+    } else {
+        0.0
+    };
+
+    let stability_rating = if max_sideslip_deg > 30.0 || heading_deviation_deg > 45.0 {
+        BrakingStabilityRating::Spinout
+    } else if max_sideslip_deg > 8.0 || heading_deviation_deg > 10.0 {
+        BrakingStabilityRating::YawWander
+    } else {
+        BrakingStabilityRating::Stable
+    };
+
+    BrakingStraightLineResult {
+        surface,
+        v0_kmh,
+        with_yaw_disturbance,
+        stopping_distance_m,
+        stopping_time_s,
+        avg_decel_g,
+        peak_decel_g,
+        max_sideslip_deg,
+        max_yaw_rate_deg_s,
+        lateral_displacement_m,
+        heading_deviation_deg,
+        front_lockup_duration_s: front_lockup_s,
+        rear_lockup_duration_s: rear_lockup_s,
+        abs_active_pct,
+        stability_rating,
+    }
+}
+
+/// Runs Split-mu (asymmetric surface) emergency braking.
+/// Left wheels ride on `high_mu`, Right wheels ride on `low_mu`.
+pub fn run_braking_split_mu(
+    config: &CarConfig,
+    high_mu: SurfaceType,
+    low_mu: SurfaceType,
+    v0_kmh: f32,
+    dt: f32,
+) -> BrakingSplitMuResult {
+    let v0_mps = v0_kmh / 3.6;
+    let mut runner = SimulationRunner::new(config.clone(), dt)
+        .with_state(Vec2::ZERO, 0.0, Vec2::new(v0_mps, 0.0));
+
+    let surfaces = [high_mu, low_mu, high_mu, low_mu];
+
+    let mut peak_yaw_rate = 0.0f32;
+    let mut max_sideslip_rad = 0.0f32;
+
+    runner.run_per_wheel_until(
+        30.0,
+        surfaces,
+        |_t, _car| CarControls::full_brake(),
+        |_t, car| {
+            let yaw_rate = car.state().angular_velocity.abs();
+            if yaw_rate > peak_yaw_rate {
+                peak_yaw_rate = yaw_rate;
+            }
+
+            let sideslip = car.state().sideslip_angle.abs();
+            if sideslip > max_sideslip_rad {
+                max_sideslip_rad = sideslip;
+            }
+
+            car.state().speed <= 0.05
+        },
+    );
+
+    let stopping_distance_m = runner.car.state().position.x.max(0.1);
+    let stopping_time_s = runner.time;
+    let avg_decel_g = (v0_mps * v0_mps) / (2.0 * stopping_distance_m * G_ACCEL);
+    let lateral_lane_drift_m = runner.car.state().position.y.abs();
+    let heading_deviation_deg = runner.car.state().angle.abs().to_degrees();
+    let max_sideslip_deg = max_sideslip_rad.to_degrees();
+
+    let status = if heading_deviation_deg > 45.0 || max_sideslip_deg > 35.0 {
+        SplitMuStatus::SpunOut
+    } else if lateral_lane_drift_m > 1.5 || heading_deviation_deg > 5.0 {
+        SplitMuStatus::PullsGripSide
+    } else {
+        SplitMuStatus::TrackedStraight
+    };
+
+    BrakingSplitMuResult {
+        high_mu_surface: high_mu,
+        low_mu_surface: low_mu,
+        v0_kmh,
+        stopping_distance_m,
+        stopping_time_s,
+        avg_decel_g,
+        peak_yaw_rate_deg_s: peak_yaw_rate.to_degrees(),
+        max_sideslip_deg,
+        lateral_lane_drift_m,
+        heading_deviation_deg,
+        status,
+    }
+}
+
+/// Runs Cornering Trail-Braking: enters a steady curve and hits full brakes.
+pub fn run_braking_in_turn(
+    config: &CarConfig,
+    surface: SurfaceType,
+    radius_m: f32,
+    v0_kmh: f32,
+    dt: f32,
+) -> BrakingCorneringResult {
+    let v0_mps = v0_kmh / 3.6;
+    // Start at (R, 0) pointing north (+y) with speed v0
+    let mut runner = SimulationRunner::new(config.clone(), dt)
+        .with_state(Vec2::new(radius_m, 0.0), PI * 0.5, Vec2::new(0.0, v0_mps));
+
+    let mut peak_yaw_rate = 0.0f32;
+    let mut max_sideslip_rad = 0.0f32;
+    let mut max_radial_divergence = 0.0f32;
+    let initial_pos = Vec2::new(radius_m, 0.0);
+
+    // Kinematic steer for circle
+    let speed_factor = 1.0 + v0_mps * config.speed_sensitive_steer_factor;
+    let turn_steer = -(config.wheelbase / (radius_m * config.max_steer_angle)) * speed_factor;
+
+    runner.run_until(
+        15.0,
+        surface,
+        |t, _car| {
+            if t < 0.2 {
+                // Settle into turn
+                CarControls {
+                    throttle: 0.1,
+                    steer: turn_steer.clamp(-1.0, 1.0),
+                    brake: 0.0,
+                    handbrake: false,
+                    reverse: false,
+                }
+            } else {
+                // Threshold braking while maintaining steer command
+                CarControls {
+                    throttle: 0.0,
+                    steer: turn_steer.clamp(-1.0, 1.0),
+                    brake: 1.0,
+                    handbrake: false,
+                    reverse: false,
+                }
+            }
+        },
+        |t, car| {
+            if t >= 0.2 {
+                let yaw_rate = car.state().angular_velocity.abs();
+                if yaw_rate > peak_yaw_rate {
+                    peak_yaw_rate = yaw_rate;
+                }
+
+                let sideslip = car.state().sideslip_angle.abs();
+                if sideslip > max_sideslip_rad {
+                    max_sideslip_rad = sideslip;
+                }
+
+                let current_r = car.state().position.length();
+                let radial_div = (current_r - radius_m).abs();
+                if radial_div > max_radial_divergence {
+                    max_radial_divergence = radial_div;
+                }
+            }
+
+            car.state().speed <= 0.05
+        },
+    );
+
+    let max_sideslip_deg = max_sideslip_rad.to_degrees();
+    let final_pos = runner.car.state().position;
+    let stopping_dist = (final_pos - initial_pos).length();
+
+    let behavior = if max_sideslip_deg > 35.0 {
+        CorneringBrakingBehavior::SnapOversteerSpin
+    } else if max_radial_divergence > 6.0 {
+        CorneringBrakingBehavior::UndersteerPlow
+    } else {
+        CorneringBrakingBehavior::CleanTrailBrake
+    };
+
+    BrakingCorneringResult {
+        surface,
+        v0_kmh,
+        radius_m,
+        peak_yaw_rate_deg_s: peak_yaw_rate.to_degrees(),
+        max_sideslip_deg,
+        stopping_distance_along_path_m: stopping_dist,
+        radial_path_divergence_m: max_radial_divergence,
+        behavior,
+    }
+}
+
+/// Runs Cadence / Brake Pumping test: cycling brake pedal on and off.
+pub fn run_braking_cadence(
+    config: &CarConfig,
+    surface: SurfaceType,
+    v0_kmh: f32,
+    dt: f32,
+) -> BrakingCadenceResult {
+    let v0_mps = v0_kmh / 3.6;
+    let mut runner = SimulationRunner::new(config.clone(), dt)
+        .with_state(Vec2::ZERO, 0.0, Vec2::new(v0_mps, 0.0));
+
+    let cycle_period = 0.30f32; // 0.15s on, 0.15s off
+    let mut total_cycles = 0u32;
+    let mut locked_cycles = 0u32;
+    let mut spinup_latencies = Vec::new();
+    let mut last_cycle_index = 0u32;
+    let mut release_time = 0.0f32;
+    let mut waiting_spinup = false;
+
+    runner.run_until(
+        30.0,
+        surface,
+        |t, _car| {
+            let phase = t % cycle_period;
+            if phase < (cycle_period * 0.5) {
+                CarControls::full_brake()
+            } else {
+                CarControls::default() // 0 throttle, 0 brake
+            }
+        },
+        |t, car| {
+            let cycle_idx = (t / cycle_period) as u32;
+            let phase = t % cycle_period;
+
+            if cycle_idx > last_cycle_index {
+                last_cycle_index = cycle_idx;
+                total_cycles += 1;
+            }
+
+            // When brake is released
+            if phase >= (cycle_period * 0.5) && !waiting_spinup {
+                waiting_spinup = true;
+                release_time = t;
+                // Check if any wheel was locked at release
+                let was_locked = car.state().wheels.iter().any(|w| w.slip_ratio.abs() >= 0.90);
+                if was_locked {
+                    locked_cycles += 1;
+                }
+            }
+
+            // Measure how long until wheel recovers grip (|slip| < 0.12)
+            if waiting_spinup {
+                let max_slip = car.state().wheels.iter().map(|w| w.slip_ratio.abs()).fold(0.0f32, f32::max);
+                if max_slip < 0.12 {
+                    spinup_latencies.push((t - release_time) * 1000.0);
+                    waiting_spinup = false;
+                }
+            }
+
+            car.state().speed <= 0.05
+        },
+    );
+
+    let stopping_distance_m = runner.car.state().position.x.max(0.1);
+    let stopping_time_s = runner.time;
+    let avg_decel_g = (v0_mps * v0_mps) / (2.0 * stopping_distance_m * G_ACCEL);
+    let avg_recovery_latency_ms = if !spinup_latencies.is_empty() {
+        spinup_latencies.iter().sum::<f32>() / spinup_latencies.len() as f32
+    } else {
+        0.0
+    };
+
+    BrakingCadenceResult {
+        surface,
+        v0_kmh,
+        stopping_distance_m,
+        stopping_time_s,
+        avg_decel_g,
+        wheel_recovery_latency_ms: avg_recovery_latency_ms,
+        locked_pulse_cycles: locked_cycles,
+        total_pulse_cycles: total_cycles.max(1),
+    }
+}
+
+/// Executes the full multi-scenario braking simulation battery for a vehicle.
+pub fn run_braking_surface_battery(
+    vehicle_id: impl Into<String>,
+    vehicle_name: impl Into<String>,
+    category: impl Into<String>,
+    config: &CarConfig,
+    v0_kmh: f32,
+    dt: f32,
+) -> BrakingSurfaceExperimentResult {
+    let surfaces = SurfaceType::ALL;
+    let mut straight_nominal = Vec::with_capacity(surfaces.len());
+    let mut straight_perturbed = Vec::with_capacity(surfaces.len());
+    let mut cornering = Vec::with_capacity(surfaces.len());
+    let mut cadence = Vec::with_capacity(surfaces.len());
+
+    for &s in &surfaces {
+        straight_nominal.push(run_braking_straight_line(config, s, v0_kmh, false, dt));
+        straight_perturbed.push(run_braking_straight_line(config, s, v0_kmh, true, dt));
+        cornering.push(run_braking_in_turn(config, s, 40.0, 70.0f32.min(v0_kmh * 0.7), dt));
+        cadence.push(run_braking_cadence(config, s, v0_kmh, dt));
+    }
+
+    // Split-mu configurations (Asphalt vs each reduced-mu surface)
+    let split_targets = [
+        SurfaceType::Concrete,
+        SurfaceType::Gravel,
+        SurfaceType::Mud,
+        SurfaceType::Grass,
+        SurfaceType::Snow,
+        SurfaceType::Water,
+        SurfaceType::Ice,
+    ];
+    let mut split_mu = Vec::with_capacity(split_targets.len());
+    for &low_s in &split_targets {
+        split_mu.push(run_braking_split_mu(config, SurfaceType::Asphalt, low_s, 100.0, dt));
+    }
+
+    BrakingSurfaceExperimentResult {
+        vehicle_id: vehicle_id.into(),
+        vehicle_name: vehicle_name.into(),
+        category: category.into(),
+        straight_line_nominal: straight_nominal,
+        straight_line_perturbed: straight_perturbed,
+        split_mu,
+        cornering_trail_braking: cornering,
+        cadence_pumping: cadence,
+    }
+}
