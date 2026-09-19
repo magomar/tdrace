@@ -1,11 +1,139 @@
 use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_triangle};
+use macroquad::texture::{draw_texture_ex, DrawTextureParams, Texture2D};
 use tdrace_core::physics::car::Car;
 
 use super::color::{CarColorScheme, Palette};
 use super::track::draw_quad;
 use crate::module::VehicleVisualType;
+
+static PORSCHE_GT3R_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
+static PORSCHE_TOPDOWN_CACHE: std::sync::Mutex<Option<std::collections::HashMap<(u32, u32), Texture2D>>> = std::sync::Mutex::new(None);
+
+#[inline]
+fn color_to_u32(c: Color) -> u32 {
+    let r = (c.r.clamp(0.0, 1.0) * 255.0) as u32;
+    let g = (c.g.clamp(0.0, 1.0) * 255.0) as u32;
+    let b = (c.b.clamp(0.0, 1.0) * 255.0) as u32;
+    (r << 16) | (g << 8) | b
+}
+
+/// Retrieves or dynamically generates a colorway-tinted top-down texture for the Porsche 911 GT3 R.
+pub fn get_tinted_porsche_topdown(primary: Color, secondary: Color) -> Texture2D {
+    let k1 = color_to_u32(primary);
+    let k2 = color_to_u32(secondary);
+
+    let mut guard = PORSCHE_TOPDOWN_CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    let map = guard.get_or_insert_with(std::collections::HashMap::new);
+    if let Some(tex) = map.get(&(k1, k2)) {
+        return tex.clone();
+    }
+
+    let base_img = macroquad::texture::Image::from_file_with_format(PORSCHE_GT3R_PNG, None)
+        .expect("failed to load porsche topdown PNG");
+    let mut tinted = base_img.clone();
+    for pixel in tinted.bytes.chunks_exact_mut(4) {
+        let a = pixel[3];
+        if a < 15 {
+            continue;
+        }
+        let r = pixel[0] as f32 / 255.0;
+        let g = pixel[1] as f32 / 255.0;
+        let b = pixel[2] as f32 / 255.0;
+
+        let max_c = r.max(g).max(b);
+        let min_c = r.min(g).min(b);
+        let sat = if max_c > 0.001 { (max_c - min_c) / max_c } else { 0.0 };
+        let lum = (r + g + b) / 3.0;
+
+        if lum > 0.65 && sat < 0.22 {
+            pixel[0] = ((primary.r * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[1] = ((primary.g * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[2] = ((primary.b * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
+        } else if g > 0.58 && r > 0.45 && b < 0.45 && sat > 0.30 {
+            pixel[0] = ((secondary.r * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[1] = ((secondary.g * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[2] = ((secondary.b * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
+        }
+    }
+
+    let texture = Texture2D::from_image(&tinted);
+    map.insert((k1, k2), texture.clone());
+    texture
+}
+
+pub fn porsche_gt3r_texture() -> Texture2D {
+    get_tinted_porsche_topdown(Color::new(0.92, 0.92, 0.94, 1.0), Color::new(0.48, 0.85, 0.12, 1.0))
+}
+
+/// Renders modern LED headlights and glowing taillights / brake lights.
+pub fn render_car_lights(
+    pos: Vec2,
+    fwd: Vec2,
+    right: Vec2,
+    half_len: f32,
+    half_w: f32,
+    is_braking: bool,
+) {
+    // Projector LED Headlights with soft glow
+    let light_w = half_w * 0.55;
+    let head_l = pos + fwd * (half_len - 0.05) - right * light_w;
+    let head_r = pos + fwd * (half_len - 0.05) + right * light_w;
+
+    // Headlight outer glow
+    draw_circle(head_l.x, head_l.y, 0.20, Color::new(0.95, 0.98, 1.0, 0.35));
+    draw_circle(head_r.x, head_r.y, 0.20, Color::new(0.95, 0.98, 1.0, 0.35));
+    // Headlight core
+    draw_circle(head_l.x, head_l.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
+    draw_circle(head_r.x, head_r.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
+
+    // Tail / LED Brake Lights with glow halo
+    let tail_l = pos - fwd * (half_len - 0.05) - right * (half_w * 0.65);
+    let tail_r = pos - fwd * (half_len - 0.05) + right * (half_w * 0.65);
+
+    if is_braking {
+        draw_circle(tail_l.x, tail_l.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
+        draw_circle(tail_r.x, tail_r.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
+        draw_circle(tail_l.x, tail_l.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
+        draw_circle(tail_r.x, tail_r.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
+    } else {
+        draw_circle(tail_l.x, tail_l.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+        draw_circle(tail_r.x, tail_r.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+    }
+}
+
+/// Renders a high-detail top-down sprite for the Porsche 911 GT3 R (992).
+pub fn render_porsche_gt3r_sprite(
+    chassis_center: Vec2,
+    angle: f32,
+    fwd: Vec2,
+    right: Vec2,
+    body_half_len: f32,
+    body_half_w: f32,
+    primary: Color,
+    secondary: Color,
+    is_braking: bool,
+) {
+    let texture = get_tinted_porsche_topdown(primary, secondary);
+    let dest_w = body_half_len * 2.0 * 1.06;
+    let dest_h = dest_w * (446.0 / 925.0);
+
+    draw_texture_ex(
+        &texture,
+        chassis_center.x - dest_w * 0.5,
+        chassis_center.y - dest_h * 0.5,
+        Color::new(1.0, 1.0, 1.0, 1.0),
+        DrawTextureParams {
+            dest_size: Some(macroquad::math::Vec2::new(dest_w, dest_h)),
+            rotation: angle,
+            pivot: Some(macroquad::math::Vec2::new(chassis_center.x, chassis_center.y)),
+            ..Default::default()
+        },
+    );
+
+    render_car_lights(chassis_center, fwd, right, body_half_len, body_half_w, is_braking);
+}
 
 /// Renders a vehicle with modern 2.5D motorsport arcade aesthetics based on its visual archetype.
 pub fn render_car(car: &Car, color_scheme: &CarColorScheme, is_braking: bool) {
@@ -27,6 +155,18 @@ pub fn render_car_with_visual_type(
     color_scheme: &CarColorScheme,
     is_braking: bool,
     visual_type: VehicleVisualType,
+) {
+    render_car_with_visual_type_and_model(car, color_scheme, is_braking, visual_type, None);
+}
+
+/// Renders a vehicle with model-specific top-down sprite support when available,
+/// falling back to procedural visual archetype rendering.
+pub fn render_car_with_visual_type_and_model(
+    car: &Car,
+    color_scheme: &CarColorScheme,
+    is_braking: bool,
+    visual_type: VehicleVisualType,
+    model_id: Option<&str>,
 ) {
     let pos = car.state.position;
     let angle = car.state.angle;
@@ -61,7 +201,23 @@ pub fn render_car_with_visual_type(
     let shadow_scale = 1.0 + (z_total * 0.08).min(0.60);
     render_chassis_shadow(shadow_pos, fwd, right, body_half_len * shadow_scale, body_half_w * shadow_scale);
 
-    // 2. --- 4 Wheels & Steering ---
+    // 2. If model-specific high-detail top-down sprite is available, render sprite directly
+    if model_id == Some("gt_porsche_911_gt3r") {
+        render_porsche_gt3r_sprite(
+            chassis_center,
+            angle,
+            fwd,
+            right,
+            body_half_len,
+            body_half_w,
+            color_scheme.primary,
+            color_scheme.secondary,
+            is_braking,
+        );
+        return;
+    }
+
+    // 3. Procedural Archetype Rendering
     let (steer_fl, steer_fr) = car.compute_ackermann_angles(car.state.steer_angle);
     let wheel_steers = [steer_fl, steer_fr, 0.0, 0.0];
     let wheel_positions = [
@@ -70,6 +226,7 @@ pub fn render_car_with_visual_type(
         chassis_center - fwd * lr - right * half_w,
         chassis_center - fwd * lr + right * half_w,
     ];
+
 
     match visual_type {
         VehicleVisualType::OpenWheel { front_wing_span, rear_wing_height, halo } => {

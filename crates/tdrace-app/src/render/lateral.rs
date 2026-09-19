@@ -1,12 +1,78 @@
+use std::collections::HashMap;
+use std::sync::Mutex;
 use macroquad::color::Color;
 use macroquad::math::Vec2;
 use macroquad::shapes::{
     draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines, draw_triangle,
 };
+use macroquad::texture::{draw_texture_ex, DrawTextureParams, Image, Texture2D};
 
 use super::color::{CarColorScheme, Palette};
 use crate::module::VehicleVisualType;
 use crate::ui::menu::CarChoice;
+
+static PORSCHE_LATERAL_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png");
+static PORSCHE_LATERAL_THUMB_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png");
+static PORSCHE_LATERAL_CACHE: Mutex<Option<HashMap<(u32, u32, bool), Texture2D>>> = Mutex::new(None);
+
+#[inline]
+fn color_to_u32(c: Color) -> u32 {
+    let r = (c.r.clamp(0.0, 1.0) * 255.0) as u32;
+    let g = (c.g.clamp(0.0, 1.0) * 255.0) as u32;
+    let b = (c.b.clamp(0.0, 1.0) * 255.0) as u32;
+    (r << 16) | (g << 8) | b
+}
+
+/// Retrieves or dynamically generates a colorway-tinted lateral texture for the Porsche 911 GT3 R.
+/// Uses full 1024px asset when `high_res` is true (garage stage) and 256px thumbnail when false (menus/cards).
+pub fn get_tinted_porsche_lateral(primary: Color, secondary: Color, high_res: bool) -> Texture2D {
+    let k1 = color_to_u32(primary);
+    let k2 = color_to_u32(secondary);
+
+    let mut guard = PORSCHE_LATERAL_CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    let map = guard.get_or_insert_with(HashMap::new);
+    if let Some(tex) = map.get(&(k1, k2, high_res)) {
+        return tex.clone();
+    }
+
+    let png_bytes = if high_res {
+        PORSCHE_LATERAL_PNG
+    } else {
+        PORSCHE_LATERAL_THUMB_PNG
+    };
+
+    let base_img = Image::from_file_with_format(png_bytes, None)
+        .expect("failed to load porsche lateral PNG");
+    let mut tinted = base_img.clone();
+    for pixel in tinted.bytes.chunks_exact_mut(4) {
+        let a = pixel[3];
+        if a < 15 {
+            continue;
+        }
+        let r = pixel[0] as f32 / 255.0;
+        let g = pixel[1] as f32 / 255.0;
+        let b = pixel[2] as f32 / 255.0;
+
+        let max_c = r.max(g).max(b);
+        let min_c = r.min(g).min(b);
+        let sat = if max_c > 0.001 { (max_c - min_c) / max_c } else { 0.0 };
+        let lum = (r + g + b) / 3.0;
+
+        if lum > 0.65 && sat < 0.22 {
+            pixel[0] = ((primary.r * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[1] = ((primary.g * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[2] = ((primary.b * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
+        } else if g > 0.58 && r > 0.45 && b < 0.45 && sat > 0.30 {
+            pixel[0] = ((secondary.r * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[1] = ((secondary.g * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[2] = ((secondary.b * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
+        }
+    }
+
+    let texture = Texture2D::from_image(&tinted);
+    map.insert((k1, k2, high_res), texture.clone());
+    texture
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WheelStyle {
@@ -106,6 +172,45 @@ pub fn render_real_car_lateral_by_id(
         Color::new(0.25, 0.35, 0.50, 0.35),
     );
 
+    // If model-specific high-resolution lateral sprite is available, render tinted texture directly
+    if model_id == "gt_porsche_911_gt3r" {
+        let high_res = scale > 1.2;
+        let texture = get_tinted_porsche_lateral(primary, secondary, high_res);
+        let dest_w = half_len * 2.36;
+        let dest_h = dest_w * (341.0 / 1024.0);
+        let car_y = ground_y - dest_h * 0.98;
+        draw_texture_ex(
+            &texture,
+            center_x - dest_w * 0.5,
+            car_y,
+            Color::new(1.0, 1.0, 1.0, 1.0),
+            DrawTextureParams {
+                dest_size: Some(Vec2::new(dest_w, dest_h)),
+                ..Default::default()
+            },
+        );
+
+        // Dynamic Rev Exhaust Backfire Sparks
+        if rev_intensity > 0.05 {
+            let exh_x = center_x - half_len * 0.92;
+            let exh_y = ground_y - 8.0 * s;
+            let flame_len = (18.0 * rev_intensity * s).min(28.0 * s);
+            draw_triangle(
+                Vec2::new(exh_x, exh_y - 2.5 * s),
+                Vec2::new(exh_x, exh_y + 2.5 * s),
+                Vec2::new(exh_x - flame_len, exh_y),
+                Color::new(1.0, 0.45, 0.10, (0.6 + 0.4 * rev_intensity).min(1.0)),
+            );
+            draw_triangle(
+                Vec2::new(exh_x, exh_y - 1.2 * s),
+                Vec2::new(exh_x, exh_y + 1.2 * s),
+                Vec2::new(exh_x - flame_len * 0.6, exh_y),
+                Color::new(1.0, 0.90, 0.40, 1.0),
+            );
+        }
+        return;
+    }
+
     // Render Model-Specific Body Silhouette
     render_specific_body(model_id, center_x, center_y, ground_y, half_len, s, primary, secondary, helmet_col);
 
@@ -145,7 +250,7 @@ pub fn render_car_lateral(
 ) {
     let dummy_id = match car_choice {
         CarChoice::GT4Clubsport => "gt_porsche_718_gt4",
-        CarChoice::GT3Car => "gt_ferrari_296_gt3",
+        CarChoice::GT3Car => "gt_porsche_911_gt3r",
         CarChoice::GT2Biturbo => "gt_porsche_911_gt2_rs",
         CarChoice::GT1Legend => "gt_mclaren_f1_gtr_lt",
         CarChoice::HypercarPrototype => "gt_ferrari_499p",

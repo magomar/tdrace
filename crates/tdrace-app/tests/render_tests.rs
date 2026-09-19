@@ -265,3 +265,25 @@ fn test_tree_cenital_canopy_and_alpha_modulation() {
     }
 }
 
+#[test]
+fn test_porsche_gt3r_topdown_sprite_asset_presence() {
+    let png_bytes = include_bytes!("../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
+    assert!(!png_bytes.is_empty(), "Topdown sprite PNG asset must not be empty");
+    assert_eq!(&png_bytes[1..4], b"PNG", "Asset must be a valid PNG format header");
+    assert!(png_bytes.len() > 100_000, "PNG file should contain high-resolution sprite data");
+}
+
+#[test]
+fn test_porsche_gt3r_lateral_sprite_asset_presence() {
+    let high_res = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png");
+    assert!(!high_res.is_empty(), "Lateral sprite PNG asset must not be empty");
+    assert_eq!(&high_res[1..4], b"PNG", "Asset must be a valid PNG format header");
+    assert!(high_res.len() > 50_000, "High-res lateral PNG file should contain detailed sprite data");
+
+    let thumb = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png");
+    assert!(!thumb.is_empty(), "Thumbnail sprite PNG asset must not be empty");
+    assert_eq!(&thumb[1..4], b"PNG", "Asset must be a valid PNG format header");
+    assert!(thumb.len() < high_res.len(), "Thumbnail must be more compact than high-res sprite");
+}
+
+

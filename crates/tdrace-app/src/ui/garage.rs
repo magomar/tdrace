@@ -191,19 +191,37 @@ pub fn render_garage_screen(
             }
             GarageViewMode::TopDownTurntable => {
                 // Top-down turntable rendering with smooth rotation
-                draw_circle(center_x, center_y + scaler.s(10.0), scaler.s(60.0), Color::new(0.06, 0.08, 0.12, 0.85));
-                draw_circle_lines(center_x, center_y + scaler.s(10.0), scaler.s(60.0), 1.5, Color::new(0.25, 0.35, 0.50, 0.50));
+                draw_circle(center_x, center_y + scaler.s(10.0), scaler.s(70.0), Color::new(0.06, 0.08, 0.12, 0.85));
+                draw_circle_lines(center_x, center_y + scaler.s(10.0), scaler.s(70.0), 1.5, Color::new(0.25, 0.35, 0.50, 0.50));
 
-                let turntable_scale = scaler.s(1.10);
-                render_real_car_lateral_by_id(
-                    model.id,
-                    &scheme,
-                    center_x,
-                    center_y,
-                    turntable_scale,
-                    garage_brake_heat,
-                    false,
-                );
+                if model.id == "gt_porsche_911_gt3r" {
+                    let texture = crate::render::car::get_tinted_porsche_topdown(scheme.primary, scheme.secondary);
+                    let dest_w = scaler.s(220.0);
+                    let dest_h = dest_w * (446.0 / 925.0);
+                    macroquad::texture::draw_texture_ex(
+                        &texture,
+                        center_x - dest_w * 0.5,
+                        center_y + scaler.s(10.0) - dest_h * 0.5,
+                        Color::new(1.0, 1.0, 1.0, 1.0),
+                        macroquad::texture::DrawTextureParams {
+                            dest_size: Some(macroquad::math::Vec2::new(dest_w, dest_h)),
+                            rotation: garage_turntable_angle,
+                            pivot: Some(macroquad::math::Vec2::new(center_x, center_y + scaler.s(10.0))),
+                            ..Default::default()
+                        },
+                    );
+                } else {
+                    let turntable_scale = scaler.s(1.10);
+                    render_real_car_lateral_by_id(
+                        model.id,
+                        &scheme,
+                        center_x,
+                        center_y,
+                        turntable_scale,
+                        garage_brake_heat,
+                        false,
+                    );
+                }
 
                 let angle_deg = (garage_turntable_angle * 180.0 / std::f32::consts::PI) % 360.0;
                 fonts.draw_ui_regular(

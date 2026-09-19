@@ -47,6 +47,15 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
   - Implement defensive positioning lines when an opponent is alongside.
 - **Dynamic Difficulty Adjustment (DDA)**: Adaptive rubber-banding or skill-tier tuning based on player pace to keep arcade races competitive.
 - **Grid AI Personalities**: Driver traits with varying aggression, apex discipline, and wet/loose surface confidence.
+- **Team / Constructor Allocation (Teammates & Coordinated Liveries)**:
+  - Structure grid rosters into constructor teams (e.g. 4 teams of 2 drivers in an 8-car field).
+  - Teammates share identical or related vehicle chassis/models with harmonized team livery palettes, racing numbers, and shared constructor championship points.
+  - Introduce intra-team rivalries and team orders (e.g., qualifying battles, defending against rivals to protect a teammate's podium position).
+- **Pilot Driving Style & Vehicle Dynamic Affinity Matching**:
+  - Map pilot AI personality profiles and stats (`aggression`, `precision`, `speed`, `defense`) directly to vehicle chassis dynamics.
+  - High-precision, high-defense drivers favor high-downforce, stable-braking apex slicers (GT3 Evo, Sports Coupe).
+  - High-aggression, high-speed power brawlers favor raw top-speed, lower-downforce machines with punchy straight-line exit speed (GT2 Biturbo, NASCAR Stock Car).
+  - Slide/oversteer specialists favor loose-rear, counter-steer friendly drift and rallycross chassis.
 
 ### 2.3 Championship & Career Mode
 - **Multi-Race Championship Cups**: Structured tournament ladders (e.g. 4-race series) with FIA-style points systems (25-18-15-12...), podium sequences, and season trophies.

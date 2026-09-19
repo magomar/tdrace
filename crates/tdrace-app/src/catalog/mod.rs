@@ -188,7 +188,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         visual_type: VehicleVisualType::TouringGT { widebody: true, gt_wing: true, diffuser: true },
         base_car_choice: CarChoice::GT3Car,
         primary_color: Color::new(0.90, 0.90, 0.92, 1.0),
-        secondary_color: Color::new(0.90, 0.20, 0.10, 1.0),
+        secondary_color: Color::new(0.80, 0.92, 0.12, 1.0),
     },
     RealCarModel {
         id: "gt_ferrari_296_gt3",

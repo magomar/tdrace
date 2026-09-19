@@ -69,10 +69,21 @@ pub fn render_starting_grid_screen(
     active_roster_idx: usize,
     is_car_unlocked: bool,
     unlock_level: u32,
+    selected_model_id: Option<&str>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
+    let model_opt = selected_model_id.and_then(crate::catalog::find_model_by_id);
+    let player_scheme = if let Some(m) = model_opt {
+        CarColorScheme {
+            primary: m.primary_color,
+            secondary: m.secondary_color,
+            helmet: player_profile.color_scheme.helmet,
+        }
+    } else {
+        player_profile.color_scheme
+    };
 
     // Dark glass backdrop overlay
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.06, 0.10, 0.90));
@@ -151,11 +162,11 @@ pub fn render_starting_grid_screen(
     let swatch_h = scaler.s(10.0);
     let swatch_x = col1_x + col_w - scaler.s(58.0);
     let swatch_y = curr_y + scaler.s(12.0);
-    draw_rectangle(swatch_x, swatch_y, swatch_w, swatch_h, player_profile.color_scheme.primary);
+    draw_rectangle(swatch_x, swatch_y, swatch_w, swatch_h, player_scheme.primary);
     draw_rectangle_lines(swatch_x, swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
-    draw_rectangle(swatch_x + swatch_w + scaler.s(2.0), swatch_y, swatch_w, swatch_h, player_profile.color_scheme.secondary);
+    draw_rectangle(swatch_x + swatch_w + scaler.s(2.0), swatch_y, swatch_w, swatch_h, player_scheme.secondary);
     draw_rectangle_lines(swatch_x + swatch_w + scaler.s(2.0), swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
-    draw_rectangle(swatch_x + (swatch_w + scaler.s(2.0)) * 2.0, swatch_y, swatch_w, swatch_h, player_profile.color_scheme.helmet);
+    draw_rectangle(swatch_x + (swatch_w + scaler.s(2.0)) * 2.0, swatch_y, swatch_w, swatch_h, player_scheme.helmet);
     draw_rectangle_lines(swatch_x + (swatch_w + scaler.s(2.0)) * 2.0, swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
 
     // Divider Line
@@ -298,15 +309,18 @@ pub fn render_starting_grid_screen(
         car_tag_col,
     );
 
+    let car_title = model_opt.map(|m| m.name).unwrap_or_else(|| active_car.title());
+    let car_desc = model_opt.map(|m| m.history_bio).unwrap_or_else(|| active_car.description());
+
     fonts.draw_ui_bold(
-        active_car.title(),
+        car_title,
         col1_x + scaler.s(12.0),
         curr_y + scaler.s(32.0),
         scaler.font_s(15.5),
         Palette::WHITE,
     );
     fonts.draw_ui_regular(
-        active_car.description(),
+        car_desc,
         col1_x + scaler.s(12.0),
         curr_y + scaler.s(46.0),
         scaler.font_s(10.5),
@@ -327,41 +341,67 @@ pub fn render_starting_grid_screen(
         Color::new(0.18, 0.25, 0.35, 0.50),
         1.0,
     );
-    render_car_lateral(
-        active_car,
-        &player_profile.color_scheme,
-        stat_base_x + stat_bar_w * 0.50,
-        lateral_box_y + lateral_box_h * 0.52,
-        scaler.s(0.95),
-        0.0,
-        true,
-    );
+    if let Some(m) = model_opt {
+        crate::render::lateral::render_real_car_lateral_by_id(
+            m.id,
+            &player_scheme,
+            stat_base_x + stat_bar_w * 0.50,
+            lateral_box_y + lateral_box_h * 0.52,
+            scaler.s(0.95),
+            0.0,
+            true,
+        );
+    } else {
+        render_car_lateral(
+            active_car,
+            &player_scheme,
+            stat_base_x + stat_bar_w * 0.50,
+            lateral_box_y + lateral_box_h * 0.52,
+            scaler.s(0.95),
+            0.0,
+            true,
+        );
+    }
 
     // 4 Performance Stat Bars
-    let (spd, acc, grip, drift) = active_car.stats();
+    let (spd, acc, grip, drift) = if let Some(m) = model_opt {
+        (m.stats.0, m.stats.1, m.stats.2, m.stats.3)
+    } else {
+        active_car.stats()
+    };
     render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(122.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
     render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(137.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
     render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(152.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
     render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(167.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
 
     // 4 Engineering / Dynamic Specs Chips
-    let (spec1, spec2, spec3, spec4) = active_car.specs();
+    let (spec1, spec2, spec3, spec4) = if let Some(m) = model_opt {
+        (
+            format!("{} BHP", m.bhp),
+            format!("{} kg", m.weight_kg),
+            format!("{} km/h", m.top_speed_kmh),
+            m.aero_downforce.to_string(),
+        )
+    } else {
+        let (s1, s2, s3, s4) = active_car.specs();
+        (s1.to_string(), s2.to_string(), s3.to_string(), s4.to_string())
+    };
     let spec_chip_w = (col_w - scaler.s(32.0)) * 0.5;
     let spec_chip_h = scaler.s(22.0);
     let chip_y1 = curr_y + scaler.s(188.0);
     let chip_y2 = curr_y + scaler.s(214.0);
 
     scaler.draw_glass_card(stat_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+    fonts.draw_ui_bold(&spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
 
     scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(spec2, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::WHITE);
+    fonts.draw_ui_bold(&spec2, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::WHITE);
 
     scaler.draw_glass_card(stat_base_x, chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(spec3, stat_base_x + scaler.s(8.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GOLD);
+    fonts.draw_ui_bold(&spec3, stat_base_x + scaler.s(8.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GOLD);
 
     scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
+    fonts.draw_ui_bold(&spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
 
     // Prompt hint at bottom of card
     if is_car_active && game_mode.allows_car_change() {

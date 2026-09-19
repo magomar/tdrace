@@ -82,7 +82,7 @@ use crate::module::{
     RallyGameModule,
 };
 use crate::profile::{CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
-use crate::render::car::render_car_with_visual_type;
+use crate::render::car::render_car_with_visual_type_and_model;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
     is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_ui,
@@ -308,6 +308,7 @@ pub struct RaceSession {
     pub active_module_id: &'static str,
     pub championship_session: Option<ChampionshipSession>,
     pub current_visual_type: VehicleVisualType,
+    pub selected_car_model_id: Option<&'static str>,
 
     pub cars: Vec<Car>,
     pub color_schemes: Vec<CarColorScheme>,
@@ -574,6 +575,7 @@ impl RaceSession {
                 gt_wing: true,
                 diffuser: true,
             },
+            selected_car_model_id: None,
 
             cars: Vec::new(),
             color_schemes: Vec::new(),
@@ -1323,6 +1325,23 @@ impl RaceSession {
         self.state = GameState::Menu;
     }
 
+    /// Returns the player's effective color scheme: factory livery colors when
+    /// a real car model is selected, otherwise the profile's abstract scheme.
+    fn player_effective_color_scheme(&self) -> CarColorScheme {
+        if let Some(model) = self
+            .selected_car_model_id
+            .and_then(crate::catalog::find_model_by_id)
+        {
+            CarColorScheme {
+                primary: model.primary_color,
+                secondary: model.secondary_color,
+                helmet: self.active_profile.color_scheme.helmet,
+            }
+        } else {
+            self.active_profile.color_scheme
+        }
+    }
+
     /// Activates the GT World Challenge module.
     pub fn switch_to_gt(&mut self) {
         self.apply_module_config("gt");
@@ -1330,10 +1349,11 @@ impl RaceSession {
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::TouringGT {
-            widebody: false,
+            widebody: true,
             gt_wing: true,
-            diffuser: false,
+            diffuser: true,
         };
+        self.selected_car_model_id = Some("gt_porsche_911_gt3r");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1836,7 +1856,7 @@ impl RaceSession {
             alias: self.active_profile.alias.clone(),
             country: self.active_profile.country.clone(),
             car_title: player_car_title,
-            color_scheme: self.active_profile.color_scheme,
+            color_scheme: self.player_effective_color_scheme(),
             best_lap: player_best_lap,
             best_circuit_time: player_best_circuit,
             random_seed: player_seed,
@@ -1928,7 +1948,7 @@ impl RaceSession {
             });
         let player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
         self.cars.push(player_car);
-        self.color_schemes.push(self.active_profile.color_scheme);
+        self.color_schemes.push(self.player_effective_color_scheme());
         self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
 
         if self.is_split_screen() {
@@ -4486,6 +4506,7 @@ impl RaceSession {
                 if is_unlocked {
                     self.car_choice = active_car.base_car_choice;
                     self.current_visual_type = active_car.visual_type;
+                    self.selected_car_model_id = Some(active_car.id);
                     self.free_car_selection = true;
                     self.audio.play_sfx(SfxType::UiSelect);
                     match origin {
@@ -7014,6 +7035,7 @@ impl RaceSession {
                     self.starting_grid_roster_idx,
                     is_unlocked,
                     unlock_level,
+                    self.selected_car_model_id,
                 );
             }
             GameState::Countdown(remaining) => {
@@ -8000,7 +8022,12 @@ impl RaceSession {
             let scheme = &self.color_schemes[i];
             let is_braking =
                 car.state.local_velocity.x > 1.0 && car.state.wheels[2].slip_ratio < -0.15;
-            render_car_with_visual_type(car, scheme, is_braking, self.current_visual_type);
+            let model_id = if i == 0 {
+                self.selected_car_model_id
+            } else {
+                None
+            };
+            render_car_with_visual_type_and_model(car, scheme, is_braking, self.current_visual_type, model_id);
         }
 
         // 5. Ghost Vehicle (Semi-transparent during Time Trial)
@@ -8034,7 +8061,12 @@ impl RaceSession {
             let scheme = &self.color_schemes[i];
             let is_braking =
                 car.state.local_velocity.x > 1.0 && car.state.wheels[2].slip_ratio < -0.15;
-            render_car_with_visual_type(car, scheme, is_braking, self.current_visual_type);
+            let model_id = if i == 0 {
+                self.selected_car_model_id
+            } else {
+                None
+            };
+            render_car_with_visual_type_and_model(car, scheme, is_braking, self.current_visual_type, model_id);
         }
 
         // 9. Airborne Particles (Smoke, Dirt roost, Sparks, Drift text)

@@ -59,8 +59,37 @@ async fn main() {
             session.start_gt_championship();
         } else if clean_arg == "split" || clean_arg == "splitscreen" || clean_arg == "s" {
             session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+        } else if clean_arg == "garage" {
+            let tier = args.iter().position(|a| a == "--tier" || a == "-t")
+                .and_then(|i| args.get(i + 1))
+                .and_then(|s| s.parse::<u8>().ok())
+                .unwrap_or(2);
+            let car_idx = args.iter().position(|a| a == "--car" || a == "-c")
+                .and_then(|i| args.get(i + 1))
+                .and_then(|s| s.parse::<usize>().ok())
+                .unwrap_or(0);
+            session.garage_origin = tdrace_app::game::GarageOrigin::ModalitySelect;
+            session.garage_tier = tier;
+            session.garage_car_idx = car_idx;
+            if args.iter().any(|a| a == "--turntable") {
+                session.garage_view_mode = tdrace_app::ui::GarageViewMode::TopDownTurntable;
+            }
+            if args.iter().any(|a| a == "--gallery") {
+                session.garage_gallery_mode = true;
+            }
+            session.state = tdrace_app::game::GameState::Garage(tdrace_app::game::GarageOrigin::ModalitySelect);
+        } else if clean_arg == "race" || clean_arg == "quick-race" {
+            session.init_race();
+            session.state = tdrace_app::game::GameState::StartingGrid;
         }
     }
+
+    let screenshot_path = args
+        .iter()
+        .position(|a| a == "--screenshot")
+        .and_then(|i| args.get(i + 1))
+        .cloned();
+    let mut frame_count: u32 = 0;
 
     loop {
         // Clear background with active track's pallid backdrop color
@@ -71,6 +100,16 @@ async fn main() {
 
         // Render world entities & screen HUD
         session.render();
+
+        frame_count += 1;
+        if let Some(path) = &screenshot_path {
+            if frame_count >= 10 {
+                let img = get_screen_data();
+                img.export_png(path);
+                println!("Screenshot exported to {}", path);
+                break;
+            }
+        }
 
         next_frame().await;
     }
