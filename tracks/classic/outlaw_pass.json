@@ -24144,7 +24144,6 @@
   "predefined_car": "sports_car",
   "module_id": "classic",
   "modules": [
-    "classic",
-    "rally"
+    "classic"
   ]
 }

@@ -398,7 +398,7 @@ impl TrackManager {
                                 module_id = Some("rally".to_string());
                             } else if stem == "outlaw_pass" {
                                 if modules.is_empty() {
-                                    modules = vec!["classic".to_string(), "rally".to_string()];
+                                    modules = vec!["classic".to_string()];
                                     module_id = Some("classic".to_string());
                                 }
                             } else if modules.is_empty() && module_id.is_none() {

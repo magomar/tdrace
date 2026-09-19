@@ -1216,7 +1216,7 @@ pub fn outlaw_pass() -> Track {
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string(), "rally".to_string()],
+        modules: vec!["classic".to_string()],
     }
 }
 
