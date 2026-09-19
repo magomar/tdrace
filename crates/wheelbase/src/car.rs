@@ -153,6 +153,9 @@ pub struct CarState {
     pub esc_active: bool,
     /// Whether Anti-lock Braking System (ABS) is actively modulating brake force.
     pub abs_active: bool,
+    /// Whether brakes (service brake or handbrake) are actively being applied.
+    #[serde(default)]
+    pub is_braking: bool,
     /// Road surface elevation underneath the vehicle in meters (z >= 0.0).
     #[serde(default)]
     pub road_elevation: f32,
@@ -216,6 +219,7 @@ impl Default for CarState {
             tcs_active: false,
             esc_active: false,
             abs_active: false,
+            is_braking: false,
             road_elevation: 0.0,
             ramp_elevation: 0.0,
             road_bank_angle: 0.0,
@@ -472,6 +476,7 @@ impl Car {
         }
 
         let clamped_ctrl = controls.clamped();
+        self.state.is_braking = clamped_ctrl.brake > 0.05 || clamped_ctrl.handbrake;
         let fwd = self.forward_vector();
         let right = self.right_vector();
 
@@ -671,15 +676,28 @@ impl Car {
         }
         self.state.tcs_active = tcs_active;
 
+        let mut engine_brake_multiplier = 1.0f32;
+        // Engine Drag Reduction (EDR / MSR): prevent lift-off snap oversteer when the chassis is in
+        // transient sideslip or high yaw rate, letting the rear tires regain lateral restoring traction.
+        if self.state.sideslip_angle.abs() > 0.08 || omega.abs() > 0.15 {
+            let slide_severity = ((self.state.sideslip_angle.abs() - 0.08) / 0.12)
+                .max((omega.abs() - 0.15) / 0.25)
+                .clamp(0.0, 1.0);
+            engine_brake_multiplier *= 1.0 - 0.85 * slide_severity;
+        }
+
         let total_drive_force = if clamped_ctrl.reverse {
             -clamped_ctrl.throttle * self.config.max_reverse_force
         } else if clamped_ctrl.throttle > 0.0 {
             clamped_ctrl.throttle * self.config.max_engine_force * engine_taper * drive_torque_multiplier
         } else if self.config.engine_braking_coefficient > 0.0 && v_long.abs() > 0.05 {
-            // Enhanced generic motor brake: opposes motion on throttle release, causing the car to lose speed
-            // noticeably quicker for crisp corner entry and realistic lift-off weight transfer.
+            // Enhanced generic motor brake with EDR modulation
             let generic_motor_brake_boost = 1.85f32;
-            -self.config.engine_braking_coefficient * generic_motor_brake_boost * total_weight * (v_long / 1.5).tanh()
+            -self.config.engine_braking_coefficient
+                * generic_motor_brake_boost
+                * total_weight
+                * (v_long / 1.5).tanh()
+                * engine_brake_multiplier
         } else {
             0.0
         };
@@ -741,8 +759,9 @@ impl Car {
 
             // Dynamic Electronic Brakeforce Distribution (EBD):
             // Blends nominal brake bias with dynamic normal load fraction.
-            // As weight transfers forward under deceleration, front brake share increases and rear decreases,
-            // preventing the unloaded rear wheels from locking up and inducing snap oversteer.
+            // As weight transfers forward under deceleration, front brake share increases and rear decreases.
+            // Safety limiter: ensure rear brake share never exceeds dynamic rear load capability,
+            // guaranteeing the front axle saturates before the rear axle (stable understeer).
             let static_share = if wheel_id.is_front() {
                 self.config.brake_bias * 0.5
             } else {
@@ -753,7 +772,12 @@ impl Car {
             } else {
                 0.25
             };
-            let brake_share = 0.40 * static_share + 0.60 * dynamic_load_share;
+            let nominal_share = 0.20 * static_share + 0.80 * dynamic_load_share;
+            let brake_share = if wheel_id.is_rear() {
+                nominal_share.min(dynamic_load_share * 0.88)
+            } else {
+                nominal_share
+            };
 
             let mut fx_demand = total_drive_force * drive_share;
 
@@ -771,30 +795,59 @@ impl Car {
                 let is_cornering = wheel_steer_angles[i].abs() > 0.01
                     || clamped_ctrl.steer.abs() > 0.02
                     || self.state.sideslip_angle.abs() > 0.02
-                    || omega.abs() > 0.08;
+                    || omega.abs() > 0.06;
+
+                // Cornering Brake Control (CBC):
+                // If vehicle is braking with an oversteering yaw divergence, trim inside rear brake pressure
+                // to eliminate oversteer spin moment before it develops.
+                let kinematic_yaw_rate = (v_long / self.config.wheelbase) * self.state.steer_angle.tan();
+                let yaw_divergence = omega - kinematic_yaw_rate;
+                let is_oversteering_under_brake = (omega.signum() == kinematic_yaw_rate.signum() && omega.abs() > (kinematic_yaw_rate.abs() + 0.08))
+                    || (kinematic_yaw_rate.abs() < 0.05 && omega.abs() > 0.08)
+                    || (omega.signum() != kinematic_yaw_rate.signum() && omega.abs() > 0.12);
+
+                if self.config.assists.abs_enabled && is_oversteering_under_brake {
+                    let yaw_sign = omega.signum();
+                    let is_inside_rear = (yaw_sign > 0.0 && wheel_id == WheelId::RearLeft)
+                        || (yaw_sign < 0.0 && wheel_id == WheelId::RearRight);
+                    if is_inside_rear {
+                        let cbc_cut = (yaw_divergence.abs() * 1.5 * self.config.assists.abs_strength).clamp(0.0, 0.45);
+                        wheel_brake_force *= 1.0 - cbc_cut;
+                    }
+                }
 
                 if self.config.assists.abs_enabled && w_v_long.abs() > 0.5 {
                     let target_lat_reserve: f32 = if is_cornering {
                         if wheel_id.is_front() {
-                            0.75 // Reserve 75% friction circle for responsive steering authority
+                            0.72 // High front lateral authority for crisp turn-in under threshold braking
                         } else {
-                            0.55 // Reserve 55% friction circle for rear yaw stability
+                            0.65 // High rear lateral reserve guarantees rear axle stays planted
                         }
                     } else {
-                        0.15 // Straight-line: prioritize 98% longitudinal stopping power
+                        if wheel_id.is_rear() {
+                            0.35 // Reserve 35% lateral grip on rear axle in straight lines
+                        } else {
+                            0.20 // Front maximizes longitudinal stopping power (98% peak Fx)
+                        }
                     };
 
                     let max_fx_abs = max_friction * (1.0f32 - target_lat_reserve * target_lat_reserve).sqrt();
-                    if wheel_brake_force > max_fx_abs {
-                        let excess = wheel_brake_force - max_fx_abs;
-                        wheel_brake_force -= excess * self.config.assists.abs_strength;
+                    // Regulate total longitudinal retarding force against ABS limit
+                    let engine_retard = if total_drive_force < 0.0 {
+                        (-total_drive_force * drive_share).max(0.0)
+                    } else {
+                        0.0
+                    };
+                    let total_retard = wheel_brake_force + engine_retard;
+                    if total_retard > max_fx_abs {
+                        let excess = total_retard - max_fx_abs;
+                        wheel_brake_force = (wheel_brake_force - excess * self.config.assists.abs_strength).max(0.0);
                         abs_active = true;
                     }
                 }
 
-                // Generically cap wheel braking force near the tire traction envelope so excessive brake
-                // force never completely wipes out lateral cornering forces in the combined slip solver.
-                let max_traction_cap = max_friction * 1.05;
+                // Generically cap wheel braking force near the tire traction envelope
+                let max_traction_cap = max_friction * 0.98;
                 if wheel_brake_force > max_traction_cap {
                     wheel_brake_force = max_traction_cap;
                 }
@@ -902,17 +955,18 @@ impl Car {
             let max_physical_yaw_rate = ((avg_surface_mu * g) / v_long.abs().max(2.0)).max(0.40);
             let target_yaw_rate = kinematic_yaw_rate.clamp(-max_physical_yaw_rate, max_physical_yaw_rate);
 
-            // ESC targets oversteer (rotating faster into turn than commanded or spinning out)
-            let is_oversteering = (omega.signum() == target_yaw_rate.signum() && omega.abs() > (target_yaw_rate.abs() + 0.10))
-                || (omega.abs() > 0.35 && target_yaw_rate.abs() < 0.1)
-                || (omega.signum() != target_yaw_rate.signum() && omega.abs() > 0.25);
+            let yaw_error = omega - target_yaw_rate;
+            // ESC targets oversteer (rotating faster into turn than commanded, opposite to target, or uncommanded yaw)
+            let is_oversteering = (omega.signum() == target_yaw_rate.signum() && omega.abs() > (target_yaw_rate.abs() + 0.06))
+                || (omega.signum() != target_yaw_rate.signum() && omega.abs() > 0.10)
+                || (target_yaw_rate.abs() < 0.05 && omega.abs() > 0.08);
 
             if is_oversteering {
-                let yaw_error = omega - target_yaw_rate;
                 let yaw_thresh = self.config.assists.esc_yaw_threshold;
                 if yaw_error.abs() > yaw_thresh {
                     let excess_yaw = (yaw_error.abs() - yaw_thresh) * yaw_error.signum();
-                    let esc_gain = self.config.inertia * 5.0 * self.config.assists.esc_strength;
+                    let speed_boost = 1.0 + (self.state.speed / 20.0).min(3.5);
+                    let esc_gain = self.config.inertia * 10.0 * speed_boost * self.config.assists.esc_strength;
                     esc_torque = -excess_yaw * esc_gain;
                     esc_active = true;
                 }
@@ -1287,6 +1341,53 @@ mod tests {
             "Crest load ({}) should be significantly unloaded compared to flat load ({})",
             crest_load,
             flat_load
+        );
+    }
+
+    #[test]
+    fn test_is_braking_state_off_throttle_vs_braking() {
+        let mut car = Car::new(CarConfig::sports_car());
+        let dt = 1.0 / 60.0;
+
+        // 1. Initial state: is_braking must be false
+        assert!(!car.state.is_braking);
+
+        // 2. Accelerate to high speed (~100 km/h)
+        while car.speed_kmh() < 100.0 {
+            car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+        }
+        assert!(!car.state.is_braking, "Accelerating must not set is_braking");
+
+        // 3. Off-throttle coasting (engine braking):
+        // Slip ratio on rear wheel becomes negative from engine drag,
+        // but is_braking MUST remain false!
+        for _ in 0..60 {
+            car.step(&CarControls::default(), SurfaceType::Asphalt, dt);
+        }
+        assert!(
+            !car.state.is_braking,
+            "Releasing throttle (off-throttle engine braking) must NOT set is_braking"
+        );
+
+        // 4. Active service brake: must set is_braking = true
+        car.step(&CarControls::full_brake(), SurfaceType::Asphalt, dt);
+        assert!(
+            car.state.is_braking,
+            "Applying service brake must set is_braking = true"
+        );
+
+        // 5. Release brake: must return to false
+        car.step(&CarControls::default(), SurfaceType::Asphalt, dt);
+        assert!(
+            !car.state.is_braking,
+            "Releasing service brake must return is_braking to false"
+        );
+
+        // 6. Handbrake: must set is_braking = true
+        car.step(&CarControls::handbrake_turn(0.0), SurfaceType::Asphalt, dt);
+        assert!(
+            car.state.is_braking,
+            "Handbrake must set is_braking = true"
         );
     }
 }

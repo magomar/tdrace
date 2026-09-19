@@ -1291,7 +1291,7 @@ impl GtWorldChallengeModule {
             max_reverse_force: 6175.0,
             max_brake_force: 22000.0,
             handbrake_force: 7000.0,
-            brake_bias: 0.60,
+            brake_bias: 0.65,
             drive_bias: 0.0, // RWD
             top_speed_mps: 82.5, // ~297 km/h
 
@@ -1299,7 +1299,7 @@ impl GtWorldChallengeModule {
             steer_speed: 9.0,
             steer_return_speed: 12.0,
             counter_steer_assist: 1.15,
-            speed_sensitive_steer_factor: 0.0010,
+            speed_sensitive_steer_factor: 0.016,
 
             air_drag_coefficient: 0.65,
             lateral_drag_coefficient: 1.40,
@@ -1401,7 +1401,7 @@ impl GtWorldChallengeModule {
             max_reverse_force: 8775.0,
             max_brake_force: 28000.0, // Carbon-carbon brake discs (up to 5.5G deceleration)
             handbrake_force: 8000.0,
-            brake_bias: 0.58,
+            brake_bias: 0.64,
             drive_bias: 0.0, // RWD
             top_speed_mps: 96.0, // ~346 km/h
 
@@ -1409,7 +1409,7 @@ impl GtWorldChallengeModule {
             steer_speed: 10.0,
             steer_return_speed: 14.0,
             counter_steer_assist: 1.1,
-            speed_sensitive_steer_factor: 0.0008,
+            speed_sensitive_steer_factor: 0.015,
 
             air_drag_coefficient: 0.72,
             lateral_drag_coefficient: 1.60,
