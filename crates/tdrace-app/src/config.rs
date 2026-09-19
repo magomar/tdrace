@@ -201,6 +201,8 @@ pub struct DisplayConfig {
     pub line_spacing: f32,
     /// Custom opacity override if specified.
     pub custom_opacity: Option<f32>,
+    /// Whether realistic vehicle ground shadows are rendered under vehicles.
+    pub vehicle_shadows: bool,
 }
 
 impl Default for DisplayConfig {
@@ -214,6 +216,7 @@ impl Default for DisplayConfig {
             vignette_intensity: 0.0,
             line_spacing: 3.0,
             custom_opacity: None,
+            vehicle_shadows: true,
         }
     }
 }

@@ -15,7 +15,7 @@
   },
   {
     "id": "dirt_figure_eight",
-    "name": "Dirt Figure-8 Arena",
+    "name": "Dirt Figure-8",
     "category": "classic",
     "modality": "CLASSIC",
     "description": "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.",
@@ -47,10 +47,11 @@
     "category": "classic",
     "modality": "CLASSIC",
     "description": "Tight technical drift arena with sweeping corners and generous asphalt runoff.",
-    "length_meters": 499.1,
-    "turns_count": 9,
+    "length_meters": 1172.2,
+    "turns_count": 7,
     "surfaces": [
-      "Asphalt"
+      "Asphalt",
+      "Dirt"
     ],
     "has_jumps": false,
     "rel_path": "tracks/classic/drift_park.json"
@@ -62,7 +63,7 @@
     "modality": "CLASSIC",
     "description": "High-speed asphalt figure-8 arena featuring an at-grade flat crossover, sweeping carousels & concrete safety walls.",
     "length_meters": 800.6,
-    "turns_count": 17,
+    "turns_count": 18,
     "surfaces": [
       "Asphalt"
     ],
@@ -131,8 +132,8 @@
     "category": "classic",
     "modality": "CLASSIC",
     "description": "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.",
-    "length_meters": 892.2,
-    "turns_count": 10,
+    "length_meters": 1088.5,
+    "turns_count": 13,
     "surfaces": [
       "Asphalt"
     ],

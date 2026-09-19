@@ -28,7 +28,11 @@
       "agility": 70,
       "downforce": 65
     },
-    "summary": "Mid-engine benchmark of customer racing. Introduced in 2022 featuring the screaming 911 GT3 engine, delivering surgical balance and razor-sharp apex turn-in."
+    "summary": "Mid-engine benchmark of customer racing. Introduced in 2022 featuring the screaming 911 GT3 engine, delivering surgical balance and razor-sharp apex turn-in.",
+    "image_ref": "/textures/vehicles/references/gt/gt_porsche_718_gt4.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_porsche_718_gt4.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_porsche_718_gt4_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_porsche_718_gt4.png"
   },
   {
     "id": "gt_bmw_m4_gt4",
@@ -59,7 +63,11 @@
       "agility": 68,
       "downforce": 62
     },
-    "summary": "Customer racing workhorse built on the G82 chassis. Renowned for its curb compliance, high mechanical grip, and massive twin-turbo mid-range punch."
+    "summary": "Customer racing workhorse built on the G82 chassis. Renowned for its curb compliance, high mechanical grip, and massive twin-turbo mid-range punch.",
+    "image_ref": "/textures/vehicles/references/gt/gt_bmw_m4_gt4.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_bmw_m4_gt4.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_bmw_m4_gt4_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_bmw_m4_gt4.png"
   },
   {
     "id": "gt_aston_vantage_gt4",
@@ -90,7 +98,11 @@
       "agility": 72,
       "downforce": 64
     },
-    "summary": "Built at Prodrive in Banbury. Features perfect 50:50 weight distribution and a progressive V8 torque curve that forgivingly absorbs aggressive trail-braking."
+    "summary": "Built at Prodrive in Banbury. Features perfect 50:50 weight distribution and a progressive V8 torque curve that forgivingly absorbs aggressive trail-braking.",
+    "image_ref": "/textures/vehicles/references/gt/gt_aston_vantage_gt4.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_aston_vantage_gt4.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_aston_vantage_gt4_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_aston_vantage_gt4.png"
   },
   {
     "id": "gt_toyota_supra_gt4",
@@ -121,7 +133,11 @@
       "agility": 74,
       "downforce": 60
     },
-    "summary": "Lightest car in the GT4 field with upgraded EVO braking and revised damper curves, providing lightning deceleration into tight chicanes."
+    "summary": "Lightest car in the GT4 field with upgraded EVO braking and revised damper curves, providing lightning deceleration into tight chicanes.",
+    "image_ref": "/textures/vehicles/references/gt/gt_toyota_supra_gt4.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_toyota_supra_gt4.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_toyota_supra_gt4_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_toyota_supra_gt4.png"
   },
   {
     "id": "gt_porsche_911_gt3r",
@@ -152,7 +168,11 @@
       "agility": 55,
       "downforce": 92
     },
-    "summary": "The global benchmark rear-engine GT3 racer. Renowned for supreme corner-exit traction and high-speed trail-braking pivot capability."
+    "summary": "The global benchmark rear-engine GT3 racer. Renowned for supreme corner-exit traction and high-speed trail-braking pivot capability.",
+    "image_ref": "/textures/vehicles/references/gt/gt_porsche_911_gt3r.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png"
   },
   {
     "id": "gt_ferrari_296_gt3",
@@ -183,7 +203,11 @@
       "agility": 52,
       "downforce": 94
     },
-    "summary": "Succeeded the 488 GT3. Powered by a 120\u00b0 Hot-V turbo V6. Claimed overall victory at the 2023 N\u00fcrburgring 24 Hours on its debut endurance season."
+    "summary": "Succeeded the 488 GT3. Powered by a 120\u00b0 Hot-V turbo V6. Claimed overall victory at the 2023 N\u00fcrburgring 24 Hours on its debut endurance season.",
+    "image_ref": "/textures/vehicles/references/gt/gt_ferrari_296_gt3.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_ferrari_296_gt3.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_ferrari_296_gt3_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_ferrari_296_gt3.png"
   },
   {
     "id": "gt_amg_gt3_evo",
@@ -214,7 +238,11 @@
       "agility": 56,
       "downforce": 90
     },
-    "summary": "Front-mid mounted atmospheric 6.2L V8 monster. Celebrated for chassis stability over curbs and progressive, predictable throttle powerband."
+    "summary": "Front-mid mounted atmospheric 6.2L V8 monster. Celebrated for chassis stability over curbs and progressive, predictable throttle powerband.",
+    "image_ref": "/textures/vehicles/references/gt/gt_amg_gt3_evo.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_amg_gt3_evo.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_amg_gt3_evo_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_amg_gt3_evo.png"
   },
   {
     "id": "gt_audi_r8_gt3_evo2",
@@ -245,7 +273,11 @@
       "agility": 53,
       "downforce": 91
     },
-    "summary": "Screaming naturally aspirated mid-engine V10 producing exceptional mechanical downforce and high-speed corner stability across endurance classics."
+    "summary": "Screaming naturally aspirated mid-engine V10 producing exceptional mechanical downforce and high-speed corner stability across endurance classics.",
+    "image_ref": "/textures/vehicles/references/gt/gt_audi_r8_gt3_evo2.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_audi_r8_gt3_evo2.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_audi_r8_gt3_evo2_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_audi_r8_gt3_evo2.png"
   },
   {
     "id": "gt_porsche_911_gt2_rs",
@@ -276,7 +308,11 @@
       "agility": 65,
       "downforce": 78
     },
-    "summary": "Raw 700 BHP biturbo missile created for high-velocity sprint racing. Features enormous straight-line top speed with lower aerodynamic drag."
+    "summary": "Raw 700 BHP biturbo missile created for high-velocity sprint racing. Features enormous straight-line top speed with lower aerodynamic drag.",
+    "image_ref": "/textures/vehicles/references/gt/gt_porsche_911_gt2_rs.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_porsche_911_gt2_rs.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_porsche_911_gt2_rs_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_porsche_911_gt2_rs.png"
   },
   {
     "id": "gt_brabham_bt62_gt2",
@@ -307,7 +343,11 @@
       "agility": 60,
       "downforce": 84
     },
-    "summary": "Ultralight carbon monocoque from the legendary motorsport dynasty, generating savage acceleration from a 5.4L atmospheric quad-cam V8."
+    "summary": "Ultralight carbon monocoque from the legendary motorsport dynasty, generating savage acceleration from a 5.4L atmospheric quad-cam V8.",
+    "image_ref": "/textures/vehicles/references/gt/gt_brabham_bt62_gt2.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_brabham_bt62_gt2.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_brabham_bt62_gt2_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_brabham_bt62_gt2.png"
   },
   {
     "id": "gt_maserati_mc20_gt2",
@@ -338,7 +378,11 @@
       "agility": 62,
       "downforce": 80
     },
-    "summary": "Marked Maserati's triumphant return to GT racing, utilizing the patented pre-chamber twin-spark Nettuno V6 in a full carbon monocoque."
+    "summary": "Marked Maserati's triumphant return to GT racing, utilizing the patented pre-chamber twin-spark Nettuno V6 in a full carbon monocoque.",
+    "image_ref": "/textures/vehicles/references/gt/gt_maserati_mc20_gt2.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_maserati_mc20_gt2.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_maserati_mc20_gt2_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_maserati_mc20_gt2.png"
   },
   {
     "id": "gt_audi_r8_gt2",
@@ -369,7 +413,11 @@
       "agility": 64,
       "downforce": 76
     },
-    "summary": "Most powerful customer car ever produced by Audi Sport, crowned with a dramatic roof-mounted ram-air intake snorkel for high-speed cylinder filling."
+    "summary": "Most powerful customer car ever produced by Audi Sport, crowned with a dramatic roof-mounted ram-air intake snorkel for high-speed cylinder filling.",
+    "image_ref": "/textures/vehicles/references/gt/gt_audi_r8_gt2.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_audi_r8_gt2.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_audi_r8_gt2_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_audi_r8_gt2.png"
   },
   {
     "id": "gt_porsche_911_gt1_98",
@@ -400,7 +448,11 @@
       "agility": 40,
       "downforce": 94
     },
-    "summary": "Overall victor of the 1998 24 Hours of Le Mans. Crafted with a full carbon monocoque and analog unassisted steering, mastering the Mulsanne Straight."
+    "summary": "Overall victor of the 1998 24 Hours of Le Mans. Crafted with a full carbon monocoque and analog unassisted steering, mastering the Mulsanne Straight.",
+    "image_ref": "/textures/vehicles/references/gt/gt_porsche_911_gt1_98.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_porsche_911_gt1_98.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_porsche_911_gt1_98_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_porsche_911_gt1_98.png"
   },
   {
     "id": "gt_mclaren_f1_gtr_lt",
@@ -431,7 +483,11 @@
       "agility": 42,
       "downforce": 92
     },
-    "summary": "Legendary central cockpit layout with an elongated rear deck designed to minimize aerodynamic drag, powered by Paul Rosche's atmospheric BMW V12."
+    "summary": "Legendary central cockpit layout with an elongated rear deck designed to minimize aerodynamic drag, powered by Paul Rosche's atmospheric BMW V12.",
+    "image_ref": "/textures/vehicles/references/gt/gt_mclaren_f1_gtr_lt.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_mclaren_f1_gtr_lt.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_mclaren_f1_gtr_lt_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_mclaren_f1_gtr_lt.png"
   },
   {
     "id": "gt_mercedes_clk_gtr",
@@ -462,7 +518,11 @@
       "agility": 44,
       "downforce": 93
     },
-    "summary": "Dominant 1997 FIA GT World Champion designed, fabricated, and winning on track in just 128 days from project initiation."
+    "summary": "Dominant 1997 FIA GT World Champion designed, fabricated, and winning on track in just 128 days from project initiation.",
+    "image_ref": "/textures/vehicles/references/gt/gt_mercedes_clk_gtr.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_mercedes_clk_gtr.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_mercedes_clk_gtr_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_mercedes_clk_gtr.png"
   },
   {
     "id": "gt_nissan_r390_gt1",
@@ -493,7 +553,11 @@
       "agility": 45,
       "downforce": 91
     },
-    "summary": "Built with TWR for the 1998 24 Hours of Le Mans, securing 3rd overall through relentless powertrain reliability and aerodynamic balance."
+    "summary": "Built with TWR for the 1998 24 Hours of Le Mans, securing 3rd overall through relentless powertrain reliability and aerodynamic balance.",
+    "image_ref": "/textures/vehicles/references/gt/gt_nissan_r390_gt1.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_nissan_r390_gt1.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_nissan_r390_gt1_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_nissan_r390_gt1.png"
   },
   {
     "id": "gt_ferrari_499p",
@@ -524,7 +588,11 @@
       "agility": 35,
       "downforce": 99
     },
-    "summary": "Back-to-back 24 Hours of Le Mans winner (2023, 2024). Full ground effect underbody tunnels with intelligent front-axle electric deployment."
+    "summary": "Back-to-back 24 Hours of Le Mans winner (2023, 2024). Full ground effect underbody tunnels with intelligent front-axle electric deployment.",
+    "image_ref": "/textures/vehicles/references/gt/gt_ferrari_499p.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_ferrari_499p.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_ferrari_499p_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_ferrari_499p.png"
   },
   {
     "id": "gt_porsche_963",
@@ -555,7 +623,11 @@
       "agility": 38,
       "downforce": 97
     },
-    "summary": "IMSA and WEC endurance title contender built on the Multimatic monocoque with a twin-turbo V8 derived from the 918 Spyder."
+    "summary": "IMSA and WEC endurance title contender built on the Multimatic monocoque with a twin-turbo V8 derived from the 918 Spyder.",
+    "image_ref": "/textures/vehicles/references/gt/gt_porsche_963.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_porsche_963.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_porsche_963_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_porsche_963.png"
   },
   {
     "id": "gt_toyota_gr010",
@@ -586,7 +658,11 @@
       "agility": 34,
       "downforce": 99
     },
-    "summary": "Pioneered the LMH regulations, dominating World Endurance Championships with supreme hybrid regeneration and wet weather traction."
+    "summary": "Pioneered the LMH regulations, dominating World Endurance Championships with supreme hybrid regeneration and wet weather traction.",
+    "image_ref": "/textures/vehicles/references/gt/gt_toyota_gr010.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_toyota_gr010.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_toyota_gr010_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_toyota_gr010.png"
   },
   {
     "id": "gt_cadillac_v_series_r",
@@ -617,7 +693,11 @@
       "agility": 40,
       "downforce": 96
     },
-    "summary": "Celebrated for the visceral roar of its naturally aspirated 5.5L cross-plane V8, married to Dallara chassis dynamics and hybrid boost."
+    "summary": "Celebrated for the visceral roar of its naturally aspirated 5.5L cross-plane V8, married to Dallara chassis dynamics and hybrid boost.",
+    "image_ref": "/textures/vehicles/references/gt/gt_cadillac_v_series_r.jpg",
+    "image_lateral": "/textures/vehicles/laterals/gt/gt_cadillac_v_series_r.png",
+    "image_thumb": "/textures/vehicles/laterals/gt/gt_cadillac_v_series_r_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/gt/gt_cadillac_v_series_r.png"
   },
   {
     "id": "nascar_monte_carlo_ss",
@@ -648,7 +728,11 @@
       "agility": 85,
       "downforce": 45
     },
-    "summary": "Grassroots short-track legend. Heavy steel body and spool rear differential teaching pure momentum preservation on tight dirt and asphalt bullrings."
+    "summary": "Grassroots short-track legend. Heavy steel body and spool rear differential teaching pure momentum preservation on tight dirt and asphalt bullrings.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_monte_carlo_ss.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_monte_carlo_ss.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_monte_carlo_ss_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_monte_carlo_ss.png"
   },
   {
     "id": "nascar_mustang_street_stock",
@@ -679,7 +763,11 @@
       "agility": 84,
       "downforce": 46
     },
-    "summary": "Fox-body silhouette housing a carbureted Windsor V8. Slightly lighter nose gives keen turn-in on flat bullrings."
+    "summary": "Fox-body silhouette housing a carbureted Windsor V8. Slightly lighter nose gives keen turn-in on flat bullrings.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_mustang_street_stock.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_mustang_street_stock.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_mustang_street_stock_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_mustang_street_stock.png"
   },
   {
     "id": "nascar_dodge_dart_street_stock",
@@ -710,7 +798,11 @@
       "agility": 86,
       "downforce": 44
     },
-    "summary": "Classic Mopar muscle grassroots entry. Torquey 360 LA engine provides strong off-corner dig on dirt bullrings."
+    "summary": "Classic Mopar muscle grassroots entry. Torquey 360 LA engine provides strong off-corner dig on dirt bullrings.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_dodge_dart_street_stock.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_dodge_dart_street_stock.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_dodge_dart_street_stock_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_dodge_dart_street_stock.png"
   },
   {
     "id": "nascar_super_late_model",
@@ -741,7 +833,11 @@
       "agility": 88,
       "downforce": 60
     },
-    "summary": "Tubular perimeter spaceframe chassis engineered for immense mid-corner speed and inside front tire lift on banked asphalt ovals."
+    "summary": "Tubular perimeter spaceframe chassis engineered for immense mid-corner speed and inside front tire lift on banked asphalt ovals.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_super_late_model.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_super_late_model.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_super_late_model_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_super_late_model.png"
   },
   {
     "id": "nascar_mustang_super_late_model",
@@ -772,7 +868,11 @@
       "agility": 87,
       "downforce": 61
     },
-    "summary": "Perimeter chassis with Mustang composite front clip. Agile mid-corner roll rate and sharp turn-in on asphalt ovals."
+    "summary": "Perimeter chassis with Mustang composite front clip. Agile mid-corner roll rate and sharp turn-in on asphalt ovals.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_mustang_super_late_model.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_mustang_super_late_model.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_mustang_super_late_model_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_mustang_super_late_model.png"
   },
   {
     "id": "nascar_late_model_stock_car",
@@ -803,7 +903,11 @@
       "agility": 86,
       "downforce": 58
     },
-    "summary": "CARSTour staple spec. Two-barrel carbureted crate V8 demands high momentum conservation and tire management across long runs."
+    "summary": "CARSTour staple spec. Two-barrel carbureted crate V8 demands high momentum conservation and tire management across long runs.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_late_model_stock_car.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_late_model_stock_car.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_late_model_stock_car_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_late_model_stock_car.png"
   },
   {
     "id": "nascar_arca_chevy_ss",
@@ -834,7 +938,11 @@
       "agility": 86,
       "downforce": 68
     },
-    "summary": "Stepping stone to national touring divisions. Employs composite body panels over Gen-6 chassis with potent drafting wake dynamics."
+    "summary": "Stepping stone to national touring divisions. Employs composite body panels over Gen-6 chassis with potent drafting wake dynamics.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_arca_chevy_ss.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_arca_chevy_ss.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_arca_chevy_ss_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_arca_chevy_ss.png"
   },
   {
     "id": "nascar_toyota_camry_arca",
@@ -865,7 +973,11 @@
       "agility": 85,
       "downforce": 69
     },
-    "summary": "TRD-supported ARCA composite racer. High aerodynamic efficiency gives excellent straight-line draft pulling power."
+    "summary": "TRD-supported ARCA composite racer. High aerodynamic efficiency gives excellent straight-line draft pulling power.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_toyota_camry_arca.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_toyota_camry_arca.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_toyota_camry_arca_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_toyota_camry_arca.png"
   },
   {
     "id": "nascar_ford_fusion_arca",
@@ -896,7 +1008,11 @@
       "agility": 85,
       "downforce": 68
     },
-    "summary": "Proven Gen-6 chassis platform with Roush Yates pedigree. Stable rear downforce through banked oval transitions."
+    "summary": "Proven Gen-6 chassis platform with Roush Yates pedigree. Stable rear downforce through banked oval transitions.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_ford_fusion_arca.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_ford_fusion_arca.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_ford_fusion_arca_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_ford_fusion_arca.png"
   },
   {
     "id": "nascar_silverado_truck",
@@ -927,7 +1043,11 @@
       "agility": 86,
       "downforce": 72
     },
-    "summary": "Massive bluff aerodynamic drag creates immense drafting pull, leading to breathtaking 3-wide pack racing and bump drafting."
+    "summary": "Massive bluff aerodynamic drag creates immense drafting pull, leading to breathtaking 3-wide pack racing and bump drafting.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_silverado_truck.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_silverado_truck.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_silverado_truck_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_silverado_truck.png"
   },
   {
     "id": "nascar_f150_truck",
@@ -958,7 +1078,11 @@
       "agility": 86,
       "downforce": 73
     },
-    "summary": "Aerodynamically tuned F-150 silhouette. Excels in pack drafting and high-speed bump drafting down superspeedway backstraights."
+    "summary": "Aerodynamically tuned F-150 silhouette. Excels in pack drafting and high-speed bump drafting down superspeedway backstraights.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_f150_truck.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_f150_truck.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_f150_truck_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_f150_truck.png"
   },
   {
     "id": "nascar_tundra_truck",
@@ -989,7 +1113,11 @@
       "agility": 85,
       "downforce": 73
     },
-    "summary": "TRD championship contender. Features low-drag front fascia and aggressive spoiler pitch for drafting parity."
+    "summary": "TRD championship contender. Features low-drag front fascia and aggressive spoiler pitch for drafting parity.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_tundra_truck.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_tundra_truck.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_tundra_truck_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_tundra_truck.png"
   },
   {
     "id": "nascar_corvette_ta1",
@@ -1020,7 +1148,11 @@
       "agility": 88,
       "downforce": 78
     },
-    "summary": "The apex of analog American spaceframe racing. 850 horsepower breathing through un-muffled boom tubes with giant rear wings."
+    "summary": "The apex of analog American spaceframe racing. 850 horsepower breathing through un-muffled boom tubes with giant rear wings.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_corvette_ta1.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_corvette_ta1.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_corvette_ta1_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_corvette_ta1.png"
   },
   {
     "id": "nascar_mustang_ta1",
@@ -1051,7 +1183,11 @@
       "agility": 87,
       "downforce": 79
     },
-    "summary": "Iconic American road racing weapon. Unrestricted 850 BHP V8 paired with lightweight spaceframe and massive high-mount rear wing."
+    "summary": "Iconic American road racing weapon. Unrestricted 850 BHP V8 paired with lightweight spaceframe and massive high-mount rear wing.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_mustang_ta1.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_mustang_ta1.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_mustang_ta1_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_mustang_ta1.png"
   },
   {
     "id": "nascar_challenger_ta1",
@@ -1082,7 +1218,11 @@
       "agility": 88,
       "downforce": 78
     },
-    "summary": "Muscular silhouette with earth-shattering Mopar acoustic presence. Immense low-RPM tractive bite out of slow chicanes."
+    "summary": "Muscular silhouette with earth-shattering Mopar acoustic presence. Immense low-RPM tractive bite out of slow chicanes.",
+    "image_ref": "/textures/vehicles/references/nascar/nascar_challenger_ta1.jpg",
+    "image_lateral": "/textures/vehicles/laterals/nascar/nascar_challenger_ta1.png",
+    "image_thumb": "/textures/vehicles/laterals/nascar/nascar_challenger_ta1_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/nascar/nascar_challenger_ta1.png"
   },
   {
     "id": "rally_peugeot_208_rally4",
@@ -1113,7 +1253,11 @@
       "agility": 76,
       "downforce": 40
     },
-    "summary": "Front-wheel-drive academy star. Teaches precision Scandinavian flicks, trail-braking rotation, and lift-off oversteer on gravel."
+    "summary": "Front-wheel-drive academy star. Teaches precision Scandinavian flicks, trail-braking rotation, and lift-off oversteer on gravel.",
+    "image_ref": "/textures/vehicles/references/rally/rally_peugeot_208_rally4.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_peugeot_208_rally4.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_peugeot_208_rally4_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_peugeot_208_rally4.png"
   },
   {
     "id": "rally_fiesta_rally4",
@@ -1144,7 +1288,11 @@
       "agility": 77,
       "downforce": 41
     },
-    "summary": "M-Sport engineered junior benchmark. Short wheelbase and punchy 3-cylinder turbo provide instantaneous trail-braking flick recovery."
+    "summary": "M-Sport engineered junior benchmark. Short wheelbase and punchy 3-cylinder turbo provide instantaneous trail-braking flick recovery.",
+    "image_ref": "/textures/vehicles/references/rally/rally_fiesta_rally4.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_fiesta_rally4.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_fiesta_rally4_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_fiesta_rally4.png"
   },
   {
     "id": "rally_clio_rally4",
@@ -1175,7 +1323,11 @@
       "agility": 76,
       "downforce": 42
     },
-    "summary": "High torque from the 1.3L 4-cylinder engine allows aggressive mid-corner pull over loose gravel ruts."
+    "summary": "High torque from the 1.3L 4-cylinder engine allows aggressive mid-corner pull over loose gravel ruts.",
+    "image_ref": "/textures/vehicles/references/rally/rally_clio_rally4.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_clio_rally4.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_clio_rally4_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_clio_rally4.png"
   },
   {
     "id": "rally_hyundai_i20_rx",
@@ -1206,7 +1358,11 @@
       "agility": 88,
       "downforce": 75
     },
-    "summary": "Violent 0-100 km/h in 2.3 seconds with permanent mechanical AWD and relentless anti-lag explosions powering full-lock 4-wheel drifts."
+    "summary": "Violent 0-100 km/h in 2.3 seconds with permanent mechanical AWD and relentless anti-lag explosions powering full-lock 4-wheel drifts.",
+    "image_ref": "/textures/vehicles/references/rally/rally_hyundai_i20_rx.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_hyundai_i20_rx.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_hyundai_i20_rx_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_hyundai_i20_rx.png"
   },
   {
     "id": "rally_polo_rx",
@@ -1237,7 +1393,11 @@
       "agility": 87,
       "downforce": 76
     },
-    "summary": "Dominant World RX machine developed with PSRX. Incredible traction off the standing launch grid with neutral 50:50 AWD split."
+    "summary": "Dominant World RX machine developed with PSRX. Incredible traction off the standing launch grid with neutral 50:50 AWD split.",
+    "image_ref": "/textures/vehicles/references/rally/rally_polo_rx.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_polo_rx.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_polo_rx_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_polo_rx.png"
   },
   {
     "id": "rally_audi_s1_rx",
@@ -1268,7 +1428,11 @@
       "agility": 88,
       "downforce": 77
     },
-    "summary": "Mattias Ekstr\u00f6m's championship-winning pocket rocket. Aggressive widebody aero kit and quick steering rack for hairpin agility."
+    "summary": "Mattias Ekstr\u00f6m's championship-winning pocket rocket. Aggressive widebody aero kit and quick steering rack for hairpin agility.",
+    "image_ref": "/textures/vehicles/references/rally/rally_audi_s1_rx.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_audi_s1_rx.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_audi_s1_rx_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_audi_s1_rx.png"
   },
   {
     "id": "rally_audi_sport_quattro_s1",
@@ -1299,7 +1463,11 @@
       "agility": 95,
       "downforce": 82
     },
-    "summary": "Mythical monster of rally's golden era. Massive KKK turbo boost onset and distinctive 5-cylinder warble with extreme aerodynamic wings."
+    "summary": "Mythical monster of rally's golden era. Massive KKK turbo boost onset and distinctive 5-cylinder warble with extreme aerodynamic wings.",
+    "image_ref": "/textures/vehicles/references/rally/rally_audi_sport_quattro_s1.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_audi_sport_quattro_s1.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_audi_sport_quattro_s1_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_audi_sport_quattro_s1.png"
   },
   {
     "id": "rally_peugeot_205_t16",
@@ -1330,7 +1498,11 @@
       "agility": 94,
       "downforce": 80
     },
-    "summary": "Mid-engine Group B conqueror. Featherweight 910 kg chassis with transverse turbo engine delivering telepathic drift balance."
+    "summary": "Mid-engine Group B conqueror. Featherweight 910 kg chassis with transverse turbo engine delivering telepathic drift balance.",
+    "image_ref": "/textures/vehicles/references/rally/rally_peugeot_205_t16.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_peugeot_205_t16.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_peugeot_205_t16_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_peugeot_205_t16.png"
   },
   {
     "id": "rally_lancia_delta_s4",
@@ -1361,7 +1533,11 @@
       "agility": 96,
       "downforce": 81
     },
-    "summary": "Twincharged technological masterpiece. Volumex supercharger handles instant low-end launch until the giant KKK turbo takes over at high RPM."
+    "summary": "Twincharged technological masterpiece. Volumex supercharger handles instant low-end launch until the giant KKK turbo takes over at high RPM.",
+    "image_ref": "/textures/vehicles/references/rally/rally_lancia_delta_s4.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_lancia_delta_s4.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_lancia_delta_s4_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_lancia_delta_s4.png"
   },
   {
     "id": "rally_toyota_hilux_t1_plus",
@@ -1392,7 +1568,11 @@
       "agility": 85,
       "downforce": 50
     },
-    "summary": "Dakar Rally conqueror. Massive 37-inch tires and 350mm wheel travel soaking up boulders and giant dunes at top speed without flinching."
+    "summary": "Dakar Rally conqueror. Massive 37-inch tires and 350mm wheel travel soaking up boulders and giant dunes at top speed without flinching.",
+    "image_ref": "/textures/vehicles/references/rally/rally_toyota_hilux_t1_plus.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_toyota_hilux_t1_plus.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_toyota_hilux_t1_plus_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_toyota_hilux_t1_plus.png"
   },
   {
     "id": "rally_audi_rs_q_etron",
@@ -1423,7 +1603,11 @@
       "agility": 84,
       "downforce": 52
     },
-    "summary": "2024 Dakar overall winner. Electric torque vectoring delivers immediate power distribution across shifting sand dunes without gearshifts."
+    "summary": "2024 Dakar overall winner. Electric torque vectoring delivers immediate power distribution across shifting sand dunes without gearshifts.",
+    "image_ref": "/textures/vehicles/references/rally/rally_audi_rs_q_etron.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_audi_rs_q_etron.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_audi_rs_q_etron_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_audi_rs_q_etron.png"
   },
   {
     "id": "rally_prodrive_hunter_t1",
@@ -1454,7 +1638,11 @@
       "agility": 85,
       "downforce": 51
     },
-    "summary": "Ian Callum designed aerodynamic silhouette housing long-travel dampers. Engineered for extreme reliability over thousands of desert kilometers."
+    "summary": "Ian Callum designed aerodynamic silhouette housing long-travel dampers. Engineered for extreme reliability over thousands of desert kilometers.",
+    "image_ref": "/textures/vehicles/references/rally/rally_prodrive_hunter_t1.jpg",
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_prodrive_hunter_t1.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_prodrive_hunter_t1_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_prodrive_hunter_t1.png"
   },
   {
     "id": "rally_sst_super_truck",
@@ -1485,7 +1673,11 @@
       "agility": 96,
       "downforce": 40
     },
-    "summary": "Spectacle on wheels created by Robby Gordon. Huge body roll, 3-wheel apex cornering, and soaring 60-meter launches off steel ramps."
+    "summary": "Spectacle on wheels created by Robby Gordon. Huge body roll, 3-wheel apex cornering, and soaring 60-meter launches off steel ramps.",
+    "image_ref": "/textures/vehicles/references/rally/rally_sst_super_truck.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "rally_sst_robby_gordon",
@@ -1516,7 +1708,11 @@
       "agility": 96,
       "downforce": 40
     },
-    "summary": "Signature orange racing livery of founder Robby Gordon. Soft sway bars allow dramatic 3-wheel apex cornering and smooth flight off steel jump ramps."
+    "summary": "Signature orange racing livery of founder Robby Gordon. Soft sway bars allow dramatic 3-wheel apex cornering and smooth flight off steel jump ramps.",
+    "image_ref": "/textures/vehicles/references/rally/rally_sst_robby_gordon.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "rally_sst_traxxas_edition",
@@ -1547,7 +1743,11 @@
       "agility": 96,
       "downforce": 41
     },
-    "summary": "Iconic high-contrast RC-inspired Traxxas livery. King shocks soak up violent landings from 20-foot jumps with zero rebound bouncing."
+    "summary": "Iconic high-contrast RC-inspired Traxxas livery. King shocks soak up violent landings from 20-foot jumps with zero rebound bouncing.",
+    "image_ref": "/textures/vehicles/references/rally/rally_sst_traxxas_edition.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_sand_rail_buggy",
@@ -1578,7 +1778,11 @@
       "agility": 94,
       "downforce": 42
     },
-    "summary": "Ultralight chromoly tube chassis, rear paddle tires, and long-travel Fox live-valve shocks creating massive sand roosts over desert dunes."
+    "summary": "Ultralight chromoly tube chassis, rear paddle tires, and long-travel Fox live-valve shocks creating massive sand roosts over desert dunes.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_sand_rail_buggy.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_polaris_rzr_pro_r",
@@ -1609,7 +1813,11 @@
       "agility": 92,
       "downforce": 38
     },
-    "summary": "Naturally aspirated 4-cylinder high-RPM power curve with 74-inch stance and 29 inches of usable travel for dune skimming."
+    "summary": "Naturally aspirated 4-cylinder high-RPM power curve with 74-inch stance and 29 inches of usable travel for dune skimming.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_polaris_rzr_pro_r.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_vw_sand_rail",
@@ -1640,7 +1848,11 @@
       "agility": 96,
       "downforce": 35
     },
-    "summary": "Minimalist chromoly skeleton with rear-hung air-cooled turbo boxer. Left and right cutting brakes allow 360-degree sand pirouettes."
+    "summary": "Minimalist chromoly skeleton with rear-hung air-cooled turbo boxer. Left and right cutting brakes allow 360-degree sand pirouettes.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_vw_sand_rail.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_baja_trophy_truck",
@@ -1671,7 +1883,11 @@
       "agility": 92,
       "downforce": 45
     },
-    "summary": "The king of Baja. Skims across 3-foot desert whoops at over 200 km/h with 30 inches of King bypass suspension travel."
+    "summary": "The king of Baja. Skims across 3-foot desert whoops at over 200 km/h with 30 inches of King bypass suspension travel.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_baja_trophy_truck.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_bettantown_trophy_truck",
@@ -1702,7 +1918,11 @@
       "agility": 94,
       "downforce": 44
     },
-    "summary": "Traditional rear-wheel-drive unlimited desert trophy truck. Immense power slide controllability across deep silt beds."
+    "summary": "Traditional rear-wheel-drive unlimited desert trophy truck. Immense power slide controllability across deep silt beds.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_bettantown_trophy_truck.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_mason_awd_truck",
@@ -1733,7 +1953,11 @@
       "agility": 91,
       "downforce": 46
     },
-    "summary": "State-of-the-art all-wheel-drive trophy truck platform. Front differential traction pulls the truck straight out of boulder-strewn washes."
+    "summary": "State-of-the-art all-wheel-drive trophy truck platform. Front differential traction pulls the truck straight out of boulder-strewn washes.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_mason_awd_truck.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_subaru_ice_racer",
@@ -1764,7 +1988,11 @@
       "agility": 98,
       "downforce": 65
     },
-    "summary": "Equipped with 600 tungsten carbide tire studs per tire, pulling sustained 60-degree slip angles on mirror-sheen frozen lakes."
+    "summary": "Equipped with 600 tungsten carbide tire studs per tire, pulling sustained 60-degree slip angles on mirror-sheen frozen lakes.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_subaru_ice_racer.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_audi_quattro_ice",
@@ -1795,7 +2023,11 @@
       "agility": 97,
       "downforce": 66
     },
-    "summary": "Short-wheelbase ice drifting weapon with custom 5mm ice spikes. Legendary 5-cylinder warble echoing across frozen Swedish lakes."
+    "summary": "Short-wheelbase ice drifting weapon with custom 5mm ice spikes. Legendary 5-cylinder warble echoing across frozen Swedish lakes.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_audi_quattro_ice.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_lancer_evo_ice",
@@ -1826,7 +2058,11 @@
       "agility": 98,
       "downforce": 64
     },
-    "summary": "Super-All Wheel Control (S-AWC) and active yaw control providing pinpoint slide control on polished blue ice circuits."
+    "summary": "Super-All Wheel Control (S-AWC) and active yaw control providing pinpoint slide control on polished blue ice circuits.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_lancer_evo_ice.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_mega_mud_truck",
@@ -1857,7 +2093,11 @@
       "agility": 90,
       "downforce": 30
     },
-    "summary": "Tall-riding mud monster fitted with 48-inch agricultural paddle tractor tires, slicing through deep mud slurries with ease."
+    "summary": "Tall-riding mud monster fitted with 48-inch agricultural paddle tractor tires, slicing through deep mud slurries with ease.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_mega_mud_truck.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_chevy_k30_mud_bogger",
@@ -1888,7 +2128,11 @@
       "agility": 90,
       "downforce": 29
     },
-    "summary": "Squarebody Chevy truck mounted on heavy 2.5-ton military axles with massive chevron tractor tires churning muddy trenches."
+    "summary": "Squarebody Chevy truck mounted on heavy 2.5-ton military axles with massive chevron tractor tires churning muddy trenches.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_chevy_k30_mud_bogger.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_ford_f250_high_riser",
@@ -1919,7 +2163,11 @@
       "agility": 89,
       "downforce": 30
     },
-    "summary": "Supercharged high-riser with 18 inches of suspension lift and massive tractor tires throwing 50-foot rooster tails of thick mud."
+    "summary": "Supercharged high-riser with 18 inches of suspension lift and massive tractor tires throwing 50-foot rooster tails of thick mud.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_ford_f250_high_riser.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_grave_crusher",
@@ -1950,7 +2198,11 @@
       "agility": 95,
       "downforce": 25
     },
-    "summary": "1,500 horsepower supercharged methanol beast on 66-inch BKT tires. 4-wheel steering enables spin-donuts and gigantic arena stadium jumps."
+    "summary": "1,500 horsepower supercharged methanol beast on 66-inch BKT tires. 4-wheel steering enables spin-donuts and gigantic arena stadium jumps.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_grave_crusher.jpg",
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_grave_crusher.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_grave_crusher_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_grave_crusher.png"
   },
   {
     "id": "offroad_max_d_monster",
@@ -1981,7 +2233,11 @@
       "agility": 95,
       "downforce": 26
     },
-    "summary": "Maximum Destruction. Spiked aerodynamic futuristic bodywork designed for explosive forward momentum, wheelies, and backflips."
+    "summary": "Maximum Destruction. Spiked aerodynamic futuristic bodywork designed for explosive forward momentum, wheelies, and backflips.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_max_d_monster.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "offroad_bigfoot_crusher",
@@ -2012,7 +2268,11 @@
       "agility": 95,
       "downforce": 25
     },
-    "summary": "The original monster truck that started the worldwide phenomenon. Classic blue Ford pickup body riding on massive 66-inch flotation tires."
+    "summary": "The original monster truck that started the worldwide phenomenon. Classic blue Ford pickup body riding on massive 66-inch flotation tires.",
+    "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_bigfoot_crusher.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_crg_hero_60",
@@ -2043,7 +2303,11 @@
       "agility": 45,
       "downforce": 30
     },
-    "summary": "The cradle of world motorsport champions. Pure momentum management where avoiding scrubbing speed in corners is the key to victory."
+    "summary": "The cradle of world motorsport champions. Pure momentum management where avoiding scrubbing speed in corners is the key to victory.",
+    "image_ref": "/textures/vehicles/references/kart/kart_crg_hero_60.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_birel_c28",
@@ -2074,7 +2338,11 @@
       "agility": 45,
       "downforce": 30
     },
-    "summary": "Italian karting pedigree. Red and white Freeline bodywork with balanced 28mm tubular frame for consistent corner exit speed."
+    "summary": "Italian karting pedigree. Red and white Freeline bodywork with balanced 28mm tubular frame for consistent corner exit speed.",
+    "image_ref": "/textures/vehicles/references/kart/kart_birel_c28.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_tony_kart_neos",
@@ -2105,7 +2373,11 @@
       "agility": 44,
       "downforce": 30
     },
-    "summary": "The emerald green weapon from Prevalle. Renowned for its supple frame flex that generates instant grip in wet and dry conditions."
+    "summary": "The emerald green weapon from Prevalle. Renowned for its supple frame flex that generates instant grip in wet and dry conditions.",
+    "image_ref": "/textures/vehicles/references/kart/kart_tony_kart_neos.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_tony_kart_racer_ok",
@@ -2136,7 +2408,11 @@
       "agility": 42,
       "downforce": 35
     },
-    "summary": "Direct-drive racing weapon without gearbox. Screams to 16,000 RPM, demanding tremendous neck strength and razor-sharp line discipline."
+    "summary": "Direct-drive racing weapon without gearbox. Screams to 16,000 RPM, demanding tremendous neck strength and razor-sharp line discipline.",
+    "image_ref": "/textures/vehicles/references/kart/kart_tony_kart_racer_ok.jpg",
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_tony_kart_racer_ok.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_tony_kart_racer_ok_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_tony_kart_racer_ok.png"
   },
   {
     "id": "kart_crg_kt2_ok",
@@ -2167,7 +2443,11 @@
       "agility": 43,
       "downforce": 35
     },
-    "summary": "Black and gold racing livery with 30mm chrome-moly tubing. Demands aggressive steering inputs and rewards high apex commitment."
+    "summary": "Black and gold racing livery with 30mm chrome-moly tubing. Demands aggressive steering inputs and rewards high apex commitment.",
+    "image_ref": "/textures/vehicles/references/kart/kart_crg_kt2_ok.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_birel_ry30_ok",
@@ -2198,7 +2478,11 @@
       "agility": 42,
       "downforce": 36
     },
-    "summary": "Red aerodynamic bodywork designed in collaboration with ART Grand Prix. Stable high-speed chassis for fast sweeping corners."
+    "summary": "Red aerodynamic bodywork designed in collaboration with ART Grand Prix. Stable high-speed chassis for fast sweeping corners.",
+    "image_ref": "/textures/vehicles/references/kart/kart_birel_ry30_ok.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_birel_art_kz2",
@@ -2229,7 +2513,11 @@
       "agility": 40,
       "downforce": 40
     },
-    "summary": "Peak karting intensity. 6-speed sequential gearbox firing off 0-100 km/h in under 3 seconds while pulling 3.5G lateral cornering grip."
+    "summary": "Peak karting intensity. 6-speed sequential gearbox firing off 0-100 km/h in under 3 seconds while pulling 3.5G lateral cornering grip.",
+    "image_ref": "/textures/vehicles/references/kart/kart_birel_art_kz2.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_crg_road_rebel_kz",
@@ -2260,7 +2548,11 @@
       "agility": 40,
       "downforce": 40
     },
-    "summary": "Most successful shifter kart chassis in World Championship history. 32mm heavy tubular frame handles brutal torque without flexing out of line."
+    "summary": "Most successful shifter kart chassis in World Championship history. 32mm heavy tubular frame handles brutal torque without flexing out of line.",
+    "image_ref": "/textures/vehicles/references/kart/kart_crg_road_rebel_kz.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_tony_kart_racer_kz",
@@ -2291,7 +2583,11 @@
       "agility": 40,
       "downforce": 40
     },
-    "summary": "The benchmark of KZ shifter racing. Dual front hand-operated or foot-operated disc brakes offering devastating stopping power."
+    "summary": "The benchmark of KZ shifter racing. Dual front hand-operated or foot-operated disc brakes offering devastating stopping power.",
+    "image_ref": "/textures/vehicles/references/kart/kart_tony_kart_racer_kz.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_honda_mean_mower",
@@ -2322,7 +2618,11 @@
       "agility": 92,
       "downforce": 20
     },
-    "summary": "Guinness World Record heritage. High-center-of-gravity tuned lawnmower delivering hilarious lift-off oversteer and frantic curb hopping."
+    "summary": "Guinness World Record heritage. High-center-of-gravity tuned lawnmower delivering hilarious lift-off oversteer and frantic curb hopping.",
+    "image_ref": "/textures/vehicles/references/kart/kart_honda_mean_mower.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_john_deere_racing_mower",
@@ -2353,7 +2653,11 @@
       "agility": 93,
       "downforce": 20
     },
-    "summary": "Classic British lawnmower racing silhouette in iconic green and yellow. Torquey V-Twin gives hilarious tire-spinning launches on grass tracks."
+    "summary": "Classic British lawnmower racing silhouette in iconic green and yellow. Torquey V-Twin gives hilarious tire-spinning launches on grass tracks.",
+    "image_ref": "/textures/vehicles/references/kart/kart_john_deere_racing_mower.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_viking_t6_tractor",
@@ -2384,7 +2688,11 @@
       "agility": 92,
       "downforce": 20
     },
-    "summary": "Austrian modified racing tractor with dropped front axle and reinforced chassis rails. Capable of surprising drift control through grass chicanes."
+    "summary": "Austrian modified racing tractor with dropped front axle and reinforced chassis rails. Capable of surprising drift control through grass chicanes.",
+    "image_ref": "/textures/vehicles/references/kart/kart_viking_t6_tractor.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_anderson_cs250",
@@ -2415,7 +2723,11 @@
       "agility": 35,
       "downforce": 85
     },
-    "summary": "Full carbon bodywork aerodynamic monster that races on full-size Grand Prix circuits, capable of out-cornering Formula 3 cars at 245 km/h."
+    "summary": "Full carbon bodywork aerodynamic monster that races on full-size Grand Prix circuits, capable of out-cornering Formula 3 cars at 245 km/h.",
+    "image_ref": "/textures/vehicles/references/kart/kart_anderson_cs250.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_ms_superkart_250",
@@ -2446,7 +2758,11 @@
       "agility": 35,
       "downforce": 86
     },
-    "summary": "Czech engineering marvel with wind-tunnel developed fiberglass fairings and rear bi-plane wing. Glues the chassis to GP circuits."
+    "summary": "Czech engineering marvel with wind-tunnel developed fiberglass fairings and rear bi-plane wing. Glues the chassis to GP circuits.",
+    "image_ref": "/textures/vehicles/references/kart/kart_ms_superkart_250.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   },
   {
     "id": "kart_viper_250_twin",
@@ -2477,6 +2793,10 @@
       "agility": 34,
       "downforce": 87
     },
-    "summary": "British Superkart championship winner. The screaming 2-stroke DEA twin engine generates high straight-line speed on long straights."
+    "summary": "British Superkart championship winner. The screaming 2-stroke DEA twin engine generates high straight-line speed on long straights.",
+    "image_ref": "/textures/vehicles/references/kart/kart_viper_250_twin.jpg",
+    "image_lateral": null,
+    "image_thumb": null,
+    "image_topdown": null
   }
 ]

@@ -173,11 +173,10 @@ pub fn render_real_car_lateral_by_id(
     );
 
     // If model-specific high-resolution lateral sprite is available, render tinted texture directly
-    if model_id == "gt_porsche_911_gt3r" {
-        let high_res = scale > 1.2;
-        let texture = get_tinted_porsche_lateral(primary, secondary, high_res);
+    let high_res = scale > 1.2;
+    if let Some(texture) = crate::render::vehicle_assets::get_vehicle_lateral_texture(model_id, primary, secondary, high_res) {
         let dest_w = half_len * 2.36;
-        let dest_h = dest_w * (341.0 / 1024.0);
+        let dest_h = dest_w * (texture.height() / texture.width());
         let car_y = ground_y - dest_h * 0.98;
         draw_texture_ex(
             &texture,

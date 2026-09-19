@@ -82,7 +82,7 @@ use crate::module::{
     RallyGameModule,
 };
 use crate::profile::{CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
-use crate::render::car::render_car_with_visual_type_and_model;
+use crate::render::car::render_car_with_visual_type_model_and_shadows;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
     is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_ui,
@@ -914,6 +914,7 @@ impl RaceSession {
         };
         modal.assist_dropdown.set_selected(assist_idx);
         modal.scanlines_dropdown.set_selected(self.crt_overlay.config.mode.to_index());
+        modal.set_vehicle_shadows(self.config.display.vehicle_shadows);
 
         let (w, h) = if self.config.display.window_width > 0 && self.config.display.window_height > 0 {
             (self.config.display.window_width, self.config.display.window_height)
@@ -953,6 +954,7 @@ impl RaceSession {
                 self.config.display.window_width = sel_w;
                 self.config.display.window_height = sel_h;
                 self.config.display.fullscreen = is_fs;
+                self.config.display.vehicle_shadows = modal.vehicle_shadows();
                 self.config.display.scanline_mode = match selected_mode {
                     ScanlineMode::Subtle => "subtle".to_string(),
                     ScanlineMode::ArcadeCrt => "arcade_crt".to_string(),
@@ -8078,15 +8080,21 @@ impl RaceSession {
         for &i in &ground_cars {
             let car = &self.cars[i];
             let scheme = &self.color_schemes[i];
-            let is_braking =
-                car.state.local_velocity.x > 1.0 && car.state.wheels[2].slip_ratio < -0.15;
+            let is_braking = car.state.is_braking;
             let model_id = if i == 0 {
                 self.selected_car_model_id
             } else {
                 None
             };
             let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
-            render_car_with_visual_type_and_model(car, scheme, is_braking, visual_type, model_id);
+            render_car_with_visual_type_model_and_shadows(
+                car,
+                scheme,
+                is_braking,
+                visual_type,
+                model_id,
+                self.config.display.vehicle_shadows,
+            );
         }
 
         // 5. Ghost Vehicle (Semi-transparent during Time Trial)
@@ -8118,15 +8126,21 @@ impl RaceSession {
         for &i in &elevated_cars {
             let car = &self.cars[i];
             let scheme = &self.color_schemes[i];
-            let is_braking =
-                car.state.local_velocity.x > 1.0 && car.state.wheels[2].slip_ratio < -0.15;
+            let is_braking = car.state.is_braking;
             let model_id = if i == 0 {
                 self.selected_car_model_id
             } else {
                 None
             };
             let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
-            render_car_with_visual_type_and_model(car, scheme, is_braking, visual_type, model_id);
+            render_car_with_visual_type_model_and_shadows(
+                car,
+                scheme,
+                is_braking,
+                visual_type,
+                model_id,
+                self.config.display.vehicle_shadows,
+            );
         }
 
         // 9. Airborne Particles (Smoke, Dirt roost, Sparks, Drift text)

@@ -696,11 +696,17 @@ fn test_arcade_settings_modal_display_tab_integration() {
     modal.tab_bar.set_tab(2);
     modal.nav.focused_col = 2;
     assert_eq!(modal.tab_bar.active_tab_name(), "DISPLAY");
-    assert_eq!(modal.nav.column_lengths[2], 6); // 5 widgets + 1 bottom button row
+    assert_eq!(modal.nav.column_lengths[2], 7); // 6 widgets + 1 bottom button row
 
     // Verify initial values
     assert_eq!(modal.selected_resolution(), (1280, 720));
     assert!(!modal.is_fullscreen());
+    assert!(modal.vehicle_shadows());
+
+    // Toggle vehicle shadows
+    modal.set_vehicle_shadows(false);
+    assert!(!modal.vehicle_shadows());
+    assert_eq!(modal.vehicle_shadows_dropdown.selected_index, 1);
 
     // Set display state
     modal.set_display_state(1920, 1080, true);
@@ -717,6 +723,8 @@ fn test_arcade_settings_modal_display_tab_integration() {
     assert!(!modal.is_fullscreen());
     assert_eq!(modal.ui_scale_dropdown.selected_index, 0);
     assert_eq!(modal.scanlines_dropdown.selected_index, 0);
+    assert_eq!(modal.vehicle_shadows_dropdown.selected_index, 0);
+    assert!(modal.vehicle_shadows());
     assert_eq!(modal.theme_dropdown.selected_index, 0);
 }
 

@@ -194,10 +194,9 @@ pub fn render_garage_screen(
                 draw_circle(center_x, center_y + scaler.s(10.0), scaler.s(70.0), Color::new(0.06, 0.08, 0.12, 0.85));
                 draw_circle_lines(center_x, center_y + scaler.s(10.0), scaler.s(70.0), 1.5, Color::new(0.25, 0.35, 0.50, 0.50));
 
-                if model.id == "gt_porsche_911_gt3r" {
-                    let texture = crate::render::car::get_tinted_porsche_topdown(scheme.primary, scheme.secondary);
+                if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture(model.id, scheme.primary, scheme.secondary) {
                     let dest_w = scaler.s(220.0);
-                    let dest_h = dest_w * (446.0 / 925.0);
+                    let dest_h = dest_w * (texture.height() / texture.width());
                     macroquad::texture::draw_texture_ex(
                         &texture,
                         center_x - dest_w * 0.5,

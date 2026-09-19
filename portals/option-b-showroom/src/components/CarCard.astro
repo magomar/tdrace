@@ -29,6 +29,10 @@ interface Props {
       downforce: number;
     };
     summary: string;
+    image_ref?: string | null;
+    image_lateral?: string | null;
+    image_thumb?: string | null;
+    image_topdown?: string | null;
   };
 }
 
@@ -43,6 +47,7 @@ const badgeColors: Record<string, string> = {
 };
 
 const moduleColor = badgeColors[car.module] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+const hasVisuals = Boolean(car.image_lateral || car.image_ref);
 ---
 
 <div class="bg-racing-surface rounded-xl border border-racing-border overflow-hidden hover:border-racing-blue/50 hover:shadow-xl hover:shadow-racing-blue/5 transition-all flex flex-col justify-between group">
@@ -62,6 +67,73 @@ const moduleColor = badgeColors[car.module] || 'bg-slate-500/15 text-slate-400 b
     <p class="text-xs text-racing-muted mt-1 font-mono">
       {car.manufacturer ? `${car.manufacturer} • ${car.year} • ` : ''}{car.category}
     </p>
+  </div>
+
+  <!-- Dual-View Visual Showcase (2D Game Asset & Real Motorsport Reference) -->
+  <div class="relative bg-racing-bg/80 border-b border-racing-border/60 overflow-hidden h-44 flex flex-col justify-between p-3 group/view" data-car-id={car.id}>
+    {hasVisuals ? (
+      <>
+        {car.image_lateral && car.image_ref && (
+          <div class="absolute top-2.5 right-2.5 z-10 flex gap-1 bg-racing-surface/90 border border-racing-border/80 rounded-md p-0.5 shadow-md text-[10px] font-mono">
+            <button
+              type="button"
+              class="view-toggle-btn px-2 py-0.5 rounded text-white bg-racing-blue font-semibold transition-all active-toggle"
+              data-target="lateral"
+              data-car={car.id}
+            >
+              2D Sprite
+            </button>
+            <button
+              type="button"
+              class="view-toggle-btn px-2 py-0.5 rounded text-racing-muted hover:text-white transition-all"
+              data-target="ref"
+              data-car={car.id}
+            >
+              Real Ref
+            </button>
+          </div>
+        )}
+
+        <div class="view-pane flex-1 flex items-center justify-center relative w-full h-full" id={`pane-lateral-${car.id}`}>
+          {car.image_lateral ? (
+            <div class="relative w-full h-full flex flex-col items-center justify-center p-2">
+              <img
+                src={car.image_lateral}
+                alt={`${car.name} 2D Game Asset`}
+                class="max-h-28 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+              <div class="w-3/4 h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent blur-[1px] mt-1"></div>
+            </div>
+          ) : (
+            <div class="text-xs font-mono text-racing-muted/60 italic">2D Game Asset Pending</div>
+          )}
+        </div>
+
+        {car.image_ref && (
+          <div class="view-pane flex-1 hidden items-center justify-center relative w-full h-full overflow-hidden rounded" id={`pane-ref-${car.id}`}>
+            <img
+              src={car.image_ref}
+              alt={`${car.name} Real Motorsport Reference`}
+              class="w-full h-full object-cover rounded border border-racing-border/40"
+              loading="lazy"
+            />
+            <div class="absolute bottom-1 right-2 text-[9px] font-mono bg-black/60 px-1.5 py-0.5 rounded text-white/80">
+              Real Trackside
+            </div>
+          </div>
+        )}
+      </>
+    ) : (
+      <div class="flex-1 flex flex-col items-center justify-center text-center p-4">
+        <div class="w-16 h-8 border border-dashed border-racing-border rounded-md flex items-center justify-center text-[10px] font-mono text-racing-muted">
+          CAD 2D
+        </div>
+        <div class="text-[11px] font-mono text-racing-muted/70 mt-2">
+          {car.category} • Blueprint Spec
+        </div>
+      </div>
+    )}
   </div>
 
   <!-- Key Specs Grid -->
@@ -138,3 +210,49 @@ const moduleColor = badgeColors[car.module] || 'bg-slate-500/15 text-slate-400 b
     "{car.summary}"
   </div>
 </div>
+
+<script>
+  function initViewToggles() {
+    document.querySelectorAll('.view-toggle-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const target = e.currentTarget as HTMLButtonElement;
+        const carId = target.dataset.car;
+        const viewMode = target.dataset.target;
+
+        const card = target.closest('[data-car-id]');
+        if (!card) return;
+
+        const paneLateral = card.querySelector(`#pane-lateral-${carId}`);
+        const paneRef = card.querySelector(`#pane-ref-${carId}`);
+
+        const buttons = card.querySelectorAll('.view-toggle-btn');
+        buttons.forEach((b) => {
+          b.classList.remove('text-white', 'bg-racing-blue', 'font-semibold', 'active-toggle');
+          b.classList.add('text-racing-muted');
+        });
+
+        target.classList.add('text-white', 'bg-racing-blue', 'font-semibold', 'active-toggle');
+        target.classList.remove('text-racing-muted');
+
+        if (viewMode === 'lateral') {
+          paneLateral?.classList.remove('hidden');
+          paneLateral?.classList.add('flex');
+          paneRef?.classList.add('hidden');
+          paneRef?.classList.remove('flex');
+        } else {
+          paneRef?.classList.remove('hidden');
+          paneRef?.classList.add('flex');
+          paneLateral?.classList.add('hidden');
+          paneLateral?.classList.remove('flex');
+        }
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initViewToggles);
+  } else {
+    initViewToggles();
+  }
+</script>

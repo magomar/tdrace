@@ -286,4 +286,44 @@ fn test_porsche_gt3r_lateral_sprite_asset_presence() {
     assert!(thumb.len() < high_res.len(), "Thumbnail must be more compact than high-res sprite");
 }
 
+#[test]
+fn test_all_80_motorsport_cars_catalog_integrity() {
+    use tdrace_app::catalog::ALL_REAL_CARS;
+
+    assert_eq!(ALL_REAL_CARS.len(), 80, "Catalog must contain exactly 80 vehicles");
+
+    let modules = ["gt", "nascar", "rally", "extreme_offroad", "kart"];
+    for m in modules {
+        let count = ALL_REAL_CARS.iter().filter(|c| c.module_id == m).count();
+        if m == "gt" {
+            assert_eq!(count, 20, "GT module must contain 20 vehicles (4 per tier)");
+        } else {
+            assert_eq!(count, 15, "Module {} must contain 15 vehicles (3 per tier)", m);
+        }
+    }
+
+    for car in ALL_REAL_CARS {
+        assert!(!car.id.is_empty(), "Car ID cannot be empty");
+        assert!(!car.name.is_empty(), "Car name cannot be empty");
+        assert!(car.tier >= 1 && car.tier <= 5, "Tier must be between 1 and 5");
+        assert!(car.bhp > 0, "BHP must be positive");
+        assert!(car.weight_kg > 0, "Weight must be positive");
+        assert!(car.top_speed_kmh > 0, "Top speed must be positive");
+        assert!(car.primary_color.a > 0.9, "Primary color must be fully opaque");
+        assert!(car.secondary_color.a > 0.9, "Secondary color must be fully opaque");
+    }
+}
+
+#[test]
+fn test_vehicle_asset_registry_color_helpers() {
+    use macroquad::color::Color;
+    use tdrace_app::render::vehicle_assets::color_to_u32;
+
+    let c = Color::new(1.0, 0.0, 0.5, 1.0);
+    let u = color_to_u32(c);
+    assert_eq!((u >> 16) & 0xFF, 255);
+    assert_eq!((u >> 8) & 0xFF, 0);
+    assert_eq!(u & 0xFF, 127);
+}
+
 

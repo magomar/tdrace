@@ -132,6 +132,16 @@ def generate_assets():
         brake_rating = raw_s[4]
         brakes_kn = round(5.0 + brake_rating * 25.0, 1)
 
+        ref_file = root / "assets" / "textures" / "vehicles" / "references" / mod_id / f"{car_id}.jpg"
+        lateral_file = root / "assets" / "textures" / "vehicles" / "laterals" / mod_id / f"{car_id}.png"
+        thumb_file = root / "assets" / "textures" / "vehicles" / "laterals" / mod_id / f"{car_id}_thumb.png"
+        topdown_file = root / "assets" / "textures" / "vehicles" / "topdown" / mod_id / f"{car_id}.png"
+
+        image_ref = f"/textures/vehicles/references/{mod_id}/{car_id}.jpg" if ref_file.exists() else None
+        image_lateral = f"/textures/vehicles/laterals/{mod_id}/{car_id}.png" if lateral_file.exists() else None
+        image_thumb = f"/textures/vehicles/laterals/{mod_id}/{car_id}_thumb.png" if thumb_file.exists() else None
+        image_topdown = f"/textures/vehicles/topdown/{mod_id}/{car_id}.png" if topdown_file.exists() else None
+
         vehicles.append({
             "id": car_id,
             "name": name,
@@ -156,6 +166,10 @@ def generate_assets():
             "brakes_kn": brakes_kn,
             "stats": stats,
             "summary": bio,
+            "image_ref": image_ref,
+            "image_lateral": image_lateral,
+            "image_thumb": image_thumb,
+            "image_topdown": image_topdown,
         })
 
     print(f"  ✅ Compiled {len(vehicles)} vehicles across 5 motorsport modules.")

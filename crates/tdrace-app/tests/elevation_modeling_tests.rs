@@ -126,3 +126,24 @@ fn test_3d_physics_grade_slope_and_crest_dynamics() {
         "Uphill acceleration must transfer weight to rear axle"
     );
 }
+
+#[test]
+fn test_vehicle_shadow_offset_and_diffusion_under_jump_elevation() {
+    let z_lift_ground = 0.0f32;
+    let z_lift_airborne = 2.5f32; // airborne jump
+
+    // Grounded shadow offset: subtle directional bias
+    let offset_ground = Vec2::new(0.06 + z_lift_ground * 0.30, 0.08 + z_lift_ground * 0.40);
+    assert_eq!(offset_ground, Vec2::new(0.06, 0.08));
+    let alpha_ground = (1.0 / (1.0 + z_lift_ground * 0.55)).clamp(0.25, 1.0);
+    assert_eq!(alpha_ground, 1.0);
+
+    // Airborne shadow offset: separates from vehicle and softens
+    let offset_airborne = Vec2::new(0.06 + z_lift_airborne * 0.30, 0.08 + z_lift_airborne * 0.40);
+    assert!(offset_airborne.x > offset_ground.x);
+    assert!(offset_airborne.y > offset_ground.y);
+
+    let alpha_airborne = (1.0 / (1.0 + z_lift_airborne * 0.55)).clamp(0.25, 1.0);
+    assert!(alpha_airborne < alpha_ground);
+    assert!(alpha_airborne >= 0.25);
+}

@@ -103,24 +103,22 @@ pub fn render_car_lights(
     }
 }
 
-/// Renders a high-detail top-down sprite for the Porsche 911 GT3 R (992).
-pub fn render_porsche_gt3r_sprite(
+/// Renders a vehicle topdown textured sprite.
+pub fn render_vehicle_topdown_sprite(
+    texture: &Texture2D,
     chassis_center: Vec2,
     angle: f32,
     fwd: Vec2,
     right: Vec2,
     body_half_len: f32,
     body_half_w: f32,
-    primary: Color,
-    secondary: Color,
     is_braking: bool,
 ) {
-    let texture = get_tinted_porsche_topdown(primary, secondary);
     let dest_w = body_half_len * 2.0 * 1.06;
-    let dest_h = dest_w * (446.0 / 925.0);
+    let dest_h = dest_w * (texture.height() / texture.width());
 
     draw_texture_ex(
-        &texture,
+        texture,
         chassis_center.x - dest_w * 0.5,
         chassis_center.y - dest_h * 0.5,
         Color::new(1.0, 1.0, 1.0, 1.0),
@@ -133,6 +131,32 @@ pub fn render_porsche_gt3r_sprite(
     );
 
     render_car_lights(chassis_center, fwd, right, body_half_len, body_half_w, is_braking);
+}
+
+/// Renders a high-detail top-down sprite for the Porsche 911 GT3 R (992).
+pub fn render_porsche_gt3r_sprite(
+    chassis_center: Vec2,
+    angle: f32,
+    fwd: Vec2,
+    right: Vec2,
+    body_half_len: f32,
+    body_half_w: f32,
+    primary: Color,
+    secondary: Color,
+    is_braking: bool,
+) {
+    if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture("gt_porsche_911_gt3r", primary, secondary) {
+        render_vehicle_topdown_sprite(
+            &texture,
+            chassis_center,
+            angle,
+            fwd,
+            right,
+            body_half_len,
+            body_half_w,
+            is_braking,
+        );
+    }
 }
 
 /// Renders a vehicle with modern 2.5D motorsport arcade aesthetics based on its visual archetype.
@@ -168,6 +192,25 @@ pub fn render_car_with_visual_type_and_model(
     visual_type: VehicleVisualType,
     model_id: Option<&str>,
 ) {
+    render_car_with_visual_type_model_and_shadows(
+        car,
+        color_scheme,
+        is_braking,
+        visual_type,
+        model_id,
+        true,
+    );
+}
+
+/// Renders a vehicle with model-specific top-down sprite support and explicit shadow toggle.
+pub fn render_car_with_visual_type_model_and_shadows(
+    car: &Car,
+    color_scheme: &CarColorScheme,
+    is_braking: bool,
+    visual_type: VehicleVisualType,
+    model_id: Option<&str>,
+    shadows_enabled: bool,
+) {
     let pos = car.state.position;
     let angle = car.state.angle;
     let fwd = car.forward_vector();
@@ -196,25 +239,39 @@ pub fn render_car_with_visual_type_and_model(
     let body_half_w = half_w + 0.12 * air_scale;
 
     // 1. --- 2.5D Drop Shadow ---
-    // Ground shadow offset scales with airborne jump lift above road surface datum
-    let shadow_pos = pos + Vec2::new(0.30 + z_lift * 0.35, 0.40 + z_lift * 0.45);
-    let shadow_scale = 1.0 + (z_lift * 0.10).min(0.60);
-    render_chassis_shadow(shadow_pos, fwd, right, body_half_len * shadow_scale, body_half_w * shadow_scale);
+    if shadows_enabled {
+        // Ground shadow offset: subtle directional bias (light coming from top-left)
+        // Scaled realistically: ~0.06m - 0.08m grounded, expanding gracefully with airborne jump elevation
+        let shadow_offset = Vec2::new(0.06 + z_lift * 0.30, 0.08 + z_lift * 0.40);
+        let shadow_pos = pos + shadow_offset;
+        let shadow_scale = 1.0 + (z_lift * 0.08).min(0.40);
+        let shadow_alpha = (1.0 / (1.0 + z_lift * 0.55)).clamp(0.25, 1.0);
 
-    // 2. If model-specific high-detail top-down sprite is available, render sprite directly
-    if model_id == Some("gt_porsche_911_gt3r") {
-        render_porsche_gt3r_sprite(
-            chassis_center,
-            angle,
+        render_chassis_shadow(
+            shadow_pos,
             fwd,
             right,
-            body_half_len,
-            body_half_w,
-            color_scheme.primary,
-            color_scheme.secondary,
-            is_braking,
+            body_half_len * shadow_scale,
+            body_half_w * shadow_scale,
+            shadow_alpha,
         );
-        return;
+    }
+
+    // 2. If model-specific high-detail top-down sprite is available, render sprite directly
+    if let Some(m_id) = model_id {
+        if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture(m_id, color_scheme.primary, color_scheme.secondary) {
+            render_vehicle_topdown_sprite(
+                &texture,
+                chassis_center,
+                angle,
+                fwd,
+                right,
+                body_half_len,
+                body_half_w,
+                is_braking,
+            );
+            return;
+        }
     }
 
     // 3. Procedural Archetype Rendering
@@ -320,14 +377,112 @@ pub fn render_car_with_visual_type_and_model(
     }
 }
 
-/// Draws ground shadow for the vehicle.
-fn render_chassis_shadow(pos: Vec2, fwd: Vec2, right: Vec2, half_len: f32, half_w: f32) {
-    let p_fl = pos + fwd * half_len - right * half_w;
-    let p_fr = pos + fwd * half_len + right * half_w;
-    let p_rr = pos - fwd * half_len + right * half_w;
-    let p_rl = pos - fwd * half_len - right * half_w;
+/// Draws a smooth convex rounded hull (capsule / rounded oriented box) centered at `center`.
+fn draw_rounded_oriented_chassis(
+    center: Vec2,
+    fwd: Vec2,
+    right: Vec2,
+    half_len: f32,
+    half_w: f32,
+    corner_radius: f32,
+    color: Color,
+) {
+    let r = corner_radius.min(half_len * 0.45).min(half_w * 0.90);
+    let lx = (half_len - r).max(0.01);
+    let wy = (half_w - r).max(0.01);
 
-    draw_quad(p_fl, p_fr, p_rr, p_rl, Palette::SHADOW);
+    // 16-point perimeter (4 points per rounded corner)
+    const SEGMENTS: usize = 4;
+    let mut points: [Vec2; 16] = [Vec2::ZERO; 16];
+    let mut idx = 0;
+
+    // Corner centers in local coordinates (x = along fwd, y = along right):
+    // 1. Front-Right corner (+lx, +wy): angle 0 to pi/2 (from +right to +fwd)
+    for s in 0..SEGMENTS {
+        let frac = s as f32 / (SEGMENTS - 1) as f32;
+        let angle = frac * std::f32::consts::FRAC_PI_2;
+        let local_x = lx + r * angle.sin();
+        let local_y = wy + r * angle.cos();
+        points[idx] = center + fwd * local_x + right * local_y;
+        idx += 1;
+    }
+    // 2. Front-Left corner (+lx, -wy): angle 0 to pi/2 (from +fwd to -right)
+    for s in 0..SEGMENTS {
+        let frac = s as f32 / (SEGMENTS - 1) as f32;
+        let angle = frac * std::f32::consts::FRAC_PI_2;
+        let local_x = lx + r * angle.cos();
+        let local_y = -wy - r * angle.sin();
+        points[idx] = center + fwd * local_x + right * local_y;
+        idx += 1;
+    }
+    // 3. Rear-Left corner (-lx, -wy): angle 0 to pi/2 (from -right to -fwd)
+    for s in 0..SEGMENTS {
+        let frac = s as f32 / (SEGMENTS - 1) as f32;
+        let angle = frac * std::f32::consts::FRAC_PI_2;
+        let local_x = -lx - r * angle.sin();
+        let local_y = -wy - r * angle.cos();
+        points[idx] = center + fwd * local_x + right * local_y;
+        idx += 1;
+    }
+    // 4. Rear-Right corner (-lx, +wy): angle 0 to pi/2 (from -fwd to +right)
+    for s in 0..SEGMENTS {
+        let frac = s as f32 / (SEGMENTS - 1) as f32;
+        let angle = frac * std::f32::consts::FRAC_PI_2;
+        let local_x = -lx - r * angle.cos();
+        let local_y = wy + r * angle.sin();
+        points[idx] = center + fwd * local_x + right * local_y;
+        idx += 1;
+    }
+
+    let c = macroquad::math::Vec2::new(center.x, center.y);
+    for i in 0..16 {
+        let next = (i + 1) % 16;
+        draw_triangle(
+            c,
+            macroquad::math::Vec2::new(points[i].x, points[i].y),
+            macroquad::math::Vec2::new(points[next].x, points[next].y),
+            color,
+        );
+    }
+}
+
+/// Draws a multi-layered, realistic soft ground shadow for the vehicle.
+///
+/// Combines:
+/// 1. An outer feathered penumbra layer (soft diffused edge)
+/// 2. A mid ambient silhouette layer (vehicle body projection)
+/// 3. An inner contact ambient occlusion core (deepest under the chassis floorpan)
+fn render_chassis_shadow(
+    pos: Vec2,
+    fwd: Vec2,
+    right: Vec2,
+    half_len: f32,
+    half_w: f32,
+    alpha_scale: f32,
+) {
+    if alpha_scale <= 0.02 {
+        return;
+    }
+
+    let corner_r = (half_w * 0.40).clamp(0.20, 0.40);
+
+    // 1. Outer Soft Penumbra: slightly expanded perimeter with faint opacity
+    let penumbra_len = half_len + 0.10;
+    let penumbra_w = half_w + 0.08;
+    let penumbra_r = corner_r + 0.08;
+    let col_outer = Color::new(0.0, 0.0, 0.0, 0.12 * alpha_scale);
+    draw_rounded_oriented_chassis(pos, fwd, right, penumbra_len, penumbra_w, penumbra_r, col_outer);
+
+    // 2. Mid Silhouette Ground Shadow: matches the vehicle footprint
+    let col_mid = Color::new(0.0, 0.0, 0.0, 0.22 * alpha_scale);
+    draw_rounded_oriented_chassis(pos, fwd, right, half_len, half_w, corner_r, col_mid);
+
+    // 3. Inner Contact Occlusion Core: compact, darkest under the central chassis floorpan
+    let core_len = half_len * 0.78;
+    let core_w = half_w * 0.72;
+    let core_r = corner_r * 0.70;
+    let col_core = Color::new(0.0, 0.0, 0.0, 0.24 * alpha_scale);
+    draw_rounded_oriented_chassis(pos, fwd, right, core_len, core_w, core_r, col_core);
 }
 
 /// Draws an individual wheel with rubber tread and center alloy hub.
@@ -344,8 +499,8 @@ fn render_wheel(pos: Vec2, angle: f32, is_wide_slick: bool) {
     let p3 = pos - tire_fwd * tire_half_len - tire_right * tire_half_w;
 
     // Tire shadow
-    let s_off = Vec2::new(0.08, 0.10);
-    draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
+    let s_off = Vec2::new(0.03, 0.04);
+    draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SOFT_SHADOW);
 
     // Tire rubber
     draw_quad(p0, p1, p2, p3, Color::new(0.10, 0.10, 0.12, 1.0));
@@ -1146,8 +1301,8 @@ fn render_sand_rail_wheel(pos: Vec2, angle: f32, is_paddle: bool) {
     let p3 = pos - tire_fwd * tire_half_len - tire_right * tire_half_w;
 
     // Tire shadow
-    let s_off = Vec2::new(0.08, 0.10);
-    draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
+    let s_off = Vec2::new(0.03, 0.04);
+    draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SOFT_SHADOW);
 
     // Tire rubber
     draw_quad(p0, p1, p2, p3, Color::new(0.12, 0.12, 0.14, 1.0));

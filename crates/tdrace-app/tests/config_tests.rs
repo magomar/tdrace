@@ -506,5 +506,26 @@ default_laps = 55
     let _ = std::fs::remove_dir_all(&temp_user_dir);
 }
 
+#[test]
+fn test_display_config_vehicle_shadows_setting() {
+    let mut config = GameConfig::default();
+    assert!(config.display.vehicle_shadows);
+
+    // Disable vehicle shadows and verify roundtrip
+    config.display.vehicle_shadows = false;
+    let toml_str = toml::to_string_pretty(&config).expect("Serialize display config with vehicle shadows disabled");
+    let loaded: GameConfig = toml::from_str(&toml_str).expect("Deserialize display config");
+    assert!(!loaded.display.vehicle_shadows);
+
+    // When omitted from TOML, serde default should restore to true
+    let partial_toml = r#"
+[display]
+window_width = 1920
+window_height = 1080
+"#;
+    let loaded_partial: GameConfig = toml::from_str(partial_toml).expect("Deserialize partial toml without shadows field");
+    assert!(loaded_partial.display.vehicle_shadows);
+}
+
 
 
