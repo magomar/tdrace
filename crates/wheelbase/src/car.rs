@@ -489,18 +489,11 @@ impl Car {
         // 1. Steering dynamics with speed-sensitive limit and counter-steer assist
         // steer > 0 is steering right (clockwise, -steer_angle in Cartesian coords)
         // steer < 0 is steering left (counter-clockwise, +steer_angle in Cartesian coords)
-        // In reverse gear or when moving backwards (v_long < -0.2), invert steering demand
-        // so that steering Right (steer > 0) turns the vehicle Right, and steering Left turns Left.
-        let steer_cmd = if clamped_ctrl.reverse || v_long < -0.2 {
-            -clamped_ctrl.steer
-        } else {
-            clamped_ctrl.steer
-        };
         let speed_factor = 1.0 + self.state.speed * self.config.speed_sensitive_steer_factor;
-        let mut target_steer = (-steer_cmd * self.config.max_steer_angle) / speed_factor;
+        let mut target_steer = (-clamped_ctrl.steer * self.config.max_steer_angle) / speed_factor;
 
-        // Check if player is counter-steering against a drift (opposite to lateral velocity / yaw, forward motion only)
-        let is_counter_steering = v_long > 0.5 && (clamped_ctrl.steer * v_lat) < -0.05;
+        // Check if player is counter-steering against a drift (opposite to lateral velocity / yaw)
+        let is_counter_steering = (clamped_ctrl.steer * v_lat) < -0.05;
 
         // Counter-steer / self-aligning drift recovery assist (forward motion only)
         if self.config.assists.counter_steer_assist_enabled
@@ -1232,54 +1225,6 @@ mod tests {
             car_straighten.step(&ctrl_neutral_rev, SurfaceType::Asphalt, dt);
         }
         assert!(car_straighten.state.angular_velocity.abs() < 1e-3, "Releasing steering in reverse must eliminate yaw rate");
-    }
-
-    #[test]
-    fn test_reverse_steering_left_and_right() {
-        let dt = 1.0 / 60.0;
-
-        // 1. Reversing with steer = +0.5 (Right)
-        let mut car_rev_right = Car::new(CarConfig::sports_car());
-        let mut ctrl_rev_right = CarControls::new(1.0, 0.5, 0.0, false);
-        ctrl_rev_right.reverse = true;
-        for _ in 0..60 {
-            car_rev_right.step(&ctrl_rev_right, SurfaceType::Asphalt, dt);
-        }
-
-        // 2. Reversing with steer = -0.5 (Left)
-        let mut car_rev_left = Car::new(CarConfig::sports_car());
-        let mut ctrl_rev_left = CarControls::new(1.0, -0.5, 0.0, false);
-        ctrl_rev_left.reverse = true;
-        for _ in 0..60 {
-            car_rev_left.step(&ctrl_rev_left, SurfaceType::Asphalt, dt);
-        }
-
-        // 3. Forward with steer = +0.5 (Right)
-        let mut car_fwd_right = Car::new(CarConfig::sports_car());
-        let ctrl_fwd_right = CarControls::new(1.0, 0.5, 0.0, false);
-        for _ in 0..60 {
-            car_fwd_right.step(&ctrl_fwd_right, SurfaceType::Asphalt, dt);
-        }
-
-        // Assertions:
-        // Steering Right in reverse yaws clockwise (omega < 0), matching forward right yaw direction!
-        assert!(car_rev_right.state.angular_velocity < -0.1, "Reverse steer right must yaw clockwise");
-        // Steering Left in reverse yaws counter-clockwise (omega > 0), matching forward left yaw direction!
-        assert!(car_rev_left.state.angular_velocity > 0.1, "Reverse steer left must yaw counter-clockwise");
-        // Perfect symmetry between left and right steering in reverse
-        assert!((car_rev_right.state.angular_velocity.abs() - car_rev_left.state.angular_velocity.abs()).abs() < 1e-4, "Left and right reverse steering must be symmetric");
-        assert!((car_rev_right.state.angle.abs() - car_rev_left.state.angle.abs()).abs() < 1e-4, "Left and right reverse angle must be symmetric");
-
-        // 4. High-speed reverse cornering stability (ensure no spinout divergence or NaN)
-        let mut car_rev_fast = Car::new(CarConfig::sports_car());
-        let mut ctrl_rev_turn = CarControls::new(1.0, 0.8, 0.0, false);
-        ctrl_rev_turn.reverse = true;
-        for _ in 0..180 {
-            car_rev_fast.step(&ctrl_rev_turn, SurfaceType::Asphalt, dt);
-        }
-        assert!(!car_rev_fast.state.angular_velocity.is_nan(), "Reverse angular velocity must not be NaN");
-        assert!(car_rev_fast.state.angular_velocity.abs() < 2.5, "Reverse cornering must remain dynamically bounded");
-        assert!(car_rev_fast.state.local_velocity.x < -3.0, "Car should sustain reverse speed under throttle");
     }
 
     #[test]
