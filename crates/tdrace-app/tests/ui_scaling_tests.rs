@@ -154,9 +154,10 @@ fn test_race_session_game_mode_roster_behaviors() {
     let mut session = RaceSession::new();
     session.num_bots = 4;
 
-    // 1. Standard Race: all drivers use track's predefined car
+    // 1. Standard Race: all drivers use track's predefined car when random_car_assignment is disabled
     session.game_mode = GameMode::StandardRace;
     session.free_car_selection = false;
+    session.random_car_assignment = false;
     session.car_choice = CarChoice::DriftCar; // Ignored in StandardRace
     session.init_race();
 

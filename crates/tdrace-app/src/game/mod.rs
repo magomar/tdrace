@@ -245,6 +245,8 @@ pub struct GridParticipant {
     pub country: Option<String>,
     /// Display title of the vehicle driven.
     pub car_title: String,
+    /// Vehicle model chosen for this participant.
+    pub car_choice: CarChoice,
     /// Livery color scheme.
     pub color_scheme: CarColorScheme,
     /// Best historical single lap time in seconds on this track.
@@ -307,7 +309,10 @@ pub struct RaceSession {
 
     pub active_module_id: &'static str,
     pub championship_session: Option<ChampionshipSession>,
+    pub random_car_assignment: bool,
+    pub roster_seed: u64,
     pub current_visual_type: VehicleVisualType,
+    pub car_visual_types: Vec<VehicleVisualType>,
     pub selected_car_model_id: Option<&'static str>,
 
     pub cars: Vec<Car>,
@@ -570,11 +575,14 @@ impl RaceSession {
 
             active_module_id: "classic",
             championship_session: None,
+            random_car_assignment: true,
+            roster_seed: 42,
             current_visual_type: VehicleVisualType::TouringGT {
                 widebody: true,
                 gt_wing: true,
                 diffuser: true,
             },
+            car_visual_types: Vec::new(),
             selected_car_model_id: None,
 
             cars: Vec::new(),
@@ -1098,6 +1106,50 @@ impl RaceSession {
         } else {
             self.resolve_predefined_car()
         }
+    }
+
+    /// Returns the pool of eligible car models for opponents based on the active motorsport category or track.
+    pub fn eligible_opponent_cars(&self) -> Vec<CarChoice> {
+        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
+        match effective_module {
+            "gt" | "gt_challenge" | "f1" => vec![
+                CarChoice::GT4Clubsport,
+                CarChoice::GT3Car,
+                CarChoice::GT2Biturbo,
+                CarChoice::GT1Legend,
+                CarChoice::HypercarPrototype,
+            ],
+            "nascar" => vec![CarChoice::StockCar],
+            "extreme_offroad" => vec![CarChoice::SandRail],
+            "rally" => vec![CarChoice::RallyCar],
+            "kart" => vec![CarChoice::Kart],
+            _ => match self.resolve_predefined_car() {
+                CarChoice::Kart => vec![CarChoice::Kart],
+                CarChoice::RallyCar => vec![CarChoice::RallyCar],
+                CarChoice::DriftCar => vec![CarChoice::DriftCar],
+                _ => vec![
+                    CarChoice::SportsCar,
+                    CarChoice::DriftCar,
+                    CarChoice::RallyCar,
+                ],
+            },
+        }
+    }
+
+    /// Selects a pseudo-random opponent car from the eligible pool deterministically using bot index and seed.
+    pub fn sample_random_opponent_car(&self, bot_idx: usize, bot_seed: u64) -> CarChoice {
+        let pool = self.eligible_opponent_cars();
+        if pool.is_empty() {
+            return self.resolve_predefined_car();
+        }
+        if pool.len() == 1 {
+            return pool[0];
+        }
+        let h = bot_seed
+            .wrapping_mul(0x517CC1B727220A95)
+            .wrapping_add((bot_idx as u64).wrapping_mul(0x9E3779B97F4A7C15));
+        let idx = ((h >> 32) as usize) % pool.len();
+        pool[idx]
     }
 
     /// Returns available circuits for the active motorsport game module (including both presets and custom circuits).
@@ -1676,6 +1728,7 @@ impl RaceSession {
         };
 
         self.cars.clear();
+        self.car_visual_types.clear();
         self.color_schemes.clear();
         self.trackers.clear();
         self.ai_drivers.clear();
@@ -1856,6 +1909,7 @@ impl RaceSession {
             alias: self.active_profile.alias.clone(),
             country: self.active_profile.country.clone(),
             car_title: player_car_title,
+            car_choice: player_car_choice,
             color_scheme: self.player_effective_color_scheme(),
             best_lap: player_best_lap,
             best_circuit_time: player_best_circuit,
@@ -1877,6 +1931,7 @@ impl RaceSession {
                 alias: "P2".to_string(),
                 country: Some("ARC".to_string()),
                 car_title: player_car_title_clone,
+                car_choice: player_car_choice,
                 color_scheme: p2_scheme,
                 best_lap: None,
                 best_circuit_time: None,
@@ -1896,9 +1951,14 @@ impl RaceSession {
 
             let bot_car_choice = match self.game_mode {
                 GameMode::ExperimentalRace => player_car_choice,
+                GameMode::Career => self.resolve_predefined_car(),
                 _ => {
-                    if self.free_car_selection {
+                    if self.championship_session.is_some() {
+                        self.resolve_predefined_car()
+                    } else if self.free_car_selection {
                         character.preferred_car
+                    } else if self.random_car_assignment {
+                        self.sample_random_opponent_car(bot_idx, bot_seed)
                     } else {
                         self.resolve_predefined_car()
                     }
@@ -1913,6 +1973,7 @@ impl RaceSession {
                 alias: character.alias.to_string(),
                 country: None,
                 car_title: bot_car_title,
+                car_choice: bot_car_choice,
                 color_scheme: character.color_scheme,
                 best_lap: bot_best_lap,
                 best_circuit_time: bot_best_circuit,
@@ -1948,6 +2009,7 @@ impl RaceSession {
             });
         let player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
         self.cars.push(player_car);
+        self.car_visual_types.push(player_car_choice.visual_type());
         self.color_schemes.push(self.player_effective_color_scheme());
         self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
 
@@ -1972,6 +2034,7 @@ impl RaceSession {
             p2_config.assists = self.assist_profile_p2.to_config();
             let p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
             self.cars.push(p2_car);
+            self.car_visual_types.push(player_car_choice.visual_type());
             self.color_schemes.push(p2_scheme);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
         }
@@ -1994,33 +2057,21 @@ impl RaceSession {
                     grid_slot: bot_slot,
                 });
 
-            let bot_car_choice = match self.game_mode {
-                GameMode::ExperimentalRace => player_car_choice,
-                _ => {
-                    if self.free_car_selection {
-                        character.preferred_car
-                    } else {
-                        self.resolve_predefined_car()
-                    }
-                }
-            };
+            let bot_car_choice = self
+                .grid_participants
+                .iter()
+                .find(|p| p.bot_index == Some(bot_idx))
+                .map(|p| p.car_choice)
+                .unwrap_or(player_car_choice);
 
             let bot_config = match bot_car_choice {
-                CarChoice::GT4Clubsport => GtWorldChallengeModule::car_gt4_clubsport(),
-                CarChoice::GT3Car => GtWorldChallengeModule::car_gt3_evo(),
-                CarChoice::GT2Biturbo => GtWorldChallengeModule::car_gt2_biturbo(),
-                CarChoice::GT1Legend => GtWorldChallengeModule::car_gt1_legend(),
-                CarChoice::HypercarPrototype => GtWorldChallengeModule::car_hypercar_prototype(),
-                CarChoice::F1Car => GtWorldChallengeModule::car_f1_hybrid(),
-                CarChoice::RallyCar => RallyGameModule::car_wrc_rally(),
-                CarChoice::Kart => KartGameModule::car_shifter_kart(),
-                CarChoice::StockCar => NascarGameModule::car_stock_car(),
-                CarChoice::SandRail => ExtremeOffRoadModule::car_sand_rail(),
                 CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(bot_car_choice),
+                _ => bot_car_choice.config(),
             };
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
 
             self.cars.push(bot_car);
+            self.car_visual_types.push(bot_car_choice.visual_type());
             self.color_schemes.push(character.color_scheme);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
             self.ai_drivers.push(BotAiDriver::new(character.profile));
@@ -8034,7 +8085,8 @@ impl RaceSession {
             } else {
                 None
             };
-            render_car_with_visual_type_and_model(car, scheme, is_braking, self.current_visual_type, model_id);
+            let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
+            render_car_with_visual_type_and_model(car, scheme, is_braking, visual_type, model_id);
         }
 
         // 5. Ghost Vehicle (Semi-transparent during Time Trial)
@@ -8073,7 +8125,8 @@ impl RaceSession {
             } else {
                 None
             };
-            render_car_with_visual_type_and_model(car, scheme, is_braking, self.current_visual_type, model_id);
+            let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
+            render_car_with_visual_type_and_model(car, scheme, is_braking, visual_type, model_id);
         }
 
         // 9. Airborne Particles (Smoke, Dirt roost, Sparks, Drift text)

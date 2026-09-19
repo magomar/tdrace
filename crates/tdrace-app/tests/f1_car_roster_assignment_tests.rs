@@ -67,21 +67,38 @@ fn test_f1_race_roster_car_assignment_and_display_titles() {
     assert_eq!(session.grid_participants.len(), 8); // 1 Player + 7 GT opponents
 
     // Player car title on roster screen (Monza defaults to GT4 Clubsport)
+    let player = session
+        .grid_participants
+        .iter()
+        .find(|p| p.is_player)
+        .expect("Player must exist in grid participants");
     assert_eq!(
-        session.grid_participants[0].car_title,
+        player.car_title,
         "420 BHP GT4 Clubsport",
         "Player car title must be '420 BHP GT4 Clubsport'"
     );
 
-    // All AI opponents on roster screen must have '420 BHP GT4 Clubsport'
-    for participant in &session.grid_participants {
-        assert_eq!(
-            participant.car_title,
-            "420 BHP GT4 Clubsport",
-            "Participant '{}' must be assigned '420 BHP GT4 Clubsport' on roster",
-            participant.name
+    // All AI opponents on roster screen must be assigned cars from the GT category pool
+    let eligible = session.eligible_opponent_cars();
+    let eligible_titles: Vec<&'static str> = eligible.iter().map(|c| c.title()).collect();
+    let opponents: Vec<_> = session.grid_participants.iter().filter(|p| !p.is_player).collect();
+    for participant in &opponents {
+        assert!(
+            eligible_titles.contains(&participant.car_title.as_str()),
+            "Participant '{}' vehicle '{}' must belong to the eligible GT category pool",
+            participant.name,
+            participant.car_title
         );
     }
+
+    // Verify there is variety across opponents (not everyone has identical clones)
+    let unique_opponent_cars: std::collections::HashSet<_> =
+        opponents.iter().map(|p| &p.car_title).collect();
+    assert!(
+        unique_opponent_cars.len() > 1,
+        "Opponents should have varied car models assigned, found: {:?}",
+        unique_opponent_cars
+    );
 
     // Verify visual archetype is TouringGT
     match session.current_visual_type {
@@ -91,15 +108,15 @@ fn test_f1_race_roster_car_assignment_and_display_titles() {
         _ => panic!("Expected TouringGT vehicle visual type in GT World Challenge race"),
     }
 
-    // Verify all cars in session are tuned with GT4 physics (~272 km/h top speed, downforce ~0.85)
+    // Verify all cars in session are tuned with GT physics (top speed > 260 km/h, downforce >= 0.85)
     for car in &session.cars {
         assert!(
             car.config.top_speed_mps * 3.6 > 260.0,
-            "Car top speed must exceed 260 km/h for GT4 spec"
+            "Car top speed must exceed 260 km/h for GT spec"
         );
         assert!(
             car.config.downforce_coefficient >= 0.85,
-            "Car downforce must be at least 0.85 for GT4 spec"
+            "Car downforce must be at least 0.85 for GT spec"
         );
     }
 }

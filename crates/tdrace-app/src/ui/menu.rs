@@ -462,7 +462,7 @@ impl TrackChoice {
 }
 
 /// Available vehicle model options.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum CarChoice {
     SportsCar,
     DriftCar,
@@ -626,6 +626,51 @@ impl CarChoice {
             Self::F1Car => crate::module::f1::GtWorldChallengeModule::car_f1_hybrid(),
             Self::StockCar => CarConfig::stock_car_ta1(),
             Self::SandRail => CarConfig::sand_rail(),
+        }
+    }
+
+    /// Returns the visual rendering archetype for this vehicle choice.
+    pub fn visual_type(&self) -> crate::module::VehicleVisualType {
+        match self {
+            Self::GT4Clubsport => crate::module::VehicleVisualType::TouringGT {
+                widebody: false,
+                gt_wing: true,
+                diffuser: false,
+            },
+            Self::GT3Car
+            | Self::GT2Biturbo
+            | Self::GT1Legend
+            | Self::HypercarPrototype
+            | Self::DriftCar
+            | Self::SportsCar => crate::module::VehicleVisualType::TouringGT {
+                widebody: true,
+                gt_wing: true,
+                diffuser: true,
+            },
+            Self::F1Car => crate::module::VehicleVisualType::OpenWheel {
+                front_wing_span: 1.80,
+                rear_wing_height: 0.85,
+                halo: true,
+            },
+            Self::RallyCar => crate::module::VehicleVisualType::RallyHatch {
+                roof_scoop: true,
+                mudflaps: true,
+                large_wing: true,
+            },
+            Self::Kart => crate::module::VehicleVisualType::GoKart {
+                exposed_driver: true,
+                side_bumpers: true,
+            },
+            Self::StockCar => crate::module::VehicleVisualType::StockCar {
+                tall_wing: false,
+                roof_fins: true,
+                window_net: true,
+            },
+            Self::SandRail => crate::module::VehicleVisualType::SandRail {
+                lightbar: true,
+                whip_antenna: true,
+                paddle_tires: true,
+            },
         }
     }
 }
