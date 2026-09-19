@@ -30,8 +30,8 @@ The **Karting Circuits** catalog in [`tracks/kart/`](../../tracks/kart) encompas
 | **7 Laghi Kart (Castelletto)** | `seven_laghi.json` | $1,256\text{ m}$ | $8.5\text{ m}$ | 13 | Technical Italian layout; demanding on chassis torsional flex and rib protection. |
 | **Motorsport Arena Ampfing** | `ampfing.json` | $1,063\text{ m}$ | $8.0\text{ m}$ | 11 | Compact Bavarian track; unforgiving concrete barriers and snappy esses. |
 | **Silverstone National Kart** | `silverstone_national_kart.json`| $1,150\text{ m}$| $8.0\text{ m}$ | 12 | Sprint kart layout situated within the historic British GP complex. |
-| **Kart Arena Indoor** | `kart_arena.json` | $950\text{ m}$ | $7.0\text{ m}$ | 14 | Polished indoor concrete floor; requires delicate throttle feathering. |
-| **Drift Park Sprint** | `drift_park.json` | $1,420\text{ m}$ | $9.0\text{ m}$ | 9 | Adapted kart sprint layout with wide runoff apexes. |
+| **Kartodromo Lucas Guerrero (Valencia)** | `valencia_kart.json` | $1,428\text{ m}$ | $8.0\text{ m}$ | 14 | Premier Spanish CIK-FIA Grade 1 venue in Chiva with sweeping technical esses and hairpins. |
+| **Kartcenter Campillos** | `campillos.json` | $1,580\text{ m}$ | $8.5\text{ m}$ | 16 | FIA Karting World Championship venue in Andalusia featuring fast sweeping curves and undulating esses. |
 
 ---
 

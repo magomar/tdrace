@@ -1,7 +1,7 @@
 ---
 type: Asset Catalog
 title: "Rallycross & All-Terrain Stages Catalog"
-description: "Directory of 17 World RX mixed-surface circuits, Joker Lap branching networks, desert raid stages, and jump ramps."
+description: "Directory of 15 World RX mixed-surface circuits, Joker Lap branching networks, and jump ramps."
 status: active
 category: circuits
 tags: [circuits, rally, rallycross, joker-lap, gravel, dirt]
@@ -9,7 +9,7 @@ tags: [circuits, rally, rallycross, joker-lap, gravel, dirt]
 
 # Rallycross & All-Terrain Stages Catalog 🌲🏜️🏁
 
-The **Rallycross & All-Terrain** catalog in [`tracks/rally/`](../../tracks/rally) covers 17 world-renowned mixed-surface venues. These tracks combine asphalt acceleration launches with loose dirt sliding sections, massive jump ramp crests, and mandatory **Joker Lap alternative routes**.
+The **Rallycross & All-Terrain** catalog in [`tracks/rally/`](../../tracks/rally) covers 15 world-renowned mixed-surface venues. These tracks combine asphalt acceleration launches with loose dirt sliding sections, massive jump ramp crests, and mandatory **Joker Lap alternative routes**.
 
 ---
 
@@ -40,9 +40,7 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 | **Nyirád Racing Center** | `nyirad_rx.json` | $1,220\text{ m}$ | $48\%$ Asphalt / $52\%$ Red Clay | Final Turn Sweep | The "Red Cauldron"; deep abrasive bauxite clay that degrades tires rapidly. |
 | **Killarney International RX** | `killarney_rx.json` | $1,067\text{ m}$ | $60\%$ Asphalt / $40\%$ Sand/Gravel| Turn 3 Outer Hairpin | Tabletop jump ramp with Table Mountain backdrop; fine coastal sand dust. |
 | **Yas Marina RX** | `yas_marina_rx.json` | $1,010\text{ m}$ | $63\%$ Asphalt / $37\%$ Gravel | North Hairpin Sweep | Floodlit night racing venue; high-grip asphalt abruptly meeting fine desert gravel. |
-| **Sahara Dunes Raid** | `sahara_dunes.json` | $4,850\text{ m}$ | $100\%$ Sand | Natural Ridge Alternative | Open desert rally raid; high dunes, jump crests, severe sand deceleration traps. |
-| **Sahara Oasis Stage** | `sahara.json` | $3,650\text{ m}$ | $70\%$ Dirt / $30\%$ Sand | Palm Oasis Crossing | Mixed desert track with water hazard splashdown zones. |
-| **Outlaw Pass Rally** | `outlaw_pass.json` | $3,200\text{ m}$ | $70\%$ Asphalt / $30\%$ Dirt | Canyon Spur Line | Mountain pass with cliff drop-offs and gravel chicane shortcuts. |
+| **Circuit des Ducs (Essay RX)** | `essay_rx.json` | $936\text{ m}$ | $65\%$ Asphalt / $35\%$ Dirt | La Butte Dirt Jump | Historic French rallycross proving ground in Normandy with high-speed launch, technical hairpins, and wooded perimeter. |
 
 ---
 

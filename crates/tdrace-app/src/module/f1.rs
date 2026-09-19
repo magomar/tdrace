@@ -1938,7 +1938,7 @@ impl GameModule for GtWorldChallengeModule {
                     "marina_bay".to_string(),
                     "cota".to_string(),
                     "interlagos".to_string(),
-                    "classic_grand_prix".to_string(),
+                    "portimao_gp".to_string(),
                 ],
                 laps_per_round: 5,
             },

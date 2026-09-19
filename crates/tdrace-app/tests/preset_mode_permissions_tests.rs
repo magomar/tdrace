@@ -241,8 +241,7 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
         .map(|git_dir| {
             let paths = [
                 git_dir.join("classic").join("outlaw_pass.json"),
-                git_dir.join("rally").join("outlaw_pass.json"),
-                git_dir.join("rally").join("sahara_dunes.json"),
+                git_dir.join("rally").join("holjes_rx.json"),
             ];
             paths.into_iter().filter_map(|p| {
                 fs::read(&p).ok().map(|content| (p, content))
@@ -250,11 +249,11 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
         })
         .unwrap_or_default();
 
-    // Demote outlaw_pass and sahara_dunes
+    // Demote outlaw_pass and holjes_rx
     let outlaw_path = manager.demote_preset_to_custom_track("outlaw_pass").expect("Demote outlaw_pass");
-    let sahara_path = manager.demote_preset_to_custom_track("sahara_dunes").expect("Demote sahara_dunes");
+    let rally_path = manager.demote_preset_to_custom_track("holjes_rx").expect("Demote holjes_rx");
     assert!(outlaw_path.exists());
-    assert!(sahara_path.exists());
+    assert!(rally_path.exists());
 
     // Both tracks must remain visible in Track Manager under their respective modules!
     let classic_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
@@ -268,14 +267,14 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
     assert!(!outlaw_choice.is_official_preset(), "Demoted outlaw_pass must be a custom track");
     assert!(matches!(outlaw_choice, tdrace_app::ui::menu::TrackChoice::Custom { .. }));
 
-    let sahara_choice = rally_tracks.iter().find(|t| t.track_id() == "sahara_dunes").expect("sahara_dunes in Rally");
-    assert!(!sahara_choice.is_official_preset(), "Demoted sahara_dunes must be a custom track");
-    assert!(matches!(sahara_choice, tdrace_app::ui::menu::TrackChoice::Custom { .. }));
+    let rally_choice = rally_tracks.iter().find(|t| t.track_id() == "holjes_rx").expect("holjes_rx in Rally");
+    assert!(!rally_choice.is_official_preset(), "Demoted holjes_rx must be a custom track");
+    assert!(matches!(rally_choice, tdrace_app::ui::menu::TrackChoice::Custom { .. }));
 
     // Both must appear in custom_track_choices (for Main Menu CUSTOM tab)
     let custom_choices = manager.custom_track_choices();
     assert!(custom_choices.iter().any(|t| t.track_id() == "outlaw_pass"));
-    assert!(custom_choices.iter().any(|t| t.track_id() == "sahara_dunes"));
+    assert!(custom_choices.iter().any(|t| t.track_id() == "holjes_rx"));
 
     // Verify persistence when reloading manager from disk
     let reloaded_manager = TrackManager::new(&temp_dir);
@@ -283,8 +282,7 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
     let reloaded_rally = reloaded_manager.filtered_main_track_choices(ModuleFilter::Rally);
 
     assert!(reloaded_classic.iter().any(|t| t.track_id() == "outlaw_pass" && !t.is_official_preset()));
-    assert!(reloaded_rally.iter().any(|t| t.track_id() == "sahara_dunes" && !t.is_official_preset()));
-    assert!(reloaded_rally.iter().any(|t| t.track_id() == "outlaw_pass" && !t.is_official_preset()));
+    assert!(reloaded_rally.iter().any(|t| t.track_id() == "holjes_rx" && !t.is_official_preset()));
 
     // Restore git preset files removed by demote during this test
     for (p, content) in git_backup {

@@ -20,7 +20,7 @@ pub use presets::{
     bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, chicago_street_course,
     classic_grand_prix, classic_template, cota, create_prototypical_track, darlington_raceway,
     daytona_superspeedway, dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park,
-    dune_raid, eldora_speedway, estering_rx, f1_template, figure_eight, generate_arena_grid, generate_checkpoints,
+    dune_raid, eldora_speedway, essay_rx, estering_rx, f1_template, figure_eight, generate_arena_grid, generate_checkpoints,
     generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints,
     generate_oval_waypoints, generate_walls_from_spline, hell_rx, holjes_rx,
     indianapolis_motor_speedway, iowa_speedway, kart_arena, kart_template, killarney_rx, kouvola_rx, loheac_rx,

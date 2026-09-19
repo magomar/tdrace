@@ -5,7 +5,7 @@ use tdrace_app::track_manager::TrackManager;
 use tdrace_app::ui::menu::{resolve_track_for_menu, CarChoice, TrackChoice};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    catalunya_rx, dirt_figure_eight, estering_rx, hell_rx, holjes_rx, killarney_rx, kouvola_rx,
+    catalunya_rx, dirt_figure_eight, essay_rx, estering_rx, hell_rx, holjes_rx, killarney_rx, kouvola_rx,
     loheac_rx, lydden_hill, mettet_rx, montalegre_rx, nyirad_rx, riga_rx, silverstone_rx,
     yas_marina_rx,
 };
@@ -17,7 +17,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 17, "Rally module should have 17 tracks (14 RX + 3 classic rally)");
+    assert_eq!(tracks.len(), 15, "Rally module should have 15 authentic World RX tracks");
 
     let expected_ids = [
         "holjes_rx",
@@ -34,9 +34,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
         "riga_rx",
         "killarney_rx",
         "yas_marina_rx",
-        "oasis_rally",
-        "outlaw_pass",
-        "sahara_dunes",
+        "essay_rx",
     ];
 
     for id in &expected_ids {
@@ -268,6 +266,13 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
     let yas_marina_breakdown = yas_marina.surface_breakdown();
     assert!(yas_marina_breakdown.len() >= 2, "Yas Marina RX must be mixed surface");
 
+    let essay = essay_rx();
+    assert_eq!(essay.name, "Circuit des Ducs (Essay RX)");
+    assert!(!essay.geometry.jump_ramps.is_empty(), "Essay RX must have jump ramp");
+    let essay_breakdown = essay.surface_breakdown();
+    assert!(essay_breakdown.len() >= 2, "Essay RX must be mixed surface");
+    assert!(!essay.geometry.trees.is_empty(), "Essay RX must have decorative trees");
+
     // Verify 1:1 scale lengths based on OpenStreetMap & FIA homologation standards
     assert!(
         holjes.spline.total_length() >= 1150.0 && holjes.spline.total_length() <= 1250.0,
@@ -339,6 +344,11 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
         "Yas Marina RX 1:1 FIA length expected ~1050m, got {:.1}m",
         yas_marina.spline.total_length()
     );
+    assert!(
+        essay.spline.total_length() >= 880.0 && essay.spline.total_length() <= 990.0,
+        "Essay RX 1:1 FIA length expected ~936m, got {:.1}m",
+        essay.spline.total_length()
+    );
 }
 
 #[test]
@@ -361,6 +371,7 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
         ("riga_rx", riga_rx()),
         ("killarney_rx", killarney_rx()),
         ("yas_marina_rx", yas_marina_rx()),
+        ("essay_rx", essay_rx()),
     ];
 
     for (slug, track) in &tracks {
@@ -491,7 +502,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
     let _ = std::fs::create_dir_all(&temp_dir);
     let tm = TrackManager::new(&temp_dir);
     let rally_catalog = tm.module_catalog_tracks("rally");
-    assert_eq!(rally_catalog.len(), 17);
+    assert_eq!(rally_catalog.len(), 15);
 
     let rally_ids = [
         "holjes_rx",
@@ -508,9 +519,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
         "riga_rx",
         "killarney_rx",
         "yas_marina_rx",
-        "oasis_rally",
-        "outlaw_pass",
-        "sahara_dunes",
+        "essay_rx",
     ];
 
     for id in &rally_ids {
@@ -520,17 +529,11 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
             id
         );
 
-        let choice = if *id == "oasis_rally" {
-            TrackChoice::OasisRally
-        } else if *id == "outlaw_pass" {
-            TrackChoice::OutlawPass
-        } else {
-            TrackChoice::Custom {
-                id: id.to_string(),
-                title: "".to_string(),
-                description: "".to_string(),
-                path: format!("rally/{}", id),
-            }
+        let choice = TrackChoice::Custom {
+            id: id.to_string(),
+            title: "".to_string(),
+            description: "".to_string(),
+            path: format!("rally/{}", id),
         };
 
         let loaded = tm.load_track(&choice);
@@ -544,7 +547,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
 #[test]
 fn test_rally_race_session_simulation_on_new_tracks() {
     let test_tracks = [
-        "dirt_figure_eight",
+        "essay_rx",
         "holjes_rx",
         "lydden_hill",
         "hell_rx",
@@ -670,7 +673,7 @@ fn test_export_and_save_rally_tracks_to_disk() {
         ("lydden_hill", lydden_hill()),
         ("hell_rx", hell_rx()),
         ("loheac_rx", loheac_rx()),
-        ("sahara", tdrace_core::track::presets::sahara_dunes()),
+        ("essay_rx", essay_rx()),
     ];
 
     for (slug, track) in &presets_to_export {

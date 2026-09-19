@@ -2,9 +2,8 @@ use macroquad::color::Color;
 use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    catalunya_rx, estering_rx, hell_rx, holjes_rx, killarney_rx, kouvola_rx, loheac_rx,
-    lydden_hill, mettet_rx, montalegre_rx, nyirad_rx, oasis_rally, outlaw_pass, riga_rx,
-    sahara_dunes, silverstone_rx, yas_marina_rx,
+    catalunya_rx, essay_rx, estering_rx, hell_rx, holjes_rx, killarney_rx, kouvola_rx, loheac_rx,
+    lydden_hill, mettet_rx, montalegre_rx, nyirad_rx, riga_rx, silverstone_rx, yas_marina_rx,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -275,31 +274,13 @@ impl GameModule for RallyGameModule {
                 generator: yas_marina_rx,
             },
             TrackDefinition {
-                id: "oasis_rally",
-                title: "Oasis Desert Rally",
-                tag: "DESERT STAGE",
-                description: "High-sliding sand and gravel rally stage surrounding a desert oasis water hazard.",
-                category: "Desert Stage",
-                default_laps: 3,
-                generator: oasis_rally,
-            },
-            TrackDefinition {
-                id: "outlaw_pass",
-                title: "Outlaw Canyon Pass",
-                tag: "MOUNTAIN PASS",
-                description: "Dangerous mountain pass carving through narrow rock canyons and tight switchbacks.",
-                category: "Mountain Pass",
-                default_laps: 3,
-                generator: outlaw_pass,
-            },
-            TrackDefinition {
-                id: "sahara_dunes",
-                title: "Sahara Dunes Stage",
-                tag: "DUNES & DIRT",
-                description: "Fast undulating sand dunes with heavy drift zones and sweeping crests.",
-                category: "Dune Stage",
-                default_laps: 3,
-                generator: sahara_dunes,
+                id: "essay_rx",
+                title: "Circuit des Ducs / Essay RX",
+                tag: "WORLD RX FRANCE",
+                description: "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, technical sweeping switchbacks, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
+                category: "World RX",
+                default_laps: 4,
+                generator: essay_rx,
             },
         ]
     }
@@ -486,7 +467,6 @@ impl GameModule for RallyGameModule {
             TournamentFormat::StageRally {
                 name: "World RX Tour".to_string(),
                 stage_track_ids: vec![
-                    "dirt_figure_eight".to_string(),
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "hell_rx".to_string(),
@@ -501,16 +481,13 @@ impl GameModule for RallyGameModule {
                     "riga_rx".to_string(),
                     "killarney_rx".to_string(),
                     "yas_marina_rx".to_string(),
-                    "oasis_rally".to_string(),
-                    "outlaw_pass".to_string(),
-                    "sahara_dunes".to_string(),
+                    "essay_rx".to_string(),
                 ],
             },
             TournamentFormat::Championship {
                 name: "Rallycross World Cup".to_string(),
                 point_system: PointSystem::F1Standard { fastest_lap_bonus: false },
                 track_ids: vec![
-                    "dirt_figure_eight".to_string(),
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "hell_rx".to_string(),
@@ -525,9 +502,7 @@ impl GameModule for RallyGameModule {
                     "riga_rx".to_string(),
                     "killarney_rx".to_string(),
                     "yas_marina_rx".to_string(),
-                    "oasis_rally".to_string(),
-                    "outlaw_pass".to_string(),
-                    "sahara_dunes".to_string(),
+                    "essay_rx".to_string(),
                 ],
                 laps_per_round: 4,
             },

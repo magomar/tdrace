@@ -4,7 +4,7 @@ use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, TrackGeometry};
 use tdrace_core::track::presets::{
-    drift_park, generate_checkpoints, generate_grid_positions, generate_walls_from_spline, kart_arena,
+    generate_checkpoints, generate_grid_positions, generate_walls_from_spline,
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{Track, TrackCategory, TrackKind};
@@ -915,6 +915,148 @@ impl KartGameModule {
             modules: vec!["kart".to_string()],
         }
     }
+
+    /// Kartodromo Internacional Lucas Guerrero (Valencia, Spain): CIK-FIA Grade 1 Supertrack
+    pub fn track_valencia_kart() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(41.5, -15.1), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(85.8, -15.6), 9.2),
+            TrackWaypoint::new(Vec2::new(130.3, -12.8), 9.2),
+            TrackWaypoint::new(Vec2::new(174.6, -7.2), 8.5),
+            TrackWaypoint::new(Vec2::new(218.8, -0.9), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(255.9, 21.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(252.8, 64.5), 8.5),
+            TrackWaypoint::new(Vec2::new(242.2, 107.8), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(215.9, 141.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(172.4, 144.8), 8.5),
+            TrackWaypoint::new(Vec2::new(127.7, 145.3), 8.5),
+            TrackWaypoint::new(Vec2::new(83.1, 145.7), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(44.0, 130.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(39.8, 88.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(73.5, 61.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(108.3, 75.6), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(76.8, 104.5), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(104.9, 119.6), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(149.5, 118.9), 8.5),
+            TrackWaypoint::new(Vec2::new(193.3, 115.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(220.1, 83.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(210.2, 40.1), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(171.3, 30.6), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(162.7, 55.9), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(188.1, 79.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(150.4, 87.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(125.1, 50.5), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(119.4, 17.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(74.9, 14.9), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(38.9, 38.2), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(2.1, 39.4), 8.0).with_curbs(true, false),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+
+        Track {
+            name: "Kartodromo Internacional Lucas Guerrero (Valencia)".to_string(),
+            description: "Premier Spanish championship venue in Chiva featuring sweeping esses, technical hairpins, and wide overtaking zones.".to_string(),
+            category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+                ..Default::default()
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 6,
+            predefined_car: Some("shifter_kart_125".to_string()),
+            module_id: Some("kart".to_string()),
+            modules: vec!["kart".to_string()],
+        }
+    }
+
+    /// Kartcenter Campillos (Málaga, Spain): FIA World Championship Venue
+    pub fn track_campillos() -> Track {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(48.1, -4.7), 9.2),
+            TrackWaypoint::new(Vec2::new(97.5, -5.5), 9.2),
+            TrackWaypoint::new(Vec2::new(146.9, -6.2), 9.2),
+            TrackWaypoint::new(Vec2::new(196.3, -7.0), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(224.4, 19.2), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(250.4, 31.0), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(279.5, -8.5), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(290.4, 19.8), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(256.9, 54.1), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(212.3, 75.3), 8.5),
+            TrackWaypoint::new(Vec2::new(167.8, 96.6), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(123.1, 90.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(118.8, 45.9), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(167.2, 41.6), 8.5).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(195.0, 20.1), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(146.2, 17.6), 8.5),
+            TrackWaypoint::new(Vec2::new(96.9, 18.4), 8.5),
+            TrackWaypoint::new(Vec2::new(47.5, 19.2), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(44.8, 43.5), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(81.0, 70.4), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(103.9, 112.9), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(76.9, 150.4), 8.5).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(35.9, 177.9), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(0.2, 166.4), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(-5.0, 117.3), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(32.5, 98.7), 8.0).with_curbs(true, false),
+            TrackWaypoint::new(Vec2::new(23.5, 129.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(53.8, 136.4), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(68.8, 95.1), 8.0).with_curbs(false, true),
+            TrackWaypoint::new(Vec2::new(30.3, 72.9), 8.5),
+            TrackWaypoint::new(Vec2::new(-0.8, 47.3), 8.0).with_curbs(true, false),
+        ];
+
+        let spline = TrackSpline::new(waypoints, true);
+        let (left_walls, right_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
+
+        let checkpoints = generate_checkpoints(&spline, 20, 3);
+        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+
+        Track {
+            name: "Kartcenter Campillos".to_string(),
+            description: "FIA Karting World Championship venue in Andalusia featuring fast sweeping curves, undulating esses, and technical braking zones.".to_string(),
+            category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
+            spline,
+            geometry: TrackGeometry {
+                inner_walls: left_walls,
+                outer_walls: right_walls,
+                obstacles: Vec::new(),
+                surface_zones: Vec::new(),
+                jump_ramps: Vec::new(),
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+                ..Default::default()
+            },
+            checkpoints,
+            grid_positions: starting_grid,
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 6,
+            predefined_car: Some("shifter_kart_125".to_string()),
+            module_id: Some("kart".to_string()),
+            modules: vec!["kart".to_string()],
+        }
+    }
 }
 
 impl Default for KartGameModule {
@@ -1091,22 +1233,22 @@ impl GameModule for KartGameModule {
                 generator: Self::track_silverstone_national_kart,
             },
             TrackDefinition {
-                id: "kart_arena",
-                title: "Kart Arena International",
-                tag: "AGILE SPRINT",
-                description: "Tight 90-degree corners, rapid switchbacks, and aggressive rumble curbs.",
-                category: "Sprint Arena",
+                id: "valencia_kart",
+                title: "Kartodromo Lucas Guerrero (Valencia)",
+                tag: "VALENCIAN ARENA",
+                description: "Premier Spanish championship venue in Chiva featuring sweeping esses, technical hairpins, and wide overtaking zones.",
+                category: "World Championship",
                 default_laps: 6,
-                generator: kart_arena,
+                generator: Self::track_valencia_kart,
             },
             TrackDefinition {
-                id: "drift_park",
-                title: "Drift Park Sprint",
-                tag: "TECHNICAL HAIRPINS",
-                description: "Technical hairpin slides, wide transitions, and tight apex curbs.",
-                category: "Technical Sprint",
+                id: "campillos",
+                title: "Kartcenter Campillos",
+                tag: "ANDALUSIAN SPEEDWAY",
+                description: "FIA Karting World Championship venue in Andalusia featuring fast sweeping curves, undulating esses, and technical braking zones.",
+                category: "World Championship",
                 default_laps: 6,
-                generator: drift_park,
+                generator: Self::track_campillos,
             },
         ]
     }
@@ -1310,8 +1452,8 @@ impl GameModule for KartGameModule {
                     "seven_laghi".to_string(),
                     "ampfing".to_string(),
                     "silverstone_national_kart".to_string(),
-                    "kart_arena".to_string(),
-                    "drift_park".to_string(),
+                    "valencia_kart".to_string(),
+                    "campillos".to_string(),
                 ],
                 laps_per_round: 6,
             },

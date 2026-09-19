@@ -26,8 +26,8 @@ fn test_kart_module_tracks_integrity_and_validation() {
         "seven_laghi",
         "ampfing",
         "silverstone_national_kart",
-        "kart_arena",
-        "drift_park",
+        "valencia_kart",
+        "campillos",
     ];
 
     for id in &expected_ids {
@@ -115,6 +115,8 @@ fn test_famous_kart_tracks_in_track_manager_and_menu_resolution() {
         "seven_laghi",
         "ampfing",
         "silverstone_national_kart",
+        "valencia_kart",
+        "campillos",
     ];
 
     for id in &famous_ids {
@@ -236,3 +238,4 @@ fn test_kart_tracks_centerline_driving_and_no_wall_obstructions() {
         }
     }
 }
+

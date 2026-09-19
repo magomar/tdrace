@@ -15,7 +15,7 @@
   },
   {
     "id": "dirt_figure_eight",
-    "name": "Dirt Figure-8",
+    "name": "Dirt Figure-8 Arena",
     "category": "classic",
     "modality": "CLASSIC",
     "description": "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.",
@@ -47,11 +47,10 @@
     "category": "classic",
     "modality": "CLASSIC",
     "description": "Tight technical drift arena with sweeping corners and generous asphalt runoff.",
-    "length_meters": 1172.2,
-    "turns_count": 7,
+    "length_meters": 499.1,
+    "turns_count": 9,
     "surfaces": [
-      "Asphalt",
-      "Dirt"
+      "Asphalt"
     ],
     "has_jumps": false,
     "rel_path": "tracks/classic/drift_park.json"
@@ -63,7 +62,7 @@
     "modality": "CLASSIC",
     "description": "High-speed asphalt figure-8 arena featuring an at-grade flat crossover, sweeping carousels & concrete safety walls.",
     "length_meters": 800.6,
-    "turns_count": 18,
+    "turns_count": 17,
     "surfaces": [
       "Asphalt"
     ],
@@ -132,8 +131,8 @@
     "category": "classic",
     "modality": "CLASSIC",
     "description": "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.",
-    "length_meters": 1088.5,
-    "turns_count": 13,
+    "length_meters": 892.2,
+    "turns_count": 10,
     "surfaces": [
       "Asphalt"
     ],
@@ -167,20 +166,6 @@
     ],
     "has_jumps": true,
     "rel_path": "tracks/f1/catalunya.json"
-  },
-  {
-    "id": "classic_grand_prix",
-    "name": "Classic Grand Prix",
-    "category": "f1",
-    "modality": "F1",
-    "description": "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
-    "length_meters": 1221.3,
-    "turns_count": 12,
-    "surfaces": [
-      "Asphalt"
-    ],
-    "has_jumps": false,
-    "rel_path": "tracks/f1/classic_grand_prix.json"
   },
   {
     "id": "cota",
@@ -391,20 +376,6 @@
     ],
     "has_jumps": true,
     "rel_path": "tracks/gt/catalunya.json"
-  },
-  {
-    "id": "classic_grand_prix",
-    "name": "Classic Grand Prix",
-    "category": "gt",
-    "modality": "GT",
-    "description": "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
-    "length_meters": 1221.3,
-    "turns_count": 12,
-    "surfaces": [
-      "Asphalt"
-    ],
-    "has_jumps": false,
-    "rel_path": "tracks/gt/classic_grand_prix.json"
   },
   {
     "id": "cota",
@@ -631,18 +602,18 @@
     "rel_path": "tracks/kart/ampfing.json"
   },
   {
-    "id": "drift_park",
-    "name": "Drift Park",
+    "id": "campillos",
+    "name": "Kartcenter Campillos",
     "category": "kart",
     "modality": "KART",
-    "description": "Tight technical drift arena with sweeping corners and generous asphalt runoff.",
-    "length_meters": 499.1,
-    "turns_count": 9,
+    "description": "FIA Karting World Championship venue in Andalusia featuring fast sweeping curves, undulating esses, and technical braking zones.",
+    "length_meters": 1391.8,
+    "turns_count": 24,
     "surfaces": [
       "Asphalt"
     ],
     "has_jumps": false,
-    "rel_path": "tracks/kart/drift_park.json"
+    "rel_path": "tracks/kart/campillos.json"
   },
   {
     "id": "franciacorta",
@@ -671,20 +642,6 @@
     ],
     "has_jumps": false,
     "rel_path": "tracks/kart/genk.json"
-  },
-  {
-    "id": "kart_arena",
-    "name": "Kart Arena",
-    "category": "kart",
-    "modality": "KART",
-    "description": "Short, high-density karting circuit with fast transitions and chicanes.",
-    "length_meters": 373.3,
-    "turns_count": 9,
-    "surfaces": [
-      "Asphalt"
-    ],
-    "has_jumps": false,
-    "rel_path": "tracks/kart/kart_arena.json"
   },
   {
     "id": "kristianstad",
@@ -799,6 +756,20 @@
     "rel_path": "tracks/kart/silverstone_national_kart.json"
   },
   {
+    "id": "valencia_kart",
+    "name": "Kartodromo Internacional Lucas Guerrero (Valencia)",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Premier Spanish championship venue in Chiva featuring sweeping esses, technical hairpins, and wide overtaking zones.",
+    "length_meters": 1325.2,
+    "turns_count": 24,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/kart/valencia_kart.json"
+  },
+  {
     "id": "wackersdorf",
     "name": "Prokart Raceland Wackersdorf",
     "category": "kart",
@@ -835,7 +806,7 @@
     "length_meters": 749.7,
     "turns_count": 0,
     "surfaces": [
-      "Asphalt"
+      "Concrete"
     ],
     "has_jumps": false,
     "rel_path": "tracks/nascar/bristol.json"
@@ -947,7 +918,7 @@
     "length_meters": 753.0,
     "turns_count": 8,
     "surfaces": [
-      "Asphalt"
+      "Concrete"
     ],
     "has_jumps": false,
     "rel_path": "tracks/nascar/martinsville.json"
@@ -1008,6 +979,21 @@
     ],
     "has_jumps": false,
     "rel_path": "tracks/rally/catalunya_rx.json"
+  },
+  {
+    "id": "essay_rx",
+    "name": "Circuit des Ducs (Essay RX)",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
+    "length_meters": 905.6,
+    "turns_count": 12,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "rel_path": "tracks/rally/essay_rx.json"
   },
   {
     "id": "estering_rx",
@@ -1160,34 +1146,6 @@
     "rel_path": "tracks/rally/nyirad_rx.json"
   },
   {
-    "id": "oasis_rally",
-    "name": "Oasis Rally",
-    "category": "rally",
-    "modality": "RALLY",
-    "description": "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
-    "length_meters": 990.1,
-    "turns_count": 0,
-    "surfaces": [
-      "Dirt"
-    ],
-    "has_jumps": false,
-    "rel_path": "tracks/rally/oasis_rally.json"
-  },
-  {
-    "id": "outlaw_pass",
-    "name": "Outlaw Pass",
-    "category": "rally",
-    "modality": "RALLY",
-    "description": "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.",
-    "length_meters": 793.8,
-    "turns_count": 13,
-    "surfaces": [
-      "Dirt"
-    ],
-    "has_jumps": false,
-    "rel_path": "tracks/rally/outlaw_pass.json"
-  },
-  {
     "id": "riga_rx",
     "name": "Bi\u0137ernieku Trase (World RX Latvia)",
     "category": "rally",
@@ -1201,34 +1159,6 @@
     ],
     "has_jumps": false,
     "rel_path": "tracks/rally/riga_rx.json"
-  },
-  {
-    "id": "sahara",
-    "name": "Oasis Rally",
-    "category": "rally",
-    "modality": "RALLY",
-    "description": "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
-    "length_meters": 990.1,
-    "turns_count": 0,
-    "surfaces": [
-      "Dirt"
-    ],
-    "has_jumps": false,
-    "rel_path": "tracks/rally/sahara.json"
-  },
-  {
-    "id": "sahara_dunes",
-    "name": "Oasis Rally",
-    "category": "rally",
-    "modality": "RALLY",
-    "description": "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
-    "length_meters": 990.1,
-    "turns_count": 0,
-    "surfaces": [
-      "Dirt"
-    ],
-    "has_jumps": false,
-    "rel_path": "tracks/rally/sahara_dunes.json"
   },
   {
     "id": "silverstone_rx",

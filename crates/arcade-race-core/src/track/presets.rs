@@ -2652,10 +2652,10 @@ pub fn essay_rx() -> Track {
         TrackWaypoint::new(Vec2::new(-190.1, -45.5), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
         TrackWaypoint::new(Vec2::new(-194.2, -21.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
         TrackWaypoint::new(Vec2::new(-162.5, -29.2), 13.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-135.5, -48.7), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-103.1, -56.1), 13.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(-69.7, -57.7), 13.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(-37.6, -52.1), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-135.5, -42.0), 13.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-103.1, -48.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-69.7, -49.0), 13.0).with_surface(SurfaceType::Dirt),
+        TrackWaypoint::new(Vec2::new(-37.6, -46.0), 13.0).with_surface(SurfaceType::Asphalt).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(-20.3, -24.2), 14.0).with_surface(SurfaceType::Asphalt),
     ];
 

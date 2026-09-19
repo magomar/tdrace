@@ -67,11 +67,11 @@ fn test_track_categories_initial_presets() {
 
     let manager = TrackManager::new(&temp_dir);
 
-    // 1. Initial state: 82 main presets across modules (10 Classic + 18 unique F1/GT + 15 unique Rally + 13 famous Kart + 12 Nascar + 14 Extreme Off-Road), 0 drafts
+    // 1. Initial state: 84 main presets across modules (10 Classic + 18 unique F1/GT + 15 unique Rally + 15 famous Kart + 12 Nascar + 14 Extreme Off-Road), 0 drafts
     assert_eq!(manager.custom_track_choices().len(), 0);
     let main_tracks = manager.main_track_choices();
     let draft_tracks = manager.draft_track_choices();
-    assert_eq!(main_tracks.len(), 82, "All 82 presets across modules should be Main tracks");
+    assert_eq!(main_tracks.len(), 84, "All 84 presets across modules should be Main tracks");
     assert_eq!(draft_tracks.len(), 0, "Initial draft tracks list should be empty");
 
     for choice in &main_tracks {
@@ -100,7 +100,7 @@ fn test_draft_creation_and_isolation_from_main_menu() {
     // 2. Verify isolation: Should appear in drafts, NOT in main
     // 3. Verify main menu list still contains only main tracks
     let main_tracks = manager.main_track_choices();
-    assert_eq!(main_tracks.len(), 82, "Main menu should only contain approved circuits");
+    assert_eq!(main_tracks.len(), 84, "Main menu should only contain approved circuits");
     let draft_tracks = manager.draft_track_choices();
     assert_eq!(draft_tracks.len(), 1, "Drafts list should contain the newly created draft");
 
@@ -145,13 +145,13 @@ fn test_promotion_and_demotion_lifecycle() {
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save proto");
 
-    assert_eq!(manager.main_track_choices().len(), 82);
+    assert_eq!(manager.main_track_choices().len(), 84);
     assert_eq!(manager.draft_track_choices().len(), 1);
 
     // Promote to F1 Module
     manager.promote_track_to_module(track_id, "f1").expect("Must promote to F1");
 
-    assert_eq!(manager.main_track_choices().len(), 83, "Promoted track must appear in Main");
+    assert_eq!(manager.main_track_choices().len(), 85, "Promoted track must appear in Main");
     assert_eq!(manager.draft_track_choices().len(), 0, "Promoted track must be removed from Drafts");
 
     let promoted_choice = manager.main_track_choices().into_iter().find(|t| t.track_id() == track_id).unwrap();
@@ -171,7 +171,7 @@ fn test_promotion_and_demotion_lifecycle() {
     // Demote back to Draft (Under testing)
     manager.demote_track(track_id).expect("Must demote to Draft");
 
-    assert_eq!(manager.main_track_choices().len(), 82, "Demoted track must be removed from Main");
+    assert_eq!(manager.main_track_choices().len(), 84, "Demoted track must be removed from Main");
     assert_eq!(manager.draft_track_choices().len(), 1, "Demoted track must reappear in Drafts");
     assert_eq!(manager.module_custom_tracks("f1").len(), 0);
 
@@ -431,11 +431,11 @@ fn test_module_filter_filtering_and_presets_in_classic() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial state: 82 tracks across all modules (10 Classic + 18 unique F1/GT + 15 unique Rally + 13 famous Kart + 12 Nascar + 14 Extreme Off-Road)
-    assert_eq!(manager.main_track_choices().len(), 82);
+    // Initial state: 84 tracks across all modules (10 Classic + 18 unique F1/GT + 15 unique Rally + 15 famous Kart + 12 Nascar + 14 Extreme Off-Road)
+    assert_eq!(manager.main_track_choices().len(), 84);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 19);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 17);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 18);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 15);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 15);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Nascar).len(), 12);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::ExtremeOffRoad).len(), 15);
@@ -453,10 +453,10 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     manager.promote_track_to_module("dune_safari", "rally").unwrap();
 
     // Verify filtered counts
-    assert_eq!(manager.main_track_choices().len(), 84);
+    assert_eq!(manager.main_track_choices().len(), 86);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 20);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 18);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 19);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 16);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 15);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Nascar).len(), 12);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::ExtremeOffRoad).len(), 15);
@@ -522,7 +522,7 @@ fn test_module_subdirectories_and_file_movement() {
 
     // 5. Test scanner on fresh TrackManager instance
     let new_scanner = TrackManager::new(&temp_dir);
-    assert_eq!(new_scanner.main_track_choices().len(), 83); // 82 presets + 1 custom
+    assert_eq!(new_scanner.main_track_choices().len(), 85); // 84 presets + 1 custom
     assert_eq!(new_scanner.module_custom_tracks("rally").len(), 1);
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -854,10 +854,11 @@ fn test_empty_module_tracks_resilience() {
         "dirty_oval_speedway".into(), "figure_eight".into(),
         "sahara".into(), "sahara_dunes".into(), "dirt_figure_eight".into(), "holjes_rx".into(), "lydden_hill".into(),
         "hell_rx".into(), "loheac_rx".into(), "estering_rx".into(), "montalegre_rx".into(), "nyirad_rx".into(), "kouvola_rx".into(), "catalunya_rx".into(),
-        "mettet_rx".into(), "silverstone_rx".into(), "riga_rx".into(), "killarney_rx".into(), "yas_marina_rx".into(),
+        "mettet_rx".into(), "silverstone_rx".into(), "riga_rx".into(), "killarney_rx".into(), "yas_marina_rx".into(), "essay_rx".into(),
         "lonato".into(), "sarno".into(), "genk".into(), "pfi".into(),
         "zuera".into(), "le_mans_kart".into(), "portimao_kart".into(), "franciacorta".into(),
         "wackersdorf".into(), "kristianstad".into(), "seven_laghi".into(), "ampfing".into(), "silverstone_national_kart".into(),
+        "valencia_kart".into(), "campillos".into(),
     ];
 
     assert_eq!(session.track_manager.module_catalog_tracks("f1").len(), 0);
@@ -1114,8 +1115,8 @@ fn test_track_manager_clone_preset_to_drafts() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial check: 82 main tracks, 0 drafts
-    assert_eq!(manager.main_track_choices().len(), 82);
+    // Initial check: 84 main tracks, 0 drafts
+    assert_eq!(manager.main_track_choices().len(), 84);
     assert_eq!(manager.draft_track_choices().len(), 0);
 
     // Clone Classic Grand Prix
@@ -1129,8 +1130,8 @@ fn test_track_manager_clone_preset_to_drafts() {
     assert!(Path::new(&saved_path).exists());
     assert!(saved_path.ends_with(".json"));
 
-    // Verify drafts list has 1 track, main still has 82
-    assert_eq!(manager.main_track_choices().len(), 82);
+    // Verify drafts list has 1 track, main still has 84
+    assert_eq!(manager.main_track_choices().len(), 84);
     let drafts = manager.draft_track_choices();
     assert_eq!(drafts.len(), 1);
     assert_eq!(drafts[0].title(), "Classic Grand Prix (clone)");
@@ -1435,11 +1436,11 @@ fn test_category_ordering_presets_first_then_custom() {
         }
     }
 
-    // Verify Rally category: 17 presets first, then 1 custom track
+    // Verify Rally category: 15 presets first, then 1 custom track
     let rally_tracks = manager.module_catalog_tracks("rally");
-    assert_eq!(rally_tracks.len(), 18);
+    assert_eq!(rally_tracks.len(), 16);
     for (i, track) in rally_tracks.iter().enumerate() {
-        if i < 17 {
+        if i < 15 {
             assert!(track.is_official_preset(), "Track at index {} must be official preset: {}", i, track.title());
         } else {
             assert!(track.is_user_custom(), "Track at index {} must be user custom: {}", i, track.title());
@@ -1447,9 +1448,9 @@ fn test_category_ordering_presets_first_then_custom() {
         }
     }
 
-    // Verify F1 category: pure presets (19), no custom tracks leaked
+    // Verify F1 category: pure presets (18), no custom tracks leaked
     let f1_tracks = manager.module_catalog_tracks("f1");
-    assert_eq!(f1_tracks.len(), 19);
+    assert_eq!(f1_tracks.len(), 18);
     assert!(f1_tracks.iter().all(|t| t.is_official_preset()));
 
     // Verify Kart category: pure presets (15), no custom tracks leaked
@@ -1485,9 +1486,9 @@ fn test_custom_circuit_multi_category_assignment() {
 
     // Check presence in Rally: after presets
     let rally_tracks = manager.module_catalog_tracks("rally");
-    assert_eq!(rally_tracks.len(), 18);
-    assert!(rally_tracks[17].is_user_custom());
-    assert_eq!(rally_tracks[17].title(), "Hybrid Classic Rally");
+    assert_eq!(rally_tracks.len(), 16);
+    assert!(rally_tracks[15].is_user_custom());
+    assert_eq!(rally_tracks[15].title(), "Hybrid Classic Rally");
 
     // Check absence in F1 and Kart
     let f1_tracks = manager.module_catalog_tracks("f1");
@@ -1507,9 +1508,9 @@ fn test_custom_circuit_multi_category_assignment() {
     assert_eq!(kart_after[15].title(), "Hybrid Classic Rally");
 
     let f1_after = manager.module_catalog_tracks("f1");
-    assert_eq!(f1_after.len(), 20);
-    assert!(f1_after[19].is_user_custom());
-    assert_eq!(f1_after[19].title(), "Hybrid Classic Rally");
+    assert_eq!(f1_after.len(), 19);
+    assert!(f1_after[18].is_user_custom());
+    assert_eq!(f1_after[18].title(), "Hybrid Classic Rally");
 
     // Must no longer appear in Classic and Rally
     let classic_after = manager.module_catalog_tracks("classic");
@@ -1517,7 +1518,7 @@ fn test_custom_circuit_multi_category_assignment() {
     assert!(!classic_after.iter().any(|t| t.title() == "Hybrid Classic Rally"));
 
     let rally_after = manager.module_catalog_tracks("rally");
-    assert_eq!(rally_after.len(), 17);
+    assert_eq!(rally_after.len(), 15);
     assert!(!rally_after.iter().any(|t| t.title() == "Hybrid Classic Rally"));
 
     let _ = fs::remove_dir_all(&temp_dir);
