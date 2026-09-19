@@ -57,7 +57,7 @@ pub fn render_ground_barriers_and_obstacles(track: &Track) {
 
 /// Draws ground barrier drop shadows, obstacles, and wall bodies with camera viewport culling.
 pub fn render_ground_barriers_and_obstacles_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
-    for wall in track.geometry.all_walls().filter(|w| w.elevation < 0.6) {
+    for wall in track.geometry.all_walls().filter(|w| !w.is_bridge) {
         if is_wall_in_view(wall, view_bounds) {
             render_wall_shadow(wall);
         }
@@ -67,7 +67,7 @@ pub fn render_ground_barriers_and_obstacles_culled(track: &Track, view_bounds: O
             render_obstacle_shadow(obs);
         }
     }
-    for wall in track.geometry.all_walls().filter(|w| w.elevation < 0.6) {
+    for wall in track.geometry.all_walls().filter(|w| !w.is_bridge) {
         if is_wall_in_view(wall, view_bounds) {
             render_wall_body(wall);
         }
@@ -86,7 +86,7 @@ pub fn render_elevated_barriers_and_obstacles(track: &Track) {
 
 /// Draws elevated bridge barrier drop shadows, obstacles, and guardrails with camera viewport culling.
 pub fn render_elevated_barriers_and_obstacles_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
-    for wall in track.geometry.all_walls().filter(|w| w.elevation >= 0.6) {
+    for wall in track.geometry.all_walls().filter(|w| w.is_bridge) {
         if is_wall_in_view(wall, view_bounds) {
             render_wall_shadow(wall);
         }
@@ -96,7 +96,7 @@ pub fn render_elevated_barriers_and_obstacles_culled(track: &Track, view_bounds:
             render_obstacle_shadow(obs);
         }
     }
-    for wall in track.geometry.all_walls().filter(|w| w.elevation >= 0.6) {
+    for wall in track.geometry.all_walls().filter(|w| w.is_bridge) {
         if is_wall_in_view(wall, view_bounds) {
             render_wall_body(wall);
         }
@@ -112,7 +112,11 @@ pub fn render_elevated_barriers_and_obstacles_culled(track: &Track, view_bounds:
 fn render_wall_shadow(wall: &WallBarrier) {
     let p0 = wall.segment.start;
     let p1 = wall.segment.end;
-    let s_off = SHADOW_OFFSET * (1.0 + wall.elevation * 0.45);
+    let s_off = if wall.is_bridge {
+        SHADOW_OFFSET * (1.0 + wall.elevation * 0.45)
+    } else {
+        SHADOW_OFFSET
+    };
     let s0 = p0 + s_off;
     let s1 = p1 + s_off;
 

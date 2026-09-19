@@ -6088,7 +6088,10 @@ impl RaceSession {
             let proj = self.track.spline.project_point_continuity(self.cars[i].state.position, prev_prog, 50.0);
             self.cars[i].state.road_elevation = proj.elevation;
             self.cars[i].state.road_bank_angle = proj.bank_angle;
+            self.cars[i].state.road_grade_slope = proj.grade_slope;
+            self.cars[i].state.road_vertical_curvature = proj.vertical_curvature;
             self.cars[i].state.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);
+            self.cars[i].state.track_forward = proj.tangent;
 
             self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
 
@@ -7982,10 +7985,14 @@ impl RaceSession {
         let mut ground_cars = Vec::new();
         let mut elevated_cars = Vec::new();
         for i in 0..self.cars.len() {
-            if self.cars[i].total_elevation() < 0.6 {
-                ground_cars.push(i);
-            } else {
+            let car = &self.cars[i];
+            let is_elevated = car.state.elevation > 0.05
+                || car.state.ramp_elevation > 0.05
+                || self.track.spline.project_point(car.state.position).is_bridge;
+            if is_elevated {
                 elevated_cars.push(i);
+            } else {
+                ground_cars.push(i);
             }
         }
         ground_cars.sort_by(|&a, &b| {

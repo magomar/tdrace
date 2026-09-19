@@ -88,6 +88,13 @@ fn test_pfi_flyover_bridge_elevation() {
         .map(|s| s.elevation)
         .fold(10.0f32, f32::min);
     assert_eq!(min_elevation, 0.0, "PFI Underpass must be at ground level (0.0m)");
+
+    // Check that crossover bridge detection flagged the upper overpass span as is_bridge
+    let bridge_samples: Vec<_> = pfi.spline.samples.iter().filter(|s| s.is_bridge).collect();
+    assert!(!bridge_samples.is_empty(), "PFI must have detected bridge samples on the overpass");
+    for s in &bridge_samples {
+        assert!(s.elevation >= 1.2, "Bridge samples must have elevated clearance");
+    }
 }
 
 #[test]

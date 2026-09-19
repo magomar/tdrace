@@ -307,7 +307,15 @@ impl wheelbase::SurfaceSampler for Track {
     #[inline]
     fn sample_surface(&self, world_pos: Vec2) -> wheelbase::SurfaceProperties {
         let surface_type = self.sample_surface(world_pos);
-        wheelbase::SurfaceProperties::from_type(surface_type)
+        let proj = self.spline.project_point(world_pos);
+        let mut props = wheelbase::SurfaceProperties::from_type(surface_type);
+        props.elevation = proj.elevation;
+        props.bank_angle = proj.bank_angle;
+        props.grade_slope = proj.grade_slope;
+        props.vertical_curvature = proj.vertical_curvature;
+        props.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);
+        props.track_forward = proj.tangent;
+        props
     }
 }
 

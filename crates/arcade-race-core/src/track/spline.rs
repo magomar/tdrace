@@ -5,7 +5,7 @@ use wheelbase::SurfaceType;
 use crate::track::curve::{
     evaluate_curve_approach, extract_curves_from_samples, CurveApproachStatus, TrackCurve,
 };
-use crate::track::geometry::BarrierType;
+use crate::track::geometry::{BarrierType, LineSegment};
 
 const fn default_true() -> bool {
     true
@@ -125,6 +125,12 @@ pub struct SplineSample {
     pub elevation: f32,
     #[serde(default)]
     pub bank_angle: f32,
+    #[serde(default)]
+    pub is_bridge: bool,
+    #[serde(default)]
+    pub grade_slope: f32,
+    #[serde(default)]
+    pub vertical_curvature: f32,
     #[serde(default = "default_true")]
     pub left_wall: bool,
     #[serde(default = "default_true")]
@@ -170,6 +176,12 @@ pub struct SplineProjection {
     pub elevation: f32,
     /// Road cross-slope banking angle in degrees.
     pub bank_angle: f32,
+    /// Whether this track segment is an elevated crossover bridge span.
+    pub is_bridge: bool,
+    /// Longitudinal road slope angle in radians (+ = uphill, - = downhill).
+    pub grade_slope: f32,
+    /// Vertical road curvature d(grade_slope)/ds in 1/m (< 0 convex crest, > 0 concave dip).
+    pub vertical_curvature: f32,
 }
 
 /// Smooth Catmull-Rom spline representation of the racing circuit centerline.
@@ -373,7 +385,124 @@ impl TrackSpline {
 
         let total_length = cumulative_dist;
 
-        // 3. Build SplineSample list
+        // 3. Detect overpass crossover bridges: non-adjacent spline segments that cross in 2D with clearance >= 2.5m
+        let n_pts = raw_points.len();
+        let mut is_bridge_flags = vec![false; n_pts];
+        let n_segs = if closed { n_pts - 1 } else { n_pts.saturating_sub(1) };
+
+        for i in 0..n_segs {
+            let p0 = raw_points[i];
+            let p1 = raw_points[(i + 1) % n_pts];
+            let seg_i = LineSegment::new(p0, p1);
+
+            let j_start = i + 6;
+            let j_end = if closed {
+                if i < 5 { n_segs.saturating_sub(6 - i) } else { n_segs }
+            } else {
+                n_segs
+            };
+
+            for j in j_start..j_end {
+                let q0 = raw_points[j];
+                let q1 = raw_points[(j + 1) % n_pts];
+                let seg_j = LineSegment::new(q0, q1);
+
+                if seg_i.intersect_segment(&seg_j).is_some() {
+                    let elev_i = (raw_elevations[i] + raw_elevations[(i + 1) % n_pts]) * 0.5;
+                    let elev_j = (raw_elevations[j] + raw_elevations[(j + 1) % n_pts]) * 0.5;
+                    let clearance = (elev_i - elev_j).abs();
+
+                    if clearance >= 2.5 {
+                        let idx_bridge = if elev_i > elev_j { i } else { j };
+                        is_bridge_flags[idx_bridge] = true;
+
+                        // Contiguously expand across the elevated overpass span (while elevation >= 1.2m)
+                        let max_bridge_span = 150.0f32;
+
+                        // Forward expansion
+                        let mut cur = (idx_bridge + 1) % n_pts;
+                        let mut dist_walked = 0.0f32;
+                        while dist_walked <= max_bridge_span {
+                            let prev = (cur + n_pts - 1) % n_pts;
+                            dist_walked += (raw_points[cur] - raw_points[prev]).length();
+                            if raw_elevations[cur] < 1.2 {
+                                break;
+                            }
+                            is_bridge_flags[cur] = true;
+                            cur = (cur + 1) % n_pts;
+                            if cur == idx_bridge {
+                                break;
+                            }
+                        }
+
+                        // Backward expansion
+                        let mut cur = (idx_bridge + n_pts - 1) % n_pts;
+                        let mut dist_walked = 0.0f32;
+                        while dist_walked <= max_bridge_span {
+                            let next = (cur + 1) % n_pts;
+                            dist_walked += (raw_points[next] - raw_points[cur]).length();
+                            if raw_elevations[cur] < 1.2 {
+                                break;
+                            }
+                            is_bridge_flags[cur] = true;
+                            if cur == 0 {
+                                if closed {
+                                    cur = n_pts - 1;
+                                } else {
+                                    break;
+                                }
+                            } else {
+                                cur -= 1;
+                            }
+                            if cur == idx_bridge {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Compute continuous longitudinal grade slope and vertical curvature
+        let mut grade_slopes = Vec::with_capacity(n_pts);
+        for i in 0..n_pts {
+            let (i_prev, i_next) = if closed && n_pts > 2 {
+                ((i + n_pts - 2) % (n_pts - 1), (i + 1) % (n_pts - 1))
+            } else {
+                (i.saturating_sub(1), (i + 1).min(n_pts - 1))
+            };
+            let delta_dist = if closed && n_pts > 2 && (i == 0 || i == n_pts - 1) {
+                let seg_prev = (raw_points[0] - raw_points[n_pts - 2]).length();
+                let seg_next = (raw_points[1] - raw_points[0]).length();
+                (seg_prev + seg_next).max(1e-4)
+            } else {
+                (dists[i_next] - dists[i_prev]).abs().max(1e-4)
+            };
+            let delta_elev = raw_elevations[i_next] - raw_elevations[i_prev];
+            let slope = (delta_elev / delta_dist).atan();
+            grade_slopes.push(slope);
+        }
+
+        let mut vertical_curvatures = Vec::with_capacity(n_pts);
+        for i in 0..n_pts {
+            let (i_prev, i_next) = if closed && n_pts > 2 {
+                ((i + n_pts - 2) % (n_pts - 1), (i + 1) % (n_pts - 1))
+            } else {
+                (i.saturating_sub(1), (i + 1).min(n_pts - 1))
+            };
+            let delta_dist = if closed && n_pts > 2 && (i == 0 || i == n_pts - 1) {
+                let seg_prev = (raw_points[0] - raw_points[n_pts - 2]).length();
+                let seg_next = (raw_points[1] - raw_points[0]).length();
+                (seg_prev + seg_next).max(1e-4)
+            } else {
+                (dists[i_next] - dists[i_prev]).abs().max(1e-4)
+            };
+            let delta_slope = grade_slopes[i_next] - grade_slopes[i_prev];
+            let curvature = delta_slope / delta_dist;
+            vertical_curvatures.push(curvature);
+        }
+
+        // 5. Build SplineSample list
         let n = raw_points.len();
         for i in 0..n {
             let p_prev = if i > 0 { raw_points[i - 1] } else if closed { raw_points[n - 2] } else { raw_points[0] };
@@ -395,6 +524,9 @@ impl TrackSpline {
                 surface: raw_surfaces[i],
                 elevation: raw_elevations[i],
                 bank_angle: raw_bank_angles[i],
+                is_bridge: is_bridge_flags[i],
+                grade_slope: grade_slopes[i],
+                vertical_curvature: vertical_curvatures[i],
                 left_wall: raw_left_walls[i],
                 right_wall: raw_right_walls[i],
                 left_wall_distance: raw_left_wall_dists[i],
@@ -460,6 +592,9 @@ impl TrackSpline {
                 surface: SurfaceType::Asphalt,
                 elevation: 0.0,
                 bank_angle: 0.0,
+                is_bridge: false,
+                grade_slope: 0.0,
+                vertical_curvature: 0.0,
                 left_wall: true,
                 right_wall: true,
                 left_wall_distance: None,
@@ -510,6 +645,9 @@ impl TrackSpline {
         let width = s0.width + (s1.width - s0.width) * t;
         let elevation = (s0.elevation + (s1.elevation - s0.elevation) * t).max(0.0);
         let bank_angle = s0.bank_angle + (s1.bank_angle - s0.bank_angle) * t;
+        let grade_slope = s0.grade_slope + (s1.grade_slope - s0.grade_slope) * t;
+        let vertical_curvature = s0.vertical_curvature + (s1.vertical_curvature - s0.vertical_curvature) * t;
+        let is_bridge = if t < 0.5 { s0.is_bridge } else { s1.is_bridge };
         let left_wall_distance = match (s0.left_wall_distance, s1.left_wall_distance) {
             (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * t),
             (Some(d1), None) => if t < 0.5 { Some(d1) } else { None },
@@ -534,6 +672,9 @@ impl TrackSpline {
             surface: s0.surface,
             elevation,
             bank_angle,
+            is_bridge,
+            grade_slope,
+            vertical_curvature,
             left_wall: if t < 0.5 { s0.left_wall } else { s1.left_wall },
             right_wall: if t < 0.5 { s0.right_wall } else { s1.right_wall },
             left_wall_distance,
@@ -561,6 +702,9 @@ impl TrackSpline {
                 base_surface: SurfaceType::Asphalt,
                 elevation: 0.0,
                 bank_angle: 0.0,
+                is_bridge: false,
+                grade_slope: 0.0,
+                vertical_curvature: 0.0,
             };
         }
 
@@ -609,6 +753,9 @@ impl TrackSpline {
         let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
         let elevation = (s0.elevation + (s1.elevation - s0.elevation) * best_t).max(0.0);
         let bank_angle = s0.bank_angle + (s1.bank_angle - s0.bank_angle) * best_t;
+        let grade_slope = s0.grade_slope + (s1.grade_slope - s0.grade_slope) * best_t;
+        let vertical_curvature = s0.vertical_curvature + (s1.vertical_curvature - s0.vertical_curvature) * best_t;
+        let is_bridge = if best_t < 0.5 { s0.is_bridge } else { s1.is_bridge };
 
         let half_w = track_width * 0.5;
         let is_on_track = lateral_offset.abs() <= half_w;
@@ -644,6 +791,9 @@ impl TrackSpline {
             base_surface: s0.surface,
             elevation,
             bank_angle,
+            is_bridge,
+            grade_slope,
+            vertical_curvature,
         }
     }
 
@@ -724,6 +874,9 @@ impl TrackSpline {
         let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
         let elevation = (s0.elevation + (s1.elevation - s0.elevation) * best_t).max(0.0);
         let bank_angle = s0.bank_angle + (s1.bank_angle - s0.bank_angle) * best_t;
+        let grade_slope = s0.grade_slope + (s1.grade_slope - s0.grade_slope) * best_t;
+        let vertical_curvature = s0.vertical_curvature + (s1.vertical_curvature - s0.vertical_curvature) * best_t;
+        let is_bridge = if best_t < 0.5 { s0.is_bridge } else { s1.is_bridge };
 
         let half_w = track_width * 0.5;
         let is_on_track = lateral_offset.abs() <= half_w;
@@ -758,6 +911,9 @@ impl TrackSpline {
             base_surface: s0.surface,
             elevation,
             bank_angle,
+            is_bridge,
+            grade_slope,
+            vertical_curvature,
         }
     }
 
@@ -848,5 +1004,61 @@ mod tests {
         let proj_grass = spline.project_point(grass_pt);
         assert!(!proj_grass.is_on_track);
         assert!(!proj_grass.is_on_curb);
+    }
+
+    #[test]
+    fn test_figure_eight_bridge_detection() {
+        // A figure-8 loop crossing at (0, 0). Lower crossing at z=0, upper overpass at z=5.0.
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(-50.0, 0.0), 10.0).with_elevation(0.0),
+            TrackWaypoint::new(Vec2::new(-25.0, 25.0), 10.0).with_elevation(0.0),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0).with_elevation(0.0), // Lower crossing
+            TrackWaypoint::new(Vec2::new(25.0, -25.0), 10.0).with_elevation(1.0),
+            TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0).with_elevation(3.0),
+            TrackWaypoint::new(Vec2::new(25.0, 25.0), 10.0).with_elevation(4.5),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0).with_elevation(5.0), // Upper crossing (bridge)
+            TrackWaypoint::new(Vec2::new(-25.0, -25.0), 10.0).with_elevation(2.5),
+        ];
+        let spline = TrackSpline::new(waypoints, true);
+
+        // Lower crossing around distance ~ 60 should NOT be bridge
+        let lower_proj = spline.project_point(Vec2::new(-35.0, 10.0));
+        assert!(!lower_proj.is_bridge, "Lower crossing should not be flagged as bridge");
+
+        // Upper crossing should have bridge samples
+        let bridge_samples: Vec<_> = spline.samples.iter().filter(|s| s.is_bridge).collect();
+        assert!(!bridge_samples.is_empty(), "Upper crossing must be detected as bridge");
+        for s in &bridge_samples {
+            assert!(s.elevation >= 1.2, "Bridge segment must have elevated clearance");
+        }
+
+        // Non-crossing parts should have is_bridge = false
+        let sample_start = spline.sample_at_distance(0.0);
+        assert!(!sample_start.is_bridge);
+    }
+
+    #[test]
+    fn test_natural_hill_elevation_no_bridge() {
+        // Oval track climbing a massive natural hill (elevation up to 15m), but zero crossovers
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0).with_elevation(0.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0).with_elevation(5.0),
+            TrackWaypoint::new(Vec2::new(100.0, 100.0), 10.0).with_elevation(15.0),
+            TrackWaypoint::new(Vec2::new(0.0, 100.0), 10.0).with_elevation(7.5),
+        ];
+        let spline = TrackSpline::new(waypoints, true);
+
+        // There are no track crossovers, so NO samples should be marked as bridge!
+        for s in &spline.samples {
+            assert!(!s.is_bridge, "Natural hill must never be flagged as bridge");
+        }
+
+        // Verify grade slope is non-zero along uphill sections
+        let uphill_sample = spline.sample_at_distance(40.0);
+        assert!(uphill_sample.grade_slope > 0.0, "Uphill section must have positive grade slope");
+
+        // Verify vertical curvature exists over crest
+        let crest_sample = spline.sample_at_distance(spline.total_length() * 0.5);
+        assert!(crest_sample.vertical_curvature != 0.0, "Crest transition must have non-zero vertical curvature");
     }
 }

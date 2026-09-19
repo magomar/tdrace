@@ -253,6 +253,7 @@ pub fn trim_walls_at_crossings(walls: &mut Vec<(WallBarrier, f32)>, spline: &Tra
                     friction: wall.friction,
                     barrier_type: wall.barrier_type,
                     elevation: wall.elevation,
+                    is_bridge: wall.is_bridge,
                 });
             }
         }
@@ -267,9 +268,6 @@ pub fn trim_corner_intersections(
     right_walls: &mut Vec<WallBarrier>,
     spline: &TrackSpline,
 ) {
-    let total_len = spline.total_length();
-    let min_loop_dist = (total_len * 0.25).min(30.0).max(15.0);
-
     for _ in 0..4 {
         let mut modified = false;
         let n_left = left_walls.len();
@@ -307,9 +305,18 @@ pub fn trim_corner_intersections(
                     let mid_b = (seg_b.start + seg_b.end) * 0.5;
                     let proj_a = spline.project_point(mid_a);
                     let proj_b = spline.project_point(mid_b);
-                    let d = (proj_a.progress_distance - proj_b.progress_distance).abs();
-                    let arc_dist = if spline.closed { d.min(total_len - d) } else { d };
-                    if arc_dist < min_loop_dist {
+                    let is_local_pair = if i < n_left && j < n_left {
+                        let d_idx = (i as isize - j as isize).abs();
+                        d_idx.min(n_left as isize - d_idx) <= 2
+                    } else if i >= n_left && j >= n_left {
+                        let ir = (i - n_left) as isize;
+                        let jr = (j - n_left) as isize;
+                        let d_idx = (ir - jr).abs();
+                        d_idx.min(n_right as isize - d_idx) <= 2
+                    } else {
+                        false
+                    };
+                    if is_local_pair {
                         continue;
                     }
 
@@ -371,7 +378,7 @@ pub fn generate_walls_from_spline(
     let mut right_pts = Vec::with_capacity(n);
 
     for s in &spline.samples {
-        let elev_factor = (s.elevation / 3.0).clamp(0.0, 1.0);
+        let elev_factor = if s.is_bridge { (s.elevation / 3.0).clamp(0.0, 1.0) } else { 0.0 };
         let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.75 };
         let bridge_offset = curb_extra + 0.50;
 
@@ -401,8 +408,9 @@ pub fn generate_walls_from_spline(
         if s_curr.left_wall && s_next.left_wall {
             let elev = (s_curr.elevation + s_next.elevation) * 0.5;
             let b_type = s_curr.wall_type.or(s_next.wall_type).unwrap_or(barrier_type);
+            let is_br = s_curr.is_bridge || s_next.is_bridge;
             raw_left_walls.push((
-                WallBarrier::with_elevation(left_pts[i], left_pts[next_i], b_type, elev),
+                WallBarrier::with_elevation(left_pts[i], left_pts[next_i], b_type, elev).with_bridge(is_br),
                 s_curr.distance,
             ));
         }
@@ -416,13 +424,14 @@ pub fn generate_walls_from_spline(
         if s_curr.right_wall && s_next.right_wall {
             let elev = (s_curr.elevation + s_next.elevation) * 0.5;
             let b_type = s_curr.wall_type.or(s_next.wall_type).unwrap_or(barrier_type);
+            let is_br = s_curr.is_bridge || s_next.is_bridge;
             raw_right_walls.push((
                 WallBarrier::with_elevation(
                     right_pts[i],
                     right_pts[next_i],
                     b_type,
                     elev,
-                ),
+                ).with_bridge(is_br),
                 s_curr.distance,
             ));
         }
@@ -890,7 +899,7 @@ pub fn drift_park() -> Track {
         default_laps: 3,
         predefined_car: Some("drift_car".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string()],
+        modules: vec!["classic".to_string(), "kart".to_string()],
     }
 }
 
@@ -947,7 +956,7 @@ pub fn kart_arena() -> Track {
         default_laps: 5,
         predefined_car: Some("kart".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string()],
+        modules: vec!["classic".to_string(), "kart".to_string()],
     }
 }
 
@@ -1137,7 +1146,7 @@ pub fn oasis_rally() -> Track {
         default_laps: 3,
         predefined_car: Some("rally_car".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string()],
+        modules: vec!["classic".to_string(), "rally".to_string()],
     }
 }
 
@@ -1207,7 +1216,7 @@ pub fn outlaw_pass() -> Track {
         default_laps: 3,
         predefined_car: Some("sports_car".to_string()),
         module_id: Some("classic".to_string()),
-        modules: vec!["classic".to_string()],
+        modules: vec!["classic".to_string(), "rally".to_string()],
     }
 }
 

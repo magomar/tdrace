@@ -165,6 +165,15 @@ pub struct CarState {
     /// Track transverse right vector in world space for resolving banking incline gravity.
     #[serde(default)]
     pub track_right: Vec2,
+    /// Longitudinal road grade slope in radians (+ = uphill, - = downhill).
+    #[serde(default)]
+    pub road_grade_slope: f32,
+    /// Vertical road curvature d(slope)/ds in rad/m (+ = dip/compression, - = crest/unloading).
+    #[serde(default)]
+    pub road_vertical_curvature: f32,
+    /// Track longitudinal forward vector in world space for resolving grade incline gravity.
+    #[serde(default)]
+    pub track_forward: Vec2,
     /// Elevation / vertical jump altitude above road in meters (z >= 0.0).
     pub elevation: f32,
     /// Vertical velocity in m/s (positive = ascending, negative = falling).
@@ -211,6 +220,9 @@ impl Default for CarState {
             ramp_elevation: 0.0,
             road_bank_angle: 0.0,
             track_right: Vec2::ZERO,
+            road_grade_slope: 0.0,
+            road_vertical_curvature: 0.0,
+            track_forward: Vec2::ZERO,
             elevation: 0.0,
             vertical_velocity: 0.0,
             is_airborne: false,
@@ -526,7 +538,7 @@ impl Car {
             Vec2::new(-lr, half_w),  // RR
         ];
 
-        // 3. Dynamic Weight Transfer Calculation & Superelevation (Banking)
+        // 3. Dynamic Weight Transfer Calculation & Superelevation (Banking) & 3D Grade Slope
         let g = 9.81;
         let total_weight = self.config.mass * g;
 
@@ -542,6 +554,34 @@ impl Car {
             (0.0, 1.0)
         };
 
+        // Longitudinal grade slope & vertical curvature (crest unloading / dip compression)
+        let grade_rad = self.state.road_grade_slope;
+        let (grade_sin, grade_cos) = if grade_rad.abs() > 1e-4 {
+            (grade_rad.sin(), grade_rad.cos())
+        } else {
+            (0.0, 1.0)
+        };
+
+        let vert_curv = self.state.road_vertical_curvature;
+        let speed_sq = self.state.speed * self.state.speed;
+
+        // Dynamic vertical acceleration from road vertical curvature: a_z = v^2 * kappa_z
+        // kappa_z > 0 = dip (upward centrifugal acceleration -> compression)
+        // kappa_z < 0 = crest (downward centrifugal acceleration -> unloading)
+        let vert_centrifugal = speed_sq * vert_curv;
+
+        // Airborne crest launch: if crest curvature is sharp and speed is high enough to exceed gravity
+        if self.state.elevation <= 0.0 && vert_curv < -1e-3 && -vert_centrifugal > g * 1.05 {
+            let v_launch = ((-vert_centrifugal - g).max(0.0)).sqrt() * 0.45;
+            if v_launch > 0.5 && self.state.vertical_velocity <= 0.0 {
+                self.state.vertical_velocity = v_launch.min(4.5);
+                self.state.is_airborne = true;
+            }
+        }
+
+        let g_eff = (g * grade_cos * bank_cos + vert_centrifugal).max(g * 0.05);
+        let effective_normal_weight = self.config.mass * g_eff;
+
         // Centripetal acceleration pressing the car into the banked turn
         let bank_compression = if bank_deg.abs() > 1e-4 {
             self.config.mass * a_lat.abs() * bank_sin.abs()
@@ -549,11 +589,13 @@ impl Car {
             0.0
         };
 
-        let static_front_load = total_weight * (lr / wheelbase) * bank_cos + bank_compression * (lr / wheelbase);
-        let static_rear_load = total_weight * (lf / wheelbase) * bank_cos + bank_compression * (lf / wheelbase);
+        let static_front_load = effective_normal_weight * (lr / wheelbase) + bank_compression * (lr / wheelbase);
+        let static_rear_load = effective_normal_weight * (lf / wheelbase) + bank_compression * (lf / wheelbase);
 
         // Acceleration squat (a_long > 0): front unloads, rear loads
-        let delta_fz_long = (self.config.mass * a_long * (self.config.cg_height / wheelbase))
+        // Grade incline pitch (grade_sin > 0 = uphill): front unloads, rear loads
+        let grade_pitch = self.config.mass * g * grade_sin * (self.config.cg_height / wheelbase);
+        let delta_fz_long = (self.config.mass * a_long * (self.config.cg_height / wheelbase) + grade_pitch)
             * self.config.weight_transfer_longitudinal;
 
         // Cornering roll & gravity cross-slope roll moment
@@ -894,8 +936,22 @@ impl Car {
             Vec2::ZERO
         };
 
+        // Longitudinal gravity downhill slope force from grade elevation
+        let grade_gravity_world = if grade_rad.abs() > 1e-4 {
+            let track_f = if self.state.track_forward.length_squared() > 0.5 {
+                self.state.track_forward.normalize()
+            } else {
+                fwd
+            };
+            // Downhill force along track: when grade_slope > 0 (uphill along track_forward),
+            // slope pulls downhill backwards (-track_f)
+            -self.config.mass * g * grade_sin * track_f
+        } else {
+            Vec2::ZERO
+        };
+
         // 6. Net world forces & accelerations
-        let net_force_world = total_wheel_force_world + drag_world + bank_gravity_world;
+        let net_force_world = total_wheel_force_world + drag_world + bank_gravity_world + grade_gravity_world;
         let net_torque = total_wheel_torque + yaw_damping_torque;
 
         let linear_accel_world = net_force_world / self.config.mass;
@@ -914,11 +970,11 @@ impl Car {
         self.state.angular_velocity += angular_accel * dt;
 
         // Low speed resting lock to prevent micro-jitter when stopped on flat ground or when holding brakes
-        let on_steep_bank = bank_deg.abs() > 1.0;
+        let on_steep_slope = bank_deg.abs() > 1.0 || grade_rad.abs() > 0.02;
         let is_holding_brakes = clamped_ctrl.brake > 0.05 || clamped_ctrl.handbrake;
         if self.state.speed < 0.05
             && clamped_ctrl.throttle < 1e-3
-            && (is_holding_brakes || !on_steep_bank)
+            && (is_holding_brakes || !on_steep_slope)
         {
             self.state.velocity = Vec2::ZERO;
             self.state.angular_velocity = 0.0;
@@ -1175,6 +1231,63 @@ mod tests {
 
         assert!((car_uniform.state.position - car_sampler.state.position).length() < 1e-4);
         assert!((car_uniform.state.speed - car_sampler.state.speed).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_grade_slope_resistance() {
+        let mut car_flat = Car::new(CarConfig::sports_car());
+        let mut car_uphill = Car::new(CarConfig::sports_car());
+
+        car_uphill.state.road_grade_slope = 0.12; // ~6.9 degrees uphill
+        car_uphill.state.track_forward = Vec2::new(1.0, 0.0);
+
+        let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+        let dt = 1.0 / 60.0;
+
+        for _ in 0..120 {
+            car_flat.step(&ctrl, SurfaceType::Asphalt, dt);
+            car_uphill.step(&ctrl, SurfaceType::Asphalt, dt);
+        }
+
+        assert!(
+            car_flat.state.speed > car_uphill.state.speed + 1.0,
+            "Flat car speed ({}) should significantly exceed uphill car speed ({})",
+            car_flat.state.speed,
+            car_uphill.state.speed
+        );
+        assert!(
+            car_flat.state.position.x > car_uphill.state.position.x + 2.0,
+            "Flat car should travel farther than uphill car"
+        );
+    }
+
+    #[test]
+    fn test_crest_unloading() {
+        let mut car_flat = Car::new(CarConfig::sports_car());
+        let mut car_crest = Car::new(CarConfig::sports_car());
+
+        car_flat.state.velocity = Vec2::new(35.0, 0.0);
+        car_flat.state.speed = 35.0;
+
+        car_crest.state.velocity = Vec2::new(35.0, 0.0);
+        car_crest.state.speed = 35.0;
+        car_crest.state.road_vertical_curvature = -0.006; // Crest: convex vertical curve
+
+        let ctrl = CarControls::new(0.5, 0.0, 0.0, false);
+        let dt = 1.0 / 60.0;
+
+        car_flat.step(&ctrl, SurfaceType::Asphalt, dt);
+        car_crest.step(&ctrl, SurfaceType::Asphalt, dt);
+
+        let flat_load: f32 = car_flat.state.wheels.iter().map(|w| w.normal_load).sum();
+        let crest_load: f32 = car_crest.state.wheels.iter().map(|w| w.normal_load).sum();
+
+        assert!(
+            crest_load < flat_load * 0.85,
+            "Crest load ({}) should be significantly unloaded compared to flat load ({})",
+            crest_load,
+            flat_load
+        );
     }
 }
 

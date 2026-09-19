@@ -229,6 +229,8 @@ pub struct WallBarrier {
     pub barrier_type: BarrierType,
     #[serde(default)]
     pub elevation: f32,
+    #[serde(default)]
+    pub is_bridge: bool,
 }
 
 impl WallBarrier {
@@ -239,6 +241,7 @@ impl WallBarrier {
             friction: barrier_type.default_friction(),
             barrier_type,
             elevation: 0.0,
+            is_bridge: false,
         }
     }
 
@@ -254,7 +257,13 @@ impl WallBarrier {
             friction: barrier_type.default_friction(),
             barrier_type,
             elevation,
+            is_bridge: false,
         }
+    }
+
+    pub fn with_bridge(mut self, is_bridge: bool) -> Self {
+        self.is_bridge = is_bridge;
+        self
     }
 
     pub fn with_physics(
@@ -270,6 +279,7 @@ impl WallBarrier {
             friction,
             barrier_type,
             elevation: 0.0,
+            is_bridge: false,
         }
     }
 }

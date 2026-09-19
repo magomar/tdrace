@@ -191,6 +191,12 @@ pub struct SurfaceProperties {
     pub bank_angle: f32,
     /// Track transverse right vector in world space for resolving banking incline gravity.
     pub track_right: Vec2,
+    /// Longitudinal road grade slope in radians (+ = uphill, - = downhill).
+    pub grade_slope: f32,
+    /// Vertical road curvature d(slope)/ds in rad/m (+ = dip/compression, - = crest/unloading).
+    pub vertical_curvature: f32,
+    /// Track longitudinal forward vector in world space for resolving grade incline gravity.
+    pub track_forward: Vec2,
 }
 
 impl Default for SurfaceProperties {
@@ -210,6 +216,9 @@ impl SurfaceProperties {
             elevation: 0.0,
             bank_angle: 0.0,
             track_right: Vec2::ZERO,
+            grade_slope: 0.0,
+            vertical_curvature: 0.0,
+            track_forward: Vec2::ZERO,
         }
     }
 }

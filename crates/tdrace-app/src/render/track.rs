@@ -72,7 +72,7 @@ pub fn render_elevated_track(track: &Track) {
 
 /// Renders elevated overpass bridges with camera viewport culling.
 pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
-    let has_elevated = track.spline.samples.iter().any(|s| s.elevation >= 0.6);
+    let has_elevated = track.spline.samples.iter().any(|s| s.is_bridge);
     if has_elevated {
         render_bridge_structure_pass(&track.spline, view_bounds);
         render_curbs_pass(&track.spline, true, view_bounds);
@@ -393,11 +393,11 @@ fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2,
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
-        let avg_elev = (s0.elevation + s1.elevation) * 0.5;
-        if avg_elev < 0.6 || !is_segment_in_view(s0, s1, view_bounds) {
+        if !s0.is_bridge || !s1.is_bridge || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
 
+        let avg_elev = (s0.elevation + s1.elevation) * 0.5;
         let s_off = Vec2::new(0.35, 0.55) * (avg_elev * 0.45 + 1.0);
         let hw0 = s0.width * 0.5 + 0.6;
         let hw1 = s1.width * 0.5 + 0.6;
@@ -413,8 +413,7 @@ fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2,
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
-        let avg_elev = (s0.elevation + s1.elevation) * 0.5;
-        if avg_elev < 0.6 || !is_segment_in_view(s0, s1, view_bounds) {
+        if !s0.is_bridge || !s1.is_bridge || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
 
@@ -435,9 +434,9 @@ fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2,
         draw_line(right0.x, right0.y, right1.x, right1.y, 0.40, Color::new(0.32, 0.34, 0.38, 1.0));
 
         // Draw bridge expansion joint line at transition points
-        if s0.elevation < 0.6 && s1.elevation >= 0.6 {
+        if !s0.is_bridge && s1.is_bridge {
             draw_line(left0.x, left0.y, right0.x, right0.y, 0.50, Color::new(0.08, 0.08, 0.10, 1.0));
-        } else if s0.elevation >= 0.6 && s1.elevation < 0.6 {
+        } else if s0.is_bridge && !s1.is_bridge {
             draw_line(left1.x, left1.y, right1.x, right1.y, 0.50, Color::new(0.08, 0.08, 0.10, 1.0));
         }
     }
@@ -456,7 +455,7 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
-        let is_seg_elevated = (s0.elevation + s1.elevation) * 0.5 >= 0.6;
+        let is_seg_elevated = s0.is_bridge && s1.is_bridge;
         if is_seg_elevated != elevated || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
@@ -506,7 +505,7 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
-        let is_seg_elevated = (s0.elevation + s1.elevation) * 0.5 >= 0.6;
+        let is_seg_elevated = s0.is_bridge && s1.is_bridge;
         if is_seg_elevated != elevated || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
@@ -665,7 +664,21 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     draw_line(mid_l0.x, mid_l0.y, mid_l1.x, mid_l1.y, 0.12, Color::new(0.40, 0.42, 0.46, 0.4));
                     draw_line(mid_r0.x, mid_r0.y, mid_r1.x, mid_r1.y, 0.12, Color::new(0.40, 0.42, 0.46, 0.4));
                 } else {
-                    draw_quad(left0, left1, right1, right0, Palette::ASPHALT);
+                    let avg_slope = (s0.grade_slope + s1.grade_slope) * 0.5;
+                    let asphalt_color = if avg_slope.abs() > 0.02 {
+                        let light_dir = Vec2::new(-0.6, -0.8).normalize();
+                        let fwd_dot_light = s0.tangent.dot(light_dir);
+                        let lighting_factor = (avg_slope * fwd_dot_light * 0.35).clamp(-0.08, 0.08);
+                        Color::new(
+                            (Palette::ASPHALT.r + lighting_factor).clamp(0.08, 0.35),
+                            (Palette::ASPHALT.g + lighting_factor).clamp(0.09, 0.36),
+                            (Palette::ASPHALT.b + lighting_factor).clamp(0.11, 0.39),
+                            1.0,
+                        )
+                    } else {
+                        Palette::ASPHALT
+                    };
+                    draw_quad(left0, left1, right1, right0, asphalt_color);
                     draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
                     draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
 
@@ -835,6 +848,9 @@ mod tests {
             surface: SurfaceType::Asphalt,
             elevation: 1.0,
             bank_angle: 0.0,
+            is_bridge: false,
+            grade_slope: 0.0,
+            vertical_curvature: 0.0,
             left_wall: false,
             right_wall: false,
             left_wall_distance: None,
