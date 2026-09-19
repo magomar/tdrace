@@ -2765,7 +2765,6 @@ impl RaceSession {
                                 // Card 0: Motorsport Garage Access Card
                                 if is_key_pressed(KeyCode::Enter)
                                     || is_key_pressed(KeyCode::KpEnter)
-                                    || is_key_pressed(KeyCode::Space)
                                     || self.input.gamepad.snapshot.btn_confirm_pressed
                                     || self.input.gamepad.snapshot.btn_a_pressed
                                 {
@@ -2843,7 +2842,6 @@ impl RaceSession {
                                 // Card 3: Launch Race Button
                                 if is_key_pressed(KeyCode::Enter)
                                     || is_key_pressed(KeyCode::KpEnter)
-                                    || is_key_pressed(KeyCode::Space)
                                     || self.input.gamepad.snapshot.btn_confirm_pressed
                                     || self.input.gamepad.snapshot.btn_a_pressed
                                 {

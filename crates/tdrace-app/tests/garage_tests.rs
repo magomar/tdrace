@@ -5,7 +5,9 @@ use tdrace_app::ui::garage::{
     garage_gallery_tab_rect, garage_select_button_rect, module_to_gallery_filter,
     GALLERY_MODULES, GarageViewMode,
 };
-use tdrace_app::ui::starting_grid::{starting_grid_garage_button_rect, starting_grid_launch_button_rect};
+use tdrace_app::ui::starting_grid::{
+    starting_grid_footer_prompt, starting_grid_garage_button_rect, starting_grid_launch_button_rect,
+};
 
 #[test]
 fn test_starting_grid_garage_button_rect_geometry() {
@@ -431,5 +433,64 @@ fn test_garage_stops_music_and_plays_engine() {
     session.state = GameState::Menu;
     session.update();
     assert_eq!(session.audio.current_music, Some(tdrace_app::audio::MusicTrack::NeonMenu));
+}
+
+#[test]
+fn test_starting_grid_card_0_enter_vs_space_reservation() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.starting_grid_focus, StartingGridFocus::LeftSetup);
+    assert_eq!(session.starting_grid_card_idx, 0);
+
+    // In Starting Grid, Enter activates the focused element (Garage on Card 0)
+    // whereas Space is reserved globally for launching the race into Countdown.
+    session.garage_origin = GarageOrigin::StartingGrid;
+    session.garage_tier = session.current_race_required_tier();
+    session.garage_car_idx = 0;
+    session.state = GameState::Garage(GarageOrigin::StartingGrid);
+    assert_eq!(session.state, GameState::Garage(GarageOrigin::StartingGrid));
+    assert_eq!(session.garage_origin, GarageOrigin::StartingGrid);
+
+    // Space key initiates the race launch countdown from StartingGrid
+    session.state = GameState::StartingGrid;
+    session.starting_grid_card_idx = 0;
+    session.transition_iris_to(GameState::Countdown(3.5), 0.45);
+    assert!(session.transition.is_some());
+    assert_eq!(session.pending_state, Some(GameState::Countdown(3.5)));
+}
+
+#[test]
+fn test_starting_grid_footer_prompt_space_reserved_for_launch() {
+    // Card 0 (Garage): Enter is used for Open Garage, Space is reserved for Launch
+    let card0_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 0);
+    assert!(card0_prompt.contains("[ENTER] Open Garage"), "Card 0 prompt must indicate Enter opens garage: {}", card0_prompt);
+    assert!(card0_prompt.contains("[SPACE] Launch"), "Card 0 prompt must reserve Space for Launch: {}", card0_prompt);
+    assert!(!card0_prompt.contains("ENTER/SPACE"), "Card 0 prompt must not combine Enter and Space: {}", card0_prompt);
+    assert!(!card0_prompt.contains("Cycle Mode"), "Card 0 prompt must not reference obsolete Cycle Mode: {}", card0_prompt);
+
+    // Card 1 (Vehicle): Enter opens garage / change vehicle, Space is reserved for Launch
+    let card1_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 1);
+    assert!(card1_prompt.contains("[ENTER / < / >] Change Vehicle"));
+    assert!(card1_prompt.contains("[SPACE] Launch"));
+
+    // Card 2 (Bot count): Enter adjusts bots, Space is reserved for Launch
+    let card2_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 2);
+    assert!(card2_prompt.contains("[ENTER / + / -] Adjust Bots"));
+    assert!(card2_prompt.contains("[SPACE] Launch"));
+
+    // Card 3 (Launch Race button): Enter / Space / Click launches
+    let card3_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 3);
+    assert!(card3_prompt.contains("LAUNCH RACE"));
+
+    // Right Roster panel: Enter opens Dossier, Space is reserved for Launch
+    let roster_prompt = starting_grid_footer_prompt(false, StartingGridFocus::RightRoster, 0);
+    assert!(roster_prompt.contains("[ENTER / D] View Dossier"));
+    assert!(roster_prompt.contains("[SPACE] Launch"));
+
+    // Gamepad Card 0 prompt: A opens Garage, START launches
+    let gp_prompt = starting_grid_footer_prompt(true, StartingGridFocus::LeftSetup, 0);
+    assert!(gp_prompt.contains("[A] Open Garage"));
+    assert!(gp_prompt.contains("[START] Launch"));
 }
 

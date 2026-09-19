@@ -35,7 +35,8 @@ pub use menu::{
 pub use profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use scaler::UiScaler;
 pub use starting_grid::{
-    render_starting_grid_screen, starting_grid_garage_button_rect, starting_grid_launch_button_rect, StartingGridFocus,
+    render_starting_grid_screen, starting_grid_footer_prompt, starting_grid_garage_button_rect,
+    starting_grid_launch_button_rect, StartingGridFocus,
 };
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,

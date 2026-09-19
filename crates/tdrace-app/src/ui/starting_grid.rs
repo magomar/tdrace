@@ -199,7 +199,7 @@ pub fn render_starting_grid_screen(
     scaler.draw_glass_card(col1_x, curr_y, col_w, garage_h, garage_bg, garage_border, if is_garage_highlighted { 2.4 } else { 1.2 });
 
     let garage_header_label = if is_garage_highlighted {
-        "GARAGE & SHOWROOM [ACTIVE • ENTER / SPACE / CLICK to open]"
+        "GARAGE & SHOWROOM [ACTIVE • ENTER / CLICK to open]"
     } else {
         "GARAGE & SHOWROOM: [Up/Down to select card]"
     };
@@ -629,7 +629,7 @@ pub fn render_starting_grid_screen(
                 "• Unrestricted circuit testing with zero lap limits or opponent traffic",
                 "• Freely test vehicle weight transfer, slip angles, and slide recovery",
                 "• Practice apex clipping zones, curb riding, and throttle control",
-                "• Press [SPACE / ENTER] to launch practice session on the starting grid",
+                "• Press [SPACE] to launch practice session on the starting grid",
             ];
             let mut tip_y = row_y + scaler.s(42.0);
             for tip in &tips {
@@ -701,10 +701,27 @@ pub fn render_starting_grid_screen(
     // =========================================================================
     // FOOTER PROMPTS
     // =========================================================================
-    let prompt = if gamepad_connected {
+    let prompt = starting_grid_footer_prompt(gamepad_connected, focused_panel, active_card_idx);
+
+    fonts.draw_ui_bold_centered(
+        prompt,
+        sw * 0.5,
+        bottom_prompt_y + scaler.s(6.0),
+        scaler.font_s(14.0),
+        Palette::WHITE,
+    );
+}
+
+/// Returns the footer navigation and action prompt string for the starting grid screen.
+pub fn starting_grid_footer_prompt(
+    gamepad_connected: bool,
+    focused_panel: StartingGridFocus,
+    active_card_idx: usize,
+) -> &'static str {
+    if gamepad_connected {
         match focused_panel {
             StartingGridFocus::LeftSetup => match active_card_idx {
-                0 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Cycle Mode  |  [START] Launch  |  [B] Menu",
+                0 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A] Open Garage  |  [START] Launch  |  [B] Menu",
                 1 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Change Car  |  [START] Launch  |  [B] Menu",
                 2 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Adjust Bots  |  [START] Launch  |  [B] Menu",
                 _ => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A / START] LAUNCH RACE  |  [B] Menu",
@@ -716,7 +733,7 @@ pub fn render_starting_grid_screen(
     } else {
         match focused_panel {
             StartingGridFocus::LeftSetup => match active_card_idx {
-                0 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER/SPACE/TAB] Cycle Mode  |  [SPACE] Launch  |  [ESC] Menu",
+                0 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER] Open Garage  |  [SPACE] Launch  |  [ESC] Menu",
                 1 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / < / >] Change Vehicle  |  [SPACE] Launch  |  [ESC] Menu",
                 2 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / + / -] Adjust Bots  |  [SPACE] Launch  |  [ESC] Menu",
                 _ => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / SPACE / CLICK] LAUNCH RACE  |  [ESC] Menu",
@@ -725,15 +742,7 @@ pub fn render_starting_grid_screen(
                 "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
             }
         }
-    };
-
-    fonts.draw_ui_bold_centered(
-        prompt,
-        sw * 0.5,
-        bottom_prompt_y + scaler.s(6.0),
-        scaler.font_s(14.0),
-        Palette::WHITE,
-    );
+    }
 }
 
 fn render_grid_stat_bar(
