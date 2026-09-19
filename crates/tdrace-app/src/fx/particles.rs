@@ -2,6 +2,7 @@ use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_line};
 use glam::Vec2;
 use tdrace_core::physics::surface::SurfaceType;
+use tdrace_core::track::scenery::TreeType;
 
 use crate::render::color::Palette;
 
@@ -143,6 +144,92 @@ impl ParticleSystem {
                 lifetime: life,
                 remaining_life: life,
                 drag: 2.8,
+                is_spark: false,
+            });
+        }
+    }
+
+    /// Emits botanical foliage roost particles (pine needles, palm frond bits, oak/maple leaves, sakura petals)
+    /// when a vehicle brushes through a tree canopy at speed.
+    pub fn emit_foliage_roost(&mut self, pos: Vec2, tree_type: TreeType, car_vel: Vec2) {
+        if self.particles.len() >= self.max_particles {
+            return;
+        }
+
+        let (base_col, col_var, is_petal) = match tree_type {
+            TreeType::Pine => (
+                Color::new(0.12, 0.35, 0.16, 0.90),
+                Color::new(0.08, 0.25, 0.12, 0.90),
+                false,
+            ),
+            TreeType::Palm => (
+                Color::new(0.25, 0.72, 0.22, 0.90),
+                Color::new(0.38, 0.82, 0.28, 0.90),
+                false,
+            ),
+            TreeType::Oak => (
+                Color::new(0.18, 0.52, 0.24, 0.90),
+                Color::new(0.12, 0.40, 0.16, 0.90),
+                false,
+            ),
+            TreeType::Cypress => (
+                Color::new(0.08, 0.28, 0.12, 0.90),
+                Color::new(0.05, 0.20, 0.08, 0.90),
+                false,
+            ),
+            TreeType::Sakura => (
+                Color::new(0.96, 0.65, 0.80, 0.95),
+                Color::new(0.99, 0.85, 0.92, 0.95),
+                true,
+            ),
+            TreeType::AutumnMaple => (
+                Color::new(0.90, 0.40, 0.10, 0.90),
+                Color::new(0.82, 0.16, 0.08, 0.90),
+                false,
+            ),
+        };
+
+        let count = if is_petal { 4 } else { 3 };
+        for _ in 0..count {
+            if self.particles.len() >= self.max_particles {
+                break;
+            }
+
+            let p_pos = pos + Vec2::new(self.rand_signed(), self.rand_signed()) * 0.35;
+            let roost_dir = -car_vel.normalize_or_zero();
+            let spread = Vec2::new(-roost_dir.y, roost_dir.x) * self.rand_signed() * 0.75;
+            let speed = if is_petal {
+                1.5 + self.rand_f32() * 3.5
+            } else {
+                2.5 + self.rand_f32() * 5.0
+            };
+            let p_vel = (roost_dir + spread) * speed;
+
+            let life = if is_petal {
+                0.50 + self.rand_f32() * 0.40
+            } else {
+                0.32 + self.rand_f32() * 0.28
+            };
+            let size = if is_petal {
+                0.09 + self.rand_f32() * 0.08
+            } else {
+                0.07 + self.rand_f32() * 0.07
+            };
+
+            let use_secondary = self.rand_f32() > 0.5;
+            let col = if use_secondary { col_var } else { base_col };
+            let col_end = Color::new(col.r, col.g, col.b, 0.0);
+
+            self.particles.push(Particle {
+                pos: p_pos,
+                vel: p_vel,
+                size_start: size,
+                size_end: if is_petal { size * 0.8 } else { size * 0.4 },
+                color_start: col,
+                color_end: col_end,
+                lifetime: life,
+                remaining_life: life,
+                drag: if is_petal { 1.8 } else { 2.6 },
                 is_spark: false,
             });
         }

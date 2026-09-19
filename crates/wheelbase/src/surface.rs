@@ -27,6 +27,8 @@ pub enum SurfaceType {
     Snow,
     /// Loose stone gravel track / rally runoff: moderate grip, high stone debris roost.
     Gravel,
+    /// Solid cast or poured concrete: high grip, smooth pavement, and grandstand/stadium aprons.
+    Concrete,
 }
 
 
@@ -36,6 +38,7 @@ impl SurfaceType {
     pub const fn friction_coefficient(self) -> f32 {
         match self {
             Self::Asphalt => 1.0,
+            Self::Concrete => 0.95,
             Self::Curb => 0.88,
             Self::Dirt => 0.78,
             Self::Gravel => 0.70,
@@ -54,6 +57,7 @@ impl SurfaceType {
     pub const fn rolling_resistance_multiplier(self) -> f32 {
         match self {
             Self::Asphalt => 1.0,
+            Self::Concrete => 1.05,
             Self::Curb => 1.3,
             Self::Dirt => 1.2,
             Self::Gravel => 2.5,
@@ -72,6 +76,7 @@ impl SurfaceType {
     pub const fn surface_drag_multiplier(self) -> f32 {
         match self {
             Self::Asphalt => 1.0,
+            Self::Concrete => 1.00,
             Self::Curb => 1.05,
             Self::Dirt => 1.10,
             Self::Gravel => 1.25,
@@ -88,7 +93,7 @@ impl SurfaceType {
     /// Whether this surface produces standard rubber skid marks and tire smoke.
     #[inline]
     pub const fn produces_tire_smoke(self) -> bool {
-        matches!(self, Self::Asphalt | Self::Curb)
+        matches!(self, Self::Asphalt | Self::Concrete | Self::Curb)
     }
 
     /// Whether this surface kicks up dust/grass/gravel particles.
@@ -113,12 +118,29 @@ impl SurfaceType {
         matches!(self, Self::Water | Self::Oil | Self::Ice | Self::Mud | Self::Snow)
     }
 
+    /// All 12 supported surface types.
+    pub const ALL: [SurfaceType; 12] = [
+        SurfaceType::Asphalt,
+        SurfaceType::Concrete,
+        SurfaceType::Curb,
+        SurfaceType::Dirt,
+        SurfaceType::Gravel,
+        SurfaceType::Mud,
+        SurfaceType::Grass,
+        SurfaceType::Snow,
+        SurfaceType::Sand,
+        SurfaceType::Water,
+        SurfaceType::Oil,
+        SurfaceType::Ice,
+    ];
+
     /// All valid global off-track terrain types that can be selected as a track's default surface.
-    pub const OFF_TRACK_TYPES: [SurfaceType; 7] = [
+    pub const OFF_TRACK_TYPES: [SurfaceType; 8] = [
         SurfaceType::Grass,
         SurfaceType::Sand,
         SurfaceType::Dirt,
         SurfaceType::Asphalt,
+        SurfaceType::Concrete,
         SurfaceType::Mud,
         SurfaceType::Snow,
         SurfaceType::Gravel,
@@ -129,7 +151,7 @@ impl SurfaceType {
     pub const fn is_valid_off_track(self) -> bool {
         matches!(
             self,
-            Self::Grass | Self::Sand | Self::Dirt | Self::Asphalt | Self::Mud | Self::Snow | Self::Gravel
+            Self::Grass | Self::Sand | Self::Dirt | Self::Asphalt | Self::Concrete | Self::Mud | Self::Snow | Self::Gravel
         )
     }
 
@@ -137,6 +159,7 @@ impl SurfaceType {
     pub const fn name(self) -> &'static str {
         match self {
             Self::Asphalt => "Asphalt",
+            Self::Concrete => "Concrete",
             Self::Dirt => "Dirt",
             Self::Curb => "Curb",
             Self::Grass => "Grass",
@@ -230,11 +253,15 @@ mod tests {
         assert!(SurfaceType::Water.friction_coefficient() > SurfaceType::Ice.friction_coefficient());
         assert!(SurfaceType::Sand.rolling_resistance_multiplier() > SurfaceType::Dirt.rolling_resistance_multiplier());
         assert!(SurfaceType::Asphalt.produces_tire_smoke());
+        assert!(SurfaceType::Concrete.produces_tire_smoke());
+        assert!(SurfaceType::Asphalt.friction_coefficient() >= SurfaceType::Concrete.friction_coefficient());
+        assert!(SurfaceType::Concrete.friction_coefficient() > SurfaceType::Curb.friction_coefficient());
         assert!(!SurfaceType::Ice.produces_tire_smoke());
         assert!(SurfaceType::Grass.produces_debris_particles());
         assert!(SurfaceType::Dirt.produces_debris_particles());
         assert!(SurfaceType::Water.produces_water_splash());
         assert!(!SurfaceType::Asphalt.produces_water_splash());
+        assert!(!SurfaceType::Concrete.produces_water_splash());
     }
 
     #[test]

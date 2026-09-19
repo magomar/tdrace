@@ -25,6 +25,7 @@ pub fn surface_preview_color(surface: SurfaceType) -> Color {
         SurfaceType::Mud => Color::new(0.55, 0.38, 0.20, 0.95),     // Deep Mud Brown
         SurfaceType::Snow => Color::new(0.95, 0.98, 1.00, 0.95),    // Pure Snow White
         SurfaceType::Gravel => Palette::GRAVEL,
+        SurfaceType::Concrete => Color::new(0.75, 0.78, 0.82, 0.95),
     }
 }
 

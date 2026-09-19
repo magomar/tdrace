@@ -4,6 +4,7 @@ pub mod color;
 pub mod ghost;
 pub mod lateral;
 pub mod marker;
+pub mod scenery;
 pub mod track;
 
 pub use barrier::{
@@ -19,8 +20,13 @@ pub use marker::{
     compute_adaptive_alpha, render_player_ground_aura, render_player_overhead_chevron,
     render_player_roof_beacon, PlayerVisibilityOptions,
 };
+pub use scenery::{
+    render_grandstand, render_grandstand_shadows_culled, render_grandstands_culled,
+    render_tree_canopies_culled, render_tree_shadows_culled, render_tree_trunks_culled,
+};
 pub use track::{
     get_track_backdrop_color, render_elevated_track, render_elevated_track_culled,
     render_ground_track, render_ground_track_culled, render_track, render_track_culled,
 };
+
 

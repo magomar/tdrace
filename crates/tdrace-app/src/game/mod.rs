@@ -93,10 +93,12 @@ use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
     compute_adaptive_alpha, render_elevated_barriers_and_obstacles,
     render_elevated_barriers_and_obstacles_culled, render_elevated_track,
-    render_elevated_track_culled, render_ground_barriers_and_obstacles,
+    render_elevated_track_culled, render_grandstand_shadows_culled,
+    render_grandstands_culled, render_ground_barriers_and_obstacles,
     render_ground_barriers_and_obstacles_culled, render_ground_track,
     render_ground_track_culled, render_player_ground_aura, render_player_overhead_chevron,
-    render_player_roof_beacon, PlayerVisibilityOptions,
+    render_player_roof_beacon, render_tree_canopies_culled, render_tree_shadows_culled,
+    render_tree_trunks_culled, PlayerVisibilityOptions,
 };
 use crate::replay::{ReplayPlayer, ReplayRecorder};
 use crate::tournament::{ChampionshipSession, PointSystem, RoundDriverResult};
@@ -6068,6 +6070,26 @@ impl RaceSession {
             self.cars[i].state.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);
 
             self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
+
+            // Soft tree canopy brush interaction: viscous foliage drag & leaf roost particles
+            if !self.cars[i].state.is_airborne && self.cars[i].state.elevation < 0.6 {
+                for tree in &self.track.geometry.trees {
+                    let car_pos = self.cars[i].state.position;
+                    if tree.contains_canopy(car_pos) && !tree.contains_trunk(car_pos) {
+                        let drag_rate = tree.tree_type.canopy_drag_deceleration();
+                        self.cars[i].state.velocity *= (1.0 - drag_rate * dt).max(0.0);
+                        self.cars[i].state.speed = self.cars[i].state.velocity.length();
+
+                        if self.cars[i].state.speed > 3.0 {
+                            self.fx.particles.emit_foliage_roost(
+                                car_pos,
+                                tree.tree_type,
+                                self.cars[i].state.velocity,
+                            );
+                        }
+                    }
+                }
+            }
         }
 
         // Track human player top speed
@@ -6186,13 +6208,14 @@ impl RaceSession {
             Vec::new()
         };
 
-        // 5. Resolve Wall and Obstacle boundary collisions for each car
+        // 5. Resolve Wall and Obstacle boundary collisions for each car (including grandstands & tree trunks)
+        let scenery_obstacles = self.track.geometry.all_obstacles_with_scenery();
         let mut wall_collision_events = Vec::new();
         for (car_idx, car) in self.cars.iter_mut().enumerate() {
             let mut wall_events = resolve_all_wall_collisions(
                 car,
                 &self.track.geometry.inner_walls,
-                &self.track.geometry.obstacles,
+                &scenery_obstacles,
             );
             let outer_events =
                 resolve_all_wall_collisions(car, &self.track.geometry.outer_walls, &[]);
@@ -7843,11 +7866,18 @@ impl RaceSession {
 
             // Render ground track & barriers
             render_ground_track(&state.track);
+            render_grandstand_shadows_culled(&state.track, None);
+            render_tree_shadows_culled(&state.track, None);
+            render_grandstands_culled(&state.track, None);
             render_ground_barriers_and_obstacles(&state.track);
+            render_tree_trunks_culled(&state.track, None);
 
             // Render elevated overpass bridges & barriers
             render_elevated_track(&state.track);
             render_elevated_barriers_and_obstacles(&state.track);
+
+            // Render tree canopies above track
+            render_tree_canopies_culled(&state.track, &[], None);
 
             // Render interactive gizmos, selection handles, and previews
             render_editor_gizmos(state, &self.editor_tools, &self.editor_camera);
@@ -7919,8 +7949,12 @@ impl RaceSession {
         // 2. Persistent Ground Skidmarks
         self.fx.render_ground_fx();
 
-        // 3. Ground Barriers & Obstacles (elevation < 0.6m)
+        // 3. Ground Scenery Shadows, Barriers & Obstacles (elevation < 0.6m)
+        render_grandstand_shadows_culled(&self.track, view_bounds);
+        render_tree_shadows_culled(&self.track, view_bounds);
+        render_grandstands_culled(&self.track, view_bounds);
         render_ground_barriers_and_obstacles_culled(&self.track, view_bounds);
+        render_tree_trunks_culled(&self.track, view_bounds);
 
         // Separate cars into ground and elevated groups
         let mut ground_cars = Vec::new();
@@ -8050,7 +8084,10 @@ impl RaceSession {
             }
         }
 
-        // 11. Debug Overlays (F1: LIDAR, F2: Checkpoints, F3: OBBs, F4: AI Lines)
+        // 11. Tree Foliage Canopies (Above Vehicles with proximity alpha fading)
+        render_tree_canopies_culled(&self.track, &self.cars, view_bounds);
+
+        // 12. Debug Overlays (F1: LIDAR, F2: Checkpoints, F3: OBBs, F4: AI Lines)
         if let Some(focus_car) = self.cars.get(focus_car_idx) {
             if let Some(focus_tracker) = self.trackers.get(focus_car_idx) {
                 self.input.render_world_debug(

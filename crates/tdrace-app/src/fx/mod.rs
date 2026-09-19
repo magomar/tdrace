@@ -66,8 +66,8 @@ impl EffectsManager {
                     let pos = wheel_pos[w];
                     let surf = car_surfaces[w];
 
-                    // Tire smoke on asphalt/curb
-                    if (surf == SurfaceType::Asphalt || surf == SurfaceType::Curb)
+                    // Tire smoke on asphalt/curb/concrete
+                    if (surf == SurfaceType::Asphalt || surf == SurfaceType::Curb || surf == SurfaceType::Concrete)
                         && telemetry.skid_intensity > 0.25
                         && car.state.speed > 3.0
                     {

@@ -2,6 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use wheelbase::SurfaceType;
+use super::scenery::{Grandstand, Tree};
 
 /// 2D Line Segment defined by two endpoints.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -962,7 +963,7 @@ impl JumpRampCarExt for wheelbase::Car {
     }
 }
 
-/// Collection of boundaries, walls, surface zones, static obstacles, and jump ramps comprising track geometry.
+/// Collection of boundaries, walls, surface zones, static obstacles, jump ramps, and scenery comprising track geometry.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct TrackGeometry {
     pub inner_walls: Vec<WallBarrier>,
@@ -972,6 +973,10 @@ pub struct TrackGeometry {
     pub jump_ramps: Vec<JumpRamp>,
     pub left_boundary_polyline: Vec<Vec2>,
     pub right_boundary_polyline: Vec<Vec2>,
+    #[serde(default)]
+    pub grandstands: Vec<Grandstand>,
+    #[serde(default)]
+    pub trees: Vec<Tree>,
 }
 
 impl TrackGeometry {
@@ -982,6 +987,18 @@ impl TrackGeometry {
     /// All barrier segments combined (inner and outer).
     pub fn all_walls(&self) -> impl Iterator<Item = &WallBarrier> {
         self.inner_walls.iter().chain(self.outer_walls.iter())
+    }
+
+    /// Returns all static obstacles plus solid tree trunk colliders and grandstand collision boxes.
+    pub fn all_obstacles_with_scenery(&self) -> Vec<Obstacle> {
+        let mut obs = self.obstacles.clone();
+        for tree in &self.trees {
+            obs.push(tree.trunk_obstacle());
+        }
+        for grandstand in &self.grandstands {
+            obs.push(grandstand.to_obstacle());
+        }
+        obs
     }
 }
 

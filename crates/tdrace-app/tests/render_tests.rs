@@ -218,3 +218,50 @@ fn test_sand_rail_visual_archetype_and_liveries() {
     assert!(audio.anti_lag_pops);
 }
 
+#[test]
+fn test_scenery_culling_and_grandstand_render_geometry() {
+    use tdrace_app::render::scenery::{is_grandstand_in_view, is_tree_in_view};
+    use tdrace_core::track::scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
+
+    let stand = Grandstand::new(1, Vec2::new(100.0, 100.0), 40.0, 10.0, 0.0)
+        .with_style(GrandstandStyle::CoveredStadium);
+    let tree = Tree::new(2, Vec2::new(100.0, 100.0), TreeType::Palm).with_scale(1.0);
+
+    // Viewport containing the elements
+    let view_in = Some((Vec2::new(50.0, 50.0), Vec2::new(150.0, 150.0)));
+    assert!(is_grandstand_in_view(&stand, view_in));
+    assert!(is_tree_in_view(&tree, view_in));
+
+    // Viewport far away
+    let view_out = Some((Vec2::new(0.0, 0.0), Vec2::new(20.0, 20.0)));
+    assert!(!is_grandstand_in_view(&stand, view_out));
+    assert!(!is_tree_in_view(&tree, view_out));
+
+    // Corners geometry
+    let corners = stand.corners();
+    assert_eq!(corners.len(), 4);
+    // Front edge should be depth * 0.5 away from center along facing normal
+    let center_calc = (corners[0] + corners[1] + corners[2] + corners[3]) * 0.25;
+    assert!((center_calc.x - 100.0).abs() < 1e-4);
+    assert!((center_calc.y - 100.0).abs() < 1e-4);
+}
+
+#[test]
+fn test_tree_cenital_canopy_and_alpha_modulation() {
+    use tdrace_core::track::scenery::{Tree, TreeType};
+
+    for &tt in &TreeType::ALL {
+        let tree = Tree::new(1, Vec2::new(0.0, 0.0), tt);
+        assert!(tree.canopy_radius() > 1.0);
+        assert!(tree.trunk_radius() > 0.15);
+
+        // When car is underneath canopy, car is detected
+        let car_under = Vec2::new(0.5, 0.5);
+        assert!(tree.contains_canopy(car_under));
+
+        // When car is outside canopy
+        let car_far = Vec2::new(20.0, 20.0);
+        assert!(!tree.contains_canopy(car_far));
+    }
+}
+

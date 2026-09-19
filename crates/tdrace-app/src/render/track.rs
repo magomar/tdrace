@@ -94,6 +94,7 @@ pub fn get_surface_zone_colors(surface: SurfaceType) -> (Color, Option<Color>) {
         SurfaceType::Mud => (Palette::MUD, Some(Palette::MUD_DARK)),
         SurfaceType::Snow => (Palette::SNOW, Some(Palette::SNOW_EDGE)),
         SurfaceType::Gravel => (Palette::GRAVEL, Some(Palette::GRAVEL_DARK)),
+        SurfaceType::Concrete => (Color::new(0.72, 0.74, 0.76, 1.0), Some(Color::new(0.55, 0.57, 0.60, 1.0))),
     }
 }
 
@@ -185,6 +186,11 @@ pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, C
             Palette::GRAVEL,
             Some(Palette::GRAVEL_EDGE),
             Color::new(0.70, 0.68, 0.64, 0.85),
+        ),
+        SurfaceType::Concrete => (
+            Color::new(0.70, 0.72, 0.74, 1.0),
+            Some(Color::new(0.85, 0.87, 0.90, 0.85)),
+            Color::new(0.82, 0.84, 0.88, 0.75),
         ),
     }
 }
@@ -674,6 +680,11 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                         );
                     }
                 }
+            }
+            SurfaceType::Concrete => {
+                draw_quad(left0, left1, right1, right0, Color::new(0.72, 0.74, 0.76, 1.0));
+                draw_line(left0.x, left0.y, left1.x, left1.y, 0.28, Palette::WHITE_LINE);
+                draw_line(right0.x, right0.y, right1.x, right1.y, 0.28, Palette::WHITE_LINE);
             }
         }
     }

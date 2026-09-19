@@ -82,6 +82,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -151,6 +152,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -218,6 +220,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -287,6 +290,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -356,6 +360,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -423,6 +428,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -492,6 +498,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -559,6 +566,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -627,6 +635,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -695,6 +704,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -763,6 +773,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -829,6 +840,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,
@@ -891,6 +903,7 @@ impl KartGameModule {
                 jump_ramps: Vec::new(),
                 left_boundary_polyline: left_poly,
                 right_boundary_polyline: right_poly,
+                ..Default::default()
             },
             checkpoints,
             grid_positions: starting_grid,

@@ -137,6 +137,8 @@ fn test_lidar_elevation_filtering() {
             jump_ramps: Vec::new(),
             left_boundary_polyline: Vec::new(),
             right_boundary_polyline: Vec::new(),
+            grandstands: Vec::new(),
+            trees: Vec::new(),
         },
         checkpoints: Vec::new(),
         grid_positions: Vec::new(),

@@ -2,6 +2,7 @@ pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
 pub mod presets;
+pub mod scenery;
 pub mod spline;
 pub mod validation;
 
@@ -14,6 +15,7 @@ pub use geometry::{
     point_in_polygon, BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape,
     SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
+pub use scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
 pub use presets::{
     bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, chicago_street_course,
     classic_grand_prix, classic_template, cota, create_prototypical_track, darlington_raceway,
@@ -222,7 +224,14 @@ impl Track {
             }
         }
 
-        // 6. Default terrain (e.g. Grass or Sand)
+        // 6. Check grandstand concrete aprons
+        for grandstand in &self.geometry.grandstands {
+            if grandstand.contains(point) {
+                return SurfaceType::Concrete;
+            }
+        }
+
+        // 7. Default terrain (e.g. Grass or Sand)
         self.default_surface
     }
 
@@ -282,7 +291,14 @@ impl Track {
             }
         }
 
-        // 5. Default terrain
+        // 5. Check grandstand concrete aprons
+        for grandstand in &self.geometry.grandstands {
+            if grandstand.contains(point) {
+                return SurfaceType::Concrete;
+            }
+        }
+
+        // 6. Default terrain
         self.default_surface
     }
 }
@@ -652,5 +668,32 @@ mod tests {
         assert!(poly_zone.contains(Vec2::new(110.0, 110.0)));
         assert!(!poly_zone.contains(Vec2::new(130.0, 130.0)));
         assert_eq!(poly_zone.shape.center(), Vec2::new(110.0, 110.0));
+    }
+
+    #[test]
+    fn test_grandstand_and_tree_scenery_sampling_and_serialization() {
+        let mut track = classic_grand_prix();
+        let stand = Grandstand::new(1, Vec2::new(0.0, 50.0), 30.0, 10.0, 0.0);
+        let tree = Tree::new(2, Vec2::new(100.0, 100.0), TreeType::Palm).with_scale(1.5);
+
+        track.geometry.grandstands.push(stand.clone());
+        track.geometry.trees.push(tree.clone());
+
+        // Grandstand footprint must sample as SurfaceType::Concrete
+        assert_eq!(track.sample_surface(Vec2::new(0.0, 50.0)), SurfaceType::Concrete);
+        assert_eq!(track.sample_surface_near(Vec2::new(0.0, 50.0), 0.0), SurfaceType::Concrete);
+
+        // All obstacles with scenery must include both tree trunk obstacle and grandstand obstacle
+        let all_obs = track.geometry.all_obstacles_with_scenery();
+        assert!(all_obs.iter().any(|o| o.name.contains("Palm Trunk")));
+        assert!(all_obs.iter().any(|o| o.name.contains("Grandstand #1")));
+
+        // Roundtrip JSON serialization must preserve grandstands and trees
+        let json = track.to_json_pretty().expect("Must serialize");
+        let deserialized = Track::from_json(&json).expect("Must deserialize");
+        assert_eq!(deserialized.geometry.grandstands.len(), 1);
+        assert_eq!(deserialized.geometry.grandstands[0].length, 30.0);
+        assert_eq!(deserialized.geometry.trees.len(), 1);
+        assert_eq!(deserialized.geometry.trees[0].tree_type, TreeType::Palm);
     }
 }
