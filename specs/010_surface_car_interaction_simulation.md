@@ -9,7 +9,7 @@ generated: { by: agent/antigravity, at: 2026-09-18T18:59:00Z }
 ---
 # Architecture Spec: Systematic Computational Simulation of Surface-Car Dynamics 🔬
 
-A purely computational, headless simulation and benchmarking suite designed to measure, evaluate, and quantify the exact physical impact of varying surface characteristics on vehicle dynamics in **TdRace**. Operating without graphical rendering or audio dependencies, this framework provides reproducible telemetry and standardized test protocols for acceleration, braking, and cornering performance across all 11 supported surface types and diverse vehicle archetypes.
+A purely computational, headless simulation and benchmarking suite designed to measure, evaluate, and quantify the exact physical impact of varying surface characteristics on vehicle dynamics in **TdRace**. Operating without graphical rendering or audio dependencies, this framework provides reproducible telemetry and standardized test protocols for acceleration, braking, and cornering performance across all 12 supported surface types (including Concrete) and diverse vehicle archetypes.
 
 ---
 
@@ -19,7 +19,7 @@ A purely computational, headless simulation and benchmarking suite designed to m
 Currently, vehicle dynamics in `wheelbase` are verified primarily through interactive graphical race loops in `tdrace-app` or targeted unit tests with static single-frame assertions:
 * **Coupled to Viewport & Audio**: Validating handling requires running Macroquad windows and Kira audio backends.
 * **Low Simulation Throughput**: Playtesting runs at real-time 60 Hz wall-clock rate; simulating hours of dynamic surface wear or comparative matrix sweeps is prohibitively slow.
-* **No Standardized Empirical Baselines**: There is no automated framework to systematically test and assert how altering rolling resistance or tire Pacejka parameters impacts acceleration, braking distances, or apex cornering limits across all 11 surfaces.
+* **No Standardized Empirical Baselines**: There is no automated framework to systematically test and assert how altering rolling resistance or tire Pacejka parameters impacts acceleration, braking distances, or apex cornering limits across all 12 surfaces.
 
 ```mermaid
 graph LR
@@ -40,7 +40,7 @@ The proposed architecture introduces a dedicated headless simulation runner (`wh
 flowchart TD
     subgraph Config ["Test Matrix Definition"]
         A[Vehicle Archetypes: F1, Stock, Rally, Buggy, Kart]
-        B[Surface Matrix: 11 Surface Types]
+        B[Surface Matrix: 12 Surface Types]
         C[Test Protocols: Accel, Brake, Skidpad, Slalom, Coast]
     end
 
@@ -152,23 +152,24 @@ Separates the contribution of mechanical rolling resistance ($C_{\text{rr}}$) fr
 
 ---
 
-## 🔬 The 11-Surface Test Matrix
+## 🔬 The 12-Surface Test Matrix
 
-The simulation harness evaluates every protocol across all 11 supported surfaces defined in [`SurfaceType`](../crates/wheelbase/src/surface.rs):
+The simulation harness evaluates every protocol across all 12 supported surfaces defined in [`SurfaceType`](../crates/wheelbase/src/surface.rs):
 
 | # | Surface Type | Base Friction ($\mu$) | Rolling Resistance ($C_{\text{rr}}$) | Surface Drag ($C_{\text{drag}}$) | Expected Dynamic Behavior |
 | :- | :--- | :-: | :-: | :-: | :--- |
 | 1 | **`Asphalt`** | $1.00$ | $1.0\times$ | $1.00\times$ | Baseline dry benchmark; maximum grip, minimal drag. |
-| 2 | **`Curb`** | $0.88$ | $1.3\times$ | $1.05\times$ | Apex kerb; slight micro-vibration, high grip with mild drag. |
-| 3 | **`Dirt`** | $0.78$ | $1.2\times$ | $1.10\times$ | Compacted rally clay; progressive slip angle, high drifting controllability. |
-| 4 | **`Gravel`** | $0.70$ | $2.5\times$ | $1.25\times$ | Loose stone gravel; loose displacement, moderate rolling resistance. |
-| 5 | **`Mud`** | $0.52$ | $6.5\times$ | $3.20\times$ | Viscous bog; heavy deceleration drag, power-sapping immersion. |
-| 6 | **`Grass`** | $0.45$ | $18.0\times$ | $2.20\times$ | Turf runoff; severe rolling resistance, rapid speed bleed off-track. |
-| 7 | **`Snow`** | $0.34$ | $3.0\times$ | $1.60\times$ | Low-friction winter rallying; gentle breakaway, long braking distances. |
-| 8 | **`Sand`** | $0.30$ | $30.0\times$ | $4.50\times$ | Arrestor bed; catastrophic rolling resistance, extreme deceleration. |
-| 9 | **`Water`** | $0.22$ | $3.5\times$ | $2.00\times$ | Hydroplaning hazard; low traction, high viscous resistance. |
-| 10 | **`Oil`** | $0.12$ | $0.8\times$ | $0.95\times$ | Low surface friction; instant spinout, zero rolling drag. |
-| 11 | **`Ice`** | $0.08$ | $0.4\times$ | $0.90\times$ | Near-frictionless; negligible braking authority, near-infinite glide. |
+| 2 | **`Concrete`** | $0.95$ | $1.05\times$ | $1.00\times$ | Poured solid pavement; high grip with low rolling drag for grandstands and aprons. |
+| 3 | **`Curb`** | $0.88$ | $1.3\times$ | $1.05\times$ | Apex kerb; slight micro-vibration, high grip with mild drag. |
+| 4 | **`Dirt`** | $0.78$ | $1.2\times$ | $1.10\times$ | Compacted rally clay; progressive slip angle, high drifting controllability. |
+| 5 | **`Gravel`** | $0.70$ | $2.5\times$ | $1.25\times$ | Loose stone gravel; loose displacement, moderate rolling resistance. |
+| 6 | **`Mud`** | $0.52$ | $6.5\times$ | $3.20\times$ | Viscous bog; heavy deceleration drag, power-sapping immersion. |
+| 7 | **`Grass`** | $0.45$ | $18.0\times$ | $2.20\times$ | Turf runoff; severe rolling resistance, rapid speed bleed off-track. |
+| 8 | **`Snow`** | $0.34$ | $3.0\times$ | $1.60\times$ | Low-friction winter rallying; gentle breakaway, long braking distances. |
+| 9 | **`Sand`** | $0.30$ | $30.0\times$ | $4.50\times$ | Arrestor bed; catastrophic rolling resistance, extreme deceleration. |
+| 10 | **`Water`** | $0.22$ | $3.5\times$ | $2.00\times$ | Hydroplaning hazard; low traction, high viscous resistance. |
+| 11 | **`Oil`** | $0.12$ | $0.8\times$ | $0.95\times$ | Low surface friction; instant spinout, zero rolling drag. |
+| 12 | **`Ice`** | $0.08$ | $0.4\times$ | $0.90\times$ | Near-frictionless; negligible braking authority, near-infinite glide. |
 
 ---
 
@@ -217,16 +218,16 @@ The simulation harness operates strictly in-memory during testing sessions or CI
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-- **Scenario: Standing start acceleration across all 11 surface types**
+- **Scenario: Standing start acceleration across all 12 surface types**
   - [ ] **Given** the wheelbase physics engine is initialized without graphics or audio backends
-  - [ ] **And** all 11 surface types are configured with validated friction, rolling resistance, and drag multipliers
+  - [ ] **And** all 12 surface types are configured with validated friction, rolling resistance, and drag multipliers
   - [ ] **When** the headless simulation executes Protocol A (Acceleration) for a baseline stock car on each surface
   - [ ] **Then** the recorded 0-100 km/h acceleration times must strictly observe the hierarchy:
     ```
-    Asphalt < Curb < Dirt < Gravel < Mud < Grass < Snow < Sand < Water < Oil < Ice
+    Asphalt < Concrete < Curb < Dirt < Gravel < Mud < Grass < Snow < Sand < Water < Oil < Ice
     ```
   - [ ] **And** the wheelspin loss index on Ice must be at least 4.0x greater than on Asphalt
-  - [ ] **And** the simulation must complete 11 benchmark runs in under 500 milliseconds of wall-clock time
+  - [ ] **And** the simulation must complete 12 benchmark runs in under 500 milliseconds of wall-clock time
 
 - **Scenario: Straight-line emergency braking distance from 100 km/h**
   - [ ] **Given** a vehicle stabilized at 100.0 km/h on a uniform test surface

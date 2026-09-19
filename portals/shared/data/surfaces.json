@@ -11,6 +11,17 @@
     "description": "Standard dry tarmac; optimal grip baseline, full tire smoke on heavy slip."
   },
   {
+    "name": "Concrete",
+    "friction": 0.95,
+    "rolling_resistance": 1.05,
+    "surface_drag": 1.0,
+    "smoke": true,
+    "roost": false,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Poured solid pavement; high grip with low rolling drag for grandstands and stadium bowls."
+  },
+  {
     "name": "Curb",
     "friction": 0.88,
     "rolling_resistance": 1.3,

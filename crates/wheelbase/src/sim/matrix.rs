@@ -48,7 +48,7 @@ impl VehicleBenchmarkResult {
         self.top_speed_kmh = top_speed_kmh;
         self
     }
-    /// Executes the full benchmark suite (Protocols A through E) across all 11 surfaces for a vehicle.
+    /// Executes the full benchmark suite (Protocols A through E) across all 12 surfaces for a vehicle.
     pub fn run(
         vehicle_id: impl Into<String>,
         vehicle_name: impl Into<String>,

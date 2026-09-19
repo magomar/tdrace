@@ -116,8 +116,40 @@ pub fn generate_markdown_report(dataset: &ExperimentDataset) -> String {
     }
     writeln!(out).unwrap();
 
-    // Section 5: Coast-Down Distance (120 - 0 km/h)
-    writeln!(out, "## 🍃 5. Protocol E: Passive Coast-Down Distance (120 → 0 km/h)").unwrap();
+    // Section 5: Transient Step-Steer & Slalom Stability
+    writeln!(out, "## 🔀 5. Protocol D: Transient Step-Steer & Slalom Stability (80 km/h)").unwrap();
+    writeln!(out).unwrap();
+    writeln!(out, "Dynamic stability classification and recovery status under rapid lateral excitation:").unwrap();
+    writeln!(out).unwrap();
+
+    write!(out, "| Vehicle |").unwrap();
+    for s in SurfaceType::ALL {
+        write!(out, " {} |", s.name()).unwrap();
+    }
+    writeln!(out).unwrap();
+
+    write!(out, "|:---|").unwrap();
+    for _ in SurfaceType::ALL {
+        write!(out, ":---:|").unwrap();
+    }
+    writeln!(out).unwrap();
+
+    for v in &dataset.vehicles {
+        write!(out, "| **{}** |", v.vehicle_name).unwrap();
+        for res in &v.protocol_d {
+            let label = match res.recovery_status {
+                super::protocols::StepSteerStatus::Stable => "Stable",
+                super::protocols::StepSteerStatus::Drifting => "Drift",
+                super::protocols::StepSteerStatus::Spun => "Spun",
+            };
+            write!(out, " {} |", label).unwrap();
+        }
+        writeln!(out).unwrap();
+    }
+    writeln!(out).unwrap();
+
+    // Section 6: Coast-Down Distance (120 - 0 km/h)
+    writeln!(out, "## 🍃 6. Protocol E: Passive Coast-Down Distance (120 → 0 km/h)").unwrap();
     writeln!(out).unwrap();
     writeln!(out, "Distance rolled ($d_{{\\text{{coast}}}}$ in meters) under purely aerodynamic and rolling resistance:").unwrap();
     writeln!(out).unwrap();
@@ -143,8 +175,8 @@ pub fn generate_markdown_report(dataset: &ExperimentDataset) -> String {
     }
     writeln!(out).unwrap();
 
-    // Section 6: Normalized Friction Index relative to Asphalt (100%)
-    writeln!(out, "## 📊 6. Cross-Surface Adhesion & Degradation Index (vs Asphalt 100%)").unwrap();
+    // Section 7: Normalized Friction Index relative to Asphalt (100%)
+    writeln!(out, "## 📊 7. Cross-Surface Adhesion & Degradation Index (vs Asphalt 100%)").unwrap();
     writeln!(out).unwrap();
     writeln!(out, "Mean stopping distance degradation factor relative to baseline dry Asphalt ($1.00\\times$):").unwrap();
     writeln!(out).unwrap();
@@ -618,7 +650,7 @@ pub fn generate_html_report(dataset: &ExperimentDataset) -> String {
     <div class="header-badge">ENGINEERING BENCHMARK SUITE — SPEC 010</div>
     <h1>TdRace <span class="glow">Surface-Car Interaction</span> Simulation</h1>
     <p class="subtitle">
-        Systematic computational evaluation of vehicle dynamic behavior across all 11 surfaces and 5 testing protocols.
+        Systematic computational evaluation of vehicle dynamic behavior across all 12 surfaces (including Concrete) and 5 testing protocols.
         Covering all 5 Career Levels / Tiers across specific modules plus Classic prototypical cars.
     </p>
     <div class="meta-strip">

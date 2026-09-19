@@ -1,7 +1,7 @@
 ---
 type: Architecture Spec
 title: "Surface & Wall Physics Legacy Specification"
-description: "Historical engineering notes and specification for 11 surface types and 4 barrier collision models."
+description: "Historical engineering notes and specification for 12 surface types and 4 barrier collision models."
 status: active
 category: engineering
 tags: [physics, legacy, surfaces, walls]

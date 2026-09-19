@@ -1,7 +1,7 @@
 ---
 type: Physics Reference
 title: "Surface Physics & Environmental Friction Matrix"
-description: "Comprehensive 11-surface simulation matrix: friction coefficients (mu), rolling resistance, viscous drag, particle roost, and split-mu per-wheel sampling."
+description: "Comprehensive 12-surface simulation matrix: friction coefficients (mu), rolling resistance, viscous drag, particle roost, and split-mu per-wheel sampling."
 status: active
 category: physics
 tags: [physics, surfaces, friction, terrain, wheelbase]
@@ -13,11 +13,12 @@ In **TdRace**, track and off-track terrain interactions are computed on an indep
 
 ---
 
-## 1. 11-Surface Comparative Parameter Matrix
+## 1. 12-Surface Comparative Parameter Matrix
 
 | Surface Type | Friction ($\mu$) | Rolling Resistance Multiplier | Surface Drag Multiplier | Tire Smoke | Debris Roost | Water Splash | Layer Default | Primary Role & Track Character |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | **`Asphalt`** | **`1.00`** | `1.0×` | `1.00×` | Yes | No | No | `BelowTrack` | Standard dry tarmac; optimal grip baseline, full tire smoke on heavy slip. |
+| **`Concrete`** | **`0.95`** | `1.05×` | `1.00×` | Yes | No | No | `BelowTrack` | Poured solid pavement; high grip with low rolling drag for grandstands, pit aprons, and stadium bowls. |
 | **`Curb`** | **`0.88`** | `1.3×` | `1.05×` | Yes | No | No | `BelowTrack` | Apex kerb / rumble strip; subtle haptic rumble, high grip with mild drag. |
 | **`Dirt`** | **`0.78`** | `1.2×` | `1.10×` | No | Yes | No | `BelowTrack` | Compacted clay / gravel rally track; predictable sliding and drift control. |
 | **`Gravel`** | **`0.70`** | `2.5×` | `1.25×` | No | Yes | No | `BelowTrack` | Loose stone rally stage / runoff; moderate grip with heavy stone roost. |

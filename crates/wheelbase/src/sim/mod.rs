@@ -54,6 +54,15 @@ mod tests {
     }
 
     #[test]
+    fn test_protocol_c_skidpad() {
+        let config = CarConfig::sports_car();
+        let res_asphalt = run_protocol_c(&config, SurfaceType::Asphalt, 30.0, DEFAULT_SIMULATION_DT);
+        let res_ice = run_protocol_c(&config, SurfaceType::Ice, 30.0, DEFAULT_SIMULATION_DT);
+        assert!(res_asphalt.peak_lateral_accel_g > 0.8, "Asphalt lateral g: {:.2}", res_asphalt.peak_lateral_accel_g);
+        assert!(res_asphalt.peak_lateral_accel_g > res_ice.peak_lateral_accel_g * 2.0);
+    }
+
+    #[test]
     fn test_protocol_e_coast_down() {
         let config = CarConfig::sports_car();
         let res_asphalt = run_protocol_e(&config, SurfaceType::Asphalt, 120.0, DEFAULT_SIMULATION_DT);

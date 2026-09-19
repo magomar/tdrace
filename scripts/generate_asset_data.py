@@ -164,6 +164,7 @@ def generate_assets():
     # 3. Ingest Surfaces Matrix
     surfaces = [
         {"name": "Asphalt", "friction": 1.00, "rolling_resistance": 1.0, "surface_drag": 1.00, "smoke": True, "roost": False, "splash": False, "layer": "BelowTrack", "description": "Standard dry tarmac; optimal grip baseline, full tire smoke on heavy slip."},
+        {"name": "Concrete", "friction": 0.95, "rolling_resistance": 1.05, "surface_drag": 1.00, "smoke": True, "roost": False, "splash": False, "layer": "BelowTrack", "description": "Poured solid pavement; high grip with low rolling drag for grandstands and stadium bowls."},
         {"name": "Curb", "friction": 0.88, "rolling_resistance": 1.3, "surface_drag": 1.05, "smoke": True, "roost": False, "splash": False, "layer": "BelowTrack", "description": "Apex kerb / rumble strip; subtle haptic vibration, high grip with mild drag."},
         {"name": "Dirt", "friction": 0.78, "rolling_resistance": 1.2, "surface_drag": 1.10, "smoke": False, "roost": True, "splash": False, "layer": "BelowTrack", "description": "Compacted clay / gravel rally track; predictable sliding and drift control."},
         {"name": "Gravel", "friction": 0.70, "rolling_resistance": 2.5, "surface_drag": 1.25, "smoke": False, "roost": True, "splash": False, "layer": "BelowTrack", "description": "Loose stone rally stage / runoff; moderate grip with heavy stone roost."},

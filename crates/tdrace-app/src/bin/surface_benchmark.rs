@@ -4,7 +4,7 @@
 //! - All 5 levels/tiers across the 5 specific modules (GT, NASCAR, Rally, Extreme Off-Road, Kart)
 //! - Plus the F1 Hybrid Open-Wheel experimental benchmark
 //! - Plus the 4 Classic Prototypical cars (Sports Car, Drift Car, Shifter Kart, Rally Car)
-//! - Across all 11 surfaces and 5 dynamic testing protocols.
+//! - Across all 12 surfaces (including Concrete) and 5 dynamic testing protocols.
 //!
 //! Generates both full detailed HTML and Markdown reports as well as JSON telemetry.
 
@@ -220,9 +220,16 @@ fn main() {
     println!("🔍 VERIFICATION OF CORE PHYSICAL INVARIANTS");
     println!("================================================================================");
 
+    let ice_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Ice).expect("Ice missing");
+    let sand_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Sand).expect("Sand missing");
+    let conc_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Concrete).expect("Concrete missing");
+
     for v in &dataset.vehicles {
         let asp_stop = v.protocol_b[0].stopping_distance_m;
-        let ice_stop = v.protocol_b[10].stopping_distance_m;
+        let conc_stop = v.protocol_b[conc_idx].stopping_distance_m;
+        let ice_stop = v.protocol_b[ice_idx].stopping_distance_m;
+
+        // Ice stopping distance must drastically exceed Asphalt
         assert!(
             ice_stop > asp_stop * 2.0,
             "Vehicle {} stopping distance failed: Ice {:.1}m vs Asphalt {:.1}m",
@@ -231,8 +238,17 @@ fn main() {
             asp_stop
         );
 
+        // Concrete (mu = 0.95) stopping distance must be close to Asphalt (mu = 1.00)
+        assert!(
+            conc_stop >= asp_stop * 0.95 && conc_stop < ice_stop,
+            "Vehicle {} stopping distance failed: Concrete {:.1}m vs Asphalt {:.1}m",
+            v.vehicle_name,
+            conc_stop,
+            asp_stop
+        );
+
         let asp_coast = v.protocol_e[0].coast_distance_m;
-        let sand_coast = v.protocol_e[7].coast_distance_m;
+        let sand_coast = v.protocol_e[sand_idx].coast_distance_m;
         assert!(
             asp_coast > sand_coast,
             "Vehicle {} coast distance failed: Asphalt {:.1}m vs Sand {:.1}m",
@@ -240,8 +256,25 @@ fn main() {
             asp_coast,
             sand_coast
         );
+
+        // Protocol C Skidpad: Asphalt lateral grip must realistically exceed Ice (> 5.0x) and baseline >= 0.85g
+        let asp_lat_g = v.protocol_c[0].peak_lateral_accel_g;
+        let ice_lat_g = v.protocol_c[ice_idx].peak_lateral_accel_g;
+        assert!(
+            asp_lat_g > ice_lat_g * 5.0,
+            "Vehicle {} skidpad grip failed: Asphalt {:.2}g vs Ice {:.2}g",
+            v.vehicle_name,
+            asp_lat_g,
+            ice_lat_g
+        );
+        assert!(
+            asp_lat_g >= 0.85,
+            "Vehicle {} skidpad grip failed: Asphalt {:.2}g is below 0.85g threshold",
+            v.vehicle_name,
+            asp_lat_g
+        );
     }
 
-    println!("✅ All 30 vehicles passed physical invariants across all 11 surfaces!");
+    println!("✅ All 30 vehicles passed physical invariants across all 12 surfaces (including Concrete)!");
     println!("================================================================================");
 }

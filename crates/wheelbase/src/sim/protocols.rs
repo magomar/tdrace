@@ -76,12 +76,20 @@ pub fn run_protocol_a(
                 v400m = Some(speed * 3.6);
             }
 
-            // Wheelspin penalty integration for driven rear wheels
-            let slip_rl = car.state().wheels[2].slip_ratio.abs();
-            let slip_rr = car.state().wheels[3].slip_ratio.abs();
-            let avg_rear_slip = (slip_rl + slip_rr) * 0.5;
-            if avg_rear_slip > 0.15 {
-                let slip_penalty = ((avg_rear_slip - 0.15) / 0.85).min(1.0);
+            // Wheelspin penalty integration for driven wheels
+            let avg_driven_slip = if config.drive_bias > 0.8 {
+                (car.state().wheels[0].slip_ratio.abs() + car.state().wheels[1].slip_ratio.abs()) * 0.5
+            } else if config.drive_bias > 0.2 {
+                (car.state().wheels[0].slip_ratio.abs()
+                    + car.state().wheels[1].slip_ratio.abs()
+                    + car.state().wheels[2].slip_ratio.abs()
+                    + car.state().wheels[3].slip_ratio.abs())
+                    * 0.25
+            } else {
+                (car.state().wheels[2].slip_ratio.abs() + car.state().wheels[3].slip_ratio.abs()) * 0.5
+            };
+            if avg_driven_slip > 0.15 {
+                let slip_penalty = ((avg_driven_slip - 0.15) / 0.85).min(1.0);
                 wheelspin_loss_index += slip_penalty * dt;
             }
 
@@ -221,7 +229,7 @@ pub fn run_protocol_c(
     let mut steer_angles_deg = Vec::new();
     let mut lat_accels_g = Vec::new();
 
-    let speed_ramp_rate = 0.1389; // +0.5 km/h per second
+    let speed_ramp_rate = 0.5556; // +2.0 km/h per second
 
     runner.run_until(
         60.0,
@@ -236,8 +244,13 @@ pub fn run_protocol_c(
             let target_heading = normalize_angle(polar_angle + PI * 0.5);
             let heading_error = normalize_angle(target_heading - car.state().angle);
 
-            // Stanley / geometric steering demand
-            let steer_demand = (1.5 * heading_error - 0.20 * radial_error).clamp(-1.0, 1.0);
+            // Kinematic Ackermann feedforward (negative steer commands counter-clockwise left turn)
+            let speed_factor = 1.0 + car.state().speed * config.speed_sensitive_steer_factor;
+            let steer_ff = -(config.wheelbase / (radius_m * config.max_steer_angle)) * speed_factor;
+
+            // Geometric closed-loop steering feedback (cross-track and heading regulation)
+            let steer_fb = -(1.8 * heading_error + 0.15 * radial_error);
+            let steer_demand = (steer_ff + steer_fb).clamp(-1.0, 1.0);
 
             // Longitudinal speed ramp
             let target_v = v_init + speed_ramp_rate * t;
@@ -276,11 +289,11 @@ pub fn run_protocol_c(
             }
 
             // Departure check
-            if sideslip_deg > 45.0 {
+            if sideslip_deg > 40.0 {
                 departure = SkidpadDepartureMode::OversteerSpin;
                 return true;
             }
-            if radial_err > 3.0 && t > 2.0 {
+            if radial_err > 4.5 && t > 1.5 {
                 departure = SkidpadDepartureMode::Understeer;
                 return true;
             }
