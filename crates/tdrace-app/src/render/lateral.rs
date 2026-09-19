@@ -205,34 +205,68 @@ fn get_wheel_geometry(
         }
 
         // NASCAR Stock Cars
-        "nascar_monte_carlo_ss" | "nascar_mustang_street_stock" => {
+        "nascar_monte_carlo_ss" | "nascar_mustang_street_stock" | "nascar_dodge_dart_street_stock" => {
             (cx + hl * 0.52, cx - hl * 0.50, 13.5 * s, WheelStyle::StockCarSteel)
         }
-        "nascar_super_late_model" | "nascar_arca_chevy_ss" | "nascar_silverado_truck" => {
+        "nascar_super_late_model" | "nascar_mustang_super_late_model" | "nascar_late_model_stock_car"
+        | "nascar_arca_chevy_ss" | "nascar_toyota_camry_arca" | "nascar_ford_fusion_arca"
+        | "nascar_silverado_truck" | "nascar_f150_truck" | "nascar_tundra_truck" => {
             (cx + hl * 0.54, cx - hl * 0.50, 13.5 * s, WheelStyle::StockCarSteel)
         }
-        "nascar_corvette_ta1" => (cx + hl * 0.55, cx - hl * 0.50, 13.5 * s, WheelStyle::AlloyGT),
+        "nascar_corvette_ta1" | "nascar_mustang_ta1" | "nascar_challenger_ta1" => {
+            (cx + hl * 0.55, cx - hl * 0.50, 13.5 * s, WheelStyle::AlloyGT)
+        }
 
         // Rallycross & All-Terrain
-        "rally_peugeot_208_rally4" => (cx + hl * 0.48, cx - hl * 0.46, 12.5 * s, WheelStyle::RallyGravel),
-        "rally_hyundai_i20_rx" => (cx + hl * 0.50, cx - hl * 0.48, 13.0 * s, WheelStyle::RallyGravel),
-        "rally_audi_sport_quattro_s1" => (cx + hl * 0.46, cx - hl * 0.44, 13.0 * s, WheelStyle::RallyGravel),
-        "rally_toyota_hilux_t1_plus" => (cx + hl * 0.52, cx - hl * 0.48, 16.5 * s, WheelStyle::MudTractorChevron),
-        "rally_sst_super_truck" => (cx + hl * 0.50, cx - hl * 0.48, 15.0 * s, WheelStyle::RallyGravel),
+        "rally_peugeot_208_rally4" | "rally_fiesta_rally4" | "rally_clio_rally4" => {
+            (cx + hl * 0.48, cx - hl * 0.46, 12.5 * s, WheelStyle::RallyGravel)
+        }
+        "rally_hyundai_i20_rx" | "rally_polo_rx" | "rally_audi_s1_rx" => {
+            (cx + hl * 0.50, cx - hl * 0.48, 13.0 * s, WheelStyle::RallyGravel)
+        }
+        "rally_audi_sport_quattro_s1" | "rally_peugeot_205_t16" | "rally_lancia_delta_s4" => {
+            (cx + hl * 0.46, cx - hl * 0.44, 13.0 * s, WheelStyle::RallyGravel)
+        }
+        "rally_toyota_hilux_t1_plus" | "rally_audi_rs_q_etron" | "rally_prodrive_hunter_t1" => {
+            (cx + hl * 0.52, cx - hl * 0.48, 16.5 * s, WheelStyle::MudTractorChevron)
+        }
+        "rally_sst_super_truck" | "rally_sst_robby_gordon" | "rally_sst_traxxas_edition" => {
+            (cx + hl * 0.50, cx - hl * 0.48, 15.0 * s, WheelStyle::RallyGravel)
+        }
 
         // Extreme Off-Road
-        "offroad_sand_rail_buggy" => (cx + hl * 0.52, cx - hl * 0.48, 14.5 * s, WheelStyle::RallyGravel),
-        "offroad_baja_trophy_truck" => (cx + hl * 0.52, cx - hl * 0.50, 16.5 * s, WheelStyle::RallyGravel),
-        "offroad_subaru_ice_racer" => (cx + hl * 0.50, cx - hl * 0.48, 13.0 * s, WheelStyle::StuddedIce),
-        "offroad_mega_mud_truck" => (cx + hl * 0.52, cx - hl * 0.50, 19.0 * s, WheelStyle::MudTractorChevron),
-        "offroad_grave_crusher" => (cx + hl * 0.54, cx - hl * 0.50, 24.0 * s, WheelStyle::MonsterJam66),
+        "offroad_sand_rail_buggy" | "offroad_polaris_rzr_pro_r" | "offroad_vw_sand_rail" => {
+            (cx + hl * 0.52, cx - hl * 0.48, 14.5 * s, WheelStyle::RallyGravel)
+        }
+        "offroad_baja_trophy_truck" | "offroad_bettantown_trophy_truck" | "offroad_mason_awd_truck" => {
+            (cx + hl * 0.52, cx - hl * 0.50, 16.5 * s, WheelStyle::RallyGravel)
+        }
+        "offroad_subaru_ice_racer" | "offroad_audi_quattro_ice" | "offroad_lancer_evo_ice" => {
+            (cx + hl * 0.50, cx - hl * 0.48, 13.0 * s, WheelStyle::StuddedIce)
+        }
+        "offroad_mega_mud_truck" | "offroad_chevy_k30_mud_bogger" | "offroad_ford_f250_high_riser" => {
+            (cx + hl * 0.52, cx - hl * 0.50, 19.0 * s, WheelStyle::MudTractorChevron)
+        }
+        "offroad_grave_crusher" | "offroad_max_d_monster" | "offroad_bigfoot_crusher" => {
+            (cx + hl * 0.54, cx - hl * 0.50, 24.0 * s, WheelStyle::MonsterJam66)
+        }
 
         // Karting
-        "kart_crg_hero_60" => (cx + hl * 0.42, cx - hl * 0.42, 8.5 * s, WheelStyle::KartSmall),
-        "kart_tony_kart_racer_ok" => (cx + hl * 0.45, cx - hl * 0.45, 9.2 * s, WheelStyle::KartSmall),
-        "kart_birel_art_kz2" => (cx + hl * 0.45, cx - hl * 0.45, 9.5 * s, WheelStyle::KartSmall),
-        "kart_honda_mean_mower" => (cx + hl * 0.45, cx - hl * 0.45, 11.0 * s, WheelStyle::LawnmowerTurf),
-        "kart_anderson_cs250" => (cx + hl * 0.48, cx - hl * 0.48, 10.0 * s, WheelStyle::KartSmall),
+        "kart_crg_hero_60" | "kart_birel_c28" | "kart_tony_kart_neos" => {
+            (cx + hl * 0.42, cx - hl * 0.42, 8.5 * s, WheelStyle::KartSmall)
+        }
+        "kart_tony_kart_racer_ok" | "kart_crg_kt2_ok" | "kart_birel_ry30_ok" => {
+            (cx + hl * 0.45, cx - hl * 0.45, 9.2 * s, WheelStyle::KartSmall)
+        }
+        "kart_birel_art_kz2" | "kart_crg_road_rebel_kz" | "kart_tony_kart_racer_kz" => {
+            (cx + hl * 0.45, cx - hl * 0.45, 9.5 * s, WheelStyle::KartSmall)
+        }
+        "kart_honda_mean_mower" | "kart_john_deere_racing_mower" | "kart_viking_t6_tractor" => {
+            (cx + hl * 0.45, cx - hl * 0.45, 11.0 * s, WheelStyle::LawnmowerTurf)
+        }
+        "kart_anderson_cs250" | "kart_ms_superkart_250" | "kart_viper_250_twin" => {
+            (cx + hl * 0.48, cx - hl * 0.48, 10.0 * s, WheelStyle::KartSmall)
+        }
 
         // Fallback F1 / Open-Wheel
         "f1_open_wheel" => (cx + hl * 0.58, cx - hl * 0.52, 13.5 * s, WheelStyle::CenterlockAero),
@@ -384,31 +418,70 @@ fn render_specific_body(
         // --- NASCAR Stock Cars ---
         "nascar_monte_carlo_ss" => render_nascar_monte_carlo(cx, cy, gy, hl, s, primary, secondary, helmet),
         "nascar_mustang_street_stock" => render_nascar_mustang_ss(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_dodge_dart_street_stock" => render_nascar_dodge_dart_ss(cx, cy, gy, hl, s, primary, secondary, helmet),
         "nascar_super_late_model" => render_nascar_late_model(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_mustang_super_late_model" => render_nascar_mustang_late_model(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_late_model_stock_car" => render_nascar_perimeter_late_model(cx, cy, gy, hl, s, primary, secondary, helmet),
         "nascar_arca_chevy_ss" => render_nascar_arca(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_toyota_camry_arca" => render_nascar_camry_arca(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_ford_fusion_arca" => render_nascar_fusion_arca(cx, cy, gy, hl, s, primary, secondary, helmet),
         "nascar_silverado_truck" => render_nascar_truck(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_f150_truck" => render_nascar_f150_truck(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_tundra_truck" => render_nascar_tundra_truck(cx, cy, gy, hl, s, primary, secondary, helmet),
         "nascar_corvette_ta1" => render_nascar_corvette_ta1(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_mustang_ta1" => render_nascar_mustang_ta1(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "nascar_challenger_ta1" => render_nascar_challenger_ta1(cx, cy, gy, hl, s, primary, secondary, helmet),
 
         // --- Rallycross & All-Terrain ---
         "rally_peugeot_208_rally4" => render_rally_peugeot_208(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_fiesta_rally4" => render_rally_fiesta_rally4(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_clio_rally4" => render_rally_clio_rally4(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_hyundai_i20_rx" => render_rally_hyundai_rx(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_polo_rx" => render_rally_polo_rx(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_audi_s1_rx" => render_rally_audi_s1_rx(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_audi_sport_quattro_s1" => render_rally_audi_quattro_s1(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_peugeot_205_t16" => render_rally_peugeot_205_t16(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_lancia_delta_s4" => render_rally_lancia_delta_s4(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_toyota_hilux_t1_plus" => render_rally_hilux_t1(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_audi_rs_q_etron" => render_rally_audi_rs_q_etron(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_prodrive_hunter_t1" => render_rally_prodrive_hunter(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_sst_super_truck" => render_rally_sst_truck(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_sst_robby_gordon" => render_rally_sst_robby_gordon(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_sst_traxxas_edition" => render_rally_sst_traxxas(cx, cy, gy, hl, s, primary, secondary, helmet),
 
         // --- Extreme Off-Road ---
         "offroad_sand_rail_buggy" => render_offroad_sand_rail(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_polaris_rzr_pro_r" => render_offroad_polaris_rzr(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_vw_sand_rail" => render_offroad_vw_baja_buggy(cx, cy, gy, hl, s, primary, secondary, helmet),
         "offroad_baja_trophy_truck" => render_offroad_trophy_truck(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_bettantown_trophy_truck" => render_offroad_bettantown_truck(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_mason_awd_truck" => render_offroad_mason_truck(cx, cy, gy, hl, s, primary, secondary, helmet),
         "offroad_subaru_ice_racer" => render_offroad_subaru_ice(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_audi_quattro_ice" => render_offroad_audi_ice(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_lancer_evo_ice" => render_offroad_lancer_ice(cx, cy, gy, hl, s, primary, secondary, helmet),
         "offroad_mega_mud_truck" => render_offroad_mud_truck(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_chevy_k30_mud_bogger" => render_offroad_chevy_k30_bogger(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_ford_f250_high_riser" => render_offroad_ford_f250_riser(cx, cy, gy, hl, s, primary, secondary, helmet),
         "offroad_grave_crusher" => render_offroad_monster_jam(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_max_d_monster" => render_offroad_max_d(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "offroad_bigfoot_crusher" => render_offroad_bigfoot(cx, cy, gy, hl, s, primary, secondary, helmet),
 
         // --- Karting ---
         "kart_crg_hero_60" => render_kart_cadet_60(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_birel_c28" => render_kart_birel_c28(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_tony_kart_neos" => render_kart_tony_neos(cx, cy, gy, hl, s, primary, secondary, helmet),
         "kart_tony_kart_racer_ok" => render_kart_tony_ok(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_crg_kt2_ok" => render_kart_crg_kt2(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_birel_ry30_ok" => render_kart_birel_ry30(cx, cy, gy, hl, s, primary, secondary, helmet),
         "kart_birel_art_kz2" => render_kart_birel_kz2(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_crg_road_rebel_kz" => render_kart_crg_road_rebel(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_tony_kart_racer_kz" => render_kart_tony_kz(cx, cy, gy, hl, s, primary, secondary, helmet),
         "kart_honda_mean_mower" => render_kart_mean_mower(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_john_deere_racing_mower" => render_kart_john_deere_mower(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_viking_t6_tractor" => render_kart_viking_tractor(cx, cy, gy, hl, s, primary, secondary, helmet),
         "kart_anderson_cs250" => render_kart_superkart_250(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_ms_superkart_250" => render_kart_ms_superkart(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "kart_viper_250_twin" => render_kart_viper_superkart(cx, cy, gy, hl, s, primary, secondary, helmet),
 
         // Fallback F1
         _ => render_lateral_f1(cx, cy, gy, hl, s, primary, secondary, helmet),
@@ -945,12 +1018,32 @@ fn render_nascar_mustang_ss(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary:
     draw_circle(cx - hl * 0.05, cy - 7.0 * s, 4.2 * s, helmet);
 }
 
+fn render_nascar_dodge_dart_ss(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.92;
+    let tail_x = cx - hl * 0.90;
+    let sill_y = gy - 7.0 * s;
+    let belt_y = cy + 1.0 * s;
+    let roof_y = cy - 18.0 * s;
+
+    // Classic 1970s Mopar A-body notchback profile
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 7.0 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.44, belt_y), Vec2::new(cx - hl * 0.50, belt_y), primary);
+    draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.09, sill_y - belt_y, primary);
+
+    // Front hood scoop & classic bumblebee tail stripe
+    draw_rectangle(cx + hl * 0.20, belt_y - 3.0 * s, 10.0 * s, 3.0 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_rectangle(tail_x + 8.0 * s, belt_y - 2.0 * s, 8.0 * s, sill_y - belt_y + 4.0 * s, secondary);
+
+    draw_triangle(Vec2::new(cx + hl * 0.35, belt_y), Vec2::new(cx + hl * 0.16, roof_y), Vec2::new(cx - hl * 0.22, roof_y), Color::new(0.12, 0.15, 0.20, 0.85));
+    draw_rectangle(cx - hl * 0.22, roof_y, 24.0 * s, belt_y - roof_y, Color::new(0.12, 0.15, 0.20, 0.85));
+    draw_circle(cx - hl * 0.05, cy - 7.0 * s, 4.2 * s, helmet);
+}
+
 fn render_nascar_late_model(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
     let nose_x = cx + hl * 0.96;
     let tail_x = cx - hl * 0.90;
     let sill_y = gy - 6.5 * s;
     let belt_y = cy + 1.0 * s;
-    let _roof_y = cy - 18.0 * s;
 
     // Asymmetric wedge nose & high quarter panels
     draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
@@ -964,8 +1057,62 @@ fn render_nascar_late_model(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary:
     draw_rectangle(cx - hl * 0.12, belt_y + 1.0 * s, 18.0 * s, 14.0 * s, secondary);
 }
 
+fn render_nascar_mustang_late_model(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.96;
+    let tail_x = cx - hl * 0.90;
+    let sill_y = gy - 6.5 * s;
+    let belt_y = cy + 1.0 * s;
+
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.50, belt_y), Vec2::new(cx - hl * 0.55, belt_y), primary);
+    draw_rectangle(cx - hl * 0.70, belt_y, hl * 1.20, sill_y - belt_y, primary);
+
+    // Front carbon splitter & double rear blade spoiler
+    draw_rectangle(nose_x - 10.0 * s, sill_y + 4.0 * s, 14.0 * s, 2.5 * s, Color::new(0.08, 0.08, 0.10, 1.0));
+    draw_line(tail_x + 2.0 * s, belt_y, tail_x - 8.0 * s, belt_y - 14.0 * s, 3.2 * s, secondary);
+
+    draw_circle(cx - hl * 0.05, cy - 7.0 * s, 4.2 * s, helmet);
+    draw_rectangle(cx - hl * 0.12, belt_y + 1.0 * s, 18.0 * s, 14.0 * s, secondary);
+}
+
+fn render_nascar_perimeter_late_model(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.95;
+    let tail_x = cx - hl * 0.89;
+    let sill_y = gy - 6.5 * s;
+    let belt_y = cy + 1.0 * s;
+
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.46, belt_y), Vec2::new(cx - hl * 0.52, belt_y), primary);
+    draw_rectangle(cx - hl * 0.68, belt_y, hl * 1.14, sill_y - belt_y, primary);
+
+    // Yellow tubular perimeter chassis bars along roof
+    draw_line(cx + hl * 0.18, cy - 18.0 * s, cx - hl * 0.22, cy - 18.0 * s, 2.5 * s, Palette::NEON_GOLD);
+    draw_line(tail_x + 2.0 * s, belt_y, tail_x - 5.0 * s, belt_y - 11.0 * s, 2.8 * s, Color::new(0.08, 0.08, 0.10, 1.0));
+
+    draw_circle(cx - hl * 0.05, cy - 7.0 * s, 4.2 * s, helmet);
+    draw_rectangle(cx - hl * 0.12, belt_y + 1.0 * s, 18.0 * s, 14.0 * s, secondary);
+}
+
 fn render_nascar_arca(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
     render_lateral_stock_car(cx, cy, gy, hl, s, primary, secondary, helmet);
+}
+
+fn render_nascar_camry_arca(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_stock_car(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Trapezoidal front nose graphic & TRD red side stripe
+    let nose_x = cx + hl * 0.94;
+    let sill_y = gy - 6.5 * s;
+    draw_triangle(Vec2::new(nose_x, sill_y + 2.0 * s), Vec2::new(nose_x - 8.0 * s, sill_y - 6.0 * s), Vec2::new(nose_x - 8.0 * s, sill_y + 2.0 * s), Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_rectangle(cx - hl * 0.50, cy + 2.0 * s, hl * 0.80, 2.5 * s, secondary);
+}
+
+fn render_nascar_fusion_arca(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_stock_car(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Hexagonal front grille graphic & dual hood heat extractors
+    let nose_x = cx + hl * 0.94;
+    let sill_y = gy - 6.5 * s;
+    draw_rectangle(nose_x - 6.0 * s, sill_y - 4.0 * s, 5.0 * s, 5.0 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_line(cx + hl * 0.30, cy + 1.0 * s, cx + hl * 0.15, cy + 1.0 * s, 2.0 * s, secondary);
 }
 
 fn render_nascar_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
@@ -991,6 +1138,24 @@ fn render_nascar_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Colo
     draw_line(tail_x + 2.0 * s, belt_y, tail_x - 5.0 * s, belt_y - 10.0 * s, 3.0 * s, secondary);
 }
 
+fn render_nascar_f150_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_nascar_truck(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // C-clamp LED headlights & Ford Blue Oval accent
+    let nose_x = cx + hl * 0.94;
+    let sill_y = gy - 6.8 * s;
+    draw_line(nose_x - 3.0 * s, sill_y - 4.0 * s, nose_x - 1.0 * s, sill_y + 2.0 * s, 2.5 * s, Palette::WHITE);
+    draw_circle(nose_x - 8.0 * s, sill_y + 1.0 * s, 2.5 * s, Color::new(0.10, 0.35, 0.85, 1.0));
+}
+
+fn render_nascar_tundra_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_nascar_truck(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Bold hexagonal grille & red TRD side decals
+    let nose_x = cx + hl * 0.94;
+    let sill_y = gy - 6.8 * s;
+    draw_rectangle(nose_x - 6.0 * s, sill_y - 3.0 * s, 5.0 * s, 6.0 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_rectangle(cx - hl * 0.40, cy + 2.0 * s, 20.0 * s, 2.5 * s, Palette::RED);
+}
+
 fn render_nascar_corvette_ta1(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
     let nose_x = cx + hl * 0.98;
     let tail_x = cx - hl * 0.90;
@@ -1012,9 +1177,48 @@ fn render_nascar_corvette_ta1(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primar
     draw_rectangle(wing_x - 12.0 * s, roof_y - 4.0 * s, 24.0 * s, 3.5 * s, secondary);
 }
 
-// =========================================================================
-// RALLYCROSS & ALL-TERRAIN IMPLEMENTATIONS
-// =========================================================================
+fn render_nascar_mustang_ta1(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.97;
+    let tail_x = cx - hl * 0.91;
+    let sill_y = gy - 6.0 * s;
+    let belt_y = cy + 2.0 * s;
+    let roof_y = cy - 17.5 * s;
+
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.0 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.50, belt_y), Vec2::new(cx - hl * 0.52, belt_y), primary);
+    draw_rectangle(cx - hl * 0.68, belt_y, hl * 1.18, sill_y - belt_y, primary);
+
+    // Large hood cowl induction bulge & side boom-tube exhaust
+    draw_rectangle(cx + hl * 0.15, belt_y - 3.0 * s, 18.0 * s, 3.5 * s, secondary);
+    draw_rectangle(cx - hl * 0.35, sill_y + 2.0 * s, 10.0 * s, 3.0 * s, Color::new(0.40, 0.42, 0.46, 1.0));
+    draw_circle(cx - hl * 0.05, cy - 6.5 * s, 4.2 * s, helmet);
+
+    let wing_x = tail_x + 6.0 * s;
+    draw_line(wing_x, belt_y, wing_x, roof_y - 2.0 * s, 2.4 * s, Color::new(0.10, 0.10, 0.12, 1.0));
+    draw_rectangle(wing_x - 12.0 * s, roof_y - 4.0 * s, 24.0 * s, 3.5 * s, secondary);
+}
+
+fn render_nascar_challenger_ta1(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.96;
+    let tail_x = cx - hl * 0.92;
+    let sill_y = gy - 6.0 * s;
+    let belt_y = cy + 1.8 * s;
+    let roof_y = cy - 17.5 * s;
+
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.0 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.48, belt_y), Vec2::new(cx - hl * 0.54, belt_y), primary);
+    draw_rectangle(cx - hl * 0.70, belt_y, hl * 1.18, sill_y - belt_y, primary);
+
+    // Dual snorkel hood scoops & side exhaust
+    draw_rectangle(cx + hl * 0.22, belt_y - 2.5 * s, 8.0 * s, 2.5 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_rectangle(cx - hl * 0.35, sill_y + 2.0 * s, 10.0 * s, 3.0 * s, Color::new(0.40, 0.42, 0.46, 1.0));
+    draw_circle(cx - hl * 0.05, cy - 6.5 * s, 4.2 * s, helmet);
+
+    let wing_x = tail_x + 6.0 * s;
+    draw_line(wing_x, belt_y, wing_x, roof_y - 2.0 * s, 2.4 * s, Color::new(0.10, 0.10, 0.12, 1.0));
+    draw_rectangle(wing_x - 12.0 * s, roof_y - 4.0 * s, 24.0 * s, 3.5 * s, secondary);
+}
+
 fn render_rally_peugeot_208(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
     render_lateral_rally(cx, cy, gy, hl, s, primary, secondary, helmet);
     // Peugeot "fang" front LED light
@@ -1029,6 +1233,41 @@ fn render_rally_hyundai_rx(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: 
     let tail_x = cx - hl * 0.84;
     let roof_y = cy - 20.0 * s;
     draw_rectangle(tail_x - 10.0 * s, roof_y - 4.0 * s, 12.0 * s, 2.0 * s, secondary);
+}
+
+fn render_rally_fiesta_rally4(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_rally(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // M-Sport angular front styling & RS roof wing
+    let nose_x = cx + hl * 0.88;
+    let sill_y = gy - 7.5 * s;
+    draw_line(nose_x - 6.0 * s, sill_y - 3.0 * s, nose_x - 1.0 * s, sill_y, 2.0 * s, Palette::WHITE);
+    draw_rectangle(cx - hl * 0.40, cy + 2.0 * s, hl * 0.70, 2.2 * s, secondary);
+}
+
+fn render_rally_clio_rally4(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_rally(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Renault C-shape LED lights & Renault Sport yellow accents
+    let nose_x = cx + hl * 0.88;
+    let sill_y = gy - 7.5 * s;
+    draw_circle_lines(nose_x - 4.0 * s, sill_y - 1.0 * s, 3.0 * s, 1.5 * s, Palette::NEON_GOLD);
+    draw_rectangle(tail_x_val(cx, hl) + 6.0 * s, sill_y + 1.0 * s, hl * 0.90, 2.0 * s, secondary);
+}
+
+fn render_rally_polo_rx(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_rally(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Large front intercooler & dual roof NACA ducts
+    let nose_x = cx + hl * 0.88;
+    let sill_y = gy - 7.5 * s;
+    draw_rectangle(nose_x - 10.0 * s, sill_y + 1.0 * s, 8.0 * s, 4.0 * s, Color::new(0.60, 0.62, 0.66, 1.0));
+}
+
+fn render_rally_audi_s1_rx(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_rally(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Blistered quattro box arches & red/black EKS livery
+    let tail_x = cx - hl * 0.84;
+    let roof_y = cy - 20.0 * s;
+    draw_rectangle(tail_x - 12.0 * s, roof_y - 5.0 * s, 14.0 * s, 2.5 * s, secondary);
+    draw_rectangle(cx - hl * 0.30, cy + 2.0 * s, hl * 0.60, 3.0 * s, Palette::RED);
 }
 
 fn render_rally_audi_quattro_s1(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
@@ -1056,23 +1295,238 @@ fn render_rally_audi_quattro_s1(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, prim
     draw_rectangle(tail_x - 14.0 * s, roof_y - 4.0 * s, 16.0 * s, 2.5 * s, secondary);
 }
 
+fn render_rally_peugeot_205_t16(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, _secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.90;
+    let tail_x = cx - hl * 0.86;
+    let sill_y = gy - 7.5 * s;
+    let belt_y = cy + 1.5 * s;
+    let roof_y = cy - 18.5 * s;
+
+    // Iconic Group B mid-engine rear clamshell
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.44, belt_y), Vec2::new(cx - hl * 0.48, belt_y), primary);
+    draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.09, sill_y - belt_y, primary);
+
+    // Peugeot Talbot Sport tricolor stripes (Blue, Yellow, Red)
+    draw_rectangle(tail_x + 8.0 * s, belt_y - 2.0 * s, (nose_x - tail_x) - 16.0 * s, 1.5 * s, Color::new(0.15, 0.55, 0.95, 1.0));
+    draw_rectangle(tail_x + 8.0 * s, belt_y - 0.5 * s, (nose_x - tail_x) - 16.0 * s, 1.5 * s, Palette::NEON_GOLD);
+    draw_rectangle(tail_x + 8.0 * s, belt_y + 1.0 * s, (nose_x - tail_x) - 16.0 * s, 1.5 * s, Palette::RED);
+
+    draw_circle(cx - hl * 0.05, cy - 7.0 * s, 4.2 * s, helmet);
+
+    // Massive Evo 2 high rear wing
+    draw_line(tail_x, roof_y + 2.0 * s, tail_x - 6.0 * s, roof_y - 8.0 * s, 2.5 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_rectangle(tail_x - 14.0 * s, roof_y - 10.0 * s, 18.0 * s, 3.2 * s, primary);
+}
+
+fn render_rally_lancia_delta_s4(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, _secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.90;
+    let tail_x = cx - hl * 0.88;
+    let sill_y = gy - 7.5 * s;
+    let belt_y = cy + 1.5 * s;
+    let roof_y = cy - 19.0 * s;
+
+    // Twincharged Group B monster with roof scoop and rear wing
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.44, belt_y), Vec2::new(cx - hl * 0.52, belt_y), primary);
+    draw_rectangle(cx - hl * 0.68, belt_y, hl * 1.12, sill_y - belt_y, primary);
+
+    // Martini racing stripes
+    draw_rectangle(tail_x + 8.0 * s, belt_y - 2.0 * s, (nose_x - tail_x) - 16.0 * s, 2.0 * s, Color::new(0.15, 0.65, 0.95, 1.0));
+    draw_rectangle(tail_x + 8.0 * s, belt_y, (nose_x - tail_x) - 16.0 * s, 2.0 * s, Palette::RED);
+    draw_rectangle(tail_x + 8.0 * s, belt_y + 2.0 * s, (nose_x - tail_x) - 16.0 * s, 2.0 * s, Color::new(0.08, 0.15, 0.45, 1.0));
+
+    // High roof intercooler scoop
+    draw_triangle(Vec2::new(cx - hl * 0.10, roof_y - 5.0 * s), Vec2::new(cx + hl * 0.05, roof_y), Vec2::new(cx - hl * 0.20, roof_y), Color::new(0.12, 0.12, 0.15, 1.0));
+
+    draw_circle(cx - hl * 0.05, cy - 7.0 * s, 4.2 * s, helmet);
+
+    let wing_x = tail_x + 2.0 * s;
+    draw_line(wing_x, belt_y, wing_x - 4.0 * s, roof_y - 4.0 * s, 2.2 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_rectangle(wing_x - 12.0 * s, roof_y - 6.0 * s, 16.0 * s, 3.0 * s, primary);
+}
+
 fn render_rally_hilux_t1(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, _secondary: Color, helmet: Color) {
     let nose_x = cx + hl * 0.94;
     let tail_x = cx - hl * 0.92;
     let sill_y = gy - 12.0 * s; // High Dakar clearance!
     let belt_y = cy - 2.0 * s;
-    let roof_y = cy - 22.0 * s;
+    let _roof_y = cy - 22.0 * s;
 
     draw_rectangle(tail_x, sill_y, nose_x - tail_x, 8.0 * s, primary);
     draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.45, belt_y), Vec2::new(cx - hl * 0.45, belt_y), primary);
     draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.10, sill_y - belt_y, primary);
 
     // Snorkel air intake running up A-pillar
-    draw_line(cx + hl * 0.35, sill_y, cx + hl * 0.15, roof_y - 2.0 * s, 2.5 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_line(cx + hl * 0.35, sill_y, cx + hl * 0.15, cy - 24.0 * s, 2.5 * s, Color::new(0.12, 0.12, 0.15, 1.0));
 
     // Spare tires visible in rear bed
     draw_circle(cx - hl * 0.40, belt_y + 2.0 * s, 8.0 * s, Color::new(0.12, 0.14, 0.18, 1.0));
     draw_circle(cx - hl * 0.05, cy - 9.0 * s, 4.4 * s, helmet);
+}
+
+fn render_rally_audi_rs_q_etron(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.94;
+    let tail_x = cx - hl * 0.92;
+    let sill_y = gy - 12.0 * s;
+    let belt_y = cy - 2.0 * s;
+    let roof_y = cy - 22.0 * s;
+
+    // Futuristic Dakar prototype with central dorsal fin
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 8.0 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.45, belt_y), Vec2::new(cx - hl * 0.50, belt_y), primary);
+    draw_rectangle(cx - hl * 0.70, belt_y, hl * 1.15, sill_y - belt_y, primary);
+
+    // Central roof dorsal fin & neon orange high-voltage accents
+    draw_triangle(Vec2::new(cx + hl * 0.05, roof_y), Vec2::new(cx - hl * 0.45, roof_y - 3.0 * s), Vec2::new(cx - hl * 0.45, belt_y), secondary);
+    draw_line(nose_x - 8.0 * s, belt_y + 2.0 * s, nose_x, belt_y + 2.0 * s, 2.5 * s, Palette::NEON_ORANGE);
+
+    draw_circle(cx - hl * 0.05, cy - 9.0 * s, 4.4 * s, helmet);
+}
+
+fn render_rally_prodrive_hunter(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.94;
+    let tail_x = cx - hl * 0.92;
+    let sill_y = gy - 12.0 * s;
+    let belt_y = cy - 2.0 * s;
+
+    // Sculpted aerodynamic body designed by Ian Callum
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 8.0 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.48, belt_y), Vec2::new(cx - hl * 0.50, belt_y), primary);
+    draw_rectangle(cx - hl * 0.68, belt_y, hl * 1.16, sill_y - belt_y, primary);
+
+    // Red Bull / Bahrain Raid Xtreme graphics
+    draw_rectangle(tail_x + 10.0 * s, belt_y - 2.0 * s, (nose_x - tail_x) - 20.0 * s, 3.5 * s, secondary);
+    draw_circle(cx - hl * 0.35, belt_y + 2.0 * s, 8.0 * s, Color::new(0.12, 0.14, 0.18, 1.0));
+    draw_circle(cx - hl * 0.05, cy - 9.0 * s, 4.4 * s, helmet);
+}
+
+fn render_offroad_sand_rail(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_sand_rail(cx, cy, gy, hl, s, primary, secondary, helmet);
+}
+
+fn render_offroad_polaris_rzr(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.88;
+    let tail_x = cx - hl * 0.84;
+    let sill_y = gy - 10.0 * s;
+    let cage_roof_y = cy - 21.0 * s;
+
+    // Angular modern factory UTV spaceframe
+    draw_line(nose_x, sill_y, cx - hl * 0.40, sill_y, 3.0 * s, primary);
+    draw_line(cx + hl * 0.30, sill_y, cx + hl * 0.08, cage_roof_y, 2.5 * s, primary);
+    draw_line(cx + hl * 0.08, cage_roof_y, cx - hl * 0.35, cage_roof_y, 2.5 * s, primary);
+    draw_line(cx - hl * 0.35, cage_roof_y, tail_x, sill_y, 2.5 * s, primary);
+
+    // Front high LED blade bar & beadlock colors
+    draw_rectangle(nose_x - 8.0 * s, sill_y - 4.0 * s, 8.0 * s, 2.5 * s, Palette::WHITE);
+    draw_rectangle(cx - hl * 0.05, cage_roof_y - 3.0 * s, 14.0 * s, 2.5 * s, secondary);
+
+    draw_circle(cx - hl * 0.05, cy - 8.5 * s, 4.4 * s, helmet);
+}
+
+fn render_offroad_vw_baja_buggy(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.86;
+    let tail_x = cx - hl * 0.82;
+    let sill_y = gy - 8.5 * s;
+    let roof_y = cy - 18.0 * s;
+
+    // Rounded classic Beetle bubble roof and exposed rear flat-4 stinger exhaust
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.0 * s, primary);
+    draw_circle(cx - hl * 0.05, roof_y + 4.0 * s, 16.0 * s, primary);
+
+    // Exposed chrome rear stinger exhaust pipe
+    draw_line(tail_x, sill_y, tail_x - 12.0 * s, sill_y - 12.0 * s, 2.5 * s, Color::new(0.85, 0.88, 0.92, 1.0));
+
+    // Vintage round front headlights
+    draw_circle(nose_x - 4.0 * s, sill_y - 4.0 * s, 3.5 * s, Palette::NEON_GOLD);
+
+    draw_circle(cx - hl * 0.05, cy - 7.0 * s, 4.2 * s, helmet);
+    draw_rectangle(cx - hl * 0.20, sill_y - 2.0 * s, 24.0 * s, 3.0 * s, secondary);
+}
+
+fn render_offroad_subaru_ice(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.92;
+    let tail_x = cx - hl * 0.88;
+    let sill_y = gy - 7.0 * s;
+    let belt_y = cy + 1.2 * s;
+    let roof_y = cy - 18.0 * s;
+
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.46, belt_y), Vec2::new(cx - hl * 0.50, belt_y), primary);
+    draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.11, sill_y - belt_y, primary);
+
+    // Subaru iconic gold STI side graphic
+    draw_rectangle(tail_x + 10.0 * s, belt_y - 2.0 * s, (nose_x - tail_x) - 20.0 * s, 3.0 * s, secondary);
+    // Roof air vent scoop
+    draw_triangle(Vec2::new(cx - hl * 0.05, roof_y - 4.0 * s), Vec2::new(cx + hl * 0.08, roof_y - 1.0 * s), Vec2::new(cx - hl * 0.12, roof_y - 1.0 * s), primary);
+
+    draw_circle(cx - hl * 0.05, cy - 6.5 * s, 4.2 * s, helmet);
+
+    // Iconic tall STI rear wing
+    let wing_x = tail_x + 4.0 * s;
+    draw_line(wing_x, belt_y, wing_x, roof_y + 1.0 * s, 2.2 * s, primary);
+    draw_rectangle(wing_x - 8.0 * s, roof_y, 18.0 * s, 3.0 * s, secondary);
+}
+
+fn render_offroad_audi_ice(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.90;
+    let tail_x = cx - hl * 0.86;
+    let sill_y = gy - 7.5 * s;
+    let belt_y = cy + 1.5 * s;
+    let _roof_y = cy - 18.5 * s;
+
+    // Classic 1980s angular Audi quattro box flares on studded ice tires
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.44, belt_y), Vec2::new(cx - hl * 0.48, belt_y), primary);
+    draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.09, sill_y - belt_y, primary);
+
+    // Front bumper yellow fog lamp pods
+    draw_circle(nose_x - 3.0 * s, sill_y - 3.0 * s, 3.5 * s, Palette::NEON_GOLD);
+
+    draw_rectangle(tail_x + 8.0 * s, belt_y - 2.0 * s, (nose_x - tail_x) - 16.0 * s, 3.0 * s, secondary);
+    draw_circle(cx - hl * 0.05, cy - 6.5 * s, 4.2 * s, helmet);
+}
+
+fn render_offroad_lancer_ice(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.92;
+    let tail_x = cx - hl * 0.88;
+    let sill_y = gy - 7.0 * s;
+    let belt_y = cy + 1.2 * s;
+    let roof_y = cy - 18.0 * s;
+
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
+    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.46, belt_y), Vec2::new(cx - hl * 0.50, belt_y), primary);
+    draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.11, sill_y - belt_y, primary);
+
+    // Ralliart red/black splash graphics & roof vortex generator teeth
+    draw_triangle(Vec2::new(tail_x + 10.0 * s, belt_y), Vec2::new(tail_x + 30.0 * s, sill_y), Vec2::new(tail_x + 10.0 * s, sill_y), Palette::RED);
+    for i in 0..4 {
+        draw_rectangle(cx - hl * 0.15 + (i as f32) * 4.0 * s, roof_y - 2.0 * s, 1.5 * s, 2.0 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    }
+
+    draw_circle(cx - hl * 0.05, cy - 6.5 * s, 4.2 * s, helmet);
+
+    let wing_x = tail_x + 4.0 * s;
+    draw_line(wing_x, belt_y, wing_x, roof_y + 1.0 * s, 2.2 * s, primary);
+    draw_rectangle(wing_x - 8.0 * s, roof_y, 18.0 * s, 3.0 * s, secondary);
+}
+
+fn render_offroad_chevy_k30_bogger(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.92;
+    let tail_x = cx - hl * 0.90;
+    let sill_y = gy - 16.0 * s;
+    let belt_y = cy - 6.0 * s;
+    let roof_y = cy - 26.0 * s;
+
+    // 1970s Squarebody pickup on monster lift kit
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 8.0 * s, primary);
+    draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.10, sill_y - belt_y, primary);
+
+    // Dual vertical chrome exhaust stacks behind cab
+    draw_line(cx - hl * 0.20, belt_y, cx - hl * 0.20, roof_y - 6.0 * s, 3.5 * s, Color::new(0.85, 0.88, 0.92, 1.0));
+
+    draw_circle(cx - hl * 0.08, cy - 12.0 * s, 4.4 * s, helmet);
+    draw_rectangle(tail_x + 10.0 * s, belt_y - 2.0 * s, (nose_x - tail_x) - 20.0 * s, 3.0 * s, secondary);
 }
 
 fn render_rally_sst_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
@@ -1080,7 +1534,6 @@ fn render_rally_sst_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: C
     let tail_x = cx - hl * 0.88;
     let sill_y = gy - 11.0 * s;
     let belt_y = cy - 1.0 * s;
-    let _roof_y = cy - 21.0 * s;
 
     draw_rectangle(tail_x, sill_y, nose_x - tail_x, 7.0 * s, primary);
     draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.45, belt_y), Vec2::new(cx - hl * 0.45, belt_y), primary);
@@ -1092,11 +1545,17 @@ fn render_rally_sst_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: C
     draw_circle(cx - hl * 0.05, cy - 8.5 * s, 4.4 * s, helmet);
 }
 
-// =========================================================================
-// EXTREME OFF-ROAD IMPLEMENTATIONS
-// =========================================================================
-fn render_offroad_sand_rail(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, _secondary: Color, helmet: Color) {
-    render_lateral_sand_rail(cx, cy, gy, hl, s, primary, _secondary, helmet);
+fn render_rally_sst_robby_gordon(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, _secondary: Color, helmet: Color) {
+    render_rally_sst_truck(cx, cy, gy, hl, s, primary, Palette::NEON_GREEN, helmet);
+    // Speed Energy neon green roof light pod
+    let roof_y = cy - 21.0 * s;
+    draw_rectangle(cx - hl * 0.05, roof_y - 4.0 * s, 14.0 * s, 3.0 * s, Palette::NEON_GREEN);
+}
+
+fn render_rally_sst_traxxas(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_rally_sst_truck(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Traxxas Slash splash graphic
+    draw_triangle(Vec2::new(cx - hl * 0.20, cy - 2.0 * s), Vec2::new(cx + hl * 0.15, cy + 4.0 * s), Vec2::new(cx - hl * 0.40, cy + 4.0 * s), Palette::NEON_CYAN);
 }
 
 fn render_offroad_trophy_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, _secondary: Color, helmet: Color) {
@@ -1123,28 +1582,20 @@ fn render_offroad_trophy_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, prima
     draw_circle(cx - hl * 0.05, cy - 10.0 * s, 4.4 * s, helmet);
 }
 
-fn render_offroad_subaru_ice(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
-    let nose_x = cx + hl * 0.92;
-    let tail_x = cx - hl * 0.88;
-    let sill_y = gy - 7.0 * s;
-    let belt_y = cy + 1.2 * s;
-    let roof_y = cy - 18.0 * s;
+fn render_offroad_bettantown_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_offroad_trophy_truck(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Quad roof pod lights
+    let roof_y = cy - 23.0 * s;
+    for i in 0..4 {
+        draw_circle(cx - hl * 0.08 + (i as f32) * 5.0 * s, roof_y - 4.0 * s, 2.2 * s, Palette::NEON_GOLD);
+    }
+}
 
-    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 6.5 * s, primary);
-    draw_triangle(Vec2::new(nose_x, sill_y), Vec2::new(cx + hl * 0.46, belt_y), Vec2::new(cx - hl * 0.50, belt_y), primary);
-    draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.11, sill_y - belt_y, primary);
-
-    // Subaru iconic gold STI side graphic
-    draw_rectangle(tail_x + 10.0 * s, belt_y - 2.0 * s, (nose_x - tail_x) - 20.0 * s, 3.0 * s, secondary);
-    // Roof air vent scoop
-    draw_triangle(Vec2::new(cx - hl * 0.05, roof_y - 4.0 * s), Vec2::new(cx + hl * 0.08, roof_y - 1.0 * s), Vec2::new(cx - hl * 0.12, roof_y - 1.0 * s), primary);
-
-    draw_circle(cx - hl * 0.05, cy - 6.5 * s, 4.2 * s, helmet);
-
-    // Iconic tall STI rear wing
-    let wing_x = tail_x + 4.0 * s;
-    draw_line(wing_x, belt_y, wing_x, roof_y + 1.0 * s, 2.2 * s, primary);
-    draw_rectangle(wing_x - 8.0 * s, roof_y, 18.0 * s, 3.0 * s, primary);
+fn render_offroad_mason_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_offroad_trophy_truck(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Aggressive dual hood air extractors & Mason blue side graphic
+    draw_rectangle(cx + hl * 0.20, cy - 4.0 * s, 12.0 * s, 3.0 * s, Color::new(0.12, 0.12, 0.15, 1.0));
+    draw_rectangle(cx - hl * 0.45, cy - 1.0 * s, hl * 0.70, 3.0 * s, secondary);
 }
 
 fn render_offroad_mud_truck(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
@@ -1174,7 +1625,6 @@ fn render_offroad_monster_jam(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primar
     let tail_x = cx - hl * 0.86;
     let sill_y = gy - 20.0 * s; // Gargantuan 66" tire height!
     let belt_y = cy - 10.0 * s;
-    let _roof_y = cy - 28.0 * s;
 
     // 1950s Panel Van body on top of giant tubular chassis
     draw_rectangle(tail_x, sill_y, nose_x - tail_x, 9.0 * s, primary);
@@ -1192,9 +1642,60 @@ fn render_offroad_monster_jam(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primar
     draw_circle(cx, cy - 16.0 * s, 4.8 * s, helmet);
 }
 
-// =========================================================================
-// KARTING IMPLEMENTATIONS
-// =========================================================================
+fn render_offroad_ford_f250_riser(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_offroad_mud_truck(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Heavy duty front bull bar & dual steering stabilizers
+    let nose_x = cx + hl * 0.90;
+    let sill_y = gy - 16.0 * s;
+    draw_line(nose_x + 4.0 * s, sill_y + 8.0 * s, nose_x + 4.0 * s, sill_y - 6.0 * s, 3.5 * s, Color::new(0.85, 0.88, 0.92, 1.0));
+}
+
+fn render_offroad_max_d(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.88;
+    let tail_x = cx - hl * 0.86;
+    let sill_y = gy - 20.0 * s;
+    let belt_y = cy - 10.0 * s;
+    let roof_y = cy - 28.0 * s;
+
+    // Maximum Destruction futuristic silver armored body with roof spikes
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 9.0 * s, primary);
+    draw_rectangle(tail_x, belt_y, nose_x - tail_x, sill_y - belt_y, primary);
+
+    // Armored roof spikes
+    for i in 0..3 {
+        draw_triangle(
+            Vec2::new(cx - hl * 0.20 + (i as f32) * 8.0 * s, roof_y),
+            Vec2::new(cx - hl * 0.16 + (i as f32) * 8.0 * s, roof_y - 6.0 * s),
+            Vec2::new(cx - hl * 0.12 + (i as f32) * 8.0 * s, roof_y),
+            Color::new(0.85, 0.88, 0.92, 1.0),
+        );
+    }
+
+    draw_circle(cx, cy - 16.0 * s, 4.8 * s, helmet);
+    draw_rectangle(cx - hl * 0.30, belt_y + 2.0 * s, hl * 0.60, 3.5 * s, secondary);
+}
+
+fn render_offroad_bigfoot(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    let nose_x = cx + hl * 0.90;
+    let tail_x = cx - hl * 0.88;
+    let sill_y = gy - 20.0 * s;
+    let belt_y = cy - 10.0 * s;
+    let roof_y = cy - 28.0 * s;
+
+    // Bigfoot classic 1970s Ford F-250 pickup cab on 66" tires
+    draw_rectangle(tail_x, sill_y, nose_x - tail_x, 9.0 * s, primary);
+    draw_rectangle(cx - hl * 0.65, belt_y, hl * 1.10, sill_y - belt_y, primary);
+
+    // Chrome double roll bar in bed with 5 KC daylighter lights
+    draw_line(cx - hl * 0.25, belt_y, cx - hl * 0.25, roof_y - 4.0 * s, 3.5 * s, Color::new(0.85, 0.88, 0.92, 1.0));
+    for i in 0..5 {
+        draw_circle(cx - hl * 0.35 + (i as f32) * 4.0 * s, roof_y - 6.0 * s, 2.0 * s, Palette::NEON_GOLD);
+    }
+
+    draw_circle(cx - hl * 0.08, cy - 16.0 * s, 4.8 * s, helmet);
+    draw_rectangle(tail_x + 10.0 * s, belt_y - 2.0 * s, (nose_x - tail_x) - 20.0 * s, 3.5 * s, secondary);
+}
+
 fn render_kart_cadet_60(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
     render_lateral_kart(cx, cy, gy, hl, s, primary, secondary, helmet);
     // 60cc air-cooled cylinder head
@@ -1202,8 +1703,35 @@ fn render_kart_cadet_60(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Col
     draw_rectangle(cx - hl * 0.30, sill_y - 8.0 * s, 6.0 * s, 6.0 * s, Color::new(0.50, 0.52, 0.56, 1.0));
 }
 
+fn render_kart_birel_c28(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_kart(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Red/white Freeline bodywork & mini chain guard
+    let sill_y = gy - 4.5 * s;
+    draw_rectangle(cx - hl * 0.32, sill_y - 6.0 * s, 6.0 * s, 4.0 * s, Palette::RED);
+}
+
+fn render_kart_tony_neos(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_kart(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // OTK Green/White graphics & compact floor tray
+    let sill_y = gy - 4.5 * s;
+    draw_rectangle(cx - hl * 0.20, sill_y - 2.0 * s, hl * 0.40, 2.0 * s, Palette::NEON_GREEN);
+}
+
 fn render_kart_tony_ok(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
     render_lateral_kart(cx, cy, gy, hl, s, primary, secondary, helmet);
+}
+
+fn render_kart_crg_kt2(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_kart(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // CRG Black/Orange aero side pods
+    let sill_y = gy - 4.5 * s;
+    draw_rectangle(cx - hl * 0.25, sill_y - 4.0 * s, hl * 0.50, 4.0 * s, Palette::NEON_ORANGE);
+}
+
+fn render_kart_birel_ry30(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_lateral_kart(cx, cy, gy, hl, s, primary, secondary, helmet);
+    let sill_y = gy - 4.5 * s;
+    draw_rectangle(cx - hl * 0.25, sill_y - 4.0 * s, hl * 0.50, 4.0 * s, Palette::RED);
 }
 
 fn render_kart_birel_kz2(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
@@ -1214,11 +1742,24 @@ fn render_kart_birel_kz2(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Co
     draw_circle(cx + hl * 0.08, cy - 6.0 * s, 2.0 * s, Palette::RED);
 }
 
+fn render_kart_crg_road_rebel(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_kart_birel_kz2(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Gold magnesium components & shifter setup
+    let sill_y = gy - 4.5 * s;
+    draw_circle(cx - hl * 0.35, sill_y - 4.0 * s, 3.0 * s, Palette::NEON_GOLD);
+}
+
+fn render_kart_tony_kz(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_kart_birel_kz2(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // OTK Green shifter styling
+    let sill_y = gy - 4.5 * s;
+    draw_rectangle(cx - hl * 0.20, sill_y - 3.0 * s, hl * 0.40, 3.0 * s, Palette::NEON_GREEN);
+}
+
 fn render_kart_mean_mower(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, _secondary: Color, helmet: Color) {
     let nose_x = cx + hl * 0.85;
     let tail_x = cx - hl * 0.75;
     let sill_y = gy - 6.0 * s;
-    let _belt_y = cy + 1.0 * s;
     let hood_y = cy - 8.0 * s;
 
     // Lawn tractor front hood box
@@ -1234,6 +1775,19 @@ fn render_kart_mean_mower(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: C
 
     // Side grass discharge chute
     draw_rectangle(cx - hl * 0.10, sill_y + 1.0 * s, 14.0 * s, 3.5 * s, Color::new(0.08, 0.08, 0.10, 1.0));
+}
+
+fn render_kart_john_deere_mower(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_kart_mean_mower(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Classic John Deere yellow racing stripes
+    draw_rectangle(cx - hl * 0.05, cy - 4.0 * s, hl * 0.70, 2.5 * s, Palette::NEON_GOLD);
+}
+
+fn render_kart_viking_tractor(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_kart_mean_mower(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Viking metallic orange / grey styling & twin LED lights
+    let nose_x = cx + hl * 0.85;
+    draw_circle(nose_x - 4.0 * s, cy - 6.0 * s, 2.5 * s, Palette::NEON_CYAN);
 }
 
 fn render_kart_superkart_250(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
@@ -1256,6 +1810,25 @@ fn render_kart_superkart_250(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary
     let wing_x = tail_x + 5.0 * s;
     draw_line(wing_x, belt_y, wing_x, roof_y, 2.0 * s, Color::new(0.10, 0.10, 0.12, 1.0));
     draw_rectangle(wing_x - 10.0 * s, roof_y - 2.0 * s, 20.0 * s, 2.8 * s, secondary);
+}
+
+fn render_kart_ms_superkart(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_kart_superkart_250(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // MS Kart Red/White livery accent
+    draw_rectangle(cx - hl * 0.40, cy + 2.0 * s, hl * 0.60, 2.5 * s, Palette::RED);
+}
+
+fn render_kart_viper_superkart(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
+    render_kart_superkart_250(cx, cy, gy, hl, s, primary, secondary, helmet);
+    // Viper Stealth carbon black & twin expansion exhausts
+    let tail_x = cx - hl * 0.90;
+    draw_line(tail_x, gy - 5.0 * s, tail_x - 8.0 * s, gy - 7.0 * s, 2.2 * s, Color::new(0.40, 0.42, 0.46, 1.0));
+    draw_line(tail_x, gy - 7.0 * s, tail_x - 8.0 * s, gy - 9.0 * s, 2.2 * s, Color::new(0.40, 0.42, 0.46, 1.0));
+}
+
+#[inline]
+fn tail_x_val(cx: f32, hl: f32) -> f32 {
+    cx - hl * 0.84
 }
 
 // =========================================================================

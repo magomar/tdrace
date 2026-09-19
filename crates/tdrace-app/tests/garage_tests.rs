@@ -81,22 +81,85 @@ fn test_garage_shows_all_module_models_across_tiers() {
 
     for mod_id in modules {
         let all_cars = get_models_for_module(mod_id);
-        assert!(!all_cars.is_empty(), "Module {} should have catalog cars", mod_id);
+        assert!(
+            all_cars.len() >= 15,
+            "Module {} should have at least 15 catalog cars, got {}",
+            mod_id,
+            all_cars.len()
+        );
 
-        // Every module should feature 5 progression tiers with distinct models
+        // Every module should feature 5 progression tiers with at least 3 distinct models each
         for tier in 1..=5 {
             let tier_models = get_models_for_module_and_tier(mod_id, tier);
             assert!(
-                !tier_models.is_empty(),
-                "Module {} Tier {} should have at least 1 car model",
+                tier_models.len() >= 3,
+                "Module {} Tier {} should have at least 3 car models, got {}",
                 mod_id,
-                tier
+                tier,
+                tier_models.len()
             );
         }
     }
 
     let global_models = get_all_models();
-    assert!(global_models.len() >= 25, "Expected at least 25 real car models in catalog");
+    assert_eq!(
+        global_models.len(),
+        80,
+        "Expected exactly 80 real car models in catalog, got {}",
+        global_models.len()
+    );
+}
+
+#[test]
+fn test_all_80_real_cars_attributes_and_data_integrity() {
+    let global_models = get_all_models();
+    assert_eq!(global_models.len(), 80);
+
+    let mut seen_ids = std::collections::HashSet::new();
+    let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
+
+    for car in global_models {
+        // Unique non-empty IDs and names
+        assert!(!car.id.is_empty(), "Car ID must not be empty");
+        assert!(seen_ids.insert(car.id), "Duplicate car ID detected: {}", car.id);
+        assert!(!car.name.is_empty(), "Car name for {} must not be empty", car.id);
+        assert!(!car.manufacturer.is_empty(), "Car manufacturer for {} must not be empty", car.id);
+        assert!(!car.history_bio.is_empty(), "Car history_bio for {} must not be empty", car.id);
+
+        // Module and tier validity
+        assert!(
+            valid_modules.contains(&car.module_id),
+            "Unknown module ID {} on car {}",
+            car.module_id,
+            car.id
+        );
+        assert!((1..=5).contains(&car.tier), "Invalid tier {} on car {}", car.tier, car.id);
+
+        // Realistic non-zero specifications
+        assert!(car.bhp > 0, "Car {} must have positive BHP", car.id);
+        assert!(car.weight_kg > 0, "Car {} must have positive weight", car.id);
+        assert!(car.top_speed_kmh > 0, "Car {} must have positive top speed", car.id);
+        assert!(car.accel_0_100 > 0.0, "Car {} must have positive 0-100 accel", car.id);
+
+        // Radar stats bounded between 0.0 and 1.0
+        let stats = [
+            car.stats.0,
+            car.stats.1,
+            car.stats.2,
+            car.stats.3,
+            car.stats.4,
+            car.stats.5,
+        ];
+        for (idx, &stat) in stats.iter().enumerate() {
+            assert!(
+                (0.0..=1.0).contains(&stat),
+                "Car {} stat index {} out of range: {}",
+                car.id,
+                idx,
+                stat
+            );
+        }
+    }
 }
 
 #[test]
