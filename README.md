@@ -261,9 +261,11 @@ make test-python
 
 ---
 
-## 📚 Documentation
+## 📚 Documentation & Contributing
 
-- [Screen Architecture & Navigation Schema](docs/screens_and_navigation.md) — Comprehensive guide to all platform screens, state machine navigation flow, visual diagrams, and machine-readable registry schemas.
+- [Contributing Guide & Cross-Platform Setup](CONTRIBUTING.md) — Setup instructions, git symlinks for Windows and macOS, and development workflow.
+- [Knowledge Base & Asset Catalog](docs/index.md) — Master OKF v0.2 index of physics, vehicles, circuits, and engineering architecture.
+- [Screen Architecture & Navigation Schema](docs/engineering/screens_and_navigation.md) — Comprehensive guide to all platform screens, state machine navigation flow, visual diagrams, and machine-readable registry schemas.
 
 ---
 
