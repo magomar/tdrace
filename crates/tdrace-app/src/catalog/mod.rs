@@ -2032,6 +2032,106 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         primary_color: Color::new(0.85, 0.10, 0.15, 1.0),
         secondary_color: Color::new(0.12, 0.12, 0.15, 1.0),
     },
+
+    // =========================================================================
+    // MODULE: CLASSIC ARCADE MOTORSPORT (FANTASY ROSTER)
+    // =========================================================================
+    RealCarModel {
+        id: "classic_gt",
+        name: "Apex Phantom GT",
+        manufacturer: "Apex Dynamics",
+        year: 2026,
+        module_id: "classic",
+        category_name: "Arcade GT Coupe",
+        tier: 1,
+        bhp: 480,
+        torque_nm: 520,
+        weight_kg: 1150,
+        top_speed_kmh: 218,
+        accel_0_100: 3.2,
+        drivetrain: "RWD",
+        engine_desc: "4.0L Twin-Turbo Arcade V8",
+        aero_downforce: "Cl 0.95 / Cd 0.40",
+        brakes_desc: "Arcade Ventilated Carbon Discs",
+        history_bio: "Fictional flagship coupe built by Apex Dynamics for high-octane circuit dominance. Tuned for razor-sharp steering and forgiving slide recovery.",
+        stats: (0.85, 0.88, 0.90, 0.70, 0.86, 0.75),
+        visual_type: VehicleVisualType::TouringGT { widebody: true, gt_wing: true, diffuser: true },
+        base_car_choice: CarChoice::SportsCar,
+        primary_color: Color::new(0.95, 0.20, 0.15, 1.0),
+        secondary_color: Color::new(0.12, 0.12, 0.15, 1.0),
+    },
+    RealCarModel {
+        id: "classic_nascar",
+        name: "Thunderbolt Stock V8",
+        manufacturer: "Thunder Alley Racing",
+        year: 2026,
+        module_id: "classic",
+        category_name: "Arcade Speedway Stock",
+        tier: 1,
+        bhp: 750,
+        torque_nm: 820,
+        weight_kg: 1280,
+        top_speed_kmh: 245,
+        accel_0_100: 3.4,
+        drivetrain: "RWD",
+        engine_desc: "5.8L Pushrod Speedway V8",
+        aero_downforce: "Cl 1.45 / Cd 0.50",
+        brakes_desc: "Heavy-Duty Speedway Steel Rotors",
+        history_bio: "Thunderous fantasy stock car engineered to trade paint at 245 km/h. Featuring a planted chassis that makes pack-drafting and high-speed banking easy and thrilling.",
+        stats: (0.95, 0.90, 0.85, 0.80, 0.88, 0.82),
+        visual_type: VehicleVisualType::StockCar { tall_wing: true, roof_fins: true, window_net: true },
+        base_car_choice: CarChoice::StockCar,
+        primary_color: Color::new(0.15, 0.45, 0.95, 1.0),
+        secondary_color: Color::new(1.0, 0.85, 0.10, 1.0),
+    },
+    RealCarModel {
+        id: "classic_offroad",
+        name: "Vortex Dune Crusher",
+        manufacturer: "Titan Terrain Systems",
+        year: 2026,
+        module_id: "classic",
+        category_name: "Extreme Off-Road Buggy",
+        tier: 1,
+        bhp: 350,
+        torque_nm: 440,
+        weight_kg: 680,
+        top_speed_kmh: 195,
+        accel_0_100: 3.5,
+        drivetrain: "RWD",
+        engine_desc: "2.5L Turbo Boxer Quad-Cam",
+        aero_downforce: "Cl 0.85 / Cd 0.60",
+        brakes_desc: "Long-Travel Caliper Off-Road Discs",
+        history_bio: "Bespoke fantasy sand and stunt buggy with massive suspension articulation, forgiving jump landing dampeners, and unyielding multi-surface grip.",
+        stats: (0.82, 0.92, 0.88, 0.92, 0.84, 0.70),
+        visual_type: VehicleVisualType::SandRail { lightbar: true, whip_antenna: true, paddle_tires: true },
+        base_car_choice: CarChoice::SandRail,
+        primary_color: Color::new(1.0, 0.55, 0.05, 1.0),
+        secondary_color: Color::new(0.15, 0.15, 0.18, 1.0),
+    },
+    RealCarModel {
+        id: "classic_kart",
+        name: "Turbo Dart 200cc",
+        manufacturer: "RocketKart Works",
+        year: 2026,
+        module_id: "classic",
+        category_name: "Arcade Sprint Kart",
+        tier: 1,
+        bhp: 45,
+        torque_nm: 55,
+        weight_kg: 165,
+        top_speed_kmh: 125,
+        accel_0_100: 3.8,
+        drivetrain: "RWD",
+        engine_desc: "200cc Twin-Ignition 2-Stroke",
+        aero_downforce: "Cl 0.25 / Cd 0.55",
+        brakes_desc: "Hydraulic Rear Axle Disc",
+        history_bio: "The ultimate pocket rocket from RocketKart Works. Delivers direct 1:1 steering response with magnetic apex adhesion, turning every tight corner into pure arcade fun.",
+        stats: (0.70, 0.96, 0.98, 0.45, 0.90, 0.40),
+        visual_type: VehicleVisualType::GoKart { exposed_driver: true, side_bumpers: true },
+        base_car_choice: CarChoice::Kart,
+        primary_color: Color::new(0.20, 0.85, 0.30, 1.0),
+        secondary_color: Color::new(0.10, 0.10, 0.12, 1.0),
+    },
 ];
 
 /// Returns all vehicles belonging to the specified module ID.
@@ -2074,6 +2174,8 @@ pub fn get_tier_name(module_id: &str, tier: u8) -> &'static str {
         other => other,
     };
     match (mod_id, tier) {
+        ("classic", _) => "Classic Arcade: Fantasy Roster",
+
         ("gt", 1) => "Tier 1: GT4 Clubsport",
         ("gt", 2) => "Tier 2: GT3 Evo / FIA GT3",
         ("gt", 3) => "Tier 3: GT2 Biturbo",
@@ -2160,5 +2262,22 @@ mod tests {
         assert!(!is_car_eligible(2, 1, false));
         assert!(!is_car_eligible(3, 2, false));
         assert!(!is_car_eligible(5, 4, false));
+    }
+
+    #[test]
+    fn test_classic_arcade_fantasy_models() {
+        let classic_models = get_models_for_module("classic");
+        assert_eq!(classic_models.len(), 4);
+        let ids: Vec<_> = classic_models.iter().map(|m| m.id).collect();
+        assert_eq!(ids, vec!["classic_gt", "classic_nascar", "classic_offroad", "classic_kart"]);
+
+        for id in ["classic_gt", "classic_nascar", "classic_offroad", "classic_kart"] {
+            let model = find_model_by_id(id).expect("classic model must exist");
+            assert_eq!(model.module_id, "classic");
+            assert!(model.bhp > 0);
+            assert!(model.top_speed_kmh > 0);
+            let cfg = model.to_car_config();
+            assert!(cfg.top_speed_mps > 0.0);
+        }
     }
 }
