@@ -112,7 +112,7 @@ impl SpaceArenaGame {
             profile_manager: ProfileManager::new(),
             record_db,
             audio: AudioMixer::new(),
-            crt: cabinet::fx::CrtOverlay::with_mode(cabinet::fx::ScanlineMode::Subtle),
+            crt: cabinet::fx::CrtOverlay::default(),
             fire_cooldown: 0.0,
         };
         game.spawn_wave(1);

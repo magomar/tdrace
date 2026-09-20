@@ -147,6 +147,9 @@ impl CrtOverlay {
 
     /// Returns true if any visual effect is active and should be drawn.
     pub fn is_active(&self) -> bool {
+        if self.config.mode == ScanlineMode::Disabled && self.config.custom_opacity.is_none() {
+            return false;
+        }
         self.effective_opacity() > 0.001
             || self.config.vignette_intensity > 0.001
             || self.config.phosphor_tint.is_some()
@@ -249,16 +252,19 @@ mod tests {
         assert_eq!(overlay.config.mode, ScanlineMode::Disabled);
         assert!(!overlay.is_active());
 
+        // When mode is Disabled, overlay remains inactive
         overlay.config.vignette_intensity = 0.25;
-        assert!(overlay.is_active());
+        assert!(!overlay.is_active());
 
         overlay.config.mode = ScanlineMode::ArcadeCrt;
         assert!(overlay.is_active());
         assert_eq!(overlay.effective_opacity(), ScanlineMode::ArcadeCrt.opacity());
 
-        // Custom opacity override
+        // Custom opacity override can activate even if mode is disabled
+        overlay.config.mode = ScanlineMode::Disabled;
         overlay.config.custom_opacity = Some(0.9);
         assert_eq!(overlay.effective_opacity(), 0.9);
+        assert!(overlay.is_active());
     }
 
     #[test]

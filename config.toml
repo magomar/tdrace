@@ -51,6 +51,16 @@ default_laps = 3
 default_num_bots = 7
 default_assist_profile = "arcade"
 
+[display]
+window_width = 1920
+window_height = 1080
+fullscreen = false
+ui_scale = "auto"
+scanline_mode = "disabled"
+vignette_intensity = 0.0
+line_spacing = 3.0
+vehicle_shadows = true
+
 [cars.drift_car]
 mass = 980.0
 inertia = 1250.0
