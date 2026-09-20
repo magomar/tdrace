@@ -597,10 +597,10 @@ fn test_screen_transition_presets_and_config() {
 #[test]
 fn test_screen_transition_module_select_switch_to_menu() {
     let mut session = RaceSession::new();
-    session.state = GameState::ModuleSelect { selected_idx: 1 }; // Rally module selected
+    session.state = GameState::ModuleSelect { selected_idx: 2 }; // Rally module selected
 
     session.transition_scanline_to(GameState::Menu, 0.35);
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 1 });
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 2 });
 
     // Advance to Holding: module switch should be automatically applied
     session.update_transition(0.20);
@@ -616,6 +616,7 @@ fn test_screen_transition_module_select_switch_to_menu() {
 fn test_race_session_crt_overlay_settings_and_toggle() {
     use cabinet::fx::crt::ScanlineMode;
 
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("session_tests_crt");
     let orig_config = std::fs::read_to_string("config.toml").ok();
     let mut session = RaceSession::new_with_config(tdrace_app::config::GameConfig::default());
     assert_eq!(session.crt_overlay.config.mode, ScanlineMode::Disabled);

@@ -74,11 +74,7 @@ pub fn export_track_to_rust_code(track: &Track, fn_name: &str) -> String {
     out.push_str(&format!("        default_surface: SurfaceType::{:?},\n", track.default_surface));
     out.push_str("        pit_box_area: None,\n");
     out.push_str(&format!("        default_laps: {},\n", track.default_laps));
-    if let Some(ref car) = track.predefined_car {
-        out.push_str(&format!("        predefined_car: Some(\"{}\".to_string()),\n", car));
-    } else {
-        out.push_str("        predefined_car: None,\n");
-    }
+    out.push_str(&format!("        car_category: CarCategory::{:?},\n", track.car_category));
     if let Some(ref m) = track.module_id {
         out.push_str(&format!("        module_id: Some(\"{}\".to_string()),\n", m));
     } else {

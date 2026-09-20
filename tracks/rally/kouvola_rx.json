@@ -1,6 +1,6 @@
 {
-  "name": "Tykkimäen Moottorirata (World RX Finland)",
-  "description": "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkimäki dirt crest.",
+  "name": "Tykkim\u00e4en Moottorirata (World RX Finland)",
+  "description": "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkim\u00e4ki dirt crest.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -40119,7 +40119,7 @@
         "launch_speed": 2.2,
         "ramp_angle_deg": 5.5,
         "height": 1.3,
-        "name": "Tykkimäki Dirt Jump",
+        "name": "Tykkim\u00e4ki Dirt Jump",
         "surface": "Dirt"
       }
     ],
@@ -45609,9 +45609,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
     "rally"
-  ]
+  ],
+  "car_category": "rally"
 }

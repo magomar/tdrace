@@ -55,7 +55,7 @@ fn test_nascar_tracks_and_geometry_validation() {
         assert!(def.default_laps >= 3 && def.default_laps <= 5, "Track '{}' default laps ({}) must be between 3 and 5", def.id, def.default_laps);
 
         let track = (def.generator)();
-        assert_eq!(track.predefined_car.as_deref(), Some("stock_car"));
+        assert_eq!(track.car_category, tdrace_core::CarCategory::Nascar);
         assert!(track.default_laps >= 3 && track.default_laps <= 5, "Track '{}' generator default laps ({}) must be between 3 and 5", def.id, track.default_laps);
         let issues = validate_track(&track);
         assert!(

@@ -46407,9 +46407,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 6,
-  "predefined_car": "shifter_kart_125",
   "module_id": "kart",
   "modules": [
     "kart"
-  ]
+  ],
+  "car_category": "kart"
 }

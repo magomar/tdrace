@@ -109,7 +109,9 @@ pub fn render_garage_screen(
     let active_model: Option<&RealCarModel> = tier_models.get(garage_car_idx).copied();
     let category_name = active_model.map(|m| m.category_name).unwrap_or("Competition Spec");
 
-    let module_subtitle = if let Some(cp) = career_progress {
+    let module_subtitle = if active_module_id == "classic" {
+        "MODULE: CLASSIC ARCADE MOTORSPORT • FANTASY ARCADE ROSTER [◄ A / D ►]".to_string()
+    } else if let Some(cp) = career_progress {
         format!(
             "MODULE: {}  [◄ 1..5 ►]  •  TIER {}: {}  [◄ Q/E ►]  •  SPENDABLE XP: {} XP",
             mod_title, garage_tier, category_name.to_uppercase(), cp.xp
@@ -143,7 +145,7 @@ pub fn render_garage_screen(
     // Hero Showroom Stage Card
     scaler.draw_glass_card(stage_x, stage_y, stage_w, stage_h, Palette::UI_CARD_BG, mod_accent, 1.4);
 
-    let is_tier_unlocked = is_dev_mode || garage_tier as u32 <= unlocked_tier;
+    let is_tier_unlocked = active_module_id == "classic" || is_dev_mode || garage_tier as u32 <= unlocked_tier;
 
     // Hero Stage Header Badges
     let view_mode_str = match garage_view_mode {
@@ -291,7 +293,9 @@ pub fn render_garage_screen(
         let num_str = format!("#{}", i + 1);
         fonts.draw_ui_bold(&num_str, cx + scaler.s(8.0), cy + scaler.s(15.0), scaler.font_s(9.5), Palette::NEON_CYAN);
 
-        if let Some(cp) = career_progress {
+        if active_module_id == "classic" {
+            fonts.draw_ui_bold("OWNED", cx + cw - scaler.s(48.0), cy + scaler.s(15.0), scaler.font_s(8.5), Palette::NEON_GREEN);
+        } else if let Some(cp) = career_progress {
             let is_unlocked = is_dev_mode || cp.is_car_unlocked(model.id, is_dev_mode);
             if is_unlocked {
                 fonts.draw_ui_bold("OWNED", cx + cw - scaler.s(48.0), cy + scaler.s(15.0), scaler.font_s(8.5), Palette::NEON_GREEN);
@@ -412,7 +416,8 @@ pub fn render_garage_screen(
 
     let active_car_id = active_model.map(|m| m.id).unwrap_or("");
     let active_car_tier = active_model.map(|m| m.tier).unwrap_or(garage_tier);
-    let is_car_unlocked = is_dev_mode
+    let is_car_unlocked = active_module_id == "classic"
+        || is_dev_mode
         || career_progress
             .map(|cp| cp.is_car_unlocked(active_car_id, is_dev_mode))
             .unwrap_or(is_tier_unlocked);

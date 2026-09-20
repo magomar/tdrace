@@ -1,5 +1,5 @@
 {
-  "name": "Nyirád Racing Center (Euro RX Hungary)",
+  "name": "Nyir\u00e1d Racing Center (Euro RX Hungary)",
   "description": "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
   "category": "main",
   "kind": {
@@ -50708,9 +50708,9 @@
   "default_surface": "Dirt",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
     "rally"
-  ]
+  ],
+  "car_category": "rally"
 }

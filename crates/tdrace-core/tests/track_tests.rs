@@ -877,22 +877,22 @@ fn test_prototypical_track_templates_all_combinations() {
                     "classic" => {
                         assert_eq!(track.default_surface, SurfaceType::Grass);
                         assert_eq!(track.spline.samples[0].surface, SurfaceType::Asphalt);
-                        assert_eq!(track.predefined_car.as_deref(), Some("sports_car"));
+                        assert_eq!(track.car_category, arcade_race_core::CarCategory::Gt);
                     }
                     "gt" => {
                         assert_eq!(track.default_surface, SurfaceType::Grass);
                         assert_eq!(track.spline.samples[0].surface, SurfaceType::Asphalt);
-                        assert_eq!(track.predefined_car.as_deref(), Some("gt3_car"));
+                        assert_eq!(track.car_category, arcade_race_core::CarCategory::Gt);
                     }
                     "kart" => {
                         assert_eq!(track.default_surface, SurfaceType::Asphalt);
                         assert_eq!(track.spline.samples[0].surface, SurfaceType::Asphalt);
-                        assert_eq!(track.predefined_car.as_deref(), Some("kart"));
+                        assert_eq!(track.car_category, arcade_race_core::CarCategory::Kart);
                     }
                     "rally" => {
                         assert_eq!(track.default_surface, SurfaceType::Dirt);
                         assert_eq!(track.spline.samples[0].surface, SurfaceType::Dirt);
-                        assert_eq!(track.predefined_car.as_deref(), Some("rally_car"));
+                        assert_eq!(track.car_category, arcade_race_core::CarCategory::Rally);
                     }
                     _ => unreachable!(),
                 }

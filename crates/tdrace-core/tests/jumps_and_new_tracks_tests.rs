@@ -191,7 +191,7 @@ fn test_ramp_raceway_preset() {
     assert!(track.checkpoints.len() >= 8);
     assert!(track.grid_positions.len() >= 6);
     assert_eq!(track.default_surface, SurfaceType::Dirt);
-    assert_eq!(track.predefined_car.as_deref(), Some("classic_rally"));
+    assert_eq!(track.car_category, arcade_race_core::CarCategory::Rally);
 
     // Verify sample surface on track is dirt
     let surf = track.sample_surface(Vec2::new(82.5, 50.0));
@@ -202,7 +202,7 @@ fn test_ramp_raceway_preset() {
 fn test_classic_rallycross_preset() {
     let track = classic_rallycross();
     assert_eq!(track.name, "Classic Rallycross");
-    assert_eq!(track.predefined_car.as_deref(), Some("classic_rally"));
+    assert_eq!(track.car_category, arcade_race_core::CarCategory::Rally);
     assert_eq!(track.geometry.jump_ramps.len(), 1);
     let len = track.spline.total_length();
     assert!(len >= 900.0 && len <= 1200.0, "Length ~1km: got {:.1}m", len);

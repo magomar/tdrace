@@ -5,36 +5,37 @@ use tdrace_core::track::presets::{
     ramp_raceway,
 };
 use tdrace_core::track::Track;
+use tdrace_core::CarCategory;
 
 #[test]
 fn test_preset_tracks_predefined_cars_and_balanced_laps() {
     let gp = classic_grand_prix();
     assert_eq!(gp.default_laps, 3);
-    assert_eq!(gp.predefined_car.as_deref(), Some("classic_gt"));
+    assert_eq!(gp.car_category, CarCategory::Gt);
 
     let oval = oval_speedway();
     assert_eq!(oval.default_laps, 5);
-    assert_eq!(oval.predefined_car.as_deref(), Some("classic_nascar"));
+    assert_eq!(oval.car_category, CarCategory::Nascar);
 
     let drift = drift_park();
     assert_eq!(drift.default_laps, 3);
-    assert_eq!(drift.predefined_car.as_deref(), Some("classic_gt"));
+    assert_eq!(drift.car_category, CarCategory::Gt);
 
     let kart = kart_arena();
     assert_eq!(kart.default_laps, 5);
-    assert_eq!(kart.predefined_car.as_deref(), Some("classic_kart"));
+    assert_eq!(kart.car_category, CarCategory::Kart);
 
     let ramp = ramp_raceway();
     assert_eq!(ramp.default_laps, 3);
-    assert_eq!(ramp.predefined_car.as_deref(), Some("classic_rally"));
+    assert_eq!(ramp.car_category, CarCategory::Rally);
 
     let oasis = oasis_rally();
     assert_eq!(oasis.default_laps, 3);
-    assert_eq!(oasis.predefined_car.as_deref(), Some("classic_offroad"));
+    assert_eq!(oasis.car_category, CarCategory::OffRoad);
 
     let rx = classic_rallycross();
     assert_eq!(rx.default_laps, 3);
-    assert_eq!(rx.predefined_car.as_deref(), Some("classic_rally"));
+    assert_eq!(rx.car_category, CarCategory::Rally);
 }
 
 #[test]
@@ -137,25 +138,25 @@ fn test_roster_driver_count_modification() {
 }
 
 #[test]
-fn test_track_serde_default_laps_and_predefined_car_roundtrip() {
+fn test_track_serde_default_laps_and_car_category_roundtrip() {
     let track = classic_grand_prix();
     let json = track.to_json_pretty().expect("Must serialize to JSON");
 
     let deserialized = Track::from_json(&json).expect("Must deserialize from JSON");
     assert_eq!(deserialized.default_laps, 3);
-    assert_eq!(deserialized.predefined_car.as_deref(), Some("classic_gt"));
+    assert_eq!(deserialized.car_category, CarCategory::Gt);
 
     // Test backwards-compatibility when fields are missing from JSON
     let mut val: serde_json::Value = serde_json::from_str(&json).expect("Parse json value");
     if let Some(obj) = val.as_object_mut() {
         obj.remove("default_laps");
-        obj.remove("predefined_car");
+        obj.remove("car_category");
     }
     let legacy_json = serde_json::to_string(&val).expect("Serialize stripped json");
 
     let legacy_track = Track::from_json(&legacy_json).expect("Must deserialize legacy JSON");
     assert_eq!(legacy_track.default_laps, 3);
-    assert_eq!(legacy_track.predefined_car, None);
+    assert_eq!(legacy_track.car_category, CarCategory::Gt);
 }
 
 #[test]

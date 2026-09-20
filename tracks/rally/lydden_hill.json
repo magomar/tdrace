@@ -47993,9 +47993,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
     "rally"
-  ]
+  ],
+  "car_category": "rally"
 }

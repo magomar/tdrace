@@ -3441,10 +3441,10 @@
         ],
         "tangent": [
           -1.0,
-          -0.0000021127535
+          -2.1127535e-06
         ],
         "normal": [
-          0.0000021127535,
+          2.1127535e-06,
           -1.0
         ],
         "distance": 256.73807,
@@ -18978,10 +18978,10 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 3,
-  "predefined_car": "classic_gt",
   "module_id": "classic",
   "modules": [
     "classic",
     "kart"
-  ]
+  ],
+  "car_category": "gt"
 }

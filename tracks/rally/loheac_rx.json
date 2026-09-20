@@ -1,5 +1,5 @@
 {
-  "name": "Circuit de Lohéac (World RX France)",
+  "name": "Circuit de Loh\u00e9ac (World RX France)",
   "description": "The French Rallycross classic in Brittany with long asphalt drag straight, gravel tabletop jump & tight switchbacks.",
   "category": "main",
   "kind": {
@@ -42286,7 +42286,7 @@
         "launch_speed": 2.2,
         "ramp_angle_deg": 5.5,
         "height": 1.3,
-        "name": "Lohéac Infield Jump",
+        "name": "Loh\u00e9ac Infield Jump",
         "surface": "Dirt"
       }
     ],
@@ -48288,9 +48288,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
     "rally"
-  ]
+  ],
+  "car_category": "rally"
 }

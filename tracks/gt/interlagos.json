@@ -1585,10 +1585,10 @@
         ],
         "tangent": [
           1.0,
-          0.000033809552
+          3.3809552e-05
         ],
         "normal": [
-          -0.000033809552,
+          -3.3809552e-05,
           1.0
         ],
         "distance": 128.28415,
@@ -47691,9 +47691,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 5,
-  "predefined_car": "gt1_legend",
   "module_id": "gt",
   "modules": [
     "gt"
-  ]
+  ],
+  "car_category": "gt"
 }

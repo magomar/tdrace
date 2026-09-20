@@ -8,7 +8,7 @@ use super::geometry::{
 };
 use super::scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
 use super::spline::{TrackSpline, TrackWaypoint};
-use super::{Track, TrackCategory, TrackKind};
+use super::{CarCategory, Track, TrackCategory, TrackKind};
 use wheelbase::SurfaceType;
 
 /// Trims local self-intersecting loops (swallowtail singularities) from an offset boundary polyline.
@@ -704,7 +704,7 @@ pub fn classic_grand_prix() -> Track {
             max: Vec2::new(70.0, -8.0),
         }),
         default_laps: 3,
-        predefined_car: Some("classic_gt".to_string()),
+        car_category: CarCategory::Gt,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
     }
@@ -759,7 +759,7 @@ pub fn oval_speedway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 5,
-        predefined_car: Some("classic_nascar".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
     }
@@ -814,7 +814,7 @@ pub fn dirty_oval_speedway() -> Track {
         default_surface: SurfaceType::Dirt,
         pit_box_area: None,
         default_laps: 5,
-        predefined_car: Some("classic_offroad".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
     }
@@ -897,7 +897,7 @@ pub fn drift_park() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("classic_gt".to_string()),
+        car_category: CarCategory::Gt,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string(), "kart".to_string()],
     }
@@ -954,7 +954,7 @@ pub fn kart_arena() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 5,
-        predefined_car: Some("classic_kart".to_string()),
+        car_category: CarCategory::Kart,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string(), "kart".to_string()],
     }
@@ -1045,7 +1045,7 @@ pub fn ramp_raceway() -> Track {
         default_surface: SurfaceType::Dirt,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("classic_rally".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
     }
@@ -1144,7 +1144,7 @@ pub fn oasis_rally() -> Track {
         default_surface: SurfaceType::Sand,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("classic_offroad".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string(), "rally".to_string()],
     }
@@ -1276,7 +1276,7 @@ pub fn dirt_figure_eight() -> Track {
         default_surface: SurfaceType::Sand,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("classic_offroad".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("classic".to_string()),
         modules: vec!["extreme_offroad".to_string(), "classic".to_string()],
     }
@@ -1295,7 +1295,7 @@ pub fn figure_eight() -> Track {
     }
     track.module_id = Some("classic".to_string());
     track.modules = vec!["classic".to_string()];
-    track.predefined_car = Some("classic_gt".to_string());
+    track.car_category = CarCategory::Gt;
     track.rebuild_geometry(5.0, BarrierType::Concrete);
     track
 }
@@ -1390,7 +1390,7 @@ pub fn classic_rallycross() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("classic_rally".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string(), "rally".to_string()],
     }
@@ -1499,7 +1499,7 @@ pub fn holjes_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -1589,7 +1589,7 @@ pub fn lydden_hill() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -1695,7 +1695,7 @@ pub fn hell_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -1801,7 +1801,7 @@ pub fn loheac_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -1881,7 +1881,7 @@ pub fn estering_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -1967,7 +1967,7 @@ pub fn montalegre_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2039,7 +2039,7 @@ pub fn nyirad_rx() -> Track {
         default_surface: SurfaceType::Dirt,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2125,7 +2125,7 @@ pub fn kouvola_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2224,7 +2224,7 @@ pub fn catalunya_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2310,7 +2310,7 @@ pub fn mettet_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2396,7 +2396,7 @@ pub fn silverstone_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2484,7 +2484,7 @@ pub fn riga_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2570,7 +2570,7 @@ pub fn killarney_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2663,7 +2663,7 @@ pub fn yas_marina_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2766,7 +2766,7 @@ pub fn essay_rx() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("rally_car".to_string()),
+        car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
     }
@@ -2948,11 +2948,11 @@ pub fn create_prototypical_track(
     let mod_id_clean = module_id.to_lowercase();
     let mod_str = mod_id_clean.as_str();
 
-    let (road_surface, offtrack_surface, predefined_car, barrier_type, barrier_offset, width, default_laps) = match mod_str {
+    let (road_surface, offtrack_surface, car_category, barrier_type, barrier_offset, width, default_laps) = match mod_str {
         "gt" => (
             SurfaceType::Asphalt,
             SurfaceType::Grass,
-            "gt3_car",
+            CarCategory::Gt,
             BarrierType::Steel,
             4.0,
             15.0,
@@ -2961,7 +2961,7 @@ pub fn create_prototypical_track(
         "kart" => (
             SurfaceType::Asphalt,
             SurfaceType::Asphalt,
-            "kart",
+            CarCategory::Kart,
             BarrierType::TireWall,
             2.0,
             10.0,
@@ -2970,7 +2970,7 @@ pub fn create_prototypical_track(
         "rally" => (
             SurfaceType::Dirt,
             SurfaceType::Dirt,
-            "rally_car",
+            CarCategory::Rally,
             BarrierType::TireWall,
             3.5,
             12.0,
@@ -2979,7 +2979,7 @@ pub fn create_prototypical_track(
         "nascar" => (
             SurfaceType::Asphalt,
             SurfaceType::Grass,
-            "stock_car",
+            CarCategory::Nascar,
             BarrierType::Concrete,
             1.5,
             22.0,
@@ -2988,7 +2988,7 @@ pub fn create_prototypical_track(
         _ => ( // "classic" and fallback
             SurfaceType::Asphalt,
             SurfaceType::Grass,
-            "sports_car",
+            CarCategory::Gt,
             BarrierType::TireWall,
             3.0,
             14.0,
@@ -3060,7 +3060,7 @@ pub fn create_prototypical_track(
         default_surface: offtrack_surface,
         pit_box_area: None,
         default_laps,
-        predefined_car: Some(predefined_car.to_string()),
+        car_category,
         module_id: Some(mod_str.to_string()),
         modules: vec![mod_str.to_string()],
     }
@@ -3149,7 +3149,7 @@ pub fn daytona_superspeedway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3213,7 +3213,7 @@ pub fn talladega_superspeedway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3284,7 +3284,7 @@ pub fn watkins_glen_nascar() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3343,7 +3343,7 @@ pub fn bristol_motor_speedway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 5,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3404,7 +3404,7 @@ pub fn martinsville_speedway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 5,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3466,7 +3466,7 @@ pub fn darlington_raceway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3529,7 +3529,7 @@ pub fn charlotte_motor_speedway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3605,7 +3605,7 @@ pub fn indianapolis_motor_speedway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3661,7 +3661,7 @@ pub fn eldora_speedway() -> Track {
         default_surface: SurfaceType::Dirt,
         pit_box_area: None,
         default_laps: 5,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3719,7 +3719,7 @@ pub fn iowa_speedway() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 5,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3793,7 +3793,7 @@ pub fn road_america() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3869,7 +3869,7 @@ pub fn chicago_street_course() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("stock_car".to_string()),
+        car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
     }
@@ -3941,7 +3941,7 @@ pub fn cota() -> Track {
         default_surface: SurfaceType::Grass,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("gt3_car".to_string()),
+        car_category: CarCategory::Gt,
         module_id: Some("gt".to_string()),
         modules: vec!["gt".to_string()],
     }
@@ -4058,7 +4058,7 @@ pub fn sahara_dune_crossing() -> Track {
         default_surface: SurfaceType::Sand,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4161,7 +4161,7 @@ pub fn atacama_sand_basin() -> Track {
         default_surface: SurfaceType::Sand,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4250,7 +4250,7 @@ pub fn red_rock_canyon() -> Track {
         default_surface: SurfaceType::Dirt,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4369,7 +4369,7 @@ pub fn baja_500_desert_scrub() -> Track {
         default_surface: SurfaceType::Sand,
         pit_box_area: None,
         default_laps: 2,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4460,7 +4460,7 @@ pub fn mud_slough_arena() -> Track {
         default_surface: SurfaceType::Mud,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4540,7 +4540,7 @@ pub fn gravel_quarry_chasm() -> Track {
         default_surface: SurfaceType::Dirt,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4628,7 +4628,7 @@ pub fn louisiana_mud_swampland() -> Track {
         default_surface: SurfaceType::Mud,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4705,7 +4705,7 @@ pub fn arctic_frozen_lake() -> Track {
         default_surface: SurfaceType::Snow,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4793,7 +4793,7 @@ pub fn alpine_snow_ridge() -> Track {
         default_surface: SurfaceType::Snow,
         pit_box_area: None,
         default_laps: 2,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4864,7 +4864,7 @@ pub fn rovaniemi_ice_ring() -> Track {
         default_surface: SurfaceType::Snow,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -4965,7 +4965,7 @@ pub fn glacier_crest_pass() -> Track {
         default_surface: SurfaceType::Ice,
         pit_box_area: None,
         default_laps: 2,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -5066,7 +5066,7 @@ pub fn supercross_stadium_arena() -> Track {
         default_surface: SurfaceType::Dirt,
         pit_box_area: None,
         default_laps: 4,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -5165,7 +5165,7 @@ pub fn monster_colosseum() -> Track {
         default_surface: SurfaceType::Dirt,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }
@@ -5261,7 +5261,7 @@ pub fn stunt_city_megastructure() -> Track {
         default_surface: SurfaceType::Asphalt,
         pit_box_area: None,
         default_laps: 3,
-        predefined_car: Some("sand_rail_buggy".to_string()),
+        car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
     }

@@ -31,20 +31,11 @@ fn test_gt_tracks_predefined_car_and_resolve_predefined_car() {
 
     for t_def in &track_defs {
         let track = (t_def.generator)();
-        let expected_car = match t_def.id {
-            "monza" | "red_bull_ring" | "nurburgring_gp" => "gt4_clubsport",
-            "silverstone" | "catalunya" | "bathurst" => "gt3_evo",
-            "spa" | "zandvoort" | "portimao_gp" => "gt2_biturbo",
-            "suzuka" | "interlagos" | "le_mans_sarthe" => "gt1_legend",
-            "monaco" | "madring" | "marina_bay" => "hypercar_prototype",
-            other => panic!("Unexpected GT track ID: {}", other),
-        };
         assert_eq!(
-            track.predefined_car.as_deref(),
-            Some(expected_car),
-            "Track '{}' must define career level predefined_car = '{}'",
-            t_def.id,
-            expected_car
+            track.car_category,
+            tdrace_core::CarCategory::Gt,
+            "Track '{}' must define car_category = Gt",
+            t_def.id
         );
     }
 
@@ -363,24 +354,31 @@ fn test_category_parity_across_multiple_disciplines() {
 }
 
 #[test]
-fn test_classic_module_preserves_procedural_cars() {
+fn test_classic_module_assigns_fantasy_category_cars() {
     let mut session = RaceSession::new();
     session.switch_to_classic();
+    session.track_choice = TrackChoice::OvalSpeedway;
+    session.track = session.load_track_for_session(&session.track_choice);
     session.num_bots = 3;
     session.init_race();
 
     assert_eq!(session.active_module_id, "classic");
     for p in &session.grid_participants {
         assert_eq!(
-            p.model_id, None,
-            "Classic participant '{}' must not have a model_id",
+            p.model_id, Some("classic_nascar"),
+            "Classic participant '{}' must have classic_nascar model_id on Oval",
+            p.name
+        );
+        assert_eq!(
+            p.car_title, "Thunderbolt Stock V8",
+            "Classic participant '{}' must have Thunderbolt Stock V8 title",
             p.name
         );
     }
     for (i, &mid) in session.car_model_ids.iter().enumerate() {
         assert_eq!(
-            mid, None,
-            "Car {} in classic session must not have a model_id",
+            mid, Some("classic_nascar"),
+            "Car {} in classic session must have classic_nascar model_id",
             i
         );
     }

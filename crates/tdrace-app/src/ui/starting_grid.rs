@@ -342,9 +342,18 @@ pub fn render_starting_grid_screen(
         1.0,
     );
     if let Some(m) = model_opt {
+        let preview_scheme = if m.module_id == "classic" {
+            CarColorScheme {
+                primary: m.primary_color,
+                secondary: m.secondary_color,
+                helmet: player_scheme.helmet,
+            }
+        } else {
+            player_scheme
+        };
         crate::render::lateral::render_real_car_lateral_by_id(
             m.id,
-            &player_scheme,
+            &preview_scheme,
             stat_base_x + stat_bar_w * 0.50,
             lateral_box_y + lateral_box_h * 0.52,
             scaler.s(0.95),

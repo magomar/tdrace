@@ -41,18 +41,22 @@ fn test_eligible_opponent_cars_per_category() {
     let kart_pool = session.eligible_opponent_cars();
     assert_eq!(kart_pool, vec![CarChoice::Kart]);
 
-    // Classic / Default
+    // Classic / Default - constrained to track's CarCategory (single fantasy car per race)
     session.switch_to_classic();
-    let classic_pool = session.eligible_opponent_cars();
-    assert_eq!(
-        classic_pool,
-        vec![
-            CarChoice::SportsCar,
-            CarChoice::StockCar,
-            CarChoice::SandRail,
-            CarChoice::Kart,
-        ]
-    );
+    session.track.car_category = tdrace_core::CarCategory::Gt;
+    assert_eq!(session.eligible_opponent_cars(), vec![CarChoice::SportsCar]);
+
+    session.track.car_category = tdrace_core::CarCategory::Nascar;
+    assert_eq!(session.eligible_opponent_cars(), vec![CarChoice::StockCar]);
+
+    session.track.car_category = tdrace_core::CarCategory::Rally;
+    assert_eq!(session.eligible_opponent_cars(), vec![CarChoice::RallyCar]);
+
+    session.track.car_category = tdrace_core::CarCategory::Kart;
+    assert_eq!(session.eligible_opponent_cars(), vec![CarChoice::Kart]);
+
+    session.track.car_category = tdrace_core::CarCategory::OffRoad;
+    assert_eq!(session.eligible_opponent_cars(), vec![CarChoice::SandRail]);
 }
 
 #[test]

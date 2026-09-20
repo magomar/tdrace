@@ -1070,7 +1070,7 @@ fn test_create_new_draft_track_with_module_templates() {
     let rally_track = Track::load_from_file(&rally_path).expect("Load rally draft track");
     assert_eq!(rally_track.default_surface, SurfaceType::Dirt);
     assert_eq!(rally_track.spline.samples[0].surface, SurfaceType::Dirt);
-    assert_eq!(rally_track.predefined_car.as_deref(), Some("rally_car"));
+    assert_eq!(rally_track.car_category, tdrace_core::CarCategory::Rally);
 
     // 2. Create a kart draft track (Oval, Right)
     let kart_path = manager
@@ -1086,7 +1086,7 @@ fn test_create_new_draft_track_with_module_templates() {
     let kart_track = Track::load_from_file(&kart_path).expect("Load kart draft track");
     assert_eq!(kart_track.default_surface, SurfaceType::Asphalt);
     assert_eq!(kart_track.spline.samples[0].surface, SurfaceType::Asphalt);
-    assert_eq!(kart_track.predefined_car.as_deref(), Some("kart"));
+    assert_eq!(kart_track.car_category, tdrace_core::CarCategory::Kart);
 
     // 3. Create a GT draft track (Oval, Right)
     let gt_path = manager
@@ -1102,7 +1102,7 @@ fn test_create_new_draft_track_with_module_templates() {
     let gt_track = Track::load_from_file(&gt_path).expect("Load GT draft track");
     assert_eq!(gt_track.default_surface, SurfaceType::Grass);
     assert_eq!(gt_track.spline.samples[0].surface, SurfaceType::Asphalt);
-    assert_eq!(gt_track.predefined_car.as_deref(), Some("gt3_car"));
+    assert_eq!(gt_track.car_category, tdrace_core::CarCategory::Gt);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -1141,7 +1141,7 @@ fn test_track_manager_clone_preset_to_drafts() {
     assert_eq!(cloned_track.checkpoints.len(), original.checkpoints.len());
     assert_eq!(cloned_track.default_surface, original.default_surface);
     assert_eq!(cloned_track.default_laps, original.default_laps);
-    assert_eq!(cloned_track.predefined_car, original.predefined_car);
+    assert_eq!(cloned_track.car_category, original.car_category);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -1830,7 +1830,7 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
 fn test_marina_bay_singapore_aliases_and_osm_calibration() {
     let t_mb = tdrace_app::module::gt::GtWorldChallengeModule::track_marina_bay();
     assert_eq!(t_mb.name, "Marina Bay Street Circuit (Singapore)");
-    assert_eq!(t_mb.predefined_car.as_deref(), Some("hypercar_prototype"));
+    assert_eq!(t_mb.car_category, tdrace_core::CarCategory::Gt);
     assert_eq!(t_mb.module_id.as_deref(), Some("gt"));
     assert!(t_mb.modules.contains(&"gt".to_string()));
     assert_eq!(t_mb.default_laps, 4);

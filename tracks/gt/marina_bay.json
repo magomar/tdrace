@@ -20321,10 +20321,10 @@
         ],
         "tangent": [
           1.0,
-          0.00007283127
+          7.283127e-05
         ],
         "normal": [
-          -0.00007283127,
+          -7.283127e-05,
           1.0
         ],
         "distance": 2266.0608,
@@ -20601,10 +20601,10 @@
         ],
         "tangent": [
           1.0,
-          -0.000052417443
+          -5.2417443e-05
         ],
         "normal": [
-          0.000052417443,
+          5.2417443e-05,
           1.0
         ],
         "distance": 2300.8894,
@@ -51650,9 +51650,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "hypercar_prototype",
   "module_id": "gt",
   "modules": [
     "gt"
-  ]
+  ],
+  "car_category": "gt"
 }

@@ -1,5 +1,5 @@
 {
-  "name": "Lånkebanen (World RX Norway)",
+  "name": "L\u00e5nkebanen (World RX Norway)",
   "description": "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.",
   "category": "main",
   "kind": {
@@ -48347,9 +48347,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
     "rally"
-  ]
+  ],
+  "car_category": "rally"
 }

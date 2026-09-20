@@ -20,8 +20,8 @@ pub mod tracks;
 pub mod ui;
 
 pub use storage::{
-    resolve_user_config_dir, resolve_user_config_path, resolve_user_data_dir,
-    resolve_user_tracks_dir,
+    is_test_environment, resolve_user_config_dir, resolve_user_config_path, resolve_user_data_dir,
+    resolve_user_tracks_dir, ScopedTempConfigDir, ENV_CONFIG_MUTEX, ENV_TEST_MODE,
 };
 pub use tracks::{DevTrackStore, PresetCatalog, UserTrackStore};
 
@@ -32,7 +32,7 @@ pub use config::{AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputCon
 pub use db::{HallOfFameDb, HallOfFameEntry};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{
-    AcrobaticStats, DriverCardsOrigin, FinishedScreenView, GameState, GridParticipant, LapTelemetry,
+    AcrobaticStats, DriverCardsOrigin, EditorOrigin, FinishedScreenView, GameState, GridParticipant, LapTelemetry,
     PlayerRaceTelemetry, RaceSession, XpAwardReceipt,
 };
 pub use module::{

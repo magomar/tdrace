@@ -336,7 +336,7 @@ fn test_classic_arcade_fantasy_sprites_presence() {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let assets_dir = manifest_dir.join("../../assets/textures/vehicles");
 
-    let cars = ["classic_gt", "classic_nascar", "classic_offroad", "classic_kart"];
+    let cars = ["classic_gt", "classic_nascar", "classic_offroad", "classic_kart", "classic_rally"];
     for id in cars {
         let lat_path = assets_dir.join(format!("laterals/classic/{}.png", id));
         let thumb_path = assets_dir.join(format!("laterals/classic/{}_thumb.png", id));
@@ -347,5 +347,125 @@ fn test_classic_arcade_fantasy_sprites_presence() {
         assert!(top_path.exists(), "Missing topdown for {}: {:?}", id, top_path);
     }
 }
+
+#[test]
+fn test_classic_mask_tinting_transforms_bodywork_pixels() {
+    use macroquad::color::Color;
+    use macroquad::texture::Image;
+    use std::path::Path;
+    use tdrace_app::render::vehicle_assets::apply_vehicle_tint;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let topdown_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/classic");
+
+    let models = [
+        "classic_gt",
+        "classic_nascar",
+        "classic_offroad",
+        "classic_kart",
+        "classic_rally",
+    ];
+
+    let target_primary = Color::new(0.85, 0.10, 0.90, 1.0); // Vivid Magenta/Purple
+    let target_secondary = Color::new(0.10, 0.95, 0.90, 1.0); // Cyan
+
+    for model_id in models {
+        let path = topdown_dir.join(format!("{}.png", model_id));
+        let bytes = std::fs::read(&path)
+            .unwrap_or_else(|e| panic!("Failed to read {}: {:?}", model_id, e));
+        let original_img = Image::from_file_with_format(&bytes, None)
+            .unwrap_or_else(|e| panic!("Failed to parse image {}: {:?}", model_id, e));
+
+        let tinted_img = apply_vehicle_tint(&original_img, model_id, target_primary, target_secondary);
+
+        assert_eq!(
+            original_img.bytes.len(),
+            tinted_img.bytes.len(),
+            "Tinted image dimensions must match original for {}",
+            model_id
+        );
+
+        let mut changed_pixels = 0;
+        let mut total_opaque = 0;
+
+        for (orig, tinted) in original_img
+            .bytes
+            .chunks_exact(4)
+            .zip(tinted_img.bytes.chunks_exact(4))
+        {
+            // Transparent pixels must remain untouched
+            if orig[3] == 0 {
+                assert_eq!(tinted[3], 0, "Transparent pixel modified in {}", model_id);
+                continue;
+            }
+            total_opaque += 1;
+
+            if orig != tinted {
+                changed_pixels += 1;
+            }
+        }
+
+        assert!(
+            changed_pixels > 0,
+            "Mask tinting must modify bodywork pixels for model {}. Changed: {}/{}",
+            model_id,
+            changed_pixels,
+            total_opaque
+        );
+
+        // Verify that a substantial portion of opaque pixels (bodywork) was tinted
+        let change_ratio = changed_pixels as f32 / total_opaque as f32;
+        assert!(
+            change_ratio > 0.05,
+            "Expected at least 5% of opaque pixels tinted on {}, got {:.1}%",
+            model_id,
+            change_ratio * 100.0
+        );
+    }
+}
+
+#[test]
+fn test_classic_mode_bot_color_schemes_distinct_from_player_sprite() {
+    use tdrace_app::catalog::find_model_by_id;
+    use tdrace_app::game::RaceSession;
+
+    let mut session = RaceSession::new();
+    session.switch_to_classic();
+    session.num_bots = 4;
+    session.rebuild_roster_participants();
+
+    assert!(session.cars.len() >= 4, "Roster must include player and bots");
+
+    let player_model_id = session.car_model_ids[0].expect("Player must have classic model id");
+    let player_model = find_model_by_id(player_model_id).expect("Model must exist in catalog");
+
+    // All bots must NOT match factory livery (so they trigger mask-based tinting)
+    // and must have primary colors visually distinct from the player model's factory primary color.
+    for i in 1..session.cars.len() {
+        let bot_scheme = session.color_schemes[i];
+        let dr = (bot_scheme.primary.r - player_model.primary_color.r).abs();
+        let dg = (bot_scheme.primary.g - player_model.primary_color.g).abs();
+        let db = (bot_scheme.primary.b - player_model.primary_color.b).abs();
+        let dist = (dr * dr + dg * dg + db * db).sqrt();
+
+        // Factory match check in vehicle_assets:
+        let is_factory = dr < 0.05 && dg < 0.05 && db < 0.05;
+        assert!(
+            !is_factory,
+            "Bot {} must not match factory livery; must use mask-based tinting",
+            i
+        );
+
+        assert!(
+            dist >= 0.20,
+            "Bot {} color ({:?}) is too close to player sprite color ({:?}), dist = {:.3}",
+            i,
+            bot_scheme.primary,
+            player_model.primary_color,
+            dist
+        );
+    }
+}
+
 
 

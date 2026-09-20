@@ -1,6 +1,6 @@
 {
   "name": "Eldora Speedway",
-  "description": "Historic 0.5-mile high-banked clay oval featuring 24° banking, relentless dirt sliding, and close-quarters pack racing.",
+  "description": "Historic 0.5-mile high-banked clay oval featuring 24\u00b0 banking, relentless dirt sliding, and close-quarters pack racing.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -24160,9 +24160,9 @@
   "default_surface": "Dirt",
   "pit_box_area": null,
   "default_laps": 5,
-  "predefined_car": "stock_car",
   "module_id": "nascar",
   "modules": [
     "nascar"
-  ]
+  ],
+  "car_category": "nascar"
 }

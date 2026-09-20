@@ -557,6 +557,21 @@ impl GameConfig {
 
     /// Serializes and writes configuration to a given file path.
     pub fn save_to_path(&self, path: &Path) -> Result<(), String> {
+        // Enforce zero side-effects during tests: Never allow writing to the host user's live config directory
+        if crate::storage::is_test_environment() {
+            if let Ok(home) = std::env::var("HOME") {
+                if !home.trim().is_empty() {
+                    let live_user_config = PathBuf::from(home).join(".config").join("tdrace");
+                    if path.starts_with(&live_user_config) {
+                        return Err(format!(
+                            "Safety violation: Test execution attempted to write to live user config directory {:?}",
+                            path
+                        ));
+                    }
+                }
+            }
+        }
+
         if let Some(parent) = path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }

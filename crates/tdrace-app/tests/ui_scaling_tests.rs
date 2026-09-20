@@ -163,20 +163,22 @@ fn test_race_session_game_mode_roster_behaviors() {
     assert_eq!(session.cars.len(), 5);
     let pred_car = session.resolve_predefined_car();
     assert_eq!(session.active_player_car_choice(), pred_car);
+    let classic_model = tdrace_app::catalog::get_classic_model_for_category(session.track.car_category);
     for p in &session.grid_participants {
-        assert_eq!(p.car_title, pred_car.title());
+        assert_eq!(p.car_title, classic_model.name);
     }
 
     // 2. Experimental Race: all drivers use player-selected car
     session.game_mode = GameMode::ExperimentalRace;
     session.free_car_selection = true;
-    session.car_choice = CarChoice::DriftCar;
+    session.car_choice = CarChoice::StockCar;
     session.rebuild_roster_participants();
 
     assert_eq!(session.cars.len(), 5);
-    assert_eq!(session.active_player_car_choice(), CarChoice::DriftCar);
+    assert_eq!(session.active_player_car_choice(), CarChoice::StockCar);
+    let stock_model = tdrace_app::catalog::get_classic_model_for_category(tdrace_core::CarCategory::Nascar);
     for p in &session.grid_participants {
-        assert_eq!(p.car_title, CarChoice::DriftCar.title());
+        assert_eq!(p.car_title, stock_model.name);
     }
 
     // 3. Time Trial: solo car (plus shadow ghost telemetry)

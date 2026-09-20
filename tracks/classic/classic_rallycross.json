@@ -9901,7 +9901,7 @@
       {
         "point": [
           -57.03704,
-          -7.1525574e-7
+          -7.1525574e-07
         ],
         "tangent": [
           0.8573985,
@@ -27663,10 +27663,10 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 3,
-  "predefined_car": "classic_rally",
   "module_id": "classic",
   "modules": [
     "classic",
     "rally"
-  ]
+  ],
+  "car_category": "rally"
 }

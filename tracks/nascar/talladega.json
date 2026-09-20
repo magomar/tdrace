@@ -1,6 +1,6 @@
 {
   "name": "Talladega Superspeedway",
-  "description": "The biggest, fastest superspeedway with 33° banking and flat-out unrestricted slipstream battles.",
+  "description": "The biggest, fastest superspeedway with 33\u00b0 banking and flat-out unrestricted slipstream battles.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -4977,10 +4977,10 @@
         ],
         "tangent": [
           -1.0,
-          0.0000018219628
+          1.8219628e-06
         ],
         "normal": [
-          -0.0000018219628,
+          -1.8219628e-06,
           -1.0
         ],
         "distance": 1000.4134,
@@ -13925,7 +13925,7 @@
             206.52092
           ],
           "end": [
-            -0.000024596497,
+            -2.4596497e-05,
             206.5
           ]
         },
@@ -13938,7 +13938,7 @@
       {
         "segment": {
           "start": [
-            -0.000024596497,
+            -2.4596497e-05,
             206.5
           ],
           "end": [
@@ -20455,7 +20455,7 @@
             233.52061
           ],
           "end": [
-            0.000024596497,
+            2.4596497e-05,
             233.5
           ]
         },
@@ -20468,7 +20468,7 @@
       {
         "segment": {
           "start": [
-            0.000024596497,
+            2.4596497e-05,
             233.5
           ],
           "end": [
@@ -24815,7 +24815,7 @@
         206.52092
       ],
       [
-        -0.000024596497,
+        -2.4596497e-05,
         206.5
       ],
       [
@@ -26353,7 +26353,7 @@
         233.52061
       ],
       [
-        0.000024596497,
+        2.4596497e-05,
         233.5
       ],
       [
@@ -27631,9 +27631,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 3,
-  "predefined_car": "stock_car",
   "module_id": "nascar",
   "modules": [
     "nascar"
-  ]
+  ],
+  "car_category": "nascar"
 }

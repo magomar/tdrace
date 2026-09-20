@@ -7,7 +7,7 @@ use tdrace_core::track::presets::{
     generate_checkpoints, generate_grid_positions, generate_walls_from_spline,
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
-use tdrace_core::track::{Track, TrackCategory, TrackKind};
+use tdrace_core::track::{CarCategory, Track, TrackCategory, TrackKind};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
 use crate::ai::{BotProfile, DriverCharacter, DriverStats};
@@ -89,7 +89,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -159,7 +159,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -227,7 +227,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -297,7 +297,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -367,7 +367,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -435,7 +435,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -505,7 +505,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -573,7 +573,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -642,7 +642,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -711,7 +711,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -780,7 +780,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -847,7 +847,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -910,7 +910,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -981,7 +981,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }
@@ -1052,7 +1052,7 @@ impl KartGameModule {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 6,
-            predefined_car: Some("shifter_kart_125".to_string()),
+            car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
         }

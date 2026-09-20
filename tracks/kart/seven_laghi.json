@@ -1981,10 +1981,10 @@
         ],
         "tangent": [
           1.0,
-          0.000016518645
+          1.6518645e-05
         ],
         "normal": [
-          -0.000016518645,
+          -1.6518645e-05,
           1.0
         ],
         "distance": 92.599266,
@@ -2373,10 +2373,10 @@
         ],
         "tangent": [
           1.0,
-          0.000016530163
+          1.6530163e-05
         ],
         "normal": [
-          -0.000016530163,
+          -1.6530163e-05,
           1.0
         ],
         "distance": 117.04574,
@@ -50346,9 +50346,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 6,
-  "predefined_car": "shifter_kart_125",
   "module_id": "kart",
   "modules": [
     "kart"
-  ]
+  ],
+  "car_category": "kart"
 }

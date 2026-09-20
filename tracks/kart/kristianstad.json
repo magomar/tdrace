@@ -1,5 +1,5 @@
 {
-  "name": "Kristianstad Karting Klubb (Åsum Ring)",
+  "name": "Kristianstad Karting Klubb (\u00c5sum Ring)",
   "description": "Historic Swedish European and World Championship circuit famous for technical rhythm sections, elevation sweeps, and high-G esses.",
   "category": "main",
   "kind": {
@@ -50432,9 +50432,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 6,
-  "predefined_car": "shifter_kart_125",
   "module_id": "kart",
   "modules": [
     "kart"
-  ]
+  ],
+  "car_category": "kart"
 }

@@ -1243,46 +1243,47 @@ fn test_track_editor_default_offtrack_surface_mutation_and_cycling() {
 }
 
 #[test]
-fn test_track_editor_predefined_car_mutation_and_cycling() {
+fn test_track_editor_car_category_mutation_and_cycling() {
     use tdrace_app::editor::{EditorState, ToolSettings};
     use tdrace_core::track::presets::classic_grand_prix;
     use tdrace_core::track::Track;
+    use tdrace_core::CarCategory;
 
     let track = classic_grand_prix();
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
-    assert_eq!(state.track.predefined_car.as_deref(), Some("classic_gt"));
+    assert_eq!(state.track.car_category, CarCategory::Gt);
     assert!(!state.is_dirty);
 
-    // 1. Set predefined car to "rally_car"
-    assert!(tools.set_track_predefined_car(&mut state, Some("rally_car".to_string())));
-    assert_eq!(state.track.predefined_car.as_deref(), Some("rally_car"));
+    // 1. Set car category to Rally
+    assert!(tools.set_track_car_category(&mut state, CarCategory::Rally));
+    assert_eq!(state.track.car_category, CarCategory::Rally);
     assert!(state.is_dirty);
 
-    // Setting same car returns false
-    assert!(!tools.set_track_predefined_car(&mut state, Some("rally_car".to_string())));
+    // Setting same category returns false
+    assert!(!tools.set_track_car_category(&mut state, CarCategory::Rally));
 
-    // 2. Undo restores "classic_gt"
+    // 2. Undo restores Gt
     assert!(state.undo());
-    assert_eq!(state.track.predefined_car.as_deref(), Some("classic_gt"));
+    assert_eq!(state.track.car_category, CarCategory::Gt);
 
-    // 3. Redo restores "rally_car"
+    // 3. Redo restores Rally
     assert!(state.redo());
-    assert_eq!(state.track.predefined_car.as_deref(), Some("rally_car"));
+    assert_eq!(state.track.car_category, CarCategory::Rally);
 
-    // 4. Test cycling predefined car: rally_car -> gt4_clubsport -> sports_car -> drift_car -> kart -> rally_car
-    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("gt4_clubsport".to_string()));
-    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("sports_car".to_string()));
-    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("drift_car".to_string()));
-    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("kart".to_string()));
-    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("rally_car".to_string()));
+    // 4. Test cycling car category: Rally -> Kart -> OffRoad -> Gt -> Nascar -> Rally
+    assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Kart);
+    assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::OffRoad);
+    assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Gt);
+    assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Nascar);
+    assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Rally);
 
-    // 5. JSON serialization roundtrip preserves predefined_car
-    tools.set_track_predefined_car(&mut state, Some("gt4_clubsport".to_string()));
+    // 5. JSON serialization roundtrip preserves car_category
+    tools.set_track_car_category(&mut state, CarCategory::Gt);
     let json_str = state.track.to_json().expect("Failed to serialize track");
     let deserialized = Track::from_json(&json_str).expect("Failed to deserialize track");
-    assert_eq!(deserialized.predefined_car.as_deref(), Some("gt4_clubsport"));
+    assert_eq!(deserialized.car_category, CarCategory::Gt);
 }
 
 #[test]
@@ -2045,7 +2046,7 @@ fn test_track_editor_new_track_action_and_templates_modal() {
 
     assert_eq!(session.track.default_surface, SurfaceType::Asphalt);
     assert_eq!(session.track.spline.samples[0].surface, SurfaceType::Asphalt);
-    assert_eq!(session.track.predefined_car.as_deref(), Some("kart"));
+    assert_eq!(session.track.car_category, tdrace_core::CarCategory::Kart);
     let start_sample = session.track.spline.sample_at_distance(0.0);
     assert!(start_sample.tangent.x < 0.0, "Left direction must start with negative X tangent");
 
@@ -2058,7 +2059,7 @@ fn test_track_editor_new_track_action_and_templates_modal() {
 
     assert_eq!(session.track.default_surface, SurfaceType::Dirt);
     assert_eq!(session.track.spline.samples[0].surface, SurfaceType::Dirt);
-    assert_eq!(session.track.predefined_car.as_deref(), Some("rally_car"));
+    assert_eq!(session.track.car_category, tdrace_core::CarCategory::Rally);
     let start_sample_rally = session.track.spline.sample_at_distance(0.0);
     assert!(start_sample_rally.tangent.x > 0.0, "Right direction must start with positive X tangent");
 }

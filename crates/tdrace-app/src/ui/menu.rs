@@ -1,6 +1,7 @@
 use macroquad::color::Color;
 use macroquad::prelude::{screen_height, screen_width};
-use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::{draw_circle, draw_rectangle, draw_rectangle_lines};
+use macroquad::texture::{draw_texture_ex, DrawTextureParams, Image, Texture2D};
 use serde::{Deserialize, Serialize};
 
 use super::font::Fonts;
@@ -8,11 +9,12 @@ use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::audio::AudioSettings;
 use crate::game::XpAwardReceipt;
-use crate::render::color::Palette;
+use crate::render::color::{CarColorScheme, Palette};
 use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
+use tdrace_core::CarCategory;
 
 /// Available track options in track selection menu.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -593,6 +595,34 @@ impl CarChoice {
         }
     }
 
+    /// Returns the high-level motorsport car category (GT, NASCAR, Rally, Kart, Off-Road).
+    pub fn category(&self) -> CarCategory {
+        match self {
+            Self::SportsCar
+            | Self::DriftCar
+            | Self::GT4Clubsport
+            | Self::GT3Car
+            | Self::GT2Biturbo
+            | Self::GT1Legend
+            | Self::HypercarPrototype => CarCategory::Gt,
+            Self::StockCar => CarCategory::Nascar,
+            Self::RallyCar => CarCategory::Rally,
+            Self::Kart => CarCategory::Kart,
+            Self::SandRail => CarCategory::OffRoad,
+        }
+    }
+
+    /// Returns the standard Classic Fantasy vehicle choice for a given category.
+    pub fn classic_car_for_category(category: CarCategory) -> Self {
+        match category {
+            CarCategory::Gt => Self::SportsCar,
+            CarCategory::Nascar => Self::StockCar,
+            CarCategory::Rally => Self::RallyCar,
+            CarCategory::Kart => Self::Kart,
+            CarCategory::OffRoad => Self::SandRail,
+        }
+    }
+
     /// Checks whether this vehicle is eligible for a race that requires `required_tier`.
     /// Rule: Selectable iff car.tier <= required_tier || dev_mode.
     #[inline]
@@ -664,28 +694,16 @@ impl CarChoice {
 /// Resolves the authentic predefined car for a specific track and active module context.
 pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track>, module_id: &str) -> CarChoice {
     if let Some(tr) = track {
-        match tr.predefined_car.as_deref() {
-            Some("gt4" | "gt4_clubsport") => CarChoice::GT4Clubsport,
-            Some("gt3" | "gt3_car" | "gt3_evo") => CarChoice::GT3Car,
-            Some("gt2" | "gt2_biturbo") => CarChoice::GT2Biturbo,
-            Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
-            Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
-            Some("gt") => CarChoice::GT4Clubsport,
-            Some("open_wheel") => CarChoice::Kart,
-            Some("drift_car") => CarChoice::DriftCar,
-            Some("kart" | "shifter_kart" | "shifter_kart_125" | "classic_kart") => CarChoice::Kart,
-            Some("rally_car" | "wrc_turbo_rally" | "rally" | "classic_rally") => CarChoice::RallyCar,
-            Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1" | "classic_nascar") => CarChoice::StockCar,
-            Some("sand_rail" | "sand_rail_buggy" | "buggy" | "classic_offroad") => CarChoice::SandRail,
-            Some("sports_car" | "classic_gt") => CarChoice::SportsCar,
-            _ => match tr.module_id.as_deref().unwrap_or(module_id) {
-                "gt" | "gt_challenge" => CarChoice::GT4Clubsport,
-                "rally" => CarChoice::RallyCar,
-                "kart" => CarChoice::Kart,
-                "nascar" => CarChoice::StockCar,
-                "extreme_offroad" => CarChoice::SandRail,
-                _ => CarChoice::SportsCar,
-            },
+        if module_id == "classic" {
+            CarChoice::classic_car_for_category(tr.car_category)
+        } else {
+            match tr.car_category {
+                tdrace_core::CarCategory::Gt => CarChoice::GT4Clubsport,
+                tdrace_core::CarCategory::Nascar => CarChoice::StockCar,
+                tdrace_core::CarCategory::Rally => CarChoice::RallyCar,
+                tdrace_core::CarCategory::Kart => CarChoice::Kart,
+                tdrace_core::CarCategory::OffRoad => CarChoice::SandRail,
+            }
         }
     } else {
         match module_id {
@@ -902,7 +920,7 @@ pub fn render_track_select_menu(
     let badge_x = col1_x;
     let badge_y = scaler.s(62.0);
     let badge_h = scaler.s(48.0);
-    render_profile_badge(fonts, &scaler, badge_x, badge_y, badge_w, badge_h, active_profile, active_stats);
+    render_profile_badge(fonts, &scaler, badge_x, badge_y, badge_w, badge_h, active_profile, active_stats, false);
 
     // Optional Career Progression Bar Banner
     let cp_h = if career_progress.is_some() { scaler.s(26.0) } else { 0.0 };
@@ -2070,11 +2088,52 @@ pub fn render_controls_screen(
 
 use crate::tournament::ChampionshipSession;
 
+static APP_ICON_PNG: &[u8] = include_bytes!("../../../../assets/icons/icon-128.png");
+static APP_ICON_TEXTURE: std::sync::Mutex<Option<Texture2D>> = std::sync::Mutex::new(None);
+
+/// Retrieves or lazily decodes the official TDRace Kinetic Speed Slant application icon texture.
+fn get_app_icon_texture() -> Texture2D {
+    let mut guard = APP_ICON_TEXTURE.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(tex) = guard.as_ref() {
+        return tex.clone();
+    }
+    let img = Image::from_file_with_format(APP_ICON_PNG, None)
+        .expect("failed to decode embedded app icon PNG");
+    let tex = Texture2D::from_image(&img);
+    tex.set_filter(macroquad::texture::FilterMode::Linear);
+    *guard = Some(tex.clone());
+    tex
+}
+
+/// Renders the official Kinetic Speed Slant application icon for the Classic Arcade Motorsport module.
+fn draw_classic_arcade_icon(cx: f32, cy: f32, s: f32, is_sel: bool, accent: Color) {
+    let tex = get_app_icon_texture();
+    let dim = 46.0 * s;
+    let x = cx - dim * 0.5;
+    let y = cy - dim * 0.5;
+
+    // Glowing accent halo when selected
+    if is_sel {
+        draw_circle(cx, cy, dim * 0.56, accent.with_alpha(0.35));
+    }
+
+    draw_texture_ex(
+        &tex,
+        x,
+        y,
+        Palette::WHITE,
+        DrawTextureParams {
+            dest_size: Some(macroquad::math::Vec2::new(dim, dim)),
+            ..Default::default()
+        },
+    );
+}
+
 /// Renders the Motorsport Grand Hub Module Selection Menu.
 pub fn render_module_select_menu(
     fonts: &Fonts,
     selected_idx: usize,
-    modules: &[(&str, &str, &str, &str, Color)], // (id, title, tag, description, color)
+    modules: &[(&str, &str, &str, Color)], // (id, title, subtitle, color)
     active_profile: &PlayerProfile,
     active_stats: &ProfileCareerStats,
 ) {
@@ -2106,19 +2165,20 @@ pub fn render_module_select_menu(
     let card_w = (sw * 0.72).clamp(scaler.s(480.0), scaler.s(720.0));
     let card_x = (sw - card_w) * 0.5;
 
-    // Active Profile Badge Banner
-    let badge_y = scaler.s(64.0);
-    let badge_h = scaler.s(48.0);
-    render_profile_badge(fonts, &scaler, card_x, badge_y, card_w, badge_h, active_profile, active_stats);
+    // Active Profile Badge Banner (Enlarged & Navigable)
+    let badge_y = scaler.s(60.0);
+    let badge_h = scaler.s(68.0);
+    let is_profile_sel = selected_idx == 0;
+    render_profile_badge(fonts, &scaler, card_x, badge_y, card_w, badge_h, active_profile, active_stats, is_profile_sel);
 
     let card_gap = scaler.s(8.0);
     let start_y = badge_y + badge_h + scaler.s(10.0);
-    let available_h = (sh - start_y - scaler.s(38.0)).max(scaler.s(240.0));
-    let card_h = ((available_h - card_gap * (modules.len() as f32 - 1.0)) / modules.len() as f32).clamp(scaler.s(60.0), scaler.s(82.0));
+    let available_h = (sh - start_y - scaler.s(36.0)).max(scaler.s(240.0));
+    let card_h = ((available_h - card_gap * (modules.len() as f32 - 1.0)) / modules.len() as f32).clamp(scaler.s(56.0), scaler.s(76.0));
     let mut curr_y = start_y;
 
-    for (i, (_id, title, tag, desc, accent_col)) in modules.iter().enumerate() {
-        let is_sel = i == selected_idx;
+    for (i, (id, title, subtitle, accent_col)) in modules.iter().enumerate() {
+        let is_sel = selected_idx == (i + 1);
         let bg_col = if is_sel {
             Palette::UI_CARD_BG_HOVER
         } else {
@@ -2137,38 +2197,136 @@ pub fn render_module_select_menu(
             draw_rectangle(card_x, curr_y, scaler.s(6.0), card_h, *accent_col);
         }
 
-        // Tag
-        fonts.draw_ui_bold(
-            tag,
-            card_x + scaler.s(20.0),
-            curr_y + card_h * 0.25,
-            scaler.font_s(11.0),
+        // Icon vertically centered and aligned left
+        let icon_cx = card_x + scaler.s(68.0);
+        let icon_cy = curr_y + card_h * 0.5;
+
+        match *id {
+            "classic" => {
+                draw_classic_arcade_icon(icon_cx, icon_cy, scaler.s(0.95), is_sel, *accent_col);
+            }
+            "rally" => {
+                let icon_scheme = CarColorScheme {
+                    primary: *accent_col,
+                    secondary: Palette::WHITE,
+                    helmet: Palette::WHITE,
+                };
+                crate::render::lateral::render_real_car_lateral_by_id(
+                    "rally_hyundai_i20_rx",
+                    &icon_scheme,
+                    icon_cx,
+                    icon_cy + scaler.s(2.0),
+                    scaler.s(0.40),
+                    0.0,
+                    false,
+                );
+            }
+            "kart" => {
+                let icon_scheme = CarColorScheme {
+                    primary: *accent_col,
+                    secondary: Palette::WHITE,
+                    helmet: Palette::WHITE,
+                };
+                crate::render::lateral::render_real_car_lateral_by_id(
+                    "kart_tony_kart_racer_ok",
+                    &icon_scheme,
+                    icon_cx,
+                    icon_cy + scaler.s(2.0),
+                    scaler.s(0.42),
+                    0.0,
+                    false,
+                );
+            }
+            "gt" => {
+                let icon_scheme = CarColorScheme {
+                    primary: *accent_col,
+                    secondary: Palette::WHITE,
+                    helmet: Palette::WHITE,
+                };
+                crate::render::lateral::render_real_car_lateral_by_id(
+                    "gt_porsche_911_gt3r",
+                    &icon_scheme,
+                    icon_cx,
+                    icon_cy + scaler.s(2.0),
+                    scaler.s(0.38),
+                    0.0,
+                    false,
+                );
+            }
+            "nascar" => {
+                let icon_scheme = CarColorScheme {
+                    primary: *accent_col,
+                    secondary: Palette::WHITE,
+                    helmet: Palette::WHITE,
+                };
+                crate::render::lateral::render_real_car_lateral_by_id(
+                    "nascar_arca_chevy_ss",
+                    &icon_scheme,
+                    icon_cx,
+                    icon_cy + scaler.s(2.0),
+                    scaler.s(0.38),
+                    0.0,
+                    false,
+                );
+            }
+            "extreme_offroad" => {
+                let icon_scheme = CarColorScheme {
+                    primary: *accent_col,
+                    secondary: Palette::WHITE,
+                    helmet: Palette::WHITE,
+                };
+                crate::render::lateral::render_real_car_lateral_by_id(
+                    "offroad_sand_rail_buggy",
+                    &icon_scheme,
+                    icon_cx,
+                    icon_cy + scaler.s(2.0),
+                    scaler.s(0.40),
+                    0.0,
+                    false,
+                );
+            }
+            _ => {}
+        }
+
+        // Text area starts to the right of the icon
+        let text_x = card_x + scaler.s(132.0);
+
+        // Title (Line 1)
+        fonts.draw_display(
+            title,
+            text_x,
+            curr_y + card_h * 0.42,
+            scaler.font_s(17.5),
+            if is_sel { Palette::WHITE } else { Color::new(0.88, 0.92, 0.97, 1.0) },
+        );
+
+        // Subtitle (Line 2)
+        fonts.draw_ui_regular(
+            subtitle,
+            text_x,
+            curr_y + card_h * 0.74,
+            scaler.font_s(12.0),
             if is_sel { *accent_col } else { Palette::UI_TEXT_MUTED },
         );
 
-        // Title
-        fonts.draw_display(
-            title,
-            card_x + scaler.s(20.0),
-            curr_y + card_h * 0.54,
-            scaler.font_s(18.0),
-            if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
-        );
-
-        // Description
-        fonts.draw_ui_regular(
-            desc,
-            card_x + scaler.s(20.0),
-            curr_y + card_h * 0.82,
-            scaler.font_s(12.0),
-            if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
-        );
+        // Prompt on the right if selected
+        if is_sel {
+            let select_prompt = "PRESS [ENTER] TO SELECT ▶";
+            let prompt_dim = fonts.measure_ui_bold(select_prompt, scaler.font_s(11.0));
+            fonts.draw_ui_bold(
+                select_prompt,
+                card_x + card_w - prompt_dim.width - scaler.s(16.0),
+                curr_y + card_h * 0.50,
+                scaler.font_s(11.0),
+                *accent_col,
+            );
+        }
 
         curr_y += card_h + card_gap;
     }
 
     // Footer prompt
-    let prompt = "USE [UP/DOWN] TO SELECT MODULE | [ENTER/SPACE] OPEN MENU | [X] SETTINGS | [P] SWITCH PROFILE | [N] NEW PROFILE | [K] CONTROLS | [ESC] QUIT";
+    let prompt = "USE [UP/DOWN] TO SELECT PROFILE OR MODULE | [ENTER/SPACE] SELECT | [X] SETTINGS | [K] CONTROLS | [ESC] QUIT";
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
@@ -2320,6 +2478,7 @@ impl ModalityCategory {
             Self::Options => &[
                 ModalityItem::PlayerProfile,
                 ModalityItem::Garage,
+                ModalityItem::TrackEditor,
                 ModalityItem::Settings,
             ],
         }
@@ -2339,6 +2498,7 @@ pub enum ModalityItem {
     CloudPlay,
     PlayerProfile,
     Garage,
+    TrackEditor,
     Settings,
 }
 
@@ -2355,6 +2515,7 @@ impl ModalityItem {
             Self::CloudPlay => "Cloud Online",
             Self::PlayerProfile => "Player Profile",
             Self::Garage => "Garage Showroom",
+            Self::TrackEditor => "Track Editor",
             Self::Settings => "Settings",
         }
     }
@@ -2371,6 +2532,7 @@ impl ModalityItem {
             Self::CloudPlay => "WORLDWIDE LOBBIES [COMING SOON]",
             Self::PlayerProfile => "DRIVER RECORDS • CAREER STATS & SLOTS",
             Self::Garage => "360° VEHICLE TURNTABLE & TECHNICAL DOSSIER",
+            Self::TrackEditor => "INTERACTIVE CAD STUDIO • CUSTOM CIRCUITS",
             Self::Settings => "AUDIO • CONTROLS • ASSISTS • DISPLAY CONFIG",
         }
     }
@@ -2387,6 +2549,7 @@ impl ModalityItem {
             Self::CloudPlay => "Compete globally in ranked matchmaking, custom public lobbies, and online events.",
             Self::PlayerProfile => "Inspect career statistics, manage driver slots, change nationality and custom car liveries.",
             Self::Garage => "Inspect active motorsport machines in fullscreen 360° turntable, check BHP and weight, and rev engine.",
+            Self::TrackEditor => "Design custom circuits, shape splines, place surface zones, and test drive your tracks.",
             Self::Settings => "Configure sound levels, gamepad and keyboard mappings, steering assists, and display settings.",
         }
     }
@@ -2407,6 +2570,7 @@ impl ModalityItem {
             Self::CloudPlay => Color::new(0.60, 0.65, 0.75, 1.0),
             Self::PlayerProfile => Palette::NEON_CYAN,
             Self::Garage => Palette::NEON_GOLD,
+            Self::TrackEditor => Palette::NEON_GREEN,
             Self::Settings => Palette::NEON_MAGENTA,
         }
     }
@@ -2753,6 +2917,15 @@ pub fn render_modality_select_screen(
                             Palette::NEON_GOLD,
                         );
                     }
+                    ModalityItem::TrackEditor => {
+                        fonts.draw_ui_bold(
+                            "📐 CAD STUDIO",
+                            col_x + col_w - scaler.s(160.0),
+                            curr_y + opt_card_h * 0.25,
+                            scaler.font_s(10.0),
+                            Palette::NEON_GREEN,
+                        );
+                    }
                     ModalityItem::Settings => {
                         fonts.draw_ui_bold(
                             "⚙️ ARCADE CONFIG",
@@ -2790,6 +2963,7 @@ pub fn render_modality_select_screen(
                     let prompt_str = match item {
                         ModalityItem::PlayerProfile => "PRESS [ENTER] OR [P] TO OPEN ▶",
                         ModalityItem::Garage => "PRESS [ENTER] OR [G] TO ENTER ▶",
+                        ModalityItem::TrackEditor => "PRESS [ENTER] OR [E] TO EDIT ▶",
                         ModalityItem::Settings => "PRESS [ENTER] OR [X] TO CONFIGURE ▶",
                         _ => "PRESS [ENTER] TO SELECT ▶",
                     };
@@ -2809,7 +2983,7 @@ pub fn render_modality_select_screen(
 
     // Bottom Action Prompt / Controller Hints
     fonts.draw_ui_regular_centered(
-        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [P] Profile  •  [X] Settings  •  [ENTER/SPACE] Select  •  [ESC] Hub",
+        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [P] Profile  •  [E] Track Editor  •  [X] Settings  •  [ENTER/SPACE] Select  •  [ESC] Hub",
         sw * 0.5,
         sh - scaler.s(14.0),
         scaler.font_s(11.5),

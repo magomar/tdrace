@@ -1,6 +1,6 @@
 {
-  "name": "Höljes Motorstadion (World RX Sweden)",
-  "description": "The Holy Grail of Rallycross in Sweden featuring the legendary Höljes Jump, banked Velodrome & mixed gravel sliding.",
+  "name": "H\u00f6ljes Motorstadion (World RX Sweden)",
+  "description": "The Holy Grail of Rallycross in Sweden featuring the legendary H\u00f6ljes Jump, banked Velodrome & mixed gravel sliding.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -45274,7 +45274,7 @@
         "launch_speed": 2.2,
         "ramp_angle_deg": 5.5,
         "height": 1.3,
-        "name": "Höljes Jump Crest",
+        "name": "H\u00f6ljes Jump Crest",
         "surface": "Dirt"
       }
     ],
@@ -51652,9 +51652,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
     "rally"
-  ]
+  ],
+  "car_category": "rally"
 }

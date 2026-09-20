@@ -10,6 +10,7 @@ use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceLayer, SurfaceShape};
 use tdrace_core::track::presets::{RaceDirection, TrackShape};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
+use tdrace_core::CarCategory;
 
 use crate::editor::camera::EditorCamera;
 use crate::editor::state::{EditorState, GridSnapSetting, Selection};
@@ -2485,32 +2486,20 @@ fn render_inspector(
             }
             curr_y += scaler.s(6.0);
 
-            fonts.draw_ui_bold("Predefined Vehicle", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_CYAN);
+            fonts.draw_ui_bold("Car Category", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_CYAN);
             curr_y += scaler.s(22.0);
 
-            let cars = [
-                ("sports_car", "GT Sport"),
-                ("drift_car", "Drift Spec"),
-                ("kart", "125cc Kart"),
-                ("rally_car", "AWD Rally"),
-                ("gt4_clubsport", "GT4 Clubsport"),
+            let categories = [
+                (CarCategory::Gt, "GT"),
+                (CarCategory::Nascar, "NASCAR"),
+                (CarCategory::Rally, "Rally"),
+                (CarCategory::Kart, "Kart"),
+                (CarCategory::OffRoad, "Off-Road"),
             ];
 
-            let active_car_str = state.track.predefined_car.clone().unwrap_or_else(|| "sports_car".to_string());
-            let is_matching_car = |car_id: &str| -> bool {
-                match car_id {
-                    "sports_car" => matches!(active_car_str.as_str(), "sports_car"),
-                    "drift_car" => matches!(active_car_str.as_str(), "drift_car"),
-                    "kart" => matches!(active_car_str.as_str(), "kart" | "shifter_kart" | "shifter_kart_125"),
-                    "rally_car" => matches!(active_car_str.as_str(), "rally_car" | "wrc_turbo_rally" | "rally"),
-                    "gt4_clubsport" => matches!(active_car_str.as_str(), "gt4_clubsport" | "gt4" | "gt"),
-                    _ => false,
-                }
-            };
-
-            for chunk in cars.chunks(2) {
-                let (cid1, label1) = chunk[0];
-                let is_active1 = is_matching_car(cid1);
+            for chunk in categories.chunks(2) {
+                let (cat1, label1) = chunk[0];
+                let is_active1 = state.track.car_category == cat1;
                 if draw_ui_btn(
                     fonts,
                     scaler,
@@ -2524,12 +2513,12 @@ fn render_inspector(
                     mouse_pos,
                     clicked,
                 ) {
-                    tools.set_track_predefined_car(state, Some(cid1.to_string()));
+                    tools.set_track_car_category(state, cat1);
                 }
 
                 if chunk.len() > 1 {
-                    let (cid2, label2) = chunk[1];
-                    let is_active2 = is_matching_car(cid2);
+                    let (cat2, label2) = chunk[1];
+                    let is_active2 = state.track.car_category == cat2;
                     if draw_ui_btn(
                         fonts,
                         scaler,
@@ -2543,7 +2532,7 @@ fn render_inspector(
                         mouse_pos,
                         clicked,
                     ) {
-                        tools.set_track_predefined_car(state, Some(cid2.to_string()));
+                        tools.set_track_car_category(state, cat2);
                     }
                 }
                 curr_y += scaler.s(26.0);

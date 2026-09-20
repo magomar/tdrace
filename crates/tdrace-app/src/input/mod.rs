@@ -603,6 +603,8 @@ mod tests {
 
     #[test]
     fn test_input_controller_initialization_and_default_preset() {
+        let _guard = crate::storage::ENV_CONFIG_MUTEX.lock().unwrap_or_else(|p| p.into_inner());
+        let _ = std::fs::remove_file(crate::storage::resolve_user_data_dir().join("input_bindings.json"));
         let controller = InputController::new();
         assert_eq!(controller.input_map, InputMap::default_racing());
         assert_eq!(
@@ -621,6 +623,8 @@ mod tests {
 
     #[test]
     fn test_input_controller_preset_cycling() {
+        let _guard = crate::storage::ENV_CONFIG_MUTEX.lock().unwrap_or_else(|p| p.into_inner());
+        let _ = std::fs::remove_file(crate::storage::resolve_user_data_dir().join("input_bindings.json"));
         let mut controller = InputController::new();
         assert_eq!(controller.input_map, InputMap::default_racing());
 
@@ -642,6 +646,7 @@ mod tests {
 
     #[test]
     fn test_input_controller_save_and_reload_bindings() {
+        let _guard = crate::storage::ENV_CONFIG_MUTEX.lock().unwrap_or_else(|p| p.into_inner());
         let temp_dir = std::env::temp_dir().join(format!(
             "tdrace_input_test_{}",
             std::time::SystemTime::now()

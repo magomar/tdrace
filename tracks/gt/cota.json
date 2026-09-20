@@ -46949,9 +46949,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "gt3_evo",
   "module_id": "gt",
   "modules": [
     "gt"
-  ]
+  ],
+  "car_category": "gt"
 }

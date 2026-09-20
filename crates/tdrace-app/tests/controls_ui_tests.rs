@@ -194,6 +194,7 @@ fn test_pause_menu_nav_grid_2d_navigation() {
 fn test_arcade_settings_modal_integration_and_bindings() {
     use tdrace_core::physics::config::AssistProfile;
 
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("controls_settings_test");
     let orig_config = std::fs::read_to_string("config.toml").ok();
 
     let mut session = RaceSession::new();
@@ -323,6 +324,7 @@ fn test_screen_stack_and_cabinet_screen_architecture() {
 fn test_menu_state_settings_modal_integration() {
     use tdrace_app::game::RaceSession;
 
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("controls_menu_settings");
     let orig_config = std::fs::read_to_string("config.toml").ok();
 
     let mut session = RaceSession::new();
@@ -351,6 +353,7 @@ fn test_menu_state_settings_modal_integration() {
 fn test_module_select_state_settings_modal_integration() {
     use tdrace_app::game::{GameState, RaceSession};
 
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("controls_hub_settings");
     let orig_config = std::fs::read_to_string("config.toml").ok();
 
     let mut session = RaceSession::new();
@@ -389,6 +392,7 @@ fn test_menu_and_module_select_settings_x_shortcut_and_unsaved_flow() {
     use cabinet::ui::CabinetTheme;
     use cabinet::input::GamepadSnapshot;
 
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("controls_shortcut_settings");
     let orig_config = std::fs::read_to_string("config.toml").ok();
 
     let mut session = RaceSession::new();

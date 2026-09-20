@@ -5,7 +5,7 @@ use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
 use tdrace_core::track::spline::TrackWaypoint;
-use tdrace_core::track::TrackKind;
+use tdrace_core::track::{CarCategory, TrackKind};
 
 use super::camera::EditorCamera;
 use super::state::{EditorState, Selection};
@@ -899,11 +899,11 @@ impl ToolSettings {
         next
     }
 
-    /// Sets the track's predefined vehicle model.
-    pub fn set_track_predefined_car(&mut self, state: &mut EditorState, car: Option<String>) -> bool {
-        if state.track.predefined_car != car {
+    /// Sets the track's car category.
+    pub fn set_track_car_category(&mut self, state: &mut EditorState, category: CarCategory) -> bool {
+        if state.track.car_category != category {
             state.record_undo();
-            state.track.predefined_car = car;
+            state.track.car_category = category;
             state.is_dirty = true;
             true
         } else {
@@ -911,14 +911,13 @@ impl ToolSettings {
         }
     }
 
-    /// Cycles the track's predefined vehicle model through available archetype options.
-    pub fn cycle_track_predefined_car(&mut self, state: &mut EditorState) -> Option<String> {
-        const CAR_PRESETS: [&str; 5] = ["sports_car", "drift_car", "kart", "rally_car", "gt4_clubsport"];
-        let current = state.track.predefined_car.as_deref().unwrap_or("sports_car");
-        let idx = CAR_PRESETS.iter().position(|&c| c == current).unwrap_or(0);
-        let next = CAR_PRESETS[(idx + 1) % CAR_PRESETS.len()].to_string();
-        self.set_track_predefined_car(state, Some(next.clone()));
-        Some(next)
+    /// Cycles the track's car category through available options.
+    pub fn cycle_track_car_category(&mut self, state: &mut EditorState) -> CarCategory {
+        let current = state.track.car_category;
+        let idx = CarCategory::ALL.iter().position(|&c| c == current).unwrap_or(0);
+        let next = CarCategory::ALL[(idx + 1) % CarCategory::ALL.len()];
+        self.set_track_car_category(state, next);
+        next
     }
 
     /// Batch modifies track width for all selected waypoints.

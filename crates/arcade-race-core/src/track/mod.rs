@@ -30,6 +30,7 @@ pub use presets::{
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 pub use validation::{validate_track, TrackValidationError, ValidationSeverity};
+pub use crate::car_category::CarCategory;
 
 use std::fmt;
 use std::fs;
@@ -128,7 +129,7 @@ pub struct Track {
     #[serde(default = "default_laps_fallback")]
     pub default_laps: u32,
     #[serde(default)]
-    pub predefined_car: Option<String>,
+    pub car_category: CarCategory,
     #[serde(default)]
     pub module_id: Option<String>,
     #[serde(default)]
@@ -532,7 +533,7 @@ mod tests {
         let rx = classic_rallycross();
         assert_eq!(rx.name, "Classic Rallycross");
         assert!(rx.spline.total_length() >= 950.0 && rx.spline.total_length() <= 1100.0, "Classic Rallycross must be ~1km (got {})", rx.spline.total_length());
-        assert_eq!(rx.predefined_car.as_deref(), Some("classic_rally"));
+        assert_eq!(rx.car_category, CarCategory::Rally);
     }
 
     #[test]

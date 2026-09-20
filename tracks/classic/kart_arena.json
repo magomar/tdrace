@@ -19034,10 +19034,10 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 5,
-  "predefined_car": "classic_kart",
   "module_id": "classic",
   "modules": [
     "classic",
     "kart"
-  ]
+  ],
+  "car_category": "kart"
 }

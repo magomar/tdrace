@@ -8,7 +8,7 @@ use super::scaler::UiScaler;
 use crate::profile::{draw_country_banner, CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::color::{CarColorScheme, Palette};
 
-/// Renders the compact Player Profile Badge for the Main Menu.
+/// Renders the Player Profile Badge for menus, supporting both compact mode and enlarged navigable card mode.
 pub fn render_profile_badge(
     fonts: &Fonts,
     scaler: &UiScaler,
@@ -18,29 +18,53 @@ pub fn render_profile_badge(
     h: f32,
     profile: &PlayerProfile,
     stats: &ProfileCareerStats,
+    is_selected: bool,
 ) {
+    let is_compact = h < scaler.s(56.0);
+    let bg_col = if is_selected {
+        Palette::UI_CARD_BG_HOVER
+    } else {
+        Palette::UI_CARD_BG
+    };
+    let border_col = if is_selected {
+        Palette::NEON_CYAN
+    } else {
+        Palette::UI_CARD_BORDER
+    };
+    let border_thickness = if is_selected { 2.4 } else { 1.2 };
+
     // Glass card backdrop
-    scaler.draw_glass_card(x, y, w, h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.8);
+    scaler.draw_glass_card(x, y, w, h, bg_col, border_col, border_thickness);
+
+    // Left accent bar when selected
+    if is_selected {
+        draw_rectangle(x, y, scaler.s(6.0), h, Palette::NEON_CYAN);
+    }
+
+    let pad_left = if is_selected { scaler.s(16.0) } else { scaler.s(12.0) };
 
     // Top Row: Country Banner, Name & Alias
-    let banner_h = scaler.s(20.0);
-    let banner_w = scaler.s(52.0);
-    draw_country_banner(profile.country.as_deref(), x + scaler.s(12.0), y + scaler.s(7.0), banner_w, banner_h, Some(fonts), scaler);
+    let banner_h = if is_compact { scaler.s(20.0) } else { scaler.s(22.0) };
+    let banner_w = if is_compact { scaler.s(52.0) } else { scaler.s(56.0) };
+    let banner_y = if is_compact { y + scaler.s(7.0) } else { y + scaler.s(11.0) };
+    draw_country_banner(profile.country.as_deref(), x + pad_left, banner_y, banner_w, banner_h, Some(fonts), scaler);
 
     let name_str = format!("{} — \"{}\"", profile.name, profile.alias);
-    fonts.draw_ui_bold(
+    let name_y = if is_compact { y + scaler.s(22.0) } else { y + scaler.s(27.0) };
+    let name_size = if is_compact { scaler.font_s(14.5) } else { scaler.font_s(17.0) };
+    fonts.draw_display(
         &name_str,
-        x + banner_w + scaler.s(20.0),
-        y + scaler.s(22.0),
-        scaler.font_s(14.5),
-        Palette::WHITE,
+        x + pad_left + banner_w + scaler.s(16.0),
+        name_y,
+        name_size,
+        if is_selected { Palette::WHITE } else { Color::new(0.88, 0.92, 0.97, 1.0) },
     );
 
     // Livery swatches on top right
-    let swatch_w = scaler.s(14.0);
-    let swatch_h = scaler.s(11.0);
-    let swatch_x = x + w - scaler.s(72.0);
-    let swatch_y = y + scaler.s(11.0);
+    let swatch_w = if is_compact { scaler.s(14.0) } else { scaler.s(16.0) };
+    let swatch_h = if is_compact { scaler.s(11.0) } else { scaler.s(13.0) };
+    let swatch_x = x + w - scaler.s(if is_compact { 72.0 } else { 80.0 });
+    let swatch_y = if is_compact { y + scaler.s(11.0) } else { y + scaler.s(13.0) };
 
     draw_rectangle(swatch_x, swatch_y, swatch_w, swatch_h, profile.color_scheme.primary);
     draw_rectangle_lines(swatch_x, swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
@@ -57,20 +81,25 @@ pub fn render_profile_badge(
         "Races: {}  •  Wins: {} ({}%)  •  Podiums: {}  •  Laps: {}",
         stats.total_races, stats.wins, win_pct, stats.podiums, stats.total_laps
     );
+    let bottom_y = if is_compact { y + scaler.s(41.0) } else { y + scaler.s(53.0) };
     fonts.draw_ui_regular(
         &stats_line,
-        x + scaler.s(12.0),
-        y + scaler.s(41.0),
-        scaler.font_s(11.5),
+        x + pad_left,
+        bottom_y,
+        if is_compact { scaler.font_s(11.5) } else { scaler.font_s(12.5) },
         Palette::NEON_GOLD,
     );
 
-    let action_prompt = "[P] PROFILE & HISTORY";
+    let action_prompt = if is_selected {
+        "PRESS [ENTER] TO MANAGE PROFILE ▶"
+    } else {
+        "[P] PROFILE & HISTORY"
+    };
     let prompt_dim = fonts.measure_ui_bold(action_prompt, scaler.font_s(11.5));
     fonts.draw_ui_bold(
         action_prompt,
         x + w - prompt_dim.width - scaler.s(14.0),
-        y + scaler.s(41.0),
+        bottom_y,
         scaler.font_s(11.5),
         Palette::NEON_CYAN,
     );

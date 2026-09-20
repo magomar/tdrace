@@ -1509,10 +1509,10 @@
         ],
         "tangent": [
           1.0,
-          -0.000081859005
+          -8.1859005e-05
         ],
         "normal": [
-          0.000081859005,
+          8.1859005e-05,
           1.0
         ],
         "distance": 149.59651,
@@ -1565,10 +1565,10 @@
         ],
         "tangent": [
           1.0,
-          0.00008186106
+          8.186106e-05
         ],
         "normal": [
-          -0.00008186106,
+          -8.186106e-05,
           1.0
         ],
         "distance": 158.07983,
@@ -55015,9 +55015,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 3,
-  "predefined_car": "stock_car",
   "module_id": "nascar",
   "modules": [
     "nascar"
-  ]
+  ],
+  "car_category": "nascar"
 }

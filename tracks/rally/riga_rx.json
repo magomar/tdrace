@@ -1,5 +1,5 @@
 {
-  "name": "Biķernieku Trase (World RX Latvia)",
+  "name": "Bi\u0137ernieku Trase (World RX Latvia)",
   "description": "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.",
   "category": "main",
   "kind": {
@@ -44695,7 +44695,7 @@
         "launch_speed": 2.2,
         "ramp_angle_deg": 5.5,
         "height": 1.3,
-        "name": "Biķernieki Double Jump Crest",
+        "name": "Bi\u0137ernieki Double Jump Crest",
         "surface": "Dirt"
       }
     ],
@@ -50937,9 +50937,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "rally_car",
   "module_id": "rally",
   "modules": [
     "rally"
-  ]
+  ],
+  "car_category": "rally"
 }

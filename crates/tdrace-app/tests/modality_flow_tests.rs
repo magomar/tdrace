@@ -4,7 +4,7 @@ use tdrace_app::ui::menu::{CarChoice, GameMode, ModalityCategory, ModalityModal}
 #[test]
 fn test_grand_hub_to_modality_select_transition() {
     let mut session = RaceSession::new();
-    session.state = GameState::ModuleSelect { selected_idx: 3 }; // GT World Challenge
+    session.state = GameState::ModuleSelect { selected_idx: 4 }; // GT World Challenge (index 4)
 
     // Simulate pressing A / Confirm on Grand Hub
     session.input.gamepad.snapshot.btn_confirm_pressed = true;
@@ -420,7 +420,7 @@ fn test_modality_select_backward_transition_to_hub() {
     assert!(session.transition.is_some());
     assert_eq!(
         session.pending_state,
-        Some(GameState::ModuleSelect { selected_idx: 3 })
+        Some(GameState::ModuleSelect { selected_idx: 4 })
     );
 }
 
@@ -576,9 +576,9 @@ fn test_modality_single_selected_menu_isolation() {
             modal: None,
         }
     );
-    assert_eq!(ModalityCategory::Options.items().len(), 3);
+    assert_eq!(ModalityCategory::Options.items().len(), 4);
 
-    // 4. Wrapping within Options menu (3 items: 0=Profile, 1=Garage, 2=Settings)
+    // 4. Wrapping within Options menu (4 items: 0=Profile, 1=Garage, 2=TrackEditor, 3=Settings)
     session.input.gamepad.snapshot.dpad_up_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.dpad_up_pressed = false;
@@ -587,7 +587,7 @@ fn test_modality_single_selected_menu_isolation() {
         session.state,
         GameState::ModalitySelect {
             category: ModalityCategory::Options,
-            selected_idx: 2,
+            selected_idx: 3,
             modal: None,
         }
     );
@@ -630,15 +630,61 @@ fn test_modality_select_options_player_profile_flow() {
 }
 
 #[test]
+fn test_modality_select_options_track_editor_flow() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::Options,
+        selected_idx: 2, // Track Editor
+        modal: None,
+    };
+
+    // 1. Confirm on Track Editor card (idx 2) opens Track Editor
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert_eq!(session.state, GameState::TrackEditor);
+    assert_eq!(session.editor_origin, tdrace_app::game::EditorOrigin::ModalitySelect);
+    assert!(session.editor_state.is_some());
+
+    // 2. Exit editor via ExitToTrackManager / return_to_track_manager returns to ModalitySelect under Options (idx 2)
+    session.handle_editor_action(tdrace_app::editor::EditorAction::ExitToTrackManager);
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Options,
+            selected_idx: 2,
+            modal: None,
+        }
+    );
+
+    // 3. Test direct shortcut [E] from ModalitySelect
+    session.enter_track_editor_from_modality_select();
+    assert_eq!(session.state, GameState::TrackEditor);
+    assert_eq!(session.editor_origin, tdrace_app::game::EditorOrigin::ModalitySelect);
+
+    session.return_to_track_manager();
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Options,
+            selected_idx: 2,
+            modal: None,
+        }
+    );
+}
+
+#[test]
 fn test_modality_select_options_settings_modal_flow() {
     let mut session = RaceSession::new();
     session.state = GameState::ModalitySelect {
         category: ModalityCategory::Options,
-        selected_idx: 2, // Settings
+        selected_idx: 3, // Settings
         modal: None,
     };
 
-    // Confirm on Settings card (idx 2) opens Settings Modal
+    // Confirm on Settings card (idx 3) opens Settings Modal
     session.input.gamepad.snapshot.btn_confirm_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_confirm_pressed = false;
@@ -648,7 +694,7 @@ fn test_modality_select_options_settings_modal_flow() {
         session.state,
         GameState::ModalitySelect {
             category: ModalityCategory::Options,
-            selected_idx: 2,
+            selected_idx: 3,
             modal: None,
         }
     ));
@@ -656,6 +702,54 @@ fn test_modality_select_options_settings_modal_flow() {
     // Close settings modal
     session.close_settings_modal(false);
     assert!(!session.is_settings_modal_open());
+}
+
+#[test]
+fn test_grand_hub_player_profile_selection_and_navigation() {
+    let mut session = RaceSession::new();
+    // Start on Classic module (index 1)
+    session.state = GameState::ModuleSelect { selected_idx: 1 };
+
+    // 1. Navigate UP from Classic -> selects Player Profile (idx 0)
+    session.input.gamepad.snapshot.nav_up = true;
+    session.update_module_select();
+    session.input.gamepad.snapshot.nav_up = false;
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+
+    // 2. Press Enter/Confirm on Player Profile -> loads ProfileManager
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_module_select();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert!(matches!(session.state, GameState::ProfileManager { .. }));
+    assert_eq!(session.profile_origin, tdrace_app::game::ProfileOrigin::ModuleSelect);
+
+    // 3. Return from ProfileManager with Cancel (Escape/Gamepad B) -> returns to ModuleSelect { selected_idx: 0 }
+    session.input.gamepad.snapshot.btn_cancel_pressed = true;
+    let sel_idx = match session.state {
+        GameState::ProfileManager { selected_idx } => selected_idx,
+        _ => 0,
+    };
+    session.update_profile_manager(sel_idx);
+    session.input.gamepad.snapshot.btn_cancel_pressed = false;
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+
+    // 4. Wrap-around UP from Player Profile (idx 0) -> wraps to Extreme Off-Road (idx 6)
+    session.input.gamepad.snapshot.nav_up = true;
+    session.update_module_select();
+    session.input.gamepad.snapshot.nav_up = false;
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 6 });
+
+    // 5. Wrap-around DOWN from Extreme Off-Road (idx 6) -> wraps to Player Profile (idx 0)
+    session.input.gamepad.snapshot.nav_down = true;
+    session.update_module_select();
+    session.input.gamepad.snapshot.nav_down = false;
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+
+    // 6. Navigate DOWN from Player Profile (idx 0) -> Classic (idx 1)
+    session.input.gamepad.snapshot.nav_down = true;
+    session.update_module_select();
+    session.input.gamepad.snapshot.nav_down = false;
+    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 1 });
 }
 
 

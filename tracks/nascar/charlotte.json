@@ -1,6 +1,6 @@
 {
   "name": "Charlotte Motor Speedway",
-  "description": "The Beast of the Southeast: 1.5-mile quad-oval with 24° banking, frontstretch dogleg, and high-speed pack drafting battles.",
+  "description": "The Beast of the Southeast: 1.5-mile quad-oval with 24\u00b0 banking, frontstretch dogleg, and high-speed pack drafting battles.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -273,10 +273,10 @@
         ],
         "tangent": [
           1.0,
-          -0.000001664597
+          -1.664597e-06
         ],
         "normal": [
-          0.000001664597,
+          1.664597e-06,
           1.0
         ],
         "distance": 0.0,
@@ -5201,10 +5201,10 @@
         ],
         "tangent": [
           -1.0,
-          0.000094180185
+          9.4180185e-05
         ],
         "normal": [
-          -0.000094180185,
+          -9.4180185e-05,
           -1.0
         ],
         "distance": 755.23944,
@@ -6097,10 +6097,10 @@
         ],
         "tangent": [
           -1.0,
-          -0.000094180185
+          -9.4180185e-05
         ],
         "normal": [
-          0.000094180185,
+          9.4180185e-05,
           -1.0
         ],
         "distance": 944.8847,
@@ -11025,10 +11025,10 @@
         ],
         "tangent": [
           1.0,
-          -0.000001664597
+          -1.664597e-06
         ],
         "normal": [
-          0.000001664597,
+          1.664597e-06,
           1.0
         ],
         "distance": 1700.1243,
@@ -11108,7 +11108,7 @@
       {
         "segment": {
           "start": [
-            0.000019073486,
+            1.9073486e-05,
             -83.5
           ],
           "end": [
@@ -17623,7 +17623,7 @@
             -83.49139
           ],
           "end": [
-            0.000019073486,
+            1.9073486e-05,
             -83.5
           ]
         },
@@ -17638,7 +17638,7 @@
       {
         "segment": {
           "start": [
-            -0.000019073486,
+            -1.9073486e-05,
             -106.5
           ],
           "end": [
@@ -24153,7 +24153,7 @@
             -106.49122
           ],
           "end": [
-            -0.000019073486,
+            -1.9073486e-05,
             -106.5
           ]
         },
@@ -24169,7 +24169,7 @@
     "jump_ramps": [],
     "left_boundary_polyline": [
       [
-        0.000019073486,
+        1.9073486e-05,
         -83.5
       ],
       [
@@ -25707,7 +25707,7 @@
     ],
     "right_boundary_polyline": [
       [
-        -0.000019073486,
+        -1.9073486e-05,
         -106.5
       ],
       [
@@ -27251,17 +27251,17 @@
       "id": 0,
       "gate": {
         "start": [
-          0.000023304357,
+          2.3304357e-05,
           -81.0
         ],
         "end": [
-          -0.000023304357,
+          -2.3304357e-05,
           -109.0
         ]
       },
       "direction": [
         1.0,
-        -0.000001664597
+        -1.664597e-06
       ],
       "sector": 0,
       "is_finish_line": true,
@@ -27389,17 +27389,17 @@
       "id": 6,
       "gate": {
         "start": [
-          -0.00006162944,
+          -6.162944e-05,
           151.0
         ],
         "end": [
-          -0.00006044078,
+          -6.044078e-05,
           179.0
         ]
       },
       "direction": [
         -1.0,
-        4.2452104e-8
+        4.2452104e-08
       ],
       "sector": 1,
       "is_finish_line": false,
@@ -27657,9 +27657,9 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
-  "predefined_car": "stock_car",
   "module_id": "nascar",
   "modules": [
     "nascar"
-  ]
+  ],
+  "car_category": "nascar"
 }

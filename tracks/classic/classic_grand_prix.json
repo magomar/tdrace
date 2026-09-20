@@ -25991,9 +25991,9 @@
     }
   },
   "default_laps": 3,
-  "predefined_car": "classic_gt",
   "module_id": "classic",
   "modules": [
     "classic"
-  ]
+  ],
+  "car_category": "gt"
 }

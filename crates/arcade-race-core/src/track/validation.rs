@@ -736,6 +736,7 @@ mod tests {
     use crate::track::presets::classic_grand_prix;
     use crate::track::spline::TrackWaypoint;
     use glam::Vec2;
+    use crate::CarCategory;
 
     #[test]
     fn test_arena_track_validation_clean() {
@@ -764,7 +765,7 @@ mod tests {
             default_surface: wheelbase::SurfaceType::Grass,
             pit_box_area: None,
             default_laps: 3,
-            predefined_car: None,
+            car_category: CarCategory::OffRoad,
             module_id: Some("extreme_offroad".to_string()),
             modules: vec!["extreme_offroad".to_string()],
         };

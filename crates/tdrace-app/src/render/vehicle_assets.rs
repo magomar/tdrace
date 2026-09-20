@@ -37,8 +37,8 @@ fn find_asset_file(rel_path: &str) -> Option<Vec<u8>> {
     None
 }
 
-/// Dynamic tinting pass converting neutral bodywork to `primary` and accent stripes to `secondary`.
-fn apply_vehicle_tint(base_img: &Image, primary: Color, secondary: Color) -> Image {
+/// Dynamic tinting pass converting neutral or archetype bodywork to `primary` and accent stripes to `secondary`.
+pub fn apply_vehicle_tint(base_img: &Image, model_id: &str, primary: Color, secondary: Color) -> Image {
     let mut tinted = base_img.clone();
     for pixel in tinted.bytes.chunks_exact_mut(4) {
         let a = pixel[3];
@@ -54,13 +54,44 @@ fn apply_vehicle_tint(base_img: &Image, primary: Color, secondary: Color) -> Ima
         let sat = if max_c > 0.001 { (max_c - min_c) / max_c } else { 0.0 };
         let lum = (r + g + b) / 3.0;
 
-        // Neutral / white / light-grey bodywork -> primary color
-        if lum > 0.65 && sat < 0.22 {
-            pixel[0] = ((primary.r * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
-            pixel[1] = ((primary.g * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
-            pixel[2] = ((primary.b * lum * 1.05).clamp(0.0, 1.0) * 255.0) as u8;
-        } else if g > 0.58 && r > 0.45 && b < 0.45 && sat > 0.30 {
-            // Accent livery graphics -> secondary color
+        let (is_body, is_accent) = match model_id {
+            "classic_gt" => {
+                let body = r > 0.45 && r > g * 1.4 && r > b * 1.4;
+                let accent = lum > 0.65 && sat < 0.22;
+                (body, accent)
+            }
+            "classic_nascar" => {
+                let body = b > 0.40 && b > r * 1.3 && b > g * 1.1;
+                let accent = r > 0.55 && g > 0.45 && b < 0.30;
+                (body, accent)
+            }
+            "classic_offroad" => {
+                let body = r > 0.60 && g > 0.20 && g < 0.70 && b < 0.30;
+                (body, false)
+            }
+            "classic_kart" => {
+                let body = g > 0.40 && g > r * 1.3 && g > b * 1.3;
+                (body, false)
+            }
+            "classic_rally" => {
+                let body = r > 0.50 && g > 0.45 && b < 0.35;
+                (body, false)
+            }
+            _ => {
+                // Neutral / white / light-grey bodywork -> primary color
+                let body = lum > 0.65 && sat < 0.22;
+                // Accent livery graphics -> secondary color
+                let accent = g > 0.58 && r > 0.45 && b < 0.45 && sat > 0.30;
+                (body, accent)
+            }
+        };
+
+        if is_body {
+            let val = max_c;
+            pixel[0] = ((primary.r * val * 1.10).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[1] = ((primary.g * val * 1.10).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[2] = ((primary.b * val * 1.10).clamp(0.0, 1.0) * 255.0) as u8;
+        } else if is_accent {
             pixel[0] = ((secondary.r * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
             pixel[1] = ((secondary.g * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
             pixel[2] = ((secondary.b * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
@@ -113,7 +144,7 @@ pub fn get_vehicle_lateral_texture(
     let final_img = if is_factory {
         base_img
     } else {
-        apply_vehicle_tint(&base_img, primary, secondary)
+        apply_vehicle_tint(&base_img, model_id, primary, secondary)
     };
 
     let texture = Texture2D::from_image(&final_img);
@@ -157,10 +188,11 @@ pub fn get_vehicle_topdown_texture(
     let final_img = if is_factory {
         base_img
     } else {
-        apply_vehicle_tint(&base_img, primary, secondary)
+        apply_vehicle_tint(&base_img, model_id, primary, secondary)
     };
 
     let texture = Texture2D::from_image(&final_img);
     map.insert(key, texture.clone());
     Some(texture)
 }
+

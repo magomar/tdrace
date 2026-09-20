@@ -30,6 +30,40 @@ pub fn is_dev_mode() -> bool {
     std::env::args().any(|arg| arg == "--dev" || arg == "-d")
 }
 
+/// Environment variable indicating automated test mode execution.
+pub const ENV_TEST_MODE: &str = "TDRACE_TEST_MODE";
+
+/// Checks whether execution is currently running within an automated test runner (e.g. `cargo test`, `nextest`).
+///
+/// Ensures tests NEVER inadvertently access or mutate live host user configuration or data directories.
+pub fn is_test_environment() -> bool {
+    // 1. Explicit override environment variable
+    if let Ok(val) = std::env::var(ENV_TEST_MODE) {
+        if val == "1" || val.eq_ignore_ascii_case("true") {
+            return true;
+        }
+        if val == "0" || val.eq_ignore_ascii_case("false") {
+            return false;
+        }
+    }
+    // 2. Cargo test / nextest environment variables
+    if std::env::var("NEXTEST").is_ok() || std::env::var("CARGO_TARGET_TMPDIR").is_ok() {
+        return true;
+    }
+    // 3. Inspect executable path: test runners are placed in target/.../deps/
+    if let Ok(exe) = std::env::current_exe() {
+        let exe_str = exe.to_string_lossy();
+        if exe_str.contains("/deps/") || exe_str.contains("\\deps\\") {
+            return true;
+        }
+    }
+    // 4. Test harness command-line arguments
+    if std::env::args().any(|a| a == "--test" || a == "--nocapture" || a == "--bench" || a == "--exact") {
+        return true;
+    }
+    false
+}
+
 /// Resolves the repository's git-tracked `tracks/` directory when running in dev mode.
 /// Checks current working directory (`tracks`), parent directory, or relative paths.
 pub fn resolve_git_tracks_dir() -> Option<PathBuf> {
@@ -73,6 +107,13 @@ pub fn resolve_user_data_dir() -> PathBuf {
             let _ = fs::create_dir_all(&p);
             return p;
         }
+    }
+
+    // Safety guard: Automated tests must NEVER mutate the host user's live game data directory!
+    if is_test_environment() {
+        let test_sandbox = std::env::temp_dir().join("tdrace_test_sandbox").join("data");
+        let _ = fs::create_dir_all(&test_sandbox);
+        return test_sandbox;
     }
 
     #[cfg(target_os = "windows")]
@@ -152,6 +193,13 @@ pub fn resolve_user_config_dir() -> PathBuf {
             let _ = fs::create_dir_all(&p);
             return p;
         }
+    }
+
+    // Safety guard: Automated tests must NEVER mutate the host user's live game configuration directory!
+    if is_test_environment() {
+        let test_sandbox = std::env::temp_dir().join("tdrace_test_sandbox").join("config");
+        let _ = fs::create_dir_all(&test_sandbox);
+        return test_sandbox;
     }
 
     #[cfg(target_os = "windows")]
@@ -252,6 +300,45 @@ pub fn save_input_bindings(map: &cabinet::input::mapping::InputMap) -> Result<()
     fs::write(path, json)
 }
 
+/// Global mutex for tests that override environment variables (such as `TDRACE_USER_CONFIG_DIR`).
+pub static ENV_CONFIG_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+/// RAII guard that temporarily isolates `TDRACE_USER_CONFIG_DIR` to a temporary directory for tests,
+/// preventing any test from mutating the developer or player's personal `~/.config/tdrace/config.toml`.
+pub struct ScopedTempConfigDir {
+    path: PathBuf,
+    _guard: std::sync::MutexGuard<'static, ()>,
+}
+
+impl ScopedTempConfigDir {
+    pub fn new(prefix: &str) -> Self {
+        let guard = ENV_CONFIG_MUTEX.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let path = std::env::temp_dir().join(format!(
+            "{}_{}_{}",
+            prefix,
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        ));
+        let _ = fs::create_dir_all(&path);
+        std::env::set_var(ENV_USER_CONFIG_DIR, &path);
+        Self { path, _guard: guard }
+    }
+
+    pub fn path(&self) -> &std::path::Path {
+        &self.path
+    }
+}
+
+impl Drop for ScopedTempConfigDir {
+    fn drop(&mut self) {
+        std::env::remove_var(ENV_USER_CONFIG_DIR);
+        let _ = fs::remove_dir_all(&self.path);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -317,5 +404,48 @@ mod tests {
         assert!(is_dev_mode());
 
         std::env::remove_var(ENV_DEV_MODE);
+    }
+
+    #[test]
+    fn test_is_test_environment_detection() {
+        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
+        // Since this test runs as a cargo test binary, is_test_environment() must detect it automatically
+        assert!(is_test_environment());
+
+        // Explicit override: false
+        std::env::set_var(ENV_TEST_MODE, "false");
+        assert!(!is_test_environment());
+
+        // Explicit override: true
+        std::env::set_var(ENV_TEST_MODE, "true");
+        assert!(is_test_environment());
+
+        std::env::remove_var(ENV_TEST_MODE);
+    }
+
+    #[test]
+    fn test_test_environment_automatically_sandboxes_directories() {
+        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
+        std::env::remove_var(ENV_USER_CONFIG_DIR);
+        std::env::remove_var(ENV_USER_DATA_DIR);
+
+        assert!(is_test_environment());
+        let config_dir = resolve_user_config_dir();
+        let data_dir = resolve_user_data_dir();
+
+        // Must resolve into temp sandbox, never host user dirs
+        assert!(config_dir.starts_with(std::env::temp_dir()));
+        assert!(data_dir.starts_with(std::env::temp_dir()));
+        assert!(config_dir.to_string_lossy().contains("tdrace_test_sandbox"));
+        assert!(data_dir.to_string_lossy().contains("tdrace_test_sandbox"));
+
+        if let Ok(home) = std::env::var("HOME") {
+            if !home.trim().is_empty() {
+                let real_config = PathBuf::from(&home).join(".config").join("tdrace");
+                let real_data = PathBuf::from(&home).join(".local").join("share").join("tdrace");
+                assert_ne!(config_dir, real_config);
+                assert_ne!(data_dir, real_data);
+            }
+        }
     }
 }

@@ -2192,12 +2192,12 @@
           27.5
         ],
         "tangent": [
-          0.0000066103903,
+          6.6103903e-06,
           1.0
         ],
         "normal": [
           -1.0,
-          0.0000066103903
+          6.6103903e-06
         ],
         "distance": 299.32224,
         "width": 13.0,
@@ -3873,10 +3873,10 @@
         ],
         "tangent": [
           -1.0,
-          -5.469804e-7
+          -5.469804e-07
         ],
         "normal": [
-          5.469804e-7,
+          5.469804e-07,
           -1.0
         ],
         "distance": 523.4559,
@@ -5552,12 +5552,12 @@
           27.5
         ],
         "tangent": [
-          -0.0000016526003,
+          -1.6526003e-06,
           -1.0
         ],
         "normal": [
           1.0,
-          -0.0000016526003
+          -1.6526003e-06
         ],
         "distance": 747.58984,
         "width": 13.0,
@@ -17331,9 +17331,9 @@
   "default_surface": "Dirt",
   "pit_box_area": null,
   "default_laps": 5,
-  "predefined_car": "classic_offroad",
   "module_id": "classic",
   "modules": [
     "classic"
-  ]
+  ],
+  "car_category": "off_road"
 }

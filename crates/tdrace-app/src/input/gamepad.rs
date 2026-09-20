@@ -207,14 +207,9 @@ impl GamepadController {
         paths.push(std::path::PathBuf::from("gamepad_profile.json"));
         // 2. Sibling directory ../gamepad-mapper/gamepad_profile.json
         paths.push(std::path::PathBuf::from("../gamepad-mapper/gamepad_profile.json"));
-        // 3. User config ~/.config/tdrace/gamepad_profile.json
-        if let Some(home) = std::env::var_os("HOME") {
-            let mut p = std::path::PathBuf::from(home);
-            p.push(".config");
-            p.push("tdrace");
-            p.push("gamepad_profile.json");
-            paths.push(p);
-        }
+        // 3. User config directory (sandboxed in test environments)
+        let cfg_dir = crate::storage::resolve_user_config_dir();
+        paths.push(cfg_dir.join("gamepad_profile.json"));
         paths
     }
 
@@ -246,23 +241,19 @@ impl GamepadController {
 
     /// Synchronizes/copies the given profile file to ~/.config/tdrace/gamepad_profile.json.
     pub fn sync_to_config_dir(src_path: &std::path::Path) {
-        if let Some(home) = std::env::var_os("HOME") {
-            let mut target_dir = std::path::PathBuf::from(home);
-            target_dir.push(".config");
-            target_dir.push("tdrace");
-            let _ = std::fs::create_dir_all(&target_dir);
-            let target_file = target_dir.join("gamepad_profile.json");
+        let target_dir = crate::storage::resolve_user_config_dir();
+        let _ = std::fs::create_dir_all(&target_dir);
+        let target_file = target_dir.join("gamepad_profile.json");
 
-            // Only copy if source is different from destination
-            if let (Ok(canonical_src), Ok(canonical_target)) = (src_path.canonicalize(), target_file.canonicalize()) {
-                if canonical_src == canonical_target {
-                    return;
-                }
+        // Only copy if source is different from destination
+        if let (Ok(canonical_src), Ok(canonical_target)) = (src_path.canonicalize(), target_file.canonicalize()) {
+            if canonical_src == canonical_target {
+                return;
             }
-            if src_path != target_file.as_path() {
-                if let Ok(_) = std::fs::copy(src_path, &target_file) {
-                    println!("[Gamepad] Synced newest mapping profile from {:?} to {:?}", src_path, target_file);
-                }
+        }
+        if src_path != target_file.as_path() {
+            if let Ok(_) = std::fs::copy(src_path, &target_file) {
+                println!("[Gamepad] Synced newest mapping profile from {:?} to {:?}", src_path, target_file);
             }
         }
     }

@@ -85,9 +85,11 @@ stateDiagram-v2
     ModalitySelect --> ModuleSelect: [ESC / B] (Back to Grand Hub)
     ModalitySelect --> ProfileManager: [ENTER on Player Profile / P] (Open Player Profile)
     ModalitySelect --> Garage: [ENTER on Garage / G] (Open Garage Showroom)
+    ModalitySelect --> TrackEditor: [ENTER on Track Editor / E] (Open Track Editor)
     ModalitySelect --> SettingsModal: [ENTER on Settings / X] (Open Settings Modal)
     ProfileManager --> ModalitySelect: [ESC / B] (Return from Profile Manager)
     Garage --> ModalitySelect: [ESC / B] (Return from Garage)
+    TrackEditor --> ModalitySelect: [ESC / Exit] (Return from Track Editor)
     SettingsModal --> ModalitySelect: [ESC / ENTER / B / A] (Dismiss Settings Modal)
 
     ModalitySelect --> Menu: [ENTER / A] (Quick Race, Custom Race, Time Trial, Free Ride, Split Screen)
@@ -120,15 +122,16 @@ stateDiagram-v2
 2. **LAN Multiplayer (`ModalityItem::LanPlay`)**: Local network matchmaking (*Coming Soon notice modal*).
 3. **Cloud Online (`ModalityItem::CloudPlay`)**: Worldwide matchmaking and server lobbies (*Coming Soon notice modal*).
 
-#### Column 3: Options (Player Profile, Garage Showroom & Settings)
+#### Column 3: Options (Player Profile, Garage Showroom, Track Editor & Settings)
 1. **Player Profile (`ModalityItem::PlayerProfile`)**: Direct entry to `GameState::ProfileManager` with driver stats, career level, license rating, and profile configuration.
 2. **Garage Showroom (`ModalityItem::Garage`)**: Fullscreen inspection (`GameState::Garage(GarageOrigin::ModalitySelect)`), 360° turntable, vehicle specs, and engine rev sampling.
-3. **Settings (`ModalityItem::Settings`)**: Opens the modal dialog (`SettingsModal`) for audio, controls, display, and rendering options.
+3. **Track Editor (`ModalityItem::TrackEditor`)**: In-game Track Studio CAD editor (`GameState::TrackEditor`), spline editing, surface zone configuration, and test driving.
+4. **Settings (`ModalityItem::Settings`)**: Opens the modal dialog (`SettingsModal`) for audio, controls, display, and rendering options.
 
 ### 3. UI Design Tokens & Shortcuts
 - **3 Balanced Columns**: Top tabs partitioned cleanly (`[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, `[ 3. OPTIONS ]`).
-- **Glass Cards**: Translucent glass cards with 1px border accents, category icon, title, description, and status tags (`OFFICIAL PRESET`, `CUSTOMIZABLE`, `CHAMPIONSHIP`, `SOLO`, `LOCAL`, `COMING SOON`, `PROFILE`, `SHOWROOM`, `SYSTEM`).
-- **Direct Shortcuts**: Pressing `[1]`, `[2]`, `[3]` jumps directly between tabs; pressing `[P]`, `[G]`, or `[X]` provides instantaneous one-touch access to Player Profile, Garage, and Settings from any column.
+- **Glass Cards**: Translucent glass cards with 1px border accents, category icon, title, description, and status tags (`OFFICIAL PRESET`, `CUSTOMIZABLE`, `CHAMPIONSHIP`, `SOLO`, `LOCAL`, `COMING SOON`, `PROFILE`, `SHOWROOM`, `CAD STUDIO`, `SYSTEM`).
+- **Direct Shortcuts**: Pressing `[1]`, `[2]`, `[3]` jumps directly between tabs; pressing `[P]`, `[G]`, `[E]`, or `[X]` provides instantaneous one-touch access to Player Profile, Garage, Track Editor, and Settings from any column.
 - **Starting Grid Card 0 Refinement**: Card 0 prominently displays the active modality (e.g. `RACING MODALITY: QUICK RACE [PRESET]` or `RACING MODALITY: CUSTOM RACE [CUSTOMIZABLE]`), ensuring full session context before race start.
 
 ---
@@ -149,6 +152,7 @@ pub enum GameState {
     Racing,
     Podium,
     Garage,
+    TrackEditor,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -163,6 +167,7 @@ pub enum ModalityItem {
     CloudPlay,
     PlayerProfile,
     Garage,
+    TrackEditor,
     Settings,
 }
 ```
@@ -205,6 +210,12 @@ When a modality is selected, `AppRacingContext` is initialized with correspondin
   - [x] **Given** the player launched a Quick Race from Modality Selection
   - [x] **When** they confirm a circuit and enter `GameState::StartingGrid`
   - [x] **Then** Card 0 displays `RACING MODALITY: QUICK RACE [PRESET]` and locks car selection to official track defaults
+
+- **Scenario: Track Editor access from Modality Selection Options**
+  - [x] **Given** the player is in `GameState::ModalitySelect` on the Options tab
+  - [x] **When** they select Track Editor and press `[ENTER]` (or press shortcut `[E]`)
+  - [x] **Then** the game transitions to `GameState::TrackEditor` with `EditorOrigin::ModalitySelect`
+  - [x] **And** upon exiting the editor, the player returns cleanly to `GameState::ModalitySelect` under Options
 
 ---
 

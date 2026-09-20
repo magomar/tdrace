@@ -155,6 +155,15 @@ pub enum ProfileOrigin {
     ModalitySelect,
 }
 
+/// Source screen that launched the Track Studio editor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum EditorOrigin {
+    #[default]
+    TrackManager,
+    ModalitySelect,
+    Menu,
+}
+
 /// High-level game flow state machine.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameState {
@@ -429,6 +438,7 @@ pub struct RaceSession {
     pub editor_save_toast_msg: String,
     pub return_to_editor_on_exit: bool,
     pub editor_return_track_manager: Option<(TrackManagerTab, ModuleFilter, usize)>,
+    pub editor_origin: EditorOrigin,
 
     // Audio System
     pub audio: AudioManager,
@@ -691,6 +701,7 @@ impl RaceSession {
             editor_save_toast_msg: String::new(),
             return_to_editor_on_exit: false,
             editor_return_track_manager: None,
+            editor_origin: EditorOrigin::TrackManager,
             audio,
             engine_rpm: EngineRpmModel::default(),
             engine_rpm_p2: EngineRpmModel::default(),
@@ -1013,6 +1024,8 @@ impl RaceSession {
                     ScanlineMode::RetroGlow => "retro_glow".to_string(),
                     ScanlineMode::Disabled => "disabled".to_string(),
                 };
+                self.base_config.display = self.config.display.clone();
+                self.base_config.audio = self.config.audio.clone();
 
                 let _ = self.config.save_to_first_existing_or_default();
             }
@@ -1035,6 +1048,7 @@ impl RaceSession {
             ScanlineMode::ArcadeCrt => "arcade_crt".to_string(),
             ScanlineMode::RetroGlow => "retro_glow".to_string(),
         };
+        self.base_config.display.scanline_mode = self.config.display.scanline_mode.clone();
     }
 
     /// Cycles CRT scanline intensity modes (Disabled -> Subtle -> Arcade CRT -> Retro Glow -> Disabled).
@@ -1057,34 +1071,12 @@ impl RaceSession {
 
     /// Resolves the track's predefined vehicle model as a `CarChoice`.
     pub fn resolve_predefined_car(&self) -> CarChoice {
-        match self.track.predefined_car.as_deref() {
-            Some("gt4" | "gt4_clubsport") => CarChoice::GT4Clubsport,
-            Some("gt3" | "gt3_car" | "gt3_evo") => CarChoice::GT3Car,
-            Some("gt2" | "gt2_biturbo") => CarChoice::GT2Biturbo,
-            Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
-            Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
-            Some("gt") => CarChoice::GT4Clubsport,
-            Some("open_wheel") => CarChoice::Kart,
-            Some("drift_car") => CarChoice::DriftCar,
-            Some("kart" | "shifter_kart" | "shifter_kart_125" | "classic_kart") => CarChoice::Kart,
-            Some("rally_car" | "wrc_turbo_rally" | "rally" | "classic_rally") => CarChoice::RallyCar,
-            Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1" | "classic_nascar") => CarChoice::StockCar,
-            Some("sand_rail" | "sand_rail_buggy" | "buggy" | "classic_offroad") => CarChoice::SandRail,
-            Some("sports_car" | "classic_gt") => CarChoice::SportsCar,
-            _ => match self.track.module_id.as_deref().unwrap_or(self.active_module_id) {
-                "nascar" => CarChoice::StockCar,
-                "extreme_offroad" => CarChoice::SandRail,
-                "gt" | "gt_challenge" => CarChoice::GT4Clubsport,
-                "rally" => CarChoice::RallyCar,
-                "kart" => CarChoice::Kart,
-                _ => CarChoice::SportsCar,
-            },
-        }
+        resolve_predefined_car_for_track(Some(&self.track), self.active_module_id)
     }
 
     /// Checks whether the specified car is unlocked under the active profile's career progress.
     pub fn is_car_unlocked(&self, car: CarChoice) -> bool {
-        if self.is_dev_mode() {
+        if self.is_dev_mode() || self.active_module_id == "classic" {
             return true;
         }
         let car_id = match car {
@@ -1112,7 +1104,11 @@ impl RaceSession {
 
     /// Returns the required motorsport category tier (1..=5) for the current race.
     pub fn current_race_required_tier(&self) -> u8 {
-        self.resolve_predefined_car().tier()
+        if self.active_module_id == "classic" {
+            1
+        } else {
+            self.resolve_predefined_car().tier()
+        }
     }
 
     /// Returns available vehicle choices for the active motorsport game module,
@@ -1133,8 +1129,9 @@ impl RaceSession {
             "classic" => vec![
                 CarChoice::SportsCar,
                 CarChoice::StockCar,
-                CarChoice::SandRail,
+                CarChoice::RallyCar,
                 CarChoice::Kart,
+                CarChoice::SandRail,
             ],
             _ => vec![
                 CarChoice::SportsCar,
@@ -1164,30 +1161,25 @@ impl RaceSession {
 
     /// Returns the pool of eligible car models for opponents based on the active motorsport category or track.
     pub fn eligible_opponent_cars(&self) -> Vec<CarChoice> {
-        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
-        match effective_module {
-            "gt" | "gt_challenge" => vec![
-                CarChoice::GT4Clubsport,
-                CarChoice::GT3Car,
-                CarChoice::GT2Biturbo,
-                CarChoice::GT1Legend,
-                CarChoice::HypercarPrototype,
-            ],
-            "nascar" => vec![CarChoice::StockCar],
-            "extreme_offroad" => vec![CarChoice::SandRail],
-            "rally" => vec![CarChoice::RallyCar],
-            "kart" => vec![CarChoice::Kart],
-            _ => match self.resolve_predefined_car() {
-                CarChoice::Kart => vec![CarChoice::Kart],
-                CarChoice::RallyCar => vec![CarChoice::RallyCar],
-                CarChoice::DriftCar => vec![CarChoice::DriftCar],
-                _ => vec![
-                    CarChoice::SportsCar,
-                    CarChoice::StockCar,
-                    CarChoice::SandRail,
-                    CarChoice::Kart,
+        let cat = self.track.car_category;
+        if self.active_module_id == "classic" {
+            vec![CarChoice::classic_car_for_category(cat)]
+        } else {
+            let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
+            match effective_module {
+                "gt" | "gt_challenge" => vec![
+                    CarChoice::GT4Clubsport,
+                    CarChoice::GT3Car,
+                    CarChoice::GT2Biturbo,
+                    CarChoice::GT1Legend,
+                    CarChoice::HypercarPrototype,
                 ],
-            },
+                "nascar" => vec![CarChoice::StockCar],
+                "extreme_offroad" => vec![CarChoice::SandRail],
+                "rally" => vec![CarChoice::RallyCar],
+                "kart" => vec![CarChoice::Kart],
+                _ => vec![CarChoice::classic_car_for_category(cat)],
+            }
         }
     }
 
@@ -1205,6 +1197,21 @@ impl RaceSession {
             .wrapping_add((bot_idx as u64).wrapping_mul(0x9E3779B97F4A7C15));
         let idx = ((h >> 32) as usize) % pool.len();
         pool[idx]
+    }
+
+    /// Transitions from Starting Grid to Garage Showroom, focusing on the circuit's category vehicle.
+    pub fn open_garage_from_starting_grid(&mut self) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        self.garage_origin = GarageOrigin::StartingGrid;
+        self.garage_tier = self.current_race_required_tier();
+        if self.active_module_id == "classic" {
+            let target_model = crate::catalog::get_classic_model_for_category(self.track.car_category);
+            let models = crate::catalog::get_models_for_module("classic");
+            self.garage_car_idx = models.iter().position(|m| m.id == target_model.id).unwrap_or(0);
+        } else {
+            self.garage_car_idx = 0;
+        }
+        self.state = GameState::Garage(GarageOrigin::StartingGrid);
     }
 
     /// Returns available circuits for the active motorsport game module (including both presets and custom circuits).
@@ -1436,6 +1443,9 @@ impl RaceSession {
     /// Returns the player's effective color scheme: factory livery colors when
     /// a real car model is selected, otherwise the profile's abstract scheme.
     fn player_effective_color_scheme(&self) -> CarColorScheme {
+        if self.active_module_id == "classic" {
+            return self.active_profile.color_scheme;
+        }
         if let Some(model) = self
             .selected_car_model_id
             .and_then(crate::catalog::find_model_by_id)
@@ -1884,7 +1894,7 @@ impl RaceSession {
 
         let player_car_choice = self.active_player_car_choice();
 
-        // In all modules except "classic", resolve the elected real car model if chosen
+        // Resolve the real or fantasy car model
         let player_model = if effective_module != "classic" {
             self.selected_car_model_id
                 .and_then(crate::catalog::find_model_by_id)
@@ -1899,7 +1909,14 @@ impl RaceSession {
                     }
                 })
         } else {
-            None
+            if self.free_car_selection {
+                self.selected_car_model_id
+                    .and_then(crate::catalog::find_model_by_id)
+                    .filter(|m| m.module_id == "classic" && m.base_car_choice == player_car_choice)
+                    .or_else(|| Some(crate::catalog::get_classic_model_for_category(player_car_choice.category())))
+            } else {
+                Some(crate::catalog::get_classic_model_for_category(self.track.car_category))
+            }
         };
 
         let mut base_config = match player_car_choice {
@@ -2022,7 +2039,13 @@ impl RaceSession {
         };
         base_config.assists = self.assist_profile.to_config();
 
-        let category_models = if self.selected_car_model_id.is_some() {
+        let category_models = if effective_module == "classic" {
+            if let Some(pm) = player_model {
+                vec![pm]
+            } else {
+                vec![crate::catalog::get_classic_model_for_category(self.track.car_category)]
+            }
+        } else if self.selected_car_model_id.is_some() {
             player_model
                 .map(|pm| crate::catalog::get_models_for_category(pm.module_id, pm.category_name))
                 .unwrap_or_default()
@@ -2484,12 +2507,13 @@ impl RaceSession {
             GameState::ModalitySelect { .. } => {
                 if let GameState::ModuleSelect { selected_idx } = self.state {
                     match selected_idx {
-                        0 => self.switch_to_classic(),
-                        1 => self.switch_to_rally(),
-                        2 => self.switch_to_kart(),
-                        3 => self.switch_to_gt(),
-                        4 => self.switch_to_nascar(),
-                        _ => self.switch_to_extreme_offroad(),
+                        1 => self.switch_to_classic(),
+                        2 => self.switch_to_rally(),
+                        3 => self.switch_to_kart(),
+                        4 => self.switch_to_gt(),
+                        5 => self.switch_to_nascar(),
+                        6 => self.switch_to_extreme_offroad(),
+                        _ => self.switch_to_classic(),
                     }
                 }
                 self.audio.play_music(MusicTrack::NeonMenu);
@@ -2497,12 +2521,13 @@ impl RaceSession {
             GameState::Menu => {
                 if let GameState::ModuleSelect { selected_idx } = self.state {
                     match selected_idx {
-                        0 => self.switch_to_classic(),
-                        1 => self.switch_to_rally(),
-                        2 => self.switch_to_kart(),
-                        3 => self.switch_to_gt(),
-                        4 => self.switch_to_nascar(),
-                        _ => self.switch_to_extreme_offroad(),
+                        1 => self.switch_to_classic(),
+                        2 => self.switch_to_rally(),
+                        3 => self.switch_to_kart(),
+                        4 => self.switch_to_gt(),
+                        5 => self.switch_to_nascar(),
+                        6 => self.switch_to_extreme_offroad(),
+                        _ => self.switch_to_classic(),
                     }
                 }
                 self.audio.play_music(MusicTrack::NeonMenu);
@@ -2992,11 +3017,7 @@ impl RaceSession {
                     && my <= g_btn_y + g_btn_h;
 
                 if garage_btn_clicked {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.garage_origin = GarageOrigin::StartingGrid;
-                    self.garage_tier = self.current_race_required_tier();
-                    self.garage_car_idx = 0;
-                    self.state = GameState::Garage(GarageOrigin::StartingGrid);
+                    self.open_garage_from_starting_grid();
                     return;
                 }
 
@@ -3057,11 +3078,7 @@ impl RaceSession {
                                     || self.input.gamepad.snapshot.btn_confirm_pressed
                                     || self.input.gamepad.snapshot.btn_a_pressed
                                 {
-                                    self.audio.play_sfx(SfxType::UiSelect);
-                                    self.garage_origin = GarageOrigin::StartingGrid;
-                                    self.garage_tier = self.current_race_required_tier();
-                                    self.garage_car_idx = 0;
-                                    self.state = GameState::Garage(GarageOrigin::StartingGrid);
+                                    self.open_garage_from_starting_grid();
                                     return;
                                 }
                             }
@@ -3070,11 +3087,7 @@ impl RaceSession {
                                 if is_key_pressed(KeyCode::Enter)
                                     || is_key_pressed(KeyCode::KpEnter)
                                 {
-                                    self.audio.play_sfx(SfxType::UiSelect);
-                                    self.garage_origin = GarageOrigin::StartingGrid;
-                                    self.garage_tier = self.current_race_required_tier();
-                                    self.garage_car_idx = 0;
-                                    self.state = GameState::Garage(GarageOrigin::StartingGrid);
+                                    self.open_garage_from_starting_grid();
                                     return;
                                 }
                                 let models = crate::catalog::get_models_for_module(self.active_module_id);
@@ -3229,11 +3242,7 @@ impl RaceSession {
 
                 // View Interactive Garage direct key shortcut (G key)
                 if is_key_pressed(KeyCode::G) {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.garage_origin = GarageOrigin::StartingGrid;
-                    self.garage_tier = self.current_race_required_tier();
-                    self.garage_car_idx = 0;
-                    self.state = GameState::Garage(GarageOrigin::StartingGrid);
+                    self.open_garage_from_starting_grid();
                     return;
                 }
 
@@ -3833,16 +3842,7 @@ impl RaceSession {
                     };
                 }
                 ProfileOrigin::ModuleSelect => {
-                    let cur_mod_idx = match self.active_module_id {
-                        "classic" => 0,
-                        "rally" => 1,
-                        "kart" => 2,
-                        "gt" | "gt_challenge" => 3,
-                        "nascar" => 4,
-                        "extreme_offroad" => 5,
-                        _ => 0,
-                    };
-                    self.state = GameState::ModuleSelect { selected_idx: cur_mod_idx };
+                    self.state = GameState::ModuleSelect { selected_idx: 0 };
                 }
                 ProfileOrigin::Menu => {
                     self.state = GameState::Menu;
@@ -4095,19 +4095,32 @@ impl RaceSession {
             return;
         }
 
-        let num_modules = 6;
-        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+        let num_items = 7; // 0: Player Profile, 1..=6: Motorsport Modules
+        if is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
+            || self.input.gamepad.snapshot.nav_up
+            || self.input.gamepad.snapshot.dpad_up_pressed
+        {
             self.audio.play_sfx(SfxType::UiMove);
             if selected_idx == 0 {
-                selected_idx = num_modules - 1;
+                selected_idx = num_items - 1;
             } else {
                 selected_idx -= 1;
             }
         }
-        if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
+        if is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
+            || self.input.gamepad.snapshot.nav_down
+            || self.input.gamepad.snapshot.dpad_down_pressed
+        {
             self.audio.play_sfx(SfxType::UiMove);
-            selected_idx = (selected_idx + 1) % num_modules;
+            selected_idx = (selected_idx + 1) % num_items;
         }
+
+        if matches!(self.state, GameState::ModuleSelect { .. }) {
+            self.state = GameState::ModuleSelect { selected_idx };
+        }
+
         if is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::KpEnter)
@@ -4115,15 +4128,37 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_a_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.transition_scanline_to(
-                GameState::ModalitySelect {
-                    category: ModalityCategory::SinglePlayer,
-                    selected_idx: 0,
-                    modal: None,
-                },
-                0.35,
-            );
-            return;
+            if selected_idx == 0 {
+                self.profile_origin = ProfileOrigin::ModuleSelect;
+                self.refresh_profiles_and_stats();
+                let current_idx = self
+                    .profile_list
+                    .iter()
+                    .position(|p| p.id == self.active_profile.id)
+                    .unwrap_or(0);
+                self.state = GameState::ProfileManager {
+                    selected_idx: current_idx,
+                };
+                return;
+            } else {
+                match selected_idx {
+                    1 => self.switch_to_classic(),
+                    2 => self.switch_to_rally(),
+                    3 => self.switch_to_kart(),
+                    4 => self.switch_to_gt(),
+                    5 => self.switch_to_nascar(),
+                    _ => self.switch_to_extreme_offroad(),
+                }
+                self.transition_scanline_to(
+                    GameState::ModalitySelect {
+                        category: ModalityCategory::SinglePlayer,
+                        selected_idx: 0,
+                        modal: None,
+                    },
+                    0.35,
+                );
+                return;
+            }
         }
 
         // Profile Manager (P key or Gamepad Y)
@@ -4269,6 +4304,12 @@ impl RaceSession {
             return;
         }
 
+        // Direct Track Editor shortcut (E key)
+        if is_key_pressed(KeyCode::E) {
+            self.enter_track_editor_from_modality_select();
+            return;
+        }
+
         // Direct Settings shortcut (X key)
         if is_key_pressed(KeyCode::X) {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -4401,6 +4442,10 @@ impl RaceSession {
                         self.state = GameState::Garage(GarageOrigin::ModalitySelect);
                         return;
                     }
+                    ModalityItem::TrackEditor => {
+                        self.enter_track_editor_from_modality_select();
+                        return;
+                    }
                     ModalityItem::Settings => {
                         self.audio.play_sfx(SfxType::UiSelect);
                         self.open_settings_modal();
@@ -4511,13 +4556,13 @@ impl RaceSession {
         {
             self.audio.play_sfx(SfxType::UiSelect);
             let cur_mod_idx = match self.active_module_id {
-                "classic" => 0,
-                "rally" => 1,
-                "kart" => 2,
-                "gt" | "gt_challenge" => 3,
-                "nascar" => 4,
-                "extreme_offroad" => 5,
-                _ => 0,
+                "classic" => 1,
+                "rally" => 2,
+                "kart" => 3,
+                "gt" | "gt_challenge" => 4,
+                "nascar" => 5,
+                "extreme_offroad" => 6,
+                _ => 1,
             };
             self.transition_fade_to(GameState::ModuleSelect { selected_idx: cur_mod_idx }, 0.3);
             return;
@@ -4845,7 +4890,8 @@ impl RaceSession {
 
         if buy_pressed || confirm_pressed {
             if let Some(active_car) = models.get(self.garage_car_idx) {
-                let is_unlocked = self.active_career_progress.is_car_unlocked(active_car.id, self.is_dev_mode())
+                let is_unlocked = self.active_module_id == "classic"
+                    || self.active_career_progress.is_car_unlocked(active_car.id, self.is_dev_mode())
                     || self.is_dev_mode();
 
                 if is_unlocked {
@@ -7387,12 +7433,12 @@ impl RaceSession {
             }
             GameState::ModuleSelect { selected_idx } => {
                 let modules_data = [
-                    ("classic", "Classic Arcade Motorsport", "ALL-IN-ONE ARCADE & STUDIO", "GT Coupe, Drift Spec, Shifter Kart, Rally Car & CAD Circuit Studio Workshop.", Palette::NEON_CYAN),
-                    ("rally", "Rallycross World Cup", "MIXED SURFACE WORLD RX & EURO RX", "World RX supercars, jumps, and high-sliding dirt stages.", Palette::NEON_GOLD),
-                    ("kart", "Karting World Cup", "125CC SHIFTER KARTS", "Direct 1:1 steering, 3.5G cornering bites, and elimination tournament heats.", Palette::NEON_GREEN),
-                    ("gt", "GT World Challenge", "FIA GT3 & SRO GT2 WORLD TOUR", "High-downforce 600 BHP GT3 Evo & 707 BHP GT2 Biturbo racers on Monza, Spa, and Silverstone.", Palette::RED),
-                    ("nascar", "NASCAR Cup Series & Trans-Am TA1", "850 BHP V8 & SUPERSPEEDWAYS", "850 BHP pushrod V8 stock cars, pack drafting, high-banked tri-ovals and road courses.", Color::new(1.0, 0.82, 0.08, 1.0)),
-                    ("extreme_offroad", "Extreme Off-Road & Stunt Arenas", "300 BHP SAND RAIL & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas with 300 BHP Sand Rail Buggy.", Color::new(1.0, 0.40, 0.05, 1.0)),
+                    ("classic", "Classic Arcade Motorsport", "All-in-one arcade racing, time trials & CAD circuit studio workshop", Palette::NEON_CYAN),
+                    ("rally", "Rallycross World Cup", "Mixed-surface sprint heats, jumps & high-sliding dirt circuits", Palette::NEON_GOLD),
+                    ("kart", "Karting World Cup", "Direct 1:1 steering, tight chicanes & elimination tournament heats", Palette::NEON_GREEN),
+                    ("gt", "GT World Challenge", "High-downforce endurance & sprint racing on world grand prix circuits", Palette::RED),
+                    ("nascar", "NASCAR Cup Series & Trans-Am TA1", "High-speed pack drafting, banked tri-ovals & iconic road courses", Color::new(1.0, 0.82, 0.08, 1.0)),
+                    ("extreme_offroad", "Extreme Off-Road & Stunt Arenas", "Desert dunes, ice lakes, massive stadium jumps & stunt arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                 ];
                 render_module_select_menu(
                     &self.fonts,
@@ -7640,11 +7686,49 @@ impl RaceSession {
         self.state = GameState::TrackEditor;
     }
 
+    /// Transitions from Race Modality Hub into Track Studio editor, setting origin to ModalitySelect.
+    pub fn enter_track_editor_from_modality_select(&mut self) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        self.editor_origin = EditorOrigin::ModalitySelect;
+        let track = self.track.clone();
+        let file_path = match &self.track_choice {
+            TrackChoice::Custom { path, .. } => {
+                let candidate = self.track_manager.track_path_for_slug(self.track_choice.track_id());
+                if candidate.exists() {
+                    Some(candidate.to_string_lossy().to_string())
+                } else if std::path::Path::new(path).exists() {
+                    Some(path.clone())
+                } else {
+                    Some(candidate.to_string_lossy().to_string())
+                }
+            }
+            preset => {
+                let candidate = self.track_manager.track_path_for_slug(preset.track_id());
+                if candidate.exists() {
+                    Some(candidate.to_string_lossy().to_string())
+                } else {
+                    None
+                }
+            }
+        };
+        self.enter_track_editor_with_path(track, file_path);
+    }
+
     /// Exits Track Studio editor and navigates cleanly back to the Track Manager screen,
     /// restoring the previous active tab, module filter, and track cursor.
     pub fn return_to_track_manager(&mut self) {
         crate::ui::menu::clear_menu_track_cache();
         let _ = self.track_manager.scan_custom_tracks();
+
+        if self.editor_origin == EditorOrigin::ModalitySelect {
+            self.editor_origin = EditorOrigin::TrackManager;
+            self.state = GameState::ModalitySelect {
+                category: ModalityCategory::Options,
+                selected_idx: 2,
+                modal: None,
+            };
+            return;
+        }
 
         let (target_tab, target_filter, fallback_idx) = self
             .editor_return_track_manager
@@ -8455,13 +8539,26 @@ impl RaceSession {
         }
         for &i in &ground_cars {
             let car = &self.cars[i];
-            let scheme = &self.color_schemes[i];
-            let is_braking = car.state.is_braking;
+            let is_player = !self.is_split_screen() && i == 0 || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
+            let effective_scheme = if self.active_module_id == "classic" && is_player {
+                if let Some(m) = model_id.and_then(crate::catalog::find_model_by_id) {
+                    CarColorScheme {
+                        primary: m.primary_color,
+                        secondary: m.secondary_color,
+                        helmet: self.color_schemes[i].helmet,
+                    }
+                } else {
+                    self.color_schemes[i]
+                }
+            } else {
+                self.color_schemes[i]
+            };
+            let is_braking = car.state.is_braking;
             let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
             render_car_with_visual_type_model_and_shadows(
                 car,
-                scheme,
+                &effective_scheme,
                 is_braking,
                 visual_type,
                 model_id,
@@ -8497,13 +8594,26 @@ impl RaceSession {
         }
         for &i in &elevated_cars {
             let car = &self.cars[i];
-            let scheme = &self.color_schemes[i];
-            let is_braking = car.state.is_braking;
+            let is_player = !self.is_split_screen() && i == 0 || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
+            let effective_scheme = if self.active_module_id == "classic" && is_player {
+                if let Some(m) = model_id.and_then(crate::catalog::find_model_by_id) {
+                    CarColorScheme {
+                        primary: m.primary_color,
+                        secondary: m.secondary_color,
+                        helmet: self.color_schemes[i].helmet,
+                    }
+                } else {
+                    self.color_schemes[i]
+                }
+            } else {
+                self.color_schemes[i]
+            };
+            let is_braking = car.state.is_braking;
             let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
             render_car_with_visual_type_model_and_shadows(
                 car,
-                scheme,
+                &effective_scheme,
                 is_braking,
                 visual_type,
                 model_id,

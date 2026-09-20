@@ -38,6 +38,26 @@ impl RealCarModel {
         dev_mode || self.tier <= race_required_tier
     }
 
+    /// Returns the high-level motorsport car category for this vehicle model.
+    pub fn category(&self) -> tdrace_core::CarCategory {
+        match self.module_id {
+            "gt" | "gt_challenge" => tdrace_core::CarCategory::Gt,
+            "nascar" => tdrace_core::CarCategory::Nascar,
+            "rally" => tdrace_core::CarCategory::Rally,
+            "kart" => tdrace_core::CarCategory::Kart,
+            "extreme_offroad" => tdrace_core::CarCategory::OffRoad,
+            "classic" => match self.id {
+                "classic_gt" => tdrace_core::CarCategory::Gt,
+                "classic_nascar" => tdrace_core::CarCategory::Nascar,
+                "classic_rally" => tdrace_core::CarCategory::Rally,
+                "classic_kart" => tdrace_core::CarCategory::Kart,
+                "classic_offroad" => tdrace_core::CarCategory::OffRoad,
+                _ => self.base_car_choice.category(),
+            },
+            _ => self.base_car_choice.category(),
+        }
+    }
+
     /// Derives the customized `CarConfig` matching the physical attributes of this real-world car model.
     pub fn to_car_config(&self) -> tdrace_core::physics::config::CarConfig {
         let mut cfg = self.base_car_choice.config();
@@ -2173,7 +2193,7 @@ pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
 /// Returns all vehicles belonging to the specified module ID and tier (1..=5).
 pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static RealCarModel> {
     if module_id == "classic" {
-        return CLASSIC_ARCADE_CARS.iter().filter(|c| c.tier == tier).collect();
+        return CLASSIC_ARCADE_CARS.iter().collect();
     }
     let mod_id = match module_id {
         "gt_challenge" => "gt",
@@ -2183,6 +2203,17 @@ pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static
         .iter()
         .filter(|c| c.module_id == mod_id && c.tier == tier)
         .collect()
+}
+
+/// Resolves the canonical Classic Fantasy arcade vehicle model for a given CarCategory.
+pub fn get_classic_model_for_category(category: tdrace_core::CarCategory) -> &'static RealCarModel {
+    match category {
+        tdrace_core::CarCategory::Gt => &CLASSIC_ARCADE_CARS[0],     // classic_gt (Apex Phantom GT)
+        tdrace_core::CarCategory::Nascar => &CLASSIC_ARCADE_CARS[1], // classic_nascar (Thunderbolt Stock V8)
+        tdrace_core::CarCategory::OffRoad => &CLASSIC_ARCADE_CARS[2], // classic_offroad (Vortex Dune Crusher)
+        tdrace_core::CarCategory::Kart => &CLASSIC_ARCADE_CARS[3],   // classic_kart (Turbo Dart 200cc)
+        tdrace_core::CarCategory::Rally => &CLASSIC_ARCADE_CARS[4],  // classic_rally (Trailfire Turbo 4WD)
+    }
 }
 
 /// Returns all vehicles belonging to the specified module ID and category name.
