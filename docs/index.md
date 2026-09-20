@@ -56,7 +56,7 @@ Meticulously mapped vector geometry circuits and procedural arenas catalogued ac
 | [Rallycross Stages](circuits/rally.md) | Asset Catalog | `active` | 15 World RX venues: Höljes, Lydden Hill, Hell RX, Lohéac, Essay RX, and Joker Lap branching networks. |
 | [Karting Circuits & Arenas](circuits/kart.md) | Asset Catalog | `active` | 15 international karting venues: South Garda (Lonato), Genk, Sarno, Valencia, Campillos, and PFI bridge crossover. |
 | [Extreme Off-Road Arenas](circuits/offroad.md) | Asset Catalog | `active` | 15 extreme arenas: sand dune raids, deep mud bog pits, arctic ice lakes, and stadium whoops. |
-| [Formula 1 & GT Road Courses](circuits/f1_gt.md) | Asset Catalog | `active` | 18 FIA Grade 1 world championship circuits: Spa-Francorchamps, Monza, Silverstone, Le Mans, Bathurst, MadRing, and Suzuka. |
+| [GT World Challenge & Endurance Road Courses](circuits/f1_gt.md) | Asset Catalog | `active` | 18 FIA Grade 1 world championship circuits: Spa-Francorchamps, Monza, Silverstone, Le Mans, Bathurst, MadRing, and Suzuka. |
 
 ---
 

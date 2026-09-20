@@ -14,7 +14,7 @@ use std::time::Instant;
 
 use chrono::Utc;
 use tdrace_app::catalog::{get_models_for_module_and_tier, get_tier_name};
-use tdrace_app::module::f1::GtWorldChallengeModule;
+use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_core::physics::sim::{
     generate_html_report, generate_markdown_report, ExperimentDataset, VehicleBenchmarkResult,
     DEFAULT_SIMULATION_DT,
@@ -52,7 +52,7 @@ fn main() {
 
     // 1. Five specific modules, each covering Levels 1 through 5
     let specific_modules = [
-        ("gt", "GT / F1"),
+        ("gt", "GT World Challenge"),
         ("nascar", "NASCAR"),
         ("rally", "Rally"),
         ("extreme_offroad", "Extreme Off-Road"),

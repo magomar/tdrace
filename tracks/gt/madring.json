@@ -48210,7 +48210,6 @@
   "predefined_car": "hypercar_prototype",
   "module_id": "gt",
   "modules": [
-    "gt",
-    "f1"
+    "gt"
   ]
 }

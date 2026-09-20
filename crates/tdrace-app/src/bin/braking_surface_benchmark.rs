@@ -15,7 +15,7 @@ use std::path::Path;
 use std::time::Instant;
 
 use chrono::Utc;
-use tdrace_app::module::f1::GtWorldChallengeModule;
+use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_app::module::{
     ExtremeOffRoadModule, KartGameModule, NascarGameModule, RallyGameModule,
 };

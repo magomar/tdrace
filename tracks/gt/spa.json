@@ -50597,7 +50597,6 @@
   "predefined_car": "gt2_biturbo",
   "module_id": "gt",
   "modules": [
-    "gt",
-    "f1"
+    "gt"
   ]
 }

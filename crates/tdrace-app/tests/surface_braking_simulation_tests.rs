@@ -1,6 +1,6 @@
 //! Integration tests for multi-surface car braking dynamics and stability simulation.
 
-use tdrace_app::module::f1::GtWorldChallengeModule;
+use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_app::module::RallyGameModule;
 use tdrace_core::physics::sim::{
     run_braking_cadence, run_braking_in_turn, run_braking_split_mu, run_braking_straight_line,

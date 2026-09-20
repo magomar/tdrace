@@ -1,15 +1,15 @@
 ---
 type: Asset Catalog
-title: "Formula 1 & GT Endurance Circuits Directory"
+title: "GT World Challenge & Endurance Circuits Directory"
 description: "Directory of 18 FIA Grade 1 world championship circuits: Spa-Francorchamps, Monza, Silverstone, Circuit de la Sarthe, and Suzuka."
 status: active
 category: circuits
-tags: [circuits, f1, gt, endurance, spa, monza, le-mans, silverstone]
+tags: [circuits, gt, endurance, spa, monza, le-mans, silverstone]
 ---
 
-# Formula 1 & GT Endurance Circuits Directory 🏁🌍⏱️
+# GT World Challenge & Endurance Circuits Directory 🏁🌍⏱️
 
-The **Formula 1 & GT Endurance** tracks in [`tracks/f1/`](../../tracks/f1) and [`tracks/gt/`](../../tracks/gt) represent the pinnacle of global road racing. These FIA Grade 1 circuits demand aerodynamic efficiency, precise trail-braking into chicanes, and high high-speed stability.
+The **GT World Challenge & Endurance** tracks in [`tracks/gt/`](../../tracks/gt) represent the pinnacle of global road racing. These FIA Grade 1 circuits demand aerodynamic efficiency, precise trail-braking into chicanes, and high high-speed stability.
 
 ---
 

@@ -171,11 +171,11 @@ fn test_all_races_and_modules_default_to_eight_riders() {
     assert_eq!(session.ai_drivers.len(), 7, "Default session should have 7 AI bots");
     assert_eq!(session.opponent_drivers.len(), 7);
 
-    // 2. Switch to F1
-    session.switch_to_f1();
+    // 2. Switch to GT
+    session.switch_to_gt();
     assert_eq!(session.num_bots, 7);
     session.init_race();
-    assert_eq!(session.cars.len(), 8, "F1 module should have 8 riders");
+    assert_eq!(session.cars.len(), 8, "GT module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
     // 3. Switch to Rally

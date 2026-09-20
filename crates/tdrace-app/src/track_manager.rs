@@ -9,7 +9,7 @@ use tdrace_core::track::{Track, TrackCategory};
 
 use crate::module::classic::ClassicGameModule;
 use crate::module::extreme_offroad::ExtremeOffRoadModule;
-use crate::module::f1::F1GameModule;
+use crate::module::gt::GtWorldChallengeModule;
 use crate::module::kart::KartGameModule;
 use crate::module::nascar::NascarGameModule;
 use crate::module::rally::RallyGameModule;
@@ -23,7 +23,7 @@ pub enum ModuleFilter {
     Classic,
     Rally,
     Kart,
-    F1,
+    Gt,
     Nascar,
     ExtremeOffRoad,
     Drafts,
@@ -34,7 +34,7 @@ impl ModuleFilter {
         Self::Classic,
         Self::Rally,
         Self::Kart,
-        Self::F1,
+        Self::Gt,
         Self::Nascar,
         Self::ExtremeOffRoad,
         Self::Drafts,
@@ -45,7 +45,7 @@ impl ModuleFilter {
             Self::Classic => Some("classic"),
             Self::Rally => Some("rally"),
             Self::Kart => Some("kart"),
-            Self::F1 => Some("gt"),
+            Self::Gt => Some("gt"),
             Self::Nascar => Some("nascar"),
             Self::ExtremeOffRoad => Some("extreme_offroad"),
             Self::Drafts => Some("drafts"),
@@ -57,7 +57,7 @@ impl ModuleFilter {
             Self::Classic => "CLASSIC",
             Self::Rally => "RALLY",
             Self::Kart => "KARTING",
-            Self::F1 => "GT WORLD CHALLENGE",
+            Self::Gt => "GT WORLD CHALLENGE",
             Self::Nascar => "NASCAR",
             Self::ExtremeOffRoad => "EXTREME OFF-ROAD",
             Self::Drafts => "DRAFTS",
@@ -69,7 +69,7 @@ impl ModuleFilter {
             Self::Classic => 1,
             Self::Rally => 2,
             Self::Kart => 3,
-            Self::F1 => 4,
+            Self::Gt => 4,
             Self::Nascar => 5,
             Self::ExtremeOffRoad => 6,
             Self::Drafts => 9,
@@ -80,8 +80,8 @@ impl ModuleFilter {
         match self {
             Self::Classic => Self::Rally,
             Self::Rally => Self::Kart,
-            Self::Kart => Self::F1,
-            Self::F1 => Self::Nascar,
+            Self::Kart => Self::Gt,
+            Self::Gt => Self::Nascar,
             Self::Nascar => Self::ExtremeOffRoad,
             Self::ExtremeOffRoad => Self::Drafts,
             Self::Drafts => Self::Classic,
@@ -93,8 +93,8 @@ impl ModuleFilter {
             Self::Classic => Self::Drafts,
             Self::Rally => Self::Classic,
             Self::Kart => Self::Rally,
-            Self::F1 => Self::Kart,
-            Self::Nascar => Self::F1,
+            Self::Gt => Self::Kart,
+            Self::Nascar => Self::Gt,
             Self::ExtremeOffRoad => Self::Nascar,
             Self::Drafts => Self::ExtremeOffRoad,
         }
@@ -102,7 +102,7 @@ impl ModuleFilter {
 
     pub fn for_module(mod_id: &str) -> Self {
         match mod_id {
-            "gt" | "gt_challenge" | "f1" => Self::F1,
+            "gt" | "gt_challenge" => Self::Gt,
             "rally" => Self::Rally,
             "kart" => Self::Kart,
             "nascar" => Self::Nascar,
@@ -138,8 +138,8 @@ impl CustomTrackInfo {
         if mod_id.eq_ignore_ascii_case("all") {
             return true;
         }
-        let target_ids = if mod_id.eq_ignore_ascii_case("gt") || mod_id.eq_ignore_ascii_case("f1") {
-            vec!["gt", "gt_challenge", "f1"]
+        let target_ids = if mod_id.eq_ignore_ascii_case("gt") {
+            vec!["gt", "gt_challenge"]
         } else {
             vec![mod_id]
         };
@@ -158,12 +158,12 @@ impl CustomTrackInfo {
     pub fn module_name(&self) -> &'static str {
         if let Some(ref m) = self.module_id {
             match m.to_lowercase().as_str() {
-                "gt" | "gt_challenge" | "f1" => "GT World Challenge",
+                "gt" | "gt_challenge" => "GT World Challenge",
                 "rally" => "Rally Cross",
                 "kart" => "Karting",
                 _ => "Classic",
             }
-        } else if self.belongs_to_module("gt") || self.belongs_to_module("f1") {
+        } else if self.belongs_to_module("gt") {
             "GT World Challenge"
         } else if self.belongs_to_module("rally") {
             "Rally Cross"
@@ -314,7 +314,7 @@ impl TrackManager {
         if module_id == "all" {
             let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
             if has_scoped_deletion {
-                let active_in_any = ["classic", "f1", "rally", "kart", "nascar"].iter().any(|m| {
+                let active_in_any = ["classic", "gt", "rally", "kart", "nascar"].iter().any(|m| {
                     let m_scoped = format!("{}:{}", m, id);
                     if self.deleted_presets.iter().any(|d| d == &m_scoped) {
                         return false;
@@ -489,7 +489,7 @@ impl TrackManager {
     pub fn filtered_main_track_choices(&self, filter: ModuleFilter) -> Vec<TrackChoice> {
         match filter {
             ModuleFilter::Classic => self.module_catalog_tracks("classic"),
-            ModuleFilter::F1 => self.module_catalog_tracks("f1"),
+            ModuleFilter::Gt => self.module_catalog_tracks("gt"),
             ModuleFilter::Rally => self.module_catalog_tracks("rally"),
             ModuleFilter::Kart => self.module_catalog_tracks("kart"),
             ModuleFilter::Nascar => self.module_catalog_tracks("nascar"),
@@ -548,7 +548,7 @@ impl TrackManager {
     /// Normalizes a motorsport module string identifier into a canonical module key.
     pub fn normalize_module_id(module_id: &str) -> &'static str {
         match module_id.to_ascii_lowercase().as_str() {
-            "gt" | "gt_challenge" | "f1" => "f1",
+            "gt" | "gt_challenge" => "gt",
             "rally" => "rally",
             "kart" => "kart",
             "nascar" => "nascar",
@@ -576,7 +576,7 @@ impl TrackManager {
         if module_id == "all" {
             let mut list: Vec<TrackChoice> = Vec::new();
             let mut seen_ids = std::collections::HashSet::new();
-            for m in ["classic", "f1", "rally", "kart", "nascar", "extreme_offroad"] {
+            for m in ["classic", "gt", "rally", "kart", "nascar", "extreme_offroad"] {
                 for choice in self.preset_track_choices(m) {
                     if seen_ids.insert(choice.track_id().to_string()) {
                         list.push(choice);
@@ -590,9 +590,9 @@ impl TrackManager {
         }
 
         let raw: Vec<TrackChoice> = match module_id {
-            "gt" | "gt_challenge" | "f1" => {
-                let f1_module = F1GameModule::new();
-                f1_module
+            "gt" | "gt_challenge" => {
+                let gt_module = GtWorldChallengeModule::new();
+                gt_module
                     .tracks()
                     .iter()
                     .map(|def| Self::track_choice_from_def(def, "gt"))
@@ -645,7 +645,7 @@ impl TrackManager {
         // In dev mode or when git_tracks_dir exists, discover promoted presets
         if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
             let scan_modules: Vec<&str> = match module_id {
-                "gt" | "gt_challenge" | "f1" => vec!["f1", "gt"],
+                "gt" | "gt_challenge" => vec!["gt"],
                 _ => vec![module_id],
             };
 
@@ -776,7 +776,7 @@ impl TrackManager {
         if module_id == "all" {
             let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
             if has_scoped_deletion {
-                let active_in_any = ["classic", "f1", "rally", "kart", "nascar"].iter().any(|m| {
+                let active_in_any = ["classic", "gt", "rally", "kart", "nascar"].iter().any(|m| {
                     let m_scoped = format!("{}:{}", m, id);
                     if self.deleted_presets.iter().any(|d| d == &m_scoped) {
                         return false;
@@ -834,8 +834,6 @@ impl TrackManager {
             TrackChoice::Custom { path, .. } => {
                 if path.starts_with("gt/") {
                     Some("gt")
-                } else if path.starts_with("f1/") {
-                    Some("f1")
                 } else if path.starts_with("nascar/") {
                     Some("nascar")
                 } else if path.starts_with("rally/") {
@@ -967,24 +965,24 @@ impl TrackManager {
                 match id.as_str() {
                     "dirty_oval_speedway" => Ok(tdrace_core::track::presets::dirty_oval_speedway()),
                     "figure_eight" => Ok(tdrace_core::track::presets::figure_eight()),
-                    "monza" => Ok(crate::module::f1::F1GameModule::track_monza()),
-                    "spa" => Ok(crate::module::f1::F1GameModule::track_spa()),
-                    "silverstone" => Ok(crate::module::f1::F1GameModule::track_silverstone()),
-                    "monaco" => Ok(crate::module::f1::F1GameModule::track_monaco()),
-                    "suzuka" => Ok(crate::module::f1::F1GameModule::track_suzuka()),
-                    "interlagos" => Ok(crate::module::f1::F1GameModule::track_interlagos()),
-                    "montreal" => Ok(crate::module::f1::F1GameModule::track_montreal()),
-                    "red_bull_ring" => Ok(crate::module::f1::F1GameModule::track_red_bull_ring()),
-                    "catalunya" => Ok(crate::module::f1::F1GameModule::track_catalunya()),
-                    "zandvoort" => Ok(crate::module::f1::F1GameModule::track_zandvoort()),
-                    "bahrain" => Ok(crate::module::f1::F1GameModule::track_bahrain()),
-                    "marina_bay" | "singapore" | "singapur" => Ok(crate::module::f1::F1GameModule::track_marina_bay()),
-                    "cota" => Ok(crate::module::f1::F1GameModule::track_cota()),
-                    "madring" => Ok(crate::module::f1::F1GameModule::track_madring()),
-                    "nurburgring_gp" | "nurburgring" => Ok(crate::module::f1::F1GameModule::track_nurburgring_gp()),
-                    "bathurst" | "mount_panorama" => Ok(crate::module::f1::F1GameModule::track_bathurst()),
-                    "portimao_gp" | "portimao" => Ok(crate::module::f1::F1GameModule::track_portimao_gp()),
-                    "le_mans_sarthe" | "le_mans" => Ok(crate::module::f1::F1GameModule::track_le_mans_sarthe()),
+                    "monza" => Ok(crate::module::gt::GtWorldChallengeModule::track_monza()),
+                    "spa" => Ok(crate::module::gt::GtWorldChallengeModule::track_spa()),
+                    "silverstone" => Ok(crate::module::gt::GtWorldChallengeModule::track_silverstone()),
+                    "monaco" => Ok(crate::module::gt::GtWorldChallengeModule::track_monaco()),
+                    "suzuka" => Ok(crate::module::gt::GtWorldChallengeModule::track_suzuka()),
+                    "interlagos" => Ok(crate::module::gt::GtWorldChallengeModule::track_interlagos()),
+                    "montreal" => Ok(crate::module::gt::GtWorldChallengeModule::track_montreal()),
+                    "red_bull_ring" => Ok(crate::module::gt::GtWorldChallengeModule::track_red_bull_ring()),
+                    "catalunya" => Ok(crate::module::gt::GtWorldChallengeModule::track_catalunya()),
+                    "zandvoort" => Ok(crate::module::gt::GtWorldChallengeModule::track_zandvoort()),
+                    "bahrain" => Ok(crate::module::gt::GtWorldChallengeModule::track_bahrain()),
+                    "marina_bay" | "singapore" | "singapur" => Ok(crate::module::gt::GtWorldChallengeModule::track_marina_bay()),
+                    "cota" => Ok(crate::module::gt::GtWorldChallengeModule::track_cota()),
+                    "madring" => Ok(crate::module::gt::GtWorldChallengeModule::track_madring()),
+                    "nurburgring_gp" | "nurburgring" => Ok(crate::module::gt::GtWorldChallengeModule::track_nurburgring_gp()),
+                    "bathurst" | "mount_panorama" => Ok(crate::module::gt::GtWorldChallengeModule::track_bathurst()),
+                    "portimao_gp" | "portimao" => Ok(crate::module::gt::GtWorldChallengeModule::track_portimao_gp()),
+                    "le_mans_sarthe" | "le_mans" => Ok(crate::module::gt::GtWorldChallengeModule::track_le_mans_sarthe()),
                     "sahara" | "sahara_dunes" => Ok(tdrace_core::track::presets::sahara_dunes()),
                     "dirt_figure_eight" | "dirt_eight" => Ok(tdrace_core::track::presets::dirt_figure_eight()),
                     "holjes_rx" | "holjes" => Ok(tdrace_core::track::presets::holjes_rx()),
@@ -1041,19 +1039,17 @@ impl TrackManager {
             "classic_grand_prix" | "oval_speedway" | "dirty_oval_speedway" | "figure_eight" | "dirt_figure_eight" | "dirt_eight" | "drift_park" | "kart_arena" | "ramp_raceway" | "oasis_rally" | "outlaw_pass" | "sahara" | "sahara_dunes" => Some("classic"),
             "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina" | "essay_rx" | "essay" => Some("rally"),
             "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart" | "valencia_kart" | "valencia" | "campillos" => Some("kart"),
-            "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" => Some("f1"),
-            "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "le_mans_sarthe" => Some("gt"),
+            "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "le_mans_sarthe" => Some("gt"),
             "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course" => Some("nascar"),
             "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city" => Some("extreme_offroad"),
             _ => {
                 if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    for m in ["classic", "rally", "kart", "f1", "gt", "nascar", "extreme_offroad"] {
+                    for m in ["classic", "rally", "kart", "gt", "nascar", "extreme_offroad"] {
                         if git_tracks_dir.join(m).join(format!("{}.json", slug)).exists() {
                             return match m {
                                 "classic" => Some("classic"),
                                 "rally" => Some("rally"),
                                 "kart" => Some("kart"),
-                                "f1" => Some("f1"),
                                 "gt" => Some("gt"),
                                 "nascar" => Some("nascar"),
                                 "extreme_offroad" => Some("extreme_offroad"),
@@ -1192,7 +1188,7 @@ impl TrackManager {
                 modules.push(m);
             }
         }
-        for m in ["classic", "f1", "gt", "rally", "kart", "nascar"] {
+        for m in ["classic", "gt", "rally", "kart", "nascar"] {
             if !modules.contains(&m) {
                 modules.push(m);
             }
@@ -1256,7 +1252,6 @@ impl TrackManager {
         self.tracks_dir.join(&file_name).exists()
             || self.tracks_dir.join("drafts").join(&file_name).exists()
             || self.tracks_dir.join("classic").join(&file_name).exists()
-            || self.tracks_dir.join("f1").join(&file_name).exists()
             || self.tracks_dir.join("gt").join(&file_name).exists()
             || self.tracks_dir.join("rally").join(&file_name).exists()
             || self.tracks_dir.join("kart").join(&file_name).exists()
@@ -1280,7 +1275,6 @@ impl TrackManager {
         }
         let candidates = [
             self.tracks_dir.join("classic").join(&file_name),
-            self.tracks_dir.join("f1").join(&file_name),
             self.tracks_dir.join("gt").join(&file_name),
             self.tracks_dir.join("rally").join(&file_name),
             self.tracks_dir.join("kart").join(&file_name),
@@ -1457,10 +1451,10 @@ impl TrackManager {
         choices
     }
 
-    /// Returns the list of motorsport module IDs ("classic", "rally", "kart", "f1") where a track is currently promoted / available.
+    /// Returns the list of motorsport module IDs ("classic", "rally", "kart", "gt") where a track is currently promoted / available.
     pub fn track_promoted_modules(&self, id: &str) -> Vec<String> {
         let mut mods = Vec::new();
-        for mod_id in ["classic", "rally", "kart", "f1", "nascar"] {
+        for mod_id in ["classic", "rally", "kart", "gt", "nascar", "extreme_offroad"] {
             if self.is_track_in_module(id, mod_id) {
                 mods.push(mod_id.to_string());
             }
@@ -1547,7 +1541,7 @@ impl TrackManager {
 
         // Clean up any duplicate legacy files across subdirectories if they differ from target_path
         let file_name = format!("{}.json", id);
-        for sub in &["classic", "f1", "rally", "kart", "nascar", "drafts"] {
+        for sub in &["classic", "gt", "rally", "kart", "nascar", "extreme_offroad", "drafts"] {
             let legacy_p = self.tracks_dir.join(sub).join(&file_name);
             if legacy_p.exists() && legacy_p != target_path {
                 let _ = fs::remove_file(legacy_p);
@@ -1603,7 +1597,7 @@ impl TrackManager {
 
         // Clean up legacy files across subdirectories
         let file_name = format!("{}.json", id);
-        for sub in &["classic", "f1", "rally", "kart", "nascar", "drafts"] {
+        for sub in &["classic", "gt", "rally", "kart", "nascar", "extreme_offroad", "drafts"] {
             let legacy_p = self.tracks_dir.join(sub).join(&file_name);
             if legacy_p.exists() && legacy_p != target_path {
                 let _ = fs::remove_file(legacy_p);
@@ -1888,9 +1882,11 @@ impl TrackManager {
                     self.tracks_dir.join(&file_name),
                     self.tracks_dir.join("drafts").join(&file_name),
                     self.tracks_dir.join("classic").join(&file_name),
-                    self.tracks_dir.join("f1").join(&file_name),
+                    self.tracks_dir.join("gt").join(&file_name),
                     self.tracks_dir.join("rally").join(&file_name),
                     self.tracks_dir.join("kart").join(&file_name),
+                    self.tracks_dir.join("nascar").join(&file_name),
+                    self.tracks_dir.join("extreme_offroad").join(&file_name),
                 ];
                 for cand in &candidates {
                     if cand.exists() {
@@ -2032,7 +2028,7 @@ impl TrackManager {
 
         // If it was a git preset, remove it from git_tracks_dir
         if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-            for m in ["classic", "rally", "kart", "f1"] {
+            for m in ["classic", "rally", "kart", "gt", "nascar", "extreme_offroad"] {
                 let git_file = git_tracks_dir.join(m).join(format!("{}.json", id));
                 if git_file.exists() {
                     let _ = fs::remove_file(git_file);
@@ -2248,13 +2244,13 @@ mod tests {
         let classic_tracks = manager.module_catalog_tracks("classic");
         assert_eq!(classic_tracks.len(), 10);
 
-        // F1 tracks
-        let f1_tracks = manager.module_catalog_tracks("f1");
-        assert_eq!(f1_tracks.len(), 18);
-        assert!(f1_tracks.iter().any(|t| t.title().contains("Monza")));
-        assert!(f1_tracks.iter().any(|t| t.title().contains("Spa")));
-        assert!(f1_tracks.iter().any(|t| t.title().contains("Silverstone")));
-        assert!(f1_tracks.iter().any(|t| t.title().contains("MadRing")));
+        // GT tracks
+        let gt_tracks = manager.module_catalog_tracks("gt");
+        assert_eq!(gt_tracks.len(), 18);
+        assert!(gt_tracks.iter().any(|t| t.title().contains("Monza")));
+        assert!(gt_tracks.iter().any(|t| t.title().contains("Spa")));
+        assert!(gt_tracks.iter().any(|t| t.title().contains("Silverstone")));
+        assert!(gt_tracks.iter().any(|t| t.title().contains("MadRing")));
 
         // Rally tracks
         let rally_tracks = manager.module_catalog_tracks("rally");
@@ -2315,10 +2311,10 @@ mod tests {
         assert!(rally_after[15].is_user_custom(), "Custom circuit must appear after presets");
         assert_eq!(rally_after[15].title(), "Custom Category Circuit");
 
-        // F1 and Kart: Must not contain this custom track
-        let f1_after = manager.module_catalog_tracks("f1");
-        assert_eq!(f1_after.len(), 18);
-        assert!(!f1_after.iter().any(|t| t.title() == "Custom Category Circuit"));
+        // GT and Kart: Must not contain this custom track
+        let gt_after = manager.module_catalog_tracks("gt");
+        assert_eq!(gt_after.len(), 18);
+        assert!(!gt_after.iter().any(|t| t.title() == "Custom Category Circuit"));
 
         let kart_after = manager.module_catalog_tracks("kart");
         assert_eq!(kart_after.len(), 15);

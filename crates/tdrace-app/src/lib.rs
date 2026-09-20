@@ -36,9 +36,9 @@ pub use game::{
     PlayerRaceTelemetry, RaceSession,
 };
 pub use module::{
-    ClassicGameModule, EngineAudioProfile, ExtremeOffRoadModule, F1GameModule, GameModule,
-    KartGameModule, ModuleTheme, NascarGameModule, RallyGameModule, TrackDefinition,
-    VehicleModelDefinition, VehicleVisualType,
+    ClassicGameModule, EngineAudioProfile, ExtremeOffRoadModule, GameModule,
+    GtWorldChallengeModule, KartGameModule, ModuleTheme, NascarGameModule, RallyGameModule,
+    TrackDefinition, VehicleModelDefinition, VehicleVisualType,
 };
 pub use tournament::{
     ChampionshipRoundResult, ChampionshipSession, EliminationSession, PointSystem, QualifyingResult,

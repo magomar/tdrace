@@ -1,4 +1,4 @@
-use tdrace_app::module::f1::F1GameModule;
+use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_app::module::kart::KartGameModule;
 use tdrace_core::car::{Car, CarControls};
 use tdrace_core::physics::config::CarConfig;
@@ -9,7 +9,7 @@ use glam::Vec2;
 #[test]
 fn test_crossover_bridge_detection_pfi_and_suzuka() {
     // 1. Suzuka: famous figure-8 crossover
-    let suzuka_track = F1GameModule::track_suzuka();
+    let suzuka_track = GtWorldChallengeModule::track_suzuka();
     let suzuka_bridge_samples: Vec<_> = suzuka_track.spline.samples.iter().filter(|s| s.is_bridge).collect();
     assert!(
         !suzuka_bridge_samples.is_empty(),
@@ -52,7 +52,7 @@ fn test_crossover_bridge_detection_pfi_and_suzuka() {
 #[test]
 fn test_natural_elevation_tracks_have_zero_bridges() {
     // Test natural mountain / elevation tracks: Spa, Nurburgring GP, Bathurst (Mount Panorama)
-    let nurburgring = F1GameModule::track_nurburgring_gp();
+    let nurburgring = GtWorldChallengeModule::track_nurburgring_gp();
     assert!(
         nurburgring.spline.samples.iter().any(|s| s.elevation.abs() > 0.5),
         "Nurburgring GP must have real elevation profile"
@@ -74,7 +74,7 @@ fn test_natural_elevation_tracks_have_zero_bridges() {
     assert!(has_curvatures, "Nurburgring GP must calculate non-zero vertical road curvatures");
 
     // Mount Panorama (Bathurst): famous mountain circuit
-    let bathurst = F1GameModule::track_bathurst();
+    let bathurst = GtWorldChallengeModule::track_bathurst();
     let max_bathurst_elev = bathurst.spline.samples.iter().map(|s| s.elevation).fold(0.0f32, f32::max);
     assert!(
         max_bathurst_elev > 4.0,

@@ -192,16 +192,16 @@ default_num_bots = 7
 [camera]
 trauma_decay = 2.2
 
-# F1 Module overrides
-[modules.f1.audio]
+# GT Module overrides
+[modules.gt.audio]
 master_volume = 0.50
 
-[modules.f1.gameplay]
+[modules.gt.gameplay]
 default_track = "monza"
 default_laps = 15
 default_assist_profile = "pro"
 
-[modules.f1.camera]
+[modules.gt.camera]
 velocity_lookahead_time = 0.65
 
 # Rally Module overrides
@@ -223,16 +223,16 @@ trauma_decay = 1.2
     assert_eq!(classic_cfg.gameplay.default_assist_profile, "arcade");
     assert!((classic_cfg.camera.trauma_decay - 2.2).abs() < 1e-4);
 
-    // 2. F1 module (specific overrides prevail, unmentioned fields inherit general)
-    let f1_cfg = base_cfg.for_module_table_only("f1");
-    assert!((f1_cfg.audio.master_volume - 0.50).abs() < 1e-4, "F1 specific audio override");
-    assert!((f1_cfg.audio.sfx_volume - 0.90).abs() < 1e-4, "F1 inherits general sfx volume");
-    assert_eq!(f1_cfg.gameplay.default_track, "monza", "F1 specific track override");
-    assert_eq!(f1_cfg.gameplay.default_laps, 15, "F1 specific laps override");
-    assert_eq!(f1_cfg.gameplay.default_assist_profile, "pro", "F1 specific assist override");
-    assert_eq!(f1_cfg.gameplay.default_num_bots, 7, "F1 inherits general bot count");
-    assert!((f1_cfg.camera.velocity_lookahead_time - 0.65).abs() < 1e-4, "F1 specific camera lookahead");
-    assert!((f1_cfg.camera.trauma_decay - 2.2).abs() < 1e-4, "F1 inherits general trauma decay");
+    // 2. GT module (specific overrides prevail, unmentioned fields inherit general)
+    let gt_cfg = base_cfg.for_module_table_only("gt");
+    assert!((gt_cfg.audio.master_volume - 0.50).abs() < 1e-4, "GT specific audio override");
+    assert!((gt_cfg.audio.sfx_volume - 0.90).abs() < 1e-4, "GT inherits general sfx volume");
+    assert_eq!(gt_cfg.gameplay.default_track, "monza", "GT specific track override");
+    assert_eq!(gt_cfg.gameplay.default_laps, 15, "GT specific laps override");
+    assert_eq!(gt_cfg.gameplay.default_assist_profile, "pro", "GT specific assist override");
+    assert_eq!(gt_cfg.gameplay.default_num_bots, 7, "GT inherits general bot count");
+    assert!((gt_cfg.camera.velocity_lookahead_time - 0.65).abs() < 1e-4, "GT specific camera lookahead");
+    assert!((gt_cfg.camera.trauma_decay - 2.2).abs() < 1e-4, "GT inherits general trauma decay");
 
     // 3. Rally module
     let rally_cfg = base_cfg.for_module_table_only("rally");
@@ -334,13 +334,13 @@ fn test_external_module_files_and_hierarchy_precedence() {
     let _guard = ENV_CONFIG_MUTEX.lock().unwrap();
     let base_cfg = GameConfig::default();
 
-    // 1. F1 Module loads config.f1.toml overrides
-    let f1_cfg = base_cfg.for_module("f1");
-    assert_eq!(f1_cfg.gameplay.default_track, "monza");
-    assert_eq!(f1_cfg.gameplay.default_laps, 5);
-    assert_eq!(f1_cfg.gameplay.default_assist_profile, "pro");
-    assert!((f1_cfg.camera.velocity_lookahead_time - 0.50).abs() < 1e-4);
-    assert!((f1_cfg.camera.position_smoothing - 9.5).abs() < 1e-4);
+    // 1. GT Module loads config.gt.toml overrides
+    let gt_cfg = base_cfg.for_module("gt");
+    assert_eq!(gt_cfg.gameplay.default_track, "monza");
+    assert_eq!(gt_cfg.gameplay.default_laps, 5);
+    assert_eq!(gt_cfg.gameplay.default_assist_profile, "pro");
+    assert!((gt_cfg.camera.velocity_lookahead_time - 0.50).abs() < 1e-4);
+    assert!((gt_cfg.camera.position_smoothing - 9.5).abs() < 1e-4);
 
     // 2. Rally Module loads config.rally.toml overrides
     let rally_cfg = base_cfg.for_module("rally");
@@ -480,26 +480,26 @@ fn test_user_module_config_overrides_default_template() {
     std::env::set_var(tdrace_app::storage::ENV_USER_CONFIG_DIR, &temp_user_dir);
 
     // Write a custom module override in the user's config directory
-    let user_f1_cfg = temp_user_dir.join("config.f1.toml");
+    let user_gt_cfg = temp_user_dir.join("config.gt.toml");
     std::fs::write(
-        &user_f1_cfg,
+        &user_gt_cfg,
         r#"
 [gameplay]
 default_track = "silverstone"
 default_laps = 55
 "#,
     )
-    .expect("Write user f1 module config");
+    .expect("Write user gt module config");
 
     let base_cfg = GameConfig::default();
-    let f1_resolved = base_cfg.for_module("f1");
+    let gt_resolved = base_cfg.for_module("gt");
 
     assert_eq!(
-        f1_resolved.gameplay.default_track, "silverstone",
+        gt_resolved.gameplay.default_track, "silverstone",
         "User installed module config must override template defaults"
     );
     assert_eq!(
-        f1_resolved.gameplay.default_laps, 55,
+        gt_resolved.gameplay.default_laps, 55,
         "User installed module config must override template laps"
     );
 

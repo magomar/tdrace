@@ -1,6 +1,6 @@
 pub mod classic;
 pub mod extreme_offroad;
-pub mod f1;
+pub mod gt;
 pub mod kart;
 pub mod rally;
 
@@ -258,7 +258,7 @@ pub trait GameModule: Send + Sync + 'static {
 
 pub use classic::ClassicGameModule;
 pub use extreme_offroad::ExtremeOffRoadModule;
-pub use f1::{F1GameModule, GtWorldChallengeModule};
+pub use gt::GtWorldChallengeModule;
 pub use kart::KartGameModule;
 pub use nascar::NascarGameModule;
 pub use rally::RallyGameModule;
@@ -270,7 +270,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_f1_game_module() {
+    fn test_gt_game_module() {
         let gt = GtWorldChallengeModule::new();
         assert_eq!(gt.id(), "gt");
         assert_eq!(gt.title(), "GT WORLD CHALLENGE");

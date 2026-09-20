@@ -61,7 +61,6 @@ def generate_circuit_svg(data: dict, cat: str, output_path: Path):
     fl_y2 = round(screen_pts[0][1] + ny * fl_len, 1)
 
     category_colors = {
-        "f1": {"stroke": "#ef4444", "glow": "#dc2626"},
         "gt": {"stroke": "#3b82f6", "glow": "#2563eb"},
         "nascar": {"stroke": "#f59e0b", "glow": "#d97706"},
         "rally": {"stroke": "#10b981", "glow": "#059669"},
@@ -140,7 +139,7 @@ def generate_assets():
                 if s:
                     surfaces_present.add(s)
             if not surfaces_present:
-                surfaces_present.add("Asphalt" if cat in ["f1", "gt", "nascar", "kart", "classic"] else "Dirt")
+                surfaces_present.add("Asphalt" if cat in ["gt", "nascar", "kart", "classic"] else "Dirt")
 
             # Generate SVG track miniature
             svg_file = circuits_img_dir / cat / f"{json_file.stem}.svg"

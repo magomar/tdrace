@@ -1,4 +1,4 @@
-use tdrace_app::module::f1::GtWorldChallengeModule;
+use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::DriverAssistsConfig;
 use tdrace_core::physics::surface::SurfaceType;

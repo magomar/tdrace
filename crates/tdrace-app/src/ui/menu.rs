@@ -62,7 +62,7 @@ impl TrackChoice {
             Self::Custom { id, path, .. } => {
                 if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "essay_rx" | "essay" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina") {
                     "RALLY CROSS"
-                } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "portimao" | "le_mans_sarthe" | "le_mans") {
+                } else if path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "portimao" | "le_mans_sarthe" | "le_mans") {
                     "GT WORLD CHALLENGE"
                 } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "valencia_kart" | "valencia" | "campillos" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart") {
                     "KARTING"
@@ -78,7 +78,7 @@ impl TrackChoice {
     pub fn tag_for_module(&self, mod_id: &str) -> &str {
         match self {
             Self::ClassicGrandPrix => {
-                if mod_id == "f1" || mod_id == "gt" || mod_id == "gt_challenge" { "GT GP CIRCUIT" } else { "FIA GP CIRCUIT" }
+                if mod_id == "gt" || mod_id == "gt_challenge" { "GT GP CIRCUIT" } else { "FIA GP CIRCUIT" }
             }
             Self::OvalSpeedway => "SUPERSPEEDWAY",
             Self::DriftPark => "TECHNICAL DRIFT",
@@ -89,7 +89,7 @@ impl TrackChoice {
             Self::Custom { id, path, .. } => {
                 if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "essay_rx" | "essay" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina") {
                     "RALLY CROSS"
-                } else if path.contains("/f1/") || path.starts_with("f1/") || path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "portimao" | "le_mans_sarthe" | "le_mans") {
+                } else if path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "portimao" | "le_mans_sarthe" | "le_mans") {
                     "GT WORLD CHALLENGE"
                 } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "valencia_kart" | "valencia" | "campillos" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart") {
                     "KARTING"
@@ -99,7 +99,7 @@ impl TrackChoice {
                     "EXTREME OFF-ROAD"
                 } else {
                     match mod_id {
-                        "gt" | "gt_challenge" | "f1" => "GT WORLD CHALLENGE",
+                        "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
                         "rally" => "RALLY CROSS",
                         "kart" => "KARTING",
                         "nascar" => "NASCAR CUP",
@@ -161,7 +161,6 @@ impl TrackChoice {
                 let is_demoted = crate::track_manager::TrackManager::is_preset_slug_demoted_in_path(id, path);
                 !is_demoted
                     && (crate::track_manager::TrackManager::is_preset_slug(id)
-                        || path.starts_with("f1/")
                         || path.starts_with("gt/")
                         || path.starts_with("rally/")
                         || path.starts_with("kart/")
@@ -228,8 +227,6 @@ fn resolve_track_for_menu_with_dir_uncached(
         TrackChoice::Custom { path, .. } => {
             if path.starts_with("gt/") {
                 Some("gt")
-            } else if path.starts_with("f1/") {
-                Some("f1")
             } else if path.starts_with("nascar/") {
                 Some("nascar")
             } else if path.starts_with("rally/") {
@@ -252,7 +249,6 @@ fn resolve_track_for_menu_with_dir_uncached(
     let user_candidates = [
         dir.join(&file_name),
         dir.join("classic").join(&file_name),
-        dir.join("f1").join(&file_name),
         dir.join("gt").join(&file_name),
         dir.join("rally").join(&file_name),
         dir.join("kart").join(&file_name),
@@ -327,7 +323,6 @@ fn resolve_track_for_menu_with_dir_uncached(
     if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
         let git_candidates = [
             git_tracks_dir.join("classic").join(&file_name),
-            git_tracks_dir.join("f1").join(&file_name),
             git_tracks_dir.join("gt").join(&file_name),
             git_tracks_dir.join("rally").join(&file_name),
             git_tracks_dir.join("kart").join(&file_name),
@@ -379,24 +374,24 @@ impl TrackChoice {
         TrackChoice::Custom { id, .. } => match id.as_str() {
             "dirty_oval_speedway" | "dirty_oval" => Some(tdrace_core::track::presets::dirty_oval_speedway()),
             "figure_eight" | "figure_8" => Some(tdrace_core::track::presets::figure_eight()),
-            "monza" => Some(crate::module::f1::F1GameModule::track_monza()),
-            "spa" => Some(crate::module::f1::F1GameModule::track_spa()),
-            "silverstone" => Some(crate::module::f1::F1GameModule::track_silverstone()),
-            "monaco" => Some(crate::module::f1::F1GameModule::track_monaco()),
-            "suzuka" => Some(crate::module::f1::F1GameModule::track_suzuka()),
-            "interlagos" => Some(crate::module::f1::F1GameModule::track_interlagos()),
-            "montreal" => Some(crate::module::f1::F1GameModule::track_montreal()),
-            "red_bull_ring" => Some(crate::module::f1::F1GameModule::track_red_bull_ring()),
-            "catalunya" => Some(crate::module::f1::F1GameModule::track_catalunya()),
-            "zandvoort" => Some(crate::module::f1::F1GameModule::track_zandvoort()),
-            "bahrain" => Some(crate::module::f1::F1GameModule::track_bahrain()),
-            "marina_bay" | "singapore" | "singapur" => Some(crate::module::f1::F1GameModule::track_marina_bay()),
-            "cota" => Some(crate::module::f1::F1GameModule::track_cota()),
-            "madring" => Some(crate::module::f1::F1GameModule::track_madring()),
-            "nurburgring_gp" | "nurburgring" => Some(crate::module::f1::F1GameModule::track_nurburgring_gp()),
-            "bathurst" | "mount_panorama" => Some(crate::module::f1::F1GameModule::track_bathurst()),
-            "portimao_gp" | "portimao" => Some(crate::module::f1::F1GameModule::track_portimao_gp()),
-            "le_mans_sarthe" | "le_mans" => Some(crate::module::f1::F1GameModule::track_le_mans_sarthe()),
+            "monza" => Some(crate::module::gt::GtWorldChallengeModule::track_monza()),
+            "spa" => Some(crate::module::gt::GtWorldChallengeModule::track_spa()),
+            "silverstone" => Some(crate::module::gt::GtWorldChallengeModule::track_silverstone()),
+            "monaco" => Some(crate::module::gt::GtWorldChallengeModule::track_monaco()),
+            "suzuka" => Some(crate::module::gt::GtWorldChallengeModule::track_suzuka()),
+            "interlagos" => Some(crate::module::gt::GtWorldChallengeModule::track_interlagos()),
+            "montreal" => Some(crate::module::gt::GtWorldChallengeModule::track_montreal()),
+            "red_bull_ring" => Some(crate::module::gt::GtWorldChallengeModule::track_red_bull_ring()),
+            "catalunya" => Some(crate::module::gt::GtWorldChallengeModule::track_catalunya()),
+            "zandvoort" => Some(crate::module::gt::GtWorldChallengeModule::track_zandvoort()),
+            "bahrain" => Some(crate::module::gt::GtWorldChallengeModule::track_bahrain()),
+            "marina_bay" | "singapore" | "singapur" => Some(crate::module::gt::GtWorldChallengeModule::track_marina_bay()),
+            "cota" => Some(crate::module::gt::GtWorldChallengeModule::track_cota()),
+            "madring" => Some(crate::module::gt::GtWorldChallengeModule::track_madring()),
+            "nurburgring_gp" | "nurburgring" => Some(crate::module::gt::GtWorldChallengeModule::track_nurburgring_gp()),
+            "bathurst" | "mount_panorama" => Some(crate::module::gt::GtWorldChallengeModule::track_bathurst()),
+            "portimao_gp" | "portimao" => Some(crate::module::gt::GtWorldChallengeModule::track_portimao_gp()),
+            "le_mans_sarthe" | "le_mans" => Some(crate::module::gt::GtWorldChallengeModule::track_le_mans_sarthe()),
             "sahara" | "sahara_dunes" => Some(tdrace_core::track::presets::sahara_dunes()),
             "dirt_figure_eight" | "dirt_eight" => Some(tdrace_core::track::presets::dirt_figure_eight()),
             "holjes_rx" | "holjes" => Some(tdrace_core::track::presets::holjes_rx()),
@@ -618,12 +613,12 @@ impl CarChoice {
             Self::DriftCar => CarConfig::drift_car(),
             Self::Kart => CarConfig::kart(),
             Self::RallyCar => CarConfig::rally_car(),
-            Self::GT4Clubsport => crate::module::f1::GtWorldChallengeModule::car_gt4_clubsport(),
-            Self::GT3Car => crate::module::f1::GtWorldChallengeModule::car_gt3_evo(),
-            Self::GT2Biturbo => crate::module::f1::GtWorldChallengeModule::car_gt2_biturbo(),
-            Self::GT1Legend => crate::module::f1::GtWorldChallengeModule::car_gt1_legend(),
-            Self::HypercarPrototype => crate::module::f1::GtWorldChallengeModule::car_hypercar_prototype(),
-            Self::F1Car => crate::module::f1::GtWorldChallengeModule::car_f1_hybrid(),
+            Self::GT4Clubsport => crate::module::gt::GtWorldChallengeModule::car_gt4_clubsport(),
+            Self::GT3Car => crate::module::gt::GtWorldChallengeModule::car_gt3_evo(),
+            Self::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
+            Self::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
+            Self::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
+            Self::F1Car => crate::module::gt::GtWorldChallengeModule::car_f1_hybrid(),
             Self::StockCar => CarConfig::stock_car_ta1(),
             Self::SandRail => CarConfig::sand_rail(),
         }
@@ -640,9 +635,7 @@ impl CarChoice {
             Self::GT3Car
             | Self::GT2Biturbo
             | Self::GT1Legend
-            | Self::HypercarPrototype
-            | Self::DriftCar
-            | Self::SportsCar => crate::module::VehicleVisualType::TouringGT {
+            | Self::HypercarPrototype => crate::module::VehicleVisualType::TouringGT {
                 widebody: true,
                 gt_wing: true,
                 diffuser: true,
@@ -662,7 +655,7 @@ impl CarChoice {
                 side_bumpers: true,
             },
             Self::StockCar => crate::module::VehicleVisualType::StockCar {
-                tall_wing: false,
+                tall_wing: true,
                 roof_fins: true,
                 window_net: true,
             },
@@ -671,11 +664,16 @@ impl CarChoice {
                 whip_antenna: true,
                 paddle_tires: true,
             },
+            Self::SportsCar | Self::DriftCar => crate::module::VehicleVisualType::TouringGT {
+                widebody: false,
+                gt_wing: false,
+                diffuser: false,
+            },
         }
     }
 }
 
-/// Resolves the predefined vehicle model for a given track and active module.
+/// Resolves the authentic predefined car for a specific track and active module context.
 pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track>, module_id: &str) -> CarChoice {
     if let Some(tr) = track {
         match tr.predefined_car.as_deref() {
@@ -685,13 +683,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
             Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
             Some("gt") => CarChoice::GT4Clubsport,
-            Some("f1" | "f1_car" | "open_wheel") => {
-                if tr.module_id.as_deref().unwrap_or(module_id) == "gt" || module_id == "gt" {
-                    CarChoice::GT4Clubsport
-                } else {
-                    CarChoice::F1Car
-                }
-            }
+            Some("f1" | "f1_car" | "open_wheel") => CarChoice::GT4Clubsport,
             Some("f1_hybrid_26") => CarChoice::F1Car,
             Some("drift_car") => CarChoice::DriftCar,
             Some("kart" | "shifter_kart" | "shifter_kart_125" | "classic_kart") => CarChoice::Kart,
@@ -700,7 +692,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             Some("sand_rail" | "sand_rail_buggy" | "buggy" | "classic_offroad") => CarChoice::SandRail,
             Some("sports_car" | "classic_gt") => CarChoice::SportsCar,
             _ => match tr.module_id.as_deref().unwrap_or(module_id) {
-                "gt" | "gt_challenge" | "f1" => CarChoice::GT4Clubsport,
+                "gt" | "gt_challenge" => CarChoice::GT4Clubsport,
                 "rally" => CarChoice::RallyCar,
                 "kart" => CarChoice::Kart,
                 "nascar" => CarChoice::StockCar,
@@ -710,7 +702,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
         }
     } else {
         match module_id {
-            "gt" | "gt_challenge" | "f1" => CarChoice::GT4Clubsport,
+            "gt" | "gt_challenge" => CarChoice::GT4Clubsport,
             "rally" => CarChoice::RallyCar,
             "kart" => CarChoice::Kart,
             "nascar" => CarChoice::StockCar,
@@ -1507,7 +1499,7 @@ pub fn render_track_select_menu(
             ("[T] Circuit Manager", "Full screen circuit organizer, drafts & file manager"),
             ("CAD Studio", "Direct spline vector circuit layout and surface designer"),
             ("Clone to Drafts", "Safely duplicate any built-in preset or custom circuit"),
-            ("Module Distribution", "Assign custom circuits to Classic, Rally, Kart, F1, Nascar"),
+            ("Module Distribution", "Assign custom circuits to Classic, Rally, Kart, GT, Nascar"),
         ];
         let mut cl_y = c2_y + scaler.s(70.0);
         for (tag, desc) in &classes {

@@ -2901,7 +2901,7 @@ pub fn generate_horizontal_eight_waypoints(direction: RaceDirection, surface: Su
 /// Creates a prototypical template circuit for a specific module, layout shape, and race direction.
 /// Follows standard module defaults:
 /// - `classic`: Asphalt road, Grass off-track, sports coupe, 14m width
-/// - `f1`: Asphalt road, Grass off-track, F1 car, 15m width
+/// - `gt`: Asphalt road, Grass off-track, GT car, 15m width
 /// - `kart`: Asphalt road, Asphalt off-track, 125cc kart, 10m width
 /// - `rally`: Dirt road, Dirt off-track, rally car, 12m width
 pub fn create_prototypical_track(
@@ -2913,10 +2913,10 @@ pub fn create_prototypical_track(
     let mod_str = mod_id_clean.as_str();
 
     let (road_surface, offtrack_surface, predefined_car, barrier_type, barrier_offset, width, default_laps) = match mod_str {
-        "f1" => (
+        "gt" => (
             SurfaceType::Asphalt,
             SurfaceType::Grass,
-            "f1_car",
+            "gt3_car",
             BarrierType::Steel,
             4.0,
             15.0,
@@ -2985,7 +2985,7 @@ pub fn create_prototypical_track(
         RaceDirection::Left => "Left",
     };
     let mod_name = match mod_str {
-        "f1" => "Formula GP",
+        "gt" => "GT World Challenge",
         "kart" => "Karting",
         "rally" => "Rallycross",
         "nascar" => "NASCAR Cup",
@@ -3035,9 +3035,9 @@ pub fn classic_template(shape: TrackShape, direction: RaceDirection) -> Track {
     create_prototypical_track("classic", shape, direction)
 }
 
-/// Prototypical template for Formula 1 module.
-pub fn f1_template(shape: TrackShape, direction: RaceDirection) -> Track {
-    create_prototypical_track("f1", shape, direction)
+/// Prototypical template for GT World Challenge module.
+pub fn gt_template(shape: TrackShape, direction: RaceDirection) -> Track {
+    create_prototypical_track("gt", shape, direction)
 }
 
 /// Prototypical template for Karting module.
@@ -3907,7 +3907,7 @@ pub fn cota() -> Track {
         default_laps: 4,
         predefined_car: Some("gt3_car".to_string()),
         module_id: Some("gt".to_string()),
-        modules: vec!["gt".to_string(), "f1".to_string()],
+        modules: vec!["gt".to_string()],
     }
 }
 

@@ -57510,7 +57510,6 @@
   "predefined_car": "gt1_legend",
   "module_id": "gt",
   "modules": [
-    "gt",
-    "f1"
+    "gt"
   ]
 }

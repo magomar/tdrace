@@ -172,7 +172,7 @@ fn test_all_roster_bios_wrap_within_dossier_width() {
 
 #[test]
 fn test_no_preset_character_uses_player_default_colors() {
-    use tdrace_app::module::{F1GameModule, GameModule, KartGameModule, RallyGameModule};
+    use tdrace_app::module::{GameModule, GtWorldChallengeModule, KartGameModule, RallyGameModule};
     use tdrace_app::render::color::CarColorScheme;
 
     let player_scheme = CarColorScheme::from_index(0); // Player: Hyper Racing Red / White / Gold
@@ -196,13 +196,13 @@ fn test_no_preset_character_uses_player_default_colors() {
         );
     }
 
-    // Check F1 game module roster
-    for driver in F1GameModule::new().drivers() {
+    // Check GT game module roster
+    for driver in GtWorldChallengeModule::new().drivers() {
         let (p, s, h) = driver.color_scheme.to_hex_strings();
         assert_ne!(
             (p, s, h),
             (p_hex.clone(), s_hex.clone(), h_hex.clone()),
-            "F1 module driver '{}' must not use human player colors",
+            "GT module driver '{}' must not use human player colors",
             driver.name
         );
     }

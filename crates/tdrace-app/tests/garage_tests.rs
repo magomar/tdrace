@@ -305,7 +305,6 @@ fn test_fleet_gallery_filter_conversions() {
 
     // Aliases
     assert_eq!(module_to_gallery_filter("gt_challenge"), 0);
-    assert_eq!(module_to_gallery_filter("f1"), 0);
     // Out of bounds fallback
     assert_eq!(gallery_filter_to_module(999), "gt");
     assert_eq!(module_to_gallery_filter("unknown"), 0);

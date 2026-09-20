@@ -44915,7 +44915,6 @@
   "predefined_car": "gt4_clubsport",
   "module_id": "gt",
   "modules": [
-    "gt",
-    "f1"
+    "gt"
   ]
 }

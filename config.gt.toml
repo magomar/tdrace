@@ -1,4 +1,4 @@
-# Formula 1 Grand Prix Module Configuration
+# GT World Challenge Module Configuration
 # Specific overrides here prevail over the general config.toml
 
 [gameplay]

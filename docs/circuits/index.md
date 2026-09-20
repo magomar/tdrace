@@ -1,7 +1,7 @@
 ---
 type: Asset Catalog
 title: "World Circuit & Track Directory"
-description: "Master directory of circuits in TdRace across Classic Heritage, NASCAR, Rallycross, Karting, Extreme Off-Road, and F1/GT modalities."
+description: "Master directory of circuits in TdRace across Classic Heritage, NASCAR, Rallycross, Karting, Extreme Off-Road, and GT World Challenge modalities."
 status: active
 category: circuits
 tags: [circuits, tracks, directory, catalog, venues]
@@ -22,7 +22,7 @@ tags: [circuits, tracks, directory, catalog, venues]
 | **Rallycross & Mixed-Surface** | [rally.md](rally.md) | 15 | 60/40 Asphalt-Gravel splits, alternative Joker Lap routing (`TrackNetwork`), jumps, and authentic World RX circuits. |
 | **Karting Arenas** | [kart.md](kart.md) | 15 | Tight-radius hairpin chicanes, high-grip sprint asphalt, curb hopping (Lonato, Genk, Sarno, Valencia, Campillos). |
 | **Extreme Off-Road & Arenas** | [offroad.md](offroad.md) | 15 | Open arena sand dunes, mud bog pits, arctic ice tracks, rhythm stadium whoops, and jump ramps. |
-| **Formula 1 & GT Endurance** | [f1_gt.md](f1_gt.md) | 18 | FIA Grade 1 homologated road courses (Spa, Monza, Silverstone, Suzuka, Circuit de la Sarthe / Le Mans, Nürburgring GP, MadRing, Portimão). |
+| **GT World Challenge & Endurance** | [f1_gt.md](f1_gt.md) | 18 | FIA Grade 1 homologated road courses (Spa, Monza, Silverstone, Suzuka, Circuit de la Sarthe / Le Mans, Nürburgring GP, MadRing, Portimão). |
 
 ---
 

@@ -3,7 +3,7 @@ use tdrace_core::track::Track;
 use crate::module::{
     classic::ClassicGameModule,
     extreme_offroad::ExtremeOffRoadModule,
-    f1::F1GameModule,
+    gt::GtWorldChallengeModule,
     kart::KartGameModule,
     nascar::NascarGameModule,
     rally::RallyGameModule,
@@ -28,7 +28,7 @@ impl PresetCatalog {
         if let Some(hint) = module_hint {
             modules.push(hint);
         }
-        for m in ["classic", "f1", "gt", "rally", "kart", "nascar"] {
+        for m in ["classic", "gt", "rally", "kart", "nascar"] {
             if !modules.contains(&m) {
                 modules.push(m);
             }
@@ -66,8 +66,8 @@ impl PresetCatalog {
     /// Returns the official preset choices for a given motorsport module.
     pub fn preset_choices_for_module(module_id: &str) -> Vec<TrackChoice> {
         match module_id {
-            "gt" | "gt_challenge" | "f1" => {
-                let m = F1GameModule::new();
+            "gt" | "gt_challenge" => {
+                let m = GtWorldChallengeModule::new();
                 m.tracks()
                     .iter()
                     .map(|def| crate::track_manager::TrackManager::track_choice_from_def(def, "gt"))

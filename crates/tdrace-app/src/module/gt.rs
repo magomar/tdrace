@@ -12,9 +12,8 @@ use crate::ai::{BotProfile, DriverCharacter, DriverStats};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
-/// GT World Challenge Game Module (formerly F1 Grand Prix Module)
+/// GT World Challenge Game Module
 pub struct GtWorldChallengeModule;
-pub type F1GameModule = GtWorldChallengeModule;
 
 impl GtWorldChallengeModule {
     pub fn new() -> Self {
@@ -85,7 +84,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt4_clubsport".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -157,7 +156,7 @@ impl GtWorldChallengeModule {
             default_laps: 3,
             predefined_car: Some("gt2_biturbo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -227,7 +226,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -293,7 +292,7 @@ impl GtWorldChallengeModule {
             default_laps: 6,
             predefined_car: Some("hypercar_prototype".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -367,7 +366,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt1_legend".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -435,7 +434,7 @@ impl GtWorldChallengeModule {
             default_laps: 5,
             predefined_car: Some("gt1_legend".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -503,7 +502,7 @@ impl GtWorldChallengeModule {
             default_laps: 5,
             predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -569,7 +568,7 @@ impl GtWorldChallengeModule {
             default_laps: 5,
             predefined_car: Some("gt4_clubsport".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -637,7 +636,7 @@ impl GtWorldChallengeModule {
             default_laps: 5,
             predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -705,7 +704,7 @@ impl GtWorldChallengeModule {
             default_laps: 5,
             predefined_car: Some("gt2_biturbo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -775,7 +774,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -845,7 +844,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("hypercar_prototype".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -915,7 +914,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -985,7 +984,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("hypercar_prototype".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -1055,7 +1054,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt4_clubsport".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -1127,7 +1126,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt3_evo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -1195,7 +1194,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt2_biturbo".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 
@@ -1271,7 +1270,7 @@ impl GtWorldChallengeModule {
             default_laps: 4,
             predefined_car: Some("gt1_legend".to_string()),
             module_id: Some("gt".to_string()),
-            modules: vec!["gt".to_string(), "f1".to_string()],
+            modules: vec!["gt".to_string()],
         }
     }
 

@@ -17,7 +17,6 @@ impl DevModeGuard {
         ));
         let mock_git = temp_dir.join("git_tracks");
         let _ = fs::create_dir_all(mock_git.join("classic"));
-        let _ = fs::create_dir_all(mock_git.join("f1"));
         let _ = fs::create_dir_all(mock_git.join("gt"));
         let _ = fs::create_dir_all(mock_git.join("rally"));
         let _ = fs::create_dir_all(mock_git.join("kart"));
@@ -50,7 +49,7 @@ fn test_standard_mode_blocks_preset_modification() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. Assigning categories to an official preset must fail in standard mode
-    let promo_err = manager.promote_track_to_module("classic_grand_prix", "f1").unwrap_err();
+    let promo_err = manager.promote_track_to_module("classic_grand_prix", "gt").unwrap_err();
     assert!(promo_err.contains("official preset circuit and its categories cannot be modified in standard mode"));
 
     let promo_mods_err = manager.promote_track_to_modules("monza", &["classic", "rally"]).unwrap_err();
@@ -70,7 +69,7 @@ fn test_standard_mode_blocks_preset_modification() {
     let del_err = manager.delete_custom_track("classic_grand_prix").unwrap_err();
     assert!(del_err.contains("official preset circuit and cannot be deleted in standard mode"));
 
-    let del_mod_err = manager.delete_track_from_module("monza", Some("f1")).unwrap_err();
+    let del_mod_err = manager.delete_track_from_module("monza", Some("gt")).unwrap_err();
     assert!(del_mod_err.contains("official preset circuit and cannot be deleted in standard mode"));
 
     // 5. Official presets must remain in catalog unmodified
@@ -78,8 +77,8 @@ fn test_standard_mode_blocks_preset_modification() {
     assert_eq!(classic_tracks.len(), 10);
     assert!(classic_tracks.iter().any(|t| t.track_id() == "classic_grand_prix"));
 
-    let f1_tracks = manager.filtered_main_track_choices(ModuleFilter::F1);
-    assert!(f1_tracks.iter().any(|t| t.track_id() == "monza"));
+    let gt_tracks = manager.filtered_main_track_choices(ModuleFilter::Gt);
+    assert!(gt_tracks.iter().any(|t| t.track_id() == "monza"));
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -107,7 +106,11 @@ fn test_standard_mode_allows_custom_circuit_management() {
     manager.promote_track_to_modules("my_custom_speedway", &["classic", "rally"]).unwrap();
     assert!(manager.is_track_in_module("my_custom_speedway", "classic"));
     assert!(manager.is_track_in_module("my_custom_speedway", "rally"));
-    assert!(!manager.is_track_in_module("my_custom_speedway", "f1"));
+    assert!(!manager.is_track_in_module("my_custom_speedway", "gt"));
+    assert!(!manager.is_track_in_module("my_custom_speedway", "kart"));
+
+    let custom_choices = manager.filtered_main_track_choices(ModuleFilter::Classic);
+    assert_eq!(custom_choices.len(), 11);
 
     // 3. Metadata update is permitted for custom tracks
     manager
@@ -122,21 +125,25 @@ fn test_standard_mode_allows_custom_circuit_management() {
     assert_eq!(loaded.name, "My Renamed Speedway");
     assert_eq!(loaded.description, "Updated track description");
 
-    // 4. Deletion is permitted for custom tracks
-    let deleted = manager.delete_custom_track("my_custom_speedway").unwrap();
-    assert!(deleted);
-    assert!(!manager.is_track_in_module("my_custom_speedway", "classic"));
+    // 3. Demoting custom track to Drafts is permitted
+    manager.demote_track("my_custom_speedway").unwrap();
+    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
+
+    // 4. Deleting custom track is permitted
+    manager.delete_custom_track("my_custom_speedway").unwrap();
+    assert_eq!(manager.draft_track_choices().len(), 0);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
-fn test_dev_mode_permits_preset_category_and_metadata_updates() {
+fn test_dev_mode_allows_preset_modification_and_sync() {
     let _lock = PERM_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
     let _dev_guard = DevModeGuard::enter();
 
     let temp_dir = std::env::temp_dir().join(format!(
-        "tdrace_perm_dev_preset_{}",
+        "tdrace_perm_dev_sync_{}",
         std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
     ));
     let _ = fs::remove_dir_all(&temp_dir);
@@ -147,7 +154,7 @@ fn test_dev_mode_permits_preset_category_and_metadata_updates() {
         .and_then(|git_dir| fs::read(git_dir.join("classic").join("classic_grand_prix.json")).ok());
 
     // In dev mode, reassigning categories of an official preset succeeds
-    let res = manager.promote_track_to_modules("classic_grand_prix", &["classic", "f1"]);
+    let res = manager.promote_track_to_modules("classic_grand_prix", &["classic", "gt"]);
     assert!(res.is_ok(), "Dev mode must allow updating preset modules: {:?}", res);
 
     // In dev mode, updating metadata of an official preset succeeds

@@ -1035,7 +1035,7 @@ impl RaceSession {
             _ => match self.track.module_id.as_deref().unwrap_or(self.active_module_id) {
                 "nascar" => CarChoice::StockCar,
                 "extreme_offroad" => CarChoice::SandRail,
-                "gt" | "gt_challenge" | "f1" => CarChoice::GT4Clubsport,
+                "gt" | "gt_challenge" => CarChoice::GT4Clubsport,
                 "rally" => CarChoice::RallyCar,
                 "kart" => CarChoice::Kart,
                 _ => CarChoice::SportsCar,
@@ -1065,7 +1065,7 @@ impl RaceSession {
         if self.is_dev_mode() {
             return true;
         }
-        if self.active_module_id == "gt" || self.active_module_id == "f1" {
+        if self.active_module_id == "gt" {
             self.active_career_progress.is_track_unlocked(track_id, self.is_dev_mode())
         } else {
             true
@@ -1081,7 +1081,7 @@ impl RaceSession {
     /// filtered by the race's category requirement (tier <= required_tier || dev_mode).
     pub fn active_module_car_choices(&self) -> Vec<CarChoice> {
         let base_choices = match self.active_module_id {
-            "gt" | "gt_challenge" | "f1" => vec![
+            "gt" | "gt_challenge" => vec![
                 CarChoice::GT4Clubsport,
                 CarChoice::GT3Car,
                 CarChoice::GT2Biturbo,
@@ -1129,7 +1129,7 @@ impl RaceSession {
     pub fn eligible_opponent_cars(&self) -> Vec<CarChoice> {
         let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
         match effective_module {
-            "gt" | "gt_challenge" | "f1" => vec![
+            "gt" | "gt_challenge" => vec![
                 CarChoice::GT4Clubsport,
                 CarChoice::GT3Car,
                 CarChoice::GT2Biturbo,
@@ -1208,7 +1208,7 @@ impl RaceSession {
     pub fn active_module_drivers(&self) -> Vec<DriverCharacter> {
         let effective_mod = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
         match effective_mod {
-            "gt" | "gt_challenge" | "f1" => GtWorldChallengeModule::new().drivers(),
+            "gt" | "gt_challenge" => GtWorldChallengeModule::new().drivers(),
             "rally" => RallyGameModule::new().drivers(),
             "kart" => KartGameModule::new().drivers(),
             "nascar" => NascarGameModule::new().drivers(),
@@ -1220,7 +1220,7 @@ impl RaceSession {
     /// Returns available vehicles for the active motorsport game module.
     pub fn active_module_vehicles(&self) -> Vec<(&'static str, &'static str, &'static str, (f32, f32, f32, f32))> {
         match self.active_module_id {
-            "gt" | "gt_challenge" | "f1" => vec![
+            "gt" | "gt_challenge" => vec![
                 (CarChoice::GT4Clubsport.title(), CarChoice::GT4Clubsport.tag(), CarChoice::GT4Clubsport.description(), CarChoice::GT4Clubsport.stats()),
                 (CarChoice::GT3Car.title(), CarChoice::GT3Car.tag(), CarChoice::GT3Car.description(), CarChoice::GT3Car.stats()),
                 (CarChoice::GT2Biturbo.title(), CarChoice::GT2Biturbo.tag(), CarChoice::GT2Biturbo.description(), CarChoice::GT2Biturbo.stats()),
@@ -1311,7 +1311,7 @@ impl RaceSession {
     pub fn switch_to_module(&mut self, mod_id: &str) {
         match mod_id {
             "nascar" => self.switch_to_nascar(),
-            "gt" | "gt_challenge" | "f1" => self.switch_to_gt(),
+            "gt" | "gt_challenge" => self.switch_to_gt(),
             "rally" => self.switch_to_rally(),
             "kart" => self.switch_to_kart(),
             "extreme_offroad" | "offroad" => self.switch_to_extreme_offroad(),
@@ -1439,7 +1439,7 @@ impl RaceSession {
                 id: "monza".to_string(),
                 title: "Monza Autodromo Nazionale".to_string(),
                 description: "Temple of Speed. 5.79km high-speed DRS straights & Variante del Rettifilo.".to_string(),
-                path: "f1/monza".to_string(),
+                path: "gt/monza".to_string(),
             });
         }
         self.track = self.load_track_for_session(&self.track_choice);
@@ -1451,11 +1451,6 @@ impl RaceSession {
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
         self.state = GameState::Menu;
-    }
-
-    /// Backwards-compatible alias to activate the GT World Challenge module.
-    pub fn switch_to_f1(&mut self) {
-        self.switch_to_gt();
     }
 
     /// Activates the Rallycross World Cup module.
@@ -1637,11 +1632,6 @@ impl RaceSession {
         self.init_race();
     }
 
-    /// Backwards-compatible alias for GT World Challenge championship.
-    pub fn start_f1_championship(&mut self) {
-        self.start_gt_championship();
-    }
-
     /// Starts a full NASCAR Cup Series Championship Season.
     pub fn start_nascar_championship(&mut self) {
         let champ = ChampionshipSession::new(
@@ -1777,7 +1767,7 @@ impl RaceSession {
         if !self.is_time_attack && total_cars > human_count {
             let target_opponents = total_cars - human_count;
             let mut module_opponents: Vec<DriverCharacter> = match effective_module {
-                "gt" | "gt_challenge" | "f1" => GtWorldChallengeModule::new().drivers(),
+                "gt" | "gt_challenge" => GtWorldChallengeModule::new().drivers(),
                 "rally" => RallyGameModule::new().drivers(),
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
@@ -2274,7 +2264,6 @@ impl RaceSession {
         let sound_type = match effective_module {
             "gt" | "gt_challenge" => EngineSoundType::SportGT,
             "nascar" => EngineSoundType::NascarV8,
-            "f1" => EngineSoundType::SportGT,
             "rally" => EngineSoundType::RallyTurbo,
             "kart" => EngineSoundType::Kart125cc,
             "extreme_offroad" => EngineSoundType::SandRailBoxer,
@@ -4295,7 +4284,7 @@ impl RaceSession {
                     ModalityItem::CareerMode => {
                         self.audio.play_sfx(SfxType::UiSelect);
                         match self.active_module_id {
-                            "gt" | "gt_challenge" | "f1" => {
+                            "gt" | "gt_challenge" => {
                                 let tier = self.active_career_progress.level.clamp(1, 5);
                                 self.start_gt_career_tier(tier);
                             }
@@ -4373,7 +4362,7 @@ impl RaceSession {
                 "classic" => 0,
                 "rally" => 1,
                 "kart" => 2,
-                "gt" | "gt_challenge" | "f1" => 3,
+                "gt" | "gt_challenge" => 3,
                 "nascar" => 4,
                 "extreme_offroad" => 5,
                 _ => 0,
@@ -4413,7 +4402,6 @@ impl RaceSession {
             "rally" => EngineSoundType::RallyTurbo,
             "kart" => EngineSoundType::Kart125cc,
             "extreme_offroad" => EngineSoundType::SandRailBoxer,
-            "f1" => EngineSoundType::F1V6Turbo,
             "gt" | "gt_challenge" => EngineSoundType::SportGT,
             _ => match active_car.map(|c| c.base_car_choice).unwrap_or(self.car_choice) {
                 CarChoice::StockCar => EngineSoundType::NascarV8,
@@ -4879,7 +4867,7 @@ impl RaceSession {
         }
 
         // Quick Championship trigger for GT World Challenge (G / F key)
-        if (self.active_module_id == "gt" || self.active_module_id == "f1")
+        if self.active_module_id == "gt"
             && (is_key_pressed(KeyCode::F) || is_key_pressed(KeyCode::G))
         {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -4995,7 +4983,7 @@ impl RaceSession {
         if is_key_pressed(KeyCode::F) {
             self.audio.play_sfx(SfxType::UiSelect);
             match self.active_module_id {
-                "f1" | "gt" | "gt_challenge" => {
+                "gt" | "gt_challenge" => {
                     self.start_gt_championship();
                     return;
                 }
@@ -5706,10 +5694,10 @@ impl RaceSession {
             }
         }
         if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
-            if active_tab == TrackManagerTab::Drafts || module_filter != ModuleFilter::F1 {
+            if active_tab == TrackManagerTab::Drafts || module_filter != ModuleFilter::Gt {
                 self.audio.play_sfx(SfxType::UiMove);
                 active_tab = TrackManagerTab::Main;
-                module_filter = ModuleFilter::F1;
+                module_filter = ModuleFilter::Gt;
                 selected_idx = 0;
             }
         }
@@ -5997,7 +5985,7 @@ impl RaceSession {
                         let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
                             "rally" => 1,
                             "kart" => 2,
-                            "f1" => 3,
+                            "gt" => 3,
                             _ => 0,
                         };
                         if !has_any_selected {
@@ -6039,7 +6027,7 @@ impl RaceSession {
                             let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
                                 "rally" => 1,
                                 "kart" => 2,
-                                "f1" => 3,
+                                "gt" => 3,
                                 _ => 0,
                             };
                             if !has_any_selected {
@@ -6885,7 +6873,7 @@ impl RaceSession {
             };
 
             // 7. Career XP Award (GT World Challenge / Career mode)
-            if self.active_module_id == "gt" || self.active_module_id == "f1" || self.game_mode == GameMode::Career {
+            if self.active_module_id == "gt" || self.game_mode == GameMode::Career {
                 let base_xp = (self.total_laps as u64) * 100;
                 let pos_bonus: u64 = match player_pos {
                     1 => 300,
@@ -7055,7 +7043,7 @@ impl RaceSession {
                 ref modal,
             } => {
                 let (mod_title, mod_accent) = match self.active_module_id {
-                    "gt" | "gt_challenge" | "f1" => ("GT WORLD CHALLENGE", Palette::RED),
+                    "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", Palette::RED),
                     "rally" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
                     "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
@@ -7115,14 +7103,14 @@ impl RaceSession {
                 let available_tracks = self.filtered_menu_tracks();
                 let filter_counts = self.menu_track_filter_counts();
                 let (mod_title, mod_sub, mod_accent) = match self.active_module_id {
-                    "gt" | "gt_challenge" | "f1" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
+                    "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
                     "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
                     "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                     _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
                 };
-                let cp_ref = if self.active_module_id == "gt" || self.active_module_id == "f1" {
+                let cp_ref = if self.active_module_id == "gt" {
                     Some(&self.active_career_progress)
                 } else {
                     None

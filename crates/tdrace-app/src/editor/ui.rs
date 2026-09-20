@@ -3839,7 +3839,7 @@ fn render_open_modal(
     let tabs: [(&str, &str); 6] = [
         ("ALL", "all"),
         ("CLASSIC", "classic"),
-        ("F1 GP", "f1"),
+        ("GT", "gt"),
         ("RALLY", "rally"),
         ("KARTING", "kart"),
         ("CUSTOM", "custom"),
@@ -3958,7 +3958,7 @@ fn render_open_modal(
 
             // Badge on right
             let tag = choice.tag();
-            let badge_col = if tag.contains("F1") {
+            let badge_col = if tag.contains("GT") {
                 Palette::NEON_GOLD
             } else if tag.contains("RALLY") {
                 Palette::YELLOW

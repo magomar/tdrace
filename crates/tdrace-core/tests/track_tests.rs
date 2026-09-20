@@ -816,12 +816,12 @@ fn test_waypoint_custom_wall_type_generation_and_json_roundtrip() {
 fn test_prototypical_track_templates_all_combinations() {
     use tdrace_core::physics::surface::SurfaceType;
     use tdrace_core::track::presets::{
-        classic_template, create_prototypical_track, f1_template, kart_template, nascar_template,
+        classic_template, create_prototypical_track, gt_template, kart_template, nascar_template,
         rally_template, RaceDirection, TrackShape,
     };
     use tdrace_core::track::validation::validate_track;
 
-    let modules = ["classic", "f1", "kart", "rally"];
+    let modules = ["classic", "gt", "kart", "rally"];
     let shapes = [TrackShape::Oval, TrackShape::HorizontalEight];
     let directions = [RaceDirection::Right, RaceDirection::Left];
 
@@ -879,10 +879,10 @@ fn test_prototypical_track_templates_all_combinations() {
                         assert_eq!(track.spline.samples[0].surface, SurfaceType::Asphalt);
                         assert_eq!(track.predefined_car.as_deref(), Some("sports_car"));
                     }
-                    "f1" => {
+                    "gt" => {
                         assert_eq!(track.default_surface, SurfaceType::Grass);
                         assert_eq!(track.spline.samples[0].surface, SurfaceType::Asphalt);
-                        assert_eq!(track.predefined_car.as_deref(), Some("f1_car"));
+                        assert_eq!(track.predefined_car.as_deref(), Some("gt3_car"));
                     }
                     "kart" => {
                         assert_eq!(track.default_surface, SurfaceType::Asphalt);
@@ -903,8 +903,8 @@ fn test_prototypical_track_templates_all_combinations() {
     // 5. Test convenience module helpers match create_prototypical_track
     let c = classic_template(TrackShape::Oval, RaceDirection::Right);
     assert_eq!(c.module_id.as_deref(), Some("classic"));
-    let f = f1_template(TrackShape::HorizontalEight, RaceDirection::Left);
-    assert_eq!(f.module_id.as_deref(), Some("f1"));
+    let g = gt_template(TrackShape::HorizontalEight, RaceDirection::Left);
+    assert_eq!(g.module_id.as_deref(), Some("gt"));
     let k = kart_template(TrackShape::Oval, RaceDirection::Left);
     assert_eq!(k.module_id.as_deref(), Some("kart"));
     let r = rally_template(TrackShape::HorizontalEight, RaceDirection::Right);

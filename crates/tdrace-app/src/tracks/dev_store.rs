@@ -88,7 +88,7 @@ impl DevTrackStore {
 
         let git_dir = Self::git_tracks_dir();
         if let Some(ref gd) = git_dir {
-            for m in ["classic", "rally", "kart", "f1", "gt", "nascar"] {
+            for m in ["classic", "rally", "kart", "gt", "nascar"] {
                 let p = gd.join(m).join(format!("{}.json", slug));
                 if p.exists() {
                     user_store.backup_file(&p);

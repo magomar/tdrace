@@ -89,8 +89,8 @@ fn test_track_preview_surface_breakdown_percentages() {
 
 #[test]
 fn test_suzuka_circuit_grid_and_crossover_geometry() {
-    use tdrace_app::module::f1::F1GameModule;
-    let suzuka = F1GameModule::track_suzuka();
+    use tdrace_app::module::gt::GtWorldChallengeModule;
+    let suzuka = GtWorldChallengeModule::track_suzuka();
 
     assert_eq!(suzuka.grid_positions.len(), 20);
 
@@ -121,7 +121,7 @@ fn test_suzuka_circuit_grid_and_crossover_geometry() {
 
 #[test]
 fn test_validate_all_circuits_and_presets() {
-    use tdrace_app::module::f1::F1GameModule;
+    use tdrace_app::module::gt::GtWorldChallengeModule;
     use tdrace_app::module::kart::KartGameModule;
     use tdrace_app::module::GameModule;
     use tdrace_core::track::presets::{
@@ -142,8 +142,8 @@ fn test_validate_all_circuits_and_presets() {
         ("Dune Raid", dune_raid()),
     ];
 
-    let f1_module = F1GameModule::new();
-    let f1_tracks = f1_module.tracks();
+    let gt_module = GtWorldChallengeModule::new();
+    let gt_tracks = gt_module.tracks();
 
     let kart_module = KartGameModule::new();
     let kart_tracks = kart_module.tracks();
@@ -160,12 +160,12 @@ fn test_validate_all_circuits_and_presets() {
         total_errors += errors.len();
     }
 
-    for t_def in &f1_tracks {
+    for t_def in &gt_tracks {
         let track = (t_def.generator)();
         let diags = validate_track(&track);
         let errors: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Error).collect();
         let warns: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Warning).collect();
-        println!("[F1]     {:<25} | errors: {:2} | warns: {:2}", t_def.id, errors.len(), warns.len());
+        println!("[GT]     {:<25} | errors: {:2} | warns: {:2}", t_def.id, errors.len(), warns.len());
         if !errors.is_empty() {
             for err in errors.iter().take(5) {
                 println!("  [{}] {}: {}", t_def.id, err.code, err.message);

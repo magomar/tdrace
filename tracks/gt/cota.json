@@ -46952,7 +46952,6 @@
   "predefined_car": "gt3_evo",
   "module_id": "gt",
   "modules": [
-    "gt",
-    "f1"
+    "gt"
   ]
 }

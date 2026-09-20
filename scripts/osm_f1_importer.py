@@ -6,7 +6,7 @@ Extracts real-world motorsport raceway waypoints from OpenStreetMap (OSM),
 projects them to metric 2D Cartesian coordinates, scales them to exactly 0.5x
 official FIA homologation lengths, aligns the start/finish straight with the +X axis,
 adds apex curbs, elevation for bridges/hills, and generates ready-to-use Rust track
-definitions for crates/tdrace-app/src/module/f1.rs.
+definitions for crates/tdrace-app/src/module/gt.rs.
 """
 
 import math
@@ -221,7 +221,7 @@ CIRCUIT_CONFIGS = {
         "start_node": "4281759834",
         "predefined_car": "hypercar_prototype",
         "module_id": "gt",
-        "modules": ["gt", "f1"],
+        "modules": ["gt"],
     },
     "cota": {
         "name": "Circuit of the Americas (COTA)",
@@ -272,7 +272,7 @@ CIRCUIT_CONFIGS = {
         "start_node": "3099078401",
         "predefined_car": "gt4_clubsport",
         "module_id": "gt",
-        "modules": ["gt", "f1"],
+        "modules": ["gt"],
         "elevations": {
             # Mercedes-Arena descent & Dunlop hairpin climb
             3: -1.0, 4: -2.0, 5: -1.5,
@@ -296,7 +296,7 @@ CIRCUIT_CONFIGS = {
         "start_node": "3890232203",
         "predefined_car": "gt3_evo",
         "module_id": "gt",
-        "modules": ["gt", "f1"],
+        "modules": ["gt"],
         "elevations": {
             # Mountain Straight climb up to Skyline crest
             4: 1.5, 5: 3.0, 6: 4.5, 7: 5.5, 8: 6.0, 9: 5.5, 10: 4.5, 11: 3.5,
@@ -320,7 +320,7 @@ CIRCUIT_CONFIGS = {
         "start_node": "5006070798",
         "predefined_car": "gt2_biturbo",
         "module_id": "gt",
-        "modules": ["gt", "f1"],
+        "modules": ["gt"],
         "elevations": {
             # Torre VIP hairpin crest & plunge
             6: 2.0, 7: 4.0, 8: 3.0,
@@ -346,7 +346,7 @@ CIRCUIT_CONFIGS = {
         "start_node": "3599294865",
         "predefined_car": "gt1_legend",
         "module_id": "gt",
-        "modules": ["gt", "f1"],
+        "modules": ["gt"],
         "elevations": {
             # Dunlop curve & bridge uphill crest
             1: 1.5, 2: 3.0, 3: 2.0,
@@ -627,9 +627,9 @@ def process_circuit(cid):
         "fia_length": cfg["fia_length"],
         "half_length": target_half_len,
         "final_len": round(final_len, 1),
-        "predefined_car": cfg.get("predefined_car", "f1_car"),
-        "module_id": cfg.get("module_id", "f1"),
-        "modules": cfg.get("modules", ["f1"]),
+        "predefined_car": cfg.get("predefined_car", "gt3_evo"),
+        "module_id": cfg.get("module_id", "gt"),
+        "modules": cfg.get("modules", ["gt"]),
         "waypoints": waypoints,
     }
 
@@ -687,9 +687,9 @@ def generate_rust_code(cdata):
     lines.append("            default_surface: SurfaceType::Grass,")
     lines.append("            pit_box_area: None,")
     lines.append(f"            default_laps: {cdata['default_laps']},")
-    pred_car = cdata.get("predefined_car", "f1_car")
-    mod_id = cdata.get("module_id", "f1")
-    mods = cdata.get("modules", ["f1"])
+    pred_car = cdata.get("predefined_car", "gt3_evo")
+    mod_id = cdata.get("module_id", "gt")
+    mods = cdata.get("modules", ["gt"])
     mods_str = ", ".join(f'"{m}".to_string()' for m in mods)
     lines.append(f'            predefined_car: Some("{pred_car}".to_string()),')
     lines.append(f'            module_id: Some("{mod_id}".to_string()),')

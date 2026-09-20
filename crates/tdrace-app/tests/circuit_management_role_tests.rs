@@ -23,7 +23,7 @@ impl DevEnvGuard {
                 .as_nanos()
         ));
         let mock_git = temp_dir.join("git_tracks");
-        for m in &["classic", "f1", "gt", "rally", "kart", "nascar"] {
+        for m in &["classic", "gt", "rally", "kart", "nascar"] {
             let _ = fs::create_dir_all(mock_git.join(m));
         }
 
@@ -278,7 +278,7 @@ fn test_ui_copy_and_error_messages_are_strictly_in_english() {
     assert_eq!(ModuleFilter::Classic.label(), "CLASSIC");
     assert_eq!(ModuleFilter::Rally.label(), "RALLY");
     assert_eq!(ModuleFilter::Kart.label(), "KARTING");
-    assert_eq!(ModuleFilter::F1.label(), "GT WORLD CHALLENGE");
+    assert_eq!(ModuleFilter::Gt.label(), "GT WORLD CHALLENGE");
     assert_eq!(ModuleFilter::Nascar.label(), "NASCAR");
 
     let _ = fs::remove_dir_all(&temp_dir);

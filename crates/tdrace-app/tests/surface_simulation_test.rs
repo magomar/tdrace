@@ -1,6 +1,6 @@
 //! Integration test verifying surface-car dynamics simulation against Spec 010.
 
-use tdrace_app::module::f1::GtWorldChallengeModule;
+use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_app::module::{
     ExtremeOffRoadModule, KartGameModule, NascarGameModule, RallyGameModule,
 };

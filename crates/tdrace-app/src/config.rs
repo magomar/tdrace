@@ -385,7 +385,7 @@ impl GameConfig {
         paths
     }
 
-    /// Candidate search paths in priority order for loading a module-specific config file (e.g. `config.f1.toml`).
+    /// Candidate search paths in priority order for loading a module-specific config file (e.g. `config.gt.toml`).
     pub fn candidate_module_paths(module_id: &str) -> Vec<PathBuf> {
         let mut paths = Vec::new();
         // 1. User config directory ~/.config/tdrace/ (overrides defaults)
@@ -466,18 +466,6 @@ impl GameConfig {
                 }
             }
         }
-        if module_id == "gt" {
-            for path in Self::candidate_module_paths("f1") {
-                if path.exists() {
-                    if let Ok(content) = std::fs::read_to_string(&path) {
-                        if let Ok(val) = toml::from_str::<toml::Value>(&content) {
-                            println!("[Config] Loaded module override for 'gt' (fallback 'f1') from {:?}", path);
-                            return Some(val);
-                        }
-                    }
-                }
-            }
-        }
         None
     }
 
@@ -489,13 +477,7 @@ impl GameConfig {
             Err(_) => return self.clone(),
         };
 
-        let module_val_opt = self.modules.get(module_id).or_else(|| {
-            if module_id == "gt" {
-                self.modules.get("f1")
-            } else {
-                None
-            }
-        });
+        let module_val_opt = self.modules.get(module_id);
         if let Some(module_val) = module_val_opt {
             deep_merge_toml(&mut base_value, module_val);
         }
@@ -522,14 +504,8 @@ impl GameConfig {
             Err(_) => return self.clone(),
         };
 
-        // 2. Apply in-file [modules.<module_id>] override if present (with gt -> f1 fallback)
-        let module_val_opt = self.modules.get(module_id).or_else(|| {
-            if module_id == "gt" {
-                self.modules.get("f1")
-            } else {
-                None
-            }
-        });
+        // 2. Apply in-file [modules.<module_id>] override if present
+        let module_val_opt = self.modules.get(module_id);
         if let Some(module_val) = module_val_opt {
             deep_merge_toml(&mut base_value, module_val);
         }
@@ -617,12 +593,12 @@ impl GameConfig {
                 CarChoice::DriftCar => CarConfig::drift_car(),
                 CarChoice::Kart => CarConfig::kart(),
                 CarChoice::RallyCar => CarConfig::rally_car(),
-                CarChoice::GT4Clubsport => crate::module::f1::GtWorldChallengeModule::car_gt4_clubsport(),
-                CarChoice::GT3Car => crate::module::f1::GtWorldChallengeModule::car_gt3_evo(),
-                CarChoice::GT2Biturbo => crate::module::f1::GtWorldChallengeModule::car_gt2_biturbo(),
-                CarChoice::GT1Legend => crate::module::f1::GtWorldChallengeModule::car_gt1_legend(),
-                CarChoice::HypercarPrototype => crate::module::f1::GtWorldChallengeModule::car_hypercar_prototype(),
-                CarChoice::F1Car => crate::module::f1::GtWorldChallengeModule::car_f1_hybrid(),
+                CarChoice::GT4Clubsport => crate::module::gt::GtWorldChallengeModule::car_gt4_clubsport(),
+                CarChoice::GT3Car => crate::module::gt::GtWorldChallengeModule::car_gt3_evo(),
+                CarChoice::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
+                CarChoice::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
+                CarChoice::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
+                CarChoice::F1Car => crate::module::gt::GtWorldChallengeModule::car_f1_hybrid(),
                 CarChoice::StockCar => CarConfig::stock_car_ta1(),
                 CarChoice::SandRail => CarConfig::sand_rail(),
             }

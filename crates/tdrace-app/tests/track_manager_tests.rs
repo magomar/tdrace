@@ -20,7 +20,6 @@ impl DevModeGuard {
         ));
         let mock_git = temp_dir.join("git_tracks");
         let _ = fs::create_dir_all(mock_git.join("classic"));
-        let _ = fs::create_dir_all(mock_git.join("f1"));
         let _ = fs::create_dir_all(mock_git.join("gt"));
         let _ = fs::create_dir_all(mock_git.join("rally"));
         let _ = fs::create_dir_all(mock_git.join("kart"));
@@ -67,7 +66,7 @@ fn test_track_categories_initial_presets() {
 
     let manager = TrackManager::new(&temp_dir);
 
-    // 1. Initial state: 84 main presets across modules (10 Classic + 18 unique F1/GT + 15 unique Rally + 15 famous Kart + 12 Nascar + 14 Extreme Off-Road), 0 drafts
+    // 1. Initial state: 84 main presets across modules (10 Classic + 18 unique GT + 15 unique Rally + 15 famous Kart + 12 Nascar + 15 Extreme Off-Road), 0 drafts
     assert_eq!(manager.custom_track_choices().len(), 0);
     let main_tracks = manager.main_track_choices();
     let draft_tracks = manager.draft_track_choices();
@@ -148,8 +147,8 @@ fn test_promotion_and_demotion_lifecycle() {
     assert_eq!(manager.main_track_choices().len(), 84);
     assert_eq!(manager.draft_track_choices().len(), 1);
 
-    // Promote to F1 Module
-    manager.promote_track_to_module(track_id, "f1").expect("Must promote to F1");
+    // Promote to GT Module
+    manager.promote_track_to_module(track_id, "gt").expect("Must promote to GT");
 
     assert_eq!(manager.main_track_choices().len(), 85, "Promoted track must appear in Main");
     assert_eq!(manager.draft_track_choices().len(), 0, "Promoted track must be removed from Drafts");
@@ -158,12 +157,12 @@ fn test_promotion_and_demotion_lifecycle() {
     assert_eq!(promoted_choice.title(), "Proto Circuit");
     let loaded_promoted = manager.load_track(&promoted_choice).expect("Must load promoted");
     assert_eq!(loaded_promoted.category, TrackCategory::Main);
-    assert_eq!(loaded_promoted.module_id, Some("f1".to_string()));
+    assert_eq!(loaded_promoted.modules, vec!["gt".to_string()]);
 
     // Verify module_custom_tracks
-    let f1_customs = manager.module_custom_tracks("f1");
-    assert_eq!(f1_customs.len(), 1);
-    assert_eq!(f1_customs[0].title(), "Proto Circuit");
+    let gt_customs = manager.module_custom_tracks("gt");
+    assert_eq!(gt_customs.len(), 1);
+    assert_eq!(gt_customs[0].title(), "Proto Circuit");
 
     let rally_customs = manager.module_custom_tracks("rally");
     assert_eq!(rally_customs.len(), 0);
@@ -173,7 +172,7 @@ fn test_promotion_and_demotion_lifecycle() {
 
     assert_eq!(manager.main_track_choices().len(), 84, "Demoted track must be removed from Main");
     assert_eq!(manager.draft_track_choices().len(), 1, "Demoted track must reappear in Drafts");
-    assert_eq!(manager.module_custom_tracks("f1").len(), 0);
+    assert_eq!(manager.module_custom_tracks("gt").len(), 0);
 
     let loaded_demoted = manager.load_track(&manager.draft_track_choices()[0]).expect("Must load demoted");
     assert_eq!(loaded_demoted.category, TrackCategory::Draft);
@@ -181,7 +180,7 @@ fn test_promotion_and_demotion_lifecycle() {
     // Re-promote to Rally Module
     manager.promote_track_to_module(track_id, "rally").expect("Must promote to Rally");
     assert_eq!(manager.module_custom_tracks("rally").len(), 1);
-    assert_eq!(manager.module_custom_tracks("f1").len(), 0);
+    assert_eq!(manager.module_custom_tracks("gt").len(), 0);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -431,20 +430,20 @@ fn test_module_filter_filtering_and_presets_in_classic() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial state: 84 tracks across all modules (10 Classic + 18 unique F1/GT + 15 unique Rally + 15 famous Kart + 12 Nascar + 14 Extreme Off-Road)
+    // Initial state: 84 tracks across all modules (10 Classic + 18 unique GT + 15 unique Rally + 15 famous Kart + 12 Nascar + 15 Extreme Off-Road)
     assert_eq!(manager.main_track_choices().len(), 84);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 18);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Gt).len(), 18);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 15);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 15);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Nascar).len(), 12);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::ExtremeOffRoad).len(), 15);
 
-    // Promote a new track to F1
-    let mut track_f1 = classic_grand_prix();
-    track_f1.name = "Monza Custom GP".to_string();
-    manager.save_custom_track(&track_f1, Some("monza_custom")).unwrap();
-    manager.promote_track_to_module("monza_custom", "f1").unwrap();
+    // Promote a new track to GT
+    let mut track_gt = classic_grand_prix();
+    track_gt.name = "Monza Custom GP".to_string();
+    manager.save_custom_track(&track_gt, Some("monza_custom")).unwrap();
+    manager.promote_track_to_module("monza_custom", "gt").unwrap();
 
     // Promote a new track to Rally
     let mut track_rally = classic_grand_prix();
@@ -455,7 +454,7 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     // Verify filtered counts
     assert_eq!(manager.main_track_choices().len(), 86);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), 19);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Gt).len(), 19);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 16);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 15);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Nascar).len(), 12);
@@ -464,8 +463,8 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     // Verify filter cycle (.next())
     assert_eq!(ModuleFilter::Classic.next(), ModuleFilter::Rally);
     assert_eq!(ModuleFilter::Rally.next(), ModuleFilter::Kart);
-    assert_eq!(ModuleFilter::Kart.next(), ModuleFilter::F1);
-    assert_eq!(ModuleFilter::F1.next(), ModuleFilter::Nascar);
+    assert_eq!(ModuleFilter::Kart.next(), ModuleFilter::Gt);
+    assert_eq!(ModuleFilter::Gt.next(), ModuleFilter::Nascar);
     assert_eq!(ModuleFilter::Nascar.next(), ModuleFilter::ExtremeOffRoad);
     assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Drafts);
     assert_eq!(ModuleFilter::Drafts.next(), ModuleFilter::Classic);
@@ -474,8 +473,8 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::Drafts);
     assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::ExtremeOffRoad);
     assert_eq!(ModuleFilter::ExtremeOffRoad.prev(), ModuleFilter::Nascar);
-    assert_eq!(ModuleFilter::Nascar.prev(), ModuleFilter::F1);
-    assert_eq!(ModuleFilter::F1.prev(), ModuleFilter::Kart);
+    assert_eq!(ModuleFilter::Nascar.prev(), ModuleFilter::Gt);
+    assert_eq!(ModuleFilter::Gt.prev(), ModuleFilter::Kart);
     assert_eq!(ModuleFilter::Kart.prev(), ModuleFilter::Rally);
     assert_eq!(ModuleFilter::Rally.prev(), ModuleFilter::Classic);
 
@@ -498,13 +497,13 @@ fn test_module_subdirectories_and_file_movement() {
     assert!(track_file.exists(), "Track file must be saved in user tracks directory");
     assert_eq!(Path::new(&saved_path), track_file);
 
-    // 2. Promote to F1 -> metadata updated to Main category and module 'f1'
-    manager.promote_track_to_module("my_circuit", "f1").expect("Promote to F1");
+    // 2. Promote to GT -> metadata updated to Main category and module 'gt'
+    manager.promote_track_to_module("my_circuit", "gt").expect("Promote to GT");
     let loaded = tdrace_core::track::Track::load_from_file(&track_file).expect("Load promoted");
     assert_eq!(loaded.category, TrackCategory::Main);
-    assert_eq!(loaded.modules, vec!["f1".to_string()]);
+    assert_eq!(loaded.modules, vec!["gt".to_string()]);
     assert_eq!(manager.draft_track_choices().len(), 0);
-    assert_eq!(manager.module_custom_tracks("f1").len(), 1);
+    assert_eq!(manager.module_custom_tracks("gt").len(), 1);
 
     // 3. Demote back to Draft -> metadata updated to Draft category and empty modules
     manager.demote_track("my_circuit").expect("Demote to Draft");
@@ -512,7 +511,7 @@ fn test_module_subdirectories_and_file_movement() {
     assert_eq!(loaded_demoted.category, TrackCategory::Draft);
     assert!(loaded_demoted.modules.is_empty());
     assert_eq!(manager.draft_track_choices().len(), 1);
-    assert_eq!(manager.module_custom_tracks("f1").len(), 0);
+    assert_eq!(manager.module_custom_tracks("gt").len(), 0);
 
     // 4. Promote to Rally -> metadata updated to Rally
     manager.promote_track_to_module("my_circuit", "rally").expect("Promote to Rally");
@@ -554,7 +553,7 @@ fn test_track_manager_tab_and_module_cycling() {
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Kart);
     module_filter = module_filter.next();
-    assert_eq!(module_filter, ModuleFilter::F1);
+    assert_eq!(module_filter, ModuleFilter::Gt);
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Nascar);
     module_filter = module_filter.next();
@@ -572,7 +571,7 @@ fn test_track_manager_tab_and_module_cycling() {
     module_filter = module_filter.prev();
     assert_eq!(module_filter, ModuleFilter::Nascar);
     module_filter = module_filter.prev();
-    assert_eq!(module_filter, ModuleFilter::F1);
+    assert_eq!(module_filter, ModuleFilter::Gt);
     module_filter = module_filter.prev();
     assert_eq!(module_filter, ModuleFilter::Kart);
     module_filter = module_filter.prev();
@@ -671,7 +670,7 @@ fn test_predefined_track_demote_promote_and_delete() {
 
     // In standard mode, modifying presets is strictly prohibited
     assert!(manager.demote_track("classic_grand_prix").is_err(), "Standard mode must reject demoting presets");
-    assert!(manager.promote_track_to_module("classic_grand_prix", "f1").is_err(), "Standard mode must reject reassigning preset categories");
+    assert!(manager.promote_track_to_module("classic_grand_prix", "gt").is_err(), "Standard mode must reject reassigning preset categories");
     assert!(manager.delete_custom_track("classic_grand_prix").is_err(), "Standard mode must reject deleting presets");
 
     // Enable developer mode for developer operations via guard
@@ -695,21 +694,21 @@ fn test_predefined_track_demote_promote_and_delete() {
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), init_classic_count - 1);
     assert_eq!(manager.draft_track_choices().len(), 0);
 
-    // 4. Test F1 predefined track (Monza) demotion and deletion
-    let init_f1_count = manager.filtered_main_track_choices(ModuleFilter::F1).len();
+    // 4. Test GT predefined track (Monza) demotion and deletion
+    let init_gt_count = manager.filtered_main_track_choices(ModuleFilter::Gt).len();
     manager.demote_track("monza").expect("Must demote Monza");
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), init_f1_count - 1);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Gt).len(), init_gt_count - 1);
     assert_eq!(manager.draft_track_choices().len(), 1);
     assert_eq!(manager.draft_track_choices()[0].track_id(), "monza");
 
     manager.delete_custom_track("monza").expect("Must delete Monza");
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::F1).len(), init_f1_count - 1);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Gt).len(), init_gt_count - 1);
     assert_eq!(manager.draft_track_choices().len(), 0);
 
     // 5. Verify persistence across new TrackManager instance
     let manager2 = TrackManager::new(&temp_dir);
     assert_eq!(manager2.filtered_main_track_choices(ModuleFilter::Classic).len(), init_classic_count - 1);
-    assert_eq!(manager2.filtered_main_track_choices(ModuleFilter::F1).len(), init_f1_count - 1);
+    assert_eq!(manager2.filtered_main_track_choices(ModuleFilter::Gt).len(), init_gt_count - 1);
     assert_eq!(manager2.draft_track_choices().len(), 0);
 
     drop(_dev_guard);
@@ -733,9 +732,9 @@ fn test_multi_module_promotion_and_distribution() {
 
     assert_eq!(manager.draft_track_choices().len(), 1);
 
-    // 2. Promote simultaneously to Rally, F1, and Classic modules
+    // 2. Promote simultaneously to Rally, GT, and Classic modules
     manager
-        .promote_track_to_modules(track_id, &["rally", "f1", "classic"])
+        .promote_track_to_modules(track_id, &["rally", "gt", "classic"])
         .expect("Must promote to multiple modules");
 
     // 3. Verify single file on disk with multi-module metadata
@@ -743,7 +742,7 @@ fn test_multi_module_promotion_and_distribution() {
     assert!(single_track_file.exists(), "Single track file must exist in user tracks dir");
     let loaded = tdrace_core::track::Track::load_from_file(&single_track_file).expect("Load multi-spec");
     assert_eq!(loaded.category, TrackCategory::Main);
-    assert_eq!(loaded.modules, vec!["rally".to_string(), "f1".to_string(), "classic".to_string()]);
+    assert_eq!(loaded.modules, vec!["rally".to_string(), "gt".to_string(), "classic".to_string()]);
 
     // 4. Verify catalog queries
     assert_eq!(manager.draft_track_choices().len(), 0, "No drafts remaining");
@@ -752,9 +751,9 @@ fn test_multi_module_promotion_and_distribution() {
     assert_eq!(rally_customs.len(), 1);
     assert_eq!(rally_customs[0].title(), "Multi Spec GP");
 
-    let f1_customs = manager.module_custom_tracks("f1");
-    assert_eq!(f1_customs.len(), 1);
-    assert_eq!(f1_customs[0].title(), "Multi Spec GP");
+    let gt_customs = manager.module_custom_tracks("gt");
+    assert_eq!(gt_customs.len(), 1);
+    assert_eq!(gt_customs[0].title(), "Multi Spec GP");
 
     let classic_customs = manager.module_custom_tracks("classic");
     assert_eq!(classic_customs.len(), 1);
@@ -767,8 +766,8 @@ fn test_multi_module_promotion_and_distribution() {
     let rally_choices = manager.filtered_main_track_choices(ModuleFilter::Rally);
     assert!(rally_choices.iter().any(|c| c.track_id() == track_id));
 
-    let f1_choices = manager.filtered_main_track_choices(ModuleFilter::F1);
-    assert!(f1_choices.iter().any(|c| c.track_id() == track_id));
+    let gt_choices = manager.filtered_main_track_choices(ModuleFilter::Gt);
+    assert!(gt_choices.iter().any(|c| c.track_id() == track_id));
 
     let classic_choices = manager.filtered_main_track_choices(ModuleFilter::Classic);
     assert!(classic_choices.iter().any(|c| c.track_id() == track_id));
@@ -787,7 +786,7 @@ fn test_multi_module_promotion_and_distribution() {
 
     assert_eq!(manager.draft_track_choices().len(), 1);
     assert_eq!(manager.module_custom_tracks("rally").len(), 0);
-    assert_eq!(manager.module_custom_tracks("f1").len(), 0);
+    assert_eq!(manager.module_custom_tracks("gt").len(), 0);
     assert_eq!(manager.module_custom_tracks("classic").len(), 0);
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -861,7 +860,7 @@ fn test_empty_module_tracks_resilience() {
         "valencia_kart".into(), "campillos".into(),
     ];
 
-    assert_eq!(session.track_manager.module_catalog_tracks("f1").len(), 0);
+    assert_eq!(session.track_manager.module_catalog_tracks("gt").len(), 0);
     assert_eq!(session.track_manager.module_catalog_tracks("rally").len(), 0);
     assert_eq!(session.track_manager.module_catalog_tracks("kart").len(), 0);
     assert_eq!(session.track_manager.module_catalog_tracks("classic").len(), 0);
@@ -976,24 +975,24 @@ fn test_re_promoting_already_promoted_track_to_different_modules() {
     assert!(!manager.is_track_in_module(track_id, "classic"));
     assert!(manager.is_track_in_module(track_id, "rally"));
     assert!(manager.is_track_in_module(track_id, "kart"));
-    assert!(!manager.is_track_in_module(track_id, "f1"));
+    assert!(!manager.is_track_in_module(track_id, "gt"));
 
     let promoted_mods = manager.track_promoted_modules(track_id);
     assert_eq!(promoted_mods, vec!["rally".to_string(), "kart".to_string()]);
 
-    // 4. Add F1 module without removing Rally or Kart (Rally, Kart, F1)
+    // 4. Add GT module without removing Rally or Kart (Rally, Kart, GT)
     manager
-        .promote_track_to_modules(track_id, &["rally", "kart", "f1"])
-        .expect("Add F1 module");
+        .promote_track_to_modules(track_id, &["rally", "kart", "gt"])
+        .expect("Add GT module");
 
     assert!(temp_dir.join(format!("{}.json", track_id)).exists());
     assert!(manager.is_track_in_module(track_id, "rally"));
     assert!(manager.is_track_in_module(track_id, "kart"));
-    assert!(manager.is_track_in_module(track_id, "f1"));
+    assert!(manager.is_track_in_module(track_id, "gt"));
     assert!(!manager.is_track_in_module(track_id, "classic"));
 
     let promoted_mods_3 = manager.track_promoted_modules(track_id);
-    assert_eq!(promoted_mods_3, vec!["rally".to_string(), "kart".to_string(), "f1".to_string()]);
+    assert_eq!(promoted_mods_3, vec!["rally".to_string(), "kart".to_string(), "gt".to_string()]);
 
     // 5. Promote with empty modules slice -> should demote track back to Drafts
     manager
@@ -1023,13 +1022,13 @@ fn test_track_manager_promotion_mask_resolution_for_promoted_track() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Create and promote to Kart and F1
-    let track_id = "kart_f1_hybrid";
+    // Create and promote to Kart and GT
+    let track_id = "kart_gt_hybrid";
     let mut track = classic_grand_prix();
     track.name = "Hybrid Circuit".to_string();
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).unwrap();
-    manager.promote_track_to_modules(track_id, &["kart", "f1"]).unwrap();
+    manager.promote_track_to_modules(track_id, &["kart", "gt"]).unwrap();
 
     // Verify mask resolution logic matches PROMOTION_MODULES indices
     let mut selected_mask = [false; 4];
@@ -1039,7 +1038,7 @@ fn test_track_manager_promotion_mask_resolution_for_promoted_track() {
         }
     }
 
-    // PROMOTION_MODULES order: 0: classic, 1: rally, 2: kart, 3: f1
+    // PROMOTION_MODULES order: 0: classic, 1: rally, 2: kart, 3: gt
     assert_eq!(selected_mask, [false, false, true, true]);
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -1089,21 +1088,21 @@ fn test_create_new_draft_track_with_module_templates() {
     assert_eq!(kart_track.spline.samples[0].surface, SurfaceType::Asphalt);
     assert_eq!(kart_track.predefined_car.as_deref(), Some("kart"));
 
-    // 3. Create an F1 draft track (Oval, Right)
-    let f1_path = manager
+    // 3. Create a GT draft track (Oval, Right)
+    let gt_path = manager
         .create_new_draft_track_with_template(
-            "Formula Super Speedway",
-            "High speed DRS oval",
-            "f1",
+            "GT Grand Arena",
+            "High speed GT oval",
+            "gt",
             TrackShape::Oval,
             RaceDirection::Right,
         )
-        .expect("F1 draft creation should succeed");
+        .expect("GT draft creation should succeed");
 
-    let f1_track = Track::load_from_file(&f1_path).expect("Load F1 draft track");
-    assert_eq!(f1_track.default_surface, SurfaceType::Grass);
-    assert_eq!(f1_track.spline.samples[0].surface, SurfaceType::Asphalt);
-    assert_eq!(f1_track.predefined_car.as_deref(), Some("f1_car"));
+    let gt_track = Track::load_from_file(&gt_path).expect("Load GT draft track");
+    assert_eq!(gt_track.default_surface, SurfaceType::Grass);
+    assert_eq!(gt_track.spline.samples[0].surface, SurfaceType::Asphalt);
+    assert_eq!(gt_track.predefined_car.as_deref(), Some("gt3_car"));
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -1326,7 +1325,7 @@ fn test_workspace_rally_deletion_preserves_classic() {
 #[ignore = "Manual export tool: cargo test --test track_manager_tests test_export_canonical_presets_to_git_repo -- --ignored"]
 fn test_export_canonical_presets_to_git_repo() {
     use tdrace_app::module::{
-        classic::ClassicGameModule, f1::F1GameModule, f1::GtWorldChallengeModule, kart::KartGameModule,
+        classic::ClassicGameModule, gt::GtWorldChallengeModule, kart::KartGameModule,
         nascar::NascarGameModule, rally::RallyGameModule, GameModule,
     };
     use tdrace_core::track::TrackCategory;
@@ -1338,7 +1337,6 @@ fn test_export_canonical_presets_to_git_repo() {
 
     let modules: Vec<Box<dyn GameModule>> = vec![
         Box::new(ClassicGameModule::new()),
-        Box::new(F1GameModule::new()),
         Box::new(GtWorldChallengeModule::new()),
         Box::new(RallyGameModule::new()),
         Box::new(KartGameModule::new()),
@@ -1449,9 +1447,9 @@ fn test_category_ordering_presets_first_then_custom() {
     }
 
     // Verify F1 category: pure presets (18), no custom tracks leaked
-    let f1_tracks = manager.module_catalog_tracks("f1");
-    assert_eq!(f1_tracks.len(), 18);
-    assert!(f1_tracks.iter().all(|t| t.is_official_preset()));
+    let gt_tracks = manager.module_catalog_tracks("gt");
+    assert_eq!(gt_tracks.len(), 18);
+    assert!(gt_tracks.iter().all(|t| t.is_official_preset()));
 
     // Verify Kart category: pure presets (15), no custom tracks leaked
     let kart_tracks = manager.module_catalog_tracks("kart");
@@ -1490,27 +1488,27 @@ fn test_custom_circuit_multi_category_assignment() {
     assert!(rally_tracks[15].is_user_custom());
     assert_eq!(rally_tracks[15].title(), "Hybrid Classic Rally");
 
-    // Check absence in F1 and Kart
-    let f1_tracks = manager.module_catalog_tracks("f1");
-    assert!(!f1_tracks.iter().any(|t| t.title() == "Hybrid Classic Rally"));
+    // Check absence in GT and Kart
+    let gt_tracks = manager.module_catalog_tracks("gt");
+    assert!(!gt_tracks.iter().any(|t| t.title() == "Hybrid Classic Rally"));
 
     let kart_tracks = manager.module_catalog_tracks("kart");
     assert!(!kart_tracks.iter().any(|t| t.title() == "Hybrid Classic Rally"));
 
-    // Now re-assign to Kart and F1 using promote_track_to_modules
-    manager.promote_track_to_modules("hybrid_circuit", &["kart", "f1"])
+    // Now re-assign to Kart and GT using promote_track_to_modules
+    manager.promote_track_to_modules("hybrid_circuit", &["kart", "gt"])
         .expect("Reassign categories");
 
-    // Must now be present in Kart and F1, after presets
+    // Must now be present in Kart and GT, after presets
     let kart_after = manager.module_catalog_tracks("kart");
     assert_eq!(kart_after.len(), 16);
     assert!(kart_after[15].is_user_custom());
     assert_eq!(kart_after[15].title(), "Hybrid Classic Rally");
 
-    let f1_after = manager.module_catalog_tracks("f1");
-    assert_eq!(f1_after.len(), 19);
-    assert!(f1_after[18].is_user_custom());
-    assert_eq!(f1_after[18].title(), "Hybrid Classic Rally");
+    let gt_after = manager.module_catalog_tracks("gt");
+    assert_eq!(gt_after.len(), 19);
+    assert!(gt_after[18].is_user_custom());
+    assert_eq!(gt_after[18].title(), "Hybrid Classic Rally");
 
     // Must no longer appear in Classic and Rally
     let classic_after = manager.module_catalog_tracks("classic");
@@ -1830,12 +1828,11 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
 
 #[test]
 fn test_marina_bay_singapore_aliases_and_osm_calibration() {
-    let t_mb = tdrace_app::module::f1::F1GameModule::track_marina_bay();
+    let t_mb = tdrace_app::module::gt::GtWorldChallengeModule::track_marina_bay();
     assert_eq!(t_mb.name, "Marina Bay Street Circuit (Singapore)");
     assert_eq!(t_mb.predefined_car.as_deref(), Some("hypercar_prototype"));
     assert_eq!(t_mb.module_id.as_deref(), Some("gt"));
     assert!(t_mb.modules.contains(&"gt".to_string()));
-    assert!(t_mb.modules.contains(&"f1".to_string()));
     assert_eq!(t_mb.default_laps, 4);
 
     // Verify 50% length scaling (FIA: 4940m -> ~2300-2480m)

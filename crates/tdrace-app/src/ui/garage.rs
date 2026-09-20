@@ -469,7 +469,7 @@ pub fn gallery_filter_to_module(idx: usize) -> &'static str {
 /// Maps a module identifier string to its gallery filter index (0..4).
 pub fn module_to_gallery_filter(module_id: &str) -> usize {
     match module_id {
-        "gt" | "gt_challenge" | "f1" => 0,
+        "gt" | "gt_challenge" => 0,
         "rally" => 1,
         "kart" => 2,
         "nascar" => 3,

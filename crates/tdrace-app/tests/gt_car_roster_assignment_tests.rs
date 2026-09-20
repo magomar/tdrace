@@ -1,12 +1,12 @@
 use tdrace_app::game::{GameState, RaceSession};
-use tdrace_app::module::f1::F1GameModule;
+use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_app::module::{GameModule, VehicleVisualType};
 use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 
 #[test]
-fn test_f1_game_module_drivers_and_preferred_car() {
-    let f1 = F1GameModule::new();
-    let drivers = f1.drivers();
+fn test_gt_game_module_drivers_and_preferred_car() {
+    let gt = GtWorldChallengeModule::new();
+    let drivers = gt.drivers();
     assert_eq!(drivers.len(), 7, "GT module must have 7 predefined driver characters");
 
     for d in &drivers {
@@ -24,9 +24,9 @@ fn test_f1_game_module_drivers_and_preferred_car() {
 }
 
 #[test]
-fn test_f1_tracks_predefined_car_and_resolve_predefined_car() {
-    let f1 = F1GameModule::new();
-    let track_defs = f1.tracks();
+fn test_gt_tracks_predefined_car_and_resolve_predefined_car() {
+    let gt = GtWorldChallengeModule::new();
+    let track_defs = gt.tracks();
     assert_eq!(track_defs.len(), 15);
 
     for t_def in &track_defs {
@@ -56,7 +56,7 @@ fn test_f1_tracks_predefined_car_and_resolve_predefined_car() {
 }
 
 #[test]
-fn test_f1_race_roster_car_assignment_and_display_titles() {
+fn test_gt_race_roster_car_assignment_and_display_titles() {
     let mut session = RaceSession::new();
     session.switch_to_gt();
     session.num_bots = 7;
@@ -122,7 +122,7 @@ fn test_f1_race_roster_car_assignment_and_display_titles() {
 }
 
 #[test]
-fn test_f1_free_car_selection_toggle_in_roster() {
+fn test_gt_free_car_selection_toggle_in_roster() {
     let mut session = RaceSession::new();
     session.switch_to_gt();
     session.num_bots = 3;
@@ -155,7 +155,7 @@ fn test_f1_free_car_selection_toggle_in_roster() {
 }
 
 #[test]
-fn test_f1_championship_roster_and_car_assignment() {
+fn test_gt_championship_roster_and_car_assignment() {
     let mut session = RaceSession::new();
     session.start_gt_championship();
 

@@ -67,7 +67,7 @@ impl UserTrackStore {
         if flat.exists() {
             return flat;
         }
-        for sub in &["drafts", "classic", "f1", "gt", "rally", "kart", "nascar"] {
+        for sub in &["drafts", "classic", "gt", "rally", "kart", "nascar"] {
             let cand = self.tracks_dir.join(sub).join(&file_name);
             if cand.exists() {
                 return cand;
@@ -80,7 +80,7 @@ impl UserTrackStore {
     pub fn track_exists(&self, slug: &str) -> bool {
         let file_name = format!("{}.json", slug);
         self.tracks_dir.join(&file_name).exists()
-            || ["drafts", "classic", "f1", "gt", "rally", "kart", "nascar"]
+            || ["drafts", "classic", "gt", "rally", "kart", "nascar"]
                 .iter()
                 .any(|sub| self.tracks_dir.join(sub).join(&file_name).exists())
     }
@@ -156,7 +156,6 @@ impl UserTrackStore {
             self.tracks_dir.join("drafts").join(&file_name),
             self.tracks_dir.join("drafts").join(&tdtrack_name),
             self.tracks_dir.join("classic").join(&file_name),
-            self.tracks_dir.join("f1").join(&file_name),
             self.tracks_dir.join("gt").join(&file_name),
             self.tracks_dir.join("rally").join(&file_name),
             self.tracks_dir.join("kart").join(&file_name),

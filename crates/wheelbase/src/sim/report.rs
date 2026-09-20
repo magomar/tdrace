@@ -832,7 +832,7 @@ pub fn generate_html_report(dataset: &ExperimentDataset) -> String {
         <div class="filter-group">
             <span style="font-size:12px; font-weight:700; color:var(--text-muted); margin-right:4px;">MODULE:</span>
             <button class="filter-btn active" onclick="setModuleFilter('all', this)">All</button>
-            <button class="filter-btn" onclick="setModuleFilter('gt', this)">GT / F1</button>
+            <button class="filter-btn" onclick="setModuleFilter('gt', this)">GT World Challenge</button>
             <button class="filter-btn" onclick="setModuleFilter('nascar', this)">NASCAR</button>
             <button class="filter-btn" onclick="setModuleFilter('rally', this)">Rally</button>
             <button class="filter-btn" onclick="setModuleFilter('extreme_offroad', this)">Extreme Off-Road</button>
@@ -873,7 +873,7 @@ pub fn generate_html_report(dataset: &ExperimentDataset) -> String {
 
     for v in &dataset.vehicles {
         let mod_badge = match v.module.as_str() {
-            "GT / F1" => "badge-mod-gt",
+            "GT" | "GT World Challenge" | "GT / F1" => "badge-mod-gt",
             "NASCAR" => "badge-mod-nascar",
             "Rally" => "badge-mod-rally",
             "Extreme Off-Road" => "badge-mod-offroad",

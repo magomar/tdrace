@@ -3,7 +3,7 @@ use tdrace_core::track::Track;
 
 use crate::module::classic::ClassicGameModule;
 use crate::module::extreme_offroad::ExtremeOffRoadModule;
-use crate::module::f1::F1GameModule;
+use crate::module::gt::GtWorldChallengeModule;
 use crate::module::kart::KartGameModule;
 use crate::module::nascar::NascarGameModule;
 use crate::module::rally::RallyGameModule;
@@ -104,7 +104,7 @@ pub fn validate_all_official_presets() -> Vec<(String, Vec<TrackValidationError>
     let mut results = Vec::new();
     let modules: Vec<Box<dyn GameModule>> = vec![
         Box::new(ClassicGameModule::new()),
-        Box::new(F1GameModule::new()),
+        Box::new(GtWorldChallengeModule::new()),
         Box::new(RallyGameModule::new()),
         Box::new(KartGameModule::new()),
         Box::new(NascarGameModule::new()),
