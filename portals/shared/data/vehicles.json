@@ -1675,9 +1675,9 @@
     },
     "summary": "Spectacle on wheels created by Robby Gordon. Huge body roll, 3-wheel apex cornering, and soaring 60-meter launches off steel ramps.",
     "image_ref": "/textures/vehicles/references/rally/rally_sst_super_truck.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_sst_super_truck.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_sst_super_truck_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_sst_super_truck.png"
   },
   {
     "id": "rally_sst_robby_gordon",
@@ -1710,9 +1710,9 @@
     },
     "summary": "Signature orange racing livery of founder Robby Gordon. Soft sway bars allow dramatic 3-wheel apex cornering and smooth flight off steel jump ramps.",
     "image_ref": "/textures/vehicles/references/rally/rally_sst_robby_gordon.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_sst_robby_gordon.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_sst_robby_gordon_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_sst_robby_gordon.png"
   },
   {
     "id": "rally_sst_traxxas_edition",
@@ -1745,9 +1745,9 @@
     },
     "summary": "Iconic high-contrast RC-inspired Traxxas livery. King shocks soak up violent landings from 20-foot jumps with zero rebound bouncing.",
     "image_ref": "/textures/vehicles/references/rally/rally_sst_traxxas_edition.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/rally/rally_sst_traxxas_edition.png",
+    "image_thumb": "/textures/vehicles/laterals/rally/rally_sst_traxxas_edition_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/rally/rally_sst_traxxas_edition.png"
   },
   {
     "id": "offroad_sand_rail_buggy",
@@ -1780,9 +1780,9 @@
     },
     "summary": "Ultralight chromoly tube chassis, rear paddle tires, and long-travel Fox live-valve shocks creating massive sand roosts over desert dunes.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_sand_rail_buggy.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_sand_rail_buggy.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_sand_rail_buggy_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_sand_rail_buggy.png"
   },
   {
     "id": "offroad_polaris_rzr_pro_r",
@@ -1815,9 +1815,9 @@
     },
     "summary": "Naturally aspirated 4-cylinder high-RPM power curve with 74-inch stance and 29 inches of usable travel for dune skimming.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_polaris_rzr_pro_r.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_polaris_rzr_pro_r.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_polaris_rzr_pro_r_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_polaris_rzr_pro_r.png"
   },
   {
     "id": "offroad_vw_sand_rail",
@@ -1850,9 +1850,9 @@
     },
     "summary": "Minimalist chromoly skeleton with rear-hung air-cooled turbo boxer. Left and right cutting brakes allow 360-degree sand pirouettes.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_vw_sand_rail.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_vw_sand_rail.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_vw_sand_rail_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_vw_sand_rail.png"
   },
   {
     "id": "offroad_baja_trophy_truck",
@@ -1885,9 +1885,9 @@
     },
     "summary": "The king of Baja. Skims across 3-foot desert whoops at over 200 km/h with 30 inches of King bypass suspension travel.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_baja_trophy_truck.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_baja_trophy_truck.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_baja_trophy_truck_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_baja_trophy_truck.png"
   },
   {
     "id": "offroad_bettantown_trophy_truck",
@@ -1920,9 +1920,9 @@
     },
     "summary": "Traditional rear-wheel-drive unlimited desert trophy truck. Immense power slide controllability across deep silt beds.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_bettantown_trophy_truck.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_bettantown_trophy_truck.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_bettantown_trophy_truck_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_bettantown_trophy_truck.png"
   },
   {
     "id": "offroad_mason_awd_truck",
@@ -1955,9 +1955,9 @@
     },
     "summary": "State-of-the-art all-wheel-drive trophy truck platform. Front differential traction pulls the truck straight out of boulder-strewn washes.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_mason_awd_truck.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_mason_awd_truck.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_mason_awd_truck_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_mason_awd_truck.png"
   },
   {
     "id": "offroad_subaru_ice_racer",
@@ -1990,9 +1990,9 @@
     },
     "summary": "Equipped with 600 tungsten carbide tire studs per tire, pulling sustained 60-degree slip angles on mirror-sheen frozen lakes.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_subaru_ice_racer.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_subaru_ice_racer.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_subaru_ice_racer_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_subaru_ice_racer.png"
   },
   {
     "id": "offroad_audi_quattro_ice",
@@ -2025,9 +2025,9 @@
     },
     "summary": "Short-wheelbase ice drifting weapon with custom 5mm ice spikes. Legendary 5-cylinder warble echoing across frozen Swedish lakes.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_audi_quattro_ice.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_audi_quattro_ice.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_audi_quattro_ice_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_audi_quattro_ice.png"
   },
   {
     "id": "offroad_lancer_evo_ice",
@@ -2060,9 +2060,9 @@
     },
     "summary": "Super-All Wheel Control (S-AWC) and active yaw control providing pinpoint slide control on polished blue ice circuits.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_lancer_evo_ice.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_lancer_evo_ice.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_lancer_evo_ice_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_lancer_evo_ice.png"
   },
   {
     "id": "offroad_mega_mud_truck",
@@ -2095,9 +2095,9 @@
     },
     "summary": "Tall-riding mud monster fitted with 48-inch agricultural paddle tractor tires, slicing through deep mud slurries with ease.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_mega_mud_truck.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_mega_mud_truck.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_mega_mud_truck_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_mega_mud_truck.png"
   },
   {
     "id": "offroad_chevy_k30_mud_bogger",
@@ -2130,9 +2130,9 @@
     },
     "summary": "Squarebody Chevy truck mounted on heavy 2.5-ton military axles with massive chevron tractor tires churning muddy trenches.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_chevy_k30_mud_bogger.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_chevy_k30_mud_bogger.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_chevy_k30_mud_bogger_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_chevy_k30_mud_bogger.png"
   },
   {
     "id": "offroad_ford_f250_high_riser",
@@ -2165,9 +2165,9 @@
     },
     "summary": "Supercharged high-riser with 18 inches of suspension lift and massive tractor tires throwing 50-foot rooster tails of thick mud.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_ford_f250_high_riser.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_ford_f250_high_riser.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_ford_f250_high_riser_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_ford_f250_high_riser.png"
   },
   {
     "id": "offroad_grave_crusher",
@@ -2235,9 +2235,9 @@
     },
     "summary": "Maximum Destruction. Spiked aerodynamic futuristic bodywork designed for explosive forward momentum, wheelies, and backflips.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_max_d_monster.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_max_d_monster.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_max_d_monster_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_max_d_monster.png"
   },
   {
     "id": "offroad_bigfoot_crusher",
@@ -2270,9 +2270,9 @@
     },
     "summary": "The original monster truck that started the worldwide phenomenon. Classic blue Ford pickup body riding on massive 66-inch flotation tires.",
     "image_ref": "/textures/vehicles/references/extreme_offroad/offroad_bigfoot_crusher.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_bigfoot_crusher.png",
+    "image_thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_bigfoot_crusher_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_bigfoot_crusher.png"
   },
   {
     "id": "kart_crg_hero_60",
@@ -2305,9 +2305,9 @@
     },
     "summary": "The cradle of world motorsport champions. Pure momentum management where avoiding scrubbing speed in corners is the key to victory.",
     "image_ref": "/textures/vehicles/references/kart/kart_crg_hero_60.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_crg_hero_60.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_crg_hero_60_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_crg_hero_60.png"
   },
   {
     "id": "kart_birel_c28",
@@ -2340,9 +2340,9 @@
     },
     "summary": "Italian karting pedigree. Red and white Freeline bodywork with balanced 28mm tubular frame for consistent corner exit speed.",
     "image_ref": "/textures/vehicles/references/kart/kart_birel_c28.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_birel_c28.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_birel_c28_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_birel_c28.png"
   },
   {
     "id": "kart_tony_kart_neos",
@@ -2375,9 +2375,9 @@
     },
     "summary": "The emerald green weapon from Prevalle. Renowned for its supple frame flex that generates instant grip in wet and dry conditions.",
     "image_ref": "/textures/vehicles/references/kart/kart_tony_kart_neos.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_tony_kart_neos.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_tony_kart_neos_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_tony_kart_neos.png"
   },
   {
     "id": "kart_tony_kart_racer_ok",
@@ -2445,9 +2445,9 @@
     },
     "summary": "Black and gold racing livery with 30mm chrome-moly tubing. Demands aggressive steering inputs and rewards high apex commitment.",
     "image_ref": "/textures/vehicles/references/kart/kart_crg_kt2_ok.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_crg_kt2_ok.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_crg_kt2_ok_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_crg_kt2_ok.png"
   },
   {
     "id": "kart_birel_ry30_ok",
@@ -2480,9 +2480,9 @@
     },
     "summary": "Red aerodynamic bodywork designed in collaboration with ART Grand Prix. Stable high-speed chassis for fast sweeping corners.",
     "image_ref": "/textures/vehicles/references/kart/kart_birel_ry30_ok.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_birel_ry30_ok.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_birel_ry30_ok_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_birel_ry30_ok.png"
   },
   {
     "id": "kart_birel_art_kz2",
@@ -2515,9 +2515,9 @@
     },
     "summary": "Peak karting intensity. 6-speed sequential gearbox firing off 0-100 km/h in under 3 seconds while pulling 3.5G lateral cornering grip.",
     "image_ref": "/textures/vehicles/references/kart/kart_birel_art_kz2.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_birel_art_kz2.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_birel_art_kz2_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_birel_art_kz2.png"
   },
   {
     "id": "kart_crg_road_rebel_kz",
@@ -2550,9 +2550,9 @@
     },
     "summary": "Most successful shifter kart chassis in World Championship history. 32mm heavy tubular frame handles brutal torque without flexing out of line.",
     "image_ref": "/textures/vehicles/references/kart/kart_crg_road_rebel_kz.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_crg_road_rebel_kz.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_crg_road_rebel_kz_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_crg_road_rebel_kz.png"
   },
   {
     "id": "kart_tony_kart_racer_kz",
@@ -2585,9 +2585,9 @@
     },
     "summary": "The benchmark of KZ shifter racing. Dual front hand-operated or foot-operated disc brakes offering devastating stopping power.",
     "image_ref": "/textures/vehicles/references/kart/kart_tony_kart_racer_kz.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_tony_kart_racer_kz.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_tony_kart_racer_kz_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_tony_kart_racer_kz.png"
   },
   {
     "id": "kart_honda_mean_mower",
@@ -2620,9 +2620,9 @@
     },
     "summary": "Guinness World Record heritage. High-center-of-gravity tuned lawnmower delivering hilarious lift-off oversteer and frantic curb hopping.",
     "image_ref": "/textures/vehicles/references/kart/kart_honda_mean_mower.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_honda_mean_mower.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_honda_mean_mower_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_honda_mean_mower.png"
   },
   {
     "id": "kart_john_deere_racing_mower",
@@ -2655,9 +2655,9 @@
     },
     "summary": "Classic British lawnmower racing silhouette in iconic green and yellow. Torquey V-Twin gives hilarious tire-spinning launches on grass tracks.",
     "image_ref": "/textures/vehicles/references/kart/kart_john_deere_racing_mower.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_john_deere_racing_mower.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_john_deere_racing_mower_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_john_deere_racing_mower.png"
   },
   {
     "id": "kart_viking_t6_tractor",
@@ -2690,9 +2690,9 @@
     },
     "summary": "Austrian modified racing tractor with dropped front axle and reinforced chassis rails. Capable of surprising drift control through grass chicanes.",
     "image_ref": "/textures/vehicles/references/kart/kart_viking_t6_tractor.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_viking_t6_tractor.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_viking_t6_tractor_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_viking_t6_tractor.png"
   },
   {
     "id": "kart_anderson_cs250",
@@ -2725,9 +2725,9 @@
     },
     "summary": "Full carbon bodywork aerodynamic monster that races on full-size Grand Prix circuits, capable of out-cornering Formula 3 cars at 245 km/h.",
     "image_ref": "/textures/vehicles/references/kart/kart_anderson_cs250.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_anderson_cs250.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_anderson_cs250_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_anderson_cs250.png"
   },
   {
     "id": "kart_ms_superkart_250",
@@ -2760,9 +2760,9 @@
     },
     "summary": "Czech engineering marvel with wind-tunnel developed fiberglass fairings and rear bi-plane wing. Glues the chassis to GP circuits.",
     "image_ref": "/textures/vehicles/references/kart/kart_ms_superkart_250.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_ms_superkart_250.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_ms_superkart_250_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_ms_superkart_250.png"
   },
   {
     "id": "kart_viper_250_twin",
@@ -2795,8 +2795,8 @@
     },
     "summary": "British Superkart championship winner. The screaming 2-stroke DEA twin engine generates high straight-line speed on long straights.",
     "image_ref": "/textures/vehicles/references/kart/kart_viper_250_twin.jpg",
-    "image_lateral": null,
-    "image_thumb": null,
-    "image_topdown": null
+    "image_lateral": "/textures/vehicles/laterals/kart/kart_viper_250_twin.png",
+    "image_thumb": "/textures/vehicles/laterals/kart/kart_viper_250_twin_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/kart/kart_viper_250_twin.png"
   }
 ]
