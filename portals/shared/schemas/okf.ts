@@ -65,6 +65,7 @@ export const circuitSchema = z.object({
   turns_count: z.number(),
   surfaces: z.array(z.string()),
   has_jumps: z.boolean(),
+  image_url: z.string().nullable().optional(),
   rel_path: z.string(),
 });
 

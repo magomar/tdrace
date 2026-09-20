@@ -11,6 +11,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/classic_grand_prix.svg",
     "rel_path": "tracks/classic/classic_grand_prix.json"
   },
   {
@@ -25,6 +26,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/dirt_figure_eight.svg",
     "rel_path": "tracks/classic/dirt_figure_eight.json"
   },
   {
@@ -39,6 +41,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/dirty_oval_speedway.svg",
     "rel_path": "tracks/classic/dirty_oval_speedway.json"
   },
   {
@@ -54,6 +57,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/drift_park.svg",
     "rel_path": "tracks/classic/drift_park.json"
   },
   {
@@ -68,6 +72,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/figure_eight.svg",
     "rel_path": "tracks/classic/figure_eight.json"
   },
   {
@@ -82,6 +87,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/kart_arena.svg",
     "rel_path": "tracks/classic/kart_arena.json"
   },
   {
@@ -96,6 +102,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/oasis_rally.svg",
     "rel_path": "tracks/classic/oasis_rally.json"
   },
   {
@@ -110,6 +117,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/outlaw_pass.svg",
     "rel_path": "tracks/classic/outlaw_pass.json"
   },
   {
@@ -124,6 +132,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/classic/oval_speedway.svg",
     "rel_path": "tracks/classic/oval_speedway.json"
   },
   {
@@ -138,6 +147,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/classic/ramp_raceway.svg",
     "rel_path": "tracks/classic/ramp_raceway.json"
   },
   {
@@ -152,6 +162,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/f1/bahrain.svg",
     "rel_path": "tracks/f1/bahrain.json"
   },
   {
@@ -166,6 +177,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/f1/catalunya.svg",
     "rel_path": "tracks/f1/catalunya.json"
   },
   {
@@ -180,6 +192,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/f1/cota.svg",
     "rel_path": "tracks/f1/cota.json"
   },
   {
@@ -194,6 +207,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/f1/interlagos.svg",
     "rel_path": "tracks/f1/interlagos.json"
   },
   {
@@ -208,6 +222,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/f1/madring.svg",
     "rel_path": "tracks/f1/madring.json"
   },
   {
@@ -222,6 +237,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/f1/marina_bay.svg",
     "rel_path": "tracks/f1/marina_bay.json"
   },
   {
@@ -236,6 +252,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/f1/monaco.svg",
     "rel_path": "tracks/f1/monaco.json"
   },
   {
@@ -250,6 +267,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/f1/montreal.svg",
     "rel_path": "tracks/f1/montreal.json"
   },
   {
@@ -264,6 +282,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/f1/monza.svg",
     "rel_path": "tracks/f1/monza.json"
   },
   {
@@ -278,6 +297,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/f1/red_bull_ring.svg",
     "rel_path": "tracks/f1/red_bull_ring.json"
   },
   {
@@ -292,6 +312,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/f1/silverstone.svg",
     "rel_path": "tracks/f1/silverstone.json"
   },
   {
@@ -306,6 +327,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/f1/spa.svg",
     "rel_path": "tracks/f1/spa.json"
   },
   {
@@ -320,6 +342,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/f1/suzuka.svg",
     "rel_path": "tracks/f1/suzuka.json"
   },
   {
@@ -334,6 +357,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/f1/zandvoort.svg",
     "rel_path": "tracks/f1/zandvoort.json"
   },
   {
@@ -348,6 +372,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/gt/bahrain.svg",
     "rel_path": "tracks/gt/bahrain.json"
   },
   {
@@ -362,6 +387,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/bathurst.svg",
     "rel_path": "tracks/gt/bathurst.json"
   },
   {
@@ -376,6 +402,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/catalunya.svg",
     "rel_path": "tracks/gt/catalunya.json"
   },
   {
@@ -390,6 +417,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/cota.svg",
     "rel_path": "tracks/gt/cota.json"
   },
   {
@@ -404,6 +432,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/gt/interlagos.svg",
     "rel_path": "tracks/gt/interlagos.json"
   },
   {
@@ -418,6 +447,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/le_mans_sarthe.svg",
     "rel_path": "tracks/gt/le_mans_sarthe.json"
   },
   {
@@ -432,6 +462,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/gt/madring.svg",
     "rel_path": "tracks/gt/madring.json"
   },
   {
@@ -446,6 +477,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/gt/marina_bay.svg",
     "rel_path": "tracks/gt/marina_bay.json"
   },
   {
@@ -460,6 +492,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/monaco.svg",
     "rel_path": "tracks/gt/monaco.json"
   },
   {
@@ -474,6 +507,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/gt/montreal.svg",
     "rel_path": "tracks/gt/montreal.json"
   },
   {
@@ -488,6 +522,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/gt/monza.svg",
     "rel_path": "tracks/gt/monza.json"
   },
   {
@@ -502,6 +537,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/nurburgring_gp.svg",
     "rel_path": "tracks/gt/nurburgring_gp.json"
   },
   {
@@ -516,6 +552,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/portimao_gp.svg",
     "rel_path": "tracks/gt/portimao_gp.json"
   },
   {
@@ -530,6 +567,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/red_bull_ring.svg",
     "rel_path": "tracks/gt/red_bull_ring.json"
   },
   {
@@ -544,6 +582,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/gt/silverstone.svg",
     "rel_path": "tracks/gt/silverstone.json"
   },
   {
@@ -558,6 +597,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/spa.svg",
     "rel_path": "tracks/gt/spa.json"
   },
   {
@@ -572,6 +612,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/suzuka.svg",
     "rel_path": "tracks/gt/suzuka.json"
   },
   {
@@ -586,6 +627,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/gt/zandvoort.svg",
     "rel_path": "tracks/gt/zandvoort.json"
   },
   {
@@ -600,6 +642,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/ampfing.svg",
     "rel_path": "tracks/kart/ampfing.json"
   },
   {
@@ -614,6 +657,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/campillos.svg",
     "rel_path": "tracks/kart/campillos.json"
   },
   {
@@ -628,6 +672,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/franciacorta.svg",
     "rel_path": "tracks/kart/franciacorta.json"
   },
   {
@@ -642,6 +687,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/genk.svg",
     "rel_path": "tracks/kart/genk.json"
   },
   {
@@ -656,6 +702,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/kristianstad.svg",
     "rel_path": "tracks/kart/kristianstad.json"
   },
   {
@@ -670,6 +717,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/le_mans_kart.svg",
     "rel_path": "tracks/kart/le_mans_kart.json"
   },
   {
@@ -684,6 +732,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/lonato.svg",
     "rel_path": "tracks/kart/lonato.json"
   },
   {
@@ -698,6 +747,7 @@
       "Asphalt"
     ],
     "has_jumps": true,
+    "image_url": "/textures/circuits/kart/pfi.svg",
     "rel_path": "tracks/kart/pfi.json"
   },
   {
@@ -712,6 +762,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/portimao_kart.svg",
     "rel_path": "tracks/kart/portimao_kart.json"
   },
   {
@@ -726,6 +777,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/sarno.svg",
     "rel_path": "tracks/kart/sarno.json"
   },
   {
@@ -740,6 +792,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/seven_laghi.svg",
     "rel_path": "tracks/kart/seven_laghi.json"
   },
   {
@@ -754,6 +807,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/silverstone_national_kart.svg",
     "rel_path": "tracks/kart/silverstone_national_kart.json"
   },
   {
@@ -768,6 +822,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/valencia_kart.svg",
     "rel_path": "tracks/kart/valencia_kart.json"
   },
   {
@@ -782,6 +837,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/wackersdorf.svg",
     "rel_path": "tracks/kart/wackersdorf.json"
   },
   {
@@ -796,6 +852,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/kart/zuera.svg",
     "rel_path": "tracks/kart/zuera.json"
   },
   {
@@ -810,6 +867,7 @@
       "Concrete"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/bristol.svg",
     "rel_path": "tracks/nascar/bristol.json"
   },
   {
@@ -824,6 +882,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/charlotte.svg",
     "rel_path": "tracks/nascar/charlotte.json"
   },
   {
@@ -838,6 +897,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/chicago.svg",
     "rel_path": "tracks/nascar/chicago.json"
   },
   {
@@ -852,6 +912,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/darlington.svg",
     "rel_path": "tracks/nascar/darlington.json"
   },
   {
@@ -866,6 +927,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/daytona.svg",
     "rel_path": "tracks/nascar/daytona.json"
   },
   {
@@ -880,6 +942,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/eldora.svg",
     "rel_path": "tracks/nascar/eldora.json"
   },
   {
@@ -894,6 +957,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/indianapolis.svg",
     "rel_path": "tracks/nascar/indianapolis.json"
   },
   {
@@ -908,6 +972,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/iowa.svg",
     "rel_path": "tracks/nascar/iowa.json"
   },
   {
@@ -922,6 +987,7 @@
       "Concrete"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/martinsville.svg",
     "rel_path": "tracks/nascar/martinsville.json"
   },
   {
@@ -936,6 +1002,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/road_america.svg",
     "rel_path": "tracks/nascar/road_america.json"
   },
   {
@@ -950,6 +1017,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/talladega.svg",
     "rel_path": "tracks/nascar/talladega.json"
   },
   {
@@ -964,6 +1032,7 @@
       "Asphalt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/nascar/watkins_glen.svg",
     "rel_path": "tracks/nascar/watkins_glen.json"
   },
   {
@@ -979,6 +1048,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/catalunya_rx.svg",
     "rel_path": "tracks/rally/catalunya_rx.json"
   },
   {
@@ -994,6 +1064,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/essay_rx.svg",
     "rel_path": "tracks/rally/essay_rx.json"
   },
   {
@@ -1009,6 +1080,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/estering_rx.svg",
     "rel_path": "tracks/rally/estering_rx.json"
   },
   {
@@ -1024,6 +1096,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/hell_rx.svg",
     "rel_path": "tracks/rally/hell_rx.json"
   },
   {
@@ -1039,6 +1112,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/holjes_rx.svg",
     "rel_path": "tracks/rally/holjes_rx.json"
   },
   {
@@ -1054,6 +1128,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/killarney_rx.svg",
     "rel_path": "tracks/rally/killarney_rx.json"
   },
   {
@@ -1069,6 +1144,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/kouvola_rx.svg",
     "rel_path": "tracks/rally/kouvola_rx.json"
   },
   {
@@ -1084,6 +1160,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/loheac_rx.svg",
     "rel_path": "tracks/rally/loheac_rx.json"
   },
   {
@@ -1099,6 +1176,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/lydden_hill.svg",
     "rel_path": "tracks/rally/lydden_hill.json"
   },
   {
@@ -1114,6 +1192,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/mettet_rx.svg",
     "rel_path": "tracks/rally/mettet_rx.json"
   },
   {
@@ -1129,6 +1208,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/montalegre_rx.svg",
     "rel_path": "tracks/rally/montalegre_rx.json"
   },
   {
@@ -1144,6 +1224,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/nyirad_rx.svg",
     "rel_path": "tracks/rally/nyirad_rx.json"
   },
   {
@@ -1159,6 +1240,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/riga_rx.svg",
     "rel_path": "tracks/rally/riga_rx.json"
   },
   {
@@ -1174,6 +1256,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/silverstone_rx.svg",
     "rel_path": "tracks/rally/silverstone_rx.json"
   },
   {
@@ -1189,6 +1272,7 @@
       "Dirt"
     ],
     "has_jumps": false,
+    "image_url": "/textures/circuits/rally/yas_marina_rx.svg",
     "rel_path": "tracks/rally/yas_marina_rx.json"
   }
 ]
