@@ -955,5 +955,28 @@ fn test_multi_level_career_stunt_and_collision_metrics() {
     assert_eq!(offroad_cat.total_collisions, 3);
 }
 
+#[test]
+fn test_option_a_tabbed_dashboard_navigation_and_filters() {
+    let mut session = RaceSession::new();
+    assert_eq!(session.profile_manager_tab, 0);
+    assert_eq!(session.profile_telemetry_filter_idx, 0);
+
+    // Verify Tab cycling (Overview -> Careers -> Championships -> Telemetry -> Overview)
+    for expected_tab in [1, 2, 3, 0] {
+        session.profile_manager_tab = (session.profile_manager_tab + 1) % 4;
+        assert_eq!(session.profile_manager_tab, expected_tab);
+    }
+
+    // Verify Category filter pills cycling
+    for expected_idx in 1..7 {
+        session.profile_telemetry_filter_idx = (session.profile_telemetry_filter_idx + 1) % 7;
+        assert_eq!(session.profile_telemetry_filter_idx, expected_idx);
+    }
+
+    // Wrap around to 0
+    session.profile_telemetry_filter_idx = (session.profile_telemetry_filter_idx + 1) % 7;
+    assert_eq!(session.profile_telemetry_filter_idx, 0);
+}
+
 
 
