@@ -554,11 +554,25 @@ fn test_banking_incline_physics_and_centripetal_downhill_force() {
     // On flat ground, stopped car has zero lateral downhill acceleration
     assert_eq!(flat_car.state.velocity, Vec2::ZERO);
 
-    // On 20 deg bank, downhill slope pulls towards left (-track_right, i.e. -Y direction)
-    assert!(
-        banked_car.state.velocity.y < 0.0,
-        "Car on banked curve should accelerate downhill (-Y), got velocity: {:?}",
+    // On 20 deg bank on asphalt (tan(20 deg) = 0.364 < mu = 1.0), tire static friction holds the stopped car completely static!
+    assert_eq!(
+        banked_car.state.velocity,
+        Vec2::ZERO,
+        "Car on banked curve with sufficient tire grip must remain static, got velocity: {:?}",
         banked_car.state.velocity
+    );
+
+    // When surface grip is insufficient (e.g. ice with mu = 0.08 < tan(20 deg)), downhill gravity overcomes static friction
+    // and accelerates the car downhill (-track_right, i.e. -Y direction)
+    let mut ice_car = Car::new(CarConfig::sports_car());
+    ice_car.state.road_bank_angle = 20.0;
+    ice_car.state.track_right = Vec2::new(0.0, 1.0);
+    let ice_surfaces = [SurfaceType::Ice; 4];
+    ice_car.step_per_wheel(&ctrl, ice_surfaces, 0.016);
+    assert!(
+        ice_car.state.velocity.y < 0.0,
+        "Car on icy banked curve should accelerate downhill (-Y), got velocity: {:?}",
+        ice_car.state.velocity
     );
 }
 

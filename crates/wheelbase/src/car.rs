@@ -1007,8 +1007,40 @@ impl Car {
             Vec2::ZERO
         };
 
+        let is_holding_brakes = clamped_ctrl.brake > 0.05 || clamped_ctrl.handbrake;
+
+        // Static friction reaction for stationary or near-stopped vehicle on slopes:
+        // Rubber tires cannot roll laterally; static Coulomb friction resists downhill slope forces
+        // up to the traction limit (mu * N).
+        let static_friction_world = if !self.state.is_airborne && ground_contact > 0.0 && self.state.speed < 0.25 {
+            let total_slope_gravity = bank_gravity_world + grade_gravity_world;
+            if total_slope_gravity.length_squared() > 1e-4 {
+                let static_blend = (1.0 - (self.state.speed / 0.25)).clamp(0.0, 1.0);
+                let max_static_friction = avg_surface_mu * total_normal_load * ground_contact;
+
+                // Lateral holding: tires cannot roll sideways, so static friction resists lateral slope force
+                let lat_slope_force = total_slope_gravity.dot(right);
+                let lat_holding = -lat_slope_force.clamp(-max_static_friction, max_static_friction) * static_blend;
+
+                // Longitudinal holding: resisted by brakes/handbrake or rolling resistance
+                let long_slope_force = total_slope_gravity.dot(fwd);
+                let long_holding = if is_holding_brakes {
+                    -long_slope_force.clamp(-max_static_friction, max_static_friction) * static_blend
+                } else {
+                    let rr_holding_cap = self.config.rolling_resistance_coefficient * total_normal_load;
+                    -long_slope_force.clamp(-rr_holding_cap, rr_holding_cap) * static_blend
+                };
+
+                right * lat_holding + fwd * long_holding
+            } else {
+                Vec2::ZERO
+            }
+        } else {
+            Vec2::ZERO
+        };
+
         // 6. Net world forces & accelerations
-        let net_force_world = total_wheel_force_world + drag_world + bank_gravity_world + grade_gravity_world;
+        let net_force_world = total_wheel_force_world + drag_world + bank_gravity_world + grade_gravity_world + static_friction_world;
         let net_torque = total_wheel_torque + yaw_damping_torque;
 
         let linear_accel_world = net_force_world / self.config.mass;
@@ -1026,9 +1058,16 @@ impl Car {
         self.state.velocity += linear_accel_world * dt;
         self.state.angular_velocity += angular_accel * dt;
 
-        // Low speed resting lock to prevent micro-jitter when stopped on flat ground or when holding brakes
-        let on_steep_slope = bank_deg.abs() > 1.0 || grade_rad.abs() > 0.02;
-        let is_holding_brakes = clamped_ctrl.brake > 0.05 || clamped_ctrl.handbrake;
+        // Low speed resting lock to prevent micro-jitter when stopped on flat ground or when holding brakes.
+        // A slope is only "too steep" to remain static if the incline angle exceeds the static friction limit:
+        // tan(theta) > mu for lateral banking, or grade exceeds rolling/braking limits.
+        let on_steep_bank = bank_rad.abs().tan() > avg_surface_mu;
+        let on_steep_grade = if is_holding_brakes {
+            grade_rad.abs().tan() > avg_surface_mu
+        } else {
+            grade_rad.abs() > 0.02
+        };
+        let on_steep_slope = on_steep_bank || on_steep_grade;
         if self.state.speed < 0.05
             && clamped_ctrl.throttle < 1e-3
             && (is_holding_brakes || !on_steep_slope)
@@ -1592,6 +1631,47 @@ mod tests {
         assert!(
             car.state.is_braking,
             "Handbrake must set is_braking = true"
+        );
+    }
+
+    #[test]
+    fn test_stopped_car_on_superelevated_segment_remains_static() {
+        let mut car_asphalt = Car::new(CarConfig::sports_car());
+        car_asphalt.state.road_bank_angle = 15.0; // 15 degrees banking
+        car_asphalt.state.track_right = Vec2::new(0.0, 1.0); // Track right is +Y
+
+        let ctrl = CarControls::default();
+        let dt = 1.0 / 60.0;
+
+        // Step physics multiple frames without control input
+        for _ in 0..60 {
+            car_asphalt.step(&ctrl, SurfaceType::Asphalt, dt);
+        }
+
+        // On asphalt (mu = 1.0, tan(15 deg) = 0.268), static friction must hold stopped car completely static!
+        assert_eq!(
+            car_asphalt.state.velocity,
+            Vec2::ZERO,
+            "Stopped car on 15 deg banked asphalt must remain completely static, got {:?}",
+            car_asphalt.state.velocity
+        );
+        assert_eq!(
+            car_asphalt.state.speed,
+            0.0,
+            "Stopped car speed must be 0.0"
+        );
+
+        // On ice (mu = 0.08, tan(15 deg) = 0.268 > 0.08), static friction is exceeded, so it slides downhill (-Y)
+        let mut car_ice = Car::new(CarConfig::sports_car());
+        car_ice.state.road_bank_angle = 15.0;
+        car_ice.state.track_right = Vec2::new(0.0, 1.0);
+        for _ in 0..10 {
+            car_ice.step(&ctrl, SurfaceType::Ice, dt);
+        }
+        assert!(
+            car_ice.state.velocity.y < 0.0,
+            "Car on icy banking exceeding friction limit must slide downhill (-Y), got {:?}",
+            car_ice.state.velocity
         );
     }
 }
