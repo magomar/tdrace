@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Player Profile Enhancement & Career Dossier"
 description: "Full-screen player profile dossier with integrated driver switcher, multi-level career hierarchy (Global -> Category -> Championship -> Race), stunt points, collision telemetry, and three selectable layout alternatives."
-status: draft
+status: implemented
 created: 2026-09-20
 generated: { by: agent/antigravity, at: 2026-09-20T21:45:00Z }
 ---
@@ -203,49 +203,49 @@ In [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs):
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Full-Screen Viewport Utilization Without Left Roster**
-  - [ ] **Given** the user navigates to the Player Profile screen (`GameState::ProfileManager`)
-  - [ ] **When** the screen is rendered on any display resolution
-  - [ ] **Then** the UI card must occupy the full available width ($94\%\text{--}98\%$ of screen width)
-  - [ ] **And** no static left-hand driver roster column shall be rendered
-  - [ ] **And** the active driver's national flag, alias, livery colors, and level shall span the top hero banner.
+  - [x] **Given** the user navigates to the Player Profile screen (`GameState::ProfileManager`)
+  - [x] **When** the screen is rendered on any display resolution
+  - [x] **Then** the UI card must occupy the full available width ($94\%\text{--}98\%$ of screen width)
+  - [x] **And** no static left-hand driver roster column shall be rendered
+  - [x] **And** the active driver's national flag, alias, livery colors, and level shall span the top hero banner.
 
 - **Scenario: Inline Driver Profile Cycling**
-  - [ ] **Given** multiple driver profiles exist in the database
-  - [ ] **When** the user presses `[Q]` or `[Left Arrow]` or `[Gamepad LB]`
-  - [ ] **Then** the active profile switches to the previous driver profile
-  - [ ] **And** all career statistics, telemetry logs, and category unlocks immediately refresh to reflect that driver.
-  - [ ] **When** the user presses `[E]` or `[Right Arrow]` or `[Gamepad RB]`
-  - [ ] **Then** the active profile switches to the next driver profile.
+  - [x] **Given** multiple driver profiles exist in the database
+  - [x] **When** the user presses `[Q]` or `[Left Arrow]` or `[Gamepad LB]`
+  - [x] **Then** the active profile switches to the previous driver profile
+  - [x] **And** all career statistics, telemetry logs, and category unlocks immediately refresh to reflect that driver.
+  - [x] **When** the user presses `[E]` or `[Right Arrow]` or `[Gamepad RB]`
+  - [x] **Then** the active profile switches to the next driver profile.
 
 - **Scenario: Granular Race Outcomes (P1, P2, P3) & Podium Rate Computation**
-  - [ ] **Given** a driver has finished races in positions 1, 2, 3, and 5
-  - [ ] **When** `GlobalProfileStats::compute` is evaluated
-  - [ ] **Then** `wins` (P1) shall equal 1
-  - [ ] **And** `p2_count` shall equal 1
-  - [ ] **And** `p3_count` shall equal 1
-  - [ ] **And** `podiums` shall equal 3
-  - [ ] **And** `win_rate` shall equal $25.0\%$ and `podium_rate` shall equal $75.0\%$.
+  - [x] **Given** a driver has finished races in positions 1, 2, 3, and 5
+  - [x] **When** `GlobalProfileStats::compute` is evaluated
+  - [x] **Then** `wins` (P1) shall equal 1
+  - [x] **And** `p2_count` shall equal 1
+  - [x] **And** `p3_count` shall equal 1
+  - [x] **And** `podiums` shall equal 3
+  - [x] **And** `win_rate` shall equal $25.0\%$ and `podium_rate` shall equal $75.0\%$.
 
 - **Scenario: Acrobatic Stunt Points & Collision Incident Telemetry**
-  - [ ] **Given** a race where the player accumulates $2,400$ drift points, performs 3 jumps with $4.5\,\text{s}$ air time, and impacts 2 walls
-  - [ ] **When** the race completes and telemetry is logged
-  - [ ] **Then** the `RaceHistoryEntry` shall record `stunt_score = 2400` and `collisions = 2`
-  - [ ] **And** the profile overview shall reflect the accumulated stunt points and collision count
-  - [ ] **And** races with zero collisions shall be tagged as `CLEAN` and increment `clean_races`.
+  - [x] **Given** a race where the player accumulates $2,400$ drift points, performs 3 jumps with $4.5\,\text{s}$ air time, and impacts 2 walls
+  - [x] **When** the race completes and telemetry is logged
+  - [x] **Then** the `RaceHistoryEntry` shall record `stunt_score = 2400` and `collisions = 2`
+  - [x] **And** the profile overview shall reflect the accumulated stunt points and collision count
+  - [x] **And** races with zero collisions shall be tagged as `CLEAN` and increment `clean_races`.
 
 - **Scenario: Multi-Level Category Progression (GT, NASCAR, Rally, Off-Road, Kart, Classic)**
-  - [ ] **Given** the driver has participated in both GT and Extreme Off-Road events
-  - [ ] **When** viewing the Career Disciplines tab or category breakdown
-  - [ ] **Then** separate progress cards shall display the independent Career Tier, spendable XP, vehicle unlocks, and win rates for each discipline.
+  - [x] **Given** the driver has participated in both GT and Extreme Off-Road events
+  - [x] **When** viewing the Career Disciplines tab or category breakdown
+  - [x] **Then** separate progress cards shall display the independent Career Tier, spendable XP, vehicle unlocks, and win rates for each discipline.
 
 - **Scenario: Layout Alternatives Validation Across Worktrees**
-  - [ ] **Given** the three layout alternatives:
+  - [x] **Given** the three layout alternatives:
     - Alternative A: Tabbed Motorsport Telemetry Dashboard
     - Alternative B: 3-Column Executive Widescreen
     - Alternative C: Hierarchical Drill-Down Dossier
-  - [ ] **When** each option is checked out and built in its respective worktree
-  - [ ] **Then** `cargo test` shall pass with zero errors
-  - [ ] **And** the visual presentation shall strictly adhere to that layout's architectural contract.
+  - [x] **When** each option is checked out and built in its respective worktree
+  - [x] **Then** `cargo test` shall pass with zero errors
+  - [x] **And** the visual presentation shall strictly adhere to that layout's architectural contract.
 
 ---
 
