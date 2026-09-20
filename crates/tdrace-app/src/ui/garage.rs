@@ -6,6 +6,7 @@ use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangl
 use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::catalog::{get_models_for_module, get_models_for_module_and_tier, RealCarModel};
+use crate::profile::ModuleCareerProgress;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::render::lateral::render_real_car_lateral_by_id;
 
@@ -57,6 +58,7 @@ pub fn render_garage_screen(
     garage_gallery_sel: usize,
     is_dev_mode: bool,
     unlocked_tier: u32,
+    career_progress: Option<&ModuleCareerProgress>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -107,10 +109,17 @@ pub fn render_garage_screen(
     let active_model: Option<&RealCarModel> = tier_models.get(garage_car_idx).copied();
     let category_name = active_model.map(|m| m.category_name).unwrap_or("Competition Spec");
 
-    let module_subtitle = format!(
-        "MODULE: {}  [◄ 1..5 ►]  •  TIER {}: {}  [◄ Q/E ►]",
-        mod_title, garage_tier, category_name.to_uppercase()
-    );
+    let module_subtitle = if let Some(cp) = career_progress {
+        format!(
+            "MODULE: {}  [◄ 1..5 ►]  •  TIER {}: {}  [◄ Q/E ►]  •  SPENDABLE XP: {} XP",
+            mod_title, garage_tier, category_name.to_uppercase(), cp.xp
+        )
+    } else {
+        format!(
+            "MODULE: {}  [◄ 1..5 ►]  •  TIER {}: {}  [◄ Q/E ►]",
+            mod_title, garage_tier, category_name.to_uppercase()
+        )
+    };
     fonts.draw_ui_regular_centered(
         &module_subtitle,
         sw * 0.5,
@@ -282,6 +291,18 @@ pub fn render_garage_screen(
         let num_str = format!("#{}", i + 1);
         fonts.draw_ui_bold(&num_str, cx + scaler.s(8.0), cy + scaler.s(15.0), scaler.font_s(9.5), Palette::NEON_CYAN);
 
+        if let Some(cp) = career_progress {
+            let is_unlocked = is_dev_mode || cp.is_car_unlocked(model.id, is_dev_mode);
+            if is_unlocked {
+                fonts.draw_ui_bold("OWNED", cx + cw - scaler.s(48.0), cy + scaler.s(15.0), scaler.font_s(8.5), Palette::NEON_GREEN);
+            } else {
+                let cost = ModuleCareerProgress::car_cost(model.tier);
+                let tag = format!("{} XP", cost);
+                let col = if cp.xp >= cost && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
+                fonts.draw_ui_bold(&tag, cx + cw - scaler.s(55.0), cy + scaler.s(15.0), scaler.font_s(8.5), col);
+            }
+        }
+
         fonts.draw_ui_bold(
             model.name,
             cx + scaler.s(8.0),
@@ -384,12 +405,25 @@ pub fn render_garage_screen(
         render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "AERODYNAMICS", aero, Palette::WHITE);
     }
 
-    // Action Button: Select Vehicle for Race / Locked Notice
+    // Action Button: Select Vehicle for Race / Purchase with XP / Locked Notice
     let (btn_x, btn_y, btn_w, btn_h) = garage_select_button_rect(sw, sh);
     let (mx, my) = mouse_position();
     let is_btn_hovered = mx >= btn_x && mx <= btn_x + btn_w && my >= btn_y && my <= btn_y + btn_h;
 
-    if is_tier_unlocked {
+    let active_car_id = active_model.map(|m| m.id).unwrap_or("");
+    let active_car_tier = active_model.map(|m| m.tier).unwrap_or(garage_tier);
+    let is_car_unlocked = is_dev_mode
+        || career_progress
+            .map(|cp| cp.is_car_unlocked(active_car_id, is_dev_mode))
+            .unwrap_or(is_tier_unlocked);
+
+    let cost = ModuleCareerProgress::car_cost(active_car_tier);
+    let can_afford = career_progress.map_or(true, |cp| cp.xp >= cost);
+    let tier_eligible = is_dev_mode
+        || career_progress
+            .map_or(is_tier_unlocked, |cp| cp.level >= active_car_tier as u32);
+
+    if is_car_unlocked {
         let (btn_bg, btn_border) = if is_btn_hovered {
             (Color::new(0.12, 0.68, 0.32, 0.98), Palette::NEON_GREEN)
         } else {
@@ -406,17 +440,17 @@ pub fn render_garage_screen(
             Palette::WHITE,
         );
         fonts.draw_ui_regular_centered(
-            "Status: Unlocked and homologated for active module",
+            "Status: Owned and homologated for active module",
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(38.0),
             scaler.font_s(10.0),
             Palette::WHITE,
         );
-    } else {
+    } else if !tier_eligible {
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.35, 0.10, 0.10, 0.95));
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::RED);
 
-        let lock_title = format!("🔒 VEHICLE LOCKED — CAREER TIER {} REQUIRED", garage_tier);
+        let lock_title = format!("🔒 VEHICLE LOCKED — CAREER TIER {} REQUIRED", active_car_tier);
         fonts.draw_ui_bold_centered(
             &lock_title,
             btn_x + btn_w * 0.5,
@@ -425,7 +459,55 @@ pub fn render_garage_screen(
             Palette::RED,
         );
         fonts.draw_ui_regular_centered(
-            "Earn XP in Career Mode Championship to unlock this vehicle",
+            "Advance career tier by earning championship podiums to unlock purchasing",
+            btn_x + btn_w * 0.5,
+            btn_y + scaler.s(38.0),
+            scaler.font_s(10.0),
+            Palette::UI_TEXT_MUTED,
+        );
+    } else if can_afford {
+        let (btn_bg, btn_border) = if is_btn_hovered {
+            (Color::new(0.70, 0.52, 0.10, 0.98), Palette::NEON_GOLD)
+        } else {
+            (Color::new(0.42, 0.32, 0.08, 0.92), Color::new(0.85, 0.68, 0.18, 0.85))
+        };
+        draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
+        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, btn_border);
+
+        let buy_title = format!("🛒 BUY VEHICLE: {} XP  [B / ENTER]", cost);
+        fonts.draw_ui_bold_centered(
+            &buy_title,
+            btn_x + btn_w * 0.5,
+            btn_y + scaler.s(22.0),
+            scaler.font_s(12.5),
+            Palette::WHITE,
+        );
+        let cur_xp = career_progress.map_or(0, |cp| cp.xp);
+        let buy_sub = format!("Spendable Balance: {} XP  →  {} XP remaining", cur_xp, cur_xp.saturating_sub(cost));
+        fonts.draw_ui_regular_centered(
+            &buy_sub,
+            btn_x + btn_w * 0.5,
+            btn_y + scaler.s(38.0),
+            scaler.font_s(10.0),
+            Palette::WHITE,
+        );
+    } else {
+        draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.28, 0.16, 0.08, 0.95));
+        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::NEON_GOLD);
+
+        let cur_xp = career_progress.map_or(0, |cp| cp.xp);
+        let lock_title = format!("🛒 VEHICLE PRICE: {} XP (WALLET: {} XP)", cost, cur_xp);
+        fonts.draw_ui_bold_centered(
+            &lock_title,
+            btn_x + btn_w * 0.5,
+            btn_y + scaler.s(22.0),
+            scaler.font_s(12.0),
+            Palette::NEON_GOLD,
+        );
+        let need_xp = cost.saturating_sub(cur_xp);
+        let lock_sub = format!("Earn {} more XP in races to purchase this vehicle", need_xp);
+        fonts.draw_ui_regular_centered(
+            &lock_sub,
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(38.0),
             scaler.font_s(10.0),
@@ -435,7 +517,7 @@ pub fn render_garage_screen(
 
     // Bottom Navigation Bar
     let bottom_y = sh - scaler.s(16.0);
-    let nav_prompt = "USE [◄ / ►] OR [A / D] CARS  •  [Q / E] TIERS  •  [1..5] MODULES  •  [SPACE] REV  •  [ENTER] SELECT  •  [ESC] RETURN";
+    let nav_prompt = "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [1..5] MODULES  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN";
     fonts.draw_ui_bold_centered(
         nav_prompt,
         sw * 0.5,

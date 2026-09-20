@@ -166,9 +166,11 @@ pub struct ModuleCareerProgress {
     pub profile_id: i64,
     pub module_id: String,
     pub xp: u64,
+    pub lifetime_xp: u64,
     pub level: u32,
     pub unlocked_cars: Vec<String>,
     pub unlocked_tracks: Vec<String>,
+    pub visited_tracks: Vec<String>,
     pub completed_events: Vec<String>,
     pub trophies_gold: u32,
     pub trophies_silver: u32,
@@ -183,9 +185,11 @@ impl ModuleCareerProgress {
             profile_id,
             module_id: "gt".to_string(),
             xp: 0,
+            lifetime_xp: 0,
             level: 1,
-            unlocked_cars: Vec::new(),
+            unlocked_cars: vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
             unlocked_tracks: Vec::new(),
+            visited_tracks: Vec::new(),
             completed_events: Vec::new(),
             trophies_gold: 0,
             trophies_silver: 0,
@@ -196,78 +200,113 @@ impl ModuleCareerProgress {
         progress
     }
 
-    /// XP requirement thresholds for levels 1 through 5.
-    pub fn xp_threshold_for_level(level: u32) -> u64 {
-        match level {
-            1 => 0,
-            2 => 1500,
-            3 => 3500,
-            4 => 6500,
-            _ => 10000,
-        }
+    /// Purchasing cost for a vehicle of the specified tier (1,000 XP x tier).
+    pub fn car_cost(tier: u8) -> u64 {
+        (tier as u64) * 1000
     }
 
-    /// Base XP of the current level.
-    pub fn current_level_base_xp(&self) -> u64 {
-        Self::xp_threshold_for_level(self.level)
+    /// First-time exploration bonus awarded when playing a circuit for the first time (250 XP x tier, rounded to 10).
+    pub fn first_time_circuit_bonus(tier: u32) -> u64 {
+        Self::round_to_10((tier as u64) * 250)
     }
 
-    /// Target XP needed to reach next level, or None if at max level 5.
-    pub fn next_level_target_xp(&self) -> Option<u64> {
+    /// Rounds an XP amount to the nearest multiple of 10 (so last digit is always 0).
+    pub fn round_to_10(val: u64) -> u64 {
+        ((val as f64 / 10.0).round() as u64) * 10
+    }
+
+    /// Target XP needed for next tier car purchase (1,000 XP x (level + 1)), or None if at max tier 5.
+    pub fn next_tier_target_xp(&self) -> Option<u64> {
         if self.level >= 5 {
             None
         } else {
-            Some(Self::xp_threshold_for_level(self.level + 1))
+            Some(Self::car_cost((self.level + 1) as u8))
         }
     }
 
-    /// Progress ratio [0.0..1.0] towards next level.
+    /// Progress ratio [0.0..1.0] towards acquiring the next tier's entry vehicle.
     pub fn level_progress_ratio(&self) -> f32 {
         if self.level >= 5 {
             return 1.0;
         }
-        let base = self.current_level_base_xp();
-        let target = self.next_level_target_xp().unwrap_or(base);
-        if target <= base {
+        let target = self.next_tier_target_xp().unwrap_or(1000);
+        if target == 0 {
             1.0
         } else {
-            let cur = (self.xp.saturating_sub(base)) as f32;
-            let total = (target - base) as f32;
-            (cur / total).clamp(0.0, 1.0)
+            (self.xp as f32 / target as f32).clamp(0.0, 1.0)
         }
     }
 
-    /// Awards XP and calculates level up. Returns Some(new_level) if level increased.
-    pub fn add_xp(&mut self, amount: u64) -> Option<u32> {
+    /// Awards XP to spendable balance and cumulative lifetime XP.
+    pub fn add_xp(&mut self, amount: u64) {
         self.xp = self.xp.saturating_add(amount);
-        let old_level = self.level;
-        let mut new_level = old_level;
-
-        while new_level < 5 && self.xp >= Self::xp_threshold_for_level(new_level + 1) {
-            new_level += 1;
-        }
-
-        if new_level > old_level {
-            self.level = new_level;
-            self.sync_unlocks_for_level();
-            Some(new_level)
-        } else {
-            None
-        }
+        self.lifetime_xp = self.lifetime_xp.saturating_add(amount);
     }
 
-    /// Ensures unlocked cars and tracks match or exceed current level.
+    /// Checks if a vehicle can be purchased: must not already be unlocked, player must be at or above the car's tier,
+    /// and player must have sufficient spendable XP balance.
+    pub fn can_buy_car(&self, car_id: &str, tier: u8) -> bool {
+        !self.is_car_unlocked(car_id, false)
+            && self.level >= (tier as u32)
+            && self.xp >= Self::car_cost(tier)
+    }
+
+    /// Purchases a vehicle, deducting its cost from spendable XP balance and unlocking it.
+    pub fn buy_car(&mut self, car_id: &str, tier: u8) -> Result<(), String> {
+        if !self.can_buy_car(car_id, tier) {
+            return Err(format!(
+                "Cannot buy car '{}' (tier {}): insufficient XP ({}/{}) or insufficient tier ({})",
+                car_id,
+                tier,
+                self.xp,
+                Self::car_cost(tier),
+                self.level
+            ));
+        }
+        let cost = Self::car_cost(tier);
+        self.xp = self.xp.saturating_sub(cost);
+        self.ensure_car(car_id);
+        Ok(())
+    }
+
+    /// Checks whether the driver satisfies both conditions to advance to the next tier:
+    /// 1. Finished at least one championship on the podium (top 3: Gold, Silver, or Bronze).
+    /// 2. Has enough spendable XP to purchase a car in the new tier (1,000 XP x next_tier).
+    pub fn can_advance_tier(&self) -> bool {
+        if self.level >= 5 {
+            return false;
+        }
+        let next_tier = self.level + 1;
+        let has_podium = (self.trophies_gold + self.trophies_silver + self.trophies_bronze) > 0;
+        let has_xp = self.xp >= Self::car_cost(next_tier as u8);
+        has_podium && has_xp
+    }
+
+    /// Advances to the next career tier if all conditions are met.
+    pub fn advance_tier(&mut self) -> Result<u32, String> {
+        if !self.can_advance_tier() {
+            return Err(format!(
+                "Cannot advance to Tier {}: Requires at least 1 championship podium and {} spendable XP (current: {})",
+                self.level + 1,
+                Self::car_cost((self.level + 1) as u8),
+                self.xp
+            ));
+        }
+        self.level += 1;
+        self.sync_unlocks_for_level();
+        Ok(self.level)
+    }
+
+    /// Ensures unlocked tracks match or exceed current level.
     pub fn sync_unlocks_for_level(&mut self) {
         if self.module_id == "gt" {
             // Level 1 Starter
-            self.ensure_car("gt4_clubsport");
             self.ensure_track("monza");
             self.ensure_track("red_bull_ring");
             self.ensure_track("nurburgring_gp");
 
             // Level 2 (FIA GT3)
             if self.level >= 2 {
-                self.ensure_car("gt3_evo");
                 self.ensure_track("silverstone");
                 self.ensure_track("catalunya");
                 self.ensure_track("bathurst");
@@ -275,7 +314,6 @@ impl ModuleCareerProgress {
 
             // Level 3 (SRO GT2)
             if self.level >= 3 {
-                self.ensure_car("gt2_biturbo");
                 self.ensure_track("spa");
                 self.ensure_track("zandvoort");
                 self.ensure_track("portimao_gp");
@@ -283,7 +321,6 @@ impl ModuleCareerProgress {
 
             // Level 4 (90s Le Mans GT1)
             if self.level >= 4 {
-                self.ensure_car("gt1_legend");
                 self.ensure_track("suzuka");
                 self.ensure_track("interlagos");
                 self.ensure_track("le_mans_sarthe");
@@ -291,7 +328,6 @@ impl ModuleCareerProgress {
 
             // Level 5 (LMH Hypercar Prototype)
             if self.level >= 5 {
-                self.ensure_car("hypercar_prototype");
                 self.ensure_track("monaco");
                 self.ensure_track("madring");
                 self.ensure_track("marina_bay");
@@ -314,6 +350,12 @@ impl ModuleCareerProgress {
     /// Checks if a vehicle is unlocked for this profile.
     pub fn is_car_unlocked(&self, car_id: &str, dev_mode: bool) -> bool {
         if dev_mode {
+            return true;
+        }
+        if car_id == "gt4_clubsport" && self.unlocked_cars.iter().any(|c| c == "gt_toyota_supra_gt4") {
+            return true;
+        }
+        if car_id == "gt_toyota_supra_gt4" && self.unlocked_cars.iter().any(|c| c == "gt4_clubsport") {
             return true;
         }
         self.unlocked_cars.iter().any(|c| c == car_id)

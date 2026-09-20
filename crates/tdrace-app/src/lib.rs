@@ -33,7 +33,7 @@ pub use db::{HallOfFameDb, HallOfFameEntry};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{
     AcrobaticStats, DriverCardsOrigin, FinishedScreenView, GameState, GridParticipant, LapTelemetry,
-    PlayerRaceTelemetry, RaceSession,
+    PlayerRaceTelemetry, RaceSession, XpAwardReceipt,
 };
 pub use module::{
     ClassicGameModule, EngineAudioProfile, ExtremeOffRoadModule, GameModule,

@@ -121,9 +121,11 @@ impl HallOfFameDb {
                 profile_id INTEGER NOT NULL,
                 module_id TEXT NOT NULL,
                 xp INTEGER NOT NULL DEFAULT 0,
+                lifetime_xp INTEGER NOT NULL DEFAULT 0,
                 level INTEGER NOT NULL DEFAULT 1,
                 unlocked_cars TEXT NOT NULL DEFAULT '[]',
                 unlocked_tracks TEXT NOT NULL DEFAULT '[]',
+                visited_tracks TEXT NOT NULL DEFAULT '[]',
                 completed_events TEXT NOT NULL DEFAULT '[]',
                 trophies_gold INTEGER NOT NULL DEFAULT 0,
                 trophies_silver INTEGER NOT NULL DEFAULT 0,
@@ -138,6 +140,14 @@ impl HallOfFameDb {
         // Ensure backward-compatibility migration for pre-existing player_profiles tables
         let _ = self.conn.execute(
             "ALTER TABLE player_profiles ADD COLUMN last_mode TEXT NOT NULL DEFAULT 'arcade'",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE profile_module_progress ADD COLUMN lifetime_xp INTEGER NOT NULL DEFAULT 0",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE profile_module_progress ADD COLUMN visited_tracks TEXT NOT NULL DEFAULT '[]'",
             [],
         );
 
@@ -634,7 +644,8 @@ impl HallOfFameDb {
     pub fn get_module_progress(&self, profile_id: i64, module_id: &str) -> Result<Option<ModuleCareerProgress>> {
         let mut stmt = self.conn.prepare(
             "SELECT profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
-                    trophies_gold, trophies_silver, trophies_bronze, updated_at
+                    trophies_gold, trophies_silver, trophies_bronze, updated_at,
+                    COALESCE(lifetime_xp, xp), COALESCE(visited_tracks, '[]')
              FROM profile_module_progress
              WHERE profile_id = ?1 AND module_id = ?2",
         )?;
@@ -643,18 +654,23 @@ impl HallOfFameDb {
             let cars_json: String = row.get(4)?;
             let tracks_json: String = row.get(5)?;
             let events_json: String = row.get(6)?;
+            let lifetime_xp: i64 = row.get(11)?;
+            let visited_json: String = row.get(12)?;
 
             let unlocked_cars: Vec<String> = serde_json::from_str(&cars_json).unwrap_or_default();
             let unlocked_tracks: Vec<String> = serde_json::from_str(&tracks_json).unwrap_or_default();
+            let visited_tracks: Vec<String> = serde_json::from_str(&visited_json).unwrap_or_default();
             let completed_events: Vec<String> = serde_json::from_str(&events_json).unwrap_or_default();
 
             Ok(ModuleCareerProgress {
                 profile_id: row.get(0)?,
                 module_id: row.get(1)?,
                 xp: row.get::<_, i64>(2)? as u64,
+                lifetime_xp: lifetime_xp as u64,
                 level: row.get::<_, i64>(3)? as u32,
                 unlocked_cars,
                 unlocked_tracks,
+                visited_tracks,
                 completed_events,
                 trophies_gold: row.get::<_, i64>(7)? as u32,
                 trophies_silver: row.get::<_, i64>(8)? as u32,
@@ -675,18 +691,21 @@ impl HallOfFameDb {
         let now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
         let cars_json = serde_json::to_string(&progress.unlocked_cars).unwrap_or_else(|_| "[]".to_string());
         let tracks_json = serde_json::to_string(&progress.unlocked_tracks).unwrap_or_else(|_| "[]".to_string());
+        let visited_json = serde_json::to_string(&progress.visited_tracks).unwrap_or_else(|_| "[]".to_string());
         let events_json = serde_json::to_string(&progress.completed_events).unwrap_or_else(|_| "[]".to_string());
 
         self.conn.execute(
             "INSERT INTO profile_module_progress (
-                profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
+                profile_id, module_id, xp, lifetime_xp, level, unlocked_cars, unlocked_tracks, visited_tracks, completed_events,
                 trophies_gold, trophies_silver, trophies_bronze, updated_at
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
             ON CONFLICT(profile_id, module_id) DO UPDATE SET
                 xp = excluded.xp,
+                lifetime_xp = excluded.lifetime_xp,
                 level = excluded.level,
                 unlocked_cars = excluded.unlocked_cars,
                 unlocked_tracks = excluded.unlocked_tracks,
+                visited_tracks = excluded.visited_tracks,
                 completed_events = excluded.completed_events,
                 trophies_gold = excluded.trophies_gold,
                 trophies_silver = excluded.trophies_silver,
@@ -696,9 +715,11 @@ impl HallOfFameDb {
                 progress.profile_id,
                 progress.module_id,
                 progress.xp as i64,
+                progress.lifetime_xp as i64,
                 progress.level as i64,
                 cars_json,
                 tracks_json,
+                visited_json,
                 events_json,
                 progress.trophies_gold as i64,
                 progress.trophies_silver as i64,

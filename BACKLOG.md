@@ -132,7 +132,17 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
 - **Multi-Class Grand Prix**: Progression series spanning Grassroots Clubman, Tuning Drift Spec, 125cc Karting, and Supercar Pro Tour.
 - **Retro High-Score Coin-Op Style**: Timed checkpoint stages with classic timer countdown ("Time Extended!") and nostalgic leaderboard ceremonies.
 
+### 2.10 Clean Driving Telemetry & Incident Penalty / Bonus System
+- **Driver Profile Incident Telemetry**:
+  - Continuous telemetry logging of wall scrapes, car-to-car SAT contact, and off-track excursions across race sessions.
+  - Driver Dossier incident rating card: clean driving factor, contact per lap average, and track limits violation frequency.
+- **Ruleset & Penalty Exploration**:
+  - Configurable ruleset toggle in gameplay settings: "Clean Race Rules (Strict / Standard / Off)".
+  - Post-race time penalties (e.g. +3s for deliberate corner cutting or heavy vehicle ramming) applied to official finish time.
+  - Career safety rating / license class (Bronze/Silver/Gold/FIA Superlicense) based on consecutive incident-free races without compromising the core metric distance XP economy.
+
 ---
+
 
 ## 3. Audio & Soundtrack Expansions
 

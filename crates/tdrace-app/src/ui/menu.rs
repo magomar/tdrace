@@ -7,6 +7,7 @@ use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::audio::AudioSettings;
+use crate::game::XpAwardReceipt;
 use crate::render::color::Palette;
 use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
@@ -910,34 +911,39 @@ pub fn render_track_select_menu(
         scaler.draw_glass_card(badge_x, cp_y, badge_w, cp_h, Color::new(0.06, 0.08, 0.12, 0.92), Palette::NEON_CYAN, 1.2);
 
         // Driver Level Tag
-        let lvl_str = format!("DRIVER LEVEL {}", cp.level);
-        fonts.draw_ui_bold(&lvl_str, badge_x + scaler.s(12.0), cp_y + scaler.s(17.0), scaler.font_s(12.5), Palette::NEON_GOLD);
+        let lvl_str = format!("CAREER TIER {}", cp.level);
+        fonts.draw_ui_bold(&lvl_str, badge_x + scaler.s(12.0), cp_y + scaler.s(17.0), scaler.font_s(12.0), Palette::NEON_GOLD);
 
-        // XP Progress text
-        let xp_str = if let Some(target) = cp.next_level_target_xp() {
-            format!("XP: {} / {}", cp.xp, target)
+        // Spendable XP text
+        let xp_str = if let Some(target) = cp.next_tier_target_xp() {
+            format!("XP: {} / {} (NEXT TIER CAR)", cp.xp, target)
         } else {
-            format!("XP: {} (MAX LEVEL)", cp.xp)
+            format!("XP: {} (MAX TIER)", cp.xp)
         };
-        fonts.draw_ui_regular(&xp_str, badge_x + scaler.s(140.0), cp_y + scaler.s(17.0), scaler.font_s(11.0), Palette::WHITE);
+        fonts.draw_ui_regular(&xp_str, badge_x + scaler.s(130.0), cp_y + scaler.s(17.0), scaler.font_s(11.0), Palette::WHITE);
 
         // Progress bar in center
-        let bar_x = badge_x + scaler.s(260.0);
+        let bar_x = badge_x + scaler.s(315.0);
         let bar_y = cp_y + scaler.s(7.0);
-        let bar_w = (badge_w - scaler.s(520.0)).clamp(scaler.s(100.0), scaler.s(320.0));
+        let bar_w = (badge_w - scaler.s(580.0)).clamp(scaler.s(60.0), scaler.s(220.0));
         let bar_h = scaler.s(11.0);
         draw_rectangle(bar_x, bar_y, bar_w, bar_h, Color::new(0.08, 0.12, 0.18, 0.95));
         draw_rectangle(bar_x, bar_y, bar_w * cp.level_progress_ratio(), bar_h, Palette::NEON_CYAN);
         draw_rectangle_lines(bar_x, bar_y, bar_w, bar_h, 1.0, Palette::NEON_CYAN);
 
+        // Championship Podiums / Trophies
+        let trophy_str = format!("PODIUMS  G:{} S:{} B:{}", cp.trophies_gold, cp.trophies_silver, cp.trophies_bronze);
+        fonts.draw_ui_bold(&trophy_str, bar_x + bar_w + scaler.s(12.0), cp_y + scaler.s(17.0), scaler.font_s(10.5), Palette::NEON_GOLD);
+
         // Mode indicator on right
-        let mode_tag = if dev_mode {
-            "[DEV MODE: ALL UNLOCKED]"
+        let (mode_tag, tag_col) = if dev_mode {
+            ("[DEV MODE: ALL UNLOCKED]", Palette::NEON_MAGENTA)
+        } else if cp.can_advance_tier() {
+            ("★ TIER ADVANCEMENT READY!", Palette::NEON_GOLD)
         } else {
-            "CAREER PROGRESSION ACTIVE"
+            ("CAREER PROGRESSION ACTIVE", Palette::NEON_GREEN)
         };
-        let tag_col = if dev_mode { Palette::NEON_MAGENTA } else { Palette::NEON_GREEN };
-        fonts.draw_ui_bold(mode_tag, badge_x + badge_w - scaler.s(200.0), cp_y + scaler.s(17.0), scaler.font_s(11.0), tag_col);
+        fonts.draw_ui_bold(mode_tag, badge_x + badge_w - scaler.s(210.0), cp_y + scaler.s(17.0), scaler.font_s(10.5), tag_col);
     }
 
     // Spacing between Profile/Career Panel and Catalog columns
@@ -1786,6 +1792,7 @@ pub fn render_results_screen(
     track_name: &str,
     results: &[RaceResultEntry],
     is_time_attack: bool,
+    xp_receipt: Option<&XpAwardReceipt>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -1871,13 +1878,44 @@ pub fn render_results_screen(
         row_y += scaler.s(32.0);
     }
 
+    // Optional Career XP Receipt Banner
+    if let Some(receipt) = xp_receipt {
+        let r_h = scaler.s(32.0);
+        let r_y = y + box_h - scaler.s(64.0);
+        let r_w = box_w - scaler.s(40.0);
+        let r_x = x + scaler.s(20.0);
+        scaler.draw_glass_card(r_x, r_y, r_w, r_h, Color::new(0.06, 0.10, 0.16, 0.95), Palette::NEON_GOLD, 1.4);
+
+        let first_text = if receipt.is_first_time {
+            format!("  •  1ST VISIT BONUS: +{} XP", receipt.first_time_bonus)
+        } else {
+            String::new()
+        };
+        let receipt_str = format!(
+            "+{} XP EARNED ({} LAPS: {} XP  •  FINISH BONUS: +{} XP{})   |   BALANCE: {} XP",
+            receipt.total_xp,
+            receipt.completed_laps,
+            receipt.lap_xp,
+            receipt.completion_bonus,
+            first_text,
+            receipt.new_balance
+        );
+        fonts.draw_ui_bold_centered(
+            &receipt_str,
+            sw * 0.5,
+            r_y + scaler.s(21.0),
+            scaler.font_s(11.5),
+            Palette::NEON_GOLD,
+        );
+    }
+
     // Bottom action prompt
     let prompt = "Press [SPACE / ENTER] Hall of Fame | [TAB] Detailed Stats | [R] Restart Race | [ESC] Main Menu";
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
-        y + box_h - scaler.s(22.0),
-        scaler.font_s(16.0),
+        y + box_h - scaler.s(20.0),
+        scaler.font_s(15.0),
         Palette::WHITE,
     );
 }

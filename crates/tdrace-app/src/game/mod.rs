@@ -238,6 +238,19 @@ pub struct PlayerRaceTelemetry {
     pub stunt_stats: AcrobaticStats,
 }
 
+/// Detailed breakdown of XP awarded after completing a race.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct XpAwardReceipt {
+    pub per_lap_xp: u64,
+    pub completed_laps: u32,
+    pub lap_xp: u64,
+    pub completion_bonus: u64,
+    pub first_time_bonus: u64,
+    pub total_xp: u64,
+    pub new_balance: u64,
+    pub is_first_time: bool,
+}
+
 
 /// Qualified participant on the starting grid, ranked by historical best lap, circuit time, or random draw.
 #[derive(Debug, Clone, PartialEq)]
@@ -389,6 +402,7 @@ pub struct RaceSession {
     pub finished_view: FinishedScreenView,
     pub finished_prev_view: FinishedScreenView,
     pub player_race_stats: PlayerRaceTelemetry,
+    pub last_xp_receipt: Option<XpAwardReceipt>,
 
     // Menu selection cursor & 2D navigation state
     pub menu_focused_panel: MenuPanelFocus,
@@ -444,6 +458,7 @@ pub struct RaceSession {
     pub drift_combo_count: u32,
     pub drift_combo_timer: f32,
     pub prev_player_drifting: bool,
+    pub stunt_scoring_override: Option<bool>,
 }
 
 
@@ -654,6 +669,7 @@ impl RaceSession {
             finished_view: FinishedScreenView::Results,
             finished_prev_view: FinishedScreenView::Results,
             player_race_stats: PlayerRaceTelemetry::default(),
+            last_xp_receipt: None,
 
             menu_focused_panel: MenuPanelFocus::LeftTracks,
             menu_track_filter: TrackCatalogFilter::Presets,
@@ -694,6 +710,7 @@ impl RaceSession {
             drift_combo_count: 0,
             drift_combo_timer: 0.0,
             prev_player_drifting: false,
+            stunt_scoring_override: None,
         };
 
         session.refresh_profiles_and_stats();
@@ -701,6 +718,26 @@ impl RaceSession {
         session.init_race();
         session.state = GameState::ModuleSelect { selected_idx: 0 }; // Start in Grand Hub module select screen
         session
+    }
+
+    /// Whether acrobatic stunt scoring and floating HUD stunt alerts are active.
+    ///
+    /// Enabled for the Classic Arcade module (`"classic"`), and disabled for
+    /// realistic motorsport disciplines (`"gt"`, `"nascar"`, `"rally"`, `"kart"`, etc.),
+    /// unless an explicit manual override has been set.
+    #[inline]
+    pub fn is_stunt_scoring_enabled(&self) -> bool {
+        if let Some(manual) = self.stunt_scoring_override {
+            return manual;
+        }
+        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
+        effective_module == "classic"
+    }
+
+    /// Sets or clears the manual override for acrobatic stunt scoring.
+    #[inline]
+    pub fn set_stunt_scoring_enabled(&mut self, enabled: Option<bool>) {
+        self.stunt_scoring_override = enabled;
     }
 
     /// Whether the active game session is in 2-Player Split Screen mode.
@@ -1584,27 +1621,77 @@ impl RaceSession {
         let (cup_name, track_ids, car_choice) = match tier {
             1 => (
                 "GT4 Clubman Sprint Cup (Tier 1)",
-                vec!["monza".to_string(), "red_bull_ring".to_string(), "nurburgring_gp".to_string()],
+                vec![
+                    "monza".to_string(),
+                    "red_bull_ring".to_string(),
+                    "nurburgring_gp".to_string(),
+                ],
                 CarChoice::GT4Clubsport,
             ),
             2 => (
                 "FIA GT3 European Challenge (Tier 2)",
-                vec!["silverstone".to_string(), "catalunya".to_string(), "bathurst".to_string()],
+                vec![
+                    "monza".to_string(),
+                    "red_bull_ring".to_string(),
+                    "nurburgring_gp".to_string(),
+                    "silverstone".to_string(),
+                    "catalunya".to_string(),
+                    "bathurst".to_string(),
+                ],
                 CarChoice::GT3Car,
             ),
             3 => (
                 "SRO GT2 Power Masters (Tier 3)",
-                vec!["spa".to_string(), "zandvoort".to_string(), "portimao_gp".to_string()],
+                vec![
+                    "monza".to_string(),
+                    "red_bull_ring".to_string(),
+                    "nurburgring_gp".to_string(),
+                    "silverstone".to_string(),
+                    "catalunya".to_string(),
+                    "bathurst".to_string(),
+                    "spa".to_string(),
+                    "zandvoort".to_string(),
+                    "portimao_gp".to_string(),
+                ],
                 CarChoice::GT2Biturbo,
             ),
             4 => (
                 "Le Mans 90s Heritage Trophy (Tier 4)",
-                vec!["suzuka".to_string(), "interlagos".to_string(), "le_mans_sarthe".to_string()],
+                vec![
+                    "monza".to_string(),
+                    "red_bull_ring".to_string(),
+                    "nurburgring_gp".to_string(),
+                    "silverstone".to_string(),
+                    "catalunya".to_string(),
+                    "bathurst".to_string(),
+                    "spa".to_string(),
+                    "zandvoort".to_string(),
+                    "portimao_gp".to_string(),
+                    "suzuka".to_string(),
+                    "interlagos".to_string(),
+                    "le_mans_sarthe".to_string(),
+                ],
                 CarChoice::GT1Legend,
             ),
             _ => (
                 "World Endurance Hypercar Grand Prix (Tier 5)",
-                vec!["monaco".to_string(), "madring".to_string(), "marina_bay".to_string()],
+                vec![
+                    "monza".to_string(),
+                    "red_bull_ring".to_string(),
+                    "nurburgring_gp".to_string(),
+                    "silverstone".to_string(),
+                    "catalunya".to_string(),
+                    "bathurst".to_string(),
+                    "spa".to_string(),
+                    "zandvoort".to_string(),
+                    "portimao_gp".to_string(),
+                    "suzuka".to_string(),
+                    "interlagos".to_string(),
+                    "le_mans_sarthe".to_string(),
+                    "monaco".to_string(),
+                    "madring".to_string(),
+                    "marina_bay".to_string(),
+                ],
                 CarChoice::HypercarPrototype,
             ),
         };
@@ -1627,7 +1714,15 @@ impl RaceSession {
         );
         self.switch_to_gt();
         self.game_mode = GameMode::Career;
-        self.car_choice = car_choice;
+        let mut active_car = car_choice;
+        if let Some(model_id) = &self.selected_car_model_id {
+            if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+                if model.tier == tier as u8 && self.active_career_progress.is_car_unlocked(model_id, self.is_dev_mode()) {
+                    active_car = model.base_car_choice;
+                }
+            }
+        }
+        self.car_choice = active_car;
         self.championship_session = Some(champ);
         self.init_race();
     }
@@ -4332,6 +4427,17 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiSelect);
                         match self.active_module_id {
                             "gt" | "gt_challenge" => {
+                                if self.active_career_progress.can_advance_tier() {
+                                    if let Ok(new_tier) = self.active_career_progress.advance_tier() {
+                                        if let Some(db) = &self.hof_db {
+                                            let _ = db.save_module_progress(&self.active_career_progress);
+                                        }
+                                        self.spawn_hud_alert(
+                                            format!("PROMOTED TO TIER {}! NEW CALENDAR UNLOCKED!", new_tier),
+                                            Palette::NEON_GOLD,
+                                        );
+                                    }
+                                }
                                 let tier = self.active_career_progress.level.clamp(1, 5);
                                 self.start_gt_career_tier(tier);
                             }
@@ -4732,50 +4838,74 @@ impl RaceSession {
             }
         }
 
-        if is_key_pressed(KeyCode::Enter)
+        let buy_pressed = is_key_pressed(KeyCode::B);
+        let confirm_pressed = is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
             || self.input.gamepad.snapshot.btn_confirm_pressed
-            || select_btn_clicked
-        {
+            || select_btn_clicked;
+
+        if buy_pressed || confirm_pressed {
             if let Some(active_car) = models.get(self.garage_car_idx) {
-                let unlocked_tier = if self.is_dev_mode() {
-                    5
-                } else {
-                    let wins = self.active_profile_stats.wins;
-                    if wins >= 10 {
-                        5
-                    } else if wins >= 5 {
-                        4
-                    } else if wins >= 2 {
-                        3
-                    } else if wins >= 1 {
-                        2
-                    } else {
-                        1
-                    }
-                };
-                let is_unlocked = self.garage_tier <= unlocked_tier;
+                let is_unlocked = self.active_career_progress.is_car_unlocked(active_car.id, self.is_dev_mode())
+                    || self.is_dev_mode();
+
                 if is_unlocked {
-                    self.car_choice = active_car.base_car_choice;
-                    self.current_visual_type = active_car.visual_type;
-                    self.selected_car_model_id = Some(active_car.id);
-                    self.free_car_selection = true;
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    match origin {
-                        GarageOrigin::StartingGrid => {
-                            self.audio.stop_all_loops();
-                            self.rebuild_roster_participants();
-                            self.state = GameState::StartingGrid;
-                        }
-                        GarageOrigin::Menu => {
-                            self.audio.stop_all_loops();
-                            self.state = GameState::Menu;
-                        }
-                        GarageOrigin::ModalitySelect => {
-                            // Stay or return
+                    if confirm_pressed {
+                        self.car_choice = active_car.base_car_choice;
+                        self.current_visual_type = active_car.visual_type;
+                        self.selected_car_model_id = Some(active_car.id);
+                        self.free_car_selection = true;
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        match origin {
+                            GarageOrigin::StartingGrid => {
+                                self.audio.stop_all_loops();
+                                self.rebuild_roster_participants();
+                                self.state = GameState::StartingGrid;
+                            }
+                            GarageOrigin::Menu => {
+                                self.audio.stop_all_loops();
+                                self.state = GameState::Menu;
+                            }
+                            GarageOrigin::ModalitySelect => {
+                                // Stay or return
+                            }
                         }
                     }
+                } else if self.active_career_progress.can_buy_car(active_car.id, active_car.tier) {
+                    if let Ok(()) = self.active_career_progress.buy_car(active_car.id, active_car.tier) {
+                        if let Some(db) = &self.hof_db {
+                            let _ = db.save_module_progress(&self.active_career_progress);
+                        }
+                        self.spawn_hud_alert(
+                            format!(
+                                "PURCHASED {} FOR {} XP! BALANCE: {} XP",
+                                active_car.name,
+                                ModuleCareerProgress::car_cost(active_car.tier),
+                                self.active_career_progress.xp
+                            ),
+                            Palette::NEON_GOLD,
+                        );
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
                 } else {
+                    let cost = ModuleCareerProgress::car_cost(active_car.tier);
+                    if self.active_career_progress.level < active_car.tier as u32 {
+                        self.spawn_hud_alert(
+                            format!(
+                                "LOCKED: CAREER TIER {} REQUIRED (CURRENT: TIER {})",
+                                active_car.tier, self.active_career_progress.level
+                            ),
+                            Palette::RED,
+                        );
+                    } else {
+                        self.spawn_hud_alert(
+                            format!(
+                                "CANNOT AFFORD: REQUIRES {} XP (WALLET: {} XP)",
+                                cost, self.active_career_progress.xp
+                            ),
+                            Palette::RED,
+                        );
+                    }
                     self.audio.play_sfx(SfxType::UiMove);
                 }
             }
@@ -6410,45 +6540,47 @@ impl RaceSession {
         }
 
         if let Some(air_time) = player_jump_air_time {
-            let pts = (air_time * 250.0).round() as u32;
-            self.player_race_stats.stunt_stats.jump_count += 1;
-            self.player_race_stats.stunt_stats.total_air_time += air_time;
-            self.player_race_stats.stunt_stats.longest_jump_time = self.player_race_stats.stunt_stats.longest_jump_time.max(air_time);
-            self.player_race_stats.stunt_stats.jump_points += pts;
-            self.player_race_stats.stunt_stats.total_stunt_score += pts;
+            if self.is_stunt_scoring_enabled() {
+                let pts = (air_time * 250.0).round() as u32;
+                self.player_race_stats.stunt_stats.jump_count += 1;
+                self.player_race_stats.stunt_stats.total_air_time += air_time;
+                self.player_race_stats.stunt_stats.longest_jump_time = self.player_race_stats.stunt_stats.longest_jump_time.max(air_time);
+                self.player_race_stats.stunt_stats.jump_points += pts;
+                self.player_race_stats.stunt_stats.total_stunt_score += pts;
 
-            if let Some(player_car) = self.cars.first() {
-                let sw = screen_width_safe();
-                let sh = screen_height_safe();
-                let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
-                let anchor = Vec2::new(
-                    screen_pos.x.clamp(100.0, sw - 100.0),
-                    (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
-                );
-
-                self.drift_combo_count += 1;
-                self.drift_combo_timer = 4.0;
-                self.player_race_stats.stunt_stats.max_combo = self.player_race_stats.stunt_stats.max_combo.max(self.drift_combo_count);
-
-                if air_time >= 0.70 {
-                    self.floating_text.spawn_alert(
-                        format!("MEGA JUMP! {:.2}s (+{} PTS)", air_time, pts),
-                        anchor,
-                        Palette::NEON_GOLD,
+                if let Some(player_car) = self.cars.first() {
+                    let sw = screen_width_safe();
+                    let sh = screen_height_safe();
+                    let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
+                    let anchor = Vec2::new(
+                        screen_pos.x.clamp(100.0, sw - 100.0),
+                        (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
                     );
-                } else {
-                    self.floating_text.spawn_alert(
-                        format!("AIR TIME {:.2}s (+{} PTS)", air_time, pts),
-                        anchor,
-                        Palette::NEON_CYAN,
-                    );
-                }
 
-                if self.drift_combo_count >= 2 {
-                    self.floating_text.spawn_combo(
-                        self.drift_combo_count,
-                        anchor + Vec2::new(0.0, -26.0),
-                    );
+                    self.drift_combo_count += 1;
+                    self.drift_combo_timer = 4.0;
+                    self.player_race_stats.stunt_stats.max_combo = self.player_race_stats.stunt_stats.max_combo.max(self.drift_combo_count);
+
+                    if air_time >= 1.50 {
+                        self.floating_text.spawn_alert(
+                            format!("MEGA JUMP! {:.2}s (+{} PTS)", air_time, pts),
+                            anchor,
+                            Palette::NEON_GOLD,
+                        );
+                    } else {
+                        self.floating_text.spawn_alert(
+                            format!("AIR TIME {:.2}s (+{} PTS)", air_time, pts),
+                            anchor,
+                            Palette::NEON_CYAN,
+                        );
+                    }
+
+                    if self.drift_combo_count >= 2 {
+                        self.floating_text.spawn_combo(
+                            self.drift_combo_count,
+                            anchor + Vec2::new(0.0, -26.0),
+                        );
+                    }
                 }
             }
         }
@@ -6921,37 +7053,56 @@ impl RaceSession {
 
             // 7. Career XP Award (GT World Challenge / Career mode)
             if self.active_module_id == "gt" || self.game_mode == GameMode::Career {
-                let base_xp = (self.total_laps as u64) * 100;
-                let pos_bonus: u64 = match player_pos {
-                    1 => 300,
-                    2 => 200,
-                    3 => 150,
-                    _ => 50,
-                };
-                let fastest_lap_bonus: u64 = if is_pb || player_pos == 1 { 75 } else { 0 };
-                let clean_race_bonus: u64 = 100;
-                let total_xp = base_xp + pos_bonus + fastest_lap_bonus + clean_race_bonus;
+                // Metric distance-based XP: track length / 10, rounded to 10
+                let track_len_m = self.track.spline.total_length().max(100.0);
+                let per_lap_xp = ModuleCareerProgress::round_to_10((track_len_m / 10.0) as u64);
+                let completed_laps = self.total_laps;
+                let lap_xp = per_lap_xp * (completed_laps as u64);
+                // Completing a race gives an extra bonus duplicating lap points
+                let completion_bonus = lap_xp;
 
-                let leveled_up = self.active_career_progress.add_xp(total_xp);
-                if player_pos == 1 {
-                    self.active_career_progress.trophies_gold += 1;
-                } else if player_pos == 2 {
-                    self.active_career_progress.trophies_silver += 1;
-                } else if player_pos == 3 {
-                    self.active_career_progress.trophies_bronze += 1;
-                }
+                // First-time circuit bonus: 250 XP x tier (Tier 1: 250, Tier 2: 500, Tier 3: 750, etc.)
+                let is_first_time = !self.active_career_progress.visited_tracks.iter().any(|t| t == &track_id);
+                let first_time_bonus = if is_first_time {
+                    self.active_career_progress.visited_tracks.push(track_id.clone());
+                    ModuleCareerProgress::first_time_circuit_bonus(self.active_career_progress.level)
+                } else {
+                    0
+                };
+
+                let total_xp = lap_xp + completion_bonus + first_time_bonus;
+                self.active_career_progress.add_xp(total_xp);
+
+                let receipt = XpAwardReceipt {
+                    per_lap_xp,
+                    completed_laps,
+                    lap_xp,
+                    completion_bonus,
+                    first_time_bonus,
+                    total_xp,
+                    new_balance: self.active_career_progress.xp,
+                    is_first_time,
+                };
+                self.last_xp_receipt = Some(receipt);
+
                 if let Some(db) = &self.hof_db {
                     let _ = db.save_module_progress(&self.active_career_progress);
                 }
 
-                if let Some(new_lvl) = leveled_up {
+                if first_time_bonus > 0 {
                     self.spawn_hud_alert(
-                        format!("LEVEL UP! REACHED LEVEL {}! NEW CAR & CIRCUITS UNLOCKED!", new_lvl),
+                        format!(
+                            "+{} XP (LAPS: {}, FINISH: {}, 1ST VISIT: +{}) | WALLET: {} XP",
+                            total_xp, lap_xp, completion_bonus, first_time_bonus, self.active_career_progress.xp
+                        ),
                         Palette::NEON_GOLD,
                     );
                 } else {
                     self.spawn_hud_alert(
-                        format!("+{} XP (TOTAL: {})", total_xp, self.active_career_progress.xp),
+                        format!(
+                            "+{} XP (LAPS: {}, FINISH: {}) | WALLET: {} XP",
+                            total_xp, lap_xp, completion_bonus, self.active_career_progress.xp
+                        ),
                         Palette::NEON_CYAN,
                     );
                 }
@@ -6980,6 +7131,22 @@ impl RaceSession {
                     });
                 }
                 champ.submit_round_results(&self.track.name, round_results);
+
+                // If championship concluded, check if player scored a podium finish in final standings
+                if champ.is_completed {
+                    if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
+                        match pos {
+                            0 => self.active_career_progress.trophies_gold += 1,
+                            1 => self.active_career_progress.trophies_silver += 1,
+                            2 => self.active_career_progress.trophies_bronze += 1,
+                            _ => {}
+                        }
+                    }
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.save_module_progress(&self.active_career_progress);
+                    }
+                }
+
                 self.state = GameState::ChampionshipStandings;
                 return;
             }
@@ -7158,6 +7325,7 @@ impl RaceSession {
                     self.garage_gallery_sel,
                     self.is_dev_mode(),
                     unlocked_tier as u32,
+                    Some(&self.active_career_progress),
                 );
             }
             GameState::Menu => {
@@ -7343,7 +7511,7 @@ impl RaceSession {
 
                 match current_view {
                     FinishedScreenView::Results => {
-                        render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack);
+                        render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack, self.last_xp_receipt.as_ref());
                     }
                     FinishedScreenView::HallOfFame => {
                         render_hall_of_fame_screen(

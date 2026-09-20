@@ -466,12 +466,14 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     let profile = db.seed_default_profile_if_empty().expect("Seed default profile");
     let pid = profile.id.expect("Profile ID must exist");
 
-    // 1. Initial get_or_create for GT should return Level 1 starter progress
+    // 1. Initial get_or_create for GT should return Level 1 starter progress with 0 XP and Supra GT4 starter
     let mut progress: ModuleCareerProgress = db.get_or_create_module_progress(pid, "gt").expect("Query or create progress");
     assert_eq!(progress.profile_id, pid);
     assert_eq!(progress.module_id, "gt");
     assert_eq!(progress.level, 1);
     assert_eq!(progress.xp, 0);
+    assert_eq!(progress.lifetime_xp, 0);
+    assert!(progress.is_car_unlocked("gt_toyota_supra_gt4", false));
     assert!(progress.is_car_unlocked("gt4_clubsport", false));
     assert!(!progress.is_car_unlocked("gt3_evo", false));
     assert!(!progress.is_car_unlocked("gt2_biturbo", false));
@@ -489,39 +491,48 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert!(!progress.is_track_unlocked("silverstone", false));
     assert!(!progress.is_track_unlocked("spa", false));
 
-    // 2. Add XP to reach Level 2 (1,500 XP required)
-    let lvl_up = progress.add_xp(1500);
-    assert_eq!(lvl_up, Some(2));
+    // 2. Add XP: increases spendable XP and lifetime XP, level remains 1 until advanced
+    progress.add_xp(2500);
+    assert_eq!(progress.xp, 2500);
+    assert_eq!(progress.lifetime_xp, 2500);
+    assert_eq!(progress.level, 1);
+
+    // Cannot advance without a championship podium finish
+    assert!(!progress.can_advance_tier(), "Cannot advance without championship podium");
+    assert!(progress.advance_tier().is_err());
+
+    // Award championship podium trophy (e.g. Gold)
+    progress.trophies_gold = 1;
+    assert!(progress.can_advance_tier(), "Eligible to advance: has podium and >= 2000 XP for Tier 2 car");
+
+    // Advance tier to Tier 2
+    let new_lvl = progress.advance_tier().expect("Advance tier");
+    assert_eq!(new_lvl, 2);
     assert_eq!(progress.level, 2);
-    assert!(progress.is_car_unlocked("gt3_evo", false));
     assert!(progress.is_track_unlocked("silverstone", false));
     assert!(progress.is_track_unlocked("catalunya", false));
     assert!(progress.is_track_unlocked("bathurst", false));
-    assert!(!progress.is_car_unlocked("gt2_biturbo", false));
+
+    // In Tier 2, cars are NOT automatically unlocked; they must be purchased with spendable XP!
+    assert!(!progress.is_car_unlocked("gt3_evo", false));
+    assert!(progress.can_buy_car("gt3_evo", 2));
+    progress.buy_car("gt3_evo", 2).expect("Buy Tier 2 GT3 car");
+    assert!(progress.is_car_unlocked("gt3_evo", false));
+    // XP reduced by 2,000 (2,500 - 2,000 = 500), but lifetime XP remains 2,500
+    assert_eq!(progress.xp, 500);
+    assert_eq!(progress.lifetime_xp, 2500);
 
     // Save and verify persistence in SQLite
     db.save_module_progress(&progress).expect("Save progress");
     let fetched = db.get_module_progress(pid, "gt").expect("Fetch progress").expect("Must exist");
     assert_eq!(fetched.level, 2);
-    assert_eq!(fetched.xp, 1500);
+    assert_eq!(fetched.xp, 500);
+    assert_eq!(fetched.lifetime_xp, 2500);
+    assert_eq!(fetched.trophies_gold, 1);
     assert!(fetched.is_car_unlocked("gt3_evo", false));
     assert!(fetched.is_track_unlocked("bathurst", false));
 
-    // 3. Level all the way up to Level 5 (10,000 XP)
-    let lvl_up_max = progress.add_xp(8500);
-    assert_eq!(lvl_up_max, Some(5));
-    assert_eq!(progress.level, 5);
-    assert_eq!(progress.xp, 10000);
-    assert!(progress.is_car_unlocked("gt2_biturbo", false));
-    assert!(progress.is_car_unlocked("gt1_legend", false));
-    assert!(progress.is_car_unlocked("hypercar_prototype", false));
-    assert!(progress.is_track_unlocked("spa", false));
-    assert!(progress.is_track_unlocked("suzuka", false));
-    assert!(progress.is_track_unlocked("le_mans_sarthe", false));
-    assert!(progress.is_track_unlocked("monaco", false));
-    assert!(progress.is_track_unlocked("marina_bay", false));
-
-    // 4. Verify module independence: progress in rally is completely separate
+    // 3. Verify module independence: progress in rally is completely separate
     let rally_progress = db.get_or_create_module_progress(pid, "rally").expect("Rally progress");
     assert_eq!(rally_progress.module_id, "rally");
     assert_eq!(rally_progress.level, 1);
@@ -576,31 +587,38 @@ fn test_gt_career_session_gating_and_cup_launch() {
     assert!(!session.is_car_unlocked(CarChoice::GT3Car));
     assert!(!session.is_track_unlocked("silverstone"));
 
-    // Verify GT Career Tier launch (Tier 1 ..= 5)
+    // Verify GT Career Tier launch with cumulative calendars (3, 6, 9, 12, 15)
     session.start_gt_career_tier(1);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT4Clubsport);
     assert!(session.championship_session.is_some());
     let champ1 = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ1.track_ids.len(), 3);
     assert_eq!(champ1.track_ids, vec!["monza", "red_bull_ring", "nurburgring_gp"]);
 
     session.start_gt_career_tier(2);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT3Car);
     let champ2 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ2.track_ids, vec!["silverstone", "catalunya", "bathurst"]);
+    assert_eq!(champ2.track_ids.len(), 6);
+    assert_eq!(
+        champ2.track_ids,
+        vec!["monza", "red_bull_ring", "nurburgring_gp", "silverstone", "catalunya", "bathurst"]
+    );
 
     session.start_gt_career_tier(4);
+    assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT1Legend);
     let champ4 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ4.track_ids, vec!["suzuka", "interlagos", "le_mans_sarthe"]);
+    assert_eq!(champ4.track_ids.len(), 12);
 
     session.start_gt_career_tier(5);
+    assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::HypercarPrototype);
     let champ5 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ5.track_ids, vec!["monaco", "madring", "marina_bay"]);
+    assert_eq!(champ5.track_ids.len(), 15);
 
-    // Test winning race in GT awards XP and persists
+    // Test race completion in GT awards metric distance XP, finish duplication, and first-time bonus
     session.start_gt_career_tier(1);
     session.total_laps = 3;
     session.trackers[0].current_lap = 4; // finished 3 laps
@@ -609,13 +627,18 @@ fn test_gt_career_session_gating_and_cup_launch() {
     session.check_race_finish();
 
     assert!(session.active_career_progress.xp > 0);
-    assert_eq!(session.active_career_progress.trophies_gold, 1);
+    let receipt = session.last_xp_receipt.as_ref().expect("Receipt present");
+    assert_eq!(receipt.completed_laps, 3);
+    assert_eq!(receipt.completion_bonus, receipt.lap_xp, "Finish bonus duplicates lap XP");
+    assert_eq!(receipt.first_time_bonus, 250, "Tier 1 first-time bonus is 250 XP");
+    assert_eq!(receipt.total_xp, receipt.lap_xp + receipt.completion_bonus + 250);
+    assert_eq!(session.active_career_progress.xp, receipt.total_xp);
 
     // Verify persisted to DB
     if let Some(db) = &session.hof_db {
         let saved = db.get_module_progress(pid, "gt").unwrap().unwrap();
         assert_eq!(saved.xp, session.active_career_progress.xp);
-        assert_eq!(saved.trophies_gold, 1);
+        assert!(saved.visited_tracks.contains(&"monza".to_string()));
     }
 }
 
@@ -666,6 +689,142 @@ fn test_circuit_defaults_unlocked_and_dev_mode_unblocks_all() {
     assert!(session.is_track_unlocked("monaco"));
     std::env::remove_var("TDRACE_DEV");
     assert!(!session.is_dev_mode());
+}
+
+#[test]
+fn test_car_purchasing_with_spendable_xp_and_deduction() {
+    let mut progress = ModuleCareerProgress::default_for_gt(1);
+    assert_eq!(progress.xp, 0);
+    assert_eq!(progress.lifetime_xp, 0);
+    assert_eq!(progress.level, 1);
+
+    // Tier 1 cars cost 1,000 XP
+    assert_eq!(ModuleCareerProgress::car_cost(1), 1000);
+    // Tier 3 cars cost 3,000 XP
+    assert_eq!(ModuleCareerProgress::car_cost(3), 3000);
+
+    // Cannot buy without sufficient XP
+    assert!(!progress.can_buy_car("gt4_cayman", 1));
+    assert!(progress.buy_car("gt4_cayman", 1).is_err());
+
+    // Add 1,500 XP
+    progress.add_xp(1500);
+    assert_eq!(progress.xp, 1500);
+    assert_eq!(progress.lifetime_xp, 1500);
+    assert!(progress.can_buy_car("gt4_cayman", 1));
+
+    // Buy Tier 1 car
+    progress.buy_car("gt4_cayman", 1).expect("Purchase car");
+    assert!(progress.is_car_unlocked("gt4_cayman", false));
+    // XP reduced by 1,000: 1500 - 1000 = 500
+    assert_eq!(progress.xp, 500);
+    // Lifetime XP remains 1500
+    assert_eq!(progress.lifetime_xp, 1500);
+
+    // Cannot buy again once unlocked
+    assert!(!progress.can_buy_car("gt4_cayman", 1));
+
+    // Cannot buy Tier 2 car while still at Level 1 even if player has XP
+    progress.add_xp(5000);
+    assert_eq!(progress.xp, 5500);
+    assert_eq!(progress.level, 1);
+    assert!(!progress.can_buy_car("gt3_evo", 2), "Cannot buy car above current driver tier");
+}
+
+#[test]
+fn test_two_condition_tier_advancement_gates() {
+    let mut progress = ModuleCareerProgress::default_for_gt(1);
+    assert_eq!(progress.level, 1);
+
+    // Target car cost for Tier 2: 1000 * 2 = 2000 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(2000));
+
+    // Case 1: Neither condition met
+    assert!(!progress.can_advance_tier());
+
+    // Case 2: Only XP condition met (5,000 XP, 0 trophies)
+    progress.add_xp(5000);
+    assert_eq!(progress.xp, 5000);
+    assert_eq!(progress.trophies_gold + progress.trophies_silver + progress.trophies_bronze, 0);
+    assert!(!progress.can_advance_tier(), "Must not advance without championship podium");
+    assert!(progress.advance_tier().is_err());
+
+    // Case 3: Only Podium condition met (spend XP down below 2000)
+    progress.xp = 1500;
+    progress.trophies_bronze = 1;
+    assert!(!progress.can_advance_tier(), "Must not advance without sufficient XP for next-tier car");
+    assert!(progress.advance_tier().is_err());
+
+    // Case 4: Both conditions met (Podium + >= 2000 XP)
+    progress.xp = 2000;
+    assert!(progress.can_advance_tier(), "Can advance with podium and sufficient XP");
+    let next_lvl = progress.advance_tier().expect("Advance tier");
+    assert_eq!(next_lvl, 2);
+    assert_eq!(progress.level, 2);
+
+    // Tier 2 now unlocked: silverstone, catalunya, bathurst
+    assert!(progress.is_track_unlocked("silverstone", false));
+    assert!(progress.is_track_unlocked("bathurst", false));
+
+    // Next tier target is Tier 3 car: 1000 * 3 = 3000 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(3000));
+}
+
+#[test]
+fn test_metric_distance_lap_xp_rounding_and_first_time_bonus() {
+    // 1. Round to 10 helper
+    assert_eq!(ModuleCareerProgress::round_to_10(0), 0);
+    assert_eq!(ModuleCareerProgress::round_to_10(95), 100);
+    assert_eq!(ModuleCareerProgress::round_to_10(104), 100);
+    assert_eq!(ModuleCareerProgress::round_to_10(289), 290);
+    assert_eq!(ModuleCareerProgress::round_to_10(1000), 1000);
+
+    // 2. First-time circuit bonus: 250 XP x tier
+    assert_eq!(ModuleCareerProgress::first_time_circuit_bonus(1), 250);
+    assert_eq!(ModuleCareerProgress::first_time_circuit_bonus(2), 500);
+    assert_eq!(ModuleCareerProgress::first_time_circuit_bonus(3), 750);
+    assert_eq!(ModuleCareerProgress::first_time_circuit_bonus(4), 1000);
+    assert_eq!(ModuleCareerProgress::first_time_circuit_bonus(5), 1250);
+
+    // 3. User example: 1000m track gives 100 pts per lap; 5 laps = 500 pts; race completion duplicates = +500 pts
+    let track_len_m = 1000.0f32;
+    let per_lap_xp = ModuleCareerProgress::round_to_10((track_len_m / 10.0) as u64);
+    assert_eq!(per_lap_xp, 100);
+    let completed_laps = 5u64;
+    let lap_xp = per_lap_xp * completed_laps;
+    assert_eq!(lap_xp, 500);
+    let completion_bonus = lap_xp;
+    assert_eq!(completion_bonus, 500);
+    let total_no_first_time = lap_xp + completion_bonus;
+    assert_eq!(total_no_first_time, 1000);
+}
+
+#[test]
+fn test_championship_completion_podium_trophy_awarded() {
+    let mut session = RaceSession::new();
+    let mem_db = HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    // Start GT Tier 1 Championship (3 rounds)
+    session.start_gt_career_tier(1);
+    assert!(session.championship_session.is_some());
+
+    // Advance to final round (round 2 of 3)
+    let champ = session.championship_session.as_mut().unwrap();
+    champ.current_round = 2; // last round is index 2
+
+    // Finish race as P1
+    session.total_laps = 3;
+    session.trackers[0].current_lap = 4;
+    session.trackers[0].best_lap_time = Some(20.5);
+    session.session_time = 62.0;
+    session.check_race_finish();
+
+    // Verify championship completed and Gold trophy awarded
+    assert_eq!(session.active_career_progress.trophies_gold, 1);
+    assert_eq!(session.state, GameState::ChampionshipStandings);
 }
 
 
