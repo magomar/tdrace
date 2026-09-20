@@ -2385,6 +2385,7 @@ impl ModalityItem {
 pub enum ModalityModal {
     LanComingSoon,
     CloudComingSoon,
+    CareerComingSoon,
 }
 
 impl ModalityModal {
@@ -2392,6 +2393,7 @@ impl ModalityModal {
         match self {
             Self::LanComingSoon => "LAN MULTIPLAYER • IN DEVELOPMENT",
             Self::CloudComingSoon => "CLOUD MULTIPLAYER • IN DEVELOPMENT",
+            Self::CareerComingSoon => "CAREER MODE • IN DEVELOPMENT",
         }
     }
 
@@ -2399,6 +2401,7 @@ impl ModalityModal {
         match self {
             Self::LanComingSoon => "Local Area Network multiplayer is currently under active development.\nDirect IP connection, auto-discovery broadcast, and dedicated headless server support are coming in an upcoming release.",
             Self::CloudComingSoon => "Worldwide online matchmaking and cloud lobbies are currently under active development.\nGlobal leaderboards, ranked matchmaking, and cloud ghost synchronization will debut in Phase 2.",
+            Self::CareerComingSoon => "Career campaign progression for this motorsport category is currently under development.\nTier ladders, championship calendars, vehicle unlocking, and trophy progression are coming soon.",
         }
     }
 }

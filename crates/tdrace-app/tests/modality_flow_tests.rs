@@ -334,6 +334,65 @@ fn test_in_development_lan_cloud_modals() {
 }
 
 #[test]
+fn test_career_mode_coming_soon_for_non_gt_modules() {
+    let mut session = RaceSession::new();
+    session.switch_to_rally();
+    assert_eq!(session.active_module_id, "rally");
+
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::SinglePlayer,
+        selected_idx: 2, // Career Mode
+        modal: None,
+    };
+
+    session.input.gamepad.snapshot.btn_a_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_a_pressed = false;
+
+    // Must show CareerComingSoon modal without changing the active module to GT
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 2,
+            modal: Some(ModalityModal::CareerComingSoon),
+        }
+    );
+    assert_eq!(session.active_module_id, "rally");
+
+    // Dismiss modal with B button
+    session.input.gamepad.snapshot.btn_b_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_b_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 2,
+            modal: None,
+        }
+    );
+    assert_eq!(session.active_module_id, "rally");
+
+    // Now switch to GT module and verify that Career Mode launches GT career tier
+    session.switch_to_gt();
+    assert_eq!(session.active_module_id, "gt");
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::SinglePlayer,
+        selected_idx: 2, // Career Mode
+        modal: None,
+    };
+
+    session.input.gamepad.snapshot.btn_a_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_a_pressed = false;
+
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert!(session.championship_session.is_some());
+}
+
+#[test]
 fn test_menu_backward_transition_to_modality_select() {
     let mut session = RaceSession::new();
     session.state = GameState::Menu;

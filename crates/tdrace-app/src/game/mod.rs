@@ -4294,11 +4294,22 @@ impl RaceSession {
                     }
                     ModalityItem::CareerMode => {
                         self.audio.play_sfx(SfxType::UiSelect);
-                        if self.active_module_id == "nascar" {
-                            self.start_nascar_championship();
-                        } else {
-                            let tier = self.active_career_progress.level.clamp(1, 5);
-                            self.start_gt_career_tier(tier);
+                        match self.active_module_id {
+                            "gt" | "gt_challenge" | "f1" => {
+                                let tier = self.active_career_progress.level.clamp(1, 5);
+                                self.start_gt_career_tier(tier);
+                            }
+                            "nascar" => {
+                                self.start_nascar_championship();
+                            }
+                            _ => {
+                                modal = Some(ModalityModal::CareerComingSoon);
+                                self.state = GameState::ModalitySelect {
+                                    category,
+                                    selected_idx,
+                                    modal,
+                                };
+                            }
                         }
                         return;
                     }
