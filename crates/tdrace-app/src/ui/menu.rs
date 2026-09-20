@@ -2088,27 +2088,27 @@ pub fn render_controls_screen(
 
 use crate::tournament::ChampionshipSession;
 
-static APP_ICON_PNG: &[u8] = include_bytes!("../../../../assets/icons/icon-128.png");
-static APP_ICON_TEXTURE: std::sync::Mutex<Option<Texture2D>> = std::sync::Mutex::new(None);
+static CLASSIC_ARCADE_ICON_PNG: &[u8] = include_bytes!("../../../../assets/icons/classic_arcade-128.png");
+static CLASSIC_ARCADE_ICON_TEXTURE: std::sync::Mutex<Option<Texture2D>> = std::sync::Mutex::new(None);
 
-/// Retrieves or lazily decodes the official TDRace Kinetic Speed Slant application icon texture.
-fn get_app_icon_texture() -> Texture2D {
-    let mut guard = APP_ICON_TEXTURE.lock().unwrap_or_else(|e| e.into_inner());
+/// Retrieves or lazily decodes the official Classic Arcade Dual-Tone Checkered Gamepad icon texture.
+fn get_classic_arcade_icon_texture() -> Texture2D {
+    let mut guard = CLASSIC_ARCADE_ICON_TEXTURE.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(tex) = guard.as_ref() {
         return tex.clone();
     }
-    let img = Image::from_file_with_format(APP_ICON_PNG, None)
-        .expect("failed to decode embedded app icon PNG");
+    let img = Image::from_file_with_format(CLASSIC_ARCADE_ICON_PNG, None)
+        .expect("failed to decode embedded classic arcade icon PNG");
     let tex = Texture2D::from_image(&img);
     tex.set_filter(macroquad::texture::FilterMode::Linear);
     *guard = Some(tex.clone());
     tex
 }
 
-/// Renders the official Kinetic Speed Slant application icon for the Classic Arcade Motorsport module.
+/// Renders the Dual-Tone Checkered Gamepad emblem for the Classic Arcade Motorsport module.
 fn draw_classic_arcade_icon(cx: f32, cy: f32, s: f32, is_sel: bool, accent: Color) {
-    let tex = get_app_icon_texture();
-    let dim = 46.0 * s;
+    let tex = get_classic_arcade_icon_texture();
+    let dim = 48.0 * s;
     let x = cx - dim * 0.5;
     let y = cy - dim * 0.5;
 
