@@ -475,5 +475,131 @@ fn test_classic_mode_bot_color_schemes_distinct_from_player_sprite() {
     }
 }
 
+#[test]
+fn test_career_mode_bot_color_schemes_use_masked_colors_and_player_uses_factory() {
+    use tdrace_app::catalog::find_model_by_id;
+    use tdrace_app::game::RaceSession;
+    use tdrace_app::ui::menu::GameMode;
+
+    for tier in 1..=5 {
+        let mut session = RaceSession::new();
+        session.start_gt_career_tier(tier);
+
+        assert_eq!(session.game_mode, GameMode::Career);
+        assert!(session.cars.len() >= 4, "Roster must include player and bots");
+
+        let player_model_id = session.car_model_ids[0].expect("Player must have model id in GT career");
+        let player_model = find_model_by_id(player_model_id).expect("Model must exist in catalog");
+
+        // Human player must use original sprite color schema (factory livery)
+        let player_scheme = session.color_schemes[0];
+        let p_dr = (player_scheme.primary.r - player_model.primary_color.r).abs();
+        let p_dg = (player_scheme.primary.g - player_model.primary_color.g).abs();
+        let p_db = (player_scheme.primary.b - player_model.primary_color.b).abs();
+        assert!(
+            p_dr < 0.05 && p_dg < 0.05 && p_db < 0.05,
+            "Tier {}: Player in career mode must use original sprite color schema (factory livery)",
+            tier
+        );
+
+        // All bots must NOT match their vehicle model factory livery (must use masked colors)
+        // and must have primary colors visually distinct from the player model's factory primary color.
+        for i in 1..session.cars.len() {
+            let bot_scheme = session.color_schemes[i];
+            let bot_model_id = session.car_model_ids[i].expect("Bot must have model id in GT career");
+            let bot_model = find_model_by_id(bot_model_id).expect("Bot model must exist in catalog");
+
+            let dr = (bot_scheme.primary.r - bot_model.primary_color.r).abs();
+            let dg = (bot_scheme.primary.g - bot_model.primary_color.g).abs();
+            let db = (bot_scheme.primary.b - bot_model.primary_color.b).abs();
+            let is_factory = dr < 0.05 && dg < 0.05 && db < 0.05;
+
+            assert!(
+                !is_factory,
+                "Tier {}: Bot {} must not match factory livery; must use masked colors",
+                tier, i
+            );
+
+            let dr_p = (bot_scheme.primary.r - player_model.primary_color.r).abs();
+            let dg_p = (bot_scheme.primary.g - player_model.primary_color.g).abs();
+            let db_p = (bot_scheme.primary.b - player_model.primary_color.b).abs();
+            let dist = (dr_p * dr_p + dg_p * dg_p + db_p * db_p).sqrt();
+
+            assert!(
+                dist >= 0.20,
+                "Tier {}: Bot {} color ({:?}) is too close to player sprite color ({:?}), dist = {:.3}",
+                tier, i, bot_scheme.primary, player_model.primary_color, dist
+            );
+        }
+    }
+}
+
+#[test]
+fn test_gt_models_mask_tinting_transforms_bodywork_pixels() {
+    use macroquad::color::Color;
+    use macroquad::texture::Image;
+    use std::path::Path;
+    use tdrace_app::render::vehicle_assets::apply_vehicle_tint;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let topdown_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/gt");
+
+    let gt_models = [
+        "gt_toyota_supra_gt4",
+        "gt_bmw_m4_gt4",
+        "gt_aston_vantage_gt4",
+        "gt_porsche_718_gt4",
+        "gt_porsche_911_gt3r",
+    ];
+
+    let target_primary = Color::new(0.85, 0.10, 0.90, 1.0); // Vivid Magenta/Purple
+    let target_secondary = Color::new(0.10, 0.95, 0.90, 1.0); // Cyan
+
+    for model_id in gt_models {
+        let path = topdown_dir.join(format!("{}.png", model_id));
+        let bytes = std::fs::read(&path)
+            .unwrap_or_else(|e| panic!("Failed to read {}: {:?}", model_id, e));
+        let original_img = Image::from_file_with_format(&bytes, None)
+            .unwrap_or_else(|e| panic!("Failed to parse image {}: {:?}", model_id, e));
+
+        let tinted_img = apply_vehicle_tint(&original_img, model_id, target_primary, target_secondary);
+
+        assert_eq!(
+            original_img.bytes.len(),
+            tinted_img.bytes.len(),
+            "Tinted image dimensions must match original for {}",
+            model_id
+        );
+
+        let mut changed_pixels = 0;
+        let mut total_opaque = 0;
+
+        for (orig, tinted) in original_img
+            .bytes
+            .chunks_exact(4)
+            .zip(tinted_img.bytes.chunks_exact(4))
+        {
+            if orig[3] == 0 {
+                assert_eq!(tinted[3], 0, "Transparent pixel modified in {}", model_id);
+                continue;
+            }
+            total_opaque += 1;
+
+            if orig != tinted {
+                changed_pixels += 1;
+            }
+        }
+
+        assert!(
+            changed_pixels > 0,
+            "Mask tinting must modify bodywork pixels for GT model {}. Changed: {}/{}",
+            model_id,
+            changed_pixels,
+            total_opaque
+        );
+    }
+}
+
+
 
 

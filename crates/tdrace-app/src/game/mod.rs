@@ -8752,7 +8752,7 @@ impl RaceSession {
             let car = &self.cars[i];
             let is_player = !self.is_split_screen() && i == 0 || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
-            let effective_scheme = if self.active_module_id == "classic" && is_player {
+            let effective_scheme = if (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
                 if let Some(m) = model_id.and_then(crate::catalog::find_model_by_id) {
                     CarColorScheme {
                         primary: m.primary_color,

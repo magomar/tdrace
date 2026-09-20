@@ -86,10 +86,26 @@ pub fn apply_vehicle_tint(base_img: &Image, model_id: &str, primary: Color, seco
                 (body, accent)
             }
             _ => {
-                // Neutral / white / light-grey bodywork -> primary color
-                let body = lum > 0.65 && sat < 0.22;
-                // Accent livery graphics -> secondary color
-                let accent = g > 0.58 && r > 0.45 && b < 0.45 && sat > 0.30;
+                let (cat_body, cat_accent) = if let Some(m) = crate::catalog::find_model_by_id(model_id) {
+                    let dr_p = (r - m.primary_color.r).abs();
+                    let dg_p = (g - m.primary_color.g).abs();
+                    let db_p = (b - m.primary_color.b).abs();
+                    let dist_p = (dr_p * dr_p + dg_p * dg_p + db_p * db_p).sqrt();
+                    let is_p = dist_p < 0.28 && sat > 0.10;
+
+                    let dr_s = (r - m.secondary_color.r).abs();
+                    let dg_s = (g - m.secondary_color.g).abs();
+                    let db_s = (b - m.secondary_color.b).abs();
+                    let dist_s = (dr_s * dr_s + dg_s * dg_s + db_s * db_s).sqrt();
+                    let is_s = dist_s < 0.28 && sat > 0.10;
+
+                    (is_p, is_s)
+                } else {
+                    (false, false)
+                };
+
+                let body = (lum > 0.65 && sat < 0.22) || cat_body;
+                let accent = (!body && (g > 0.58 && r > 0.45 && b < 0.45 && sat > 0.30)) || cat_accent;
                 (body, accent)
             }
         };
