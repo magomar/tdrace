@@ -394,8 +394,30 @@ mod tests {
         assert_eq!(classic.vehicles().len(), 4);
         assert_eq!(classic.tracks().len(), 10);
         assert!(!classic.drivers().is_empty());
-        assert_eq!(classic.default_vehicle_id(), "sports_car");
+        assert_eq!(classic.default_vehicle_id(), "classic_gt");
         assert_eq!(classic.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
+
+        let vehicle_ids: Vec<_> = classic.vehicles().into_iter().map(|v| v.id).collect();
+        assert_eq!(vehicle_ids, vec!["classic_gt", "classic_nascar", "classic_offroad", "classic_kart"]);
+
+        // Verify arcade assist configs are active across all 4 fantasy vehicles
+        let gt = ClassicGameModule::car_classic_gt();
+        assert!(gt.assists.tcs_enabled);
+        assert!(gt.assists.esc_enabled);
+        assert!(gt.assists.counter_steer_assist_enabled);
+        assert!(gt.top_speed_mps * 3.6 > 210.0);
+
+        let nascar = ClassicGameModule::car_classic_nascar();
+        assert!(nascar.top_speed_mps * 3.6 > 240.0);
+        assert!(nascar.assists.counter_steer_assist_enabled);
+
+        let offroad = ClassicGameModule::car_classic_offroad();
+        assert_eq!(offroad.mass, 680.0);
+        assert!(offroad.tire.drift_slide_friction >= 0.94);
+
+        let kart = ClassicGameModule::car_classic_kart();
+        assert_eq!(kart.mass, 165.0);
+        assert!(kart.steer_speed >= 10.0);
     }
 
     #[test]

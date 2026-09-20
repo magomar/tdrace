@@ -17,6 +17,72 @@ impl ClassicGameModule {
     pub fn new() -> Self {
         Self
     }
+
+    /// 480 BHP Arcade GT Coupe: balanced RWD dynamics, high grip, forgiving slip.
+    pub fn car_classic_gt() -> CarConfig {
+        let mut cfg = CarConfig::sports_car();
+        cfg.mass = 1150.0;
+        cfg.max_engine_force = 7800.0;
+        cfg.top_speed_mps = 60.5; // ~218 km/h
+        cfg.max_brake_force = 13500.0;
+        cfg.downforce_coefficient = 0.95;
+        cfg.steer_speed = 7.0;
+        cfg.steer_return_speed = 9.0;
+        cfg.tire.drift_slide_friction = 0.94;
+        cfg.tire.stiffness_b = 10.5;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg
+    }
+
+    /// 750 BHP Arcade Stock Car: roaring speedway V8, planted rear, spin-proof stability.
+    pub fn car_classic_nascar() -> CarConfig {
+        let mut cfg = CarConfig::stock_car_ta1();
+        cfg.mass = 1280.0;
+        cfg.max_engine_force = 10500.0;
+        cfg.top_speed_mps = 68.0; // ~245 km/h
+        cfg.max_brake_force = 18000.0;
+        cfg.max_steer_angle = 0.56;
+        cfg.steer_speed = 8.0;
+        cfg.steer_return_speed = 10.5;
+        cfg.downforce_coefficient = 1.45;
+        cfg.tire.drift_slide_friction = 0.93;
+        cfg.tire.stiffness_b = 11.0;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg
+    }
+
+    /// 350 BHP Extreme Off-Road Buggy: high suspension travel, all-terrain forgiving grip.
+    pub fn car_classic_offroad() -> CarConfig {
+        let mut cfg = CarConfig::sand_rail();
+        cfg.mass = 680.0;
+        cfg.max_engine_force = 8200.0;
+        cfg.top_speed_mps = 54.2; // ~195 km/h
+        cfg.max_steer_angle = 0.76;
+        cfg.steer_speed = 9.0;
+        cfg.steer_return_speed = 11.0;
+        cfg.downforce_coefficient = 0.85;
+        cfg.tire.drift_slide_friction = 0.95;
+        cfg.tire.stiffness_b = 9.0;
+        cfg.weight_transfer_longitudinal = 0.65;
+        cfg.weight_transfer_lateral = 0.65;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg
+    }
+
+    /// 45 BHP 200cc Arcade Sprint Kart: 1:1 direct steering, ultra-light, razor apex grip.
+    pub fn car_classic_kart() -> CarConfig {
+        let mut cfg = CarConfig::kart();
+        cfg.mass = 165.0;
+        cfg.max_engine_force = 2600.0;
+        cfg.top_speed_mps = 34.8; // ~125 km/h
+        cfg.max_steer_angle = 0.65;
+        cfg.steer_speed = 10.0;
+        cfg.steer_return_speed = 14.0;
+        cfg.tire.drift_slide_friction = 0.90;
+        cfg.tire.stiffness_b = 13.0;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg
+    }
 }
 
 impl Default for ClassicGameModule {
@@ -50,17 +116,17 @@ impl GameModule for ClassicGameModule {
     fn vehicles(&self) -> Vec<VehicleModelDefinition> {
         vec![
             VehicleModelDefinition {
-                id: "sports_car",
-                name: "GT Sports Coupe",
-                tag: "BALANCED RWD",
-                description: "Balanced RWD arcade dynamics, responsive rack, 208 km/h top speed.",
-                config: CarConfig::sports_car(),
+                id: "classic_gt",
+                name: "Apex Phantom GT",
+                tag: "ARCADE GT COUPE",
+                description: "Balanced fantasy GT racer with razor-sharp arcade handling, high grip & 218 km/h top speed.",
+                config: Self::car_classic_gt(),
                 visual_type: VehicleVisualType::TouringGT {
                     widebody: true,
                     gt_wing: true,
                     diffuser: true,
                 },
-                stats: (0.85, 0.80, 0.75, 0.65),
+                stats: (0.85, 0.88, 0.90, 0.70),
                 default_schemes: vec![
                     CarColorScheme::from_index(0),
                     CarColorScheme::from_index(1),
@@ -69,52 +135,54 @@ impl GameModule for ClassicGameModule {
                 ],
             },
             VehicleModelDefinition {
-                id: "drift_car",
-                name: "Tuned Drift Spec",
-                tag: "PRO SLIDE",
-                description: "High-power slide machine with loose rear, wide lock & snappy counter-steer.",
-                config: CarConfig::drift_car(),
-                visual_type: VehicleVisualType::TouringGT {
-                    widebody: true,
-                    gt_wing: true,
-                    diffuser: true,
+                id: "classic_nascar",
+                name: "Thunderbolt Stock V8",
+                tag: "ARCADE SPEEDWAY STOCK",
+                description: "Roaring 750 BHP stock car with planted high-speed stability and forgiving drift control.",
+                config: Self::car_classic_nascar(),
+                visual_type: VehicleVisualType::StockCar {
+                    tall_wing: true,
+                    roof_fins: true,
+                    window_net: true,
                 },
-                stats: (0.80, 0.85, 0.50, 0.98),
+                stats: (0.95, 0.90, 0.85, 0.80),
                 default_schemes: vec![
                     CarColorScheme::from_index(4),
+                    CarColorScheme::from_index(0),
                     CarColorScheme::from_index(5),
                 ],
             },
             VehicleModelDefinition {
-                id: "kart",
-                name: "125cc Shifter Kart",
-                tag: "APEX GRIP",
-                description: "Ultra-lightweight direct steering with extreme apex cornering grip.",
-                config: CarConfig::kart(),
+                id: "classic_offroad",
+                name: "Vortex Dune Crusher",
+                tag: "EXTREME OFF-ROAD BUGGY",
+                description: "Long-travel dune & stunt buggy with all-terrain arcade traction and high jump compliance.",
+                config: Self::car_classic_offroad(),
+                visual_type: VehicleVisualType::SandRail {
+                    lightbar: true,
+                    whip_antenna: true,
+                    paddle_tires: true,
+                },
+                stats: (0.82, 0.92, 0.88, 0.92),
+                default_schemes: vec![
+                    CarColorScheme::from_index(3),
+                    CarColorScheme::from_index(1),
+                    CarColorScheme::from_index(2),
+                ],
+            },
+            VehicleModelDefinition {
+                id: "classic_kart",
+                name: "Turbo Dart 200cc",
+                tag: "ARCADE SPRINT KART",
+                description: "Ultra-agile fantasy micro-kart with 1:1 direct steering and impossible-to-spin apex grip.",
+                config: Self::car_classic_kart(),
                 visual_type: VehicleVisualType::GoKart {
                     exposed_driver: true,
                     side_bumpers: true,
                 },
-                stats: (0.65, 0.95, 0.95, 0.40),
+                stats: (0.70, 0.96, 0.98, 0.45),
                 default_schemes: vec![
                     CarColorScheme::from_index(5),
-                    CarColorScheme::from_index(1),
-                ],
-            },
-            VehicleModelDefinition {
-                id: "rally_car",
-                name: "AWD Turbo Rally",
-                tag: "AWD ALL-TERRAIN",
-                description: "All-wheel-drive traction with compliant suspension for mixed surfaces.",
-                config: CarConfig::rally_car(),
-                visual_type: VehicleVisualType::RallyHatch {
-                    roof_scoop: true,
-                    mudflaps: true,
-                    large_wing: true,
-                },
-                stats: (0.78, 0.90, 0.85, 0.75),
-                default_schemes: vec![
-                    CarColorScheme::from_index(3),
                     CarColorScheme::from_index(2),
                 ],
             },
@@ -122,7 +190,7 @@ impl GameModule for ClassicGameModule {
     }
 
     fn default_vehicle_id(&self) -> &'static str {
-        "sports_car"
+        "classic_gt"
     }
 
     fn tracks(&self) -> Vec<TrackDefinition> {
