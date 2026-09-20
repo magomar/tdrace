@@ -28,3 +28,33 @@ verify-okf:
 # Re-ingest game tracks and vehicle specs into JSON datasets
 ingest-assets:
     python3 scripts/generate_asset_data.py
+
+# Rebuild both static web portals (Wiki + Showroom) after re-ingesting assets
+build-portals:
+    @echo "🌐 Rebuilding static web portals (Wiki + Showroom)..."
+    cd portals && bun run build:all
+
+# Rebuild static site for Option A (Astro + Starlight Wiki)
+build-wiki:
+    @echo "📚 Building static site for TdRace Wiki..."
+    cd portals && bun run build:starlight
+
+# Rebuild static site for Option B (Motorsport Showroom)
+build-showroom:
+    @echo "🏎️  Building static site for Motorsport Showroom..."
+    cd portals && bun run build:showroom
+
+# ------------------------------------------------------------------------------
+# 📦 WebAssembly Game Site
+# ------------------------------------------------------------------------------
+
+# Build WebAssembly distribution for web browsers
+build-web:
+    @echo "🌐 Building WebAssembly distribution..."
+    ./web/build_web.sh
+
+# Start local web server for WebAssembly game in browser (port 8080)
+serve-web: build-web
+    @echo "🌐 Serving WebAssembly game at http://localhost:8080 (Ctrl+C to stop)..."
+    cd web/dist && python3 -m http.server 8080
+

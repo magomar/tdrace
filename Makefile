@@ -27,7 +27,7 @@ PYTHON   := $(VENV_DIR)/bin/python
 MATURIN  := $(VENV_DIR)/bin/maturin
 PYTEST   := $(VENV_DIR)/bin/pytest
 
-.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean wiki showroom
+.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean wiki showroom build-portals build-wiki build-showroom ingest-assets verify-okf
 
 help: ## Display this help screen
 	@echo -e "$(CYAN)🏎️  TDRace Make Commands$(RESET)"
@@ -38,7 +38,15 @@ help: ## Display this help screen
 	@echo -e "  $(GREEN)make run ARGS=\"--rally\"$(RESET)   # Launch Rally module via ARGS"
 	@echo -e "  $(GREEN)make run-kart$(RESET)             # Dedicated target for Karting"
 	@echo -e "  $(GREEN)make test-rust -- --nocapture$(RESET)\n"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "  $(GREEN)%-16s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "; cur_section=""} \
+		/^# ---+$$/ {getline; if ($$0 ~ /^# /) { cur_section=substr($$0, 3); getline; next } } \
+		/^[a-zA-Z0-9_-]+:.*?## / { \
+			if (cur_section != "") { \
+				printf "\n\033[1;34m[%s]\033[0m\n", cur_section; \
+				cur_section=""; \
+			} \
+			printf "  $(GREEN)%-18s$(RESET) %s\n", $$1, $$2; \
+		}' $(MAKEFILE_LIST)
 
 # ------------------------------------------------------------------------------
 # 🛠️ Setup & Installation
@@ -176,6 +184,27 @@ wiki: ## Launch Option A (Astro + Starlight Technical Reference Manual on port 4
 showroom: ## Launch Option B (Custom Motorsport Showroom & Physics Lab on port 4322)
 	@echo -e "$(CYAN)🏎️  Launching TdRace Showroom (Custom Astro + Tailwind) on http://localhost:4322...$(RESET)"
 	@cd portals/option-b-showroom && bun run dev -- --host 0.0.0.0 --port 4322
+
+build-portals: ## Rebuild both static web portals (Wiki + Showroom) after re-ingesting assets
+	@echo -e "$(CYAN)🌐 Rebuilding static web portals (Wiki + Showroom)...$(RESET)"
+	@cd portals && bun run build:all
+
+build-wiki: ## Rebuild static site for Option A (Astro + Starlight Wiki)
+	@echo -e "$(CYAN)📚 Building static site for TdRace Wiki...$(RESET)"
+	@cd portals && bun run build:starlight
+
+build-showroom: ## Rebuild static site for Option B (Motorsport Showroom)
+	@echo -e "$(CYAN)🏎️  Building static site for Motorsport Showroom...$(RESET)"
+	@cd portals && bun run build:showroom
+
+ingest-assets: ## Re-ingest game tracks and vehicle specs into JSON datasets
+	@echo -e "$(YELLOW)🔄 Ingesting circuits and vehicles into portal data...$(RESET)"
+	python3 scripts/generate_asset_data.py
+
+verify-okf: ## Verify Open Knowledge Framework (OKF) documentation links and cross-references
+	@echo -e "$(GREEN)🔍 Verifying OKF documentation links...$(RESET)"
+	python3 scripts/verify_okf.py
+
 
 # ------------------------------------------------------------------------------
 # 🧹 Clean
