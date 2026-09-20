@@ -413,11 +413,19 @@ fn test_classic_mask_tinting_transforms_bodywork_pixels() {
             total_opaque
         );
 
-        // Verify that a substantial portion of opaque pixels (bodywork) was tinted
         let change_ratio = changed_pixels as f32 / total_opaque as f32;
+        let expected_min_ratio = match model_id {
+            "classic_offroad" => 0.14,
+            "classic_kart" => 0.30,
+            "classic_gt" => 0.38,
+            "classic_nascar" => 0.50,
+            "classic_rally" => 0.50,
+            _ => 0.10,
+        };
         assert!(
-            change_ratio > 0.05,
-            "Expected at least 5% of opaque pixels tinted on {}, got {:.1}%",
+            change_ratio >= expected_min_ratio,
+            "Expected at least {:.1}% of opaque pixels tinted on {}, got {:.1}%",
+            expected_min_ratio * 100.0,
             model_id,
             change_ratio * 100.0
         );

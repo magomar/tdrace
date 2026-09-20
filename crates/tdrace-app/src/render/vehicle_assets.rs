@@ -56,26 +56,34 @@ pub fn apply_vehicle_tint(base_img: &Image, model_id: &str, primary: Color, seco
 
         let (is_body, is_accent) = match model_id {
             "classic_gt" => {
-                let body = r > 0.45 && r > g * 1.4 && r > b * 1.4;
+                // Red bodywork: all pixels where red is dominant, excluding neutral shadows and glass
+                let body = r > g * 1.08 && r > b * 1.08 && r > 0.12 && sat > 0.10;
                 let accent = lum > 0.65 && sat < 0.22;
                 (body, accent)
             }
             "classic_nascar" => {
-                let body = b > 0.40 && b > r * 1.3 && b > g * 1.1;
-                let accent = r > 0.55 && g > 0.45 && b < 0.30;
+                // Blue bodywork: all pixels where blue is dominant
+                let body = b > r * 1.08 && b > g * 1.05 && b > 0.12 && sat > 0.10;
+                let accent = r > 0.45 && g > 0.35 && b < 0.35 && sat > 0.20;
                 (body, accent)
             }
             "classic_offroad" => {
-                let body = r > 0.60 && g > 0.20 && g < 0.70 && b < 0.30;
-                (body, false)
+                // Orange body & tubular frame: red is high, green moderate, blue low
+                let body = r > 0.18 && r > b * 1.15 && r > g * 1.05 && (g > 0.08 || sat > 0.35);
+                let accent = lum > 0.65 && sat < 0.22;
+                (body, accent)
             }
             "classic_kart" => {
-                let body = g > 0.40 && g > r * 1.3 && g > b * 1.3;
-                (body, false)
+                // Green bodywork, pods and front fairing: green is dominant
+                let body = g > r * 1.08 && g > b * 1.08 && g > 0.12 && sat > 0.10;
+                let accent = lum > 0.65 && sat < 0.22;
+                (body, accent)
             }
             "classic_rally" => {
-                let body = r > 0.50 && g > 0.45 && b < 0.35;
-                (body, false)
+                // Yellow bodywork: red and green both high, blue low
+                let body = r > 0.18 && g > 0.16 && (r + g) > b * 1.8 && sat > 0.15;
+                let accent = lum > 0.65 && sat < 0.22;
+                (body, accent)
             }
             _ => {
                 // Neutral / white / light-grey bodywork -> primary color
@@ -87,14 +95,15 @@ pub fn apply_vehicle_tint(base_img: &Image, model_id: &str, primary: Color, seco
         };
 
         if is_body {
-            let val = max_c;
-            pixel[0] = ((primary.r * val * 1.10).clamp(0.0, 1.0) * 255.0) as u8;
-            pixel[1] = ((primary.g * val * 1.10).clamp(0.0, 1.0) * 255.0) as u8;
-            pixel[2] = ((primary.b * val * 1.10).clamp(0.0, 1.0) * 255.0) as u8;
+            let val = (max_c * 1.35).clamp(0.0, 1.0);
+            pixel[0] = ((primary.r * val).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[1] = ((primary.g * val).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[2] = ((primary.b * val).clamp(0.0, 1.0) * 255.0) as u8;
         } else if is_accent {
-            pixel[0] = ((secondary.r * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
-            pixel[1] = ((secondary.g * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
-            pixel[2] = ((secondary.b * lum * 1.15).clamp(0.0, 1.0) * 255.0) as u8;
+            let val = (lum * 1.25).clamp(0.0, 1.0);
+            pixel[0] = ((secondary.r * val).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[1] = ((secondary.g * val).clamp(0.0, 1.0) * 255.0) as u8;
+            pixel[2] = ((secondary.b * val).clamp(0.0, 1.0) * 255.0) as u8;
         }
     }
     tinted
