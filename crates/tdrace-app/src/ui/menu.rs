@@ -2129,6 +2129,31 @@ fn draw_classic_arcade_icon(cx: f32, cy: f32, s: f32, is_sel: bool, accent: Colo
     );
 }
 
+/// Returns bounding box (x, y, w, h) for the Grand Hub profile badge.
+pub fn module_select_badge_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let card_w = (sw * 0.72).clamp(scaler.s(480.0), scaler.s(720.0));
+    let card_x = (sw - card_w) * 0.5;
+    let badge_y = scaler.s(60.0);
+    let badge_h = scaler.s(68.0);
+    (card_x, badge_y, card_w, badge_h)
+}
+
+/// Returns bounding box (x, y, w, h) for a Grand Hub motorsport module card.
+pub fn module_select_card_rect(sw: f32, sh: f32, idx: usize, total_modules: usize) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let card_w = (sw * 0.72).clamp(scaler.s(480.0), scaler.s(720.0));
+    let card_x = (sw - card_w) * 0.5;
+    let badge_y = scaler.s(60.0);
+    let badge_h = scaler.s(68.0);
+    let card_gap = scaler.s(8.0);
+    let start_y = badge_y + badge_h + scaler.s(10.0);
+    let available_h = (sh - start_y - scaler.s(36.0)).max(scaler.s(240.0));
+    let card_h = ((available_h - card_gap * (total_modules as f32 - 1.0)) / total_modules as f32).clamp(scaler.s(56.0), scaler.s(76.0));
+    let curr_y = start_y + (idx as f32) * (card_h + card_gap);
+    (card_x, curr_y, card_w, card_h)
+}
+
 /// Renders the Motorsport Grand Hub Module Selection Menu.
 pub fn render_module_select_menu(
     fonts: &Fonts,
@@ -2600,6 +2625,28 @@ impl ModalityModal {
             Self::CareerComingSoon => "Career campaign progression for this motorsport category is currently under development.\nTier ladders, championship calendars, vehicle unlocking, and trophy progression are coming soon.",
         }
     }
+}
+
+/// Returns bounding box (x, y, w, h) for a modality card in the Modality Selection screen.
+pub fn modality_card_rect(sw: f32, sh: f32, category: ModalityCategory, idx: usize) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let tab_w = (sw * 0.28).clamp(scaler.s(160.0), scaler.s(260.0));
+    let tab_gap = scaler.s(12.0);
+    let total_tabs_w = tab_w * 3.0 + tab_gap * 2.0;
+    let tabs_start_x = (sw - total_tabs_w) * 0.5;
+
+    let col_w = total_tabs_w;
+    let col_x = tabs_start_x;
+    let start_y = scaler.s(104.0);
+    let available_h = (sh - start_y - scaler.s(36.0)).max(scaler.s(300.0));
+
+    let items = category.items();
+    let card_gap = scaler.s(8.0);
+    let card_h = ((available_h - card_gap * (items.len() as f32 - 1.0)) / items.len() as f32)
+        .clamp(scaler.s(54.0), scaler.s(88.0));
+    let curr_y = start_y + (idx as f32) * (card_h + card_gap);
+
+    (col_x, curr_y, col_w, card_h)
 }
 
 /// Renders the Race Modality Selection stage inserted between the Grand Hub and Circuit Selection.

@@ -69,37 +69,107 @@ impl PlayerProfile {
     }
 }
 
+/// Category-specific aggregated career statistics.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct CategoryCareerStats {
+    pub category: String,
+    pub total_races: u32,
+    pub wins: u32,
+    pub p2_count: u32,
+    pub p3_count: u32,
+    pub podiums: u32,
+    pub total_laps: u32,
+    pub total_stunt_score: u32,
+    pub total_collisions: u32,
+    pub clean_races: u32,
+    pub win_rate: f32,
+    pub podium_rate: f32,
+    pub clean_rate: f32,
+}
+
 /// Aggregated career statistics computed from persistent race history logs.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ProfileCareerStats {
     pub total_races: u32,
     pub wins: u32,
+    pub p2_count: u32,
+    pub p3_count: u32,
     pub podiums: u32,
     pub total_laps: u32,
     pub win_rate: f32,
     pub podium_rate: f32,
+    pub total_stunt_score: u32,
+    pub max_stunt_score: u32,
+    pub total_collisions: u32,
+    pub clean_races: u32,
+    pub clean_rate: f32,
     pub best_times: BTreeMap<String, f32>,
     pub best_circuit_times: BTreeMap<String, f32>,
+    pub category_stats: BTreeMap<String, CategoryCareerStats>,
 }
+
+pub type GlobalProfileStats = ProfileCareerStats;
 
 impl ProfileCareerStats {
     pub fn compute(races: &[RaceHistoryEntry]) -> Self {
         let mut total_races = 0u32;
         let mut wins = 0u32;
+        let mut p2_count = 0u32;
+        let mut p3_count = 0u32;
         let mut podiums = 0u32;
         let mut total_laps = 0u32;
+        let mut total_stunt_score = 0u32;
+        let mut max_stunt_score = 0u32;
+        let mut total_collisions = 0u32;
+        let mut clean_races = 0u32;
         let mut best_times: BTreeMap<String, f32> = BTreeMap::new();
         let mut best_circuit_times: BTreeMap<String, f32> = BTreeMap::new();
+        let mut category_stats: BTreeMap<String, CategoryCareerStats> = BTreeMap::new();
 
         for race in races {
             total_races += 1;
             total_laps += race.laps;
+            total_stunt_score = total_stunt_score.saturating_add(race.stunt_score);
+            max_stunt_score = max_stunt_score.max(race.stunt_score);
+            total_collisions = total_collisions.saturating_add(race.collisions);
+
+            if race.collisions == 0 {
+                clean_races += 1;
+            }
 
             if race.position == 1 {
                 wins += 1;
+            } else if race.position == 2 {
+                p2_count += 1;
+            } else if race.position == 3 {
+                p3_count += 1;
             }
             if race.position >= 1 && race.position <= 3 {
                 podiums += 1;
+            }
+
+            // Per-category aggregation
+            let cat_key = if race.category.is_empty() { "gt" } else { &race.category };
+            let cat_entry = category_stats.entry(cat_key.to_string()).or_insert_with(|| CategoryCareerStats {
+                category: cat_key.to_string(),
+                ..Default::default()
+            });
+            cat_entry.total_races += 1;
+            cat_entry.total_laps += race.laps;
+            cat_entry.total_stunt_score = cat_entry.total_stunt_score.saturating_add(race.stunt_score);
+            cat_entry.total_collisions = cat_entry.total_collisions.saturating_add(race.collisions);
+            if race.collisions == 0 {
+                cat_entry.clean_races += 1;
+            }
+            if race.position == 1 {
+                cat_entry.wins += 1;
+            } else if race.position == 2 {
+                cat_entry.p2_count += 1;
+            } else if race.position == 3 {
+                cat_entry.p3_count += 1;
+            }
+            if race.position >= 1 && race.position <= 3 {
+                cat_entry.podiums += 1;
             }
 
             if let Some(lap) = race.best_lap {
@@ -119,6 +189,15 @@ impl ProfileCareerStats {
             }
         }
 
+        // Finalize rates for each category
+        for cat in category_stats.values_mut() {
+            if cat.total_races > 0 {
+                cat.win_rate = (cat.wins as f32 / cat.total_races as f32) * 100.0;
+                cat.podium_rate = (cat.podiums as f32 / cat.total_races as f32) * 100.0;
+                cat.clean_rate = (cat.clean_races as f32 / cat.total_races as f32) * 100.0;
+            }
+        }
+
         let win_rate = if total_races > 0 {
             (wins as f32 / total_races as f32) * 100.0
         } else {
@@ -131,15 +210,29 @@ impl ProfileCareerStats {
             0.0
         };
 
+        let clean_rate = if total_races > 0 {
+            (clean_races as f32 / total_races as f32) * 100.0
+        } else {
+            0.0
+        };
+
         Self {
             total_races,
             wins,
+            p2_count,
+            p3_count,
             podiums,
             total_laps,
             win_rate,
             podium_rate,
+            total_stunt_score,
+            max_stunt_score,
+            total_collisions,
+            clean_races,
+            clean_rate,
             best_times,
             best_circuit_times,
+            category_stats,
         }
     }
 }
@@ -158,6 +251,33 @@ pub struct RaceHistoryEntry {
     pub laps: u32,
     pub is_time_attack: bool,
     pub created_at: String,
+    // Enhanced Multi-Level Telemetry
+    pub category: String,
+    pub championship_name: Option<String>,
+    pub stunt_score: u32,
+    pub collisions: u32,
+}
+
+impl Default for RaceHistoryEntry {
+    fn default() -> Self {
+        Self {
+            id: None,
+            profile_id: 0,
+            track_id: String::new(),
+            car_name: String::new(),
+            position: 1,
+            total_cars: 1,
+            total_time: 0.0,
+            best_lap: None,
+            laps: 1,
+            is_time_attack: false,
+            created_at: String::new(),
+            category: "gt".to_string(),
+            championship_name: None,
+            stunt_score: 0,
+            collisions: 0,
+        }
+    }
 }
 
 /// Persistent career progression record for a specific motorsport module (e.g. "gt", "rally", etc.).

@@ -113,6 +113,10 @@ impl HallOfFameDb {
                 laps INTEGER NOT NULL,
                 is_time_attack INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL,
+                category TEXT NOT NULL DEFAULT 'gt',
+                championship_name TEXT,
+                stunt_score INTEGER NOT NULL DEFAULT 0,
+                collisions INTEGER NOT NULL DEFAULT 0,
                 FOREIGN KEY(profile_id) REFERENCES player_profiles(id) ON DELETE CASCADE
             );
             CREATE INDEX IF NOT EXISTS idx_race_history_profile ON race_history(profile_id, created_at DESC);
@@ -148,6 +152,22 @@ impl HallOfFameDb {
         );
         let _ = self.conn.execute(
             "ALTER TABLE profile_module_progress ADD COLUMN visited_tracks TEXT NOT NULL DEFAULT '[]'",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE race_history ADD COLUMN category TEXT NOT NULL DEFAULT 'gt'",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE race_history ADD COLUMN championship_name TEXT",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE race_history ADD COLUMN stunt_score INTEGER NOT NULL DEFAULT 0",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE race_history ADD COLUMN collisions INTEGER NOT NULL DEFAULT 0",
             [],
         );
 
@@ -419,8 +439,8 @@ impl HallOfFameDb {
         };
 
         self.conn.execute(
-            "INSERT INTO race_history (profile_id, track_id, car_name, position, total_cars, total_time, best_lap, laps, is_time_attack, created_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            "INSERT INTO race_history (profile_id, track_id, car_name, position, total_cars, total_time, best_lap, laps, is_time_attack, created_at, category, championship_name, stunt_score, collisions)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
             params![
                 record.profile_id,
                 record.track_id,
@@ -432,6 +452,10 @@ impl HallOfFameDb {
                 record.laps,
                 if record.is_time_attack { 1 } else { 0 },
                 created_at,
+                record.category,
+                record.championship_name,
+                record.stunt_score as i64,
+                record.collisions as i64,
             ],
         )?;
 
@@ -441,7 +465,8 @@ impl HallOfFameDb {
     /// Fetches up to `limit` recent race history records for a profile.
     pub fn get_history_for_profile(&self, profile_id: i64, limit: usize) -> Result<Vec<RaceHistoryEntry>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, profile_id, track_id, car_name, position, total_cars, total_time, best_lap, laps, is_time_attack, created_at
+            "SELECT id, profile_id, track_id, car_name, position, total_cars, total_time, best_lap, laps, is_time_attack, created_at,
+                    COALESCE(category, 'gt'), championship_name, COALESCE(stunt_score, 0), COALESCE(collisions, 0)
              FROM race_history
              WHERE profile_id = ?1
              ORDER BY id DESC
@@ -462,6 +487,10 @@ impl HallOfFameDb {
                 laps: row.get(8)?,
                 is_time_attack: is_ta != 0,
                 created_at: row.get(10)?,
+                category: row.get(11)?,
+                championship_name: row.get(12)?,
+                stunt_score: row.get::<_, i64>(13)? as u32,
+                collisions: row.get::<_, i64>(14)? as u32,
             })
         })?;
 
@@ -470,6 +499,54 @@ impl HallOfFameDb {
             list.push(r?);
         }
         Ok(list)
+    }
+
+    /// Fetches race history filtered optionally by category discipline.
+    pub fn get_history_for_profile_filtered(
+        &self,
+        profile_id: i64,
+        category: Option<&str>,
+        limit: usize,
+    ) -> Result<Vec<RaceHistoryEntry>> {
+        if let Some(cat) = category {
+            let mut stmt = self.conn.prepare(
+                "SELECT id, profile_id, track_id, car_name, position, total_cars, total_time, best_lap, laps, is_time_attack, created_at,
+                        COALESCE(category, 'gt'), championship_name, COALESCE(stunt_score, 0), COALESCE(collisions, 0)
+                 FROM race_history
+                 WHERE profile_id = ?1 AND (category = ?2 OR (?2 = 'gt' AND category IS NULL))
+                 ORDER BY id DESC
+                 LIMIT ?3",
+            )?;
+
+            let rows = stmt.query_map(params![profile_id, cat, limit as i64], |row| {
+                let is_ta: i32 = row.get(9)?;
+                Ok(RaceHistoryEntry {
+                    id: Some(row.get(0)?),
+                    profile_id: row.get(1)?,
+                    track_id: row.get(2)?,
+                    car_name: row.get(3)?,
+                    position: row.get::<_, i64>(4)? as usize,
+                    total_cars: row.get::<_, i64>(5)? as usize,
+                    total_time: row.get::<_, f64>(6)? as f32,
+                    best_lap: row.get::<_, Option<f64>>(7)?.map(|v| v as f32),
+                    laps: row.get(8)?,
+                    is_time_attack: is_ta != 0,
+                    created_at: row.get(10)?,
+                    category: row.get(11)?,
+                    championship_name: row.get(12)?,
+                    stunt_score: row.get::<_, i64>(13)? as u32,
+                    collisions: row.get::<_, i64>(14)? as u32,
+                })
+            })?;
+
+            let mut list = Vec::new();
+            for r in rows {
+                list.push(r?);
+            }
+            Ok(list)
+        } else {
+            self.get_history_for_profile(profile_id, limit)
+        }
     }
 
     /// Computes aggregated career statistics for a profile.
@@ -892,10 +969,22 @@ impl HallOfFameDb {
     }
 
     pub fn get_history_for_profile(&self, profile_id: i64, limit: usize) -> Result<Vec<RaceHistoryEntry>> {
+        self.get_history_for_profile_filtered(profile_id, None, limit)
+    }
+
+    pub fn get_history_for_profile_filtered(
+        &self,
+        profile_id: i64,
+        category: Option<&str>,
+        limit: usize,
+    ) -> Result<Vec<RaceHistoryEntry>> {
         let guard = self.history.lock().unwrap();
         let items: Vec<RaceHistoryEntry> = guard
             .iter()
-            .filter(|r| r.profile_id == profile_id)
+            .filter(|r| {
+                r.profile_id == profile_id
+                    && category.map_or(true, |c| r.category == c || (c == "gt" && r.category.is_empty()))
+            })
             .rev()
             .take(limit)
             .cloned()

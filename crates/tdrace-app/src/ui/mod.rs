@@ -27,7 +27,8 @@ pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, Play
 pub use hud::{format_lap_time, render_hud, PersonalBestNotification};
 pub use race_stats::render_race_stats_screen;
 pub use menu::{
-    pause_menu_layout, render_controls_screen, render_modality_select_screen, render_pause_menu,
+    modality_card_rect, module_select_badge_rect, module_select_card_rect, pause_menu_layout,
+    render_controls_screen, render_modality_select_screen, render_pause_menu,
     render_results_screen, render_track_select_menu, CarChoice, GameMode, GameModeChoice,
     MenuPanelFocus, ModalityCategory, ModalityItem, ModalityModal, PauseMenuButtonLayout,
     RaceResultEntry, TrackCatalogFilter, TrackChoice,

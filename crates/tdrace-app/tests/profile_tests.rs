@@ -91,6 +91,10 @@ fn test_race_history_logging_and_career_stats() {
             laps: 3,
             is_time_attack: false,
             created_at: "2026-08-27 10:00".to_string(),
+            category: "gt".to_string(),
+            championship_name: Some("GT World Challenge".to_string()),
+            stunt_score: 500,
+            collisions: 0,
         },
         RaceHistoryEntry {
             id: None,
@@ -104,6 +108,10 @@ fn test_race_history_logging_and_career_stats() {
             laps: 3,
             is_time_attack: false,
             created_at: "2026-08-27 10:15".to_string(),
+            category: "rally".to_string(),
+            championship_name: None,
+            stunt_score: 1200,
+            collisions: 1,
         },
         RaceHistoryEntry {
             id: None,
@@ -117,6 +125,10 @@ fn test_race_history_logging_and_career_stats() {
             laps: 3,
             is_time_attack: false,
             created_at: "2026-08-27 10:30".to_string(),
+            category: "gt".to_string(),
+            championship_name: None,
+            stunt_score: 3400,
+            collisions: 0,
         },
         RaceHistoryEntry {
             id: None,
@@ -130,6 +142,10 @@ fn test_race_history_logging_and_career_stats() {
             laps: 3,
             is_time_attack: false,
             created_at: "2026-08-27 10:45".to_string(),
+            category: "kart".to_string(),
+            championship_name: None,
+            stunt_score: 0,
+            collisions: 2,
         },
     ];
 
@@ -146,10 +162,20 @@ fn test_race_history_logging_and_career_stats() {
     let stats = db.get_stats_for_profile(pid).expect("Get aggregated stats");
     assert_eq!(stats.total_races, 4);
     assert_eq!(stats.wins, 2);
+    assert_eq!(stats.p2_count, 1);
+    assert_eq!(stats.p3_count, 0);
     assert_eq!(stats.podiums, 3);
     assert_eq!(stats.total_laps, 12);
     assert_eq!(stats.win_rate, 50.0);
     assert_eq!(stats.podium_rate, 75.0);
+    assert_eq!(stats.total_stunt_score, 5100);
+    assert_eq!(stats.max_stunt_score, 3400);
+    assert_eq!(stats.total_collisions, 3);
+    assert_eq!(stats.clean_races, 2);
+    assert_eq!(stats.clean_rate, 50.0);
+    assert_eq!(stats.category_stats.len(), 3);
+    assert_eq!(stats.category_stats.get("gt").unwrap().wins, 2);
+    assert_eq!(stats.category_stats.get("rally").unwrap().podiums, 1);
     assert_eq!(stats.best_times.get("classic_grand_prix"), Some(&24.5));
     assert_eq!(stats.best_times.get("oval_speedway"), Some(&13.8));
     assert_eq!(stats.best_times.get("drift_park"), Some(&22.1));
@@ -342,6 +368,7 @@ fn test_clear_profile_history_and_hall_of_fame() {
         laps: 3,
         is_time_attack: false,
         created_at: "2026-09-01 10:10".to_string(),
+        ..Default::default()
     };
     db.insert_race_history(&race_p1).unwrap();
 
@@ -357,6 +384,7 @@ fn test_clear_profile_history_and_hall_of_fame() {
         laps: 3,
         is_time_attack: false,
         created_at: "2026-09-01 10:15".to_string(),
+        ..Default::default()
     };
     db.insert_race_history(&race_p2).unwrap();
 
@@ -826,5 +854,106 @@ fn test_championship_completion_podium_trophy_awarded() {
     assert_eq!(session.active_career_progress.trophies_gold, 1);
     assert_eq!(session.state, GameState::ChampionshipStandings);
 }
+
+#[test]
+fn test_multi_level_career_stunt_and_collision_metrics() {
+    let db = HallOfFameDb::open_in_memory().expect("In-memory database should initialize");
+    let prof = db.seed_default_profile_if_empty().expect("Seed default profile");
+    let pid = prof.id.expect("Profile ID");
+
+    // Race 1: GT Cup, P1 (Win), 1200 stunt pts, 0 collisions (Clean)
+    let r1 = RaceHistoryEntry {
+        id: None,
+        profile_id: pid,
+        track_id: "monza".to_string(),
+        car_name: "GT4 Clubsport".to_string(),
+        position: 1,
+        total_cars: 8,
+        total_time: 125.0,
+        best_lap: Some(25.0),
+        laps: 5,
+        is_time_attack: false,
+        created_at: "2026-09-20 10:00".to_string(),
+        category: "gt".to_string(),
+        championship_name: Some("GT World Challenge".to_string()),
+        stunt_score: 1200,
+        collisions: 0,
+    };
+
+    // Race 2: Off-road Stunt Arena, P3 (Podium), 4500 stunt pts, 3 collisions
+    let r2 = RaceHistoryEntry {
+        id: None,
+        profile_id: pid,
+        track_id: "stunt_city".to_string(),
+        car_name: "Sand Rail Buggy".to_string(),
+        position: 3,
+        total_cars: 6,
+        total_time: 95.0,
+        best_lap: Some(15.0),
+        laps: 3,
+        is_time_attack: false,
+        created_at: "2026-09-20 11:00".to_string(),
+        category: "extreme_offroad".to_string(),
+        championship_name: Some("Freestyle Stunt Arena Cup".to_string()),
+        stunt_score: 4500,
+        collisions: 3,
+    };
+
+    // Race 3: NASCAR Oval, P2 (Podium), 200 stunt pts, 1 collision
+    let r3 = RaceHistoryEntry {
+        id: None,
+        profile_id: pid,
+        track_id: "daytona".to_string(),
+        car_name: "Stock Car Cup".to_string(),
+        position: 2,
+        total_cars: 12,
+        total_time: 150.0,
+        best_lap: Some(18.0),
+        laps: 6,
+        is_time_attack: false,
+        created_at: "2026-09-20 12:00".to_string(),
+        category: "nascar".to_string(),
+        championship_name: Some("Daytona 500".to_string()),
+        stunt_score: 200,
+        collisions: 1,
+    };
+
+    db.insert_race_history(&r1).unwrap();
+    db.insert_race_history(&r2).unwrap();
+    db.insert_race_history(&r3).unwrap();
+
+    let stats = db.get_stats_for_profile(pid).unwrap();
+    assert_eq!(stats.total_races, 3);
+    assert_eq!(stats.wins, 1);
+    assert_eq!(stats.p2_count, 1);
+    assert_eq!(stats.p3_count, 1);
+    assert_eq!(stats.podiums, 3);
+    assert_eq!(stats.total_stunt_score, 5900);
+    assert_eq!(stats.max_stunt_score, 4500);
+    assert_eq!(stats.total_collisions, 4);
+    assert_eq!(stats.clean_races, 1);
+    assert!((stats.clean_rate - 33.333).abs() < 0.1);
+
+    // Verify category filtered history
+    let gt_races = db.get_history_for_profile_filtered(pid, Some("gt"), 10).unwrap();
+    assert_eq!(gt_races.len(), 1);
+    assert_eq!(gt_races[0].track_id, "monza");
+    assert_eq!(gt_races[0].stunt_score, 1200);
+
+    let offroad_races = db.get_history_for_profile_filtered(pid, Some("extreme_offroad"), 10).unwrap();
+    assert_eq!(offroad_races.len(), 1);
+    assert_eq!(offroad_races[0].track_id, "stunt_city");
+    assert_eq!(offroad_races[0].collisions, 3);
+
+    // Verify per-category stats
+    let gt_cat = stats.category_stats.get("gt").unwrap();
+    assert_eq!(gt_cat.wins, 1);
+    assert_eq!(gt_cat.clean_races, 1);
+
+    let offroad_cat = stats.category_stats.get("extreme_offroad").unwrap();
+    assert_eq!(offroad_cat.total_stunt_score, 4500);
+    assert_eq!(offroad_cat.total_collisions, 3);
+}
+
 
 

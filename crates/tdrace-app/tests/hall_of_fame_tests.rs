@@ -242,6 +242,7 @@ fn test_hall_of_fame_clear_track_history_isolation() {
         laps: 3,
         is_time_attack: false,
         created_at: "2026-09-01 10:00".to_string(),
+        ..Default::default()
     };
     let race_b = RaceHistoryEntry {
         id: None,
@@ -255,6 +256,7 @@ fn test_hall_of_fame_clear_track_history_isolation() {
         laps: 3,
         is_time_attack: false,
         created_at: "2026-09-01 11:00".to_string(),
+        ..Default::default()
     };
     db.insert_race_history(&race_a).unwrap();
     db.insert_race_history(&race_b).unwrap();

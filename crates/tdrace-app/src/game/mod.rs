@@ -245,6 +245,7 @@ pub struct PlayerRaceTelemetry {
     pub best_lap_idx: Option<usize>,
     pub top_speed_mps: f32,
     pub stunt_stats: AcrobaticStats,
+    pub collision_count: u32,
 }
 
 /// Detailed breakdown of XP awarded after completing a race.
@@ -4117,16 +4118,41 @@ impl RaceSession {
             selected_idx = (selected_idx + 1) % num_items;
         }
 
+        let (sw, sh) = (screen_width_safe(), screen_height_safe());
+        let (mx, my) = mouse_position_safe();
+        let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+
+        let mut mouse_selected_item = None;
+        if mouse_clicked {
+            let (bx, by, bw, bh) = crate::ui::menu::module_select_badge_rect(sw, sh);
+            if mx >= bx && mx <= bx + bw && my >= by && my <= by + bh {
+                selected_idx = 0;
+                mouse_selected_item = Some(0);
+            } else {
+                let num_modules = 6;
+                for i in 0..num_modules {
+                    let (cx, cy, cw, ch) = crate::ui::menu::module_select_card_rect(sw, sh, i, num_modules);
+                    if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
+                        selected_idx = i + 1;
+                        mouse_selected_item = Some(i + 1);
+                        break;
+                    }
+                }
+            }
+        }
+
         if matches!(self.state, GameState::ModuleSelect { .. }) {
             self.state = GameState::ModuleSelect { selected_idx };
         }
 
-        if is_key_pressed(KeyCode::Enter)
+        let confirm_pressed = is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::KpEnter)
             || self.input.gamepad.snapshot.btn_confirm_pressed
             || self.input.gamepad.snapshot.btn_a_pressed
-        {
+            || mouse_selected_item.is_some();
+
+        if confirm_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
             if selected_idx == 0 {
                 self.profile_origin = ProfileOrigin::ModuleSelect;
@@ -4141,14 +4167,6 @@ impl RaceSession {
                 };
                 return;
             } else {
-                match selected_idx {
-                    1 => self.switch_to_classic(),
-                    2 => self.switch_to_rally(),
-                    3 => self.switch_to_kart(),
-                    4 => self.switch_to_gt(),
-                    5 => self.switch_to_nascar(),
-                    _ => self.switch_to_extreme_offroad(),
-                }
                 self.transition_scanline_to(
                     GameState::ModalitySelect {
                         category: ModalityCategory::SinglePlayer,
@@ -4413,12 +4431,26 @@ impl RaceSession {
             }
         }
 
-        // Confirmation (Enter / Space / Gamepad A)
+        // Mouse click on modality cards
+        let mut mouse_confirmed_card = false;
+        if modal.is_none() && mouse_clicked {
+            for i in 0..items_len {
+                let (cx, cy, cw, ch) = crate::ui::menu::modality_card_rect(sw, sh, category, i);
+                if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
+                    selected_idx = i;
+                    mouse_confirmed_card = true;
+                    break;
+                }
+            }
+        }
+
+        // Confirmation (Enter / Space / Gamepad A / Mouse Click)
         if is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::KpEnter)
             || self.input.gamepad.snapshot.btn_confirm_pressed
             || self.input.gamepad.snapshot.btn_a_pressed
+            || mouse_confirmed_card
         {
             if let Some(&item) = items.get(selected_idx) {
                 match item {
@@ -6678,6 +6710,9 @@ impl RaceSession {
                     }
                 }
                 if wev.impact_speed > 2.2 {
+                    if car_idx == 0 {
+                        self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
+                    }
                     let gain = (wev.impact_speed / 16.0).clamp(0.3, 0.9);
                     self.audio.play_sfx_with_gain(SfxType::WallCrash, gain);
                 }
@@ -6691,6 +6726,7 @@ impl RaceSession {
                     self.camera.add_trauma(cev.closing_speed * 0.06);
                 }
                 if cev.closing_speed > 2.0 {
+                    self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
                     let gain = (cev.closing_speed / 14.0).clamp(0.25, 0.85);
                     self.audio.play_sfx_with_gain(SfxType::CarHit, gain);
                 }
@@ -7010,6 +7046,10 @@ impl RaceSession {
                     laps: self.total_laps,
                     is_time_attack: self.is_time_attack,
                     created_at: String::new(),
+                    category: self.active_module_id.to_string(),
+                    championship_name: self.championship_session.as_ref().map(|c| c.name.clone()),
+                    stunt_score: self.player_race_stats.stunt_stats.total_stunt_score,
+                    collisions: self.player_race_stats.collision_count,
                 };
                 if let Some(db) = &self.hof_db {
                     let _ = db.insert_race_history(&history_record);

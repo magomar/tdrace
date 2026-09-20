@@ -16,16 +16,38 @@ fn test_grand_hub_to_modality_select_transition() {
         session.transition.is_some() || matches!(session.state, GameState::ModalitySelect { .. }),
         "Grand Hub must transition towards ModalitySelect"
     );
-    if let Some(target) = session.pending_state {
+    // Crucial invariant: state must NOT prematurely mutate to GameState::Menu during transition covering
+    assert_eq!(
+        session.state,
+        GameState::ModuleSelect { selected_idx: 4 },
+        "State must remain ModuleSelect during transition to prevent flashing Circuit Selection"
+    );
+    if let Some(ref target) = session.pending_state {
         assert_eq!(
             target,
-            GameState::ModalitySelect {
+            &GameState::ModalitySelect {
                 category: ModalityCategory::SinglePlayer,
                 selected_idx: 0,
                 modal: None,
             }
         );
     }
+
+    // Advance to Holding (midpoint: 0.20s): module switch is applied and state swaps to ModalitySelect
+    session.update_transition(0.20);
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+    assert_eq!(session.active_module_id, "gt");
+
+    // Complete transition
+    session.update_transition(0.25);
+    assert!(!session.is_transitioning());
 }
 
 #[test]
