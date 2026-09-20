@@ -2032,10 +2032,10 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         primary_color: Color::new(0.85, 0.10, 0.15, 1.0),
         secondary_color: Color::new(0.12, 0.12, 0.15, 1.0),
     },
+];
 
-    // =========================================================================
-    // MODULE: CLASSIC ARCADE MOTORSPORT (FANTASY ROSTER)
-    // =========================================================================
+/// Master catalog of fantasy arcade vehicles for the Classic Arcade module.
+pub static CLASSIC_ARCADE_CARS: &[RealCarModel] = &[
     RealCarModel {
         id: "classic_gt",
         name: "Apex Phantom GT",
@@ -2047,7 +2047,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         bhp: 480,
         torque_nm: 520,
         weight_kg: 1150,
-        top_speed_kmh: 218,
+        top_speed_kmh: 208,
         accel_0_100: 3.2,
         drivetrain: "RWD",
         engine_desc: "4.0L Twin-Turbo Arcade V8",
@@ -2118,8 +2118,8 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         tier: 1,
         bhp: 45,
         torque_nm: 55,
-        weight_kg: 165,
-        top_speed_kmh: 125,
+        weight_kg: 180,
+        top_speed_kmh: 115,
         accel_0_100: 3.8,
         drivetrain: "RWD",
         engine_desc: "200cc Twin-Ignition 2-Stroke",
@@ -2136,6 +2136,9 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
 
 /// Returns all vehicles belonging to the specified module ID.
 pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
+    if module_id == "classic" {
+        return CLASSIC_ARCADE_CARS.iter().collect();
+    }
     let mod_id = match module_id {
         "gt_challenge" | "f1" => "gt",
         other => other,
@@ -2145,6 +2148,9 @@ pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
 
 /// Returns all vehicles belonging to the specified module ID and tier (1..=5).
 pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static RealCarModel> {
+    if module_id == "classic" {
+        return CLASSIC_ARCADE_CARS.iter().filter(|c| c.tier == tier).collect();
+    }
     let mod_id = match module_id {
         "gt_challenge" | "f1" => "gt",
         other => other,
@@ -2212,7 +2218,7 @@ pub fn get_tier_name(module_id: &str, tier: u8) -> &'static str {
 
 /// Searches for a vehicle model by its string identifier.
 pub fn find_model_by_id(id: &str) -> Option<&'static RealCarModel> {
-    ALL_REAL_CARS.iter().find(|c| c.id == id)
+    CLASSIC_ARCADE_CARS.iter().chain(ALL_REAL_CARS.iter()).find(|c| c.id == id)
 }
 
 /// Returns the entire master collection of authentic real-world vehicles.

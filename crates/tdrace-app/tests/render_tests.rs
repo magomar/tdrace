@@ -290,7 +290,7 @@ fn test_porsche_gt3r_lateral_sprite_asset_presence() {
 fn test_all_80_motorsport_cars_catalog_integrity() {
     use tdrace_app::catalog::ALL_REAL_CARS;
 
-    assert_eq!(ALL_REAL_CARS.len(), 84, "Catalog must contain 80 authentic motorsport vehicles + 4 classic fantasy vehicles");
+    assert_eq!(ALL_REAL_CARS.len(), 80, "Catalog must contain exactly 80 authentic motorsport vehicles");
 
     let modules = ["gt", "nascar", "rally", "extreme_offroad", "kart"];
     for m in modules {
@@ -301,8 +301,9 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
             assert_eq!(count, 15, "Module {} must contain 15 vehicles (3 per tier)", m);
         }
     }
-    let classic_count = ALL_REAL_CARS.iter().filter(|c| c.module_id == "classic").count();
-    assert_eq!(classic_count, 4, "Classic arcade module must contain 4 fantasy vehicles");
+
+    use tdrace_app::catalog::CLASSIC_ARCADE_CARS;
+    assert_eq!(CLASSIC_ARCADE_CARS.len(), 4, "Classic arcade catalog must contain 4 fantasy vehicles");
 
     for car in ALL_REAL_CARS {
         assert!(!car.id.is_empty(), "Car ID cannot be empty");

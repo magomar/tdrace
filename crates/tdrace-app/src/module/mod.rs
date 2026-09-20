@@ -405,7 +405,7 @@ mod tests {
         assert!(gt.assists.tcs_enabled);
         assert!(gt.assists.esc_enabled);
         assert!(gt.assists.counter_steer_assist_enabled);
-        assert!(gt.top_speed_mps * 3.6 > 210.0);
+        assert!(gt.top_speed_mps * 3.6 >= 200.0);
 
         let nascar = ClassicGameModule::car_classic_nascar();
         assert!(nascar.top_speed_mps * 3.6 > 240.0);
@@ -416,7 +416,7 @@ mod tests {
         assert!(offroad.tire.drift_slide_friction >= 0.94);
 
         let kart = ClassicGameModule::car_classic_kart();
-        assert_eq!(kart.mass, 165.0);
+        assert_eq!(kart.mass, 180.0);
         assert!(kart.steer_speed >= 10.0);
     }
 

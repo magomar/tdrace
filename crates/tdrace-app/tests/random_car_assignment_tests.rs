@@ -46,7 +46,12 @@ fn test_eligible_opponent_cars_per_category() {
     let classic_pool = session.eligible_opponent_cars();
     assert_eq!(
         classic_pool,
-        vec![CarChoice::SportsCar, CarChoice::DriftCar, CarChoice::RallyCar]
+        vec![
+            CarChoice::SportsCar,
+            CarChoice::StockCar,
+            CarChoice::SandRail,
+            CarChoice::Kart,
+        ]
     );
 }
 

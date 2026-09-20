@@ -694,11 +694,11 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             }
             Some("f1_hybrid_26") => CarChoice::F1Car,
             Some("drift_car") => CarChoice::DriftCar,
-            Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
+            Some("kart" | "shifter_kart" | "shifter_kart_125" | "classic_kart") => CarChoice::Kart,
             Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
-            Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1") => CarChoice::StockCar,
-            Some("sand_rail" | "sand_rail_buggy" | "buggy") => CarChoice::SandRail,
-            Some("sports_car") => CarChoice::SportsCar,
+            Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1" | "classic_nascar") => CarChoice::StockCar,
+            Some("sand_rail" | "sand_rail_buggy" | "buggy" | "classic_offroad") => CarChoice::SandRail,
+            Some("sports_car" | "classic_gt") => CarChoice::SportsCar,
             _ => match tr.module_id.as_deref().unwrap_or(module_id) {
                 "gt" | "gt_challenge" | "f1" => CarChoice::GT4Clubsport,
                 "rally" => CarChoice::RallyCar,

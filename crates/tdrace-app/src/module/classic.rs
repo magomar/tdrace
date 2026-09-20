@@ -23,7 +23,7 @@ impl ClassicGameModule {
         let mut cfg = CarConfig::sports_car();
         cfg.mass = 1150.0;
         cfg.max_engine_force = 7800.0;
-        cfg.top_speed_mps = 60.5; // ~218 km/h
+        cfg.top_speed_mps = 58.0; // ~208 km/h
         cfg.max_brake_force = 13500.0;
         cfg.downforce_coefficient = 0.95;
         cfg.steer_speed = 7.0;
@@ -72,9 +72,9 @@ impl ClassicGameModule {
     /// 45 BHP 200cc Arcade Sprint Kart: 1:1 direct steering, ultra-light, razor apex grip.
     pub fn car_classic_kart() -> CarConfig {
         let mut cfg = CarConfig::kart();
-        cfg.mass = 165.0;
+        cfg.mass = 180.0;
         cfg.max_engine_force = 2600.0;
-        cfg.top_speed_mps = 34.8; // ~125 km/h
+        cfg.top_speed_mps = 32.0; // ~115 km/h
         cfg.max_steer_angle = 0.65;
         cfg.steer_speed = 10.0;
         cfg.steer_return_speed = 14.0;
@@ -119,7 +119,7 @@ impl GameModule for ClassicGameModule {
                 id: "classic_gt",
                 name: "Apex Phantom GT",
                 tag: "ARCADE GT COUPE",
-                description: "Balanced fantasy GT racer with razor-sharp arcade handling, high grip & 218 km/h top speed.",
+                description: "Balanced fantasy GT racer with razor-sharp arcade handling, high grip & 208 km/h top speed.",
                 config: Self::car_classic_gt(),
                 visual_type: VehicleVisualType::TouringGT {
                     widebody: true,

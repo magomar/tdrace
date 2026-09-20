@@ -78,8 +78,8 @@ use crate::input::touch::TouchController;
 use crate::input::{DigitalInputFilter, InputController, NavGrid2D};
 pub use crate::module::VehicleVisualType;
 use crate::module::{
-    ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule, NascarGameModule,
-    RallyGameModule,
+    ClassicGameModule, ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule,
+    NascarGameModule, RallyGameModule,
 };
 use crate::profile::{CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::car::render_car_with_visual_type_model_and_shadows;
@@ -1027,11 +1027,11 @@ impl RaceSession {
             }
             Some("f1_hybrid_26") => CarChoice::F1Car,
             Some("drift_car") => CarChoice::DriftCar,
-            Some("kart" | "shifter_kart" | "shifter_kart_125") => CarChoice::Kart,
+            Some("kart" | "shifter_kart" | "shifter_kart_125" | "classic_kart") => CarChoice::Kart,
             Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
-            Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1") => CarChoice::StockCar,
-            Some("sand_rail" | "sand_rail_buggy" | "buggy") => CarChoice::SandRail,
-            Some("sports_car") => CarChoice::SportsCar,
+            Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1" | "classic_nascar") => CarChoice::StockCar,
+            Some("sand_rail" | "sand_rail_buggy" | "buggy" | "classic_offroad") => CarChoice::SandRail,
+            Some("sports_car" | "classic_gt") => CarChoice::SportsCar,
             _ => match self.track.module_id.as_deref().unwrap_or(self.active_module_id) {
                 "nascar" => CarChoice::StockCar,
                 "extreme_offroad" => CarChoice::SandRail,
@@ -1093,6 +1093,12 @@ impl RaceSession {
             "extreme_offroad" => vec![CarChoice::SandRail],
             "rally" => vec![CarChoice::RallyCar],
             "kart" => vec![CarChoice::Kart],
+            "classic" => vec![
+                CarChoice::SportsCar,
+                CarChoice::StockCar,
+                CarChoice::SandRail,
+                CarChoice::Kart,
+            ],
             _ => vec![
                 CarChoice::SportsCar,
                 CarChoice::DriftCar,
@@ -1100,6 +1106,9 @@ impl RaceSession {
                 CarChoice::RallyCar,
             ],
         };
+        if self.active_module_id == "classic" {
+            return base_choices;
+        }
         let req_tier = self.current_race_required_tier();
         base_choices
             .into_iter()
@@ -1137,8 +1146,9 @@ impl RaceSession {
                 CarChoice::DriftCar => vec![CarChoice::DriftCar],
                 _ => vec![
                     CarChoice::SportsCar,
-                    CarChoice::DriftCar,
-                    CarChoice::RallyCar,
+                    CarChoice::StockCar,
+                    CarChoice::SandRail,
+                    CarChoice::Kart,
                 ],
             },
         }
@@ -1869,15 +1879,23 @@ impl RaceSession {
                     exposed_driver: true,
                     side_bumpers: true,
                 };
-                KartGameModule::car_shifter_kart()
+                if self.active_module_id == "classic" {
+                    ClassicGameModule::car_classic_kart()
+                } else {
+                    KartGameModule::car_shifter_kart()
+                }
             }
             CarChoice::StockCar => {
                 self.current_visual_type = VehicleVisualType::StockCar {
-                    tall_wing: false,
+                    tall_wing: self.active_module_id == "classic",
                     roof_fins: true,
                     window_net: true,
                 };
-                NascarGameModule::car_stock_car()
+                if self.active_module_id == "classic" {
+                    ClassicGameModule::car_classic_nascar()
+                } else {
+                    NascarGameModule::car_stock_car()
+                }
             }
             CarChoice::SandRail => {
                 self.current_visual_type = VehicleVisualType::SandRail {
@@ -1885,7 +1903,11 @@ impl RaceSession {
                     whip_antenna: true,
                     paddle_tires: true,
                 };
-                ExtremeOffRoadModule::car_sand_rail()
+                if self.active_module_id == "classic" {
+                    ClassicGameModule::car_classic_offroad()
+                } else {
+                    ExtremeOffRoadModule::car_sand_rail()
+                }
             }
             CarChoice::DriftCar => {
                 self.current_visual_type = VehicleVisualType::TouringGT {
@@ -1901,7 +1923,11 @@ impl RaceSession {
                     gt_wing: true,
                     diffuser: true,
                 };
-                self.config.get_car_config(player_car_choice)
+                if self.active_module_id == "classic" {
+                    ClassicGameModule::car_classic_gt()
+                } else {
+                    self.config.get_car_config(player_car_choice)
+                }
             }
         };
 
@@ -2131,17 +2157,41 @@ impl RaceSession {
                     (m.to_car_config(), m.visual_type, p.color_scheme, Some(m.id))
                 } else {
                     let cfg = match p.car_choice {
+                        CarChoice::SportsCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_gt(),
+                        CarChoice::StockCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_nascar(),
+                        CarChoice::SandRail if self.active_module_id == "classic" => ClassicGameModule::car_classic_offroad(),
+                        CarChoice::Kart if self.active_module_id == "classic" => ClassicGameModule::car_classic_kart(),
                         CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(p.car_choice),
                         _ => p.car_choice.config(),
                     };
-                    (cfg, p.car_choice.visual_type(), p.color_scheme, None)
+                    let visual = match p.car_choice {
+                        CarChoice::StockCar if self.active_module_id == "classic" => VehicleVisualType::StockCar {
+                            tall_wing: true,
+                            roof_fins: true,
+                            window_net: true,
+                        },
+                        _ => p.car_choice.visual_type(),
+                    };
+                    (cfg, visual, p.color_scheme, None)
                 }
             } else {
                 let cfg = match player_car_choice {
+                    CarChoice::SportsCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_gt(),
+                    CarChoice::StockCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_nascar(),
+                    CarChoice::SandRail if self.active_module_id == "classic" => ClassicGameModule::car_classic_offroad(),
+                    CarChoice::Kart if self.active_module_id == "classic" => ClassicGameModule::car_classic_kart(),
                     CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(player_car_choice),
                     _ => player_car_choice.config(),
                 };
-                (cfg, player_car_choice.visual_type(), character.color_scheme, None)
+                let visual = match player_car_choice {
+                    CarChoice::StockCar if self.active_module_id == "classic" => VehicleVisualType::StockCar {
+                        tall_wing: true,
+                        roof_fins: true,
+                        window_net: true,
+                    },
+                    _ => player_car_choice.visual_type(),
+                };
+                (cfg, visual, character.color_scheme, None)
             };
 
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
