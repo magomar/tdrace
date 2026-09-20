@@ -2820,14 +2820,13 @@ pub fn render_modality_select_screen(
                         secondary: car.secondary_color,
                         helmet: Palette::WHITE,
                     };
-                    crate::render::render_lateral_car(
+                    crate::render::render_real_car_lateral_by_id(
+                        car.id,
+                        &mini_scheme,
                         col_x + col_w - scaler.s(60.0),
                         card_y + tier_card_h - scaler.s(10.0),
                         scaler.s(0.44),
-                        car.visual_type,
-                        &mini_scheme,
                         0.0,
-                        false,
                         false,
                     );
                 }

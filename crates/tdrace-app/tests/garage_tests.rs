@@ -494,3 +494,28 @@ fn test_starting_grid_footer_prompt_space_reserved_for_launch() {
     assert!(gp_prompt.contains("[START] Launch"));
 }
 
+#[test]
+fn test_roster_featured_cars_have_valid_lateral_assets() {
+    let modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
+    for mod_id in modules {
+        for tier in 1..=5 {
+            let models = get_models_for_module_and_tier(mod_id, tier);
+            let featured = models.first().expect("Each tier must have at least one featured car");
+            assert!(!featured.id.is_empty());
+            let candidates = [
+                format!("assets/textures/vehicles/laterals/{}/{}_thumb.png", mod_id, featured.id),
+                format!("../assets/textures/vehicles/laterals/{}/{}_thumb.png", mod_id, featured.id),
+                format!("../../assets/textures/vehicles/laterals/{}/{}_thumb.png", mod_id, featured.id),
+            ];
+            let found = candidates.iter().any(|p| std::path::Path::new(p).exists());
+            assert!(
+                found,
+                "Lateral thumbnail must exist for featured car {} in module {}: checked {:?}",
+                featured.id,
+                mod_id,
+                candidates
+            );
+        }
+    }
+}
+
