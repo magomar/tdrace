@@ -249,7 +249,7 @@ fn test_nascar_phase2_hub_navigation_and_return_mapping() {
         "classic" => 0,
         "rally" => 1,
         "kart" => 2,
-        "gt" | "gt_challenge" | "f1" => 3,
+        "gt" | "gt_challenge" => 3,
         "nascar" => 4,
         _ => 0,
     };

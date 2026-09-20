@@ -22,7 +22,7 @@ pub enum TrackChoice {
     KartArena,
     RampRaceway,
     OasisRally,
-    OutlawPass,
+    ClassicRallycross,
     Custom { id: String, title: String, description: String, path: String },
 }
 
@@ -34,7 +34,7 @@ impl TrackChoice {
         Self::KartArena,
         Self::RampRaceway,
         Self::OasisRally,
-        Self::OutlawPass,
+        Self::ClassicRallycross,
     ];
 
     pub fn title(&self) -> &str {
@@ -45,7 +45,7 @@ impl TrackChoice {
             Self::KartArena => "Kart Arena",
             Self::RampRaceway => "Ramp Raceway",
             Self::OasisRally => "Oasis Rally",
-            Self::OutlawPass => "Outlaw Pass",
+            Self::ClassicRallycross => "Classic Rallycross",
             Self::Custom { title, .. } => title.as_str(),
         }
     }
@@ -56,9 +56,9 @@ impl TrackChoice {
             Self::OvalSpeedway => "SUPERSPEEDWAY",
             Self::DriftPark => "TECHNICAL DRIFT",
             Self::KartArena => "AGILE SPRINT",
-            Self::RampRaceway => "STUNT RAMPS & JUMPS",
+            Self::RampRaceway => "DIRT STUNT RAMPS",
             Self::OasisRally => "DESERT DIRT RALLY",
-            Self::OutlawPass => "NARROW MOUNTAIN PASS",
+            Self::ClassicRallycross => "HYBRID RALLYCROSS",
             Self::Custom { id, path, .. } => {
                 if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "essay_rx" | "essay" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina") {
                     "RALLY CROSS"
@@ -83,9 +83,9 @@ impl TrackChoice {
             Self::OvalSpeedway => "SUPERSPEEDWAY",
             Self::DriftPark => "TECHNICAL DRIFT",
             Self::KartArena => "AGILE SPRINT",
-            Self::RampRaceway => "STUNT RAMPS & JUMPS",
+            Self::RampRaceway => "DIRT STUNT RAMPS",
             Self::OasisRally => "DESERT DIRT RALLY",
-            Self::OutlawPass => "NARROW MOUNTAIN PASS",
+            Self::ClassicRallycross => "HYBRID RALLYCROSS",
             Self::Custom { id, path, .. } => {
                 if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "essay_rx" | "essay" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina") {
                     "RALLY CROSS"
@@ -117,9 +117,9 @@ impl TrackChoice {
             Self::OvalSpeedway => "Full-throttle banked superspeedway surrounded by concrete barriers.",
             Self::DriftPark => "Technical hairpin slides, wide transitions & dynamic apex clipping zones.",
             Self::KartArena => "Tight 90-degree corners, rapid switchbacks & aggressive rumble curbs.",
-            Self::RampRaceway => "High-speed stadium circuit with launch ramps, hazard water puddles, gap jumps & banked turns.",
+            Self::RampRaceway => "High-speed dirt stadium circuit with launch ramps, hazard water puddles, gap jumps & banked dirt turns.",
             Self::OasisRally => "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
-            Self::OutlawPass => "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.",
+            Self::ClassicRallycross => "Dynamic 1.0 km mixed-surface rallycross circuit featuring asphalt launch straights, high-grip chicanes, sweeping dirt hairpins & tabletop jump ramps.",
             Self::Custom { description, .. } => {
                 if description.trim().is_empty() {
                     "User-created custom racing circuit."
@@ -138,7 +138,7 @@ impl TrackChoice {
             Self::KartArena => "kart_arena",
             Self::RampRaceway => "ramp_raceway",
             Self::OasisRally => "oasis_rally",
-            Self::OutlawPass => "outlaw_pass",
+            Self::ClassicRallycross => "classic_rallycross",
             Self::Custom { id, .. } => id.as_str(),
         }
     }
@@ -156,7 +156,7 @@ impl TrackChoice {
             | Self::KartArena
             | Self::RampRaceway
             | Self::OasisRally
-            | Self::OutlawPass => true,
+            | Self::ClassicRallycross => true,
             Self::Custom { id, path, .. } => {
                 let is_demoted = crate::track_manager::TrackManager::is_preset_slug_demoted_in_path(id, path);
                 !is_demoted
@@ -351,7 +351,7 @@ impl TrackChoice {
             "kart_arena" => Self::KartArena,
             "ramp_raceway" => Self::RampRaceway,
             "oasis_rally" => Self::OasisRally,
-            "outlaw_pass" => Self::OutlawPass,
+            "classic_rallycross" => Self::ClassicRallycross,
             other => Self::Custom {
                 id: other.to_string(),
                 title: other.to_string(),
@@ -370,7 +370,7 @@ impl TrackChoice {
         TrackChoice::KartArena => Some(tdrace_core::track::presets::kart_arena()),
         TrackChoice::RampRaceway => Some(tdrace_core::track::presets::ramp_raceway()),
         TrackChoice::OasisRally => Some(tdrace_core::track::presets::oasis_rally()),
-        TrackChoice::OutlawPass => Some(tdrace_core::track::presets::outlaw_pass()),
+        TrackChoice::ClassicRallycross => Some(tdrace_core::track::presets::classic_rallycross()),
         TrackChoice::Custom { id, .. } => match id.as_str() {
             "dirty_oval_speedway" | "dirty_oval" => Some(tdrace_core::track::presets::dirty_oval_speedway()),
             "figure_eight" | "figure_8" => Some(tdrace_core::track::presets::figure_eight()),
@@ -468,13 +468,12 @@ pub enum CarChoice {
     GT2Biturbo,
     GT1Legend,
     HypercarPrototype,
-    F1Car,
     StockCar,
     SandRail,
 }
 
 impl CarChoice {
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 11] = [
         Self::SportsCar,
         Self::DriftCar,
         Self::Kart,
@@ -484,7 +483,6 @@ impl CarChoice {
         Self::GT2Biturbo,
         Self::GT1Legend,
         Self::HypercarPrototype,
-        Self::F1Car,
         Self::StockCar,
         Self::SandRail,
     ];
@@ -500,7 +498,6 @@ impl CarChoice {
             Self::GT2Biturbo => "707 BHP GT2 Biturbo Sprint",
             Self::GT1Legend => "650 BHP GT1 Le Mans Legend",
             Self::HypercarPrototype => "800 BHP LMH Hypercar Prototype",
-            Self::F1Car => "1050 BHP Hybrid F1 Turbo (Experimental)",
             Self::StockCar => "850 BHP NASCAR Cup V8",
             Self::SandRail => "300 BHP Sand Rail Buggy",
         }
@@ -517,7 +514,6 @@ impl CarChoice {
             Self::GT2Biturbo => "SRO GT2 SPRINT",
             Self::GT1Legend => "90s GT1 LEGEND",
             Self::HypercarPrototype => "LE MANS HYPERCAR",
-            Self::F1Car => "EXPERIMENTAL OPEN-WHEEL",
             Self::StockCar => "850 BHP SPACEFRAME V8",
             Self::SandRail => "300 BHP RWD ULTRALIGHT",
         }
@@ -534,7 +530,6 @@ impl CarChoice {
             Self::GT2Biturbo => "High-power 707 BHP biturbo straight-line missile, 328 km/h top speed, lower downforce (Cl=1.4).",
             Self::GT1Legend => "Raw 650 BHP twin-turbo beast with high downforce (Cl=2.60) and pure analog handling (zero electronic assists).",
             Self::HypercarPrototype => "Cutting-edge 800 BHP hybrid prototype with ground-effect aero tunnels (Cl=3.10) and hybrid boost.",
-            Self::F1Car => "Experimental 1050 BHP hybrid open-wheel test bench, 346 km/h, extreme downforce (Cl=3.4).",
             Self::StockCar => "High-compression 5.9L pushrod V8, 850 BHP, 1260 kg, quick-ratio steering, 320 km/h superspeedway pack racer.",
             Self::SandRail => "Ultralight chromoly tube chassis, 300 BHP rear turbo boxer, paddle tires, and long-travel off-road suspension.",
         }
@@ -552,7 +547,6 @@ impl CarChoice {
             Self::GT2Biturbo => (0.96, 0.97, 0.89, 0.65),
             Self::GT1Legend => (0.98, 0.98, 0.93, 0.40),
             Self::HypercarPrototype => (0.99, 0.99, 0.98, 0.35),
-            Self::F1Car => (0.99, 0.99, 0.99, 0.30),
             Self::StockCar => (0.97, 0.90, 0.86, 0.88),
             Self::SandRail => (0.88, 0.96, 0.82, 0.94),
         }
@@ -570,7 +564,6 @@ impl CarChoice {
             Self::GT2Biturbo => ("RWD GT2 Spec", "1,390 kg Mass", "328 km/h Top Speed", "Cl 1.40 Downforce"),
             Self::GT1Legend => ("RWD GT1 Analog", "1,120 kg Mass", "335 km/h Top Speed", "Cl 2.60 Downforce"),
             Self::HypercarPrototype => ("Hybrid Ground-Effect", "1,030 kg Mass", "342 km/h Top Speed", "Cl 3.10 Downforce"),
-            Self::F1Car => ("Hybrid V6 Turbo", "798 kg Mass", "346 km/h Top Speed", "Cl 3.40 Downforce"),
             Self::StockCar => ("RWD Spaceframe V8", "1,260 kg Mass", "320 km/h Top Speed", "Pack Draft Dynamic"),
             Self::SandRail => ("RWD Long-Travel", "680 kg Mass", "215 km/h Top Speed", "Paddle Sand Tires"),
         }
@@ -579,7 +572,7 @@ impl CarChoice {
     /// Returns the GT career unlock level required for this car (Level 1-5).
     pub fn unlock_level(&self) -> u32 {
         match self {
-            Self::GT4Clubsport | Self::F1Car => 1,
+            Self::GT4Clubsport => 1,
             Self::GT3Car => 2,
             Self::GT2Biturbo => 3,
             Self::GT1Legend => 4,
@@ -595,7 +588,7 @@ impl CarChoice {
             Self::GT3Car | Self::RallyCar | Self::DriftCar => 2,
             Self::GT2Biturbo | Self::Kart => 3,
             Self::GT1Legend => 4,
-            Self::HypercarPrototype | Self::F1Car | Self::StockCar => 5,
+            Self::HypercarPrototype | Self::StockCar => 5,
         }
     }
 
@@ -618,7 +611,6 @@ impl CarChoice {
             Self::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
             Self::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
             Self::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
-            Self::F1Car => crate::module::gt::GtWorldChallengeModule::car_f1_hybrid(),
             Self::StockCar => CarConfig::stock_car_ta1(),
             Self::SandRail => CarConfig::sand_rail(),
         }
@@ -639,11 +631,6 @@ impl CarChoice {
                 widebody: true,
                 gt_wing: true,
                 diffuser: true,
-            },
-            Self::F1Car => crate::module::VehicleVisualType::OpenWheel {
-                front_wing_span: 1.80,
-                rear_wing_height: 0.85,
-                halo: true,
             },
             Self::RallyCar => crate::module::VehicleVisualType::RallyHatch {
                 roof_scoop: true,
@@ -683,11 +670,10 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
             Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
             Some("gt") => CarChoice::GT4Clubsport,
-            Some("f1" | "f1_car" | "open_wheel") => CarChoice::GT4Clubsport,
-            Some("f1_hybrid_26") => CarChoice::F1Car,
+            Some("open_wheel") => CarChoice::Kart,
             Some("drift_car") => CarChoice::DriftCar,
             Some("kart" | "shifter_kart" | "shifter_kart_125" | "classic_kart") => CarChoice::Kart,
-            Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
+            Some("rally_car" | "wrc_turbo_rally" | "rally" | "classic_rally") => CarChoice::RallyCar,
             Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1" | "classic_nascar") => CarChoice::StockCar,
             Some("sand_rail" | "sand_rail_buggy" | "buggy" | "classic_offroad") => CarChoice::SandRail,
             Some("sports_car" | "classic_gt") => CarChoice::SportsCar,

@@ -2132,6 +2132,30 @@ pub static CLASSIC_ARCADE_CARS: &[RealCarModel] = &[
         primary_color: Color::new(0.20, 0.85, 0.30, 1.0),
         secondary_color: Color::new(0.10, 0.10, 0.12, 1.0),
     },
+    RealCarModel {
+        id: "classic_rally",
+        name: "Trailfire Turbo 4WD",
+        manufacturer: "Apex Dynamics",
+        year: 2026,
+        module_id: "classic",
+        category_name: "Arcade Group B Rally",
+        tier: 1,
+        bhp: 450,
+        torque_nm: 550,
+        weight_kg: 1050,
+        top_speed_kmh: 215,
+        accel_0_100: 2.9,
+        drivetrain: "4WD",
+        engine_desc: "2.1L Turbocharged Inline-5 20V",
+        aero_downforce: "Cl 1.10 / Cd 0.44",
+        brakes_desc: "Gravel & Tarmac Dual-Bias Ventilated Discs",
+        history_bio: "Legendary fantasy Group B rally beast engineered for vicious 4WD acceleration, massive jump composure, and fearless slides across dirt, gravel, and asphalt.",
+        stats: (0.88, 0.94, 0.92, 0.88, 0.90, 0.78),
+        visual_type: VehicleVisualType::RallyHatch { roof_scoop: true, mudflaps: true, large_wing: true },
+        base_car_choice: CarChoice::RallyCar,
+        primary_color: Color::new(0.95, 0.82, 0.10, 1.0),
+        secondary_color: Color::new(0.12, 0.12, 0.16, 1.0),
+    },
 ];
 
 /// Returns all vehicles belonging to the specified module ID.
@@ -2140,7 +2164,7 @@ pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
         return CLASSIC_ARCADE_CARS.iter().collect();
     }
     let mod_id = match module_id {
-        "gt_challenge" | "f1" => "gt",
+        "gt_challenge" => "gt",
         other => other,
     };
     ALL_REAL_CARS.iter().filter(|c| c.module_id == mod_id).collect()
@@ -2152,7 +2176,7 @@ pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static
         return CLASSIC_ARCADE_CARS.iter().filter(|c| c.tier == tier).collect();
     }
     let mod_id = match module_id {
-        "gt_challenge" | "f1" => "gt",
+        "gt_challenge" => "gt",
         other => other,
     };
     ALL_REAL_CARS
@@ -2163,8 +2187,14 @@ pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static
 
 /// Returns all vehicles belonging to the specified module ID and category name.
 pub fn get_models_for_category(module_id: &str, category_name: &str) -> Vec<&'static RealCarModel> {
+    if module_id == "classic" {
+        return CLASSIC_ARCADE_CARS
+            .iter()
+            .filter(|c| c.category_name.eq_ignore_ascii_case(category_name))
+            .collect();
+    }
     let mod_id = match module_id {
-        "gt_challenge" | "f1" => "gt",
+        "gt_challenge" => "gt",
         other => other,
     };
     ALL_REAL_CARS
@@ -2176,7 +2206,7 @@ pub fn get_models_for_category(module_id: &str, category_name: &str) -> Vec<&'st
 /// Returns the category display title for a given module and tier.
 pub fn get_tier_name(module_id: &str, tier: u8) -> &'static str {
     let mod_id = match module_id {
-        "gt_challenge" | "f1" => "gt",
+        "gt_challenge" => "gt",
         other => other,
     };
     match (mod_id, tier) {
@@ -2273,11 +2303,11 @@ mod tests {
     #[test]
     fn test_classic_arcade_fantasy_models() {
         let classic_models = get_models_for_module("classic");
-        assert_eq!(classic_models.len(), 4);
+        assert_eq!(classic_models.len(), 5);
         let ids: Vec<_> = classic_models.iter().map(|m| m.id).collect();
-        assert_eq!(ids, vec!["classic_gt", "classic_nascar", "classic_offroad", "classic_kart"]);
+        assert_eq!(ids, vec!["classic_gt", "classic_nascar", "classic_offroad", "classic_kart", "classic_rally"]);
 
-        for id in ["classic_gt", "classic_nascar", "classic_offroad", "classic_kart"] {
+        for id in ["classic_gt", "classic_nascar", "classic_offroad", "classic_kart", "classic_rally"] {
             let model = find_model_by_id(id).expect("classic model must exist");
             assert_eq!(model.module_id, "classic");
             assert!(model.bhp > 0);

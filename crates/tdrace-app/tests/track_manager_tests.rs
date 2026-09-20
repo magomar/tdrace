@@ -812,7 +812,7 @@ fn test_consistent_module_categorization_in_module_view() {
     for t in &classic_tracks {
         let tag = t.tag_for_module("classic");
         assert!(
-            tag == "CLASSIC MOTORSPORT" || tag == "FIA GP CIRCUIT" || tag == "SUPERSPEEDWAY" || tag == "TECHNICAL DRIFT" || tag == "AGILE SPRINT" || tag == "STUNT RAMPS & JUMPS" || tag == "DESERT DIRT RALLY" || tag == "NARROW MOUNTAIN PASS" || tag == "RALLY CROSS",
+            tag == "CLASSIC MOTORSPORT" || tag == "FIA GP CIRCUIT" || tag == "SUPERSPEEDWAY" || tag == "TECHNICAL DRIFT" || tag == "AGILE SPRINT" || tag == "STUNT RAMPS & JUMPS" || tag == "DIRT STUNT RAMPS" || tag == "HYBRID RALLYCROSS" || tag == "DESERT DIRT RALLY" || tag == "NARROW MOUNTAIN PASS" || tag == "RALLY CROSS",
             "Track in classic view should have valid classic tag: {}", tag
         );
     }
@@ -849,7 +849,7 @@ fn test_empty_module_tracks_resilience() {
         "zandvoort".into(), "bahrain".into(), "marina_bay".into(), "cota".into(), "madring".into(),
         "nurburgring_gp".into(), "bathurst".into(), "portimao_gp".into(), "le_mans_sarthe".into(),
         "classic_grand_prix".into(), "oval_speedway".into(), "drift_park".into(),
-        "kart_arena".into(), "ramp_raceway".into(), "oasis_rally".into(), "outlaw_pass".into(),
+        "kart_arena".into(), "ramp_raceway".into(), "classic_rallycross".into(), "oasis_rally".into(),
         "dirty_oval_speedway".into(), "figure_eight".into(),
         "sahara".into(), "sahara_dunes".into(), "dirt_figure_eight".into(), "holjes_rx".into(), "lydden_hill".into(),
         "hell_rx".into(), "loheac_rx".into(), "estering_rx".into(), "montalegre_rx".into(), "nyirad_rx".into(), "kouvola_rx".into(), "catalunya_rx".into(),
@@ -1385,7 +1385,7 @@ fn test_export_canonical_presets_to_git_repo() {
             total_exported += 1;
         }
     }
-    assert!(total_exported >= 78, "Must export all preset track definitions across modules");
+    assert!(total_exported >= 67, "Must export all preset track definitions across modules");
 }
 
 #[test]
@@ -1446,7 +1446,7 @@ fn test_category_ordering_presets_first_then_custom() {
         }
     }
 
-    // Verify F1 category: pure presets (18), no custom tracks leaked
+    // Verify GT category: pure presets (18), no custom tracks leaked
     let gt_tracks = manager.module_catalog_tracks("gt");
     assert_eq!(gt_tracks.len(), 18);
     assert!(gt_tracks.iter().all(|t| t.is_official_preset()));
@@ -1808,7 +1808,7 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
 
     // 4. Verify initial state and cycling into Drafts
     let mut filter = ModuleFilter::Classic;
-    // Step forward 6 times: Classic -> Rally -> Kart -> F1 -> Nascar -> ExtremeOffRoad -> Drafts
+    // Step forward 6 times: Classic -> Rally -> Kart -> GT -> Nascar -> ExtremeOffRoad -> Drafts
     for _ in 0..6 {
         filter = filter.next();
     }

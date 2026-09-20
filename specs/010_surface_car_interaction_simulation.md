@@ -39,7 +39,7 @@ The proposed architecture introduces a dedicated headless simulation runner (`wh
 ```mermaid
 flowchart TD
     subgraph Config ["Test Matrix Definition"]
-        A[Vehicle Archetypes: F1, Stock, Rally, Buggy, Kart]
+        A[Vehicle Archetypes: GT / Hypercar, Stock, Rally, Buggy, Kart]
         B[Surface Matrix: 12 Surface Types]
         C[Test Protocols: Accel, Brake, Skidpad, Slalom, Coast]
     end

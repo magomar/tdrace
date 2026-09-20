@@ -71,7 +71,7 @@ pub enum EditorModal {
 impl EditorModal {
     pub fn templates_default(module_id: Option<&str>) -> Self {
         let mod_idx = match module_id {
-            Some("gt") | Some("gt_challenge") | Some("f1") => 1,
+            Some("gt") | Some("gt_challenge") => 1,
             Some("kart") => 2,
             Some("rally") => 3,
             _ => 0,
@@ -2493,7 +2493,7 @@ fn render_inspector(
                 ("drift_car", "Drift Spec"),
                 ("kart", "125cc Kart"),
                 ("rally_car", "AWD Rally"),
-                ("f1_car", "F1 Hybrid"),
+                ("gt4_clubsport", "GT4 Clubsport"),
             ];
 
             let active_car_str = state.track.predefined_car.clone().unwrap_or_else(|| "sports_car".to_string());
@@ -2503,7 +2503,7 @@ fn render_inspector(
                     "drift_car" => matches!(active_car_str.as_str(), "drift_car"),
                     "kart" => matches!(active_car_str.as_str(), "kart" | "shifter_kart" | "shifter_kart_125"),
                     "rally_car" => matches!(active_car_str.as_str(), "rally_car" | "wrc_turbo_rally" | "rally"),
-                    "f1_car" => matches!(active_car_str.as_str(), "f1_car" | "f1" | "f1_hybrid_26" | "open_wheel"),
+                    "gt4_clubsport" => matches!(active_car_str.as_str(), "gt4_clubsport" | "gt4" | "gt"),
                     _ => false,
                 }
             };

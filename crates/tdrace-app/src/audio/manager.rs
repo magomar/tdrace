@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 use crate::audio::sfx::{
     generate_car_hit_sound, generate_countdown_high, generate_countdown_low,
     generate_curb_rumble_sound, generate_engine_sound,
-    generate_f1_v6_rpm_band, generate_gear_shift_pop, generate_generic_engine_rpm_band,
+    generate_gear_shift_pop, generate_generic_engine_rpm_band,
     generate_jump_launch_sound, generate_kart_125cc_rpm_band, generate_landing_sound,
     generate_lap_chime, generate_nascar_v8_rpm_band, generate_offroad_sound, generate_race_finish,
     generate_rally_turbo_rpm_band, generate_sand_rail_boxer_rpm_band, generate_sector_ping, generate_skid_sound,
@@ -48,8 +48,6 @@ pub enum EngineSoundType {
     SportGT,
     /// 125cc 2-Stroke Single-Cylinder Kart (screaming 2-stroke ring-a-ding buzz, expansion chamber resonance)
     Kart125cc,
-    /// High-revving Formula 1 V6 Turbo Hybrid (screaming top end, aggressive turbo whine, sharp metallic pitch)
-    F1V6Turbo,
     /// 4-Cylinder Rally Turbo (anti-lag pops, wastegate flutter, gravel-chewing mid-range rasp)
     RallyTurbo,
     /// Roaring 5.9L (358 cu in) Pushrod V8 Stock Car / Trans-Am TA1 (open boom-tube side pipes, thunderous roar)
@@ -124,7 +122,6 @@ pub struct SoundBank {
     pub engine_generic: [Option<Sound>; NUM_RPM_BANDS],
     pub engine_sport_gt: [Option<Sound>; NUM_RPM_BANDS],
     pub engine_kart: [Option<Sound>; NUM_RPM_BANDS],
-    pub engine_f1: [Option<Sound>; NUM_RPM_BANDS],
     pub engine_rally: [Option<Sound>; NUM_RPM_BANDS],
     pub engine_nascar: [Option<Sound>; NUM_RPM_BANDS],
     pub engine_sand_rail: [Option<Sound>; NUM_RPM_BANDS],
@@ -158,7 +155,6 @@ impl SoundBank {
             engine_generic: [const { None }; NUM_RPM_BANDS],
             engine_sport_gt: [const { None }; NUM_RPM_BANDS],
             engine_kart: [const { None }; NUM_RPM_BANDS],
-            engine_f1: [const { None }; NUM_RPM_BANDS],
             engine_rally: [const { None }; NUM_RPM_BANDS],
             engine_nascar: [const { None }; NUM_RPM_BANDS],
             engine_sand_rail: [const { None }; NUM_RPM_BANDS],
@@ -195,7 +191,6 @@ impl SoundBank {
         let mut generic_bands = [const { None }; NUM_RPM_BANDS];
         let mut sport_gt_bands = [const { None }; NUM_RPM_BANDS];
         let mut kart_bands = [const { None }; NUM_RPM_BANDS];
-        let mut f1_bands = [const { None }; NUM_RPM_BANDS];
         let mut rally_bands = [const { None }; NUM_RPM_BANDS];
         let mut nascar_bands = [const { None }; NUM_RPM_BANDS];
         let mut sand_rail_bands = [const { None }; NUM_RPM_BANDS];
@@ -210,8 +205,6 @@ impl SoundBank {
             let kart_wav = generate_kart_125cc_rpm_band(sample_rate, freq);
             kart_bands[idx] = safe_load_sound_from_bytes(&kart_wav).await;
 
-            let f1_wav = generate_f1_v6_rpm_band(sample_rate, freq);
-            f1_bands[idx] = safe_load_sound_from_bytes(&f1_wav).await;
 
             let rally_wav = generate_rally_turbo_rpm_band(sample_rate, freq);
             rally_bands[idx] = safe_load_sound_from_bytes(&rally_wav).await;
@@ -284,7 +277,6 @@ impl SoundBank {
             engine_generic: generic_bands,
             engine_sport_gt: sport_gt_bands,
             engine_kart: kart_bands,
-            engine_f1: f1_bands,
             engine_rally: rally_bands,
             engine_nascar: nascar_bands,
             engine_sand_rail: sand_rail_bands,
@@ -321,7 +313,6 @@ impl SoundBank {
             EngineSoundType::Generic => self.engine_generic[idx].as_ref(),
             EngineSoundType::SportGT => self.engine_sport_gt[idx].as_ref(),
             EngineSoundType::Kart125cc => self.engine_kart[idx].as_ref(),
-            EngineSoundType::F1V6Turbo => self.engine_f1[idx].as_ref(),
             EngineSoundType::RallyTurbo => self.engine_rally[idx].as_ref(),
             EngineSoundType::NascarV8 => self.engine_nascar[idx].as_ref(),
             EngineSoundType::SandRailBoxer => self.engine_sand_rail[idx].as_ref(),
@@ -874,7 +865,6 @@ impl AudioManager {
             EngineSoundType::Generic,
             EngineSoundType::SportGT,
             EngineSoundType::Kart125cc,
-            EngineSoundType::F1V6Turbo,
             EngineSoundType::RallyTurbo,
             EngineSoundType::NascarV8,
             EngineSoundType::SandRailBoxer,

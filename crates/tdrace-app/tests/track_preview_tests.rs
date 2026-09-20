@@ -34,7 +34,7 @@ fn test_track_bounds_computation() {
 
 #[test]
 fn test_menu_track_resolver_special_modules() {
-    let f1_ids = [
+    let gt_circuit_ids = [
         "monza",
         "spa",
         "silverstone",
@@ -50,24 +50,24 @@ fn test_menu_track_resolver_special_modules() {
         "cota",
     ];
 
-    for id in f1_ids {
+    for id in gt_circuit_ids {
         let choice = TrackChoice::Custom {
             id: id.to_string(),
             title: id.to_string(),
-            description: format!("F1 {}", id),
-            path: format!("f1/{}", id),
+            description: format!("GT {}", id),
+            path: format!("gt/{}", id),
         };
         let track = resolve_track_for_menu(&choice)
-            .unwrap_or_else(|| panic!("F1 track '{}' must resolve via menu resolver", id));
+            .unwrap_or_else(|| panic!("GT circuit '{}' must resolve via menu resolver", id));
         assert!(
             track.total_length_m() > 400.0,
-            "F1 track '{}' length must be > 400m",
+            "GT circuit '{}' length must be > 400m",
             id
         );
         assert_eq!(
             track.surface_summary_string(),
             "100% Asphalt",
-            "F1 track '{}' surface must be 100% Asphalt",
+            "GT circuit '{}' surface must be 100% Asphalt",
             id
         );
     }
@@ -125,7 +125,7 @@ fn test_validate_all_circuits_and_presets() {
     use tdrace_app::module::kart::KartGameModule;
     use tdrace_app::module::GameModule;
     use tdrace_core::track::presets::{
-        classic_grand_prix, drift_park, dune_raid, kart_arena, oasis_rally, outlaw_pass,
+        classic_grand_prix, drift_park, dune_raid, kart_arena, oasis_rally,
         oval_speedway, ramp_raceway, sahara_dunes,
     };
     use tdrace_core::track::validation::{validate_track, ValidationSeverity};
@@ -137,7 +137,6 @@ fn test_validate_all_circuits_and_presets() {
         ("Kart Arena", kart_arena()),
         ("Ramp Raceway", ramp_raceway()),
         ("Oasis Rally", oasis_rally()),
-        ("Outlaw Pass", outlaw_pass()),
         ("Sahara Dunes", sahara_dunes()),
         ("Dune Raid", dune_raid()),
     ];

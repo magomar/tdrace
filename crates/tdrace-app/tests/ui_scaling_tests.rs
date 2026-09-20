@@ -65,17 +65,17 @@ fn test_resolve_predefined_car_for_track_and_modules() {
     use tdrace_app::ui::menu::resolve_predefined_car_for_track;
     use tdrace_core::track::presets;
 
-    let f1_track = presets::classic_grand_prix();
-    assert_eq!(resolve_predefined_car_for_track(Some(&f1_track), "classic"), CarChoice::SportsCar);
+    let gp_track = presets::classic_grand_prix();
+    assert_eq!(resolve_predefined_car_for_track(Some(&gp_track), "classic"), CarChoice::SportsCar);
 
     let oasis = presets::oasis_rally();
-    assert_eq!(resolve_predefined_car_for_track(Some(&oasis), "rally"), CarChoice::RallyCar);
+    assert_eq!(resolve_predefined_car_for_track(Some(&oasis), "rally"), CarChoice::SandRail);
 
     let kart = presets::kart_arena();
     assert_eq!(resolve_predefined_car_for_track(Some(&kart), "kart"), CarChoice::Kart);
 
     let drift = presets::drift_park();
-    assert_eq!(resolve_predefined_car_for_track(Some(&drift), "classic"), CarChoice::DriftCar);
+    assert_eq!(resolve_predefined_car_for_track(Some(&drift), "classic"), CarChoice::SportsCar);
 
     // Module fallbacks when track is None
     assert_eq!(resolve_predefined_car_for_track(None, "gt"), CarChoice::GT4Clubsport);
@@ -183,11 +183,11 @@ fn test_race_session_game_mode_roster_behaviors() {
     session.game_mode = GameMode::TimeTrial;
     session.is_time_attack = true;
     session.free_car_selection = true;
-    session.car_choice = CarChoice::F1Car;
+    session.car_choice = CarChoice::HypercarPrototype;
     session.rebuild_roster_participants();
 
     assert_eq!(session.cars.len(), 1);
-    assert_eq!(session.active_player_car_choice(), CarChoice::F1Car);
+    assert_eq!(session.active_player_car_choice(), CarChoice::HypercarPrototype);
     assert_eq!(session.grid_participants.len(), 1);
     assert!(session.grid_participants[0].is_player);
 

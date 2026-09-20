@@ -1,8 +1,8 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::track::presets::{
-    classic_grand_prix, dirt_figure_eight, dirty_oval_speedway, drift_park, figure_eight,
-    kart_arena, oasis_rally, outlaw_pass, oval_speedway, ramp_raceway,
+    classic_grand_prix, classic_rallycross, dirt_figure_eight, dirty_oval_speedway, drift_park, figure_eight,
+    kart_arena, oasis_rally, oval_speedway, ramp_raceway,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -80,6 +80,26 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 14.0;
         cfg.tire.drift_slide_friction = 0.90;
         cfg.tire.stiffness_b = 13.0;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg
+    }
+
+    /// 450 BHP Fantasy Group B Rally Beast: explosive 4WD acceleration, multi-surface suspension compliance, agile slide damping.
+    pub fn car_classic_rally() -> CarConfig {
+        let mut cfg = CarConfig::rally_car();
+        cfg.mass = 1050.0;
+        cfg.max_engine_force = 9200.0;
+        cfg.top_speed_mps = 59.7; // ~215 km/h
+        cfg.max_brake_force = 15000.0;
+        cfg.max_steer_angle = 0.62;
+        cfg.steer_speed = 8.5;
+        cfg.steer_return_speed = 12.0;
+        cfg.downforce_coefficient = 1.10;
+        cfg.drive_bias = 0.5; // 4WD 50:50 torque split
+        cfg.tire.drift_slide_friction = 0.94;
+        cfg.tire.stiffness_b = 10.0;
+        cfg.weight_transfer_longitudinal = 0.50;
+        cfg.weight_transfer_lateral = 0.50;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg
     }
@@ -186,6 +206,24 @@ impl GameModule for ClassicGameModule {
                     CarColorScheme::from_index(2),
                 ],
             },
+            VehicleModelDefinition {
+                id: "classic_rally",
+                name: "Trailfire Turbo 4WD",
+                tag: "ARCADE GROUP B RALLY",
+                description: "Explosive 4WD fantasy rally beast with long-travel suspension, jump composure, and fearless multi-surface slides.",
+                config: Self::car_classic_rally(),
+                visual_type: VehicleVisualType::RallyHatch {
+                    roof_scoop: true,
+                    mudflaps: true,
+                    large_wing: true,
+                },
+                stats: (0.88, 0.94, 0.92, 0.88),
+                default_schemes: vec![
+                    CarColorScheme::from_index(3),
+                    CarColorScheme::from_index(0),
+                    CarColorScheme::from_index(1),
+                ],
+            },
         ]
     }
 
@@ -261,9 +299,9 @@ impl GameModule for ClassicGameModule {
             TrackDefinition {
                 id: "ramp_raceway",
                 title: "Ramp Raceway",
-                tag: "STUNT RAMPS & JUMPS",
-                description: "High-speed stadium circuit with launch ramps, water hazards & gap jumps.",
-                category: "Stunt Track",
+                tag: "DIRT STUNT RAMPS",
+                description: "High-speed dirt stadium circuit with launch ramps, water hazards & gap jumps.",
+                category: "Dirt Stunt Track",
                 default_laps: 3,
                 generator: ramp_raceway,
             },
@@ -277,13 +315,13 @@ impl GameModule for ClassicGameModule {
                 generator: oasis_rally,
             },
             TrackDefinition {
-                id: "outlaw_pass",
-                title: "Outlaw Pass",
-                tag: "NARROW MOUNTAIN PASS",
-                description: "Perilous mountain circuit carving through a dramatic narrow canyon pass.",
-                category: "Mountain Pass",
+                id: "classic_rallycross",
+                title: "Classic Rallycross",
+                tag: "HYBRID RALLYCROSS",
+                description: "Dynamic 1.0 km mixed-surface rallycross circuit with asphalt straights, dirt hairpins & tabletop jumps.",
+                category: "Mixed Surface RX",
                 default_laps: 3,
-                generator: outlaw_pass,
+                generator: classic_rallycross,
             },
         ]
     }
@@ -310,7 +348,8 @@ impl GameModule for ClassicGameModule {
                     "classic_grand_prix".to_string(),
                     "drift_park".to_string(),
                     "ramp_raceway".to_string(),
-                    "outlaw_pass".to_string(),
+                    "oasis_rally".to_string(),
+                    "classic_rallycross".to_string(),
                 ],
                 laps_per_round: 3,
             },

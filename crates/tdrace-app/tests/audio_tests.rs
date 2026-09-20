@@ -318,15 +318,15 @@ fn test_multi_engine_sound_types_synthesis_and_fallback() {
         let generic_wav = generate_generic_engine_rpm_band(DEFAULT_SAMPLE_RATE, freq);
         let gt_wav = generate_sport_gt_rpm_band(DEFAULT_SAMPLE_RATE, freq);
         let kart_wav = generate_kart_125cc_rpm_band(DEFAULT_SAMPLE_RATE, freq);
-        let f1_wav = generate_f1_v6_rpm_band(DEFAULT_SAMPLE_RATE, freq);
         let rally_wav = generate_rally_turbo_rpm_band(DEFAULT_SAMPLE_RATE, freq);
+        let nascar_wav = generate_nascar_v8_rpm_band(DEFAULT_SAMPLE_RATE, freq);
 
         for (name, wav) in [
             ("generic", generic_wav),
             ("sport_gt", gt_wav),
             ("kart", kart_wav),
-            ("f1", f1_wav),
             ("rally", rally_wav),
+            ("nascar", nascar_wav),
         ] {
             assert_eq!(&wav[0..4], b"RIFF", "{name} band missing RIFF");
             assert_eq!(&wav[8..12], b"WAVE", "{name} band missing WAVE");
@@ -339,7 +339,7 @@ fn test_multi_engine_sound_types_synthesis_and_fallback() {
     // Initially empty -> returns None
     assert!(bank.get_engine_band(EngineSoundType::SportGT, 0).is_none());
 
-    // When only generic bank has a sound, querying SportGT, Kart, F1, Rally falls back to generic
+    // When only generic bank has a sound, querying SportGT, Kart, Rally falls back to generic
     // (We test the fallback logic on the data structure)
     let test_sound_bytes = generate_generic_engine_rpm_band(DEFAULT_SAMPLE_RATE, 65.0);
     assert!(!test_sound_bytes.is_empty());

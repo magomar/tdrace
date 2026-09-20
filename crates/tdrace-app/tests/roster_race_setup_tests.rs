@@ -1,7 +1,7 @@
 use tdrace_app::game::RaceSession;
 use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
+    classic_grand_prix, classic_rallycross, drift_park, kart_arena, oasis_rally, oval_speedway,
     ramp_raceway,
 };
 use tdrace_core::track::Track;
@@ -10,31 +10,31 @@ use tdrace_core::track::Track;
 fn test_preset_tracks_predefined_cars_and_balanced_laps() {
     let gp = classic_grand_prix();
     assert_eq!(gp.default_laps, 3);
-    assert_eq!(gp.predefined_car.as_deref(), Some("sports_car"));
+    assert_eq!(gp.predefined_car.as_deref(), Some("classic_gt"));
 
     let oval = oval_speedway();
     assert_eq!(oval.default_laps, 5);
-    assert_eq!(oval.predefined_car.as_deref(), Some("sports_car"));
+    assert_eq!(oval.predefined_car.as_deref(), Some("classic_nascar"));
 
     let drift = drift_park();
     assert_eq!(drift.default_laps, 3);
-    assert_eq!(drift.predefined_car.as_deref(), Some("drift_car"));
+    assert_eq!(drift.predefined_car.as_deref(), Some("classic_gt"));
 
     let kart = kart_arena();
     assert_eq!(kart.default_laps, 5);
-    assert_eq!(kart.predefined_car.as_deref(), Some("kart"));
+    assert_eq!(kart.predefined_car.as_deref(), Some("classic_kart"));
 
     let ramp = ramp_raceway();
     assert_eq!(ramp.default_laps, 3);
-    assert_eq!(ramp.predefined_car.as_deref(), Some("sports_car"));
+    assert_eq!(ramp.predefined_car.as_deref(), Some("classic_rally"));
 
     let oasis = oasis_rally();
     assert_eq!(oasis.default_laps, 3);
-    assert_eq!(oasis.predefined_car.as_deref(), Some("rally_car"));
+    assert_eq!(oasis.predefined_car.as_deref(), Some("classic_offroad"));
 
-    let outlaw = outlaw_pass();
-    assert_eq!(outlaw.default_laps, 3);
-    assert_eq!(outlaw.predefined_car.as_deref(), Some("sports_car"));
+    let rx = classic_rallycross();
+    assert_eq!(rx.default_laps, 3);
+    assert_eq!(rx.predefined_car.as_deref(), Some("classic_rally"));
 }
 
 #[test]
@@ -61,18 +61,19 @@ fn test_enforced_predefined_car_in_race_session() {
         assert!((bot_car.config.top_speed_mps - 32.0).abs() < 1.0);
     }
 
-    // 2. Select Drift Park (enforced car = DriftCar, laps = 3)
+    // 2. Select Drift Park (enforced car = SportsCar / classic_gt, laps = 3)
     session.track_choice = TrackChoice::DriftPark;
     session.free_car_selection = false;
+    session.random_car_assignment = false;
     session.init_race();
 
     assert_eq!(session.total_laps, 3);
-    assert_eq!(session.resolve_predefined_car(), CarChoice::DriftCar);
-    assert_eq!(session.active_player_car_choice(), CarChoice::DriftCar);
+    assert_eq!(session.resolve_predefined_car(), CarChoice::SportsCar);
+    assert_eq!(session.active_player_car_choice(), CarChoice::SportsCar);
 
-    // Verify drift car max steer lock (~0.78 rad)
+    // Verify sports car top speed (~58 m/s)
     for car in &session.cars {
-        assert!((car.config.max_steer_angle - 0.78).abs() < 0.05);
+        assert!((car.config.top_speed_mps - 58.0).abs() < 1.0);
     }
 }
 
@@ -91,6 +92,7 @@ fn test_free_car_selection_toggle_in_race_session() {
     // Enable free car selection
     session.free_car_selection = true;
     session.rebuild_roster_participants();
+    session.init_race();
 
     // Now player gets SportsCar
     assert_eq!(session.active_player_car_choice(), CarChoice::SportsCar);
@@ -141,7 +143,7 @@ fn test_track_serde_default_laps_and_predefined_car_roundtrip() {
 
     let deserialized = Track::from_json(&json).expect("Must deserialize from JSON");
     assert_eq!(deserialized.default_laps, 3);
-    assert_eq!(deserialized.predefined_car.as_deref(), Some("sports_car"));
+    assert_eq!(deserialized.predefined_car.as_deref(), Some("classic_gt"));
 
     // Test backwards-compatibility when fields are missing from JSON
     let mut val: serde_json::Value = serde_json::from_str(&json).expect("Parse json value");

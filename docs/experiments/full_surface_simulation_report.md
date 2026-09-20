@@ -10,19 +10,19 @@ tags: [physics, surface, benchmark, telemetry, simulation, balance]
 # 🔬 Empirical Benchmark Report: Surface-Car Dynamics Simulation
 
 **Experiment**: `Full 5-Tier Multi-Module & Classic Surface Dynamics Simulation`
-**Timestamp**: `2026-09-19T22:40:43.643452129+00:00`
-**Vehicles Tested**: 30
+**Timestamp**: `2026-09-20T15:34:14.486881078+00:00`
+**Vehicles Tested**: 29
 **Surfaces Evaluated**: 12 surfaces
 
 ## 📋 1. Vehicle Roster (1 Vehicle Per Category Across Non-Classic Modules)
 
 | Module | Tier | Category | Vehicle ID | Display Name |
 |:---|:---:|:---|:---|:---|
-| **GT / F1** | Tier 1 | Tier 1: GT4 Clubsport | `gt_porsche_718_gt4` | Porsche 718 Cayman GT4 RS Clubsport |
-| **GT / F1** | Tier 2 | Tier 2: GT3 Evo / FIA GT3 | `gt_porsche_911_gt3r` | Porsche 911 GT3 R (992) |
-| **GT / F1** | Tier 3 | Tier 3: GT2 Biturbo | `gt_porsche_911_gt2_rs` | Porsche 911 GT2 RS Clubsport |
-| **GT / F1** | Tier 4 | Tier 4: GT1 Legend | `gt_porsche_911_gt1_98` | Porsche 911 GT1-98 |
-| **GT / F1** | Tier 5 | Tier 5: Hypercar Prototype | `gt_ferrari_499p` | Ferrari 499P LMH |
+| **GT World Challenge** | Tier 1 | Tier 1: GT4 Clubsport | `gt_porsche_718_gt4` | Porsche 718 Cayman GT4 RS Clubsport |
+| **GT World Challenge** | Tier 2 | Tier 2: GT3 Evo / FIA GT3 | `gt_porsche_911_gt3r` | Porsche 911 GT3 R (992) |
+| **GT World Challenge** | Tier 3 | Tier 3: GT2 Biturbo | `gt_porsche_911_gt2_rs` | Porsche 911 GT2 RS Clubsport |
+| **GT World Challenge** | Tier 4 | Tier 4: GT1 Legend | `gt_porsche_911_gt1_98` | Porsche 911 GT1-98 |
+| **GT World Challenge** | Tier 5 | Tier 5: Hypercar Prototype | `gt_ferrari_499p` | Ferrari 499P LMH |
 | **NASCAR** | Tier 1 | Tier 1: Street Stock V8 | `nascar_monte_carlo_ss` | Chevrolet Monte Carlo Street Stock |
 | **NASCAR** | Tier 2 | Tier 2: Late Model Stock | `nascar_super_late_model` | Super Late Model Camaro |
 | **NASCAR** | Tier 3 | Tier 3: ARCA Menards Series | `nascar_arca_chevy_ss` | Chevrolet SS ARCA Spec |
@@ -43,7 +43,6 @@ tags: [physics, surface, benchmark, telemetry, simulation, balance]
 | **Kart** | Tier 3 | Tier 3: Shifter Kart 125cc KZ2 | `kart_birel_art_kz2` | Birel ART KZ2 125cc Shifter |
 | **Kart** | Tier 4 | Tier 4: Racing Lawnmower | `kart_honda_mean_mower` | Honda Mean Mower V2 Tuned |
 | **Kart** | Tier 5 | Tier 5: Superkart 250cc GP | `kart_anderson_cs250` | Anderson CS250 Twin GP |
-| **GT / F1** | Tier 5 | Tier 5: Open-Wheel F1 | `f1_hybrid_26` | 1050 BHP Hybrid F1 Turbo |
 | **Classic** | Tier 1 | Classic Prototypical | `classic_sports_car` | GT Sports Coupe (Prototypical) |
 | **Classic** | Tier 2 | Classic Prototypical | `classic_drift_car` | Tuned Drift Spec (Prototypical) |
 | **Classic** | Tier 3 | Classic Prototypical | `classic_kart` | 125cc Shifter Kart (Prototypical) |
@@ -80,7 +79,6 @@ Elapsed time to 100 km/h ($t_{100}$ in seconds) across surfaces (*DNC* = did not
 | **Birel ART KZ2 125cc Shifter** | 5.85s | 6.27s | 7.05s | 8.41s | 10.84s | *DNC* (61k) | *DNC* (31k) | *DNC* (69k) | *DNC* (1k) | *DNC* (42k) | *DNC* (38k) | *DNC* (27k) |
 | **Honda Mean Mower V2 Tuned** | 5.76s | 6.16s | 6.91s | 8.17s | 10.32s | *DNC* (65k) | *DNC* (32k) | *DNC* (72k) | *DNC* (1k) | *DNC* (44k) | *DNC* (38k) | *DNC* (28k) |
 | **Anderson CS250 Twin GP** | 5.70s | 6.10s | 6.82s | 8.03s | 10.04s | *DNC* (68k) | *DNC* (33k) | *DNC* (75k) | *DNC* (1k) | *DNC* (45k) | *DNC* (39k) | *DNC* (28k) |
-| **1050 BHP Hybrid F1 Turbo** | 5.73s | 6.07s | 6.65s | 7.61s | 8.94s | *DNC* (99k) | *DNC* (63k) | *DNC* (99k) | *DNC* (2k) | *DNC* (57k) | *DNC* (42k) | *DNC* (29k) |
 | **GT Sports Coupe (Prototypical)** | 5.41s | 5.76s | 6.35s | 7.33s | 8.66s | 17.21s | *DNC* (54k) | 23.16s | *DNC* (1k) | *DNC* (60k) | *DNC* (42k) | *DNC* (29k) |
 | **Tuned Drift Spec (Prototypical)** | 5.44s | 5.79s | 6.39s | 7.38s | 8.72s | 17.77s | *DNC* (53k) | 23.62s | *DNC* (1k) | *DNC* (59k) | *DNC* (42k) | *DNC* (29k) |
 | **125cc Shifter Kart (Prototypical)** | 5.82s | 6.24s | 7.02s | 8.36s | 10.72s | *DNC* (62k) | *DNC* (31k) | *DNC* (70k) | *DNC* (1k) | *DNC* (43k) | *DNC* (38k) | *DNC* (27k) |
@@ -92,7 +90,7 @@ Stopping distance ($d_{\text{stop}}$ in meters) from an initial speed of 100 km/
 
 | Vehicle | Asphalt | Concrete | Curb | Dirt | Gravel | Mud | Grass | Snow | Sand | Water | Oil | Ice |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Porsche 718 Cayman GT4 RS Clubsport** | 37.7m | 39.6m | 42.7m | 48.1m | 53.3m | 67.6m | 79.5m | 105.5m | 105.6m | 154.2m | 286.9m | 412.6m |
+| **Porsche 718 Cayman GT4 RS Clubsport** | 37.8m | 39.7m | 42.7m | 48.1m | 53.3m | 67.6m | 79.5m | 105.5m | 105.6m | 154.2m | 286.9m | 412.6m |
 | **Porsche 911 GT3 R (992)** | 36.1m | 38.0m | 40.9m | 46.0m | 51.0m | 63.9m | 75.3m | 100.0m | 97.8m | 144.6m | 269.9m | 385.9m |
 | **Porsche 911 GT2 RS Clubsport** | 37.2m | 39.1m | 42.1m | 47.4m | 52.5m | 66.5m | 78.2m | 103.8m | 103.5m | 151.5m | 282.1m | 405.5m |
 | **Porsche 911 GT1-98** | 34.8m | 36.5m | 39.4m | 44.2m | 48.9m | 60.7m | 71.8m | 95.4m | 91.7m | 136.8m | 255.8m | 363.9m |
@@ -102,26 +100,25 @@ Stopping distance ($d_{\text{stop}}$ in meters) from an initial speed of 100 km/
 | **Chevrolet SS ARCA Spec** | 37.4m | 39.4m | 42.4m | 47.8m | 53.0m | 67.6m | 79.3m | 105.3m | 106.5m | 154.7m | 287.5m | 414.6m |
 | **Chevrolet Silverado RST Truck** | 37.5m | 39.4m | 42.5m | 47.8m | 53.1m | 67.8m | 79.6m | 105.6m | 107.1m | 155.4m | 288.6m | 416.5m |
 | **Chevrolet Corvette C7 TA1** | 37.2m | 39.1m | 42.1m | 47.4m | 52.6m | 66.6m | 78.3m | 103.9m | 103.8m | 151.8m | 282.5m | 406.2m |
-| **Peugeot 208 Rally4** | 37.7m | 39.6m | 42.7m | 48.1m | 53.3m | 67.7m | 79.5m | 105.5m | 105.8m | 154.4m | 287.3m | 413.2m |
-| **Hyundai i20 RX Supercar** | 37.9m | 39.8m | 42.9m | 48.3m | 53.6m | 68.6m | 80.4m | 106.7m | 108.3m | 157.0m | 291.7m | 420.8m |
-| **Audi Sport Quattro S1 E2** | 37.7m | 39.7m | 42.7m | 48.1m | 53.3m | 67.7m | 79.6m | 105.6m | 106.0m | 154.6m | 287.6m | 413.7m |
-| **Toyota GR DKR Hilux T1+** | 46.2m | 47.0m | 48.0m | 49.9m | 54.5m | 71.0m | 82.9m | 109.9m | 115.7m | 164.4m | 304.1m | 441.6m |
-| **Stadium Super Truck V8** | 39.6m | 40.2m | 43.1m | 48.5m | 53.8m | 69.1m | 80.9m | 107.4m | 109.8m | 158.6m | 294.3m | 425.1m |
+| **Peugeot 208 Rally4** | 38.0m | 40.0m | 43.0m | 48.2m | 53.3m | 67.7m | 79.5m | 105.5m | 105.8m | 154.4m | 287.3m | 413.2m |
+| **Hyundai i20 RX Supercar** | 38.2m | 40.2m | 43.2m | 48.5m | 53.6m | 68.6m | 80.4m | 106.7m | 108.3m | 157.0m | 291.7m | 420.8m |
+| **Audi Sport Quattro S1 E2** | 38.0m | 39.9m | 42.9m | 48.1m | 53.3m | 67.7m | 79.6m | 105.6m | 106.0m | 154.6m | 287.6m | 413.7m |
+| **Toyota GR DKR Hilux T1+** | 46.9m | 47.3m | 48.1m | 49.9m | 54.5m | 71.0m | 82.9m | 109.9m | 115.7m | 164.4m | 304.1m | 441.6m |
+| **Stadium Super Truck V8** | 39.2m | 40.3m | 43.3m | 48.6m | 53.8m | 69.1m | 80.9m | 107.4m | 109.8m | 158.6m | 294.3m | 425.1m |
 | **Can-Am Maverick R Trophy Spec** | 37.2m | 39.1m | 42.0m | 47.1m | 52.0m | 62.5m | 74.5m | 99.1m | 90.5m | 138.6m | 260.7m | 364.8m |
-| **Geiser Bros AWD Trophy Truck** | 50.8m | 50.7m | 50.5m | 52.8m | 55.0m | 71.7m | 83.6m | 110.9m | 117.0m | 166.1m | 307.2m | 445.8m |
-| **Subaru WRX STI Ice Racer** | 37.9m | 39.8m | 42.9m | 48.3m | 53.6m | 68.5m | 80.3m | 106.6m | 108.0m | 156.7m | 291.2m | 419.9m |
-| **Mega Truck V8 Mud Slinger** | 55.9m | 55.9m | 55.5m | 55.7m | 56.8m | 72.2m | 84.1m | 111.5m | 118.8m | 167.8m | 309.9m | 450.4m |
-| **Grave Digger Spec Monster Jam** | 79.0m | 78.9m | 78.2m | 78.4m | 74.8m | 75.4m | 85.6m | 113.4m | 124.2m | 172.8m | 318.1m | 464.2m |
+| **Geiser Bros AWD Trophy Truck** | 52.7m | 52.7m | 52.3m | 53.0m | 55.0m | 71.7m | 83.6m | 110.9m | 117.0m | 166.1m | 307.2m | 445.8m |
+| **Subaru WRX STI Ice Racer** | 38.2m | 40.2m | 43.2m | 48.4m | 53.6m | 68.5m | 80.3m | 106.6m | 108.0m | 156.7m | 291.2m | 419.9m |
+| **Mega Truck V8 Mud Slinger** | 57.9m | 57.8m | 57.4m | 57.5m | 56.6m | 72.2m | 84.1m | 111.5m | 118.8m | 167.8m | 309.9m | 450.4m |
+| **Grave Digger Spec Monster Jam** | 80.9m | 80.8m | 80.0m | 80.3m | 76.5m | 75.4m | 85.6m | 113.4m | 124.2m | 172.8m | 318.1m | 464.2m |
 | **CRG Hero 60cc Cadet** | 34.0m | 35.6m | 37.9m | 41.9m | 45.1m | 44.9m | 55.9m | 74.9m | 53.7m | 91.8m | 178.0m | 231.0m |
 | **Tony Kart Racer 401 RR OK** | 35.1m | 36.8m | 39.3m | 43.6m | 47.2m | 49.2m | 60.7m | 81.2m | 61.3m | 102.5m | 197.4m | 260.2m |
 | **Birel ART KZ2 125cc Shifter** | 35.7m | 37.4m | 40.0m | 44.6m | 48.5m | 52.1m | 63.8m | 85.2m | 66.6m | 109.7m | 210.3m | 280.2m |
-| **Honda Mean Mower V2 Tuned** | 36.1m | 37.9m | 40.5m | 45.2m | 49.3m | 54.0m | 65.8m | 87.9m | 70.4m | 114.6m | 219.2m | 294.2m |
-| **Anderson CS250 Twin GP** | 36.3m | 38.1m | 40.9m | 45.6m | 49.8m | 55.3m | 67.2m | 89.7m | 73.1m | 118.1m | 225.3m | 304.1m |
-| **1050 BHP Hybrid F1 Turbo** | 32.9m | 34.6m | 37.2m | 41.7m | 46.0m | 55.9m | 66.5m | 88.4m | 81.8m | 124.4m | 233.8m | 328.5m |
-| **GT Sports Coupe (Prototypical)** | 37.7m | 39.7m | 42.7m | 48.1m | 53.3m | 67.6m | 79.5m | 105.5m | 105.4m | 154.1m | 286.7m | 412.1m |
+| **Honda Mean Mower V2 Tuned** | 36.2m | 37.9m | 40.5m | 45.2m | 49.3m | 54.0m | 65.8m | 87.9m | 70.4m | 114.6m | 219.2m | 294.2m |
+| **Anderson CS250 Twin GP** | 36.5m | 38.2m | 40.9m | 45.6m | 49.8m | 55.3m | 67.2m | 89.7m | 73.1m | 118.1m | 225.3m | 304.1m |
+| **GT Sports Coupe (Prototypical)** | 38.0m | 39.9m | 42.9m | 48.1m | 53.3m | 67.6m | 79.5m | 105.5m | 105.4m | 154.1m | 286.7m | 412.1m |
 | **Tuned Drift Spec (Prototypical)** | 37.9m | 39.9m | 42.9m | 48.3m | 53.5m | 67.6m | 79.5m | 105.6m | 104.6m | 153.6m | 286.1m | 410.2m |
 | **125cc Shifter Kart (Prototypical)** | 35.8m | 37.5m | 40.2m | 44.7m | 48.7m | 52.5m | 64.2m | 85.8m | 67.4m | 110.7m | 212.2m | 283.1m |
-| **AWD Turbo Rally (Prototypical)** | 37.6m | 39.6m | 42.7m | 48.0m | 53.2m | 67.5m | 79.3m | 105.3m | 105.2m | 153.8m | 286.3m | 411.5m |
+| **AWD Turbo Rally (Prototypical)** | 37.9m | 39.8m | 42.8m | 48.0m | 53.2m | 67.5m | 79.3m | 105.3m | 105.2m | 153.8m | 286.3m | 411.5m |
 
 ## 🔄 4. Protocol C: Steady-State Skidpad Cornering Limit ($R = 30\text{m}$)
 
@@ -129,35 +126,34 @@ Peak lateral acceleration ($a_{y,\max}$ in $g$) on constant-radius skidpad:
 
 | Vehicle | Asphalt | Concrete | Curb | Dirt | Gravel | Mud | Grass | Snow | Sand | Water | Oil | Ice |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Porsche 718 Cayman GT4 RS Clubsport** | 1.00g | 0.95g | 0.87g | 0.77g | 0.68g | 0.50g | 0.38g | 0.32g | 0.09g | 0.19g | 0.08g | 0.05g |
-| **Porsche 911 GT3 R (992)** | 1.03g | 0.98g | 0.90g | 0.79g | 0.70g | 0.47g | 0.39g | 0.30g | 0.09g | 0.16g | 0.08g | 0.05g |
-| **Porsche 911 GT2 RS Clubsport** | 1.01g | 0.96g | 0.88g | 0.78g | 0.69g | 0.47g | 0.38g | 0.30g | 0.08g | 0.16g | 0.07g | 0.05g |
-| **Porsche 911 GT1-98** | 1.07g | 1.01g | 0.92g | 0.81g | 0.71g | 0.47g | 0.26g | 0.31g | 0.08g | 0.15g | 0.07g | 0.05g |
-| **Ferrari 499P LMH** | 0.91g | 0.86g | 0.79g | 0.69g | 0.61g | 0.39g | 0.30g | 0.25g | 0.08g | 0.13g | 0.07g | 0.04g |
-| **Chevrolet Monte Carlo Street Stock** | 1.00g | 0.95g | 0.88g | 0.77g | 0.69g | 0.47g | 0.38g | 0.31g | 0.08g | 0.17g | 0.08g | 0.05g |
-| **Super Late Model Camaro** | 1.01g | 0.95g | 0.88g | 0.78g | 0.69g | 0.47g | 0.38g | 0.31g | 0.08g | 0.16g | 0.07g | 0.05g |
-| **Chevrolet SS ARCA Spec** | 1.00g | 0.95g | 0.88g | 0.77g | 0.69g | 0.47g | 0.39g | 0.30g | 0.08g | 0.16g | 0.08g | 0.05g |
-| **Chevrolet Silverado RST Truck** | 1.00g | 0.95g | 0.88g | 0.77g | 0.69g | 0.47g | 0.39g | 0.30g | 0.09g | 0.16g | 0.08g | 0.05g |
-| **Chevrolet Corvette C7 TA1** | 1.01g | 0.95g | 0.88g | 0.77g | 0.69g | 0.47g | 0.36g | 0.30g | 0.08g | 0.16g | 0.07g | 0.05g |
+| **Porsche 718 Cayman GT4 RS Clubsport** | 1.00g | 0.95g | 0.87g | 0.77g | 0.68g | 0.49g | 0.39g | 0.32g | 0.09g | 0.19g | 0.09g | 0.05g |
+| **Porsche 911 GT3 R (992)** | 1.03g | 0.98g | 0.90g | 0.79g | 0.70g | 0.47g | 0.30g | 0.31g | 0.08g | 0.17g | 0.08g | 0.05g |
+| **Porsche 911 GT2 RS Clubsport** | 1.01g | 0.96g | 0.88g | 0.78g | 0.69g | 0.47g | 0.29g | 0.31g | 0.08g | 0.16g | 0.08g | 0.05g |
+| **Porsche 911 GT1-98** | 1.07g | 1.01g | 0.92g | 0.81g | 0.71g | 0.48g | 0.26g | 0.31g | 0.08g | 0.16g | 0.07g | 0.05g |
+| **Ferrari 499P LMH** | 0.91g | 0.86g | 0.79g | 0.69g | 0.61g | 0.40g | 0.24g | 0.25g | 0.08g | 0.13g | 0.07g | 0.04g |
+| **Chevrolet Monte Carlo Street Stock** | 1.00g | 0.95g | 0.88g | 0.77g | 0.69g | 0.47g | 0.34g | 0.31g | 0.08g | 0.17g | 0.08g | 0.05g |
+| **Super Late Model Camaro** | 1.01g | 0.95g | 0.88g | 0.78g | 0.69g | 0.47g | 0.31g | 0.31g | 0.08g | 0.17g | 0.08g | 0.05g |
+| **Chevrolet SS ARCA Spec** | 1.00g | 0.95g | 0.88g | 0.77g | 0.69g | 0.47g | 0.31g | 0.30g | 0.08g | 0.17g | 0.08g | 0.05g |
+| **Chevrolet Silverado RST Truck** | 1.00g | 0.95g | 0.88g | 0.77g | 0.69g | 0.47g | 0.31g | 0.30g | 0.09g | 0.17g | 0.08g | 0.05g |
+| **Chevrolet Corvette C7 TA1** | 1.01g | 0.95g | 0.88g | 0.77g | 0.69g | 0.47g | 0.31g | 0.30g | 0.08g | 0.16g | 0.07g | 0.05g |
 | **Peugeot 208 Rally4** | 0.98g | 0.93g | 0.86g | 0.75g | 0.67g | 0.50g | 0.35g | 0.31g | 0.07g | 0.19g | 0.10g | 0.06g |
-| **Hyundai i20 RX Supercar** | 0.96g | 0.91g | 0.85g | 0.75g | 0.67g | 0.50g | 0.42g | 0.33g | 0.27g | 0.21g | 0.11g | 0.07g |
+| **Hyundai i20 RX Supercar** | 0.96g | 0.92g | 0.85g | 0.75g | 0.67g | 0.50g | 0.42g | 0.33g | 0.27g | 0.21g | 0.11g | 0.07g |
 | **Audi Sport Quattro S1 E2** | 0.96g | 0.92g | 0.85g | 0.75g | 0.67g | 0.50g | 0.42g | 0.33g | 0.27g | 0.21g | 0.11g | 0.07g |
 | **Toyota GR DKR Hilux T1+** | 0.96g | 0.91g | 0.84g | 0.75g | 0.67g | 0.50g | 0.42g | 0.33g | 0.07g | 0.21g | 0.11g | 0.07g |
-| **Stadium Super Truck V8** | 0.95g | 0.90g | 0.84g | 0.74g | 0.65g | 0.47g | 0.30g | 0.30g | 0.06g | 0.18g | 0.08g | 0.05g |
-| **Can-Am Maverick R Trophy Spec** | 0.91g | 0.86g | 0.80g | 0.71g | 0.63g | 0.45g | 0.28g | 0.30g | 0.09g | 0.17g | 0.07g | 0.04g |
+| **Stadium Super Truck V8** | 0.95g | 0.90g | 0.83g | 0.73g | 0.65g | 0.46g | 0.30g | 0.30g | 0.15g | 0.17g | 0.08g | 0.05g |
+| **Can-Am Maverick R Trophy Spec** | 0.91g | 0.86g | 0.80g | 0.71g | 0.63g | 0.45g | 0.28g | 0.30g | 0.09g | 0.17g | 0.08g | 0.04g |
 | **Geiser Bros AWD Trophy Truck** | 0.91g | 0.86g | 0.80g | 0.72g | 0.64g | 0.48g | 0.41g | 0.33g | 0.24g | 0.21g | 0.10g | 0.06g |
 | **Subaru WRX STI Ice Racer** | 0.96g | 0.91g | 0.85g | 0.75g | 0.67g | 0.50g | 0.42g | 0.33g | 0.27g | 0.21g | 0.11g | 0.07g |
 | **Mega Truck V8 Mud Slinger** | 0.91g | 0.87g | 0.80g | 0.72g | 0.65g | 0.48g | 0.41g | 0.33g | 0.06g | 0.21g | 0.10g | 0.06g |
-| **Grave Digger Spec Monster Jam** | 0.90g | 0.86g | 0.80g | 0.71g | 0.63g | 0.44g | 0.28g | 0.31g | 0.06g | 0.20g | 0.10g | 0.06g |
-| **CRG Hero 60cc Cadet** | 0.94g | 0.89g | 0.83g | 0.73g | 0.65g | 0.37g | 0.12g | 0.31g | 0.03g | 0.19g | 0.10g | 0.06g |
-| **Tony Kart Racer 401 RR OK** | 0.95g | 0.90g | 0.83g | 0.73g | 0.65g | 0.45g | 0.20g | 0.29g | 0.04g | 0.16g | 0.09g | 0.05g |
-| **Birel ART KZ2 125cc Shifter** | 0.96g | 0.91g | 0.84g | 0.74g | 0.65g | 0.45g | 0.17g | 0.28g | 0.05g | 0.15g | 0.08g | 0.05g |
-| **Honda Mean Mower V2 Tuned** | 0.95g | 0.91g | 0.84g | 0.75g | 0.66g | 0.48g | 0.20g | 0.29g | 0.04g | 0.16g | 0.09g | 0.05g |
-| **Anderson CS250 Twin GP** | 0.95g | 0.90g | 0.84g | 0.74g | 0.66g | 0.41g | 0.16g | 0.28g | 0.05g | 0.15g | 0.08g | 0.05g |
-| **1050 BHP Hybrid F1 Turbo** | 1.12g | 1.06g | 0.96g | 0.84g | 0.74g | 0.49g | 0.37g | 0.31g | 0.13g | 0.17g | 0.09g | 0.05g |
-| **GT Sports Coupe (Prototypical)** | 0.97g | 0.92g | 0.84g | 0.74g | 0.66g | 0.48g | 0.31g | 0.30g | 0.06g | 0.18g | 0.08g | 0.05g |
-| **Tuned Drift Spec (Prototypical)** | 0.96g | 0.91g | 0.84g | 0.74g | 0.65g | 0.43g | 0.26g | 0.27g | 0.06g | 0.16g | 0.07g | 0.05g |
-| **125cc Shifter Kart (Prototypical)** | 0.96g | 0.91g | 0.84g | 0.74g | 0.65g | 0.44g | 0.18g | 0.28g | 0.06g | 0.15g | 0.08g | 0.05g |
+| **Grave Digger Spec Monster Jam** | 0.90g | 0.86g | 0.80g | 0.71g | 0.63g | 0.44g | 0.28g | 0.31g | 0.16g | 0.17g | 0.08g | 0.05g |
+| **CRG Hero 60cc Cadet** | 0.94g | 0.89g | 0.83g | 0.73g | 0.65g | 0.39g | 0.12g | 0.30g | 0.09g | 0.19g | 0.09g | 0.05g |
+| **Tony Kart Racer 401 RR OK** | 0.95g | 0.90g | 0.83g | 0.73g | 0.65g | 0.46g | 0.19g | 0.28g | 0.09g | 0.16g | 0.07g | 0.05g |
+| **Birel ART KZ2 125cc Shifter** | 0.96g | 0.91g | 0.84g | 0.74g | 0.65g | 0.44g | 0.27g | 0.28g | 0.08g | 0.15g | 0.07g | 0.05g |
+| **Honda Mean Mower V2 Tuned** | 0.95g | 0.91g | 0.84g | 0.75g | 0.66g | 0.48g | 0.23g | 0.29g | 0.10g | 0.16g | 0.08g | 0.05g |
+| **Anderson CS250 Twin GP** | 0.95g | 0.90g | 0.84g | 0.74g | 0.66g | 0.41g | 0.30g | 0.28g | 0.10g | 0.14g | 0.07g | 0.04g |
+| **GT Sports Coupe (Prototypical)** | 0.97g | 0.91g | 0.84g | 0.74g | 0.66g | 0.48g | 0.32g | 0.30g | 0.15g | 0.17g | 0.08g | 0.05g |
+| **Tuned Drift Spec (Prototypical)** | 0.96g | 0.91g | 0.84g | 0.74g | 0.65g | 0.44g | 0.28g | 0.28g | 0.15g | 0.15g | 0.07g | 0.05g |
+| **125cc Shifter Kart (Prototypical)** | 0.96g | 0.91g | 0.84g | 0.74g | 0.65g | 0.43g | 0.27g | 0.28g | 0.08g | 0.15g | 0.07g | 0.05g |
 | **AWD Turbo Rally (Prototypical)** | 0.96g | 0.92g | 0.85g | 0.75g | 0.67g | 0.50g | 0.42g | 0.33g | 0.27g | 0.21g | 0.11g | 0.07g |
 
 ## 🔀 5. Protocol D: Transient Step-Steer & Slalom Stability (80 km/h)
@@ -166,36 +162,35 @@ Dynamic stability classification and recovery status under rapid lateral excitat
 
 | Vehicle | Asphalt | Concrete | Curb | Dirt | Gravel | Mud | Grass | Snow | Sand | Water | Oil | Ice |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Porsche 718 Cayman GT4 RS Clubsport** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift |
-| **Porsche 911 GT3 R (992)** | Drift | Drift | Drift | Drift | Drift | Spun | Spun | Spun | Spun | Spun | Spun | Spun |
-| **Porsche 911 GT2 RS Clubsport** | Drift | Drift | Drift | Drift | Drift | Spun | Spun | Spun | Spun | Spun | Spun | Drift |
+| **Porsche 718 Cayman GT4 RS Clubsport** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift |
+| **Porsche 911 GT3 R (992)** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift |
+| **Porsche 911 GT2 RS Clubsport** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Stable | Drift | Drift | Drift | Drift |
 | **Porsche 911 GT1-98** | Spun | Spun | Spun | Spun | Spun | Spun | Spun | Spun | Spun | Spun | Spun | Spun |
-| **Ferrari 499P LMH** | Drift | Drift | Drift | Drift | Drift | Spun | Spun | Spun | Spun | Spun | Spun | Spun |
-| **Chevrolet Monte Carlo Street Stock** | Stable | Stable | Drift | Drift | Drift | Drift | Spun | Spun | Drift | Spun | Drift | Drift |
-| **Super Late Model Camaro** | Stable | Stable | Drift | Drift | Drift | Drift | Spun | Spun | Spun | Spun | Drift | Drift |
-| **Chevrolet SS ARCA Spec** | Drift | Drift | Drift | Drift | Drift | Spun | Spun | Spun | Spun | Spun | Spun | Drift |
-| **Chevrolet Silverado RST Truck** | Drift | Drift | Drift | Drift | Drift | Spun | Spun | Spun | Spun | Spun | Spun | Spun |
-| **Chevrolet Corvette C7 TA1** | Drift | Drift | Drift | Drift | Drift | Spun | Spun | Spun | Spun | Spun | Spun | Drift |
-| **Peugeot 208 Rally4** | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Spun | Drift | Drift | Drift |
-| **Hyundai i20 RX Supercar** | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Stable | Drift | Stable | Stable | Stable |
-| **Audi Sport Quattro S1 E2** | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Stable | Drift | Stable | Stable | Stable |
-| **Toyota GR DKR Hilux T1+** | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Stable | Stable | Stable | Stable | Stable |
-| **Stadium Super Truck V8** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Spun | Drift | Drift |
-| **Can-Am Maverick R Trophy Spec** | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift | Drift | Spun | Drift | Drift |
-| **Geiser Bros AWD Trophy Truck** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Spun | Stable | Spun | Drift | Drift |
-| **Subaru WRX STI Ice Racer** | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Stable | Drift | Stable | Stable | Stable |
-| **Mega Truck V8 Mud Slinger** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Spun | Spun | Spun | Drift | Drift |
-| **Grave Digger Spec Monster Jam** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Spun | Spun | Spun |
-| **CRG Hero 60cc Cadet** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Drift | Drift |
-| **Tony Kart Racer 401 RR OK** | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Drift | Drift | Drift | Drift |
-| **Birel ART KZ2 125cc Shifter** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift |
-| **Honda Mean Mower V2 Tuned** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Spun | Drift |
-| **Anderson CS250 Twin GP** | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Spun | Spun | Spun |
-| **1050 BHP Hybrid F1 Turbo** | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Spun | Spun | Spun | Spun | Spun |
-| **GT Sports Coupe (Prototypical)** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Stable | Stable |
-| **Tuned Drift Spec (Prototypical)** | Drift | Drift | Drift | Drift | Drift | Spun | Spun | Spun | Stable | Spun | Drift | Stable |
-| **125cc Shifter Kart (Prototypical)** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Spun | Drift |
-| **AWD Turbo Rally (Prototypical)** | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Stable | Stable | Stable |
+| **Ferrari 499P LMH** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift |
+| **Chevrolet Monte Carlo Street Stock** | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Stable | Drift | Drift | Drift | Stable |
+| **Super Late Model Camaro** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Stable | Drift | Drift | Drift | Stable |
+| **Chevrolet SS ARCA Spec** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift |
+| **Chevrolet Silverado RST Truck** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift |
+| **Chevrolet Corvette C7 TA1** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift |
+| **Peugeot 208 Rally4** | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Stable | Stable | Stable |
+| **Hyundai i20 RX Supercar** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable |
+| **Audi Sport Quattro S1 E2** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable |
+| **Toyota GR DKR Hilux T1+** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable |
+| **Stadium Super Truck V8** | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Stable | Drift | Stable | Stable |
+| **Can-Am Maverick R Trophy Spec** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Stable | Stable |
+| **Geiser Bros AWD Trophy Truck** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Stable |
+| **Subaru WRX STI Ice Racer** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable |
+| **Mega Truck V8 Mud Slinger** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift |
+| **Grave Digger Spec Monster Jam** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Drift | Drift |
+| **CRG Hero 60cc Cadet** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable |
+| **Tony Kart Racer 401 RR OK** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Drift | Stable |
+| **Birel ART KZ2 125cc Shifter** | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Stable | Drift | Drift | Drift |
+| **Honda Mean Mower V2 Tuned** | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Drift | Stable | Drift | Drift | Drift |
+| **Anderson CS250 Twin GP** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Drift | Drift |
+| **GT Sports Coupe (Prototypical)** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Drift | Stable | Stable |
+| **Tuned Drift Spec (Prototypical)** | Stable | Stable | Stable | Drift | Drift | Drift | Drift | Drift | Stable | Drift | Drift | Stable |
+| **125cc Shifter Kart (Prototypical)** | Stable | Stable | Stable | Stable | Stable | Drift | Drift | Drift | Stable | Drift | Drift | Drift |
+| **AWD Turbo Rally (Prototypical)** | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable | Stable |
 
 ## 🍃 6. Protocol E: Passive Coast-Down Distance (120 → 0 km/h)
 
@@ -228,7 +223,6 @@ Distance rolled ($d_{\text{coast}}$ in meters) under purely aerodynamic and roll
 | **Birel ART KZ2 125cc Shifter** | 643m | 634m | 573m | 573m | 395m | 153m | 104m | 317m | 81m | 262m | 697m | 784m |
 | **Honda Mean Mower V2 Tuned** | 694m | 685m | 621m | 622m | 426m | 165m | 109m | 342m | 87m | 282m | 749m | 838m |
 | **Anderson CS250 Twin GP** | 730m | 721m | 657m | 658m | 448m | 174m | 113m | 361m | 90m | 298m | 786m | 877m |
-| **1050 BHP Hybrid F1 Turbo** | 996m | 989m | 934m | 931m | 696m | 270m | 159m | 562m | 103m | 466m | 1046m | 1127m |
 | **GT Sports Coupe (Prototypical)** | 1272m | 1262m | 1196m | 1202m | 901m | 350m | 174m | 739m | 141m | 618m | 1328m | 1426m |
 | **Tuned Drift Spec (Prototypical)** | 1252m | 1242m | 1177m | 1182m | 885m | 343m | 173m | 723m | 139m | 604m | 1307m | 1404m |
 | **125cc Shifter Kart (Prototypical)** | 654m | 645m | 583m | 583m | 402m | 156m | 105m | 323m | 82m | 266m | 708m | 796m |
@@ -243,13 +237,13 @@ Mean stopping distance degradation factor relative to baseline dry Asphalt ($1.0
 | **Asphalt** | 1.00 | 1.0x | 1.00x | 1.00x (100%) |
 | **Concrete** | 0.95 | 1.0x | 1.04x | 0.95x (95%) |
 | **Curb** | 0.88 | 1.3x | 1.11x | 0.88x (88%) |
-| **Dirt** | 0.78 | 1.2x | 1.23x | 0.77x (77%) |
-| **Gravel** | 0.70 | 2.5x | 1.35x | 0.69x (69%) |
-| **Mud** | 0.52 | 6.5x | 1.65x | 0.48x (48%) |
-| **Grass** | 0.45 | 18.0x | 1.95x | 0.33x (33%) |
-| **Snow** | 0.34 | 3.0x | 2.59x | 0.31x (31%) |
-| **Sand** | 0.30 | 30.0x | 2.48x | 0.11x (11%) |
-| **Water** | 0.22 | 3.5x | 3.70x | 0.18x (18%) |
-| **Oil** | 0.12 | 0.8x | 6.92x | 0.09x (9%) |
-| **Ice** | 0.08 | 0.4x | 9.81x | 0.06x (6%) |
+| **Dirt** | 0.78 | 1.2x | 1.23x | 0.78x (78%) |
+| **Gravel** | 0.70 | 2.5x | 1.34x | 0.69x (69%) |
+| **Mud** | 0.52 | 6.5x | 1.64x | 0.48x (48%) |
+| **Grass** | 0.45 | 18.0x | 1.94x | 0.33x (33%) |
+| **Snow** | 0.34 | 3.0x | 2.58x | 0.31x (31%) |
+| **Sand** | 0.30 | 30.0x | 2.47x | 0.13x (13%) |
+| **Water** | 0.22 | 3.5x | 3.68x | 0.18x (18%) |
+| **Oil** | 0.12 | 0.8x | 6.88x | 0.09x (9%) |
+| **Ice** | 0.08 | 0.4x | 9.75x | 0.05x (5%) |
 

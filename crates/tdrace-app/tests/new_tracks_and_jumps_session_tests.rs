@@ -3,7 +3,7 @@ use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 use tdrace_core::physics::surface::SurfaceType;
 
 #[test]
-fn test_all_seven_track_choices_selectable_and_initializable() {
+fn test_all_six_track_choices_selectable_and_initializable() {
     assert_eq!(TrackChoice::ALL.len(), 7);
 
     for choice in &TrackChoice::ALL {
@@ -16,16 +16,7 @@ fn test_all_seven_track_choices_selectable_and_initializable() {
         assert_eq!(session.trackers.len(), 4);
         assert!(!session.track.name.is_empty());
         assert!(!session.track.checkpoints.is_empty());
-        assert_eq!(session.track_choice_id(), match choice {
-            TrackChoice::ClassicGrandPrix => "classic_grand_prix",
-            TrackChoice::OvalSpeedway => "oval_speedway",
-            TrackChoice::DriftPark => "drift_park",
-            TrackChoice::KartArena => "kart_arena",
-            TrackChoice::RampRaceway => "ramp_raceway",
-            TrackChoice::OasisRally => "oasis_rally",
-            TrackChoice::OutlawPass => "outlaw_pass",
-            TrackChoice::Custom { id, .. } => id.as_str(),
-        });
+        assert_eq!(session.track_choice_id(), choice.track_id());
     }
 }
 
@@ -60,23 +51,4 @@ fn test_oasis_rally_session_features() {
     // Verify Oasis water hazard is present
     let has_water = session.track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Water);
     assert!(has_water, "Oasis Rally must feature Oasis water hazard zones");
-}
-
-#[test]
-fn test_outlaw_pass_session_features() {
-    let mut session = RaceSession::new();
-    session.track_choice = TrackChoice::OutlawPass;
-    session.init_race();
-
-    assert_eq!(session.track.name, "Outlaw Pass");
-    assert!(session.track.geometry.jump_ramps.is_empty(), "No jump ramps in Outlaw Pass");
-    assert!(session.track.geometry.obstacles.is_empty(), "No obstacles in Outlaw Pass");
-    assert!(
-        !session.track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Water),
-        "Outlaw Pass must have no water hazards"
-    );
-
-    // Verify narrow pass section exists on the track ribbon
-    let has_narrow_pass = session.track.spline.samples.iter().any(|s| s.width <= 7.5);
-    assert!(has_narrow_pass, "Outlaw Pass must feature a dedicated narrow pass section (width <= 7.5m)");
 }

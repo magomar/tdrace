@@ -247,7 +247,7 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
     let git_backup: Vec<_> = tdrace_app::storage::resolve_git_tracks_dir()
         .map(|git_dir| {
             let paths = [
-                git_dir.join("classic").join("outlaw_pass.json"),
+                git_dir.join("classic").join("drift_park.json"),
                 git_dir.join("rally").join("holjes_rx.json"),
             ];
             paths.into_iter().filter_map(|p| {
@@ -256,10 +256,10 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
         })
         .unwrap_or_default();
 
-    // Demote outlaw_pass and holjes_rx
-    let outlaw_path = manager.demote_preset_to_custom_track("outlaw_pass").expect("Demote outlaw_pass");
+    // Demote drift_park and holjes_rx
+    let drift_path = manager.demote_preset_to_custom_track("drift_park").expect("Demote drift_park");
     let rally_path = manager.demote_preset_to_custom_track("holjes_rx").expect("Demote holjes_rx");
-    assert!(outlaw_path.exists());
+    assert!(drift_path.exists());
     assert!(rally_path.exists());
 
     // Both tracks must remain visible in Track Manager under their respective modules!
@@ -270,9 +270,9 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
     assert_eq!(rally_tracks.len(), init_rally, "Rally track count must not decrease when demoting to custom");
 
     // They must now appear as custom circuits, NOT immutable official presets
-    let outlaw_choice = classic_tracks.iter().find(|t| t.track_id() == "outlaw_pass").expect("outlaw_pass in Classic");
-    assert!(!outlaw_choice.is_official_preset(), "Demoted outlaw_pass must be a custom track");
-    assert!(matches!(outlaw_choice, tdrace_app::ui::menu::TrackChoice::Custom { .. }));
+    let drift_choice = classic_tracks.iter().find(|t| t.track_id() == "drift_park").expect("drift_park in Classic");
+    assert!(!drift_choice.is_official_preset(), "Demoted drift_park must be a custom track");
+    assert!(matches!(drift_choice, tdrace_app::ui::menu::TrackChoice::Custom { .. }));
 
     let rally_choice = rally_tracks.iter().find(|t| t.track_id() == "holjes_rx").expect("holjes_rx in Rally");
     assert!(!rally_choice.is_official_preset(), "Demoted holjes_rx must be a custom track");
@@ -280,7 +280,7 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
 
     // Both must appear in custom_track_choices (for Main Menu CUSTOM tab)
     let custom_choices = manager.custom_track_choices();
-    assert!(custom_choices.iter().any(|t| t.track_id() == "outlaw_pass"));
+    assert!(custom_choices.iter().any(|t| t.track_id() == "drift_park"));
     assert!(custom_choices.iter().any(|t| t.track_id() == "holjes_rx"));
 
     // Verify persistence when reloading manager from disk
@@ -288,7 +288,7 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
     let reloaded_classic = reloaded_manager.filtered_main_track_choices(ModuleFilter::Classic);
     let reloaded_rally = reloaded_manager.filtered_main_track_choices(ModuleFilter::Rally);
 
-    assert!(reloaded_classic.iter().any(|t| t.track_id() == "outlaw_pass" && !t.is_official_preset()));
+    assert!(reloaded_classic.iter().any(|t| t.track_id() == "drift_park" && !t.is_official_preset()));
     assert!(reloaded_rally.iter().any(|t| t.track_id() == "holjes_rx" && !t.is_official_preset()));
 
     // Restore git preset files removed by demote during this test

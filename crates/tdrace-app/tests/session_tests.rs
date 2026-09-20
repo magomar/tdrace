@@ -207,7 +207,6 @@ fn test_all_races_and_modules_default_to_eight_riders() {
         TrackChoice::KartArena,
         TrackChoice::RampRaceway,
         TrackChoice::OasisRally,
-        TrackChoice::OutlawPass,
     ] {
         session.track_choice = track_choice;
         session.init_race();

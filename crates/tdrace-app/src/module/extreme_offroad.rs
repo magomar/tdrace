@@ -436,7 +436,7 @@ impl GameModule for ExtremeOffRoadModule {
         vec![
             TournamentFormat::Championship {
                 name: "Extreme Off-Road World Series".to_string(),
-                point_system: PointSystem::F1Standard { fastest_lap_bonus: false },
+                point_system: PointSystem::FiaStandard { fastest_lap_bonus: false },
                 track_ids: vec![
                     "sahara_dune_crossing".to_string(),
                     "dirt_figure_eight".to_string(),

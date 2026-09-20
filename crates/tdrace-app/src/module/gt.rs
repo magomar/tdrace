@@ -1384,67 +1384,6 @@ impl GtWorldChallengeModule {
         cfg.assists = DriverAssistsConfig::sport();
         cfg
     }
-
-    /// Modern Formula 1 Turbo Hybrid Vehicle Spec
-    pub fn car_f1_hybrid() -> CarConfig {
-        CarConfig {
-            mass: 798.0, // FIA 2026 minimum regulation weight
-            inertia: 980.0,
-            wheelbase: 3.60,
-            track_width: 1.80,
-            cg_to_front: 1.65,
-            cg_to_rear: 1.95,
-            cg_height: 0.20,
-
-            max_engine_force: 13500.0, // ~1000+ BHP Hybrid Power Unit
-            max_reverse_force: 8775.0,
-            max_brake_force: 28000.0, // Carbon-carbon brake discs (up to 5.5G deceleration)
-            handbrake_force: 8000.0,
-            brake_bias: 0.64,
-            drive_bias: 0.0, // RWD
-            top_speed_mps: 96.0, // ~346 km/h
-
-            max_steer_angle: 0.42, // ~24 deg precise open-wheel rack
-            steer_speed: 10.0,
-            steer_return_speed: 14.0,
-            counter_steer_assist: 1.1,
-            speed_sensitive_steer_factor: 0.015,
-
-            air_drag_coefficient: 0.72,
-            lateral_drag_coefficient: 1.60,
-            rolling_resistance_coefficient: 0.012,
-            angular_damping: 220.0,
-
-            weight_transfer_longitudinal: 0.6,
-            weight_transfer_lateral: 0.5,
-
-            engine_braking_coefficient: 0.20,
-            downforce_coefficient: 3.40, // Massive aerodynamic downforce scaling with V^2
-
-            tire: TireConfig {
-                stiffness_b: 14.5,
-                shape_c: 1.55,
-                peak_d: 1.28,
-                curvature_e: -0.10,
-                drift_slide_friction: 0.75,
-                handbrake_lateral_friction_multiplier: 0.45,
-                skid_threshold: 0.06,
-                skid_full_threshold: 0.22,
-            },
-            assists: DriverAssistsConfig::arcade(),
-        }
-    }
-
-    /// Classic 3.0L Screaming V10 Formula 1 Vehicle Spec
-    pub fn car_f1_v10() -> CarConfig {
-        let mut cfg = Self::car_f1_hybrid();
-        cfg.mass = 605.0; // Ultra lightweight screaming V10 era
-        cfg.inertia = 750.0;
-        cfg.max_engine_force = 12200.0;
-        cfg.downforce_coefficient = 3.10;
-        cfg.top_speed_mps = 98.5; // ~355 km/h
-        cfg
-    }
 }
 
 impl Default for GtWorldChallengeModule {
@@ -1567,25 +1506,6 @@ impl GameModule for GtWorldChallengeModule {
                     CarColorScheme::from_index(2), // Factory Racing Red
                     CarColorScheme::from_index(6), // Carbon Black / Gold
                     CarColorScheme::from_index(1), // Electric Aero Cyan
-                ],
-            },
-            VehicleModelDefinition {
-                id: "f1_hybrid_26",
-                name: "1050 BHP Hybrid F1 Turbo (Experimental)",
-                tag: "EXPERIMENTAL OPEN-WHEEL",
-                description: "Experimental 1050 BHP hybrid open-wheel test bench, 346 km/h, extreme downforce (Cl=3.4). Available from Level 1.",
-                config: Self::car_f1_hybrid(),
-                visual_type: VehicleVisualType::OpenWheel {
-                    front_wing_span: 1.80,
-                    rear_wing_height: 0.85,
-                    halo: true,
-                },
-                stats: (0.99, 0.99, 0.99, 0.30),
-                default_schemes: vec![
-                    CarColorScheme::from_index(6), // Red Bull Stealth Carbon / Navy
-                    CarColorScheme::from_index(1), // Electric Cyan
-                    CarColorScheme::from_index(2), // Ferrari Rosso Corsa
-                    CarColorScheme::from_index(3), // McLaren Papaya
                 ],
             },
         ]
@@ -1921,7 +1841,7 @@ impl GameModule for GtWorldChallengeModule {
         vec![
             TournamentFormat::Championship {
                 name: "GT World Challenge Championship 2026".to_string(),
-                point_system: PointSystem::F1Standard { fastest_lap_bonus: true },
+                point_system: PointSystem::FiaStandard { fastest_lap_bonus: true },
                 track_ids: vec![
                     "bahrain".to_string(),
                     "suzuka".to_string(),

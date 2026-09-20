@@ -2,7 +2,6 @@
 //!
 //! Executes the full combinatorial experiment matrix:
 //! - All 5 levels/tiers across the 5 specific modules (GT, NASCAR, Rally, Extreme Off-Road, Kart)
-//! - Plus the F1 Hybrid Open-Wheel experimental benchmark
 //! - Plus the 4 Classic Prototypical cars (Sports Car, Drift Car, Shifter Kart, Rally Car)
 //! - Across all 12 surfaces (including Concrete) and 5 dynamic testing protocols.
 //!
@@ -14,7 +13,6 @@ use std::time::Instant;
 
 use chrono::Utc;
 use tdrace_app::catalog::{get_models_for_module_and_tier, get_tier_name};
-use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_core::physics::sim::{
     generate_html_report, generate_markdown_report, ExperimentDataset, VehicleBenchmarkResult,
     DEFAULT_SIMULATION_DT,
@@ -80,21 +78,7 @@ fn main() {
         }
     }
 
-    // 2. Bonus GT / F1 Experimental Open-Wheel
-    targets.push(VehicleTestTarget {
-        id: "f1_hybrid_26".to_string(),
-        name: "1050 BHP Hybrid F1 Turbo".to_string(),
-        category: "Tier 5: Open-Wheel F1".to_string(),
-        module: "GT / F1".to_string(),
-        tier: 5,
-        drivetrain: "RWD".to_string(),
-        mass_kg: 798.0,
-        power_bhp: 1050,
-        top_speed_kmh: 346,
-        config: GtWorldChallengeModule::car_f1_hybrid(),
-    });
-
-    // 3. Classic Prototypical Cars
+    // 2. Classic Prototypical Cars
     targets.push(VehicleTestTarget {
         id: "classic_sports_car".to_string(),
         name: "GT Sports Coupe (Prototypical)".to_string(),

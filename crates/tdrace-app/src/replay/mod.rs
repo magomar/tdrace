@@ -325,7 +325,6 @@ impl ReplayPlayer {
             CarChoice::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
             CarChoice::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
             CarChoice::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
-            CarChoice::F1Car => crate::module::gt::GtWorldChallengeModule::car_f1_hybrid(),
             CarChoice::StockCar => CarConfig::stock_car_ta1(),
             CarChoice::SandRail => CarConfig::sand_rail(),
         };

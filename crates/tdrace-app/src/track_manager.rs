@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway, ramp_raceway,
+    classic_grand_prix, classic_rallycross, drift_park, kart_arena, oasis_rally, oval_speedway, ramp_raceway,
 };
 use tdrace_core::track::{Track, TrackCategory};
 
@@ -396,11 +396,6 @@ impl TrackManager {
                             if stem == "sahara_dunes" || stem == "sahara" {
                                 modules = vec!["rally".to_string()];
                                 module_id = Some("rally".to_string());
-                            } else if stem == "outlaw_pass" {
-                                if modules.is_empty() {
-                                    modules = vec!["classic".to_string()];
-                                    module_id = Some("classic".to_string());
-                                }
                             } else if modules.is_empty() && module_id.is_none() {
                                 if let Some(m) = Self::preset_module(&stem) {
                                     modules = vec![m.to_string()];
@@ -705,8 +700,8 @@ impl TrackManager {
             "drift_park" => TrackChoice::DriftPark,
             "kart_arena" => TrackChoice::KartArena,
             "ramp_raceway" => TrackChoice::RampRaceway,
+            "classic_rallycross" => TrackChoice::ClassicRallycross,
             "oasis_rally" => TrackChoice::OasisRally,
-            "outlaw_pass" => TrackChoice::OutlawPass,
             other => TrackChoice::Custom {
                 id: other.to_string(),
                 title: def.title.to_string(),
@@ -802,8 +797,8 @@ impl TrackManager {
             "drift_park" => TrackChoice::DriftPark,
             "kart_arena" => TrackChoice::KartArena,
             "ramp_raceway" => TrackChoice::RampRaceway,
+            "classic_rallycross" => TrackChoice::ClassicRallycross,
             "oasis_rally" => TrackChoice::OasisRally,
-            "outlaw_pass" => TrackChoice::OutlawPass,
             custom_id => {
                 // If it exists in git_tracks_dir, load directly from the git preset file
                 if let Some(git_file) = self.resolve_preset_git_file(custom_id, None) {
@@ -831,6 +826,13 @@ impl TrackManager {
     /// Loads a `Track` from a `TrackChoice`.
     pub fn load_track(&self, choice: &TrackChoice) -> Result<Track, String> {
         let choice_module = match choice {
+            TrackChoice::ClassicGrandPrix
+            | TrackChoice::OvalSpeedway
+            | TrackChoice::DriftPark
+            | TrackChoice::KartArena
+            | TrackChoice::RampRaceway
+            | TrackChoice::ClassicRallycross
+            | TrackChoice::OasisRally => Some("classic"),
             TrackChoice::Custom { path, .. } => {
                 if path.starts_with("gt/") {
                     Some("gt")
@@ -848,19 +850,18 @@ impl TrackManager {
                     None
                 }
             }
-            _ => None,
         };
 
-        // Official presets load from user storage overrides first, then git preset files, then procedural generator.
+        // Official presets load from git preset files first, then user storage overrides, then procedural generator.
         if choice.is_official_preset() {
-            let user_path = self.track_path_for_slug(choice.track_id());
-            if user_path.exists() && user_path.starts_with(&self.tracks_dir) {
-                if let Ok(t) = Track::load_from_file(&user_path) {
+            if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
+                if let Ok(t) = Track::load_from_file(&git_file) {
                     return Ok(t);
                 }
             }
-            if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
-                if let Ok(t) = Track::load_from_file(&git_file) {
+            let user_path = self.track_path_for_slug(choice.track_id());
+            if user_path.exists() && user_path.starts_with(&self.tracks_dir) {
+                if let Ok(t) = Track::load_from_file(&user_path) {
                     return Ok(t);
                 }
             }
@@ -908,20 +909,20 @@ impl TrackManager {
                     Ok(ramp_raceway())
                 }
             }
+            TrackChoice::ClassicRallycross => {
+                let p = self.track_path_for_slug("classic_rallycross");
+                if p.exists() {
+                    Track::load_from_file(&p).or_else(|_| Ok(classic_rallycross()))
+                } else {
+                    Ok(classic_rallycross())
+                }
+            }
             TrackChoice::OasisRally => {
                 let p = self.track_path_for_slug("oasis_rally");
                 if p.exists() {
                     Track::load_from_file(&p).or_else(|_| Ok(oasis_rally()))
                 } else {
                     Ok(oasis_rally())
-                }
-            }
-            TrackChoice::OutlawPass => {
-                let p = self.track_path_for_slug("outlaw_pass");
-                if p.exists() {
-                    Track::load_from_file(&p).or_else(|_| Ok(outlaw_pass()))
-                } else {
-                    Ok(outlaw_pass())
                 }
             }
             TrackChoice::Custom { id, path, .. } => {
@@ -963,6 +964,7 @@ impl TrackManager {
                     }
                 }
                 match id.as_str() {
+                    "classic_rallycross" => Ok(tdrace_core::track::presets::classic_rallycross()),
                     "dirty_oval_speedway" => Ok(tdrace_core::track::presets::dirty_oval_speedway()),
                     "figure_eight" => Ok(tdrace_core::track::presets::figure_eight()),
                     "monza" => Ok(crate::module::gt::GtWorldChallengeModule::track_monza()),
@@ -1036,7 +1038,7 @@ impl TrackManager {
     /// Returns the built-in motorsport module ID for a preset track slug, if applicable.
     pub fn preset_module(slug: &str) -> Option<&'static str> {
         match slug {
-            "classic_grand_prix" | "oval_speedway" | "dirty_oval_speedway" | "figure_eight" | "dirt_figure_eight" | "dirt_eight" | "drift_park" | "kart_arena" | "ramp_raceway" | "oasis_rally" | "outlaw_pass" | "sahara" | "sahara_dunes" => Some("classic"),
+            "classic_grand_prix" | "oval_speedway" | "dirty_oval_speedway" | "figure_eight" | "dirt_figure_eight" | "dirt_eight" | "drift_park" | "kart_arena" | "ramp_raceway" | "classic_rallycross" | "oasis_rally" | "sahara" | "sahara_dunes" => Some("classic"),
             "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina" | "essay_rx" | "essay" => Some("rally"),
             "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart" | "valencia_kart" | "valencia" | "campillos" => Some("kart"),
             "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "le_mans_sarthe" => Some("gt"),
@@ -1773,8 +1775,8 @@ impl TrackManager {
                 "drift_park" => TrackChoice::DriftPark,
                 "kart_arena" => TrackChoice::KartArena,
                 "ramp_raceway" => TrackChoice::RampRaceway,
+                "classic_rallycross" => TrackChoice::ClassicRallycross,
                 "oasis_rally" => TrackChoice::OasisRally,
-                "outlaw_pass" => TrackChoice::OutlawPass,
                 custom_id => {
                     let path = self.track_path_for_slug(custom_id).to_string_lossy().to_string();
                     TrackChoice::Custom {
@@ -2122,7 +2124,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 84); // 10 classic + 18 f1/gt + 15 rally unique + 15 famous kart + 12 nascar + 14 extreme off-road
+        assert_eq!(choices.len(), 84); // 10 classic + 18 gt + 15 rally unique + 15 famous kart + 12 nascar + 14 extreme off-road
 
         let mut gp = classic_grand_prix();
         gp.name = "My Custom GP".to_string();

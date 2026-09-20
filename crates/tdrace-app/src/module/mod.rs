@@ -141,19 +141,6 @@ impl Default for EngineAudioProfile {
 }
 
 impl EngineAudioProfile {
-    pub fn f1_v6_turbo_hybrid() -> Self {
-        Self {
-            sound_type: EngineSoundType::F1V6Turbo,
-            idle_rpm: 4200.0,
-            max_rpm: 15000.0,
-            base_pitch: 140.0,
-            pitch_scale: 0.065,
-            harmonic_ratio: 3.0,
-            turbo_flutter: true,
-            anti_lag_pops: false,
-        }
-    }
-
     pub fn kart_2stroke() -> Self {
         Self {
             sound_type: EngineSoundType::Kart125cc,
@@ -275,7 +262,7 @@ mod tests {
         assert_eq!(gt.id(), "gt");
         assert_eq!(gt.title(), "GT WORLD CHALLENGE");
         assert!(!gt.vehicles().is_empty());
-        assert_eq!(gt.vehicles().len(), 6);
+        assert_eq!(gt.vehicles().len(), 5);
         assert!(!gt.tracks().is_empty());
         assert_eq!(gt.tracks().len(), 15);
         assert_eq!(gt.drivers().len(), 7);
@@ -303,10 +290,6 @@ mod tests {
         let hypercar = GtWorldChallengeModule::car_hypercar_prototype();
         assert_eq!(hypercar.mass, 1030.0);
         assert!(hypercar.downforce_coefficient >= 3.0);
-
-        let f1 = GtWorldChallengeModule::car_f1_hybrid();
-        assert!(f1.downforce_coefficient > 3.0);
-        assert!(f1.top_speed_mps * 3.6 > 340.0);
 
         // Verify that every single GT World Challenge track definition generates a valid track with 0 validation errors
         for track_def in gt.tracks() {
@@ -391,16 +374,16 @@ mod tests {
         let classic = ClassicGameModule::new();
         assert_eq!(classic.id(), "classic");
         assert!(!classic.title().is_empty());
-        assert_eq!(classic.vehicles().len(), 4);
+        assert_eq!(classic.vehicles().len(), 5);
         assert_eq!(classic.tracks().len(), 10);
         assert!(!classic.drivers().is_empty());
         assert_eq!(classic.default_vehicle_id(), "classic_gt");
         assert_eq!(classic.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
 
         let vehicle_ids: Vec<_> = classic.vehicles().into_iter().map(|v| v.id).collect();
-        assert_eq!(vehicle_ids, vec!["classic_gt", "classic_nascar", "classic_offroad", "classic_kart"]);
+        assert_eq!(vehicle_ids, vec!["classic_gt", "classic_nascar", "classic_offroad", "classic_kart", "classic_rally"]);
 
-        // Verify arcade assist configs are active across all 4 fantasy vehicles
+        // Verify arcade assist configs are active across all 5 fantasy vehicles
         let gt = ClassicGameModule::car_classic_gt();
         assert!(gt.assists.tcs_enabled);
         assert!(gt.assists.esc_enabled);
@@ -418,6 +401,10 @@ mod tests {
         let kart = ClassicGameModule::car_classic_kart();
         assert_eq!(kart.mass, 180.0);
         assert!(kart.steer_speed >= 10.0);
+
+        let rally = ClassicGameModule::car_classic_rally();
+        assert_eq!(rally.drive_bias, 0.5);
+        assert!(rally.assists.counter_steer_assist_enabled);
     }
 
     #[test]

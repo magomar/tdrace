@@ -46,8 +46,8 @@ fn test_all_five_archetypes_sample_banks_generate_valid_audio() {
         EngineSoundType::SportGT,
         EngineSoundType::NascarV8,
         EngineSoundType::Kart125cc,
-        EngineSoundType::F1V6Turbo,
         EngineSoundType::RallyTurbo,
+        EngineSoundType::SandRailBoxer,
     ];
 
     for archetype in archetypes {
@@ -106,8 +106,8 @@ fn test_save_canonical_engine_assets_to_repo() {
         EngineSoundType::SportGT,
         EngineSoundType::NascarV8,
         EngineSoundType::Kart125cc,
-        EngineSoundType::F1V6Turbo,
         EngineSoundType::RallyTurbo,
+        EngineSoundType::SandRailBoxer,
     ] {
         let bank = ArchetypeSampleBank::generate(archetype, 44100);
         let _ = bank.save_to_dir(repo_assets);

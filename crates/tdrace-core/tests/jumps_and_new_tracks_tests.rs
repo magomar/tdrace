@@ -3,9 +3,8 @@ use tdrace_core::collision::wall::resolve_car_wall_collision;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, JumpRampCarExt, SurfaceShape, WallBarrier};
-use tdrace_core::track::presets::{dune_raid, oasis_rally, outlaw_pass, ramp_raceway, sahara_dunes};
+use tdrace_core::track::presets::{classic_rallycross, dune_raid, oasis_rally, ramp_raceway, sahara_dunes};
 
 #[test]
 fn test_car_jump_launch_and_gravity_arc() {
@@ -191,10 +190,26 @@ fn test_ramp_raceway_preset() {
     assert_eq!(track.geometry.jump_ramps.len(), 1, "Must have 1 jump ramp");
     assert!(track.checkpoints.len() >= 8);
     assert!(track.grid_positions.len() >= 6);
+    assert_eq!(track.default_surface, SurfaceType::Dirt);
+    assert_eq!(track.predefined_car.as_deref(), Some("classic_rally"));
 
-    // Verify sample surface on track
+    // Verify sample surface on track is dirt
     let surf = track.sample_surface(Vec2::new(82.5, 50.0));
-    assert_eq!(surf, SurfaceType::Asphalt);
+    assert_eq!(surf, SurfaceType::Dirt);
+}
+
+#[test]
+fn test_classic_rallycross_preset() {
+    let track = classic_rallycross();
+    assert_eq!(track.name, "Classic Rallycross");
+    assert_eq!(track.predefined_car.as_deref(), Some("classic_rally"));
+    assert_eq!(track.geometry.jump_ramps.len(), 1);
+    let len = track.spline.total_length();
+    assert!(len >= 900.0 && len <= 1200.0, "Length ~1km: got {:.1}m", len);
+    let has_asphalt = track.spline.waypoints.iter().any(|wp| wp.surface == Some(SurfaceType::Asphalt));
+    let has_dirt = track.spline.waypoints.iter().any(|wp| wp.surface == Some(SurfaceType::Dirt));
+    assert!(has_asphalt, "Classic Rallycross must contain asphalt sections");
+    assert!(has_dirt, "Classic Rallycross must contain dirt sections");
 }
 
 #[test]
@@ -300,92 +315,6 @@ fn test_sand_under_track_does_not_override_dirt_ribbon() {
         SurfaceType::Water,
         "On-track water hazard must override the underlying track ribbon"
     );
-}
-
-#[test]
-fn test_outlaw_pass_narrow_mountain_pass_preset() {
-    use tdrace_core::collision::wall::resolve_all_wall_collisions;
-
-    let track = outlaw_pass();
-    assert_eq!(track.name, "Outlaw Pass");
-    assert!(track.geometry.jump_ramps.is_empty(), "Outlaw Pass has no jump ramps");
-    assert!(
-        !track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Water),
-        "Outlaw Pass has no water hazards"
-    );
-    assert_eq!(track.geometry.obstacles.len(), 0, "Outlaw Pass has no obstacles");
-
-    // 1. Verify narrow mountain pass section (width <= 7.5m)
-    let min_width = track
-        .spline
-        .samples
-        .iter()
-        .map(|s| s.width)
-        .fold(f32::INFINITY, f32::min);
-    assert!(
-        min_width <= 7.05,
-        "The Pass section must narrow down to ~7.0m, found min width {:.2}m",
-        min_width
-    );
-
-    let max_width = track
-        .spline
-        .samples
-        .iter()
-        .map(|s| s.width)
-        .fold(0.0f32, f32::max);
-    assert_eq!(max_width, 13.0, "High-speed straights must be 13.0m wide");
-
-    // 2. Drive the entire circuit centerline (all sectors + narrow pass)
-    let total_len = track.spline.total_length();
-    let num_steps = (total_len / 0.5) as usize;
-    for i in 0..num_steps {
-        let dist = i as f32 * 0.5;
-        let sample = track.spline.sample_at_distance(dist);
-        let heading = sample.tangent.y.atan2(sample.tangent.x);
-        let mut car = Car::new(CarConfig::sports_car()).with_pose(sample.point, heading);
-
-        let initial_pos = car.state.position;
-        let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &track.geometry.obstacles);
-        let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
-
-        let displacement = (car.state.position - initial_pos).length();
-        assert!(
-            hit_inner.is_empty() && hit_outer.is_empty() && displacement < 0.01,
-            "Centerline collision on Outlaw Pass at dist={:.1}m / {:.1}m: disp={:.3}m",
-            dist, total_len, displacement
-        );
-
-        // Surface must be Asphalt or Curb
-        let surface = track.sample_surface(sample.point);
-        assert!(
-            surface == SurfaceType::Asphalt || surface == SurfaceType::Curb,
-            "Surface on track ribbon at dist={:.1}m must be Asphalt/Curb, got {:?}",
-            dist, surface
-        );
-    }
-
-    // 3. Lap progression and timing
-    let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
-    let mut car = Car::new(CarConfig::sports_car());
-
-    for i in 0..track.checkpoints.len() {
-        let cp = &track.checkpoints[i];
-        let mid = (cp.gate.start + cp.gate.end) * 0.5;
-        car.state.position = mid - cp.direction * 1.5;
-        tracker.update(&car, &track.spline, &track.checkpoints, 0.016);
-        car.state.position = mid + cp.direction * 1.5;
-        tracker.update(&car, &track.spline, &track.checkpoints, 0.016);
-    }
-
-    let cp0 = &track.checkpoints[0];
-    car.state.position = cp0.gate.start - cp0.direction * 1.5;
-    tracker.update(&car, &track.spline, &track.checkpoints, 0.016);
-    car.state.position = cp0.gate.start + cp0.direction * 1.5;
-    tracker.update(&car, &track.spline, &track.checkpoints, 0.016);
-
-    assert_eq!(tracker.current_lap, 2, "Full lap must be counted as lap 2");
-    assert!(tracker.best_lap_time.is_some(), "Lap time must be recorded");
 }
 
 

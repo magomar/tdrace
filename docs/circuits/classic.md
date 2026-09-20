@@ -20,14 +20,13 @@ The **Classic Heritage** tracks form the foundational proving grounds of **TdRac
 
 | Circuit | File Key | Lap Length | Turns | Primary Surface | Special Hazards & Features |
 | :--- | :--- | :---: | :---: | :--- | :--- |
-| **Classic Grand Prix** | `classic_grand_prix.json` | $2,850\text{ m}$ | 12 | `Asphalt` | FIA Grade curb teeth, wide overtaking straights, grass runoff traps. |
+| **Classic Grand Prix** | `classic_grand_prix.json` | $920\text{ m}$ | 12 | `Asphalt` | FIA Grade curb teeth, chicane, sweeping curves, hairpin sand trap, pit lane. |
 | **Drift Park** | `drift_park.json` | $1,420\text{ m}$ | 9 | `Asphalt` | Tight hairpin switchbacks, extended radius clipping zones, polished tarmac. |
 | **Figure Eight** | `figure_eight.json` | $1,850\text{ m}$ | 8 | `Asphalt` | 2.5D elevation overpass / underpass bridge crossing. |
 | **Dirt Figure Eight** | `dirt_figure_eight.json` | $1,720\text{ m}$ | 8 | `Dirt` | Flat at-grade crossover intersection, high risk of head-on collisions. |
 | **Oval Speedway** | `oval_speedway.json` | $1,200\text{ m}$ | 4 | `Asphalt` | Banked tri-oval turns, slipstream drafting battles, steel Armco barriers. |
 | **Dirty Oval Speedway** | `dirty_oval_speedway.json` | $800\text{ m}$ | 4 | `Dirt` | Compacted clay surface, heavy rooster plumes, cushion sliding line. |
 | **Ramp Raceway** | `ramp_raceway.json` | $2,100\text{ m}$ | 10 | `Asphalt` / `Dirt` | Triple elevated jump ramps over sand pits; aerodynamic vehicle pitch control. |
-| **Outlaw Pass** | `outlaw_pass.json` | $3,200\text{ m}$ | 16 | `Asphalt` | Mountain canyon pass, concrete retaining walls, blind apexes. |
 | **Oasis Rally** | `oasis_rally.json` | $2,450\text{ m}$ | 11 | `Dirt` / `Sand` | Desert trail circling water hazard; deep sand deceleration traps. |
 | **Kart Arena** | `kart_arena.json` | $950\text{ m}$ | 14 | `Asphalt` | Compact indoor sprint layout with tire wall chicanes. |
 

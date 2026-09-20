@@ -39,7 +39,7 @@ async fn main() {
             if let Some(mod_name) = args.get(i + 1) {
                 session.switch_to_module(mod_name.trim_start_matches('-'));
             }
-        } else if clean_arg == "gt" || clean_arg == "f1" {
+        } else if clean_arg == "gt" {
             session.switch_to_gt();
         } else if clean_arg == "nascar" {
             session.switch_to_nascar();
@@ -55,7 +55,7 @@ async fn main() {
             session.start_nascar_championship();
         } else if clean_arg == "offroad-championship" || clean_arg == "extreme-offroad-championship" {
             session.start_extreme_offroad_championship();
-        } else if clean_arg == "championship" || clean_arg == "gt-championship" || clean_arg == "f1-championship" {
+        } else if clean_arg == "championship" || clean_arg == "gt-championship" {
             session.start_gt_championship();
         } else if clean_arg == "split" || clean_arg == "splitscreen" || clean_arg == "s" {
             session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;

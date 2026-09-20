@@ -52,11 +52,11 @@ fn main() {
             config: GtWorldChallengeModule::car_gt3_evo(),
         },
         VehicleTarget {
-            id: "f1_hybrid_26".to_string(),
-            name: "1050 BHP Hybrid F1 Turbo".to_string(),
-            category: "GT / Open-Wheel F1".to_string(),
+            id: "hypercar_prototype".to_string(),
+            name: "800 BHP LMH Hypercar Prototype".to_string(),
+            category: "GT / Le Mans Hypercar".to_string(),
             v0_kmh: 180.0,
-            config: GtWorldChallengeModule::car_f1_hybrid(),
+            config: GtWorldChallengeModule::car_hypercar_prototype(),
         },
         VehicleTarget {
             id: "nascar_cup_v8".to_string(),

@@ -5,7 +5,7 @@
     "category": "classic",
     "modality": "CLASSIC",
     "description": "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
-    "length_meters": 1221.3,
+    "length_meters": 918.8,
     "turns_count": 12,
     "surfaces": [
       "Asphalt"
@@ -104,21 +104,6 @@
     "has_jumps": false,
     "image_url": "/textures/circuits/classic/oasis_rally.svg",
     "rel_path": "tracks/classic/oasis_rally.json"
-  },
-  {
-    "id": "outlaw_pass",
-    "name": "Outlaw Pass",
-    "category": "classic",
-    "modality": "CLASSIC",
-    "description": "Perilous mountain circuit carving through a dramatic narrow canyon pass with tight switchbacks and cliff rock walls.",
-    "length_meters": 793.8,
-    "turns_count": 13,
-    "surfaces": [
-      "Asphalt"
-    ],
-    "has_jumps": false,
-    "image_url": "/textures/circuits/classic/outlaw_pass.svg",
-    "rel_path": "tracks/classic/outlaw_pass.json"
   },
   {
     "id": "oval_speedway",

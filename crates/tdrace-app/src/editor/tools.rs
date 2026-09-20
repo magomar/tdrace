@@ -913,7 +913,7 @@ impl ToolSettings {
 
     /// Cycles the track's predefined vehicle model through available archetype options.
     pub fn cycle_track_predefined_car(&mut self, state: &mut EditorState) -> Option<String> {
-        const CAR_PRESETS: [&str; 5] = ["sports_car", "drift_car", "kart", "rally_car", "f1_car"];
+        const CAR_PRESETS: [&str; 5] = ["sports_car", "drift_car", "kart", "rally_car", "gt4_clubsport"];
         let current = state.track.predefined_car.as_deref().unwrap_or("sports_car");
         let idx = CAR_PRESETS.iter().position(|&c| c == current).unwrap_or(0);
         let next = CAR_PRESETS[(idx + 1) % CAR_PRESETS.len()].to_string();

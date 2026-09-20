@@ -170,7 +170,7 @@ impl AuxiliaryAudioLayer {
     ) -> f32 {
         let has_turbo = matches!(
             engine_type,
-            EngineSoundType::F1V6Turbo | EngineSoundType::RallyTurbo | EngineSoundType::SandRailBoxer
+            EngineSoundType::RallyTurbo | EngineSoundType::SandRailBoxer
         );
         let tween_dur = Duration::from_millis(10);
 

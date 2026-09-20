@@ -13,7 +13,7 @@ use tdrace_core::physics::config::CarConfig;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::WallBarrier;
 use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, oasis_rally, outlaw_pass, oval_speedway,
+    classic_grand_prix, drift_park, kart_arena, oasis_rally, oval_speedway,
     ramp_raceway,
 };
 use tdrace_core::track::Track;
@@ -105,7 +105,6 @@ impl PyEngine {
             "oasis" | "oasis_rally" | "dune" | "dune_raid" | "sahara" | "sahara_dunes" | "sand" => {
                 oasis_rally()
             }
-            "outlaw" | "outlaw_pass" | "shortcut" => outlaw_pass(),
             _ => classic_grand_prix(),
         };
 

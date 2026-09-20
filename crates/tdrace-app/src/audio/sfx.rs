@@ -105,22 +105,6 @@ impl EngineSoundConfig {
         }
     }
 
-    /// High-Revving Formula 1 V6 Turbo Hybrid Power Unit
-    pub const fn f1_v6_turbo() -> Self {
-        Self {
-            cylinder_count: 6,
-            is_two_stroke: false,
-            crank_lumpiness: 0.18, // High-RPM racing balance
-            combustion_asymmetry: 0.50,
-            intake_growl_intensity: 0.28,
-            turbo_whine_level: 0.15, // Subtle compressor spool whistle
-            mechanical_buzz: 0.22,
-            formant_f1_hz: 300.0,
-            formant_f2_hz: 2400.0, // Metallic high-pitch scream
-            formant_q: 2.4,
-            saturation_drive: 1.35,
-        }
-    }
 
     /// 4-Cylinder WRC Turbo Anti-Lag Rally Engine
     pub const fn rally_turbo() -> Self {
@@ -306,10 +290,6 @@ pub fn generate_kart_125cc_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
     generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::kart_125cc())
 }
 
-/// Generates screaming Formula 1 V6 turbo hybrid engine sound loop band.
-pub fn generate_f1_v6_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
-    generate_custom_engine_rpm_band(sample_rate, base_hz, &EngineSoundConfig::f1_v6_turbo())
-}
 
 /// Generates aggressive 4-cylinder WRC turbo rally engine sound loop band.
 pub fn generate_rally_turbo_rpm_band(sample_rate: u32, base_hz: f32) -> Vec<u8> {
@@ -534,7 +514,6 @@ mod tests {
             ("generic", generate_generic_engine_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("sport_gt", generate_sport_gt_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("kart", generate_kart_125cc_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
-            ("f1", generate_f1_v6_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("rally", generate_rally_turbo_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("nascar", generate_nascar_v8_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),
             ("sand_rail", generate_sand_rail_boxer_rpm_band(DEFAULT_SAMPLE_RATE, base_hz)),

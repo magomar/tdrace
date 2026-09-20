@@ -162,7 +162,7 @@ impl GameApp {
   2. **CRG KT2:** 30mm chassis tubing offering superior mid-corner bite on rubbered-in tracks.
   3. **Birel ART RY30:** Exceptional straight-line stability and compliance over harsh curb strikes.
 
-### 1.3 Tier 3: Shifter Kart 125cc / 6-Speed KZ2 (The F1 of Karting)
+### 1.3 Tier 3: Shifter Kart 125cc / 6-Speed KZ2 (The Pinnacle of Sprint Karting)
 * **Design Philosophy:** The undisputed pinnacle of sprint karting. 50 BHP 6-speed sequential gearbox, 4-wheel disc brakes with front hand-lever modulation, and standing starts that catapult the kart from $0$–$100\,\text{km/h}$ in under $3.0\,\text{seconds}$ with up to $3.5\,\text{G}$ lateral cornering loads.
 * **Core Physics:**
   * Power: $50\,\text{BHP}$ ($37.3\,\text{kW}$) 125cc water-cooled 2-stroke ($14,500\,\text{RPM}$).

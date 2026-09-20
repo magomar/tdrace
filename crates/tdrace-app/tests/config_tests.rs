@@ -305,12 +305,12 @@ default_num_bots = 7
     assert!((session.audio.settings.master_volume - 0.80).abs() < 1e-4);
     assert_eq!(session.assist_profile, AssistProfile::Arcade);
 
-    // Switch to GT (loads config.gt.toml or config.f1.toml overrides)
+    // Switch to GT (loads config.gt.toml overrides)
     session.switch_to_gt();
     assert_eq!(session.active_module_id, "gt");
-    assert_eq!(session.total_laps, 5, "GT/F1 specific laps configured in config.f1.toml");
+    assert_eq!(session.total_laps, 5, "GT specific laps configured in config.gt.toml");
     assert_eq!(session.assist_profile, AssistProfile::Arcade, "Player assist profile remains Arcade across module switch");
-    assert!((session.camera.velocity_lookahead_time - 0.50).abs() < 1e-4, "GT/F1 specific camera lookahead configured");
+    assert!((session.camera.velocity_lookahead_time - 0.50).abs() < 1e-4, "GT specific camera lookahead configured");
 
     // Player changes assist mode to Sport
     session.set_assist_profile(AssistProfile::Sport);

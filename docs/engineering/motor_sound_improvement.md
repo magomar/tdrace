@@ -11,7 +11,7 @@ tags: [audio, sound, synthesis, kira]
 
 ## 1. Executive Summary & Root Cause Diagnosis
 
-In **TDRace**, the engine audio is currently produced by an in-house procedural synthesis engine (`crates/tdrace-app/src/audio/sfx.rs` & `manager.rs`). While the synthesis code models physical combustion pulses, cylinder counts, crankshaft imbalance, formants, and wave-shaping across 6 vehicle archetypes (`Generic`, `SportGT`, `Kart125cc`, `F1V6Turbo`, `RallyTurbo`, `NascarV8`), **the resulting in-game audio sounds like an organ chord or accordion rather than a continuous, revving internal combustion engine.**
+In **TDRace**, the engine audio is currently produced by an in-house procedural synthesis engine (`crates/tdrace-app/src/audio/sfx.rs` & `manager.rs`). While the synthesis code models physical combustion pulses, cylinder counts, crankshaft imbalance, formants, and wave-shaping across vehicle archetypes (`Generic`, `SportGT`, `Kart125cc`, `RallyTurbo`, `NascarV8`), **the resulting in-game audio sounds like an organ chord or accordion rather than a continuous, revving internal combustion engine.**
 
 ### The Technical Root Causes
 

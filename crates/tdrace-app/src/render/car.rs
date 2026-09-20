@@ -522,7 +522,7 @@ fn render_wheel(pos: Vec2, angle: f32, is_wide_slick: bool) {
     draw_quad(h0, h1, h2, h3, Palette::TIRE_RIM);
 }
 
-/// Renders exposed double-wishbone suspension arms for open-wheel formula cars.
+/// Renders exposed double-wishbone suspension arms for open-wheel vehicles.
 fn render_open_wheel_suspension(chassis: Vec2, wheels: &[Vec2; 4], _fwd: Vec2, _right: Vec2) {
     let arm_col = Color::new(0.18, 0.18, 0.22, 0.95);
     let th = 0.06;
@@ -535,7 +535,7 @@ fn render_open_wheel_suspension(chassis: Vec2, wheels: &[Vec2; 4], _fwd: Vec2, _
     draw_line(chassis.x, chassis.y, wheels[3].x, wheels[3].y, th, arm_col);
 }
 
-/// Renders Formula 1 Open-Wheel monocoque, wings, sidepods, and halo.
+/// Renders open-wheel aerodynamic body, wings, sidepods, and halo.
 #[allow(clippy::too_many_arguments)]
 fn render_open_wheel_body(
     pos: Vec2,

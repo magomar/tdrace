@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 /// Scoring system for championship tournaments.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PointSystem {
-    /// Official FIA Formula 1 scoring: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 (plus optional fastest lap bonus)
-    F1Standard { fastest_lap_bonus: bool },
+    /// Official FIA standard scoring: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 (plus optional fastest lap bonus)
+    FiaStandard { fastest_lap_bonus: bool },
     /// MotoGP scoring: 25, 20, 16, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
     MotoGp,
     /// Classic arcade 6-place scoring: 10, 6, 4, 3, 2, 1
@@ -21,7 +21,7 @@ impl PointSystem {
             return 0;
         }
         let base_pts = match self {
-            Self::F1Standard { .. } => match position {
+            Self::FiaStandard { .. } => match position {
                 1 => 25,
                 2 => 18,
                 3 => 15,
@@ -77,7 +77,7 @@ impl PointSystem {
         };
 
         let bonus = match self {
-            Self::F1Standard { fastest_lap_bonus: true } if has_fastest_lap && position <= 10 => 1,
+            Self::FiaStandard { fastest_lap_bonus: true } if has_fastest_lap && position <= 10 => 1,
             Self::NascarCup { stage_win_bonus: true } if has_fastest_lap => 10,
             _ => 0,
         };
@@ -373,8 +373,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_f1_point_system() {
-        let pts = PointSystem::F1Standard { fastest_lap_bonus: true };
+    fn test_fia_point_system() {
+        let pts = PointSystem::FiaStandard { fastest_lap_bonus: true };
         assert_eq!(pts.points_for_position(1, false), 25);
         assert_eq!(pts.points_for_position(1, true), 26);
         assert_eq!(pts.points_for_position(10, true), 2);
@@ -384,8 +384,8 @@ mod tests {
     #[test]
     fn test_championship_standings() {
         let mut champ = ChampionshipSession::new(
-            "Formula 1 2026",
-            PointSystem::F1Standard { fastest_lap_bonus: true },
+            "GT World Challenge 2026",
+            PointSystem::FiaStandard { fastest_lap_bonus: true },
             vec!["monza".to_string(), "spa".to_string()],
             5,
             &[

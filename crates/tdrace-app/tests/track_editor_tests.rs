@@ -13,7 +13,7 @@ use tdrace_core::track::presets::{
     alpine_snow_ridge, arctic_frozen_lake, atacama_sand_basin, baja_500_desert_scrub,
     classic_grand_prix, dirt_figure_eight, drift_park, glacier_crest_pass, gravel_quarry_chasm,
     kart_arena, louisiana_mud_swampland, monster_colosseum, mud_slough_arena, oasis_rally,
-    outlaw_pass, oval_speedway, ramp_raceway, red_rock_canyon, rovaniemi_ice_ring,
+    oval_speedway, ramp_raceway, red_rock_canyon, rovaniemi_ice_ring,
     sahara_dune_crossing, stunt_city_megastructure, supercross_stadium_arena,
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
@@ -23,14 +23,13 @@ use tdrace_core::track::Track;
 static DEV_MODE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[test]
-fn test_all_seven_presets_json_roundtrip_and_validation() {
+fn test_all_six_presets_json_roundtrip_and_validation() {
     let presets: Vec<(&str, Track)> = vec![
         ("Classic Grand Prix", classic_grand_prix()),
         ("Oval Speedway", oval_speedway()),
         ("Drift Park", drift_park()),
         ("Kart Arena", kart_arena()),
         ("Oasis Rally", oasis_rally()),
-        ("Outlaw Pass", outlaw_pass()),
         ("Ramp Raceway", ramp_raceway()),
     ];
 
@@ -334,7 +333,7 @@ fn test_test_drive_exit_from_starting_grid_and_finished_states() {
     session.start_editor_test_drive();
     assert_eq!(session.state, GameState::StartingGrid);
     assert!(session.return_to_editor_on_exit);
-    assert_eq!(session.car_choice, CarChoice::RallyCar);
+    assert_eq!(session.car_choice, CarChoice::SandRail);
 
     // Simulate Escape in StartingGrid
     if session.return_to_editor_on_exit {
@@ -1253,7 +1252,7 @@ fn test_track_editor_predefined_car_mutation_and_cycling() {
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
-    assert_eq!(state.track.predefined_car.as_deref(), Some("sports_car"));
+    assert_eq!(state.track.predefined_car.as_deref(), Some("classic_gt"));
     assert!(!state.is_dirty);
 
     // 1. Set predefined car to "rally_car"
@@ -1264,26 +1263,26 @@ fn test_track_editor_predefined_car_mutation_and_cycling() {
     // Setting same car returns false
     assert!(!tools.set_track_predefined_car(&mut state, Some("rally_car".to_string())));
 
-    // 2. Undo restores "sports_car"
+    // 2. Undo restores "classic_gt"
     assert!(state.undo());
-    assert_eq!(state.track.predefined_car.as_deref(), Some("sports_car"));
+    assert_eq!(state.track.predefined_car.as_deref(), Some("classic_gt"));
 
     // 3. Redo restores "rally_car"
     assert!(state.redo());
     assert_eq!(state.track.predefined_car.as_deref(), Some("rally_car"));
 
-    // 4. Test cycling predefined car: rally_car -> f1_car -> sports_car -> drift_car -> kart -> rally_car
-    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("f1_car".to_string()));
+    // 4. Test cycling predefined car: rally_car -> gt4_clubsport -> sports_car -> drift_car -> kart -> rally_car
+    assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("gt4_clubsport".to_string()));
     assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("sports_car".to_string()));
     assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("drift_car".to_string()));
     assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("kart".to_string()));
     assert_eq!(tools.cycle_track_predefined_car(&mut state), Some("rally_car".to_string()));
 
     // 5. JSON serialization roundtrip preserves predefined_car
-    tools.set_track_predefined_car(&mut state, Some("f1_car".to_string()));
+    tools.set_track_predefined_car(&mut state, Some("gt4_clubsport".to_string()));
     let json_str = state.track.to_json().expect("Failed to serialize track");
     let deserialized = Track::from_json(&json_str).expect("Failed to deserialize track");
-    assert_eq!(deserialized.predefined_car.as_deref(), Some("f1_car"));
+    assert_eq!(deserialized.predefined_car.as_deref(), Some("gt4_clubsport"));
 }
 
 #[test]

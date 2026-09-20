@@ -473,7 +473,6 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert_eq!(progress.level, 1);
     assert_eq!(progress.xp, 0);
     assert!(progress.is_car_unlocked("gt4_clubsport", false));
-    assert!(progress.is_car_unlocked("f1_hybrid_26", false));
     assert!(!progress.is_car_unlocked("gt3_evo", false));
     assert!(!progress.is_car_unlocked("gt2_biturbo", false));
     assert!(!progress.is_car_unlocked("gt1_legend", false));
@@ -548,9 +547,8 @@ fn test_gt_career_session_gating_and_cup_launch() {
     session.switch_to_gt();
     assert_eq!(session.active_module_id, "gt");
 
-    // Level 1 vehicle gating checks: GT4 & F1 unlocked, GT3/GT2/GT1/Hypercar locked
+    // Level 1 vehicle gating checks: GT4 unlocked, GT3/GT2/GT1/Hypercar locked
     assert!(session.is_car_unlocked(CarChoice::GT4Clubsport));
-    assert!(session.is_car_unlocked(CarChoice::F1Car));
     assert!(!session.is_car_unlocked(CarChoice::GT3Car));
     assert!(!session.is_car_unlocked(CarChoice::GT2Biturbo));
     assert!(!session.is_car_unlocked(CarChoice::GT1Legend));

@@ -258,10 +258,9 @@ impl ModuleCareerProgress {
 
     /// Ensures unlocked cars and tracks match or exceed current level.
     pub fn sync_unlocks_for_level(&mut self) {
-        if self.module_id == "gt" || self.module_id == "f1" {
+        if self.module_id == "gt" {
             // Level 1 Starter
             self.ensure_car("gt4_clubsport");
-            self.ensure_car("f1_hybrid_26");
             self.ensure_track("monza");
             self.ensure_track("red_bull_ring");
             self.ensure_track("nurburgring_gp");
@@ -314,7 +313,7 @@ impl ModuleCareerProgress {
 
     /// Checks if a vehicle is unlocked for this profile.
     pub fn is_car_unlocked(&self, car_id: &str, dev_mode: bool) -> bool {
-        if dev_mode || car_id == "f1_hybrid_26" {
+        if dev_mode {
             return true;
         }
         self.unlocked_cars.iter().any(|c| c == car_id)

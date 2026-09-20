@@ -131,16 +131,16 @@ fn test_gt_free_car_selection_toggle_in_roster() {
     assert_eq!(session.resolve_predefined_car(), CarChoice::GT4Clubsport);
     assert_eq!(session.active_player_car_choice(), CarChoice::GT4Clubsport);
 
-    // Enable free car selection and choose experimental F1Car for player
+    // Enable free car selection and choose cross-discipline DriftCar for player
     session.free_car_selection = true;
-    session.car_choice = CarChoice::F1Car;
+    session.car_choice = CarChoice::DriftCar;
     session.rebuild_roster_participants();
 
-    // Player gets experimental F1 car
-    assert_eq!(session.active_player_car_choice(), CarChoice::F1Car);
+    // Player gets DriftCar
+    assert_eq!(session.active_player_car_choice(), CarChoice::DriftCar);
     assert_eq!(
         session.grid_participants.iter().find(|p| p.is_player).unwrap().car_title,
-        "1050 BHP Hybrid F1 Turbo (Experimental)"
+        "Tuned Drift Spec"
     );
 
     // GT AI opponents retain their preferred GT3 cars
@@ -202,9 +202,9 @@ fn test_all_disciplines_car_assignment_integrity() {
     // 5. Classic Drift Park Preset
     session.track_choice = TrackChoice::DriftPark;
     session.track = session.load_track_for_session(&session.track_choice);
-    assert_eq!(session.resolve_predefined_car(), CarChoice::DriftCar);
-    assert_eq!(session.active_player_car_choice(), CarChoice::DriftCar);
-    assert_eq!(session.active_player_car_choice().title(), "Tuned Drift Spec");
+    assert_eq!(session.resolve_predefined_car(), CarChoice::SportsCar);
+    assert_eq!(session.active_player_car_choice(), CarChoice::SportsCar);
+    assert_eq!(session.active_player_car_choice().title(), "GT Sports Coupe");
 }
 
 #[test]

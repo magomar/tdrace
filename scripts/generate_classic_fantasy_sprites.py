@@ -723,9 +723,308 @@ def generate_classic_kart():
     print("✓ Generated classic_kart assets")
 
 
+# ==============================================================================
+# 5. TRAILFIRE TURBO 4WD (classic_rally)
+# ==============================================================================
+def generate_classic_rally():
+    ss = 2
+    W, H = 1024 * ss, 512 * ss
+    im_lat = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im_lat)
+
+    ground_y = int(450 * ss)
+    r_wheel = int(60 * ss)
+    wf_x = int(740 * ss)
+    wr_x = int(280 * ss)
+    cy_wheel = ground_y - r_wheel - int(8 * ss)  # Raised rally suspension travel
+
+    # Ground Shadow
+    draw.ellipse(
+        [int(140 * ss), ground_y - int(12 * ss), int(880 * ss), ground_y + int(24 * ss)],
+        fill=(0, 0, 0, 140),
+    )
+
+    # Rally Mudflaps (Durable red mudflaps behind wheels)
+    draw.polygon(
+        [
+            (wr_x - int(72 * ss), ground_y - int(10 * ss)),
+            (wr_x - int(56 * ss), ground_y - int(10 * ss)),
+            (wr_x - int(58 * ss), ground_y - int(70 * ss)),
+            (wr_x - int(70 * ss), ground_y - int(70 * ss)),
+        ],
+        fill=(220, 35, 30),
+    )
+    draw.polygon(
+        [
+            (wf_x - int(72 * ss), ground_y - int(10 * ss)),
+            (wf_x - int(56 * ss), ground_y - int(10 * ss)),
+            (wf_x - int(58 * ss), ground_y - int(70 * ss)),
+            (wf_x - int(70 * ss), ground_y - int(70 * ss)),
+        ],
+        fill=(220, 35, 30),
+    )
+
+    # Main Body Contours (Group B / WRC Turbo Hatchback)
+    body_poly = [
+        (int(165 * ss), ground_y - int(45 * ss)),   # Rear skidplate bottom
+        (int(150 * ss), ground_y - int(95 * ss)),   # Rear bumper tip
+        (int(160 * ss), ground_y - int(145 * ss)),  # Hatch crease
+        (int(230 * ss), ground_y - int(210 * ss)),  # Hatch upper glass to roof
+        (int(240 * ss), ground_y - int(215 * ss)),  # Roof spoiler mount
+        (int(460 * ss), ground_y - int(218 * ss)),  # Roof mid
+        (int(630 * ss), ground_y - int(215 * ss)),  # Roof front / A-pillar
+        (int(730 * ss), ground_y - int(140 * ss)),  # Hood base / cowl
+        (int(850 * ss), ground_y - int(115 * ss)),  # Hood front / light pod
+        (int(875 * ss), ground_y - int(70 * ss)),   # Front bumper nose
+        (int(865 * ss), ground_y - int(38 * ss)),   # Front skidplate
+        (int(790 * ss), ground_y - int(38 * ss)),   # Under front overhang
+        (int(680 * ss), ground_y - int(38 * ss)),   # Front sill
+        (int(340 * ss), ground_y - int(38 * ss)),   # Rear sill
+        (int(220 * ss), ground_y - int(38 * ss)),   # Under rear overhang
+    ]
+    # Primary Rally Sunburst Yellow coat
+    draw.polygon(body_poly, fill=(242, 209, 25))
+
+    # Box Flares / Wheel Arches (Shadow undercuts)
+    draw.arc(
+        [wr_x - int(75 * ss), cy_wheel - int(75 * ss), wr_x + int(75 * ss), cy_wheel + int(75 * ss)],
+        start=180, end=360, fill=(40, 42, 48), width=int(8 * ss)
+    )
+    draw.arc(
+        [wf_x - int(75 * ss), cy_wheel - int(75 * ss), wf_x + int(75 * ss), cy_wheel + int(75 * ss)],
+        start=180, end=360, fill=(40, 42, 48), width=int(8 * ss)
+    )
+
+    # Dark Rally Greenhouse & Side Windows
+    window_poly = [
+        (int(250 * ss), ground_y - int(202 * ss)),  # Rear quarter glass top
+        (int(620 * ss), ground_y - int(205 * ss)),  # Windshield top
+        (int(705 * ss), ground_y - int(145 * ss)),  # Windshield bottom
+        (int(470 * ss), ground_y - int(145 * ss)),  # B-pillar bottom
+        (int(280 * ss), ground_y - int(145 * ss)),  # C-pillar bottom
+    ]
+    draw.polygon(window_poly, fill=(28, 32, 40))
+
+    # Front door window glass
+    draw.polygon(
+        [
+            (int(485 * ss), ground_y - int(198 * ss)),
+            (int(605 * ss), ground_y - int(198 * ss)),
+            (int(685 * ss), ground_y - int(148 * ss)),
+            (int(485 * ss), ground_y - int(148 * ss)),
+        ],
+        fill=(90, 160, 220, 220),
+        outline=(20, 22, 28),
+        width=int(2 * ss),
+    )
+    # Rear quarter window glass
+    draw.polygon(
+        [
+            (int(275 * ss), ground_y - int(195 * ss)),
+            (int(465 * ss), ground_y - int(195 * ss)),
+            (int(465 * ss), ground_y - int(148 * ss)),
+            (int(315 * ss), ground_y - int(148 * ss)),
+        ],
+        fill=(70, 130, 190, 220),
+        outline=(20, 22, 28),
+        width=int(2 * ss),
+    )
+
+    # Roof Air Scoop (High-flow rally ventilation)
+    draw.polygon(
+        [
+            (int(520 * ss), ground_y - int(216 * ss)),
+            (int(590 * ss), ground_y - int(216 * ss)),
+            (int(580 * ss), ground_y - int(238 * ss)),
+            (int(535 * ss), ground_y - int(238 * ss)),
+        ],
+        fill=(28, 30, 36),
+        outline=(242, 209, 25),
+        width=int(1 * ss),
+    )
+    draw.polygon(
+        [
+            (int(580 * ss), ground_y - int(238 * ss)),
+            (int(590 * ss), ground_y - int(216 * ss)),
+            (int(598 * ss), ground_y - int(228 * ss)),
+        ],
+        fill=(15, 16, 20),
+    )
+
+    # Massive Group B Dual-Tier Rear Wing
+    wing_poly = [
+        (int(130 * ss), ground_y - int(250 * ss)),
+        (int(220 * ss), ground_y - int(250 * ss)),
+        (int(240 * ss), ground_y - int(215 * ss)),
+        (int(190 * ss), ground_y - int(215 * ss)),
+        (int(145 * ss), ground_y - int(235 * ss)),
+    ]
+    draw.polygon(wing_poly, fill=(28, 32, 40), outline=(242, 209, 25), width=int(2 * ss))
+    # Wing endplate detail
+    draw.polygon(
+        [
+            (int(125 * ss), ground_y - int(255 * ss)),
+            (int(155 * ss), ground_y - int(255 * ss)),
+            (int(170 * ss), ground_y - int(220 * ss)),
+            (int(135 * ss), ground_y - int(220 * ss)),
+        ],
+        fill=(220, 35, 30),
+    )
+
+    # Front Quad Rally Fog Light Pod
+    draw.polygon(
+        [
+            (int(830 * ss), ground_y - int(118 * ss)),
+            (int(885 * ss), ground_y - int(112 * ss)),
+            (int(890 * ss), ground_y - int(88 * ss)),
+            (int(835 * ss), ground_y - int(92 * ss)),
+        ],
+        fill=(245, 245, 250),
+        outline=(30, 32, 38),
+        width=int(2 * ss),
+    )
+    draw_circle(draw, int(848 * ss), ground_y - int(105 * ss), int(12 * ss), fill=(255, 255, 220), outline=(180, 180, 200), width=int(1 * ss))
+    draw_circle(draw, int(872 * ss), ground_y - int(102 * ss), int(12 * ss), fill=(255, 255, 220), outline=(180, 180, 200), width=int(1 * ss))
+
+    # Bold Charcoal & White Rally Racing Livery Graphics
+    draw.polygon(
+        [
+            (int(320 * ss), ground_y - int(38 * ss)),
+            (int(460 * ss), ground_y - int(140 * ss)),
+            (int(530 * ss), ground_y - int(140 * ss)),
+            (int(390 * ss), ground_y - int(38 * ss)),
+        ],
+        fill=(28, 30, 36),
+    )
+    draw.polygon(
+        [
+            (int(405 * ss), ground_y - int(38 * ss)),
+            (int(545 * ss), ground_y - int(140 * ss)),
+            (int(570 * ss), ground_y - int(140 * ss)),
+            (int(430 * ss), ground_y - int(38 * ss)),
+        ],
+        fill=(245, 245, 250),
+    )
+
+    # Rally Competition Number Decal #4
+    draw.rectangle(
+        [int(440 * ss), ground_y - int(115 * ss), int(500 * ss), ground_y - int(65 * ss)],
+        fill=(245, 245, 250),
+        outline=(28, 30, 36),
+        width=int(2 * ss),
+    )
+    draw.line([int(475 * ss), ground_y - int(110 * ss), int(455 * ss), ground_y - int(80 * ss)], fill=(28, 30, 36), width=int(4 * ss))
+    draw.line([int(450 * ss), ground_y - int(80 * ss), int(485 * ss), ground_y - int(80 * ss)], fill=(28, 30, 36), width=int(4 * ss))
+    draw.line([int(475 * ss), ground_y - int(110 * ss), int(475 * ss), ground_y - int(70 * ss)], fill=(28, 30, 36), width=int(4 * ss))
+
+    # Wheels (OZ-style white multi-spoke rally alloys)
+    draw_wheel_lateral(draw, wr_x, cy_wheel, r_wheel, rim_color=(245, 245, 250), style="alloy", ss=ss)
+    draw_wheel_lateral(draw, wf_x, cy_wheel, r_wheel, rim_color=(245, 245, 250), style="alloy", ss=ss)
+
+    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+    lat_img.save(LATERAL_DIR / "classic_rally.png")
+    lat_thumb = lat_img.resize((256, 85), Image.Resampling.LANCZOS)
+    lat_thumb.save(LATERAL_DIR / "classic_rally_thumb.png")
+
+    # --- TOP-DOWN SPRITE (512x512) ---
+    W_TD, H_TD = 512 * ss, 512 * ss
+    im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
+    draw_td = ImageDraw.Draw(im_td)
+
+    cx = 256 * ss
+    cy = 256 * ss
+    w_half = int(92 * ss)
+    h_half = int(205 * ss)
+
+    # Mudflaps top-down (protruding slightly behind rear wheels)
+    draw_td.rectangle([cx - w_half - int(6 * ss), cy + int(140 * ss), cx - w_half + int(12 * ss), cy + int(148 * ss)], fill=(220, 35, 30))
+    draw_td.rectangle([cx + w_half - int(12 * ss), cy + int(140 * ss), cx + w_half + int(6 * ss), cy + int(148 * ss)], fill=(220, 35, 30))
+
+    # Wheels top-down
+    for wx, wy in [
+        (cx - w_half + int(12 * ss), cy - int(110 * ss)),
+        (cx + w_half - int(12 * ss), cy - int(110 * ss)),
+        (cx - w_half + int(12 * ss), cy + int(115 * ss)),
+        (cx + w_half - int(12 * ss), cy + int(115 * ss)),
+    ]:
+        draw_td.rounded_rectangle([wx - int(15 * ss), wy - int(34 * ss), wx + int(15 * ss), wy + int(34 * ss)], radius=int(6 * ss), fill=(22, 24, 28))
+
+    # Main Body Outline (Facing UP)
+    top_poly = [
+        (cx - int(48 * ss), cy - h_half),                 # Front bumper nose L
+        (cx + int(48 * ss), cy - h_half),                 # Front bumper nose R
+        (cx + int(80 * ss), cy - h_half + int(25 * ss)),  # Front light pod R
+        (cx + int(94 * ss), cy - int(95 * ss)),           # Front box flare R
+        (cx + int(84 * ss), cy - int(30 * ss)),           # Door waist R
+        (cx + int(96 * ss), cy + int(95 * ss)),           # Rear box flare R
+        (cx + int(90 * ss), cy + h_half - int(15 * ss)),  # Rear bumper R
+        (cx + int(65 * ss), cy + h_half),                 # Rear hatch R
+        (cx - int(65 * ss), cy + h_half),                 # Rear hatch L
+        (cx - int(90 * ss), cy + h_half - int(15 * ss)),  # Rear bumper L
+        (cx - int(96 * ss), cy + int(95 * ss)),           # Rear box flare L
+        (cx - int(84 * ss), cy - int(30 * ss)),           # Door waist L
+        (cx - int(94 * ss), cy - int(95 * ss)),           # Front box flare L
+        (cx - int(80 * ss), cy - h_half + int(25 * ss)),  # Front light pod L
+    ]
+    draw_td.polygon(top_poly, fill=(242, 209, 25), outline=(190, 160, 20), width=int(2 * ss))
+
+    # Quad Fog Lamp Pod on Nosecone
+    draw_td.rounded_rectangle([cx - int(45 * ss), cy - h_half - int(8 * ss), cx + int(45 * ss), cy - h_half + int(18 * ss)], radius=int(4 * ss), fill=(245, 245, 250), outline=(28, 30, 36), width=int(2 * ss))
+    for lx in [-32, -11, 11, 32]:
+        draw_circle(draw_td, cx + int(lx * ss), cy - h_half + int(5 * ss), int(8 * ss), fill=(255, 255, 220), outline=(140, 140, 160), width=int(1 * ss))
+
+    # Hood Louvers / Vents
+    draw_td.rectangle([cx - int(28 * ss), cy - int(120 * ss), cx - int(8 * ss), cy - int(90 * ss)], fill=(28, 30, 36))
+    draw_td.rectangle([cx + int(8 * ss), cy - int(120 * ss), cx + int(28 * ss), cy - int(90 * ss)], fill=(28, 30, 36))
+
+    # Greenhouse (Cabin & Windows)
+    greenhouse = [
+        (cx - int(48 * ss), cy - int(65 * ss)),
+        (cx + int(48 * ss), cy - int(65 * ss)),
+        (cx + int(56 * ss), cy + int(85 * ss)),
+        (cx - int(56 * ss), cy + int(85 * ss)),
+    ]
+    draw_td.polygon(greenhouse, fill=(26, 28, 34))
+
+    # Windshield (Facing Up)
+    draw_td.polygon(
+        [
+            (cx - int(44 * ss), cy - int(60 * ss)),
+            (cx + int(44 * ss), cy - int(60 * ss)),
+            (cx + int(48 * ss), cy - int(20 * ss)),
+            (cx - int(48 * ss), cy - int(20 * ss)),
+        ],
+        fill=(90, 160, 220, 230),
+    )
+    # Rear Hatch Window
+    draw_td.polygon(
+        [
+            (cx - int(48 * ss), cy + int(45 * ss)),
+            (cx + int(48 * ss), cy + int(45 * ss)),
+            (cx + int(52 * ss), cy + int(80 * ss)),
+            (cx - int(52 * ss), cy + int(80 * ss)),
+        ],
+        fill=(65, 120, 180, 230),
+    )
+
+    # Roof Air Scoop (Topdown)
+    draw_td.rectangle([cx - int(18 * ss), cy - int(18 * ss), cx + int(18 * ss), cy + int(15 * ss)], fill=(28, 30, 36), outline=(245, 245, 250), width=int(1 * ss))
+
+    # Rear High-Downforce Rally Wing
+    draw_td.rounded_rectangle([cx - int(82 * ss), cy + h_half - int(8 * ss), cx + int(82 * ss), cy + h_half + int(18 * ss)], radius=int(4 * ss), fill=(28, 32, 40), outline=(242, 209, 25), width=int(2 * ss))
+    # Red Wing Endplates
+    draw_td.rectangle([cx - int(85 * ss), cy + h_half - int(10 * ss), cx - int(78 * ss), cy + h_half + int(20 * ss)], fill=(220, 35, 30))
+    draw_td.rectangle([cx + int(78 * ss), cy + h_half - int(10 * ss), cx + int(85 * ss), cy + h_half + int(20 * ss)], fill=(220, 35, 30))
+
+    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+    td_img.save(TOPDOWN_DIR / "classic_rally.png")
+    print("✓ Generated classic_rally assets")
+
+
 if __name__ == "__main__":
     generate_classic_gt()
     generate_classic_nascar()
     generate_classic_offroad()
     generate_classic_kart()
-    print("✨ All 4 classic fantasy vehicle asset sets generated successfully!")
+    generate_classic_rally()
+    print("✨ All 5 classic fantasy vehicle asset sets generated successfully!")

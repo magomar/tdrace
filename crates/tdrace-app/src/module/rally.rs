@@ -486,7 +486,7 @@ impl GameModule for RallyGameModule {
             },
             TournamentFormat::Championship {
                 name: "Rallycross World Cup".to_string(),
-                point_system: PointSystem::F1Standard { fastest_lap_bonus: false },
+                point_system: PointSystem::FiaStandard { fastest_lap_bonus: false },
                 track_ids: vec![
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),

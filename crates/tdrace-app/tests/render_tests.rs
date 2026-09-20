@@ -303,7 +303,7 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
     }
 
     use tdrace_app::catalog::CLASSIC_ARCADE_CARS;
-    assert_eq!(CLASSIC_ARCADE_CARS.len(), 4, "Classic arcade catalog must contain 4 fantasy vehicles");
+    assert_eq!(CLASSIC_ARCADE_CARS.len(), 5, "Classic arcade catalog must contain 5 fantasy vehicles");
 
     for car in ALL_REAL_CARS {
         assert!(!car.id.is_empty(), "Car ID cannot be empty");

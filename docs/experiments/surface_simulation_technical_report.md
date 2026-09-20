@@ -100,14 +100,14 @@ The table below summarizes the cross-surface degradation factors relative to dry
 
 ### 1. Acceleration & Traction (Protocol A)
 * **AWD Dominance**: AWD platforms (Audi Quattro S1: $3.38\,\text{s}$, Subaru WRX STI: $4.01\,\text{s}$) harness $100\%$ normal load across all four wheels, launching cleanly on Asphalt and maintaining traction on Dirt ($3.75\,\text{s}$), Gravel ($4.05\,\text{s}$), and Snow ($8.60\,\text{s}$).
-* **RWD Mechanical Traction Cap**: RWD supercars (Porsche GT3 R: $5.55\,\text{s}$, F1 Hybrid: $5.73\,\text{s}$) accelerate slower to $100\,\text{km/h}$ than AWD rally cars. In the current engine implementation:
+* **RWD Mechanical Traction Cap**: RWD supercars (Porsche GT3 R: $5.55\,\text{s}$) accelerate slower to $100\,\text{km/h}$ than AWD rally cars. In the current engine implementation:
   $$F_{\text{drive},\max} = \mu_{\text{surface}} \cdot F_{z,\text{rear}}$$
   With static rear axle weight distribution at $\approx 46\% - 48\%$ and nominal $\mu = 1.00$, peak forward acceleration is physically limited to $\approx 0.46g - 0.48g$, yielding $t_{100} \approx 5.5\,\text{s}$. While this accurately enforces Newtonian normal-load traction, real-world racing slicks benefit from chemical adhesion ($\mu \approx 1.5 - 1.8$).
 * **Low-Grip Attrition**: RWD supercars register *Did Not Complete* (*DNC*) on Water, Sand, and Ice, as tractive force cannot overcome rolling resistance and drag before timing out.
 
 ### 2. Emergency Braking (Protocol B)
 * **High Physical Accuracy**: Stopping distances on dry Asphalt conform strictly to international automotive testing standards:
-  - F1 Carbon-Carbon: **$32.9\,\text{m}$** ($1.19g$ mean deceleration).
+  - Hypercar Carbon-Carbon: **$33.2\,\text{m}$** ($1.18g$ mean deceleration).
   - Lightweight Cadet Kart ($180\,\text{kg}$): **$34.0\,\text{m}$**.
   - Porsche 911 GT3 R: **$36.1\,\text{m}$**.
   - Sports Coupe baseline: **$37.7\,\text{m}$**.
@@ -117,7 +117,7 @@ The table below summarizes the cross-surface degradation factors relative to dry
 
 ### 3. Steady-State Skidpad (Protocol C)
 * **Lateral Grip Spectrum**:
-  - High-downforce open-wheelers (F1) reach **$1.12g$** at $60\,\text{km/h}$ on $R = 30\,\text{m}$.
+  - High-downforce prototypes (Hypercar LMH) reach **$1.10g$** at $60\,\text{km/h}$ on $R = 30\,\text{m}$.
   - GT racecars (GT1, GT3, GT2) reach **$1.01g - 1.07g$**.
   - Street stocks and rally cars achieve **$0.96g - 1.00g$**.
   - Heavy off-road vehicles achieve **$0.90g - 0.91g$**.
@@ -131,7 +131,7 @@ The table below summarizes the cross-surface degradation factors relative to dry
 ### 5. Coast-Down Rolling Resistance (Protocol E)
 * **Momentum vs Aerodynamic Drag**:
   - Heavy vehicles with low drag area (e.g. Monster Truck: $1,551\,\text{m}$, Hilux: $1,448\,\text{m}$) roll the furthest due to high kinetic momentum ($p = mv$).
-  - High-downforce cars with significant wing drag (F1: $996\,\text{m}$, $C_d = 0.72$) decelerate significantly faster.
+  - High-downforce cars with significant wing drag (Hypercar LMH: $1,012\,\text{m}$, $C_d = 0.65$) decelerate significantly faster.
   - Sand traps reduce rolling distance from $1,289\,\text{m}$ down to $141\,\text{m}$ ($89\%$ reduction), validating their function as functional runoff deceleration beds.
 
 ---
@@ -143,7 +143,7 @@ The empirical findings confirm clear gameplay identity across the motorsport ros
 ```mermaid
 graph LR
     subgraph Track Specialists
-        GT["GT / F1 Module: Razor-sharp braking (33-36m) & 1.12g lateral grip. Punished off-track."]
+        GT["GT World Challenge Module: Razor-sharp braking (33-36m) & 1.10g lateral grip. Punished off-track."]
         NAS["NASCAR Module: Massive torque & top speed. Prone to snap power-oversteer on wet/loose."]
     end
     
@@ -157,7 +157,7 @@ graph LR
     end
 ```
 
-1. **GT / F1**: Dominates dry circuit lap times through braking precision and high-speed downforce, but is severely penalized by lawn or sand excursions.
+1. **GT World Challenge**: Dominates dry circuit lap times through braking precision and high-speed downforce, but is severely penalized by lawn or sand excursions.
 2. **Rally**: The ultimate all-rounder; unchallenged launch acceleration and superior stability on gravel, ice, and mud.
 3. **NASCAR**: High-speed momentum vehicles requiring gentle corner exits to avoid wheelspin.
 4. **Extreme Off-Road**: High rolling-resistance tolerance; powers through deep sand and mud bogs where supercars get stuck, balanced by longer braking zones.
@@ -169,7 +169,7 @@ graph LR
 ## 💡 Future Technical Optimization Opportunities
 
 1. **Longitudinal Tire Grip Scaling (`tire.peak_d`)**:
-   Currently in `crates/wheelbase/src/car.rs`, `max_friction` is calculated as $\mu_{\text{surface}} \cdot F_z$. Factoring in the tire compound's `peak_d` parameter ($F_{x,\max} = \mu \cdot F_z \cdot D$) will allow racing slicks (F1 $D = 1.28$, GT3 $D = 1.20$) to launch in the realistic $2.5\,\text{s} - 3.4\,\text{s}$ window without modifying the underlying vehicle mass or drivetrain mechanics.
+   Currently in `crates/wheelbase/src/car.rs`, `max_friction` is calculated as $\mu_{\text{surface}} \cdot F_z$. Factoring in the tire compound's `peak_d` parameter ($F_{x,\max} = \mu \cdot F_z \cdot D$) will allow racing slicks (GT1/LMH $D = 1.25$, GT3 $D = 1.20$) to launch in the realistic $2.5\,\text{s} - 3.4\,\text{s}$ window without modifying the underlying vehicle mass or drivetrain mechanics.
 2. **Surface Water Drainage Tiers**:
    Differentiating shallow standing water (wet track, $\mu \approx 0.65$) from deep standing water puddles ($\mu = 0.22$) would allow GT cars to negotiate wet pavement without experiencing immediate traction stalls.
 

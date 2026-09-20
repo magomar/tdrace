@@ -375,7 +375,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 ---
 
 ### 3.8. Championship Standings (`GameState::ChampionshipStandings`)
-* **Purpose**: Multi-round season tournament progress (e.g. FIA Formula 1 World Championship 4-Round Season).
+* **Purpose**: Multi-round season tournament progress (e.g. GT World Challenge 4-Round Season).
 * **State Struct**: `GameState::ChampionshipStandings`
 * **Components**:
   - Driver championship points table (1st: 25pts, 2nd: 18pts, 3rd: 15pts, etc.).
@@ -467,7 +467,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
   - `CLASSIC`: Standard arcade & sports car circuits (e.g. Classic Grand Prix, Oval Speedway).
   - `RALLY`: Dirt courses, dunes, and off-road stages (e.g. Oasis Rally, Outlaw Pass).
   - `KARTING`: Tight technical hairpins, indoor arenas, and sprint tracks (e.g. Kart Arena).
-  - `FORMULA 1`: High-speed DRS circuits, chicanes, and grand prix courses.
+  - `GT WORLD CHALLENGE`: High-speed endurance circuits, chicanes, and grand prix courses.
 * **Circuit Catalog Layout**:
   - In each discipline category, official built-in presets appear first, followed by custom circuits belonging to that category.
   - Custom circuits can belong to one or more motorsport disciplines.
@@ -476,8 +476,8 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` / `Tab` | Switch Module Tab | Cycles active discipline (`Classic` ⇄ `Rally` ⇄ `Karting` ⇄ `Formula 1`) |
-| `1` / `2` / `3` / `4` | Direct Module Jump | Directly selects Classic (1), Rally (2), Karting (3), or Formula 1 (4) |
+| `Left` / `Right` / `A` / `D` / Gamepad `D-pad X` / `Tab` | Switch Module Tab | Cycles active discipline (`Classic` ⇄ `Rally` ⇄ `Karting` ⇄ `GT World Challenge`) |
+| `1` / `2` / `3` / `4` | Direct Module Jump | Directly selects Classic (1), Rally (2), Karting (3), or GT World Challenge (4) |
 | `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Select Track | Highlights circuit in catalog list |
 | `Enter` / `Space` / Gamepad `A` | Race Track | Starts race session on the highlighted circuit |
 | `E` / Gamepad `X` | Open in CAD Studio | Opens track in vector spline designer (`GameState::TrackEditor`) |

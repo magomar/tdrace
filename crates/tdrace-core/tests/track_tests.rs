@@ -872,7 +872,7 @@ fn test_prototypical_track_templates_all_combinations() {
                 }
 
                 // 4. Module surface requirements:
-                // "asphalt for classic, F1 and karts, with grass offtrack for F1 and classic, asphalt for karts and dirt for rally"
+                // "asphalt for classic, GT and karts, with grass offtrack for GT and classic, asphalt for karts and dirt for rally"
                 match module {
                     "classic" => {
                         assert_eq!(track.default_surface, SurfaceType::Grass);

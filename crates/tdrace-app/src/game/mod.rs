@@ -536,7 +536,6 @@ impl RaceSession {
             "kart_arena" => TrackChoice::KartArena,
             "ramp_raceway" => TrackChoice::RampRaceway,
             "oasis_rally" | "oasis" | "dune_raid" | "sahara_dunes" => TrackChoice::OasisRally,
-            "outlaw_pass" => TrackChoice::OutlawPass,
             _ => TrackChoice::ClassicGrandPrix,
         };
         let car_choice = match config.gameplay.default_car.as_str() {
@@ -1029,14 +1028,7 @@ impl RaceSession {
             Some("gt1" | "gt1_legend") => CarChoice::GT1Legend,
             Some("hypercar" | "hypercar_prototype" | "lmh" | "lmdh") => CarChoice::HypercarPrototype,
             Some("gt") => CarChoice::GT4Clubsport,
-            Some("f1" | "f1_car" | "open_wheel") => {
-                if matches!(self.active_module_id, "gt" | "gt_challenge") {
-                    CarChoice::GT4Clubsport
-                } else {
-                    CarChoice::F1Car
-                }
-            }
-            Some("f1_hybrid_26") => CarChoice::F1Car,
+            Some("open_wheel") => CarChoice::Kart,
             Some("drift_car") => CarChoice::DriftCar,
             Some("kart" | "shifter_kart" | "shifter_kart_125" | "classic_kart") => CarChoice::Kart,
             Some("rally_car" | "wrc_turbo_rally" | "rally" | "classic_rally") => CarChoice::RallyCar,
@@ -1065,7 +1057,6 @@ impl RaceSession {
             CarChoice::GT2Biturbo => "gt2_biturbo",
             CarChoice::GT1Legend => "gt1_legend",
             CarChoice::HypercarPrototype => "hypercar_prototype",
-            CarChoice::F1Car => "f1_hybrid_26",
             _ => return true,
         };
         self.active_career_progress.is_car_unlocked(car_id, self.is_dev_mode())
@@ -1098,7 +1089,6 @@ impl RaceSession {
                 CarChoice::GT2Biturbo,
                 CarChoice::GT1Legend,
                 CarChoice::HypercarPrototype,
-                CarChoice::F1Car,
             ],
             "nascar" => vec![CarChoice::StockCar],
             "extreme_offroad" => vec![CarChoice::SandRail],
@@ -1237,7 +1227,6 @@ impl RaceSession {
                 (CarChoice::GT2Biturbo.title(), CarChoice::GT2Biturbo.tag(), CarChoice::GT2Biturbo.description(), CarChoice::GT2Biturbo.stats()),
                 (CarChoice::GT1Legend.title(), CarChoice::GT1Legend.tag(), CarChoice::GT1Legend.description(), CarChoice::GT1Legend.stats()),
                 (CarChoice::HypercarPrototype.title(), CarChoice::HypercarPrototype.tag(), CarChoice::HypercarPrototype.description(), CarChoice::HypercarPrototype.stats()),
-                (CarChoice::F1Car.title(), CarChoice::F1Car.tag(), CarChoice::F1Car.description(), CarChoice::F1Car.stats()),
             ],
             "rally" => vec![
                 (CarChoice::RallyCar.title(), CarChoice::RallyCar.tag(), CarChoice::RallyCar.description(), CarChoice::RallyCar.stats()),
@@ -1571,7 +1560,7 @@ impl RaceSession {
     pub fn start_gt_championship(&mut self) {
         let champ = ChampionshipSession::new(
             "GT World Challenge Championship 2026",
-            PointSystem::F1Standard { fastest_lap_bonus: true },
+            PointSystem::FiaStandard { fastest_lap_bonus: true },
             vec!["monza".to_string(), "spa".to_string(), "silverstone".to_string(), "classic_grand_prix".to_string()],
             5,
             &[
@@ -1622,7 +1611,7 @@ impl RaceSession {
 
         let champ = ChampionshipSession::new(
             cup_name,
-            PointSystem::F1Standard { fastest_lap_bonus: true },
+            PointSystem::FiaStandard { fastest_lap_bonus: true },
             track_ids,
             4,
             &[
@@ -1687,7 +1676,7 @@ impl RaceSession {
     pub fn start_extreme_offroad_championship(&mut self) {
         let champ = ChampionshipSession::new(
             "Extreme Off-Road World Series 2026",
-            PointSystem::F1Standard { fastest_lap_bonus: false },
+            PointSystem::FiaStandard { fastest_lap_bonus: false },
             vec![
                 "sahara_dune_crossing".to_string(),
                 "dirt_figure_eight".to_string(),
@@ -1801,15 +1790,23 @@ impl RaceSession {
 
         let player_car_choice = self.active_player_car_choice();
 
-        // Resolve the elected car model if chosen or matching player's car choice
-        let player_model = self.selected_car_model_id
-            .and_then(crate::catalog::find_model_by_id)
-            .filter(|m| m.module_id == effective_module)
-            .or_else(|| {
-                crate::catalog::get_models_for_module(effective_module)
-                    .into_iter()
-                    .find(|m| m.base_car_choice == player_car_choice)
-            });
+        // In all modules except "classic", resolve the elected real car model if chosen
+        let player_model = if effective_module != "classic" {
+            self.selected_car_model_id
+                .and_then(crate::catalog::find_model_by_id)
+                .filter(|m| m.module_id == effective_module && (!self.free_car_selection || m.base_car_choice == player_car_choice))
+                .or_else(|| {
+                    if self.free_car_selection {
+                        crate::catalog::get_models_for_module(effective_module)
+                            .into_iter()
+                            .find(|m| m.base_car_choice == player_car_choice)
+                    } else {
+                        None
+                    }
+                })
+        } else {
+            None
+        };
 
         let mut base_config = match player_car_choice {
             CarChoice::GT4Clubsport => {
@@ -1852,21 +1849,17 @@ impl RaceSession {
                 };
                 GtWorldChallengeModule::car_hypercar_prototype()
             }
-            CarChoice::F1Car => {
-                self.current_visual_type = VehicleVisualType::OpenWheel {
-                    front_wing_span: 1.80,
-                    rear_wing_height: 0.85,
-                    halo: true,
-                };
-                GtWorldChallengeModule::car_f1_hybrid()
-            }
             CarChoice::RallyCar => {
                 self.current_visual_type = VehicleVisualType::RallyHatch {
                     roof_scoop: true,
                     mudflaps: true,
                     large_wing: true,
                 };
-                RallyGameModule::car_wrc_rally()
+                if self.active_module_id == "classic" {
+                    ClassicGameModule::car_classic_rally()
+                } else {
+                    RallyGameModule::car_wrc_rally()
+                }
             }
             CarChoice::Kart => {
                 self.current_visual_type = VehicleVisualType::GoKart {
@@ -1935,9 +1928,13 @@ impl RaceSession {
         };
         base_config.assists = self.assist_profile.to_config();
 
-        let category_models = player_model
-            .map(|pm| crate::catalog::get_models_for_category(pm.module_id, pm.category_name))
-            .unwrap_or_default();
+        let category_models = if self.selected_car_model_id.is_some() {
+            player_model
+                .map(|pm| crate::catalog::get_models_for_category(pm.module_id, pm.category_name))
+                .unwrap_or_default()
+        } else {
+            Vec::new()
+        };
 
         let track_id = self.track_choice_id();
 
@@ -2022,10 +2019,14 @@ impl RaceSession {
 
             let (bot_car_choice, bot_car_title, bot_model_id, bot_scheme) = if !category_models.is_empty() {
                 let bot_model = category_models[bot_idx % category_models.len()];
-                let scheme = CarColorScheme {
-                    primary: bot_model.primary_color,
-                    secondary: bot_model.secondary_color,
-                    helmet: character.color_scheme.helmet,
+                let scheme = if effective_module == "classic" {
+                    character.color_scheme
+                } else {
+                    CarColorScheme {
+                        primary: bot_model.primary_color,
+                        secondary: bot_model.secondary_color,
+                        helmet: character.color_scheme.helmet,
+                    }
                 };
                 (bot_model.base_car_choice, bot_model.name.to_string(), Some(bot_model.id), scheme)
             } else {
@@ -2155,6 +2156,7 @@ impl RaceSession {
                         CarChoice::StockCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_nascar(),
                         CarChoice::SandRail if self.active_module_id == "classic" => ClassicGameModule::car_classic_offroad(),
                         CarChoice::Kart if self.active_module_id == "classic" => ClassicGameModule::car_classic_kart(),
+                        CarChoice::RallyCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_rally(),
                         CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(p.car_choice),
                         _ => p.car_choice.config(),
                     };
@@ -2174,6 +2176,7 @@ impl RaceSession {
                     CarChoice::StockCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_nascar(),
                     CarChoice::SandRail if self.active_module_id == "classic" => ClassicGameModule::car_classic_offroad(),
                     CarChoice::Kart if self.active_module_id == "classic" => ClassicGameModule::car_classic_kart(),
+                    CarChoice::RallyCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_rally(),
                     CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(player_car_choice),
                     _ => player_car_choice.config(),
                 };
@@ -2279,7 +2282,6 @@ impl RaceSession {
                 | CarChoice::GT2Biturbo
                 | CarChoice::GT1Legend
                 | CarChoice::HypercarPrototype => EngineSoundType::SportGT,
-                CarChoice::F1Car => EngineSoundType::F1V6Turbo,
                 CarChoice::Kart => EngineSoundType::Kart125cc,
                 CarChoice::RallyCar => EngineSoundType::RallyTurbo,
                 CarChoice::SportsCar | CarChoice::DriftCar => EngineSoundType::SportGT,
@@ -2981,32 +2983,30 @@ impl RaceSession {
                                     self.state = GameState::Garage(GarageOrigin::StartingGrid);
                                     return;
                                 }
-                                if self.active_module_id != "classic" {
-                                    let models = crate::catalog::get_models_for_module(self.active_module_id);
-                                    if !models.is_empty() {
-                                        let current_idx = self.selected_car_model_id
-                                            .and_then(|id| models.iter().position(|m| m.id == id))
-                                            .unwrap_or(0);
-                                        if is_key_pressed(KeyCode::RightBracket) {
-                                            self.audio.play_sfx(SfxType::UiMove);
-                                            let next_idx = (current_idx + 1) % models.len();
-                                            let chosen = models[next_idx];
-                                            self.selected_car_model_id = Some(chosen.id);
-                                            self.car_choice = chosen.base_car_choice;
-                                            self.current_visual_type = chosen.visual_type;
-                                            self.free_car_selection = true;
-                                            self.rebuild_roster_participants();
-                                        }
-                                        if is_key_pressed(KeyCode::LeftBracket) {
-                                            self.audio.play_sfx(SfxType::UiMove);
-                                            let next_idx = if current_idx == 0 { models.len() - 1 } else { current_idx - 1 };
-                                            let chosen = models[next_idx];
-                                            self.selected_car_model_id = Some(chosen.id);
-                                            self.car_choice = chosen.base_car_choice;
-                                            self.current_visual_type = chosen.visual_type;
-                                            self.free_car_selection = true;
-                                            self.rebuild_roster_participants();
-                                        }
+                                let models = crate::catalog::get_models_for_module(self.active_module_id);
+                                if !models.is_empty() {
+                                    let current_idx = self.selected_car_model_id
+                                        .and_then(|id| models.iter().position(|m| m.id == id))
+                                        .unwrap_or(0);
+                                    if is_key_pressed(KeyCode::RightBracket) {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        let next_idx = (current_idx + 1) % models.len();
+                                        let chosen = models[next_idx];
+                                        self.selected_car_model_id = Some(chosen.id);
+                                        self.car_choice = chosen.base_car_choice;
+                                        self.current_visual_type = chosen.visual_type;
+                                        self.free_car_selection = true;
+                                        self.rebuild_roster_participants();
+                                    }
+                                    if is_key_pressed(KeyCode::LeftBracket) {
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        let next_idx = if current_idx == 0 { models.len() - 1 } else { current_idx - 1 };
+                                        let chosen = models[next_idx];
+                                        self.selected_car_model_id = Some(chosen.id);
+                                        self.car_choice = chosen.base_car_choice;
+                                        self.current_visual_type = chosen.visual_type;
+                                        self.free_car_selection = true;
+                                        self.rebuild_roster_participants();
                                     }
                                 } else {
                                     let choices = self.active_module_car_choices();
@@ -4453,7 +4453,6 @@ impl RaceSession {
             _ => match active_car.map(|c| c.base_car_choice).unwrap_or(self.car_choice) {
                 CarChoice::StockCar => EngineSoundType::NascarV8,
                 CarChoice::SandRail => EngineSoundType::SandRailBoxer,
-                CarChoice::F1Car => EngineSoundType::F1V6Turbo,
                 CarChoice::Kart => EngineSoundType::Kart125cc,
                 CarChoice::RallyCar => EngineSoundType::RallyTurbo,
                 _ => EngineSoundType::SportGT,

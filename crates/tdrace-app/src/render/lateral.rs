@@ -100,7 +100,7 @@ pub fn render_lateral_car(
     draw_reflection: bool,
 ) {
     let car_choice = match visual_type {
-        VehicleVisualType::OpenWheel { .. } => CarChoice::F1Car,
+        VehicleVisualType::OpenWheel { .. } => CarChoice::Kart,
         VehicleVisualType::GoKart { .. } => CarChoice::Kart,
         VehicleVisualType::RallyHatch { .. } => CarChoice::RallyCar,
         VehicleVisualType::StockCar { .. } => CarChoice::StockCar,
@@ -253,7 +253,6 @@ pub fn render_car_lateral(
         CarChoice::GT2Biturbo => "gt_porsche_911_gt2_rs",
         CarChoice::GT1Legend => "gt_mclaren_f1_gtr_lt",
         CarChoice::HypercarPrototype => "gt_ferrari_499p",
-        CarChoice::F1Car => "f1_open_wheel",
         CarChoice::Kart => "kart_tony_kart_racer_ok",
         CarChoice::RallyCar => "rally_hyundai_i20_rx",
         CarChoice::StockCar => "nascar_arca_chevy_ss",
@@ -284,6 +283,7 @@ fn get_wheel_geometry(
         "classic_nascar" => (cx + hl * 0.54, cx - hl * 0.50, 13.5 * s, WheelStyle::StockCarSteel),
         "classic_offroad" => (cx + hl * 0.55, cx - hl * 0.48, 16.0 * s, WheelStyle::MudTractorChevron),
         "classic_kart" => (cx + hl * 0.46, cx - hl * 0.44, 9.0 * s, WheelStyle::KartSmall),
+        "classic_rally" => (cx + hl * 0.50, cx - hl * 0.48, 13.0 * s, WheelStyle::RallyGravel),
 
         // GT4
         "gt_porsche_718_gt4" => (cx + hl * 0.50, cx - hl * 0.50, 12.0 * s, WheelStyle::AlloyGT),
@@ -377,9 +377,6 @@ fn get_wheel_geometry(
         "kart_anderson_cs250" | "kart_ms_superkart_250" | "kart_viper_250_twin" => {
             (cx + hl * 0.48, cx - hl * 0.48, 10.0 * s, WheelStyle::KartSmall)
         }
-
-        // Fallback F1 / Open-Wheel
-        "f1_open_wheel" => (cx + hl * 0.58, cx - hl * 0.52, 13.5 * s, WheelStyle::CenterlockAero),
         _ => (cx + hl * 0.52, cx - hl * 0.50, 12.8 * s, WheelStyle::AlloyGT),
     }
 }
@@ -500,6 +497,7 @@ fn render_specific_body(
         "classic_nascar" => render_nascar_monte_carlo(cx, cy, gy, hl, s, primary, secondary, helmet),
         "classic_offroad" => render_offroad_sand_rail(cx, cy, gy, hl, s, primary, secondary, helmet),
         "classic_kart" => render_kart_birel_kz2(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "classic_rally" => render_rally_audi_quattro_s1(cx, cy, gy, hl, s, primary, secondary, helmet),
 
         // --- GT4 Models ---
         "gt_porsche_718_gt4" => render_porsche_718_gt4(cx, cy, gy, hl, s, primary, secondary, helmet),
@@ -599,8 +597,8 @@ fn render_specific_body(
         "kart_ms_superkart_250" => render_kart_ms_superkart(cx, cy, gy, hl, s, primary, secondary, helmet),
         "kart_viper_250_twin" => render_kart_viper_superkart(cx, cy, gy, hl, s, primary, secondary, helmet),
 
-        // Fallback F1
-        _ => render_lateral_f1(cx, cy, gy, hl, s, primary, secondary, helmet),
+        // Fallback GT Sports Car
+        _ => render_porsche_718_gt4(cx, cy, gy, hl, s, primary, secondary, helmet),
     }
 }
 
@@ -1922,7 +1920,7 @@ fn render_kart_superkart_250(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary
     draw_triangle(Vec2::new(cx + hl * 0.25, belt_y), Vec2::new(cx + hl * 0.10, roof_y + 2.0 * s), Vec2::new(cx - hl * 0.15, roof_y + 2.0 * s), Color::new(0.12, 0.15, 0.20, 0.85));
     draw_circle(cx - hl * 0.02, cy - 4.0 * s, 4.2 * s, helmet);
 
-    // Formula-style multi-element rear wing
+    // Multi-element aerodynamic rear wing
     let wing_x = tail_x + 5.0 * s;
     draw_line(wing_x, belt_y, wing_x, roof_y, 2.0 * s, Color::new(0.10, 0.10, 0.12, 1.0));
     draw_rectangle(wing_x - 10.0 * s, roof_y - 2.0 * s, 20.0 * s, 2.8 * s, secondary);
@@ -1950,37 +1948,6 @@ fn tail_x_val(cx: f32, hl: f32) -> f32 {
 // =========================================================================
 // BASE ARCHETYPE LATERAL RENDERERS
 // =========================================================================
-fn render_lateral_f1(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
-    let nose_x = cx + hl * 1.06;
-    let tail_x = cx - hl * 0.95;
-    let sill_y = gy - 6.5 * s;
-    let belt_y = cy + 4.0 * s;
-    let cockpit_y = cy - 6.0 * s;
-    let airbox_y = cy - 18.0 * s;
-
-    draw_rectangle(cx - hl * 0.60, sill_y, hl * 1.30, 5.5 * s, primary);
-    draw_triangle(Vec2::new(nose_x, sill_y + 2.0 * s), Vec2::new(cx + hl * 0.50, belt_y), Vec2::new(cx + hl * 0.50, sill_y), primary);
-    draw_rectangle(nose_x - 16.0 * s, sill_y + 3.0 * s, 20.0 * s, 2.2 * s, secondary);
-    draw_rectangle(nose_x + 2.0 * s, sill_y - 2.0 * s, 2.0 * s, 7.0 * s, Color::new(0.15, 0.16, 0.18, 1.0));
-
-    draw_rectangle(cx - hl * 0.15, belt_y - 2.0 * s, hl * 0.45, sill_y - belt_y + 2.0 * s, secondary);
-    draw_circle(cx + hl * 0.05, cockpit_y + 1.0 * s, 4.4 * s, helmet);
-
-    // Halo
-    draw_line(cx + hl * 0.22, belt_y - 2.0 * s, cx + hl * 0.08, airbox_y + 5.0 * s, 2.0 * s, Color::new(0.15, 0.16, 0.18, 1.0));
-    draw_line(cx + hl * 0.08, airbox_y + 5.0 * s, cx - hl * 0.10, belt_y - 2.0 * s, 2.0 * s, Color::new(0.15, 0.16, 0.18, 1.0));
-
-    // Airbox
-    draw_triangle(Vec2::new(cx - hl * 0.02, airbox_y), Vec2::new(cx - hl * 0.25, airbox_y + 8.0 * s), Vec2::new(cx - hl * 0.25, belt_y), primary);
-    draw_rectangle(cx - hl * 0.25, airbox_y + 2.0 * s, hl * 0.35, belt_y - (airbox_y + 2.0 * s), primary);
-
-    // Bi-Plane Rear Wing
-    let wing_x = tail_x + 5.0 * s;
-    draw_line(wing_x, belt_y, wing_x, airbox_y + 1.0 * s, 2.4 * s, Color::new(0.15, 0.16, 0.18, 1.0));
-    draw_rectangle(wing_x - 14.0 * s, airbox_y, 24.0 * s, 3.0 * s, secondary);
-    draw_rectangle(wing_x - 12.0 * s, airbox_y + 5.0 * s, 20.0 * s, 2.0 * s, Color::new(0.20, 0.22, 0.25, 1.0));
-}
-
 fn render_lateral_stock_car(cx: f32, cy: f32, gy: f32, hl: f32, s: f32, primary: Color, secondary: Color, helmet: Color) {
     let nose_x = cx + hl * 0.94;
     let tail_x = cx - hl * 0.92;

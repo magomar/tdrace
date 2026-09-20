@@ -18,13 +18,13 @@ pub use geometry::{
 pub use scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
 pub use presets::{
     bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, chicago_street_course,
-    classic_grand_prix, classic_template, cota, create_prototypical_track, darlington_raceway,
+    classic_grand_prix, classic_rallycross, classic_template, cota, create_prototypical_track, darlington_raceway,
     daytona_superspeedway, dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park,
     dune_raid, eldora_speedway, essay_rx, estering_rx, figure_eight, generate_arena_grid, generate_checkpoints,
     generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints,
     generate_oval_waypoints, generate_walls_from_spline, gt_template, hell_rx, holjes_rx,
     indianapolis_motor_speedway, iowa_speedway, kart_arena, kart_template, killarney_rx, kouvola_rx, loheac_rx,
-    lydden_hill, martinsville_speedway, mettet_rx, montalegre_rx, nyirad_rx, oasis_rally, outlaw_pass,
+    lydden_hill, martinsville_speedway, mettet_rx, montalegre_rx, nyirad_rx, oasis_rally,
     oval_speedway, rally_template, ramp_raceway, riga_rx, road_america, sahara_dunes,
     silverstone_rx, talladega_superspeedway, watkins_glen_nascar, yas_marina_rx, RaceDirection, TrackShape,
 };
@@ -528,6 +528,11 @@ mod tests {
 
         let kart = kart_arena();
         assert_eq!(kart.name, "Kart Arena");
+
+        let rx = classic_rallycross();
+        assert_eq!(rx.name, "Classic Rallycross");
+        assert!(rx.spline.total_length() >= 950.0 && rx.spline.total_length() <= 1100.0, "Classic Rallycross must be ~1km (got {})", rx.spline.total_length());
+        assert_eq!(rx.predefined_car.as_deref(), Some("classic_rally"));
     }
 
     #[test]
@@ -539,7 +544,7 @@ mod tests {
             kart_arena(),
             ramp_raceway(),
             oasis_rally(),
-            outlaw_pass(),
+            classic_rallycross(),
             dirt_figure_eight(),
             holjes_rx(),
             lydden_hill(),
@@ -583,12 +588,12 @@ mod tests {
         assert_eq!(surf_far, SurfaceType::Grass);
 
         // Sample inside sand trap
-        let surf_sand = track.sample_surface(Vec2::new(220.0, 330.0));
+        let surf_sand = track.sample_surface(Vec2::new(180.0, 235.0));
         assert_eq!(surf_sand, SurfaceType::Sand);
 
-        // Regression: sand trap AABB overlaps the hairpin ribbon (centerline y=310,
-        // half-width 6, zone starts at y=315). On-track points must stay Asphalt.
-        let surf_overlap = track.sample_surface(Vec2::new(200.0, 313.0));
+        // Regression: sand trap AABB overlaps the hairpin ribbon (centerline y=210,
+        // half-width 6, zone starts at y=215). On-track points must stay Asphalt.
+        let surf_overlap = track.sample_surface(Vec2::new(180.0, 213.0));
         assert_eq!(surf_overlap, SurfaceType::Asphalt);
 
         // Test sample_car_surfaces
