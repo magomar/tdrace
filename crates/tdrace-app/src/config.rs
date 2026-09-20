@@ -208,8 +208,8 @@ pub struct DisplayConfig {
 impl Default for DisplayConfig {
     fn default() -> Self {
         Self {
-            window_width: 1280,
-            window_height: 720,
+            window_width: 1920,
+            window_height: 1080,
             fullscreen: false,
             ui_scale: "auto".to_string(),
             scanline_mode: "disabled".to_string(),

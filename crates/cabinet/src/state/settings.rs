@@ -411,7 +411,11 @@ impl ArcadeSettingsModal {
             steer_sensitivity_slider: SliderWidget::new("STEER SENSITIVITY", 0.50, 2.00, 0.05, gamepad.steer_scale),
             steer_exponent_slider: SliderWidget::new("STEER EXPONENT", 1.00, 1.50, 0.05, gamepad.steer_exponent),
 
-            resolution_dropdown: DropdownWidget::new("SCREEN RESOLUTION", resolution_options, 0),
+            resolution_dropdown: DropdownWidget::new(
+                "SCREEN RESOLUTION",
+                resolution_options,
+                DisplayResolution::DEFAULT_PRESET_INDEX,
+            ),
             display_mode_dropdown: DropdownWidget::new("DISPLAY MODE", display_mode_options, 0),
             ui_scale_dropdown: DropdownWidget::new("UI SCALING", scale_options, 0),
             scanlines_dropdown: DropdownWidget::new("CRT FILTER", scanline_options, 0),
@@ -452,7 +456,7 @@ impl ArcadeSettingsModal {
         self.steer_sensitivity_slider.set_value(def_gp.steer_scale);
         self.steer_exponent_slider.set_value(def_gp.steer_exponent);
 
-        self.resolution_dropdown.set_selected(0);
+        self.resolution_dropdown.set_selected(DisplayResolution::DEFAULT_PRESET_INDEX);
         self.display_mode_dropdown.set_selected(0);
         self.ui_scale_dropdown.set_selected(0);
         self.scanlines_dropdown.set_selected(0);
@@ -476,7 +480,8 @@ impl ArcadeSettingsModal {
         if let Some(res) = presets.get(self.resolution_dropdown.selected_index) {
             (res.width, res.height)
         } else {
-            (1280, 720)
+            let def = DisplayResolution::default();
+            (def.width, def.height)
         }
     }
 
@@ -519,7 +524,13 @@ impl ArcadeSettingsModal {
 
     /// Applies configured CRT scanline mode to an external `CrtOverlay`.
     pub fn apply_to_crt(&self, crt: &mut crate::fx::CrtOverlay) {
-        crt.config.mode = self.scanline_mode();
+        let mode = self.scanline_mode();
+        crt.config.mode = mode;
+        if mode == crate::fx::ScanlineMode::Disabled {
+            crt.config.vignette_intensity = 0.0;
+        } else if crt.config.vignette_intensity <= 0.0 {
+            crt.config.vignette_intensity = 0.25;
+        }
     }
 
     /// Returns true if vehicle ground shadows are enabled.

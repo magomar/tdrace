@@ -51,12 +51,12 @@ fn get_frame_time_safe() -> f32 {
 
 #[inline]
 fn screen_width_safe() -> f32 {
-    std::panic::catch_unwind(screen_width).unwrap_or(1280.0)
+    std::panic::catch_unwind(screen_width).unwrap_or(1920.0)
 }
 
 #[inline]
 fn screen_height_safe() -> f32 {
-    std::panic::catch_unwind(screen_height).unwrap_or(720.0)
+    std::panic::catch_unwind(screen_height).unwrap_or(1080.0)
 }
 use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
 use tdrace_core::collision::wall::resolve_all_wall_collisions;

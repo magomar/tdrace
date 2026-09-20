@@ -91,11 +91,13 @@ impl DisplayResolution {
         }
         best_idx
     }
+
+    pub const DEFAULT_PRESET_INDEX: usize = 2;
 }
 
 impl Default for DisplayResolution {
     fn default() -> Self {
-        Self::HD_720P
+        Self::FHD_1080P
     }
 }
 

@@ -529,6 +529,7 @@ fn test_crt_scanlines_and_settings_integration() {
 
     let mut crt = CrtOverlay::default();
     assert_eq!(crt.config.mode, ScanlineMode::Disabled);
+    assert!(!crt.is_active());
 
     // Scanlines dropdown selection: 2 is Arcade CRT
     modal.scanlines_dropdown.set_selected(2);
@@ -538,6 +539,16 @@ fn test_crt_scanlines_and_settings_integration() {
     assert_eq!(crt.config.mode, ScanlineMode::ArcadeCrt);
     assert!(crt.is_active());
     assert!((crt.effective_opacity() - ScanlineMode::ArcadeCrt.opacity()).abs() < 1e-4);
+
+    // Re-disabling turns off active state and vignette
+    modal.scanlines_dropdown.set_selected(0);
+    modal.apply_to_crt(&mut crt);
+    assert_eq!(crt.config.mode, ScanlineMode::Disabled);
+    assert!(!crt.is_active());
+
+    // Restore mode 2 for remaining checks
+    modal.scanlines_dropdown.set_selected(2);
+    modal.apply_to_crt(&mut crt);
 
     // Check custom configuration and roll animation
     crt.config.roll_speed = 50.0;
@@ -700,7 +711,8 @@ fn test_arcade_settings_modal_display_tab_integration() {
     assert_eq!(modal.nav.column_lengths[2], 7); // 6 widgets + 1 bottom button row
 
     // Verify initial values
-    assert_eq!(modal.selected_resolution(), (1280, 720));
+    assert_eq!(modal.selected_resolution(), (1920, 1080));
+    assert_eq!(modal.resolution_dropdown.selected_index, 2);
     assert!(!modal.is_fullscreen());
     assert!(modal.vehicle_shadows());
 
@@ -710,9 +722,9 @@ fn test_arcade_settings_modal_display_tab_integration() {
     assert_eq!(modal.vehicle_shadows_dropdown.selected_index, 1);
 
     // Set display state
-    modal.set_display_state(1920, 1080, true);
-    assert_eq!(modal.resolution_dropdown.selected_index, 2); // 1080p
-    assert_eq!(modal.selected_resolution(), (1920, 1080));
+    modal.set_display_state(1280, 720, true);
+    assert_eq!(modal.resolution_dropdown.selected_index, 0); // 720p
+    assert_eq!(modal.selected_resolution(), (1280, 720));
     assert!(modal.is_fullscreen());
 
     // Test apply_display_settings (should not panic in test environment due to catch_unwind)
@@ -720,7 +732,8 @@ fn test_arcade_settings_modal_display_tab_integration() {
 
     // Test restore defaults
     modal.restore_defaults();
-    assert_eq!(modal.selected_resolution(), (1280, 720));
+    assert_eq!(modal.selected_resolution(), (1920, 1080));
+    assert_eq!(modal.resolution_dropdown.selected_index, 2);
     assert!(!modal.is_fullscreen());
     assert_eq!(modal.ui_scale_dropdown.selected_index, 0);
     assert_eq!(modal.scanlines_dropdown.selected_index, 0);

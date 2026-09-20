@@ -88,7 +88,7 @@ impl Default for CrtConfig {
             custom_opacity: None,
             line_spacing: 3.0,
             line_thickness: 1.0,
-            vignette_intensity: 0.25,
+            vignette_intensity: 0.0,
             vignette_steps: 5,
             phosphor_tint: None,
             roll_speed: 0.0,
@@ -125,6 +125,9 @@ impl CrtOverlay {
     pub fn with_mode(mode: ScanlineMode) -> Self {
         let mut config = CrtConfig::default();
         config.mode = mode;
+        if mode != ScanlineMode::Disabled {
+            config.vignette_intensity = 0.25;
+        }
         Self::new(config)
     }
 
@@ -242,11 +245,12 @@ mod tests {
     #[test]
     fn test_crt_overlay_defaults_and_activation() {
         let mut overlay = CrtOverlay::default();
-        // Default has vignette 0.25 so it is active
-        assert!(overlay.is_active());
-
-        overlay.config.vignette_intensity = 0.0;
+        // By default CRT filter is disabled and inactive (no scanlines, no vignette)
+        assert_eq!(overlay.config.mode, ScanlineMode::Disabled);
         assert!(!overlay.is_active());
+
+        overlay.config.vignette_intensity = 0.25;
+        assert!(overlay.is_active());
 
         overlay.config.mode = ScanlineMode::ArcadeCrt;
         assert!(overlay.is_active());

@@ -380,21 +380,23 @@ default_laps = 20
 #[test]
 fn test_display_resolution_and_window_config_roundtrip() {
     let mut config = GameConfig::default();
-    assert_eq!(config.display.window_width, 1280);
-    assert_eq!(config.display.window_height, 720);
+    assert_eq!(config.display.window_width, 1920);
+    assert_eq!(config.display.window_height, 1080);
     assert!(!config.display.fullscreen);
     assert_eq!(config.display.ui_scale, "auto");
+    assert_eq!(config.display.scanline_mode, "disabled");
+    assert!((config.display.vignette_intensity - 0.0).abs() < 1e-4);
 
-    config.display.window_width = 1920;
-    config.display.window_height = 1080;
+    config.display.window_width = 2560;
+    config.display.window_height = 1440;
     config.display.fullscreen = true;
     config.display.ui_scale = "standard".to_string();
 
     let toml_str = toml::to_string(&config).expect("Serialize toml failed");
     let deserialized: GameConfig = toml::from_str(&toml_str).expect("Deserialize toml failed");
 
-    assert_eq!(deserialized.display.window_width, 1920);
-    assert_eq!(deserialized.display.window_height, 1080);
+    assert_eq!(deserialized.display.window_width, 2560);
+    assert_eq!(deserialized.display.window_height, 1440);
     assert!(deserialized.display.fullscreen);
     assert_eq!(deserialized.display.ui_scale, "standard");
 
@@ -404,8 +406,8 @@ fn test_display_resolution_and_window_config_roundtrip() {
 default_track = "oval_speedway"
 "#;
     let legacy_config: GameConfig = toml::from_str(legacy_toml).expect("Legacy toml should parse");
-    assert_eq!(legacy_config.display.window_width, 1280);
-    assert_eq!(legacy_config.display.window_height, 720);
+    assert_eq!(legacy_config.display.window_width, 1920);
+    assert_eq!(legacy_config.display.window_height, 1080);
     assert!(!legacy_config.display.fullscreen);
 }
 
