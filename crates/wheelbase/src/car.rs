@@ -1283,6 +1283,156 @@ mod tests {
     }
 
     #[test]
+    fn test_reverse_simulation_extended() {
+        let mut config = CarConfig::sports_car();
+        config.max_reverse_force = 6175.0; // GT3 evo reverse power
+        config.mass = 1260.0;
+        config.tire.stiffness_b = 13.0;
+        config.tire.peak_d = 1.20;
+        let dt = 1.0 / 60.0;
+        let mut car = Car::new(config);
+        let mut ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl.reverse = true;
+
+        println!("\n=== SIMULATION: Neutral Steer in Reverse for 300 frames (5s) ===");
+        for frame in 0..300 {
+            car.step(&ctrl, SurfaceType::Asphalt, dt);
+            if frame % 30 == 0 || frame == 299 {
+                println!(
+                    "frame={:3}: v_long={:6.2} v_lat={:6.3} speed={:5.2} angle={:7.4} omega={:7.4}",
+                    frame,
+                    car.state.local_velocity.x,
+                    car.state.local_velocity.y,
+                    car.state.speed,
+                    car.state.angle,
+                    car.state.angular_velocity
+                );
+            }
+        }
+
+        println!("\n=== SIMULATION: Disturbed Steer / Turn in Reverse ===");
+        let mut car_turn = Car::new(config);
+        // Start reverse with a tiny initial yaw rate 0.01 rad/s
+        car_turn.state.angular_velocity = 0.01;
+        for frame in 0..300 {
+            car_turn.step(&ctrl, SurfaceType::Asphalt, dt);
+            if frame % 30 == 0 || frame == 299 {
+                println!(
+                    "frame={:3}: v_long={:6.2} v_lat={:6.3} speed={:5.2} angle={:7.4} omega={:7.4}",
+                    frame,
+                    car_turn.state.local_velocity.x,
+                    car_turn.state.local_velocity.y,
+                    car_turn.state.speed,
+                    car_turn.state.angle,
+                    car_turn.state.angular_velocity
+                );
+            }
+        }
+
+        println!("\n=== SIMULATION: Reversing then steering right then trying to steer left ===");
+        let mut car_steer = Car::new(config);
+        let mut ctrl_r = CarControls::new(1.0, 0.5, 0.0, false);
+        ctrl_r.reverse = true;
+        // Turn right for 60 frames (1 sec)
+        for _frame in 0..60 {
+            car_steer.step(&ctrl_r, SurfaceType::Asphalt, dt);
+        }
+        println!(
+            "After 1s right steer: v_long={:6.2} angle={:7.4} omega={:7.4}",
+            car_steer.state.local_velocity.x,
+            car_steer.state.angle,
+            car_steer.state.angular_velocity
+        );
+
+        // Now steer left (-0.5) for 120 frames (2 sec) to turn the other way
+        let mut ctrl_l = CarControls::new(1.0, -0.5, 0.0, false);
+        ctrl_l.reverse = true;
+        for frame in 0..120 {
+            car_steer.step(&ctrl_l, SurfaceType::Asphalt, dt);
+            if frame % 20 == 0 || frame == 119 {
+                println!(
+                    "steer left frame={:3}: v_long={:6.2} v_lat={:6.3} angle={:7.4} omega={:7.4}",
+                    frame,
+                    car_steer.state.local_velocity.x,
+                    car_steer.state.local_velocity.y,
+                    car_steer.state.angle,
+                    car_steer.state.angular_velocity
+                );
+            }
+        }
+
+        println!("\n=== SIMULATION: Forward driving, brake to 0, then reverse with steer=0 ===");
+        let mut car_fwd_rev = Car::new(config);
+        // Drive forward for 2 seconds
+        let ctrl_accel = CarControls::accelerate();
+        for _ in 0..120 {
+            car_fwd_rev.step(&ctrl_accel, SurfaceType::Asphalt, dt);
+        }
+        println!("After 2s accel: speed={:.2}, v_long={:.2}", car_fwd_rev.state.speed, car_fwd_rev.state.local_velocity.x);
+        // Brake to full stop
+        let ctrl_brake = CarControls::full_brake();
+        let mut brake_frames = 0;
+        while car_fwd_rev.state.local_velocity.x > 0.05 && brake_frames < 300 {
+            car_fwd_rev.step(&ctrl_brake, SurfaceType::Asphalt, dt);
+            brake_frames += 1;
+        }
+        println!("Stopped after {} brake frames: speed={:.3}, v_long={:.3}", brake_frames, car_fwd_rev.state.speed, car_fwd_rev.state.local_velocity.x);
+
+        // Now reverse for 300 frames with steer=0
+        let mut ctrl_rev = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl_rev.reverse = true;
+        for frame in 0..300 {
+            car_fwd_rev.step(&ctrl_rev, SurfaceType::Asphalt, dt);
+            if frame % 30 == 0 || frame == 299 {
+                println!(
+                    "post-stop rev frame={:3}: v_long={:6.2} v_lat={:6.3} angle={:7.4} omega={:7.4}",
+                    frame,
+                    car_fwd_rev.state.local_velocity.x,
+                    car_fwd_rev.state.local_velocity.y,
+                    car_fwd_rev.state.angle,
+                    car_fwd_rev.state.angular_velocity
+                );
+            }
+        }
+
+        println!("\n=== SIMULATION: Reversing while turning for 180 frames then reverse steering ===");
+        let mut car_turn_swap = Car::new(config);
+        let mut ctrl_turn1 = CarControls::new(1.0, 0.25, 0.0, false);
+        ctrl_turn1.reverse = true;
+        for frame in 0..180 {
+            car_turn_swap.step(&ctrl_turn1, SurfaceType::Asphalt, dt);
+            if frame % 60 == 0 || frame == 179 {
+                println!(
+                    "turn1 frame={:3}: v_long={:6.2} v_lat={:6.3} angle={:7.4} omega={:7.4}",
+                    frame,
+                    car_turn_swap.state.local_velocity.x,
+                    car_turn_swap.state.local_velocity.y,
+                    car_turn_swap.state.angle,
+                    car_turn_swap.state.angular_velocity
+                );
+            }
+        }
+
+        // Now player steers the OTHER direction (-0.25)
+        println!("--- Now steering opposite (-0.25) ---");
+        let mut ctrl_turn2 = CarControls::new(1.0, -0.25, 0.0, false);
+        ctrl_turn2.reverse = true;
+        for frame in 0..180 {
+            car_turn_swap.step(&ctrl_turn2, SurfaceType::Asphalt, dt);
+            if frame % 30 == 0 || frame == 179 {
+                println!(
+                    "opposite frame={:3}: v_long={:6.2} v_lat={:6.3} angle={:7.4} omega={:7.4}",
+                    frame,
+                    car_turn_swap.state.local_velocity.x,
+                    car_turn_swap.state.local_velocity.y,
+                    car_turn_swap.state.angle,
+                    car_turn_swap.state.angular_velocity
+                );
+            }
+        }
+    }
+
+    #[test]
     fn test_reverse_drive_bias_distribution() {
         let sports = Car::new(CarConfig::sports_car()); // RWD: drive_bias = 0.0
         let rally = Car::new(CarConfig::rally_car());   // AWD: drive_bias = 0.5
