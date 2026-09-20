@@ -40,3 +40,7 @@ crates/tdrace-app/tracks/
 node_modules/
 .astro/
 dist/
+
+# Git Worktrees
+.worktrees/
+
