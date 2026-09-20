@@ -15,13 +15,16 @@ pub use matrix::{ExperimentDataset, VehicleBenchmarkResult};
 pub use protocols::{
     run_braking_cadence, run_braking_in_turn, run_braking_split_mu, run_braking_straight_line,
     run_braking_surface_battery, run_protocol_a, run_protocol_b, run_protocol_c, run_protocol_d,
-    run_protocol_e, BrakingCadenceResult, BrakingCorneringResult, BrakingSplitMuResult,
+    run_protocol_e, run_reverse_simulation_battery, run_reverse_step_steer,
+    run_reverse_straight_line, BrakingCadenceResult, BrakingCorneringResult, BrakingSplitMuResult,
     BrakingStabilityRating, BrakingStraightLineResult, BrakingSurfaceExperimentResult,
     CorneringBrakingBehavior, ProtocolAResult, ProtocolBResult, ProtocolCResult, ProtocolDResult,
-    ProtocolEResult, SkidpadDepartureMode, SplitMuStatus, StepSteerStatus,
+    ProtocolEResult, ReverseExperimentResult, ReverseStepSteerResult, ReverseSteerStatus,
+    ReverseStraightLineResult, SkidpadDepartureMode, SplitMuStatus, StepSteerStatus,
 };
 pub use report::{
     generate_braking_simulation_markdown_report, generate_html_report, generate_markdown_report,
+    generate_reverse_simulation_markdown_report,
 };
 pub use telemetry::TelemetryPoint;
 
@@ -105,5 +108,62 @@ mod tests {
         let config = CarConfig::sports_car();
         let res = run_braking_cadence(&config, SurfaceType::Asphalt, 120.0, DEFAULT_SIMULATION_DT);
         assert!(res.total_pulse_cycles >= 2);
+    }
+
+    #[test]
+    fn test_reverse_straight_line_simulation() {
+        let config = CarConfig::sports_car();
+        let res = run_reverse_straight_line(&config, SurfaceType::Asphalt, 3.0, DEFAULT_SIMULATION_DT);
+        assert!(res.stable, "Reverse straight line tracking must be stable");
+        assert!(res.heading_deviation_deg < 0.05, "Heading deviation must be near zero, got {:.4}", res.heading_deviation_deg);
+        assert!(res.lateral_drift_m < 0.05, "Lateral drift must be near zero, got {:.4}", res.lateral_drift_m);
+        assert!(res.max_yaw_rate_deg_s < 0.1, "Max yaw rate in neutral reverse must be tiny, got {:.4}", res.max_yaw_rate_deg_s);
+        assert!(res.distance_traveled_m > 5.0, "Car must travel distance in reverse");
+    }
+
+    #[test]
+    fn test_reverse_step_steer_simulation() {
+        let config = CarConfig::sports_car();
+        let res = run_reverse_step_steer(&config, SurfaceType::Asphalt, DEFAULT_SIMULATION_DT);
+        assert_eq!(res.status, ReverseSteerStatus::Stable);
+        assert!(res.peak_right_yaw_rate_deg_s > 10.0, "Right steer in reverse must generate yaw");
+        assert!(res.peak_left_yaw_rate_deg_s > 10.0, "Left steer in reverse must generate yaw");
+        assert!(res.yaw_asymmetry_pct < 2.0, "Left/Right steering in reverse must be symmetrical, got {:.2}%", res.yaw_asymmetry_pct);
+        assert!(res.reversal_latency_ms < 350.0, "Steering reversal latency must be under 350ms, got {:.1}ms", res.reversal_latency_ms);
+        assert!(res.post_release_residual_yaw_deg_s < 1.0, "Post-release residual yaw must decay to zero, got {:.2}°/s", res.post_release_residual_yaw_deg_s);
+    }
+
+    #[test]
+    fn test_reverse_simulation_battery_fleet() {
+        let fleet = [
+            ("sports_car", "Sports Car", "Sports", CarConfig::sports_car()),
+            ("drift_car", "Drift Machine", "Drift", CarConfig::drift_car()),
+            ("kart", "Sprint Kart", "Kart", CarConfig::kart()),
+            ("rally_car", "Rally Supercar", "Rally", CarConfig::rally_car()),
+            ("stock_car", "Cup Stock Car", "Stock", CarConfig::stock_car_ta1()),
+        ];
+
+        let fleet_refs: Vec<(&str, &str, &str, &CarConfig)> = fleet
+            .iter()
+            .map(|(id, name, cat, cfg)| (*id, *name, *cat, cfg))
+            .collect();
+
+        let results = run_reverse_simulation_battery(&fleet_refs, SurfaceType::Asphalt, DEFAULT_SIMULATION_DT);
+        assert_eq!(results.len(), 5);
+
+        for r in &results {
+            assert!(r.straight_line.stable, "Vehicle {} failed straight line stability", r.vehicle_id);
+            assert_eq!(r.step_steer.status, ReverseSteerStatus::Stable, "Vehicle {} failed step steer stability", r.vehicle_id);
+            assert!(r.step_steer.yaw_asymmetry_pct < 2.0, "Vehicle {} had excessive steering asymmetry", r.vehicle_id);
+            assert!(r.step_steer.post_release_residual_yaw_deg_s < 2.0, "Vehicle {} failed residual yaw damping", r.vehicle_id);
+        }
+
+        let report = generate_reverse_simulation_markdown_report(&results);
+        println!("\n{}\n", report);
+        assert!(report.contains("Reverse Movement & Directional Steering Benchmark"));
+        assert!(report.contains("Sports Car"));
+        assert!(report.contains("Drift Machine"));
+        assert!(report.contains("✅ Pass"));
+        assert!(report.contains("✅ Stable"));
     }
 }

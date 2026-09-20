@@ -521,7 +521,10 @@ impl InputMap {
         Self { bindings }
     }
 
-    /// Standard racing layout supporting Q/A/O/P, Arrow keys, WASD, and gamepad triggers/sticks.
+    /// Standard racing layout supporting Q/A/O/P, Arrow keys, and gamepad triggers/sticks.
+    ///
+    /// Note: WASD keys are excluded from this hybrid map because 'A' conflicts between
+    /// QAOP Down/Brake and WASD Steer Left. Players preferring WASD can select [InputMap::wasd_racing].
     pub fn default_racing() -> Self {
         let mut bindings = HashMap::new();
 
@@ -530,7 +533,6 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::Q),
                 InputSource::Key(ArcadeKey::Up),
-                InputSource::Key(ArcadeKey::W),
                 InputSource::GamepadAxisPos(GamepadAxis::Throttle),
                 InputSource::GamepadBtn(GamepadButton::DpadUp),
             ],
@@ -540,7 +542,6 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::A),
                 InputSource::Key(ArcadeKey::Down),
-                InputSource::Key(ArcadeKey::S),
                 InputSource::GamepadAxisPos(GamepadAxis::Brake),
                 InputSource::GamepadBtn(GamepadButton::DpadDown),
             ],
@@ -550,7 +551,6 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::O),
                 InputSource::Key(ArcadeKey::Left),
-                InputSource::Key(ArcadeKey::A),
                 InputSource::GamepadAxisNeg(GamepadAxis::LeftStickX),
                 InputSource::GamepadBtn(GamepadButton::DpadLeft),
             ],
@@ -560,7 +560,6 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::P),
                 InputSource::Key(ArcadeKey::Right),
-                InputSource::Key(ArcadeKey::D),
                 InputSource::GamepadAxisPos(GamepadAxis::LeftStickX),
                 InputSource::GamepadBtn(GamepadButton::DpadRight),
             ],
@@ -1043,5 +1042,36 @@ mod tests {
         let json = racing.to_json().expect("Serialize racing map");
         let decoded = InputMap::from_json(&json).expect("Deserialize racing map");
         assert_eq!(racing, decoded);
+    }
+
+    #[test]
+    fn test_racing_presets_no_steering_overlap_with_down() {
+        let presets = [
+            ("default_racing", InputMap::default_racing()),
+            ("wasd_racing", InputMap::wasd_racing()),
+            ("arrows_racing", InputMap::arrows_racing()),
+            ("classic_racing", InputMap::classic_racing()),
+        ];
+
+        for (name, map) in presets {
+            let down_sources = map.get_bindings(ArcadeAction::Down);
+            let left_sources = map.get_bindings(ArcadeAction::Left);
+            let right_sources = map.get_bindings(ArcadeAction::Right);
+
+            for src in down_sources {
+                assert!(
+                    !left_sources.contains(src),
+                    "Preset {} has source {:?} bound to both Down and Left",
+                    name,
+                    src
+                );
+                assert!(
+                    !right_sources.contains(src),
+                    "Preset {} has source {:?} bound to both Down and Right",
+                    name,
+                    src
+                );
+            }
+        }
     }
 }

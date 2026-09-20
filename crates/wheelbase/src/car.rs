@@ -949,8 +949,7 @@ impl Car {
 
         if self.config.assists.esc_enabled
             && self.state.speed > 2.5
-            && v_long > 0.5
-            && !clamped_ctrl.reverse
+            && v_long.abs() > 0.5
             && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake)
         {
             let wheelbase = self.config.wheelbase;

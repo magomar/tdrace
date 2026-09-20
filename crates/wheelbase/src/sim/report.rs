@@ -3,7 +3,8 @@ use std::fmt::Write;
 use crate::surface::SurfaceType;
 use super::matrix::ExperimentDataset;
 use super::protocols::{
-    BrakingStabilityRating, BrakingSurfaceExperimentResult, CorneringBrakingBehavior, SplitMuStatus,
+    BrakingStabilityRating, BrakingSurfaceExperimentResult, CorneringBrakingBehavior,
+    ReverseExperimentResult, ReverseSteerStatus, SplitMuStatus,
 };
 
 /// Generates a comprehensive markdown report summarizing the multi-vehicle, multi-surface experiment.
@@ -1481,6 +1482,75 @@ pub fn generate_braking_simulation_markdown_report(
     writeln!(out, "- **Dynamic EBD Balance**: The rear axle consistently avoids lockup, eliminating sudden uncommanded snap oversteer during straight-line deceleration.").unwrap();
     writeln!(out, "- **Cornering Brake Control (CBC)**: Inside rear brake pressure modulation prevents yaw spinouts during trail-braking corner entries.").unwrap();
     writeln!(out, "- **Engine Drag Reduction (EDR)**: During cadence cycling, off-throttle engine drag is attenuated on slide recovery, yielding immediate wheel spin-up ($< 25\\,\\text{{ms}}$) upon pedal release.").unwrap();
+    writeln!(out).unwrap();
+
+    out
+}
+
+/// Generates a markdown report summarizing the reverse simulation benchmark across vehicles.
+pub fn generate_reverse_simulation_markdown_report(results: &[ReverseExperimentResult]) -> String {
+    let mut out = String::new();
+    writeln!(out, "---").unwrap();
+    writeln!(out, "type: Technical Report").unwrap();
+    writeln!(out, "title: \"Empirical Benchmark: Reverse Movement & Directional Steering Dynamics\"").unwrap();
+    writeln!(out, "status: active").unwrap();
+    writeln!(out, "category: physics-verification").unwrap();
+    writeln!(out, "---").unwrap();
+    writeln!(out).unwrap();
+    writeln!(out, "# 🔄 Reverse Movement & Directional Steering Benchmark").unwrap();
+    writeln!(out).unwrap();
+    writeln!(out, "This benchmark evaluates straight-line reverse tracking, bidirectional steering symmetry, transition latency, and post-release yaw stabilization.").unwrap();
+    writeln!(out).unwrap();
+
+    writeln!(out, "## 1. Straight-Line Reverse Tracking (Neutral Steer, 3.0s)").unwrap();
+    writeln!(out).unwrap();
+    writeln!(out, "| Vehicle | Category | Surface | Speed (km/h) | Distance (m) | Heading Dev (°) | Lateral Drift (m) | Max Yaw (°/s) | Stable |").unwrap();
+    writeln!(out, "|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|").unwrap();
+    for r in results {
+        let sl = &r.straight_line;
+        writeln!(
+            out,
+            "| **{}** | {} | {} | {:.1} | {:.2} | {:.4}° | {:.4}m | {:.4}°/s | {} |",
+            r.vehicle_name,
+            r.category,
+            sl.surface.name(),
+            sl.terminal_speed_kmh,
+            sl.distance_traveled_m,
+            sl.heading_deviation_deg,
+            sl.lateral_drift_m,
+            sl.max_yaw_rate_deg_s,
+            if sl.stable { "✅ Pass" } else { "❌ Fail" }
+        )
+        .unwrap();
+    }
+    writeln!(out).unwrap();
+
+    writeln!(out, "## 2. Bidirectional Reverse Step-Steer Dynamics").unwrap();
+    writeln!(out).unwrap();
+    writeln!(out, "| Vehicle | Category | Surface | Peak Right (°/s) | Peak Left (°/s) | Asymmetry (%) | Latency (ms) | Residual Yaw (°/s) | Status |").unwrap();
+    writeln!(out, "|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|").unwrap();
+    for r in results {
+        let ss = &r.step_steer;
+        let status_str = match ss.status {
+            ReverseSteerStatus::Stable => "✅ Stable",
+            ReverseSteerStatus::OversteerSpin => "⚠️ Spinout",
+            ReverseSteerStatus::UndersteerPlow => "⚠️ Plow",
+        };
+        writeln!(
+            out,
+            "| **{}** | {} | {} | {:.1}°/s | {:.1}°/s | {:.2}% | {:.1}ms | {:.2}°/s | {} |",
+            r.vehicle_name,
+            r.category,
+            ss.surface.name(),
+            ss.peak_right_yaw_rate_deg_s,
+            ss.peak_left_yaw_rate_deg_s,
+            ss.yaw_asymmetry_pct,
+            ss.reversal_latency_ms,
+            ss.post_release_residual_yaw_deg_s,
+            status_str
+        )
+        .unwrap();
+    }
     writeln!(out).unwrap();
 
     out

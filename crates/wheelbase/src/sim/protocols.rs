@@ -996,3 +996,224 @@ pub fn run_braking_surface_battery(
         cadence_pumping: cadence,
     }
 }
+
+// ============================================================================
+// Reverse Simulation Battery: Straight-Line & Dynamic Step-Steer
+// ============================================================================
+
+/// Reverse steering stability rating.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ReverseSteerStatus {
+    Stable,
+    OversteerSpin,
+    UndersteerPlow,
+}
+
+/// Output metrics from Reverse Straight-Line Stability Simulation.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ReverseStraightLineResult {
+    pub surface: SurfaceType,
+    pub duration_s: f32,
+    pub terminal_speed_kmh: f32,
+    pub distance_traveled_m: f32,
+    pub heading_deviation_deg: f32,
+    pub lateral_drift_m: f32,
+    pub max_yaw_rate_deg_s: f32,
+    pub stable: bool,
+}
+
+/// Output metrics from Reverse Step-Steer Bidirectional Dynamic Test.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ReverseStepSteerResult {
+    pub surface: SurfaceType,
+    pub peak_right_yaw_rate_deg_s: f32,
+    pub peak_left_yaw_rate_deg_s: f32,
+    pub yaw_asymmetry_pct: f32,
+    pub reversal_latency_ms: f32,
+    pub post_release_residual_yaw_deg_s: f32,
+    pub status: ReverseSteerStatus,
+}
+
+/// Aggregated reverse simulation benchmark result for a vehicle.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ReverseExperimentResult {
+    pub vehicle_id: String,
+    pub vehicle_name: String,
+    pub category: String,
+    pub straight_line: ReverseStraightLineResult,
+    pub step_steer: ReverseStepSteerResult,
+}
+
+/// Runs straight-line reverse acceleration from rest to verify neutral heading stability.
+pub fn run_reverse_straight_line(
+    config: &CarConfig,
+    surface: SurfaceType,
+    duration_s: f32,
+    dt: f32,
+) -> ReverseStraightLineResult {
+    let mut runner = SimulationRunner::new(config.clone(), dt);
+    let mut max_yaw_rate = 0.0f32;
+
+    runner.run_for(duration_s, surface, |_t, _car| {
+        let mut ctrl = CarControls::accelerate();
+        ctrl.reverse = true;
+        ctrl
+    });
+
+    for pt in &runner.telemetry {
+        let yaw = pt.yaw_rate_rad_s.to_degrees().abs();
+        if yaw > max_yaw_rate {
+            max_yaw_rate = yaw;
+        }
+    }
+
+    let final_state = runner.car.state();
+    let terminal_speed_kmh = final_state.speed * 3.6;
+    let distance_traveled_m = final_state.position.length();
+    let heading_deviation_deg = normalize_angle(final_state.angle).to_degrees().abs();
+    let lateral_drift_m = final_state.position.y.abs();
+    let stable = heading_deviation_deg < 0.1 && lateral_drift_m < 0.05 && max_yaw_rate < 0.5;
+
+    ReverseStraightLineResult {
+        surface,
+        duration_s,
+        terminal_speed_kmh,
+        distance_traveled_m,
+        heading_deviation_deg,
+        lateral_drift_m,
+        max_yaw_rate_deg_s: max_yaw_rate,
+        stable,
+    }
+}
+
+/// Runs bidirectional reverse step-steer test:
+/// - Evaluates peak right vs peak left steering from identical conditions to test symmetry.
+/// - Evaluates dynamic steering reversal latency (switching right -> left) and post-release yaw decay.
+pub fn run_reverse_step_steer(
+    config: &CarConfig,
+    surface: SurfaceType,
+    dt: f32,
+) -> ReverseStepSteerResult {
+    // 1. Right turn isolated peak
+    let mut runner_r = SimulationRunner::new(config.clone(), dt);
+    let mut peak_right_yaw_deg_s = 0.0f32;
+    runner_r.run_for(1.5, surface, |_t, car| {
+        let yaw = car.state().angular_velocity.to_degrees().abs();
+        if yaw > peak_right_yaw_deg_s {
+            peak_right_yaw_deg_s = yaw;
+        }
+        let mut ctrl = CarControls::accelerate();
+        ctrl.reverse = true;
+        ctrl.steer = 0.5;
+        ctrl
+    });
+
+    // 2. Left turn isolated peak
+    let mut runner_l = SimulationRunner::new(config.clone(), dt);
+    let mut peak_left_yaw_deg_s = 0.0f32;
+    runner_l.run_for(1.5, surface, |_t, car| {
+        let yaw = car.state().angular_velocity.to_degrees().abs();
+        if yaw > peak_left_yaw_deg_s {
+            peak_left_yaw_deg_s = yaw;
+        }
+        let mut ctrl = CarControls::accelerate();
+        ctrl.reverse = true;
+        ctrl.steer = -0.5;
+        ctrl
+    });
+
+    let max_peak = peak_right_yaw_deg_s.max(peak_left_yaw_deg_s);
+    let yaw_asymmetry_pct = if max_peak > 1e-3 {
+        ((peak_right_yaw_deg_s - peak_left_yaw_deg_s).abs() / max_peak) * 100.0
+    } else {
+        0.0
+    };
+
+    // 3. Dynamic reversal & stabilization test:
+    // Phase A (0.0..1.5s): Steer Right (+0.5)
+    // Phase B (1.5..3.0s): Reverse steer to Left (-0.5)
+    // Phase C (3.0..4.5s): Release steer to Center (0.0)
+    let mut runner_rev = SimulationRunner::new(config.clone(), dt);
+    let mut zero_cross_time = None;
+    let mut max_sideslip_deg = 0.0f32;
+    let mut initial_yaw_sign = 0.0f32;
+
+    runner_rev.run_for(4.5, surface, |t, car| {
+        let yaw_deg_s = car.state().angular_velocity.to_degrees();
+        let sideslip_deg = car.state().sideslip_angle.to_degrees().abs();
+        if sideslip_deg > max_sideslip_deg {
+            max_sideslip_deg = sideslip_deg;
+        }
+
+        let mut ctrl = CarControls::accelerate();
+        ctrl.reverse = true;
+
+        if t < 1.5 {
+            ctrl.steer = 0.5;
+            if yaw_deg_s.abs() > 1.0 && initial_yaw_sign == 0.0 {
+                initial_yaw_sign = yaw_deg_s.signum();
+            }
+        } else if t < 3.0 {
+            ctrl.steer = -0.5;
+            if zero_cross_time.is_none()
+                && initial_yaw_sign != 0.0
+                && yaw_deg_s.signum() != initial_yaw_sign
+                && yaw_deg_s.abs() > 0.5
+            {
+                zero_cross_time = Some(t);
+            }
+        } else {
+            ctrl.steer = 0.0;
+        }
+        ctrl
+    });
+
+    let reversal_latency_ms = if let Some(zct) = zero_cross_time {
+        ((zct - 1.5) * 1000.0).max(0.0)
+    } else {
+        1500.0
+    };
+
+    let post_release_residual_yaw_deg_s = runner_rev.car.state().angular_velocity.to_degrees().abs();
+
+    let status = if max_sideslip_deg > 45.0 || post_release_residual_yaw_deg_s > 45.0 {
+        ReverseSteerStatus::OversteerSpin
+    } else if max_peak < 5.0 {
+        ReverseSteerStatus::UndersteerPlow
+    } else {
+        ReverseSteerStatus::Stable
+    };
+
+    ReverseStepSteerResult {
+        surface,
+        peak_right_yaw_rate_deg_s: peak_right_yaw_deg_s,
+        peak_left_yaw_rate_deg_s: peak_left_yaw_deg_s,
+        yaw_asymmetry_pct,
+        reversal_latency_ms,
+        post_release_residual_yaw_deg_s,
+        status,
+    }
+}
+
+/// Executes the automated reverse simulation battery across a fleet of vehicles.
+pub fn run_reverse_simulation_battery(
+    vehicles: &[(&str, &str, &str, &CarConfig)],
+    surface: SurfaceType,
+    dt: f32,
+) -> Vec<ReverseExperimentResult> {
+    vehicles
+        .iter()
+        .map(|(id, name, cat, config)| {
+            let straight_line = run_reverse_straight_line(config, surface, 3.0, dt);
+            let step_steer = run_reverse_step_steer(config, surface, dt);
+            ReverseExperimentResult {
+                vehicle_id: (*id).to_string(),
+                vehicle_name: (*name).to_string(),
+                category: (*cat).to_string(),
+                straight_line,
+                step_steer,
+            }
+        })
+        .collect()
+}
+
