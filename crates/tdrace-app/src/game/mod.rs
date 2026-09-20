@@ -1210,7 +1210,12 @@ impl RaceSession {
             let models = crate::catalog::get_models_for_module("classic");
             self.garage_car_idx = models.iter().position(|m| m.id == target_model.id).unwrap_or(0);
         } else {
-            self.garage_car_idx = 0;
+            let tier_models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
+            if let Some(selected_id) = self.selected_car_model_id {
+                self.garage_car_idx = tier_models.iter().position(|m| m.id == selected_id).unwrap_or(0);
+            } else {
+                self.garage_car_idx = 0;
+            }
         }
         self.state = GameState::Garage(GarageOrigin::StartingGrid);
     }
@@ -1444,6 +1449,25 @@ impl RaceSession {
     /// Returns the player's effective color scheme: factory livery colors when
     /// a real car model is selected, otherwise the profile's abstract scheme.
     fn player_effective_color_scheme(&self) -> CarColorScheme {
+        if self.game_mode == GameMode::Career {
+            let model_opt = self
+                .selected_car_model_id
+                .and_then(crate::catalog::find_model_by_id)
+                .or_else(|| {
+                    if self.active_module_id == "classic" {
+                        Some(crate::catalog::get_classic_model_for_category(self.track.car_category))
+                    } else {
+                        None
+                    }
+                });
+            if let Some(model) = model_opt {
+                return CarColorScheme {
+                    primary: model.primary_color,
+                    secondary: model.secondary_color,
+                    helmet: self.active_profile.color_scheme.helmet,
+                };
+            }
+        }
         if self.active_module_id == "classic" {
             return self.active_profile.color_scheme;
         }
@@ -1458,6 +1482,66 @@ impl RaceSession {
             }
         } else {
             self.active_profile.color_scheme
+        }
+    }
+
+    /// Resolves the color scheme for a bot in Career mode.
+    /// Bots must use masked colors (must not match the vehicle model's factory livery,
+    /// triggering mask-based tinting) and must have primary colors visually distinct
+    /// from the player's factory sprite color schema.
+    pub fn resolve_bot_career_color_scheme(
+        base_scheme: CarColorScheme,
+        bot_model: Option<&crate::catalog::RealCarModel>,
+        player_model: Option<&crate::catalog::RealCarModel>,
+        bot_idx: usize,
+    ) -> CarColorScheme {
+        let player_primary = player_model
+            .map(|m| m.primary_color)
+            .unwrap_or(Palette::CAR_COLORS[0].0);
+
+        let is_conflict = |s: &CarColorScheme| {
+            let is_factory = if let Some(m) = bot_model {
+                let dr = (s.primary.r - m.primary_color.r).abs();
+                let dg = (s.primary.g - m.primary_color.g).abs();
+                let db = (s.primary.b - m.primary_color.b).abs();
+                dr < 0.05 && dg < 0.05 && db < 0.05
+            } else {
+                false
+            };
+            let dr_p = (s.primary.r - player_primary.r).abs();
+            let dg_p = (s.primary.g - player_primary.g).abs();
+            let db_p = (s.primary.b - player_primary.b).abs();
+            let dist_p = (dr_p * dr_p + dg_p * dg_p + db_p * db_p).sqrt();
+            is_factory || dist_p < 0.20
+        };
+
+        if !is_conflict(&base_scheme) {
+            return base_scheme;
+        }
+
+        // Try candidate color presets from Palette::CAR_COLORS (excluding index 0 which is player red)
+        for offset in 1..Palette::CAR_COLORS.len() {
+            let candidate_idx = (bot_idx + offset) % (Palette::CAR_COLORS.len() - 1) + 1;
+            let candidate = CarColorScheme::from_index(candidate_idx);
+            if !is_conflict(&candidate) {
+                return CarColorScheme {
+                    primary: candidate.primary,
+                    secondary: candidate.secondary,
+                    helmet: base_scheme.helmet,
+                };
+            }
+        }
+
+        let nudged_primary = Color::new(
+            (base_scheme.primary.r + 0.35) % 1.0,
+            (base_scheme.primary.g + 0.35) % 1.0,
+            (base_scheme.primary.b + 0.35) % 1.0,
+            1.0,
+        );
+        CarColorScheme {
+            primary: nudged_primary,
+            secondary: base_scheme.secondary,
+            helmet: base_scheme.helmet,
         }
     }
 
@@ -1722,17 +1806,32 @@ impl RaceSession {
                 ("bot_7", "Oscar Rocket", "McLaren GT"),
             ],
         );
+        let prev_selected = self.selected_car_model_id;
         self.switch_to_gt();
         self.game_mode = GameMode::Career;
-        let mut active_car = car_choice;
-        if let Some(model_id) = &self.selected_car_model_id {
-            if let Some(model) = crate::catalog::find_model_by_id(model_id) {
-                if model.tier == tier as u8 && self.active_career_progress.is_car_unlocked(model_id, self.is_dev_mode()) {
-                    active_car = model.base_car_choice;
-                }
-            }
+
+        let selected_model = prev_selected
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == "gt" && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("gt", tier as u8)
+                    .into_iter()
+                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            })
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("gt", tier as u8)
+                    .into_iter()
+                    .next()
+            });
+
+        if let Some(model) = selected_model {
+            self.selected_car_model_id = Some(model.id);
+            self.car_choice = model.base_car_choice;
+            self.current_visual_type = model.visual_type;
+            self.free_car_selection = true;
+        } else {
+            self.car_choice = car_choice;
         }
-        self.car_choice = active_car;
         self.championship_session = Some(champ);
         self.init_race();
     }
@@ -2137,7 +2236,14 @@ impl RaceSession {
 
             let (bot_car_choice, bot_car_title, bot_model_id, bot_scheme) = if !category_models.is_empty() {
                 let bot_model = category_models[bot_idx % category_models.len()];
-                let scheme = if effective_module == "classic" {
+                let scheme = if self.game_mode == GameMode::Career {
+                    Self::resolve_bot_career_color_scheme(
+                        character.color_scheme,
+                        Some(bot_model),
+                        player_model,
+                        bot_idx,
+                    )
+                } else if effective_module == "classic" {
                     character.color_scheme
                 } else {
                     CarColorScheme {
@@ -2163,7 +2269,17 @@ impl RaceSession {
                         }
                     }
                 };
-                (choice, choice.title().to_string(), None, character.color_scheme)
+                let scheme = if self.game_mode == GameMode::Career {
+                    Self::resolve_bot_career_color_scheme(
+                        character.color_scheme,
+                        None,
+                        player_model,
+                        bot_idx,
+                    )
+                } else {
+                    character.color_scheme
+                };
+                (choice, choice.title().to_string(), None, scheme)
             };
 
             participants.push(GridParticipant {
@@ -8581,7 +8697,7 @@ impl RaceSession {
             let car = &self.cars[i];
             let is_player = !self.is_split_screen() && i == 0 || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
-            let effective_scheme = if self.active_module_id == "classic" && is_player {
+            let effective_scheme = if (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
                 if let Some(m) = model_id.and_then(crate::catalog::find_model_by_id) {
                     CarColorScheme {
                         primary: m.primary_color,

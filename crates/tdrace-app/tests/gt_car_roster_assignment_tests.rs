@@ -1,7 +1,7 @@
 use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_app::module::{GameModule, VehicleVisualType};
-use tdrace_app::ui::menu::{CarChoice, TrackChoice};
+use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
 
 #[test]
 fn test_gt_game_module_drivers_and_preferred_car() {
@@ -381,6 +381,36 @@ fn test_classic_module_assigns_fantasy_category_cars() {
             "Car {} in classic session must have classic_nascar model_id",
             i
         );
+    }
+}
+
+#[test]
+fn test_gt_career_tier_initializes_unlocked_real_car_and_diverse_roster() {
+    let mut session = RaceSession::new();
+    session.start_gt_career_tier(1);
+
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert_eq!(session.selected_car_model_id, Some("gt_toyota_supra_gt4"));
+    assert_eq!(session.car_choice, CarChoice::GT4Clubsport);
+    assert_eq!(session.grid_participants.len(), 8);
+
+    let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
+    assert_eq!(player.car_title, "Toyota GR Supra GT4 EVO");
+    assert_eq!(player.model_id, Some("gt_toyota_supra_gt4"));
+    assert_eq!(session.car_model_ids[0], Some("gt_toyota_supra_gt4"));
+
+    let gt4_models = tdrace_app::catalog::get_models_for_category("gt", "GT4 Clubsport");
+    let gt4_ids: Vec<&str> = gt4_models.iter().map(|m| m.id).collect();
+
+    // Bots must use diverse authentic GT4 models, not generic 420 BHP GT4 Clubsport
+    for p in session.grid_participants.iter().filter(|p| !p.is_player) {
+        let mid = p.model_id.expect("Bot must have authentic model_id");
+        assert!(gt4_ids.contains(&mid), "Bot model '{}' must belong to GT4", mid);
+        assert_ne!(p.car_title, "420 BHP GT4 Clubsport", "Bot must have real car title");
+    }
+
+    for (i, &mid) in session.car_model_ids.iter().enumerate() {
+        assert!(mid.is_some(), "Car {} must have modern model_id sprite assigned", i);
     }
 }
 
