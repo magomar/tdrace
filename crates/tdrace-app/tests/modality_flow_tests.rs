@@ -65,7 +65,7 @@ fn test_modality_category_switching_and_wrapping() {
         }
     );
 
-    // 3. Switch through all 4 categories via bumper RB (SinglePlayer -> Multiplayer -> Garage -> CircuitCatalogue -> SinglePlayer)
+    // 3. Switch through all 3 categories via bumper RB (SinglePlayer -> Multiplayer -> Options -> SinglePlayer)
     session.input.gamepad.snapshot.btn_rb_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_rb_pressed = false;
@@ -84,19 +84,7 @@ fn test_modality_category_switching_and_wrapping() {
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
-            category: ModalityCategory::Garage,
-            selected_idx: 0,
-            modal: None,
-        }
-    );
-
-    session.input.gamepad.snapshot.btn_rb_pressed = true;
-    session.update_modality_select();
-    session.input.gamepad.snapshot.btn_rb_pressed = false;
-    assert_eq!(
-        session.state,
-        GameState::ModalitySelect {
-            category: ModalityCategory::CircuitCatalogue,
+            category: ModalityCategory::Options,
             selected_idx: 0,
             modal: None,
         }
@@ -455,7 +443,7 @@ fn test_starting_grid_card_0_opens_garage() {
 }
 
 #[test]
-fn test_modality_select_column_3_garage_navigation() {
+fn test_modality_select_column_3_options_garage_navigation() {
     let mut session = RaceSession::new();
     session.state = GameState::ModalitySelect {
         category: ModalityCategory::Multiplayer,
@@ -463,7 +451,7 @@ fn test_modality_select_column_3_garage_navigation() {
         modal: None,
     };
 
-    // Right moves from Multiplayer (col 2) to Garage (col 3)
+    // Right moves from Multiplayer (col 2) to Options (col 3)
     session.input.gamepad.snapshot.dpad_right_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.dpad_right_pressed = false;
@@ -471,13 +459,13 @@ fn test_modality_select_column_3_garage_navigation() {
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
-            category: ModalityCategory::Garage,
+            category: ModalityCategory::Options,
             selected_idx: 0,
             modal: None,
         }
     );
 
-    // Down moves to Tier 1 card (index 1)
+    // Down moves to Garage card (index 1)
     session.input.gamepad.snapshot.dpad_down_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.dpad_down_pressed = false;
@@ -485,13 +473,13 @@ fn test_modality_select_column_3_garage_navigation() {
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
-            category: ModalityCategory::Garage,
+            category: ModalityCategory::Options,
             selected_idx: 1,
             modal: None,
         }
     );
 
-    // Confirm (A / Enter) opens Garage focused on Tier 1
+    // Confirm (A / Enter) opens Garage
     session.input.gamepad.snapshot.btn_confirm_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_confirm_pressed = false;
@@ -500,7 +488,7 @@ fn test_modality_select_column_3_garage_navigation() {
         session.state,
         GameState::Garage(GarageOrigin::ModalitySelect)
     );
-    assert_eq!(session.garage_tier, 1);
+    assert_eq!(session.garage_origin, GarageOrigin::ModalitySelect);
 }
 
 #[test]
@@ -516,7 +504,7 @@ fn test_garage_lifecycle_and_return() {
     session.input.gamepad.snapshot.btn_y_pressed = false;
     assert_eq!(session.garage_view_mode, tdrace_app::ui::GarageViewMode::TopDownTurntable);
 
-    // Escape returns to ModalitySelect
+    // Escape returns to ModalitySelect under Options (index 1 = Garage)
     session.input.gamepad.snapshot.btn_cancel_pressed = true;
     session.update_garage(GarageOrigin::ModalitySelect, 0.016);
     session.input.gamepad.snapshot.btn_cancel_pressed = false;
@@ -524,8 +512,8 @@ fn test_garage_lifecycle_and_return() {
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
-            category: ModalityCategory::Garage,
-            selected_idx: 2,
+            category: ModalityCategory::Options,
+            selected_idx: 1,
             modal: None,
         }
     );
@@ -575,7 +563,7 @@ fn test_modality_single_selected_menu_isolation() {
     );
     assert_eq!(ModalityCategory::Multiplayer.items().len(), 3);
 
-    // 3. Switch to Garage menu via Key3
+    // 3. Switch to Options menu via Tab
     session.input.gamepad.snapshot.btn_rb_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_rb_pressed = false;
@@ -583,13 +571,14 @@ fn test_modality_single_selected_menu_isolation() {
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
-            category: ModalityCategory::Garage,
+            category: ModalityCategory::Options,
             selected_idx: 0,
             modal: None,
         }
     );
+    assert_eq!(ModalityCategory::Options.items().len(), 3);
 
-    // 4. Wrapping within Garage menu (6 items: 1 hero showroom card + 5 tier cards)
+    // 4. Wrapping within Options menu (3 items: 0=Profile, 1=Garage, 2=Settings)
     session.input.gamepad.snapshot.dpad_up_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.dpad_up_pressed = false;
@@ -597,21 +586,43 @@ fn test_modality_single_selected_menu_isolation() {
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
-            category: ModalityCategory::Garage,
-            selected_idx: 5,
+            category: ModalityCategory::Options,
+            selected_idx: 2,
             modal: None,
         }
     );
+}
 
-    // 5. Switch to Circuit Catalogue menu via Tab
-    session.input.gamepad.snapshot.btn_rb_pressed = true;
+#[test]
+fn test_modality_select_options_player_profile_flow() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::Options,
+        selected_idx: 0, // Player Profile
+        modal: None,
+    };
+
+    // Confirm on Player Profile card (idx 0) opens ProfileManager
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
     session.update_modality_select();
-    session.input.gamepad.snapshot.btn_rb_pressed = false;
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert!(matches!(session.state, GameState::ProfileManager { .. }));
+    assert_eq!(session.profile_origin, tdrace_app::game::ProfileOrigin::ModalitySelect);
+
+    // Escape in ProfileManager returns cleanly to ModalitySelect under Options
+    session.input.gamepad.snapshot.btn_cancel_pressed = true;
+    let sel_idx = match session.state {
+        GameState::ProfileManager { selected_idx } => selected_idx,
+        _ => 0,
+    };
+    session.update_profile_manager(sel_idx);
+    session.input.gamepad.snapshot.btn_cancel_pressed = false;
 
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
-            category: ModalityCategory::CircuitCatalogue,
+            category: ModalityCategory::Options,
             selected_idx: 0,
             modal: None,
         }
@@ -619,92 +630,32 @@ fn test_modality_single_selected_menu_isolation() {
 }
 
 #[test]
-fn test_modality_select_column_4_circuit_catalogue_navigation() {
+fn test_modality_select_options_settings_modal_flow() {
     let mut session = RaceSession::new();
-    session.active_module_id = "classic";
     session.state = GameState::ModalitySelect {
-        category: ModalityCategory::CircuitCatalogue,
-        selected_idx: 0,
+        category: ModalityCategory::Options,
+        selected_idx: 2, // Settings
         modal: None,
     };
 
-    let module_tracks = session.track_manager.module_catalog_tracks(session.active_module_id);
-    let expected_items_len = 1 + module_tracks.len().min(5);
-
-    // Up from 0 wraps to last track card
-    session.input.gamepad.snapshot.dpad_up_pressed = true;
-    session.update_modality_select();
-    session.input.gamepad.snapshot.dpad_up_pressed = false;
-
-    assert_eq!(
-        session.state,
-        GameState::ModalitySelect {
-            category: ModalityCategory::CircuitCatalogue,
-            selected_idx: expected_items_len - 1,
-            modal: None,
-        }
-    );
-
-    // Down from last wraps back to 0 (Hero card)
-    session.input.gamepad.snapshot.dpad_down_pressed = true;
-    session.update_modality_select();
-    session.input.gamepad.snapshot.dpad_down_pressed = false;
-
-    assert_eq!(
-        session.state,
-        GameState::ModalitySelect {
-            category: ModalityCategory::CircuitCatalogue,
-            selected_idx: 0,
-            modal: None,
-        }
-    );
-}
-
-#[test]
-fn test_modality_select_column_4_circuit_catalogue_launch_track_manager() {
-    let mut session = RaceSession::new();
-    session.active_module_id = "rally";
-    session.state = GameState::ModalitySelect {
-        category: ModalityCategory::CircuitCatalogue,
-        selected_idx: 0, // Hero Card
-        modal: None,
-    };
-
-    // Confirm on Hero Card (idx 0) opens TrackManager at index 0
+    // Confirm on Settings card (idx 2) opens Settings Modal
     session.input.gamepad.snapshot.btn_confirm_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_confirm_pressed = false;
 
+    assert!(session.is_settings_modal_open());
     assert!(matches!(
         session.state,
-        GameState::TrackManager {
-            active_tab: tdrace_app::ui::TrackManagerTab::Main,
-            selected_idx: 0,
-            modal: tdrace_app::ui::TrackManagerModal::None,
-            ..
+        GameState::ModalitySelect {
+            category: ModalityCategory::Options,
+            selected_idx: 2,
+            modal: None,
         }
     ));
 
-    // Confirm on Track Card 1 (idx 1) opens TrackManager focused on track 0
-    session.state = GameState::ModalitySelect {
-        category: ModalityCategory::CircuitCatalogue,
-        selected_idx: 2, // Second track in list
-        modal: None,
-    };
-
-    session.input.gamepad.snapshot.btn_confirm_pressed = true;
-    session.update_modality_select();
-    session.input.gamepad.snapshot.btn_confirm_pressed = false;
-
-    assert!(matches!(
-        session.state,
-        GameState::TrackManager {
-            active_tab: tdrace_app::ui::TrackManagerTab::Main,
-            selected_idx: 1, // 2 - 1 = 1
-            modal: tdrace_app::ui::TrackManagerModal::None,
-            ..
-        }
-    ));
+    // Close settings modal
+    session.close_settings_modal(false);
+    assert!(!session.is_settings_modal_open());
 }
 
 

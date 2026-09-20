@@ -146,6 +146,15 @@ pub enum GarageOrigin {
     StartingGrid,
 }
 
+/// Source screen that launched the Profile Manager view.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ProfileOrigin {
+    #[default]
+    Menu,
+    ModuleSelect,
+    ModalitySelect,
+}
+
 /// High-level game flow state machine.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameState {
@@ -341,6 +350,7 @@ pub struct RaceSession {
     pub in_garage_state: bool,
 
     // Active Player Profile & Career History
+    pub profile_origin: ProfileOrigin,
     pub active_profile: PlayerProfile,
     pub active_profile_stats: ProfileCareerStats,
     pub active_career_progress: ModuleCareerProgress,
@@ -610,6 +620,7 @@ impl RaceSession {
             garage_gallery_sel: 0,
             in_garage_state: false,
 
+            profile_origin: ProfileOrigin::Menu,
             active_profile: PlayerProfile::default(),
             active_profile_stats: ProfileCareerStats::default(),
             active_career_progress: ModuleCareerProgress::default_for_gt(1),
@@ -1028,7 +1039,7 @@ impl RaceSession {
             Some("f1_hybrid_26") => CarChoice::F1Car,
             Some("drift_car") => CarChoice::DriftCar,
             Some("kart" | "shifter_kart" | "shifter_kart_125" | "classic_kart") => CarChoice::Kart,
-            Some("rally_car" | "wrc_turbo_rally" | "rally") => CarChoice::RallyCar,
+            Some("rally_car" | "wrc_turbo_rally" | "rally" | "classic_rally") => CarChoice::RallyCar,
             Some("nascar" | "nascar_cup" | "nascar_cup_v8" | "stock_car" | "trans_am" | "trans_am_ta1" | "ta1" | "classic_nascar") => CarChoice::StockCar,
             Some("sand_rail" | "sand_rail_buggy" | "buggy" | "classic_offroad") => CarChoice::SandRail,
             Some("sports_car" | "classic_gt") => CarChoice::SportsCar,
@@ -1767,6 +1778,7 @@ impl RaceSession {
         if !self.is_time_attack && total_cars > human_count {
             let target_opponents = total_cars - human_count;
             let mut module_opponents: Vec<DriverCharacter> = match effective_module {
+                "classic" => ClassicGameModule::new().drivers(),
                 "gt" | "gt_challenge" => GtWorldChallengeModule::new().drivers(),
                 "rally" => RallyGameModule::new().drivers(),
                 "kart" => KartGameModule::new().drivers(),
@@ -1789,23 +1801,15 @@ impl RaceSession {
 
         let player_car_choice = self.active_player_car_choice();
 
-        // In all modules except "classic", resolve the elected real car model if chosen
-        let player_model = if effective_module != "classic" {
-            self.selected_car_model_id
-                .and_then(crate::catalog::find_model_by_id)
-                .filter(|m| m.module_id == effective_module)
-                .or_else(|| {
-                    if self.free_car_selection {
-                        crate::catalog::get_models_for_module(effective_module)
-                            .into_iter()
-                            .find(|m| m.base_car_choice == player_car_choice)
-                    } else {
-                        None
-                    }
-                })
-        } else {
-            None
-        };
+        // Resolve the elected car model if chosen or matching player's car choice
+        let player_model = self.selected_car_model_id
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == effective_module)
+            .or_else(|| {
+                crate::catalog::get_models_for_module(effective_module)
+                    .into_iter()
+                    .find(|m| m.base_car_choice == player_car_choice)
+            });
 
         let mut base_config = match player_car_choice {
             CarChoice::GT4Clubsport => {
@@ -3593,7 +3597,7 @@ impl RaceSession {
     }
 
     /// Handles input and actions for the Profile Manager screen.
-    fn update_profile_manager(&mut self, selected_idx: usize) {
+    pub fn update_profile_manager(&mut self, selected_idx: usize) {
         let mut current_idx = selected_idx;
         let count = self.profile_list.len();
         if count == 0 {
@@ -3718,7 +3722,7 @@ impl RaceSession {
             }
         }
 
-        // Return to Main Menu (Escape, or Gamepad Cancel / B)
+        // Return to Origin Screen (Escape, or Gamepad Cancel / B)
         if is_key_pressed(KeyCode::Escape)
             || self.input.gamepad.snapshot.btn_cancel_pressed
             || self.input.gamepad.snapshot.btn_back_pressed
@@ -3726,7 +3730,30 @@ impl RaceSession {
         {
             self.audio.play_sfx(SfxType::UiSelect);
             self.refresh_profiles_and_stats();
-            self.state = GameState::Menu;
+            match self.profile_origin {
+                ProfileOrigin::ModalitySelect => {
+                    self.state = GameState::ModalitySelect {
+                        category: ModalityCategory::Options,
+                        selected_idx: 0,
+                        modal: None,
+                    };
+                }
+                ProfileOrigin::ModuleSelect => {
+                    let cur_mod_idx = match self.active_module_id {
+                        "classic" => 0,
+                        "rally" => 1,
+                        "kart" => 2,
+                        "gt" | "gt_challenge" => 3,
+                        "nascar" => 4,
+                        "extreme_offroad" => 5,
+                        _ => 0,
+                    };
+                    self.state = GameState::ModuleSelect { selected_idx: cur_mod_idx };
+                }
+                ProfileOrigin::Menu => {
+                    self.state = GameState::Menu;
+                }
+            }
             return;
         }
 
@@ -4008,6 +4035,7 @@ impl RaceSession {
         // Profile Manager (P key or Gamepad Y)
         if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
+            self.profile_origin = ProfileOrigin::ModuleSelect;
             self.refresh_profiles_and_stats();
             let current_idx = self
                 .profile_list
@@ -4076,6 +4104,31 @@ impl RaceSession {
             _ => return,
         };
 
+        // If Arcade Settings Modal is open on the Modality Select screen, update it and return:
+        if let Some(ref mut modal) = self.settings_modal {
+            let (sw, sh) = (screen_width_safe(), screen_height_safe());
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::default();
+            let mut ctx = CabinetContext {
+                scaler: &scaler,
+                fonts: &self.fonts,
+                theme: &theme,
+                gamepad: &self.input.gamepad.snapshot,
+                dt: 1.0 / 60.0,
+                audio: Some(&self.audio),
+            };
+
+            let action = modal.update(&mut ctx);
+            if matches!(action, ScreenAction::Pop) {
+                let saved = modal.is_saved;
+                self.close_settings_modal(saved);
+                if saved {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+            }
+            return;
+        }
+
         // If informational coming-soon modal is open, any confirm/back dismisses it
         if modal.is_some() {
             if is_key_pressed(KeyCode::Escape)
@@ -4106,26 +4159,36 @@ impl RaceSession {
             return;
         }
 
-        // Direct Circuit Catalogue / Track Manager shortcut (T key)
-        if is_key_pressed(KeyCode::T) {
+        // Direct Player Profile shortcut (P key or Gamepad Y)
+        if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
-            let mod_filter = ModuleFilter::for_module(self.active_module_id);
-            self.state = GameState::TrackManager {
-                active_tab: TrackManagerTab::Main,
-                module_filter: mod_filter,
-                selected_idx: 0,
-                modal: TrackManagerModal::None,
+            self.profile_origin = ProfileOrigin::ModalitySelect;
+            self.refresh_profiles_and_stats();
+            let current_idx = self
+                .profile_list
+                .iter()
+                .position(|p| p.id == self.active_profile.id)
+                .unwrap_or(0);
+            self.state = GameState::ProfileManager {
+                selected_idx: current_idx,
             };
             return;
         }
 
-        // Category Column/Menu Switching (Left / Right / Tab / 1 / 2 / 3 / 4 / Gamepad D-pad / Bumpers / Mouse Tab Click)
+        // Direct Settings shortcut (X key)
+        if is_key_pressed(KeyCode::X) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.open_settings_modal();
+            return;
+        }
+
+        // Category Column/Menu Switching (Left / Right / Tab / 1 / 2 / 3 / Gamepad D-pad / Bumpers / Mouse Tab Click)
         let (sw, sh) = (screen_width_safe(), screen_height_safe());
         let scaler = UiScaler::new(sw, sh);
-        let tab_w = (sw * 0.22).clamp(scaler.s(140.0), scaler.s(225.0));
+        let tab_w = (sw * 0.28).clamp(scaler.s(160.0), scaler.s(260.0));
         let tab_h = scaler.s(30.0);
-        let tab_gap = scaler.s(10.0);
-        let total_tabs_w = tab_w * 4.0 + tab_gap * 3.0;
+        let tab_gap = scaler.s(12.0);
+        let total_tabs_w = tab_w * 3.0 + tab_gap * 2.0;
         let tabs_start_x = (sw - total_tabs_w) * 0.5;
         let tab_y = scaler.s(64.0);
 
@@ -4158,14 +4221,8 @@ impl RaceSession {
                 self.audio.play_sfx(SfxType::UiMove);
             }
         } else if is_key_pressed(KeyCode::Key3) {
-            if category != ModalityCategory::Garage {
-                category = ModalityCategory::Garage;
-                selected_idx = 0;
-                self.audio.play_sfx(SfxType::UiMove);
-            }
-        } else if is_key_pressed(KeyCode::Key4) {
-            if category != ModalityCategory::CircuitCatalogue {
-                category = ModalityCategory::CircuitCatalogue;
+            if category != ModalityCategory::Options {
+                category = ModalityCategory::Options;
                 selected_idx = 0;
                 self.audio.play_sfx(SfxType::UiMove);
             }
@@ -4177,9 +4234,8 @@ impl RaceSession {
         {
             category = match category {
                 ModalityCategory::SinglePlayer => ModalityCategory::Multiplayer,
-                ModalityCategory::Multiplayer => ModalityCategory::Garage,
-                ModalityCategory::Garage => ModalityCategory::CircuitCatalogue,
-                ModalityCategory::CircuitCatalogue => ModalityCategory::SinglePlayer,
+                ModalityCategory::Multiplayer => ModalityCategory::Options,
+                ModalityCategory::Options => ModalityCategory::SinglePlayer,
             };
             selected_idx = 0;
             self.audio.play_sfx(SfxType::UiMove);
@@ -4189,10 +4245,9 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_lb_pressed
         {
             category = match category {
-                ModalityCategory::SinglePlayer => ModalityCategory::CircuitCatalogue,
+                ModalityCategory::SinglePlayer => ModalityCategory::Options,
                 ModalityCategory::Multiplayer => ModalityCategory::SinglePlayer,
-                ModalityCategory::Garage => ModalityCategory::Multiplayer,
-                ModalityCategory::CircuitCatalogue => ModalityCategory::Garage,
+                ModalityCategory::Options => ModalityCategory::Multiplayer,
             };
             selected_idx = 0;
             self.audio.play_sfx(SfxType::UiMove);
@@ -4200,14 +4255,7 @@ impl RaceSession {
 
         // Modality Card Navigation (Up / Down / W / S / Gamepad D-pad)
         let items = category.items();
-        let module_tracks = self.track_manager.module_catalog_tracks(self.active_module_id);
-        let items_len = if category == ModalityCategory::Garage {
-            6 // 0 is Hero card, 1..=5 are Tiers 1..=5
-        } else if category == ModalityCategory::CircuitCatalogue {
-            1 + module_tracks.len().min(5)
-        } else {
-            items.len()
-        };
+        let items_len = items.len();
         if is_key_pressed(KeyCode::Up)
             || is_key_pressed(KeyCode::W)
             || self.input.gamepad.snapshot.dpad_up_pressed
@@ -4237,34 +4285,33 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_confirm_pressed
             || self.input.gamepad.snapshot.btn_a_pressed
         {
-            if category == ModalityCategory::Garage {
-                self.audio.play_sfx(SfxType::UiSelect);
-                if selected_idx >= 1 && selected_idx <= 5 {
-                    self.garage_tier = selected_idx as u8;
-                    self.garage_car_idx = 0;
-                }
-                self.garage_origin = GarageOrigin::ModalitySelect;
-                self.state = GameState::Garage(GarageOrigin::ModalitySelect);
-                return;
-            }
-            if category == ModalityCategory::CircuitCatalogue {
-                self.audio.play_sfx(SfxType::UiSelect);
-                let mod_filter = ModuleFilter::for_module(self.active_module_id);
-                let track_sel_idx = if selected_idx == 0 {
-                    0
-                } else {
-                    selected_idx - 1
-                };
-                self.state = GameState::TrackManager {
-                    active_tab: TrackManagerTab::Main,
-                    module_filter: mod_filter,
-                    selected_idx: track_sel_idx,
-                    modal: TrackManagerModal::None,
-                };
-                return;
-            }
             if let Some(&item) = items.get(selected_idx) {
                 match item {
+                    ModalityItem::PlayerProfile => {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.profile_origin = ProfileOrigin::ModalitySelect;
+                        self.refresh_profiles_and_stats();
+                        let current_idx = self
+                            .profile_list
+                            .iter()
+                            .position(|p| p.id == self.active_profile.id)
+                            .unwrap_or(0);
+                        self.state = GameState::ProfileManager {
+                            selected_idx: current_idx,
+                        };
+                        return;
+                    }
+                    ModalityItem::Garage => {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.garage_origin = GarageOrigin::ModalitySelect;
+                        self.state = GameState::Garage(GarageOrigin::ModalitySelect);
+                        return;
+                    }
+                    ModalityItem::Settings => {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.open_settings_modal();
+                        return;
+                    }
                     ModalityItem::QuickRace => {
                         self.game_mode = GameMode::StandardRace;
                         self.free_car_selection = false;
@@ -4433,8 +4480,8 @@ impl RaceSession {
             match origin {
                 GarageOrigin::ModalitySelect => {
                     self.state = GameState::ModalitySelect {
-                        category: ModalityCategory::Garage,
-                        selected_idx: (self.garage_tier as usize).clamp(1, 5),
+                        category: ModalityCategory::Options,
+                        selected_idx: 1,
                         modal: None,
                     };
                 }
@@ -4911,6 +4958,7 @@ impl RaceSession {
         // Open Player Profile & Career History Screen (P key or Gamepad Y)
         if is_key_pressed(KeyCode::P) || self.input.gamepad.snapshot.btn_y_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
+            self.profile_origin = ProfileOrigin::Menu;
             self.refresh_profiles_and_stats();
             let current_idx = self
                 .profile_list
@@ -7064,6 +7112,20 @@ impl RaceSession {
                     self.is_dev_mode(),
                     &active_tracks,
                 );
+                if let Some(ref modal) = self.settings_modal {
+                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::default();
+                    let ctx = CabinetContext {
+                        scaler: &scaler,
+                        fonts: &self.fonts,
+                        theme: &theme,
+                        gamepad: &self.input.gamepad.snapshot,
+                        dt: 0.0,
+                        audio: Some(&self.audio),
+                    };
+                    modal.draw(&ctx);
+                }
             }
             GameState::Garage(_) => {
                 let unlocked_tier = if self.is_dev_mode() {

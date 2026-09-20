@@ -43,35 +43,34 @@ stateDiagram-v2
             LanPlay --> CloudPlay: DOWN
         }
 
-        state "Column 3: Vehicle Roster & Garage" as GarageCol {
-            [*] --> BrowseRoster
-            BrowseRoster --> OpenGarage: ENTER / G
-        }
-
-        state "Column 4: Circuit Catalogue" as CircuitCol {
-            [*] --> BrowseCircuits
-            BrowseCircuits --> OpenTrackManager: ENTER / T
+        state "Column 3: Options" as OptionsCol {
+            [*] --> PlayerProfile
+            PlayerProfile --> GarageShowroom: DOWN
+            GarageShowroom --> ArcadeSettings: DOWN
         }
 
         SinglePlayerCol --> MultiplayerCol: RIGHT / TAB / 2
-        MultiplayerCol --> GarageCol: RIGHT / TAB / 3
-        GarageCol --> CircuitCol: RIGHT / TAB / 4
-        CircuitCol --> SinglePlayerCol: RIGHT / TAB / 1
+        MultiplayerCol --> OptionsCol: RIGHT / TAB / 3
+        OptionsCol --> SinglePlayerCol: RIGHT / TAB / 1
         MultiplayerCol --> SinglePlayerCol: LEFT
-        GarageCol --> MultiplayerCol: LEFT
-        CircuitCol --> GarageCol: LEFT
+        OptionsCol --> MultiplayerCol: LEFT
+        SinglePlayerCol --> OptionsCol: LEFT
 
         state ComingSoonModal {
             [*] --> DisplayNotice
         }
     }
 
+    state "Profile Manager (ProfileManager)" as ProfileManager {
+        [*] --> FullscreenProfile
+    }
+
     state "Garage Showroom (Garage)" as Garage {
         [*] --> FullscreenInspection
     }
 
-    state "Circuit Catalogue & Manager (TrackManager)" as TrackManager {
-        [*] --> FullscreenManager
+    state "Settings Modal" as SettingsModal {
+        [*] --> SettingsOverlay
     }
 
     state "Circuit Selection (Menu)" as Menu {
@@ -84,10 +83,12 @@ stateDiagram-v2
 
     ModuleSelect --> ModalitySelect: [ENTER / SPACE / A] (Select Module)
     ModalitySelect --> ModuleSelect: [ESC / B] (Back to Grand Hub)
-    ModalitySelect --> Garage: [ENTER on Col 3 / G] (Open Garage Showroom)
-    ModalitySelect --> TrackManager: [ENTER on Col 4 / T] (Open Circuit Catalogue)
+    ModalitySelect --> ProfileManager: [ENTER on Player Profile / P] (Open Player Profile)
+    ModalitySelect --> Garage: [ENTER on Garage / G] (Open Garage Showroom)
+    ModalitySelect --> SettingsModal: [ENTER on Settings / X] (Open Settings Modal)
+    ProfileManager --> ModalitySelect: [ESC / B] (Return from Profile Manager)
     Garage --> ModalitySelect: [ESC / B] (Return from Garage)
-    TrackManager --> ModalitySelect: [ESC / B] (Return from Track Manager)
+    SettingsModal --> ModalitySelect: [ESC / ENTER / B / A] (Dismiss Settings Modal)
 
     ModalitySelect --> Menu: [ENTER / A] (Quick Race, Custom Race, Time Trial, Free Ride, Split Screen)
     ModalitySelect --> ChampionshipStandings: [ENTER / A] (Career Mode)
@@ -105,7 +106,7 @@ stateDiagram-v2
     StartingGrid --> Racing: [ENTER / SPACE / A] (Launch Race)
 ```
 
-### 2. 4-Column Modality, Roster & Circuit Architecture
+### 2. 3-Column Modality & Options Architecture
 
 #### Column 1: Single Player Modalities
 1. **Quick Race (`ModalityItem::QuickRace`)**: Standard race using the track's official required category vehicle.
@@ -119,21 +120,15 @@ stateDiagram-v2
 2. **LAN Multiplayer (`ModalityItem::LanPlay`)**: Local network matchmaking (*Coming Soon notice modal*).
 3. **Cloud Online (`ModalityItem::CloudPlay`)**: Worldwide matchmaking and server lobbies (*Coming Soon notice modal*).
 
-#### Column 3: Vehicle Roster & Garage Column
-1. **Roster Display**: Directly showcases the active module's 5 tiers of vehicles.
-2. **Visual Specs**: Renders mini 2D side-profile silhouettes, real-world model names, horsepower (BHP), mass, and drivetrain layout.
-3. **Unlock Status**: Clearly differentiates between unlocked cars and locked cars (marked with `🔒 Requires Career Level X`).
-4. **Interactive Entry to Garage**: Pressing `[ENTER]` or `[G]` with Column 3 focused opens `GameState::Garage` for full-screen inspection, 360° turntable viewing, historical dossier, and sound-stage rev sampling.
+#### Column 3: Options (Player Profile, Garage Showroom & Settings)
+1. **Player Profile (`ModalityItem::PlayerProfile`)**: Direct entry to `GameState::ProfileManager` with driver stats, career level, license rating, and profile configuration.
+2. **Garage Showroom (`ModalityItem::Garage`)**: Fullscreen inspection (`GameState::Garage(GarageOrigin::ModalitySelect)`), 360° turntable, vehicle specs, and engine rev sampling.
+3. **Settings (`ModalityItem::Settings`)**: Opens the modal dialog (`SettingsModal`) for audio, controls, display, and rendering options.
 
-#### Column 4: Circuit Catalogue & Track Manager Column
-1. **Catalogue Entry Card**: Direct hero card to open the Circuit Catalogue and Manager (`GameState::TrackManager`).
-2. **Module Track Showcase**: Lists official presets and custom circuits available for the active module with discipline tags and preset badges.
-3. **Interactive Inspection**: Pressing `[ENTER]` on the hero card or a track card opens `GameState::TrackManager` focused on that circuit.
-4. **Direct Shortcut**: Pressing `[T]` or `[4]` immediately accesses the circuit catalogue from any modality tab.
-
-### 3. UI Design Tokens & Starting Grid Card 0
-- **4 Balanced Columns**: Top tabs partitioned cleanly (`[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, `[ 3. VEHICLE ROSTER ]`, `[ 4. CIRCUIT CATALOGUE ]`).
-- **Glass Cards**: Translucent glass cards with 1px border accents, category icon, title, description, and status tags (`OFFICIAL PRESET`, `CUSTOM CIRCUIT`, `OFFICIAL`, `CUSTOMIZABLE`, `CHAMPIONSHIP`, `SOLO`, `LOCAL`, `COMING SOON`, `ROSTER`).
+### 3. UI Design Tokens & Shortcuts
+- **3 Balanced Columns**: Top tabs partitioned cleanly (`[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, `[ 3. OPTIONS ]`).
+- **Glass Cards**: Translucent glass cards with 1px border accents, category icon, title, description, and status tags (`OFFICIAL PRESET`, `CUSTOMIZABLE`, `CHAMPIONSHIP`, `SOLO`, `LOCAL`, `COMING SOON`, `PROFILE`, `SHOWROOM`, `SYSTEM`).
+- **Direct Shortcuts**: Pressing `[1]`, `[2]`, `[3]` jumps directly between tabs; pressing `[P]`, `[G]`, or `[X]` provides instantaneous one-touch access to Player Profile, Garage, and Settings from any column.
 - **Starting Grid Card 0 Refinement**: Card 0 prominently displays the active modality (e.g. `RACING MODALITY: QUICK RACE [PRESET]` or `RACING MODALITY: CUSTOM RACE [CUSTOMIZABLE]`), ensuring full session context before race start.
 
 ---
@@ -166,6 +161,9 @@ pub enum ModalityItem {
     SplitScreen,
     LanPlay,
     CloudPlay,
+    PlayerProfile,
+    Garage,
+    Settings,
 }
 ```
 

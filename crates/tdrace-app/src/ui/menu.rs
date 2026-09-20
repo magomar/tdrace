@@ -7,7 +7,7 @@ use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::audio::AudioSettings;
-use crate::render::color::{CarColorScheme, Palette};
+use crate::render::color::Palette;
 use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
@@ -2261,24 +2261,21 @@ pub fn render_exit_confirm_modal(fonts: &Fonts) {
 pub enum ModalityCategory {
     SinglePlayer,
     Multiplayer,
-    Garage,
-    CircuitCatalogue,
+    Options,
 }
 
 impl ModalityCategory {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 3] = [
         Self::SinglePlayer,
         Self::Multiplayer,
-        Self::Garage,
-        Self::CircuitCatalogue,
+        Self::Options,
     ];
 
     pub fn title(&self) -> &'static str {
         match self {
             Self::SinglePlayer => "SINGLE PLAYER",
             Self::Multiplayer => "MULTIPLAYER",
-            Self::Garage => "VEHICLE ROSTER & GARAGE",
-            Self::CircuitCatalogue => "CIRCUIT CATALOGUE",
+            Self::Options => "OPTIONS",
         }
     }
 
@@ -2296,7 +2293,11 @@ impl ModalityCategory {
                 ModalityItem::LanPlay,
                 ModalityItem::CloudPlay,
             ],
-            Self::Garage | Self::CircuitCatalogue => &[],
+            Self::Options => &[
+                ModalityItem::PlayerProfile,
+                ModalityItem::Garage,
+                ModalityItem::Settings,
+            ],
         }
     }
 }
@@ -2312,6 +2313,9 @@ pub enum ModalityItem {
     SplitScreen,
     LanPlay,
     CloudPlay,
+    PlayerProfile,
+    Garage,
+    Settings,
 }
 
 impl ModalityItem {
@@ -2325,6 +2329,9 @@ impl ModalityItem {
             Self::SplitScreen => "2P Split Screen",
             Self::LanPlay => "LAN Multiplayer",
             Self::CloudPlay => "Cloud Online",
+            Self::PlayerProfile => "Player Profile",
+            Self::Garage => "Garage Showroom",
+            Self::Settings => "Settings",
         }
     }
 
@@ -2338,6 +2345,9 @@ impl ModalityItem {
             Self::SplitScreen => "HEAD-TO-HEAD LOCAL RACING",
             Self::LanPlay => "LOCAL NETWORK [COMING SOON]",
             Self::CloudPlay => "WORLDWIDE LOBBIES [COMING SOON]",
+            Self::PlayerProfile => "DRIVER RECORDS • CAREER STATS & SLOTS",
+            Self::Garage => "360° VEHICLE TURNTABLE & TECHNICAL DOSSIER",
+            Self::Settings => "AUDIO • CONTROLS • ASSISTS • DISPLAY CONFIG",
         }
     }
 
@@ -2351,6 +2361,9 @@ impl ModalityItem {
             Self::SplitScreen => "Battle side-by-side with a friend on a single screen using keyboard and gamepad.",
             Self::LanPlay => "Host or join low-latency racing lobbies on your local Wi-Fi or wired network.",
             Self::CloudPlay => "Compete globally in ranked matchmaking, custom public lobbies, and online events.",
+            Self::PlayerProfile => "Inspect career statistics, manage driver slots, change nationality and custom car liveries.",
+            Self::Garage => "Inspect active motorsport machines in fullscreen 360° turntable, check BHP and weight, and rev engine.",
+            Self::Settings => "Configure sound levels, gamepad and keyboard mappings, steering assists, and display settings.",
         }
     }
 
@@ -2368,6 +2381,9 @@ impl ModalityItem {
             Self::SplitScreen => Palette::NEON_ORANGE,
             Self::LanPlay => Color::new(0.60, 0.65, 0.75, 1.0),
             Self::CloudPlay => Color::new(0.60, 0.65, 0.75, 1.0),
+            Self::PlayerProfile => Palette::NEON_CYAN,
+            Self::Garage => Palette::NEON_GOLD,
+            Self::Settings => Palette::NEON_MAGENTA,
         }
     }
 }
@@ -2399,19 +2415,19 @@ impl ModalityModal {
 }
 
 /// Renders the Race Modality Selection stage inserted between the Grand Hub and Circuit Selection.
-/// Layout: 4 Columns (Col 1: Single Player, Col 2: Multiplayer, Col 3: Vehicle Roster, Col 4: Circuit Catalogue).
+/// Layout: 3 Columns (Col 1: Single Player, Col 2: Multiplayer, Col 3: Options).
 pub fn render_modality_select_screen(
     fonts: &Fonts,
     active_module_title: &str,
-    active_module_id: &str,
+    _active_module_id: &str,
     active_module_accent: Color,
     category: ModalityCategory,
     selected_idx: usize,
     modal: Option<&ModalityModal>,
-    _active_profile: &PlayerProfile,
-    active_stats: &ProfileCareerStats,
-    dev_mode: bool,
-    available_tracks: &[TrackChoice],
+    active_profile: &PlayerProfile,
+    _active_stats: &ProfileCareerStats,
+    _dev_mode: bool,
+    _available_tracks: &[TrackChoice],
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2431,18 +2447,18 @@ pub fn render_modality_select_screen(
     );
 
     fonts.draw_ui_regular_centered(
-        "Choose session format: Single Player vs Multiplayer  •  Or inspect vehicle roster & circuit catalogue",
+        "Choose session format: Single Player vs Multiplayer  •  Or configure options, garage & profile",
         sw * 0.5,
         scaler.s(48.0),
         scaler.font_s(12.5),
         Palette::UI_TEXT_MUTED,
     );
 
-    // 4 Category Tabs at Top
-    let tab_w = (sw * 0.22).clamp(scaler.s(140.0), scaler.s(225.0));
+    // 3 Category Tabs at Top
+    let tab_w = (sw * 0.28).clamp(scaler.s(160.0), scaler.s(260.0));
     let tab_h = scaler.s(30.0);
-    let tab_gap = scaler.s(10.0);
-    let total_tabs_w = tab_w * 4.0 + tab_gap * 3.0;
+    let tab_gap = scaler.s(12.0);
+    let total_tabs_w = tab_w * 3.0 + tab_gap * 2.0;
     let tabs_start_x = (sw - total_tabs_w) * 0.5;
     let tab_y = scaler.s(64.0);
 
@@ -2469,8 +2485,7 @@ pub fn render_modality_select_screen(
         let tab_label = match cat {
             ModalityCategory::SinglePlayer => "[ 1. SINGLE PLAYER ]",
             ModalityCategory::Multiplayer => "[ 2. MULTIPLAYER ]",
-            ModalityCategory::Garage => "[ 3. VEHICLE ROSTER ]",
-            ModalityCategory::CircuitCatalogue => "[ 4. CIRCUITS ]",
+            ModalityCategory::Options => "[ 3. OPTIONS ]",
         };
         let tab_text_col = if is_cat_active {
             Palette::WHITE
@@ -2657,314 +2672,120 @@ pub fn render_modality_select_screen(
                 curr_y += mp_card_h + card_gap;
             }
         }
-        ModalityCategory::Garage => {
-            // Hero Action Card at Top: "ENTER GARAGE SHOWROOM"
-            let hero_btn_h = scaler.s(56.0);
-            let is_hero_sel = selected_idx == 0;
-            scaler.draw_glass_card(
-                col_x,
-                start_y,
-                col_w,
-                hero_btn_h,
-                if is_hero_sel { Color::new(0.18, 0.24, 0.38, 0.95) } else { Color::new(0.08, 0.12, 0.18, 0.85) },
-                if is_hero_sel { Palette::NEON_GOLD } else { active_module_accent },
-                if is_hero_sel { 2.4 } else { 1.2 },
-            );
+        ModalityCategory::Options => {
+            let opt_items = ModalityCategory::Options.items();
+            let card_gap = scaler.s(12.0);
+            let opt_card_h = ((available_h - card_gap * (opt_items.len() as f32 - 1.0)) / opt_items.len() as f32)
+                .clamp(scaler.s(68.0), scaler.s(110.0));
 
-            if is_hero_sel {
-                draw_rectangle(col_x, start_y, scaler.s(6.0), hero_btn_h, Palette::NEON_GOLD);
-            }
+            let mut curr_y = start_y;
+            for (i, item) in opt_items.iter().enumerate() {
+                let is_sel = i == selected_idx;
+                let accent = item.accent_color();
 
-            fonts.draw_display(
-                "🏛️ ENTER GARAGE SHOWROOM",
-                col_x + scaler.s(18.0),
-                start_y + scaler.s(22.0),
-                scaler.font_s(15.5),
-                if is_hero_sel { Palette::WHITE } else { Palette::NEON_GOLD },
-            );
-            fonts.draw_ui_regular(
-                "PRESS [ENTER] OR [G] FOR FULLSCREEN 360° TURNTABLE, TECHNICAL SPECS & REV STAGE",
-                col_x + scaler.s(18.0),
-                start_y + scaler.s(42.0),
-                scaler.font_s(10.0),
-                Palette::NEON_CYAN,
-            );
-
-            if is_hero_sel {
-                fonts.draw_ui_bold(
-                    "OPEN SHOWROOM ▶",
-                    col_x + col_w - scaler.s(160.0),
-                    start_y + scaler.s(32.0),
-                    scaler.font_s(12.0),
-                    Palette::NEON_GOLD,
-                );
-            }
-
-            // Active Module Roster (5 Progression Tiers)
-            let card_gap = scaler.s(7.0);
-            let roster_start_y = start_y + hero_btn_h + card_gap;
-            let roster_available_h = available_h - hero_btn_h - card_gap;
-            let tier_card_h = ((roster_available_h - card_gap * 4.0) / 5.0).clamp(scaler.s(46.0), scaler.s(74.0));
-
-            for tier in 1..=5 {
-                let tier_idx = tier as usize;
-                let is_tier_sel = selected_idx == tier_idx;
-                let card_y = roster_start_y + ((tier - 1) as f32) * (tier_card_h + card_gap);
-
-                let unlocked_tier = if dev_mode {
-                    5
+                let bg_col = if is_sel {
+                    Palette::UI_CARD_BG_HOVER
                 } else {
-                    let wins = active_stats.wins;
-                    if wins >= 10 {
-                        5
-                    } else if wins >= 5 {
-                        4
-                    } else if wins >= 2 {
-                        3
-                    } else if wins >= 1 {
-                        2
-                    } else {
-                        1
-                    }
+                    Color::new(0.06, 0.08, 0.12, 0.70)
                 };
-                let is_unlocked = tier <= unlocked_tier;
-                let models = crate::catalog::get_models_for_module_and_tier(active_module_id, tier);
-                let featured_car = models.first().copied();
-
-                scaler.draw_glass_card(
-                    col_x,
-                    card_y,
-                    col_w,
-                    tier_card_h,
-                    if is_tier_sel { Color::new(0.14, 0.18, 0.28, 0.95) } else { Color::new(0.06, 0.08, 0.12, 0.70) },
-                    if is_tier_sel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                    if is_tier_sel { 2.2 } else { 1.0 },
-                );
-
-                if is_tier_sel {
-                    draw_rectangle(col_x, card_y, scaler.s(6.0), tier_card_h, Palette::NEON_GOLD);
-                }
-
-                // Tier Header & Category Title
-                let cat_title = crate::catalog::get_tier_name(active_module_id, tier);
-                fonts.draw_ui_bold(
-                    cat_title,
-                    col_x + scaler.s(16.0),
-                    card_y + tier_card_h * 0.28,
-                    scaler.font_s(10.0),
-                    if is_tier_sel { Palette::NEON_GOLD } else { Palette::NEON_CYAN },
-                );
-
-                // Unlock Status Indicator Badge
-                if is_unlocked {
-                    fonts.draw_ui_bold(
-                        "✓ UNLOCKED",
-                        col_x + col_w - scaler.s(170.0),
-                        card_y + tier_card_h * 0.28,
-                        scaler.font_s(9.5),
-                        Palette::NEON_GREEN,
-                    );
+                let border_col = if is_sel {
+                    accent
                 } else {
-                    let req_str = format!("🔒 TIER {}", tier);
-                    fonts.draw_ui_bold(
-                        &req_str,
-                        col_x + col_w - scaler.s(170.0),
-                        card_y + tier_card_h * 0.28,
-                        scaler.font_s(9.5),
-                        Palette::NEON_GOLD,
-                    );
+                    Palette::UI_CARD_BORDER
+                };
+
+                scaler.draw_glass_card(col_x, curr_y, col_w, opt_card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.0 });
+
+                if is_sel {
+                    draw_rectangle(col_x, curr_y, scaler.s(6.0), opt_card_h, accent);
                 }
 
-                // Featured Model Name
-                if let Some(car) = featured_car {
-                    let name_str = if is_tier_sel {
-                        format!("▶ {}", car.name)
-                    } else {
-                        car.name.to_string()
-                    };
-                    fonts.draw_display(
-                        &name_str,
-                        col_x + scaler.s(16.0),
-                        card_y + tier_card_h * 0.60,
-                        scaler.font_s(14.5),
-                        if is_tier_sel { Palette::WHITE } else { Color::new(0.85, 0.88, 0.94, 1.0) },
-                    );
+                fonts.draw_ui_bold(
+                    item.tag(),
+                    col_x + scaler.s(18.0),
+                    curr_y + opt_card_h * 0.25,
+                    scaler.font_s(9.5),
+                    if is_sel { accent } else { Palette::UI_TEXT_MUTED },
+                );
 
-                    let spec_str = format!("{} BHP • {} kg • {}", car.bhp, car.weight_kg, car.drivetrain);
-                    fonts.draw_ui_regular(
-                        &spec_str,
-                        col_x + scaler.s(16.0),
-                        card_y + tier_card_h * 0.86,
-                        scaler.font_s(10.0),
-                        Palette::UI_TEXT_MUTED,
-                    );
-
-                    if is_tier_sel {
+                // Right-aligned status indicators
+                match item {
+                    ModalityItem::PlayerProfile => {
+                        let profile_str = format!("👤 {}", active_profile.name);
                         fonts.draw_ui_bold(
-                            "[ENTER] INSPECT",
-                            col_x + col_w - scaler.s(220.0),
-                            card_y + tier_card_h * 0.62,
+                            &profile_str,
+                            col_x + col_w - scaler.s(180.0),
+                            curr_y + opt_card_h * 0.25,
+                            scaler.font_s(10.0),
+                            Palette::NEON_CYAN,
+                        );
+                    }
+                    ModalityItem::Garage => {
+                        fonts.draw_ui_bold(
+                            "🏎️ 360° SHOWROOM",
+                            col_x + col_w - scaler.s(160.0),
+                            curr_y + opt_card_h * 0.25,
                             scaler.font_s(10.0),
                             Palette::NEON_GOLD,
                         );
                     }
-
-                    // Mini lateral profile silhouette rendered on right edge of card
-                    let mini_scheme = CarColorScheme {
-                        primary: car.primary_color,
-                        secondary: car.secondary_color,
-                        helmet: Palette::WHITE,
-                    };
-                    crate::render::render_real_car_lateral_by_id(
-                        car.id,
-                        &mini_scheme,
-                        col_x + col_w - scaler.s(60.0),
-                        card_y + tier_card_h - scaler.s(10.0),
-                        scaler.s(0.44),
-                        0.0,
-                        false,
-                    );
-                }
-            }
-        }
-        ModalityCategory::CircuitCatalogue => {
-            // Hero Action Card at Top: "ENTER CIRCUIT CATALOGUE"
-            let hero_btn_h = scaler.s(56.0);
-            let is_hero_sel = selected_idx == 0;
-            scaler.draw_glass_card(
-                col_x,
-                start_y,
-                col_w,
-                hero_btn_h,
-                if is_hero_sel { Color::new(0.18, 0.24, 0.38, 0.95) } else { Color::new(0.08, 0.12, 0.18, 0.85) },
-                if is_hero_sel { Palette::NEON_CYAN } else { active_module_accent },
-                if is_hero_sel { 2.4 } else { 1.2 },
-            );
-
-            if is_hero_sel {
-                draw_rectangle(col_x, start_y, scaler.s(6.0), hero_btn_h, Palette::NEON_CYAN);
-            }
-
-            fonts.draw_display(
-                "🏁 ENTER CIRCUIT CATALOGUE",
-                col_x + scaler.s(18.0),
-                start_y + scaler.s(22.0),
-                scaler.font_s(15.5),
-                if is_hero_sel { Palette::WHITE } else { Palette::NEON_CYAN },
-            );
-            fonts.draw_ui_regular(
-                "PRESS [ENTER] OR [T] TO BROWSE, TEST DRIVE, CLONE & EDIT CIRCUITS",
-                col_x + scaler.s(18.0),
-                start_y + scaler.s(42.0),
-                scaler.font_s(10.0),
-                Palette::NEON_GOLD,
-            );
-
-            if is_hero_sel {
-                fonts.draw_ui_bold(
-                    "OPEN CATALOGUE ▶",
-                    col_x + col_w - scaler.s(180.0),
-                    start_y + scaler.s(32.0),
-                    scaler.font_s(12.0),
-                    Palette::NEON_CYAN,
-                );
-            }
-
-            // Active Module Track Cards (Up to 5 tracks)
-            let card_gap = scaler.s(7.0);
-            let tracks_start_y = start_y + hero_btn_h + card_gap;
-            let tracks_available_h = available_h - hero_btn_h - card_gap;
-            let max_tracks = available_tracks.len().min(5);
-            let track_card_h = if max_tracks > 0 {
-                ((tracks_available_h - card_gap * 4.0) / 5.0).clamp(scaler.s(46.0), scaler.s(74.0))
-            } else {
-                scaler.s(60.0)
-            };
-
-            for (idx, track) in available_tracks.iter().take(5).enumerate() {
-                let card_idx = idx + 1;
-                let is_card_sel = selected_idx == card_idx;
-                let card_y = tracks_start_y + (idx as f32) * (track_card_h + card_gap);
-
-                scaler.draw_glass_card(
-                    col_x,
-                    card_y,
-                    col_w,
-                    track_card_h,
-                    if is_card_sel { Color::new(0.14, 0.18, 0.28, 0.95) } else { Color::new(0.06, 0.08, 0.12, 0.70) },
-                    if is_card_sel { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
-                    if is_card_sel { 2.2 } else { 1.0 },
-                );
-
-                if is_card_sel {
-                    draw_rectangle(col_x, card_y, scaler.s(6.0), track_card_h, Palette::NEON_CYAN);
+                    ModalityItem::Settings => {
+                        fonts.draw_ui_bold(
+                            "⚙️ ARCADE CONFIG",
+                            col_x + col_w - scaler.s(160.0),
+                            curr_y + opt_card_h * 0.25,
+                            scaler.font_s(10.0),
+                            Palette::NEON_MAGENTA,
+                        );
+                    }
+                    _ => {}
                 }
 
-                let tag_str = track.tag_for_module(active_module_id);
-                fonts.draw_ui_bold(
-                    tag_str,
-                    col_x + scaler.s(16.0),
-                    card_y + track_card_h * 0.28,
-                    scaler.font_s(10.0),
-                    if is_card_sel { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
-                );
-
-                let is_official = track.is_official_preset();
-                if is_official {
-                    fonts.draw_ui_bold(
-                        "✓ OFFICIAL PRESET",
-                        col_x + col_w - scaler.s(170.0),
-                        card_y + track_card_h * 0.28,
-                        scaler.font_s(9.5),
-                        Palette::NEON_GREEN,
-                    );
+                let title_str = if is_sel {
+                    format!("▶ {}", item.title())
                 } else {
-                    fonts.draw_ui_bold(
-                        "★ CUSTOM CIRCUIT",
-                        col_x + col_w - scaler.s(170.0),
-                        card_y + track_card_h * 0.28,
-                        scaler.font_s(9.5),
-                        Palette::NEON_GOLD,
-                    );
-                }
-
-                let title_str = if is_card_sel {
-                    format!("▶ {}", track.title())
-                } else {
-                    track.title().to_string()
+                    item.title().to_string()
                 };
                 fonts.draw_display(
                     &title_str,
-                    col_x + scaler.s(16.0),
-                    card_y + track_card_h * 0.60,
-                    scaler.font_s(14.5),
-                    if is_card_sel { Palette::WHITE } else { Color::new(0.85, 0.88, 0.94, 1.0) },
+                    col_x + scaler.s(18.0),
+                    curr_y + opt_card_h * 0.55,
+                    scaler.font_s(17.0),
+                    if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
                 );
 
                 fonts.draw_ui_regular(
-                    track.description(),
-                    col_x + scaler.s(16.0),
-                    card_y + track_card_h * 0.86,
-                    scaler.font_s(10.0),
-                    Palette::UI_TEXT_MUTED,
+                    item.description(),
+                    col_x + scaler.s(18.0),
+                    curr_y + opt_card_h * 0.84,
+                    scaler.font_s(11.5),
+                    if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
                 );
 
-                if is_card_sel {
+                if is_sel {
+                    let prompt_str = match item {
+                        ModalityItem::PlayerProfile => "PRESS [ENTER] OR [P] TO OPEN ▶",
+                        ModalityItem::Garage => "PRESS [ENTER] OR [G] TO ENTER ▶",
+                        ModalityItem::Settings => "PRESS [ENTER] OR [X] TO CONFIGURE ▶",
+                        _ => "PRESS [ENTER] TO SELECT ▶",
+                    };
                     fonts.draw_ui_bold(
-                        "[ENTER] INSPECT",
+                        prompt_str,
                         col_x + col_w - scaler.s(220.0),
-                        card_y + track_card_h * 0.62,
-                        scaler.font_s(10.0),
-                        Palette::NEON_CYAN,
+                        curr_y + opt_card_h * 0.55,
+                        scaler.font_s(11.0),
+                        accent,
                     );
                 }
+
+                curr_y += opt_card_h + card_gap;
             }
         }
     }
 
     // Bottom Action Prompt / Controller Hints
     fonts.draw_ui_regular_centered(
-        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3/4] Switch Menu  •  [G] Garage  •  [T] Circuits  •  [ENTER/SPACE] Select  •  [ESC] Hub",
+        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [P] Profile  •  [X] Settings  •  [ENTER/SPACE] Select  •  [ESC] Hub",
         sw * 0.5,
         sh - scaler.s(14.0),
         scaler.font_s(11.5),
