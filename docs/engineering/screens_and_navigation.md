@@ -26,6 +26,10 @@ stateDiagram-v2
         ExitConfirmModal --> [*]: [ENTER / Y / Confirm]
     }
 
+    state "Race Modality Selection (ModalitySelect)" as ModalitySelect {
+        [*] --> ColumnNavigation
+    }
+
     state "Track Selection Menu (Menu)" as Menu {
         [*] --> LeftPanelTracks
         LeftPanelTracks --> RightPanelVehicle: [RIGHT / D]
@@ -47,10 +51,22 @@ stateDiagram-v2
         SelectButton --> ToggleCursor: [LEFT / RIGHT / UP / DOWN / A / D / W / S]
         SelectButton --> ConfirmAction: [ENTER / SPACE / A]
     }
-    state "Race Results & Podium (Finished)" as Finished
+
+    state "Race Results & Post-Race Hub (Finished)" as Finished {
+        [*] --> ResultsView
+        ResultsView --> HallOfFameView: [SPACE / ENTER / A]
+        HallOfFameView --> ResultsView: [ESC / B]
+        ResultsView --> StatisticsView: [TAB / S / X]
+        HallOfFameView --> StatisticsView: [TAB / S / X]
+        StatisticsView --> ResultsView: [TAB / S / X / ESC / B] (if from Results)
+        StatisticsView --> HallOfFameView: [TAB / S / X / ESC / B] (if from HoF)
+    }
+
     state "Championship Standings (ChampionshipStandings)" as ChampionshipStandings
     state "Arcade Settings Modal (ArcadeSettingsModal)" as ArcadeSettingsModal
     state "Garage Showroom (Garage)" as Garage
+    state "Circuit Hub & Workshop (TrackManager)" as TrackManager
+    state "CAD Spline Studio (TrackEditor)" as TrackEditor
 
     %% Grand Hub transitions
     ModuleSelect --> ModalitySelect: [ENTER / SPACE / A] (Configure Discipline)
@@ -64,18 +80,20 @@ stateDiagram-v2
     ModalitySelect --> ModuleSelect: [ESC / B] (Back to Grand Hub)
     ModalitySelect --> Menu: [ENTER / SPACE / A] (Quick Race, Custom Race, Time Trial, Free Ride, Split Screen)
     ModalitySelect --> ChampionshipStandings: [ENTER / SPACE / A] (Career Mode)
+    ModalitySelect --> Garage: [ENTER on Col 3 / G] (Open Garage Showroom)
+    ModalitySelect --> TrackManager: [ENTER on Col 4 / T] (Open Circuit Hub)
 
     %% Menu transitions
     Menu --> ModalitySelect: [ESC / TAB / B] (Return to Modality Selection)
     Menu --> StartingGrid: [SPACE / ENTER / A]
     Menu --> Garage: [G] (Open Garage Showroom)
-    Garage --> Menu: [ESC / B / Select]
+    Garage --> Menu: [ESC / B / Select] (if origin is Menu)
     Menu --> TrackManager: [T] or select Track Manager card
     Menu --> TrackEditor: [E] (Launch Editor with Selected Track)
     Menu --> ChampionshipStandings: [F] (GT World Challenge / NASCAR Cup Championship Mode)
     Menu --> ProfileManager: [P / Y]
     Menu --> ControlsHelp: [K]
-    Menu --> ArcadeSettingsModal: [O]
+    Menu --> ArcadeSettingsModal: [X / O]
     ArcadeSettingsModal --> Menu: [ESC / B / Save] (if opened from Menu)
 
     %% StartingGrid transitions
@@ -83,8 +101,11 @@ stateDiagram-v2
     StartingGrid --> DriverCards: [D / Y]
     DriverCards --> StartingGrid: [ESC / ENTER / B]
     StartingGrid --> Garage: [G] (Inspect Car Details)
-    Garage --> StartingGrid: [ESC / B]
+    Garage --> StartingGrid: [ESC / B] (if origin is StartingGrid)
     StartingGrid --> Menu: [ESC / B]
+
+    %% Garage transitions
+    Garage --> ModalitySelect: [ESC / B] (if origin is ModalitySelect)
 
     %% Race Loop transitions
     Countdown --> Racing: Timer Expires (3.5s)
@@ -95,10 +116,13 @@ stateDiagram-v2
     ControlsHelp --> Paused: [ESC / ENTER / K / B] (if from_paused)
     Paused --> ArcadeSettingsModal: [O / Y]
     ArcadeSettingsModal --> Paused: [ESC / B / Save] (if opened from Paused)
-    Racing --> Finished: Lap Count Reached
-    Finished --> StartingGrid: [SPACE / ENTER / A] (Restart Race)
-    Finished --> ChampionshipStandings: [SPACE / ENTER] (If Championship Active)
-    Finished --> Menu: [ESC / B]
+    Racing --> Finished: Lap Count Reached (starts in Results view)
+
+    %% Post-Race Finished transitions
+    Finished --> Countdown: [R / Y] (Instant Restart Race)
+    Finished --> Menu: [ESC / B] (from Results view)
+    Finished --> Menu: [SPACE / ENTER / A] (from HallOfFame view)
+    Finished --> ChampionshipStandings: [SPACE / ENTER / A] (from HallOfFame if Championship Active)
 
     %% Championship transitions
     ChampionshipStandings --> StartingGrid: [SPACE / ENTER / A] (Next Round)
@@ -112,7 +136,8 @@ stateDiagram-v2
 
     %% Track Manager & Studio flow
     TrackManager --> TrackEditor: [E / N / C] (Edit, New Spline, or Clone)
-    TrackManager --> Menu: [ESC / B]
+    TrackManager --> ModalitySelect: [ESC / B] (if opened from ModalitySelect)
+    TrackManager --> Menu: [ESC / B] (if opened from Menu)
     TrackEditor --> StartingGrid: [SPACE / P] (Launch Time Trial Test Drive)
     TrackEditor --> TrackManager: [ESC] (Exit Studio)
 
@@ -232,7 +257,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `E` | Launch CAD Studio | Loads highlighted circuit into Track CAD Editor -> `GameState::TrackEditor` |
 | `F` | Start Championship | Launches Championship mode (e.g. F1 World Championship) |
 | `P` / Gamepad `Y` | Profile Manager | Opens `GameState::ProfileManager` |
-| `O` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
+| `X` / `O` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
 | `K` | Controls Help | Opens `GameState::ControlsHelp(false)` |
 | `Escape` / `G` / Gamepad `B` | Return to Modality | Transitions back to Modality Selection -> `GameState::ModalitySelect` |
 
@@ -328,20 +353,24 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 ---
 
-### 3.7. Race Results & Podium (`GameState::Finished`)
-* **Purpose**: Session completion screen showing final standings, lap records, career awards, and Hall of Fame.
+### 3.7. Race Results, Hall of Fame & Telemetry Statistics (`GameState::Finished`)
+* **Purpose**: Session completion stage presenting final standings, circuit best records, career progression awards, Hall of Fame leaderboard, and granular stunt/lap telemetry.
 * **State Struct**: `GameState::Finished`
-* **Components**:
-  - Podium standings table (Position, Driver Name, Car, Total Race Time, Best Lap Time, Delta to Leader).
-  - Career XP / achievement badges earned.
-  - Hall of Fame leaderboard records card.
+* **Internal Sub-Views (`FinishedScreenView`)**:
+  - `FinishedScreenView::Results`: Podium standings table (Position, Driver Name, Car, Total Race Time, Best Lap Time, Delta to Leader, Career XP / Achievement badges).
+  - `FinishedScreenView::HallOfFame`: High score and best lap records leaderboard for the completed circuit.
+  - `FinishedScreenView::Statistics`: Detailed telemetry metrics table breaking down individual lap sector times, personal bests, top speed (km/h & m/s), total drift score, drift count, jump count, total air time, and max acrobatic combo.
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Space` / `Enter` / Gamepad `A` | Restart / Next Race | If single race: re-initializes race -> `GameState::StartingGrid`<br>If championship: -> `GameState::ChampionshipStandings` |
-| `Left` / `Right` / `A` / `D` / `Tab` / Gamepad `X` | Toggle Hall of Fame | Switches between podium results table and all-time Hall of Fame leaderboard |
-| `Escape` / Gamepad `B` | Return to Menu | Transitions to `GameState::Menu` |
+| `Space` / `Enter` / Gamepad `A` (in `Results`) | Advance to Leaderboard | Transitions view to `FinishedScreenView::HallOfFame` |
+| `Space` / `Enter` / Gamepad `A` (in `HallOfFame`) | Return to Menu / Advance | If single race: returns to Track Selection Menu -> `GameState::Menu`<br>If championship active: advances to `GameState::ChampionshipStandings` |
+| `R` / Gamepad `Y` | Restart Race | Immediately restarts the race session with current circuit and vehicle -> `GameState::Countdown(3.5)` |
+| `Tab` / `S` / Gamepad `X` | Toggle Statistics | Toggles between current view (`Results` or `HallOfFame`) and `FinishedScreenView::Statistics` |
+| `Escape` / Gamepad `B` (in `Statistics`) | Back to Previous View | Returns to origin view (`Results` or `HallOfFame`) |
+| `Escape` / Gamepad `B` (in `HallOfFame`) | Back to Results | Returns to `FinishedScreenView::Results` |
+| `Escape` / Gamepad `B` (in `Results`) | Return to Menu | Transitions back to `GameState::Menu` |
 
 ---
 
@@ -483,12 +512,19 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 ### 3.15. Arcade Settings Modal (`ArcadeSettingsModal`)
 * **Purpose**: Comprehensive arcade cabinet preferences overlay configuring Audio, Controls, Display, and Gameplay options.
-* **Host Screens**: Accessible from `GameState::ModuleSelect` (`O` / `X`), `GameState::Menu` (`O`), and `GameState::Paused` (`O` / Gamepad `Y`).
+* **Host Screens**: Accessible from `GameState::ModuleSelect` (`X` / `O`), `GameState::Menu` (`X` / `O`), and `GameState::Paused` (`O` / Gamepad `Y`).
 * **Category Tabs**:
   - `AUDIO`: Master Volume, Music Volume, SFX Volume, UI Sounds Volume, Audio Output (Unmuted / Muted).
   - `CONTROLS`: Left Stick Deadzone, Analog Trigger Deadzone, Steering Sensitivity, Steering Exponent.
   - `DISPLAY`: Screen Resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), Display Mode (Windowed / Fullscreen), UI Scaling, CRT Scanlines, Color Theme.
   - `GAMEPLAY`: Assist Profile (`Arcade`, `Sport`, `Pro`), Speedometer Unit (`km/h`, `mph`), Ghost Replay Shadow Car.
+* **Unsaved Changes Protection**:
+  - Automatically captures baseline settings snapshot upon entry.
+  - If settings are unmodified, `Escape` / Gamepad `B` exits immediately without prompting.
+  - If settings are modified and `Escape` / Gamepad `B` is pressed, opens `UnsavedSettingsModal` asking whether to:
+    - **[SAVE & EXIT]** (`S` / `Enter`): Applies all settings to session/audio/display/gamepad and saves to disk.
+    - **[QUIT & LOSE]** (`Q` / `D`): Drops uncommitted modifications and closes modal.
+    - **[CANCEL]** (`Escape` / Gamepad `B`): Dismisses confirmation dialog and stays in settings.
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
@@ -501,15 +537,18 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `Up` / `Down` / `W` / `S` (Settings rows) | Navigate Rows | Moves through setting widgets and bottom action buttons |
 | `Left` / `Right` (Bottom button row) | Select Bottom Button | Toggles between **[RESTORE DEFAULTS]** and **[SAVE & CLOSE]** |
 | `Enter` / `Space` / Gamepad `A` (Bottom row) | Execute Action | Restores default preferences or saves and closes modal |
-| `Escape` / Gamepad `B` | Cancel & Close | Discards uncommitted changes and closes modal |
+| `Escape` / Gamepad `B` | Exit Settings | If clean: closes immediately. If dirty: opens Unsaved Changes modal |
 
 ---
 
 ### 3.16. Garage Showroom (`GameState::Garage`)
 * **Purpose**: Vehicle inspection showroom providing dual-view graphics (2D lateral profile & top-down turntable), vehicle historical dossier, real-world engineering specifications, performance radar, and live engine rev audio testing.
-* **State Struct**: `GameState::Garage { category_idx: usize, car_idx: usize, view_mode: GarageViewMode, is_revving: bool }`
+* **State Struct**: `GameState::Garage(GarageOrigin)`
+  - `GarageOrigin::ModalitySelect`: Opened from Race Modality Selection (Category 3 or `G`). Returns to `GameState::ModalitySelect`.
+  - `GarageOrigin::Menu`: Opened from Track & Setup Menu (`G`). Returns to `GameState::Menu`.
+  - `GarageOrigin::StartingGrid`: Opened from Starting Grid setup (`G`). Returns to `GameState::StartingGrid`.
 * **Components**:
-  - **Showroom Stage**: 2D Lateral profile vector model with brake calipers, spoke alloys, rim detailing, and polished floor mirror reflection; toggleable to Top-Down 360° turntable view.
+  - **Showroom Stage**: 2D Lateral profile vector model with brake calipers, spoke alloys, rim detailing, and polished floor mirror reflection; toggleable (`Tab` / Gamepad `X`) to Top-Down 360° turntable view.
   - **Historical Dossier Panel**: Motorsport lineage, championship titles, technical innovations, and manufacturer heritage.
   - **Engineering Telemetry Panel**: Weight (kg), F/R weight balance, BHP, Torque (Nm), Top Speed (km/h & mph), 0-100 km/h sprint, Downforce ($C_l \cdot A$), Braking force (N), and electronic assists.
   - **Performance Radar**: Hexagonal comparative stat chart (Speed, Acceleration, Grip, Drift, Braking, Downforce).
@@ -518,23 +557,67 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Q` / `E` / Gamepad `LB` / `RB` | Switch Category | Cycles motorsport class (GT4, GT3, GT2, GT1, Hypercar, F1, Rally, Kart, etc.) |
+| `Q` / `E` / Gamepad `LB` / `RB` | Switch Category | Cycles motorsport class (GT4, GT3, GT2, GT1, Hypercar, F1, Rally, Kart, Stock Car, Sand Rail) |
 | `A` / `D` / `Left` / `Right` | Cycle Vehicle | Cycles authentic real-world car models in active category |
 | `Tab` / Gamepad `X` | Toggle Dual-View | Swaps between 2D Lateral Profile and Top-Down Turntable view |
 | `Space` / Gamepad `RT` (Hold) | Rev Engine | Plays dynamic engine rev audio, moves tachometer, animates exhaust backfires & brake heat glow |
 | `L` / Gamepad `Y` | Cycle Livery | Cycles factory race liveries and sponsor colorways |
-| `Enter` / Gamepad `A` | Select Vehicle | Confirms vehicle selection and returns to Menu / Starting Grid |
-| `Escape` / Gamepad `B` | Return to Menu | Exits Garage without changing vehicle -> `GameState::Menu` |
+| `Enter` / Gamepad `A` | Select Vehicle | Confirms vehicle selection and returns to origin screen (`ModalitySelect`, `Menu`, or `StartingGrid`) |
+| `Escape` / Gamepad `B` | Return to Origin | Exits Garage without changing vehicle -> returns to origin screen (`ModalitySelect`, `Menu`, or `StartingGrid`) |
 
 ---
 
 ## 4. Game Modes & Vehicle Allocation Schema
 
-The system supports four distinct operational game modes selectable from the pre-race setup screen:
+The system supports six distinct operational game modes selectable from the pre-race setup screen:
 
 ```json
 {
   "game_modes": [
+    {
+      "mode_id": "StandardRace",
+      "title": "Standard Race",
+      "tag": "PREDEFINED CAR • GRID",
+      "description": "All drivers compete using the circuit's official predefined car.",
+      "allows_car_change": false,
+      "has_bots": true,
+      "has_ghost": false,
+      "is_time_attack": false,
+      "grid_allocation": "Player and all AI bots enforced to circuit's predefined car"
+    },
+    {
+      "mode_id": "Career",
+      "title": "Career Mode",
+      "tag": "5-TIER CAMPAIGN • XP & UNLOCKS",
+      "description": "5-tier GT championship campaign with XP, level progression, and car/circuit unlocks.",
+      "allows_car_change": false,
+      "has_bots": true,
+      "has_ghost": false,
+      "is_time_attack": false,
+      "grid_allocation": "Full championship driver roster with standings and season points"
+    },
+    {
+      "mode_id": "ExperimentalRace",
+      "title": "Experimental Race",
+      "tag": "CUSTOM CAR SPEC • MULTI-CAR",
+      "description": "All drivers compete using the car model specified by the player.",
+      "allows_car_change": true,
+      "has_bots": true,
+      "has_ghost": false,
+      "is_time_attack": false,
+      "grid_allocation": "Player and all AI bots use user-selected car model"
+    },
+    {
+      "mode_id": "SplitScreen",
+      "title": "2P Split Screen",
+      "tag": "LOCAL 2-PLAYER • KEYS VS GAMEPAD",
+      "description": "2 simultaneous local players competing head-to-head (P1 on Keyboard vs P2 on Gamepad).",
+      "allows_car_change": true,
+      "has_bots": true,
+      "has_ghost": false,
+      "is_time_attack": false,
+      "grid_allocation": "2 human drivers + remaining AI grid slots"
+    },
     {
       "mode_id": "TimeTrial",
       "title": "Time Trial",
@@ -556,28 +639,6 @@ The system supports four distinct operational game modes selectable from the pre
       "has_ghost": false,
       "is_time_attack": true,
       "grid_allocation": "1 human driver (unlimited practice session, zero traffic)"
-    },
-    {
-      "mode_id": "StandardRace",
-      "title": "Standard Race",
-      "tag": "PREDEFINED CAR • GRID",
-      "description": "All drivers compete using the circuit's official predefined car.",
-      "allows_car_change": false,
-      "has_bots": true,
-      "has_ghost": false,
-      "is_time_attack": false,
-      "grid_allocation": "Player and all AI bots enforced to circuit's predefined car"
-    },
-    {
-      "mode_id": "ExperimentalRace",
-      "title": "Experimental Race",
-      "tag": "CUSTOM CAR SPEC • MULTI-CAR",
-      "description": "All drivers compete using the car model specified by the player.",
-      "allows_car_change": true,
-      "has_bots": true,
-      "has_ghost": false,
-      "is_time_attack": false,
-      "grid_allocation": "Player and all AI bots use user-selected car model"
     }
   ]
 }
@@ -590,9 +651,11 @@ The system supports four distinct operational game modes selectable from the pre
 | Modal Name | Host Screen | Trigger Input | Dismiss Input | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
 | **Exit Confirm Dialog** | `ModuleSelect` | `Escape` / Gamepad `B` | `Escape` / `N` / Gamepad `B` | Prevents accidental application close |
-| **Arcade Settings Modal** | `ModuleSelect`, `Menu`, `Paused` | `X` (Hub), `O` (Menu), `O` / Gamepad `Y` (Paused) | `Escape` / Gamepad `B` / Click Save/Cancel | Full cabinet arcade settings modal: Master/Music/SFX volume, stereo balance, audio mute, screen resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), display mode (Windowed / Fullscreen), UI scaling, CRT scanline presets, color themes, and driving assists |
-| **Hall of Fame Overlay** | `Finished` | `Tab` / Gamepad `X` | `Tab` / Gamepad `X` | Toggles all-time leaderboard records vs session podium |
+| **Arcade Settings Modal** | `ModuleSelect`, `Menu`, `Paused` | `X` (Hub), `O` (Menu), `O` / Gamepad `Y` (Paused) | `Escape` / Gamepad `B` / Click Save/Cancel | Full cabinet arcade settings modal: Master/Music/SFX volume, audio output mute, screen resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), display mode (Windowed / Fullscreen), UI scaling, CRT scanline presets, vehicle shadows, color themes, and driving assists |
+| **Unsaved Settings Confirmation** | `ArcadeSettingsModal` | `Escape` / Gamepad `B` (when settings modified) | `S` (Save & Exit), `Q` / `D` (Quit & Discard), `Escape` (Cancel) | Guards against accidental loss of modified audio, display, or control preferences |
+| **Coming Soon Modal** | `ModalitySelect` | `Enter` / Gamepad `A` on LAN / Cloud cards | `Escape` / `Enter` / Gamepad `A` / `B` | Informs user that LAN and Cloud online multiplayer formats are in active development |
 | **Edit Track Metadata** | `TrackManager` | `I` (on custom track) | `Enter` (save) / `Escape` (cancel) | Edits circuit title and description |
 | **Select Module Promotion** | `TrackManager` | `P` / Gamepad `Y` | `Enter` / Gamepad `A` (confirm) / `Escape` / `B` (cancel) | Promotes track or adds/removes module distribution |
 | **Delete Track Modal** | `TrackManager` | `Delete` / `Backspace` | `Y` (confirm) / `N` / `Escape` (cancel) | Confirms custom track file deletion |
+| **Leaderboard Name Input Modal** | `Finished` (in Hall of Fame) | Automatic upon high score / record | `Enter` (submit) / `Escape` (skip) | Records 3-letter arcade driver callsign initials into persistent database |
 

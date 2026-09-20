@@ -924,6 +924,8 @@ impl RaceSession {
         let is_fs = self.config.display.fullscreen;
         modal.set_display_state(w, h, is_fs);
 
+        modal.snapshot_initial();
+
         self.settings_modal = Some(modal);
     }
 
@@ -4658,8 +4660,8 @@ impl RaceSession {
             return;
         }
 
-        // Open Arcade Settings Modal (O key)
-        if is_key_pressed(KeyCode::O) {
+        // Open Arcade Settings Modal (X or O key)
+        if is_key_pressed(KeyCode::X) || is_key_pressed(KeyCode::O) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.open_settings_modal();
             return;
@@ -4852,12 +4854,6 @@ impl RaceSession {
                 }
                 _ => {}
             }
-        }
-
-        // Toggle Mode (Time Attack vs Race vs AI - X key or Gamepad X)
-        if is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
-            self.is_time_attack = !self.is_time_attack;
-            self.audio.play_sfx(SfxType::UiSelect);
         }
 
         // Cycle Audio Volume (V key)

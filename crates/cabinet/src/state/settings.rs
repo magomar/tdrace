@@ -5,6 +5,7 @@ use crate::audio::AudioSettings;
 use crate::input::{GamepadConfig, NavGrid2D};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::display::{safe_request_screen_size, safe_set_fullscreen, DisplayResolution, WindowMode};
+use crate::ui::scaler::UiScaler;
 use crate::ui::theme::Palette;
 use crate::ui::widgets::{
     draw_dropdown, draw_dropdown_popup, draw_slider, draw_tab_bar, DropdownWidget, SliderWidget,
@@ -14,6 +15,286 @@ use crate::ui::widgets::{
 #[inline]
 fn safe_key_pressed(key: KeyCode) -> bool {
     std::panic::catch_unwind(|| macroquad::input::is_key_pressed(key)).unwrap_or(false)
+}
+
+/// Baseline snapshot of all configurable arcade settings to determine dirty/modified state.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SettingsSnapshot {
+    pub master_volume: f32,
+    pub music_volume: f32,
+    pub sfx_volume: f32,
+    pub ui_volume: f32,
+    pub mute_idx: usize,
+    pub stick_deadzone: f32,
+    pub trigger_deadzone: f32,
+    pub steer_sensitivity: f32,
+    pub steer_exponent: f32,
+    pub resolution_idx: usize,
+    pub display_mode_idx: usize,
+    pub ui_scale_idx: usize,
+    pub scanlines_idx: usize,
+    pub vehicle_shadows_idx: usize,
+    pub theme_idx: usize,
+    pub assist_idx: usize,
+    pub speed_unit_idx: usize,
+    pub ghost_car_idx: usize,
+}
+
+impl Default for SettingsSnapshot {
+    fn default() -> Self {
+        Self {
+            master_volume: 0.0,
+            music_volume: 0.0,
+            sfx_volume: 0.0,
+            ui_volume: 0.0,
+            mute_idx: 0,
+            stick_deadzone: 0.0,
+            trigger_deadzone: 0.0,
+            steer_sensitivity: 0.0,
+            steer_exponent: 0.0,
+            resolution_idx: 0,
+            display_mode_idx: 0,
+            ui_scale_idx: 0,
+            scanlines_idx: 0,
+            vehicle_shadows_idx: 0,
+            theme_idx: 0,
+            assist_idx: 0,
+            speed_unit_idx: 0,
+            ghost_car_idx: 0,
+        }
+    }
+}
+
+/// User choice when prompted about unsaved settings changes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UnsavedSettingsAction {
+    None,
+    Save,
+    Quit,
+    Cancel,
+}
+
+/// Interactive modal dialog asking whether to save changes, discard/quit, or cancel.
+#[derive(Debug, Clone)]
+pub struct UnsavedSettingsModal {
+    pub selected_button: usize, // 0: Save & Exit, 1: Quit & Lose, 2: Cancel
+}
+
+impl Default for UnsavedSettingsModal {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl UnsavedSettingsModal {
+    pub fn new() -> Self {
+        Self {
+            selected_button: 0,
+        }
+    }
+
+    pub fn handle_input(&mut self, ctx: &mut CabinetContext, scaler: &UiScaler) -> UnsavedSettingsAction {
+        // Direct key shortcuts:
+        if safe_key_pressed(KeyCode::S) {
+            ctx.play_ui_select();
+            return UnsavedSettingsAction::Save;
+        }
+        if safe_key_pressed(KeyCode::Q) || safe_key_pressed(KeyCode::D) {
+            ctx.play_ui_cancel();
+            return UnsavedSettingsAction::Quit;
+        }
+        if safe_key_pressed(KeyCode::Escape)
+            || ctx.gamepad.btn_cancel_pressed
+            || ctx.gamepad.btn_b_pressed
+            || ctx.gamepad.btn_back_pressed
+        {
+            ctx.play_ui_cancel();
+            return UnsavedSettingsAction::Cancel;
+        }
+
+        // Arrow navigation:
+        let nav_left = safe_key_pressed(KeyCode::Left) || safe_key_pressed(KeyCode::A) || ctx.gamepad.nav_left;
+        let nav_right = safe_key_pressed(KeyCode::Right) || safe_key_pressed(KeyCode::D) || ctx.gamepad.nav_right;
+
+        if nav_left {
+            if self.selected_button > 0 {
+                self.selected_button -= 1;
+                ctx.play_ui_move();
+            }
+        } else if nav_right {
+            if self.selected_button < 2 {
+                self.selected_button += 1;
+                ctx.play_ui_move();
+            }
+        }
+
+        // Layout for mouse hover / clicks:
+        let sw = scaler.screen_w;
+        let sh = scaler.screen_h;
+        let box_w = (sw * 0.52).clamp(scaler.s(480.0), scaler.s(680.0));
+        let box_h = scaler.s(220.0);
+        let box_x = (sw - box_w) * 0.5;
+        let box_y = (sh - box_h) * 0.5;
+
+        let btn_w = (box_w - scaler.s(60.0)) / 3.0;
+        let btn_h = scaler.s(44.0);
+        let btn_y = box_y + box_h - btn_h - scaler.s(24.0);
+        let btn0_x = box_x + scaler.s(18.0);
+        let btn1_x = btn0_x + btn_w + scaler.s(12.0);
+        let btn2_x = btn1_x + btn_w + scaler.s(12.0);
+
+        let r0 = (btn0_x, btn_y, btn_w, btn_h);
+        let r1 = (btn1_x, btn_y, btn_w, btn_h);
+        let r2 = (btn2_x, btn_y, btn_w, btn_h);
+
+        if NavGrid2D::check_mouse_hover(r0) && self.selected_button != 0 {
+            self.selected_button = 0;
+            ctx.play_ui_move();
+        } else if NavGrid2D::check_mouse_hover(r1) && self.selected_button != 1 {
+            self.selected_button = 1;
+            ctx.play_ui_move();
+        } else if NavGrid2D::check_mouse_hover(r2) && self.selected_button != 2 {
+            self.selected_button = 2;
+            ctx.play_ui_move();
+        }
+
+        if NavGrid2D::check_mouse_click(r0) {
+            ctx.play_ui_select();
+            return UnsavedSettingsAction::Save;
+        }
+        if NavGrid2D::check_mouse_click(r1) {
+            ctx.play_ui_cancel();
+            return UnsavedSettingsAction::Quit;
+        }
+        if NavGrid2D::check_mouse_click(r2) {
+            ctx.play_ui_cancel();
+            return UnsavedSettingsAction::Cancel;
+        }
+
+        // Confirm button:
+        let is_confirm = safe_key_pressed(KeyCode::Enter)
+            || safe_key_pressed(KeyCode::KpEnter)
+            || safe_key_pressed(KeyCode::Space)
+            || ctx.gamepad.btn_confirm_pressed
+            || ctx.gamepad.btn_a_pressed;
+
+        if is_confirm {
+            match self.selected_button {
+                0 => {
+                    ctx.play_ui_select();
+                    UnsavedSettingsAction::Save
+                }
+                1 => {
+                    ctx.play_ui_cancel();
+                    UnsavedSettingsAction::Quit
+                }
+                _ => {
+                    ctx.play_ui_cancel();
+                    UnsavedSettingsAction::Cancel
+                }
+            }
+        } else {
+            UnsavedSettingsAction::None
+        }
+    }
+
+    pub fn draw(&self, ctx: &CabinetContext) {
+        let sw = ctx.scaler.screen_w;
+        let sh = ctx.scaler.screen_h;
+        let scaler = ctx.scaler;
+        let fonts = ctx.fonts;
+
+        // Dark dim backdrop over settings modal
+        draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
+
+        let box_w = (sw * 0.52).clamp(scaler.s(480.0), scaler.s(680.0));
+        let box_h = scaler.s(220.0);
+        let box_x = (sw - box_w) * 0.5;
+        let box_y = (sh - box_h) * 0.5;
+
+        // Glassmorphism card with warning gold border
+        scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 2.2);
+
+        // Title
+        fonts.draw_display_centered_with_shadow(
+            "SETTINGS HAVE CHANGED",
+            sw * 0.5,
+            box_y + scaler.s(36.0),
+            scaler.font_s(22.0),
+            Palette::WHITE,
+            Color::new(0.0, 0.0, 0.0, 0.6),
+            scaler.s(2.0),
+        );
+
+        // Subtitle / message
+        fonts.draw_ui_bold_centered(
+            "You have unsaved changes in your settings.",
+            sw * 0.5,
+            box_y + scaler.s(72.0),
+            scaler.font_s(14.0),
+            Palette::NEON_GOLD,
+        );
+        fonts.draw_ui_regular_centered(
+            "Would you like to save before exiting, or quit and lose your changes?",
+            sw * 0.5,
+            box_y + scaler.s(98.0),
+            scaler.font_s(13.0),
+            Palette::UI_TEXT_MUTED,
+        );
+
+        // Buttons
+        let btn_w = (box_w - scaler.s(60.0)) / 3.0;
+        let btn_h = scaler.s(44.0);
+        let btn_y = box_y + box_h - btn_h - scaler.s(24.0);
+        let btn0_x = box_x + scaler.s(18.0);
+        let btn1_x = btn0_x + btn_w + scaler.s(12.0);
+        let btn2_x = btn1_x + btn_w + scaler.s(12.0);
+
+        let btns = [
+            (btn0_x, "SAVE & EXIT", 0, Palette::NEON_GREEN),
+            (btn1_x, "QUIT & LOSE", 1, Palette::NEON_RED),
+            (btn2_x, "CANCEL", 2, Palette::NEON_CYAN),
+        ];
+
+        for (bx, label, idx, accent_col) in btns {
+            let is_sel = self.selected_button == idx;
+            let bg = if is_sel {
+                Palette::UI_CARD_BG_HOVER
+            } else {
+                Palette::UI_CARD_BG
+            };
+            let border = if is_sel {
+                accent_col
+            } else {
+                Palette::UI_CARD_BORDER
+            };
+            let border_w = if is_sel { 2.4 } else { 1.2 };
+
+            scaler.draw_glass_card(bx, btn_y, btn_w, btn_h, bg, border, border_w);
+
+            let txt_col = if is_sel {
+                Palette::WHITE
+            } else {
+                Palette::UI_TEXT_MUTED
+            };
+            fonts.draw_ui_bold_centered(
+                label,
+                bx + btn_w * 0.5,
+                btn_y + btn_h * 0.62,
+                scaler.font_s(13.0),
+                txt_col,
+            );
+        }
+
+        // Footer helper
+        fonts.draw_ui_regular_centered(
+            "[Left/Right] Select  •  [Enter] Confirm  •  [S] Save  •  [Q] Discard  •  [ESC] Cancel",
+            sw * 0.5,
+            box_y + box_h - scaler.s(6.0),
+            scaler.font_s(10.5),
+            Palette::UI_TEXT_MUTED,
+        );
+    }
 }
 
 /// Comprehensive, reusable Arcade Settings Modal screen.
@@ -52,6 +333,8 @@ pub struct ArcadeSettingsModal {
     pub is_tab_focused: bool,
     pub selected_bottom_btn: usize,
     pub is_saved: bool,
+    pub initial_snapshot: SettingsSnapshot,
+    pub unsaved_confirm_modal: Option<UnsavedSettingsModal>,
 }
 
 impl Default for ArcadeSettingsModal {
@@ -114,7 +397,7 @@ impl ArcadeSettingsModal {
         let speed_options = vec!["KM/H (Metric)".to_string(), "MPH (Imperial)".to_string()];
         let ghost_options = vec!["Enabled (Best Lap)".to_string(), "Disabled".to_string()];
 
-        Self {
+        let mut modal = Self {
             tab_bar,
             nav,
             master_slider: SliderWidget::percentage("MASTER VOLUME", audio.master_volume),
@@ -146,7 +429,11 @@ impl ArcadeSettingsModal {
             is_tab_focused: true,
             selected_bottom_btn: 1,
             is_saved: false,
-        }
+            initial_snapshot: SettingsSnapshot::default(),
+            unsaved_confirm_modal: None,
+        };
+        modal.snapshot_initial();
+        modal
     }
 
     /// Resets all values back to initial factory defaults.
@@ -244,6 +531,60 @@ impl ArcadeSettingsModal {
     pub fn set_vehicle_shadows(&mut self, enabled: bool) {
         self.vehicle_shadows_dropdown.set_selected(if enabled { 0 } else { 1 });
     }
+
+    /// Captures the current state of all setting widgets into a `SettingsSnapshot`.
+    pub fn current_snapshot(&self) -> SettingsSnapshot {
+        SettingsSnapshot {
+            master_volume: self.master_slider.normalized(),
+            music_volume: self.music_slider.normalized(),
+            sfx_volume: self.sfx_slider.normalized(),
+            ui_volume: self.ui_slider.normalized(),
+            mute_idx: self.mute_dropdown.selected_index,
+            stick_deadzone: self.stick_deadzone_slider.value,
+            trigger_deadzone: self.trigger_deadzone_slider.value,
+            steer_sensitivity: self.steer_sensitivity_slider.value,
+            steer_exponent: self.steer_exponent_slider.value,
+            resolution_idx: self.resolution_dropdown.selected_index,
+            display_mode_idx: self.display_mode_dropdown.selected_index,
+            ui_scale_idx: self.ui_scale_dropdown.selected_index,
+            scanlines_idx: self.scanlines_dropdown.selected_index,
+            vehicle_shadows_idx: self.vehicle_shadows_dropdown.selected_index,
+            theme_idx: self.theme_dropdown.selected_index,
+            assist_idx: self.assist_dropdown.selected_index,
+            speed_unit_idx: self.speed_unit_dropdown.selected_index,
+            ghost_car_idx: self.ghost_car_dropdown.selected_index,
+        }
+    }
+
+    /// Records the current state as the initial baseline snapshot.
+    pub fn snapshot_initial(&mut self) {
+        self.initial_snapshot = self.current_snapshot();
+    }
+
+    /// Returns true if any setting differs from the initial baseline snapshot.
+    pub fn has_changes(&self) -> bool {
+        let cur = self.current_snapshot();
+        let init = &self.initial_snapshot;
+
+        (cur.master_volume - init.master_volume).abs() > 0.001
+            || (cur.music_volume - init.music_volume).abs() > 0.001
+            || (cur.sfx_volume - init.sfx_volume).abs() > 0.001
+            || (cur.ui_volume - init.ui_volume).abs() > 0.001
+            || cur.mute_idx != init.mute_idx
+            || (cur.stick_deadzone - init.stick_deadzone).abs() > 0.001
+            || (cur.trigger_deadzone - init.trigger_deadzone).abs() > 0.001
+            || (cur.steer_sensitivity - init.steer_sensitivity).abs() > 0.001
+            || (cur.steer_exponent - init.steer_exponent).abs() > 0.001
+            || cur.resolution_idx != init.resolution_idx
+            || cur.display_mode_idx != init.display_mode_idx
+            || cur.ui_scale_idx != init.ui_scale_idx
+            || cur.scanlines_idx != init.scanlines_idx
+            || cur.vehicle_shadows_idx != init.vehicle_shadows_idx
+            || cur.theme_idx != init.theme_idx
+            || cur.assist_idx != init.assist_idx
+            || cur.speed_unit_idx != init.speed_unit_idx
+            || cur.ghost_car_idx != init.ghost_car_idx
+    }
 }
 
 impl CabinetScreen for ArcadeSettingsModal {
@@ -260,10 +601,66 @@ impl CabinetScreen for ArcadeSettingsModal {
         let sh = ctx.scaler.screen_h;
         let scaler = ctx.scaler;
 
-        // Cancel / Back closes modal without saving
+        // If the unsaved changes confirmation modal is active, update it:
+        if let Some(ref mut confirm_modal) = self.unsaved_confirm_modal {
+            match confirm_modal.handle_input(ctx, scaler) {
+                UnsavedSettingsAction::Save => {
+                    self.is_saved = true;
+                    self.unsaved_confirm_modal = None;
+                    return ScreenAction::Pop;
+                }
+                UnsavedSettingsAction::Quit => {
+                    self.is_saved = false;
+                    self.unsaved_confirm_modal = None;
+                    return ScreenAction::Pop;
+                }
+                UnsavedSettingsAction::Cancel => {
+                    self.unsaved_confirm_modal = None;
+                    return ScreenAction::None;
+                }
+                UnsavedSettingsAction::None => return ScreenAction::None,
+            }
+        }
+
+        // Check if any dropdown is currently open. If so, let it capture input
+        let is_any_dropdown_open = self.mute_dropdown.is_open
+            || self.resolution_dropdown.is_open
+            || self.display_mode_dropdown.is_open
+            || self.ui_scale_dropdown.is_open
+            || self.scanlines_dropdown.is_open
+            || self.vehicle_shadows_dropdown.is_open
+            || self.theme_dropdown.is_open
+            || self.assist_dropdown.is_open
+            || self.speed_unit_dropdown.is_open
+            || self.ghost_car_dropdown.is_open;
+
+        // Cancel / Back closes modal or prompts confirmation if settings have changed
         if self.nav.is_cancelled(ctx.gamepad.btn_cancel_pressed || ctx.gamepad.btn_b_pressed || ctx.gamepad.btn_back_pressed) {
-            ctx.play_ui_cancel();
-            return ScreenAction::Pop;
+            if is_any_dropdown_open {
+                // If a dropdown was open, close it first
+                self.mute_dropdown.is_open = false;
+                self.resolution_dropdown.is_open = false;
+                self.display_mode_dropdown.is_open = false;
+                self.ui_scale_dropdown.is_open = false;
+                self.scanlines_dropdown.is_open = false;
+                self.vehicle_shadows_dropdown.is_open = false;
+                self.theme_dropdown.is_open = false;
+                self.assist_dropdown.is_open = false;
+                self.speed_unit_dropdown.is_open = false;
+                self.ghost_car_dropdown.is_open = false;
+                ctx.play_ui_cancel();
+                return ScreenAction::None;
+            }
+
+            if self.has_changes() {
+                ctx.play_ui_select();
+                self.unsaved_confirm_modal = Some(UnsavedSettingsModal::new());
+                return ScreenAction::None;
+            } else {
+                ctx.play_ui_cancel();
+                self.is_saved = false;
+                return ScreenAction::Pop;
+            }
         }
 
         // Dialog box bounds
@@ -851,5 +1248,10 @@ impl CabinetScreen for ArcadeSettingsModal {
             scaler.font_s(11.0),
             Color::new(0.80, 0.88, 0.95, 0.85),
         );
+
+        // If the unsaved changes confirmation modal is active, render it on top:
+        if let Some(ref confirm_modal) = self.unsaved_confirm_modal {
+            confirm_modal.draw(ctx);
+        }
     }
 }

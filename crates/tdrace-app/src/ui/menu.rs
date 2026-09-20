@@ -1577,9 +1577,9 @@ pub fn render_track_select_menu(
     let btn_y = sh - btn_h - scaler.s(14.0);
 
     let footer_text = if crate::storage::is_dev_mode() {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [O] Settings  •  [ESC] Back"
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [X] Settings  •  [ESC] Back"
     } else {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [O] Settings  •  [K] Controls  •  [ESC] Back"
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [X] Settings  •  [K] Controls  •  [ESC] Back"
     };
 
     fonts.draw_ui_regular_centered(

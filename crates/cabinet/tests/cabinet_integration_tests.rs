@@ -246,6 +246,7 @@ fn test_arcade_settings_modal_lifecycle_and_bindings() {
     modal.restore_defaults();
     assert_eq!(modal.mute_dropdown.selected_index, 0); // Unmuted default
     assert_eq!(modal.theme_dropdown.selected_index, 0); // Cyberpunk Neon
+    modal.snapshot_initial();
 
     // Test on ScreenStack
     let root = Box::new(DummyScreen { name: "GameRoot".to_string() });
@@ -836,6 +837,105 @@ fn test_arcade_settings_modal_arrow_category_navigation() {
     assert!(matches!(pop_action, ScreenAction::Pop));
     assert!(modal.is_saved);
 }
+
+#[test]
+fn test_arcade_settings_dirty_tracking_and_exit_modal() {
+    let audio = AudioSettings::default();
+    let gp_config = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp_config);
+
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let fonts = Fonts { display: None, ui_bold: None, ui_regular: None };
+    let theme = CabinetTheme::cyberpunk_neon();
+
+    // 1. Initially clean
+    assert!(!modal.has_changes());
+    assert!(modal.unsaved_confirm_modal.is_none());
+
+    // 2. Press cancel when clean -> immediate pop without saving
+    let mut gp_cancel = GamepadSnapshot::default();
+    gp_cancel.btn_cancel_pressed = true;
+    let mut ctx = CabinetContext {
+        scaler: &scaler,
+        fonts: &fonts,
+        theme: &theme,
+        gamepad: &gp_cancel,
+        dt: 1.0 / 60.0,
+        audio: None,
+    };
+    let action = modal.update(&mut ctx);
+    assert!(matches!(action, ScreenAction::Pop));
+    assert!(!modal.is_saved);
+    assert!(modal.unsaved_confirm_modal.is_none());
+
+    // 3. Mutate a setting (Master volume)
+    modal.master_slider.set_normalized(0.33);
+    assert!(modal.has_changes());
+
+    // 4. Press cancel when dirty -> DOES NOT pop! Opens unsaved confirm modal
+    ctx.gamepad = &gp_cancel;
+    let action = modal.update(&mut ctx);
+    assert!(matches!(action, ScreenAction::None));
+    assert!(modal.unsaved_confirm_modal.is_some());
+    assert_eq!(modal.unsaved_confirm_modal.as_ref().unwrap().selected_button, 0); // Default: Save & Exit
+
+    // 5. In confirm modal, press cancel (Escape/B) -> dismisses confirm modal, returns to settings
+    ctx.gamepad = &gp_cancel;
+    let action = modal.update(&mut ctx);
+    assert!(matches!(action, ScreenAction::None));
+    assert!(modal.unsaved_confirm_modal.is_none());
+    assert!(modal.has_changes()); // Changes still retained
+
+    // 6. Trigger confirm modal again and choose Save (Button 0)
+    ctx.gamepad = &gp_cancel;
+    modal.update(&mut ctx);
+    assert!(modal.unsaved_confirm_modal.is_some());
+
+    let mut gp_confirm = GamepadSnapshot::default();
+    gp_confirm.btn_confirm_pressed = true;
+    ctx.gamepad = &gp_confirm;
+    let action = modal.update(&mut ctx);
+    assert!(matches!(action, ScreenAction::Pop));
+    assert!(modal.is_saved);
+    assert!(modal.unsaved_confirm_modal.is_none());
+
+    // 7. Test Quit & Lose Changes (Button 1)
+    let mut modal2 = ArcadeSettingsModal::new(&audio, &gp_config);
+    modal2.assist_dropdown.set_selected(2); // Pro assist
+    assert!(modal2.has_changes());
+
+    ctx.gamepad = &gp_cancel;
+    modal2.update(&mut ctx);
+    assert!(modal2.unsaved_confirm_modal.is_some());
+
+    // Navigate to Button 1 (Quit & Lose)
+    let mut gp_right = GamepadSnapshot::default();
+    gp_right.nav_right = true;
+    ctx.gamepad = &gp_right;
+    modal2.update(&mut ctx);
+    assert_eq!(modal2.unsaved_confirm_modal.as_ref().unwrap().selected_button, 1);
+
+    // Confirm Quit
+    ctx.gamepad = &gp_confirm;
+    let action = modal2.update(&mut ctx);
+    assert!(matches!(action, ScreenAction::Pop));
+    assert!(!modal2.is_saved);
+
+    // 8. Test mutating and restoring to original value -> no dirty modal
+    let mut modal3 = ArcadeSettingsModal::new(&audio, &gp_config);
+    let orig_vol = modal3.music_slider.normalized();
+    modal3.music_slider.set_normalized(orig_vol + 0.20);
+    assert!(modal3.has_changes());
+    modal3.music_slider.set_normalized(orig_vol);
+    assert!(!modal3.has_changes());
+
+    ctx.gamepad = &gp_cancel;
+    let action = modal3.update(&mut ctx);
+    assert!(matches!(action, ScreenAction::Pop));
+    assert!(!modal3.is_saved);
+    assert!(modal3.unsaved_confirm_modal.is_none());
+}
+
 
 
 

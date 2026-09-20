@@ -9,6 +9,6 @@ pub use confirm::{confirm_modal_layout, ConfirmButtonLayout, UniversalConfirmMod
 pub use leaderboard::{format_metric_score, leaderboard_modal_layout, LeaderboardLayout, LeaderboardModal};
 pub use pause::{pause_modal_layout, PauseButtonLayout, UniversalPauseModal};
 pub use profile_select::{profile_select_layout, ProfileSelectLayout, ProfileSelectModal};
-pub use settings::ArcadeSettingsModal;
+pub use settings::{ArcadeSettingsModal, SettingsSnapshot, UnsavedSettingsAction, UnsavedSettingsModal};
 pub use stack::{CabinetContext, CabinetScreen, ScreenAction, ScreenStack};
 

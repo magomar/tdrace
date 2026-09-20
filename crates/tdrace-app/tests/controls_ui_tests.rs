@@ -382,6 +382,96 @@ fn test_module_select_state_settings_modal_integration() {
 }
 
 #[test]
+fn test_menu_and_module_select_settings_x_shortcut_and_unsaved_flow() {
+    use tdrace_app::game::{GameState, RaceSession};
+    use cabinet::state::{CabinetContext, CabinetScreen, ScreenAction};
+    use cabinet::ui::scaler::UiScaler;
+    use cabinet::ui::CabinetTheme;
+    use cabinet::input::GamepadSnapshot;
+
+    let orig_config = std::fs::read_to_string("config.toml").ok();
+
+    let mut session = RaceSession::new();
+    session.state = GameState::Menu;
+    assert!(!session.is_settings_modal_open());
+
+    // 1. Open settings modal from Menu state
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+
+    // Baseline snapshot should be completely clean
+    {
+        let modal = session.settings_modal.as_ref().unwrap();
+        assert!(!modal.has_changes());
+        assert!(modal.unsaved_confirm_modal.is_none());
+    }
+
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let theme = CabinetTheme::cyberpunk_neon();
+
+    // 2. Press cancel when clean -> immediate pop without saving
+    let mut gp_cancel = GamepadSnapshot::default();
+    gp_cancel.btn_cancel_pressed = true;
+    {
+        let mut ctx = CabinetContext {
+            scaler: &scaler,
+            fonts: &session.fonts,
+            theme: &theme,
+            gamepad: &gp_cancel,
+            dt: 1.0 / 60.0,
+            audio: None,
+        };
+        let modal = session.settings_modal.as_mut().unwrap();
+        let action = modal.update(&mut ctx);
+        assert!(matches!(action, ScreenAction::Pop));
+        assert!(!modal.is_saved);
+    }
+    session.close_settings_modal(false);
+    assert!(!session.is_settings_modal_open());
+
+    // 3. Open settings again, mutate, and press cancel -> opens unsaved confirm modal
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    {
+        let modal = session.settings_modal.as_mut().unwrap();
+        modal.master_slider.set_normalized(0.45);
+        assert!(modal.has_changes());
+
+        let mut ctx = CabinetContext {
+            scaler: &scaler,
+            fonts: &session.fonts,
+            theme: &theme,
+            gamepad: &gp_cancel,
+            dt: 1.0 / 60.0,
+            audio: None,
+        };
+        let action = modal.update(&mut ctx);
+        // Should NOT pop! Must open unsaved confirm modal
+        assert!(matches!(action, ScreenAction::None));
+        assert!(modal.unsaved_confirm_modal.is_some());
+        assert_eq!(modal.unsaved_confirm_modal.as_ref().unwrap().selected_button, 0); // Save & Exit default
+
+        // Confirm Save action via Enter / Confirm button
+        let mut gp_confirm = GamepadSnapshot::default();
+        gp_confirm.btn_confirm_pressed = true;
+        ctx.gamepad = &gp_confirm;
+        let action = modal.update(&mut ctx);
+        assert!(matches!(action, ScreenAction::Pop));
+        assert!(modal.is_saved);
+    }
+
+    // Close and verify saved values
+    session.close_settings_modal(true);
+    assert!(!session.is_settings_modal_open());
+    assert!((session.audio.settings.master_volume - 0.45).abs() < 1e-4);
+
+    // Restore original disk config so tests leave workspace clean
+    if let Some(ref content) = orig_config {
+        let _ = std::fs::write("config.toml", content);
+    }
+}
+
+#[test]
 fn test_player_starts_in_arcade_and_preserves_last_used_mode_across_new_races() {
     let mut session = RaceSession::new();
     session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
