@@ -185,6 +185,8 @@ fn test_player_race_telemetry_and_acrobatic_metrics() {
 fn test_racing_simulation_tracks_jumps_and_drifts() {
     let mut session = RaceSession::new();
     session.init_race();
+    assert_eq!(session.active_module_id, "classic");
+    assert!(session.is_stunt_scoring_enabled());
 
     // Verify initial telemetry
     assert_eq!(session.player_race_stats.stunt_stats.jump_count, 0);
@@ -194,7 +196,7 @@ fn test_racing_simulation_tracks_jumps_and_drifts() {
     if let Some(player_car) = session.cars.first_mut() {
         player_car.state.elevation = 0.01;
         player_car.state.vertical_velocity = -5.0;
-        player_car.state.air_time = 0.85; // 0.85s mega jump
+        player_car.state.air_time = 0.85; // Standard jump (< 1.50s)
     }
 
     session.physics_step(0.016);
@@ -213,4 +215,82 @@ fn test_racing_simulation_tracks_jumps_and_drifts() {
     session.physics_step(0.016);
     assert_eq!(session.player_race_stats.stunt_stats.drift_count, 1);
     assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 150);
+}
+
+#[test]
+fn test_stunt_scoring_disabled_on_non_classic_modules() {
+    let mut session = RaceSession::new();
+    session.active_module_id = "gt";
+    session.init_race();
+    assert!(!session.is_stunt_scoring_enabled());
+
+    // 1. Simulate jump landing on GT circuit
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.elevation = 0.01;
+        player_car.state.vertical_velocity = -5.0;
+        player_car.state.air_time = 1.60;
+    }
+
+    session.physics_step(0.016);
+    // Stunt scoring must remain 0 on non-classic module
+    assert_eq!(session.player_race_stats.stunt_stats.jump_count, 0);
+    assert_eq!(session.player_race_stats.stunt_stats.jump_points, 0);
+    assert_eq!(session.player_race_stats.stunt_stats.total_stunt_score, 0);
+
+    // 2. Simulate drift ending on GT circuit
+    session.prev_player_drifting = true;
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.is_drifting = false;
+        player_car.state.drift_score = 300.0;
+    }
+
+    session.physics_step(0.016);
+    assert_eq!(session.player_race_stats.stunt_stats.drift_count, 0);
+    assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 0);
+    assert_eq!(session.player_race_stats.stunt_stats.total_stunt_score, 0);
+
+    // 3. Manual override allows re-enabling if desired
+    session.set_stunt_scoring_enabled(Some(true));
+    assert!(session.is_stunt_scoring_enabled());
+
+    session.prev_player_drifting = true;
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.is_drifting = false;
+        player_car.state.drift_score = 200.0;
+    }
+
+    session.physics_step(0.016);
+    assert_eq!(session.player_race_stats.stunt_stats.drift_count, 1);
+    assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 200);
+}
+
+#[test]
+fn test_mega_jump_requires_one_point_five_seconds() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert!(session.is_stunt_scoring_enabled());
+
+    // 1. Jump of 1.20s should award AIR TIME alert, NOT MEGA JUMP
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.elevation = 0.01;
+        player_car.state.vertical_velocity = -5.0;
+        player_car.state.air_time = 1.20;
+    }
+    session.physics_step(0.016);
+
+    assert!(session.floating_text.items.iter().any(|item| item.text.contains("AIR TIME 1.20s")));
+    assert!(!session.floating_text.items.iter().any(|item| item.text.contains("MEGA JUMP")));
+
+    // Clear floating text for next jump test
+    session.floating_text.clear();
+
+    // 2. Jump of 1.60s (>= 1.50s) should award MEGA JUMP alert
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.elevation = 0.01;
+        player_car.state.vertical_velocity = -5.0;
+        player_car.state.air_time = 1.60;
+    }
+    session.physics_step(0.016);
+
+    assert!(session.floating_text.items.iter().any(|item| item.text.contains("MEGA JUMP! 1.60s")));
 }

@@ -812,12 +812,12 @@ fn test_drift_combo_and_jump_landing_dynamic_popups() {
     if let Some(player_car) = session.cars.first_mut() {
         player_car.state.elevation = 0.01;
         player_car.state.vertical_velocity = -5.0;
-        player_car.state.air_time = 0.85; // 0.85s mega jump
+        player_car.state.air_time = 1.60; // 1.60s mega jump (>= 1.50s)
     }
 
     session.physics_step(0.016);
     assert_eq!(session.drift_combo_count, 3, "Jump landing should chain into active combo");
-    assert!(session.floating_text.items.iter().any(|item| item.text.contains("MEGA JUMP! 0.85s")));
+    assert!(session.floating_text.items.iter().any(|item| item.text.contains("MEGA JUMP! 1.60s")));
     assert!(session.floating_text.items.iter().any(|item| item.text == "COMBO x3!"));
 
     // 4. Decay timer resets combo after 4.0 seconds of inactivity

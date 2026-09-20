@@ -28,6 +28,7 @@ pub fn render_race_stats_screen(
     stats: &PlayerRaceTelemetry,
     total_time: f32,
     prev_is_hof: bool,
+    stunt_scoring_enabled: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -247,7 +248,11 @@ pub fn render_race_stats_screen(
     let stunt = &stats.stunt_stats;
 
     // Stunt Rank Banner
-    let (rank_title, rank_color) = determine_stunt_rank(stunt.total_stunt_score);
+    let (rank_title, rank_color) = if stunt_scoring_enabled {
+        determine_stunt_rank(stunt.total_stunt_score)
+    } else {
+        ("CIRCUIT TIMING MODE (STUNT SCORING INACTIVE)", Color::new(0.60, 0.70, 0.80, 0.85))
+    };
     let banner_h = scaler.s(38.0);
     let banner_y = content_top_y + scaler.s(30.0);
 
@@ -258,7 +263,7 @@ pub fn render_race_stats_screen(
         rank_title,
         right_inner_x + right_inner_w * 0.5,
         banner_y + scaler.s(24.0),
-        scaler.font_s(14.5),
+        if stunt_scoring_enabled { scaler.font_s(14.5) } else { scaler.font_s(12.5) },
         rank_color,
     );
 
@@ -266,22 +271,26 @@ pub fn render_race_stats_screen(
     let score_card_y = banner_y + banner_h + scaler.s(10.0);
     let score_card_h = scaler.s(48.0);
     draw_rectangle(right_inner_x, score_card_y, right_inner_w, score_card_h, Color::new(0.12, 0.18, 0.14, 0.85));
-    draw_rectangle_lines(right_inner_x, score_card_y, right_inner_w, score_card_h, 1.0, Palette::NEON_GOLD);
+    draw_rectangle_lines(right_inner_x, score_card_y, right_inner_w, score_card_h, 1.0, if stunt_scoring_enabled { Palette::NEON_GOLD } else { Color::new(0.30, 0.40, 0.50, 0.6) });
 
     fonts.draw_ui_regular(
-        "TOTAL ACROBATIC SCORE",
+        if stunt_scoring_enabled { "TOTAL ACROBATIC SCORE" } else { "TOTAL ACROBATIC SCORE (INACTIVE)" },
         right_inner_x + scaler.s(12.0),
         score_card_y + scaler.s(20.0),
         scaler.font_s(11.5),
         Palette::UI_TEXT_MUTED,
     );
-    let score_str = format!("{} PTS", stunt.total_stunt_score);
+    let score_str = if stunt_scoring_enabled {
+        format!("{} PTS", stunt.total_stunt_score)
+    } else {
+        "OFF (CLASSIC ARCADE ONLY)".to_string()
+    };
     fonts.draw_display(
         &score_str,
         right_inner_x + scaler.s(12.0),
         score_card_y + scaler.s(41.0),
-        scaler.font_s(20.0),
-        Palette::NEON_GOLD,
+        if stunt_scoring_enabled { scaler.font_s(20.0) } else { scaler.font_s(14.0) },
+        if stunt_scoring_enabled { Palette::NEON_GOLD } else { Color::new(0.60, 0.70, 0.80, 0.85) },
     );
 
     // Stunt Details Rows

@@ -138,8 +138,17 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
   - Driver Dossier incident rating card: clean driving factor, contact per lap average, and track limits violation frequency.
 - **Ruleset & Penalty Exploration**:
   - Configurable ruleset toggle in gameplay settings: "Clean Race Rules (Strict / Standard / Off)".
-  - Post-race time penalties (e.g. +3s for deliberate corner cutting or heavy vehicle ramming) applied to official finish time.
   - Career safety rating / license class (Bronze/Silver/Gold/FIA Superlicense) based on consecutive incident-free races without compromising the core metric distance XP economy.
+
+### 2.11 Dedicated Stunt & Acrobatic Competition Mode (Gymkhana, Freestyle Arenas & Trick Attack)
+- **Competition Rulesets & Win Conditions**:
+  - Introduce new competition formats where acrobatic stunt score—rather than lap time or finish position—determines victory and podium placement.
+  - *Gymkhana / Precision Drift Attack*: Timed technical courses through tight cone slaloms, 360° donut clipping zones, and figure-eight drift transitions with combo multiplier chains.
+  - *Freestyle Stunt Arena Battles*: Open 2D arena environments (such as *Stunt City Megastructure*, *Monster Colosseum*, or *Mud Slough Arena*) featuring high-launch stunt kickers, elevated gap jumps, loop-the-loops, and car-crush obstacles.
+  - *Trick Attack / Target Ring Challenges*: Timed trick runs with suspended holographic target rings, mid-air barrel rolls/flips, and obstacle smashes.
+- **Engine & Telemetry Integration**:
+  - Leverages the existing `AcrobaticStats` telemetry pipeline, 4-second combo multiplier state machine, and floating HUD score popups currently preserved in the game engine.
+  - Circuit-selective or ruleset-based activation: Enable stunt scoring selectively on dedicated stunt venues or when entering the Stunt / Gymkhana competition mode, while preserving clean timing in realistic motorsport disciplines.
 
 ---
 

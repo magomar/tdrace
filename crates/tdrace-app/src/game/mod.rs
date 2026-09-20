@@ -730,8 +730,7 @@ impl RaceSession {
         if let Some(manual) = self.stunt_scoring_override {
             return manual;
         }
-        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
-        effective_module == "classic"
+        self.active_module_id == "classic"
     }
 
     /// Sets or clears the manual override for acrobatic stunt scoring.
@@ -6884,7 +6883,7 @@ impl RaceSession {
             let was_drifting = self.prev_player_drifting;
             let is_drifting = player_car.state.is_drifting;
 
-            if was_drifting && !is_drifting && player_car.state.drift_score > 50.0 {
+            if self.is_stunt_scoring_enabled() && was_drifting && !is_drifting && player_car.state.drift_score > 50.0 {
                 self.drift_combo_count += 1;
                 self.drift_combo_timer = 4.0;
                 let pts = player_car.state.drift_score.round() as u32;
@@ -7530,6 +7529,7 @@ impl RaceSession {
                             &self.player_race_stats,
                             self.session_time,
                             self.finished_prev_view == FinishedScreenView::HallOfFame,
+                            self.is_stunt_scoring_enabled(),
                         );
                     }
                 }
