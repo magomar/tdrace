@@ -290,7 +290,7 @@ fn test_porsche_gt3r_lateral_sprite_asset_presence() {
 fn test_all_80_motorsport_cars_catalog_integrity() {
     use tdrace_app::catalog::ALL_REAL_CARS;
 
-    assert_eq!(ALL_REAL_CARS.len(), 80, "Catalog must contain exactly 80 vehicles");
+    assert_eq!(ALL_REAL_CARS.len(), 84, "Catalog must contain 80 authentic motorsport vehicles + 4 classic fantasy vehicles");
 
     let modules = ["gt", "nascar", "rally", "extreme_offroad", "kart"];
     for m in modules {
@@ -301,6 +301,8 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
             assert_eq!(count, 15, "Module {} must contain 15 vehicles (3 per tier)", m);
         }
     }
+    let classic_count = ALL_REAL_CARS.iter().filter(|c| c.module_id == "classic").count();
+    assert_eq!(classic_count, 4, "Classic arcade module must contain 4 fantasy vehicles");
 
     for car in ALL_REAL_CARS {
         assert!(!car.id.is_empty(), "Car ID cannot be empty");
@@ -324,6 +326,25 @@ fn test_vehicle_asset_registry_color_helpers() {
     assert_eq!((u >> 16) & 0xFF, 255);
     assert_eq!((u >> 8) & 0xFF, 0);
     assert_eq!(u & 0xFF, 127);
+}
+
+#[test]
+fn test_classic_arcade_fantasy_sprites_presence() {
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let assets_dir = manifest_dir.join("../../assets/textures/vehicles");
+
+    let cars = ["classic_gt", "classic_nascar", "classic_offroad", "classic_kart"];
+    for id in cars {
+        let lat_path = assets_dir.join(format!("laterals/classic/{}.png", id));
+        let thumb_path = assets_dir.join(format!("laterals/classic/{}_thumb.png", id));
+        let top_path = assets_dir.join(format!("topdown/classic/{}.png", id));
+
+        assert!(lat_path.exists(), "Missing lateral for {}: {:?}", id, lat_path);
+        assert!(thumb_path.exists(), "Missing thumbnail for {}: {:?}", id, thumb_path);
+        assert!(top_path.exists(), "Missing topdown for {}: {:?}", id, top_path);
+    }
 }
 
 

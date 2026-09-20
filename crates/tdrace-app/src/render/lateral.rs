@@ -279,6 +279,12 @@ fn get_wheel_geometry(
     s: f32,
 ) -> (f32, f32, f32, WheelStyle) {
     match id {
+        // Classic Arcade Fantasy Roster
+        "classic_gt" => (cx + hl * 0.52, cx - hl * 0.48, 12.5 * s, WheelStyle::AlloyGT),
+        "classic_nascar" => (cx + hl * 0.54, cx - hl * 0.50, 13.5 * s, WheelStyle::StockCarSteel),
+        "classic_offroad" => (cx + hl * 0.55, cx - hl * 0.48, 16.0 * s, WheelStyle::MudTractorChevron),
+        "classic_kart" => (cx + hl * 0.46, cx - hl * 0.44, 9.0 * s, WheelStyle::KartSmall),
+
         // GT4
         "gt_porsche_718_gt4" => (cx + hl * 0.50, cx - hl * 0.50, 12.0 * s, WheelStyle::AlloyGT),
         "gt_bmw_m4_gt4" => (cx + hl * 0.56, cx - hl * 0.48, 12.5 * s, WheelStyle::AlloyGT),
@@ -489,6 +495,12 @@ fn render_specific_body(
     helmet: Color,
 ) {
     match id {
+        // --- Classic Arcade Fantasy Roster ---
+        "classic_gt" => render_porsche_718_gt4(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "classic_nascar" => render_nascar_monte_carlo(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "classic_offroad" => render_offroad_sand_rail(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "classic_kart" => render_kart_birel_kz2(cx, cy, gy, hl, s, primary, secondary, helmet),
+
         // --- GT4 Models ---
         "gt_porsche_718_gt4" => render_porsche_718_gt4(cx, cy, gy, hl, s, primary, secondary, helmet),
         "gt_bmw_m4_gt4" => render_bmw_m4_gt4(cx, cy, gy, hl, s, primary, secondary, helmet),
