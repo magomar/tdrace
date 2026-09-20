@@ -9,7 +9,10 @@ tags: [circuits, classic, tracks, grand-prix, drift-park]
 
 # Classic Heritage Circuit Catalog 🏎️🏛️
 
-The **Classic Heritage** tracks form the foundational proving grounds of **TdRace**. Located in [`tracks/classic/`](../../tracks/classic), these venues showcase foundational mechanics: asphalt apex clipping, high-risk intersection crossings, dirt sliding, and 2.5D jump ramps.
+The **Classic Heritage** tracks form the foundational proving grounds of **TdRace**. Located in [`tracks/classic/`](../../tracks/classic), these 10 venues showcase foundational mechanics: asphalt apex clipping, high-risk intersection crossings, dirt sliding, and 2.5D jump ramps.
+
+> [!NOTE]
+> Classic circuits are decoupled from specific modern motorsport modules (GT, Karting, Rallycross). They are available under the **Classic Motorsport** category and can be driven by any classic vehicle preset or imported into the Track Studio.
 
 ---
 
@@ -38,4 +41,4 @@ The **Classic Heritage** tracks form the foundational proving grounds of **TdRac
   * **Turns 4-6 (The Esses)**: Rapid lateral weight transfer switchbacks; rewards stiff anti-roll bars.
   * **Final Turn (Apex Sweeper)**: High-speed parabolic sweeper where aerodynamic downforce dominates.
 
-For vehicle choices, see the [GT & Endurance Roster](../vehicles/gt_endurance.md).
+For classic vehicle profiles (GT Sports Coupe, Tuned Drift Spec, 125cc Shifter Kart, AWD Turbo Rally) and motorsport rosters, see the [Vehicles Overview](../vehicles/index.md).

@@ -1,7 +1,7 @@
 ---
 type: Asset Catalog
 title: "Formula 1 & GT Endurance Circuits Directory"
-description: "Directory of 19 FIA Grade 1 world championship circuits: Spa-Francorchamps, Monza, Silverstone, Circuit de la Sarthe, and Suzuka."
+description: "Directory of 18 FIA Grade 1 world championship circuits: Spa-Francorchamps, Monza, Silverstone, Circuit de la Sarthe, and Suzuka."
 status: active
 category: circuits
 tags: [circuits, f1, gt, endurance, spa, monza, le-mans, silverstone]

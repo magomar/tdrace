@@ -9,29 +9,29 @@ tags: [circuits, offroad, stunt, arenas, mud, ice, jumps]
 
 # Extreme Off-Road & Stunt Arenas Directory 🏜️🚜💥
 
-The **Extreme Off-Road & Stunt Arenas** catalog covers non-traditional motorsport arenas designed for extreme terrain traversal, mud bogs, ice drifting, and parabolic jump flight.
+The **Extreme Off-Road & Stunt Arenas** catalog covers 15 specialized motorsport venues designed for extreme terrain traversal, mud bogs, arctic ice racing, and parabolic jump flight, implemented in [`crates/tdrace-app/src/module/extreme_offroad.rs`](../../crates/tdrace-app/src/module/extreme_offroad.rs).
 
 ---
 
 ## 📋 Extreme Venues Roster
 
-| Venue | Surface Environment | Primary Hazards | Signature Feature |
-| :--- | :--- | :--- | :--- |
-| **Sahara Dunes Raid** | Open Sand Dunes | Deep sand deceleration traps, blind crests | 6-meter dune drop-offs; rewards long-travel suspension. |
-| **Oasis Rally** | Mixed Sand & Palms | Water hazard wash, narrow palm groves | High-speed water splash down leading to sand trap runoff. |
-| **Sahara Oasis Stage** | Compacted Dirt & Sand | Camber drop-offs, dust roost clouds | Dual alternative path crossing a dry riverbed. |
-| **Ramp Raceway Arena** | Asphalt & Jump Ramps | 2.5D parabolic flights, structural obstacles | Triple consecutive jump ramp sequence over sand pit traps. |
-| **Outlaw Canyon Pass** | Crushed Stone & Rock | Sheer cliff walls, concrete barrier scrapes | High-altitude mountain gravel stage with zero room for error. |
-| **Dirty Oval Speedway** | Heavy Clay Dirt | Slippery wet bottom groove, high cushion | Banked dirt oval requiring continuous counter-steer drifting. |
-| **Dirt Figure Eight** | Compacted Mud & Dirt | High-velocity center intersection | At-grade perpendicular cross-over creating demolition-derby risk. |
-| **Arctic Ice Lake Oval** | $100\%$ Frozen Ice Sheet | Near-zero friction ($\mu = 0.08$), spin-outs | Giant circular frozen lake; requires studded tires or pure inertia slides. |
-| **Mud Bog Colosseum** | Viscous Mud Trenches | Rolling resistance $6.5\times$, viscous drag $3.2\times$| Deep mud trenches that swallow low-clearance vehicles; requires locked AWD. |
-| **Stadium Supercross Whoops**| Hard-Packed Red Clay | Rhythm whoops, concrete stadium walls | High-frequency terrain ripples testing damping rebound. |
-| **Monster Freestyle Bowl** | Dirt / Crushed Car Obstacles | Crushed car ramps, school bus jumps | Freestyle arena with $360^\circ$ jump ramps and backflip kickers. |
-| **Baja Canyon Run** | Arid Gravel Wash | River stones, washboard terrain, cactus hazards | Fast flowing desert wash with sweeping drift corners. |
-| **Red Rock Quarry** | Solid Stone & Fine Dust | Massive stone block obstacles, steep ascents | Tiered quarry climb requiring high engine torque and traction. |
-| **Death Valley Wash** | High-Heat Alkaline Dirt | Extreme heat tire degradation, salt crust | Ultra-long flat-out straight through glaring salt flats. |
-| **Frozen Fjord Ice Circuit** | Glacial Snow & Ice | Powder snow drifts, ice patches | Mountain road carved into a glacier with alternating snow and sheer ice. |
+| Venue | Identifier / Generator | Category | Surface Environment | Primary Hazards & Signature Features |
+| :--- | :--- | :--- | :--- | :--- |
+| **Sahara Dune Crossing** | `sahara_dune_crossing` | Desert Raid | Open Sand Dunes | High-speed sweeping desert crossing over cresting sand dunes with 3 tabletop jump ramps. |
+| **Dirt Figure Eight** | `dirt_figure_eight` | Stunt Arenas | Compacted Dirt & Mud | High-speed dirt figure-eight crossover with twin jumps and 18-degree banked outer berms. |
+| **Atacama Sand Basin** | `atacama_sand_basin` | Desert Raid | Dried Salt Flats & Fine Sand | Massive high-speed desert basin with sweeping sand curves and cresting jumps. |
+| **Red Rock Canyon** | `red_rock_canyon` | Desert Raid | Red Sandstone & Gravel | Narrow technical gorge between red sandstone towers with rough dirt trails and hairpin climbs. |
+| **Mud Slough Arena** | `mud_slough_arena` | Mud & Quarry | Deep Mud & Water Hazard | Enclosed stadium mud bowl arena with deep viscous mud ruts, raised dirt berms and tabletop jumps. |
+| **Baja 500 Desert Scrub** | `baja_500_desert_scrub` | Desert Raid | Arid Scrubland & Silt Flats | Punishing open desert enduro course across arid scrubland, washboard whoops, and high-speed jumps. |
+| **Arctic Frozen Lake** | `arctic_frozen_lake` | Arctic Frost | Glacial Ice Sheet & Snow Banks | Wide-open frozen glacial lake arena with slick blue ice, compacted snow banks, and perimeter snow berms. |
+| **Alpine Snow Ridge** | `alpine_snow_ridge` | Arctic Frost | Compacted Snow & Ice | Sub-zero mountain climb along high snow ridges, icy switchbacks, and sheer cliff edges. |
+| **Rovaniemi Ice Ring** | `rovaniemi_ice_ring` | Arctic Frost | Finnish Packed Snow & Ice | Finnish high-speed ice racing circuit with packed snow chicanes and high-velocity drift arcs. |
+| **Supercross Stadium Arena** | `supercross_stadium_arena` | Stunt Arenas | Hard-Packed Stadium Clay | Indoor supercross colosseum featuring rhythmic triple jumps, whoop sections, and banked bowl turns. |
+| **Gravel Quarry Chasm** | `gravel_quarry_chasm` | Mud & Quarry | Industrial Gravel & Rock | Multi-tiered industrial quarry chasm with vertical drops, loose gravel slides, and rock walls. |
+| **Louisiana Mud Swampland** | `louisiana_mud_swampland` | Mud & Quarry | Deep Bayou Mud & Swampland | Treacherous bayou basin featuring deep mud bogs, slippery cypress roots, and submerged dirt roads. |
+| **Monster Colosseum** | `monster_colosseum` | Stunt Arenas | Stadium Dirt & Crushed Ramps | Massive open-floor monster truck arena with multiple crossing ramps, mud pits, and perimeter grandstands. |
+| **Glacier Crest Pass** | `glacier_crest_pass` | Arctic Frost | Glacial Blue Ice & Crevasses | Treacherous high-altitude circuit over blue glacial ice crevasses, frozen tunnels, and blinding snow ridges. |
+| **Stunt City Megastructure** | `stunt_city_megastructure` | Stunt Arenas | Concrete, Asphalt & Steel | Colossal multi-level concrete and asphalt stunt arena with high-flyer ramps, elevated cross-bridges, and drift bowls. |
 
 ---
 
