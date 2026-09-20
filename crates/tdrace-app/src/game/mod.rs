@@ -249,6 +249,8 @@ pub struct GridParticipant {
     pub car_choice: CarChoice,
     /// Livery color scheme.
     pub color_scheme: CarColorScheme,
+    /// Model ID for authentic vehicle sprite and specification if elected.
+    pub model_id: Option<&'static str>,
     /// Best historical single lap time in seconds on this track.
     pub best_lap: Option<f32>,
     /// Best historical total circuit race time in seconds on this track.
@@ -314,6 +316,7 @@ pub struct RaceSession {
     pub current_visual_type: VehicleVisualType,
     pub car_visual_types: Vec<VehicleVisualType>,
     pub selected_car_model_id: Option<&'static str>,
+    pub car_model_ids: Vec<Option<&'static str>>,
 
     pub cars: Vec<Car>,
     pub color_schemes: Vec<CarColorScheme>,
@@ -584,6 +587,7 @@ impl RaceSession {
             },
             car_visual_types: Vec::new(),
             selected_car_model_id: None,
+            car_model_ids: Vec::new(),
 
             cars: Vec::new(),
             color_schemes: Vec::new(),
@@ -1316,6 +1320,7 @@ impl RaceSession {
             roof_fins: true,
             window_net: true,
         };
+        self.selected_car_model_id = None;
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1354,6 +1359,7 @@ impl RaceSession {
             whip_antenna: true,
             paddle_tires: true,
         };
+        self.selected_car_model_id = None;
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1409,7 +1415,7 @@ impl RaceSession {
             gt_wing: true,
             diffuser: true,
         };
-        self.selected_car_model_id = Some("gt_porsche_911_gt3r");
+        self.selected_car_model_id = None;
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1452,6 +1458,7 @@ impl RaceSession {
             mudflaps: true,
             large_wing: true,
         };
+        self.selected_car_model_id = None;
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1483,6 +1490,7 @@ impl RaceSession {
             exposed_driver: true,
             side_bumpers: true,
         };
+        self.selected_car_model_id = None;
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1520,6 +1528,7 @@ impl RaceSession {
             gt_wing: true,
             diffuser: true,
         };
+        self.selected_car_model_id = None;
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1733,6 +1742,7 @@ impl RaceSession {
 
         self.cars.clear();
         self.car_visual_types.clear();
+        self.car_model_ids.clear();
         self.color_schemes.clear();
         self.trackers.clear();
         self.ai_drivers.clear();
@@ -1747,7 +1757,11 @@ impl RaceSession {
             .unwrap_or(42))
             .wrapping_add((self.num_bots as u64) * 101);
 
-        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
+        let effective_module = if self.active_module_id != "classic" {
+            self.active_module_id
+        } else {
+            self.track.module_id.as_deref().unwrap_or(self.active_module_id)
+        };
 
         let human_count = if self.is_split_screen() { 2 } else { 1 };
         if !self.is_time_attack && total_cars > human_count {
@@ -1774,6 +1788,25 @@ impl RaceSession {
         }
 
         let player_car_choice = self.active_player_car_choice();
+
+        // In all modules except "classic", resolve the elected real car model if chosen
+        let player_model = if effective_module != "classic" {
+            self.selected_car_model_id
+                .and_then(crate::catalog::find_model_by_id)
+                .filter(|m| m.module_id == effective_module)
+                .or_else(|| {
+                    if self.free_car_selection {
+                        crate::catalog::get_models_for_module(effective_module)
+                            .into_iter()
+                            .find(|m| m.base_car_choice == player_car_choice)
+                    } else {
+                        None
+                    }
+                })
+        } else {
+            None
+        };
+
         let mut base_config = match player_car_choice {
             CarChoice::GT4Clubsport => {
                 self.current_visual_type = VehicleVisualType::TouringGT {
@@ -1871,14 +1904,26 @@ impl RaceSession {
                 self.config.get_car_config(player_car_choice)
             }
         };
+
+        let (player_car_title, player_model_id, player_visual_type) = if let Some(pm) = player_model {
+            self.selected_car_model_id = Some(pm.id);
+            self.current_visual_type = pm.visual_type;
+            base_config = pm.to_car_config();
+            (pm.name.to_string(), Some(pm.id), pm.visual_type)
+        } else {
+            (player_car_choice.title().to_string(), None, self.current_visual_type)
+        };
         base_config.assists = self.assist_profile.to_config();
+
+        let category_models = player_model
+            .map(|pm| crate::catalog::get_models_for_category(pm.module_id, pm.category_name))
+            .unwrap_or_default();
 
         let track_id = self.track_choice_id();
 
         let mut participants = Vec::new();
 
         // 1. Player participant
-        let player_car_title = player_car_choice.title().to_string();
         let player_best_lap = self
             .active_profile_stats
             .best_times
@@ -1914,6 +1959,7 @@ impl RaceSession {
             country: self.active_profile.country.clone(),
             car_title: player_car_title,
             car_choice: player_car_choice,
+            model_id: player_model_id,
             color_scheme: self.player_effective_color_scheme(),
             best_lap: player_best_lap,
             best_circuit_time: player_best_circuit,
@@ -1936,6 +1982,7 @@ impl RaceSession {
                 country: Some("ARC".to_string()),
                 car_title: player_car_title_clone,
                 car_choice: player_car_choice,
+                model_id: player_model_id,
                 color_scheme: p2_scheme,
                 best_lap: None,
                 best_circuit_time: None,
@@ -1953,22 +2000,32 @@ impl RaceSession {
             let bot_best_circuit = bot_hof.map(|e| e.total_time);
             let bot_seed = seed.wrapping_add((bot_idx as u64 + 1).wrapping_mul(0x9E3779B97F4A7C15));
 
-            let bot_car_choice = match self.game_mode {
-                GameMode::ExperimentalRace => player_car_choice,
-                GameMode::Career => self.resolve_predefined_car(),
-                _ => {
-                    if self.championship_session.is_some() {
-                        self.resolve_predefined_car()
-                    } else if self.free_car_selection {
-                        character.preferred_car
-                    } else if self.random_car_assignment {
-                        self.sample_random_opponent_car(bot_idx, bot_seed)
-                    } else {
-                        self.resolve_predefined_car()
+            let (bot_car_choice, bot_car_title, bot_model_id, bot_scheme) = if !category_models.is_empty() {
+                let bot_model = category_models[bot_idx % category_models.len()];
+                let scheme = CarColorScheme {
+                    primary: bot_model.primary_color,
+                    secondary: bot_model.secondary_color,
+                    helmet: character.color_scheme.helmet,
+                };
+                (bot_model.base_car_choice, bot_model.name.to_string(), Some(bot_model.id), scheme)
+            } else {
+                let choice = match self.game_mode {
+                    GameMode::ExperimentalRace => player_car_choice,
+                    GameMode::Career => self.resolve_predefined_car(),
+                    _ => {
+                        if self.championship_session.is_some() {
+                            self.resolve_predefined_car()
+                        } else if self.free_car_selection {
+                            character.preferred_car
+                        } else if self.random_car_assignment {
+                            self.sample_random_opponent_car(bot_idx, bot_seed)
+                        } else {
+                            self.resolve_predefined_car()
+                        }
                     }
-                }
+                };
+                (choice, choice.title().to_string(), None, character.color_scheme)
             };
-            let bot_car_title = bot_car_choice.title().to_string();
 
             participants.push(GridParticipant {
                 is_player: false,
@@ -1978,7 +2035,8 @@ impl RaceSession {
                 country: None,
                 car_title: bot_car_title,
                 car_choice: bot_car_choice,
-                color_scheme: character.color_scheme,
+                model_id: bot_model_id,
+                color_scheme: bot_scheme,
                 best_lap: bot_best_lap,
                 best_circuit_time: bot_best_circuit,
                 random_seed: bot_seed,
@@ -2013,8 +2071,9 @@ impl RaceSession {
             });
         let player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
         self.cars.push(player_car);
-        self.car_visual_types.push(player_car_choice.visual_type());
+        self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
+        self.car_model_ids.push(player_model_id);
         self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
 
         if self.is_split_screen() {
@@ -2038,8 +2097,9 @@ impl RaceSession {
             p2_config.assists = self.assist_profile_p2.to_config();
             let p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
             self.cars.push(p2_car);
-            self.car_visual_types.push(player_car_choice.visual_type());
+            self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
+            self.car_model_ids.push(player_model_id);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
         }
 
@@ -2061,22 +2121,35 @@ impl RaceSession {
                     grid_slot: bot_slot,
                 });
 
-            let bot_car_choice = self
+            let bot_participant = self
                 .grid_participants
                 .iter()
-                .find(|p| p.bot_index == Some(bot_idx))
-                .map(|p| p.car_choice)
-                .unwrap_or(player_car_choice);
+                .find(|p| p.bot_index == Some(bot_idx));
 
-            let bot_config = match bot_car_choice {
-                CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(bot_car_choice),
-                _ => bot_car_choice.config(),
+            let (bot_config, bot_visual_type, bot_scheme, bot_model_id) = if let Some(p) = bot_participant {
+                if let Some(m) = p.model_id.and_then(crate::catalog::find_model_by_id) {
+                    (m.to_car_config(), m.visual_type, p.color_scheme, Some(m.id))
+                } else {
+                    let cfg = match p.car_choice {
+                        CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(p.car_choice),
+                        _ => p.car_choice.config(),
+                    };
+                    (cfg, p.car_choice.visual_type(), p.color_scheme, None)
+                }
+            } else {
+                let cfg = match player_car_choice {
+                    CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(player_car_choice),
+                    _ => player_car_choice.config(),
+                };
+                (cfg, player_car_choice.visual_type(), character.color_scheme, None)
             };
+
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
 
             self.cars.push(bot_car);
-            self.car_visual_types.push(bot_car_choice.visual_type());
-            self.color_schemes.push(character.color_scheme);
+            self.car_visual_types.push(bot_visual_type);
+            self.color_schemes.push(bot_scheme);
+            self.car_model_ids.push(bot_model_id);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
             self.ai_drivers.push(BotAiDriver::new(character.profile));
         }
@@ -2865,25 +2938,54 @@ impl RaceSession {
                                     self.state = GameState::Garage(GarageOrigin::StartingGrid);
                                     return;
                                 }
-                                let choices = self.active_module_car_choices();
-                                if !choices.is_empty() {
-                                    if is_key_pressed(KeyCode::RightBracket) {
-                                        self.audio.play_sfx(SfxType::UiMove);
-                                        self.menu_car_idx = (self.menu_car_idx + 1) % choices.len();
-                                        self.car_choice = choices[self.menu_car_idx];
-                                        self.free_car_selection = true;
-                                        self.rebuild_roster_participants();
-                                    }
-                                    if is_key_pressed(KeyCode::LeftBracket) {
-                                        self.audio.play_sfx(SfxType::UiMove);
-                                        if self.menu_car_idx == 0 {
-                                            self.menu_car_idx = choices.len() - 1;
-                                        } else {
-                                            self.menu_car_idx -= 1;
+                                if self.active_module_id != "classic" {
+                                    let models = crate::catalog::get_models_for_module(self.active_module_id);
+                                    if !models.is_empty() {
+                                        let current_idx = self.selected_car_model_id
+                                            .and_then(|id| models.iter().position(|m| m.id == id))
+                                            .unwrap_or(0);
+                                        if is_key_pressed(KeyCode::RightBracket) {
+                                            self.audio.play_sfx(SfxType::UiMove);
+                                            let next_idx = (current_idx + 1) % models.len();
+                                            let chosen = models[next_idx];
+                                            self.selected_car_model_id = Some(chosen.id);
+                                            self.car_choice = chosen.base_car_choice;
+                                            self.current_visual_type = chosen.visual_type;
+                                            self.free_car_selection = true;
+                                            self.rebuild_roster_participants();
                                         }
-                                        self.car_choice = choices[self.menu_car_idx];
-                                        self.free_car_selection = true;
-                                        self.rebuild_roster_participants();
+                                        if is_key_pressed(KeyCode::LeftBracket) {
+                                            self.audio.play_sfx(SfxType::UiMove);
+                                            let next_idx = if current_idx == 0 { models.len() - 1 } else { current_idx - 1 };
+                                            let chosen = models[next_idx];
+                                            self.selected_car_model_id = Some(chosen.id);
+                                            self.car_choice = chosen.base_car_choice;
+                                            self.current_visual_type = chosen.visual_type;
+                                            self.free_car_selection = true;
+                                            self.rebuild_roster_participants();
+                                        }
+                                    }
+                                } else {
+                                    let choices = self.active_module_car_choices();
+                                    if !choices.is_empty() {
+                                        if is_key_pressed(KeyCode::RightBracket) {
+                                            self.audio.play_sfx(SfxType::UiMove);
+                                            self.menu_car_idx = (self.menu_car_idx + 1) % choices.len();
+                                            self.car_choice = choices[self.menu_car_idx];
+                                            self.free_car_selection = true;
+                                            self.rebuild_roster_participants();
+                                        }
+                                        if is_key_pressed(KeyCode::LeftBracket) {
+                                            self.audio.play_sfx(SfxType::UiMove);
+                                            if self.menu_car_idx == 0 {
+                                                self.menu_car_idx = choices.len() - 1;
+                                            } else {
+                                                self.menu_car_idx -= 1;
+                                            }
+                                            self.car_choice = choices[self.menu_car_idx];
+                                            self.free_car_selection = true;
+                                            self.rebuild_roster_participants();
+                                        }
                                     }
                                 }
                             }
@@ -8077,11 +8179,7 @@ impl RaceSession {
             let car = &self.cars[i];
             let scheme = &self.color_schemes[i];
             let is_braking = car.state.is_braking;
-            let model_id = if i == 0 {
-                self.selected_car_model_id
-            } else {
-                None
-            };
+            let model_id = self.car_model_ids.get(i).copied().flatten();
             let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
             render_car_with_visual_type_model_and_shadows(
                 car,
@@ -8123,11 +8221,7 @@ impl RaceSession {
             let car = &self.cars[i];
             let scheme = &self.color_schemes[i];
             let is_braking = car.state.is_braking;
-            let model_id = if i == 0 {
-                self.selected_car_model_id
-            } else {
-                None
-            };
+            let model_id = self.car_model_ids.get(i).copied().flatten();
             let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
             render_car_with_visual_type_model_and_shadows(
                 car,

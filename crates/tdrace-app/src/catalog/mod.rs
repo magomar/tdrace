@@ -2055,6 +2055,18 @@ pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static
         .collect()
 }
 
+/// Returns all vehicles belonging to the specified module ID and category name.
+pub fn get_models_for_category(module_id: &str, category_name: &str) -> Vec<&'static RealCarModel> {
+    let mod_id = match module_id {
+        "gt_challenge" | "f1" => "gt",
+        other => other,
+    };
+    ALL_REAL_CARS
+        .iter()
+        .filter(|c| c.module_id == mod_id && c.category_name.eq_ignore_ascii_case(category_name))
+        .collect()
+}
+
 /// Returns the category display title for a given module and tier.
 pub fn get_tier_name(module_id: &str, tier: u8) -> &'static str {
     let mod_id = match module_id {

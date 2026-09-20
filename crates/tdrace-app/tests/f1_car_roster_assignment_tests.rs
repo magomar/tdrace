@@ -207,3 +207,183 @@ fn test_all_disciplines_car_assignment_integrity() {
     assert_eq!(session.active_player_car_choice().title(), "Tuned Drift Spec");
 }
 
+#[test]
+fn test_player_elected_car_sets_authentic_title_in_roster() {
+    let mut session = RaceSession::new();
+    session.switch_to_gt();
+    session.num_bots = 3;
+
+    // Elect BMW M4 GT4
+    session.selected_car_model_id = Some("gt_bmw_m4_gt4");
+    session.free_car_selection = true;
+    session.rebuild_roster_participants();
+
+    let player = session
+        .grid_participants
+        .iter()
+        .find(|p| p.is_player)
+        .expect("Player participant must exist");
+
+    assert_eq!(
+        player.car_title, "BMW M4 GT4 (G82)",
+        "Player car title in roster must display authentic model name"
+    );
+    assert_eq!(
+        player.model_id,
+        Some("gt_bmw_m4_gt4"),
+        "Player participant model_id must match elected vehicle"
+    );
+    assert_eq!(
+        session.car_model_ids[0],
+        Some("gt_bmw_m4_gt4"),
+        "First car in session must have elected model ID"
+    );
+}
+
+#[test]
+fn test_bots_assigned_same_category_when_player_elects_car() {
+    use tdrace_app::catalog::{find_model_by_id, get_models_for_category};
+
+    let mut session = RaceSession::new();
+    session.switch_to_gt();
+    session.num_bots = 7;
+
+    // Elect Porsche 718 Cayman GT4 (GT4 Clubsport category)
+    session.selected_car_model_id = Some("gt_porsche_718_gt4");
+    session.free_car_selection = true;
+    session.rebuild_roster_participants();
+
+    assert_eq!(session.grid_participants.len(), 8);
+    assert_eq!(session.cars.len(), 8);
+    assert_eq!(session.car_model_ids.len(), 8);
+
+    let gt4_models = get_models_for_category("gt", "GT4 Clubsport");
+    let gt4_ids: Vec<&str> = gt4_models.iter().map(|m| m.id).collect();
+
+    // Verify all bot participants in roster are in the same category
+    for p in session.grid_participants.iter().filter(|p| !p.is_player) {
+        let mid = p.model_id.expect("Bot participant must have a model_id");
+        assert!(
+            gt4_ids.contains(&mid),
+            "Bot '{}' model '{}' must belong to GT4 Clubsport category, eligible: {:?}",
+            p.name,
+            mid,
+            gt4_ids
+        );
+
+        let model = find_model_by_id(mid).unwrap();
+        assert_eq!(
+            p.car_title, model.name,
+            "Bot '{}' car title must match its authentic model name",
+            p.name
+        );
+    }
+
+    // Verify all cars in session have corresponding model IDs
+    for (i, &mid_opt) in session.car_model_ids.iter().enumerate() {
+        let mid = mid_opt.expect("Every car must have an authentic model_id");
+        assert!(
+            gt4_ids.contains(&mid),
+            "Car {} with model '{}' must belong to GT4 category",
+            i,
+            mid
+        );
+    }
+}
+
+#[test]
+fn test_category_parity_across_multiple_disciplines() {
+    use tdrace_app::catalog::get_models_for_category;
+
+    let mut session = RaceSession::new();
+    session.num_bots = 5;
+
+    // 1. Rally WRC
+    session.switch_to_rally();
+    session.selected_car_model_id = Some("rally_hyundai_i20_rx");
+    session.free_car_selection = true;
+    session.rebuild_roster_participants();
+
+    let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
+    assert_eq!(player.car_title, "Hyundai i20 RX Supercar");
+
+    let wrc_models = get_models_for_category("rally", "WRC / RX Supercar");
+    let wrc_ids: Vec<&str> = wrc_models.iter().map(|m| m.id).collect();
+
+    for p in session.grid_participants.iter().filter(|p| !p.is_player) {
+        let mid = p.model_id.unwrap();
+        assert!(
+            wrc_ids.contains(&mid),
+            "Rally bot model '{}' must belong to WRC category",
+            mid
+        );
+    }
+
+    // 2. NASCAR Trans-Am
+    session.switch_to_nascar();
+    session.selected_car_model_id = Some("nascar_mustang_ta1");
+    session.free_car_selection = true;
+    session.rebuild_roster_participants();
+
+    let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
+    assert_eq!(player.car_title, "Ford Mustang TA1");
+
+    let ta_models = get_models_for_category("nascar", "Trans-Am TA1");
+    let ta_ids: Vec<&str> = ta_models.iter().map(|m| m.id).collect();
+
+    for p in session.grid_participants.iter().filter(|p| !p.is_player) {
+        let mid = p.model_id.unwrap();
+        assert!(
+            ta_ids.contains(&mid),
+            "NASCAR bot model '{}' must belong to Trans-Am TA1 category",
+            mid
+        );
+    }
+
+    // 3. Karting KZ2 Shifter
+    session.switch_to_kart();
+    session.selected_car_model_id = Some("kart_tony_kart_racer_kz");
+    session.free_car_selection = true;
+    session.rebuild_roster_participants();
+
+    let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
+    assert_eq!(player.car_title, "Tony Kart Racer 401 KZ");
+
+    let kz_models = get_models_for_category("kart", "Shifter Kart 125cc KZ2");
+    let kz_ids: Vec<&str> = kz_models.iter().map(|m| m.id).collect();
+
+    for p in session.grid_participants.iter().filter(|p| !p.is_player) {
+        let mid = p.model_id.unwrap();
+        assert!(
+            kz_ids.contains(&mid),
+            "Kart bot model '{}' must belong to KZ2 category",
+            mid
+        );
+    }
+}
+
+#[test]
+fn test_classic_module_preserves_procedural_cars() {
+    let mut session = RaceSession::new();
+    session.switch_to_classic();
+    session.num_bots = 3;
+    session.init_race();
+
+    assert_eq!(session.active_module_id, "classic");
+    for p in &session.grid_participants {
+        assert_eq!(
+            p.model_id, None,
+            "Classic participant '{}' must not have a model_id",
+            p.name
+        );
+    }
+    for (i, &mid) in session.car_model_ids.iter().enumerate() {
+        assert_eq!(
+            mid, None,
+            "Car {} in classic session must not have a model_id",
+            i
+        );
+    }
+}
+
+

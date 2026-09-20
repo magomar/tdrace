@@ -31,24 +31,6 @@ def remove_magenta_bg(img: Image.Image, is_topdown: bool = False) -> Image.Image
     min_y, max_y = ys.min(), ys.max()
     min_x, max_x = xs.min(), xs.max()
 
-    # If topdown and multiple cars were generated side-by-side (w / h > 0.65)
-    if is_topdown and (max_x - min_x) / max(1, (max_y - min_y)) > 0.65:
-        # Take the leftmost car (up to midpoint or gap)
-        mid_x = (min_x + max_x) // 2
-        # Check column density to find gap between cars
-        col_density = np.count_nonzero(alpha[:, min_x:max_x], axis=0)
-        # Find minimum density near midpoint
-        search_start = int((max_x - min_x) * 0.35)
-        search_end = int((max_x - min_x) * 0.65)
-        gap_offset = search_start + np.argmin(col_density[search_start:search_end])
-        split_x = min_x + gap_offset
-        
-        car1_alpha = alpha[:, min_x:split_x]
-        c1_ys, c1_xs = np.where(car1_alpha > 0)
-        if len(c1_ys) > 0 and len(c1_xs) > 0:
-            min_y, max_y = c1_ys.min(), c1_ys.max()
-            min_x, max_x = min_x + c1_xs.min(), min_x + c1_xs.max()
-
     return Image.fromarray(arr[min_y:max_y+1, min_x:max_x+1])
 
 def process_lateral(raw_path: Path, out_path: Path, thumb_path: Path):
@@ -82,9 +64,12 @@ def process_topdown(raw_path: Path, out_path: Path):
     scaled = cropped.resize((nw, nh), Image.Resampling.LANCZOS)
     canvas.paste(scaled, ((512 - nw) // 2, (512 - nh) // 2))
 
+    # Rotate 90 degrees clockwise so vehicle nose points to the RIGHT (+X, forward heading)
+    canvas = canvas.transpose(Image.Transpose.ROTATE_270)
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out_path, format="PNG")
-    print(f"✓ Top-down (512x512) -> {out_path}")
+    print(f"✓ Top-down (512x512, facing right) -> {out_path}")
 
 def main():
     parser = argparse.ArgumentParser(description="Process vehicle sprites")

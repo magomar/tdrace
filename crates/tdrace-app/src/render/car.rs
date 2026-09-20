@@ -114,8 +114,15 @@ pub fn render_vehicle_topdown_sprite(
     body_half_w: f32,
     is_braking: bool,
 ) {
-    let dest_w = body_half_len * 2.0 * 1.06;
-    let dest_h = dest_w * (texture.height() / texture.width());
+    let (dest_w, dest_h, draw_angle) = if texture.height() > texture.width() {
+        let w = body_half_len * 2.0 * 1.06;
+        let h = w * (texture.width() / texture.height());
+        (h, w, angle + std::f32::consts::FRAC_PI_2)
+    } else {
+        let w = body_half_len * 2.0 * 1.06;
+        let h = w * (texture.height() / texture.width());
+        (w, h, angle)
+    };
 
     draw_texture_ex(
         texture,
@@ -124,7 +131,7 @@ pub fn render_vehicle_topdown_sprite(
         Color::new(1.0, 1.0, 1.0, 1.0),
         DrawTextureParams {
             dest_size: Some(macroquad::math::Vec2::new(dest_w, dest_h)),
-            rotation: angle,
+            rotation: draw_angle,
             pivot: Some(macroquad::math::Vec2::new(chassis_center.x, chassis_center.y)),
             ..Default::default()
         },
