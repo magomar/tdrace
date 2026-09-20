@@ -67,6 +67,7 @@ Technical design documents, audio engine architectures, and performance profiles
 | Document | Type | Status | Description |
 | :--- | :--- | :---: | :--- |
 | [Screen Architecture](engineering/screens_and_navigation.md) | Architecture Spec | `active` | UI screens, state machines, transition triggers, and navigation schemas. |
+| [UI & Screen Terminology](engineering/terminology.md) | Architecture Spec | `active` | Formal UI component hierarchy, Cabinet platform primitives, and canonical screen catalog. |
 | [Motor Sound Synthesis](engineering/motor_sound_improvement.md) | Architecture Spec | `active` | Procedural motor sound synthesis, pitch modulation, exhaust pop harmonics, and Kira integration. |
 | [Circuit Rendering Performance](engineering/circuit_rendering_performance.md) | Architecture Spec | `active` | OpenGL batching, Catmull-Rom spline tessellation, and memory footprint analysis. |
 | [Surface & Wall Legacy Spec](engineering/surface_and_wall_legacy_spec.md) | Architecture Spec | `active` | Historical specifications for 12 surface types and 4 barrier collision models. |
