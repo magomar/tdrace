@@ -42,7 +42,7 @@ impl SurfaceMaterial {
         let (tile_scale_meters, base_tint, roughness, has_macro_modulation) = match surface_type {
             SurfaceType::Asphalt => (4.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.70, true),
             SurfaceType::Concrete => (5.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.55, false),
-            SurfaceType::Curb => (1.5, Color::new(1.0, 1.0, 1.0, 1.0), 0.60, false),
+            SurfaceType::Curb => (3.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.60, false),
             SurfaceType::Dirt => (3.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.85, true),
             SurfaceType::Gravel => (3.5, Color::new(1.0, 1.0, 1.0, 1.0), 0.90, true),
             SurfaceType::Grass => (6.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.80, true),
@@ -227,9 +227,13 @@ impl SurfaceMaterialRegistry {
         };
 
         if let Some(bytes) = Self::find_surface_asset_file(filename) {
-            let tex = Texture2D::from_file_with_format(&bytes, None);
-            tex.set_filter(FilterMode::Linear);
-            return Some(tex);
+            if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let t = Texture2D::from_file_with_format(&bytes, None);
+                t.set_filter(FilterMode::Linear);
+                t
+            })) {
+                return Some(tex);
+            }
         }
 
         // Procedural synthetic fallback
@@ -239,19 +243,25 @@ impl SurfaceMaterialRegistry {
 
     fn load_or_generate_curb_texture(dim: u16) -> Option<Texture2D> {
         if let Some(bytes) = Self::find_surface_asset_file("curb_teeth.png") {
-            let tex = Texture2D::from_file_with_format(&bytes, None);
-            tex.set_filter(FilterMode::Linear);
-            return Some(tex);
+            if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let t = Texture2D::from_file_with_format(&bytes, None);
+                t.set_filter(FilterMode::Linear);
+                t
+            })) {
+                return Some(tex);
+            }
         }
         let img = generate_curb_image(dim, dim / 2);
         Self::upload_texture(&img)
     }
 
     fn upload_texture(img: &Image) -> Option<Texture2D> {
-        // Safe upload: from_image creates GPU texture via active graphics context.
-        let tex = Texture2D::from_image(img);
-        tex.set_filter(FilterMode::Linear);
-        Some(tex)
+        // Safe upload: catches panic if running in headless environments without window context.
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let tex = Texture2D::from_image(img);
+            tex.set_filter(FilterMode::Linear);
+            tex
+        })).ok()
     }
 }
 

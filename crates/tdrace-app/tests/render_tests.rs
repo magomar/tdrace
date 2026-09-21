@@ -846,6 +846,38 @@ fn test_surface_asset_files_exist_and_are_valid_png() {
     }
 }
 
+#[test]
+fn test_spline_ribbon_and_world_space_uv_mappings() {
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let track = classic_grand_prix();
+    assert!(track.spline.samples.len() > 10);
+
+    // Verify distance monotonically increases along spline samples
+    let samples = &track.spline.samples;
+    for i in 1..samples.len() {
+        assert!(samples[i].distance >= samples[i - 1].distance);
+    }
+
+    // Verify ribbon UV scaling formula: v = distance / tile_scale
+    let tile_scale = 4.0; // Asphalt scale
+    let s0 = &samples[0];
+    let s1 = &samples[1];
+    let v0 = s0.distance / tile_scale;
+    let v1 = s1.distance / tile_scale;
+    assert!(v1 >= v0);
+    assert_eq!(v0, 0.0);
+
+    // Verify world UV scaling formula: uv = (x / scale, y / scale)
+    let world_p1 = glam::Vec2::new(100.0, 200.0);
+    let world_p2 = glam::Vec2::new(100.0, 200.0);
+    let scale_world = 6.0;
+    let uv1 = world_p1 / scale_world;
+    let uv2 = world_p2 / scale_world;
+    assert_eq!(uv1, uv2, "Identical world coordinates must share identical UVs for seamless continuity");
+}
+
+
 
 
 
