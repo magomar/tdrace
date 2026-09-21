@@ -17,6 +17,10 @@ A comprehensive rendering, asset pipeline, and material specification introducin
 ## 🗺️ User Flow & Interface Design
 
 ### 1. In-Game Cenital (Top-Down) Visual Aesthetics
+
+#### Art Direction Standard: Authentic Motorsport Physical Fidelity & Micro-Texture
+In accordance with user approval, the visual design strictly follows **authentic motorsport physical fidelity and micro-texture**. Rather than cartoonish or exaggerated arcade motifs, all surface materials are calibrated to realistic motorsport scales, natural daylight values, and authentic physical wear patterns that elevate the game's top-down presentation:
+
 In cenital racing view, tracks transform from sterile single-color polygons into rich, tactile motorsport environments:
 
 * **Asphalt (`SurfaceType::Asphalt`)**:
@@ -151,10 +155,11 @@ Repetitive tiling grids ("checkerboard artifact") destroy visual immersion on lo
 * **High-Frequency Micro Texture**: $256 \times 256$ or $512 \times 512$ tileable albedo map capturing fine surface grain ($1 - 4\,\text{m}$ spatial frequency).
 * **Low-Frequency Macro Modulation**: A continuous perlin/simplex value field ($32 - 64\,\text{m}$ spatial frequency) modulates surface luminance and tint via vertex colors:
   $$C_{\text{final}} = C_{\text{texture}} \cdot \left(1.0 + \Delta_{\text{macro}}(x, y) \cdot 0.18\right) \cdot C_{\text{vertex\_lighting}}$$
-* **Dynamic Racing Line Rubbering-In**:
-  * Near the driving line and corner apexes, an darkening factor $\rho_{\text{rubber}} \in [0.0, 0.40]$ is blended into the asphalt:
+* **Hybrid Racing Line Rubbering Architecture**:
+  * **Phase 1 (Static Apex Groove Baseline)**: Pre-computed at track load time along corner entries, apex clipping points, and corner exits based on spline curvature and optimal trajectory. Directly modulates vertex colors ($\rho_{\text{rubber}} \in [0.0, 0.40]$) with **zero per-frame CPU overhead**:
     $$C_{\text{asphalt}} = C_{\text{asphalt}} \cdot (1.0 - \rho_{\text{rubber}}) + C_{\text{rubber}} \cdot \rho_{\text{rubber}}$$
-  * Produces an authentic dark, slick rubber streak along corner entries and apex clipping points.
+    Produces an authentic dark, slick rubber streak along corner entries and apex clipping points from Lap 1.
+  * **Phase 2 (Dynamic Track Evolution Hook)**: Structured with per-segment wear state hooks where tire slip ($|\vec{v}_{\text{slip}}| \cdot F_{\text{load}}$) dynamically increments $\Delta \rho_{\text{rubber}}$, allowing multi-lap races to organically darken the line, generate brake lockup patches, and push rubber marbles off-line over extended sessions.
 
 ### 4. Organic Edge Feathering & Transitional Fringing
 

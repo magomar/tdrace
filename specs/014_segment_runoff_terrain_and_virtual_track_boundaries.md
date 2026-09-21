@@ -226,8 +226,14 @@ When a point is projected onto the centerline spline, the updated surface evalua
        - Corridor limit: $d_{\text{limit}} = \text{half\_w} + s_0.\text{right\_wall\_distance.unwrap\_or}(D_{\text{default}})$.
        - If $d_{\text{lat}} \le d_{\text{limit}}$ and $s_0.\text{right\_runoff\_surface.is\_some()}$:
          - Return `s0.right_runoff_surface.unwrap()`.
+      - **Corridor Fallback**: If `left_runoff_surface` or `right_runoff_surface` is not explicitly customized, `Track::default_runoff_surface()` determines the discipline corridor material:
+        - **GT & Rallycross Circuits** (`CarCategory::Gt`, `CarCategory::Rally`, or modules `gt`/`rally`/`classic`): `SurfaceType::Gravel`.
+        - **Kart Circuits** (`CarCategory::Kart` or module `kart`): `SurfaceType::Concrete`.
+        - **Pure Dirt or Mud Circuits** (`default_surface == Dirt | Mud` or pure dirt/mud ribbons): `SurfaceType::Dirt`.
+        - **Sandy Circuits** (`default_surface == Sand` or sand desert/dune venues): `SurfaceType::Sand`.
+        - **Snow or Icy Circuits** (`default_surface == Snow | Ice` or arctic/glacier venues): `SurfaceType::Snow`.
 5. **Arena / Hybrid Floor Polygons**: Enclosed stadium floor polygon.
-6. **Below-Track Custom Zones**: Hand-placed `SurfaceZone` instances (`SurfaceLayer::BelowTrack`).
+6. **Below-Track Custom Zones**: Hand-placed `SurfaceZone` instances (`SurfaceLayer::BelowTrack`, e.g. dedicated hairpin sand traps or paved asphalt aprons).
 7. **Grandstand Aprons**: Concrete bleacher foundations.
 8. **Global Default Backdrop**: Fallback `self.default_surface` (e.g. `SurfaceType::Grass`).
 

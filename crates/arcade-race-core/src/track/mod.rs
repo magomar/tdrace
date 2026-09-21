@@ -319,21 +319,35 @@ impl Track {
             if proj.is_on_track {
                 return proj.base_surface;
             }
+            // Check curbs
             if proj.is_on_curb {
                 return SurfaceType::Curb;
             }
+        }
 
-            // Segment runoff corridor check
+        // 4. Check explicit off-track surface zones (e.g. hand-placed sand traps, asphalt runoffs):
+        for zone in &self.geometry.surface_zones {
+            if !zone.is_above_track() && zone.contains(point) {
+                return zone.surface;
+            }
+        }
+
+        // 5. Segment runoff corridor (off-track terrain between track/curb edge and boundary wall):
+        if self.spline.waypoints.len() >= 2 {
+            let proj = self.spline.project_point(point);
             let half_w = proj.track_width * 0.5;
+            let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
+            let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
+
             if proj.lateral_offset < -half_w {
-                if let Some(runoff) = proj.left_runoff_surface {
+                if let Some(runoff) = left_ro {
                     let limit = half_w + proj.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
                     if -proj.lateral_offset <= limit {
                         return runoff;
                     }
                 }
             } else if proj.lateral_offset > half_w {
-                if let Some(runoff) = proj.right_runoff_surface {
+                if let Some(runoff) = right_ro {
                     let limit = half_w + proj.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
                     if proj.lateral_offset <= limit {
                         return runoff;
@@ -342,7 +356,7 @@ impl Track {
             }
         }
 
-        // 4. Check Arena / Hybrid floor surface inside boundary hull:
+        // 6. Check Arena / Hybrid floor surface inside boundary hull:
         match &self.kind {
             TrackKind::Arena { boundary_hull, floor_surface, .. } => {
                 if point_in_polygon(point, boundary_hull) {
@@ -357,21 +371,14 @@ impl Track {
             TrackKind::Circuit => {}
         }
 
-        // 5. Check below-track ground zones (e.g. sand traps, asphalt runoff, dirt base beneath road)
-        for zone in &self.geometry.surface_zones {
-            if !zone.is_above_track() && zone.contains(point) {
-                return zone.surface;
-            }
-        }
-
-        // 6. Check grandstand concrete aprons
+        // 7. Check grandstand concrete aprons
         for grandstand in &self.geometry.grandstands {
             if grandstand.contains(point) {
                 return SurfaceType::Concrete;
             }
         }
 
-        // 7. Default terrain (e.g. Grass or Sand)
+        // 8. Default terrain
         self.default_surface
     }
 
@@ -401,7 +408,7 @@ impl Track {
 
     /// Samples the surface at `point` with localized spline projection near `hint_dist`.
     pub fn sample_surface_near(&self, point: Vec2, hint_dist: f32) -> SurfaceType {
-        // 1. Check jump ramps
+        // 1. Check jump ramps (elevated platforms)
         for ramp in &self.geometry.jump_ramps {
             if ramp.contains(point) {
                 return ramp.surface;
@@ -424,17 +431,27 @@ impl Track {
             return SurfaceType::Curb;
         }
 
-        // Segment runoff corridor check
+        // 4. Check explicit off-track surface zones
+        for zone in &self.geometry.surface_zones {
+            if !zone.is_above_track() && zone.contains(point) {
+                return zone.surface;
+            }
+        }
+
+        // 5. Segment runoff corridor check
         let half_w = proj.track_width * 0.5;
+        let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
+        let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
+
         if proj.lateral_offset < -half_w {
-            if let Some(runoff) = proj.left_runoff_surface {
+            if let Some(runoff) = left_ro {
                 let limit = half_w + proj.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
                 if -proj.lateral_offset <= limit {
                     return runoff;
                 }
             }
         } else if proj.lateral_offset > half_w {
-            if let Some(runoff) = proj.right_runoff_surface {
+            if let Some(runoff) = right_ro {
                 let limit = half_w + proj.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
                 if proj.lateral_offset <= limit {
                     return runoff;
@@ -442,12 +459,6 @@ impl Track {
             }
         }
 
-        // 4. Check below-track ground zones
-        for zone in &self.geometry.surface_zones {
-            if !zone.is_above_track() && zone.contains(point) {
-                return zone.surface;
-            }
-        }
 
         // 5. Check grandstand concrete aprons
         for grandstand in &self.geometry.grandstands {
@@ -487,6 +498,111 @@ impl Track {
         }
     }
 
+    /// Resolves the default runoff corridor surface type for the track based on discipline and environment:
+    /// - Snow or icy circuits -> `SurfaceType::Snow`
+    /// - Sandy circuits -> `SurfaceType::Sand`
+    /// - Pure dirt or mud circuits -> `SurfaceType::Dirt`
+    /// - Kart circuits -> `SurfaceType::Concrete`
+    /// - GT and Rallycross circuits -> `SurfaceType::Gravel`
+    pub fn default_runoff_surface(&self) -> Option<SurfaceType> {
+        let name_lower = self.name.to_lowercase();
+
+        // 1. Snow or icy circuits
+        if self.default_surface == SurfaceType::Snow
+            || self.default_surface == SurfaceType::Ice
+            || (!self.spline.waypoints.is_empty()
+                && self.spline.waypoints.iter().all(|wp| {
+                    wp.surface == Some(SurfaceType::Snow) || wp.surface == Some(SurfaceType::Ice)
+                }))
+            || name_lower.contains("snow")
+            || name_lower.contains("ice")
+            || name_lower.contains("arctic")
+            || name_lower.contains("glacier")
+            || name_lower.contains("frozen")
+        {
+            return Some(SurfaceType::Snow);
+        }
+
+        // 2. Sandy circuits
+        if self.default_surface == SurfaceType::Sand
+            || (!self.spline.waypoints.is_empty()
+                && self.spline.waypoints.iter().all(|wp| wp.surface == Some(SurfaceType::Sand)))
+            || name_lower.contains("sand")
+            || name_lower.contains("dune")
+            || name_lower.contains("sahara")
+            || name_lower.contains("atacama")
+        {
+            return Some(SurfaceType::Sand);
+        }
+
+        // 3. Pure dirt or mud circuits
+        if self.default_surface == SurfaceType::Dirt
+            || self.default_surface == SurfaceType::Mud
+            || (!self.spline.waypoints.is_empty()
+                && self.spline.waypoints.iter().all(|wp| {
+                    wp.surface == Some(SurfaceType::Dirt) || wp.surface == Some(SurfaceType::Mud)
+                }))
+            || name_lower.contains("mud")
+            || name_lower.contains("dirt")
+            || name_lower.contains("clay")
+        {
+            return Some(SurfaceType::Dirt);
+        }
+
+        // 4. Kart circuits
+        if self.car_category == CarCategory::Kart
+            || self.belongs_to_module("kart")
+            || name_lower.contains("kart")
+        {
+            return Some(SurfaceType::Concrete);
+        }
+
+        // 5. GT and Rallycross circuits
+        if self.car_category == CarCategory::Gt
+            || self.car_category == CarCategory::Rally
+            || self.belongs_to_module("gt")
+            || self.belongs_to_module("rally")
+            || self.belongs_to_module("classic")
+            || name_lower.contains(" rx")
+            || name_lower.contains("rallycross")
+            || name_lower.contains("grand prix")
+            || name_lower.contains("world rx")
+        {
+            return Some(SurfaceType::Gravel);
+        }
+
+        None
+    }
+
+    /// Populates segment runoff surfaces (`left_runoff_surface` / `right_runoff_surface`) across all waypoints
+    /// and spline samples where they have not been explicitly customized.
+    pub fn apply_default_runoff_surfaces(&mut self) {
+        if let Some(default_runoff) = self.default_runoff_surface() {
+            for wp in &mut self.spline.waypoints {
+                if wp.left_runoff_surface.is_none() {
+                    wp.left_runoff_surface = Some(default_runoff);
+                }
+                if wp.right_runoff_surface.is_none() {
+                    wp.right_runoff_surface = Some(default_runoff);
+                }
+            }
+            for s in &mut self.spline.samples {
+                if s.left_runoff_surface.is_none() {
+                    s.left_runoff_surface = Some(default_runoff);
+                }
+                if s.right_runoff_surface.is_none() {
+                    s.right_runoff_surface = Some(default_runoff);
+                }
+            }
+        }
+    }
+
+    /// Chainable helper applying default runoff surfaces.
+    pub fn with_default_runoff_surfaces(mut self) -> Self {
+        self.apply_default_runoff_surfaces();
+        self
+    }
+
     /// Deserializes a `Track` from a JSON string.
     pub fn from_json(json_str: &str) -> Result<Self, TrackError> {
         let mut track: Self = serde_json::from_str(json_str).map_err(|e| TrackError::Json(e.to_string()))?;
@@ -497,6 +613,7 @@ impl Track {
                 track.spline.closed,
             );
         }
+        track.apply_default_runoff_surfaces();
         Ok(track)
     }
 
@@ -539,6 +656,7 @@ impl Track {
     /// Rebuilds spline samples, boundary polylines, and wall barriers from the spline waypoints.
     pub fn rebuild_geometry(&mut self, barrier_offset: f32, barrier_type: BarrierType) {
         if self.spline.waypoints.len() >= 3 {
+            self.apply_default_runoff_surfaces();
             self.spline = TrackSpline::new(self.spline.waypoints.clone(), self.spline.closed);
             let (left_walls, right_walls, left_poly, right_poly) =
                 generate_walls_from_spline(&self.spline, barrier_offset, barrier_type);
@@ -546,6 +664,7 @@ impl Track {
             self.geometry.outer_walls = right_walls;
             self.geometry.left_boundary_polyline = left_poly;
             self.geometry.right_boundary_polyline = right_poly;
+            self.apply_default_runoff_surfaces();
         }
     }
 
@@ -931,5 +1050,80 @@ mod tests {
             SurfaceType::Grass,
             "Beyond right corridor limit must fall back to Grass"
         );
+    }
+
+    #[test]
+    fn test_default_runoff_surfaces_across_disciplines() {
+        let make_track = |name: &str, category: CarCategory, default_surf: SurfaceType, module: &str| {
+            let wps = vec![
+                TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
+                TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0),
+                TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0),
+            ];
+            Track {
+                name: name.to_string(),
+                car_category: category,
+                default_surface: default_surf,
+                module_id: Some(module.to_string()),
+                modules: vec![module.to_string()],
+                spline: TrackSpline::new(wps, false),
+                ..Default::default()
+            }
+        };
+
+        // 1. GT Circuit -> Gravel
+        let mut gt_track = make_track("Spa GP", CarCategory::Gt, SurfaceType::Grass, "gt");
+        assert_eq!(gt_track.default_runoff_surface(), Some(SurfaceType::Gravel));
+        gt_track.apply_default_runoff_surfaces();
+        assert_eq!(gt_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(gt_track.spline.samples[0].right_runoff_surface, Some(SurfaceType::Gravel));
+
+        // 2. Rallycross Circuit -> Gravel
+        let mut rx_track = make_track("Holjes RX", CarCategory::Rally, SurfaceType::Grass, "rally");
+        assert_eq!(rx_track.default_runoff_surface(), Some(SurfaceType::Gravel));
+        rx_track.apply_default_runoff_surfaces();
+        assert_eq!(rx_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Gravel));
+
+        // 3. Kart Circuit -> Concrete
+        let mut kart_track = make_track("Lonato Karting", CarCategory::Kart, SurfaceType::Grass, "kart");
+        assert_eq!(kart_track.default_runoff_surface(), Some(SurfaceType::Concrete));
+        kart_track.apply_default_runoff_surfaces();
+        assert_eq!(kart_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Concrete));
+
+        // 4. Pure Dirt or Mud Circuit -> Dirt
+        let mut dirt_track = make_track("Crandon Offroad", CarCategory::OffRoad, SurfaceType::Dirt, "extreme_offroad");
+        assert_eq!(dirt_track.default_runoff_surface(), Some(SurfaceType::Dirt));
+        dirt_track.apply_default_runoff_surfaces();
+        assert_eq!(dirt_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Dirt));
+
+        let mut mud_track = make_track("Louisiana Mud Slough", CarCategory::OffRoad, SurfaceType::Mud, "extreme_offroad");
+        assert_eq!(mud_track.default_runoff_surface(), Some(SurfaceType::Dirt));
+        mud_track.apply_default_runoff_surfaces();
+        assert_eq!(mud_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Dirt));
+
+        // 5. Sandy Circuit -> Sand
+        let mut sand_track = make_track("Sahara Dunes", CarCategory::OffRoad, SurfaceType::Sand, "extreme_offroad");
+        assert_eq!(sand_track.default_runoff_surface(), Some(SurfaceType::Sand));
+        sand_track.apply_default_runoff_surfaces();
+        assert_eq!(sand_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Sand));
+
+        // 6. Snow or Icy Circuit -> Snow
+        let mut snow_track = make_track("Alpine Snow Ridge", CarCategory::OffRoad, SurfaceType::Snow, "extreme_offroad");
+        assert_eq!(snow_track.default_runoff_surface(), Some(SurfaceType::Snow));
+        snow_track.apply_default_runoff_surfaces();
+        assert_eq!(snow_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Snow));
+
+        let mut ice_track = make_track("Arctic Ice Lake", CarCategory::OffRoad, SurfaceType::Ice, "extreme_offroad");
+        assert_eq!(ice_track.default_runoff_surface(), Some(SurfaceType::Snow));
+        ice_track.apply_default_runoff_surfaces();
+        assert_eq!(ice_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Snow));
+
+        // Custom override preservation:
+        let mut custom_track = make_track("Nurburgring GP", CarCategory::Gt, SurfaceType::Grass, "gt");
+        custom_track.spline.waypoints[1].left_runoff_surface = Some(SurfaceType::Sand);
+        custom_track.apply_default_runoff_surfaces();
+        assert_eq!(custom_track.spline.waypoints[0].left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(custom_track.spline.waypoints[1].left_runoff_surface, Some(SurfaceType::Sand));
+        assert_eq!(custom_track.spline.waypoints[2].left_runoff_surface, Some(SurfaceType::Gravel));
     }
 }
