@@ -2,8 +2,9 @@ use macroquad::color::Color;
 use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    catalunya_rx, essay_rx, estering_rx, hell_rx, holjes_rx, killarney_rx, kouvola_rx, loheac_rx,
-    lydden_hill, mettet_rx, montalegre_rx, nyirad_rx, riga_rx, silverstone_rx, yas_marina_rx,
+    blyton_park_rx, catalunya_rx, dreux_rx, essay_rx, estering_rx, hell_rx, holjes_rx, killarney_rx,
+    kouvola_rx, loheac_rx, lydden_hill, mettet_rx, montalegre_rx, nyirad_rx, riga_rx, silverstone_rx,
+    yas_marina_rx,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -281,6 +282,24 @@ impl GameModule for RallyGameModule {
                 category: "World RX",
                 default_laps: 4,
                 generator: essay_rx,
+            },
+            TrackDefinition {
+                id: "dreux_rx",
+                title: "* Dreux Circuit de l'Ouest Parisien",
+                tag: "EURO RX FRANCE",
+                description: "Classic French mixed-surface rallycross circuit with fast flowing dirt curves and wide asphalt launch.",
+                category: "Euro RX",
+                default_laps: 4,
+                generator: dreux_rx,
+            },
+            TrackDefinition {
+                id: "blyton_rx",
+                title: "* Blyton Park Rallycross Circuit",
+                tag: "BRITISH RX",
+                description: "Renowned UK mixed-surface proving ground with technical chalk/dirt transitions and jump crests.",
+                category: "Euro RX",
+                default_laps: 4,
+                generator: blyton_park_rx,
             },
         ]
     }

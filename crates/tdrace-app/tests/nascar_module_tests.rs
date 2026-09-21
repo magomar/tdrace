@@ -33,7 +33,7 @@ fn test_nascar_game_module_identity_and_vehicles() {
 fn test_nascar_tracks_and_geometry_validation() {
     let nascar = NascarGameModule::new();
     let tracks = nascar.tracks();
-    assert_eq!(tracks.len(), 12, "Expected 12 NASCAR tracks");
+    assert_eq!(tracks.len(), 17, "Expected 17 NASCAR tracks");
 
     let expected_ids = [
         "daytona_superspeedway",
@@ -48,6 +48,11 @@ fn test_nascar_tracks_and_geometry_validation() {
         "iowa_speedway",
         "road_america",
         "chicago_street_course",
+        "bowman_gray_stadium",
+        "lucas_oil_irp",
+        "north_wilkesboro_speedway",
+        "pocono_raceway",
+        "phoenix_raceway",
     ];
 
     for (idx, def) in tracks.iter().enumerate() {

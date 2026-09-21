@@ -3,9 +3,10 @@ use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
     alpine_snow_ridge, arctic_frozen_lake, atacama_sand_basin, baja_500_desert_scrub,
-    dirt_figure_eight, glacier_crest_pass, gravel_quarry_chasm, louisiana_mud_swampland,
-    monster_colosseum, mud_slough_arena, red_rock_canyon, rovaniemi_ice_ring, sahara_dune_crossing,
-    stunt_city_megastructure, supercross_stadium_arena,
+    crandon_short_course, dirt_figure_eight, glacier_crest_pass, glamis_sand_dunes,
+    gravel_quarry_chasm, louisiana_mud_swampland, monster_colosseum, mud_slough_arena,
+    red_rock_canyon, rovaniemi_ice_ring, sahara_dune_crossing, stunt_city_megastructure,
+    supercross_stadium_arena,
 };
 
 use super::{
@@ -227,6 +228,24 @@ impl GameModule for ExtremeOffRoadModule {
                 category: "Stunt Arenas",
                 default_laps: 3,
                 generator: stunt_city_megastructure,
+            },
+            TrackDefinition {
+                id: "glamis_dunes",
+                title: "* Glamis Imperial Sand Dunes",
+                tag: "DESERT RAID",
+                description: "Open California sand bowl with natural razorback dune crests and sweeping high-speed bowls.",
+                category: "Desert Raid",
+                default_laps: 3,
+                generator: glamis_sand_dunes,
+            },
+            TrackDefinition {
+                id: "crandon_short_course",
+                title: "* Crandon International Off-Road",
+                tag: "SHORT COURSE",
+                description: "The Big House: iconic Wisconsin short-course track with high-speed clay straights and tabletop jumps.",
+                category: "Mud & Quarry",
+                default_laps: 3,
+                generator: crandon_short_course,
             },
         ]
     }

@@ -1736,9 +1736,11 @@ impl RaceSession {
             1 => (
                 "GT4 Clubman Sprint Cup (Tier 1)",
                 vec![
-                    "monza".to_string(),
                     "red_bull_ring".to_string(),
+                    "zandvoort".to_string(),
                     "nurburgring_gp".to_string(),
+                    "portimao_gp".to_string(),
+                    "montreal".to_string(),
                 ],
                 CarChoice::GT4Clubsport,
             ),
@@ -1746,64 +1748,34 @@ impl RaceSession {
                 "FIA GT3 European Challenge (Tier 2)",
                 vec![
                     "monza".to_string(),
-                    "red_bull_ring".to_string(),
-                    "nurburgring_gp".to_string(),
                     "silverstone".to_string(),
                     "catalunya".to_string(),
-                    "bathurst".to_string(),
                 ],
                 CarChoice::GT3Car,
             ),
             3 => (
                 "SRO GT2 Power Masters (Tier 3)",
                 vec![
-                    "monza".to_string(),
-                    "red_bull_ring".to_string(),
-                    "nurburgring_gp".to_string(),
-                    "silverstone".to_string(),
-                    "catalunya".to_string(),
-                    "bathurst".to_string(),
                     "spa".to_string(),
-                    "zandvoort".to_string(),
-                    "portimao_gp".to_string(),
+                    "cota".to_string(),
+                    "bahrain".to_string(),
                 ],
                 CarChoice::GT2Biturbo,
             ),
             4 => (
                 "Le Mans 90s Heritage Trophy (Tier 4)",
                 vec![
-                    "monza".to_string(),
-                    "red_bull_ring".to_string(),
-                    "nurburgring_gp".to_string(),
-                    "silverstone".to_string(),
-                    "catalunya".to_string(),
-                    "bathurst".to_string(),
-                    "spa".to_string(),
-                    "zandvoort".to_string(),
-                    "portimao_gp".to_string(),
                     "suzuka".to_string(),
                     "interlagos".to_string(),
-                    "le_mans_sarthe".to_string(),
+                    "bathurst".to_string(),
                 ],
                 CarChoice::GT1Legend,
             ),
             _ => (
                 "World Endurance Hypercar Grand Prix (Tier 5)",
                 vec![
-                    "monza".to_string(),
-                    "red_bull_ring".to_string(),
-                    "nurburgring_gp".to_string(),
-                    "silverstone".to_string(),
-                    "catalunya".to_string(),
-                    "bathurst".to_string(),
-                    "spa".to_string(),
-                    "zandvoort".to_string(),
-                    "portimao_gp".to_string(),
-                    "suzuka".to_string(),
-                    "interlagos".to_string(),
                     "le_mans_sarthe".to_string(),
                     "monaco".to_string(),
-                    "madring".to_string(),
                     "marina_bay".to_string(),
                 ],
                 CarChoice::HypercarPrototype,
@@ -1851,6 +1823,383 @@ impl RaceSession {
             self.free_car_selection = true;
         } else {
             self.car_choice = car_choice;
+        }
+        self.championship_session = Some(champ);
+        self.init_race();
+    }
+
+    /// Launches a NASCAR Career Championship Cup for the given tier (1..=5).
+    pub fn start_nascar_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids) = match tier {
+            1 => (
+                "NASCAR Weekly Short Track Series (Tier 1)",
+                vec![
+                    "martinsville_speedway".to_string(),
+                    "bristol_motor_speedway".to_string(),
+                    "eldora_speedway".to_string(),
+                    "bowman_gray_stadium".to_string(),
+                    "lucas_oil_irp".to_string(),
+                ],
+            ),
+            2 => (
+                "NASCAR Intermediate Oval Challenge (Tier 2)",
+                vec![
+                    "charlotte_motor_speedway".to_string(),
+                    "darlington_raceway".to_string(),
+                    "north_wilkesboro_speedway".to_string(),
+                ],
+            ),
+            3 => (
+                "NASCAR National Road & Oval Tour (Tier 3)",
+                vec![
+                    "iowa_speedway".to_string(),
+                    "watkins_glen_nascar".to_string(),
+                    "road_america".to_string(),
+                ],
+            ),
+            4 => (
+                "NASCAR Premier Speedway Trophy (Tier 4)",
+                vec![
+                    "indianapolis_motor_speedway".to_string(),
+                    "pocono_raceway".to_string(),
+                    "chicago_street_course".to_string(),
+                ],
+            ),
+            _ => (
+                "NASCAR Cup Series Championship (Tier 5)",
+                vec![
+                    "daytona_superspeedway".to_string(),
+                    "talladega_superspeedway".to_string(),
+                    "phoenix_raceway".to_string(),
+                ],
+            ),
+        };
+
+        let champ = ChampionshipSession::new(
+            cup_name,
+            PointSystem::NascarCup { stage_win_bonus: true },
+            track_ids,
+            4,
+            &[
+                ("player", "Player", "Apex Stock Car"),
+                ("dale_vance", "Dale 'The Intimidator' Vance", "Richard Childress Racing"),
+                ("chase_gordon", "Chase 'Rainbow' Gordon", "Hendrick Motorsports"),
+                ("richard_pettyfield", "Richard 'The King' Pettyfield", "Petty Enterprises"),
+                ("rowdy_busch", "Rowdy 'Wild Thing' Busch", "Joe Gibbs Racing"),
+                ("jimmie_johnson", "Jimmie 'Seven-Time' Johnson", "Hendrick Motorsports"),
+                ("tony_stewart", "Tony 'Smoke' Stewart", "Stewart-Haas Racing"),
+                ("bobby_allison", "Bobby 'Alabama' Allison", "Alabama Gang"),
+                ("bubba_wallace", "Bubba 'The Rocket' Wallace", "23XI Racing"),
+                ("joey_logano", "Joey 'Sliced Bread' Logano", "Team Penske"),
+                ("bill_elliott", "Bill 'Awesome Bill' Elliott", "Melling Racing"),
+                ("cale_yarborough", "Cale 'The Iron Man' Yarborough", "Junior Johnson Racing"),
+            ],
+        );
+        let prev_selected = self.selected_car_model_id;
+        self.switch_to_nascar();
+        self.game_mode = GameMode::Career;
+
+        let selected_model = prev_selected
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == "nascar" && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("nascar", tier as u8)
+                    .into_iter()
+                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            })
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("nascar", tier as u8)
+                    .into_iter()
+                    .next()
+            });
+
+        if let Some(model) = selected_model {
+            self.selected_car_model_id = Some(model.id);
+            self.car_choice = model.base_car_choice;
+            self.current_visual_type = model.visual_type;
+            self.free_car_selection = true;
+        } else {
+            self.car_choice = CarChoice::StockCar;
+        }
+        self.championship_session = Some(champ);
+        self.init_race();
+    }
+
+    /// Launches a Rallycross Career Championship Cup for the given tier (1..=5).
+    pub fn start_rally_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids) = match tier {
+            1 => (
+                "World RX Clubman Sprint (Tier 1)",
+                vec![
+                    "holjes_rx".to_string(),
+                    "lydden_hill".to_string(),
+                    "mettet_rx".to_string(),
+                    "dreux_rx".to_string(),
+                    "blyton_rx".to_string(),
+                ],
+            ),
+            2 => (
+                "European Rallycross Challenge (Tier 2)",
+                vec![
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
+                    "silverstone_rx".to_string(),
+                ],
+            ),
+            3 => (
+                "Global Supercar Trophy (Tier 3)",
+                vec![
+                    "estering_rx".to_string(),
+                    "montalegre_rx".to_string(),
+                    "riga_rx".to_string(),
+                ],
+            ),
+            4 => (
+                "FIA World RX Masters (Tier 4)",
+                vec![
+                    "nyirad_rx".to_string(),
+                    "kouvola_rx".to_string(),
+                    "killarney_rx".to_string(),
+                ],
+            ),
+            _ => (
+                "FIA World RX Grand Finale (Tier 5)",
+                vec![
+                    "catalunya_rx".to_string(),
+                    "yas_marina_rx".to_string(),
+                    "essay_rx".to_string(),
+                ],
+            ),
+        };
+
+        let champ = ChampionshipSession::new(
+            cup_name,
+            PointSystem::FiaStandard { fastest_lap_bonus: true },
+            track_ids,
+            4,
+            &[
+                ("player", "Player", "Apex Rally Team"),
+                ("johan_kristoffersson", "Johan Kristoffersson", "KMS Volkswagen"),
+                ("timmy_hansen", "Timmy Hansen", "Hansen Motorsport"),
+                ("mattias_ekstrom", "Mattias Ekström", "EKS RX"),
+                ("petter_solberg", "Petter Solberg", "PSRX Volkswagen"),
+                ("andreas_bakkerud", "Andreas Bakkerud", "Monster Energy RX"),
+                ("niclas_gronholm", "Niclas Grönholm", "GRX Taneco"),
+                ("kevin_hansen", "Kevin Hansen", "Hansen Motorsport"),
+            ],
+        );
+        let prev_selected = self.selected_car_model_id;
+        self.switch_to_rally();
+        self.game_mode = GameMode::Career;
+
+        let selected_model = prev_selected
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == "rally" && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("rally", tier as u8)
+                    .into_iter()
+                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            })
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("rally", tier as u8)
+                    .into_iter()
+                    .next()
+            });
+
+        if let Some(model) = selected_model {
+            self.selected_car_model_id = Some(model.id);
+            self.car_choice = model.base_car_choice;
+            self.current_visual_type = model.visual_type;
+            self.free_car_selection = true;
+        } else {
+            self.car_choice = CarChoice::RallyCar;
+        }
+        self.championship_session = Some(champ);
+        self.init_race();
+    }
+
+    /// Launches a Karting Career Championship Cup for the given tier (1..=5).
+    pub fn start_kart_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids) = match tier {
+            1 => (
+                "Rotax Junior Academy (Tier 1)",
+                vec![
+                    "lonato".to_string(),
+                    "genk".to_string(),
+                    "wackersdorf".to_string(),
+                    "laval_kart".to_string(),
+                    "whilton_mill".to_string(),
+                ],
+            ),
+            2 => (
+                "National Kart Championship (Tier 2)",
+                vec![
+                    "sarno".to_string(),
+                    "kristianstad".to_string(),
+                    "seven_laghi".to_string(),
+                ],
+            ),
+            3 => (
+                "Continental KZ2 Trophy (Tier 3)",
+                vec![
+                    "pfi".to_string(),
+                    "franciacorta".to_string(),
+                    "ampfing".to_string(),
+                ],
+            ),
+            4 => (
+                "FIA Karting International Masters (Tier 4)",
+                vec![
+                    "zuera".to_string(),
+                    "silverstone_national_kart".to_string(),
+                    "le_mans_kart".to_string(),
+                ],
+            ),
+            _ => (
+                "FIA Karting World Championship (Tier 5)",
+                vec![
+                    "portimao_kart".to_string(),
+                    "valencia_kart".to_string(),
+                    "campillos".to_string(),
+                ],
+            ),
+        };
+
+        let champ = ChampionshipSession::new(
+            cup_name,
+            PointSystem::FiaStandard { fastest_lap_bonus: true },
+            track_ids,
+            4,
+            &[
+                ("player", "Player", "Apex Kart Racing"),
+                ("marco_armani", "Marco Armani", "Tony Kart Racing"),
+                ("lucas_vance", "Lucas Vance", "CRG Factory Team"),
+                ("alex_rossi", "Alex Rossi", "Birel ART"),
+                ("sofia_lind", "Sofia Lind", "Kosmic Racing"),
+                ("finn_korhonen", "Finn Korhonen", "Sodi Kart"),
+                ("leo_dupont", "Leo Dupont", "Energy Corse"),
+                ("mateo_silva", "Mateo Silva", "Parolin Motorsport"),
+            ],
+        );
+        let prev_selected = self.selected_car_model_id;
+        self.switch_to_kart();
+        self.game_mode = GameMode::Career;
+
+        let selected_model = prev_selected
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == "kart" && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("kart", tier as u8)
+                    .into_iter()
+                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            })
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("kart", tier as u8)
+                    .into_iter()
+                    .next()
+            });
+
+        if let Some(model) = selected_model {
+            self.selected_car_model_id = Some(model.id);
+            self.car_choice = model.base_car_choice;
+            self.current_visual_type = model.visual_type;
+            self.free_car_selection = true;
+        } else {
+            self.car_choice = CarChoice::Kart;
+        }
+        self.championship_session = Some(champ);
+        self.init_race();
+    }
+
+    /// Launches an Extreme Off-Road Career Championship Cup for the given tier (1..=5).
+    pub fn start_extreme_offroad_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids) = match tier {
+            1 => (
+                "Desert Sand Sprint Series (Tier 1)",
+                vec![
+                    "sahara_dune_crossing".to_string(),
+                    "dirt_figure_eight".to_string(),
+                    "atacama_sand_basin".to_string(),
+                    "glamis_dunes".to_string(),
+                    "crandon_short_course".to_string(),
+                ],
+            ),
+            2 => (
+                "Canyon & Baja Trail Challenge (Tier 2)",
+                vec![
+                    "red_rock_canyon".to_string(),
+                    "mud_slough_arena".to_string(),
+                    "baja_500_desert_scrub".to_string(),
+                ],
+            ),
+            3 => (
+                "Sub-Zero Polar Expedition (Tier 3)",
+                vec![
+                    "arctic_frozen_lake".to_string(),
+                    "alpine_snow_ridge".to_string(),
+                    "rovaniemi_ice_ring".to_string(),
+                ],
+            ),
+            4 => (
+                "Stadium Super Trucks Arena Tour (Tier 4)",
+                vec![
+                    "supercross_stadium_arena".to_string(),
+                    "gravel_quarry_chasm".to_string(),
+                    "louisiana_mud_swampland".to_string(),
+                ],
+            ),
+            _ => (
+                "Extreme Off-Road Ultimate Championship (Tier 5)",
+                vec![
+                    "monster_colosseum".to_string(),
+                    "glacier_crest_pass".to_string(),
+                    "stunt_city_megastructure".to_string(),
+                ],
+            ),
+        };
+
+        let champ = ChampionshipSession::new(
+            cup_name,
+            PointSystem::FiaStandard { fastest_lap_bonus: false },
+            track_ids,
+            3,
+            &[
+                ("player", "Player", "Sand Rail Dynamics"),
+                ("wyatt_cole", "Wyatt 'Dust Devil' Cole", "Mojave Sandworks"),
+                ("jaxson_rivera", "Jaxson 'Baja King' Rivera", "Baja Trophy Racing"),
+                ("astrid_lindholm", "Astrid 'Ice Queen' Lindholm", "Nordic Glacier Works"),
+                ("bubba_beauregard", "Bubba 'Mud Slinger' Beauregard", "Bayou Heavy Traction"),
+                ("travis_mcgrath", "Travis 'Nitro' McGrath", "Redline Freestyle"),
+                ("roxie_vance", "Roxie 'Rock Hound' Vance", "Canyon Crawler Team"),
+                ("sven_lindqvist", "Sven 'Blizzard' Lindqvist", "Arctic Circle Rally"),
+                ("cruz_morales", "Cruz 'Chasm Jumper' Morales", "Quarry Stunt Squad"),
+            ],
+        );
+        let prev_selected = self.selected_car_model_id;
+        self.switch_to_extreme_offroad();
+        self.game_mode = GameMode::Career;
+
+        let selected_model = prev_selected
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == "extreme_offroad" && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("extreme_offroad", tier as u8)
+                    .into_iter()
+                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            })
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("extreme_offroad", tier as u8)
+                    .into_iter()
+                    .next()
+            });
+
+        if let Some(model) = selected_model {
+            self.selected_car_model_id = Some(model.id);
+            self.car_choice = model.base_car_choice;
+            self.current_visual_type = model.visual_type;
+            self.free_car_selection = true;
+        } else {
+            self.car_choice = CarChoice::SandRail;
         }
         self.championship_session = Some(champ);
         self.init_race();
@@ -5135,24 +5484,33 @@ impl RaceSession {
                     }
                     ModalityItem::CareerMode => {
                         self.audio.play_sfx(SfxType::UiSelect);
+                        if self.active_career_progress.can_advance_tier() {
+                            if let Ok(new_tier) = self.active_career_progress.advance_tier() {
+                                if let Some(db) = &self.hof_db {
+                                    let _ = db.save_module_progress(&self.active_career_progress);
+                                }
+                                self.spawn_hud_alert(
+                                    format!("PROMOTED TO TIER {}! NEW CALENDAR UNLOCKED!", new_tier),
+                                    Palette::NEON_GOLD,
+                                );
+                            }
+                        }
+                        let tier = self.active_career_progress.level.clamp(1, 5);
                         match self.active_module_id {
                             "gt" | "gt_challenge" => {
-                                if self.active_career_progress.can_advance_tier() {
-                                    if let Ok(new_tier) = self.active_career_progress.advance_tier() {
-                                        if let Some(db) = &self.hof_db {
-                                            let _ = db.save_module_progress(&self.active_career_progress);
-                                        }
-                                        self.spawn_hud_alert(
-                                            format!("PROMOTED TO TIER {}! NEW CALENDAR UNLOCKED!", new_tier),
-                                            Palette::NEON_GOLD,
-                                        );
-                                    }
-                                }
-                                let tier = self.active_career_progress.level.clamp(1, 5);
                                 self.start_gt_career_tier(tier);
                             }
                             "nascar" => {
-                                self.start_nascar_championship();
+                                self.start_nascar_career_tier(tier);
+                            }
+                            "rally" => {
+                                self.start_rally_career_tier(tier);
+                            }
+                            "kart" => {
+                                self.start_kart_career_tier(tier);
+                            }
+                            "extreme_offroad" => {
+                                self.start_extreme_offroad_career_tier(tier);
                             }
                             _ => {
                                 modal = Some(ModalityModal::CareerComingSoon);

@@ -707,6 +707,9 @@ pub fn classic_grand_prix() -> Track {
         car_category: CarCategory::Gt,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -762,6 +765,9 @@ pub fn oval_speedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -817,6 +823,9 @@ pub fn dirty_oval_speedway() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -900,6 +909,9 @@ pub fn drift_park() -> Track {
         car_category: CarCategory::Gt,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string(), "kart".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -957,6 +969,9 @@ pub fn kart_arena() -> Track {
         car_category: CarCategory::Kart,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string(), "kart".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1048,6 +1063,9 @@ pub fn ramp_raceway() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1147,6 +1165,9 @@ pub fn oasis_rally() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string(), "rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1279,6 +1300,9 @@ pub fn dirt_figure_eight() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("classic".to_string()),
         modules: vec!["extreme_offroad".to_string(), "classic".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1393,6 +1417,9 @@ pub fn classic_rallycross() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("classic".to_string()),
         modules: vec!["classic".to_string(), "rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1502,6 +1529,9 @@ pub fn holjes_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1592,6 +1622,9 @@ pub fn lydden_hill() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1698,6 +1731,9 @@ pub fn hell_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1804,6 +1840,9 @@ pub fn loheac_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1884,6 +1923,9 @@ pub fn estering_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -1970,6 +2012,9 @@ pub fn montalegre_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2042,6 +2087,9 @@ pub fn nyirad_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2128,6 +2176,9 @@ pub fn kouvola_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2227,6 +2278,9 @@ pub fn catalunya_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2313,6 +2367,9 @@ pub fn mettet_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2399,6 +2456,9 @@ pub fn silverstone_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2487,6 +2547,9 @@ pub fn riga_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2573,6 +2636,9 @@ pub fn killarney_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2666,6 +2732,9 @@ pub fn yas_marina_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -2769,6 +2838,9 @@ pub fn essay_rx() -> Track {
         car_category: CarCategory::Rally,
         module_id: Some("rally".to_string()),
         modules: vec!["rally".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3063,6 +3135,9 @@ pub fn create_prototypical_track(
         car_category,
         module_id: Some(mod_str.to_string()),
         modules: vec![mod_str.to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3152,6 +3227,9 @@ pub fn daytona_superspeedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3216,6 +3294,9 @@ pub fn talladega_superspeedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3287,6 +3368,9 @@ pub fn watkins_glen_nascar() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3346,6 +3430,9 @@ pub fn bristol_motor_speedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3407,6 +3494,9 @@ pub fn martinsville_speedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3469,6 +3559,9 @@ pub fn darlington_raceway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3532,6 +3625,9 @@ pub fn charlotte_motor_speedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3608,6 +3704,9 @@ pub fn indianapolis_motor_speedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3664,6 +3763,9 @@ pub fn eldora_speedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3722,6 +3824,9 @@ pub fn iowa_speedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3796,6 +3901,9 @@ pub fn road_america() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3872,6 +3980,9 @@ pub fn chicago_street_course() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -3944,6 +4055,9 @@ pub fn cota() -> Track {
         car_category: CarCategory::Gt,
         module_id: Some("gt".to_string()),
         modules: vec!["gt".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4061,6 +4175,9 @@ pub fn sahara_dune_crossing() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4164,6 +4281,9 @@ pub fn atacama_sand_basin() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4253,6 +4373,9 @@ pub fn red_rock_canyon() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4372,6 +4495,9 @@ pub fn baja_500_desert_scrub() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4463,6 +4589,9 @@ pub fn mud_slough_arena() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4543,6 +4672,9 @@ pub fn gravel_quarry_chasm() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4631,6 +4763,9 @@ pub fn louisiana_mud_swampland() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4708,6 +4843,9 @@ pub fn arctic_frozen_lake() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4796,6 +4934,9 @@ pub fn alpine_snow_ridge() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4867,6 +5008,9 @@ pub fn rovaniemi_ice_ring() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -4968,6 +5112,9 @@ pub fn glacier_crest_pass() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -5069,6 +5216,9 @@ pub fn supercross_stadium_arena() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -5168,6 +5318,9 @@ pub fn monster_colosseum() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
 }
 
@@ -5264,7 +5417,214 @@ pub fn stunt_city_megastructure() -> Track {
         car_category: CarCategory::OffRoad,
         module_id: Some("extreme_offroad".to_string()),
         modules: vec!["extreme_offroad".to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
     }
+}
+
+// =========================================================================
+// STAGE 1: 11 DUMMY CLONE PRESET GENERATORS (OVAL SPEEDWAY GEOMETRY)
+// =========================================================================
+
+fn make_dummy_oval_clone(
+    name: &str,
+    description: &str,
+    car_category: CarCategory,
+    module_id: &str,
+    default_laps: u32,
+    barrier_type: BarrierType,
+    surface: SurfaceType,
+) -> Track {
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, -60.0), 13.5).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(150.0, -60.0), 13.5).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(230.0, -25.0), 13.0).with_curbs(true, true).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(250.0, 30.0), 13.0).with_curbs(true, true).with_bank_angle(22.0),
+        TrackWaypoint::new(Vec2::new(230.0, 85.0), 13.0).with_curbs(true, true).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(150.0, 120.0), 13.5).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(0.0, 120.0), 13.5).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-80.0, 85.0), 13.0).with_curbs(true, true).with_bank_angle(12.0),
+        TrackWaypoint::new(Vec2::new(-100.0, 30.0), 13.0).with_curbs(true, true).with_bank_angle(22.0),
+        TrackWaypoint::new(Vec2::new(-80.0, -25.0), 13.0).with_curbs(true, true).with_bank_angle(12.0),
+    ];
+
+    let spline = TrackSpline::new(waypoints, true);
+    let (left_walls, right_walls, left_poly, right_poly) =
+        generate_walls_from_spline(&spline, 1.5, barrier_type);
+
+    let checkpoints = generate_checkpoints(&spline, 8, 2);
+    let grid_positions = generate_grid_positions(&spline, 16, 7.0, 3.0);
+
+    Track {
+        name: name.to_string(),
+        description: description.to_string(),
+        category: TrackCategory::Main,
+        kind: TrackKind::Circuit,
+        spline,
+        geometry: TrackGeometry {
+            inner_walls: left_walls,
+            outer_walls: right_walls,
+            obstacles: Vec::new(),
+            surface_zones: Vec::new(),
+            jump_ramps: Vec::new(),
+            left_boundary_polyline: left_poly,
+            right_boundary_polyline: right_poly,
+            grandstands: Vec::new(),
+            trees: Vec::new(),
+        },
+        checkpoints,
+        grid_positions,
+        default_surface: surface,
+        pit_box_area: None,
+        default_laps,
+        car_category,
+        module_id: Some(module_id.to_string()),
+        modules: vec![module_id.to_string()],
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
+    }
+}
+
+// --- NASCAR Speedways (5 New) ---
+
+pub fn bowman_gray_stadium() -> Track {
+    make_dummy_oval_clone(
+        "* Bowman Gray Stadium",
+        "The Madhouse: historic 0.25-mile flat asphalt bullring short track in Winston-Salem, NC.",
+        CarCategory::Nascar,
+        "nascar",
+        5,
+        BarrierType::Concrete,
+        SurfaceType::Grass,
+    )
+}
+
+pub fn lucas_oil_irp() -> Track {
+    make_dummy_oval_clone(
+        "* Lucas Oil Indianapolis Raceway Park",
+        "Classic 0.686-mile asphalt oval with 12-degree banking in Clermont, Indiana.",
+        CarCategory::Nascar,
+        "nascar",
+        5,
+        BarrierType::Concrete,
+        SurfaceType::Grass,
+    )
+}
+
+pub fn north_wilkesboro_speedway() -> Track {
+    make_dummy_oval_clone(
+        "* North Wilkesboro Speedway",
+        "Historic 0.625-mile short track with an uphill frontstretch and downhill backstretch.",
+        CarCategory::Nascar,
+        "nascar",
+        4,
+        BarrierType::Concrete,
+        SurfaceType::Grass,
+    )
+}
+
+pub fn pocono_raceway() -> Track {
+    make_dummy_oval_clone(
+        "* Pocono Raceway",
+        "The Tricky Triangle: 2.5-mile superspeedway with three distinct turns and long flat-out straights.",
+        CarCategory::Nascar,
+        "nascar",
+        3,
+        BarrierType::Steel,
+        SurfaceType::Grass,
+    )
+}
+
+pub fn phoenix_raceway() -> Track {
+    make_dummy_oval_clone(
+        "* Phoenix Raceway",
+        "1.0-mile low-banked tri-oval in Avondale, Arizona featuring the famous dogleg cut across the apron.",
+        CarCategory::Nascar,
+        "nascar",
+        4,
+        BarrierType::Concrete,
+        SurfaceType::Grass,
+    )
+}
+
+// --- Rallycross Circuits (2 New) ---
+
+pub fn dreux_rx() -> Track {
+    make_dummy_oval_clone(
+        "* Dreux Circuit de l'Ouest Parisien",
+        "Classic French mixed-surface rallycross circuit with fast flowing dirt curves and wide asphalt launch.",
+        CarCategory::Rally,
+        "rally",
+        4,
+        BarrierType::TireWall,
+        SurfaceType::Dirt,
+    )
+}
+
+pub fn blyton_park_rx() -> Track {
+    make_dummy_oval_clone(
+        "* Blyton Park Rallycross Circuit",
+        "Renowned UK mixed-surface proving ground with technical chalk/dirt transitions and jump crests.",
+        CarCategory::Rally,
+        "rally",
+        4,
+        BarrierType::TireWall,
+        SurfaceType::Grass,
+    )
+}
+
+// --- Karting Circuits (2 New) ---
+
+pub fn laval_kart() -> Track {
+    make_dummy_oval_clone(
+        "* Laval - Circuit Louis Beuvron",
+        "Historic French CIK-FIA cadet proving ground with undulating esses and heavy braking hairpins.",
+        CarCategory::Kart,
+        "kart",
+        5,
+        BarrierType::TireWall,
+        SurfaceType::Grass,
+    )
+}
+
+pub fn whilton_mill_kart() -> Track {
+    make_dummy_oval_clone(
+        "* Whilton Mill Kart Circuit",
+        "Northamptonshire premier kart venue featuring technical elevation drops and apex curb hopping.",
+        CarCategory::Kart,
+        "kart",
+        5,
+        BarrierType::TireWall,
+        SurfaceType::Grass,
+    )
+}
+
+// --- Extreme Off-Road Venues (2 New) ---
+
+pub fn glamis_sand_dunes() -> Track {
+    make_dummy_oval_clone(
+        "* Glamis Imperial Sand Dunes",
+        "Open California sand bowl with natural razorback dune crests and sweeping high-speed bowls.",
+        CarCategory::OffRoad,
+        "extreme_offroad",
+        3,
+        BarrierType::Steel,
+        SurfaceType::Dirt,
+    )
+}
+
+pub fn crandon_short_course() -> Track {
+    make_dummy_oval_clone(
+        "* Crandon International Off-Road",
+        "The Big House: iconic Wisconsin short-course track with high-speed clay straights and tabletop jumps.",
+        CarCategory::OffRoad,
+        "extreme_offroad",
+        3,
+        BarrierType::Steel,
+        SurfaceType::Dirt,
+    )
 }
 
 

@@ -2,9 +2,10 @@ use macroquad::color::Color;
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::presets::{
-    bristol_motor_speedway, charlotte_motor_speedway, chicago_street_course, darlington_raceway,
-    daytona_superspeedway, eldora_speedway, indianapolis_motor_speedway, iowa_speedway,
-    martinsville_speedway, road_america, talladega_superspeedway, watkins_glen_nascar,
+    bowman_gray_stadium, bristol_motor_speedway, charlotte_motor_speedway, chicago_street_course,
+    darlington_raceway, daytona_superspeedway, eldora_speedway, indianapolis_motor_speedway,
+    iowa_speedway, lucas_oil_irp, martinsville_speedway, north_wilkesboro_speedway, phoenix_raceway,
+    pocono_raceway, road_america, talladega_superspeedway, watkins_glen_nascar,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -220,6 +221,51 @@ impl GameModule for NascarGameModule {
                 category: "Street Course",
                 default_laps: 4,
                 generator: chicago_street_course,
+            },
+            TrackDefinition {
+                id: "bowman_gray_stadium",
+                title: "* Bowman Gray Stadium",
+                tag: "BULLRING SHORT TRACK",
+                description: "The Madhouse: historic 0.25-mile flat asphalt bullring short track in Winston-Salem, NC.",
+                category: "Short Track",
+                default_laps: 5,
+                generator: bowman_gray_stadium,
+            },
+            TrackDefinition {
+                id: "lucas_oil_irp",
+                title: "* Lucas Oil Indianapolis Raceway Park",
+                tag: "SHORT TRACK 12° BANK",
+                description: "Classic 0.686-mile asphalt oval with 12-degree banking in Clermont, Indiana.",
+                category: "Short Track",
+                default_laps: 5,
+                generator: lucas_oil_irp,
+            },
+            TrackDefinition {
+                id: "north_wilkesboro_speedway",
+                title: "* North Wilkesboro Speedway",
+                tag: "SHORT TRACK 14° BANK",
+                description: "Historic 0.625-mile short track with an uphill frontstretch and downhill backstretch.",
+                category: "Short Track",
+                default_laps: 4,
+                generator: north_wilkesboro_speedway,
+            },
+            TrackDefinition {
+                id: "pocono_raceway",
+                title: "* Pocono Raceway",
+                tag: "TRICKY TRIANGLE 14° BANK",
+                description: "The Tricky Triangle: 2.5-mile superspeedway with three distinct turns and long flat-out straights.",
+                category: "Superspeedway",
+                default_laps: 3,
+                generator: pocono_raceway,
+            },
+            TrackDefinition {
+                id: "phoenix_raceway",
+                title: "* Phoenix Raceway",
+                tag: "TRI-OVAL 11° BANK",
+                description: "1.0-mile low-banked tri-oval in Avondale, Arizona featuring the famous dogleg cut across the apron.",
+                category: "Intermediate Oval",
+                default_laps: 4,
+                generator: phoenix_raceway,
             },
         ]
     }

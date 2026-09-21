@@ -513,9 +513,10 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert!(progress.is_track_unlocked("monaco", true));
 
     // Check Starter circuits
-    assert!(progress.is_track_unlocked("monza", false));
     assert!(progress.is_track_unlocked("red_bull_ring", false));
+    assert!(progress.is_track_unlocked("zandvoort", false));
     assert!(progress.is_track_unlocked("nurburgring_gp", false));
+    assert!(!progress.is_track_unlocked("monza", false));
     assert!(!progress.is_track_unlocked("silverstone", false));
     assert!(!progress.is_track_unlocked("spa", false));
 
@@ -537,9 +538,9 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     let new_lvl = progress.advance_tier().expect("Advance tier");
     assert_eq!(new_lvl, 2);
     assert_eq!(progress.level, 2);
+    assert!(progress.is_track_unlocked("monza", false));
     assert!(progress.is_track_unlocked("silverstone", false));
     assert!(progress.is_track_unlocked("catalunya", false));
-    assert!(progress.is_track_unlocked("bathurst", false));
 
     // In Tier 2, cars are NOT automatically unlocked; they must be purchased with spendable XP!
     assert!(!progress.is_car_unlocked("gt3_evo", false));
@@ -558,7 +559,7 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert_eq!(fetched.lifetime_xp, 2500);
     assert_eq!(fetched.trophies_gold, 1);
     assert!(fetched.is_car_unlocked("gt3_evo", false));
-    assert!(fetched.is_track_unlocked("bathurst", false));
+    assert!(fetched.is_track_unlocked("monza", false));
 
     // 3. Verify module independence: progress in rally is completely separate
     let rally_progress = db.get_or_create_module_progress(pid, "rally").expect("Rally progress");
@@ -594,9 +595,12 @@ fn test_gt_career_session_gating_and_cup_launch() {
     assert!(!session.is_car_unlocked(CarChoice::HypercarPrototype));
 
     // Level 1 circuit gating checks
-    assert!(session.is_track_unlocked("monza"));
     assert!(session.is_track_unlocked("red_bull_ring"));
+    assert!(session.is_track_unlocked("zandvoort"));
     assert!(session.is_track_unlocked("nurburgring_gp"));
+    assert!(session.is_track_unlocked("portimao_gp"));
+    assert!(session.is_track_unlocked("montreal"));
+    assert!(!session.is_track_unlocked("monza"));
     assert!(!session.is_track_unlocked("silverstone"));
     assert!(!session.is_track_unlocked("bathurst"));
     assert!(!session.is_track_unlocked("le_mans_sarthe"));
@@ -615,36 +619,38 @@ fn test_gt_career_session_gating_and_cup_launch() {
     assert!(!session.is_car_unlocked(CarChoice::GT3Car));
     assert!(!session.is_track_unlocked("silverstone"));
 
-    // Verify GT Career Tier launch with cumulative calendars (3, 6, 9, 12, 15)
+    // Verify GT Career Tier launch with 5-3-3-3-3 calendar structure
     session.start_gt_career_tier(1);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT4Clubsport);
     assert!(session.championship_session.is_some());
     let champ1 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ1.track_ids.len(), 3);
-    assert_eq!(champ1.track_ids, vec!["monza", "red_bull_ring", "nurburgring_gp"]);
+    assert_eq!(champ1.track_ids.len(), 5);
+    assert_eq!(champ1.track_ids, vec!["red_bull_ring", "zandvoort", "nurburgring_gp", "portimao_gp", "montreal"]);
 
     session.start_gt_career_tier(2);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT3Car);
     let champ2 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ2.track_ids.len(), 6);
+    assert_eq!(champ2.track_ids.len(), 3);
     assert_eq!(
         champ2.track_ids,
-        vec!["monza", "red_bull_ring", "nurburgring_gp", "silverstone", "catalunya", "bathurst"]
+        vec!["monza", "silverstone", "catalunya"]
     );
 
     session.start_gt_career_tier(4);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT1Legend);
     let champ4 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ4.track_ids.len(), 12);
+    assert_eq!(champ4.track_ids.len(), 3);
+    assert_eq!(champ4.track_ids, vec!["suzuka", "interlagos", "bathurst"]);
 
     session.start_gt_career_tier(5);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::HypercarPrototype);
     let champ5 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ5.track_ids.len(), 15);
+    assert_eq!(champ5.track_ids.len(), 3);
+    assert_eq!(champ5.track_ids, vec!["le_mans_sarthe", "monaco", "marina_bay"]);
 
     // Test race completion in GT awards metric distance XP, finish duplication, and first-time bonus
     session.start_gt_career_tier(1);
@@ -790,9 +796,10 @@ fn test_two_condition_tier_advancement_gates() {
     assert_eq!(next_lvl, 2);
     assert_eq!(progress.level, 2);
 
-    // Tier 2 now unlocked: silverstone, catalunya, bathurst
+    // Tier 2 now unlocked: monza, silverstone, catalunya
+    assert!(progress.is_track_unlocked("monza", false));
     assert!(progress.is_track_unlocked("silverstone", false));
-    assert!(progress.is_track_unlocked("bathurst", false));
+    assert!(progress.is_track_unlocked("catalunya", false));
 
     // Next tier target is Tier 3 car: 1000 * 3 = 3000 XP
     assert_eq!(progress.next_tier_target_xp(), Some(3000));
@@ -835,13 +842,13 @@ fn test_championship_completion_podium_trophy_awarded() {
     session.hof_db = Some(mem_db);
     session.refresh_profiles_and_stats();
 
-    // Start GT Tier 1 Championship (3 rounds)
+    // Start GT Tier 1 Championship
     session.start_gt_career_tier(1);
     assert!(session.championship_session.is_some());
 
-    // Advance to final round (round 2 of 3)
+    // Advance to final round
     let champ = session.championship_session.as_mut().unwrap();
-    champ.current_round = 2; // last round is index 2
+    champ.current_round = champ.total_rounds() - 1;
 
     // Finish race as P1
     session.total_laps = 3;
@@ -1080,6 +1087,54 @@ fn test_player_card_focus_and_roster_manager_navigation() {
     session.state = GameState::ProfileManager { selected_idx: 1 };
     assert!(matches!(session.state, GameState::ProfileManager { selected_idx: 1 }));
 }
+
+#[test]
+fn test_all_modules_career_tier_launch_and_calendar_counts() {
+    use tdrace_app::ui::menu::GameMode;
+
+    let mut session = RaceSession::new();
+    let mem_db = HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    // 1. NASCAR Career Tiers
+    session.start_nascar_career_tier(1);
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 5);
+    for tier in 2..=5 {
+        session.start_nascar_career_tier(tier);
+        assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
+    }
+
+    // 2. Rallycross Career Tiers
+    session.start_rally_career_tier(1);
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 5);
+    for tier in 2..=5 {
+        session.start_rally_career_tier(tier);
+        assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
+    }
+
+    // 3. Karting Career Tiers
+    session.start_kart_career_tier(1);
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 5);
+    for tier in 2..=5 {
+        session.start_kart_career_tier(tier);
+        assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
+    }
+
+    // 4. Extreme Off-Road Career Tiers
+    session.start_extreme_offroad_career_tier(1);
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 5);
+    for tier in 2..=5 {
+        session.start_extreme_offroad_career_tier(tier);
+        assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
+    }
+}
+
 
 
 

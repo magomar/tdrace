@@ -38,7 +38,7 @@ fn test_extreme_offroad_module_identity_and_vehicles() {
 fn test_extreme_offroad_tracks_and_geometry_validation() {
     let offroad = ExtremeOffRoadModule::new();
     let tracks = offroad.tracks();
-    assert_eq!(tracks.len(), 15, "Expected 15 Extreme Off-Road tracks & arenas");
+    assert_eq!(tracks.len(), 17, "Expected 17 Extreme Off-Road tracks & arenas");
 
     let expected_ids = [
         "sahara_dune_crossing",
@@ -56,7 +56,18 @@ fn test_extreme_offroad_tracks_and_geometry_validation() {
         "monster_colosseum",
         "glacier_crest_pass",
         "stunt_city_megastructure",
+        "glamis_dunes",
+        "crandon_short_course",
     ];
+
+    let tracks_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("tracks")
+        .join("extreme_offroad");
+    let _ = std::fs::create_dir_all(&tracks_dir);
 
     for (idx, def) in tracks.iter().enumerate() {
         assert_eq!(def.id, expected_ids[idx]);
@@ -68,6 +79,13 @@ fn test_extreme_offroad_tracks_and_geometry_validation() {
         );
 
         let track = (def.generator)();
+        let target_file = tracks_dir.join(format!("{}.json", def.id));
+        if !target_file.exists() {
+            if let Ok(json_str) = serde_json::to_string_pretty(&track) {
+                let _ = std::fs::write(&target_file, json_str);
+            }
+        }
+
         assert!(
             track.default_laps >= 2 && track.default_laps <= 5,
             "Track '{}' generator default laps ({}) must be between 2 and 5",

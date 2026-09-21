@@ -17,7 +17,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 15, "Rally module should have 15 authentic World RX tracks");
+    assert_eq!(tracks.len(), 17, "Rally module should have 17 authentic World RX tracks");
 
     let expected_ids = [
         "holjes_rx",
@@ -35,6 +35,8 @@ fn test_rally_module_tracks_integrity_and_validation() {
         "killarney_rx",
         "yas_marina_rx",
         "essay_rx",
+        "dreux_rx",
+        "blyton_rx",
     ];
 
     for id in &expected_ids {
@@ -502,7 +504,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
     let _ = std::fs::create_dir_all(&temp_dir);
     let tm = TrackManager::new(&temp_dir);
     let rally_catalog = tm.module_catalog_tracks("rally");
-    assert_eq!(rally_catalog.len(), 15);
+    assert_eq!(rally_catalog.len(), 17);
 
     let rally_ids = [
         "holjes_rx",
@@ -520,6 +522,8 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
         "killarney_rx",
         "yas_marina_rx",
         "essay_rx",
+        "dreux_rx",
+        "blyton_rx",
     ];
 
     for id in &rally_ids {

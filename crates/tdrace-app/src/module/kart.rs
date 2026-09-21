@@ -5,6 +5,7 @@ use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, TrackGeometry};
 use tdrace_core::track::presets::{
     generate_checkpoints, generate_grid_positions, generate_walls_from_spline,
+    laval_kart, whilton_mill_kart,
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, Track, TrackCategory, TrackKind};
@@ -92,6 +93,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
     /// Circuito Internazionale Napoli (Sarno, Italy): High-Speed Temple of Speed
@@ -162,6 +166,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
     /// Karting Genk (Genk, Belgium): Home of Champions
@@ -230,6 +237,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
     /// PF International Kart Circuit (PFI, UK): Elevated Flyover Crossover Bridge
@@ -300,6 +310,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
     /// Circuito Internacional de Zuera (Zaragoza, Spain): Ultra-Fast Supertrack
@@ -370,6 +383,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
     /// Le Mans Karting International (Le Mans, France): Alain Prost CIK Circuit
@@ -438,6 +454,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
     /// Kartodromo Internacional do Algarve (Portimao, Portugal): Rollercoaster Track
@@ -508,6 +527,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
     /// Franciacorta Karting Track (Castrezzato, Italy): World Championship Benchmark
@@ -576,6 +598,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
 
@@ -645,6 +670,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
 
@@ -714,6 +742,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
 
@@ -783,6 +814,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
 
@@ -850,6 +884,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
 
@@ -913,6 +950,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
 
@@ -984,6 +1024,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
 
@@ -1055,6 +1098,9 @@ impl KartGameModule {
             car_category: CarCategory::Kart,
             module_id: Some("kart".to_string()),
             modules: vec!["kart".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
         }
     }
 }
@@ -1249,6 +1295,24 @@ impl GameModule for KartGameModule {
                 category: "World Championship",
                 default_laps: 6,
                 generator: Self::track_campillos,
+            },
+            TrackDefinition {
+                id: "laval_kart",
+                title: "* Laval - Circuit Louis Beuvron",
+                tag: "CADET CRADLE",
+                description: "Historic French CIK-FIA cadet proving ground with undulating esses and heavy braking hairpins.",
+                category: "World Championship",
+                default_laps: 5,
+                generator: laval_kart,
+            },
+            TrackDefinition {
+                id: "whilton_mill",
+                title: "* Whilton Mill Kart Circuit",
+                tag: "CLUB CADET APEX",
+                description: "Northamptonshire premier kart venue featuring technical elevation drops and apex curb hopping.",
+                category: "World Championship",
+                default_laps: 5,
+                generator: whilton_mill_kart,
             },
         ]
     }

@@ -418,39 +418,188 @@ impl ModuleCareerProgress {
 
     /// Ensures unlocked tracks match or exceed current level.
     pub fn sync_unlocks_for_level(&mut self) {
-        if self.module_id == "gt" {
-            // Level 1 Starter
-            self.ensure_track("monza");
-            self.ensure_track("red_bull_ring");
-            self.ensure_track("nurburgring_gp");
-
-            // Level 2 (FIA GT3)
-            if self.level >= 2 {
-                self.ensure_track("silverstone");
-                self.ensure_track("catalunya");
-                self.ensure_track("bathurst");
-            }
-
-            // Level 3 (SRO GT2)
-            if self.level >= 3 {
-                self.ensure_track("spa");
+        match self.module_id.as_str() {
+            "gt" | "gt_challenge" => {
+                // Tier 1 (5 circuits)
+                self.ensure_track("red_bull_ring");
                 self.ensure_track("zandvoort");
+                self.ensure_track("nurburgring_gp");
                 self.ensure_track("portimao_gp");
-            }
+                self.ensure_track("montreal");
 
-            // Level 4 (90s Le Mans GT1)
-            if self.level >= 4 {
-                self.ensure_track("suzuka");
-                self.ensure_track("interlagos");
-                self.ensure_track("le_mans_sarthe");
-            }
+                // Tier 2 (3 circuits)
+                if self.level >= 2 {
+                    self.ensure_track("monza");
+                    self.ensure_track("silverstone");
+                    self.ensure_track("catalunya");
+                }
 
-            // Level 5 (LMH Hypercar Prototype)
-            if self.level >= 5 {
-                self.ensure_track("monaco");
-                self.ensure_track("madring");
-                self.ensure_track("marina_bay");
+                // Tier 3 (3 circuits)
+                if self.level >= 3 {
+                    self.ensure_track("spa");
+                    self.ensure_track("cota");
+                    self.ensure_track("bahrain");
+                }
+
+                // Tier 4 (3 circuits)
+                if self.level >= 4 {
+                    self.ensure_track("suzuka");
+                    self.ensure_track("interlagos");
+                    self.ensure_track("bathurst");
+                }
+
+                // Tier 5 (3 circuits)
+                if self.level >= 5 {
+                    self.ensure_track("le_mans_sarthe");
+                    self.ensure_track("monaco");
+                    self.ensure_track("marina_bay");
+                }
             }
+            "nascar" => {
+                // Tier 1 (5 circuits)
+                self.ensure_track("martinsville_speedway");
+                self.ensure_track("bristol_motor_speedway");
+                self.ensure_track("eldora_speedway");
+                self.ensure_track("bowman_gray_stadium");
+                self.ensure_track("lucas_oil_irp");
+
+                // Tier 2 (3 circuits)
+                if self.level >= 2 {
+                    self.ensure_track("charlotte_motor_speedway");
+                    self.ensure_track("darlington_raceway");
+                    self.ensure_track("north_wilkesboro_speedway");
+                }
+
+                // Tier 3 (3 circuits)
+                if self.level >= 3 {
+                    self.ensure_track("iowa_speedway");
+                    self.ensure_track("watkins_glen_nascar");
+                    self.ensure_track("road_america");
+                }
+
+                // Tier 4 (3 circuits)
+                if self.level >= 4 {
+                    self.ensure_track("indianapolis_motor_speedway");
+                    self.ensure_track("pocono_raceway");
+                    self.ensure_track("chicago_street_course");
+                }
+
+                // Tier 5 (3 circuits)
+                if self.level >= 5 {
+                    self.ensure_track("daytona_superspeedway");
+                    self.ensure_track("talladega_superspeedway");
+                    self.ensure_track("phoenix_raceway");
+                }
+            }
+            "rally" => {
+                // Tier 1 (5 circuits)
+                self.ensure_track("holjes_rx");
+                self.ensure_track("lydden_hill");
+                self.ensure_track("mettet_rx");
+                self.ensure_track("dreux_rx");
+                self.ensure_track("blyton_rx");
+
+                // Tier 2 (3 circuits)
+                if self.level >= 2 {
+                    self.ensure_track("hell_rx");
+                    self.ensure_track("loheac_rx");
+                    self.ensure_track("silverstone_rx");
+                }
+
+                // Tier 3 (3 circuits)
+                if self.level >= 3 {
+                    self.ensure_track("estering_rx");
+                    self.ensure_track("montalegre_rx");
+                    self.ensure_track("riga_rx");
+                }
+
+                // Tier 4 (3 circuits)
+                if self.level >= 4 {
+                    self.ensure_track("nyirad_rx");
+                    self.ensure_track("kouvola_rx");
+                    self.ensure_track("killarney_rx");
+                }
+
+                // Tier 5 (3 circuits)
+                if self.level >= 5 {
+                    self.ensure_track("catalunya_rx");
+                    self.ensure_track("yas_marina_rx");
+                    self.ensure_track("essay_rx");
+                }
+            }
+            "kart" => {
+                // Tier 1 (5 circuits)
+                self.ensure_track("lonato");
+                self.ensure_track("genk");
+                self.ensure_track("wackersdorf");
+                self.ensure_track("laval_kart");
+                self.ensure_track("whilton_mill");
+
+                // Tier 2 (3 circuits)
+                if self.level >= 2 {
+                    self.ensure_track("sarno");
+                    self.ensure_track("kristianstad");
+                    self.ensure_track("seven_laghi");
+                }
+
+                // Tier 3 (3 circuits)
+                if self.level >= 3 {
+                    self.ensure_track("pfi");
+                    self.ensure_track("franciacorta");
+                    self.ensure_track("ampfing");
+                }
+
+                // Tier 4 (3 circuits)
+                if self.level >= 4 {
+                    self.ensure_track("zuera");
+                    self.ensure_track("silverstone_national_kart");
+                    self.ensure_track("le_mans_kart");
+                }
+
+                // Tier 5 (3 circuits)
+                if self.level >= 5 {
+                    self.ensure_track("portimao_kart");
+                    self.ensure_track("valencia_kart");
+                    self.ensure_track("campillos");
+                }
+            }
+            "extreme_offroad" => {
+                // Tier 1 (5 circuits)
+                self.ensure_track("sahara_dune_crossing");
+                self.ensure_track("dirt_figure_eight");
+                self.ensure_track("atacama_sand_basin");
+                self.ensure_track("glamis_dunes");
+                self.ensure_track("crandon_short_course");
+
+                // Tier 2 (3 circuits)
+                if self.level >= 2 {
+                    self.ensure_track("red_rock_canyon");
+                    self.ensure_track("mud_slough_arena");
+                    self.ensure_track("baja_500_desert_scrub");
+                }
+
+                // Tier 3 (3 circuits)
+                if self.level >= 3 {
+                    self.ensure_track("arctic_frozen_lake");
+                    self.ensure_track("alpine_snow_ridge");
+                    self.ensure_track("rovaniemi_ice_ring");
+                }
+
+                // Tier 4 (3 circuits)
+                if self.level >= 4 {
+                    self.ensure_track("supercross_stadium_arena");
+                    self.ensure_track("gravel_quarry_chasm");
+                    self.ensure_track("louisiana_mud_swampland");
+                }
+
+                // Tier 5 (3 circuits)
+                if self.level >= 5 {
+                    self.ensure_track("monster_colosseum");
+                    self.ensure_track("glacier_crest_pass");
+                    self.ensure_track("stunt_city_megastructure");
+                }
+            }
+            _ => {}
         }
     }
 
