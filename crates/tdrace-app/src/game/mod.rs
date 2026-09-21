@@ -3564,6 +3564,7 @@ impl RaceSession {
                 let (sw, sh) = (screen_width_safe(), screen_height_safe());
                 let (btn_x, btn_y, btn_w, btn_h) = crate::ui::starting_grid_launch_button_rect(sw, sh);
                 let (g_btn_x, g_btn_y, g_btn_w, g_btn_h) = crate::ui::starting_grid_garage_button_rect(sw, sh);
+                let (grid_btn_x, grid_btn_y, grid_btn_w, grid_btn_h) = crate::ui::starting_grid_grid_button_rect(sw, sh);
                 let (mx, my) = mouse_position_safe();
                 let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
                 let launch_btn_clicked = mouse_clicked
@@ -3576,9 +3577,30 @@ impl RaceSession {
                     && mx <= g_btn_x + g_btn_w
                     && my >= g_btn_y
                     && my <= g_btn_y + g_btn_h;
+                let grid_btn_clicked = mouse_clicked
+                    && mx >= grid_btn_x
+                    && mx <= grid_btn_x + grid_btn_w
+                    && my >= grid_btn_y
+                    && my <= grid_btn_y + grid_btn_h;
 
                 if garage_btn_clicked {
                     self.open_garage_from_starting_grid();
+                    return;
+                }
+
+                if grid_btn_clicked {
+                    self.starting_grid_focus = StartingGridFocus::RightRoster;
+                    self.starting_grid_card_idx = 1;
+                    if self.game_mode.has_bots() && self.game_mode.allows_roster_customization() {
+                        let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+                        self.audio.play_sfx(SfxType::UiMove);
+                        if self.num_bots < max_bots {
+                            self.num_bots += 1;
+                        } else {
+                            self.num_bots = 1;
+                        }
+                        self.rebuild_roster_participants();
+                    }
                     return;
                 }
 
@@ -3591,6 +3613,9 @@ impl RaceSession {
                     if self.starting_grid_focus != StartingGridFocus::LeftSetup {
                         self.audio.play_sfx(SfxType::UiMove);
                         self.starting_grid_focus = StartingGridFocus::LeftSetup;
+                        if self.starting_grid_card_idx == 1 {
+                            self.starting_grid_card_idx = 0;
+                        }
                     }
                 }
                 if is_key_pressed(KeyCode::Right)
@@ -3607,9 +3632,7 @@ impl RaceSession {
                 // 2. Navigation & Actions within Active Panel
                 match self.starting_grid_focus {
                     StartingGridFocus::LeftSetup => {
-                        let num_cards = 3; // 0 = Combined Garage & Active Car, 1 = Grid / Bot Count, 2 = Launch Race Button
-
-                        // Up / Down to navigate between setup cards
+                        // Up / Down to navigate between setup cards (Garage vs Launch Race button)
                         if is_key_pressed(KeyCode::Up)
                             || is_key_pressed(KeyCode::W)
                             || self.input.gamepad.snapshot.dpad_up_pressed
@@ -3617,9 +3640,9 @@ impl RaceSession {
                         {
                             self.audio.play_sfx(SfxType::UiMove);
                             if self.starting_grid_card_idx == 0 {
-                                self.starting_grid_card_idx = num_cards - 1;
+                                self.starting_grid_card_idx = 2;
                             } else {
-                                self.starting_grid_card_idx -= 1;
+                                self.starting_grid_card_idx = 0;
                             }
                         }
                         if is_key_pressed(KeyCode::Down)
@@ -3628,7 +3651,11 @@ impl RaceSession {
                             || self.input.gamepad.snapshot.nav_down
                         {
                             self.audio.play_sfx(SfxType::UiMove);
-                            self.starting_grid_card_idx = (self.starting_grid_card_idx + 1) % num_cards;
+                            if self.starting_grid_card_idx == 0 {
+                                self.starting_grid_card_idx = 2;
+                            } else {
+                                self.starting_grid_card_idx = 0;
+                            }
                         }
 
                         // Modify active card setting on Enter / Space / bracket / etc.
@@ -3695,7 +3722,7 @@ impl RaceSession {
                                 }
                             }
                             1 => {
-                                // Card 1: Grid Configuration / Bot Count (Customizable only in Custom Race mode)
+                                // Backward-compatibility / direct test adjustment of Grid Configuration
                                 if self.game_mode.has_bots() && self.game_mode.allows_roster_customization() {
                                     let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
                                     if is_key_pressed(KeyCode::Enter)
@@ -3744,79 +3771,133 @@ impl RaceSession {
                     }
                     StartingGridFocus::RightRoster => {
                         let roster_len = self.grid_participants.len().max(1);
-                        if is_key_pressed(KeyCode::Up)
-                            || is_key_pressed(KeyCode::W)
-                            || self.input.gamepad.snapshot.dpad_up_pressed
-                            || self.input.gamepad.snapshot.nav_up
-                        {
-                            self.audio.play_sfx(SfxType::UiMove);
-                            if self.starting_grid_roster_idx == 0 {
+                        if self.starting_grid_card_idx == 1 {
+                            // Top Grid Config card is active in right column
+                            if is_key_pressed(KeyCode::Up)
+                                || is_key_pressed(KeyCode::W)
+                                || self.input.gamepad.snapshot.dpad_up_pressed
+                                || self.input.gamepad.snapshot.nav_up
+                            {
+                                self.audio.play_sfx(SfxType::UiMove);
+                                self.starting_grid_card_idx = 0;
                                 self.starting_grid_roster_idx = roster_len - 1;
-                            } else {
-                                self.starting_grid_roster_idx -= 1;
                             }
-                        }
-                        if is_key_pressed(KeyCode::Down)
-                            || is_key_pressed(KeyCode::S)
-                            || self.input.gamepad.snapshot.dpad_down_pressed
-                            || self.input.gamepad.snapshot.nav_down
-                        {
-                            self.audio.play_sfx(SfxType::UiMove);
-                            self.starting_grid_roster_idx = (self.starting_grid_roster_idx + 1) % roster_len;
-                        }
+                            if is_key_pressed(KeyCode::Down)
+                                || is_key_pressed(KeyCode::S)
+                                || self.input.gamepad.snapshot.dpad_down_pressed
+                                || self.input.gamepad.snapshot.nav_down
+                            {
+                                self.audio.play_sfx(SfxType::UiMove);
+                                self.starting_grid_card_idx = 0;
+                                self.starting_grid_roster_idx = 0;
+                            }
 
-                        // In Custom Race mode, allow customizing vehicle of selected participant with [ / ]
-                        if self.game_mode.allows_roster_customization() {
-                            let models = crate::catalog::get_models_for_module(self.active_module_id);
-                            if !models.is_empty() {
-                                if is_key_pressed(KeyCode::RightBracket) {
-                                    if let Some(p) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
-                                        let cur_idx = p.model_id
-                                            .and_then(|id| models.iter().position(|m| m.id == id))
-                                            .unwrap_or(0);
-                                        let next_m = models[(cur_idx + 1) % models.len()];
-                                        p.model_id = Some(next_m.id);
-                                        p.car_title = next_m.name.to_string();
-                                        p.car_choice = next_m.base_car_choice;
-                                        self.audio.play_sfx(SfxType::UiMove);
-                                        if p.is_player {
-                                            self.selected_car_model_id = Some(next_m.id);
-                                            self.car_choice = next_m.base_car_choice;
-                                            self.current_visual_type = next_m.visual_type;
+                            // Adjust bots on Enter / + / - / [ / ]
+                            if self.game_mode.has_bots() && self.game_mode.allows_roster_customization() {
+                                let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+                                if is_key_pressed(KeyCode::Enter)
+                                    || is_key_pressed(KeyCode::KpEnter)
+                                    || is_key_pressed(KeyCode::RightBracket)
+                                    || is_key_pressed(KeyCode::Equal)
+                                {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    if self.num_bots < max_bots {
+                                        self.num_bots += 1;
+                                    } else {
+                                        self.num_bots = 1;
+                                    }
+                                    self.rebuild_roster_participants();
+                                }
+                                if is_key_pressed(KeyCode::LeftBracket) || is_key_pressed(KeyCode::Minus) {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    if self.num_bots > 1 {
+                                        self.num_bots -= 1;
+                                    } else {
+                                        self.num_bots = max_bots;
+                                    }
+                                    self.rebuild_roster_participants();
+                                }
+                            }
+                        } else {
+                            // Roster entries are active
+                            if is_key_pressed(KeyCode::Up)
+                                || is_key_pressed(KeyCode::W)
+                                || self.input.gamepad.snapshot.dpad_up_pressed
+                                || self.input.gamepad.snapshot.nav_up
+                            {
+                                self.audio.play_sfx(SfxType::UiMove);
+                                if self.starting_grid_roster_idx == 0 {
+                                    self.starting_grid_card_idx = 1; // Move up to Grid Config card
+                                } else {
+                                    self.starting_grid_roster_idx -= 1;
+                                }
+                            }
+                            if is_key_pressed(KeyCode::Down)
+                                || is_key_pressed(KeyCode::S)
+                                || self.input.gamepad.snapshot.dpad_down_pressed
+                                || self.input.gamepad.snapshot.nav_down
+                            {
+                                self.audio.play_sfx(SfxType::UiMove);
+                                if self.starting_grid_roster_idx >= roster_len - 1 {
+                                    self.starting_grid_card_idx = 1; // Wrap down to Grid Config card
+                                } else {
+                                    self.starting_grid_roster_idx += 1;
+                                }
+                            }
+
+                            // In Custom Race mode, allow customizing vehicle of selected participant with [ / ]
+                            if self.game_mode.allows_roster_customization() {
+                                let models = crate::catalog::get_models_for_module(self.active_module_id);
+                                if !models.is_empty() {
+                                    if is_key_pressed(KeyCode::RightBracket) {
+                                        if let Some(p) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
+                                            let cur_idx = p.model_id
+                                                .and_then(|id| models.iter().position(|m| m.id == id))
+                                                .unwrap_or(0);
+                                            let next_m = models[(cur_idx + 1) % models.len()];
+                                            p.model_id = Some(next_m.id);
+                                            p.car_title = next_m.name.to_string();
+                                            p.car_choice = next_m.base_car_choice;
+                                            self.audio.play_sfx(SfxType::UiMove);
+                                            if p.is_player {
+                                                self.selected_car_model_id = Some(next_m.id);
+                                                self.car_choice = next_m.base_car_choice;
+                                                self.current_visual_type = next_m.visual_type;
+                                            }
+                                        }
+                                    }
+                                    if is_key_pressed(KeyCode::LeftBracket) {
+                                        if let Some(p) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
+                                            let cur_idx = p.model_id
+                                                .and_then(|id| models.iter().position(|m| m.id == id))
+                                                .unwrap_or(0);
+                                            let next_idx = if cur_idx == 0 { models.len() - 1 } else { cur_idx - 1 };
+                                            let next_m = models[next_idx];
+                                            p.model_id = Some(next_m.id);
+                                            p.car_title = next_m.name.to_string();
+                                            p.car_choice = next_m.base_car_choice;
+                                            self.audio.play_sfx(SfxType::UiMove);
+                                            if p.is_player {
+                                                self.selected_car_model_id = Some(next_m.id);
+                                                self.car_choice = next_m.base_car_choice;
+                                                self.current_visual_type = next_m.visual_type;
+                                            }
                                         }
                                     }
                                 }
-                                if is_key_pressed(KeyCode::LeftBracket) {
-                                    if let Some(p) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
-                                        let cur_idx = p.model_id
-                                            .and_then(|id| models.iter().position(|m| m.id == id))
-                                            .unwrap_or(0);
-                                        let next_idx = if cur_idx == 0 { models.len() - 1 } else { cur_idx - 1 };
-                                        let next_m = models[next_idx];
-                                        p.model_id = Some(next_m.id);
-                                        p.car_title = next_m.name.to_string();
-                                        p.car_choice = next_m.base_car_choice;
-                                        self.audio.play_sfx(SfxType::UiMove);
-                                        if p.is_player {
-                                            self.selected_car_model_id = Some(next_m.id);
-                                            self.car_choice = next_m.base_car_choice;
-                                            self.current_visual_type = next_m.visual_type;
-                                        }
-                                    }
-                                }
                             }
-                        }
 
-                        // Open Driver Dossier for selected slot (Enter / D / Gamepad Y)
-                        if is_key_pressed(KeyCode::Enter)
-                            || is_key_pressed(KeyCode::KpEnter)
-                            || is_key_pressed(KeyCode::D)
-                            || self.input.gamepad.snapshot.btn_y_pressed
-                        {
-                            self.audio.play_sfx(SfxType::UiSelect);
-                            self.driver_cards_idx = self.starting_grid_roster_idx;
-                            self.state = GameState::DriverCards(DriverCardsOrigin::StartingGrid);
-                            return;
+                            // Open Driver Dossier for selected slot (Enter / D / Gamepad Y)
+                            if is_key_pressed(KeyCode::Enter)
+                                || is_key_pressed(KeyCode::KpEnter)
+                                || is_key_pressed(KeyCode::D)
+                                || self.input.gamepad.snapshot.btn_y_pressed
+                            {
+                                self.audio.play_sfx(SfxType::UiSelect);
+                                self.driver_cards_idx = self.starting_grid_roster_idx;
+                                self.state = GameState::DriverCards(DriverCardsOrigin::StartingGrid);
+                                return;
+                            }
                         }
                     }
                 }
@@ -3825,7 +3906,7 @@ impl RaceSession {
                 if is_key_pressed(KeyCode::Space)
                     || self.input.gamepad.snapshot.btn_start_pressed
                     || launch_btn_clicked
-                    || (self.starting_grid_focus == StartingGridFocus::LeftSetup && self.starting_grid_card_idx == 2 && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
+                    || (self.starting_grid_focus == StartingGridFocus::LeftSetup && (self.starting_grid_card_idx == 1 || self.starting_grid_card_idx == 2) && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
                 {
                     let player_car = self.active_player_car_choice();
                     let req_tier = self.current_race_required_tier();

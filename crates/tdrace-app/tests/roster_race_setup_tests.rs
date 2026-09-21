@@ -313,11 +313,14 @@ fn test_championship_mode_roster_locked_and_custom_race_customizable() {
 
 #[test]
 fn test_combined_garage_button_rect_and_launch_button_rect() {
-    use tdrace_app::ui::{starting_grid_garage_button_rect, starting_grid_launch_button_rect};
+    use tdrace_app::ui::{
+        starting_grid_garage_button_rect, starting_grid_grid_button_rect,
+        starting_grid_launch_button_rect,
+    };
 
     let (gx, gy, gw, gh) = starting_grid_garage_button_rect(1280.0, 720.0);
     assert!(gw > 350.0);
-    assert!(gh > 250.0, "Combined Garage card must encompass the full active car showcase (h = {})", gh);
+    assert!(gh >= 400.0, "Enlarged Garage card must encompass the full active car showcase (h = {})", gh);
     assert!(gx > 0.0);
     assert!(gy > 50.0);
 
@@ -325,7 +328,14 @@ fn test_combined_garage_button_rect_and_launch_button_rect() {
     assert!(lw > 350.0);
     assert!(lh > 30.0);
     assert!(lx > 0.0);
-    // Launch button must be positioned below the Garage card and Grid card
+    // Launch button must be positioned below the Garage card
     assert!(ly > gy + gh, "Launch button (ly={}) must be below Garage card (gy+gh={})", ly, gy + gh);
+
+    // Grid config button rect is now in the right column above the roster card
+    let (grid_x, grid_y, grid_w, grid_h) = starting_grid_grid_button_rect(1280.0, 720.0);
+    assert!(grid_x > gx, "Grid config rect (x={}) must be in the right column (gx={})", grid_x, gx);
+    assert!(grid_w > 350.0);
+    assert!(grid_h > 40.0);
+    assert_eq!(grid_y, 60.0);
 }
 

@@ -173,8 +173,8 @@ pub fn render_real_car_lateral_by_id(
     );
 
     // If model-specific high-resolution lateral sprite is available, render tinted texture directly
-    let high_res = scale > 1.2;
-    if let Some(texture) = crate::render::vehicle_assets::get_vehicle_lateral_texture(model_id, primary, secondary, high_res) {
+    // Always use full-resolution lateral asset (high_res = true) to guarantee authentic 2:1 aspect ratio and avoid squashed thumbnail distortion
+    if let Some(texture) = crate::render::vehicle_assets::get_vehicle_lateral_texture(model_id, primary, secondary, true) {
         let dest_w = half_len * 2.36;
         let dest_h = dest_w * (texture.height() / texture.width());
         let car_y = ground_y - dest_h * 0.98;

@@ -27,7 +27,7 @@ pub fn starting_grid_garage_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32
     let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
     let panel_y = scaler.s(60.0);
     let p1_h = scaler.s(88.0);
-    let garage_card_h = scaler.s(264.0);
+    let garage_card_h = scaler.s(420.0);
     let curr_y = panel_y + p1_h + scaler.s(8.0);
     (col1_x, curr_y, col_w, garage_card_h)
 }
@@ -40,12 +40,21 @@ pub fn starting_grid_launch_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32
     let panel_y = scaler.s(60.0);
 
     let p1_h = scaler.s(88.0);
-    let garage_card_h = scaler.s(264.0);
-    let grid_h = scaler.s(48.0);
+    let garage_card_h = scaler.s(420.0);
     let launch_h = scaler.s(48.0);
 
-    let curr_y = panel_y + p1_h + scaler.s(8.0) + garage_card_h + scaler.s(8.0) + grid_h + scaler.s(10.0);
+    let curr_y = panel_y + p1_h + scaler.s(8.0) + garage_card_h + scaler.s(10.0);
     (col1_x, curr_y, col_w, launch_h)
+}
+
+/// Returns the rectangle (x, y, w, h) of the Grid Configuration card at the top of the right column.
+pub fn starting_grid_grid_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
+    let col2_x = (sw * 0.5 + scaler.s(12.0)).min(sw - col_w - scaler.safe_pad_x);
+    let panel_y = scaler.s(60.0);
+    let grid_h = scaler.s(52.0);
+    (col2_x, panel_y, col_w, grid_h)
 }
 
 /// Renders the 2-panel starting grid and participants showcase screen before race launch.
@@ -189,9 +198,9 @@ pub fn render_starting_grid_screen(
 
     curr_y += p1_h + scaler.s(8.0);
 
-    // Card 2 (Index 0): Combined Motorsport Garage & Active Car Card
+    // Card 2 (Index 0): Enlarged Motorsport Garage & Active Car Card
     let is_garage_active = is_left_focused && active_card_idx == 0;
-    let garage_card_h = scaler.s(264.0);
+    let garage_card_h = scaler.s(420.0);
     let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
     let is_garage_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + garage_card_h;
     let is_garage_highlighted = is_garage_active || is_garage_hovered;
@@ -254,8 +263,8 @@ pub fn render_starting_grid_screen(
     fonts.draw_ui_bold(
         car_title,
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(33.0),
-        scaler.font_s(15.5),
+        curr_y + scaler.s(34.0),
+        scaler.font_s(16.0),
         Palette::WHITE,
     );
 
@@ -272,7 +281,7 @@ pub fn render_starting_grid_screen(
     fonts.draw_ui_bold(
         car_tag_str,
         col1_x + col_w - scaler.s(160.0),
-        curr_y + scaler.s(33.0),
+        curr_y + scaler.s(34.0),
         scaler.font_s(10.0),
         car_tag_col,
     );
@@ -280,16 +289,16 @@ pub fn render_starting_grid_screen(
     fonts.draw_ui_regular(
         car_desc,
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(48.0),
-        scaler.font_s(10.5),
+        curr_y + scaler.s(50.0),
+        scaler.font_s(11.0),
         Palette::UI_TEXT_MUTED,
     );
 
-    // 2D Lateral View Blueprint Showcase Box
+    // 2D Lateral View Blueprint Showcase Box (Enlarged and aspect-ratio preserved)
     let stat_base_x = col1_x + scaler.s(12.0);
     let stat_bar_w = col_w - scaler.s(24.0);
-    let lateral_box_y = curr_y + scaler.s(58.0);
-    let lateral_box_h = scaler.s(58.0);
+    let lateral_box_y = curr_y + scaler.s(66.0);
+    let lateral_box_h = scaler.s(160.0);
     scaler.draw_glass_card(
         stat_base_x,
         lateral_box_y,
@@ -313,8 +322,8 @@ pub fn render_starting_grid_screen(
             m.id,
             &preview_scheme,
             stat_base_x + stat_bar_w * 0.50,
-            lateral_box_y + lateral_box_h * 0.52,
-            scaler.s(0.95),
+            lateral_box_y + lateral_box_h * 0.54,
+            scaler.s(1.55),
             0.0,
             true,
         );
@@ -323,8 +332,8 @@ pub fn render_starting_grid_screen(
             active_car,
             &player_scheme,
             stat_base_x + stat_bar_w * 0.50,
-            lateral_box_y + lateral_box_h * 0.52,
-            scaler.s(0.95),
+            lateral_box_y + lateral_box_h * 0.54,
+            scaler.s(1.55),
             0.0,
             true,
         );
@@ -336,10 +345,10 @@ pub fn render_starting_grid_screen(
     } else {
         active_car.stats()
     };
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(124.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(139.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(154.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(169.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(236.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(254.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(272.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(290.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
 
     // 4 Engineering / Dynamic Specs Chips
     let (spec1, spec2, spec3, spec4) = if let Some(m) = model_opt {
@@ -354,21 +363,21 @@ pub fn render_starting_grid_screen(
         (s1.to_string(), s2.to_string(), s3.to_string(), s4.to_string())
     };
     let spec_chip_w = (col_w - scaler.s(32.0)) * 0.5;
-    let spec_chip_h = scaler.s(22.0);
-    let chip_y1 = curr_y + scaler.s(190.0);
-    let chip_y2 = curr_y + scaler.s(216.0);
+    let spec_chip_h = scaler.s(24.0);
+    let chip_y1 = curr_y + scaler.s(314.0);
+    let chip_y2 = curr_y + scaler.s(344.0);
 
     scaler.draw_glass_card(stat_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(&spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+    fonts.draw_ui_bold(&spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(16.0), scaler.font_s(10.5), Palette::NEON_CYAN);
 
     scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(&spec2, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::WHITE);
+    fonts.draw_ui_bold(&spec2, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(16.0), scaler.font_s(10.5), Palette::WHITE);
 
     scaler.draw_glass_card(stat_base_x, chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(&spec3, stat_base_x + scaler.s(8.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GOLD);
+    fonts.draw_ui_bold(&spec3, stat_base_x + scaler.s(8.0), chip_y2 + scaler.s(16.0), scaler.font_s(10.5), Palette::NEON_GOLD);
 
     scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(&spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
+    fonts.draw_ui_bold(&spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(16.0), scaler.font_s(10.5), Palette::NEON_GREEN);
 
     // Prompt hint at bottom of card
     if is_garage_highlighted {
@@ -380,103 +389,17 @@ pub fn render_starting_grid_screen(
         fonts.draw_ui_regular(
             hint_text,
             col1_x + scaler.s(12.0),
-            curr_y + scaler.s(250.0),
-            scaler.font_s(9.5),
+            curr_y + scaler.s(396.0),
+            scaler.font_s(10.0),
             Palette::NEON_GOLD,
         );
     }
 
-    curr_y += garage_card_h + scaler.s(8.0);
+    curr_y += garage_card_h + scaler.s(10.0);
 
-    // Card 3 (Index 1): Grid Configuration / Session Status Card
-    let is_grid_active = is_left_focused && active_card_idx == 1;
-    let grid_h = scaler.s(48.0);
-    let is_roster_locked = !game_mode.allows_roster_customization();
-    let grid_border = if is_grid_active {
-        Palette::NEON_CYAN
-    } else {
-        Palette::UI_CARD_BORDER
-    };
-    let grid_bg = if is_grid_active {
-        Palette::UI_CARD_BG_HOVER
-    } else {
-        Palette::UI_CARD_BG
-    };
-    scaler.draw_glass_card(col1_x, curr_y, col_w, grid_h, grid_bg, grid_border, if is_grid_active { 2.4 } else { 1.2 });
-
-    if game_mode.has_bots() {
-        let grid_hdr = if is_roster_locked {
-            if game_mode == GameMode::Career {
-                "GRID CONFIG: 🔒 LOCKED [Championship Roster]"
-            } else {
-                "GRID CONFIG: 🔒 LOCKED [Official Roster]"
-            }
-        } else if is_grid_active {
-            "GRID CONFIG [ACTIVE • ENTER / + / - to adjust]"
-        } else {
-            "GRID CONFIG: [Up/Down to select card]"
-        };
-        fonts.draw_ui_bold(
-            grid_hdr,
-            col1_x + scaler.s(12.0),
-            curr_y + scaler.s(16.0),
-            scaler.font_s(10.5),
-            if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
-        );
-        let racer_desc = if is_roster_locked && game_mode == GameMode::Career {
-            format!("{} Racers (Championship Grid) • Official Season Roster Locked", num_drivers)
-        } else if game_mode == GameMode::SplitScreen {
-            let bot_count = num_drivers.saturating_sub(2);
-            if bot_count == 0 {
-                format!("2 Players (1v1 Head-to-Head Duel) • Max {} Slots", max_grid_size)
-            } else {
-                format!("{} Racers (2 Players + {} AI Bots) • Max {} Slots", num_drivers, bot_count, max_grid_size)
-            }
-        } else {
-            format!("{} Racers ({} AI Opponents) • Max {} Slots", num_drivers, num_drivers.saturating_sub(1), max_grid_size)
-        };
-        fonts.draw_ui_bold(
-            &racer_desc,
-            col1_x + scaler.s(12.0),
-            curr_y + scaler.s(34.0),
-            scaler.font_s(12.5),
-            Palette::WHITE,
-        );
-    } else {
-        let solo_hdr = if is_grid_active {
-            "SESSION STATUS [ACTIVE • Solo Track Time]"
-        } else {
-            "SESSION STATUS: SOLO TRACK TIME"
-        };
-        fonts.draw_ui_bold(
-            solo_hdr,
-            col1_x + scaler.s(12.0),
-            curr_y + scaler.s(16.0),
-            scaler.font_s(10.5),
-            if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
-        );
-        let status_str = match game_mode {
-            GameMode::TimeTrial => {
-                format!("Personal Best: {} • Shadow Car Active", best_lap_time.map(format_lap_time).unwrap_or_else(|| "No Record".to_string()))
-            }
-            GameMode::FreeRide => "Open Practice Session • Unlimited Laps • Zero Traffic".to_string(),
-            _ => "Solo Practice".to_string(),
-        };
-        fonts.draw_ui_bold(
-            &status_str,
-            col1_x + scaler.s(12.0),
-            curr_y + scaler.s(34.0),
-            scaler.font_s(12.0),
-            Palette::WHITE,
-        );
-    }
-
-    curr_y += grid_h + scaler.s(10.0);
-
-    // Card 4 (Index 2): High-Visibility Green "LAUNCH RACE" Action Button
+    // Card 3: High-Visibility Green "LAUNCH RACE" Action Button
     let launch_h = scaler.s(48.0);
-    let is_launch_card = is_left_focused && active_card_idx == 2;
-    let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
+    let is_launch_card = is_left_focused && (active_card_idx == 1 || active_card_idx == 2);
     let is_launch_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + launch_h;
     let is_launch_active = is_launch_card || is_launch_hovered;
 
@@ -529,8 +452,94 @@ pub fn render_starting_grid_screen(
     );
 
     // =========================================================================
-    // RIGHT PANEL: Starting Grid & Roster
+    // RIGHT PANEL: Grid Config (Top) & Starting Grid Roster (Below)
     // =========================================================================
+    let grid_y = panel_y;
+    let grid_h = scaler.s(52.0);
+    let is_roster_locked = !game_mode.allows_roster_customization();
+    let is_grid_hovered = mx >= col2_x && mx <= col2_x + col_w && my >= grid_y && my <= grid_y + grid_h;
+    let is_grid_active = (is_right_focused && active_card_idx == 1) || (is_left_focused && active_card_idx == 1) || is_grid_hovered;
+
+    let grid_border = if is_grid_active {
+        Palette::NEON_CYAN
+    } else {
+        Palette::UI_CARD_BORDER
+    };
+    let grid_bg = if is_grid_active {
+        Palette::UI_CARD_BG_HOVER
+    } else {
+        Palette::UI_CARD_BG
+    };
+    scaler.draw_glass_card(col2_x, grid_y, col_w, grid_h, grid_bg, grid_border, if is_grid_active { 2.4 } else { 1.2 });
+
+    if game_mode.has_bots() {
+        let grid_hdr = if is_roster_locked {
+            if game_mode == GameMode::Career {
+                "GRID CONFIG: 🔒 LOCKED [Championship Roster]"
+            } else {
+                "GRID CONFIG: 🔒 LOCKED [Official Roster]"
+            }
+        } else if is_grid_active {
+            "GRID CONFIG [ACTIVE • ENTER / + / - to adjust]"
+        } else {
+            "GRID CONFIG: [Up/Down to select • Click to adjust]"
+        };
+        fonts.draw_ui_bold(
+            grid_hdr,
+            col2_x + scaler.s(12.0),
+            grid_y + scaler.s(17.0),
+            scaler.font_s(11.0),
+            if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
+        );
+        let racer_desc = if is_roster_locked && game_mode == GameMode::Career {
+            format!("{} Racers (Championship Grid) • Official Season Roster Locked", num_drivers)
+        } else if game_mode == GameMode::SplitScreen {
+            let bot_count = num_drivers.saturating_sub(2);
+            if bot_count == 0 {
+                format!("2 Players (1v1 Head-to-Head Duel) • Max {} Slots", max_grid_size)
+            } else {
+                format!("{} Racers (2 Players + {} AI Bots) • Max {} Slots", num_drivers, bot_count, max_grid_size)
+            }
+        } else {
+            format!("{} Racers ({} AI Opponents) • Max {} Slots", num_drivers, num_drivers.saturating_sub(1), max_grid_size)
+        };
+        fonts.draw_ui_bold(
+            &racer_desc,
+            col2_x + scaler.s(12.0),
+            grid_y + scaler.s(36.0),
+            scaler.font_s(13.0),
+            Palette::WHITE,
+        );
+    } else {
+        let solo_hdr = if is_grid_active {
+            "SESSION STATUS [ACTIVE • Solo Track Time]"
+        } else {
+            "SESSION STATUS: SOLO TRACK TIME"
+        };
+        fonts.draw_ui_bold(
+            solo_hdr,
+            col2_x + scaler.s(12.0),
+            grid_y + scaler.s(17.0),
+            scaler.font_s(11.0),
+            if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
+        );
+        let status_str = match game_mode {
+            GameMode::TimeTrial => {
+                format!("Personal Best: {} • Shadow Car Active", best_lap_time.map(format_lap_time).unwrap_or_else(|| "No Record".to_string()))
+            }
+            GameMode::FreeRide => "Open Practice Session • Unlimited Laps • Zero Traffic".to_string(),
+            _ => "Solo Practice".to_string(),
+        };
+        fonts.draw_ui_bold(
+            &status_str,
+            col2_x + scaler.s(12.0),
+            grid_y + scaler.s(36.0),
+            scaler.font_s(12.5),
+            Palette::WHITE,
+        );
+    }
+
+    // Roster Header (Positioned directly under Grid Config card)
     let roster_base_title = match game_mode {
         GameMode::TimeTrial => "TIME TRIAL • ROSTER & SHADOW CAR",
         GameMode::FreeRide => "FREE RIDE • PRACTICE ROSTER",
@@ -539,7 +548,8 @@ pub fn render_starting_grid_screen(
         GameMode::Career => "CAREER CHAMPIONSHIP • STARTING GRID [LOCKED]",
         GameMode::SplitScreen => "2P SPLIT SCREEN • KEYS VS GAMEPAD",
     };
-    let roster_header = if is_right_focused {
+    let roster_header_is_focused = is_right_focused && active_card_idx != 1;
+    let roster_header = if roster_header_is_focused {
         if game_mode.allows_roster_customization() {
             format!("{} [FOCUSED • Up/Down select • [ / ] Change Car • ENTER/D Dossier]", roster_base_title)
         } else {
@@ -548,18 +558,19 @@ pub fn render_starting_grid_screen(
     } else {
         format!("{} [Right arrow to focus roster]", roster_base_title)
     };
+    let roster_header_y = grid_y + grid_h + scaler.s(16.0);
     fonts.draw_ui_bold(
         &roster_header,
         col2_x,
-        panel_y + scaler.s(13.0),
-        scaler.font_s(13.5),
-        if is_right_focused { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
+        roster_header_y,
+        scaler.font_s(13.0),
+        if roster_header_is_focused { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
     );
 
-    let roster_card_y = panel_y + scaler.s(22.0);
-    let roster_card_h = (bottom_prompt_y - roster_card_y - scaler.s(8.0)).max(scaler.s(240.0));
-    let roster_border = if is_right_focused { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
-    scaler.draw_glass_card(col2_x, roster_card_y, col_w, roster_card_h, Palette::UI_CARD_BG, roster_border, if is_right_focused { 2.2 } else { 1.4 });
+    let roster_card_y = roster_header_y + scaler.s(10.0);
+    let roster_card_h = (bottom_prompt_y - roster_card_y - scaler.s(8.0)).max(scaler.s(220.0));
+    let roster_border = if roster_header_is_focused { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
+    scaler.draw_glass_card(col2_x, roster_card_y, col_w, roster_card_h, Palette::UI_CARD_BG, roster_border, if roster_header_is_focused { 2.2 } else { 1.4 });
 
     let row_w = col_w - scaler.s(16.0);
     let row_x = col2_x + scaler.s(8.0);
@@ -570,7 +581,7 @@ pub fn render_starting_grid_screen(
     match game_mode {
         GameMode::TimeTrial => {
             // Row 1: Player (P1)
-            let is_row_sel = is_right_focused && active_roster_idx == 0;
+            let is_row_sel = is_right_focused && active_card_idx != 1 && active_roster_idx == 0;
             let pb_desc = best_lap_time.map(format_lap_time).unwrap_or_else(|| "No Prior Record".to_string());
             let p_line = format!("Personal Best: {}  •  Live Driver Telemetry", pb_desc);
             render_participant_row(
@@ -593,7 +604,7 @@ pub fn render_starting_grid_screen(
             row_y += row_h + row_gap;
 
             // Row 2: Shadow / Ghost Car
-            let is_ghost_sel = is_right_focused && active_roster_idx == 1;
+            let is_ghost_sel = is_right_focused && active_card_idx != 1 && active_roster_idx == 1;
             let ghost_lap_str = best_lap_time.map(|t| format!("Ghost Target: {}  •  Live Telemetry Replay", format_lap_time(t))).unwrap_or_else(|| "No prior lap recorded  •  Recording live ghost".to_string());
             render_ghost_participant_row(
                 fonts,
@@ -626,7 +637,7 @@ pub fn render_starting_grid_screen(
         }
         GameMode::FreeRide => {
             // Row 1: Player (P1)
-            let is_row_sel = is_right_focused && active_roster_idx == 0;
+            let is_row_sel = is_right_focused && active_card_idx != 1 && active_roster_idx == 0;
             let p_line = "Unlimited Open Circuit Session  •  Zero Obstacle Traffic".to_string();
             render_participant_row(
                 fonts,
@@ -666,7 +677,7 @@ pub fn render_starting_grid_screen(
         GameMode::StandardRace | GameMode::ExperimentalRace | GameMode::SplitScreen | GameMode::Career => {
             for (i, participant) in grid_participants.iter().enumerate() {
                 let slot = i + 1;
-                let is_row_sel = is_right_focused && i == active_roster_idx;
+                let is_row_sel = is_right_focused && active_card_idx != 1 && i == active_roster_idx;
                 let desc = if game_mode == GameMode::SplitScreen && i == 0 {
                     "Player 1: Keyboard (WASD / Arrows) • Grid Slot 1".to_string()
                 } else if game_mode == GameMode::SplitScreen && i == 1 {
@@ -766,7 +777,15 @@ pub fn starting_grid_footer_prompt_with_mode(
                 _ => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A / START] LAUNCH RACE  |  [B] Menu",
             },
             StartingGridFocus::RightRoster => {
-                "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Driver  |  [A/Y] View Dossier  |  [START] Launch  |  [B] Menu"
+                if active_card_idx == 1 {
+                    if is_roster_customizable {
+                        "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Driver  |  [A/X] Adjust Bots  |  [START] Launch  |  [B] Menu"
+                    } else {
+                        "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Driver  |  [ROSTER LOCKED]  |  [START] Launch  |  [B] Menu"
+                    }
+                } else {
+                    "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Driver  |  [A/Y] View Dossier  |  [START] Launch  |  [B] Menu"
+                }
             }
         }
     } else {
@@ -780,11 +799,19 @@ pub fn starting_grid_footer_prompt_with_mode(
                 },
                 _ => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / SPACE / CLICK] LAUNCH RACE  |  [ESC] Menu",
             },
-            StartingGridFocus::RightRoster => if is_roster_customizable {
-                "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [< / >] Change Vehicle  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
-            } else {
-                "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
-            },
+            StartingGridFocus::RightRoster => {
+                if active_card_idx == 1 {
+                    if is_roster_customizable {
+                        "[Left/Right] Switch Panel  |  [Up/Down] Select Card/Driver  |  [ENTER / + / -] Adjust Bots  |  [SPACE] Launch  |  [ESC] Menu"
+                    } else {
+                        "[Left/Right] Switch Panel  |  [Up/Down] Select Card/Driver  |  [ROSTER LOCKED]  |  [SPACE] Launch  |  [ESC] Menu"
+                    }
+                } else if is_roster_customizable {
+                    "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [< / >] Change Vehicle  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
+                } else {
+                    "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
+                }
+            }
         }
     }
 }
