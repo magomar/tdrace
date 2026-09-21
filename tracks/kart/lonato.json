@@ -50274,9 +50274,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 6,
+  "car_category": "kart",
   "module_id": "kart",
   "modules": [
     "kart"
   ],
-  "car_category": "kart"
+  "scale": "1:1",
+  "country_code": "IT",
+  "country_name": "Italy",
+  "min_width": 8.0,
+  "max_width": 9.2,
+  "is_inspired": false
 }

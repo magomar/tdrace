@@ -529,17 +529,22 @@ pub fn render_track_manager_screen(
         let card_w = (desc_w - scaler.s(12.0)) * 0.5;
         let card_h = scaler.s(38.0);
 
-        // Metric Card 1: Track Length & Waypoints
+        // Metric Card 1: Track Length, Width & Waypoints
         scaler.draw_glass_card(pad_x, grid_y, card_w, card_h, Color::new(0.07, 0.09, 0.14, 0.70), Palette::UI_CARD_BORDER, 1.0);
         let len_str = if let Some(ref tr) = loaded_track {
-            format!("{:.0}m Length ({} WPs)", tr.total_length_m(), tr.spline.waypoints.len())
+            let scale_suffix = if tr.scale() != "1:1" {
+                format!(" • {}", tr.scale())
+            } else {
+                String::new()
+            };
+            format!("{:.0}m • W: {}{} ({} WPs)", tr.total_length_m(), tr.width_summary_string(), scale_suffix, tr.spline.waypoints.len())
         } else if let Some(info) = custom_info {
-            format!("{:.0}m Length ({} WPs)", info.length_m, info.waypoint_count)
+            format!("{:.0}m • W: 12.0m ({} WPs)", info.length_m, info.waypoint_count)
         } else {
             "Standard Circuit Spline".to_string()
         };
-        fonts.draw_ui_regular("LENGTH & NODES", pad_x + scaler.s(8.0), grid_y + scaler.s(12.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
-        fonts.draw_ui_bold(&len_str, pad_x + scaler.s(8.0), grid_y + scaler.s(27.0), scaler.font_s(12.5), Palette::WHITE);
+        fonts.draw_ui_regular("LENGTH, WIDTH & NODES", pad_x + scaler.s(8.0), grid_y + scaler.s(12.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(&len_str, pad_x + scaler.s(8.0), grid_y + scaler.s(27.0), scaler.font_s(12.0), Palette::WHITE);
 
         // Metric Card 2: Surface Composition & Breakdown
         scaler.draw_glass_card(pad_x + card_w + scaler.s(12.0), grid_y, card_w, card_h, Color::new(0.07, 0.09, 0.14, 0.70), Palette::UI_CARD_BORDER, 1.0);

@@ -45609,9 +45609,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
+  "car_category": "rally",
   "module_id": "rally",
   "modules": [
     "rally"
   ],
-  "car_category": "rally"
+  "scale": "1:1",
+  "country_code": "FI",
+  "country_name": "Finland",
+  "min_width": 11.5,
+  "max_width": 13.0,
+  "is_inspired": false
 }

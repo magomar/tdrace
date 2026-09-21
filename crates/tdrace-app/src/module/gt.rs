@@ -85,6 +85,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -157,6 +165,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -227,6 +243,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -293,6 +317,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -367,6 +399,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -435,6 +475,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -503,6 +551,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -569,6 +625,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -637,6 +701,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -705,6 +777,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -775,6 +855,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -845,6 +933,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -915,6 +1011,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -985,6 +1089,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -1055,6 +1167,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -1127,6 +1247,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -1195,6 +1323,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -1271,6 +1407,14 @@ impl GtWorldChallengeModule {
             car_category: CarCategory::Gt,
             module_id: Some("gt".to_string()),
             modules: vec!["gt".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 

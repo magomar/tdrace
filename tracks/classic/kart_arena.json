@@ -19034,10 +19034,16 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 5,
+  "car_category": "kart",
   "module_id": "classic",
   "modules": [
     "classic",
     "kart"
   ],
-  "car_category": "kart"
+  "scale": "1:1",
+  "country_code": "INT",
+  "country_name": "International",
+  "min_width": 7.5,
+  "max_width": 8.0,
+  "is_inspired": false
 }

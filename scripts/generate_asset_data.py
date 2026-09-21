@@ -62,9 +62,11 @@ def generate_circuit_svg(data: dict, cat: str, output_path: Path):
 
     category_colors = {
         "gt": {"stroke": "#3b82f6", "glow": "#2563eb"},
-        "nascar": {"stroke": "#f59e0b", "glow": "#d97706"},
+        "nascar": {"stroke": "#ef4444", "glow": "#dc2626"},
         "rally": {"stroke": "#10b981", "glow": "#059669"},
         "kart": {"stroke": "#a855f7", "glow": "#9333ea"},
+        "offroad": {"stroke": "#f59e0b", "glow": "#d97706"},
+        "extreme_offroad": {"stroke": "#f59e0b", "glow": "#d97706"},
         "classic": {"stroke": "#06b6d4", "glow": "#0891b2"},
     }
     colors = category_colors.get(cat, {"stroke": "#38bdf8", "glow": "#0284c7"})
@@ -113,6 +115,19 @@ def generate_assets():
     circuits_img_dir = root / "assets" / "textures" / "circuits"
     circuits = []
     
+    CLASSIC_TRACK_CATEGORIES = {
+        "classic_grand_prix": "gt",
+        "drift_park": "gt",
+        "figure_eight": "gt",
+        "oval_speedway": "nascar",
+        "dirty_oval_speedway": "nascar",
+        "oasis_rally": "rally",
+        "classic_rallycross": "rally",
+        "dirt_figure_eight": "offroad",
+        "ramp_raceway": "offroad",
+        "kart_arena": "kart",
+    }
+
     for json_file in sorted(tracks_dir.rglob("*.json")):
         if json_file.name.startswith("."):
             continue
@@ -120,7 +135,16 @@ def generate_assets():
             data = json.loads(json_file.read_text(encoding="utf-8"))
             name = data.get("name", json_file.stem.replace("_", " ").title())
             desc = data.get("description", "Competition racing venue.")
-            cat = json_file.parent.name
+            module_name = json_file.parent.name
+            
+            if module_name == "classic":
+                circuit_category = CLASSIC_TRACK_CATEGORIES.get(json_file.stem, "gt")
+            elif module_name == "extreme_offroad":
+                circuit_category = "offroad"
+            else:
+                circuit_category = module_name
+
+            modality = circuit_category.upper()
             
             # Compute track length from waypoints
             waypoints = data.get("spline", {}).get("waypoints", [])
@@ -139,19 +163,44 @@ def generate_assets():
                 if s:
                     surfaces_present.add(s)
             if not surfaces_present:
-                surfaces_present.add("Asphalt" if cat in ["gt", "nascar", "kart", "classic"] else "Dirt")
+                surfaces_present.add("Asphalt" if circuit_category in ["gt", "nascar", "kart"] else "Dirt")
+
+            # Extract scale and reference URLs
+            scale = data.get("scale", "1:1")
+            wikipedia_url = data.get("wikipedia_url")
+            osm_url = data.get("osm_url")
+            country_code = data.get("country_code")
+            country_name = data.get("country_name")
+            is_inspired = data.get("is_inspired", False)
+
+            # Compute min and max track width
+            samples = data.get("spline", {}).get("samples", [])
+            widths = [wp.get("width", 0.0) for wp in waypoints if isinstance(wp, dict) and wp.get("width", 0.0) > 0]
+            if not widths:
+                widths = [s.get("width", 0.0) for s in samples if isinstance(s, dict) and s.get("width", 0.0) > 0]
+            min_width = round(min(widths), 1) if widths else 12.0
+            max_width = round(max(widths), 1) if widths else 12.0
 
             # Generate SVG track miniature
-            svg_file = circuits_img_dir / cat / f"{json_file.stem}.svg"
-            generate_circuit_svg(data, cat, svg_file)
-            image_url = f"/textures/circuits/{cat}/{json_file.stem}.svg" if svg_file.exists() else None
+            svg_file = circuits_img_dir / module_name / f"{json_file.stem}.svg"
+            generate_circuit_svg(data, circuit_category, svg_file)
+            image_url = f"/textures/circuits/{module_name}/{json_file.stem}.svg" if svg_file.exists() else None
 
             circuits.append({
                 "id": json_file.stem,
                 "name": name,
-                "category": cat,
-                "modality": cat.upper(),
+                "module": module_name,
+                "category": circuit_category,
+                "modality": modality,
                 "description": desc,
+                "scale": scale,
+                "wikipedia_url": wikipedia_url,
+                "osm_url": osm_url,
+                "country_code": country_code,
+                "country_name": country_name,
+                "min_width_meters": min_width,
+                "max_width_meters": max_width,
+                "is_inspired": is_inspired,
                 "length_meters": round(length_m, 1) if length_m > 0 else 2500.0,
                 "turns_count": len([wp for wp in waypoints if wp.get("left_curb") or wp.get("right_curb")]),
                 "surfaces": sorted(list(surfaces_present)),

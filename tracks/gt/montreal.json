@@ -44085,5 +44085,13 @@
   "modules": [
     "gt"
   ],
-  "car_category": "gt"
+  "car_category": "gt",
+  "scale": "1:2",
+  "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Gilles_Villeneuve",
+  "osm_url": "https://www.openstreetmap.org/relation/1126305",
+  "country_code": "CA",
+  "country_name": "Canada",
+  "min_width": 13.0,
+  "max_width": 14.5,
+  "is_inspired": false
 }

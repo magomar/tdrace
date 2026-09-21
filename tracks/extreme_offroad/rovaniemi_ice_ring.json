@@ -19212,5 +19212,10 @@
   "modules": [
     "extreme_offroad"
   ],
-  "scale": "1:1"
+  "scale": "1:1",
+  "country_code": "FI",
+  "country_name": "Finland",
+  "min_width": 13.0,
+  "max_width": 13.0,
+  "is_inspired": true
 }

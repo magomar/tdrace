@@ -18,10 +18,10 @@ tags: [circuits, tracks, directory, catalog, venues]
 | Modality | Document Reference | Circuit Count | Surface Makeup & Special Mechanics |
 | :--- | :--- | :---: | :--- |
 | **Classic Heritage** | [classic.md](classic.md) | 10 | Asphalt GP ribbons, figure-eight cross-overs, jump raceways, dirt ovals. Standalone arcade catalog. |
-| **NASCAR & Ovals** | [nascar.md](nascar.md) | 12 | High-banked tri-ovals (Daytona, Talladega), short tracks (Bristol, Martinsville), dirt ovals (Eldora), and road courses. |
-| **Rallycross & Mixed-Surface** | [rally.md](rally.md) | 15 | 60/40 Asphalt-Gravel splits, alternative Joker Lap routing (`TrackNetwork`), jumps, and authentic World RX circuits. |
-| **Karting Arenas** | [kart.md](kart.md) | 15 | Tight-radius hairpin chicanes, high-grip sprint asphalt, curb hopping (Lonato, Genk, Sarno, Valencia, Campillos). |
-| **Extreme Off-Road & Arenas** | [offroad.md](offroad.md) | 15 | Open arena sand dunes, mud bog pits, arctic ice tracks, rhythm stadium whoops, and jump ramps. |
+| **NASCAR & Ovals** | [nascar.md](nascar.md) | 17 | High-banked tri-ovals (Daytona, Talladega), short tracks (Bristol, Martinsville), dirt ovals (Eldora), and road courses. |
+| **Rallycross & Mixed-Surface** | [rally.md](rally.md) | 17 | 60/40 Asphalt-Gravel splits, alternative Joker Lap routing (`TrackNetwork`), jumps, and authentic World RX circuits. |
+| **Karting Arenas** | [kart.md](kart.md) | 17 | Tight-radius hairpin chicanes, high-grip sprint asphalt, curb hopping (Lonato, Genk, Sarno, Valencia, Campillos). |
+| **Extreme Off-Road & Arenas** | [offroad.md](offroad.md) | 17 | Open arena sand dunes, mud bog pits, arctic ice tracks, rhythm stadium whoops, and jump ramps. |
 | **GT World Challenge & Endurance** | [f1_gt.md](f1_gt.md) | 18 | FIA Grade 1 homologated road courses (Spa, Monza, Silverstone, Suzuka, Circuit de la Sarthe / Le Mans, Nürburgring GP, MadRing, Portimão). |
 
 ---

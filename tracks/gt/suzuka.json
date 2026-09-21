@@ -58095,9 +58095,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
+  "car_category": "gt",
   "module_id": "gt",
   "modules": [
     "gt"
   ],
-  "car_category": "gt"
+  "scale": "1:2",
+  "country_code": "JP",
+  "country_name": "Japan",
+  "min_width": 11.5,
+  "max_width": 14.5,
+  "is_inspired": false
 }

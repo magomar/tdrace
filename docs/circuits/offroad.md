@@ -21,8 +21,8 @@ The **Extreme Off-Road & Stunt Arenas** catalog covers 15 specialized motorsport
 | **Sahara Dune Crossing** | `sahara_dune_crossing` | Desert Raid | Open Sand Dunes | High-speed sweeping desert crossing over cresting sand dunes with 3 tabletop jump ramps. |
 | **Dirt Figure Eight** | `dirt_figure_eight` | Stunt Arenas | Compacted Dirt & Mud | High-speed dirt figure-eight crossover with twin jumps and 18-degree banked outer berms. |
 | **Atacama Sand Basin** | `atacama_sand_basin` | Desert Raid | Dried Salt Flats & Fine Sand | Massive high-speed desert basin with sweeping sand curves and cresting jumps. |
-| *** Glamis Imperial Sand Dunes** | `glamis_dunes` | Desert Raid | Open Sand Dunes | Open California sand bowl with natural razorback dune crests and sweeping high-speed bowls. |
-| *** Crandon International Off-Road** | `crandon_short_course` | Mud & Quarry | Short Course Clay | The Big House: iconic Wisconsin short-course track with high-speed clay straights and tabletop jumps. |
+| **Glamis Imperial Sand Dunes** | `glamis_dunes` | Desert Raid | Open Sand Dunes | Open California sand bowl with natural razorback dune crests and sweeping high-speed bowls. |
+| **Crandon International Off-Road** | `crandon_short_course` | Mud & Quarry | Short Course Clay | The Big House: iconic Wisconsin short-course track with high-speed clay straights and tabletop jumps. |
 
 ### Tier 2: Canyon & Baja Trail Challenge (3 Circuits)
 | Venue | Identifier / Generator | Category | Surface Environment | Primary Hazards & Signature Features |

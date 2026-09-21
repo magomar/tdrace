@@ -50937,9 +50937,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
+  "car_category": "rally",
   "module_id": "rally",
   "modules": [
     "rally"
   ],
-  "car_category": "rally"
+  "scale": "1:1",
+  "country_code": "LV",
+  "country_name": "Latvia",
+  "min_width": 12.0,
+  "max_width": 14.5,
+  "is_inspired": false
 }

@@ -29764,5 +29764,10 @@
   "modules": [
     "extreme_offroad"
   ],
-  "scale": "1:1"
+  "scale": "1:1",
+  "country_code": "MX",
+  "country_name": "Mexico",
+  "min_width": 14.0,
+  "max_width": 14.0,
+  "is_inspired": true
 }

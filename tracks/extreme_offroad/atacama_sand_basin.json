@@ -24430,5 +24430,10 @@
   "modules": [
     "extreme_offroad"
   ],
-  "scale": "1:1"
+  "scale": "1:1",
+  "country_code": "CL",
+  "country_name": "Chile",
+  "min_width": 18.0,
+  "max_width": 18.0,
+  "is_inspired": true
 }

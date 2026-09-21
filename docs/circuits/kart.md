@@ -21,8 +21,8 @@ The **Karting Circuits** catalog in [`tracks/kart/`](../../tracks/kart) encompas
 | **South Garda Karting (Lonato)** | `lonato.json` | $1,200\text{ m}$ | $9.0\text{ m}$ | 12 | The world capital of karting; fast esses into heavy chicane braking, high rubber grip. |
 | **Home of Champions (Genk)** | `genk.json` | $1,360\text{ m}$ | $8.5\text{ m}$ | 14 | Technical Belgian venue; challenging sweeping left-hander into the back straight. |
 | **Prokart Raceland (Wackersdorf)** | `wackersdorf.json` | $1,190\text{ m}$ | $10.0\text{ m}$ | 13 | Smooth flowing elevation changes; rewards aggressive curb clipping. |
-| *** Laval Karting (Circuit Louis Beuvron)** | `laval_kart.json` | $1,232\text{ m}$ | $8.0\text{ m}$ | 13 | Legendary French karting arena with banked parabolique and rapid esses. |
-| *** Whilton Mill Kart Circuit** | `whilton_mill.json` | $1,200\text{ m}$ | $8.0\text{ m}$ | 14 | Premier British National circuit in Northamptonshire with challenging downhill esses. |
+| **Laval Karting (Circuit Louis Beuvron)** | `laval_kart.json` | $1,232\text{ m}$ | $8.0\text{ m}$ | 13 | Legendary French karting arena with banked parabolique and rapid esses. |
+| **Whilton Mill Kart Circuit** | `whilton_mill.json` | $1,200\text{ m}$ | $8.0\text{ m}$ | 14 | Premier British National circuit in Northamptonshire with challenging downhill esses. |
 
 ### Tier 2: National Kart Championship (3 Circuits)
 | Circuit | File Key | Track Length | Width | Turn Count | Key Technical Features |

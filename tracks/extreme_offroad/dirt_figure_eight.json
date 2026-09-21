@@ -40680,10 +40680,15 @@
   "pit_box_area": null,
   "default_laps": 4,
   "car_category": "off_road",
-  "module_id": "classic",
+  "module_id": "extreme_offroad",
   "modules": [
     "extreme_offroad",
     "classic"
   ],
-  "scale": "1:1"
+  "scale": "1:1",
+  "country_code": "US",
+  "country_name": "United States",
+  "min_width": 13.0,
+  "max_width": 14.0,
+  "is_inspired": true
 }

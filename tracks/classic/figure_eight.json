@@ -41280,9 +41280,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
+  "car_category": "gt",
   "module_id": "classic",
   "modules": [
     "classic"
   ],
-  "car_category": "gt"
+  "scale": "1:1",
+  "country_code": "INT",
+  "country_name": "International",
+  "min_width": 13.0,
+  "max_width": 14.0,
+  "is_inspired": false
 }

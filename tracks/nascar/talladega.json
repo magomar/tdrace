@@ -27631,9 +27631,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 3,
+  "car_category": "nascar",
   "module_id": "nascar",
   "modules": [
     "nascar"
   ],
-  "car_category": "nascar"
+  "scale": "1:2",
+  "country_code": "US",
+  "country_name": "United States",
+  "min_width": 24.0,
+  "max_width": 24.0,
+  "is_inspired": false
 }

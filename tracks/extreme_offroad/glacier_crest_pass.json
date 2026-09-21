@@ -20966,5 +20966,10 @@
   "modules": [
     "extreme_offroad"
   ],
-  "scale": "1:1"
+  "scale": "1:1",
+  "country_code": "CH",
+  "country_name": "Switzerland",
+  "min_width": 11.5,
+  "max_width": 11.5,
+  "is_inspired": true
 }

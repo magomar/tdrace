@@ -205,12 +205,17 @@ pub fn render_track_detailed_preview(
         Palette::NEON_GOLD,
     );
 
-    let len_badge = format!("{:.0}m | Off-Track: {}", track.total_length_m(), track.default_surface.name());
+    let scale_part = if track.scale() != "1:1" {
+        format!(" | {}", track.scale())
+    } else {
+        String::new()
+    };
+    let len_badge = format!("{:.0}m | Width: {}{} | Off-Track: {}", track.total_length_m(), track.width_summary_string(), scale_part, track.default_surface.name());
     fonts.draw_ui_bold(
         &len_badge,
-        x + w - scaler.s(190.0),
+        x + w - scaler.s(260.0),
         y + scaler.s(14.0),
-        scaler.font_s(10.5),
+        scaler.font_s(10.0),
         Palette::NEON_CYAN,
     );
 

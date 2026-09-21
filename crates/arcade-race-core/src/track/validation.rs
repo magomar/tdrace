@@ -768,6 +768,14 @@ mod tests {
             car_category: CarCategory::OffRoad,
             module_id: Some("extreme_offroad".to_string()),
             modules: vec!["extreme_offroad".to_string()],
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         };
 
         let diags = validate_track(&track);

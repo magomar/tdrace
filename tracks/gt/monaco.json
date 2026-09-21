@@ -43580,9 +43580,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 6,
+  "car_category": "gt",
   "module_id": "gt",
   "modules": [
     "gt"
   ],
-  "car_category": "gt"
+  "scale": "1:2",
+  "country_code": "MC",
+  "country_name": "Monaco",
+  "min_width": 10.5,
+  "max_width": 10.5,
+  "is_inspired": false
 }

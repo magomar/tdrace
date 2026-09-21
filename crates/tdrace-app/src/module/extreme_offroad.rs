@@ -231,7 +231,7 @@ impl GameModule for ExtremeOffRoadModule {
             },
             TrackDefinition {
                 id: "glamis_dunes",
-                title: "* Glamis Imperial Sand Dunes",
+                title: "Glamis Imperial Sand Dunes",
                 tag: "DESERT RAID",
                 description: "Open California sand bowl with natural razorback dune crests and sweeping high-speed bowls.",
                 category: "Desert Raid",
@@ -240,7 +240,7 @@ impl GameModule for ExtremeOffRoadModule {
             },
             TrackDefinition {
                 id: "crandon_short_course",
-                title: "* Crandon International Off-Road",
+                title: "Crandon International Off-Road",
                 tag: "SHORT COURSE",
                 description: "The Big House: iconic Wisconsin short-course track with high-speed clay straights and tabletop jumps.",
                 category: "Mud & Quarry",

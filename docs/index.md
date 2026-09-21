@@ -50,12 +50,12 @@ Meticulously mapped vector geometry circuits and procedural arenas catalogued ac
 
 | Document | Type | Status | Description |
 | :--- | :--- | :---: | :--- |
-| [Circuits Directory Overview](circuits/index.md) | Asset Catalog | `active` | Overview of all circuits, spline representations, surface zones, and barrier definitions. |
+| [Circuits Directory Overview](circuits/index.md) | Asset Catalog | `active` | Overview of all 96 circuits, spline representations, surface zones, and barrier definitions. |
 | [Classic Heritage Circuits](circuits/classic.md) | Asset Catalog | `active` | 10 foundational tracks: Classic Grand Prix, Drift Park, Figure Eight crossovers, and jump ramp raceways. |
-| [NASCAR & Stock Car Ovals](circuits/nascar.md) | Asset Catalog | `active` | 12 speedways: Daytona, Talladega, Bristol, Martinsville, Charlotte, Darlington, and Eldora clay dirt oval. |
-| [Rallycross Stages](circuits/rally.md) | Asset Catalog | `active` | 15 World RX venues: Höljes, Lydden Hill, Hell RX, Lohéac, Essay RX, and Joker Lap branching networks. |
-| [Karting Circuits & Arenas](circuits/kart.md) | Asset Catalog | `active` | 15 international karting venues: South Garda (Lonato), Genk, Sarno, Valencia, Campillos, and PFI bridge crossover. |
-| [Extreme Off-Road Arenas](circuits/offroad.md) | Asset Catalog | `active` | 15 extreme arenas: sand dune raids, deep mud bog pits, arctic ice lakes, and stadium whoops. |
+| [NASCAR & Stock Car Ovals](circuits/nascar.md) | Asset Catalog | `active` | 17 speedways: Daytona, Talladega, Bristol, Martinsville, Charlotte, Darlington, and Eldora clay dirt oval. |
+| [Rallycross Stages](circuits/rally.md) | Asset Catalog | `active` | 17 World RX venues: Höljes, Lydden Hill, Hell RX, Lohéac, Essay RX, and Joker Lap branching networks. |
+| [Karting Circuits & Arenas](circuits/kart.md) | Asset Catalog | `active` | 17 international karting venues: South Garda (Lonato), Genk, Sarno, Valencia, Campillos, and PFI bridge crossover. |
+| [Extreme Off-Road Arenas](circuits/offroad.md) | Asset Catalog | `active` | 17 extreme arenas: sand dune raids, deep mud bog pits, arctic ice lakes, and stadium whoops. |
 | [GT World Challenge & Endurance Road Courses](circuits/f1_gt.md) | Asset Catalog | `active` | 18 FIA Grade 1 world championship circuits: Spa-Francorchamps, Monza, Silverstone, Le Mans, Bathurst, MadRing, and Suzuka. |
 
 ---

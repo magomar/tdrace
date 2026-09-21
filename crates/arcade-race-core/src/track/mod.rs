@@ -110,6 +110,10 @@ impl Default for TrackKind {
     }
 }
 
+fn default_scale_fallback() -> String {
+    "1:1".to_string()
+}
+
 /// Complete racing circuit specification including spline, boundaries, surfaces, obstacles, and checkpoints.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Track {
@@ -134,6 +138,120 @@ pub struct Track {
     pub module_id: Option<String>,
     #[serde(default)]
     pub modules: Vec<String>,
+    #[serde(default = "default_scale_fallback")]
+    pub scale: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wikipedia_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub osm_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub country_code: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub country_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_width: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_width: Option<f32>,
+    #[serde(default)]
+    pub is_inspired: bool,
+}
+
+impl Default for Track {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            description: String::new(),
+            category: TrackCategory::Main,
+            kind: TrackKind::Circuit,
+            spline: TrackSpline::default(),
+            geometry: TrackGeometry::default(),
+            checkpoints: Vec::new(),
+            grid_positions: Vec::new(),
+            default_surface: SurfaceType::Grass,
+            pit_box_area: None,
+            default_laps: 3,
+            car_category: CarCategory::Gt,
+            module_id: None,
+            modules: Vec::new(),
+            scale: "1:1".to_string(),
+            wikipedia_url: None,
+            osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
+        }
+    }
+}
+
+impl Track {
+    /// Returns the scale of the track model (defaults to "1:1").
+    pub fn scale(&self) -> &str {
+        if self.scale.is_empty() {
+            "1:1"
+        } else {
+            &self.scale
+        }
+    }
+
+    /// Sets the scale of the track model.
+    pub fn with_scale(mut self, scale: impl Into<String>) -> Self {
+        self.scale = scale.into();
+        self
+    }
+
+    /// Sets the external reference URLs (Wikipedia and OSM) for the track.
+    pub fn with_urls(mut self, wikipedia: Option<String>, osm: Option<String>) -> Self {
+        self.wikipedia_url = wikipedia;
+        self.osm_url = osm;
+        self
+    }
+
+    /// Sets country metadata for this track.
+    pub fn with_country(mut self, code: impl Into<String>, name: impl Into<String>) -> Self {
+        self.country_code = Some(code.into());
+        self.country_name = Some(name.into());
+        self
+    }
+
+    /// Computes or retrieves the minimum and maximum drivable track width in meters.
+    pub fn width_range(&self) -> (f32, f32) {
+        if let (Some(min), Some(max)) = (self.min_width, self.max_width) {
+            return (min, max);
+        }
+        let mut min_w = f32::INFINITY;
+        let mut max_w = f32::NEG_INFINITY;
+        for wp in &self.spline.waypoints {
+            if wp.width > 0.0 {
+                min_w = min_w.min(wp.width);
+                max_w = max_w.max(wp.width);
+            }
+        }
+        if min_w.is_infinite() {
+            for s in &self.spline.samples {
+                if s.width > 0.0 {
+                    min_w = min_w.min(s.width);
+                    max_w = max_w.max(s.width);
+                }
+            }
+        }
+        if min_w.is_infinite() {
+            (12.0, 12.0)
+        } else {
+            (min_w, max_w)
+        }
+    }
+
+    /// Formats the track width range as a human-readable string (e.g. "13.5m" or "11.0–15.0m").
+    pub fn width_summary_string(&self) -> String {
+        let (min, max) = self.width_range();
+        if (min - max).abs() < 0.1 {
+            format!("{:.1}m", min)
+        } else {
+            format!("{:.1}–{:.1}m", min, max)
+        }
+    }
 }
 
 impl Track {

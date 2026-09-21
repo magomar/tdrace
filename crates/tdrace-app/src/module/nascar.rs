@@ -224,7 +224,7 @@ impl GameModule for NascarGameModule {
             },
             TrackDefinition {
                 id: "bowman_gray_stadium",
-                title: "* Bowman Gray Stadium",
+                title: "Bowman Gray Stadium",
                 tag: "BULLRING SHORT TRACK",
                 description: "The Madhouse: historic 0.25-mile flat asphalt bullring short track in Winston-Salem, NC.",
                 category: "Short Track",
@@ -233,7 +233,7 @@ impl GameModule for NascarGameModule {
             },
             TrackDefinition {
                 id: "lucas_oil_irp",
-                title: "* Lucas Oil Indianapolis Raceway Park",
+                title: "Lucas Oil Indianapolis Raceway Park",
                 tag: "SHORT TRACK 12° BANK",
                 description: "Classic 0.686-mile asphalt oval with 12-degree banking in Clermont, Indiana.",
                 category: "Short Track",
@@ -242,7 +242,7 @@ impl GameModule for NascarGameModule {
             },
             TrackDefinition {
                 id: "north_wilkesboro_speedway",
-                title: "* North Wilkesboro Speedway",
+                title: "North Wilkesboro Speedway",
                 tag: "SHORT TRACK 14° BANK",
                 description: "Historic 0.625-mile short track with an uphill frontstretch and downhill backstretch.",
                 category: "Short Track",
@@ -251,7 +251,7 @@ impl GameModule for NascarGameModule {
             },
             TrackDefinition {
                 id: "pocono_raceway",
-                title: "* Pocono Raceway",
+                title: "Pocono Raceway",
                 tag: "TRICKY TRIANGLE 14° BANK",
                 description: "The Tricky Triangle: 2.5-mile superspeedway with three distinct turns and long flat-out straights.",
                 category: "Superspeedway",
@@ -260,7 +260,7 @@ impl GameModule for NascarGameModule {
             },
             TrackDefinition {
                 id: "phoenix_raceway",
-                title: "* Phoenix Raceway",
+                title: "Phoenix Raceway",
                 tag: "TRI-OVAL 11° BANK",
                 description: "1.0-mile low-banked tri-oval in Avondale, Arizona featuring the famous dogleg cut across the apron.",
                 category: "Intermediate Oval",

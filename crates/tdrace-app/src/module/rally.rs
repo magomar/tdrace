@@ -285,7 +285,7 @@ impl GameModule for RallyGameModule {
             },
             TrackDefinition {
                 id: "dreux_rx",
-                title: "* Dreux Circuit de l'Ouest Parisien",
+                title: "Dreux Circuit de l'Ouest Parisien",
                 tag: "EURO RX FRANCE",
                 description: "Classic French mixed-surface rallycross circuit with fast flowing dirt curves and wide asphalt launch.",
                 category: "Euro RX",
@@ -294,7 +294,7 @@ impl GameModule for RallyGameModule {
             },
             TrackDefinition {
                 id: "blyton_rx",
-                title: "* Blyton Park Rallycross Circuit",
+                title: "Blyton Park Rallycross Circuit",
                 tag: "BRITISH RX",
                 description: "Renowned UK mixed-surface proving ground with technical chalk/dirt transitions and jump crests.",
                 category: "Euro RX",

@@ -46953,5 +46953,13 @@
   "modules": [
     "gt"
   ],
-  "car_category": "gt"
+  "car_category": "gt",
+  "scale": "1:2",
+  "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_of_the_Americas",
+  "osm_url": "https://www.openstreetmap.org/relation/2387140",
+  "country_code": "US",
+  "country_name": "United States",
+  "min_width": 13.5,
+  "max_width": 15.0,
+  "is_inspired": false
 }

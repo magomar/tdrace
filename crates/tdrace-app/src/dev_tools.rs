@@ -89,6 +89,17 @@ pub fn export_track_to_rust_code(track: &Track, fn_name: &str) -> String {
             .collect::<Vec<_>>()
             .join(", ")
     ));
+    out.push_str(&format!("        scale: \"{}\".to_string(),\n", track.scale()));
+    if let Some(ref wiki) = track.wikipedia_url {
+        out.push_str(&format!("        wikipedia_url: Some(\"{}\".to_string()),\n", wiki));
+    } else {
+        out.push_str("        wikipedia_url: None,\n");
+    }
+    if let Some(ref osm) = track.osm_url {
+        out.push_str(&format!("        osm_url: Some(\"{}\".to_string()),\n", osm));
+    } else {
+        out.push_str("        osm_url: None,\n");
+    }
     out.push_str("    }\n");
     out.push_str("}\n");
 

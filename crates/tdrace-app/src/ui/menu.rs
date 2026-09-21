@@ -1150,6 +1150,25 @@ pub fn render_track_select_menu(
                     scaler.font_s(10.0),
                     tag_col,
                 );
+                if let Some(ref tr) = loaded_track {
+                    let mut extra_tags = Vec::new();
+                    if tr.is_inspired {
+                        extra_tags.push("INSPIRED".to_string());
+                    }
+                    if tr.scale() != "1:1" {
+                        extra_tags.push(tr.scale().to_string());
+                    }
+                    if !extra_tags.is_empty() {
+                        let tag_str = extra_tags.join(" • ");
+                        fonts.draw_ui_regular(
+                            &tag_str,
+                            col1_x + col_w - thumb_w - scaler.s(85.0),
+                            curr_y + scaler.s(16.0),
+                            scaler.font_s(9.5),
+                            if is_sel { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
+                        );
+                    }
+                }
 
                 // Track title
                 let (title_str, title_col) = if is_locked {
@@ -1326,6 +1345,11 @@ pub fn render_track_select_menu(
         } else {
             "3 Laps".to_string()
         };
+        let width_str = if let Some(tr) = tr_ref {
+            format!("Width: {}", tr.width_summary_string())
+        } else {
+            "Width: 12.0m".to_string()
+        };
         let cps_str = if let Some(tr) = tr_ref {
             format!("{} Checkpoints", tr.checkpoints.len())
         } else {
@@ -1336,8 +1360,17 @@ pub fn render_track_select_menu(
         } else {
             "8 Slots".to_string()
         };
+        let scale_str = if let Some(tr) = tr_ref {
+            if tr.scale() != "1:1" {
+                format!(" • {}", tr.scale())
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        };
 
-        let metrics_summary = format!("{} • {} • {} • {}", len_str, laps_str, cps_str, grid_str);
+        let metrics_summary = format!("{} • {} • {} • {} • {}{}", len_str, width_str, laps_str, cps_str, grid_str, scale_str);
         fonts.draw_ui_bold(
             &metrics_summary,
             col2_x + scaler.s(14.0),

@@ -47624,5 +47624,13 @@
   "modules": [
     "gt"
   ],
-  "car_category": "gt"
+  "car_category": "gt",
+  "scale": "1:2",
+  "wikipedia_url": "https://en.wikipedia.org/wiki/Bahrain_International_Circuit",
+  "osm_url": "https://www.openstreetmap.org/relation/3089108",
+  "country_code": "BH",
+  "country_name": "Bahrain",
+  "min_width": 13.5,
+  "max_width": 15.0,
+  "is_inspired": false
 }

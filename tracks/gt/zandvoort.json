@@ -48115,9 +48115,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 5,
+  "car_category": "gt",
   "module_id": "gt",
   "modules": [
     "gt"
   ],
-  "car_category": "gt"
+  "scale": "1:2",
+  "country_code": "NL",
+  "country_name": "Netherlands",
+  "min_width": 12.5,
+  "max_width": 14.0,
+  "is_inspired": false
 }

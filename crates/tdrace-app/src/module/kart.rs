@@ -96,6 +96,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
     /// Circuito Internazionale Napoli (Sarno, Italy): High-Speed Temple of Speed
@@ -169,6 +174,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
     /// Karting Genk (Genk, Belgium): Home of Champions
@@ -240,6 +250,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
     /// PF International Kart Circuit (PFI, UK): Elevated Flyover Crossover Bridge
@@ -313,6 +328,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
     /// Circuito Internacional de Zuera (Zaragoza, Spain): Ultra-Fast Supertrack
@@ -386,6 +406,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
     /// Le Mans Karting International (Le Mans, France): Alain Prost CIK Circuit
@@ -457,6 +482,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
     /// Kartodromo Internacional do Algarve (Portimao, Portugal): Rollercoaster Track
@@ -530,6 +560,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
     /// Franciacorta Karting Track (Castrezzato, Italy): World Championship Benchmark
@@ -601,6 +636,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -673,6 +713,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -745,6 +790,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -817,6 +867,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -887,6 +942,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -953,6 +1013,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -1027,6 +1092,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 
@@ -1101,6 +1171,11 @@ impl KartGameModule {
             scale: "1:1".to_string(),
             wikipedia_url: None,
             osm_url: None,
+            country_code: None,
+            country_name: None,
+            min_width: None,
+            max_width: None,
+            is_inspired: false,
         }
     }
 }
@@ -1298,7 +1373,7 @@ impl GameModule for KartGameModule {
             },
             TrackDefinition {
                 id: "laval_kart",
-                title: "* Laval - Circuit Louis Beuvron",
+                title: "Laval - Circuit Louis Beuvron",
                 tag: "CADET CRADLE",
                 description: "Historic French CIK-FIA cadet proving ground with undulating esses and heavy braking hairpins.",
                 category: "World Championship",
@@ -1307,7 +1382,7 @@ impl GameModule for KartGameModule {
             },
             TrackDefinition {
                 id: "whilton_mill",
-                title: "* Whilton Mill Kart Circuit",
+                title: "Whilton Mill Kart Circuit",
                 tag: "CLUB CADET APEX",
                 description: "Northamptonshire premier kart venue featuring technical elevation drops and apex curb hopping.",
                 category: "World Championship",

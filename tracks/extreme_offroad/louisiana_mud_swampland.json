@@ -20895,5 +20895,10 @@
   "modules": [
     "extreme_offroad"
   ],
-  "scale": "1:1"
+  "scale": "1:1",
+  "country_code": "US",
+  "country_name": "United States",
+  "min_width": 11.0,
+  "max_width": 11.0,
+  "is_inspired": true
 }

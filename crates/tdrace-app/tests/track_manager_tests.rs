@@ -1339,8 +1339,9 @@ fn test_workspace_rally_deletion_preserves_classic() {
 #[ignore = "Manual export tool: cargo test --test track_manager_tests test_export_canonical_presets_to_git_repo -- --ignored"]
 fn test_export_canonical_presets_to_git_repo() {
     use tdrace_app::module::{
-        classic::ClassicGameModule, gt::GtWorldChallengeModule, kart::KartGameModule,
-        nascar::NascarGameModule, rally::RallyGameModule, GameModule,
+        classic::ClassicGameModule, extreme_offroad::ExtremeOffRoadModule,
+        gt::GtWorldChallengeModule, kart::KartGameModule, nascar::NascarGameModule,
+        rally::RallyGameModule, GameModule,
     };
     use tdrace_core::track::TrackCategory;
 
@@ -1355,6 +1356,7 @@ fn test_export_canonical_presets_to_git_repo() {
         Box::new(RallyGameModule::new()),
         Box::new(KartGameModule::new()),
         Box::new(NascarGameModule::new()),
+        Box::new(ExtremeOffRoadModule::new()),
     ];
 
     let mut total_exported = 0;
@@ -1383,6 +1385,11 @@ fn test_export_canonical_presets_to_git_repo() {
                     "eldora_speedway" => "eldora",
                     "iowa_speedway" => "iowa",
                     "chicago_street_course" => "chicago",
+                    "bowman_gray_stadium" => "bowman_gray",
+                    "lucas_oil_irp" => "irp_oval",
+                    "north_wilkesboro_speedway" => "north_wilkesboro",
+                    "pocono_raceway" => "pocono",
+                    "phoenix_raceway" => "phoenix",
                     other => other,
                 }
             } else {
@@ -1399,7 +1406,7 @@ fn test_export_canonical_presets_to_git_repo() {
             total_exported += 1;
         }
     }
-    assert!(total_exported >= 67, "Must export all preset track definitions across modules");
+    assert!(total_exported >= 80, "Must export all preset track definitions across modules");
 }
 
 #[test]

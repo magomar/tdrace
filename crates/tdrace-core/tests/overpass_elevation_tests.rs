@@ -148,6 +148,14 @@ fn test_lidar_elevation_filtering() {
         car_category: arcade_race_core::CarCategory::Gt,
         module_id: None,
         modules: Vec::new(),
+        scale: "1:1".to_string(),
+        wikipedia_url: None,
+        osm_url: None,
+        country_code: None,
+        country_name: None,
+        min_width: None,
+        max_width: None,
+        is_inspired: false,
     };
 
     let scanner = LidarScanner::new(LidarConfig::forward_cone_16());

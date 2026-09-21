@@ -30,8 +30,8 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 | **Höljes Motorstadion** | `holjes_rx.json` | $1,210\text{ m}$ | $60\%$ Asphalt / $40\%$ Gravel | Turn 5 Wide Sweeper | The "Magic Weekend"; iconic 35-meter jump crest over the velodrome. |
 | **Lydden Hill** | `lydden_hill.json` | $1,300\text{ m}$ | $55\%$ Asphalt / $45\%$ Chalk/Dirt | Chessons Drift Outer Loop | The birthplace of rallycross; fast downhill entry into North Bend. |
 | **Mettet (Circuit Jules Tacheny)** | `mettet_rx.json` | $1,031\text{ m}$ | $61\%$ Asphalt / $39\%$ Dirt | Turn 6 Inner Apex | Technical asphalt section followed by banked dirt bowl. |
-| *** Dreux RX (Circuit de l'Ouest Parisien)** | `dreux_rx.json` | $1,048\text{ m}$ | $62\%$ Asphalt / $38\%$ Dirt | Turn 4 Inner Hook | French Championship venue with high-speed sweeping tarmac and loose dirt hairpins. |
-| *** Blyton Park RX** | `blyton_rx.json` | $1,180\text{ m}$ | $58\%$ Asphalt / $42\%$ Gravel | Airfield Outer Loop | British classic on former RAF airfield with flowing flat curves and jump ramp. |
+| **Dreux RX (Circuit de l'Ouest Parisien)** | `dreux_rx.json` | $1,048\text{ m}$ | $62\%$ Asphalt / $38\%$ Dirt | Turn 4 Inner Hook | French Championship venue with high-speed sweeping tarmac and loose dirt hairpins. |
+| **Blyton Park RX** | `blyton_rx.json` | $1,180\text{ m}$ | $58\%$ Asphalt / $42\%$ Gravel | Airfield Outer Loop | British classic on former RAF airfield with flowing flat curves and jump ramp. |
 
 ### Tier 2: Scandinavian & Continental Classics (3 Circuits)
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |

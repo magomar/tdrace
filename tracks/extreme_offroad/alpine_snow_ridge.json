@@ -20957,5 +20957,10 @@
   "modules": [
     "extreme_offroad"
   ],
-  "scale": "1:1"
+  "scale": "1:1",
+  "country_code": "FR",
+  "country_name": "France",
+  "min_width": 10.0,
+  "max_width": 10.0,
+  "is_inspired": true
 }

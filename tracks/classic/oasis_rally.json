@@ -26031,10 +26031,16 @@
   "default_surface": "Sand",
   "pit_box_area": null,
   "default_laps": 3,
+  "car_category": "off_road",
   "module_id": "classic",
   "modules": [
     "classic",
     "rally"
   ],
-  "car_category": "off_road"
+  "scale": "1:1",
+  "country_code": "INT",
+  "country_name": "International",
+  "min_width": 14.0,
+  "max_width": 16.0,
+  "is_inspired": false
 }

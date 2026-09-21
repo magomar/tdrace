@@ -48277,9 +48277,15 @@
   "default_surface": "Grass",
   "pit_box_area": null,
   "default_laps": 4,
+  "car_category": "gt",
   "module_id": "gt",
   "modules": [
     "gt"
   ],
-  "car_category": "gt"
+  "scale": "1:2",
+  "country_code": "IT",
+  "country_name": "Italy",
+  "min_width": 13.5,
+  "max_width": 15.0,
+  "is_inspired": false
 }
