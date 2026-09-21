@@ -12,7 +12,7 @@ const featuredCars = vehiclesData.filter((c) =>
 );
 
 const featuredCircuits = circuitsData.filter((c) =>
-  ['spa', 'daytona', 'holjes_rx', 'lonato', 'classic_grand_prix', 'sahara_dunes'].includes(c.id)
+  ['spa', 'daytona', 'holjes_rx', 'lonato', 'classic_grand_prix', 'sahara_dune_crossing'].includes(c.id)
 );
 ---
 
@@ -28,7 +28,7 @@ const featuredCircuits = circuitsData.filter((c) =>
         Authentic Motorsport Assets & <span class="bg-gradient-to-r from-racing-blue via-racing-cyan to-racing-green bg-clip-text text-transparent">Physical Simulation</span>.
       </h1>
       <p class="mt-4 text-base sm:text-lg text-racing-muted leading-relaxed">
-        Explore 80 authentic motorsport models across 25 progression categories, 89 homologated circuit layouts, and real-time Pacejka '96 tire and surface physics—all backed by a unified Google OKF v0.2 knowledge graph.
+        Explore 80 authentic motorsport models across 25 progression categories, {circuitsData.length} homologated circuit layouts, and real-time Pacejka '96 tire and surface physics—all backed by a unified Google OKF v0.2 knowledge graph.
       </p>
 
       <!-- Quick Metrics Grid -->
@@ -41,7 +41,7 @@ const featuredCircuits = circuitsData.filter((c) =>
         <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
           <div class="text-3xl font-extrabold text-white font-mono">{circuitsData.length}</div>
           <div class="text-xs text-racing-muted uppercase font-mono mt-1">Circuits Mapped</div>
-          <div class="text-[11px] text-racing-amber mt-0.5">GT, Ovals, RX & Karts</div>
+          <div class="text-[11px] text-racing-amber mt-0.5">GT, Ovals, RX, Off-Road & Karts</div>
         </div>
         <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
           <div class="text-3xl font-extrabold text-white font-mono">{surfacesData.length}</div>
@@ -99,7 +99,7 @@ const featuredCircuits = circuitsData.filter((c) =>
         <p class="text-xs text-racing-muted font-mono mt-1">Vector splines, surface zones, barrier perimeters, and Joker Laps.</p>
       </div>
       <a href="/circuits" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
-        View All 89 Tracks <span>→</span>
+        View All {circuitsData.length} Tracks <span>→</span>
       </a>
     </div>
 

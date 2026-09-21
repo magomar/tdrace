@@ -3,10 +3,18 @@ import Layout from '../layouts/Layout.astro';
 import CircuitCard from '../components/CircuitCard.astro';
 import circuitsData from '../../../shared/data/circuits.json';
 
-const categories = ['all', 'gt', 'nascar', 'rally', 'kart', 'classic'];
+const modules = [
+  { id: 'all', label: 'All Modules' },
+  { id: 'gt', label: 'GT' },
+  { id: 'nascar', label: 'NASCAR' },
+  { id: 'rally', label: 'Rally' },
+  { id: 'extreme_offroad', label: 'OFFROAD' },
+  { id: 'kart', label: 'Kart' },
+  { id: 'classic', label: 'Classic' },
+];
 ---
 
-<Layout title="World Circuit & Track Directory" description="Explore 70 homologated circuit layouts across GT World Challenge, NASCAR speedways, World RX stages, and sprint kart arenas.">
+<Layout title="World Circuit & Track Directory" description="Explore 96 homologated circuit layouts across GT World Challenge, NASCAR speedways, World RX stages, Off-Road arenas, and sprint kart tracks.">
   <div class="py-6 border-b border-racing-border">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -21,25 +29,25 @@ const categories = ['all', 'gt', 'nascar', 'rally', 'kart', 'classic'];
         <input
           type="text"
           id="circuit-search"
-          placeholder="Search by venue name, category..."
+          placeholder="Search by circuit category (e.g. offroad, gt, rally)..."
           class="w-full px-4 py-2 bg-racing-surface border border-racing-border rounded-lg text-xs font-mono text-white placeholder-racing-muted focus:outline-none focus:border-racing-blue"
         />
       </div>
     </div>
 
-    <!-- Category Filters -->
+    <!-- Module Filters -->
     <div class="flex flex-wrap gap-2 mt-6">
-      {categories.map((cat, idx) => (
+      {modules.map((m, idx) => (
         <button
           type="button"
-          class={`cat-btn px-3 py-1.5 rounded-lg text-xs font-mono uppercase transition-all ${
+          class={`module-btn px-3 py-1.5 rounded-lg text-xs font-mono uppercase transition-all ${
             idx === 0
               ? 'active bg-racing-blue text-white font-bold shadow-lg shadow-racing-blue/20'
               : 'bg-racing-surface border border-racing-border text-racing-muted hover:text-white hover:bg-racing-surface2'
           }`}
-          data-category={cat}
+          data-module={m.id}
         >
-          {cat === 'all' ? 'All Modalities' : cat}
+          {m.label}
         </button>
       ))}
     </div>
@@ -48,7 +56,12 @@ const categories = ['all', 'gt', 'nascar', 'rally', 'kart', 'classic'];
   <!-- Circuits Grid -->
   <div id="circuits-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-8">
     {circuitsData.map((c) => (
-      <div class="circuit-item" data-category={c.category} data-search={`${c.name} ${c.category} ${c.modality} ${c.surfaces.join(' ')}`.toLowerCase()}>
+      <div
+        class="circuit-item"
+        data-module={c.module || c.category}
+        data-category={c.category}
+        data-search={`${c.name} ${c.category} ${c.modality} ${c.surfaces.join(' ')}`.toLowerCase()}
+      >
         <CircuitCard circuit={c} />
       </div>
     ))}
@@ -57,23 +70,23 @@ const categories = ['all', 'gt', 'nascar', 'rally', 'kart', 'classic'];
 
 <script>
   function initCircuitFilters() {
-    const catBtns = document.querySelectorAll('.cat-btn');
+    const filterBtns = document.querySelectorAll('.module-btn');
     const searchInput = document.getElementById('circuit-search') as HTMLInputElement;
     const items = document.querySelectorAll('.circuit-item');
 
-    let currentCat = 'all';
+    let currentModule = 'all';
     let searchQuery = '';
 
     function applyFilter() {
       items.forEach((el) => {
         const item = el as HTMLElement;
-        const itemCat = item.dataset.category || '';
+        const itemModule = item.dataset.module || '';
         const itemSearch = item.dataset.search || '';
 
-        const matchesCat = currentCat === 'all' || itemCat === currentCat;
+        const matchesModule = currentModule === 'all' || itemModule === currentModule;
         const matchesSearch = searchQuery === '' || itemSearch.includes(searchQuery.toLowerCase());
 
-        if (matchesCat && matchesSearch) {
+        if (matchesModule && matchesSearch) {
           item.style.display = '';
         } else {
           item.style.display = 'none';
@@ -81,17 +94,17 @@ const categories = ['all', 'gt', 'nascar', 'rally', 'kart', 'classic'];
       });
     }
 
-    catBtns.forEach((btn) => {
+    filterBtns.forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const target = e.currentTarget as HTMLElement;
-        catBtns.forEach((b) => {
-          b.classList.remove('active', 'bg-racing-blue', 'text-white', 'font-bold', 'shadow-lg');
+        filterBtns.forEach((b) => {
+          b.classList.remove('active', 'bg-racing-blue', 'text-white', 'font-bold', 'shadow-lg', 'shadow-racing-blue/20');
           b.classList.add('bg-racing-surface', 'border', 'border-racing-border', 'text-racing-muted');
         });
-        target.classList.add('active', 'bg-racing-blue', 'text-white', 'font-bold', 'shadow-lg');
+        target.classList.add('active', 'bg-racing-blue', 'text-white', 'font-bold', 'shadow-lg', 'shadow-racing-blue/20');
         target.classList.remove('text-racing-muted', 'bg-racing-surface');
 
-        currentCat = target.dataset.category || 'all';
+        currentModule = target.dataset.module || 'all';
         applyFilter();
       });
     });

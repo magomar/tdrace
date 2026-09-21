@@ -2938,5 +2938,40 @@
     "image_lateral": "/textures/vehicles/laterals/classic/classic_kart.png",
     "image_thumb": "/textures/vehicles/laterals/classic/classic_kart_thumb.png",
     "image_topdown": "/textures/vehicles/topdown/classic/classic_kart.png"
+  },
+  {
+    "id": "classic_rally",
+    "name": "Trailfire Turbo 4WD",
+    "manufacturer": "Apex Dynamics",
+    "year": 2026,
+    "module": "classic",
+    "tier": 1,
+    "category": "Arcade Group B Rally",
+    "class_badge": "T1",
+    "mass": 1050,
+    "power_bhp": 450,
+    "torque_nm": 550,
+    "engine_force": 7875,
+    "top_speed_kmh": 215,
+    "accel_0_100": 2.9,
+    "drive_bias": 0.5,
+    "drivetrain": "4WD",
+    "engine_desc": "2.1L Turbocharged Inline-5 20V",
+    "downforce": 1.1,
+    "drag": 0.44,
+    "brakes_desc": "Gravel & Tarmac Dual-Bias Ventilated Discs",
+    "brakes_kn": 27.5,
+    "stats": {
+      "speed": 88,
+      "acceleration": 94,
+      "grip": 92,
+      "agility": 88,
+      "downforce": 78
+    },
+    "summary": "Legendary fantasy Group B rally beast engineered for vicious 4WD acceleration, massive jump composure, and fearless slides across dirt, gravel, and asphalt.",
+    "image_ref": null,
+    "image_lateral": "/textures/vehicles/laterals/classic/classic_rally.png",
+    "image_thumb": "/textures/vehicles/laterals/classic/classic_rally_thumb.png",
+    "image_topdown": "/textures/vehicles/topdown/classic/classic_rally.png"
   }
 ]

@@ -3,9 +3,18 @@ interface Props {
   circuit: {
     id: string;
     name: string;
+    module?: string;
     category: string;
     modality: string;
     description: string;
+    scale?: string;
+    wikipedia_url?: string | null;
+    osm_url?: string | null;
+    country_code?: string;
+    country_name?: string;
+    min_width_meters?: number;
+    max_width_meters?: number;
+    is_inspired?: boolean;
     length_meters: number;
     turns_count: number;
     surfaces: string[];
@@ -16,12 +25,22 @@ interface Props {
 
 const { circuit } = Astro.props;
 
+// Convert 2-letter ISO country code to Unicode regional indicator flag emoji
+const getFlagEmoji = (code?: string) => {
+  if (!code || code === 'INT' || code.length !== 2) return '🌐';
+  const offset = 127397;
+  return String.fromCodePoint(...[...code.toUpperCase()].map(c => c.charCodeAt(0) + offset));
+};
+
+const flagEmoji = getFlagEmoji(circuit.country_code);
+
 const modalityColors: Record<string, string> = {
   gt: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  nascar: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  nascar: 'bg-red-500/15 text-red-400 border-red-500/30',
   rally: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  offroad: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  extreme_offroad: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   kart: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-  classic: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
 };
 
 const badgeColor = modalityColors[circuit.category] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
@@ -57,9 +76,37 @@ const badgeColor = modalityColors[circuit.category] || 'bg-slate-500/15 text-sla
 
   <div class="p-5">
     <div class="flex items-center justify-between gap-2 mb-2.5">
-      <span class={`text-xs px-2.5 py-0.5 rounded-full border font-mono font-semibold uppercase ${badgeColor}`}>
-        {circuit.category}
-      </span>
+      <div class="flex items-center gap-1.5 flex-wrap">
+        {circuit.country_name && (
+          <span
+            class="text-sm px-1.5 py-0.5 rounded bg-white/5 border border-white/10 cursor-help flex items-center justify-center"
+            title={circuit.country_name}
+          >
+            {flagEmoji}
+          </span>
+        )}
+        <span class={`text-xs px-2.5 py-0.5 rounded-full border font-mono font-semibold uppercase ${badgeColor}`}>
+          {circuit.category}
+        </span>
+        {circuit.module === 'classic' && (
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/30 font-mono font-medium">
+            Classic
+          </span>
+        )}
+        {circuit.is_inspired && (
+          <span
+            class="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/30 font-mono font-medium cursor-help"
+            title="Inspired by real-world motorsport venue/events (adapted layout)"
+          >
+            🧭
+          </span>
+        )}
+        {circuit.scale && circuit.scale !== '1:1' && (
+          <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-mono font-medium">
+            {circuit.scale}
+          </span>
+        )}
+      </div>
       {circuit.has_jumps && (
         <span class="text-xs px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30 font-mono font-medium flex items-center gap-1">
           <span>🚀</span> Jump Ramps
@@ -75,7 +122,7 @@ const badgeColor = modalityColors[circuit.category] || 'bg-slate-500/15 text-sla
       {circuit.description}
     </p>
 
-    <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-racing-border/40 font-mono text-xs">
+    <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-racing-border/40 font-mono text-xs">
       <div>
         <div class="text-[10px] text-racing-muted uppercase">Lap Distance</div>
         <div class="font-bold text-racing-text mt-0.5">
@@ -85,10 +132,48 @@ const badgeColor = modalityColors[circuit.category] || 'bg-slate-500/15 text-sla
         </div>
       </div>
       <div>
+        <div class="text-[10px] text-racing-muted uppercase">Track Width</div>
+        <div class="font-bold text-racing-cyan mt-0.5">
+          {circuit.min_width_meters && circuit.max_width_meters
+            ? circuit.min_width_meters === circuit.max_width_meters
+              ? `${circuit.min_width_meters} m`
+              : `${circuit.min_width_meters} – ${circuit.max_width_meters} m`
+            : '12.0 m'}
+        </div>
+      </div>
+      <div>
         <div class="text-[10px] text-racing-muted uppercase">Turns / Apexes</div>
         <div class="font-bold text-racing-text mt-0.5">{circuit.turns_count > 0 ? circuit.turns_count : 'Fast Arc'}</div>
       </div>
     </div>
+
+    {(circuit.wikipedia_url || circuit.osm_url) && (
+      <div class="flex items-center gap-2 mt-3 pt-3 border-t border-racing-border/30 flex-wrap">
+        <span class="text-[10px] font-mono text-racing-muted uppercase">Reference:</span>
+        {circuit.wikipedia_url && (
+          <a
+            href={circuit.wikipedia_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[11px] font-mono text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
+          >
+            <span>Wikipedia</span>
+            <span class="text-[9px]">↗</span>
+          </a>
+        )}
+        {circuit.osm_url && (
+          <a
+            href={circuit.osm_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
+          >
+            <span>OSM</span>
+            <span class="text-[9px]">↗</span>
+          </a>
+        )}
+      </div>
+    )}
   </div>
 
   <div class="px-5 py-3 bg-racing-surface2/60 border-t border-racing-border flex flex-wrap gap-1.5 items-center">
