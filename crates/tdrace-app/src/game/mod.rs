@@ -115,7 +115,9 @@ use crate::ui::menu::{
     resolve_track_for_menu, CarChoice, GameMode, MenuPanelFocus, ModalityCategory, ModalityItem,
     ModalityModal, RaceResultEntry, TrackCatalogFilter, TrackChoice,
 };
-use crate::ui::profile_ui::{render_profile_create_screen, render_profile_manager_screen};
+use crate::ui::profile_ui::{
+    render_player_roster_manager_screen, render_profile_create_screen, render_profile_manager_screen,
+};
 use crate::ui::starting_grid::render_starting_grid_screen;
 pub use crate::ui::starting_grid::StartingGridFocus;
 use crate::ui::track_manager_ui::{
@@ -187,6 +189,18 @@ pub enum GameState {
     DriverCards(DriverCardsOrigin),
     ProfileManager {
         selected_idx: usize,
+    },
+    PlayerRosterManager {
+        selected_idx: usize,
+        active_column: usize,
+        field_idx: usize,
+        input_name: String,
+        input_alias: String,
+        country_idx: usize,
+        livery_idx: usize,
+        assist_mode: AssistProfile,
+        cursor_timer: f32,
+        status_msg: Option<String>,
     },
     ProfileCreate {
         editing_id: Option<i64>,
@@ -381,6 +395,7 @@ pub struct RaceSession {
     pub profile_history: Vec<RaceHistoryEntry>,
     pub profile_manager_tab: usize,
     pub profile_telemetry_filter_idx: usize,
+    pub profile_focus_card: bool,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -655,6 +670,7 @@ impl RaceSession {
             profile_history: Vec::new(),
             profile_manager_tab: 0,
             profile_telemetry_filter_idx: 0,
+            profile_focus_card: false,
 
             fx: EffectsManager::new(8000, 1500),
             camera,
@@ -2720,6 +2736,7 @@ impl RaceSession {
             || matches!(
                 self.state,
                 GameState::ProfileCreate { .. }
+                    | GameState::PlayerRosterManager { active_column: 1, field_idx: 0..=1, .. }
                     | GameState::TrackManager { .. }
             )
             || (matches!(self.state, GameState::TrackEditor) && self.editor_modal != EditorModal::None);
@@ -2995,6 +3012,37 @@ impl RaceSession {
         if let GameState::ProfileManager { selected_idx } = self.state {
             self.update_profile_manager(selected_idx);
             return;
+        }
+
+        if matches!(self.state, GameState::PlayerRosterManager { .. }) {
+            if let GameState::PlayerRosterManager {
+                selected_idx,
+                active_column,
+                field_idx,
+                input_name,
+                input_alias,
+                country_idx,
+                livery_idx,
+                assist_mode,
+                cursor_timer,
+                status_msg,
+            } = std::mem::replace(&mut self.state, GameState::Menu)
+            {
+                self.update_player_roster_manager(
+                    selected_idx,
+                    active_column,
+                    field_idx,
+                    input_name,
+                    input_alias,
+                    country_idx,
+                    livery_idx,
+                    assist_mode,
+                    cursor_timer,
+                    status_msg,
+                    frame_dt,
+                );
+                return;
+            }
         }
 
         if matches!(self.state, GameState::ProfileCreate { .. }) {
@@ -3712,6 +3760,7 @@ impl RaceSession {
 
             GameState::ProfileManager { .. }
             | GameState::ProfileCreate { .. }
+            | GameState::PlayerRosterManager { .. }
             | GameState::TrackManager { .. }
             | GameState::TrackEditor => {}
 
@@ -3828,44 +3877,105 @@ impl RaceSession {
             self.refresh_profiles_and_stats();
         }
 
-        // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-4, Mouse Click)
-        let tab_prev = is_key_pressed(KeyCode::Left)
-            || self.input.gamepad.snapshot.nav_left;
-        let tab_next = is_key_pressed(KeyCode::Right)
-            || is_key_pressed(KeyCode::Tab)
-            || self.input.gamepad.snapshot.nav_right;
+        // Top Hero Card Focus vs Tab Focus
+        if !self.profile_focus_card {
+            // Focus card when pressing Up
+            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.profile_focus_card = true;
+            }
 
-        if tab_prev {
-            self.audio.play_sfx(SfxType::UiMove);
-            if self.profile_manager_tab == 0 {
+            // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-4)
+            let tab_prev = is_key_pressed(KeyCode::Left) || self.input.gamepad.snapshot.nav_left;
+            let tab_next = is_key_pressed(KeyCode::Right)
+                || is_key_pressed(KeyCode::Tab)
+                || self.input.gamepad.snapshot.nav_right;
+
+            if tab_prev {
+                self.audio.play_sfx(SfxType::UiMove);
+                if self.profile_manager_tab == 0 {
+                    self.profile_manager_tab = 3;
+                } else {
+                    self.profile_manager_tab -= 1;
+                }
+            }
+            if tab_next {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+            }
+
+            if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Kp1) {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.profile_manager_tab = 0;
+            }
+            if is_key_pressed(KeyCode::Key2) || is_key_pressed(KeyCode::Kp2) {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.profile_manager_tab = 1;
+            }
+            if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::Kp3) {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.profile_manager_tab = 2;
+            }
+            if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
+                self.audio.play_sfx(SfxType::UiMove);
                 self.profile_manager_tab = 3;
-            } else {
-                self.profile_manager_tab -= 1;
+            }
+        } else {
+            // On Card Focus: Pressing Down returns focus to Tabs
+            if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.profile_focus_card = false;
+            }
+
+            // Enter on focused hero card opens Player Roster Manager
+            if is_key_pressed(KeyCode::Enter)
+                || is_key_pressed(KeyCode::KpEnter)
+                || is_key_pressed(KeyCode::Space)
+                || self.input.gamepad.snapshot.btn_confirm_pressed
+                || self.input.gamepad.snapshot.btn_a_pressed
+            {
+                self.open_player_roster_manager(current_idx);
+                return;
+            }
+
+            // Inline driver cycling while focused on card
+            let cycle_prev = is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::Q);
+            let cycle_next = is_key_pressed(KeyCode::Right);
+
+            if cycle_prev {
+                self.audio.play_sfx(SfxType::UiMove);
+                if current_idx == 0 {
+                    current_idx = self.profile_list.len().saturating_sub(1);
+                } else {
+                    current_idx -= 1;
+                }
+                if let Some(p) = self.profile_list.get(current_idx) {
+                    if let Some(pid) = p.id {
+                        if let Some(db) = &self.hof_db {
+                            self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
+                            self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+                        }
+                    }
+                }
+            }
+
+            if cycle_next {
+                self.audio.play_sfx(SfxType::UiMove);
+                if !self.profile_list.is_empty() {
+                    current_idx = (current_idx + 1) % self.profile_list.len();
+                }
+                if let Some(p) = self.profile_list.get(current_idx) {
+                    if let Some(pid) = p.id {
+                        if let Some(db) = &self.hof_db {
+                            self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
+                            self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+                        }
+                    }
+                }
             }
         }
-        if tab_next {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
-        }
 
-        if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Kp1) {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.profile_manager_tab = 0;
-        }
-        if is_key_pressed(KeyCode::Key2) || is_key_pressed(KeyCode::Kp2) {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.profile_manager_tab = 1;
-        }
-        if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::Kp3) {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.profile_manager_tab = 2;
-        }
-        if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.profile_manager_tab = 3;
-        }
-
-        // Mouse click on Tab bar
+        // Mouse click on Hero Card or Tab bar
         if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
             let (mx, my) = macroquad::input::mouse_position();
             let sw = screen_width();
@@ -3874,8 +3984,16 @@ impl RaceSession {
             let full_w = sw * 0.96;
             let full_h = sh * 0.92;
             let px = (sw - full_w) * 0.5;
-            let hero_h = scaler.s(76.0);
-            let tab_y = (sh - full_h) * 0.5 + scaler.s(16.0) + hero_h + scaler.s(8.0);
+            let py = (sh - full_h) * 0.5 + scaler.s(16.0);
+            let hero_h = scaler.s(74.0);
+
+            // Clicked hero card -> open roster manager
+            if mx >= px && mx <= px + full_w && my >= py && my <= py + hero_h {
+                self.open_player_roster_manager(current_idx);
+                return;
+            }
+
+            let tab_y = py + hero_h + scaler.s(8.0);
             let tab_bar_h = scaler.s(34.0);
             if my >= tab_y && my <= tab_y + tab_bar_h {
                 let tab_gap = scaler.s(8.0);
@@ -3887,6 +4005,7 @@ impl RaceSession {
                         if self.profile_manager_tab != i {
                             self.audio.play_sfx(SfxType::UiMove);
                             self.profile_manager_tab = i;
+                            self.profile_focus_card = false;
                         }
                         break;
                     }
@@ -3895,25 +4014,13 @@ impl RaceSession {
         }
 
         // Telemetry Category Filter Cycling (F key when on Tab 3)
-        if self.profile_manager_tab == 3 {
-            if is_key_pressed(KeyCode::F) {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_telemetry_filter_idx = (self.profile_telemetry_filter_idx + 1) % 7;
-            }
+        if self.profile_manager_tab == 3 && is_key_pressed(KeyCode::F) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_telemetry_filter_idx = (self.profile_telemetry_filter_idx + 1) % 7;
         }
 
-        // Inline Driver Profile Cycling (Q / E or Up / Down or W / S)
-        let cycle_prev = is_key_pressed(KeyCode::Q)
-            || is_key_pressed(KeyCode::Up)
-            || is_key_pressed(KeyCode::W)
-            || self.input.gamepad.snapshot.nav_up;
-
-        let cycle_next = is_key_pressed(KeyCode::E)
-            || is_key_pressed(KeyCode::Down)
-            || is_key_pressed(KeyCode::S)
-            || self.input.gamepad.snapshot.nav_down;
-
-        if cycle_prev {
+        // Q key cycles driver prev anywhere in ProfileManager
+        if !self.profile_focus_card && is_key_pressed(KeyCode::Q) {
             self.audio.play_sfx(SfxType::UiMove);
             if current_idx == 0 {
                 current_idx = self.profile_list.len().saturating_sub(1);
@@ -3930,76 +4037,15 @@ impl RaceSession {
             }
         }
 
-        if cycle_next {
-            self.audio.play_sfx(SfxType::UiMove);
-            if !self.profile_list.is_empty() {
-                current_idx = (current_idx + 1) % self.profile_list.len();
-            }
-            if let Some(p) = self.profile_list.get(current_idx) {
-                if let Some(pid) = p.id {
-                    if let Some(db) = &self.hof_db {
-                        self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
-                        self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
-                    }
-                }
-            }
-        }
-
-        // Set Active profile (Enter / Space / Gamepad A / Confirm)
-        if is_key_pressed(KeyCode::Enter)
-            || is_key_pressed(KeyCode::KpEnter)
-            || is_key_pressed(KeyCode::Space)
-            || self.input.gamepad.snapshot.btn_confirm_pressed
-            || self.input.gamepad.snapshot.btn_a_pressed
-        {
-            if let Some(p) = self.profile_list.get(current_idx) {
-                if let Some(pid) = p.id {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.set_active_profile_by_id(pid);
-                }
-            }
-        }
-
-        // Edit Profile (M or F2 key)
-        if is_key_pressed(KeyCode::M) || is_key_pressed(KeyCode::F2) {
-            if let Some(p) = self.profile_list.get(current_idx) {
-                self.audio.play_sfx(SfxType::UiSelect);
-                while get_char_pressed().is_some() {}
-                let country_idx = p.country.as_deref().and_then(|code| {
-                    CountryRegistry::ALL.iter().position(|c| c.code.eq_ignore_ascii_case(code)).map(|pos| pos + 1)
-                }).unwrap_or(0);
-
-                let livery_idx = Palette::CAR_COLORS.iter().position(|c| {
-                    c.0 == p.color_scheme.primary && c.1 == p.color_scheme.secondary
-                }).unwrap_or(0);
-
-                self.state = GameState::ProfileCreate {
-                    editing_id: p.id,
-                    field_idx: 0,
-                    input_name: p.name.clone(),
-                    input_alias: p.alias.clone(),
-                    country_idx,
-                    livery_idx,
-                    cursor_timer: 0.0,
-                };
-                return;
-            }
+        // Open Player Roster Manager (E or F2 key)
+        if is_key_pressed(KeyCode::E) || is_key_pressed(KeyCode::F2) {
+            self.open_player_roster_manager(current_idx);
+            return;
         }
 
         // Create New Profile (N key or Gamepad X)
         if is_key_pressed(KeyCode::N) || self.input.gamepad.snapshot.btn_x_pressed {
-            self.audio.play_sfx(SfxType::UiSelect);
-            while get_char_pressed().is_some() {}
-            let next_livery = self.profile_list.len() % Palette::CAR_COLORS.len();
-            self.state = GameState::ProfileCreate {
-                editing_id: None,
-                field_idx: 0,
-                input_name: String::new(),
-                input_alias: String::new(),
-                country_idx: 1, // Spain default
-                livery_idx: next_livery,
-                cursor_timer: 0.0,
-            };
+            self.open_player_roster_manager(current_idx);
             return;
         }
 
@@ -4017,20 +4063,6 @@ impl RaceSession {
             }
         }
 
-        // Delete Profile (Delete / X key or Gamepad Y) - only when more than 1 profile exists
-        if (is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::X)) && self.profile_list.len() > 1 {
-            if let Some(p) = self.profile_list.get(current_idx) {
-                if let Some(pid) = p.id {
-                    self.audio.play_sfx(SfxType::UiMove);
-                    if let Some(db) = &self.hof_db {
-                        let _ = db.delete_profile(pid);
-                    }
-                    self.refresh_profiles_and_stats();
-                    current_idx = current_idx.min(self.profile_list.len().saturating_sub(1));
-                }
-            }
-        }
-
         // Return to Origin Screen (Escape, or Gamepad Cancel / B)
         if is_key_pressed(KeyCode::Escape)
             || self.input.gamepad.snapshot.btn_cancel_pressed
@@ -4038,6 +4070,7 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_b_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
+            self.profile_focus_card = false;
             self.refresh_profiles_and_stats();
             match self.profile_origin {
                 ProfileOrigin::ModalitySelect => {
@@ -4059,6 +4092,402 @@ impl RaceSession {
 
         self.state = GameState::ProfileManager {
             selected_idx: current_idx,
+        };
+    }
+
+    /// Opens the Two-Column Driver Roster & Profile Manager screen.
+    pub fn open_player_roster_manager(&mut self, selected_idx: usize) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        while get_char_pressed().is_some() {}
+        let sel = selected_idx.min(self.profile_list.len().saturating_sub(1));
+        if let Some(p) = self.profile_list.get(sel) {
+            let country_idx = p.country.as_deref().and_then(|code| {
+                CountryRegistry::ALL.iter().position(|c| c.code.eq_ignore_ascii_case(code)).map(|pos| pos + 1)
+            }).unwrap_or(0);
+
+            let livery_idx = Palette::CAR_COLORS.iter().position(|c| {
+                c.0 == p.color_scheme.primary && c.1 == p.color_scheme.secondary
+            }).unwrap_or(0);
+
+            if let Some(pid) = p.id {
+                if let Some(db) = &self.hof_db {
+                    self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
+                    self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+                }
+            }
+
+            self.state = GameState::PlayerRosterManager {
+                selected_idx: sel,
+                active_column: 0,
+                field_idx: 0,
+                input_name: p.name.clone(),
+                input_alias: p.alias.clone(),
+                country_idx,
+                livery_idx,
+                assist_mode: p.last_mode,
+                cursor_timer: 0.0,
+                status_msg: None,
+            };
+        }
+    }
+
+    /// Handles input and navigation for the Two-Column Driver Roster & Profile Manager screen.
+    #[allow(clippy::too_many_arguments)]
+    fn update_player_roster_manager(
+        &mut self,
+        mut selected_idx: usize,
+        mut active_column: usize,
+        mut field_idx: usize,
+        mut input_name: String,
+        mut input_alias: String,
+        mut country_idx: usize,
+        mut livery_idx: usize,
+        mut assist_mode: AssistProfile,
+        mut cursor_timer: f32,
+        mut status_msg: Option<String>,
+        frame_dt: f32,
+    ) {
+        cursor_timer += frame_dt;
+
+        // Escape: Back to ProfileManager
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_cancel_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.refresh_profiles_and_stats();
+            self.state = GameState::ProfileManager { selected_idx };
+            return;
+        }
+
+        // New Driver [N key]
+        if is_key_pressed(KeyCode::N) || (active_column == 0 && self.input.gamepad.snapshot.btn_x_pressed) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            while get_char_pressed().is_some() {}
+            if let Some(db) = &self.hof_db {
+                let new_num = self.profile_list.len() + 1;
+                let new_name = format!("Racer {}", new_num);
+                let new_alias = format!("Apex {}", new_num);
+                let next_livery = self.profile_list.len() % Palette::CAR_COLORS.len();
+                let scheme = CarColorScheme::from_index(next_livery);
+                let mut new_profile = PlayerProfile::new(&new_name, &new_alias, Some("ESP"), scheme);
+                new_profile.is_active = false;
+                if let Ok(new_id) = db.create_profile(&new_profile) {
+                    self.refresh_profiles_and_stats();
+                    if let Some(pos) = self.profile_list.iter().position(|p| p.id == Some(new_id)) {
+                        selected_idx = pos;
+                    }
+                    input_name = new_name;
+                    input_alias = new_alias;
+                    country_idx = 1;
+                    livery_idx = next_livery;
+                    assist_mode = AssistProfile::Arcade;
+                    active_column = 1;
+                    field_idx = 0;
+                    status_msg = Some("New driver added. Enter details and press Save.".to_string());
+                    self.state = GameState::PlayerRosterManager {
+                        selected_idx,
+                        active_column,
+                        field_idx,
+                        input_name,
+                        input_alias,
+                        country_idx,
+                        livery_idx,
+                        assist_mode,
+                        cursor_timer,
+                        status_msg,
+                    };
+                    return;
+                }
+            }
+        }
+
+        // Delete Driver [DEL or X key] - only when more than 1 profile exists
+        if (is_key_pressed(KeyCode::Delete) || (active_column == 0 && is_key_pressed(KeyCode::X)))
+            && self.profile_list.len() > 1
+        {
+            if let Some(p) = self.profile_list.get(selected_idx) {
+                if let Some(pid) = p.id {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.delete_profile(pid);
+                    }
+                    self.refresh_profiles_and_stats();
+                    selected_idx = selected_idx.min(self.profile_list.len().saturating_sub(1));
+                    if let Some(np) = self.profile_list.get(selected_idx) {
+                        input_name = np.name.clone();
+                        input_alias = np.alias.clone();
+                        country_idx = np.country.as_deref().and_then(|c| {
+                            CountryRegistry::ALL.iter().position(|r| r.code.eq_ignore_ascii_case(c)).map(|pos| pos + 1)
+                        }).unwrap_or(0);
+                        livery_idx = Palette::CAR_COLORS.iter().position(|c| {
+                            c.0 == np.color_scheme.primary && c.1 == np.color_scheme.secondary
+                        }).unwrap_or(0);
+                        assist_mode = np.last_mode;
+                        if let Some(npid) = np.id {
+                            if let Some(db) = &self.hof_db {
+                                self.active_profile_stats = db.get_stats_for_profile(npid).unwrap_or_default();
+                                self.profile_history = db.get_history_for_profile(npid, 20).unwrap_or_default();
+                            }
+                        }
+                    }
+                    status_msg = Some("Driver removed from roster.".to_string());
+                    self.state = GameState::PlayerRosterManager {
+                        selected_idx,
+                        active_column,
+                        field_idx,
+                        input_name,
+                        input_alias,
+                        country_idx,
+                        livery_idx,
+                        assist_mode,
+                        cursor_timer,
+                        status_msg,
+                    };
+                    return;
+                }
+            }
+        }
+
+        // Column switching (Tab key, or Right Arrow from left column)
+        if is_key_pressed(KeyCode::Tab) {
+            self.audio.play_sfx(SfxType::UiMove);
+            active_column = 1 - active_column;
+            while get_char_pressed().is_some() {}
+        } else if active_column == 0 && (is_key_pressed(KeyCode::Right) || self.input.gamepad.snapshot.nav_right) {
+            self.audio.play_sfx(SfxType::UiMove);
+            active_column = 1;
+            while get_char_pressed().is_some() {}
+        }
+
+        if active_column == 0 {
+            // Left Column: Browsing Roster
+            let prev_driver = is_key_pressed(KeyCode::Up)
+                || is_key_pressed(KeyCode::W)
+                || self.input.gamepad.snapshot.nav_up;
+            let next_driver = is_key_pressed(KeyCode::Down)
+                || is_key_pressed(KeyCode::S)
+                || self.input.gamepad.snapshot.nav_down;
+
+            if prev_driver && !self.profile_list.is_empty() {
+                self.audio.play_sfx(SfxType::UiMove);
+                if selected_idx == 0 {
+                    selected_idx = self.profile_list.len() - 1;
+                } else {
+                    selected_idx -= 1;
+                }
+                if let Some(p) = self.profile_list.get(selected_idx) {
+                    input_name = p.name.clone();
+                    input_alias = p.alias.clone();
+                    country_idx = p.country.as_deref().and_then(|c| {
+                        CountryRegistry::ALL.iter().position(|r| r.code.eq_ignore_ascii_case(c)).map(|pos| pos + 1)
+                    }).unwrap_or(0);
+                    livery_idx = Palette::CAR_COLORS.iter().position(|c| {
+                        c.0 == p.color_scheme.primary && c.1 == p.color_scheme.secondary
+                    }).unwrap_or(0);
+                    assist_mode = p.last_mode;
+                    if let Some(pid) = p.id {
+                        if let Some(db) = &self.hof_db {
+                            self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
+                            self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+                        }
+                    }
+                }
+            } else if next_driver && !self.profile_list.is_empty() {
+                self.audio.play_sfx(SfxType::UiMove);
+                selected_idx = (selected_idx + 1) % self.profile_list.len();
+                if let Some(p) = self.profile_list.get(selected_idx) {
+                    input_name = p.name.clone();
+                    input_alias = p.alias.clone();
+                    country_idx = p.country.as_deref().and_then(|c| {
+                        CountryRegistry::ALL.iter().position(|r| r.code.eq_ignore_ascii_case(c)).map(|pos| pos + 1)
+                    }).unwrap_or(0);
+                    livery_idx = Palette::CAR_COLORS.iter().position(|c| {
+                        c.0 == p.color_scheme.primary && c.1 == p.color_scheme.secondary
+                    }).unwrap_or(0);
+                    assist_mode = p.last_mode;
+                    if let Some(pid) = p.id {
+                        if let Some(db) = &self.hof_db {
+                            self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
+                            self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+                        }
+                    }
+                }
+            }
+
+            // Set Active Profile (Enter / Space / Gamepad A)
+            if is_key_pressed(KeyCode::Enter)
+                || is_key_pressed(KeyCode::KpEnter)
+                || is_key_pressed(KeyCode::Space)
+                || self.input.gamepad.snapshot.btn_confirm_pressed
+                || self.input.gamepad.snapshot.btn_a_pressed
+            {
+                let maybe_active = self.profile_list.get(selected_idx).and_then(|p| {
+                    p.id.map(|pid| (pid, p.name.clone()))
+                });
+                if let Some((pid, name)) = maybe_active {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.set_active_profile_by_id(pid);
+                    status_msg = Some(format!("'{}' set as active racer!", name));
+                }
+            }
+        } else {
+            // Right Column: Editing Profile Details
+            if is_key_pressed(KeyCode::Up) || (field_idx > 1 && (is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up)) {
+                self.audio.play_sfx(SfxType::UiMove);
+                if field_idx == 0 {
+                    field_idx = 5;
+                } else {
+                    field_idx -= 1;
+                }
+            }
+            if is_key_pressed(KeyCode::Down) || (field_idx > 1 && (is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down)) {
+                self.audio.play_sfx(SfxType::UiMove);
+                field_idx = (field_idx + 1) % 6;
+            }
+
+            // Text input for fields 0 (Name) and 1 (Alias)
+            if field_idx == 0 {
+                while let Some(c) = get_char_pressed() {
+                    if (c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_') && input_name.len() < 16 {
+                        input_name.push(c);
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                }
+                if is_key_pressed(KeyCode::Backspace) && !input_name.is_empty() {
+                    input_name.pop();
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+            } else if field_idx == 1 {
+                while let Some(c) = get_char_pressed() {
+                    if (c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_') && input_alias.len() < 16 {
+                        input_alias.push(c);
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                }
+                if is_key_pressed(KeyCode::Backspace) && !input_alias.is_empty() {
+                    input_alias.pop();
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+            }
+
+            // Cycling options for Country (2), Livery (3), Assist Mode (4)
+            let total_countries = CountryRegistry::ALL.len() + 1;
+            let total_liveries = Palette::CAR_COLORS.len();
+
+            if field_idx == 2 {
+                if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if country_idx == 0 {
+                        country_idx = total_countries - 1;
+                    } else {
+                        country_idx -= 1;
+                    }
+                }
+                if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    country_idx = (country_idx + 1) % total_countries;
+                }
+            } else if field_idx == 3 {
+                if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if livery_idx == 0 {
+                        livery_idx = total_liveries - 1;
+                    } else {
+                        livery_idx -= 1;
+                    }
+                }
+                if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    livery_idx = (livery_idx + 1) % total_liveries;
+                }
+            } else if field_idx == 4 {
+                if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    assist_mode = match assist_mode {
+                        AssistProfile::Arcade => AssistProfile::Pro,
+                        AssistProfile::Sport => AssistProfile::Arcade,
+                        AssistProfile::Pro => AssistProfile::Sport,
+                    };
+                }
+                if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    assist_mode = match assist_mode {
+                        AssistProfile::Arcade => AssistProfile::Sport,
+                        AssistProfile::Sport => AssistProfile::Pro,
+                        AssistProfile::Pro => AssistProfile::Arcade,
+                    };
+                }
+            }
+
+            // Save Changes (Enter on Save button, or Enter on country/livery/assist, or Ctrl+S)
+            let save_triggered = if field_idx >= 2 {
+                is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Space)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+            } else {
+                (is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl)) && is_key_pressed(KeyCode::S)
+            };
+
+            if save_triggered {
+                let final_name = if input_name.trim().is_empty() {
+                    "Driver".to_string()
+                } else {
+                    input_name.trim().to_string()
+                };
+
+                let final_alias = if input_alias.trim().is_empty() {
+                    "Apex".to_string()
+                } else {
+                    input_alias.trim().to_string()
+                };
+
+                let country_opt = if country_idx > 0 && country_idx <= CountryRegistry::ALL.len() {
+                    Some(CountryRegistry::ALL[country_idx - 1].code.to_string())
+                } else {
+                    None
+                };
+
+                let scheme = CarColorScheme::from_index(livery_idx);
+
+                let maybe_updated = self.profile_list.get(selected_idx).and_then(|p| {
+                    p.id.map(|pid| PlayerProfile {
+                        id: Some(pid),
+                        name: final_name,
+                        alias: final_alias,
+                        country: country_opt,
+                        color_scheme: scheme,
+                        is_active: p.is_active,
+                        created_at: p.created_at.clone(),
+                        last_mode: assist_mode,
+                    })
+                });
+
+                if let Some(updated) = maybe_updated {
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.update_profile(&updated);
+                    }
+                    self.refresh_profiles_and_stats();
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    status_msg = Some("✓ Profile saved successfully!".to_string());
+                }
+            }
+        }
+
+        self.state = GameState::PlayerRosterManager {
+            selected_idx,
+            active_column,
+            field_idx,
+            input_name,
+            input_alias,
+            country_idx,
+            livery_idx,
+            assist_mode,
+            cursor_timer,
+            status_msg,
         };
     }
 
@@ -7851,6 +8280,35 @@ impl RaceSession {
                     &self.active_profile_stats,
                     self.profile_manager_tab,
                     self.profile_telemetry_filter_idx,
+                    self.profile_focus_card,
+                );
+            }
+            GameState::PlayerRosterManager {
+                selected_idx,
+                active_column,
+                field_idx,
+                ref input_name,
+                ref input_alias,
+                country_idx,
+                livery_idx,
+                assist_mode,
+                cursor_timer,
+                ref status_msg,
+            } => {
+                render_player_roster_manager_screen(
+                    &self.fonts,
+                    &self.profile_list,
+                    selected_idx,
+                    active_column,
+                    field_idx,
+                    input_name,
+                    input_alias,
+                    country_idx,
+                    livery_idx,
+                    assist_mode,
+                    &self.active_profile_stats,
+                    cursor_timer,
+                    status_msg.as_deref(),
                 );
             }
             GameState::ProfileCreate {

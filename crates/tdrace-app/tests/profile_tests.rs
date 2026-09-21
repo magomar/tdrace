@@ -988,5 +988,98 @@ fn test_option_a_tabbed_dashboard_navigation_and_filters() {
     assert_eq!(session.profile_telemetry_filter_idx, 0);
 }
 
+#[test]
+fn test_player_card_focus_and_roster_manager_navigation() {
+    let mut session = RaceSession::new();
+    let db = HallOfFameDb::open_in_memory().expect("In-memory db should initialize");
+    let p1 = db.seed_default_profile_if_empty().expect("Seed default profile");
+
+    // Add a second driver
+    let p2 = PlayerProfile {
+        id: None,
+        name: "Elena Swift".to_string(),
+        alias: "Velocity".to_string(),
+        country: Some("FRA".to_string()),
+        color_scheme: CarColorScheme::from_index(2),
+        is_active: false,
+        created_at: "2026-09-20 12:00".to_string(),
+        last_mode: AssistProfile::Sport,
+    };
+    let p2_id = db.create_profile(&p2).expect("Insert driver 2");
+
+    session.hof_db = Some(db);
+    session.refresh_profiles_and_stats();
+    assert_eq!(session.profile_list.len(), 2);
+
+    // 1. Verify default focus state on hero card is false
+    assert!(!session.profile_focus_card);
+
+    // 2. Up arrow sets profile_focus_card = true, Down arrow sets it to false
+    session.profile_focus_card = true;
+    assert!(session.profile_focus_card);
+    session.profile_focus_card = false;
+    assert!(!session.profile_focus_card);
+
+    // 3. Open Player Roster Manager for profile 0
+    session.open_player_roster_manager(0);
+    match &session.state {
+        GameState::PlayerRosterManager {
+            selected_idx,
+            active_column,
+            field_idx,
+            input_name,
+            input_alias,
+            country_idx,
+            assist_mode,
+            ..
+        } => {
+            assert_eq!(*selected_idx, 0);
+            assert_eq!(*active_column, 0); // Left column (Roster list)
+            assert_eq!(*field_idx, 0);
+            assert_eq!(input_name, &p1.name);
+            assert_eq!(input_alias, &p1.alias);
+            assert_eq!(*assist_mode, AssistProfile::Arcade);
+            assert!(*country_idx > 0);
+        }
+        _ => panic!("Expected GameState::PlayerRosterManager"),
+    }
+
+    // 4. Open Player Roster Manager for profile 1
+    session.open_player_roster_manager(1);
+    match &session.state {
+        GameState::PlayerRosterManager {
+            selected_idx,
+            input_name,
+            input_alias,
+            assist_mode,
+            ..
+        } => {
+            assert_eq!(*selected_idx, 1);
+            assert_eq!(input_name, "Elena Swift");
+            assert_eq!(input_alias, "Velocity");
+            assert_eq!(*assist_mode, AssistProfile::Sport);
+        }
+        _ => panic!("Expected GameState::PlayerRosterManager"),
+    }
+
+    // 5. Test in-place update and persistence in DB
+    if let Some(db) = &session.hof_db {
+        let mut updated = db.get_profile_by_id(p2_id).unwrap().unwrap();
+        updated.name = "Elena Modified".to_string();
+        updated.alias = "Hyperdrive".to_string();
+        updated.last_mode = AssistProfile::Pro;
+        db.update_profile(&updated).expect("Update profile in db");
+
+        let fetched = db.get_profile_by_id(p2_id).unwrap().unwrap();
+        assert_eq!(fetched.name, "Elena Modified");
+        assert_eq!(fetched.alias, "Hyperdrive");
+        assert_eq!(fetched.last_mode, AssistProfile::Pro);
+    }
+
+    // 6. Test ESC return to ProfileManager
+    session.state = GameState::ProfileManager { selected_idx: 1 };
+    assert!(matches!(session.state, GameState::ProfileManager { selected_idx: 1 }));
+}
+
 
 

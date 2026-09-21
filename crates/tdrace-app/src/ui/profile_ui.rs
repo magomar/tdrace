@@ -5,7 +5,7 @@ use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
-use crate::profile::{draw_country_banner, CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+use crate::profile::{draw_country_banner, AssistProfile, CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::color::{CarColorScheme, Palette};
 
 /// Renders the Player Profile Badge for menus, supporting both compact mode and enlarged navigable card mode.
@@ -125,6 +125,7 @@ pub fn render_profile_manager_screen(
     stats: &ProfileCareerStats,
     active_tab: usize,
     filter_category_idx: usize,
+    focus_card: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -144,7 +145,22 @@ pub fn render_profile_manager_screen(
     // 1. TOP FULL-WIDTH HERO DRIVER BANNER WITH INLINE SWITCHER [◄ Q / E ►]
     // =========================================================================
     let hero_h = scaler.s(74.0);
-    scaler.draw_glass_card(x, cur_y, full_w, hero_h, Color::new(0.06, 0.08, 0.13, 0.95), Palette::NEON_CYAN, 1.8);
+    let card_bg = if focus_card {
+        Palette::UI_CARD_BG_HOVER
+    } else {
+        Color::new(0.06, 0.08, 0.13, 0.95)
+    };
+    let card_border = if focus_card {
+        Palette::NEON_CYAN
+    } else {
+        Palette::UI_CARD_BORDER
+    };
+    let card_thickness = if focus_card { 2.4 } else { 1.2 };
+    scaler.draw_glass_card(x, cur_y, full_w, hero_h, card_bg, card_border, card_thickness);
+
+    if focus_card {
+        draw_rectangle(x, cur_y, scaler.s(6.0), hero_h, Palette::NEON_CYAN);
+    }
 
     if let Some(p) = sel_profile {
         let left_pad = scaler.s(14.0);
@@ -174,12 +190,18 @@ pub fn render_profile_manager_screen(
             Palette::WHITE,
         );
 
-        // Inline Driver Cycler right button [E ►]
+        // Manage Roster Action Button
         let title_dim = fonts.measure_display(&driver_title, scaler.font_s(21.0));
         let btn2_x = name_x + title_dim.width + scaler.s(12.0);
-        draw_rectangle(btn2_x, btn_y, btn_w, btn_h, Color::new(0.12, 0.16, 0.24, 0.90));
-        draw_rectangle_lines(btn2_x, btn_y, btn_w, btn_h, 1.2, Palette::NEON_CYAN);
-        fonts.draw_ui_bold_centered("E ►", btn2_x + btn_w * 0.5, btn_y + scaler.s(21.0), scaler.font_s(13.0), Palette::NEON_CYAN);
+        let btn2_w = scaler.s(136.0);
+        let (b2_bg, b2_border, b2_text) = if focus_card {
+            (Color::new(0.08, 0.25, 0.35, 0.95), Palette::WHITE, "[ENTER] MANAGE ▶")
+        } else {
+            (Color::new(0.12, 0.16, 0.24, 0.90), Palette::NEON_CYAN, "[E] MANAGE ▶")
+        };
+        draw_rectangle(btn2_x, btn_y, btn2_w, btn_h, b2_bg);
+        draw_rectangle_lines(btn2_x, btn_y, btn2_w, btn_h, if focus_card { 2.0 } else { 1.2 }, b2_border);
+        fonts.draw_ui_bold_centered(b2_text, btn2_x + btn2_w * 0.5, btn_y + scaler.s(21.0), scaler.font_s(11.5), if focus_card { Palette::WHITE } else { Palette::NEON_CYAN });
 
         // Driver Metadata Subtitle
         let status_desc = if p.is_active { "PRIMARY ACTIVE DRIVER" } else { "BENCH DRIVER" };
@@ -331,7 +353,11 @@ pub fn render_profile_manager_screen(
     // 4. FOOTER ACTION BAR
     // =========================================================================
     let foot_y = sh - scaler.s(20.0);
-    let footer_prompt = "[◄ Q / E ►] Cycle Driver  |  [◄ / ►] [1-4] Tabs  |  [ENTER] Set Active  |  [N] New Driver  |  [DEL / X] Delete  |  [C] Clear History  |  [ESC] Exit";
+    let footer_prompt = if focus_card {
+        "[ENTER / E] Open Driver Manager  |  [▼] Focus Tabs  |  [◄ / ►] [Q] Cycle Driver  |  [ESC] Exit"
+    } else {
+        "[▲] Focus Driver Card  |  [◄ / ►] [1-4] Tabs  |  [E] Manage Roster  |  [ESC] Exit"
+    };
     fonts.draw_ui_bold_centered(
         footer_prompt,
         sw * 0.5,
@@ -1026,4 +1052,342 @@ fn render_text_field(
             draw_rectangle(cursor_x, cursor_y, cursor_w, cursor_h, Palette::NEON_CYAN);
         }
     }
+}
+
+/// Renders the Two-Column Driver Roster & Profile Manager Screen.
+#[allow(clippy::too_many_arguments)]
+pub fn render_player_roster_manager_screen(
+    fonts: &Fonts,
+    profiles: &[PlayerProfile],
+    selected_idx: usize,
+    active_column: usize,
+    field_idx: usize,
+    name_input: &str,
+    alias_input: &str,
+    country_idx: usize,
+    livery_idx: usize,
+    assist_mode: AssistProfile,
+    stats: &ProfileCareerStats,
+    cursor_timer: f32,
+    status_msg: Option<&str>,
+) {
+    let sw = screen_width();
+    let sh = screen_height();
+    let scaler = UiScaler::new(sw, sh);
+
+    // Dark backdrop overlay
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.96));
+
+    let full_w = sw * 0.96;
+    let full_h = sh * 0.92;
+    let x = (sw - full_w) * 0.5;
+    let mut cur_y = (sh - full_h) * 0.5;
+
+    // Header Bar
+    let header_h = scaler.s(52.0);
+    scaler.draw_glass_card(x, cur_y, full_w, header_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.4);
+    draw_rectangle(x, cur_y, scaler.s(6.0), header_h, Palette::NEON_CYAN);
+
+    fonts.draw_display(
+        "DRIVER ROSTER & PROFILE MANAGER",
+        x + scaler.s(16.0),
+        cur_y + scaler.s(26.0),
+        scaler.font_s(18.0),
+        Palette::WHITE,
+    );
+    fonts.draw_ui_regular(
+        "MANAGE REGISTERED RACERS, EDIT IDENTITY, CONFIGURE DRIVING ASSISTS, AND INSPECT CAREER DOSSIER",
+        x + scaler.s(16.0),
+        cur_y + scaler.s(43.0),
+        scaler.font_s(11.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    if let Some(msg) = status_msg {
+        let msg_dim = fonts.measure_ui_bold(msg, scaler.font_s(12.0));
+        let badge_w = msg_dim.width + scaler.s(24.0);
+        let badge_x = x + full_w - badge_w - scaler.s(16.0);
+        let badge_y = cur_y + scaler.s(12.0);
+        let badge_h = scaler.s(28.0);
+        draw_rectangle(badge_x, badge_y, badge_w, badge_h, Color::new(0.08, 0.28, 0.16, 0.90));
+        draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, 1.2, Palette::NEON_GREEN);
+        fonts.draw_ui_bold_centered(msg, badge_x + badge_w * 0.5, badge_y + scaler.s(18.0), scaler.font_s(12.0), Palette::NEON_GREEN);
+    }
+
+    cur_y += header_h + scaler.s(10.0);
+
+    let footer_h = scaler.s(32.0);
+    let body_h = (sh - cur_y - footer_h - scaler.s(10.0)).max(scaler.s(400.0));
+    let col_left_w = full_w * 0.35;
+    let gap = scaler.s(14.0);
+    let col_right_w = full_w - col_left_w - gap;
+    let col_left_x = x;
+    let col_right_x = x + col_left_w + gap;
+
+    // =========================================================================
+    // LEFT COLUMN: DRIVER ROSTER LIST
+    // =========================================================================
+    let left_border = if active_column == 0 { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+    let left_thick = if active_column == 0 { 2.0 } else { 1.2 };
+    scaler.draw_glass_card(col_left_x, cur_y, col_left_w, body_h, Palette::UI_CARD_BG, left_border, left_thick);
+
+    let col_title = format!("REGISTERED DRIVERS ({})", profiles.len());
+    fonts.draw_ui_bold(&col_title, col_left_x + scaler.s(14.0), cur_y + scaler.s(24.0), scaler.font_s(14.0), if active_column == 0 { Palette::NEON_CYAN } else { Palette::WHITE });
+    fonts.draw_ui_regular("[▲ / ▼] Browse  •  [ENTER] Active  •  [TAB / ►] Edit", col_left_x + scaler.s(14.0), cur_y + scaler.s(40.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
+
+    draw_rectangle(col_left_x + scaler.s(10.0), cur_y + scaler.s(48.0), col_left_w - scaler.s(20.0), 1.0, Palette::UI_CARD_BORDER);
+
+    let list_y = cur_y + scaler.s(54.0);
+    let item_h = scaler.s(52.0);
+    let item_gap = scaler.s(6.0);
+    let bottom_actions_h = scaler.s(42.0);
+    let list_avail_h = body_h - scaler.s(54.0) - bottom_actions_h;
+    let visible_items = (list_avail_h / (item_h + item_gap)).floor().max(1.0) as usize;
+    let scroll_offset = if selected_idx >= visible_items {
+        selected_idx - visible_items + 1
+    } else {
+        0
+    };
+
+    let mut item_cur_y = list_y;
+    for (i, p) in profiles.iter().enumerate().skip(scroll_offset).take(visible_items) {
+        let is_sel = i == selected_idx;
+        let item_w = col_left_w - scaler.s(20.0);
+        let item_x = col_left_x + scaler.s(10.0);
+
+        let (ibg, iborder, ithick) = if is_sel && active_column == 0 {
+            (Color::new(0.10, 0.16, 0.28, 0.95), Palette::NEON_CYAN, 2.0)
+        } else if is_sel {
+            (Color::new(0.08, 0.12, 0.20, 0.90), Palette::WHITE, 1.4)
+        } else {
+            (Color::new(0.06, 0.08, 0.12, 0.70), Palette::UI_CARD_BORDER, 1.0)
+        };
+
+        draw_rectangle(item_x, item_cur_y, item_w, item_h, ibg);
+        draw_rectangle_lines(item_x, item_cur_y, item_w, item_h, ithick, iborder);
+
+        if is_sel {
+            draw_rectangle(item_x, item_cur_y, scaler.s(4.0), item_h, Palette::NEON_CYAN);
+        }
+
+        // Flag banner
+        let b_w = scaler.s(36.0);
+        let b_h = scaler.s(18.0);
+        let b_x = item_x + scaler.s(10.0);
+        let b_y = item_cur_y + scaler.s(9.0);
+        draw_country_banner(p.country.as_deref(), b_x, b_y, b_w, b_h, Some(fonts), &scaler);
+
+        // Driver Name
+        let name_x = b_x + b_w + scaler.s(10.0);
+        let name_size = scaler.font_s(14.0);
+        let name_col = if is_sel { Palette::WHITE } else { Color::new(0.85, 0.88, 0.95, 1.0) };
+        fonts.draw_display(&p.name, name_x, item_cur_y + scaler.s(22.0), name_size, name_col);
+
+        // Callsign / Alias & Mode
+        let sub_str = format!("\"{}\"  •  {}", p.alias, p.last_mode.short_name());
+        fonts.draw_ui_regular(&sub_str, name_x, item_cur_y + scaler.s(40.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
+
+        // Livery swatches on right
+        let sw_s = scaler.s(10.0);
+        let sw_y = item_cur_y + scaler.s(12.0);
+        let sw_right = item_x + item_w - scaler.s(10.0);
+        draw_rectangle(sw_right - sw_s, sw_y, sw_s, sw_s, p.color_scheme.helmet);
+        draw_rectangle(sw_right - sw_s * 2.0 - scaler.s(2.0), sw_y, sw_s, sw_s, p.color_scheme.secondary);
+        draw_rectangle(sw_right - sw_s * 3.0 - scaler.s(4.0), sw_y, sw_s, sw_s, p.color_scheme.primary);
+
+        // Active Badge
+        if p.is_active {
+            let active_w = scaler.s(54.0);
+            let active_h = scaler.s(16.0);
+            let active_x = item_x + item_w - active_w - scaler.s(8.0);
+            let active_y = item_cur_y + scaler.s(28.0);
+            draw_rectangle(active_x, active_y, active_w, active_h, Color::new(0.08, 0.25, 0.12, 0.85));
+            draw_rectangle_lines(active_x, active_y, active_w, active_h, 1.0, Palette::NEON_GREEN);
+            fonts.draw_ui_bold_centered("ACTIVE", active_x + active_w * 0.5, active_y + scaler.s(12.0), scaler.font_s(9.0), Palette::NEON_GREEN);
+        }
+
+        item_cur_y += item_h + item_gap;
+    }
+
+    // Bottom Left Actions
+    let btn_row_y = cur_y + body_h - bottom_actions_h;
+    draw_rectangle(col_left_x + scaler.s(10.0), btn_row_y, col_left_w - scaler.s(20.0), 1.0, Palette::UI_CARD_BORDER);
+
+    let btn_action_y = btn_row_y + scaler.s(8.0);
+    let btn_action_h = scaler.s(26.0);
+    let btn_n_w = scaler.s(90.0);
+    let btn_del_w = scaler.s(90.0);
+
+    draw_rectangle(col_left_x + scaler.s(14.0), btn_action_y, btn_n_w, btn_action_h, Color::new(0.12, 0.18, 0.26, 0.90));
+    draw_rectangle_lines(col_left_x + scaler.s(14.0), btn_action_y, btn_n_w, btn_action_h, 1.0, Palette::NEON_CYAN);
+    fonts.draw_ui_bold_centered("[N] NEW", col_left_x + scaler.s(14.0) + btn_n_w * 0.5, btn_action_y + scaler.s(18.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+
+    if profiles.len() > 1 {
+        let del_x = col_left_x + scaler.s(14.0) + btn_n_w + scaler.s(8.0);
+        draw_rectangle(del_x, btn_action_y, btn_del_w, btn_action_h, Color::new(0.22, 0.10, 0.12, 0.90));
+        draw_rectangle_lines(del_x, btn_action_y, btn_del_w, btn_action_h, 1.0, Color::new(0.95, 0.45, 0.40, 1.0));
+        fonts.draw_ui_bold_centered("[DEL] DELETE", del_x + btn_del_w * 0.5, btn_action_y + scaler.s(18.0), scaler.font_s(11.0), Color::new(0.95, 0.45, 0.40, 1.0));
+    }
+
+    // =========================================================================
+    // RIGHT COLUMN: DRIVER IDENTITY SETUP & CAREER DOSSIER
+    // =========================================================================
+    let right_border = if active_column == 1 { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+    let right_thick = if active_column == 1 { 2.0 } else { 1.2 };
+    scaler.draw_glass_card(col_right_x, cur_y, col_right_w, body_h, Palette::UI_CARD_BG, right_border, right_thick);
+
+    let right_pad = scaler.s(16.0);
+    let right_inner_w = col_right_w - right_pad * 2.0;
+    let mut ry = cur_y + right_pad;
+
+    fonts.draw_ui_bold(
+        "DRIVER IDENTITY & CUSTOMIZATION",
+        col_right_x + right_pad,
+        ry + scaler.s(10.0),
+        scaler.font_s(14.0),
+        if active_column == 1 { Palette::NEON_CYAN } else { Palette::WHITE },
+    );
+    fonts.draw_ui_regular(
+        "MODIFY NAME, ALIAS, NATIONALITY BANNER, TEAM LIVERY, AND DRIVING DIFFICULTY",
+        col_right_x + right_pad,
+        ry + scaler.s(26.0),
+        scaler.font_s(10.5),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    ry += scaler.s(36.0);
+
+    let field_h = scaler.s(38.0);
+    let field_w = (right_inner_w - scaler.s(12.0)) * 0.5;
+    let show_cursor = (cursor_timer * 2.5).fract() < 0.5;
+
+    // Row 1: Field 0 (Name) and Field 1 (Alias)
+    let f0_sel = active_column == 1 && field_idx == 0;
+    let f1_sel = active_column == 1 && field_idx == 1;
+
+    render_text_field(&scaler, fonts, col_right_x + right_pad, ry, field_w, field_h, "DRIVER FULL NAME", name_input, f0_sel, show_cursor && f0_sel, "Enter Name");
+    render_text_field(&scaler, fonts, col_right_x + right_pad + field_w + scaler.s(12.0), ry, field_w, field_h, "CALLSIGN / ALIAS", alias_input, f1_sel, show_cursor && f1_sel, "Enter Alias");
+
+    ry += field_h + scaler.s(14.0);
+
+    // Row 2: Field 2 (Country Banner) and Field 3 (Livery Theme)
+    let f2_sel = active_column == 1 && field_idx == 2;
+    let f3_sel = active_column == 1 && field_idx == 3;
+
+    let country_info = if country_idx > 0 && country_idx <= CountryRegistry::ALL.len() {
+        Some(&CountryRegistry::ALL[country_idx - 1])
+    } else {
+        None
+    };
+    let country_title = country_info
+        .map(|c| format!("{} ({})", c.name, c.code))
+        .unwrap_or_else(|| "International (Worldwide)".to_string());
+    let c_border = if f2_sel { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+    draw_rectangle(col_right_x + right_pad, ry, field_w, field_h, Color::new(0.08, 0.10, 0.15, 0.90));
+    draw_rectangle_lines(col_right_x + right_pad, ry, field_w, field_h, if f2_sel { 2.0 } else { 1.0 }, c_border);
+    fonts.draw_ui_bold("NATIONALITY & BANNER [◄ / ►]", col_right_x + right_pad + scaler.s(10.0), ry - scaler.s(4.0), scaler.font_s(10.0), if f2_sel { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED });
+    let cb_w = scaler.s(40.0);
+    let cb_h = scaler.s(20.0);
+    let c_code = country_info.map(|c| c.code);
+    draw_country_banner(c_code, col_right_x + right_pad + scaler.s(10.0), ry + scaler.s(9.0), cb_w, cb_h, Some(fonts), &scaler);
+    fonts.draw_ui_bold(&country_title, col_right_x + right_pad + cb_w + scaler.s(20.0), ry + scaler.s(24.0), scaler.font_s(12.5), Palette::WHITE);
+
+    let livery_x = col_right_x + right_pad + field_w + scaler.s(12.0);
+    let l_border = if f3_sel { Palette::NEON_MAGENTA } else { Palette::UI_CARD_BORDER };
+    draw_rectangle(livery_x, ry, field_w, field_h, Color::new(0.08, 0.10, 0.15, 0.90));
+    draw_rectangle_lines(livery_x, ry, field_w, field_h, if f3_sel { 2.0 } else { 1.0 }, l_border);
+    fonts.draw_ui_bold("TEAM LIVERY & COLORS [◄ / ►]", livery_x + scaler.s(10.0), ry - scaler.s(4.0), scaler.font_s(10.0), if f3_sel { Palette::NEON_MAGENTA } else { Palette::UI_TEXT_MUTED });
+
+    let scheme = CarColorScheme::from_index(livery_idx);
+    let sw_w = scaler.s(20.0);
+    let sw_h = scaler.s(16.0);
+    let sw_x = livery_x + scaler.s(12.0);
+    let sw_y = ry + scaler.s(11.0);
+    draw_rectangle(sw_x, sw_y, sw_w, sw_h, scheme.primary);
+    draw_rectangle_lines(sw_x, sw_y, sw_w, sw_h, 1.0, Palette::WHITE);
+    draw_rectangle(sw_x + sw_w + scaler.s(4.0), sw_y, sw_w, sw_h, scheme.secondary);
+    draw_rectangle_lines(sw_x + sw_w + scaler.s(4.0), sw_y, sw_w, sw_h, 1.0, Palette::WHITE);
+    draw_rectangle(sw_x + (sw_w + scaler.s(4.0)) * 2.0, sw_y, sw_w, sw_h, scheme.helmet);
+    draw_rectangle_lines(sw_x + (sw_w + scaler.s(4.0)) * 2.0, sw_y, sw_w, sw_h, 1.0, Palette::WHITE);
+    let livery_name = format!("Theme #{}", (livery_idx % Palette::CAR_COLORS.len()) + 1);
+    fonts.draw_ui_bold(&livery_name, sw_x + (sw_w + scaler.s(4.0)) * 3.0 + scaler.s(10.0), ry + scaler.s(24.0), scaler.font_s(12.5), Palette::WHITE);
+
+    ry += field_h + scaler.s(14.0);
+
+    // Row 3: Field 4 (Assist Mode Profile) and Field 5 (Save Button)
+    let f4_sel = active_column == 1 && field_idx == 4;
+    let f5_sel = active_column == 1 && field_idx == 5;
+
+    let a_border = if f4_sel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
+    draw_rectangle(col_right_x + right_pad, ry, field_w, field_h, Color::new(0.08, 0.10, 0.15, 0.90));
+    draw_rectangle_lines(col_right_x + right_pad, ry, field_w, field_h, if f4_sel { 2.0 } else { 1.0 }, a_border);
+    fonts.draw_ui_bold("DRIVING ASSISTS / HANDLING [◄ / ►]", col_right_x + right_pad + scaler.s(10.0), ry - scaler.s(4.0), scaler.font_s(10.0), if f4_sel { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED });
+    fonts.draw_ui_bold(assist_mode.title(), col_right_x + right_pad + scaler.s(14.0), ry + scaler.s(24.0), scaler.font_s(12.5), Palette::NEON_GOLD);
+
+    let save_x = col_right_x + right_pad + field_w + scaler.s(12.0);
+    let (s_bg, s_border, s_col) = if f5_sel {
+        (Color::new(0.08, 0.28, 0.35, 0.95), Palette::NEON_CYAN, Palette::WHITE)
+    } else {
+        (Color::new(0.08, 0.16, 0.22, 0.90), Palette::UI_CARD_BORDER, Palette::NEON_CYAN)
+    };
+    draw_rectangle(save_x, ry, field_w, field_h, s_bg);
+    draw_rectangle_lines(save_x, ry, field_w, field_h, if f5_sel { 2.0 } else { 1.2 }, s_border);
+    fonts.draw_ui_bold_centered("[ENTER / A] SAVE CHANGES", save_x + field_w * 0.5, ry + scaler.s(24.0), scaler.font_s(13.0), s_col);
+
+    ry += field_h + scaler.s(16.0);
+
+    draw_rectangle(col_right_x + right_pad, ry, right_inner_w, 1.0, Palette::UI_CARD_BORDER);
+    ry += scaler.s(12.0);
+
+    // Lifetime Career Dossier
+    fonts.draw_ui_bold("LIFETIME CAREER DOSSIER", col_right_x + right_pad, ry + scaler.s(12.0), scaler.font_s(13.5), Palette::NEON_CYAN);
+    ry += scaler.s(22.0);
+
+    let tile_gap = scaler.s(8.0);
+    let tile_w = (right_inner_w - tile_gap * 5.0) / 6.0;
+    let tile_h = scaler.s(48.0);
+
+    let win_str = format!("{} ({:.0}%)", stats.wins, stats.win_rate);
+    let podium_str = format!("{} ({:.0}%)", stats.podiums, stats.podium_rate);
+    let clean_str = format!("{:.1}%", stats.clean_rate);
+
+    render_kpi_tile(&scaler, fonts, col_right_x + right_pad, ry, tile_w, tile_h, "TOTAL RACES", &stats.total_races.to_string(), Palette::NEON_CYAN);
+    render_kpi_tile(&scaler, fonts, col_right_x + right_pad + (tile_w + tile_gap), ry, tile_w, tile_h, "WINS (P1)", &win_str, Palette::NEON_GOLD);
+    render_kpi_tile(&scaler, fonts, col_right_x + right_pad + (tile_w + tile_gap) * 2.0, ry, tile_w, tile_h, "P2 RUNNER-UP", &stats.p2_count.to_string(), Color::new(0.85, 0.88, 0.95, 1.0));
+    render_kpi_tile(&scaler, fonts, col_right_x + right_pad + (tile_w + tile_gap) * 3.0, ry, tile_w, tile_h, "P3 THIRD", &stats.p3_count.to_string(), Color::new(0.88, 0.55, 0.25, 1.0));
+    render_kpi_tile(&scaler, fonts, col_right_x + right_pad + (tile_w + tile_gap) * 4.0, ry, tile_w, tile_h, "PODIUMS", &podium_str, Palette::NEON_GREEN);
+    render_kpi_tile(&scaler, fonts, col_right_x + right_pad + (tile_w + tile_gap) * 5.0, ry, tile_w, tile_h, "CLEAN RACE %", &clean_str, Palette::NEON_MAGENTA);
+
+    ry += tile_h + scaler.s(12.0);
+
+    let stat_panel_w = (right_inner_w - scaler.s(12.0)) * 0.5;
+    let stat_panel_h = (cur_y + body_h - ry - scaler.s(10.0)).max(scaler.s(80.0));
+
+    // Stunt Box
+    scaler.draw_glass_card(col_right_x + right_pad, ry, stat_panel_w, stat_panel_h, Color::new(0.06, 0.08, 0.12, 0.85), Palette::NEON_GOLD, 1.0);
+    fonts.draw_ui_bold("STUNT PORTFOLIO", col_right_x + right_pad + scaler.s(10.0), ry + scaler.s(18.0), scaler.font_s(11.5), Palette::NEON_GOLD);
+    render_data_row(&scaler, fonts, col_right_x + right_pad + scaler.s(10.0), ry + scaler.s(36.0), stat_panel_w - scaler.s(20.0), "Accumulated Stunt Points", &format!("{} PTS", stats.total_stunt_score), Palette::NEON_GOLD);
+    render_data_row(&scaler, fonts, col_right_x + right_pad + scaler.s(10.0), ry + scaler.s(54.0), stat_panel_w - scaler.s(20.0), "Total Laps Under Telemetry", &format!("{} LAPS", stats.total_laps), Palette::WHITE);
+
+    // Incident Box
+    let inc_x = col_right_x + right_pad + stat_panel_w + scaler.s(12.0);
+    scaler.draw_glass_card(inc_x, ry, stat_panel_w, stat_panel_h, Color::new(0.06, 0.08, 0.12, 0.85), Palette::NEON_CYAN, 1.0);
+    fonts.draw_ui_bold("SAFETY & INCIDENT RECORD", inc_x + scaler.s(10.0), ry + scaler.s(18.0), scaler.font_s(11.5), Palette::NEON_CYAN);
+    render_data_row(&scaler, fonts, inc_x + scaler.s(10.0), ry + scaler.s(36.0), stat_panel_w - scaler.s(20.0), "Total Collisions", &format!("{} IMPACTS", stats.total_collisions), if stats.total_collisions == 0 { Palette::NEON_GREEN } else { Color::new(0.95, 0.45, 0.35, 1.0) });
+    render_data_row(&scaler, fonts, inc_x + scaler.s(10.0), ry + scaler.s(54.0), stat_panel_w - scaler.s(20.0), "Incident-Free Races", &format!("{} / {}", stats.clean_races, stats.total_races), Palette::NEON_GREEN);
+
+    // Footer Action Bar
+    let foot_y = sh - scaler.s(18.0);
+    let footer_prompt = if active_column == 0 {
+        "[▲ / ▼] Select Driver  |  [ENTER] Set Active  |  [TAB / ►] Edit Details  |  [N] New Driver  |  [DEL / X] Delete  |  [ESC] Exit"
+    } else {
+        "[▲ / ▼] Select Field  |  [◄ / ►] Change Value  |  [ENTER] Save  |  [TAB / ◄] Back to Roster  |  [ESC] Exit"
+    };
+    fonts.draw_ui_bold_centered(
+        footer_prompt,
+        sw * 0.5,
+        foot_y,
+        scaler.font_s(12.5),
+        Palette::WHITE,
+    );
 }

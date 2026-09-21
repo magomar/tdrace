@@ -2,8 +2,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::render::color::CarColorScheme;
-use tdrace_core::physics::config::AssistProfile;
-
+pub use tdrace_core::physics::config::AssistProfile;
 pub use cabinet::profile::country::{draw_country_banner, CountryInfo, CountryRegistry};
 
 /// Player Profile representing driver identity, livery customizations, nationality, and driving mode.
