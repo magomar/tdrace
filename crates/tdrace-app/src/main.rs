@@ -22,6 +22,10 @@ fn window_conf() -> Conf {
         high_dpi: true,
         sample_count: 4,
         icon,
+        platform: macroquad::miniquad::conf::Platform {
+            linux_wm_class: "tdrace",
+            ..Default::default()
+        },
         ..Default::default()
     }
 }
