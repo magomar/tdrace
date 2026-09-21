@@ -48,7 +48,8 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
         render_surface_shape(pit_area, Palette::PIT_LANE, Some(Palette::WHITE_LINE));
     }
 
-    // 3. Render ground curbs and ground surface quads
+    // 3. Render segment runoff corridors, ground curbs and ground surface quads
+    render_runoff_pass(&track.spline, false, view_bounds);
     render_curbs_pass(&track.spline, false, view_bounds);
     render_surface_pass(&track.spline, false, view_bounds);
 
@@ -75,6 +76,7 @@ pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Ve
     let has_elevated = track.spline.samples.iter().any(|s| s.is_bridge);
     if has_elevated {
         render_bridge_structure_pass(&track.spline, view_bounds);
+        render_runoff_pass(&track.spline, true, view_bounds);
         render_curbs_pass(&track.spline, true, view_bounds);
         render_surface_pass(&track.spline, true, view_bounds);
     }
@@ -438,6 +440,68 @@ fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2,
             draw_line(left0.x, left0.y, right0.x, right0.y, 0.50, Color::new(0.08, 0.08, 0.10, 1.0));
         } else if s0.is_bridge && !s1.is_bridge {
             draw_line(left1.x, left1.y, right1.x, right1.y, 0.50, Color::new(0.08, 0.08, 0.10, 1.0));
+        }
+    }
+}
+
+/// Draws track runoff ribbon quads between track/curb edge and wall boundary for ground or elevated segments.
+fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+    let samples = &spline.samples;
+    let n = samples.len();
+    if n < 2 {
+        return;
+    }
+    let curb_extra_width = 1.35;
+    let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
+
+    for i in 0..seg_count {
+        let s0 = &samples[i];
+        let s1 = &samples[(i + 1) % n];
+        let is_seg_elevated = s0.is_bridge && s1.is_bridge;
+        if is_seg_elevated != elevated || !is_segment_in_view(s0, s1, view_bounds) {
+            continue;
+        }
+
+        // Left runoff corridor
+        if let Some(runoff_surf) = s0.left_runoff_surface {
+            let (fill_col, _) = get_surface_zone_colors(runoff_surf);
+            let hw0 = s0.width * 0.5;
+            let hw1 = s1.width * 0.5;
+            let curb_w0 = if s0.left_curb { curb_extra_width } else { 0.0 };
+            let curb_w1 = if s1.left_curb { curb_extra_width } else { 0.0 };
+
+            let wall_dist0 = s0.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+            let wall_dist1 = s1.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+
+            if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
+                let p0_inner = s0.point + s0.normal * (hw0 + curb_w0);
+                let p1_inner = s1.point + s1.normal * (hw1 + curb_w1);
+                let p0_outer = s0.point + s0.normal * (hw0 + wall_dist0);
+                let p1_outer = s1.point + s1.normal * (hw1 + wall_dist1);
+
+                draw_quad(p0_inner, p1_inner, p1_outer, p0_outer, fill_col);
+            }
+        }
+
+        // Right runoff corridor
+        if let Some(runoff_surf) = s0.right_runoff_surface {
+            let (fill_col, _) = get_surface_zone_colors(runoff_surf);
+            let hw0 = s0.width * 0.5;
+            let hw1 = s1.width * 0.5;
+            let curb_w0 = if s0.right_curb { curb_extra_width } else { 0.0 };
+            let curb_w1 = if s1.right_curb { curb_extra_width } else { 0.0 };
+
+            let wall_dist0 = s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+            let wall_dist1 = s1.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+
+            if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
+                let p0_inner = s0.point - s0.normal * (hw0 + curb_w0);
+                let p1_inner = s1.point - s1.normal * (hw1 + curb_w1);
+                let p0_outer = s0.point - s0.normal * (hw0 + wall_dist0);
+                let p1_outer = s1.point - s1.normal * (hw1 + wall_dist1);
+
+                draw_quad(p0_inner, p1_inner, p1_outer, p0_outer, fill_col);
+            }
         }
     }
 }
@@ -833,6 +897,8 @@ mod tests {
         render_curbs_pass(&empty_spline, true, None);
         render_surface_pass(&empty_spline, false, None);
         render_surface_pass(&empty_spline, true, None);
+        render_runoff_pass(&empty_spline, false, None);
+        render_runoff_pass(&empty_spline, true, None);
         render_bridge_structure_pass(&empty_spline, None);
 
         // Spline with 1 sample
@@ -856,7 +922,11 @@ mod tests {
             left_wall_distance: None,
             right_wall_distance: None,
             wall_type: None,
+            left_runoff_surface: Some(SurfaceType::Gravel),
+            right_runoff_surface: Some(SurfaceType::Sand),
         });
+        render_runoff_pass(&single_spline, false, None);
+        render_runoff_pass(&single_spline, true, None);
         render_curbs_pass(&single_spline, false, None);
         render_curbs_pass(&single_spline, true, None);
         render_surface_pass(&single_spline, false, None);

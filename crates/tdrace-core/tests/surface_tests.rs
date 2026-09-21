@@ -193,3 +193,59 @@ fn test_off_track_surface_types_and_track_sampling() {
         );
     }
 }
+
+#[test]
+fn test_segment_runoff_corridor_and_virtual_boundary() {
+    use glam::Vec2;
+    use tdrace_core::track::geometry::BarrierType;
+    use tdrace_core::track::spline::TrackWaypoint;
+    use tdrace_core::track::{Track, TrackSpline};
+    use tdrace_core::collision::wall::resolve_car_wall_collision;
+    use tdrace_core::track::geometry::WallBarrier;
+
+    // Track heading along +X with asphalt track, left gravel runoff corridor up to 8m, and virtual barrier
+    let waypoints = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0)
+            .with_curbs(false, false)
+            .with_runoff_surfaces(Some(SurfaceType::Gravel), None)
+            .with_wall_distances(Some(8.0), None),
+        TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0)
+            .with_curbs(false, false)
+            .with_runoff_surfaces(Some(SurfaceType::Gravel), None)
+            .with_wall_distances(Some(8.0), None),
+        TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0)
+            .with_curbs(false, false)
+            .with_runoff_surfaces(Some(SurfaceType::Gravel), None)
+            .with_wall_distances(Some(8.0), None),
+    ];
+
+    let track = Track {
+        spline: TrackSpline::new(waypoints, false),
+        default_surface: SurfaceType::Grass,
+        ..Default::default()
+    };
+
+    // Track half width is 5.0m. Left side is +Y.
+    // 1. Center of track (y = 0.0) -> Asphalt
+    assert_eq!(track.sample_surface(Vec2::new(50.0, 0.0)), SurfaceType::Asphalt);
+
+    // 2. Off track left in runoff corridor (y = 9.0 -> 4.0m off track, within 8.0m corridor) -> Gravel
+    assert_eq!(track.sample_surface(Vec2::new(50.0, 9.0)), SurfaceType::Gravel);
+
+    // 3. Beyond corridor (y = 15.0 -> 10.0m off track, beyond 8.0m limit) -> Grass
+    assert_eq!(track.sample_surface(Vec2::new(50.0, 15.0)), SurfaceType::Grass);
+
+    // 4. Car passing through virtual boundary at y = 13.0 suffers zero collision impulse
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(50.0, 12.0), std::f32::consts::FRAC_PI_2);
+    car.state.velocity = Vec2::new(0.0, 15.0);
+
+    let virtual_boundary = WallBarrier::new(
+        Vec2::new(0.0, 13.0),
+        Vec2::new(100.0, 13.0),
+        BarrierType::Virtual,
+    );
+
+    let col_event = resolve_car_wall_collision(&mut car, &virtual_boundary);
+    assert!(col_event.is_none(), "Virtual boundary must produce no collision event");
+    assert_eq!(car.state.velocity.y, 15.0, "Car velocity must not be altered by virtual boundary");
+}

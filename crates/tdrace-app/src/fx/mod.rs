@@ -122,6 +122,7 @@ impl EffectsManager {
                         self.particles
                             .emit_sparks(ev.contact_point, ev.normal, ev.impact_speed);
                     }
+                    BarrierType::Virtual => {}
                 }
             }
         }

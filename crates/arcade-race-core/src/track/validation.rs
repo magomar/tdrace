@@ -144,6 +144,30 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                     .with_index(i),
                 );
             }
+
+            // Waypoint runoff wall distance validation
+            if let Some(left_dist) = waypoints[i].left_wall_distance {
+                if left_dist <= 0.0 || !left_dist.is_finite() {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_INVALID_WALL_DISTANCE",
+                            format!("Waypoint #{} left wall distance ({:.1}m) must be strictly positive and finite.", i + 1, left_dist),
+                        )
+                        .with_index(i),
+                    );
+                }
+            }
+            if let Some(right_dist) = waypoints[i].right_wall_distance {
+                if right_dist <= 0.0 || !right_dist.is_finite() {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_INVALID_WALL_DISTANCE",
+                            format!("Waypoint #{} right wall distance ({:.1}m) must be strictly positive and finite.", i + 1, right_dist),
+                        )
+                        .with_index(i),
+                    );
+                }
+            }
         }
 
         // Spline total length check
@@ -903,6 +927,19 @@ mod tests {
         assert!(
             diags.iter().any(|d| d.code == "ERR_OBSTACLE_ON_TRACK"),
             "Validation must detect obstacle on track: {:?}",
+            diags
+        );
+    }
+
+    #[test]
+    fn test_invalid_wall_distance_detected() {
+        let mut track = classic_grand_prix();
+        track.spline.waypoints[0].left_wall_distance = Some(-5.0);
+
+        let diags = validate_track(&track);
+        assert!(
+            diags.iter().any(|d| d.code == "ERR_INVALID_WALL_DISTANCE"),
+            "Validation must flag negative wall distance: {:?}",
             diags
         );
     }

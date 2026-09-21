@@ -44,6 +44,10 @@ pub fn resolve_car_wall_collision(
     car: &mut Car,
     wall: &WallBarrier,
 ) -> Option<WallCollisionEvent> {
+    if !wall.is_physical() {
+        return None;
+    }
+
     if (car.total_elevation() - wall.elevation).abs() > 1.8 || car.state.elevation > 1.2 {
         return None;
     }
@@ -434,6 +438,25 @@ mod tests {
             car.state.angular_velocity.abs() > 0.1,
             "Yaw rate should be induced on corner wall clip, got {}",
             car.state.angular_velocity
+        );
+    }
+
+    #[test]
+    fn test_virtual_barrier_collision_bypass() {
+        let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+        car.state.velocity = Vec2::new(20.0, 0.0);
+
+        let virtual_wall = WallBarrier::new(
+            Vec2::new(1.0, -10.0),
+            Vec2::new(1.0, 10.0),
+            BarrierType::Virtual,
+        );
+
+        let event = resolve_car_wall_collision(&mut car, &virtual_wall);
+        assert!(event.is_none(), "Virtual barriers must not produce collisions");
+        assert_eq!(
+            car.state.velocity.x, 20.0,
+            "Car velocity must remain completely unaffected by virtual barrier"
         );
     }
 }

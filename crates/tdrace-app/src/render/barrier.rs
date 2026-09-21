@@ -57,7 +57,7 @@ pub fn render_ground_barriers_and_obstacles(track: &Track) {
 
 /// Draws ground barrier drop shadows, obstacles, and wall bodies with camera viewport culling.
 pub fn render_ground_barriers_and_obstacles_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
-    for wall in track.geometry.all_walls().filter(|w| !w.is_bridge) {
+    for wall in track.geometry.all_walls().filter(|w| w.is_physical() && !w.is_bridge) {
         if is_wall_in_view(wall, view_bounds) {
             render_wall_shadow(wall);
         }
@@ -67,7 +67,7 @@ pub fn render_ground_barriers_and_obstacles_culled(track: &Track, view_bounds: O
             render_obstacle_shadow(obs);
         }
     }
-    for wall in track.geometry.all_walls().filter(|w| !w.is_bridge) {
+    for wall in track.geometry.all_walls().filter(|w| w.is_physical() && !w.is_bridge) {
         if is_wall_in_view(wall, view_bounds) {
             render_wall_body(wall);
         }
@@ -86,7 +86,7 @@ pub fn render_elevated_barriers_and_obstacles(track: &Track) {
 
 /// Draws elevated bridge barrier drop shadows, obstacles, and guardrails with camera viewport culling.
 pub fn render_elevated_barriers_and_obstacles_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
-    for wall in track.geometry.all_walls().filter(|w| w.is_bridge) {
+    for wall in track.geometry.all_walls().filter(|w| w.is_physical() && w.is_bridge) {
         if is_wall_in_view(wall, view_bounds) {
             render_wall_shadow(wall);
         }
@@ -96,7 +96,7 @@ pub fn render_elevated_barriers_and_obstacles_culled(track: &Track, view_bounds:
             render_obstacle_shadow(obs);
         }
     }
-    for wall in track.geometry.all_walls().filter(|w| w.is_bridge) {
+    for wall in track.geometry.all_walls().filter(|w| w.is_physical() && w.is_bridge) {
         if is_wall_in_view(wall, view_bounds) {
             render_wall_body(wall);
         }
@@ -110,6 +110,9 @@ pub fn render_elevated_barriers_and_obstacles_culled(track: &Track, view_bounds:
 
 /// Draws 2.5D shadow cast by a wall barrier.
 fn render_wall_shadow(wall: &WallBarrier) {
+    if wall.barrier_type == BarrierType::Virtual {
+        return;
+    }
     let p0 = wall.segment.start;
     let p1 = wall.segment.end;
     let s_off = if wall.is_bridge {
@@ -125,6 +128,7 @@ fn render_wall_shadow(wall: &WallBarrier) {
         BarrierType::Steel => 0.50,
         BarrierType::TireWall => 0.85,
         BarrierType::CurbWall => 0.40,
+        BarrierType::Virtual => unreachable!(),
     };
 
     draw_line(s0.x, s0.y, s1.x, s1.y, thickness, Palette::SHADOW);
@@ -217,6 +221,7 @@ fn render_wall_body(wall: &WallBarrier) {
             draw_circle(p0.x, p0.y, half_w, Palette::CURB_RED);
             draw_circle(p1.x, p1.y, half_w, Palette::CURB_RED);
         }
+        BarrierType::Virtual => {}
     }
 }
 
@@ -297,5 +302,28 @@ fn render_obstacle_body(obs: &Obstacle) {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    #[test]
+    fn test_virtual_barrier_rendering_bypass_logic() {
+        let mut track = classic_grand_prix();
+        let physical_count = track.geometry.all_walls().filter(|w| w.is_physical() && !w.is_bridge).count();
+        track.geometry.outer_walls.push(WallBarrier::new(
+            Vec2::new(10.0, -10.0),
+            Vec2::new(10.0, 10.0),
+            BarrierType::Virtual,
+        ));
+
+        let filtered_count = track.geometry.all_walls().filter(|w| w.is_physical() && !w.is_bridge).count();
+        assert_eq!(
+            physical_count, filtered_count,
+            "Virtual walls must be filtered out from physical barrier rendering"
+        );
     }
 }

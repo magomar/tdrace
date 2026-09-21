@@ -155,9 +155,17 @@ pub enum BarrierType {
     TireWall,
     /// Low track-edge curb wall.
     CurbWall,
+    /// Virtual non-physical boundary delimiter (zero collision, delimits surface transition zones).
+    Virtual,
 }
 
 impl BarrierType {
+    /// Whether this barrier possesses physical collidable geometry.
+    #[inline]
+    pub const fn is_physical(self) -> bool {
+        !matches!(self, Self::Virtual)
+    }
+
     /// Human-readable display name.
     pub const fn name(self) -> &'static str {
         match self {
@@ -165,6 +173,7 @@ impl BarrierType {
             Self::Steel => "Steel",
             Self::TireWall => "Rubber Tyres",
             Self::CurbWall => "Curb Wall",
+            Self::Virtual => "Virtual Boundary",
         }
     }
 
@@ -175,6 +184,7 @@ impl BarrierType {
             Self::Steel => 0.42,
             Self::TireWall => 0.18,
             Self::CurbWall => 0.30,
+            Self::Virtual => 0.0,
         }
     }
 
@@ -185,6 +195,7 @@ impl BarrierType {
             Self::Steel => 0.45,
             Self::TireWall => 0.80,
             Self::CurbWall => 0.40,
+            Self::Virtual => 0.0,
         }
     }
 
@@ -195,6 +206,7 @@ impl BarrierType {
             Self::Steel => 14.0,     // Corrugated steel beam and post catching (~1.4g)
             Self::TireWall => 24.0,  // Soft high-grip rubber compression drag (~2.4g)
             Self::CurbWall => 7.0,   // Low curb wall resistance (~0.7g)
+            Self::Virtual => 0.0,
         }
     }
 
@@ -205,6 +217,7 @@ impl BarrierType {
             Self::Steel => 0.25,     // Corrugations and upright posts snag corners and induce moderate yaw
             Self::TireWall => 0.45,  // Aggressive rubber bite grips corners and spins car into barrier
             Self::CurbWall => 0.10,  // Low curb redirects car with little torque
+            Self::Virtual => 0.0,
         }
     }
 
@@ -216,6 +229,7 @@ impl BarrierType {
             Self::Steel => 0.40,     // Deformable steel beam yields, absorbing 40% of impact energy
             Self::TireWall => 0.75,  // Compressive tire stacks absorb 75% of impact energy
             Self::CurbWall => 0.25,  // Low barrier absorption
+            Self::Virtual => 1.0,    // Fully yielding: zero collision damage
         }
     }
 }
@@ -234,6 +248,12 @@ pub struct WallBarrier {
 }
 
 impl WallBarrier {
+    /// Returns true if this wall has physical collision geometry.
+    #[inline]
+    pub fn is_physical(&self) -> bool {
+        self.barrier_type.is_physical()
+    }
+
     pub fn new(start: Vec2, end: Vec2, barrier_type: BarrierType) -> Self {
         Self {
             segment: LineSegment::new(start, end),
@@ -1170,6 +1190,24 @@ mod tests {
         let deserialized: JumpRamp = serde_json::from_str(json_data).expect("Should deserialize legacy ramp without surface field");
         assert_eq!(deserialized.surface, SurfaceType::Asphalt);
         assert_eq!(deserialized.name, "Legacy Ramp");
+    }
+
+    #[test]
+    fn test_barrier_type_virtual_properties() {
+        let b_virt = BarrierType::Virtual;
+        assert!(!b_virt.is_physical());
+        assert_eq!(b_virt.name(), "Virtual Boundary");
+        assert_eq!(b_virt.default_restitution(), 0.0);
+        assert_eq!(b_virt.default_friction(), 0.0);
+        assert_eq!(b_virt.scraping_deceleration(), 0.0);
+        assert_eq!(b_virt.snag_torque_factor(), 0.0);
+        assert_eq!(b_virt.energy_absorption_factor(), 1.0);
+
+        let wall = WallBarrier::new(Vec2::ZERO, Vec2::new(10.0, 0.0), BarrierType::Virtual);
+        assert!(!wall.is_physical());
+
+        let wall_conc = WallBarrier::new(Vec2::ZERO, Vec2::new(10.0, 0.0), BarrierType::Concrete);
+        assert!(wall_conc.is_physical());
     }
 }
 

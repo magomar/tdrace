@@ -290,11 +290,14 @@ impl Track {
     /// 2. Track spline projection:
     ///    - Main drivable track ribbon (`SurfaceType::Dirt`, `SurfaceType::Asphalt`).
     ///    - Apex / exit curbs (`SurfaceType::Curb`).
-    /// 3. Arena / Hybrid open floor surface:
+    /// 3. Segment runoff corridor:
+    ///    - Off-track corridor between track/curb edge and segment wall boundary (`left_runoff_surface` / `right_runoff_surface`).
+    /// 4. Arena / Hybrid open floor surface:
     ///    - Full-floor drivable ground inside perimeter boundary hull.
-    /// 4. Off-track surface zones (e.g. `SurfaceType::Sand` traps, runoff areas):
+    /// 5. Off-track surface zones (e.g. `SurfaceType::Sand` traps, runoff areas):
     ///    Located underneath the track ribbon, only affecting the vehicle when running off track.
-    /// 5. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::Sand`).
+    /// 6. Grandstand concrete aprons.
+    /// 7. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::Sand`).
     pub fn sample_surface(&self, point: Vec2) -> SurfaceType {
         // 1. Check jump ramps (elevated platforms)
         for ramp in &self.geometry.jump_ramps {
@@ -318,6 +321,24 @@ impl Track {
             }
             if proj.is_on_curb {
                 return SurfaceType::Curb;
+            }
+
+            // Segment runoff corridor check
+            let half_w = proj.track_width * 0.5;
+            if proj.lateral_offset < -half_w {
+                if let Some(runoff) = proj.left_runoff_surface {
+                    let limit = half_w + proj.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                    if -proj.lateral_offset <= limit {
+                        return runoff;
+                    }
+                }
+            } else if proj.lateral_offset > half_w {
+                if let Some(runoff) = proj.right_runoff_surface {
+                    let limit = half_w + proj.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                    if proj.lateral_offset <= limit {
+                        return runoff;
+                    }
+                }
             }
         }
 
@@ -401,6 +422,24 @@ impl Track {
         }
         if proj.is_on_curb {
             return SurfaceType::Curb;
+        }
+
+        // Segment runoff corridor check
+        let half_w = proj.track_width * 0.5;
+        if proj.lateral_offset < -half_w {
+            if let Some(runoff) = proj.left_runoff_surface {
+                let limit = half_w + proj.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                if -proj.lateral_offset <= limit {
+                    return runoff;
+                }
+            }
+        } else if proj.lateral_offset > half_w {
+            if let Some(runoff) = proj.right_runoff_surface {
+                let limit = half_w + proj.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                if proj.lateral_offset <= limit {
+                    return runoff;
+                }
+            }
         }
 
         // 4. Check below-track ground zones
@@ -827,5 +866,70 @@ mod tests {
         assert_eq!(deserialized.geometry.grandstands[0].length, 30.0);
         assert_eq!(deserialized.geometry.trees.len(), 1);
         assert_eq!(deserialized.geometry.trees[0].tree_type, TreeType::Palm);
+    }
+
+    #[test]
+    fn test_segment_runoff_corridor_surface_resolution() {
+        // Build a straight 3-waypoint track going along X axis from 0 to 100
+        let wps = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0)
+                .with_curbs(false, false)
+                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_wall_distances(Some(6.0), Some(12.0)),
+            TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0)
+                .with_curbs(false, false)
+                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_wall_distances(Some(6.0), Some(12.0)),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0)
+                .with_curbs(false, false)
+                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_wall_distances(Some(6.0), Some(12.0)),
+        ];
+
+        let track = Track {
+            spline: TrackSpline::new(wps, false),
+            default_surface: SurfaceType::Grass,
+            ..Default::default()
+        };
+
+        // Center point at (50, 0) -> on track -> Asphalt (track base)
+        assert_eq!(track.sample_surface(Vec2::new(50.0, 0.0)), SurfaceType::Asphalt);
+
+        // Track is 10m wide (half-width = 5.0m).
+        // Tangent is +X, normal points left (+Y), right points right (-Y).
+        // Left side (+Y): lateral offset is -y in spline local frame.
+        // At y = 8.0 (3.0m off track to the left, inside the 6m left runoff corridor):
+        assert_eq!(
+            track.sample_surface(Vec2::new(50.0, 8.0)),
+            SurfaceType::Gravel,
+            "Left runoff corridor must resolve to Gravel"
+        );
+        assert_eq!(
+            track.sample_surface_near(Vec2::new(50.0, 8.0), 50.0),
+            SurfaceType::Gravel,
+            "Left runoff corridor near-sample must resolve to Gravel"
+        );
+
+        // At y = 14.0 (9.0m off track to the left, beyond the 6m corridor limit = 5 + 6 = 11.0m):
+        assert_eq!(
+            track.sample_surface(Vec2::new(50.0, 14.0)),
+            SurfaceType::Grass,
+            "Beyond left corridor limit must fall back to default backdrop (Grass)"
+        );
+
+        // Right side (-Y): lateral offset is +y (abs) in right direction.
+        // At y = -10.0 (5.0m off track to the right, inside the 12m right runoff corridor):
+        assert_eq!(
+            track.sample_surface(Vec2::new(50.0, -10.0)),
+            SurfaceType::Asphalt,
+            "Right runoff corridor must resolve to Asphalt runoff"
+        );
+
+        // At y = -20.0 (15.0m off track to the right, beyond the 12m limit = 5 + 12 = 17.0m):
+        assert_eq!(
+            track.sample_surface(Vec2::new(50.0, -20.0)),
+            SurfaceType::Grass,
+            "Beyond right corridor limit must fall back to Grass"
+        );
     }
 }

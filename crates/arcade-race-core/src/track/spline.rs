@@ -45,6 +45,12 @@ pub struct TrackWaypoint {
     /// Optional barrier wall type override (e.g. Concrete or TireWall; default: None, inheriting global barrier type).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wall_type: Option<BarrierType>,
+    /// Optional surface type override for the left corridor between track/curb and left wall (e.g. Gravel).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub left_runoff_surface: Option<SurfaceType>,
+    /// Optional surface type override for the right corridor between track/curb and right wall (e.g. Gravel).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub right_runoff_surface: Option<SurfaceType>,
 }
 
 impl TrackWaypoint {
@@ -62,7 +68,25 @@ impl TrackWaypoint {
             left_wall_distance: None,
             right_wall_distance: None,
             wall_type: None,
+            left_runoff_surface: None,
+            right_runoff_surface: None,
         }
+    }
+
+    pub const fn with_runoff_surface(mut self, surface: SurfaceType) -> Self {
+        self.left_runoff_surface = Some(surface);
+        self.right_runoff_surface = Some(surface);
+        self
+    }
+
+    pub const fn with_runoff_surfaces(
+        mut self,
+        left: Option<SurfaceType>,
+        right: Option<SurfaceType>,
+    ) -> Self {
+        self.left_runoff_surface = left;
+        self.right_runoff_surface = right;
+        self
     }
 
     pub const fn with_wall_type(mut self, wall_type: Option<BarrierType>) -> Self {
@@ -141,6 +165,10 @@ pub struct SplineSample {
     pub right_wall_distance: Option<f32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wall_type: Option<BarrierType>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub left_runoff_surface: Option<SurfaceType>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub right_runoff_surface: Option<SurfaceType>,
 }
 
 /// Result of projecting a 2D world coordinate onto the track spline.
@@ -182,6 +210,18 @@ pub struct SplineProjection {
     pub grade_slope: f32,
     /// Vertical road curvature d(grade_slope)/ds in 1/m (< 0 convex crest, > 0 concave dip).
     pub vertical_curvature: f32,
+    /// Left wall distance at projected segment.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub left_wall_distance: Option<f32>,
+    /// Right wall distance at projected segment.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub right_wall_distance: Option<f32>,
+    /// Left runoff surface override at projected segment.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub left_runoff_surface: Option<SurfaceType>,
+    /// Right runoff surface override at projected segment.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub right_runoff_surface: Option<SurfaceType>,
 }
 
 /// Smooth Catmull-Rom spline representation of the racing circuit centerline.
@@ -204,6 +244,9 @@ impl Default for TrackSpline {
 impl TrackSpline {
     /// Standard curb strip width in meters.
     pub const DEFAULT_CURB_WIDTH: f32 = 1.4;
+
+    /// Default wall distance from track edge in meters when unspecified.
+    pub const DEFAULT_WALL_DISTANCE: f32 = 8.0;
 
     /// An empty track spline with no waypoints or samples.
     pub fn empty() -> Self {
@@ -246,6 +289,8 @@ impl TrackSpline {
         let mut raw_left_wall_dists = Vec::new();
         let mut raw_right_wall_dists = Vec::new();
         let mut raw_wall_types = Vec::new();
+        let mut raw_left_runoff = Vec::new();
+        let mut raw_right_runoff = Vec::new();
 
         for i in 0..segments {
             let p0 = if closed {
@@ -326,6 +371,8 @@ impl TrackSpline {
                 };
                 let surf = wp1.surface.unwrap_or(SurfaceType::Asphalt);
                 let wt = if t < 0.5 { wp1.wall_type } else { wp2.wall_type };
+                let l_ro = if t < 0.5 { wp1.left_runoff_surface } else { wp2.left_runoff_surface };
+                let r_ro = if t < 0.5 { wp1.right_runoff_surface } else { wp2.right_runoff_surface };
 
                 raw_points.push(pt);
                 raw_widths.push(w);
@@ -339,6 +386,8 @@ impl TrackSpline {
                 raw_left_wall_dists.push(lwd);
                 raw_right_wall_dists.push(rwd);
                 raw_wall_types.push(wt);
+                raw_left_runoff.push(l_ro);
+                raw_right_runoff.push(r_ro);
             }
         }
 
@@ -356,6 +405,8 @@ impl TrackSpline {
             raw_left_wall_dists.push(raw_left_wall_dists[0]);
             raw_right_wall_dists.push(raw_right_wall_dists[0]);
             raw_wall_types.push(raw_wall_types[0]);
+            raw_left_runoff.push(raw_left_runoff[0]);
+            raw_right_runoff.push(raw_right_runoff[0]);
         } else {
             let last = waypoints.last().unwrap();
             raw_points.push(last.point);
@@ -370,6 +421,8 @@ impl TrackSpline {
             raw_left_wall_dists.push(last.left_wall_distance);
             raw_right_wall_dists.push(last.right_wall_distance);
             raw_wall_types.push(last.wall_type);
+            raw_left_runoff.push(last.left_runoff_surface);
+            raw_right_runoff.push(last.right_runoff_surface);
         }
 
         // 2. Compute cumulative arc-length distances and orientations
@@ -532,6 +585,8 @@ impl TrackSpline {
                 left_wall_distance: raw_left_wall_dists[i],
                 right_wall_distance: raw_right_wall_dists[i],
                 wall_type: raw_wall_types[i],
+                left_runoff_surface: raw_left_runoff[i],
+                right_runoff_surface: raw_right_runoff[i],
             });
         }
 
@@ -600,6 +655,8 @@ impl TrackSpline {
                 left_wall_distance: None,
                 right_wall_distance: None,
                 wall_type: None,
+                left_runoff_surface: None,
+                right_runoff_surface: None,
             };
         }
 
@@ -680,6 +737,8 @@ impl TrackSpline {
             left_wall_distance,
             right_wall_distance,
             wall_type: if t < 0.5 { s0.wall_type } else { s1.wall_type },
+            left_runoff_surface: if t < 0.5 { s0.left_runoff_surface } else { s1.left_runoff_surface },
+            right_runoff_surface: if t < 0.5 { s0.right_runoff_surface } else { s1.right_runoff_surface },
         }
     }
 
@@ -705,6 +764,10 @@ impl TrackSpline {
                 is_bridge: false,
                 grade_slope: 0.0,
                 vertical_curvature: 0.0,
+                left_wall_distance: None,
+                right_wall_distance: None,
+                left_runoff_surface: None,
+                right_runoff_surface: None,
             };
         }
 
@@ -775,6 +838,21 @@ impl TrackSpline {
             0.0
         };
 
+        let left_wall_distance = match (s0.left_wall_distance, s1.left_wall_distance) {
+            (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * best_t),
+            (Some(d1), None) => if best_t < 0.5 { Some(d1) } else { None },
+            (None, Some(d2)) => if best_t < 0.5 { None } else { Some(d2) },
+            (None, None) => None,
+        };
+        let right_wall_distance = match (s0.right_wall_distance, s1.right_wall_distance) {
+            (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * best_t),
+            (Some(d1), None) => if best_t < 0.5 { Some(d1) } else { None },
+            (None, Some(d2)) => if best_t < 0.5 { None } else { Some(d2) },
+            (None, None) => None,
+        };
+        let left_runoff_surface = if best_t < 0.5 { s0.left_runoff_surface } else { s1.left_runoff_surface };
+        let right_runoff_surface = if best_t < 0.5 { s0.right_runoff_surface } else { s1.right_runoff_surface };
+
         SplineProjection {
             closest_point: best_point,
             distance_to_spline,
@@ -794,6 +872,10 @@ impl TrackSpline {
             is_bridge,
             grade_slope,
             vertical_curvature,
+            left_wall_distance,
+            right_wall_distance,
+            left_runoff_surface,
+            right_runoff_surface,
         }
     }
 
@@ -895,6 +977,21 @@ impl TrackSpline {
             0.0
         };
 
+        let left_wall_distance = match (s0.left_wall_distance, s1.left_wall_distance) {
+            (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * best_t),
+            (Some(d1), None) => if best_t < 0.5 { Some(d1) } else { None },
+            (None, Some(d2)) => if best_t < 0.5 { None } else { Some(d2) },
+            (None, None) => None,
+        };
+        let right_wall_distance = match (s0.right_wall_distance, s1.right_wall_distance) {
+            (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * best_t),
+            (Some(d1), None) => if best_t < 0.5 { Some(d1) } else { None },
+            (None, Some(d2)) => if best_t < 0.5 { None } else { Some(d2) },
+            (None, None) => None,
+        };
+        let left_runoff_surface = if best_t < 0.5 { s0.left_runoff_surface } else { s1.left_runoff_surface };
+        let right_runoff_surface = if best_t < 0.5 { s0.right_runoff_surface } else { s1.right_runoff_surface };
+
         SplineProjection {
             closest_point: best_point,
             distance_to_spline,
@@ -914,6 +1011,10 @@ impl TrackSpline {
             is_bridge,
             grade_slope,
             vertical_curvature,
+            left_wall_distance,
+            right_wall_distance,
+            left_runoff_surface,
+            right_runoff_surface,
         }
     }
 
@@ -1060,5 +1161,33 @@ mod tests {
         // Verify vertical curvature exists over crest
         let crest_sample = spline.sample_at_distance(spline.total_length() * 0.5);
         assert!(crest_sample.vertical_curvature != 0.0, "Crest transition must have non-zero vertical curvature");
+    }
+
+    #[test]
+    fn test_track_waypoint_and_spline_runoff_surfaces() {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0)
+                .with_runoff_surface(SurfaceType::Gravel),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0)
+                .with_runoff_surfaces(Some(SurfaceType::Sand), Some(SurfaceType::Asphalt)),
+            TrackWaypoint::new(Vec2::new(100.0, 100.0), 10.0),
+            TrackWaypoint::new(Vec2::new(0.0, 100.0), 10.0),
+        ];
+        let spline = TrackSpline::new(waypoints, true);
+
+        // Near WP 0, both left and right should be Gravel
+        let s0 = spline.sample_at_distance(0.0);
+        assert_eq!(s0.left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(s0.right_runoff_surface, Some(SurfaceType::Gravel));
+
+        // Near WP 1, left should be Sand, right should be Asphalt
+        let s1 = spline.sample_at_distance(100.0);
+        assert_eq!(s1.left_runoff_surface, Some(SurfaceType::Sand));
+        assert_eq!(s1.right_runoff_surface, Some(SurfaceType::Asphalt));
+
+        // Near WP 2, both should be None
+        let s2 = spline.sample_at_distance(200.0);
+        assert_eq!(s2.left_runoff_surface, None);
+        assert_eq!(s2.right_runoff_surface, None);
     }
 }

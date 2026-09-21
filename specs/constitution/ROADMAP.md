@@ -29,6 +29,8 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 
 ### Phase 4: Track Scenery & World Building (Priority: High)
 - `[x]` **[Track Scenery and Decorative Elements](../012_track_scenery_and_decorative_elements.md)**: Tiered concrete grandstands and multi-species trees with cenital recognition and physical car interactions.
+- `[x]` **[Segment Runoff Terrain & Virtual Track Boundaries](../014_segment_runoff_terrain_and_virtual_track_boundaries.md)**: Track-segment runoff terrain properties (e.g. gravel margins, tarmac runoff) and non-physical virtual boundary barriers for fluid off-track surface transitions.
+- `[ ]` **[Surface Textures & Environmental Materials](../016_surface_textures_and_environmental_materials.md)**: High-fidelity tileable texture mapping, dual spline/world UV pipeline, macro-modulation, and organic terrain transitions across all 12 racing surfaces.
 
 ---
 

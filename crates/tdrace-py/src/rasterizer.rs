@@ -57,12 +57,13 @@ impl FastRasterizer {
         }
 
         // 3. Walls and barriers
-        for wall in track.geometry.all_walls() {
+        for wall in track.geometry.all_walls().filter(|w| w.is_physical()) {
             let color = match wall.barrier_type {
                 tdrace_core::track::geometry::BarrierType::Concrete => [180, 180, 185],
                 tdrace_core::track::geometry::BarrierType::TireWall => [200, 30, 30],
                 tdrace_core::track::geometry::BarrierType::Steel => [160, 165, 175],
                 tdrace_core::track::geometry::BarrierType::CurbWall => [190, 190, 190],
+                tdrace_core::track::geometry::BarrierType::Virtual => [0, 0, 0],
             };
             wall_segments.push((wall.segment.start, wall.segment.end, 0.4, color));
         }

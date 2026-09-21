@@ -612,9 +612,15 @@ pub fn classic_grand_prix() -> Track {
         TrackWaypoint::new(Vec2::new(255.0, 25.0), 13.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(290.0, 85.0), 13.0).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(270.0, 160.0), 13.0).with_curbs(false, true),
-        // Hairpin Turn
-        TrackWaypoint::new(Vec2::new(215.0, 210.0), 12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(150.0, 210.0), 12.0).with_curbs(true, true),
+        // Hairpin Turn with gravel runoff corridor
+        TrackWaypoint::new(Vec2::new(215.0, 210.0), 12.0)
+            .with_curbs(true, false)
+            .with_runoff_surfaces(Some(SurfaceType::Gravel), None)
+            .with_wall_distances(Some(10.0), None),
+        TrackWaypoint::new(Vec2::new(150.0, 210.0), 12.0)
+            .with_curbs(true, true)
+            .with_runoff_surfaces(Some(SurfaceType::Gravel), None)
+            .with_wall_distances(Some(10.0), None),
         // Technical Esses & Infield
         TrackWaypoint::new(Vec2::new(110.0, 165.0), 12.0).with_curbs(false, true),
         TrackWaypoint::new(Vec2::new(65.0, 180.0), 12.0).with_curbs(true, false),

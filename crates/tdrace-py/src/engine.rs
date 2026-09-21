@@ -108,7 +108,12 @@ impl PyEngine {
             _ => classic_grand_prix(),
         };
 
-        let walls: Vec<WallBarrier> = track.geometry.all_walls().cloned().collect();
+        let walls: Vec<WallBarrier> = track
+            .geometry
+            .all_walls()
+            .filter(|w| w.is_physical())
+            .cloned()
+            .collect();
         let base_car_cfg = parse_car_config(car_type);
         let lidar_cfg = parse_lidar_config("", Some(num_lidar_rays));
         let reward_cfg = reward_config.unwrap_or_default();

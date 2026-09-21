@@ -187,6 +187,9 @@ impl LidarScanner {
             .geometry
             .all_walls()
             .filter(|w| {
+                if !w.is_physical() {
+                    return false;
+                }
                 if (car_elev - w.elevation).abs() > 2.0 {
                     return false;
                 }
@@ -236,7 +239,11 @@ impl LidarScanner {
         track: &Track,
         opponents: &[(OrientedBox, Vec2)],
     ) -> LidarHit {
-        let walls: Vec<&crate::track::geometry::WallBarrier> = track.geometry.all_walls().collect();
+        let walls: Vec<&crate::track::geometry::WallBarrier> = track
+            .geometry
+            .all_walls()
+            .filter(|w| w.is_physical())
+            .collect();
         self.cast_ray_candidates(
             origin,
             dir,
@@ -423,5 +430,28 @@ mod tests {
         let center_hit = hits[hits.len() / 2];
         assert_eq!(center_hit.hit_type, LidarHitType::OpponentCar);
         assert!(center_hit.distance < 15.0);
+    }
+
+    #[test]
+    fn test_lidar_ignores_virtual_barrier() {
+        let mut track = classic_grand_prix();
+        // Insert a virtual barrier right in front of the car at x=5.0
+        track.geometry.outer_walls.push(crate::track::geometry::WallBarrier::new(
+            Vec2::new(5.0, -10.0),
+            Vec2::new(5.0, 10.0),
+            crate::track::geometry::BarrierType::Virtual,
+        ));
+
+        let scanner = LidarScanner::new(LidarConfig::forward_cone_16());
+        let host = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+
+        let hits = scanner.scan(&host, &track, &[]);
+        let center_hit = hits[hits.len() / 2];
+        // Center ray should not hit the virtual barrier at x=5.0
+        assert_ne!(
+            center_hit.hit_point.x.round(),
+            5.0,
+            "Lidar must pass straight through virtual barrier at x=5.0"
+        );
     }
 }
