@@ -529,5 +529,60 @@ window_height = 1080
     assert!(loaded_partial.display.vehicle_shadows);
 }
 
+#[test]
+fn test_display_config_surface_texture_quality_roundtrip() {
+    use tdrace_app::render::SurfaceTextureQuality;
+
+    let mut config = GameConfig::default();
+    assert_eq!(config.display.surface_texture_quality, SurfaceTextureQuality::High);
+
+    // 1. Serialize with Standard
+    config.display.surface_texture_quality = SurfaceTextureQuality::Standard;
+    let toml_standard = toml::to_string_pretty(&config).expect("Serialize config with Standard texture quality");
+    let loaded_standard: GameConfig = toml::from_str(&toml_standard).expect("Deserialize Standard config");
+    assert_eq!(loaded_standard.display.surface_texture_quality, SurfaceTextureQuality::Standard);
+
+    // 2. Serialize with Off
+    config.display.surface_texture_quality = SurfaceTextureQuality::Off;
+    let toml_off = toml::to_string_pretty(&config).expect("Serialize config with Off texture quality");
+    let loaded_off: GameConfig = toml::from_str(&toml_off).expect("Deserialize Off config");
+    assert_eq!(loaded_off.display.surface_texture_quality, SurfaceTextureQuality::Off);
+
+    // 3. When omitted from TOML, serde default restores to High
+    let partial_toml = r#"
+[display]
+window_width = 1280
+window_height = 720
+"#;
+    let loaded_partial: GameConfig = toml::from_str(partial_toml).expect("Deserialize partial toml without surface_texture_quality");
+    assert_eq!(loaded_partial.display.surface_texture_quality, SurfaceTextureQuality::High);
+}
+
+#[test]
+fn test_surface_texture_settings_ui_lifecycle() {
+    use tdrace_app::render::SurfaceTextureQuality;
+    use tdrace_app::ui::settings::{cycle_surface_texture_quality, SurfaceTextureSettings};
+
+    // Cycle order: High -> Standard -> Off -> High
+    assert_eq!(cycle_surface_texture_quality(SurfaceTextureQuality::High), SurfaceTextureQuality::Standard);
+    assert_eq!(cycle_surface_texture_quality(SurfaceTextureQuality::Standard), SurfaceTextureQuality::Off);
+    assert_eq!(cycle_surface_texture_quality(SurfaceTextureQuality::Off), SurfaceTextureQuality::High);
+
+    let mut settings = SurfaceTextureSettings::new(SurfaceTextureQuality::High);
+    assert_eq!(settings.quality, SurfaceTextureQuality::High);
+    assert!(settings.description().contains("512x512"));
+
+    let next = settings.cycle();
+    assert_eq!(next, SurfaceTextureQuality::Standard);
+    assert!(settings.description().contains("256x256"));
+
+    let next = settings.cycle();
+    assert_eq!(next, SurfaceTextureQuality::Off);
+    assert!(settings.description().contains("Flat vector"));
+
+    let next = settings.cycle();
+    assert_eq!(next, SurfaceTextureQuality::High);
+}
+
 
 

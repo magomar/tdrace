@@ -626,6 +626,7 @@ impl RaceSession {
         let camera_p2 = RaceCamera::from_config(&config.camera);
         let editor_camera = EditorCamera::from_config(&config.camera);
         let crt_overlay = config.display.to_crt_overlay();
+        crate::render::track::set_surface_texture_quality(config.display.surface_texture_quality);
 
         let mut session = Self {
             state: GameState::ModuleSelect { selected_idx: 0 },
