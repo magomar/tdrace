@@ -804,6 +804,48 @@ fn test_procedural_surface_image_generators_all_12_surfaces() {
     assert_eq!(macro_noise.bytes.len(), 32 * 32 * 4);
 }
 
+#[test]
+fn test_surface_asset_files_exist_and_are_valid_png() {
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let candidate_dirs = [
+        manifest_dir.join("assets/textures/surfaces"),
+        manifest_dir.join("../../assets/textures/surfaces"),
+        manifest_dir.join("../../../assets/textures/surfaces"),
+    ];
+
+    let surfaces_dir = candidate_dirs
+        .iter()
+        .find(|p| p.exists())
+        .expect("assets/textures/surfaces directory must exist");
+
+    let expected_files = [
+        "asphalt_diffuse.png",
+        "dirt_compacted.png",
+        "grass_turf.png",
+        "gravel_crushed.png",
+        "sand_dune.png",
+        "mud_viscous.png",
+        "snow_powder.png",
+        "ice_glazed.png",
+        "water_caustic.png",
+        "oil_iridescent.png",
+        "concrete_brushed.png",
+        "curb_teeth.png",
+        "edge_fringe_mask.png",
+        "asphalt_groove.png",
+    ];
+
+    for filename in &expected_files {
+        let path = surfaces_dir.join(filename);
+        assert!(path.exists(), "Surface texture file must exist: {:?}", path);
+        let bytes = std::fs::read(&path).expect("Failed to read texture file");
+        assert!(bytes.len() > 500, "Texture file {:?} must be larger than 500 bytes", filename);
+        assert_eq!(&bytes[1..4], b"PNG", "File {:?} must be a valid PNG image", filename);
+    }
+}
+
 
 
 
