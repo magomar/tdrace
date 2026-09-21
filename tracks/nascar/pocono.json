@@ -1,6 +1,6 @@
 {
   "name": "Pocono Raceway",
-  "description": "The Tricky Triangle: 2.5-mile tri-oval superspeedway scaled to 0.5x (2,011.5m) with 3 distinct banked turns (14\u00b0/8\u00b0/6\u00b0) and massive straights.",
+  "description": "The Tricky Triangle: 2.5-mile tri-oval superspeedway scaled to 0.5x (2,011.5m) with 3 distinct banked turns (14°/8°/6°) and massive straights.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -41337,10 +41337,6 @@
   "modules": [
     "nascar"
   ],
-  "scale": "1:2",
-  "country_code": "US",
-  "country_name": "United States",
-  "min_width": 18.0,
-  "max_width": 18.0,
+  "scale": "0.5x",
   "is_inspired": false
 }

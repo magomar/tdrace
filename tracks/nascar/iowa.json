@@ -1,6 +1,6 @@
 {
   "name": "Iowa Speedway",
-  "description": "The Fastest Short Track on the Planet: 7/8-mile D-shaped oval with progressive 12\u00b0-14\u00b0 banking and intense multi-groove racing.",
+  "description": "The Fastest Short Track on the Planet: 7/8-mile D-shaped oval with progressive 12°-14° banking and intense multi-groove racing.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -27669,9 +27669,5 @@
     "nascar"
   ],
   "scale": "1:1",
-  "country_code": "US",
-  "country_name": "United States",
-  "min_width": 20.0,
-  "max_width": 20.0,
   "is_inspired": false
 }

@@ -721,7 +721,7 @@ pub fn classic_grand_prix() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset 2: Oval Speedway
@@ -784,7 +784,7 @@ pub fn oval_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Dirty Oval Speedway
@@ -847,7 +847,7 @@ pub fn dirty_oval_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Backwards compatibility alias for `dirty_oval_speedway`.
@@ -938,7 +938,7 @@ pub fn drift_park() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset 4: Kart Arena
@@ -1003,7 +1003,7 @@ pub fn kart_arena() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset 5: Ramp Raceway
@@ -1102,7 +1102,7 @@ pub fn ramp_raceway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset 6: Oasis Rally
@@ -1209,7 +1209,7 @@ pub fn oasis_rally() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Backwards compatibility alias for `oasis_rally`.
@@ -1349,7 +1349,7 @@ pub fn dirt_figure_eight() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Figure 8 Arena (Classic Asphalt)
@@ -1471,7 +1471,7 @@ pub fn classic_rallycross() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 
@@ -1588,7 +1588,7 @@ pub fn holjes_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset 10: Lydden Hill Race Circuit (World RX Great Britain)
@@ -1686,7 +1686,7 @@ pub fn lydden_hill() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset 11: Lånkebanen / Hell RX (World RX Norway)
@@ -1800,7 +1800,7 @@ pub fn hell_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset 12: Circuit de Lohéac (World RX France)
@@ -1914,7 +1914,7 @@ pub fn loheac_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Estering Buxtehude (World RX Germany)
@@ -2002,7 +2002,7 @@ pub fn estering_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Pista Automóvel de Montalegre (World RX Portugal)
@@ -2096,7 +2096,7 @@ pub fn montalegre_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Nyirád Racing Center (Euro RX Hungary)
@@ -2176,7 +2176,7 @@ pub fn nyirad_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Tykkimäen Moottorirata (World RX Finland)
@@ -2270,7 +2270,7 @@ pub fn kouvola_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Circuit de Barcelona-Catalunya RX (World RX Spain)
@@ -2377,7 +2377,7 @@ pub fn catalunya_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Circuit Jules Tacheny Mettet (World RX Belgium)
@@ -2471,7 +2471,7 @@ pub fn mettet_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Silverstone Circuit RX (World RX Great Britain)
@@ -2565,7 +2565,7 @@ pub fn silverstone_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Biķernieku Trase (World RX Latvia)
@@ -2661,7 +2661,7 @@ pub fn riga_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Killarney International Raceway (World RX South Africa)
@@ -2755,7 +2755,7 @@ pub fn killarney_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 pub fn yas_marina_rx() -> Track {
@@ -2856,7 +2856,7 @@ pub fn yas_marina_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Circuit des Ducs (World RX / Euro RX France - Essay, Normandy)
@@ -2967,7 +2967,7 @@ pub fn essay_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Layout shape options for prototypical circuit generation.
@@ -3269,7 +3269,7 @@ pub fn create_prototypical_track(
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Prototypical template for Classic Motorsport module.
@@ -3366,7 +3366,7 @@ pub fn daytona_superspeedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Talladega Superspeedway (NASCAR Monster Tri-Oval)
@@ -3438,7 +3438,7 @@ pub fn talladega_superspeedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Watkins Glen International (NASCAR Short Course)
@@ -3517,7 +3517,7 @@ pub fn watkins_glen_nascar() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Bristol Motor Speedway (The Last Great Colosseum)
@@ -3584,7 +3584,7 @@ pub fn bristol_motor_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Martinsville Speedway (The Paperclip)
@@ -3653,7 +3653,7 @@ pub fn martinsville_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Darlington Raceway (The Lady in Black / Too Tough to Tame)
@@ -3723,7 +3723,7 @@ pub fn darlington_raceway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Charlotte Motor Speedway (The Beast of the Southeast)
@@ -3794,7 +3794,7 @@ pub fn charlotte_motor_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Indianapolis Motor Speedway (The Brickyard)
@@ -3878,7 +3878,7 @@ pub fn indianapolis_motor_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Eldora Speedway (Dirt Track Oval)
@@ -3942,7 +3942,7 @@ pub fn eldora_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Iowa Speedway (The Fastest Short Track on the Planet)
@@ -4008,7 +4008,7 @@ pub fn iowa_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Road America (Elkhart Lake)
@@ -4090,7 +4090,7 @@ pub fn road_america() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Chicago Street Course (Grant Park 220)
@@ -4174,7 +4174,7 @@ pub fn chicago_street_course() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Circuit of the Americas (COTA)
@@ -4254,7 +4254,7 @@ pub fn cota() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Sahara Dune Crossing
@@ -4379,7 +4379,7 @@ pub fn sahara_dune_crossing() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Atacama Sand Basin
@@ -4490,7 +4490,7 @@ pub fn atacama_sand_basin() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Red Rock Canyon
@@ -4587,7 +4587,7 @@ pub fn red_rock_canyon() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Baja 500 Desert Scrub
@@ -4714,7 +4714,7 @@ pub fn baja_500_desert_scrub() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Mud Slough Arena
@@ -4813,7 +4813,7 @@ pub fn mud_slough_arena() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Gravel Quarry Chasm
@@ -4901,7 +4901,7 @@ pub fn gravel_quarry_chasm() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Louisiana Mud Swampland
@@ -4997,7 +4997,7 @@ pub fn louisiana_mud_swampland() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Arctic Frozen Lake
@@ -5082,7 +5082,7 @@ pub fn arctic_frozen_lake() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Alpine Snow Ridge
@@ -5178,7 +5178,7 @@ pub fn alpine_snow_ridge() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Rovaniemi Ice Ring
@@ -5257,7 +5257,7 @@ pub fn rovaniemi_ice_ring() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Glacier Crest Pass
@@ -5366,7 +5366,7 @@ pub fn glacier_crest_pass() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Supercross Stadium Arena
@@ -5475,7 +5475,7 @@ pub fn supercross_stadium_arena() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Monster Colosseum
@@ -5582,7 +5582,7 @@ pub fn monster_colosseum() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Stunt City Megastructure
@@ -5686,7 +5686,7 @@ pub fn stunt_city_megastructure() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Bowman Gray Stadium (The Madhouse)
@@ -5761,7 +5761,7 @@ pub fn bowman_gray_stadium() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Lucas Oil Indianapolis Raceway Park (IRP)
@@ -5836,7 +5836,7 @@ pub fn lucas_oil_irp() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: North Wilkesboro Speedway
@@ -5914,7 +5914,7 @@ pub fn north_wilkesboro_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Pocono Raceway (The Tricky Triangle)
@@ -5996,7 +5996,7 @@ pub fn pocono_raceway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Phoenix Raceway
@@ -6075,7 +6075,7 @@ pub fn phoenix_raceway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Circuit de l'Ouest Parisien (Dreux RX)
@@ -6177,7 +6177,7 @@ pub fn dreux_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Blyton Park Rallycross Circuit
@@ -6279,7 +6279,7 @@ pub fn blyton_park_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Laval Karting (Circuit Louis Beuvron)
@@ -6367,7 +6367,7 @@ pub fn laval_kart() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Whilton Mill Kart Circuit
@@ -6455,7 +6455,7 @@ pub fn whilton_mill_kart() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Glamis Imperial Sand Dunes
@@ -6580,7 +6580,7 @@ pub fn glamis_sand_dunes() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }
 
 /// Preset: Crandon International Off-Road (The Big House)
@@ -6699,5 +6699,5 @@ pub fn crandon_short_course() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
-    }
+    }.with_default_runoff_surfaces()
 }

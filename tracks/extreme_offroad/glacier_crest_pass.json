@@ -21,7 +21,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -37,7 +39,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -53,7 +57,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -69,7 +75,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -85,7 +93,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -101,7 +111,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -117,7 +129,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -133,7 +147,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -149,7 +165,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -165,7 +183,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -181,7 +201,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -197,7 +219,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       }
     ],
     "closed": true,
@@ -228,7 +252,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -256,7 +282,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -284,7 +312,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -312,7 +342,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -340,7 +372,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -368,7 +402,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -396,7 +432,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -424,7 +462,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -452,7 +492,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -480,7 +522,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -508,7 +552,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -536,7 +582,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -564,7 +612,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -592,7 +642,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -620,7 +672,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -648,7 +702,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -676,7 +732,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -704,7 +762,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -732,7 +792,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -760,7 +822,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -788,7 +852,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -816,7 +882,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -844,7 +912,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -872,7 +942,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -900,7 +972,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -928,7 +1002,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -956,7 +1032,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -984,7 +1062,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1012,7 +1092,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1040,7 +1122,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1068,7 +1152,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1096,7 +1182,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1124,7 +1212,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1152,7 +1242,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1180,7 +1272,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1208,7 +1302,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1236,7 +1332,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1264,7 +1362,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1292,7 +1392,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1320,7 +1422,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1348,7 +1452,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1376,7 +1482,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1404,7 +1512,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1432,7 +1542,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1460,7 +1572,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1488,7 +1602,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1516,7 +1632,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1544,7 +1662,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1572,7 +1692,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1600,7 +1722,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1624,11 +1748,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.007295835,
-        "vertical_curvature": 8.8011664e-05,
+        "vertical_curvature": 0.000088011664,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1652,11 +1778,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.007903745,
-        "vertical_curvature": 8.3526145e-05,
+        "vertical_curvature": 0.000083526145,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1680,11 +1808,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.008485313,
-        "vertical_curvature": 7.961507e-05,
+        "vertical_curvature": 0.00007961507,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1708,11 +1838,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.009043297,
-        "vertical_curvature": 7.6210024e-05,
+        "vertical_curvature": 0.000076210024,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1736,11 +1868,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.009580141,
-        "vertical_curvature": 7.324727e-05,
+        "vertical_curvature": 0.00007324727,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1764,11 +1898,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.010097983,
-        "vertical_curvature": 7.068285e-05,
+        "vertical_curvature": 0.00007068285,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1792,11 +1928,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.010598871,
-        "vertical_curvature": 6.848035e-05,
+        "vertical_curvature": 0.00006848035,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1820,11 +1958,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.011084591,
-        "vertical_curvature": 6.6593166e-05,
+        "vertical_curvature": 0.000066593166,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1848,11 +1988,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.01155666,
-        "vertical_curvature": 6.499239e-05,
+        "vertical_curvature": 0.00006499239,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1876,11 +2018,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.012016562,
-        "vertical_curvature": 6.3656196e-05,
+        "vertical_curvature": 0.000063656196,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1904,11 +2048,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.012465569,
-        "vertical_curvature": 6.255198e-05,
+        "vertical_curvature": 0.00006255198,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1932,11 +2078,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.012904753,
-        "vertical_curvature": 6.165519e-05,
+        "vertical_curvature": 0.00006165519,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1960,11 +2108,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.013335075,
-        "vertical_curvature": 6.0940423e-05,
+        "vertical_curvature": 0.000060940423,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -1988,11 +2138,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.013757268,
-        "vertical_curvature": 6.0379854e-05,
+        "vertical_curvature": 0.000060379854,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2016,11 +2168,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.014171919,
-        "vertical_curvature": 5.994842e-05,
+        "vertical_curvature": 0.00005994842,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2044,11 +2198,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.014579424,
-        "vertical_curvature": 5.9606387e-05,
+        "vertical_curvature": 0.000059606387,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2072,11 +2228,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.014979839,
-        "vertical_curvature": 5.9306738e-05,
+        "vertical_curvature": 0.000059306738,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2100,11 +2258,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.015372961,
-        "vertical_curvature": 5.90068e-05,
+        "vertical_curvature": 0.0000590068,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2128,11 +2288,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.015758332,
-        "vertical_curvature": 5.8641002e-05,
+        "vertical_curvature": 0.000058641002,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2156,11 +2318,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.016134972,
-        "vertical_curvature": 5.8114285e-05,
+        "vertical_curvature": 0.000058114285,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2184,11 +2348,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.01650134,
-        "vertical_curvature": 5.7325607e-05,
+        "vertical_curvature": 0.000057325607,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2212,11 +2378,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.016855389,
-        "vertical_curvature": 5.7667916e-05,
+        "vertical_curvature": 0.000057667916,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2240,11 +2408,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.01721306,
-        "vertical_curvature": 6.0334754e-05,
+        "vertical_curvature": 0.000060334754,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2268,11 +2438,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.017591393,
-        "vertical_curvature": 6.249418e-05,
+        "vertical_curvature": 0.00006249418,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2296,11 +2468,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.017976737,
-        "vertical_curvature": 6.2232524e-05,
+        "vertical_curvature": 0.000062232524,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2324,11 +2498,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.018357351,
-        "vertical_curvature": 6.133747e-05,
+        "vertical_curvature": 0.00006133747,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2352,11 +2528,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.018735599,
-        "vertical_curvature": 6.0927705e-05,
+        "vertical_curvature": 0.000060927705,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2380,11 +2558,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.019113563,
-        "vertical_curvature": 6.096336e-05,
+        "vertical_curvature": 0.00006096336,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2408,11 +2588,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.019493205,
-        "vertical_curvature": 6.142676e-05,
+        "vertical_curvature": 0.00006142676,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2436,11 +2618,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.019876419,
-        "vertical_curvature": 6.231107e-05,
+        "vertical_curvature": 0.00006231107,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2464,11 +2648,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.020265043,
-        "vertical_curvature": 6.360166e-05,
+        "vertical_curvature": 0.00006360166,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2492,11 +2678,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.020660706,
-        "vertical_curvature": 6.529934e-05,
+        "vertical_curvature": 0.00006529934,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2520,11 +2708,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.021065127,
-        "vertical_curvature": 6.7409535e-05,
+        "vertical_curvature": 0.000067409535,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2548,11 +2738,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.021479812,
-        "vertical_curvature": 6.9923706e-05,
+        "vertical_curvature": 0.000069923706,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2576,11 +2768,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.021906145,
-        "vertical_curvature": 7.285751e-05,
+        "vertical_curvature": 0.00007285751,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2604,11 +2798,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.02234555,
-        "vertical_curvature": 7.620707e-05,
+        "vertical_curvature": 0.00007620707,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2632,11 +2828,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.022799052,
-        "vertical_curvature": 7.9953636e-05,
+        "vertical_curvature": 0.000079953636,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2660,11 +2858,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.02326752,
-        "vertical_curvature": 8.4075036e-05,
+        "vertical_curvature": 0.000084075036,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2688,11 +2888,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.023751372,
-        "vertical_curvature": 8.849074e-05,
+        "vertical_curvature": 0.00008849074,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2716,11 +2918,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.024250241,
-        "vertical_curvature": 9.3079994e-05,
+        "vertical_curvature": 0.000093079994,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2744,11 +2948,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.024762953,
-        "vertical_curvature": 9.768046e-05,
+        "vertical_curvature": 0.00009768046,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2776,7 +2982,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2804,7 +3012,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2832,7 +3042,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2860,7 +3072,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2884,11 +3098,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.02737724,
-        "vertical_curvature": 9.9809884e-05,
+        "vertical_curvature": 0.000099809884,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2912,11 +3128,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.027798818,
-        "vertical_curvature": 7.59944e-05,
+        "vertical_curvature": 0.0000759944,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2940,11 +3158,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.028065044,
-        "vertical_curvature": 4.376769e-05,
+        "vertical_curvature": 0.00004376769,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2968,11 +3188,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.028193556,
-        "vertical_curvature": 1.8376699e-05,
+        "vertical_curvature": 0.000018376699,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -2996,11 +3218,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.028231865,
-        "vertical_curvature": -4.274912e-09,
+        "vertical_curvature": -4.274912e-9,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3024,11 +3248,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.028193517,
-        "vertical_curvature": -1.5296015e-05,
+        "vertical_curvature": -0.000015296015,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3052,11 +3278,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.028090656,
-        "vertical_curvature": -2.7804646e-05,
+        "vertical_curvature": -0.000027804646,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3080,11 +3308,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.027934387,
-        "vertical_curvature": -3.782316e-05,
+        "vertical_curvature": -0.00003782316,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3108,11 +3338,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.027734715,
-        "vertical_curvature": -4.5714325e-05,
+        "vertical_curvature": -0.000045714325,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3136,11 +3368,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.027500015,
-        "vertical_curvature": -5.1877378e-05,
+        "vertical_curvature": -0.000051877378,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3164,11 +3398,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.027237166,
-        "vertical_curvature": -5.666516e-05,
+        "vertical_curvature": -0.00005666516,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3192,11 +3428,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.026951749,
-        "vertical_curvature": -6.0363152e-05,
+        "vertical_curvature": -0.000060363152,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3220,11 +3458,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.02664839,
-        "vertical_curvature": -6.323428e-05,
+        "vertical_curvature": -0.00006323428,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3248,11 +3488,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.026330518,
-        "vertical_curvature": -6.550068e-05,
+        "vertical_curvature": -0.00006550068,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3276,11 +3518,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.026000898,
-        "vertical_curvature": -6.7363675e-05,
+        "vertical_curvature": -0.000067363675,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3304,11 +3548,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.025661223,
-        "vertical_curvature": -6.900051e-05,
+        "vertical_curvature": -0.00006900051,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3332,11 +3578,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.025312679,
-        "vertical_curvature": -7.051373e-05,
+        "vertical_curvature": -0.00007051373,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3360,11 +3608,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.024956081,
-        "vertical_curvature": -7.20628e-05,
+        "vertical_curvature": -0.0000720628,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3388,11 +3638,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.02459114,
-        "vertical_curvature": -7.376407e-05,
+        "vertical_curvature": -0.00007376407,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3416,11 +3668,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.024217607,
-        "vertical_curvature": -7.570257e-05,
+        "vertical_curvature": -0.00007570257,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3444,11 +3698,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.023834452,
-        "vertical_curvature": -7.798648e-05,
+        "vertical_curvature": -0.00007798648,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3472,11 +3728,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.023440465,
-        "vertical_curvature": -8.067944e-05,
+        "vertical_curvature": -0.00008067944,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3500,11 +3758,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.023034133,
-        "vertical_curvature": -8.397813e-05,
+        "vertical_curvature": -0.00008397813,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3528,11 +3788,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.022612493,
-        "vertical_curvature": -8.7956185e-05,
+        "vertical_curvature": -0.000087956185,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3556,11 +3818,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.02217356,
-        "vertical_curvature": -7.794771e-05,
+        "vertical_curvature": -0.00007794771,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3584,11 +3848,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.021856861,
-        "vertical_curvature": -4.0421262e-05,
+        "vertical_curvature": -0.000040421262,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3612,11 +3878,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.021780644,
-        "vertical_curvature": -9.957517e-06,
+        "vertical_curvature": -0.000009957517,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3640,11 +3908,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.0217574,
-        "vertical_curvature": -1.3564327e-05,
+        "vertical_curvature": -0.000013564327,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3668,11 +3938,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.02164014,
-        "vertical_curvature": -2.9947212e-05,
+        "vertical_curvature": -0.000029947212,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3696,11 +3968,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.021437109,
-        "vertical_curvature": -4.419787e-05,
+        "vertical_curvature": -0.00004419787,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3724,11 +3998,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.021154013,
-        "vertical_curvature": -5.7086494e-05,
+        "vertical_curvature": -0.000057086494,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3752,11 +4028,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.020793784,
-        "vertical_curvature": -6.921235e-05,
+        "vertical_curvature": -0.00006921235,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3780,11 +4058,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.020357631,
-        "vertical_curvature": -8.096517e-05,
+        "vertical_curvature": -0.00008096517,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3808,11 +4088,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": 0.01984566,
-        "vertical_curvature": -9.2702816e-05,
+        "vertical_curvature": -0.000092702816,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3840,7 +4122,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3868,7 +4152,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3896,7 +4182,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3924,7 +4212,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3952,7 +4242,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -3980,7 +4272,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4008,7 +4302,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4036,7 +4332,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4064,7 +4362,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4092,7 +4392,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4120,7 +4422,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4148,7 +4452,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4176,7 +4482,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4204,7 +4512,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4232,7 +4542,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4260,7 +4572,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4288,7 +4602,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4316,7 +4632,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4344,7 +4662,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4372,7 +4692,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4400,7 +4722,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4428,7 +4752,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4456,7 +4782,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4484,7 +4812,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4512,7 +4842,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4540,7 +4872,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4564,11 +4898,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.021664998,
-        "vertical_curvature": -8.448714e-05,
+        "vertical_curvature": -0.00008448714,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4592,11 +4928,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.022191998,
-        "vertical_curvature": -6.9147565e-05,
+        "vertical_curvature": -0.000069147565,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4620,11 +4958,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.022621086,
-        "vertical_curvature": -5.527664e-05,
+        "vertical_curvature": -0.00005527664,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4648,11 +4988,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.022957966,
-        "vertical_curvature": -4.2181397e-05,
+        "vertical_curvature": -0.000042181397,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4676,11 +5018,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.023204785,
-        "vertical_curvature": -2.9210618e-05,
+        "vertical_curvature": -0.000029210618,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4704,11 +5048,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.023360197,
-        "vertical_curvature": -1.5672984e-05,
+        "vertical_curvature": -0.000015672984,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4732,11 +5078,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.023418803,
-        "vertical_curvature": -7.808883e-07,
+        "vertical_curvature": -7.808883e-7,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4760,11 +5108,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.023370735,
-        "vertical_curvature": 1.634489e-05,
+        "vertical_curvature": 0.00001634489,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4788,11 +5138,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.023201477,
-        "vertical_curvature": 3.678204e-05,
+        "vertical_curvature": 0.00003678204,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4816,11 +5168,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.022890313,
-        "vertical_curvature": 6.181234e-05,
+        "vertical_curvature": 0.00006181234,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4844,11 +5198,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.022410393,
-        "vertical_curvature": 9.288056e-05,
+        "vertical_curvature": 0.00009288056,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4876,7 +5232,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4904,7 +5262,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4932,7 +5292,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4956,11 +5318,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01942197,
-        "vertical_curvature": 6.272084e-05,
+        "vertical_curvature": 0.00006272084,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -4984,11 +5348,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019173566,
-        "vertical_curvature": 4.5386136e-05,
+        "vertical_curvature": 0.000045386136,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5012,11 +5378,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018894894,
-        "vertical_curvature": 4.8912756e-05,
+        "vertical_curvature": 0.000048912756,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5040,11 +5408,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01860474,
-        "vertical_curvature": 4.938636e-05,
+        "vertical_curvature": 0.00004938636,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5068,11 +5438,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.0183188,
-        "vertical_curvature": 4.7355752e-05,
+        "vertical_curvature": 0.000047355752,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5096,11 +5468,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01805016,
-        "vertical_curvature": 4.3344116e-05,
+        "vertical_curvature": 0.000043344116,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5124,11 +5498,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017809115,
-        "vertical_curvature": 3.783923e-05,
+        "vertical_curvature": 0.00003783923,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5152,11 +5528,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017603563,
-        "vertical_curvature": 3.125253e-05,
+        "vertical_curvature": 0.00003125253,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5180,11 +5558,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017439224,
-        "vertical_curvature": 2.3880651e-05,
+        "vertical_curvature": 0.000023880651,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5208,11 +5588,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017320488,
-        "vertical_curvature": 1.5942964e-05,
+        "vertical_curvature": 0.000015942964,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5236,11 +5618,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017250242,
-        "vertical_curvature": 7.595865e-06,
+        "vertical_curvature": 0.000007595865,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5264,11 +5648,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017230608,
-        "vertical_curvature": -1.0718122e-06,
+        "vertical_curvature": -0.0000010718122,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5292,11 +5678,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017262878,
-        "vertical_curvature": -9.9739245e-06,
+        "vertical_curvature": -0.0000099739245,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5320,11 +5708,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017347537,
-        "vertical_curvature": -1.902602e-05,
+        "vertical_curvature": -0.00001902602,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5348,11 +5738,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017484246,
-        "vertical_curvature": -2.811117e-05,
+        "vertical_curvature": -0.00002811117,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5376,11 +5768,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01767153,
-        "vertical_curvature": -3.7020847e-05,
+        "vertical_curvature": -0.000037020847,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5404,11 +5798,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017906176,
-        "vertical_curvature": -4.544269e-05,
+        "vertical_curvature": -0.00004544269,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5432,11 +5828,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018182931,
-        "vertical_curvature": -5.298324e-05,
+        "vertical_curvature": -0.00005298324,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5460,11 +5858,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018494308,
-        "vertical_curvature": -5.8955782e-05,
+        "vertical_curvature": -0.000058955782,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5488,11 +5888,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01882807,
-        "vertical_curvature": -6.2424064e-05,
+        "vertical_curvature": -0.000062424064,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5516,11 +5918,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019167805,
-        "vertical_curvature": -6.240984e-05,
+        "vertical_curvature": -0.00006240984,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5544,11 +5948,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019492652,
-        "vertical_curvature": -5.7675756e-05,
+        "vertical_curvature": -0.000057675756,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5572,11 +5978,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019775273,
-        "vertical_curvature": -4.592961e-05,
+        "vertical_curvature": -0.00004592961,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5600,11 +6008,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019972766,
-        "vertical_curvature": -2.9062208e-05,
+        "vertical_curvature": -0.000029062208,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5628,11 +6038,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.020078376,
-        "vertical_curvature": -1.5498616e-05,
+        "vertical_curvature": -0.000015498616,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5656,11 +6068,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.020134786,
-        "vertical_curvature": -8.29745e-06,
+        "vertical_curvature": -0.00000829745,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5684,11 +6098,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.020165455,
-        "vertical_curvature": -3.6951205e-06,
+        "vertical_curvature": -0.0000036951205,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5712,11 +6128,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.020173725,
-        "vertical_curvature": 3.2810436e-07,
+        "vertical_curvature": 3.2810436e-7,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5740,11 +6158,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.020161983,
-        "vertical_curvature": 3.875788e-06,
+        "vertical_curvature": 0.000003875788,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5768,11 +6188,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.020132542,
-        "vertical_curvature": 6.942702e-06,
+        "vertical_curvature": 0.000006942702,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5796,11 +6218,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.020087916,
-        "vertical_curvature": 9.591602e-06,
+        "vertical_curvature": 0.000009591602,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5824,11 +6248,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.020029834,
-        "vertical_curvature": 1.1894297e-05,
+        "vertical_curvature": 0.000011894297,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5852,11 +6278,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019960117,
-        "vertical_curvature": 1.3851357e-05,
+        "vertical_curvature": 0.000013851357,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5880,11 +6308,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019880561,
-        "vertical_curvature": 1.5548268e-05,
+        "vertical_curvature": 0.000015548268,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5908,11 +6338,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019792141,
-        "vertical_curvature": 1.7002296e-05,
+        "vertical_curvature": 0.000017002296,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5936,11 +6368,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019696523,
-        "vertical_curvature": 1.8235687e-05,
+        "vertical_curvature": 0.000018235687,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5964,11 +6398,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019594496,
-        "vertical_curvature": 1.93312e-05,
+        "vertical_curvature": 0.0000193312,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -5992,11 +6428,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019486876,
-        "vertical_curvature": 2.0264777e-05,
+        "vertical_curvature": 0.000020264777,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6020,11 +6458,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019374752,
-        "vertical_curvature": 2.108883e-05,
+        "vertical_curvature": 0.00002108883,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6048,11 +6488,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019258408,
-        "vertical_curvature": 2.1873635e-05,
+        "vertical_curvature": 0.000021873635,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6076,11 +6518,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019138198,
-        "vertical_curvature": 2.257769e-05,
+        "vertical_curvature": 0.00002257769,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6104,11 +6548,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.019014882,
-        "vertical_curvature": 2.3207675e-05,
+        "vertical_curvature": 0.000023207675,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6132,11 +6578,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01888877,
-        "vertical_curvature": 2.3838496e-05,
+        "vertical_curvature": 0.000023838496,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6160,11 +6608,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018759837,
-        "vertical_curvature": 2.4490604e-05,
+        "vertical_curvature": 0.000024490604,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6188,11 +6638,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018628204,
-        "vertical_curvature": 2.5128598e-05,
+        "vertical_curvature": 0.000025128598,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6216,11 +6668,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018494254,
-        "vertical_curvature": 2.5812826e-05,
+        "vertical_curvature": 0.000025812826,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6244,11 +6698,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.0183575,
-        "vertical_curvature": 2.3281807e-05,
+        "vertical_curvature": 0.000023281807,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6272,11 +6728,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018252265,
-        "vertical_curvature": 1.4570003e-05,
+        "vertical_curvature": 0.000014570003,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6300,11 +6758,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018206516,
-        "vertical_curvature": 7.5949515e-06,
+        "vertical_curvature": 0.0000075949515,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6328,11 +6788,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01817279,
-        "vertical_curvature": 8.797124e-06,
+        "vertical_curvature": 0.000008797124,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6356,11 +6818,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018113082,
-        "vertical_curvature": 1.3433683e-05,
+        "vertical_curvature": 0.000013433683,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6384,11 +6848,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.018028272,
-        "vertical_curvature": 1.7914883e-05,
+        "vertical_curvature": 0.000017914883,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6412,11 +6878,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017918264,
-        "vertical_curvature": 2.2394666e-05,
+        "vertical_curvature": 0.000022394666,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6440,11 +6908,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017782565,
-        "vertical_curvature": 2.6901294e-05,
+        "vertical_curvature": 0.000026901294,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6468,11 +6938,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017621024,
-        "vertical_curvature": 3.1507632e-05,
+        "vertical_curvature": 0.000031507632,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6496,11 +6968,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017432593,
-        "vertical_curvature": 3.6351958e-05,
+        "vertical_curvature": 0.000036351958,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6524,11 +6998,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.017215818,
-        "vertical_curvature": 4.14886e-05,
+        "vertical_curvature": 0.0000414886,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6552,11 +7028,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.016969275,
-        "vertical_curvature": 4.695067e-05,
+        "vertical_curvature": 0.00004695067,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6580,11 +7058,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.016691389,
-        "vertical_curvature": 5.2834326e-05,
+        "vertical_curvature": 0.000052834326,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6608,11 +7088,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.016379945,
-        "vertical_curvature": 5.927892e-05,
+        "vertical_curvature": 0.00005927892,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6636,11 +7118,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.016032128,
-        "vertical_curvature": 6.638252e-05,
+        "vertical_curvature": 0.00006638252,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6664,11 +7148,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01564498,
-        "vertical_curvature": 7.423843e-05,
+        "vertical_curvature": 0.00007423843,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6692,11 +7178,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.01521507,
-        "vertical_curvature": 8.298176e-05,
+        "vertical_curvature": 0.00008298176,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6720,11 +7208,13 @@
         "bank_angle": 0.0,
         "is_bridge": false,
         "grade_slope": -0.014738431,
-        "vertical_curvature": 9.274534e-05,
+        "vertical_curvature": 0.00009274534,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6752,7 +7242,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6780,7 +7272,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6808,7 +7302,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6836,7 +7332,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6864,7 +7362,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6892,7 +7392,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6920,7 +7422,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6948,7 +7452,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -6976,7 +7482,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7004,7 +7512,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7032,7 +7542,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7060,7 +7572,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7088,7 +7602,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7116,7 +7632,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7144,7 +7662,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7172,7 +7692,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7200,7 +7722,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7228,7 +7752,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7256,7 +7782,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7284,7 +7812,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7312,7 +7842,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7340,7 +7872,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7368,7 +7902,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7396,7 +7932,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7424,7 +7962,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7452,7 +7992,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7480,7 +8022,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7508,7 +8052,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7536,7 +8082,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7564,7 +8112,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7592,7 +8142,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7620,7 +8172,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7648,7 +8202,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7676,7 +8232,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7704,7 +8262,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7732,7 +8292,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7760,7 +8322,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7788,7 +8352,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7816,7 +8382,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7844,7 +8412,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7872,7 +8442,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7900,7 +8472,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7928,7 +8502,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7956,7 +8532,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -7984,7 +8562,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8012,7 +8592,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8040,7 +8622,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8068,7 +8652,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8096,7 +8682,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8124,7 +8712,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8152,7 +8742,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8180,7 +8772,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8208,7 +8802,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8236,7 +8832,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8264,7 +8862,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       },
       {
         "point": [
@@ -8292,7 +8892,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Snow",
+        "right_runoff_surface": "Snow"
       }
     ],
     "total_length": 1662.4169,
@@ -20967,9 +21569,5 @@
     "extreme_offroad"
   ],
   "scale": "1:1",
-  "country_code": "CH",
-  "country_name": "Switzerland",
-  "min_width": 11.5,
-  "max_width": 11.5,
-  "is_inspired": true
+  "is_inspired": false
 }

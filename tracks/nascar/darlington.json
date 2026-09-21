@@ -1,6 +1,6 @@
 {
   "name": "Darlington Raceway",
-  "description": "The Lady in Black: 1.366-mile egg-shaped asymmetrical oval with 25\u00b0 high banks and the famous wall-scraping 'Darlington Stripe'.",
+  "description": "The Lady in Black: 1.366-mile egg-shaped asymmetrical oval with 25° high banks and the famous wall-scraping 'Darlington Stripe'.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -621,10 +621,10 @@
         ],
         "tangent": [
           1.0,
-          5.939263e-05
+          0.00005939263
         ],
         "normal": [
-          -5.939263e-05,
+          -0.00005939263,
           1.0
         ],
         "distance": 66.14322,
@@ -25920,10 +25920,6 @@
   "modules": [
     "nascar"
   ],
-  "scale": "1:1.5",
-  "country_code": "US",
-  "country_name": "United States",
-  "min_width": 18.0,
-  "max_width": 18.0,
+  "scale": "1:1",
   "is_inspired": false
 }

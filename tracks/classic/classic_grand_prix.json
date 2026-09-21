@@ -21,7 +21,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -37,7 +39,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -53,7 +57,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -69,7 +75,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -85,7 +93,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -101,7 +111,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -117,7 +129,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -132,8 +146,10 @@
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -148,8 +164,10 @@
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -165,7 +183,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -181,7 +201,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -197,7 +219,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -213,7 +237,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -229,7 +255,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -245,7 +273,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       }
     ],
     "closed": true,
@@ -276,7 +306,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -304,7 +336,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -332,7 +366,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -360,7 +396,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -388,7 +426,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -416,7 +456,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -444,7 +486,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -472,7 +516,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -500,7 +546,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -528,7 +576,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -556,7 +606,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -584,7 +636,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -612,7 +666,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -640,7 +696,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -668,7 +726,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -696,7 +756,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -724,7 +786,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -752,7 +816,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -780,7 +846,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -808,7 +876,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -836,7 +906,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -864,7 +936,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -892,7 +966,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -920,7 +996,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -948,7 +1026,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -976,7 +1056,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1004,7 +1086,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1032,7 +1116,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1060,7 +1146,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1088,7 +1176,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1116,7 +1206,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1144,7 +1236,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1172,7 +1266,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1200,7 +1296,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1228,7 +1326,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1256,7 +1356,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1284,7 +1386,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1312,7 +1416,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1340,7 +1446,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1368,7 +1476,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1396,7 +1506,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1424,7 +1536,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1452,7 +1566,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1480,7 +1596,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1508,7 +1626,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1536,7 +1656,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1564,7 +1686,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1592,7 +1716,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1620,7 +1746,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1648,7 +1776,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1676,7 +1806,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1704,7 +1836,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1732,7 +1866,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1760,7 +1896,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1788,7 +1926,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1816,7 +1956,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1844,7 +1986,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1872,7 +2016,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1900,7 +2046,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1928,7 +2076,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1956,7 +2106,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -1984,7 +2136,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2012,7 +2166,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2040,7 +2196,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2068,7 +2226,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2096,7 +2256,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2124,7 +2286,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2152,7 +2316,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2180,7 +2346,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2208,7 +2376,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2236,7 +2406,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2264,7 +2436,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2292,7 +2466,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2320,7 +2496,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2348,7 +2526,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2376,7 +2556,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2404,7 +2586,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2432,7 +2616,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2460,7 +2646,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2488,7 +2676,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2516,7 +2706,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2544,7 +2736,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2572,7 +2766,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2600,7 +2796,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2628,7 +2826,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2656,7 +2856,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2684,7 +2886,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2712,7 +2916,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2740,7 +2946,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2768,7 +2976,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2796,7 +3006,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2824,7 +3036,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2852,7 +3066,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2880,7 +3096,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2908,7 +3126,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2936,7 +3156,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2964,7 +3186,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -2992,7 +3216,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3020,7 +3246,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3048,7 +3276,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3076,7 +3306,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3104,7 +3336,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3132,7 +3366,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3160,7 +3396,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3188,7 +3426,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3216,7 +3456,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3244,7 +3486,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3272,7 +3516,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3300,7 +3546,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3328,7 +3576,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3356,7 +3606,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3384,7 +3636,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3412,7 +3666,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3440,7 +3696,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3468,7 +3726,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3496,7 +3756,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3524,7 +3786,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3552,7 +3816,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3580,7 +3846,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3608,7 +3876,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3636,7 +3906,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3664,7 +3936,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3692,7 +3966,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3720,7 +3996,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3748,7 +4026,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3776,7 +4056,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3804,7 +4086,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3832,7 +4116,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3860,7 +4146,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3888,7 +4176,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3916,7 +4206,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3944,7 +4236,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -3972,7 +4266,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4000,7 +4296,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4028,7 +4326,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4056,7 +4356,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4084,7 +4386,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4112,7 +4416,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4140,7 +4446,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4168,7 +4476,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4196,7 +4506,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4224,7 +4536,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4252,7 +4566,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4280,7 +4596,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4308,7 +4626,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4336,7 +4656,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4364,7 +4686,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4392,7 +4716,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4420,7 +4746,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4448,7 +4776,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4476,7 +4806,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4504,7 +4836,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4532,7 +4866,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4560,7 +4896,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4588,7 +4926,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4616,7 +4956,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4643,8 +4985,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4671,8 +5015,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4699,8 +5045,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4727,8 +5075,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4755,8 +5105,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4783,8 +5135,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4811,8 +5165,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4839,8 +5195,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4867,8 +5225,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4895,8 +5255,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4923,8 +5285,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4951,8 +5315,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -4979,8 +5345,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5007,8 +5375,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5035,8 +5405,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5063,8 +5435,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5091,8 +5465,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5119,8 +5495,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5147,8 +5525,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5175,8 +5555,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5203,8 +5585,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5231,8 +5615,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5259,8 +5645,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5287,8 +5675,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5315,8 +5705,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5343,8 +5735,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5371,8 +5765,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5399,8 +5795,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5427,8 +5825,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5455,8 +5855,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5483,8 +5885,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5511,8 +5915,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5539,8 +5945,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5567,8 +5975,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5595,8 +6005,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5623,8 +6035,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5651,8 +6065,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5679,8 +6095,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5707,8 +6125,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5735,8 +6155,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5763,8 +6185,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5791,8 +6215,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5819,8 +6245,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5847,8 +6275,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5875,8 +6305,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5903,8 +6335,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5931,8 +6365,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5959,8 +6395,10 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 10.0,
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -5988,7 +6426,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6016,7 +6456,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6044,7 +6486,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6072,7 +6516,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6100,7 +6546,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6128,7 +6576,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6156,7 +6606,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6184,7 +6636,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6212,7 +6666,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6240,7 +6696,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6268,7 +6726,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6296,7 +6756,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6324,7 +6786,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6352,7 +6816,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6380,7 +6846,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6408,7 +6876,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6436,7 +6906,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6464,7 +6936,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6492,7 +6966,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6520,7 +6996,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6548,7 +7026,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6576,7 +7056,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6604,7 +7086,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6632,7 +7116,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6660,7 +7146,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6688,7 +7176,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6716,7 +7206,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6744,7 +7236,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6772,7 +7266,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6800,7 +7296,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6828,7 +7326,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6856,7 +7356,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6884,7 +7386,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6912,7 +7416,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6940,7 +7446,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6968,7 +7476,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -6996,7 +7506,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7024,7 +7536,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7052,7 +7566,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7080,7 +7596,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7108,7 +7626,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7136,7 +7656,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7164,7 +7686,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7192,7 +7716,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7220,7 +7746,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7248,7 +7776,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7276,7 +7806,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7304,7 +7836,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7332,7 +7866,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7360,7 +7896,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7388,7 +7926,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7416,7 +7956,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7444,7 +7986,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7472,7 +8016,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7500,7 +8046,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7528,7 +8076,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7556,7 +8106,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7584,7 +8136,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7612,7 +8166,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7640,7 +8196,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7668,7 +8226,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7696,7 +8256,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7724,7 +8286,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7752,7 +8316,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7780,7 +8346,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7808,7 +8376,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7836,7 +8406,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7864,7 +8436,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7892,7 +8466,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7920,7 +8496,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7948,7 +8526,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -7976,7 +8556,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8004,7 +8586,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8032,7 +8616,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8060,7 +8646,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8088,7 +8676,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8116,7 +8706,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8144,7 +8736,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8172,7 +8766,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8200,7 +8796,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8228,7 +8826,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8256,7 +8856,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8284,7 +8886,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8312,7 +8916,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8340,7 +8946,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8368,7 +8976,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8396,7 +9006,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8424,7 +9036,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8452,7 +9066,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8480,7 +9096,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8508,7 +9126,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8536,7 +9156,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8564,7 +9186,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8592,7 +9216,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8620,7 +9246,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8648,7 +9276,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8676,7 +9306,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8704,7 +9336,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8732,7 +9366,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8760,7 +9396,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8788,7 +9426,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8816,7 +9456,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8844,7 +9486,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8872,7 +9516,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8900,7 +9546,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8928,7 +9576,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8956,7 +9606,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -8984,7 +9636,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9012,7 +9666,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9040,7 +9696,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9068,7 +9726,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9096,7 +9756,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9124,7 +9786,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9152,7 +9816,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9180,7 +9846,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9208,7 +9876,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9236,7 +9906,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9264,7 +9936,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9292,7 +9966,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9320,7 +9996,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9348,7 +10026,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9376,7 +10056,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9404,7 +10086,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9432,7 +10116,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9460,7 +10146,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9488,7 +10176,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9516,7 +10206,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9544,7 +10236,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9572,7 +10266,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9600,7 +10296,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9628,7 +10326,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9656,7 +10356,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9684,7 +10386,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9712,7 +10416,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9740,7 +10446,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9768,7 +10476,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9796,7 +10506,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9824,7 +10536,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9852,7 +10566,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9880,7 +10596,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9908,7 +10626,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9936,7 +10656,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9964,7 +10686,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -9992,7 +10716,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10020,7 +10746,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10048,7 +10776,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10076,7 +10806,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10104,7 +10836,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10132,7 +10866,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10160,7 +10896,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10188,7 +10926,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10216,7 +10956,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10244,7 +10986,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10272,7 +11016,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10300,7 +11046,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10328,7 +11076,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       },
       {
         "point": [
@@ -10356,7 +11106,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Gravel",
+        "right_runoff_surface": "Gravel"
       }
     ],
     "total_length": 918.7562,
@@ -13120,8 +13872,8 @@
             180.01906
           ],
           "end": [
-            238.39757,
-            182.12138
+            234.34981,
+            177.69243
           ]
         },
         "restitution": 0.42,
@@ -13133,12 +13885,12 @@
       {
         "segment": {
           "start": [
-            238.39757,
-            182.12138
+            234.34981,
+            177.69243
           ],
           "end": [
-            236.14554,
-            184.16104
+            232.20007,
+            179.64072
           ]
         },
         "restitution": 0.42,
@@ -13150,12 +13902,12 @@
       {
         "segment": {
           "start": [
-            236.14554,
-            184.16104
+            232.20007,
+            179.64072
           ],
           "end": [
-            233.86626,
-            186.13187
+            230.02728,
+            181.52075
           ]
         },
         "restitution": 0.42,
@@ -13167,12 +13919,12 @@
       {
         "segment": {
           "start": [
-            233.86626,
-            186.13187
+            230.02728,
+            181.52075
           ],
           "end": [
-            231.5665,
-            188.02771
+            227.83899,
+            183.32605
           ]
         },
         "restitution": 0.42,
@@ -13184,12 +13936,12 @@
       {
         "segment": {
           "start": [
-            231.5665,
-            188.02771
+            227.83899,
+            183.32605
           ],
           "end": [
-            229.25304,
-            189.84267
+            225.6428,
+            185.05035
           ]
         },
         "restitution": 0.42,
@@ -13201,12 +13953,12 @@
       {
         "segment": {
           "start": [
-            229.25304,
-            189.84267
+            225.6428,
+            185.05035
           ],
           "end": [
-            226.93294,
-            191.5708
+            223.44681,
+            186.68747
           ]
         },
         "restitution": 0.42,
@@ -13218,12 +13970,12 @@
       {
         "segment": {
           "start": [
-            226.93294,
-            191.5708
+            223.44681,
+            186.68747
           ],
           "end": [
-            224.61346,
-            193.2063
+            221.25941,
+            188.23134
           ]
         },
         "restitution": 0.42,
@@ -13235,12 +13987,12 @@
       {
         "segment": {
           "start": [
-            224.61346,
-            193.2063
+            221.25941,
+            188.23134
           ],
           "end": [
-            222.30217,
-            194.74348
+            219.08945,
+            189.6761
           ]
         },
         "restitution": 0.42,
@@ -13252,12 +14004,12 @@
       {
         "segment": {
           "start": [
-            222.30217,
-            194.74348
+            219.08945,
+            189.6761
           ],
           "end": [
-            220.00687,
-            196.17676
+            216.94621,
+            191.0161
           ]
         },
         "restitution": 0.42,
@@ -13269,12 +14021,12 @@
       {
         "segment": {
           "start": [
-            220.00687,
-            196.17676
+            216.94621,
+            191.0161
           ],
           "end": [
-            217.73566,
-            197.50085
+            214.8395,
+            192.24612
           ]
         },
         "restitution": 0.42,
@@ -13286,12 +14038,12 @@
       {
         "segment": {
           "start": [
-            217.73566,
-            197.50085
+            214.8395,
+            192.24612
           ],
           "end": [
-            215.49739,
-            198.71054
+            212.78021,
+            193.36105
           ]
         },
         "restitution": 0.42,
@@ -13303,12 +14055,12 @@
       {
         "segment": {
           "start": [
-            215.49739,
-            198.71054
+            212.78021,
+            193.36105
           ],
           "end": [
-            213.30075,
-            199.80118
+            210.77919,
+            194.35675
           ]
         },
         "restitution": 0.42,
@@ -13320,12 +14072,12 @@
       {
         "segment": {
           "start": [
-            213.30075,
-            199.80118
+            210.77919,
+            194.35675
           ],
           "end": [
-            211.1603,
-            200.76654
+            208.85646,
+            195.22647
           ]
         },
         "restitution": 0.42,
@@ -13337,12 +14089,12 @@
       {
         "segment": {
           "start": [
-            211.1603,
-            200.76654
+            208.85646,
+            195.22647
           ],
           "end": [
-            209.0086,
-            201.6094
+            206.93643,
+            195.97858
           ]
         },
         "restitution": 0.42,
@@ -13354,12 +14106,12 @@
       {
         "segment": {
           "start": [
-            209.0086,
-            201.6094
+            206.93643,
+            195.97858
           ],
           "end": [
-            206.77895,
-            202.3783
+            204.93399,
+            196.66899
           ]
         },
         "restitution": 0.42,
@@ -13371,12 +14123,12 @@
       {
         "segment": {
           "start": [
-            206.77895,
-            202.3783
+            204.93399,
+            196.66899
           ],
           "end": [
-            204.4712,
-            203.0748
+            202.84436,
+            197.29956
           ]
         },
         "restitution": 0.42,
@@ -13388,12 +14140,12 @@
       {
         "segment": {
           "start": [
-            204.4712,
-            203.0748
+            202.84436,
+            197.29956
           ],
           "end": [
-            202.09402,
-            203.6973
+            200.67682,
+            197.86707
           ]
         },
         "restitution": 0.42,
@@ -13405,12 +14157,12 @@
       {
         "segment": {
           "start": [
-            202.09402,
-            203.6973
+            200.67682,
+            197.86707
           ],
           "end": [
-            199.65617,
-            204.24463
+            198.44089,
+            198.369
           ]
         },
         "restitution": 0.42,
@@ -13422,12 +14174,12 @@
       {
         "segment": {
           "start": [
-            199.65617,
-            204.24463
+            198.44089,
+            198.369
           ],
           "end": [
-            197.1667,
-            204.71596
+            196.14642,
+            198.80334
           ]
         },
         "restitution": 0.42,
@@ -13439,12 +14191,12 @@
       {
         "segment": {
           "start": [
-            197.1667,
-            204.71596
+            196.14642,
+            198.80334
           ],
           "end": [
-            194.63467,
-            205.11075
+            193.80339,
+            199.16862
           ]
         },
         "restitution": 0.42,
@@ -13456,12 +14208,12 @@
       {
         "segment": {
           "start": [
-            194.63467,
-            205.11075
+            193.80339,
+            199.16862
           ],
           "end": [
-            192.06909,
-            205.42879
+            191.42166,
+            199.4638
           ]
         },
         "restitution": 0.42,
@@ -13473,12 +14225,12 @@
       {
         "segment": {
           "start": [
-            192.06909,
-            205.42879
+            191.42166,
+            199.4638
           ],
           "end": [
-            189.47893,
-            205.6701
+            189.011,
+            199.68839
           ]
         },
         "restitution": 0.42,
@@ -13490,12 +14242,12 @@
       {
         "segment": {
           "start": [
-            189.47893,
-            205.6701
+            189.011,
+            199.68839
           ],
           "end": [
-            186.87323,
-            205.83504
+            186.58138,
+            199.84213
           ]
         },
         "restitution": 0.42,
@@ -13507,12 +14259,12 @@
       {
         "segment": {
           "start": [
-            186.87323,
-            205.83504
+            186.58138,
+            199.84213
           ],
           "end": [
-            184.26125,
-            205.92407
+            184.14296,
+            199.92525
           ]
         },
         "restitution": 0.42,
@@ -13524,12 +14276,12 @@
       {
         "segment": {
           "start": [
-            184.26125,
-            205.92407
+            184.14296,
+            199.92525
           ],
           "end": [
-            181.65204,
-            205.9379
+            181.70576,
+            199.93814
           ]
         },
         "restitution": 0.42,
@@ -13541,12 +14293,12 @@
       {
         "segment": {
           "start": [
-            181.65204,
-            205.9379
+            181.70576,
+            199.93814
           ],
           "end": [
-            179.05464,
-            205.87743
+            179.27963,
+            199.88165
           ]
         },
         "restitution": 0.42,
@@ -13558,12 +14310,12 @@
       {
         "segment": {
           "start": [
-            179.05464,
-            205.87743
+            179.27963,
+            199.88165
           ],
           "end": [
-            176.47821,
-            205.74376
+            176.87468,
+            199.75688
           ]
         },
         "restitution": 0.42,
@@ -13575,12 +14327,12 @@
       {
         "segment": {
           "start": [
-            176.47821,
-            205.74376
+            176.87468,
+            199.75688
           ],
           "end": [
-            173.93207,
-            205.53827
+            174.50125,
+            199.56532
           ]
         },
         "restitution": 0.42,
@@ -13592,12 +14344,12 @@
       {
         "segment": {
           "start": [
-            173.93207,
-            205.53827
+            174.50125,
+            199.56532
           ],
           "end": [
-            171.42545,
-            205.26239
+            172.1696,
+            199.30872
           ]
         },
         "restitution": 0.42,
@@ -13609,12 +14361,12 @@
       {
         "segment": {
           "start": [
-            171.42545,
-            205.26239
+            172.1696,
+            199.30872
           ],
           "end": [
-            168.96767,
-            204.91795
+            169.89003,
+            198.98927
           ]
         },
         "restitution": 0.42,
@@ -13626,12 +14378,12 @@
       {
         "segment": {
           "start": [
-            168.96767,
-            204.91795
+            169.89003,
+            198.98927
           ],
           "end": [
-            166.5682,
-            204.50699
+            167.67319,
+            198.6096
           ]
         },
         "restitution": 0.42,
@@ -13643,12 +14395,12 @@
       {
         "segment": {
           "start": [
-            166.5682,
-            204.50699
+            167.67319,
+            198.6096
           ],
           "end": [
-            164.23663,
-            204.03188
+            165.52982,
+            198.17288
           ]
         },
         "restitution": 0.42,
@@ -13660,12 +14412,12 @@
       {
         "segment": {
           "start": [
-            164.23663,
-            204.03188
+            165.52982,
+            198.17288
           ],
           "end": [
-            161.98262,
-            203.49533
+            163.4708,
+            197.68282
           ]
         },
         "restitution": 0.42,
@@ -13677,12 +14429,12 @@
       {
         "segment": {
           "start": [
-            161.98262,
-            203.49533
+            163.4708,
+            197.68282
           ],
           "end": [
-            159.81592,
-            202.90063
+            161.50723,
+            197.14395
           ]
         },
         "restitution": 0.42,
@@ -13694,12 +14446,12 @@
       {
         "segment": {
           "start": [
-            159.81592,
-            202.90063
+            161.50723,
+            197.14395
           ],
           "end": [
-            157.7468,
-            202.25163
+            159.65094,
+            196.5618
           ]
         },
         "restitution": 0.42,
@@ -13711,12 +14463,12 @@
       {
         "segment": {
           "start": [
-            157.7468,
-            202.25163
+            159.65094,
+            196.5618
           ],
           "end": [
-            155.7849,
-            201.5526
+            157.91284,
+            195.94263
           ]
         },
         "restitution": 0.42,
@@ -13728,12 +14480,12 @@
       {
         "segment": {
           "start": [
-            155.7849,
-            201.5526
+            157.91284,
+            195.94263
           ],
           "end": [
-            154.09645,
-            200.87755
+            156.55434,
+            195.40408
           ]
         },
         "restitution": 0.42,
@@ -13745,12 +14497,12 @@
       {
         "segment": {
           "start": [
-            154.09645,
-            200.87755
+            156.55434,
+            195.40408
           ],
           "end": [
-            152.77289,
-            200.22661
+            155.72113,
+            195.00092
           ]
         },
         "restitution": 0.42,
@@ -13762,12 +14514,12 @@
       {
         "segment": {
           "start": [
-            152.77289,
-            200.22661
+            155.72113,
+            195.00092
           ],
           "end": [
-            151.54605,
-            199.44513
+            154.98932,
+            194.53148
           ]
         },
         "restitution": 0.42,
@@ -13779,12 +14531,12 @@
       {
         "segment": {
           "start": [
-            151.54605,
-            199.44513
+            154.98932,
+            194.53148
           ],
           "end": [
-            150.24652,
-            198.4416
+            154.0917,
+            193.83568
           ]
         },
         "restitution": 0.42,
@@ -13796,12 +14548,12 @@
       {
         "segment": {
           "start": [
-            150.24652,
-            198.4416
+            154.0917,
+            193.83568
           ],
           "end": [
-            148.8873,
-            197.21274
+            153.05301,
+            192.89453
           ]
         },
         "restitution": 0.42,
@@ -13813,12 +14565,12 @@
       {
         "segment": {
           "start": [
-            148.8873,
-            197.21274
+            153.05301,
+            192.89453
           ],
           "end": [
-            147.48418,
-            195.76624
+            151.9024,
+            191.70677
           ]
         },
         "restitution": 0.42,
@@ -13830,12 +14582,12 @@
       {
         "segment": {
           "start": [
-            147.48418,
-            195.76624
+            151.9024,
+            191.70677
           ],
           "end": [
-            146.05156,
-            194.11795
+            150.66685,
+            190.28403
           ]
         },
         "restitution": 0.42,
@@ -13847,12 +14599,12 @@
       {
         "segment": {
           "start": [
-            146.05156,
-            194.11795
+            150.66685,
+            190.28403
           ],
           "end": [
-            144.60075,
-            192.28862
+            149.36836,
+            188.64584
           ]
         },
         "restitution": 0.42,
@@ -13864,12 +14616,12 @@
       {
         "segment": {
           "start": [
-            144.60075,
-            192.28862
+            149.36836,
+            188.64584
           ],
           "end": [
-            143.1393,
-            190.3015
+            148.02287,
+            186.81572
           ]
         },
         "restitution": 0.42,
@@ -13881,12 +14633,12 @@
       {
         "segment": {
           "start": [
-            143.1393,
-            190.3015
+            148.02287,
+            186.81572
           ],
           "end": [
-            141.67142,
-            188.18094
+            146.64105,
+            184.819
           ]
         },
         "restitution": 0.42,
@@ -13898,12 +14650,12 @@
       {
         "segment": {
           "start": [
-            141.67142,
-            188.18094
+            146.64105,
+            184.819
           ],
           "end": [
-            140.19838,
-            185.95157
+            145.22885,
+            182.68137
           ]
         },
         "restitution": 0.42,
@@ -13915,12 +14667,12 @@
       {
         "segment": {
           "start": [
-            140.19838,
-            185.95157
+            145.22885,
+            182.68137
           ],
           "end": [
-            138.71895,
-            183.63747
+            143.78821,
+            180.4277
           ]
         },
         "restitution": 0.42,
@@ -13932,8 +14684,8 @@
       {
         "segment": {
           "start": [
-            138.71895,
-            183.63747
+            143.78821,
+            180.4277
           ],
           "end": [
             137.22966,
@@ -23334,196 +24086,196 @@
         180.01906
       ],
       [
-        238.39757,
-        182.12138
+        234.34981,
+        177.69243
       ],
       [
-        236.14554,
-        184.16104
+        232.20007,
+        179.64072
       ],
       [
-        233.86626,
-        186.13187
+        230.02728,
+        181.52075
       ],
       [
-        231.5665,
-        188.02771
+        227.83899,
+        183.32605
       ],
       [
-        229.25304,
-        189.84267
+        225.6428,
+        185.05035
       ],
       [
-        226.93294,
-        191.5708
+        223.44681,
+        186.68747
       ],
       [
-        224.61346,
-        193.2063
+        221.25941,
+        188.23134
       ],
       [
-        222.30217,
-        194.74348
+        219.08945,
+        189.6761
       ],
       [
-        220.00687,
-        196.17676
+        216.94621,
+        191.0161
       ],
       [
-        217.73566,
-        197.50085
+        214.8395,
+        192.24612
       ],
       [
-        215.49739,
-        198.71054
+        212.78021,
+        193.36105
       ],
       [
-        213.30075,
-        199.80118
+        210.77919,
+        194.35675
       ],
       [
-        211.1603,
-        200.76654
+        208.85646,
+        195.22647
       ],
       [
-        209.0086,
-        201.6094
+        206.93643,
+        195.97858
       ],
       [
-        206.77895,
-        202.3783
+        204.93399,
+        196.66899
       ],
       [
-        204.4712,
-        203.0748
+        202.84436,
+        197.29956
       ],
       [
-        202.09402,
-        203.6973
+        200.67682,
+        197.86707
       ],
       [
-        199.65617,
-        204.24463
+        198.44089,
+        198.369
       ],
       [
-        197.1667,
-        204.71596
+        196.14642,
+        198.80334
       ],
       [
-        194.63467,
-        205.11075
+        193.80339,
+        199.16862
       ],
       [
-        192.06909,
-        205.42879
+        191.42166,
+        199.4638
       ],
       [
-        189.47893,
-        205.6701
+        189.011,
+        199.68839
       ],
       [
-        186.87323,
-        205.83504
+        186.58138,
+        199.84213
       ],
       [
-        184.26125,
-        205.92407
+        184.14296,
+        199.92525
       ],
       [
-        181.65204,
-        205.9379
+        181.70576,
+        199.93814
       ],
       [
-        179.05464,
-        205.87743
+        179.27963,
+        199.88165
       ],
       [
-        176.47821,
-        205.74376
+        176.87468,
+        199.75688
       ],
       [
-        173.93207,
-        205.53827
+        174.50125,
+        199.56532
       ],
       [
-        171.42545,
-        205.26239
+        172.1696,
+        199.30872
       ],
       [
-        168.96767,
-        204.91795
+        169.89003,
+        198.98927
       ],
       [
-        166.5682,
-        204.50699
+        167.67319,
+        198.6096
       ],
       [
-        164.23663,
-        204.03188
+        165.52982,
+        198.17288
       ],
       [
-        161.98262,
-        203.49533
+        163.4708,
+        197.68282
       ],
       [
-        159.81592,
-        202.90063
+        161.50723,
+        197.14395
       ],
       [
-        157.7468,
-        202.25163
+        159.65094,
+        196.5618
       ],
       [
-        155.7849,
-        201.5526
+        157.91284,
+        195.94263
       ],
       [
-        154.09645,
-        200.87755
+        156.55434,
+        195.40408
       ],
       [
-        152.77289,
-        200.22661
+        155.72113,
+        195.00092
       ],
       [
-        151.54605,
-        199.44513
+        154.98932,
+        194.53148
       ],
       [
-        150.24652,
-        198.4416
+        154.0917,
+        193.83568
       ],
       [
-        148.8873,
-        197.21274
+        153.05301,
+        192.89453
       ],
       [
-        147.48418,
-        195.76624
+        151.9024,
+        191.70677
       ],
       [
-        146.05156,
-        194.11795
+        150.66685,
+        190.28403
       ],
       [
-        144.60075,
-        192.28862
+        149.36836,
+        188.64584
       ],
       [
-        143.1393,
-        190.3015
+        148.02287,
+        186.81572
       ],
       [
-        141.67142,
-        188.18094
+        146.64105,
+        184.819
       ],
       [
-        140.19838,
-        185.95157
+        145.22885,
+        182.68137
       ],
       [
-        138.71895,
-        183.63747
+        143.78821,
+        180.4277
       ],
       [
         137.22966,
@@ -25997,9 +26749,5 @@
     "classic"
   ],
   "scale": "1:1",
-  "country_code": "INT",
-  "country_name": "International",
-  "min_width": 12.0,
-  "max_width": 14.0,
   "is_inspired": false
 }

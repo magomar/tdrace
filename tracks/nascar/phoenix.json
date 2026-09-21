@@ -1,6 +1,6 @@
 {
   "name": "Phoenix Raceway",
-  "description": "1.0-mile low-banked tri-oval in Avondale, Arizona featuring the famous dogleg cut across the apron and 8\u00b0-11\u00b0 progressive banking.",
+  "description": "1.0-mile low-banked tri-oval in Avondale, Arizona featuring the famous dogleg cut across the apron and 8°-11° progressive banking.",
   "category": "main",
   "kind": {
     "type": "circuit"
@@ -41256,9 +41256,5 @@
     "nascar"
   ],
   "scale": "1:1",
-  "country_code": "US",
-  "country_name": "United States",
-  "min_width": 18.0,
-  "max_width": 18.0,
   "is_inspired": false
 }

@@ -101,7 +101,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
     /// Circuito Internazionale Napoli (Sarno, Italy): High-Speed Temple of Speed
     pub fn track_sarno() -> Track {
@@ -179,7 +179,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
     /// Karting Genk (Genk, Belgium): Home of Champions
     pub fn track_genk() -> Track {
@@ -255,7 +255,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
     /// PF International Kart Circuit (PFI, UK): Elevated Flyover Crossover Bridge
     pub fn track_pfi() -> Track {
@@ -333,7 +333,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
     /// Circuito Internacional de Zuera (Zaragoza, Spain): Ultra-Fast Supertrack
     pub fn track_zuera() -> Track {
@@ -411,7 +411,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
     /// Le Mans Karting International (Le Mans, France): Alain Prost CIK Circuit
     pub fn track_le_mans() -> Track {
@@ -487,7 +487,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
     /// Kartodromo Internacional do Algarve (Portimao, Portugal): Rollercoaster Track
     pub fn track_portimao() -> Track {
@@ -565,7 +565,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
     /// Franciacorta Karting Track (Castrezzato, Italy): World Championship Benchmark
     pub fn track_franciacorta() -> Track {
@@ -641,7 +641,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Prokart Raceland Wackersdorf (Wackersdorf, Germany): CIK-FIA World Championship Circuit
@@ -718,7 +718,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Kristianstad Karting Klubb (Åsum Ring, Sweden): Scandinavian World Championship Circuit
@@ -795,7 +795,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Circuito Internazionale 7 Laghi (Castelletto di Branduzzo, Italy): Technical Proving Ground
@@ -872,7 +872,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Schweppermannring Ampfing (Ampfing, Germany): Outdoor Kartring Arena
@@ -947,7 +947,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Silverstone National Karting Circuit (Silverstone, UK): Agile National Sprint Complex
@@ -1018,7 +1018,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Kartodromo Internacional Lucas Guerrero (Valencia, Spain): CIK-FIA Grade 1 Supertrack
@@ -1097,7 +1097,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Kartcenter Campillos (Málaga, Spain): FIA World Championship Venue
@@ -1176,7 +1176,7 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 }
 

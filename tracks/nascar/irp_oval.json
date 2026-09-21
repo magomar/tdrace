@@ -34387,9 +34387,5 @@
     "nascar"
   ],
   "scale": "1:1",
-  "country_code": "US",
-  "country_name": "United States",
-  "min_width": 16.0,
-  "max_width": 16.0,
   "is_inspired": false
 }

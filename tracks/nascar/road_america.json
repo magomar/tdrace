@@ -1509,10 +1509,10 @@
         ],
         "tangent": [
           1.0,
-          -8.1859005e-05
+          -0.000081859005
         ],
         "normal": [
-          8.1859005e-05,
+          0.000081859005,
           1.0
         ],
         "distance": 149.59651,
@@ -1565,10 +1565,10 @@
         ],
         "tangent": [
           1.0,
-          8.186106e-05
+          0.00008186106
         ],
         "normal": [
-          -8.186106e-05,
+          -0.00008186106,
           1.0
         ],
         "distance": 158.07983,
@@ -55020,10 +55020,6 @@
   "modules": [
     "nascar"
   ],
-  "scale": "1:2",
-  "country_code": "US",
-  "country_name": "United States",
-  "min_width": 14.0,
-  "max_width": 15.0,
+  "scale": "1:1",
   "is_inspired": false
 }

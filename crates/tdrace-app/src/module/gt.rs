@@ -93,7 +93,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Circuit de Spa-Francorchamps: Belgian Ardennes rollercoaster featuring Eau Rouge and Pouhon.
@@ -173,7 +173,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Silverstone Grand Prix Circuit: High-speed sweeping esses through Maggotts, Becketts and Chapel.
@@ -251,7 +251,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Circuit de Monaco: Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.
@@ -325,7 +325,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Suzuka International Racing Course: Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.
@@ -407,7 +407,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Autodromo Jose Carlos Pace (Interlagos): Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.
@@ -483,7 +483,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Circuit Gilles Villeneuve (Montreal): High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.
@@ -559,7 +559,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Red Bull Ring (Spielberg): High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.
@@ -633,7 +633,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Circuit de Barcelona-Catalunya: Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.
@@ -709,7 +709,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Circuit Zandvoort: Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.
@@ -785,7 +785,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Bahrain International Circuit (Sakhir): High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.
@@ -863,7 +863,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Marina Bay Street Circuit (Singapore): High-intensity Singapore night race through the dazzling city streets and harbor waterfront.
@@ -941,7 +941,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Circuit of the Americas (COTA): Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.
@@ -1019,7 +1019,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// MadRing Circuito de Madrid: Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.
@@ -1097,7 +1097,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Nürburgring Grand Prix-Strecke: Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.
@@ -1175,7 +1175,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Mount Panorama (Bathurst): The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.
@@ -1255,7 +1255,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Autodromo Internacional do Algarve: Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.
@@ -1331,7 +1331,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
     /// Circuit de la Sarthe (Le Mans): The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.
@@ -1415,7 +1415,7 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
-        }
+        }.with_default_runoff_surfaces()
     }
 
 

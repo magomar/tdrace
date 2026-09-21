@@ -21,7 +21,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -37,7 +39,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -53,7 +57,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -69,7 +75,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -85,7 +93,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -101,7 +111,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -117,7 +129,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -133,7 +147,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -149,7 +165,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -165,7 +183,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -181,7 +201,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       }
     ],
     "closed": true,
@@ -212,7 +234,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -240,7 +264,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -268,7 +294,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -296,7 +324,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -324,7 +354,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -352,7 +384,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -380,7 +414,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -408,7 +444,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -436,7 +474,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -464,7 +504,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -492,7 +534,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -520,7 +564,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -548,7 +594,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -576,7 +624,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -604,7 +654,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -632,7 +684,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -660,7 +714,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -688,7 +744,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -716,7 +774,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -744,7 +804,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -772,7 +834,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -800,7 +864,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -828,7 +894,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -856,7 +924,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -884,7 +954,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -912,7 +984,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -940,7 +1014,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -968,7 +1044,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -996,7 +1074,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1024,7 +1104,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1052,7 +1134,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1080,7 +1164,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1108,7 +1194,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1136,7 +1224,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1164,7 +1254,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1192,7 +1284,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1220,7 +1314,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1248,7 +1344,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1276,7 +1374,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1304,7 +1404,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1332,7 +1434,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1360,7 +1464,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1388,7 +1494,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1416,7 +1524,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1444,7 +1554,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1472,7 +1584,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1500,7 +1614,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1528,7 +1644,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1556,7 +1674,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1584,7 +1704,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1612,7 +1734,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1640,7 +1764,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1668,7 +1794,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1696,7 +1824,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1724,7 +1854,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1752,7 +1884,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1780,7 +1914,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1808,7 +1944,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1836,7 +1974,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1864,7 +2004,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1892,7 +2034,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1920,7 +2064,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1948,7 +2094,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -1976,7 +2124,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2004,7 +2154,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2032,7 +2184,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2060,7 +2214,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2088,7 +2244,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2116,7 +2274,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2144,7 +2304,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2172,7 +2334,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2200,7 +2364,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2228,7 +2394,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2256,7 +2424,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2284,7 +2454,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2312,7 +2484,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2340,7 +2514,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2368,7 +2544,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2396,7 +2574,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2424,7 +2604,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2452,7 +2634,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2480,7 +2664,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2508,7 +2694,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2536,7 +2724,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2564,7 +2754,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2592,7 +2784,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2620,7 +2814,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2648,7 +2844,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2676,7 +2874,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2704,7 +2904,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2732,7 +2934,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2760,7 +2964,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2788,7 +2994,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2816,7 +3024,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2844,7 +3054,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2872,7 +3084,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2900,7 +3114,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2928,7 +3144,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2956,7 +3174,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -2984,7 +3204,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3012,7 +3234,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3040,7 +3264,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3068,7 +3294,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3096,7 +3324,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3124,7 +3354,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3152,7 +3384,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3180,7 +3414,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3208,7 +3444,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3236,7 +3474,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3264,7 +3504,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3292,7 +3534,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3320,7 +3564,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3348,7 +3594,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3376,7 +3624,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3404,7 +3654,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3432,7 +3684,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3460,7 +3714,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3488,7 +3744,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3516,7 +3774,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3544,7 +3804,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3572,7 +3834,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3600,7 +3864,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3628,7 +3894,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3656,7 +3924,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3684,7 +3954,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3712,7 +3984,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3740,7 +4014,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3768,7 +4044,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3796,7 +4074,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3824,7 +4104,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3852,7 +4134,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3880,7 +4164,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3908,7 +4194,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3936,7 +4224,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3964,7 +4254,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -3992,7 +4284,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4020,7 +4314,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4048,7 +4344,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4076,7 +4374,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4104,7 +4404,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4132,7 +4434,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4160,7 +4464,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4188,7 +4494,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4216,7 +4524,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4244,7 +4554,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4272,7 +4584,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4300,7 +4614,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4328,7 +4644,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4356,7 +4674,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4384,7 +4704,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4412,7 +4734,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4440,7 +4764,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4468,7 +4794,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4496,7 +4824,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4524,7 +4854,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4552,7 +4884,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4580,7 +4914,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4608,7 +4944,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4636,7 +4974,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4664,7 +5004,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4692,7 +5034,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4720,7 +5064,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4748,7 +5094,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4776,7 +5124,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4804,7 +5154,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4832,7 +5184,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4860,7 +5214,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4888,7 +5244,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4916,7 +5274,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4944,7 +5304,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -4972,7 +5334,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5000,7 +5364,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5028,7 +5394,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5056,7 +5424,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5084,7 +5454,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5112,7 +5484,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5140,7 +5514,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5168,7 +5544,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5196,7 +5574,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5224,7 +5604,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5252,7 +5634,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5280,7 +5664,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5308,7 +5694,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5336,7 +5724,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5364,7 +5754,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5392,7 +5784,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5420,7 +5814,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5448,7 +5844,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5476,7 +5874,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5504,7 +5904,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5532,7 +5934,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5560,7 +5964,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5588,7 +5994,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5616,7 +6024,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5644,7 +6054,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5672,7 +6084,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5700,7 +6114,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5728,7 +6144,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5756,7 +6174,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5784,7 +6204,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5812,7 +6234,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5840,7 +6264,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5868,7 +6294,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5896,7 +6324,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5924,7 +6354,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5952,7 +6384,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -5980,7 +6414,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6008,7 +6444,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6036,7 +6474,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6064,7 +6504,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6092,7 +6534,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6120,7 +6564,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6148,7 +6594,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6176,7 +6624,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6204,7 +6654,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6232,7 +6684,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6260,7 +6714,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6288,7 +6744,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6316,7 +6774,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6344,7 +6804,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6372,7 +6834,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6400,7 +6864,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6428,7 +6894,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6456,7 +6924,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6484,7 +6954,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6512,7 +6984,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6540,7 +7014,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6568,7 +7044,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6596,7 +7074,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6624,7 +7104,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6652,7 +7134,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6680,7 +7164,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6708,7 +7194,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6736,7 +7224,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6764,7 +7254,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6792,7 +7284,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6820,7 +7314,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6848,7 +7344,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6876,7 +7374,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6904,7 +7404,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6932,7 +7434,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6960,7 +7464,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -6988,7 +7494,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7016,7 +7524,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7044,7 +7554,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7072,7 +7584,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7100,7 +7614,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7128,7 +7644,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7156,7 +7674,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7184,7 +7704,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7212,7 +7734,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7240,7 +7764,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7268,7 +7794,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7296,7 +7824,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7324,7 +7854,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7352,7 +7884,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7380,7 +7914,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7408,7 +7944,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7436,7 +7974,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7464,7 +8004,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7492,7 +8034,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7520,7 +8064,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7548,7 +8094,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7576,7 +8124,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       },
       {
         "point": [
@@ -7604,7 +8154,9 @@
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
-        "right_wall_distance": null
+        "right_wall_distance": null,
+        "left_runoff_surface": "Concrete",
+        "right_runoff_surface": "Concrete"
       }
     ],
     "total_length": 383.20676,
@@ -19041,9 +19593,5 @@
     "kart"
   ],
   "scale": "1:1",
-  "country_code": "INT",
-  "country_name": "International",
-  "min_width": 7.5,
-  "max_width": 8.0,
   "is_inspired": false
 }

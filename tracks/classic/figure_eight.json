@@ -22,7 +22,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -39,7 +41,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -56,7 +60,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -73,7 +79,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -90,7 +98,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -107,7 +117,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -124,7 +136,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -141,7 +155,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -158,7 +174,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -175,7 +193,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -192,7 +212,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -209,7 +231,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -226,7 +250,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -243,7 +269,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -260,7 +288,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -277,7 +307,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -294,7 +326,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -311,7 +345,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -328,7 +364,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -345,7 +383,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -362,7 +402,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -379,7 +421,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -396,7 +440,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -413,7 +459,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       }
     ],
     "closed": true,
@@ -445,7 +493,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -474,7 +524,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -503,7 +555,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -532,7 +586,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -561,7 +617,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -590,7 +648,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -619,7 +679,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -648,7 +710,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -677,7 +741,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -706,7 +772,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -735,7 +803,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -764,7 +834,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -793,7 +865,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -822,7 +896,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -851,7 +927,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -880,7 +958,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -909,7 +989,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -938,7 +1020,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -967,7 +1051,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -996,7 +1082,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1025,7 +1113,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1054,7 +1144,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1083,7 +1175,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1112,7 +1206,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1141,7 +1237,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1170,7 +1268,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1199,7 +1299,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1228,7 +1330,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1257,7 +1361,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1286,7 +1392,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1315,7 +1423,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1344,7 +1454,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1373,7 +1485,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1402,7 +1516,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1431,7 +1547,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1460,7 +1578,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1489,7 +1609,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1518,7 +1640,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1547,7 +1671,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1576,7 +1702,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1605,7 +1733,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1634,7 +1764,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1663,7 +1795,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1692,7 +1826,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1721,7 +1857,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1750,7 +1888,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1779,7 +1919,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1808,7 +1950,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1837,7 +1981,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1866,7 +2012,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1895,7 +2043,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1924,7 +2074,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1953,7 +2105,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -1982,7 +2136,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2011,7 +2167,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2040,7 +2198,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2069,7 +2229,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2098,7 +2260,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2127,7 +2291,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2156,7 +2322,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2185,7 +2353,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2214,7 +2384,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2243,7 +2415,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2272,7 +2446,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2301,7 +2477,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2330,7 +2508,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2359,7 +2539,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2388,7 +2570,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2417,7 +2601,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2446,7 +2632,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2475,7 +2663,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2504,7 +2694,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2533,7 +2725,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2562,7 +2756,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2591,7 +2787,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2620,7 +2818,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2649,7 +2849,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2678,7 +2880,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2707,7 +2911,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2736,7 +2942,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2765,7 +2973,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2794,7 +3004,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2823,7 +3035,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2852,7 +3066,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2881,7 +3097,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2910,7 +3128,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2939,7 +3159,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2968,7 +3190,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -2997,7 +3221,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3026,7 +3252,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3055,7 +3283,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3084,7 +3314,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3113,7 +3345,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3142,7 +3376,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3171,7 +3407,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3200,7 +3438,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3229,7 +3469,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3258,7 +3500,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3287,7 +3531,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3316,7 +3562,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3345,7 +3593,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3374,7 +3624,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3403,7 +3655,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3432,7 +3686,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3461,7 +3717,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3490,7 +3748,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3519,7 +3779,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3548,7 +3810,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3577,7 +3841,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3606,7 +3872,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3635,7 +3903,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3664,7 +3934,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3693,7 +3965,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3722,7 +3996,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3751,7 +4027,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3780,7 +4058,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3809,7 +4089,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3838,7 +4120,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3867,7 +4151,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3896,7 +4182,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3925,7 +4213,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3954,7 +4244,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -3983,7 +4275,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4012,7 +4306,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4041,7 +4337,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4070,7 +4368,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4099,7 +4399,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4128,7 +4430,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4157,7 +4461,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4186,7 +4492,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4215,7 +4523,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4244,7 +4554,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4273,7 +4585,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4302,7 +4616,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4331,7 +4647,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4360,7 +4678,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4389,7 +4709,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4418,7 +4740,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4447,7 +4771,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4476,7 +4802,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4505,7 +4833,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4534,7 +4864,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4563,7 +4895,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4592,7 +4926,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4621,7 +4957,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4650,7 +4988,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4679,7 +5019,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4708,7 +5050,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4737,7 +5081,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4766,7 +5112,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4795,7 +5143,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4824,7 +5174,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4853,7 +5205,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4882,7 +5236,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4911,7 +5267,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4940,7 +5298,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4969,7 +5329,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -4998,7 +5360,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5027,7 +5391,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5056,7 +5422,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5085,7 +5453,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5114,7 +5484,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5143,7 +5515,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5172,7 +5546,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5201,7 +5577,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5230,7 +5608,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5259,7 +5639,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5288,7 +5670,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5317,7 +5701,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5346,7 +5732,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5375,7 +5763,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5404,7 +5794,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5433,7 +5825,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5462,7 +5856,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5491,7 +5887,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5520,7 +5918,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5549,7 +5949,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5578,7 +5980,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5607,7 +6011,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5636,7 +6042,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5665,7 +6073,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5694,7 +6104,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5723,7 +6135,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5752,7 +6166,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5781,7 +6197,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5810,7 +6228,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5839,7 +6259,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5868,7 +6290,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5897,7 +6321,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5926,7 +6352,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5955,7 +6383,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -5984,7 +6414,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6013,7 +6445,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6042,7 +6476,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6071,7 +6507,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6100,7 +6538,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6129,7 +6569,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6158,7 +6600,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6187,7 +6631,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6216,7 +6662,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6245,7 +6693,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6274,7 +6724,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6303,7 +6755,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6332,7 +6786,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6361,7 +6817,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6390,7 +6848,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6419,7 +6879,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6448,7 +6910,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6477,7 +6941,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6506,7 +6972,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6535,7 +7003,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6564,7 +7034,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6593,7 +7065,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6622,7 +7096,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6651,7 +7127,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6680,7 +7158,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6688,12 +7168,12 @@
           0.0
         ],
         "tangent": [
-          3.065362e-05,
+          0.00003065362,
           -1.0
         ],
         "normal": [
           1.0,
-          3.065362e-05
+          0.00003065362
         ],
         "distance": 309.64664,
         "width": 13.5,
@@ -6709,7 +7189,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6738,7 +7220,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6767,7 +7251,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6796,7 +7282,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6825,7 +7313,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6854,7 +7344,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6883,7 +7375,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6912,7 +7406,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6941,7 +7437,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6970,7 +7468,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -6999,7 +7499,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7028,7 +7530,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7057,7 +7561,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7086,7 +7592,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7115,7 +7623,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7144,7 +7654,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7173,7 +7685,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7202,7 +7716,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7231,7 +7747,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7260,7 +7778,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7289,7 +7809,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7318,7 +7840,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7347,7 +7871,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7376,7 +7902,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7405,7 +7933,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7434,7 +7964,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7463,7 +7995,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7492,7 +8026,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7521,7 +8057,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7550,7 +8088,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7579,7 +8119,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7608,7 +8150,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7637,7 +8181,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7666,7 +8212,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7695,7 +8243,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7724,7 +8274,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7753,7 +8305,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7782,7 +8336,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7811,7 +8367,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7840,7 +8398,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7869,7 +8429,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7898,7 +8460,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7927,7 +8491,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7956,7 +8522,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -7985,7 +8553,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8014,7 +8584,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8043,7 +8615,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8072,7 +8646,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8101,7 +8677,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8130,7 +8708,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8159,7 +8739,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8188,7 +8770,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8217,7 +8801,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8246,7 +8832,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8275,7 +8863,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8304,7 +8894,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8333,7 +8925,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8362,7 +8956,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8391,7 +8987,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8420,7 +9018,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8449,7 +9049,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8478,7 +9080,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8507,7 +9111,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8536,7 +9142,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8565,7 +9173,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8594,7 +9204,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8623,7 +9235,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8652,7 +9266,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8681,7 +9297,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8710,7 +9328,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8739,7 +9359,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8768,7 +9390,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8797,7 +9421,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8826,7 +9452,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8855,7 +9483,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8884,7 +9514,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8913,7 +9545,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8942,7 +9576,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -8971,7 +9607,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9000,7 +9638,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9029,7 +9669,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9058,7 +9700,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9087,7 +9731,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9116,7 +9762,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9145,7 +9793,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9174,7 +9824,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9203,7 +9855,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9232,7 +9886,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9261,7 +9917,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9290,7 +9948,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9319,7 +9979,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9348,7 +10010,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9377,7 +10041,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9406,7 +10072,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9435,7 +10103,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9464,7 +10134,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9493,7 +10165,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9522,7 +10196,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9551,7 +10227,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9580,7 +10258,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9609,7 +10289,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9638,7 +10320,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9667,7 +10351,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9696,7 +10382,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9725,7 +10413,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9754,7 +10444,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9783,7 +10475,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9812,7 +10506,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9841,7 +10537,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9870,7 +10568,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9899,7 +10599,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9928,7 +10630,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9957,7 +10661,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -9986,7 +10692,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10015,7 +10723,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10044,7 +10754,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10073,7 +10785,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10102,7 +10816,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10131,7 +10847,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10160,7 +10878,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10189,7 +10909,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10218,7 +10940,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10247,7 +10971,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10276,7 +11002,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10305,7 +11033,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10334,7 +11064,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10363,7 +11095,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10392,7 +11126,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10421,7 +11157,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10450,7 +11188,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10479,7 +11219,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10508,7 +11250,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10537,7 +11281,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10566,7 +11312,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10595,7 +11343,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10624,7 +11374,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10653,7 +11405,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10682,7 +11436,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10711,7 +11467,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10740,7 +11498,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10769,7 +11529,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10798,7 +11560,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10827,7 +11591,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10856,7 +11622,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10885,7 +11653,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10914,7 +11684,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10943,7 +11715,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -10972,7 +11746,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11001,7 +11777,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11030,7 +11808,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11059,7 +11839,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11088,7 +11870,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11117,7 +11901,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11146,7 +11932,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11175,7 +11963,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11204,7 +11994,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11233,7 +12025,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11262,7 +12056,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11291,7 +12087,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11320,7 +12118,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11349,7 +12149,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11378,7 +12180,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11407,7 +12211,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11436,7 +12242,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11465,7 +12273,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11494,7 +12304,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11523,7 +12335,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11552,7 +12366,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11581,7 +12397,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11610,7 +12428,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11639,7 +12459,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11668,7 +12490,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11697,7 +12521,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11726,7 +12552,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11755,7 +12583,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11784,7 +12614,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11813,7 +12645,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11842,7 +12676,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11871,7 +12707,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11900,7 +12738,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11929,7 +12769,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11958,7 +12800,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -11987,7 +12831,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12016,7 +12862,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12045,7 +12893,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12074,7 +12924,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12103,7 +12955,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12132,7 +12986,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12161,7 +13017,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12190,7 +13048,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12219,7 +13079,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12248,7 +13110,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12277,7 +13141,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12306,7 +13172,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12335,7 +13203,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12364,7 +13234,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12393,7 +13265,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12422,7 +13296,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12451,7 +13327,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12480,7 +13358,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12509,7 +13389,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12538,7 +13420,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12567,7 +13451,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12596,7 +13482,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12625,7 +13513,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12654,7 +13544,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12683,7 +13575,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12712,7 +13606,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12741,7 +13637,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12770,7 +13668,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12799,7 +13699,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12828,7 +13730,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12857,7 +13761,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12886,7 +13792,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12915,7 +13823,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12944,7 +13854,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -12973,7 +13885,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13002,7 +13916,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13031,7 +13947,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13060,7 +13978,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13089,7 +14009,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13118,7 +14040,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13147,7 +14071,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13176,7 +14102,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13205,7 +14133,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13234,7 +14164,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13263,7 +14195,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13292,7 +14226,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13321,7 +14257,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13350,7 +14288,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13379,7 +14319,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13408,7 +14350,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13437,7 +14381,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13466,7 +14412,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13495,7 +14443,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13524,7 +14474,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13553,7 +14505,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13582,7 +14536,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13611,7 +14567,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13640,7 +14598,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13669,7 +14629,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13698,7 +14660,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13727,7 +14691,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13756,7 +14722,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13785,7 +14753,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13814,7 +14784,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13843,7 +14815,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13872,7 +14846,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13901,7 +14877,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13930,7 +14908,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13959,7 +14939,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -13988,7 +14970,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14017,7 +15001,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14046,7 +15032,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14075,7 +15063,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14104,7 +15094,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14133,7 +15125,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14162,7 +15156,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14191,7 +15187,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14220,7 +15218,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14249,7 +15249,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14278,7 +15280,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14307,7 +15311,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14336,7 +15342,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14365,7 +15373,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14394,7 +15404,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14423,7 +15435,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14452,7 +15466,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14481,7 +15497,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14510,7 +15528,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14539,7 +15559,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14568,7 +15590,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14597,7 +15621,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14626,7 +15652,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14655,7 +15683,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14684,7 +15714,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14713,7 +15745,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14742,7 +15776,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14771,7 +15807,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14800,7 +15838,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14829,7 +15869,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14858,7 +15900,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14887,7 +15931,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14916,7 +15962,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14945,7 +15993,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -14974,7 +16024,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15003,7 +16055,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15032,7 +16086,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15040,12 +16096,12 @@
           0.0
         ],
         "tangent": [
-          -3.065362e-05,
+          -0.00003065362,
           -1.0
         ],
         "normal": [
           1.0,
-          -3.065362e-05
+          -0.00003065362
         ],
         "distance": 713.0149,
         "width": 13.5,
@@ -15061,7 +16117,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15090,7 +16148,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15119,7 +16179,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15148,7 +16210,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15177,7 +16241,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15206,7 +16272,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15235,7 +16303,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15264,7 +16334,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15293,7 +16365,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15322,7 +16396,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15351,7 +16427,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15380,7 +16458,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15409,7 +16489,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15438,7 +16520,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15467,7 +16551,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15496,7 +16582,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15525,7 +16613,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15554,7 +16644,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15583,7 +16675,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15612,7 +16706,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15641,7 +16737,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15670,7 +16768,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15699,7 +16799,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15728,7 +16830,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15757,7 +16861,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15786,7 +16892,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15815,7 +16923,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15844,7 +16954,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15873,7 +16985,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15902,7 +17016,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15931,7 +17047,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15960,7 +17078,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -15989,7 +17109,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16018,7 +17140,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16047,7 +17171,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16076,7 +17202,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16105,7 +17233,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16134,7 +17264,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16163,7 +17295,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16192,7 +17326,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16221,7 +17357,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16250,7 +17388,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16279,7 +17419,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16308,7 +17450,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16337,7 +17481,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16366,7 +17512,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16395,7 +17543,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16424,7 +17574,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16453,7 +17605,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16482,7 +17636,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16511,7 +17667,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16540,7 +17698,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16569,7 +17729,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16598,7 +17760,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16627,7 +17791,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16656,7 +17822,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16685,7 +17853,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16714,7 +17884,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16743,7 +17915,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16772,7 +17946,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16801,7 +17977,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16830,7 +18008,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16859,7 +18039,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16888,7 +18070,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16917,7 +18101,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16946,7 +18132,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -16975,7 +18163,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -17004,7 +18194,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -17033,7 +18225,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -17062,7 +18256,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -17091,7 +18287,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -17120,7 +18318,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       },
       {
         "point": [
@@ -17149,7 +18349,9 @@
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "wall_type": "Concrete"
+        "wall_type": "Concrete",
+        "left_runoff_surface": "Sand",
+        "right_runoff_surface": "Sand"
       }
     ],
     "total_length": 806.73663,
@@ -18294,7 +19496,7 @@
         "segment": {
           "start": [
             -17.567144,
-            1.7881393e-07
+            1.7881393e-7
           ],
           "end": [
             -16.984741,
@@ -23177,7 +24379,7 @@
           ],
           "end": [
             -17.567144,
-            1.7881393e-07
+            1.7881393e-7
           ]
         },
         "restitution": 0.65,
@@ -27905,7 +29107,7 @@
           ],
           "end": [
             17.567144,
-            1.7881393e-07
+            1.7881393e-7
           ]
         },
         "restitution": 0.65,
@@ -32474,7 +33676,7 @@
         "segment": {
           "start": [
             17.567144,
-            1.7881393e-07
+            1.7881393e-7
           ],
           "end": [
             16.984741,
@@ -41286,9 +42488,5 @@
     "classic"
   ],
   "scale": "1:1",
-  "country_code": "INT",
-  "country_name": "International",
-  "min_width": 13.0,
-  "max_width": 14.0,
   "is_inspired": false
 }

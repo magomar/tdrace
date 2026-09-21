@@ -160,15 +160,15 @@ fn test_per_wheel_split_mu_sampling() {
     assert_eq!(surfaces[0], SurfaceType::Asphalt, "FL wheel should be on Asphalt");
     assert_eq!(surfaces[2], SurfaceType::Asphalt, "RL wheel should be on Asphalt");
 
-    // Right wheels (FR, RR: pos + right * half_w) are beyond track boundary (Grass or Curb)
+    // Right wheels (FR, RR: pos + right * half_w) are beyond track boundary (Curb, Gravel, or Grass)
     assert!(
-        surfaces[1] == SurfaceType::Grass || surfaces[1] == SurfaceType::Curb,
-        "FR should be Curb or Grass, got {:?}",
+        surfaces[1] == SurfaceType::Grass || surfaces[1] == SurfaceType::Curb || surfaces[1] == SurfaceType::Gravel,
+        "FR should be Curb, Gravel, or Grass, got {:?}",
         surfaces[1]
     );
     assert!(
-        surfaces[3] == SurfaceType::Grass || surfaces[3] == SurfaceType::Curb,
-        "RR should be Curb or Grass, got {:?}",
+        surfaces[3] == SurfaceType::Grass || surfaces[3] == SurfaceType::Curb || surfaces[3] == SurfaceType::Gravel,
+        "RR should be Curb, Gravel, or Grass, got {:?}",
         surfaces[3]
     );
 }
