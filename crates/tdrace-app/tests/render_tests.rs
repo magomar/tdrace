@@ -600,6 +600,61 @@ fn test_gt_models_mask_tinting_transforms_bodywork_pixels() {
     }
 }
 
+#[test]
+fn test_all_modality_emblem_assets_and_integrity() {
+    let modalities_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../assets/icons/modalities");
+
+    let modality_slugs = [
+        "quick_race",
+        "custom_race",
+        "career_mode",
+        "time_trial",
+        "free_ride",
+        "split_screen",
+        "lan_play",
+        "cloud_play",
+        "player_profile",
+        "garage",
+        "track_editor",
+        "settings",
+    ];
+
+    for slug in &modality_slugs {
+        let svg_path = modalities_dir.join(format!("{}.svg", slug));
+        assert!(
+            svg_path.exists(),
+            "Modality SVG vector file must exist: {:?}",
+            svg_path
+        );
+        let svg_content = std::fs::read_to_string(&svg_path).expect("Failed to read SVG file");
+        assert!(
+            svg_content.contains("<svg") && svg_content.contains("</svg>"),
+            "SVG file must contain valid SVG root markup for {}",
+            slug
+        );
+
+        let png_path = modalities_dir.join(format!("{}-128.png", slug));
+        assert!(
+            png_path.exists(),
+            "Modality 128x128 PNG raster file must exist: {:?}",
+            png_path
+        );
+        let png_bytes = std::fs::read(&png_path).expect("Failed to read PNG file");
+        assert!(
+            png_bytes.len() > 1000,
+            "PNG file size must be at least 1KB for {}",
+            slug
+        );
+        assert_eq!(
+            &png_bytes[1..4],
+            b"PNG",
+            "File must have valid PNG magic header for {}",
+            slug
+        );
+    }
+}
+
 
 
 

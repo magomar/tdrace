@@ -2641,6 +2641,83 @@ impl ModalityItem {
     }
 }
 
+static MODALITY_QUICK_RACE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/quick_race-128.png");
+static MODALITY_CUSTOM_RACE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/custom_race-128.png");
+static MODALITY_CAREER_MODE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/career_mode-128.png");
+static MODALITY_TIME_TRIAL_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/time_trial-128.png");
+static MODALITY_FREE_RIDE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/free_ride-128.png");
+static MODALITY_SPLIT_SCREEN_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/split_screen-128.png");
+static MODALITY_LAN_PLAY_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/lan_play-128.png");
+static MODALITY_CLOUD_PLAY_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/cloud_play-128.png");
+static MODALITY_PLAYER_PROFILE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/player_profile-128.png");
+static MODALITY_GARAGE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/garage-128.png");
+static MODALITY_TRACK_EDITOR_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/track_editor-128.png");
+static MODALITY_SETTINGS_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/settings-128.png");
+
+static MODALITY_ICON_TEXTURES: std::sync::Mutex<[Option<Texture2D>; 12]> = std::sync::Mutex::new([
+    None, None, None, None, None, None, None, None, None, None, None, None,
+]);
+
+/// Lazily decodes or retrieves the cached 128x128 texture for a given ModalityItem.
+pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
+    let idx = match item {
+        ModalityItem::QuickRace => 0,
+        ModalityItem::CustomRace => 1,
+        ModalityItem::CareerMode => 2,
+        ModalityItem::TimeTrial => 3,
+        ModalityItem::FreeRide => 4,
+        ModalityItem::SplitScreen => 5,
+        ModalityItem::LanPlay => 6,
+        ModalityItem::CloudPlay => 7,
+        ModalityItem::PlayerProfile => 8,
+        ModalityItem::Garage => 9,
+        ModalityItem::TrackEditor => 10,
+        ModalityItem::Settings => 11,
+    };
+    let mut guard = MODALITY_ICON_TEXTURES.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(tex) = guard[idx].as_ref() {
+        return tex.clone();
+    }
+    let png_bytes = match item {
+        ModalityItem::QuickRace => MODALITY_QUICK_RACE_PNG,
+        ModalityItem::CustomRace => MODALITY_CUSTOM_RACE_PNG,
+        ModalityItem::CareerMode => MODALITY_CAREER_MODE_PNG,
+        ModalityItem::TimeTrial => MODALITY_TIME_TRIAL_PNG,
+        ModalityItem::FreeRide => MODALITY_FREE_RIDE_PNG,
+        ModalityItem::SplitScreen => MODALITY_SPLIT_SCREEN_PNG,
+        ModalityItem::LanPlay => MODALITY_LAN_PLAY_PNG,
+        ModalityItem::CloudPlay => MODALITY_CLOUD_PLAY_PNG,
+        ModalityItem::PlayerProfile => MODALITY_PLAYER_PROFILE_PNG,
+        ModalityItem::Garage => MODALITY_GARAGE_PNG,
+        ModalityItem::TrackEditor => MODALITY_TRACK_EDITOR_PNG,
+        ModalityItem::Settings => MODALITY_SETTINGS_PNG,
+    };
+    let img = Image::from_file_with_format(png_bytes, None)
+        .expect("failed to decode embedded modality icon PNG");
+    let tex = Texture2D::from_image(&img);
+    tex.set_filter(macroquad::texture::FilterMode::Linear);
+    guard[idx] = Some(tex.clone());
+    tex
+}
+
+/// Renders the official visual emblem for a given modality with an optional glowing halo.
+pub fn draw_modality_icon(item: ModalityItem, cx: f32, cy: f32, dim: f32, is_sel: bool, accent: Color) {
+    let tex = get_modality_icon_texture(item);
+    if is_sel {
+        draw_circle(cx, cy, dim * 0.58, accent.with_alpha(0.35));
+    }
+    draw_texture_ex(
+        &tex,
+        cx - dim * 0.5,
+        cy - dim * 0.5,
+        Palette::WHITE,
+        DrawTextureParams {
+            dest_size: Some(macroquad::math::Vec2::new(dim, dim)),
+            ..Default::default()
+        },
+    );
+}
+
 /// Modal overlay shown when interacting with an in-development modality.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ModalityModal {
@@ -2811,9 +2888,17 @@ pub fn render_modality_select_screen(
                     draw_rectangle(col_x, curr_y, scaler.s(6.0), sp_card_h, accent);
                 }
 
+                // Render Modality Emblem Badge
+                let icon_cx = col_x + scaler.s(44.0);
+                let icon_cy = curr_y + sp_card_h * 0.5;
+                let icon_dim = (sp_card_h * 0.72).clamp(scaler.s(38.0), scaler.s(52.0));
+                draw_modality_icon(*item, icon_cx, icon_cy, icon_dim, is_sel, accent);
+
+                let text_x = col_x + scaler.s(78.0);
+
                 fonts.draw_ui_bold(
                     item.tag(),
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + sp_card_h * 0.25,
                     scaler.font_s(9.5),
                     if is_sel { accent } else { Palette::UI_TEXT_MUTED },
@@ -2826,7 +2911,7 @@ pub fn render_modality_select_screen(
                 };
                 fonts.draw_display(
                     &title_str,
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + sp_card_h * 0.55,
                     scaler.font_s(16.0),
                     if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
@@ -2834,7 +2919,7 @@ pub fn render_modality_select_screen(
 
                 fonts.draw_ui_regular(
                     item.description(),
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + sp_card_h * 0.84,
                     scaler.font_s(11.0),
                     if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
@@ -2882,9 +2967,17 @@ pub fn render_modality_select_screen(
                     draw_rectangle(col_x, curr_y, scaler.s(6.0), mp_card_h, accent);
                 }
 
+                // Render Modality Emblem Badge
+                let icon_cx = col_x + scaler.s(48.0);
+                let icon_cy = curr_y + mp_card_h * 0.5;
+                let icon_dim = (mp_card_h * 0.68).clamp(scaler.s(46.0), scaler.s(60.0));
+                draw_modality_icon(*item, icon_cx, icon_cy, icon_dim, is_sel, accent);
+
+                let text_x = col_x + scaler.s(86.0);
+
                 fonts.draw_ui_bold(
                     item.tag(),
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + mp_card_h * 0.25,
                     scaler.font_s(9.5),
                     if is_sel { accent } else { Palette::UI_TEXT_MUTED },
@@ -2915,7 +3008,7 @@ pub fn render_modality_select_screen(
                 };
                 fonts.draw_display(
                     &title_str,
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + mp_card_h * 0.55,
                     scaler.font_s(17.0),
                     if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
@@ -2923,7 +3016,7 @@ pub fn render_modality_select_screen(
 
                 fonts.draw_ui_regular(
                     item.description(),
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + mp_card_h * 0.84,
                     scaler.font_s(11.5),
                     if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
@@ -2975,9 +3068,17 @@ pub fn render_modality_select_screen(
                     draw_rectangle(col_x, curr_y, scaler.s(6.0), opt_card_h, accent);
                 }
 
+                // Render Modality Emblem Badge
+                let icon_cx = col_x + scaler.s(48.0);
+                let icon_cy = curr_y + opt_card_h * 0.5;
+                let icon_dim = (opt_card_h * 0.68).clamp(scaler.s(46.0), scaler.s(60.0));
+                draw_modality_icon(*item, icon_cx, icon_cy, icon_dim, is_sel, accent);
+
+                let text_x = col_x + scaler.s(86.0);
+
                 fonts.draw_ui_bold(
                     item.tag(),
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + opt_card_h * 0.25,
                     scaler.font_s(9.5),
                     if is_sel { accent } else { Palette::UI_TEXT_MUTED },
@@ -3032,7 +3133,7 @@ pub fn render_modality_select_screen(
                 };
                 fonts.draw_display(
                     &title_str,
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + opt_card_h * 0.55,
                     scaler.font_s(17.0),
                     if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
@@ -3040,7 +3141,7 @@ pub fn render_modality_select_screen(
 
                 fonts.draw_ui_regular(
                     item.description(),
-                    col_x + scaler.s(18.0),
+                    text_x,
                     curr_y + opt_card_h * 0.84,
                     scaler.font_s(11.5),
                     if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },

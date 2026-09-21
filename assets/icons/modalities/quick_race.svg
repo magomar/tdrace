@@ -1,0 +1,114 @@
+<svg id="emblem-quick-race" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow-quick" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.85" />
+      <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#33D9FF" flood-opacity="0.45" />
+    </filter>
+    <linearGradient id="bolt-cyan-grad" x1="160" y1="80" x2="352" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#8AEBFF" />
+      <stop offset="70%" stop-color="#00B4D8" />
+      <stop offset="100%" stop-color="#005B8A" />
+    </linearGradient>
+    <linearGradient id="chevron-cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#33D9FF" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#007799" stop-opacity="0.2" />
+    </linearGradient>
+    <clipPath id="shield-left">
+      <path d="M 256,70 L 90,105 C 50,115 45,210 50,300 C 55,395 180,445 256,460 Z" />
+    </clipPath>
+    <clipPath id="shield-right">
+      <path d="M 256,70 L 422,105 C 462,115 467,210 462,300 C 457,395 332,445 256,460 Z" />
+    </clipPath>
+  </defs>
+
+  <!-- Ambient Obsidian Chassis Backdrop -->
+  <rect x="40" y="40" width="432" height="432" rx="90" fill="#080A10" stroke="#141B26" stroke-width="6" />
+  <rect x="52" y="52" width="408" height="408" rx="80" fill="none" stroke="#33D9FF" stroke-width="1.5" stroke-dasharray="10 10" opacity="0.35" />
+
+  <!-- Outer Kinetic Speed Shield Frame -->
+  <g filter="url(#shadow-quick)">
+    <!-- Aerodynamic Chassis Contour Rim -->
+    <path d="M 256,66 L 90,102 C 46,112 40,212 46,304 C 52,400 180,450 256,466 C 332,450 460,400 466,304 C 472,212 466,112 422,102 Z" fill="#0D131C" stroke="#33D9FF" stroke-width="5" />
+
+    <!-- LEFT WING: Carbon Fiber Weave with Tachometer Speed Arc -->
+    <g clip-path="url(#shield-left)">
+      <rect x="40" y="60" width="220" height="410" fill="#0A0F17" />
+      <!-- Carbon Weave Hatch Lines -->
+      <g opacity="0.10" stroke="#FFFFFF" stroke-width="2">
+        <line x1="40" y1="120" x2="260" y2="120" />
+        <line x1="40" y1="160" x2="260" y2="160" />
+        <line x1="40" y1="200" x2="260" y2="200" />
+        <line x1="40" y1="240" x2="260" y2="240" />
+        <line x1="40" y1="280" x2="260" y2="280" />
+        <line x1="40" y1="320" x2="260" y2="320" />
+        <line x1="40" y1="360" x2="260" y2="360" />
+        <line x1="40" y1="400" x2="260" y2="400" />
+      </g>
+      <!-- Dual Motion Chevrons -->
+      <path d="M 130,160 L 190,250 L 130,340" stroke="url(#chevron-cyan)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      <path d="M 90,180 L 140,250 L 90,320" stroke="url(#chevron-cyan)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6" />
+    </g>
+
+    <!-- RIGHT WING: Skewed Checkered Motorsport Flag -->
+    <g clip-path="url(#shield-right)">
+      <rect x="256" y="60" width="220" height="410" fill="#101824" />
+      <g transform="translate(256, 80) skewX(-16)">
+        <!-- 6 rows x 4 cols Checkers -->
+        <rect x="0" y="0" width="55" height="48" fill="#FFFFFF" />
+        <rect x="55" y="0" width="55" height="48" fill="#0A0E17" />
+        <rect x="110" y="0" width="55" height="48" fill="#FFFFFF" />
+        <rect x="165" y="0" width="55" height="48" fill="#0A0E17" />
+
+        <rect x="0" y="48" width="55" height="48" fill="#0A0E17" />
+        <rect x="55" y="48" width="55" height="48" fill="#FFFFFF" />
+        <rect x="110" y="48" width="55" height="48" fill="#0A0E17" />
+        <rect x="165" y="48" width="55" height="48" fill="#FFFFFF" />
+
+        <rect x="0" y="96" width="55" height="48" fill="#FFFFFF" />
+        <rect x="55" y="96" width="55" height="48" fill="#0A0E17" />
+        <rect x="110" y="96" width="55" height="48" fill="#FFFFFF" />
+        <rect x="165" y="96" width="55" height="48" fill="#0A0E17" />
+
+        <rect x="0" y="144" width="55" height="48" fill="#0A0E17" />
+        <rect x="55" y="144" width="55" height="48" fill="#FFFFFF" />
+        <rect x="110" y="144" width="55" height="48" fill="#0A0E17" />
+        <rect x="165" y="144" width="55" height="48" fill="#FFFFFF" />
+
+        <rect x="0" y="192" width="55" height="48" fill="#FFFFFF" />
+        <rect x="55" y="192" width="55" height="48" fill="#0A0E17" />
+        <rect x="110" y="192" width="55" height="48" fill="#FFFFFF" />
+        <rect x="165" y="192" width="55" height="48" fill="#0A0E17" />
+
+        <rect x="0" y="240" width="55" height="48" fill="#0A0E17" />
+        <rect x="55" y="240" width="55" height="48" fill="#FFFFFF" />
+        <rect x="110" y="240" width="55" height="48" fill="#0A0E17" />
+        <rect x="165" y="240" width="55" height="48" fill="#FFFFFF" />
+      </g>
+    </g>
+
+    <!-- Center Spine Pinstripes -->
+    <line x1="256" y1="70" x2="256" y2="455" stroke="#33D9FF" stroke-width="5" />
+    <line x1="248" y1="75" x2="248" y2="450" stroke="#00B4D8" stroke-width="2" />
+    <line x1="264" y1="75" x2="264" y2="450" stroke="#FFFFFF" stroke-width="2" />
+
+    <!-- TACHOMETER REDLINE SPEED ARC AT LOWER CHASSIS -->
+    <path d="M 150,380 A 130,130 0 0,1 362,380" stroke="#121D2C" stroke-width="12" fill="none" />
+    <path d="M 150,380 A 130,130 0 0,1 300,270" stroke="#33D9FF" stroke-width="10" fill="none" stroke-linecap="round" />
+    <path d="M 300,270 A 130,130 0 0,1 362,380" stroke="#EF4444" stroke-width="10" fill="none" stroke-linecap="round" />
+
+    <!-- CENTRAL 3D SCULPTED LIGHTNING BOLT -->
+    <!-- Outer Bevel Rim / Silhouette -->
+    <polygon points="296,85 160,265 242,265 190,435 362,215 274,215" fill="url(#bolt-cyan-grad)" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.85))" />
+    <!-- Inner Core Speed Facet -->
+    <polygon points="292,95 178,255 240,255 204,395 344,225 270,225" fill="#FFFFFF" opacity="0.3" />
+
+    <!-- APEX LENS FLARE / STAR BURST -->
+    <g transform="translate(296, 85)">
+      <circle cx="0" cy="0" r="10" fill="#FFFFFF" filter="drop-shadow(0 0 8px #33D9FF)" />
+      <line x1="-30" y1="0" x2="30" y2="0" stroke="#FFFFFF" stroke-width="2.5" />
+      <line x1="0" y1="-30" x2="0" y2="30" stroke="#FFFFFF" stroke-width="2.5" />
+      <polygon points="0,-16 4,-4 16,0 4,4 0,16 -4,4 -16,0 -4,-4" fill="#FFFFFF" />
+    </g>
+  </g>
+</svg>
