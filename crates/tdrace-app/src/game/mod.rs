@@ -146,6 +146,7 @@ pub enum GarageOrigin {
     ModalitySelect,
     Menu,
     StartingGrid,
+    CareerHub,
 }
 
 /// Source screen that launched the Profile Manager view.
@@ -177,6 +178,12 @@ pub enum GameState {
         category: ModalityCategory,
         selected_idx: usize,
         modal: Option<ModalityModal>,
+    },
+    CareerHub {
+        selected_tier: u32,
+        selected_slot: usize,
+        calendar_tracks: Vec<String>,
+        showing_standings: bool,
     },
     Garage(GarageOrigin),
     ChampionshipStandings,
@@ -1732,54 +1739,32 @@ impl RaceSession {
 
     /// Launches a GT Career Championship Cup for the given tier (1..=5).
     pub fn start_gt_career_tier(&mut self, tier: u32) {
-        let (cup_name, track_ids, car_choice) = match tier {
-            1 => (
-                "GT4 Clubman Sprint Cup (Tier 1)",
-                vec![
-                    "red_bull_ring".to_string(),
-                    "zandvoort".to_string(),
-                    "nurburgring_gp".to_string(),
-                    "portimao_gp".to_string(),
-                    "montreal".to_string(),
-                ],
-                CarChoice::GT4Clubsport,
-            ),
-            2 => (
-                "FIA GT3 European Challenge (Tier 2)",
-                vec![
-                    "monza".to_string(),
-                    "silverstone".to_string(),
-                    "catalunya".to_string(),
-                ],
-                CarChoice::GT3Car,
-            ),
-            3 => (
-                "SRO GT2 Power Masters (Tier 3)",
-                vec![
-                    "spa".to_string(),
-                    "cota".to_string(),
-                    "bahrain".to_string(),
-                ],
-                CarChoice::GT2Biturbo,
-            ),
-            4 => (
-                "Le Mans 90s Heritage Trophy (Tier 4)",
-                vec![
-                    "suzuka".to_string(),
-                    "interlagos".to_string(),
-                    "bathurst".to_string(),
-                ],
-                CarChoice::GT1Legend,
-            ),
-            _ => (
-                "World Endurance Hypercar Grand Prix (Tier 5)",
-                vec![
-                    "le_mans_sarthe".to_string(),
-                    "monaco".to_string(),
-                    "marina_bay".to_string(),
-                ],
-                CarChoice::HypercarPrototype,
-            ),
+        self.start_gt_career_tier_with_calendar(tier, None);
+    }
+
+    /// Launches a GT Career Championship Cup with an optional custom calendar.
+    pub fn start_gt_career_tier_with_calendar(&mut self, tier: u32, custom_tracks: Option<Vec<String>>) {
+        let default_tracks = crate::ui::gt_default_calendar(tier);
+        let mandatory_tracks = crate::ui::gt_mandatory_tracks(tier);
+        let track_ids = match custom_tracks {
+            Some(tracks) => {
+                if tracks.len() == default_tracks.len()
+                    && mandatory_tracks.iter().all(|m| tracks.iter().any(|t| t == m))
+                {
+                    tracks
+                } else {
+                    default_tracks
+                }
+            }
+            None => default_tracks,
+        };
+        let cup_name = crate::ui::gt_tier_title(tier);
+        let car_choice = match tier {
+            1 => CarChoice::GT4Clubsport,
+            2 => CarChoice::GT3Car,
+            3 => CarChoice::GT2Biturbo,
+            4 => CarChoice::GT1Legend,
+            _ => CarChoice::HypercarPrototype,
         };
 
         let champ = ChampionshipSession::new(
@@ -1825,6 +1810,11 @@ impl RaceSession {
             self.car_choice = car_choice;
         }
         self.championship_session = Some(champ);
+        if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+            if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                self.track = t;
+            }
+        }
         self.init_race();
     }
 
@@ -2295,11 +2285,33 @@ impl RaceSession {
                     .unwrap_or_else(|_| tdrace_core::track::presets::classic_grand_prix());
                 self.init_race();
             } else {
-                self.championship_session = None;
-                self.state = GameState::Menu;
+                if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+                    let tier = self.active_career_progress.level.clamp(1, 5);
+                    let calendar = crate::ui::gt_default_calendar(tier);
+                    self.state = GameState::CareerHub {
+                        selected_tier: tier,
+                        selected_slot: 0,
+                        calendar_tracks: calendar,
+                        showing_standings: false,
+                    };
+                } else {
+                    self.championship_session = None;
+                    self.state = GameState::Menu;
+                }
             }
         } else {
-            self.state = GameState::Menu;
+            if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+                let tier = self.active_career_progress.level.clamp(1, 5);
+                let calendar = crate::ui::gt_default_calendar(tier);
+                self.state = GameState::CareerHub {
+                    selected_tier: tier,
+                    selected_slot: 0,
+                    calendar_tracks: calendar,
+                    showing_standings: false,
+                };
+            } else {
+                self.state = GameState::Menu;
+            }
         }
     }
 
@@ -2817,7 +2829,19 @@ impl RaceSession {
 
         // 1. Build selected track (preserve in-memory track if launched from editor)
         if !self.return_to_editor_on_exit {
-            self.track = self.load_track_for_session(&self.track_choice);
+            if let Some(champ) = &self.championship_session {
+                if let Some(track_id) = champ.current_track_id() {
+                    if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                        self.track = t;
+                    } else {
+                        self.track = self.load_track_for_session(&self.track_choice);
+                    }
+                } else {
+                    self.track = self.load_track_for_session(&self.track_choice);
+                }
+            } else {
+                self.track = self.load_track_for_session(&self.track_choice);
+            }
         }
 
         // Predefined balanced lap count from track
@@ -3443,7 +3467,7 @@ impl RaceSession {
         }
 
         // Open Driver Cards Dossier Screen (D key)
-        if is_key_pressed(KeyCode::D) && !matches!(self.state, GameState::Garage(_) | GameState::ModalitySelect { .. }) {
+        if is_key_pressed(KeyCode::D) && !matches!(self.state, GameState::Garage(_) | GameState::ModalitySelect { .. } | GameState::CareerHub { .. }) {
             self.audio.play_sfx(SfxType::UiSelect);
             let origin = match self.state {
                 GameState::StartingGrid => DriverCardsOrigin::StartingGrid,
@@ -3495,6 +3519,10 @@ impl RaceSession {
                 self.audio.play_music(MusicTrack::NeonMenu);
                 self.update_modality_select();
             }
+            GameState::CareerHub { .. } => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+                self.update_career_hub();
+            }
             GameState::Garage(origin) => {
                 self.update_garage(origin, frame_dt);
             }
@@ -3513,8 +3541,23 @@ impl RaceSession {
                 }
                 if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.championship_session = None;
-                    self.state = GameState::Menu;
+                    if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+                        let tier = self.active_career_progress.level.clamp(1, 5);
+                        let calendar = if let Some(c) = &self.championship_session {
+                            c.track_ids.clone()
+                        } else {
+                            crate::ui::gt_default_calendar(tier)
+                        };
+                        self.state = GameState::CareerHub {
+                            selected_tier: tier,
+                            selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                            calendar_tracks: calendar,
+                            showing_standings: false,
+                        };
+                    } else {
+                        self.championship_session = None;
+                        self.state = GameState::Menu;
+                    }
                 }
             }
             GameState::StartingGrid => {
@@ -3564,7 +3607,7 @@ impl RaceSession {
                 // 2. Navigation & Actions within Active Panel
                 match self.starting_grid_focus {
                     StartingGridFocus::LeftSetup => {
-                        let num_cards = 4; // 0 = Garage Access, 1 = Vehicle Choice, 2 = Grid / Bot Count, 3 = Launch Race Button
+                        let num_cards = 3; // 0 = Combined Garage & Active Car, 1 = Grid / Bot Count, 2 = Launch Race Button
 
                         // Up / Down to navigate between setup cards
                         if is_key_pressed(KeyCode::Up)
@@ -3580,6 +3623,7 @@ impl RaceSession {
                             }
                         }
                         if is_key_pressed(KeyCode::Down)
+                            || is_key_pressed(KeyCode::S)
                             || self.input.gamepad.snapshot.dpad_down_pressed
                             || self.input.gamepad.snapshot.nav_down
                         {
@@ -3590,7 +3634,7 @@ impl RaceSession {
                         // Modify active card setting on Enter / Space / bracket / etc.
                         match self.starting_grid_card_idx {
                             0 => {
-                                // Card 0: Motorsport Garage Access Card
+                                // Card 0: Combined Motorsport Garage & Active Car Card
                                 if is_key_pressed(KeyCode::Enter)
                                     || is_key_pressed(KeyCode::KpEnter)
                                     || self.input.gamepad.snapshot.btn_confirm_pressed
@@ -3599,67 +3643,60 @@ impl RaceSession {
                                     self.open_garage_from_starting_grid();
                                     return;
                                 }
-                            }
-                            1 => {
-                                // Card 1: Vehicle Selection Card
-                                if is_key_pressed(KeyCode::Enter)
-                                    || is_key_pressed(KeyCode::KpEnter)
-                                {
-                                    self.open_garage_from_starting_grid();
-                                    return;
-                                }
-                                let models = crate::catalog::get_models_for_module(self.active_module_id);
-                                if !models.is_empty() {
-                                    let current_idx = self.selected_car_model_id
-                                        .and_then(|id| models.iter().position(|m| m.id == id))
-                                        .unwrap_or(0);
-                                    if is_key_pressed(KeyCode::RightBracket) {
-                                        self.audio.play_sfx(SfxType::UiMove);
-                                        let next_idx = (current_idx + 1) % models.len();
-                                        let chosen = models[next_idx];
-                                        self.selected_car_model_id = Some(chosen.id);
-                                        self.car_choice = chosen.base_car_choice;
-                                        self.current_visual_type = chosen.visual_type;
-                                        self.free_car_selection = true;
-                                        self.rebuild_roster_participants();
-                                    }
-                                    if is_key_pressed(KeyCode::LeftBracket) {
-                                        self.audio.play_sfx(SfxType::UiMove);
-                                        let next_idx = if current_idx == 0 { models.len() - 1 } else { current_idx - 1 };
-                                        let chosen = models[next_idx];
-                                        self.selected_car_model_id = Some(chosen.id);
-                                        self.car_choice = chosen.base_car_choice;
-                                        self.current_visual_type = chosen.visual_type;
-                                        self.free_car_selection = true;
-                                        self.rebuild_roster_participants();
-                                    }
-                                } else {
-                                    let choices = self.active_module_car_choices();
-                                    if !choices.is_empty() {
+                                if self.game_mode.allows_car_change() {
+                                    let models = crate::catalog::get_models_for_module(self.active_module_id);
+                                    if !models.is_empty() {
+                                        let current_idx = self.selected_car_model_id
+                                            .and_then(|id| models.iter().position(|m| m.id == id))
+                                            .unwrap_or(0);
                                         if is_key_pressed(KeyCode::RightBracket) {
                                             self.audio.play_sfx(SfxType::UiMove);
-                                            self.menu_car_idx = (self.menu_car_idx + 1) % choices.len();
-                                            self.car_choice = choices[self.menu_car_idx];
+                                            let next_idx = (current_idx + 1) % models.len();
+                                            let chosen = models[next_idx];
+                                            self.selected_car_model_id = Some(chosen.id);
+                                            self.car_choice = chosen.base_car_choice;
+                                            self.current_visual_type = chosen.visual_type;
                                             self.free_car_selection = true;
                                             self.rebuild_roster_participants();
                                         }
                                         if is_key_pressed(KeyCode::LeftBracket) {
                                             self.audio.play_sfx(SfxType::UiMove);
-                                            if self.menu_car_idx == 0 {
-                                                self.menu_car_idx = choices.len() - 1;
-                                            } else {
-                                                self.menu_car_idx -= 1;
-                                            }
-                                            self.car_choice = choices[self.menu_car_idx];
+                                            let next_idx = if current_idx == 0 { models.len() - 1 } else { current_idx - 1 };
+                                            let chosen = models[next_idx];
+                                            self.selected_car_model_id = Some(chosen.id);
+                                            self.car_choice = chosen.base_car_choice;
+                                            self.current_visual_type = chosen.visual_type;
                                             self.free_car_selection = true;
                                             self.rebuild_roster_participants();
+                                        }
+                                    } else {
+                                        let choices = self.active_module_car_choices();
+                                        if !choices.is_empty() {
+                                            if is_key_pressed(KeyCode::RightBracket) {
+                                                self.audio.play_sfx(SfxType::UiMove);
+                                                self.menu_car_idx = (self.menu_car_idx + 1) % choices.len();
+                                                self.car_choice = choices[self.menu_car_idx];
+                                                self.free_car_selection = true;
+                                                self.rebuild_roster_participants();
+                                            }
+                                            if is_key_pressed(KeyCode::LeftBracket) {
+                                                self.audio.play_sfx(SfxType::UiMove);
+                                                if self.menu_car_idx == 0 {
+                                                    self.menu_car_idx = choices.len() - 1;
+                                                } else {
+                                                    self.menu_car_idx -= 1;
+                                                }
+                                                self.car_choice = choices[self.menu_car_idx];
+                                                self.free_car_selection = true;
+                                                self.rebuild_roster_participants();
+                                            }
                                         }
                                     }
                                 }
                             }
-                            2 => {
-                                // Card 2: Grid Configuration / Bot Count
-                                if self.game_mode.has_bots() {
+                            1 => {
+                                // Card 1: Grid Configuration / Bot Count (Customizable only in Custom Race mode)
+                                if self.game_mode.has_bots() && self.game_mode.allows_roster_customization() {
                                     let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
                                     if is_key_pressed(KeyCode::Enter)
                                         || is_key_pressed(KeyCode::KpEnter)
@@ -3686,7 +3723,7 @@ impl RaceSession {
                                 }
                             }
                             _ => {
-                                // Card 3: Launch Race Button
+                                // Card 2: Launch Race Button
                                 if is_key_pressed(KeyCode::Enter)
                                     || is_key_pressed(KeyCode::KpEnter)
                                     || self.input.gamepad.snapshot.btn_confirm_pressed
@@ -3720,11 +3757,54 @@ impl RaceSession {
                             }
                         }
                         if is_key_pressed(KeyCode::Down)
+                            || is_key_pressed(KeyCode::S)
                             || self.input.gamepad.snapshot.dpad_down_pressed
                             || self.input.gamepad.snapshot.nav_down
                         {
                             self.audio.play_sfx(SfxType::UiMove);
                             self.starting_grid_roster_idx = (self.starting_grid_roster_idx + 1) % roster_len;
+                        }
+
+                        // In Custom Race mode, allow customizing vehicle of selected participant with [ / ]
+                        if self.game_mode.allows_roster_customization() {
+                            let models = crate::catalog::get_models_for_module(self.active_module_id);
+                            if !models.is_empty() {
+                                if is_key_pressed(KeyCode::RightBracket) {
+                                    if let Some(p) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
+                                        let cur_idx = p.model_id
+                                            .and_then(|id| models.iter().position(|m| m.id == id))
+                                            .unwrap_or(0);
+                                        let next_m = models[(cur_idx + 1) % models.len()];
+                                        p.model_id = Some(next_m.id);
+                                        p.car_title = next_m.name.to_string();
+                                        p.car_choice = next_m.base_car_choice;
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        if p.is_player {
+                                            self.selected_car_model_id = Some(next_m.id);
+                                            self.car_choice = next_m.base_car_choice;
+                                            self.current_visual_type = next_m.visual_type;
+                                        }
+                                    }
+                                }
+                                if is_key_pressed(KeyCode::LeftBracket) {
+                                    if let Some(p) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
+                                        let cur_idx = p.model_id
+                                            .and_then(|id| models.iter().position(|m| m.id == id))
+                                            .unwrap_or(0);
+                                        let next_idx = if cur_idx == 0 { models.len() - 1 } else { cur_idx - 1 };
+                                        let next_m = models[next_idx];
+                                        p.model_id = Some(next_m.id);
+                                        p.car_title = next_m.name.to_string();
+                                        p.car_choice = next_m.base_car_choice;
+                                        self.audio.play_sfx(SfxType::UiMove);
+                                        if p.is_player {
+                                            self.selected_car_model_id = Some(next_m.id);
+                                            self.car_choice = next_m.base_car_choice;
+                                            self.current_visual_type = next_m.visual_type;
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         // Open Driver Dossier for selected slot (Enter / D / Gamepad Y)
@@ -3745,7 +3825,7 @@ impl RaceSession {
                 if is_key_pressed(KeyCode::Space)
                     || self.input.gamepad.snapshot.btn_start_pressed
                     || launch_btn_clicked
-                    || (self.starting_grid_focus == StartingGridFocus::LeftSetup && self.starting_grid_card_idx == 3 && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
+                    || (self.starting_grid_focus == StartingGridFocus::LeftSetup && self.starting_grid_card_idx == 2 && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
                 {
                     let player_car = self.active_player_car_choice();
                     let req_tier = self.current_race_required_tier();
@@ -3781,6 +3861,22 @@ impl RaceSession {
                     if self.return_to_editor_on_exit {
                         self.return_to_editor_on_exit = false;
                         self.transition_fade_to(GameState::TrackEditor, 0.35);
+                    } else if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+                        let tier = self.active_career_progress.level.clamp(1, 5);
+                        let calendar = if let Some(c) = &self.championship_session {
+                            c.track_ids.clone()
+                        } else {
+                            crate::ui::gt_default_calendar(tier)
+                        };
+                        self.transition_fade_to(
+                            GameState::CareerHub {
+                                selected_tier: tier,
+                                selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                                calendar_tracks: calendar,
+                                showing_standings: false,
+                            },
+                            0.35,
+                        );
                     } else {
                         self.transition_fade_to(GameState::Menu, 0.35);
                     }
@@ -5498,7 +5594,17 @@ impl RaceSession {
                         let tier = self.active_career_progress.level.clamp(1, 5);
                         match self.active_module_id {
                             "gt" | "gt_challenge" => {
-                                self.start_gt_career_tier(tier);
+                                let calendar = if let Some(c) = &self.championship_session {
+                                    c.track_ids.clone()
+                                } else {
+                                    crate::ui::gt_default_calendar(tier)
+                                };
+                                self.state = GameState::CareerHub {
+                                    selected_tier: tier,
+                                    selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                                    calendar_tracks: calendar,
+                                    showing_standings: false,
+                                };
                             }
                             "nascar" => {
                                 self.start_nascar_career_tier(tier);
@@ -5601,6 +5707,239 @@ impl RaceSession {
         }
     }
 
+    /// Updates input and state for the GT Career Hub screen.
+    pub fn update_career_hub(&mut self) {
+        let (mut selected_tier, mut selected_slot, mut calendar_tracks, mut showing_standings) =
+            match self.state {
+                GameState::CareerHub {
+                    selected_tier,
+                    selected_slot,
+                    ref calendar_tracks,
+                    showing_standings,
+                } => (
+                    selected_tier,
+                    selected_slot,
+                    calendar_tracks.clone(),
+                    showing_standings,
+                ),
+                _ => return,
+            };
+
+        // 1. Standings Toggle (Tab / Gamepad Y)
+        if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_y_pressed {
+            self.audio.play_sfx(SfxType::UiSelect);
+            showing_standings = !showing_standings;
+            self.state = GameState::CareerHub {
+                selected_tier,
+                selected_slot,
+                calendar_tracks,
+                showing_standings,
+            };
+            return;
+        }
+
+        // 2. Direct Garage Shortcut (G key)
+        if is_key_pressed(KeyCode::G) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.garage_origin = GarageOrigin::CareerHub;
+            self.state = GameState::Garage(GarageOrigin::CareerHub);
+            return;
+        }
+
+        // 3. Tier Switching: Q / E, Gamepad LB / RB
+        let mut tier_changed = false;
+        if is_key_pressed(KeyCode::Q) || self.input.gamepad.snapshot.btn_lb_pressed {
+            if selected_tier > 1 {
+                self.audio.play_sfx(SfxType::UiMove);
+                selected_tier -= 1;
+                tier_changed = true;
+            }
+        }
+        if is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_rb_pressed {
+            if selected_tier < 5 {
+                self.audio.play_sfx(SfxType::UiMove);
+                selected_tier += 1;
+                tier_changed = true;
+            }
+        }
+        if tier_changed {
+            calendar_tracks = if let Some(champ) = &self.championship_session {
+                if champ.track_ids.len() == crate::ui::gt_default_calendar(selected_tier).len() {
+                    champ.track_ids.clone()
+                } else {
+                    crate::ui::gt_default_calendar(selected_tier)
+                }
+            } else {
+                crate::ui::gt_default_calendar(selected_tier)
+            };
+            selected_slot = 0;
+            self.state = GameState::CareerHub {
+                selected_tier,
+                selected_slot,
+                calendar_tracks,
+                showing_standings,
+            };
+            return;
+        }
+
+        // 4. Advance Tier Gate (P key)
+        if is_key_pressed(KeyCode::P) {
+            if selected_tier == self.active_career_progress.level
+                && self.active_career_progress.can_advance_tier()
+            {
+                if let Ok(new_tier) = self.active_career_progress.advance_tier() {
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.save_module_progress(&self.active_career_progress);
+                    }
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.spawn_hud_alert(
+                        format!("PROMOTED TO TIER {}! NEW CALENDAR UNLOCKED!", new_tier),
+                        Palette::NEON_GOLD,
+                    );
+                    selected_tier = new_tier;
+                    calendar_tracks = crate::ui::gt_default_calendar(new_tier);
+                    selected_slot = 0;
+                    self.state = GameState::CareerHub {
+                        selected_tier,
+                        selected_slot,
+                        calendar_tracks,
+                        showing_standings,
+                    };
+                    return;
+                }
+            }
+        }
+
+        // 5. Reset / Abandon Season (X key / Gamepad X)
+        if is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
+            if self.championship_session.is_some() {
+                self.championship_session = None;
+                calendar_tracks = crate::ui::gt_default_calendar(selected_tier);
+                selected_slot = 0;
+                self.audio.play_sfx(SfxType::UiSelect);
+                self.spawn_hud_alert("CHAMPIONSHIP SEASON RESET".to_string(), Palette::NEON_CYAN);
+                self.state = GameState::CareerHub {
+                    selected_tier,
+                    selected_slot,
+                    calendar_tracks,
+                    showing_standings,
+                };
+                return;
+            }
+        }
+
+        let season_active = self
+            .championship_session
+            .as_ref()
+            .map(|c| !c.is_completed)
+            .unwrap_or(false);
+
+        // 6. Navigate Calendar Slots (Up / Down, W / S, D-Pad Y)
+        let num_slots = calendar_tracks.len();
+        if is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
+            || self.input.gamepad.snapshot.dpad_up_pressed
+            || self.input.gamepad.snapshot.nav_up
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            selected_slot = selected_slot.saturating_sub(1);
+        }
+        if is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
+            || self.input.gamepad.snapshot.dpad_down_pressed
+            || self.input.gamepad.snapshot.nav_down
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            if selected_slot + 1 < num_slots {
+                selected_slot += 1;
+            }
+        }
+
+        // 7. Swap Optional Circuit in Selected Slot (Left / Right, A / D, [ / ], D-Pad X)
+        // Allowed only if season is not active
+        if !season_active && selected_tier > 1 {
+            let left_pressed = is_key_pressed(KeyCode::Left)
+                || is_key_pressed(KeyCode::A)
+                || is_key_pressed(KeyCode::LeftBracket)
+                || self.input.gamepad.snapshot.dpad_left_pressed
+                || self.input.gamepad.snapshot.nav_left;
+            let right_pressed = is_key_pressed(KeyCode::Right)
+                || is_key_pressed(KeyCode::D)
+                || is_key_pressed(KeyCode::RightBracket)
+                || self.input.gamepad.snapshot.dpad_right_pressed
+                || self.input.gamepad.snapshot.nav_right;
+
+            if left_pressed {
+                if crate::ui::cycle_calendar_slot(selected_tier, &mut calendar_tracks, selected_slot, false) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                } else {
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+            } else if right_pressed {
+                if crate::ui::cycle_calendar_slot(selected_tier, &mut calendar_tracks, selected_slot, true) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                } else {
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+            }
+        }
+
+        // 8. Confirm / Start / Resume Round (Enter, Space, KpEnter, Gamepad A)
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            if selected_tier <= self.active_career_progress.level {
+                self.audio.play_sfx(SfxType::UiSelect);
+                let need_new_champ = match &self.championship_session {
+                    None => true,
+                    Some(c) => c.is_completed || c.total_rounds() != calendar_tracks.len(),
+                };
+
+                if need_new_champ {
+                    self.start_gt_career_tier_with_calendar(selected_tier, Some(calendar_tracks.clone()));
+                } else {
+                    // Resume existing round
+                    if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+                        if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                            self.track = t;
+                        }
+                    }
+                    self.init_race();
+                }
+                return;
+            } else {
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        }
+
+        // 9. Back to Modality Selection (Escape / Gamepad B / Back)
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.transition_fade_to(
+                GameState::ModalitySelect {
+                    category: ModalityCategory::SinglePlayer,
+                    selected_idx: 2,
+                    modal: None,
+                },
+                0.3,
+            );
+            return;
+        }
+
+        self.state = GameState::CareerHub {
+            selected_tier,
+            selected_slot,
+            calendar_tracks,
+            showing_standings,
+        };
+    }
+
     /// Updates inputs, vehicle selection, and turntable/rev stage animations for the Interactive Garage (`GameState::Garage`).
     pub fn update_garage(&mut self, origin: GarageOrigin, frame_dt: f32) {
         // 1. Turntable rotation & Revving state
@@ -5663,6 +6002,20 @@ impl RaceSession {
                 }
                 GarageOrigin::StartingGrid => {
                     self.state = GameState::StartingGrid;
+                }
+                GarageOrigin::CareerHub => {
+                    let tier = self.active_career_progress.level.clamp(1, 5);
+                    let calendar = if let Some(c) = &self.championship_session {
+                        c.track_ids.clone()
+                    } else {
+                        crate::ui::gt_default_calendar(tier)
+                    };
+                    self.state = GameState::CareerHub {
+                        selected_tier: tier,
+                        selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                        calendar_tracks: calendar,
+                        showing_standings: false,
+                    };
                 }
             }
             return;
@@ -5934,6 +6287,21 @@ impl RaceSession {
                             GarageOrigin::Menu => {
                                 self.audio.stop_all_loops();
                                 self.state = GameState::Menu;
+                            }
+                            GarageOrigin::CareerHub => {
+                                self.audio.stop_all_loops();
+                                let tier = self.active_career_progress.level.clamp(1, 5);
+                                let calendar = if let Some(c) = &self.championship_session {
+                                    c.track_ids.clone()
+                                } else {
+                                    crate::ui::gt_default_calendar(tier)
+                                };
+                                self.state = GameState::CareerHub {
+                                    selected_tier: tier,
+                                    selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                                    calendar_tracks: calendar,
+                                    showing_standings: false,
+                                };
                             }
                             GarageOrigin::ModalitySelect => {
                                 // Stay or return
@@ -8505,6 +8873,25 @@ impl RaceSession {
                     };
                     modal.draw(&ctx);
                 }
+            }
+            GameState::CareerHub {
+                selected_tier,
+                selected_slot,
+                ref calendar_tracks,
+                showing_standings,
+            } => {
+                crate::ui::render_career_hub_screen(
+                    &self.fonts,
+                    &self.active_profile,
+                    &self.active_career_progress,
+                    selected_tier,
+                    selected_slot,
+                    calendar_tracks,
+                    self.championship_session.as_ref(),
+                    showing_standings,
+                    self.selected_car_model_id,
+                    self.input.gamepad.snapshot.is_connected,
+                );
             }
             GameState::ChampionshipStandings => {
                 if let Some(champ) = &self.championship_session {

@@ -1,3 +1,4 @@
+pub mod career_hub;
 pub mod curve_indicator;
 pub mod driver_card;
 pub mod font;
@@ -11,6 +12,12 @@ pub mod scaler;
 pub mod starting_grid;
 pub mod track_manager_ui;
 pub mod track_preview;
+
+pub use career_hub::{
+    cycle_calendar_slot, gt_default_calendar, gt_eligible_previous_tracks,
+    gt_mandatory_tracks, gt_tier_class, gt_tier_title, is_slot_mandatory,
+    render_career_hub_screen, track_country, track_length_meters, track_title,
+};
 
 pub use curve_indicator::{
     compute_curve_arrow_position, compute_curve_colors, compute_indicator_alpha,
@@ -36,8 +43,8 @@ pub use menu::{
 pub use profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
 pub use scaler::UiScaler;
 pub use starting_grid::{
-    render_starting_grid_screen, starting_grid_footer_prompt, starting_grid_garage_button_rect,
-    starting_grid_launch_button_rect, StartingGridFocus,
+    render_starting_grid_screen, starting_grid_footer_prompt, starting_grid_footer_prompt_with_mode,
+    starting_grid_garage_button_rect, starting_grid_launch_button_rect, StartingGridFocus,
 };
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,

@@ -619,7 +619,7 @@ fn test_gt_career_session_gating_and_cup_launch() {
     assert!(!session.is_car_unlocked(CarChoice::GT3Car));
     assert!(!session.is_track_unlocked("silverstone"));
 
-    // Verify GT Career Tier launch with 5-3-3-3-3 calendar structure
+    // Verify GT Career Tier launch with 5 -> 7 -> 9 -> 10 -> 12 calendar curve
     session.start_gt_career_tier(1);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT4Clubsport);
@@ -632,25 +632,31 @@ fn test_gt_career_session_gating_and_cup_launch() {
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT3Car);
     let champ2 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ2.track_ids.len(), 3);
+    assert_eq!(champ2.track_ids.len(), 7);
     assert_eq!(
         champ2.track_ids,
-        vec!["monza", "silverstone", "catalunya"]
+        vec!["monza", "silverstone", "catalunya", "red_bull_ring", "zandvoort", "nurburgring_gp", "portimao_gp"]
     );
+
+    session.start_gt_career_tier(3);
+    assert_eq!(session.game_mode, GameMode::Career);
+    assert_eq!(session.car_choice, CarChoice::GT2Biturbo);
+    let champ3 = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ3.track_ids.len(), 9);
 
     session.start_gt_career_tier(4);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::GT1Legend);
     let champ4 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ4.track_ids.len(), 3);
-    assert_eq!(champ4.track_ids, vec!["suzuka", "interlagos", "bathurst"]);
+    assert_eq!(champ4.track_ids.len(), 10);
+    assert_eq!(champ4.track_ids, vec!["suzuka", "interlagos", "bathurst", "spa", "monza", "silverstone", "catalunya", "cota", "nurburgring_gp", "red_bull_ring"]);
 
     session.start_gt_career_tier(5);
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.car_choice, CarChoice::HypercarPrototype);
     let champ5 = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ5.track_ids.len(), 3);
-    assert_eq!(champ5.track_ids, vec!["le_mans_sarthe", "monaco", "marina_bay"]);
+    assert_eq!(champ5.track_ids.len(), 12);
+    assert_eq!(champ5.track_ids, vec!["le_mans_sarthe", "monaco", "marina_bay", "spa", "monza", "silverstone", "suzuka", "bathurst", "interlagos", "catalunya", "cota", "red_bull_ring"]);
 
     // Test race completion in GT awards metric distance XP, finish duplication, and first-time bonus
     session.start_gt_career_tier(1);
@@ -1133,6 +1139,105 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
         session.start_extreme_offroad_career_tier(tier);
         assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
     }
+}
+
+#[test]
+fn test_gt_career_hub_calendar_helpers_and_customization() {
+    use tdrace_app::ui::career_hub::{
+        cycle_calendar_slot, gt_default_calendar, gt_eligible_previous_tracks, gt_mandatory_tracks,
+        is_slot_mandatory,
+    };
+
+    // 1. Mandatory tracks: Tier 1 has 5, Tiers 2-5 have 3
+    assert_eq!(gt_mandatory_tracks(1).len(), 5);
+    assert_eq!(gt_mandatory_tracks(2), vec!["monza", "silverstone", "catalunya"]);
+    assert_eq!(gt_mandatory_tracks(3), vec!["spa", "cota", "bahrain"]);
+    assert_eq!(gt_mandatory_tracks(4), vec!["suzuka", "interlagos", "bathurst"]);
+    assert_eq!(gt_mandatory_tracks(5), vec!["le_mans_sarthe", "monaco", "marina_bay"]);
+
+    // 2. Default calendar sizes: 5, 7, 9, 10, 12
+    assert_eq!(gt_default_calendar(1).len(), 5);
+    assert_eq!(gt_default_calendar(2).len(), 7);
+    assert_eq!(gt_default_calendar(3).len(), 9);
+    assert_eq!(gt_default_calendar(4).len(), 10);
+    assert_eq!(gt_default_calendar(5).len(), 12);
+
+    // 3. Mandatory slot checks
+    assert!(is_slot_mandatory(2, "monza"));
+    assert!(is_slot_mandatory(2, "silverstone"));
+    assert!(is_slot_mandatory(2, "catalunya"));
+    assert!(!is_slot_mandatory(2, "red_bull_ring"));
+    assert!(!is_slot_mandatory(2, "zandvoort"));
+
+    // 4. Eligible previous tracks
+    let tier2_eligible = gt_eligible_previous_tracks(2);
+    assert_eq!(tier2_eligible.len(), 5); // 5 tracks from Tier 1
+    assert!(tier2_eligible.contains(&"red_bull_ring"));
+    assert!(tier2_eligible.contains(&"montreal"));
+
+    // 5. Calendar slot cycling
+    let mut calendar = gt_default_calendar(2);
+    // Mandatory slots (0..2) cannot be modified
+    cycle_calendar_slot(2, &mut calendar, 0, true);
+    assert_eq!(calendar[0], "monza");
+    cycle_calendar_slot(2, &mut calendar, 1, false);
+    assert_eq!(calendar[1], "silverstone");
+
+    // Optional slot (e.g. index 3 = "red_bull_ring") can be cycled
+    let original_track = calendar[3].clone();
+    cycle_calendar_slot(2, &mut calendar, 3, true);
+    assert_ne!(calendar[3], original_track);
+    // Must remain unique within calendar
+    let mut track_set = std::collections::HashSet::new();
+    for t in &calendar {
+        assert!(track_set.insert(t.clone()), "Track {} was duplicated in calendar", t);
+    }
+
+    // Reverse cycling test
+    cycle_calendar_slot(2, &mut calendar, 3, false);
+    assert_eq!(calendar[3], original_track);
+}
+
+#[test]
+fn test_gt_career_tier_launch_with_custom_calendar() {
+    use tdrace_app::ui::menu::GameMode;
+
+    let mut session = RaceSession::new();
+    let mem_db = HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+    session.switch_to_gt();
+
+    // Custom calendar for Tier 2: 3 mandatory + 4 chosen tracks from Tier 1
+    let custom_tracks = vec![
+        "monza".to_string(),
+        "silverstone".to_string(),
+        "catalunya".to_string(),
+        "montreal".to_string(),
+        "portimao_gp".to_string(),
+        "nurburgring_gp".to_string(),
+        "zandvoort".to_string(),
+    ];
+
+    session.start_gt_career_tier_with_calendar(2, Some(custom_tracks.clone()));
+    assert_eq!(session.game_mode, GameMode::Career);
+    let champ = session.championship_session.as_ref().expect("Championship should be active");
+    assert_eq!(champ.track_ids.len(), 7);
+    assert_eq!(champ.track_ids, custom_tracks);
+
+    // Fallback: If player attempts to launch with invalid calendar (missing mandatory tracks)
+    let invalid_tracks = vec![
+        "red_bull_ring".to_string(),
+        "zandvoort".to_string(),
+        "nurburgring_gp".to_string(),
+        "portimao_gp".to_string(),
+        "montreal".to_string(),
+    ];
+    session.start_gt_career_tier_with_calendar(2, Some(invalid_tracks));
+    let champ_fallback = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ_fallback.track_ids.len(), 7);
+    assert_eq!(champ_fallback.track_ids[0], "monza");
 }
 
 

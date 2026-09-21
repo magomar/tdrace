@@ -468,19 +468,19 @@ fn test_starting_grid_footer_prompt_space_reserved_for_launch() {
     assert!(!card0_prompt.contains("ENTER/SPACE"), "Card 0 prompt must not combine Enter and Space: {}", card0_prompt);
     assert!(!card0_prompt.contains("Cycle Mode"), "Card 0 prompt must not reference obsolete Cycle Mode: {}", card0_prompt);
 
-    // Card 1 (Vehicle): Enter opens garage / change vehicle, Space is reserved for Launch
+    // Card 1 (Grid Config / Bot count): Enter adjusts bots, Space is reserved for Launch
     let card1_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 1);
-    assert!(card1_prompt.contains("[ENTER / < / >] Change Vehicle"));
+    assert!(card1_prompt.contains("[ENTER / + / -] Adjust Bots"), "Card 1 prompt: {}", card1_prompt);
     assert!(card1_prompt.contains("[SPACE] Launch"));
 
-    // Card 2 (Bot count): Enter adjusts bots, Space is reserved for Launch
-    let card2_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 2);
-    assert!(card2_prompt.contains("[ENTER / + / -] Adjust Bots"));
-    assert!(card2_prompt.contains("[SPACE] Launch"));
+    // Card 1 (Locked mode / Championship): indicates Roster Locked
+    use tdrace_app::ui::starting_grid_footer_prompt_with_mode;
+    let locked_prompt = starting_grid_footer_prompt_with_mode(false, StartingGridFocus::LeftSetup, 1, false);
+    assert!(locked_prompt.contains("[ROSTER LOCKED]"), "Locked prompt must show ROSTER LOCKED: {}", locked_prompt);
 
-    // Card 3 (Launch Race button): Enter / Space / Click launches
-    let card3_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 3);
-    assert!(card3_prompt.contains("LAUNCH RACE"));
+    // Card 2 (Launch Race button): Enter / Space / Click launches
+    let card2_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 2);
+    assert!(card2_prompt.contains("LAUNCH RACE"));
 
     // Right Roster panel: Enter opens Dossier, Space is reserved for Launch
     let roster_prompt = starting_grid_footer_prompt(false, StartingGridFocus::RightRoster, 0);

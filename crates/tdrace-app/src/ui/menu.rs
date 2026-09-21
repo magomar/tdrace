@@ -786,6 +786,13 @@ impl GameMode {
         }
     }
 
+    pub fn allows_roster_customization(&self) -> bool {
+        match self {
+            Self::ExperimentalRace => true,
+            Self::StandardRace | Self::Career | Self::SplitScreen | Self::TimeTrial | Self::FreeRide => false,
+        }
+    }
+
     pub fn has_bots(&self) -> bool {
         match self {
             Self::StandardRace | Self::Career | Self::ExperimentalRace | Self::SplitScreen => true,

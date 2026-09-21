@@ -63,6 +63,7 @@ stateDiagram-v2
     }
 
     state "Championship Standings (ChampionshipStandings)" as ChampionshipStandings
+    state "GT Career Hub & Calendar (CareerHub)" as CareerHub
     state "Arcade Settings Modal (ArcadeSettingsModal)" as ArcadeSettingsModal
     state "Garage Showroom (Garage)" as Garage
     state "Circuit Hub & Workshop (TrackManager)" as TrackManager
@@ -79,9 +80,19 @@ stateDiagram-v2
     %% Modality Selection transitions
     ModalitySelect --> ModuleSelect: [ESC / B] (Back to Grand Hub)
     ModalitySelect --> Menu: [ENTER / SPACE / A] (Quick Race, Custom Race, Time Trial, Free Ride, Split Screen)
-    ModalitySelect --> ChampionshipStandings: [ENTER / SPACE / A] (Career Mode)
+    ModalitySelect --> CareerHub: [ENTER / SPACE / A] (GT Career Mode)
+    ModalitySelect --> ChampionshipStandings: [ENTER / SPACE / A] (NASCAR/Rallycross Career Mode)
     ModalitySelect --> Garage: [ENTER on Col 3 / G] (Open Garage Showroom)
     ModalitySelect --> TrackManager: [ENTER on Col 4 / T] (Open Circuit Hub)
+
+    %% Career Hub transitions
+    CareerHub --> ModalitySelect: [ESC / B] (Back to Modality Selection)
+    CareerHub --> StartingGrid: [SPACE / ENTER / A] (Launch Championship Cup)
+    CareerHub --> Garage: [G] (Inspect Assigned Vehicle)
+    CareerHub --> CareerHub: [Q / E] (Switch Tier Tabs & Replay Cups)
+    CareerHub --> CareerHub: [< / > / A / D] (Customize Optional Calendar Slots)
+    CareerHub --> CareerHub: [P] (Advance / Promote Tier)
+    CareerHub --> CareerHub: [TAB / S] (Toggle Live Season Standings)
 
     %% Menu transitions
     Menu --> ModalitySelect: [ESC / TAB / B] (Return to Modality Selection)
@@ -102,7 +113,9 @@ stateDiagram-v2
     DriverCards --> StartingGrid: [ESC / ENTER / B]
     StartingGrid --> Garage: [G] (Inspect Car Details)
     Garage --> StartingGrid: [ESC / B] (if origin is StartingGrid)
-    StartingGrid --> Menu: [ESC / B]
+    Garage --> CareerHub: [ESC / B] (if origin is CareerHub)
+    StartingGrid --> Menu: [ESC / B] (if origin is Menu)
+    StartingGrid --> CareerHub: [ESC / B] (if GT Career Mode)
 
     %% Garage transitions
     Garage --> ModalitySelect: [ESC / B] (if origin is ModalitySelect)
@@ -127,6 +140,7 @@ stateDiagram-v2
     %% Championship transitions
     ChampionshipStandings --> StartingGrid: [SPACE / ENTER / A] (Next Round)
     ChampionshipStandings --> Menu: [ESC / B] (Abandon)
+    ChampionshipStandings --> CareerHub: [ESC / B / Finish] (if GT Career Mode)
 
     %% Profile flow
     ProfileManager --> ProfileCreate: [N / E]
@@ -385,7 +399,35 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Space` / `Enter` / Gamepad `A` | Advance to Next Round | Loads next round track -> Transitions to `GameState::StartingGrid` |
-| `Escape` / Gamepad `B` | Abandon Championship | Resets championship session -> Transitions to `GameState::Menu` |
+| `Escape` / Gamepad `B` | Abandon Championship | Resets championship session -> Transitions to `GameState::CareerHub` (if GT Career) or `GameState::Menu` |
+
+---
+
+### 3.8.1. Gran Turismo Career Hub (`GameState::CareerHub`)
+* **Purpose**: Intermediate career command hub for the Gran Turismo active career, displaying pilot identity, career XP wallet, trophy cabinet, tier advancement gates, active vehicle specifications, and a customizable championship calendar.
+* **State Struct**: `GameState::CareerHub { selected_tier: u32, selected_slot: usize, calendar_tracks: Vec<String>, showing_standings: bool }`
+* **Components**:
+  - **Pilot Identity & XP Wallet**: Top header banner featuring driver country flag, name, alias callsign, spendable XP balance, and gold/silver/bronze championship trophy counts.
+  - **Tier Selector Tab Bar**: 5 career tiers (Tier 1 GT4 Clubman, Tier 2 GT3 European, Tier 3 GT2 Power, Tier 4 Le Mans Heritage, Tier 5 Hypercar Apex). Allows replaying lower unlocked tiers for XP/trophies.
+  - **Career Status & Promotion Panel**: Shows tier clearance status, podium finish requirement, target XP advancement gate, progress bar, and active promotion button `[P]`.
+  - **Assigned Vehicle & Class Spec**: Assigned car model for the selected tier, horsepower, weight, top speed, drivetrain, unlock status, and direct link to the Garage Showroom `[G]`.
+  - **Championship Calendar (5 -> 7 -> 9 -> 10 -> 12)**:
+    - 3 mandatory headline tracks per tier (5 in Tier 1) pinned in slots 1–3.
+    - Customizable optional slots (e.g., 4 slots in Tier 2, 6 in Tier 3, 7 in Tier 4, 9 in Tier 5) that can be swapped using `<` / `>` among previously unlocked tracks.
+  - **Live Standings Overlay**: Toggleable side-by-side championship points table `[TAB]` when a season is in progress.
+* **Navigation & Shortcuts**:
+
+| Key / Input | Action | Target / Result |
+| :--- | :--- | :--- |
+| `Q` / `E` / Bumpers | Switch Tier Tab | Selects previous / next unlocked tier tab (`1` to `career.level`) |
+| `Up` / `Down` / `W` / `S` / D-Pad | Navigate Calendar Slots | Selects circuit slot in the championship calendar |
+| `Left` / `Right` / `A` / `D` / `[` / `]` | Swap Optional Circuit | Cycles through eligible previous tier tracks for the selected optional slot |
+| `Space` / `Enter` / Gamepad `A` | Start / Resume Championship Cup | Launches tier cup with current calendar -> `GameState::StartingGrid` |
+| `Tab` / `S` / Gamepad `X` | Toggle Live Standings | Toggles season standings overlay view |
+| `P` / Gamepad `Y` | Advance Career Tier | Promotes pilot to next tier when XP and podium requirements are satisfied |
+| `G` | Inspect in Garage | Opens Garage Showroom for the assigned car -> `GameState::Garage` |
+| `X` | Reset Cup Progress | Resets active unfinished championship season to customize calendar anew |
+| `Escape` / Gamepad `B` | Back to Modalities | Returns to discipline modality selector -> `GameState::ModalitySelect` |
 
 ---
 

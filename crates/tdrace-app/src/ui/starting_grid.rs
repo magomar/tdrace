@@ -27,9 +27,9 @@ pub fn starting_grid_garage_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32
     let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
     let panel_y = scaler.s(60.0);
     let p1_h = scaler.s(88.0);
-    let garage_h = scaler.s(60.0);
+    let garage_card_h = scaler.s(264.0);
     let curr_y = panel_y + p1_h + scaler.s(8.0);
-    (col1_x, curr_y, col_w, garage_h)
+    (col1_x, curr_y, col_w, garage_card_h)
 }
 
 /// Returns the rectangle (x, y, w, h) of the high-visibility Launch Race button on the Starting Grid.
@@ -40,12 +40,11 @@ pub fn starting_grid_launch_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32
     let panel_y = scaler.s(60.0);
 
     let p1_h = scaler.s(88.0);
-    let garage_h = scaler.s(60.0);
-    let car_card_h = scaler.s(256.0);
+    let garage_card_h = scaler.s(264.0);
     let grid_h = scaler.s(48.0);
     let launch_h = scaler.s(48.0);
 
-    let curr_y = panel_y + p1_h + scaler.s(8.0) + garage_h + scaler.s(8.0) + car_card_h + scaler.s(8.0) + grid_h + scaler.s(10.0);
+    let curr_y = panel_y + p1_h + scaler.s(8.0) + garage_card_h + scaler.s(8.0) + grid_h + scaler.s(10.0);
     (col1_x, curr_y, col_w, launch_h)
 }
 
@@ -190,37 +189,57 @@ pub fn render_starting_grid_screen(
 
     curr_y += p1_h + scaler.s(8.0);
 
-    // Card 2 (Index 0): Motorsport Garage Access Card
+    // Card 2 (Index 0): Combined Motorsport Garage & Active Car Card
     let is_garage_active = is_left_focused && active_card_idx == 0;
-    let garage_h = scaler.s(60.0);
+    let garage_card_h = scaler.s(264.0);
     let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
-    let is_garage_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + garage_h;
+    let is_garage_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + garage_card_h;
     let is_garage_highlighted = is_garage_active || is_garage_hovered;
 
-    let garage_border = if is_garage_highlighted {
+    let garage_border = if !is_car_unlocked {
+        Palette::RED
+    } else if is_garage_highlighted {
         Palette::NEON_GOLD
     } else {
         Palette::UI_CARD_BORDER
     };
-    let garage_bg = if is_garage_highlighted {
+    let garage_bg = if !is_car_unlocked {
+        Color::new(0.12, 0.04, 0.04, 0.85)
+    } else if is_garage_highlighted {
         Palette::UI_CARD_BG_HOVER
     } else {
         Palette::UI_CARD_BG
     };
-    scaler.draw_glass_card(col1_x, curr_y, col_w, garage_h, garage_bg, garage_border, if is_garage_highlighted { 2.4 } else { 1.2 });
+    scaler.draw_glass_card(col1_x, curr_y, col_w, garage_card_h, garage_bg, garage_border, if is_garage_highlighted || !is_car_unlocked { 2.4 } else { 1.2 });
 
-    let garage_header_label = if is_garage_highlighted {
-        "GARAGE & SHOWROOM [ACTIVE • ENTER / CLICK to open]"
+    let locked_header_str = format!("GARAGE: 🔒 LOCKED [LEVEL {} REQUIRED]", unlock_level);
+    let garage_header_title = if !is_car_unlocked {
+        &locked_header_str
+    } else if is_garage_highlighted {
+        if game_mode.allows_car_change() {
+            "GARAGE [ACTIVE • CLICK / ENTER to open • [ / ] to switch]"
+        } else {
+            "GARAGE [ACTIVE • CLICK / ENTER / G to open]"
+        }
     } else {
-        "GARAGE & SHOWROOM: [Up/Down to select card]"
+        "GARAGE [ACTIVE CAR • Click to open Garage]"
+    };
+    let garage_header_col = if !is_car_unlocked {
+        Palette::RED
+    } else if is_garage_highlighted {
+        Palette::NEON_GOLD
+    } else {
+        Palette::UI_TEXT_MUTED
     };
     fonts.draw_ui_bold(
-        garage_header_label,
+        garage_header_title,
         col1_x + scaler.s(12.0),
         curr_y + scaler.s(16.0),
         scaler.font_s(11.0),
-        if is_garage_highlighted { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
+        garage_header_col,
     );
+
+    // "OPEN GARAGE [G]" badge / button hint
     fonts.draw_ui_bold(
         "OPEN GARAGE [G]",
         col1_x + col_w - scaler.s(130.0),
@@ -229,68 +248,17 @@ pub fn render_starting_grid_screen(
         Palette::NEON_CYAN,
     );
 
+    let car_title = model_opt.map(|m| m.name).unwrap_or_else(|| active_car.title());
+    let car_desc = model_opt.map(|m| m.history_bio).unwrap_or_else(|| active_car.description());
+
     fonts.draw_ui_bold(
-        "Motorsport Garage & Showroom",
+        car_title,
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(34.0),
-        scaler.font_s(15.0),
+        curr_y + scaler.s(33.0),
+        scaler.font_s(15.5),
         Palette::WHITE,
     );
-    fonts.draw_ui_regular(
-        "Browse all module vehicles, inspect 2D side profiles & select unlocked cars.",
-        col1_x + scaler.s(12.0),
-        curr_y + scaler.s(48.0),
-        scaler.font_s(10.5),
-        Palette::UI_TEXT_MUTED,
-    );
 
-    curr_y += garage_h + scaler.s(8.0);
-
-    // Card 3 (Index 1): Vehicle Selection & Specs Card (with 2D Lateral View)
-    let is_car_active = is_left_focused && active_card_idx == 1;
-    let car_card_h = scaler.s(256.0);
-    let car_border_col = if !is_car_unlocked {
-        Palette::RED
-    } else if is_car_active {
-        if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::NEON_CYAN }
-    } else {
-        Palette::UI_CARD_BORDER
-    };
-    let car_bg = if !is_car_unlocked {
-        Color::new(0.12, 0.04, 0.04, 0.85)
-    } else if is_car_active {
-        Palette::UI_CARD_BG_HOVER
-    } else {
-        Palette::UI_CARD_BG
-    };
-    scaler.draw_glass_card(col1_x, curr_y, col_w, car_card_h, car_bg, car_border_col, if is_car_active || !is_car_unlocked { 2.4 } else { 1.2 });
-
-    let locked_header_str = format!("CAR SELECTION: 🔒 LOCKED [LEVEL {} REQUIRED]", unlock_level);
-    let car_header_title = if !is_car_unlocked {
-        &locked_header_str
-    } else if is_car_active {
-        if game_mode.allows_car_change() {
-            "ACTIVE CAR [ENTER / G to open Garage • [ / ] to switch]"
-        } else {
-            "ACTIVE CAR: ENFORCED PREDEFINED [Locked]"
-        }
-    } else {
-        "ACTIVE CAR SPEC: [Up/Down to select card]"
-    };
-    let car_header_col = if !is_car_unlocked {
-        Palette::RED
-    } else if is_car_active {
-        if game_mode.allows_car_change() { Palette::NEON_GREEN } else { Palette::NEON_CYAN }
-    } else {
-        Palette::UI_TEXT_MUTED
-    };
-    fonts.draw_ui_bold(
-        car_header_title,
-        col1_x + scaler.s(12.0),
-        curr_y + scaler.s(16.0),
-        scaler.font_s(11.0),
-        car_header_col,
-    );
     let car_tag_str = if !is_car_unlocked {
         "🔒 LOCKED"
     } else {
@@ -304,25 +272,15 @@ pub fn render_starting_grid_screen(
     fonts.draw_ui_bold(
         car_tag_str,
         col1_x + col_w - scaler.s(160.0),
-        curr_y + scaler.s(16.0),
+        curr_y + scaler.s(33.0),
         scaler.font_s(10.0),
         car_tag_col,
     );
 
-    let car_title = model_opt.map(|m| m.name).unwrap_or_else(|| active_car.title());
-    let car_desc = model_opt.map(|m| m.history_bio).unwrap_or_else(|| active_car.description());
-
-    fonts.draw_ui_bold(
-        car_title,
-        col1_x + scaler.s(12.0),
-        curr_y + scaler.s(32.0),
-        scaler.font_s(15.5),
-        Palette::WHITE,
-    );
     fonts.draw_ui_regular(
         car_desc,
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(46.0),
+        curr_y + scaler.s(48.0),
         scaler.font_s(10.5),
         Palette::UI_TEXT_MUTED,
     );
@@ -330,7 +288,7 @@ pub fn render_starting_grid_screen(
     // 2D Lateral View Blueprint Showcase Box
     let stat_base_x = col1_x + scaler.s(12.0);
     let stat_bar_w = col_w - scaler.s(24.0);
-    let lateral_box_y = curr_y + scaler.s(56.0);
+    let lateral_box_y = curr_y + scaler.s(58.0);
     let lateral_box_h = scaler.s(58.0);
     scaler.draw_glass_card(
         stat_base_x,
@@ -378,10 +336,10 @@ pub fn render_starting_grid_screen(
     } else {
         active_car.stats()
     };
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(122.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(137.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(152.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(167.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(124.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(139.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(154.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(169.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
 
     // 4 Engineering / Dynamic Specs Chips
     let (spec1, spec2, spec3, spec4) = if let Some(m) = model_opt {
@@ -397,8 +355,8 @@ pub fn render_starting_grid_screen(
     };
     let spec_chip_w = (col_w - scaler.s(32.0)) * 0.5;
     let spec_chip_h = scaler.s(22.0);
-    let chip_y1 = curr_y + scaler.s(188.0);
-    let chip_y2 = curr_y + scaler.s(214.0);
+    let chip_y1 = curr_y + scaler.s(190.0);
+    let chip_y2 = curr_y + scaler.s(216.0);
 
     scaler.draw_glass_card(stat_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
     fonts.draw_ui_bold(&spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
@@ -413,21 +371,27 @@ pub fn render_starting_grid_screen(
     fonts.draw_ui_bold(&spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
 
     // Prompt hint at bottom of card
-    if is_car_active && game_mode.allows_car_change() {
+    if is_garage_highlighted {
+        let hint_text = if game_mode.allows_car_change() {
+            "Press [ENTER], [G] or CLICK to open Garage showroom & switch vehicle"
+        } else {
+            "Press [ENTER], [G] or CLICK to open Garage showroom"
+        };
         fonts.draw_ui_regular(
-            "Press [ENTER] or [G] to open Garage showroom and select vehicle",
+            hint_text,
             col1_x + scaler.s(12.0),
-            curr_y + scaler.s(244.0),
+            curr_y + scaler.s(250.0),
             scaler.font_s(9.5),
             Palette::NEON_GOLD,
         );
     }
 
-    curr_y += car_card_h + scaler.s(8.0);
+    curr_y += garage_card_h + scaler.s(8.0);
 
-    // Card 4: Grid Configuration / Session Status Card
-    let is_grid_active = is_left_focused && active_card_idx == 2;
+    // Card 3 (Index 1): Grid Configuration / Session Status Card
+    let is_grid_active = is_left_focused && active_card_idx == 1;
     let grid_h = scaler.s(48.0);
+    let is_roster_locked = !game_mode.allows_roster_customization();
     let grid_border = if is_grid_active {
         Palette::NEON_CYAN
     } else {
@@ -441,7 +405,13 @@ pub fn render_starting_grid_screen(
     scaler.draw_glass_card(col1_x, curr_y, col_w, grid_h, grid_bg, grid_border, if is_grid_active { 2.4 } else { 1.2 });
 
     if game_mode.has_bots() {
-        let grid_hdr = if is_grid_active {
+        let grid_hdr = if is_roster_locked {
+            if game_mode == GameMode::Career {
+                "GRID CONFIG: 🔒 LOCKED [Championship Roster]"
+            } else {
+                "GRID CONFIG: 🔒 LOCKED [Official Roster]"
+            }
+        } else if is_grid_active {
             "GRID CONFIG [ACTIVE • ENTER / + / - to adjust]"
         } else {
             "GRID CONFIG: [Up/Down to select card]"
@@ -453,7 +423,9 @@ pub fn render_starting_grid_screen(
             scaler.font_s(10.5),
             if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
         );
-        let racer_desc = if game_mode == GameMode::SplitScreen {
+        let racer_desc = if is_roster_locked && game_mode == GameMode::Career {
+            format!("{} Racers (Championship Grid) • Official Season Roster Locked", num_drivers)
+        } else if game_mode == GameMode::SplitScreen {
             let bot_count = num_drivers.saturating_sub(2);
             if bot_count == 0 {
                 format!("2 Players (1v1 Head-to-Head Duel) • Max {} Slots", max_grid_size)
@@ -501,9 +473,9 @@ pub fn render_starting_grid_screen(
 
     curr_y += grid_h + scaler.s(10.0);
 
-    // Card 5 (Index 3): High-Visibility Green "LAUNCH RACE" Action Button
+    // Card 4 (Index 2): High-Visibility Green "LAUNCH RACE" Action Button
     let launch_h = scaler.s(48.0);
-    let is_launch_card = is_left_focused && active_card_idx == 3;
+    let is_launch_card = is_left_focused && active_card_idx == 2;
     let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
     let is_launch_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + launch_h;
     let is_launch_active = is_launch_card || is_launch_hovered;
@@ -562,12 +534,17 @@ pub fn render_starting_grid_screen(
     let roster_base_title = match game_mode {
         GameMode::TimeTrial => "TIME TRIAL • ROSTER & SHADOW CAR",
         GameMode::FreeRide => "FREE RIDE • PRACTICE ROSTER",
-        GameMode::StandardRace | GameMode::ExperimentalRace => "STARTING GRID & ROSTER",
-        GameMode::Career => "CAREER CHAMPIONSHIP • STARTING GRID",
+        GameMode::StandardRace => "STANDARD RACE • STARTING GRID",
+        GameMode::ExperimentalRace => "CUSTOM RACE • STARTING GRID & ROSTER",
+        GameMode::Career => "CAREER CHAMPIONSHIP • STARTING GRID [LOCKED]",
         GameMode::SplitScreen => "2P SPLIT SCREEN • KEYS VS GAMEPAD",
     };
     let roster_header = if is_right_focused {
-        format!("{} [FOCUSED • Up/Down to select slot • ENTER/D for Dossier]", roster_base_title)
+        if game_mode.allows_roster_customization() {
+            format!("{} [FOCUSED • Up/Down select • [ / ] Change Car • ENTER/D Dossier]", roster_base_title)
+        } else {
+            format!("{} [FOCUSED • Up/Down to select slot • ENTER/D for Dossier]", roster_base_title)
+        }
     } else {
         format!("{} [Right arrow to focus roster]", roster_base_title)
     };
@@ -750,7 +727,7 @@ pub fn render_starting_grid_screen(
     // =========================================================================
     // FOOTER PROMPTS
     // =========================================================================
-    let prompt = starting_grid_footer_prompt(gamepad_connected, focused_panel, active_card_idx);
+    let prompt = starting_grid_footer_prompt_with_mode(gamepad_connected, focused_panel, active_card_idx, game_mode.allows_roster_customization());
 
     fonts.draw_ui_bold_centered(
         prompt,
@@ -767,12 +744,25 @@ pub fn starting_grid_footer_prompt(
     focused_panel: StartingGridFocus,
     active_card_idx: usize,
 ) -> &'static str {
+    starting_grid_footer_prompt_with_mode(gamepad_connected, focused_panel, active_card_idx, true)
+}
+
+/// Returns the footer prompt with awareness of whether the roster can be customized in the current game mode.
+pub fn starting_grid_footer_prompt_with_mode(
+    gamepad_connected: bool,
+    focused_panel: StartingGridFocus,
+    active_card_idx: usize,
+    is_roster_customizable: bool,
+) -> &'static str {
     if gamepad_connected {
         match focused_panel {
             StartingGridFocus::LeftSetup => match active_card_idx {
                 0 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A] Open Garage  |  [START] Launch  |  [B] Menu",
-                1 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Change Car  |  [START] Launch  |  [B] Menu",
-                2 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Adjust Bots  |  [START] Launch  |  [B] Menu",
+                1 => if is_roster_customizable {
+                    "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A/X] Adjust Bots  |  [START] Launch  |  [B] Menu"
+                } else {
+                    "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [ROSTER LOCKED]  |  [START] Launch  |  [B] Menu"
+                },
                 _ => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A / START] LAUNCH RACE  |  [B] Menu",
             },
             StartingGridFocus::RightRoster => {
@@ -783,13 +773,18 @@ pub fn starting_grid_footer_prompt(
         match focused_panel {
             StartingGridFocus::LeftSetup => match active_card_idx {
                 0 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER] Open Garage  |  [SPACE] Launch  |  [ESC] Menu",
-                1 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / < / >] Change Vehicle  |  [SPACE] Launch  |  [ESC] Menu",
-                2 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / + / -] Adjust Bots  |  [SPACE] Launch  |  [ESC] Menu",
+                1 => if is_roster_customizable {
+                    "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / + / -] Adjust Bots  |  [SPACE] Launch  |  [ESC] Menu"
+                } else {
+                    "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ROSTER LOCKED]  |  [SPACE] Launch  |  [ESC] Menu"
+                },
                 _ => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / SPACE / CLICK] LAUNCH RACE  |  [ESC] Menu",
             },
-            StartingGridFocus::RightRoster => {
+            StartingGridFocus::RightRoster => if is_roster_customizable {
+                "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [< / >] Change Vehicle  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
+            } else {
                 "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
-            }
+            },
         }
     }
 }

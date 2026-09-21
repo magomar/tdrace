@@ -180,18 +180,15 @@ fn test_2d_navigation_focus_and_cursor_state() {
     session.init_race();
 
     assert_eq!(session.starting_grid_focus, StartingGridFocus::LeftSetup);
-    assert_eq!(session.starting_grid_card_idx, 0); // Game Mode card
+    assert_eq!(session.starting_grid_card_idx, 0); // Combined Garage & Active Car card
     assert_eq!(session.starting_grid_roster_idx, 0);
 
     // 3. Starting Grid 2D navigation: panel switching & card cycling
-    session.starting_grid_card_idx = 1; // Vehicle Selection card
+    session.starting_grid_card_idx = 1; // Grid Config card
     assert_eq!(session.starting_grid_card_idx, 1);
 
-    session.starting_grid_card_idx = 2; // Bot Count card
+    session.starting_grid_card_idx = 2; // Launch Race button
     assert_eq!(session.starting_grid_card_idx, 2);
-
-    session.starting_grid_card_idx = 3; // Launch Race button
-    assert_eq!(session.starting_grid_card_idx, 3);
 
     // Verify Starting Grid Launch button rect geometry
     let (bx, by, bw, bh) = tdrace_app::ui::starting_grid_launch_button_rect(1280.0, 720.0);
@@ -292,5 +289,43 @@ fn test_custom_tracks_pure_selection_and_shortcut() {
         modal: tdrace_app::ui::TrackManagerModal::None,
     };
     assert!(matches!(session.state, GameState::TrackManager { .. }));
+}
+
+#[test]
+fn test_championship_mode_roster_locked_and_custom_race_customizable() {
+    use tdrace_app::ui::menu::GameMode;
+
+    // 1. Championship Mode (Career): Roster and vehicle must be strictly locked
+    let career = GameMode::Career;
+    assert!(!career.allows_roster_customization(), "Championship mode roster must be locked");
+    assert!(!career.allows_car_change(), "Championship mode car change must be locked");
+
+    // 2. Custom Race Mode (ExperimentalRace): Roster and vehicle must be customizable
+    let custom = GameMode::ExperimentalRace;
+    assert!(custom.allows_roster_customization(), "Custom race mode roster must be customizable");
+    assert!(custom.allows_car_change(), "Custom race mode car must be customizable");
+
+    // 3. Quick Race (StandardRace): Fixed predefined car & locked roster
+    let standard = GameMode::StandardRace;
+    assert!(!standard.allows_roster_customization(), "Standard race roster must be locked");
+    assert!(!standard.allows_car_change(), "Standard race car must be predefined");
+}
+
+#[test]
+fn test_combined_garage_button_rect_and_launch_button_rect() {
+    use tdrace_app::ui::{starting_grid_garage_button_rect, starting_grid_launch_button_rect};
+
+    let (gx, gy, gw, gh) = starting_grid_garage_button_rect(1280.0, 720.0);
+    assert!(gw > 350.0);
+    assert!(gh > 250.0, "Combined Garage card must encompass the full active car showcase (h = {})", gh);
+    assert!(gx > 0.0);
+    assert!(gy > 50.0);
+
+    let (lx, ly, lw, lh) = starting_grid_launch_button_rect(1280.0, 720.0);
+    assert!(lw > 350.0);
+    assert!(lh > 30.0);
+    assert!(lx > 0.0);
+    // Launch button must be positioned below the Garage card and Grid card
+    assert!(ly > gy + gh, "Launch button (ly={}) must be below Garage card (gy+gh={})", ly, gy + gh);
 }
 
