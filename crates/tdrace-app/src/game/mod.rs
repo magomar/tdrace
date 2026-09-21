@@ -379,6 +379,8 @@ pub struct RaceSession {
     pub active_career_progress: ModuleCareerProgress,
     pub profile_list: Vec<PlayerProfile>,
     pub profile_history: Vec<RaceHistoryEntry>,
+    pub profile_manager_tab: usize,
+    pub profile_telemetry_filter_idx: usize,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -651,6 +653,8 @@ impl RaceSession {
             active_career_progress: ModuleCareerProgress::default_for_gt(1),
             profile_list: Vec::new(),
             profile_history: Vec::new(),
+            profile_manager_tab: 0,
+            profile_telemetry_filter_idx: 0,
 
             fx: EffectsManager::new(8000, 1500),
             camera,
@@ -3824,7 +3828,92 @@ impl RaceSession {
             self.refresh_profiles_and_stats();
         }
 
-        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+        // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-4, Mouse Click)
+        let tab_prev = is_key_pressed(KeyCode::Left)
+            || self.input.gamepad.snapshot.nav_left;
+        let tab_next = is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::Tab)
+            || self.input.gamepad.snapshot.nav_right;
+
+        if tab_prev {
+            self.audio.play_sfx(SfxType::UiMove);
+            if self.profile_manager_tab == 0 {
+                self.profile_manager_tab = 3;
+            } else {
+                self.profile_manager_tab -= 1;
+            }
+        }
+        if tab_next {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+        }
+
+        if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Kp1) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 0;
+        }
+        if is_key_pressed(KeyCode::Key2) || is_key_pressed(KeyCode::Kp2) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 1;
+        }
+        if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::Kp3) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 2;
+        }
+        if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 3;
+        }
+
+        // Mouse click on Tab bar
+        if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
+            let (mx, my) = macroquad::input::mouse_position();
+            let sw = screen_width();
+            let sh = screen_height();
+            let scaler = UiScaler::new(sw, sh);
+            let full_w = sw * 0.96;
+            let full_h = sh * 0.92;
+            let px = (sw - full_w) * 0.5;
+            let hero_h = scaler.s(76.0);
+            let tab_y = (sh - full_h) * 0.5 + scaler.s(16.0) + hero_h + scaler.s(8.0);
+            let tab_bar_h = scaler.s(34.0);
+            if my >= tab_y && my <= tab_y + tab_bar_h {
+                let tab_gap = scaler.s(8.0);
+                let total_gaps = tab_gap * 3.0;
+                let tab_w = ((full_w - scaler.s(220.0) - total_gaps) / 4.0).max(scaler.s(110.0));
+                for i in 0..4 {
+                    let tx = px + i as f32 * (tab_w + tab_gap);
+                    if mx >= tx && mx <= tx + tab_w {
+                        if self.profile_manager_tab != i {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.profile_manager_tab = i;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Telemetry Category Filter Cycling (F key when on Tab 3)
+        if self.profile_manager_tab == 3 {
+            if is_key_pressed(KeyCode::F) {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.profile_telemetry_filter_idx = (self.profile_telemetry_filter_idx + 1) % 7;
+            }
+        }
+
+        // Inline Driver Profile Cycling (Q / E or Up / Down or W / S)
+        let cycle_prev = is_key_pressed(KeyCode::Q)
+            || is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
+            || self.input.gamepad.snapshot.nav_up;
+
+        let cycle_next = is_key_pressed(KeyCode::E)
+            || is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
+            || self.input.gamepad.snapshot.nav_down;
+
+        if cycle_prev {
             self.audio.play_sfx(SfxType::UiMove);
             if current_idx == 0 {
                 current_idx = self.profile_list.len().saturating_sub(1);
@@ -3841,7 +3930,7 @@ impl RaceSession {
             }
         }
 
-        if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
+        if cycle_next {
             self.audio.play_sfx(SfxType::UiMove);
             if !self.profile_list.is_empty() {
                 current_idx = (current_idx + 1) % self.profile_list.len();
@@ -3871,8 +3960,8 @@ impl RaceSession {
             }
         }
 
-        // Edit Profile (E key)
-        if is_key_pressed(KeyCode::E) {
+        // Edit Profile (M or F2 key)
+        if is_key_pressed(KeyCode::M) || is_key_pressed(KeyCode::F2) {
             if let Some(p) = self.profile_list.get(current_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
                 while get_char_pressed().is_some() {}
@@ -7760,6 +7849,8 @@ impl RaceSession {
                     selected_idx,
                     &self.profile_history,
                     &self.active_profile_stats,
+                    self.profile_manager_tab,
+                    self.profile_telemetry_filter_idx,
                 );
             }
             GameState::ProfileCreate {
