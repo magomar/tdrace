@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Surface Textures and Environmental Materials"
 description: "High-fidelity texture rendering pipeline, dual ribbon/world UV mapping, macro-color modulation, and organic edge transitions across all 12 racing surfaces."
-status: draft
+status: implemented
 created: 2026-09-21
 generated: { by: agent/antigravity, at: 2026-09-21T21:18:13Z }
 ---
@@ -249,44 +249,44 @@ Added to the game settings menu (`GameState::Settings`) and configuration file:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Spline ribbon texture curvature alignment**
-  - [ ] **Given** an asphalt or dirt track with sharp curved corners
-  - [ ] **When** the track ribbon is rendered on screen
-  - [ ] **Then** the surface texture must follow the tangent direction of the track spline without angular pinching or sliding
-  - [ ] **And** the texture repetition must remain consistent along the arc length regardless of corner radius
+  - [x] **Given** an asphalt or dirt track with sharp curved corners
+  - [x] **When** the track ribbon is rendered on screen
+  - [x] **Then** the surface texture must follow the tangent direction of the track spline without angular pinching or sliding
+  - [x] **And** the texture repetition must remain consistent along the arc length regardless of corner radius
 
 - **Scenario: Outfield grass seamless world-space continuity**
-  - [ ] **Given** a circuit with an expansive grass outfield backdrop and separate grass runoff zones
-  - [ ] **When** the camera pans across the circuit following a moving car
-  - [ ] **Then** the grass texture must tile seamlessly across all outfield polygons and zone boundaries
-  - [ ] **And** no texture seams or shearing must appear at segment junctions
+  - [x] **Given** a circuit with an expansive grass outfield backdrop and separate grass runoff zones
+  - [x] **When** the camera pans across the circuit following a moving car
+  - [x] **Then** the grass texture must tile seamlessly across all outfield polygons and zone boundaries
+  - [x] **And** no texture seams or shearing must appear at segment junctions
 
 - **Scenario: Procedural fallback on missing asset files**
-  - [ ] **Given** the game binary launched in an environment where `assets/textures/surfaces/` is missing or inaccessible
-  - [ ] **When** the track materials are initialized
-  - [ ] **Then** the engine must automatically synthesize procedural memory textures for all 12 surface types
-  - [ ] **And** the game must render without panicking or displaying magenta missing-texture placeholders
+  - [x] **Given** the game binary launched in an environment where `assets/textures/surfaces/` is missing or inaccessible
+  - [x] **When** the track materials are initialized
+  - [x] **Then** the engine must automatically synthesize procedural memory textures for all 12 surface types
+  - [x] **And** the game must render without panicking or displaying magenta missing-texture placeholders
 
 - **Scenario: Graphics settings quality toggle**
-  - [ ] **Given** the game running in `GameState::Settings`
-  - [ ] **When** the player switches `SurfaceTextureQuality` between `Off`, `Standard`, and `High`
-  - [ ] **Then** the track rendering must immediately switch between flat vector colors and textured materials
-  - [ ] **And** frame rate must remain $\ge 60\,\text{FPS}$ across all quality levels
+  - [x] **Given** the game running in `GameState::Settings`
+  - [x] **When** the player switches `SurfaceTextureQuality` between `Off`, `Standard`, and `High`
+  - [x] **Then** the track rendering must immediately switch between flat vector colors and textured materials
+  - [x] **And** frame rate must remain $\ge 60\,\text{FPS}$ across all quality levels
 
 - **Scenario: Macro-modulation repetition breaking on long straights**
-  - [ ] **Given** a straight track ribbon exceeding $400\,\text{m}$ in length
-  - [ ] **When** rendered at `High` quality
-  - [ ] **Then** low-frequency luminance modulation must prevent visible repeating tile patterns along the asphalt surface
+  - [x] **Given** a straight track ribbon exceeding $400\,\text{m}$ in length
+  - [x] **When** rendered at `High` quality
+  - [x] **Then** low-frequency luminance modulation must prevent visible repeating tile patterns along the asphalt surface
 
 - **Scenario: Banked curve gradient and lighting modulation**
-  - [ ] **Given** an oval or banked circuit segment with bank angle $> 10^\circ$
-  - [ ] **When** the textured asphalt or dirt ribbon is rendered
-  - [ ] **Then** the banking gradient shading and rim shadow must modulate the surface texture rather than obscuring it with solid flat color
+  - [x] **Given** an oval or banked circuit segment with bank angle $> 10^\circ$
+  - [x] **When** the textured asphalt or dirt ribbon is rendered
+  - [x] **Then** the banking gradient shading and rim shadow must modulate the surface texture rather than obscuring it with solid flat color
 
 - **Scenario: Headless simulation performance independence**
-  - [ ] **Given** the headless simulation harness (`wheelbase::sim::SimulationRunner`)
-  - [ ] **When** executing standard acceleration and braking test protocols
-  - [ ] **Then** simulation execution must complete with zero texture dependencies or graphics initializations
-  - [ ] **And** throughput must exceed $100,000$ simulation steps per second
+  - [x] **Given** the headless simulation harness (`wheelbase::sim::SimulationRunner`)
+  - [x] **When** executing standard acceleration and braking test protocols
+  - [x] **Then** simulation execution must complete with zero texture dependencies or graphics initializations
+  - [x] **And** throughput must exceed $100,000$ simulation steps per second
 
 ---
 
