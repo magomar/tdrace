@@ -10,7 +10,21 @@ use tdrace_core::track::spline::{SplineSample, TrackSpline};
 use tdrace_core::track::Track;
 
 use super::color::Palette;
-use super::surface_material::{SurfaceMaterialRegistry, SurfaceTextureQuality};
+use super::surface_material::{evaluate_macro_modulation, SurfaceMaterialRegistry, SurfaceTextureQuality};
+
+/// Computes instantaneous track curvature (radians per meter) between two spline samples.
+#[inline]
+pub fn compute_segment_curvature(s0: &SplineSample, s1: &SplineSample) -> f32 {
+    let ds = (s1.point - s0.point).length();
+    if ds > 1e-4 {
+        let cross = s0.tangent.x * s1.tangent.y - s0.tangent.y * s1.tangent.x;
+        let dot = (s0.tangent.dot(s1.tangent)).clamp(-1.0, 1.0);
+        let angle = cross.atan2(dot);
+        angle / ds
+    } else {
+        0.0
+    }
+}
 
 static SURFACE_REGISTRY: Mutex<Option<SurfaceMaterialRegistry>> = Mutex::new(None);
 
@@ -742,6 +756,12 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
 
     let quality = get_surface_texture_quality();
     let mut runoff_builders: HashMap<SurfaceType, BatchMeshBuilder> = HashMap::new();
+    let fringe_tex = if quality == SurfaceTextureQuality::High {
+        with_surface_registry(|r| r.edge_fringe_texture().cloned()).flatten()
+    } else {
+        None
+    };
+    let mut fringe_builder = BatchMeshBuilder::new(fringe_tex);
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -750,6 +770,15 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
         if is_seg_elevated != elevated || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
+
+        let d0 = s0.distance;
+        let d1 = if (i + 1) % n == 0 && spline.closed {
+            s0.distance + (s1.point - s0.point).length()
+        } else {
+            s1.distance
+        };
+        let u0 = d0 / 2.0;
+        let u1 = d1 / 2.0;
 
         // Left runoff corridor (constrained strictly to between track/curb edge and wall boundary)
         if s0.left_wall && s1.left_wall {
@@ -781,7 +810,36 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
                         let uv1 = macroquad::prelude::Vec2::new(p1_inner.x / scale, p1_inner.y / scale);
                         let uv2 = macroquad::prelude::Vec2::new(p1_outer.x / scale, p1_outer.y / scale);
                         let uv3 = macroquad::prelude::Vec2::new(p0_outer.x / scale, p0_outer.y / scale);
-                        builder.push_quad(p0_inner, uv0, WHITE, p1_inner, uv1, WHITE, p1_outer, uv2, WHITE, p0_outer, uv3, WHITE);
+
+                        let (c0, c1, c2, c3) = if quality == SurfaceTextureQuality::High {
+                            let m0 = 1.0 + evaluate_macro_modulation(p0_inner.x, p0_inner.y) * 0.18;
+                            let m1 = 1.0 + evaluate_macro_modulation(p1_inner.x, p1_inner.y) * 0.18;
+                            let m2 = 1.0 + evaluate_macro_modulation(p1_outer.x, p1_outer.y) * 0.18;
+                            let m3 = 1.0 + evaluate_macro_modulation(p0_outer.x, p0_outer.y) * 0.18;
+                            (
+                                Color::new(m0, m0, m0, 1.0),
+                                Color::new(m1, m1, m1, 1.0),
+                                Color::new(m2, m2, m2, 1.0),
+                                Color::new(m3, m3, m3, 1.0),
+                            )
+                        } else {
+                            (WHITE, WHITE, WHITE, WHITE)
+                        };
+
+                        builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
+
+                        // Outer organic fringe feathering
+                        if fringe_builder.texture.is_some() {
+                            let p0_fringe = p0_outer + s0.normal * 0.6;
+                            let p1_fringe = p1_outer + s1.normal * 0.6;
+                            let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
+                            fringe_builder.push_quad(
+                                p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
+                                p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), fringe_c,
+                                p1_fringe, macroquad::prelude::Vec2::new(u1, 0.0), fringe_c,
+                                p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
+                            );
+                        }
                     } else {
                         builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
                     }
@@ -819,7 +877,36 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
                         let uv1 = macroquad::prelude::Vec2::new(p1_inner.x / scale, p1_inner.y / scale);
                         let uv2 = macroquad::prelude::Vec2::new(p1_outer.x / scale, p1_outer.y / scale);
                         let uv3 = macroquad::prelude::Vec2::new(p0_outer.x / scale, p0_outer.y / scale);
-                        builder.push_quad(p0_inner, uv0, WHITE, p1_inner, uv1, WHITE, p1_outer, uv2, WHITE, p0_outer, uv3, WHITE);
+
+                        let (c0, c1, c2, c3) = if quality == SurfaceTextureQuality::High {
+                            let m0 = 1.0 + evaluate_macro_modulation(p0_inner.x, p0_inner.y) * 0.18;
+                            let m1 = 1.0 + evaluate_macro_modulation(p1_inner.x, p1_inner.y) * 0.18;
+                            let m2 = 1.0 + evaluate_macro_modulation(p1_outer.x, p1_outer.y) * 0.18;
+                            let m3 = 1.0 + evaluate_macro_modulation(p0_outer.x, p0_outer.y) * 0.18;
+                            (
+                                Color::new(m0, m0, m0, 1.0),
+                                Color::new(m1, m1, m1, 1.0),
+                                Color::new(m2, m2, m2, 1.0),
+                                Color::new(m3, m3, m3, 1.0),
+                            )
+                        } else {
+                            (WHITE, WHITE, WHITE, WHITE)
+                        };
+
+                        builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
+
+                        // Outer organic fringe feathering
+                        if fringe_builder.texture.is_some() {
+                            let p0_fringe = p0_outer - s0.normal * 0.6;
+                            let p1_fringe = p1_outer - s1.normal * 0.6;
+                            let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
+                            fringe_builder.push_quad(
+                                p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
+                                p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), fringe_c,
+                                p1_fringe, macroquad::prelude::Vec2::new(u1, 0.0), fringe_c,
+                                p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
+                            );
+                        }
                     } else {
                         builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
                     }
@@ -831,6 +918,7 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
     for (_, mut builder) in runoff_builders {
         builder.flush();
     }
+    fringe_builder.flush();
 }
 
 /// Draws curb rumble strips for either ground or elevated bridge segments.
@@ -1032,6 +1120,19 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     let uv_r0 = macroquad::prelude::Vec2::new(1.0, v0);
                     let uv_r1 = macroquad::prelude::Vec2::new(1.0, v1);
 
+                    let (c_l, c_m, c_r) = if has_tex && quality == SurfaceTextureQuality::High {
+                        let m_l = 1.0 + evaluate_macro_modulation(left0.x, left0.y) * 0.18;
+                        let m_m = 1.0 + evaluate_macro_modulation(mid_l0.x, mid_l0.y) * 0.18;
+                        let m_r = 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18;
+                        (
+                            Color::new((c_l.r * m_l).clamp(0.1, 1.8), (c_l.g * m_l).clamp(0.1, 1.8), (c_l.b * m_l).clamp(0.1, 1.8), 1.0),
+                            Color::new((c_m.r * m_m).clamp(0.1, 1.8), (c_m.g * m_m).clamp(0.1, 1.8), (c_m.b * m_m).clamp(0.1, 1.8), 1.0),
+                            Color::new((c_r.r * m_r).clamp(0.1, 1.8), (c_r.g * m_r).clamp(0.1, 1.8), (c_r.b * m_r).clamp(0.1, 1.8), 1.0),
+                        )
+                    } else {
+                        (c_l, c_m, c_r)
+                    };
+
                     builder.push_quad(left0, uv_l0, c_l, left1, uv_l1, c_l, mid_l1, uv_ml1, c_l, mid_l0, uv_ml0, c_l);
                     builder.push_quad(mid_l0, uv_ml0, c_m, mid_l1, uv_ml1, c_m, mid_r1, uv_mr1, c_m, mid_r0, uv_mr0, c_m);
                     builder.push_quad(mid_r0, uv_mr0, c_r, mid_r1, uv_mr1, c_r, right1, uv_r1, c_r, right0, uv_r0, c_r);
@@ -1043,9 +1144,21 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                     let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
                     let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
-                    let col = if has_tex { WHITE } else { Palette::DIRT };
+                    let (c0, c1, c2, c3) = if has_tex {
+                        if quality == SurfaceTextureQuality::High {
+                            let m0 = 1.0 + evaluate_macro_modulation(left0.x, left0.y) * 0.18;
+                            let m1 = 1.0 + evaluate_macro_modulation(left1.x, left1.y) * 0.18;
+                            let m2 = 1.0 + evaluate_macro_modulation(right1.x, right1.y) * 0.18;
+                            let m3 = 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18;
+                            (Color::new(m0, m0, m0, 1.0), Color::new(m1, m1, m1, 1.0), Color::new(m2, m2, m2, 1.0), Color::new(m3, m3, m3, 1.0))
+                        } else {
+                            (WHITE, WHITE, WHITE, WHITE)
+                        }
+                    } else {
+                        (Palette::DIRT, Palette::DIRT, Palette::DIRT, Palette::DIRT)
+                    };
 
-                    builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
+                    builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
                     lines_to_draw.push((left0, left1, 0.32, Palette::DIRT_EDGE));
                     lines_to_draw.push((right0, right1, 0.32, Palette::DIRT_EDGE));
 
@@ -1062,8 +1175,20 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
                 let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
-                let col = if has_tex { WHITE } else { Palette::SAND };
-                builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
+                let (c0, c1, c2, c3) = if has_tex {
+                    if quality == SurfaceTextureQuality::High {
+                        let m0 = 1.0 + evaluate_macro_modulation(left0.x, left0.y) * 0.18;
+                        let m1 = 1.0 + evaluate_macro_modulation(left1.x, left1.y) * 0.18;
+                        let m2 = 1.0 + evaluate_macro_modulation(right1.x, right1.y) * 0.18;
+                        let m3 = 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18;
+                        (Color::new(m0, m0, m0, 1.0), Color::new(m1, m1, m1, 1.0), Color::new(m2, m2, m2, 1.0), Color::new(m3, m3, m3, 1.0))
+                    } else {
+                        (WHITE, WHITE, WHITE, WHITE)
+                    }
+                } else {
+                    (Palette::SAND, Palette::SAND, Palette::SAND, Palette::SAND)
+                };
+                builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
                 lines_to_draw.push((left0, left1, 0.32, Palette::SAND_DARK));
                 lines_to_draw.push((right0, right1, 0.32, Palette::SAND_DARK));
             }
@@ -1072,8 +1197,20 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
                 let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
-                let col = if has_tex { WHITE } else { Palette::GRASS_DARK };
-                builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
+                let (c0, c1, c2, c3) = if has_tex {
+                    if quality == SurfaceTextureQuality::High {
+                        let m0 = 1.0 + evaluate_macro_modulation(left0.x, left0.y) * 0.18;
+                        let m1 = 1.0 + evaluate_macro_modulation(left1.x, left1.y) * 0.18;
+                        let m2 = 1.0 + evaluate_macro_modulation(right1.x, right1.y) * 0.18;
+                        let m3 = 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18;
+                        (Color::new(m0, m0, m0, 1.0), Color::new(m1, m1, m1, 1.0), Color::new(m2, m2, m2, 1.0), Color::new(m3, m3, m3, 1.0))
+                    } else {
+                        (WHITE, WHITE, WHITE, WHITE)
+                    }
+                } else {
+                    (Palette::GRASS_DARK, Palette::GRASS_DARK, Palette::GRASS_DARK, Palette::GRASS_DARK)
+                };
+                builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
                 lines_to_draw.push((left0, left1, 0.32, Palette::GRASS));
                 lines_to_draw.push((right0, right1, 0.32, Palette::GRASS));
             }
@@ -1120,8 +1257,20 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
                 let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
-                let col = if has_tex { WHITE } else { Palette::MUD };
-                builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
+                let (c0, c1, c2, c3) = if has_tex {
+                    if quality == SurfaceTextureQuality::High {
+                        let m0 = 1.0 + evaluate_macro_modulation(left0.x, left0.y) * 0.18;
+                        let m1 = 1.0 + evaluate_macro_modulation(left1.x, left1.y) * 0.18;
+                        let m2 = 1.0 + evaluate_macro_modulation(right1.x, right1.y) * 0.18;
+                        let m3 = 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18;
+                        (Color::new(m0, m0, m0, 1.0), Color::new(m1, m1, m1, 1.0), Color::new(m2, m2, m2, 1.0), Color::new(m3, m3, m3, 1.0))
+                    } else {
+                        (WHITE, WHITE, WHITE, WHITE)
+                    }
+                } else {
+                    (Palette::MUD, Palette::MUD, Palette::MUD, Palette::MUD)
+                };
+                builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
                 lines_to_draw.push((left0, left1, 0.34, Palette::MUD_DARK));
                 lines_to_draw.push((right0, right1, 0.34, Palette::MUD_DARK));
 
@@ -1137,8 +1286,20 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
                 let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
-                let col = if has_tex { WHITE } else { Palette::SNOW };
-                builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
+                let (c0, c1, c2, c3) = if has_tex {
+                    if quality == SurfaceTextureQuality::High {
+                        let m0 = 1.0 + evaluate_macro_modulation(left0.x, left0.y) * 0.18;
+                        let m1 = 1.0 + evaluate_macro_modulation(left1.x, left1.y) * 0.18;
+                        let m2 = 1.0 + evaluate_macro_modulation(right1.x, right1.y) * 0.18;
+                        let m3 = 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18;
+                        (Color::new(m0, m0, m0, 1.0), Color::new(m1, m1, m1, 1.0), Color::new(m2, m2, m2, 1.0), Color::new(m3, m3, m3, 1.0))
+                    } else {
+                        (WHITE, WHITE, WHITE, WHITE)
+                    }
+                } else {
+                    (Palette::SNOW, Palette::SNOW, Palette::SNOW, Palette::SNOW)
+                };
+                builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
                 lines_to_draw.push((left0, left1, 0.32, Palette::SNOW_EDGE));
                 lines_to_draw.push((right0, right1, 0.32, Palette::SNOW_EDGE));
 
@@ -1154,8 +1315,20 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
                 let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
-                let col = if has_tex { WHITE } else { Palette::GRAVEL };
-                builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
+                let (c0, c1, c2, c3) = if has_tex {
+                    if quality == SurfaceTextureQuality::High {
+                        let m0 = 1.0 + evaluate_macro_modulation(left0.x, left0.y) * 0.18;
+                        let m1 = 1.0 + evaluate_macro_modulation(left1.x, left1.y) * 0.18;
+                        let m2 = 1.0 + evaluate_macro_modulation(right1.x, right1.y) * 0.18;
+                        let m3 = 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18;
+                        (Color::new(m0, m0, m0, 1.0), Color::new(m1, m1, m1, 1.0), Color::new(m2, m2, m2, 1.0), Color::new(m3, m3, m3, 1.0))
+                    } else {
+                        (WHITE, WHITE, WHITE, WHITE)
+                    }
+                } else {
+                    (Palette::GRAVEL, Palette::GRAVEL, Palette::GRAVEL, Palette::GRAVEL)
+                };
+                builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
                 lines_to_draw.push((left0, left1, 0.32, Palette::GRAVEL_EDGE));
                 lines_to_draw.push((right0, right1, 0.32, Palette::GRAVEL_EDGE));
 
@@ -1167,83 +1340,139 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 lines_to_draw.push((track_r0, track_r1, 0.22, Palette::GRAVEL_DARK));
             }
             SurfaceType::Asphalt => {
-                if is_banked {
-                    let mid_l0 = s0.point + s0.normal * (hw0 * 0.33);
-                    let mid_l1 = s1.point + s1.normal * (hw1 * 0.33);
-                    let mid_r0 = s0.point - s0.normal * (hw0 * 0.33);
-                    let mid_r1 = s1.point - s1.normal * (hw1 * 0.33);
+                let mid_l0 = s0.point + s0.normal * (hw0 * 0.33);
+                let mid_l1 = s1.point + s1.normal * (hw1 * 0.33);
+                let mid_r0 = s0.point - s0.normal * (hw0 * 0.33);
+                let mid_r1 = s1.point - s1.normal * (hw1 * 0.33);
 
-                    let (c_low, c_mid, c_high) = if has_tex {
-                        (
-                            Color::new(0.65, 0.65, 0.70, 1.0),
-                            Color::new(0.95, 0.95, 0.98, 1.0),
-                            Color::new(1.18, 1.18, 1.20, 1.0),
-                        )
+                let uv_l0 = macroquad::prelude::Vec2::new(0.0, v0);
+                let uv_l1 = macroquad::prelude::Vec2::new(0.0, v1);
+                let uv_ml0 = macroquad::prelude::Vec2::new(0.335, v0);
+                let uv_ml1 = macroquad::prelude::Vec2::new(0.335, v1);
+                let uv_mr0 = macroquad::prelude::Vec2::new(0.665, v0);
+                let uv_mr1 = macroquad::prelude::Vec2::new(0.665, v1);
+                let uv_r0 = macroquad::prelude::Vec2::new(1.0, v0);
+                let uv_r1 = macroquad::prelude::Vec2::new(1.0, v1);
+
+                // Static apex rubbering based on instantaneous curvature
+                let kappa = compute_segment_curvature(s0, s1);
+                let abs_k = kappa.abs();
+                let rho_apex = (abs_k * 6.0).clamp(0.0, 0.35);
+
+                // Darken apex trajectory:
+                // If kappa > 0, turning left -> apex on left
+                // If kappa < 0, turning right -> apex on right
+                let (rho_l, rho_m, rho_r) = if abs_k <= 0.002 {
+                    (0.0, 0.0, 0.0)
+                } else if kappa > 0.0 {
+                    (rho_apex, rho_apex * 0.65, rho_apex * 0.15)
+                } else {
+                    (rho_apex * 0.15, rho_apex * 0.65, rho_apex)
+                };
+
+                // Longitudinal slope lighting factor
+                let avg_slope = (s0.grade_slope + s1.grade_slope) * 0.5;
+                let slope_factor = if avg_slope.abs() > 0.02 {
+                    let light_dir = Vec2::new(-0.6, -0.8).normalize();
+                    let fwd_dot_light = s0.tangent.dot(light_dir);
+                    (1.0 + avg_slope * fwd_dot_light * 0.8).clamp(0.70, 1.25)
+                } else {
+                    1.0
+                };
+
+                // Cross-slope banking gradient multipliers
+                let (bank_l, bank_m, bank_r) = if is_banked {
+                    if avg_bank > 0.0 {
+                        (0.65, 0.95, 1.18)
                     } else {
-                        (
+                        (1.18, 0.95, 0.65)
+                    }
+                } else {
+                    (1.0, 1.0, 1.0)
+                };
+
+                if has_tex {
+                    let m_l0 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(left0.x, left0.y) * 0.18 } else { 1.0 };
+                    let m_l1 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(left1.x, left1.y) * 0.18 } else { 1.0 };
+                    let m_ml0 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(mid_l0.x, mid_l0.y) * 0.18 } else { 1.0 };
+                    let m_ml1 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(mid_l1.x, mid_l1.y) * 0.18 } else { 1.0 };
+                    let m_mr0 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(mid_r0.x, mid_r0.y) * 0.18 } else { 1.0 };
+                    let m_mr1 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(mid_r1.x, mid_r1.y) * 0.18 } else { 1.0 };
+                    let m_r0 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18 } else { 1.0 };
+                    let m_r1 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(right1.x, right1.y) * 0.18 } else { 1.0 };
+
+                    let rub_l = 1.0 - 0.60 * rho_l;
+                    let rub_m = 1.0 - 0.60 * rho_m;
+                    let rub_r = 1.0 - 0.60 * rho_r;
+
+                    let f_l0 = (bank_l * slope_factor * rub_l * m_l0).clamp(0.2, 1.8);
+                    let f_l1 = (bank_l * slope_factor * rub_l * m_l1).clamp(0.2, 1.8);
+                    let f_ml0 = (bank_m * slope_factor * rub_m * m_ml0).clamp(0.2, 1.8);
+                    let f_ml1 = (bank_m * slope_factor * rub_m * m_ml1).clamp(0.2, 1.8);
+                    let f_mr0 = (bank_m * slope_factor * rub_m * m_mr0).clamp(0.2, 1.8);
+                    let f_mr1 = (bank_m * slope_factor * rub_m * m_mr1).clamp(0.2, 1.8);
+                    let f_r0 = (bank_r * slope_factor * rub_r * m_r0).clamp(0.2, 1.8);
+                    let f_r1 = (bank_r * slope_factor * rub_r * m_r1).clamp(0.2, 1.8);
+
+                    let c_l0 = Color::new(f_l0, f_l0, f_l0, 1.0);
+                    let c_l1 = Color::new(f_l1, f_l1, f_l1, 1.0);
+                    let c_ml0 = Color::new(f_ml0, f_ml0, f_ml0, 1.0);
+                    let c_ml1 = Color::new(f_ml1, f_ml1, f_ml1, 1.0);
+                    let c_mr0 = Color::new(f_mr0, f_mr0, f_mr0, 1.0);
+                    let c_mr1 = Color::new(f_mr1, f_mr1, f_mr1, 1.0);
+                    let c_r0 = Color::new(f_r0, f_r0, f_r0, 1.0);
+                    let c_r1 = Color::new(f_r1, f_r1, f_r1, 1.0);
+
+                    builder.push_quad(left0, uv_l0, c_l0, left1, uv_l1, c_l1, mid_l1, uv_ml1, c_ml1, mid_l0, uv_ml0, c_ml0);
+                    builder.push_quad(mid_l0, uv_ml0, c_ml0, mid_l1, uv_ml1, c_ml1, mid_r1, uv_mr1, c_mr1, mid_r0, uv_mr0, c_mr0);
+                    builder.push_quad(mid_r0, uv_mr0, c_mr0, mid_r1, uv_mr1, c_mr1, right1, uv_r1, c_r1, right0, uv_r0, c_r0);
+                } else {
+                    let (base_l, base_m, base_r) = if is_banked {
+                        let (c_low, c_mid, c_high) = (
                             Color::new(0.12, 0.13, 0.16, 1.0),
                             Palette::ASPHALT,
                             Color::new(0.24, 0.25, 0.29, 1.0),
-                        )
-                    };
-
-                    let (c_l, c_m, c_r) = if avg_bank > 0.0 {
-                        (c_low, c_mid, c_high)
+                        );
+                        if avg_bank > 0.0 {
+                            (c_low, c_mid, c_high)
+                        } else {
+                            (c_high, c_mid, c_low)
+                        }
                     } else {
-                        (c_high, c_mid, c_low)
+                        (Palette::ASPHALT, Palette::ASPHALT, Palette::ASPHALT)
                     };
 
-                    let uv_l0 = macroquad::prelude::Vec2::new(0.0, v0);
-                    let uv_l1 = macroquad::prelude::Vec2::new(0.0, v1);
-                    let uv_ml0 = macroquad::prelude::Vec2::new(0.335, v0);
-                    let uv_ml1 = macroquad::prelude::Vec2::new(0.335, v1);
-                    let uv_mr0 = macroquad::prelude::Vec2::new(0.665, v0);
-                    let uv_mr1 = macroquad::prelude::Vec2::new(0.665, v1);
-                    let uv_r0 = macroquad::prelude::Vec2::new(1.0, v0);
-                    let uv_r1 = macroquad::prelude::Vec2::new(1.0, v1);
+                    let c_l = Color::new(
+                        (base_l.r * (1.0 - rho_l * 0.5)).clamp(0.05, 1.0),
+                        (base_l.g * (1.0 - rho_l * 0.5)).clamp(0.05, 1.0),
+                        (base_l.b * (1.0 - rho_l * 0.5)).clamp(0.05, 1.0),
+                        1.0,
+                    );
+                    let c_m = Color::new(
+                        (base_m.r * (1.0 - rho_m * 0.5)).clamp(0.05, 1.0),
+                        (base_m.g * (1.0 - rho_m * 0.5)).clamp(0.05, 1.0),
+                        (base_m.b * (1.0 - rho_m * 0.5)).clamp(0.05, 1.0),
+                        1.0,
+                    );
+                    let c_r = Color::new(
+                        (base_r.r * (1.0 - rho_r * 0.5)).clamp(0.05, 1.0),
+                        (base_r.g * (1.0 - rho_r * 0.5)).clamp(0.05, 1.0),
+                        (base_r.b * (1.0 - rho_r * 0.5)).clamp(0.05, 1.0),
+                        1.0,
+                    );
 
                     builder.push_quad(left0, uv_l0, c_l, left1, uv_l1, c_l, mid_l1, uv_ml1, c_l, mid_l0, uv_ml0, c_l);
                     builder.push_quad(mid_l0, uv_ml0, c_m, mid_l1, uv_ml1, c_m, mid_r1, uv_mr1, c_m, mid_r0, uv_mr0, c_m);
                     builder.push_quad(mid_r0, uv_mr0, c_r, mid_r1, uv_mr1, c_r, right1, uv_r1, c_r, right0, uv_r0, c_r);
+                }
 
-                    lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
-                    lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
+                lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
+                lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
+
+                if is_banked {
                     lines_to_draw.push((mid_l0, mid_l1, 0.12, Color::new(0.40, 0.42, 0.46, 0.4)));
                     lines_to_draw.push((mid_r0, mid_r1, 0.12, Color::new(0.40, 0.42, 0.46, 0.4)));
                 } else {
-                    let avg_slope = (s0.grade_slope + s1.grade_slope) * 0.5;
-                    let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
-                    let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
-                    let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
-                    let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
-
-                    let col = if has_tex {
-                        if avg_slope.abs() > 0.02 {
-                            let light_dir = Vec2::new(-0.6, -0.8).normalize();
-                            let fwd_dot_light = s0.tangent.dot(light_dir);
-                            let factor = (1.0 + avg_slope * fwd_dot_light * 0.8).clamp(0.70, 1.25);
-                            Color::new(factor, factor, factor, 1.0)
-                        } else {
-                            WHITE
-                        }
-                    } else if avg_slope.abs() > 0.02 {
-                        let light_dir = Vec2::new(-0.6, -0.8).normalize();
-                        let fwd_dot_light = s0.tangent.dot(light_dir);
-                        let lighting_factor = (avg_slope * fwd_dot_light * 0.35).clamp(-0.08, 0.08);
-                        Color::new(
-                            (Palette::ASPHALT.r + lighting_factor).clamp(0.08, 0.35),
-                            (Palette::ASPHALT.g + lighting_factor).clamp(0.09, 0.36),
-                            (Palette::ASPHALT.b + lighting_factor).clamp(0.11, 0.39),
-                            1.0,
-                        )
-                    } else {
-                        Palette::ASPHALT
-                    };
-
-                    builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
-                    lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
-                    lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
-
                     let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
                     if center_stripe {
                         lines_to_draw.push((s0.point, s1.point, 0.16, Color::new(0.95, 0.95, 0.95, 0.35)));
@@ -1368,27 +1597,29 @@ fn render_finish_line(track: &Track) {
 
 /// Renders starting grid boxes for all spawn positions.
 fn render_starting_grid(track: &Track) {
-    for pose in &track.grid_positions {
-        let pos = pose.position;
-        let angle = pose.angle;
-        let fwd = Vec2::new(angle.cos(), angle.sin());
-        let right = Vec2::new(-angle.sin(), angle.cos());
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        for pose in &track.grid_positions {
+            let pos = pose.position;
+            let angle = pose.angle;
+            let fwd = Vec2::new(angle.cos(), angle.sin());
+            let right = Vec2::new(-angle.sin(), angle.cos());
 
-        let box_len = 3.6;
-        let box_w = 1.9;
+            let box_len = 3.6;
+            let box_w = 1.9;
 
-        let p_fl = pos + fwd * (box_len * 0.5) - right * (box_w * 0.5);
-        let p_fr = pos + fwd * (box_len * 0.5) + right * (box_w * 0.5);
-        let p_rl = pos - fwd * (box_len * 0.5) - right * (box_w * 0.5);
-        let p_rr = pos - fwd * (box_len * 0.5) + right * (box_w * 0.5);
+            let p_fl = pos + fwd * (box_len * 0.5) - right * (box_w * 0.5);
+            let p_fr = pos + fwd * (box_len * 0.5) + right * (box_w * 0.5);
+            let p_rl = pos - fwd * (box_len * 0.5) - right * (box_w * 0.5);
+            let p_rr = pos - fwd * (box_len * 0.5) + right * (box_w * 0.5);
 
-        // Front line & side brackets
-        let line_thickness = 0.22;
-        draw_line(p_fl.x, p_fl.y, p_fr.x, p_fr.y, line_thickness, Palette::GRID_LINE);
-        draw_line(p_fl.x, p_fl.y, p_fl.x - fwd.x * 0.8, p_fl.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
-        draw_line(p_fr.x, p_fr.y, p_fr.x - fwd.x * 0.8, p_fr.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
-        draw_line(p_rl.x, p_rl.y, p_rr.x, p_rr.y, line_thickness * 0.7, Color::new(0.9, 0.9, 0.9, 0.4));
-    }
+            // Front line & side brackets
+            let line_thickness = 0.22;
+            draw_line(p_fl.x, p_fl.y, p_fr.x, p_fr.y, line_thickness, Palette::GRID_LINE);
+            draw_line(p_fl.x, p_fl.y, p_fl.x - fwd.x * 0.8, p_fl.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
+            draw_line(p_fr.x, p_fr.y, p_fr.x - fwd.x * 0.8, p_fr.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
+            draw_line(p_rl.x, p_rl.y, p_rr.x, p_rr.y, line_thickness * 0.7, Color::new(0.9, 0.9, 0.9, 0.4));
+        }
+    }));
 }
 
 /// Utility to draw a filled convex quad from 4 vertices in CCW/CW order.

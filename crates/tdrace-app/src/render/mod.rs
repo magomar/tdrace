@@ -30,8 +30,9 @@ pub use scenery::{
     render_tree_canopies_culled, render_tree_shadows_culled, render_tree_trunks_culled,
 };
 pub use surface_material::{
-    generate_curb_image, generate_edge_fringe_mask, generate_macro_noise_image,
-    generate_surface_image, SurfaceMaterial, SurfaceMaterialRegistry, SurfaceTextureQuality,
+    evaluate_macro_modulation, generate_curb_image, generate_edge_fringe_mask,
+    generate_macro_noise_image, generate_surface_image, SurfaceMaterial, SurfaceMaterialRegistry,
+    SurfaceTextureQuality, TrackWearState,
 };
 pub use track::{
     get_track_backdrop_color, render_elevated_track, render_elevated_track_culled,

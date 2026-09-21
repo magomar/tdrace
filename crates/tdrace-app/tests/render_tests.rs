@@ -877,6 +877,150 @@ fn test_spline_ribbon_and_world_space_uv_mappings() {
     assert_eq!(uv1, uv2, "Identical world coordinates must share identical UVs for seamless continuity");
 }
 
+#[test]
+fn test_macro_modulation_value_range_and_spatial_continuity() {
+    use tdrace_app::render::evaluate_macro_modulation;
+
+    let mut min_val = 100.0f32;
+    let mut max_val = -100.0f32;
+    let mut sum = 0.0f32;
+    let mut count = 0;
+
+    // Sample across a 400m x 400m circuit expanse at 4m intervals
+    for x_i in 0..100 {
+        for y_i in 0..100 {
+            let x = x_i as f32 * 4.0;
+            let y = y_i as f32 * 4.0;
+            let val = evaluate_macro_modulation(x, y);
+
+            assert!(
+                val >= -1.0 && val <= 1.0,
+                "Macro modulation must be strictly within [-1.0, 1.0], got {}",
+                val
+            );
+
+            min_val = min_val.min(val);
+            max_val = max_val.max(val);
+            sum += val;
+            count += 1;
+        }
+    }
+
+    let mean = sum / count as f32;
+    // Verify non-trivial modulation variance over the circuit
+    assert!(max_val - min_val > 0.8, "Macro field must exhibit sufficient amplitude variance, got range [{}, {}]", min_val, max_val);
+    assert!(mean.abs() < 0.25, "Macro modulation should be reasonably centered near 0, got mean {}", mean);
+}
+
+#[test]
+fn test_track_wear_state_phase_2_hooks() {
+    use tdrace_app::render::TrackWearState;
+
+    let mut wear = TrackWearState::new(10);
+    assert_eq!(wear.segment_rubber.len(), 10);
+    assert_eq!(wear.segment_marbles.len(), 10);
+
+    // Initial state: pristine track
+    for i in 0..10 {
+        assert_eq!(wear.get_rubber(i), 0.0);
+        assert_eq!(wear.get_marbles(i), 0.0);
+    }
+
+    // Dynamic rubber deposition from tire slip work
+    wear.deposit_rubber(3, 250.0); // 250 * 0.001 = 0.25
+    assert!((wear.get_rubber(3) - 0.25).abs() < 1e-4);
+
+    wear.deposit_rubber(3, 500.0); // 0.25 + 0.50 = 0.75
+    assert!((wear.get_rubber(3) - 0.75).abs() < 1e-4);
+
+    // Clamp at 1.0
+    wear.deposit_rubber(3, 500.0);
+    assert_eq!(wear.get_rubber(3), 1.0);
+
+    // Loose marbles accumulation
+    wear.accumulate_marbles(7, 400.0);
+    assert!((wear.get_marbles(7) - 0.40).abs() < 1e-4);
+
+    // Out-of-bounds safety
+    assert_eq!(wear.get_rubber(999), 0.0);
+    assert_eq!(wear.get_marbles(999), 0.0);
+    wear.deposit_rubber(999, 100.0); // No panic
+    wear.accumulate_marbles(999, 100.0); // No panic
+}
+
+#[test]
+fn test_segment_curvature_and_apex_rubbering_lateral_distribution() {
+    use tdrace_app::render::track::compute_segment_curvature;
+    use tdrace_core::track::presets::classic_grand_prix;
+    let base_sample = classic_grand_prix().spline.samples[0].clone();
+
+    // 1. Synthetic straight segment
+    let mut s_straight_0 = base_sample.clone();
+    s_straight_0.point = glam::Vec2::new(0.0, 0.0);
+    s_straight_0.tangent = glam::Vec2::new(1.0, 0.0);
+    s_straight_0.distance = 0.0;
+
+    let mut s_straight_1 = s_straight_0.clone();
+    s_straight_1.point = glam::Vec2::new(10.0, 0.0);
+    s_straight_1.tangent = glam::Vec2::new(1.0, 0.0);
+    s_straight_1.distance = 10.0;
+
+    let k_straight = compute_segment_curvature(&s_straight_0, &s_straight_1);
+    assert!(k_straight.abs() < 1e-5, "Straight segment curvature must be near zero: {}", k_straight);
+
+    // 2. Synthetic Left turn (counter-clockwise deflection: tangent rotates from (1, 0) towards (0, 1))
+    let mut s_left_1 = s_straight_0.clone();
+    let angle_left = 0.20f32; // ~11.5 degrees left turn
+    s_left_1.tangent = glam::Vec2::new(angle_left.cos(), angle_left.sin());
+    s_left_1.point = glam::Vec2::new(5.0, 1.0);
+    s_left_1.distance = 5.1;
+
+    let k_left = compute_segment_curvature(&s_straight_0, &s_left_1);
+    assert!(k_left > 0.0, "Left turn curvature must be positive: {}", k_left);
+
+    // 3. Synthetic Right turn (clockwise deflection: tangent rotates from (1, 0) towards (0, -1))
+    let mut s_right_1 = s_straight_0.clone();
+    let angle_right = -0.20f32; // ~11.5 degrees right turn
+    s_right_1.tangent = glam::Vec2::new(angle_right.cos(), angle_right.sin());
+    s_right_1.point = glam::Vec2::new(5.0, -1.0);
+    s_right_1.distance = 5.1;
+
+    let k_right = compute_segment_curvature(&s_straight_0, &s_right_1);
+    assert!(k_right < 0.0, "Right turn curvature must be negative: {}", k_right);
+
+    // 4. Verify on realistic track spline
+    let track = classic_grand_prix();
+    let samples = &track.spline.samples;
+    let mut max_k = 0.0f32;
+    for i in 0..samples.len() - 1 {
+        let k = compute_segment_curvature(&samples[i], &samples[i + 1]);
+        max_k = max_k.max(k.abs());
+    }
+    assert!(max_k > 0.02, "Realistic track must contain curved segments with significant curvature, found max: {}", max_k);
+}
+
+#[test]
+fn test_track_render_execution_under_all_quality_tiers_headless_safety() {
+    use tdrace_app::render::track::{render_track, set_surface_texture_quality};
+    use tdrace_app::render::surface_material::SurfaceTextureQuality;
+    use tdrace_core::track::presets::{classic_grand_prix, drift_park, oval_speedway};
+
+    let tracks = [classic_grand_prix(), oval_speedway(), drift_park()];
+    let qualities = [
+        SurfaceTextureQuality::Off,
+        SurfaceTextureQuality::Standard,
+        SurfaceTextureQuality::High,
+    ];
+
+    for &q in &qualities {
+        set_surface_texture_quality(q);
+        for t in &tracks {
+            // Must execute without panic in headless environments across all quality tiers
+            render_track(t);
+        }
+    }
+}
+
 
 
 

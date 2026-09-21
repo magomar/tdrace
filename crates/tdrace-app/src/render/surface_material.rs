@@ -629,3 +629,54 @@ pub fn generate_macro_noise_image(width: u16, height: u16) -> Image {
         height,
     }
 }
+
+/// Continuous multi-octave trigonometric value field for macro-modulation repetition breaking.
+/// Operates at 32m - 64m spatial wavelength and returns a normalized offset in [-1.0, 1.0].
+#[inline]
+pub fn evaluate_macro_modulation(x: f32, y: f32) -> f32 {
+    let w1 = (x * 0.13 + y * 0.09).sin() * (x * 0.07 - y * 0.11).cos();
+    let w2 = 0.5 * (x * 0.19 - y * 0.15 + 1.2).sin();
+    let w3 = 0.25 * (x * 0.08 + y * 0.14 - 0.7).cos();
+    (w1 + w2 + w3) / 1.75
+}
+
+/// Dynamic track surface wear state (Phase 2 dynamic evolution hook).
+/// Tracks cumulative rubber deposition and marble accumulation per track segment.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TrackWearState {
+    /// Normalized dynamic rubber accumulation factor per segment [0.0, 1.0].
+    pub segment_rubber: Vec<f32>,
+    /// Off-line tire marble debris accumulation factor per segment [0.0, 1.0].
+    pub segment_marbles: Vec<f32>,
+}
+
+impl TrackWearState {
+    pub fn new(segment_count: usize) -> Self {
+        Self {
+            segment_rubber: vec![0.0; segment_count],
+            segment_marbles: vec![0.0; segment_count],
+        }
+    }
+
+    /// Records dynamic tire friction work onto a track segment.
+    pub fn deposit_rubber(&mut self, segment_index: usize, slip_work: f32) {
+        if let Some(r) = self.segment_rubber.get_mut(segment_index) {
+            *r = (*r + slip_work * 0.001).clamp(0.0, 1.0);
+        }
+    }
+
+    /// Accumulates loose marbles off-line on a track segment.
+    pub fn accumulate_marbles(&mut self, segment_index: usize, debris: f32) {
+        if let Some(m) = self.segment_marbles.get_mut(segment_index) {
+            *m = (*m + debris * 0.001).clamp(0.0, 1.0);
+        }
+    }
+
+    pub fn get_rubber(&self, segment_index: usize) -> f32 {
+        self.segment_rubber.get(segment_index).copied().unwrap_or(0.0)
+    }
+
+    pub fn get_marbles(&self, segment_index: usize) -> f32 {
+        self.segment_marbles.get(segment_index).copied().unwrap_or(0.0)
+    }
+}
