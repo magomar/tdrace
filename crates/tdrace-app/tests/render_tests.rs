@@ -700,6 +700,110 @@ fn test_all_modality_emblem_assets_and_integrity() {
     }
 }
 
+#[test]
+fn test_surface_material_quality_and_properties() {
+    use tdrace_app::render::{SurfaceMaterial, SurfaceTextureQuality};
+    use tdrace_core::physics::surface::SurfaceType;
+
+    assert_eq!(SurfaceTextureQuality::Off.name(), "Off (Flat)");
+    assert_eq!(SurfaceTextureQuality::Standard.name(), "Standard");
+    assert_eq!(SurfaceTextureQuality::High.name(), "High");
+    assert_eq!(SurfaceTextureQuality::default(), SurfaceTextureQuality::High);
+
+    let surfaces = [
+        SurfaceType::Asphalt,
+        SurfaceType::Dirt,
+        SurfaceType::Curb,
+        SurfaceType::Grass,
+        SurfaceType::Sand,
+        SurfaceType::Water,
+        SurfaceType::Oil,
+        SurfaceType::Ice,
+        SurfaceType::Mud,
+        SurfaceType::Snow,
+        SurfaceType::Gravel,
+        SurfaceType::Concrete,
+    ];
+
+    for &surf in &surfaces {
+        let mat = SurfaceMaterial::new(surf, None);
+        assert_eq!(mat.surface_type, surf);
+        assert!(mat.tile_scale_meters > 0.0, "Tile scale must be positive for {:?}", surf);
+        assert!(mat.roughness >= 0.0 && mat.roughness <= 1.0, "Roughness in [0, 1] for {:?}", surf);
+    }
+}
+
+#[test]
+fn test_procedural_surface_image_generators_all_12_surfaces() {
+    use tdrace_app::render::{generate_curb_image, generate_edge_fringe_mask, generate_macro_noise_image, generate_surface_image};
+    use tdrace_core::physics::surface::SurfaceType;
+
+    let surfaces = [
+        SurfaceType::Asphalt,
+        SurfaceType::Dirt,
+        SurfaceType::Grass,
+        SurfaceType::Gravel,
+        SurfaceType::Sand,
+        SurfaceType::Mud,
+        SurfaceType::Snow,
+        SurfaceType::Ice,
+        SurfaceType::Water,
+        SurfaceType::Oil,
+        SurfaceType::Concrete,
+    ];
+
+    let dim = 64u16;
+
+    for &surf in &surfaces {
+        let img = generate_surface_image(surf, dim, dim);
+        assert_eq!(img.width, dim);
+        assert_eq!(img.height, dim);
+        assert_eq!(img.bytes.len(), (dim as usize) * (dim as usize) * 4);
+
+        // Verify non-zero alpha and color variation across pixels
+        let mut min_val = 255u8;
+        let mut max_val = 0u8;
+        for chunk in img.bytes.chunks_exact(4) {
+            let r = chunk[0];
+            let a = chunk[3];
+            assert!(a > 0, "Alpha must be positive for {:?}", surf);
+            min_val = min_val.min(r);
+            max_val = max_val.max(r);
+        }
+
+        assert!(
+            max_val > min_val,
+            "Procedural texture must exhibit micro-texture color variation for {:?}",
+            surf
+        );
+    }
+
+    // Verify curb image (alternating red and white teeth with bevel gradient)
+    let curb = generate_curb_image(64, 32);
+    assert_eq!(curb.width, 64);
+    assert_eq!(curb.height, 32);
+    // Left half should be red (R > 150, G < 100), right half should be white (R > 150, G > 150)
+    let p_red = &curb.bytes[0..4]; // (0, 0)
+    let p_white = &curb.bytes[(32 * 4)..(32 * 4 + 4)]; // (32, 0)
+    assert!(p_red[0] > 150 && p_red[1] < 100, "Left tooth must be red: {:?}", p_red);
+    assert!(p_white[0] > 150 && p_white[1] > 150, "Right tooth must be white: {:?}", p_white);
+
+    // Verify edge fringe mask has alpha variations
+    let fringe = generate_edge_fringe_mask(32, 32);
+    assert_eq!(fringe.bytes.len(), 32 * 32 * 4);
+    let mut min_alpha = 255u8;
+    let mut max_alpha = 0u8;
+    for chunk in fringe.bytes.chunks_exact(4) {
+        min_alpha = min_alpha.min(chunk[3]);
+        max_alpha = max_alpha.max(chunk[3]);
+    }
+    assert!(max_alpha > min_alpha, "Edge fringe mask must have alpha falloff");
+
+    // Verify macro noise image
+    let macro_noise = generate_macro_noise_image(32, 32);
+    assert_eq!(macro_noise.bytes.len(), 32 * 32 * 4);
+}
+
 
 
 
