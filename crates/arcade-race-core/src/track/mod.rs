@@ -338,17 +338,18 @@ impl Track {
             let half_w = proj.track_width * 0.5;
             let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
             let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
+            let bo = self.effective_barrier_offset();
 
             if proj.lateral_offset < -half_w {
                 if let Some(runoff) = left_ro {
-                    let limit = half_w + proj.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                    let limit = half_w + proj.left_wall_distance.unwrap_or(bo);
                     if -proj.lateral_offset <= limit {
                         return runoff;
                     }
                 }
             } else if proj.lateral_offset > half_w {
                 if let Some(runoff) = right_ro {
-                    let limit = half_w + proj.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                    let limit = half_w + proj.right_wall_distance.unwrap_or(bo);
                     if proj.lateral_offset <= limit {
                         return runoff;
                     }
@@ -442,17 +443,18 @@ impl Track {
         let half_w = proj.track_width * 0.5;
         let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
         let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
+        let bo = self.effective_barrier_offset();
 
         if proj.lateral_offset < -half_w {
             if let Some(runoff) = left_ro {
-                let limit = half_w + proj.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                let limit = half_w + proj.left_wall_distance.unwrap_or(bo);
                 if -proj.lateral_offset <= limit {
                     return runoff;
                 }
             }
         } else if proj.lateral_offset > half_w {
             if let Some(runoff) = right_ro {
-                let limit = half_w + proj.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                let limit = half_w + proj.right_wall_distance.unwrap_or(bo);
                 if proj.lateral_offset <= limit {
                     return runoff;
                 }
@@ -574,25 +576,86 @@ impl Track {
         None
     }
 
-    /// Populates segment runoff surfaces (`left_runoff_surface` / `right_runoff_surface`) across all waypoints
-    /// and spline samples where they have not been explicitly customized.
-    pub fn apply_default_runoff_surfaces(&mut self) {
-        if let Some(default_runoff) = self.default_runoff_surface() {
-            for wp in &mut self.spline.waypoints {
-                if wp.left_runoff_surface.is_none() {
-                    wp.left_runoff_surface = Some(default_runoff);
+    /// Returns the track-level barrier offset in meters, inferring from wall geometry or car category / module.
+    pub fn effective_barrier_offset(&self) -> f32 {
+        // Infer from inner/outer wall geometry if available
+        let walls = if !self.geometry.inner_walls.is_empty() {
+            &self.geometry.inner_walls
+        } else {
+            &self.geometry.outer_walls
+        };
+
+        if !walls.is_empty() && !self.spline.samples.is_empty() {
+            let sample_count = self.spline.samples.len().min(10);
+            let mut dists = Vec::with_capacity(sample_count);
+            for s in &self.spline.samples[..sample_count] {
+                let hw = s.width * 0.5;
+                let edge = s.point + s.normal * hw;
+                let mut min_d = f32::MAX;
+                for w in walls {
+                    let d = w.segment.distance_to_point(edge);
+                    if d < min_d {
+                        min_d = d;
+                    }
                 }
-                if wp.right_runoff_surface.is_none() {
-                    wp.right_runoff_surface = Some(default_runoff);
+                if min_d < 30.0 {
+                    dists.push(min_d);
                 }
             }
-            for s in &mut self.spline.samples {
-                if s.left_runoff_surface.is_none() {
-                    s.left_runoff_surface = Some(default_runoff);
-                }
-                if s.right_runoff_surface.is_none() {
-                    s.right_runoff_surface = Some(default_runoff);
-                }
+            if !dists.is_empty() {
+                dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+                return dists[dists.len() / 2];
+            }
+        }
+
+        let name_lower = self.name.to_lowercase();
+        if self.car_category == CarCategory::Kart
+            || self.belongs_to_module("kart")
+            || name_lower.contains("kart")
+        {
+            2.0
+        } else if self.belongs_to_module("nascar") {
+            1.8
+        } else if self.belongs_to_module("extreme_offroad") {
+            6.0
+        } else {
+            3.5
+        }
+    }
+
+    /// Populates segment runoff surfaces (`left_runoff_surface` / `right_runoff_surface`)
+    /// and wall distances (`left_wall_distance` / `right_wall_distance`) across all waypoints
+    /// and spline samples where they have not been explicitly customized.
+    pub fn apply_default_runoff_surfaces(&mut self) {
+        let default_runoff = self.default_runoff_surface();
+        let bo = self.effective_barrier_offset();
+
+        for wp in &mut self.spline.waypoints {
+            if wp.left_runoff_surface.is_none() {
+                wp.left_runoff_surface = default_runoff;
+            }
+            if wp.right_runoff_surface.is_none() {
+                wp.right_runoff_surface = default_runoff;
+            }
+        }
+
+        for s in &mut self.spline.samples {
+            if s.left_runoff_surface.is_none() {
+                s.left_runoff_surface = default_runoff;
+            }
+            if s.right_runoff_surface.is_none() {
+                s.right_runoff_surface = default_runoff;
+            }
+            let elev_factor = if s.is_bridge { (s.elevation / 3.0).clamp(0.0, 1.0) } else { 0.0 };
+            let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.75 };
+            let bridge_offset = curb_extra + 0.50;
+            let sample_bo = bo * (1.0 - elev_factor) + bridge_offset * elev_factor;
+
+            if s.left_wall_distance.is_none() && s.left_wall {
+                s.left_wall_distance = Some(sample_bo);
+            }
+            if s.right_wall_distance.is_none() && s.right_wall {
+                s.right_wall_distance = Some(sample_bo);
             }
         }
     }

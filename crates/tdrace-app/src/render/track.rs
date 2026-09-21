@@ -463,44 +463,48 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
         }
 
         // Left runoff corridor
-        if let Some(runoff_surf) = s0.left_runoff_surface {
-            let (fill_col, _) = get_surface_zone_colors(runoff_surf);
-            let hw0 = s0.width * 0.5;
-            let hw1 = s1.width * 0.5;
-            let curb_w0 = if s0.left_curb { curb_extra_width } else { 0.0 };
-            let curb_w1 = if s1.left_curb { curb_extra_width } else { 0.0 };
+        if s0.left_wall && s1.left_wall {
+            if let Some(runoff_surf) = s0.left_runoff_surface {
+                let (fill_col, _) = get_surface_zone_colors(runoff_surf);
+                let hw0 = s0.width * 0.5;
+                let hw1 = s1.width * 0.5;
+                let curb_w0 = if s0.left_curb { curb_extra_width } else { 0.0 };
+                let curb_w1 = if s1.left_curb { curb_extra_width } else { 0.0 };
 
-            let wall_dist0 = s0.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
-            let wall_dist1 = s1.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                let wall_dist0 = s0.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                let wall_dist1 = s1.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
 
-            if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
-                let p0_inner = s0.point + s0.normal * (hw0 + curb_w0);
-                let p1_inner = s1.point + s1.normal * (hw1 + curb_w1);
-                let p0_outer = s0.point + s0.normal * (hw0 + wall_dist0);
-                let p1_outer = s1.point + s1.normal * (hw1 + wall_dist1);
+                if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
+                    let p0_inner = s0.point + s0.normal * (hw0 + curb_w0);
+                    let p1_inner = s1.point + s1.normal * (hw1 + curb_w1);
+                    let p0_outer = s0.point + s0.normal * (hw0 + wall_dist0);
+                    let p1_outer = s1.point + s1.normal * (hw1 + wall_dist1);
 
-                draw_quad(p0_inner, p1_inner, p1_outer, p0_outer, fill_col);
+                    draw_quad(p0_inner, p1_inner, p1_outer, p0_outer, fill_col);
+                }
             }
         }
 
         // Right runoff corridor
-        if let Some(runoff_surf) = s0.right_runoff_surface {
-            let (fill_col, _) = get_surface_zone_colors(runoff_surf);
-            let hw0 = s0.width * 0.5;
-            let hw1 = s1.width * 0.5;
-            let curb_w0 = if s0.right_curb { curb_extra_width } else { 0.0 };
-            let curb_w1 = if s1.right_curb { curb_extra_width } else { 0.0 };
+        if s0.right_wall && s1.right_wall {
+            if let Some(runoff_surf) = s0.right_runoff_surface {
+                let (fill_col, _) = get_surface_zone_colors(runoff_surf);
+                let hw0 = s0.width * 0.5;
+                let hw1 = s1.width * 0.5;
+                let curb_w0 = if s0.right_curb { curb_extra_width } else { 0.0 };
+                let curb_w1 = if s1.right_curb { curb_extra_width } else { 0.0 };
 
-            let wall_dist0 = s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
-            let wall_dist1 = s1.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                let wall_dist0 = s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                let wall_dist1 = s1.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
 
-            if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
-                let p0_inner = s0.point - s0.normal * (hw0 + curb_w0);
-                let p1_inner = s1.point - s1.normal * (hw1 + curb_w1);
-                let p0_outer = s0.point - s0.normal * (hw0 + wall_dist0);
-                let p1_outer = s1.point - s1.normal * (hw1 + wall_dist1);
+                if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
+                    let p0_inner = s0.point - s0.normal * (hw0 + curb_w0);
+                    let p1_inner = s1.point - s1.normal * (hw1 + curb_w1);
+                    let p0_outer = s0.point - s0.normal * (hw0 + wall_dist0);
+                    let p1_outer = s1.point - s1.normal * (hw1 + wall_dist1);
 
-                draw_quad(p0_inner, p1_inner, p1_outer, p0_outer, fill_col);
+                    draw_quad(p0_inner, p1_inner, p1_outer, p0_outer, fill_col);
+                }
             }
         }
     }

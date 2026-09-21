@@ -227,8 +227,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -255,8 +255,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -283,8 +283,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -311,8 +311,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -339,8 +339,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -367,8 +367,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -395,8 +395,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -423,8 +423,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -451,8 +451,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -479,8 +479,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -507,8 +507,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -535,8 +535,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -563,8 +563,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -591,8 +591,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -619,8 +619,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -647,8 +647,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -675,8 +675,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -703,8 +703,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -731,8 +731,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -759,8 +759,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -787,8 +787,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -815,8 +815,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -843,8 +843,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -871,8 +871,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -899,8 +899,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -927,8 +927,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -955,8 +955,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -983,8 +983,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1011,8 +1011,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1039,8 +1039,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1067,8 +1067,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1095,8 +1095,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1123,8 +1123,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1151,8 +1151,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1179,8 +1179,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1207,8 +1207,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1235,8 +1235,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1263,8 +1263,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1291,8 +1291,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1319,8 +1319,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1347,8 +1347,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1375,8 +1375,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1403,8 +1403,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1431,8 +1431,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1459,8 +1459,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1487,8 +1487,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1515,8 +1515,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1543,8 +1543,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1571,8 +1571,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1599,8 +1599,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1627,8 +1627,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1655,8 +1655,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1683,8 +1683,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1711,8 +1711,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1739,8 +1739,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1767,8 +1767,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1795,8 +1795,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1823,8 +1823,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1851,8 +1851,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1879,8 +1879,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1907,8 +1907,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1935,8 +1935,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1963,8 +1963,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -1991,8 +1991,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2019,8 +2019,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2047,8 +2047,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2075,8 +2075,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2103,8 +2103,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2131,8 +2131,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2159,8 +2159,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2187,8 +2187,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2215,8 +2215,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2243,8 +2243,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2271,8 +2271,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2299,8 +2299,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2327,8 +2327,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2355,8 +2355,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2383,8 +2383,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2411,8 +2411,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2439,8 +2439,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2467,8 +2467,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2495,8 +2495,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2523,8 +2523,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2551,8 +2551,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2579,8 +2579,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2607,8 +2607,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2635,8 +2635,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2663,8 +2663,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2691,8 +2691,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2719,8 +2719,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2747,8 +2747,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2775,8 +2775,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2803,8 +2803,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2831,8 +2831,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2859,8 +2859,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2887,8 +2887,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2915,8 +2915,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2943,8 +2943,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2971,8 +2971,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -2999,8 +2999,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3027,8 +3027,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3055,8 +3055,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3083,8 +3083,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3111,8 +3111,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3139,8 +3139,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3167,8 +3167,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3195,8 +3195,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3223,8 +3223,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3251,8 +3251,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3279,8 +3279,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3307,8 +3307,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3335,8 +3335,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3363,8 +3363,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3391,8 +3391,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3419,8 +3419,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3447,8 +3447,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3475,8 +3475,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3503,8 +3503,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3531,8 +3531,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3559,8 +3559,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3587,8 +3587,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3615,8 +3615,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3643,8 +3643,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3671,8 +3671,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3699,8 +3699,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3727,8 +3727,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3755,8 +3755,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3783,8 +3783,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3811,8 +3811,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3839,8 +3839,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3867,8 +3867,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3895,8 +3895,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3923,8 +3923,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3951,8 +3951,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -3979,8 +3979,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4007,8 +4007,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4035,8 +4035,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4063,8 +4063,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4091,8 +4091,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4119,8 +4119,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4147,8 +4147,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4175,8 +4175,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4203,8 +4203,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4231,8 +4231,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4259,8 +4259,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4287,8 +4287,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4315,8 +4315,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4343,8 +4343,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4371,8 +4371,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4399,8 +4399,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4427,8 +4427,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4455,8 +4455,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4483,8 +4483,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4511,8 +4511,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4539,8 +4539,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4567,8 +4567,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4595,8 +4595,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4623,8 +4623,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4651,8 +4651,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4679,8 +4679,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4707,8 +4707,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4735,8 +4735,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4763,8 +4763,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4791,8 +4791,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4819,8 +4819,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4847,8 +4847,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4875,8 +4875,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4903,8 +4903,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4931,8 +4931,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4959,8 +4959,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -4987,8 +4987,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5015,8 +5015,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5043,8 +5043,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5071,8 +5071,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5099,8 +5099,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5127,8 +5127,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5155,8 +5155,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5183,8 +5183,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5211,8 +5211,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5239,8 +5239,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5267,8 +5267,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5295,8 +5295,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5323,8 +5323,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5351,8 +5351,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5379,8 +5379,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5407,8 +5407,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5435,8 +5435,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5463,8 +5463,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5491,8 +5491,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5519,8 +5519,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5547,8 +5547,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5575,8 +5575,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5603,8 +5603,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5631,8 +5631,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5659,8 +5659,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5687,8 +5687,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5715,8 +5715,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5743,8 +5743,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5771,8 +5771,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5799,8 +5799,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5827,8 +5827,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5855,8 +5855,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5883,8 +5883,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5911,8 +5911,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5939,8 +5939,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5967,8 +5967,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -5995,8 +5995,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6023,8 +6023,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6051,8 +6051,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6079,8 +6079,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6107,8 +6107,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6135,8 +6135,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6163,8 +6163,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6191,8 +6191,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6219,8 +6219,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6247,8 +6247,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6275,8 +6275,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6303,8 +6303,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6331,8 +6331,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6359,8 +6359,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6387,8 +6387,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6415,8 +6415,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6443,8 +6443,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6471,8 +6471,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6499,8 +6499,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6527,8 +6527,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6555,8 +6555,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6583,8 +6583,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6611,8 +6611,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6639,8 +6639,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6667,8 +6667,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6695,8 +6695,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6723,8 +6723,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6751,8 +6751,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6779,8 +6779,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6807,8 +6807,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6835,8 +6835,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6863,8 +6863,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6891,8 +6891,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6919,8 +6919,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6947,8 +6947,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -6975,8 +6975,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7003,8 +7003,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7031,8 +7031,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7059,8 +7059,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7087,8 +7087,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7115,8 +7115,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7143,8 +7143,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7171,8 +7171,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7199,8 +7199,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7227,8 +7227,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7255,8 +7255,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7283,8 +7283,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7311,8 +7311,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7339,8 +7339,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7367,8 +7367,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7395,8 +7395,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7423,8 +7423,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7451,8 +7451,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7479,8 +7479,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7507,8 +7507,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7535,8 +7535,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7563,8 +7563,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7591,8 +7591,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7619,8 +7619,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7647,8 +7647,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7675,8 +7675,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7703,8 +7703,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7731,8 +7731,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7759,8 +7759,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7787,8 +7787,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7815,8 +7815,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7843,8 +7843,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7871,8 +7871,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7899,8 +7899,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7927,8 +7927,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7955,8 +7955,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -7983,8 +7983,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8011,8 +8011,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8039,8 +8039,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8067,8 +8067,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8095,8 +8095,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8123,8 +8123,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8151,8 +8151,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8179,8 +8179,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8207,8 +8207,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8235,8 +8235,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8263,8 +8263,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       },
       {
         "point": [
@@ -8291,8 +8291,8 @@
         "vertical_curvature": 0.0,
         "left_wall": true,
         "right_wall": true,
-        "left_wall_distance": null,
-        "right_wall_distance": null
+        "left_wall_distance": 1.199999,
+        "right_wall_distance": 1.199999
       }
     ],
     "total_length": 758.6467,
