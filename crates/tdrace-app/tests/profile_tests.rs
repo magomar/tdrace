@@ -961,9 +961,19 @@ fn test_option_a_tabbed_dashboard_navigation_and_filters() {
     assert_eq!(session.profile_manager_tab, 0);
     assert_eq!(session.profile_telemetry_filter_idx, 0);
 
-    // Verify Tab cycling (Overview -> Careers -> Championships -> Telemetry -> Overview)
+    // Verify Tab cycling right (Overview -> Careers -> Championships -> Telemetry -> Overview)
     for expected_tab in [1, 2, 3, 0] {
         session.profile_manager_tab = (session.profile_manager_tab + 1) % 4;
+        assert_eq!(session.profile_manager_tab, expected_tab);
+    }
+
+    // Verify Tab cycling left with wrap-around (Overview -> Telemetry -> Championships -> Careers -> Overview)
+    for expected_tab in [3, 2, 1, 0] {
+        if session.profile_manager_tab == 0 {
+            session.profile_manager_tab = 3;
+        } else {
+            session.profile_manager_tab -= 1;
+        }
         assert_eq!(session.profile_manager_tab, expected_tab);
     }
 

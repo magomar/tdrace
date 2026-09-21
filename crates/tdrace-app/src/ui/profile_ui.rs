@@ -301,7 +301,7 @@ pub fn render_profile_manager_screen(
     }
 
     // Tab switch prompt on the far right
-    let tab_hint = "[TAB / 1-4] SWITCH TAB";
+    let tab_hint = "[◄ / ►] [1-4] TABS";
     fonts.draw_ui_bold(
         tab_hint,
         x + full_w - scaler.s(170.0),
@@ -331,7 +331,7 @@ pub fn render_profile_manager_screen(
     // 4. FOOTER ACTION BAR
     // =========================================================================
     let foot_y = sh - scaler.s(20.0);
-    let footer_prompt = "[◄ Q / E ►] Cycle Driver  |  [TAB / 1-4] Tabs  |  [ENTER] Set Active  |  [N] New Driver  |  [DEL / X] Delete  |  [C] Clear History  |  [ESC] Exit";
+    let footer_prompt = "[◄ Q / E ►] Cycle Driver  |  [◄ / ►] [1-4] Tabs  |  [ENTER] Set Active  |  [N] New Driver  |  [DEL / X] Delete  |  [C] Clear History  |  [ESC] Exit";
     fonts.draw_ui_bold_centered(
         footer_prompt,
         sw * 0.5,
@@ -661,7 +661,7 @@ fn render_telemetry_tab(
         px += pill_w + pill_gap;
     }
 
-    let filter_hint = "[◄ / ►] Change Category Filter";
+    let filter_hint = "[F] Change Category Filter";
     fonts.draw_ui_regular(
         filter_hint,
         x + pad + inner_w - scaler.s(180.0),
