@@ -81,6 +81,7 @@ impl GameModule for NascarGameModule {
                     CarColorScheme::stock_car_intimidator_black(),
                     CarColorScheme::stock_car_carolina_blue(),
                 ],
+                audio_profile: None,
             },
             VehicleModelDefinition {
                 id: "trans_am_ta1",
@@ -100,6 +101,7 @@ impl GameModule for NascarGameModule {
                     CarColorScheme::stock_car_racing_red(),
                     CarColorScheme::stock_car_daytona_blue(),
                 ],
+                audio_profile: None,
             },
         ]
     }

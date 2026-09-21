@@ -1226,6 +1226,7 @@ impl GameModule for KartGameModule {
                     CarColorScheme::from_index(1), // Cyan / Black
                     CarColorScheme::from_index(2), // Red / White
                 ],
+                audio_profile: None,
             },
         ]
     }

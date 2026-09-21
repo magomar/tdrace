@@ -1578,6 +1578,7 @@ impl GameModule for GtWorldChallengeModule {
                     CarColorScheme::from_index(3), // Sunburst Orange
                     CarColorScheme::from_index(0), // Gunmetal Platinum
                 ],
+                audio_profile: None,
             },
             VehicleModelDefinition {
                 id: "gt3_evo",
@@ -1597,6 +1598,7 @@ impl GameModule for GtWorldChallengeModule {
                     CarColorScheme::from_index(4), // Sapphire Racing Blue
                     CarColorScheme::from_index(3), // Sunburst Orange
                 ],
+                audio_profile: None,
             },
             VehicleModelDefinition {
                 id: "gt2_biturbo",
@@ -1615,6 +1617,7 @@ impl GameModule for GtWorldChallengeModule {
                     CarColorScheme::from_index(1), // Electric Cyan GT
                     CarColorScheme::from_index(5), // Vivid Competition Yellow
                 ],
+                audio_profile: None,
             },
             VehicleModelDefinition {
                 id: "gt1_legend",
@@ -1633,6 +1636,7 @@ impl GameModule for GtWorldChallengeModule {
                     CarColorScheme::from_index(2), // Rosso Heritage
                     CarColorScheme::from_index(6), // Stealth Carbon
                 ],
+                audio_profile: None,
             },
             VehicleModelDefinition {
                 id: "hypercar_prototype",
@@ -1651,6 +1655,7 @@ impl GameModule for GtWorldChallengeModule {
                     CarColorScheme::from_index(6), // Carbon Black / Gold
                     CarColorScheme::from_index(1), // Electric Aero Cyan
                 ],
+                audio_profile: None,
             },
         ]
     }

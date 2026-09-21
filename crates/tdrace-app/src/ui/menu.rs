@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
-use crate::audio::AudioSettings;
+use crate::audio::{AudioSettings, EngineSoundType};
 use crate::game::XpAwardReceipt;
 use crate::render::color::{CarColorScheme, Palette};
 use cabinet::input::GamepadSnapshot;
@@ -620,6 +620,23 @@ impl CarChoice {
             CarCategory::Rally => Self::RallyCar,
             CarCategory::Kart => Self::Kart,
             CarCategory::OffRoad => Self::SandRail,
+        }
+    }
+
+    /// Returns the engine sound archetype for this vehicle choice.
+    pub fn sound_type(&self) -> EngineSoundType {
+        match self {
+            Self::StockCar => EngineSoundType::NascarV8,
+            Self::SandRail => EngineSoundType::SandRailBoxer,
+            Self::Kart => EngineSoundType::Kart125cc,
+            Self::RallyCar => EngineSoundType::RallyTurbo,
+            Self::SportsCar
+            | Self::DriftCar
+            | Self::GT4Clubsport
+            | Self::GT3Car
+            | Self::GT2Biturbo
+            | Self::GT1Legend
+            | Self::HypercarPrototype => EngineSoundType::SportGT,
         }
     }
 

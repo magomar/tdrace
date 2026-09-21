@@ -76,6 +76,15 @@ pub struct VehicleModelDefinition {
     /// Normalized performance ratings: (Speed, Acceleration, Grip, Drift/Aero) [0.0..1.0]
     pub stats: (f32, f32, f32, f32),
     pub default_schemes: Vec<CarColorScheme>,
+    pub audio_profile: Option<EngineAudioProfile>,
+}
+
+impl VehicleModelDefinition {
+    /// Returns the vehicle's specific audio profile, or falls back to the provided default/module profile.
+    #[inline]
+    pub fn effective_audio_profile(&self, default_profile: EngineAudioProfile) -> EngineAudioProfile {
+        self.audio_profile.unwrap_or(default_profile)
+    }
 }
 
 /// Track catalog entry for built-in or module-specific circuits.

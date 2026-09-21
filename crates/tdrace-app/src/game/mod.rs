@@ -1187,6 +1187,41 @@ impl RaceSession {
         }
     }
 
+    /// Resolves the engine sound archetype for the active session, respecting vehicle selection and tier banks.
+    pub fn resolve_active_sound_type(&self) -> EngineSoundType {
+        // 1. In Garage showroom, use the focused car model from the catalog
+        if matches!(self.state, GameState::Garage(_)) {
+            let models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
+            if let Some(active_car) = models.get(self.garage_car_idx) {
+                return active_car.sound_type();
+            }
+            return self.car_choice.sound_type();
+        }
+
+        // 2. If a specific authentic car model was selected, dispatch by that model
+        if let Some(model_id) = self.selected_car_model_id {
+            if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+                return model.sound_type();
+            }
+        }
+
+        // 3. In Classic mode, each vehicle uses the Tier 1 sound bank of its discipline
+        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
+        if effective_module == "classic" {
+            return self.active_player_car_choice().sound_type();
+        }
+
+        // 4. Specialized modules default to their primary sound bank, falling back to car choice
+        match effective_module {
+            "gt" | "gt_challenge" => EngineSoundType::SportGT,
+            "nascar" => EngineSoundType::NascarV8,
+            "rally" => EngineSoundType::RallyTurbo,
+            "kart" => EngineSoundType::Kart125cc,
+            "extreme_offroad" => EngineSoundType::SandRailBoxer,
+            _ => self.active_player_car_choice().sound_type(),
+        }
+    }
+
     /// Returns the pool of eligible car models for opponents based on the active motorsport category or track.
     pub fn eligible_opponent_cars(&self) -> Vec<CarChoice> {
         let cat = self.track.car_category;
@@ -2894,26 +2929,7 @@ impl RaceSession {
         self.audio.stop_all_loops();
         self.audio.stop_music(); // In-game music muted
 
-        let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
-        let sound_type = match effective_module {
-            "gt" | "gt_challenge" => EngineSoundType::SportGT,
-            "nascar" => EngineSoundType::NascarV8,
-            "rally" => EngineSoundType::RallyTurbo,
-            "kart" => EngineSoundType::Kart125cc,
-            "extreme_offroad" => EngineSoundType::SandRailBoxer,
-            _ => match active_car {
-                CarChoice::StockCar => EngineSoundType::NascarV8,
-                CarChoice::SandRail => EngineSoundType::SandRailBoxer,
-                CarChoice::GT4Clubsport
-                | CarChoice::GT3Car
-                | CarChoice::GT2Biturbo
-                | CarChoice::GT1Legend
-                | CarChoice::HypercarPrototype => EngineSoundType::SportGT,
-                CarChoice::Kart => EngineSoundType::Kart125cc,
-                CarChoice::RallyCar => EngineSoundType::RallyTurbo,
-                CarChoice::SportsCar | CarChoice::DriftCar => EngineSoundType::SportGT,
-            },
-        };
+        let sound_type = self.resolve_active_sound_type();
         self.audio.set_engine_type(sound_type);
 
         // Show Starting Grid with selected race participants
@@ -6036,22 +6052,7 @@ impl RaceSession {
         }
 
         // Active vehicle engine acoustic archetype & live telemetry
-        let models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
-        let active_car = models.get(self.garage_car_idx);
-        let sound_type = match self.active_module_id {
-            "nascar" => EngineSoundType::NascarV8,
-            "rally" => EngineSoundType::RallyTurbo,
-            "kart" => EngineSoundType::Kart125cc,
-            "extreme_offroad" => EngineSoundType::SandRailBoxer,
-            "gt" | "gt_challenge" => EngineSoundType::SportGT,
-            _ => match active_car.map(|c| c.base_car_choice).unwrap_or(self.car_choice) {
-                CarChoice::StockCar => EngineSoundType::NascarV8,
-                CarChoice::SandRail => EngineSoundType::SandRailBoxer,
-                CarChoice::Kart => EngineSoundType::Kart125cc,
-                CarChoice::RallyCar => EngineSoundType::RallyTurbo,
-                _ => EngineSoundType::SportGT,
-            },
-        };
+        let sound_type = self.resolve_active_sound_type();
         self.audio.set_engine_type(sound_type);
 
         let current_rpm = 1100.0 + self.garage_rev_rpm * 7400.0;

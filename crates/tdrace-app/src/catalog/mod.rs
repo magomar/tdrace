@@ -1,4 +1,5 @@
 use macroquad::color::Color;
+use crate::audio::EngineSoundType;
 use crate::module::VehicleVisualType;
 use crate::ui::menu::CarChoice;
 
@@ -79,6 +80,29 @@ impl RealCarModel {
         }
 
         cfg
+    }
+
+    /// Returns the engine sound archetype for this real car model.
+    pub fn sound_type(&self) -> EngineSoundType {
+        if self.module_id == "classic" {
+            match self.id {
+                "classic_gt" => EngineSoundType::SportGT,
+                "classic_nascar" => EngineSoundType::NascarV8,
+                "classic_offroad" => EngineSoundType::SandRailBoxer,
+                "classic_kart" => EngineSoundType::Kart125cc,
+                "classic_rally" => EngineSoundType::RallyTurbo,
+                _ => self.base_car_choice.sound_type(),
+            }
+        } else {
+            match self.module_id {
+                "nascar" => EngineSoundType::NascarV8,
+                "rally" => EngineSoundType::RallyTurbo,
+                "kart" => EngineSoundType::Kart125cc,
+                "extreme_offroad" => EngineSoundType::SandRailBoxer,
+                "gt" | "gt_challenge" => EngineSoundType::SportGT,
+                _ => self.base_car_choice.sound_type(),
+            }
+        }
     }
 }
 
