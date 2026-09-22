@@ -1,3 +1,4 @@
+use glam::Vec2;
 use tdrace_app::db::HallOfFameDb;
 use tdrace_app::game::{FinishedScreenView, GameState, LapTelemetry, RaceSession};
 use tdrace_app::ui::menu::TrackChoice;
@@ -293,4 +294,113 @@ fn test_mega_jump_requires_one_point_five_seconds() {
     session.physics_step(0.016);
 
     assert!(session.floating_text.items.iter().any(|item| item.text.contains("MEGA JUMP! 1.60s")));
+}
+
+#[test]
+fn test_collision_voids_drift_and_breaks_combo() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert!(session.is_stunt_scoring_enabled());
+
+    // 1. Establish an active combo streak and in-progress drift
+    session.drift_combo_count = 3;
+    session.drift_combo_timer = 3.5;
+    session.prev_player_drifting = true;
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.is_drifting = true;
+        player_car.state.drift_score = 160.0;
+        player_car.state.position = Vec2::new(-1.0, 0.0);
+        player_car.state.velocity = Vec2::new(10.0, 0.0);
+        player_car.state.angle = 0.0;
+    }
+
+    // Place second car approaching head-on
+    if let Some(car_b) = session.cars.get_mut(1) {
+        car_b.state.position = Vec2::new(1.0, 0.0);
+        car_b.state.velocity = Vec2::new(-10.0, 0.0);
+        car_b.state.angle = std::f32::consts::PI;
+    }
+
+    session.physics_step(0.016);
+
+    // Collision must void drift score, reset combo streak, and activate lockout
+    assert_eq!(session.drift_combo_count, 0, "Combo must be broken by collision");
+    assert_eq!(session.drift_combo_timer, 0.0);
+    assert!(session.player_collision_stunt_lockout > 0.0, "Collision lockout must activate");
+    assert_eq!(session.player_race_stats.stunt_stats.drift_count, 0, "No drift should be awarded");
+    assert_eq!(session.player_race_stats.stunt_stats.total_stunt_score, 0);
+    assert_eq!(session.cars[0].state.drift_score, 0.0, "Drift score must be voided to 0");
+    assert!(!session.cars[0].state.is_drifting);
+
+    // Verify visual feedback for broken combo / voided drift
+    assert!(
+        session.floating_text.items.iter().any(|item| item.text.contains("COMBO BROKEN!") || item.text.contains("DRIFT VOIDED!")),
+        "UI must display broken combo alert"
+    );
+}
+
+#[test]
+fn test_collision_lockout_prevents_spinout_stunt_points() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert!(session.is_stunt_scoring_enabled());
+
+    // Activate collision recovery lockout
+    session.player_collision_stunt_lockout = 1.0;
+
+    // Simulate car spinning / sliding violently after impact
+    session.prev_player_drifting = true;
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.is_drifting = false;
+        player_car.state.drift_score = 250.0;
+    }
+
+    session.physics_step(0.016);
+
+    // Lockout must suppress drift completion and wipe drift score
+    assert_eq!(session.player_race_stats.stunt_stats.drift_count, 0);
+    assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 0);
+    assert_eq!(session.player_race_stats.stunt_stats.total_stunt_score, 0);
+    assert_eq!(session.drift_combo_count, 0);
+    assert_eq!(session.cars[0].state.drift_score, 0.0);
+}
+
+#[test]
+fn test_clean_drift_resets_drift_score_after_banking() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert!(session.is_stunt_scoring_enabled());
+    assert_eq!(session.player_collision_stunt_lockout, 0.0);
+
+    // 1. First clean drift
+    session.prev_player_drifting = true;
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.is_drifting = false;
+        player_car.state.drift_score = 120.0;
+    }
+
+    session.physics_step(0.016);
+
+    assert_eq!(session.player_race_stats.stunt_stats.drift_count, 1);
+    assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 120);
+    assert_eq!(session.cars[0].state.drift_score, 0.0, "Drift score must be reset to 0 after banking");
+
+    // 2. A subsequent step without drifting must NOT re-bank points
+    session.physics_step(0.016);
+    assert_eq!(session.player_race_stats.stunt_stats.drift_count, 1);
+    assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 120);
+    assert_eq!(session.cars[0].state.drift_score, 0.0);
+
+    // 3. Second clean drift accumulates from fresh 0 baseline
+    session.prev_player_drifting = true;
+    if let Some(player_car) = session.cars.first_mut() {
+        player_car.state.is_drifting = false;
+        player_car.state.drift_score = 90.0;
+    }
+
+    session.physics_step(0.016);
+
+    assert_eq!(session.player_race_stats.stunt_stats.drift_count, 2);
+    assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 210);
+    assert_eq!(session.cars[0].state.drift_score, 0.0);
 }

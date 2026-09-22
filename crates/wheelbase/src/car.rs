@@ -1102,6 +1102,12 @@ impl Car {
         }
     }
 
+    /// Resets the accumulated single-maneuver drift score to zero.
+    #[inline]
+    pub fn reset_drift_score(&mut self) {
+        self.state.drift_score = 0.0;
+    }
+
     /// Initiates a ballistic jump launch with given launch direction, speed, and ramp angle.
     pub fn launch_jump(&mut self, direction: Vec2, _launch_speed: f32, ramp_angle_deg: f32) {
         self.launch_jump_with_height(direction, ramp_angle_deg, 0.05);

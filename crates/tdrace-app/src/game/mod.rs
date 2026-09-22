@@ -505,6 +505,8 @@ pub struct RaceSession {
     pub drift_combo_timer: f32,
     pub prev_player_drifting: bool,
     pub stunt_scoring_override: Option<bool>,
+    pub player_collision_stunt_lockout: f32,
+    pub player2_collision_stunt_lockout: f32,
 }
 
 
@@ -764,6 +766,8 @@ impl RaceSession {
             drift_combo_timer: 0.0,
             prev_player_drifting: false,
             stunt_scoring_override: None,
+            player_collision_stunt_lockout: 0.0,
+            player2_collision_stunt_lockout: 0.0,
         };
 
         session.refresh_profiles_and_stats();
@@ -790,6 +794,15 @@ impl RaceSession {
     #[inline]
     pub fn set_stunt_scoring_enabled(&mut self, enabled: Option<bool>) {
         self.stunt_scoring_override = enabled;
+    }
+
+    /// Whether vehicle collisions are intended to be scored as stunts (e.g. Demolition Derby / Car Crush).
+    ///
+    /// Currently returns `false` for standard circuit and arcade racing, ensuring vehicle
+    /// collisions penalize and void acrobatic stunts rather than awarding drift points.
+    #[inline]
+    pub fn is_demolition_scoring_enabled(&self) -> bool {
+        false
     }
 
     /// Whether the active game session is in 2-Player Split Screen mode.
@@ -3012,6 +3025,8 @@ impl RaceSession {
         self.drift_combo_count = 0;
         self.drift_combo_timer = 0.0;
         self.prev_player_drifting = false;
+        self.player_collision_stunt_lockout = 0.0;
+        self.player2_collision_stunt_lockout = 0.0;
         self.results.clear();
         self.session_time = 0.0;
         self.accumulator = 0.0;
@@ -8132,6 +8147,13 @@ impl RaceSession {
         }
         let is_split = self.is_split_screen();
 
+        if self.player_collision_stunt_lockout > 0.0 {
+            self.player_collision_stunt_lockout = (self.player_collision_stunt_lockout - dt).max(0.0);
+        }
+        if self.player2_collision_stunt_lockout > 0.0 {
+            self.player2_collision_stunt_lockout = (self.player2_collision_stunt_lockout - dt).max(0.0);
+        }
+
         // 1. Gather driver controls (Player keyboard with smoothing + Touch combined, and AI bots)
         let mut controls_all = Vec::with_capacity(n_cars);
         if is_split {
@@ -8318,7 +8340,7 @@ impl RaceSession {
         }
 
         if let Some(air_time) = player_jump_air_time {
-            if self.is_stunt_scoring_enabled() {
+            if self.is_stunt_scoring_enabled() && self.player_collision_stunt_lockout <= 0.0 {
                 let pts = (air_time * 250.0).round() as u32;
                 self.player_race_stats.stunt_stats.jump_count += 1;
                 self.player_race_stats.stunt_stats.total_air_time += air_time;
@@ -8391,6 +8413,7 @@ impl RaceSession {
 
         // 5. Resolve Wall and Obstacle boundary collisions for each car (including grandstands & tree trunks)
         let scenery_obstacles = self.track.geometry.all_obstacles_with_scenery();
+        let demolition_mode = self.is_demolition_scoring_enabled();
         let mut wall_collision_events = Vec::new();
         for (car_idx, car) in self.cars.iter_mut().enumerate() {
             let mut wall_events = resolve_all_wall_collisions(
@@ -8403,6 +8426,31 @@ impl RaceSession {
             wall_events.extend(outer_events);
 
             for wev in &wall_events {
+                if wev.impact_speed > 2.0 && !demolition_mode {
+                    car.state.drift_score = 0.0;
+                    car.state.is_drifting = false;
+                    if car_idx == 0 {
+                        self.player_collision_stunt_lockout = 1.2;
+                        if self.drift_combo_count > 0 || self.prev_player_drifting {
+                            if self.drift_combo_count >= 2 || self.prev_player_drifting {
+                                let sw = screen_width_safe();
+                                let sh = screen_height_safe();
+                                let screen_pos = self.camera.world_to_screen_with_viewport(car.state.position, sw, sh);
+                                let anchor = Vec2::new(
+                                    screen_pos.x.clamp(100.0, sw - 100.0),
+                                    (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
+                                );
+                                let alert_msg = if self.drift_combo_count >= 2 { "COMBO BROKEN!" } else { "DRIFT VOIDED!" };
+                                self.floating_text.spawn_alert(alert_msg, anchor, Palette::RED);
+                            }
+                            self.drift_combo_count = 0;
+                            self.drift_combo_timer = 0.0;
+                            self.prev_player_drifting = false;
+                        }
+                    } else if car_idx == 1 && is_split {
+                        self.player2_collision_stunt_lockout = 1.2;
+                    }
+                }
                 if wev.impact_speed > 3.0 {
                     if car_idx == 0 {
                         self.camera.add_trauma(wev.impact_speed * 0.08);
@@ -8422,6 +8470,39 @@ impl RaceSession {
         }
 
         for cev in &car_collision_events {
+            if cev.closing_speed > 2.0 && !demolition_mode {
+                if cev.car_a_idx < self.cars.len() {
+                    self.cars[cev.car_a_idx].state.drift_score = 0.0;
+                    self.cars[cev.car_a_idx].state.is_drifting = false;
+                }
+                if cev.car_b_idx < self.cars.len() {
+                    self.cars[cev.car_b_idx].state.drift_score = 0.0;
+                    self.cars[cev.car_b_idx].state.is_drifting = false;
+                }
+                if cev.car_a_idx == 0 || cev.car_b_idx == 0 {
+                    self.player_collision_stunt_lockout = 1.2;
+                    if self.drift_combo_count > 0 || self.prev_player_drifting {
+                        if self.drift_combo_count >= 2 || self.prev_player_drifting {
+                            let sw = screen_width_safe();
+                            let sh = screen_height_safe();
+                            let pos = self.cars.first().map(|c| c.state.position).unwrap_or(Vec2::ZERO);
+                            let screen_pos = self.camera.world_to_screen_with_viewport(pos, sw, sh);
+                            let anchor = Vec2::new(
+                                screen_pos.x.clamp(100.0, sw - 100.0),
+                                (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
+                            );
+                            let alert_msg = if self.drift_combo_count >= 2 { "COMBO BROKEN!" } else { "DRIFT VOIDED!" };
+                            self.floating_text.spawn_alert(alert_msg, anchor, Palette::RED);
+                        }
+                        self.drift_combo_count = 0;
+                        self.drift_combo_timer = 0.0;
+                        self.prev_player_drifting = false;
+                    }
+                }
+                if is_split && (cev.car_a_idx == 1 || cev.car_b_idx == 1) {
+                    self.player2_collision_stunt_lockout = 1.2;
+                }
+            }
             if cev.car_a_idx == 0 || cev.car_b_idx == 0 {
                 if cev.closing_speed > 3.0 {
                     self.camera.add_trauma(cev.closing_speed * 0.06);
@@ -8662,39 +8743,58 @@ impl RaceSession {
         );
 
         // 9b. Drift Combo & HUD Floating Popups
-        if let Some(player_car) = self.cars.first() {
+        let stunt_scoring_enabled = self.is_stunt_scoring_enabled();
+        if let Some(player_car) = self.cars.first_mut() {
             let was_drifting = self.prev_player_drifting;
             let is_drifting = player_car.state.is_drifting;
 
-            if self.is_stunt_scoring_enabled() && was_drifting && !is_drifting && player_car.state.drift_score > 50.0 {
-                self.drift_combo_count += 1;
-                self.drift_combo_timer = 4.0;
-                let pts = player_car.state.drift_score.round() as u32;
+            if self.player_collision_stunt_lockout > 0.0 {
+                // In collision recovery lockout: cancel any post-impact slide from scoring as a stunt
+                player_car.state.drift_score = 0.0;
+                player_car.state.is_drifting = false;
+                self.prev_player_drifting = false;
+            } else {
+                if stunt_scoring_enabled && was_drifting && !is_drifting && player_car.state.drift_score > 50.0 {
+                    self.drift_combo_count += 1;
+                    self.drift_combo_timer = 4.0;
+                    let pts = player_car.state.drift_score.round() as u32;
 
-                self.player_race_stats.stunt_stats.drift_count += 1;
-                self.player_race_stats.stunt_stats.total_drift_points += pts;
-                self.player_race_stats.stunt_stats.max_single_drift_score = self.player_race_stats.stunt_stats.max_single_drift_score.max(player_car.state.drift_score);
-                self.player_race_stats.stunt_stats.total_stunt_score += pts;
-                self.player_race_stats.stunt_stats.max_combo = self.player_race_stats.stunt_stats.max_combo.max(self.drift_combo_count);
+                    self.player_race_stats.stunt_stats.drift_count += 1;
+                    self.player_race_stats.stunt_stats.total_drift_points += pts;
+                    self.player_race_stats.stunt_stats.max_single_drift_score = self.player_race_stats.stunt_stats.max_single_drift_score.max(player_car.state.drift_score);
+                    self.player_race_stats.stunt_stats.total_stunt_score += pts;
+                    self.player_race_stats.stunt_stats.max_combo = self.player_race_stats.stunt_stats.max_combo.max(self.drift_combo_count);
 
-                let sw = screen_width_safe();
-                let sh = screen_height_safe();
-                let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
-                let anchor = Vec2::new(
-                    screen_pos.x.clamp(100.0, sw - 100.0),
-                    (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
-                );
-
-                self.floating_text.spawn_score(pts, anchor);
-
-                if self.drift_combo_count >= 2 {
-                    self.floating_text.spawn_combo(
-                        self.drift_combo_count,
-                        anchor + Vec2::new(0.0, -26.0),
+                    let sw = screen_width_safe();
+                    let sh = screen_height_safe();
+                    let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
+                    let anchor = Vec2::new(
+                        screen_pos.x.clamp(100.0, sw - 100.0),
+                        (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
                     );
+
+                    self.floating_text.spawn_score(pts, anchor);
+
+                    if self.drift_combo_count >= 2 {
+                        self.floating_text.spawn_combo(
+                            self.drift_combo_count,
+                            anchor + Vec2::new(0.0, -26.0),
+                        );
+                    }
                 }
+                if was_drifting && !is_drifting {
+                    // Reset single-maneuver drift score upon ending drift so it doesn't leak into subsequent maneuvers
+                    player_car.state.drift_score = 0.0;
+                }
+                self.prev_player_drifting = is_drifting;
             }
-            self.prev_player_drifting = is_drifting;
+        }
+
+        // Ensure non-player cars also clear drift_score when not drifting
+        for car in self.cars.iter_mut().skip(1) {
+            if !car.state.is_drifting && car.state.drift_score > 0.0 {
+                car.state.drift_score = 0.0;
+            }
         }
 
         // 10. Update active Personal Best notification timer
