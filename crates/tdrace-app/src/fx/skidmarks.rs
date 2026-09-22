@@ -108,30 +108,133 @@ impl SkidmarkBuffer {
                 let telemetry = &car.state.wheels[wheel_id];
                 let surface = surfaces.get(car_idx).map(|s| s[wheel_id]).unwrap_or(SurfaceType::Asphalt);
 
-                // Skid intensity: based on telemetry skid_intensity, slip angle, slip ratio, and drift
-                let is_skidding = telemetry.skid_intensity > 0.025
+                // Mark trigger: active tire slip OR rolling indentation on loose/deformable terrain OR dirt contamination transfer on pavement
+                let has_slip = telemetry.skid_intensity > 0.025
                     || telemetry.is_skidding
                     || car.state.is_drifting
                     || telemetry.slip_ratio.abs() > 0.10
-                    || telemetry.slip_angle.abs() > 0.07
-                    || (surface == SurfaceType::Grass && telemetry.slip_ratio.abs() > 0.18);
+                    || telemetry.slip_angle.abs() > 0.07;
 
-                if is_skidding {
+                let is_rolling_loose = surface.leaves_rolling_rut() && car.state.speed > 1.2;
+                let is_transferring_dirt = surface.is_rigid_pavement() && telemetry.dirt_contamination > 0.03 && car.state.speed > 1.2;
+
+                let leaves_mark = has_slip || is_rolling_loose || is_transferring_dirt;
+
+                if leaves_mark {
                     if let Some(prev_pos) = self.prev_wheel_positions[car_idx][wheel_id] {
                         let travel = curr_pos - prev_pos;
                         let dist = travel.length();
 
                         // Only add segment if vehicle moved sufficiently (prevents static stacking)
                         if (0.20..=3.0).contains(&dist) {
-                            let (base_col, alpha_mult) = match surface {
-                                SurfaceType::Grass => (Color::new(0.12, 0.28, 0.10, 1.0), 0.85),
-                                SurfaceType::Sand => (Color::new(0.55, 0.45, 0.25, 1.0), 0.85),
-                                SurfaceType::Dirt => (Color::new(0.25, 0.15, 0.08, 1.0), 0.85),
-                                SurfaceType::Water => (Color::new(0.40, 0.70, 0.90, 0.50), 0.50),
-                                _ => (Color::new(0.03, 0.03, 0.04, 1.0), 1.0), // Deep carbon black rubber
+                            let (base_col, alpha, width_mult, jitter_mult) = if is_transferring_dirt && !has_slip {
+                                let dirt_col = match telemetry.dirt_surface {
+                                    SurfaceType::Gravel => Color::new(0.38, 0.36, 0.34, 1.0),
+                                    SurfaceType::Sand => Color::new(0.68, 0.58, 0.36, 1.0),
+                                    SurfaceType::Dirt => Color::new(0.35, 0.22, 0.12, 1.0),
+                                    SurfaceType::Mud => Color::new(0.24, 0.16, 0.08, 1.0),
+                                    SurfaceType::Grass => Color::new(0.22, 0.30, 0.16, 1.0),
+                                    _ => Color::new(0.45, 0.45, 0.45, 1.0),
+                                };
+                                let a = (telemetry.dirt_contamination * 0.55).clamp(0.18, 0.65);
+                                (dirt_col, a, 0.92, 0.20)
+                            } else {
+                                match surface {
+                                    SurfaceType::Asphalt => {
+                                        let a = (0.50 + telemetry.skid_intensity * 0.45).clamp(0.45, 0.95);
+                                        (Color::new(0.03, 0.03, 0.04, 1.0), a, 1.0, 0.20)
+                                    }
+                                    SurfaceType::Concrete => {
+                                        let a = (0.45 + telemetry.skid_intensity * 0.45).clamp(0.40, 0.90);
+                                        (Color::new(0.04, 0.04, 0.05, 1.0), a, 1.0, 0.20)
+                                    }
+                                    SurfaceType::Curb => {
+                                        let a = (0.40 + telemetry.skid_intensity * 0.40).clamp(0.35, 0.80);
+                                        (Color::new(0.05, 0.05, 0.06, 1.0), a, 0.95, 0.18)
+                                    }
+                                    SurfaceType::Gravel => {
+                                        // Dark slate stone furrow bed with jagged edge jitter
+                                        let a = if has_slip {
+                                            (0.65 + telemetry.skid_intensity * 0.30).clamp(0.60, 0.92)
+                                        } else {
+                                            0.42
+                                        };
+                                        let w = if has_slip { 1.25 } else { 0.95 };
+                                        (Color::new(0.28, 0.26, 0.24, 1.0), a, w, 0.45)
+                                    }
+                                    SurfaceType::Sand => {
+                                        // Warm shadowed dune furrow
+                                        let a = if has_slip {
+                                            (0.55 + telemetry.skid_intensity * 0.35).clamp(0.50, 0.88)
+                                        } else {
+                                            0.38
+                                        };
+                                        let w = if has_slip { 1.20 } else { 0.90 };
+                                        (Color::new(0.65, 0.52, 0.28, 1.0), a, w, 0.22)
+                                    }
+                                    SurfaceType::Dirt => {
+                                        // Compacted moist loam ruts
+                                        let a = if has_slip {
+                                            (0.60 + telemetry.skid_intensity * 0.35).clamp(0.55, 0.92)
+                                        } else {
+                                            0.44
+                                        };
+                                        let w = if has_slip { 1.15 } else { 0.92 };
+                                        (Color::new(0.24, 0.14, 0.07, 1.0), a, w, 0.25)
+                                    }
+                                    SurfaceType::Mud => {
+                                        // Deep viscous muck furrow
+                                        let a = if has_slip {
+                                            (0.70 + telemetry.skid_intensity * 0.28).clamp(0.65, 0.96)
+                                        } else {
+                                            0.52
+                                        };
+                                        let w = if has_slip { 1.35 } else { 1.05 };
+                                        (Color::new(0.18, 0.12, 0.06, 1.0), a, w, 0.30)
+                                    }
+                                    SurfaceType::Grass => {
+                                        // Bruised turf & exposed topsoil furrow on slip
+                                        let a = if has_slip {
+                                            (0.55 + telemetry.skid_intensity * 0.35).clamp(0.50, 0.88)
+                                        } else {
+                                            0.36
+                                        };
+                                        let w = if has_slip { 1.10 } else { 0.85 };
+                                        let col = if has_slip {
+                                            Color::new(0.16, 0.22, 0.10, 1.0)
+                                        } else {
+                                            Color::new(0.12, 0.28, 0.10, 1.0)
+                                        };
+                                        (col, a, w, 0.25)
+                                    }
+                                    SurfaceType::Snow => {
+                                        // Cool blue-shadowed powder rut
+                                        let a = if has_slip {
+                                            (0.55 + telemetry.skid_intensity * 0.32).clamp(0.50, 0.85)
+                                        } else {
+                                            0.40
+                                        };
+                                        let w = if has_slip { 1.20 } else { 0.95 };
+                                        (Color::new(0.65, 0.72, 0.82, 1.0), a, w, 0.20)
+                                    }
+                                    SurfaceType::Ice => {
+                                        // Frosted white claw scratch
+                                        let a = (0.20 + telemetry.skid_intensity * 0.35).clamp(0.20, 0.55);
+                                        (Color::new(0.92, 0.96, 1.0, 1.0), a, 0.75, 0.12)
+                                    }
+                                    SurfaceType::Water => {
+                                        // Translucent parted wake
+                                        let a = (0.25 + telemetry.skid_intensity * 0.25).clamp(0.20, 0.50);
+                                        (Color::new(0.40, 0.70, 0.90, 0.50), a, 1.30, 0.15)
+                                    }
+                                    SurfaceType::Oil => {
+                                        // Sheared rainbow interference dark film
+                                        (Color::new(0.14, 0.11, 0.18, 1.0), 0.60, 1.10, 0.15)
+                                    }
+                                }
                             };
 
-                            let alpha = (0.50 + telemetry.skid_intensity * 0.45 * alpha_mult).clamp(0.45, 0.95);
+                            let effective_half_w = half_tire_w * width_mult;
 
                             // Calculate quad perpendicular to travel direction or tire orientation
                             let seg_right = if dist > 1e-4 {
@@ -142,14 +245,14 @@ impl SkidmarkBuffer {
 
                             // Contact chatter modulation (pulsing alpha along stroke)
                             let chatter = 0.88 + skid_noise(curr_pos, 101) * 0.24;
-                            let alpha_mod = (alpha * chatter).clamp(0.40, 0.95);
+                            let alpha_mod = (alpha * chatter).clamp(0.15, 0.96);
                             let col_outer = Color::new(base_col.r, base_col.g, base_col.b, alpha_mod);
-                            let col_inner = Color::new(base_col.r, base_col.g, base_col.b, (alpha_mod * 0.94).clamp(0.38, 0.92));
+                            let col_inner = Color::new(base_col.r, base_col.g, base_col.b, (alpha_mod * 0.94).clamp(0.14, 0.92));
 
                             // Multi-ribbon tread contact striations with ragged edge jitter
-                            let jitter = (skid_noise(curr_pos, 202) - 0.5) * (half_tire_w * 0.20);
-                            let sub_w = half_tire_w * 0.48;
-                            let offset = half_tire_w * 0.50 + jitter;
+                            let jitter = (skid_noise(curr_pos, 202) - 0.5) * (effective_half_w * jitter_mult);
+                            let sub_w = effective_half_w * 0.48;
+                            let offset = effective_half_w * 0.50 + jitter;
 
                             // Texture UV longitudinal coordinate mapping (tread pattern repeats every 0.75m)
                             let v0 = self.wheel_accum_v[car_idx][wheel_id];

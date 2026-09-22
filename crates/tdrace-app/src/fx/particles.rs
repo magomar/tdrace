@@ -115,6 +115,13 @@ impl ParticleSystem {
             _ => return,
         };
 
+        let (drag, speed_base, size_base) = match surface {
+            SurfaceType::Gravel => (3.2, 4.5, 0.09), // Fast angular stone pellets
+            SurfaceType::Mud => (4.5, 2.5, 0.11),    // Heavy viscous muck clods with high drag
+            SurfaceType::Snow => (2.2, 2.8, 0.08),   // Drifting powder crystals
+            _ => (2.8, 3.0, 0.08),
+        };
+
         let count = 3;
         for _ in 0..count {
             if self.particles.len() >= self.max_particles {
@@ -125,10 +132,10 @@ impl ParticleSystem {
             // Roost flies backward relative to wheel velocity
             let roost_dir = -wheel_vel.normalize_or_zero();
             let spread = Vec2::new(-roost_dir.y, roost_dir.x) * self.rand_signed() * 0.6;
-            let p_vel = (roost_dir + spread) * (3.0 + self.rand_f32() * 6.0);
+            let p_vel = (roost_dir + spread) * (speed_base + self.rand_f32() * 6.0);
 
             let life = 0.35 + self.rand_f32() * 0.30;
-            let size = 0.08 + self.rand_f32() * 0.08;
+            let size = size_base + self.rand_f32() * 0.08;
 
             let use_secondary = self.rand_f32() > 0.5;
             let col = if use_secondary { col_var } else { base_col };
@@ -143,7 +150,7 @@ impl ParticleSystem {
                 color_end: col_end,
                 lifetime: life,
                 remaining_life: life,
-                drag: 2.8,
+                drag,
                 is_spark: false,
             });
         }

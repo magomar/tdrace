@@ -85,10 +85,10 @@ impl EffectsManager {
                             .emit_tire_smoke(pos, car.state.velocity, telemetry.skid_intensity);
                     }
 
-                    // Off-track & dirt track roost
-                    if (surf == SurfaceType::Grass || surf == SurfaceType::Sand || surf == SurfaceType::Dirt)
-                        && (telemetry.skid_intensity > 0.10 || telemetry.slip_ratio.abs() > 0.15)
-                        && car.state.speed > 2.0
+                    // Debris particle roost on loose / deformable terrain (Gravel, Mud, Snow, Dirt, Sand, Grass)
+                    if surf.produces_debris_particles()
+                        && (telemetry.skid_intensity > 0.08 || telemetry.slip_ratio.abs() > 0.12 || telemetry.slip_angle.abs() > 0.08)
+                        && car.state.speed > 1.5
                     {
                         self.particles.emit_dirt_roost(pos, surf, car.state.velocity);
                     }
