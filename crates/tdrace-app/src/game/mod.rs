@@ -693,7 +693,7 @@ impl RaceSession {
             profile_telemetry_filter_idx: 0,
             profile_focus_card: false,
 
-            fx: EffectsManager::new(64000, 1500),
+            fx: EffectsManager::new_persistent(1500),
             camera,
             camera_p2,
             split_layout: SplitLayout::Vertical,
@@ -1582,45 +1582,81 @@ impl RaceSession {
         }
     }
 
-    /// Resolves the color scheme for a bot in Career mode.
+    /// Resolves the color scheme for an AI bot driver across Career, Quick, and Custom races.
     /// Bots must use masked colors (must not match the vehicle model's factory livery,
-    /// triggering mask-based tinting) and must have primary colors visually distinct
-    /// from the player's factory sprite color schema.
-    pub fn resolve_bot_career_color_scheme(
+    /// triggering dynamic mask-based tinting) and must have primary colors visually distinct
+    /// from the player's primary color and other cars on the grid, maximizing color diversity.
+    pub fn resolve_bot_color_scheme(
         base_scheme: CarColorScheme,
         bot_model: Option<&crate::catalog::RealCarModel>,
-        player_model: Option<&crate::catalog::RealCarModel>,
+        player_primary: Option<Color>,
+        existing_participants: &[GridParticipant],
         bot_idx: usize,
     ) -> CarColorScheme {
-        let player_primary = player_model
-            .map(|m| m.primary_color)
-            .unwrap_or(Palette::CAR_COLORS[0].0);
+        let pp = player_primary.unwrap_or(Palette::CAR_COLORS[0].0);
+        let bot_mid = bot_model.map(|m| m.id);
 
-        let is_conflict = |s: &CarColorScheme| {
-            let is_factory = if let Some(m) = bot_model {
-                let dr = (s.primary.r - m.primary_color.r).abs();
-                let dg = (s.primary.g - m.primary_color.g).abs();
-                let db = (s.primary.b - m.primary_color.b).abs();
+        let color_dist = |c1: Color, c2: Color| -> f32 {
+            let dr = c1.r - c2.r;
+            let dg = c1.g - c2.g;
+            let db = c1.b - c2.b;
+            (dr * dr + dg * dg + db * db).sqrt()
+        };
+
+        let is_factory = |c: Color| -> bool {
+            if let Some(m) = bot_model {
+                let dr = (c.r - m.primary_color.r).abs();
+                let dg = (c.g - m.primary_color.g).abs();
+                let db = (c.b - m.primary_color.b).abs();
                 dr < 0.05 && dg < 0.05 && db < 0.05
             } else {
                 false
-            };
-            let dr_p = (s.primary.r - player_primary.r).abs();
-            let dg_p = (s.primary.g - player_primary.g).abs();
-            let db_p = (s.primary.b - player_primary.b).abs();
-            let dist_p = (dr_p * dr_p + dg_p * dg_p + db_p * db_p).sqrt();
-            is_factory || dist_p < 0.20
+            }
         };
 
-        if !is_conflict(&base_scheme) {
+        // Hard conflict: matches factory livery, too close to player (< 0.20),
+        // or too close (< 0.20) to another car sharing the same vehicle model.
+        let is_hard_conflict = |s: &CarColorScheme| -> bool {
+            if is_factory(s.primary) {
+                return true;
+            }
+            if color_dist(s.primary, pp) < 0.20 {
+                return true;
+            }
+            if let Some(mid) = bot_mid {
+                for other in existing_participants {
+                    if other.model_id == Some(mid) && color_dist(s.primary, other.color_scheme.primary) < 0.20 {
+                        return true;
+                    }
+                }
+            }
+            false
+        };
+
+        // Grid-wide diversity conflict: also checks if any existing car on the grid has the same/close primary color (< 0.20).
+        let is_grid_conflict = |s: &CarColorScheme| -> bool {
+            if is_hard_conflict(s) {
+                return true;
+            }
+            for other in existing_participants {
+                if color_dist(s.primary, other.color_scheme.primary) < 0.20 {
+                    return true;
+                }
+            }
+            false
+        };
+
+        // 1. If base scheme has no conflict across the grid, retain driver's signature livery.
+        if !is_grid_conflict(&base_scheme) {
             return base_scheme;
         }
 
-        // Try candidate color presets from Palette::CAR_COLORS (excluding index 0 which is player red)
-        for offset in 1..Palette::CAR_COLORS.len() {
-            let candidate_idx = (bot_idx + offset) % (Palette::CAR_COLORS.len() - 1) + 1;
+        // 2. Try candidate color presets from Palette::CAR_COLORS (indices 1..=8, excluding index 0 player red)
+        let num_candidates = Palette::CAR_COLORS.len() - 1;
+        for offset in 0..num_candidates {
+            let candidate_idx = (bot_idx + offset) % num_candidates + 1;
             let candidate = CarColorScheme::from_index(candidate_idx);
-            if !is_conflict(&candidate) {
+            if !is_grid_conflict(&candidate) {
                 return CarColorScheme {
                     primary: candidate.primary,
                     secondary: candidate.secondary,
@@ -1629,17 +1665,56 @@ impl RaceSession {
             }
         }
 
-        let nudged_primary = Color::new(
-            (base_scheme.primary.r + 0.35) % 1.0,
-            (base_scheme.primary.g + 0.35) % 1.0,
-            (base_scheme.primary.b + 0.35) % 1.0,
-            1.0,
-        );
+        // 3. If all presets have grid-wide conflicts (e.g. grids > 8 cars), relax grid-wide check
+        // but strictly enforce hard constraints (not factory, distinct from player, distinct from same model).
+        for offset in 0..num_candidates {
+            let candidate_idx = (bot_idx + offset) % num_candidates + 1;
+            let candidate = CarColorScheme::from_index(candidate_idx);
+            if !is_hard_conflict(&candidate) {
+                return CarColorScheme {
+                    primary: candidate.primary,
+                    secondary: candidate.secondary,
+                    helmet: base_scheme.helmet,
+                };
+            }
+        }
+
+        // 4. Fallback: generate a deterministic hue-shifted color that avoids player & factory.
+        let mut best_color = base_scheme.primary;
+        let mut best_dist = 0.0f32;
+        for step in 1..=8 {
+            let shift = (step as f32 * 0.125 + (bot_idx as f32 * 0.07)) % 1.0;
+            let cand_c = Color::new(
+                (base_scheme.primary.r + shift) % 1.0,
+                (base_scheme.primary.g + shift) % 1.0,
+                (base_scheme.primary.b + shift) % 1.0,
+                1.0,
+            );
+            if !is_factory(cand_c) {
+                let d = color_dist(cand_c, pp);
+                if d > best_dist {
+                    best_dist = d;
+                    best_color = cand_c;
+                }
+            }
+        }
+
         CarColorScheme {
-            primary: nudged_primary,
+            primary: best_color,
             secondary: base_scheme.secondary,
             helmet: base_scheme.helmet,
         }
+    }
+
+    /// Resolves the color scheme for a bot in Career mode (backward-compatible delegate).
+    pub fn resolve_bot_career_color_scheme(
+        base_scheme: CarColorScheme,
+        bot_model: Option<&crate::catalog::RealCarModel>,
+        player_model: Option<&crate::catalog::RealCarModel>,
+        bot_idx: usize,
+    ) -> CarColorScheme {
+        let player_primary = player_model.map(|m| m.primary_color);
+        Self::resolve_bot_color_scheme(base_scheme, bot_model, player_primary, &[], bot_idx)
     }
 
     /// Activates the GT World Challenge module.
@@ -2684,6 +2759,8 @@ impl RaceSession {
             });
         }
 
+        let player_primary = participants.first().map(|p| p.color_scheme.primary);
+
         // 2. AI Opponent participants
         for (bot_idx, character) in self.opponent_drivers.iter().enumerate() {
             let bot_hof = self
@@ -2696,22 +2773,13 @@ impl RaceSession {
 
             let (bot_car_choice, bot_car_title, bot_model_id, bot_scheme) = if !category_models.is_empty() {
                 let bot_model = category_models[bot_idx % category_models.len()];
-                let scheme = if self.game_mode == GameMode::Career {
-                    Self::resolve_bot_career_color_scheme(
-                        character.color_scheme,
-                        Some(bot_model),
-                        player_model,
-                        bot_idx,
-                    )
-                } else if effective_module == "classic" {
-                    character.color_scheme
-                } else {
-                    CarColorScheme {
-                        primary: bot_model.primary_color,
-                        secondary: bot_model.secondary_color,
-                        helmet: character.color_scheme.helmet,
-                    }
-                };
+                let scheme = Self::resolve_bot_color_scheme(
+                    character.color_scheme,
+                    Some(bot_model),
+                    player_primary,
+                    &participants,
+                    bot_idx,
+                );
                 (bot_model.base_car_choice, bot_model.name.to_string(), Some(bot_model.id), scheme)
             } else {
                 let choice = match self.game_mode {
@@ -2729,16 +2797,13 @@ impl RaceSession {
                         }
                     }
                 };
-                let scheme = if self.game_mode == GameMode::Career {
-                    Self::resolve_bot_career_color_scheme(
-                        character.color_scheme,
-                        None,
-                        player_model,
-                        bot_idx,
-                    )
-                } else {
-                    character.color_scheme
-                };
+                let scheme = Self::resolve_bot_color_scheme(
+                    character.color_scheme,
+                    None,
+                    player_primary,
+                    &participants,
+                    bot_idx,
+                );
                 (choice, choice.title().to_string(), None, scheme)
             };
 
@@ -3973,6 +4038,98 @@ impl RaceSession {
         }
     }
 
+    /// Cycles the selected Starting Grid participant's car model (forward or backward) in modes that allow roster customization,
+    /// updating their model, car choice, title, and re-resolving bot color scheme against the rest of the grid.
+    pub fn cycle_starting_grid_participant_model(&mut self, next: bool) {
+        if !self.game_mode.allows_roster_customization() {
+            return;
+        }
+        let models = crate::catalog::get_models_for_module(self.active_module_id);
+        if models.is_empty() {
+            return;
+        }
+        if let Some(p) = self.grid_participants.get(self.starting_grid_roster_idx) {
+            let cur_idx = p.model_id
+                .and_then(|id| models.iter().position(|m| m.id == id))
+                .unwrap_or(0);
+            let next_idx = if next {
+                (cur_idx + 1) % models.len()
+            } else if cur_idx == 0 {
+                models.len() - 1
+            } else {
+                cur_idx - 1
+            };
+            let next_m = models[next_idx];
+            let is_player = p.is_player;
+            let bot_idx_opt = p.bot_index;
+            let old_scheme = p.color_scheme;
+            let other_parts: Vec<GridParticipant> = self.grid_participants
+                .iter()
+                .enumerate()
+                .filter(|(idx, _)| *idx != self.starting_grid_roster_idx)
+                .map(|(_, part)| part.clone())
+                .collect();
+            let player_primary = other_parts
+                .iter()
+                .find(|part| part.is_player)
+                .map(|part| part.color_scheme.primary);
+            let new_scheme = if !is_player {
+                Self::resolve_bot_color_scheme(
+                    old_scheme,
+                    Some(next_m),
+                    player_primary,
+                    &other_parts,
+                    self.starting_grid_roster_idx,
+                )
+            } else {
+                old_scheme
+            };
+
+            if let Some(p_mut) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
+                p_mut.model_id = Some(next_m.id);
+                p_mut.car_title = next_m.name.to_string();
+                p_mut.car_choice = next_m.base_car_choice;
+                if !is_player {
+                    p_mut.color_scheme = new_scheme;
+                }
+            }
+            self.audio.play_sfx(SfxType::UiMove);
+            if is_player {
+                self.selected_car_model_id = Some(next_m.id);
+                self.car_choice = next_m.base_car_choice;
+                self.current_visual_type = next_m.visual_type;
+                if let Some(cs) = self.color_schemes.get_mut(0) {
+                    *cs = new_scheme;
+                }
+                if let Some(mid) = self.car_model_ids.get_mut(0) {
+                    *mid = Some(next_m.id);
+                }
+                if let Some(vt) = self.car_visual_types.get_mut(0) {
+                    *vt = next_m.visual_type;
+                }
+                if let Some(car) = self.cars.get_mut(0) {
+                    car.config = next_m.to_car_config();
+                }
+            } else {
+                let car_idx = bot_idx_opt
+                    .map(|b| if self.is_split_screen() { b + 2 } else { b + 1 })
+                    .unwrap_or(self.starting_grid_roster_idx);
+                if let Some(cs) = self.color_schemes.get_mut(car_idx) {
+                    *cs = new_scheme;
+                }
+                if let Some(mid) = self.car_model_ids.get_mut(car_idx) {
+                    *mid = Some(next_m.id);
+                }
+                if let Some(vt) = self.car_visual_types.get_mut(car_idx) {
+                    *vt = next_m.visual_type;
+                }
+                if let Some(car) = self.cars.get_mut(car_idx) {
+                    car.config = next_m.to_car_config();
+                }
+            }
+        }
+    }
+
     /// Updates input and state progression when in the StartingGrid screen.
     pub fn update_starting_grid(&mut self) {
         let (sw, sh) = (screen_width_safe(), screen_height_safe());
@@ -4305,43 +4462,11 @@ impl RaceSession {
 
                     // In Custom Race mode, allow customizing vehicle of selected participant with [ / ]
                     if self.game_mode.allows_roster_customization() {
-                        let models = crate::catalog::get_models_for_module(self.active_module_id);
-                        if !models.is_empty() {
-                            if is_key_pressed(KeyCode::RightBracket) {
-                                if let Some(p) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
-                                    let cur_idx = p.model_id
-                                        .and_then(|id| models.iter().position(|m| m.id == id))
-                                        .unwrap_or(0);
-                                    let next_m = models[(cur_idx + 1) % models.len()];
-                                    p.model_id = Some(next_m.id);
-                                    p.car_title = next_m.name.to_string();
-                                    p.car_choice = next_m.base_car_choice;
-                                    self.audio.play_sfx(SfxType::UiMove);
-                                    if p.is_player {
-                                        self.selected_car_model_id = Some(next_m.id);
-                                        self.car_choice = next_m.base_car_choice;
-                                        self.current_visual_type = next_m.visual_type;
-                                    }
-                                }
-                            }
-                            if is_key_pressed(KeyCode::LeftBracket) {
-                                if let Some(p) = self.grid_participants.get_mut(self.starting_grid_roster_idx) {
-                                    let cur_idx = p.model_id
-                                        .and_then(|id| models.iter().position(|m| m.id == id))
-                                        .unwrap_or(0);
-                                    let next_idx = if cur_idx == 0 { models.len() - 1 } else { cur_idx - 1 };
-                                    let next_m = models[next_idx];
-                                    p.model_id = Some(next_m.id);
-                                    p.car_title = next_m.name.to_string();
-                                    p.car_choice = next_m.base_car_choice;
-                                    self.audio.play_sfx(SfxType::UiMove);
-                                    if p.is_player {
-                                        self.selected_car_model_id = Some(next_m.id);
-                                        self.car_choice = next_m.base_car_choice;
-                                        self.current_visual_type = next_m.visual_type;
-                                    }
-                                }
-                            }
+                        if is_key_pressed(KeyCode::RightBracket) {
+                            self.cycle_starting_grid_participant_model(true);
+                        }
+                        if is_key_pressed(KeyCode::LeftBracket) {
+                            self.cycle_starting_grid_participant_model(false);
                         }
                     }
 
@@ -10292,7 +10417,7 @@ impl RaceSession {
         render_ground_track_culled(&self.track, view_bounds);
 
         // 2. Persistent Ground Skidmarks
-        self.fx.render_ground_fx();
+        self.fx.render_ground_fx_culled(view_bounds);
 
         // 3. Ground Scenery Shadows, Barriers & Obstacles (elevation < 0.6m)
         render_grandstand_shadows_culled(&self.track, view_bounds);
