@@ -212,3 +212,124 @@ fn test_skidmarks_uv_mapping_and_persistent_capacity() {
     // Verify safe batch rendering call
     buffer.render();
 }
+
+#[test]
+fn test_persistent_skidmarks_across_multiple_laps() {
+    let mut buffer = SkidmarkBuffer::new_persistent();
+    assert!(buffer.is_persistent());
+    assert_eq!(buffer.count(), 0);
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.wheels[0].skid_intensity = 0.75;
+    car.state.wheels[1].skid_intensity = 0.75;
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    // Establish baseline anchor
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    // Lap 1: simulate laying down rubber marks
+    for step in 1..=50 {
+        car.state.position = Vec2::new(step as f32 * 0.35, 0.0);
+        buffer.update_for_cars(&[car.clone()], &surfaces);
+    }
+
+    let lap1_count = buffer.count();
+    assert!(lap1_count > 0, "Lap 1 must lay down rubber traces");
+    let lap1_snapshot = buffer.segments()[..lap1_count].to_vec();
+
+    // Laps 2 through 10: simulate repeated laps generating hundreds of segments
+    for lap in 2..=10 {
+        // Car circles around another corner of the track
+        for step in 1..=50 {
+            car.state.position = Vec2::new(
+                step as f32 * 0.35,
+                lap as f32 * 10.0,
+            );
+            buffer.update_for_cars(&[car.clone()], &surfaces);
+        }
+    }
+
+    // Crucial requirement: Buffer must never wrap or drop segments from Lap 1
+    assert_eq!(
+        &buffer.segments()[..lap1_count],
+        &lap1_snapshot[..],
+        "Lap 1 tire rubber traces must remain completely intact and preserved through the final lap without overwriting"
+    );
+    assert!(
+        buffer.count() > lap1_count * 9,
+        "Persistent buffer must accumulate segments monotonically across all laps"
+    );
+
+    // Verify clear only empties on explicit race restart
+    buffer.clear();
+    assert_eq!(buffer.count(), 0);
+}
+
+#[test]
+fn test_skidmarks_viewport_culling() {
+    let mut buffer = SkidmarkBuffer::new_persistent();
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.wheels[0].skid_intensity = 0.8;
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    // Emit segments in the origin region
+    for step in 1..=5 {
+        car.state.position = Vec2::new(step as f32 * 0.4, 0.0);
+        buffer.update_for_cars(&[car.clone()], &surfaces);
+    }
+
+    // Car teleports far away (> 3m breaks contiguous ribbon) and skids far off-screen
+    car.state.position = Vec2::new(1000.0, 1000.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    for step in 1..=5 {
+        car.state.position = Vec2::new(1000.0 + step as f32 * 0.4, 1000.0);
+        buffer.update_for_cars(&[car.clone()], &surfaces);
+    }
+
+    // Verify culled rendering completes safely for both focused view and off-screen view
+    let in_view_bounds = Some((Vec2::new(-10.0, -10.0), Vec2::new(20.0, 20.0)));
+    buffer.render_culled(in_view_bounds);
+
+    let far_view_bounds = Some((Vec2::new(990.0, 990.0), Vec2::new(1020.0, 1020.0)));
+    buffer.render_culled(far_view_bounds);
+
+    let nowhere_view_bounds = Some((Vec2::new(500.0, 500.0), Vec2::new(510.0, 510.0)));
+    buffer.render_culled(nowhere_view_bounds);
+}
+
+#[test]
+fn test_slow_speed_hairpin_distance_accumulation() {
+    let mut buffer = SkidmarkBuffer::new_persistent();
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.wheels[0].skid_intensity = 0.9;
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    // Step 0: Record initial wheel anchor
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 0);
+
+    // Car moves in micro-steps of 0.05m (slow hairpin cornering)
+    // Step 1: 0.05m -> dist < 0.20 -> no segment yet, anchor accumulates
+    car.state.position = Vec2::new(0.05, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 0, "Micro-step 0.05m should accumulate without emitting");
+
+    // Step 2: 0.10m cumulative -> dist < 0.20 -> still accumulating
+    car.state.position = Vec2::new(0.10, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 0, "Cumulative 0.10m should accumulate without emitting");
+
+    // Step 3: 0.15m cumulative -> dist < 0.20 -> still accumulating
+    car.state.position = Vec2::new(0.15, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 0, "Cumulative 0.15m should accumulate without emitting");
+
+    // Step 4: 0.20m cumulative -> dist >= 0.20 -> emits dual-ribbon segments!
+    car.state.position = Vec2::new(0.20, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 2, "Cumulative distance reaching 0.20m must cleanly emit dual-tread segments");
+}

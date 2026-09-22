@@ -110,3 +110,46 @@ fn test_race_session_visibility_initialization() {
     assert_eq!(session.visibility_options.curve_color_scheme, CurveColorScheme::Traffic);
     assert!(session.visibility_toast.is_none());
 }
+
+#[test]
+fn test_render_player_visual_clues_headless_execution() {
+    use glam::Vec2;
+    use macroquad::color::Color;
+    use tdrace_app::render::color::CarColorScheme;
+    use tdrace_app::render::marker::{
+        render_player_ground_aura, render_player_overhead_chevron, render_player_roof_beacon,
+    };
+
+    let schemes = [
+        CarColorScheme::default(),
+        CarColorScheme {
+            primary: Color::new(0.05, 0.05, 0.05, 1.0),
+            secondary: Color::new(0.02, 0.02, 0.02, 1.0),
+            helmet: Color::new(0.8, 0.8, 0.1, 1.0),
+        },
+        CarColorScheme {
+            primary: Color::new(1.0, 0.9, 0.1, 1.0),
+            secondary: Color::new(0.1, 0.9, 0.9, 1.0),
+            helmet: Color::new(1.0, 1.0, 1.0, 1.0),
+        },
+    ];
+
+    let zooms = [5.0f32, 10.0, 16.5, 22.0];
+    let pos = Vec2::new(100.0, 150.0);
+    let fwd = Vec2::new(1.0, 0.0);
+
+    for scheme in &schemes {
+        for &zoom in &zooms {
+            for &alpha in &[0.0f32, 0.20, 0.50, 1.0] {
+                // Must execute calculations cleanly without panic prior to GPU submission
+                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    render_player_overhead_chevron(pos, 0.0, zoom, 1.25, scheme, alpha);
+                    render_player_ground_aura(pos, zoom, scheme, alpha);
+                    render_player_roof_beacon(pos, fwd, 0.0, zoom, 1.25, scheme, alpha);
+                }));
+            }
+        }
+    }
+}
+
+

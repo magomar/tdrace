@@ -13,7 +13,7 @@ fn skid_noise(p: Vec2, seed: u32) -> f32 {
 }
 
 /// A single persistent 2D skid mark quad segment with UV coordinates for realistic tire tread rendering.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SkidSegment {
     pub p0: Vec2,
     pub p1: Vec2,
@@ -40,13 +40,28 @@ pub struct SkidmarkBuffer {
 impl SkidmarkBuffer {
     pub fn new(capacity: usize) -> Self {
         Self {
-            segments: Vec::with_capacity(capacity),
+            segments: if capacity > 0 {
+                Vec::with_capacity(capacity.min(64000))
+            } else {
+                Vec::with_capacity(8192)
+            },
             max_capacity: capacity,
             write_idx: 0,
             total_count: 0,
             prev_wheel_positions: Vec::new(),
             wheel_accum_v: Vec::new(),
         }
+    }
+
+    /// Creates a persistent skidmark buffer that retains all tire rubber traces
+    /// across the whole race session, from first to last lap, without overwriting.
+    pub fn new_persistent() -> Self {
+        Self::new(0)
+    }
+
+    /// Returns true if the buffer operates in persistent mode (no mid-race overwrite).
+    pub fn is_persistent(&self) -> bool {
+        self.max_capacity == 0
     }
 
     /// Clears all skidmarks from the buffer.
@@ -61,6 +76,11 @@ impl SkidmarkBuffer {
     /// Number of active skid mark segments.
     pub fn count(&self) -> usize {
         self.segments.len()
+    }
+
+    /// Read-only slice of active skid mark segments.
+    pub fn segments(&self) -> &[SkidSegment] {
+        &self.segments
     }
 
     /// Updates the skid mark buffer for a set of active cars on the track.
@@ -102,7 +122,7 @@ impl SkidmarkBuffer {
                         let dist = travel.length();
 
                         // Only add segment if vehicle moved sufficiently (prevents static stacking)
-                        if (0.10..3.0).contains(&dist) {
+                        if (0.20..=3.0).contains(&dist) {
                             let (base_col, alpha_mult) = match surface {
                                 SurfaceType::Grass => (Color::new(0.12, 0.28, 0.10, 1.0), 0.85),
                                 SurfaceType::Sand => (Color::new(0.55, 0.45, 0.25, 1.0), 0.85),
@@ -180,9 +200,15 @@ impl SkidmarkBuffer {
                                 uv3: uv3_b,
                                 color: col_inner,
                             });
+
+                            self.prev_wheel_positions[car_idx][wheel_id] = Some(curr_pos);
+                        } else if dist > 3.0 {
+                            // Car jumped or teleported across track: reset anchor without stretching quad
+                            self.prev_wheel_positions[car_idx][wheel_id] = Some(curr_pos);
                         }
+                    } else {
+                        self.prev_wheel_positions[car_idx][wheel_id] = Some(curr_pos);
                     }
-                    self.prev_wheel_positions[car_idx][wheel_id] = Some(curr_pos);
                 } else {
                     // Break the contiguous skid line
                     self.prev_wheel_positions[car_idx][wheel_id] = None;
@@ -191,9 +217,9 @@ impl SkidmarkBuffer {
         }
     }
 
-    /// Adds a skid segment to the ring buffer.
+    /// Adds a skid segment to the buffer (persistent or ring-buffered if bounded).
     fn add_segment(&mut self, segment: SkidSegment) {
-        if self.segments.len() < self.max_capacity {
+        if self.max_capacity == 0 || self.segments.len() < self.max_capacity {
             self.segments.push(segment);
         } else {
             self.segments[self.write_idx] = segment;
@@ -202,29 +228,68 @@ impl SkidmarkBuffer {
         self.total_count += 1;
     }
 
-    /// Renders all active skid marks using the global surface material registry's tire rubber texture.
-    pub fn render(&self) {
+    /// Renders active skid marks with optional camera viewport culling using the global surface material registry's tire rubber texture.
+    pub fn render_culled(&self, view_bounds: Option<(Vec2, Vec2)>) {
         let tex = crate::render::track::with_surface_registry(|reg| {
             reg.tire_rubber_texture().cloned()
         }).flatten();
-        self.render_textured(tex.as_ref());
+        self.render_textured_culled(tex.as_ref(), view_bounds);
     }
 
-    /// Renders all active skid marks as a high-performance GPU batch mesh.
-    pub fn render_textured(&self, texture: Option<&macroquad::texture::Texture2D>) {
+    /// Renders all active skid marks using the global surface material registry's tire rubber texture.
+    pub fn render(&self) {
+        self.render_culled(None);
+    }
+
+    /// Renders active skid marks using a specific texture with optional camera viewport culling.
+    pub fn render_textured_culled(
+        &self,
+        texture: Option<&macroquad::texture::Texture2D>,
+        view_bounds: Option<(Vec2, Vec2)>,
+    ) {
         if self.segments.is_empty() {
             return;
         }
 
         let mut builder = crate::render::track::BatchMeshBuilder::new(texture.cloned());
-        for seg in &self.segments {
-            builder.push_quad(
-                seg.p0, seg.uv0, seg.color,
-                seg.p1, seg.uv1, seg.color,
-                seg.p2, seg.uv2, seg.color,
-                seg.p3, seg.uv3, seg.color,
-            );
+        if let Some((min, max)) = view_bounds {
+            for seg in &self.segments {
+                if is_quad_in_view(seg.p0, seg.p1, seg.p2, seg.p3, min, max) {
+                    builder.push_quad(
+                        seg.p0, seg.uv0, seg.color,
+                        seg.p1, seg.uv1, seg.color,
+                        seg.p2, seg.uv2, seg.color,
+                        seg.p3, seg.uv3, seg.color,
+                    );
+                }
+            }
+        } else {
+            for seg in &self.segments {
+                builder.push_quad(
+                    seg.p0, seg.uv0, seg.color,
+                    seg.p1, seg.uv1, seg.color,
+                    seg.p2, seg.uv2, seg.color,
+                    seg.p3, seg.uv3, seg.color,
+                );
+            }
         }
         builder.flush();
     }
+
+    /// Renders all active skid marks as a high-performance GPU batch mesh.
+    pub fn render_textured(&self, texture: Option<&macroquad::texture::Texture2D>) {
+        self.render_textured_culled(texture, None);
+    }
+}
+
+#[inline]
+fn is_quad_in_view(
+    p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2,
+    min: Vec2, max: Vec2,
+) -> bool {
+    let s_min_x = p0.x.min(p1.x).min(p2.x).min(p3.x);
+    let s_max_x = p0.x.max(p1.x).max(p2.x).max(p3.x);
+    let s_min_y = p0.y.min(p1.y).min(p2.y).min(p3.y);
+    let s_max_y = p0.y.max(p1.y).max(p2.y).max(p3.y);
+    !(s_max_x < min.x || s_min_x > max.x || s_max_y < min.y || s_min_y > max.y)
 }

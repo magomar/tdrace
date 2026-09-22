@@ -58,7 +58,7 @@ pub fn render_player_overhead_chevron(
     // Chevron dimensions (fixed screen-pixel footprint: 18px wide x 13px tall)
     let half_w = 9.0 / zoom;
     let height = 13.0 / zoom;
-    let stroke = (1.5 / zoom).max(0.05);
+    let stroke = (2.0 / zoom).max(0.06);
 
     // Points of inverted triangle (tip pointing down toward car)
     let p_tip = anchor;
@@ -67,21 +67,21 @@ pub fn render_player_overhead_chevron(
 
     // Color with alpha_scale
     let mut fill_col = color_scheme.secondary;
-    // Boost vibrancy if too dark
-    if fill_col.r + fill_col.g + fill_col.b < 0.6 {
+    // Boost vibrancy if too dark or low contrast
+    if fill_col.r + fill_col.g + fill_col.b < 0.85 {
         fill_col = Palette::NEON_CYAN;
     }
     fill_col.a *= alpha_scale.clamp(0.0, 1.0);
 
-    let outline_col = Color::new(0.02, 0.02, 0.05, 0.90 * alpha_scale);
+    let outline_col = Color::new(0.0, 0.0, 0.0, 0.98 * alpha_scale);
 
-    // Drop shadow slightly offset
-    let s_off = Vec2::new(0.12, -0.12);
+    // Drop shadow slightly offset with higher contrast
+    let s_off = Vec2::new(0.14, -0.14);
     draw_triangle(
         macroquad::prelude::Vec2::new(p_tip.x + s_off.x, p_tip.y + s_off.y),
         macroquad::prelude::Vec2::new(p_left.x + s_off.x, p_left.y + s_off.y),
         macroquad::prelude::Vec2::new(p_right.x + s_off.x, p_right.y + s_off.y),
-        Color::new(0.0, 0.0, 0.0, 0.40 * alpha_scale),
+        Color::new(0.0, 0.0, 0.0, 0.65 * alpha_scale),
     );
 
     // Fill triangle
@@ -92,13 +92,13 @@ pub fn render_player_overhead_chevron(
         fill_col,
     );
 
-    // Triangle border
+    // High-contrast triangle border
     draw_line(p_tip.x, p_tip.y, p_left.x, p_left.y, stroke, outline_col);
     draw_line(p_left.x, p_left.y, p_right.x, p_right.y, stroke, outline_col);
     draw_line(p_right.x, p_right.y, p_tip.x, p_tip.y, stroke, outline_col);
 
-    // Inner highlight bar for vector polish
-    let inner_col = Color::new(1.0, 1.0, 1.0, 0.55 * alpha_scale);
+    // Inner bright highlight bar for vector polish and contrast
+    let inner_col = Color::new(1.0, 1.0, 1.0, 0.85 * alpha_scale);
     let inner_top_l = anchor + Vec2::new(-half_w * 0.55, height * 0.72);
     let inner_top_r = anchor + Vec2::new(half_w * 0.55, height * 0.72);
     draw_line(inner_top_l.x, inner_top_l.y, inner_top_r.x, inner_top_r.y, stroke * 0.8, inner_col);
@@ -123,25 +123,25 @@ pub fn render_player_ground_aura(
     let radius = 2.4f32.max(15.0 / zoom);
 
     let mut aura_col = color_scheme.secondary;
-    if aura_col.r + aura_col.g + aura_col.b < 0.6 {
+    if aura_col.r + aura_col.g + aura_col.b < 0.85 {
         aura_col = Palette::NEON_CYAN;
     }
 
-    // Outer soft ambient halo
-    let c_outer = Color::new(aura_col.r, aura_col.g, aura_col.b, 0.16 * alpha_scale);
+    // Outer soft ambient halo (higher contrast)
+    let c_outer = Color::new(aura_col.r, aura_col.g, aura_col.b, 0.32 * alpha_scale);
     draw_circle(pos.x, pos.y, radius, c_outer);
 
-    // Mid-level luminous glow
-    let c_mid = Color::new(aura_col.r, aura_col.g, aura_col.b, 0.28 * alpha_scale);
+    // Mid-level luminous glow (higher contrast)
+    let c_mid = Color::new(aura_col.r, aura_col.g, aura_col.b, 0.52 * alpha_scale);
     draw_circle(pos.x, pos.y, radius * 0.68, c_mid);
 
-    // Inner bright underglow core
-    let c_inner = Color::new(aura_col.r, aura_col.g, aura_col.b, 0.45 * alpha_scale);
+    // Inner bright underglow core (higher contrast)
+    let c_inner = Color::new(aura_col.r, aura_col.g, aura_col.b, 0.75 * alpha_scale);
     draw_circle(pos.x, pos.y, radius * 0.38, c_inner);
 
-    // Subtle edge ring for crisp definition
-    let ring_stroke = (1.2 / zoom).max(0.04);
-    let c_ring = Color::new(aura_col.r, aura_col.g, aura_col.b, 0.35 * alpha_scale);
+    // High-contrast edge ring for crisp definition
+    let ring_stroke = (2.0 / zoom).max(0.06);
+    let c_ring = Color::new(aura_col.r, aura_col.g, aura_col.b, 0.75 * alpha_scale);
     draw_circle_lines(pos.x, pos.y, radius, ring_stroke, c_ring);
 }
 

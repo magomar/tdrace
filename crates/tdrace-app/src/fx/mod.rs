@@ -31,6 +31,16 @@ impl EffectsManager {
         }
     }
 
+    /// Creates an effects manager with persistent skidmark retention across the entire race.
+    pub fn new_persistent(max_particles: usize) -> Self {
+        Self {
+            skidmarks: SkidmarkBuffer::new_persistent(),
+            particles: ParticleSystem::new(max_particles),
+            drift_popups: DriftPopupManager::new(32),
+            prev_drifting: Vec::new(),
+        }
+    }
+
     pub fn clear(&mut self) {
         self.skidmarks.clear();
         self.particles.clear();
@@ -140,9 +150,14 @@ impl EffectsManager {
         self.drift_popups.update(dt);
     }
 
+    /// Renders skidmarks in the ground pass with camera viewport culling.
+    pub fn render_ground_fx_culled(&self, view_bounds: Option<(glam::Vec2, glam::Vec2)>) {
+        self.skidmarks.render_culled(view_bounds);
+    }
+
     /// Renders skidmarks in the ground pass.
     pub fn render_ground_fx(&self) {
-        self.skidmarks.render();
+        self.render_ground_fx_culled(None);
     }
 
     /// Renders airborne particles and drift popups.
