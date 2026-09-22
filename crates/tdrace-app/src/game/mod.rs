@@ -2078,25 +2078,25 @@ impl RaceSession {
             2 => (
                 "National Kart Championship (Tier 2)",
                 vec![
-                    "pf_international".to_string(),
-                    "salbris".to_string(),
-                    "zuera".to_string(),
+                    "sarno".to_string(),
+                    "kristianstad".to_string(),
+                    "seven_laghi".to_string(),
                 ],
             ),
             3 => (
                 "Continental Rotax Trophy (Tier 3)",
                 vec![
-                    "sarno".to_string(),
-                    "alghero".to_string(),
-                    "castelletto".to_string(),
+                    "pfi".to_string(),
+                    "franciacorta".to_string(),
+                    "ampfing".to_string(),
                 ],
             ),
             4 => (
                 "FIA Karting European Championship (Tier 4)",
                 vec![
-                    "angerville".to_string(),
-                    "kristianstad".to_string(),
-                    "lemans_kart".to_string(),
+                    "zuera".to_string(),
+                    "silverstone_national_kart".to_string(),
+                    "le_mans_kart".to_string(),
                 ],
             ),
             _ => (
