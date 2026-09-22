@@ -187,8 +187,23 @@ impl SurfaceMaterialRegistry {
         self.curb_material = Some(SurfaceMaterial::new(SurfaceType::Curb, curb_tex));
 
         // Edge fringe and macro noise
-        let fringe_img = generate_edge_fringe_mask(128, 128);
-        self.edge_fringe_texture = Self::upload_texture(&fringe_img);
+        let fringe_tex = if let Some(bytes) = Self::find_surface_asset_file("edge_fringe_mask.png") {
+            if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let t = Texture2D::from_file_with_format(&bytes, None);
+                t.set_filter(FilterMode::Linear);
+                Self::set_texture_repeat(&t);
+                t
+            })) {
+                Some(tex)
+            } else {
+                let fringe_img = generate_edge_fringe_mask(128, 128);
+                Self::upload_texture(&fringe_img)
+            }
+        } else {
+            let fringe_img = generate_edge_fringe_mask(128, 128);
+            Self::upload_texture(&fringe_img)
+        };
+        self.edge_fringe_texture = fringe_tex;
 
         let noise_img = generate_macro_noise_image(128, 128);
         self.macro_noise_texture = Self::upload_texture(&noise_img);
@@ -230,6 +245,7 @@ impl SurfaceMaterialRegistry {
             if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 let t = Texture2D::from_file_with_format(&bytes, None);
                 t.set_filter(FilterMode::Linear);
+                Self::set_texture_repeat(&t);
                 t
             })) {
                 return Some(tex);
@@ -246,6 +262,7 @@ impl SurfaceMaterialRegistry {
             if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 let t = Texture2D::from_file_with_format(&bytes, None);
                 t.set_filter(FilterMode::Linear);
+                Self::set_texture_repeat(&t);
                 t
             })) {
                 return Some(tex);
@@ -255,11 +272,25 @@ impl SurfaceMaterialRegistry {
         Self::upload_texture(&img)
     }
 
+    fn set_texture_repeat(tex: &Texture2D) {
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            unsafe {
+                let gl_ctx = macroquad::window::get_internal_gl();
+                gl_ctx.quad_context.texture_set_wrap(
+                    tex.raw_miniquad_id(),
+                    macroquad::miniquad::TextureWrap::Repeat,
+                    macroquad::miniquad::TextureWrap::Repeat,
+                );
+            }
+        }));
+    }
+
     fn upload_texture(img: &Image) -> Option<Texture2D> {
         // Safe upload: catches panic if running in headless environments without window context.
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let tex = Texture2D::from_image(img);
             tex.set_filter(FilterMode::Linear);
+            Self::set_texture_repeat(&tex);
             tex
         })).ok()
     }

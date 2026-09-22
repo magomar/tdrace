@@ -85,6 +85,9 @@ async fn main() {
         } else if clean_arg == "race" || clean_arg == "quick-race" {
             session.init_race();
             session.state = tdrace_app::game::GameState::StartingGrid;
+        } else if clean_arg == "racing" {
+            session.init_race();
+            session.state = tdrace_app::game::GameState::Racing;
         }
     }
 
