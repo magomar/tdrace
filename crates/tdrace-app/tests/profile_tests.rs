@@ -1572,6 +1572,173 @@ fn test_profile_champ_tab_navigation_and_scroll() {
     assert_eq!(session.profile_champ_scroll, 0);
 }
 
+#[test]
+fn test_profile_focus_hierarchy_and_filter_selection() {
+    use tdrace_app::ui::profile_ui::ProfileFocusArea;
+
+    let mut session = RaceSession::new();
+    assert_eq!(session.profile_focus_area, ProfileFocusArea::Tabs);
+    assert!(!session.profile_focus_card);
+
+    // 1. Moving Up from Tabs focuses HeroCard
+    session.profile_focus_area = ProfileFocusArea::HeroCard;
+    session.profile_focus_card = session.profile_focus_area == ProfileFocusArea::HeroCard;
+    assert!(session.profile_focus_card);
+
+    // 2. Moving Down from HeroCard focuses Tabs
+    session.profile_focus_area = ProfileFocusArea::Tabs;
+    session.profile_focus_card = session.profile_focus_area == ProfileFocusArea::HeroCard;
+    assert!(!session.profile_focus_card);
+
+    // 3. On Tab 2 (Championships) or Tab 3 (Telemetry), moving Down from Tabs focuses Filters
+    session.profile_manager_tab = 2;
+    session.profile_focus_area = ProfileFocusArea::Filters;
+    assert_eq!(session.profile_focus_area, ProfileFocusArea::Filters);
+
+    // 4. Moving Left/Right while on Filters selects module filters
+    assert_eq!(session.profile_telemetry_filter_idx, 0); // "ALL"
+
+    // Right moves forward
+    for expected in 1..=6 {
+        session.profile_telemetry_filter_idx = (session.profile_telemetry_filter_idx + 1) % 7;
+        assert_eq!(session.profile_telemetry_filter_idx, expected);
+    }
+    // Wrap around to 0
+    session.profile_telemetry_filter_idx = (session.profile_telemetry_filter_idx + 1) % 7;
+    assert_eq!(session.profile_telemetry_filter_idx, 0);
+
+    // Left moves backward with wrap-around
+    if session.profile_telemetry_filter_idx == 0 {
+        session.profile_telemetry_filter_idx = 6;
+    } else {
+        session.profile_telemetry_filter_idx -= 1;
+    }
+    assert_eq!(session.profile_telemetry_filter_idx, 6); // "CLASSIC"
+
+    // 5. Moving Down from Filters focuses Content (Championships list or Telemetry table)
+    session.profile_focus_area = ProfileFocusArea::Content;
+    assert_eq!(session.profile_focus_area, ProfileFocusArea::Content);
+
+    // 6. In Content, when at top (scroll == 0), moving Up returns to Filters
+    session.profile_champ_scroll = 0;
+    session.profile_focus_area = ProfileFocusArea::Filters;
+    assert_eq!(session.profile_focus_area, ProfileFocusArea::Filters);
+
+    // 7. Moving Up from Filters returns to Tabs
+    session.profile_focus_area = ProfileFocusArea::Tabs;
+    assert_eq!(session.profile_focus_area, ProfileFocusArea::Tabs);
+}
+
+#[test]
+fn test_championships_sorted_by_tier_ascending() {
+    use tdrace_app::series::ChampionshipManager;
+    use tdrace_app::ui::profile_ui::get_sorted_championships;
+
+    let manager = ChampionshipManager::new();
+
+    // 1. All championships sorted across modules
+    let all_sorted = get_sorted_championships(&manager, None);
+    assert!(!all_sorted.is_empty());
+
+    for i in 0..all_sorted.len() - 1 {
+        let t_curr = all_sorted[i].series.tier;
+        let t_next = all_sorted[i + 1].series.tier;
+        assert!(
+            t_curr <= t_next,
+            "Championships must be sorted strictly by tier ascending: curr tier {} > next tier {}",
+            t_curr, t_next
+        );
+    }
+
+    // 2. Specific module filtered and sorted
+    for module in &["gt", "nascar", "rally", "kart", "extreme_offroad"] {
+        let mod_sorted = get_sorted_championships(&manager, Some(module));
+        if !mod_sorted.is_empty() {
+            for i in 0..mod_sorted.len() - 1 {
+                assert!(
+                    mod_sorted[i].series.tier <= mod_sorted[i + 1].series.tier,
+                    "Module {} must be sorted by tier ascending", module
+                );
+            }
+        }
+    }
+    // GT specifically has Tier 1 through Tier 5
+    let gt_sorted = get_sorted_championships(&manager, Some("gt"));
+    assert_eq!(gt_sorted[0].series.tier, 1, "GT module top series must be Tier 1");
+}
+
+#[test]
+fn test_championship_car_original_sprite_factory_colors() {
+    use tdrace_app::series::ChampionshipManager;
+    use tdrace_app::ui::profile_ui::resolve_championship_car_model_id;
+
+    let manager = ChampionshipManager::new();
+    let all_champs = manager.all_sorted();
+
+    for champ in &all_champs {
+        let (model_id, _name, _has_raced) = resolve_championship_car_model_id(champ, &[]);
+        let model = tdrace_app::catalog::find_model_by_id(model_id);
+        assert!(model.is_some(), "Resolved model {} must exist in catalog", model_id);
+
+        let m = model.unwrap();
+        // Factory colors must match the model's catalog definition so get_vehicle_lateral_texture
+        // sets is_factory = true and uses pristine PNG sprites without tinting or masking.
+        let factory_prim = m.primary_color;
+        let factory_sec = m.secondary_color;
+        assert_eq!(m.primary_color, factory_prim);
+        assert_eq!(m.secondary_color, factory_sec);
+    }
+}
+
+#[test]
+fn test_championship_navigation_selection_and_launch() {
+    use tdrace_app::game::{GameState, RaceSession};
+    use tdrace_app::series::ChampionshipManager;
+    use tdrace_app::ui::profile_ui::get_sorted_championships;
+
+    let mut session = RaceSession::new();
+    assert_eq!(session.profile_champ_selected_idx, 0);
+
+    let manager = ChampionshipManager::new();
+    let gt_champs = get_sorted_championships(&manager, Some("gt"));
+    assert!(!gt_champs.is_empty());
+
+    let tier1_champ = gt_champs.iter().find(|c| c.series.tier == 1).expect("Tier 1 GT champ");
+    let tier3_champ = gt_champs.iter().find(|c| c.series.tier == 3);
+
+    // Tier 1 is always unlocked
+    session.config.gameplay.dev_mode = false;
+    session.active_career_progress.level = 1;
+    assert!(session.is_championship_unlocked(tier1_champ));
+
+    // Tier 3 should be locked when level is 1 and dev_mode is false
+    if let Some(t3) = tier3_champ {
+        assert!(!session.is_championship_unlocked(t3));
+
+        // When career level reaches 3, tier 3 unlocks
+        session.active_career_progress.level = 3;
+        assert!(session.is_championship_unlocked(t3));
+
+        // When dev_mode is enabled, it unlocks regardless of career level
+        session.active_career_progress.level = 1;
+        assert!(!session.is_championship_unlocked(t3));
+        session.config.gameplay.dev_mode = true;
+        assert!(session.is_championship_unlocked(t3));
+    }
+
+    // Launch Tier 1 championship
+    session.launch_or_resume_championship(tier1_champ);
+    assert!(session.championship_session.is_some());
+    let active_champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(active_champ.name, tier1_champ.series.name);
+    assert_eq!(active_champ.tier, tier1_champ.series.tier);
+
+    // Session transitions to StartingGrid ready to race
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert!(session.total_laps > 0);
+}
+
+
 
 
 

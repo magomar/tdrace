@@ -121,6 +121,20 @@ pub const TELEMETRY_CATEGORY_FILTERS: &[(&str, Option<&str>)] = &[
     ("CLASSIC", Some("classic")),
 ];
 
+/// Focus area within the Player Profile Manager screen
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ProfileFocusArea {
+    /// Top hero driver card focused (cycling drivers, enter opens roster manager)
+    HeroCard,
+    /// Tab bar focused (left/right switches tabs)
+    #[default]
+    Tabs,
+    /// Category/module filters row focused (left/right selects active category filter)
+    Filters,
+    /// Content body focused (scrolling list of championships or telemetry)
+    Content,
+}
+
 /// Renders the full-screen Option A: Tabbed Motorsport Telemetry Dashboard.
 pub fn render_profile_manager_screen(
     fonts: &Fonts,
@@ -130,11 +144,16 @@ pub fn render_profile_manager_screen(
     stats: &ProfileCareerStats,
     active_tab: usize,
     filter_category_idx: usize,
-    focus_card: bool,
+    focus_area: ProfileFocusArea,
     championship_manager: &ChampionshipManager,
     active_championship: Option<&ChampionshipSession>,
     champ_scroll_offset: usize,
+    champ_selected_idx: usize,
+    is_dev_mode: bool,
+    career_level: u32,
 ) {
+    let focus_card = focus_area == ProfileFocusArea::HeroCard;
+    let is_filter_focused = focus_area == ProfileFocusArea::Filters;
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
@@ -331,13 +350,21 @@ pub fn render_profile_manager_screen(
     }
 
     // Tab switch prompt on the far right
-    let tab_hint = "[◄ / ►] [1-4] TABS";
+    let tab_hint = if focus_area == ProfileFocusArea::Tabs {
+        if active_tab == 2 || active_tab == 3 {
+            "[◄ / ►] TABS  •  [▼] FILTERS"
+        } else {
+            "[◄ / ►] [1-4] TABS"
+        }
+    } else {
+        "[◄ / ►] [1-4] TABS"
+    };
     fonts.draw_ui_bold(
         tab_hint,
-        x + full_w - scaler.s(170.0),
+        x + full_w - scaler.s(205.0),
         cur_y + scaler.s(22.0),
         scaler.font_s(11.0),
-        Palette::NEON_GOLD,
+        if focus_area == ProfileFocusArea::Tabs { Palette::NEON_CYAN } else { Palette::NEON_GOLD },
     );
 
     cur_y += tab_bar_h + scaler.s(8.0);
@@ -366,8 +393,13 @@ pub fn render_profile_manager_screen(
             active_championship,
             filter_category_idx,
             champ_scroll_offset,
+            champ_selected_idx,
+            focus_area == ProfileFocusArea::Content,
+            is_filter_focused,
+            is_dev_mode,
+            career_level,
         ),
-        3 => render_telemetry_tab(&scaler, fonts, x, cur_y, full_w, content_h, history, filter_category_idx),
+        3 => render_telemetry_tab(&scaler, fonts, x, cur_y, full_w, content_h, history, filter_category_idx, is_filter_focused),
         _ => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
     }
 
@@ -375,12 +407,31 @@ pub fn render_profile_manager_screen(
     // 4. FOOTER ACTION BAR
     // =========================================================================
     let foot_y = sh - scaler.s(20.0);
-    let footer_prompt = if focus_card {
-        "[ENTER / E] Open Driver Manager  |  [▼] Focus Tabs  |  [◄ / ►] [Q] Cycle Driver  |  [ESC] Exit"
-    } else if active_tab == 2 {
-        "[▲] Focus Driver Card  |  [◄ / ►] [1-4] Tabs  |  [F] Filter  |  [▲ / ▼ / WHEEL] Scroll  |  [ESC] Exit"
-    } else {
-        "[▲] Focus Driver Card  |  [◄ / ►] [1-4] Tabs  |  [E] Manage Roster  |  [ESC] Exit"
+    let footer_prompt = match focus_area {
+        ProfileFocusArea::HeroCard => {
+            "[ENTER / E] Open Driver Manager  |  [▼] Focus Tabs  |  [◄ / ►] [Q] Cycle Driver  |  [ESC] Exit"
+        }
+        ProfileFocusArea::Tabs => {
+            if active_tab == 2 || active_tab == 3 {
+                "[▲] Driver Card  |  [◄ / ►] [1-4] Tabs  |  [▼] Module Filters  |  [ESC] Exit"
+            } else {
+                "[▲] Driver Card  |  [◄ / ►] [1-4] Tabs  |  [E] Manage Roster  |  [ESC] Exit"
+            }
+        }
+        ProfileFocusArea::Filters => {
+            if active_tab == 2 {
+                "[▲] Focus Tabs  |  [◄ / ►] Select Module Filter  |  [▼] Browse Championships  |  [ESC] Exit"
+            } else {
+                "[▲] Focus Tabs  |  [◄ / ►] Select Module Filter  |  [▼] Browse Telemetry Logs  |  [ESC] Exit"
+            }
+        }
+        ProfileFocusArea::Content => {
+            if active_tab == 2 {
+                "[ENTER / CLICK] Enter Championship  |  [▲ / ▼] Navigate  |  [▲ at top] Filters  |  [ESC] Exit"
+            } else {
+                "[▲] Focus Filters  |  [▲ / ▼] Browse Telemetry  |  [F] Quick Filter  |  [ESC] Exit"
+            }
+        }
     };
     fonts.draw_ui_bold_centered(
         footer_prompt,
@@ -702,6 +753,41 @@ pub fn resolve_championship_car_model_id(
     ("gt_porsche_718_gt4", "Porsche 718 Cayman GT4 RS".to_string(), false)
 }
 
+/// Returns championships filtered by optional module_id and sorted strictly by tier ascending (1..=5),
+/// then module_id, then series name.
+pub fn get_sorted_championships<'a>(
+    championship_manager: &'a ChampionshipManager,
+    module_filter: Option<&str>,
+) -> Vec<&'a SeriesDefinition> {
+    let mut list: Vec<&SeriesDefinition> = championship_manager
+        .all_sorted()
+        .into_iter()
+        .filter(|c| match module_filter {
+            Some(mod_id) => c.series.module_id.eq_ignore_ascii_case(mod_id),
+            None => true,
+        })
+        .collect();
+
+    list.sort_by(|a, b| {
+        a.series
+            .tier
+            .cmp(&b.series.tier)
+            .then_with(|| a.series.module_id.cmp(&b.series.module_id))
+            .then_with(|| a.series.name.cmp(&b.series.name))
+    });
+
+    list
+}
+
+/// Computes the number of championship cards visible within the given content height.
+pub fn championship_visible_count(scaler: &UiScaler, content_h: f32) -> usize {
+    let item_h = scaler.s(64.0);
+    let item_gap = scaler.s(7.0);
+    let header_space = scaler.s(82.0);
+    let available_h = (content_h - header_space - scaler.s(12.0)).max(scaler.s(100.0));
+    ((available_h + item_gap) / (item_h + item_gap)).floor().max(1.0) as usize
+}
+
 fn render_championships_tab(
     scaler: &UiScaler,
     fonts: &Fonts,
@@ -711,11 +797,16 @@ fn render_championships_tab(
     h: f32,
     _stats: &ProfileCareerStats,
     history: &[RaceHistoryEntry],
-    sel_profile: Option<&PlayerProfile>,
+    _sel_profile: Option<&PlayerProfile>,
     championship_manager: &ChampionshipManager,
     active_championship: Option<&ChampionshipSession>,
     filter_category_idx: usize,
     champ_scroll_offset: usize,
+    champ_selected_idx: usize,
+    is_content_focused: bool,
+    is_filter_focused: bool,
+    is_dev_mode: bool,
+    career_level: u32,
 ) {
     let pad = scaler.s(16.0);
     let inner_w = w - pad * 2.0;
@@ -742,21 +833,12 @@ fn render_championships_tab(
         .copied()
         .unwrap_or(TELEMETRY_CATEGORY_FILTERS[0]);
 
-    let all_champs = championship_manager.all_sorted();
-    let filtered_champs: Vec<&SeriesDefinition> = all_champs
-        .into_iter()
-        .filter(|c| match active_filter.1 {
-            Some(mod_id) => c.series.module_id.eq_ignore_ascii_case(mod_id),
-            None => true,
-        })
-        .collect();
+    let filtered_champs = get_sorted_championships(championship_manager, active_filter.1);
 
     // Scroll counter on top right
     let item_h = scaler.s(64.0);
     let item_gap = scaler.s(7.0);
-    let header_space = scaler.s(82.0);
-    let available_h = (h - header_space - scaler.s(12.0)).max(scaler.s(100.0));
-    let visible_count = ((available_h + item_gap) / (item_h + item_gap)).floor().max(1.0) as usize;
+    let visible_count = championship_visible_count(scaler, h);
     let max_scroll = filtered_champs.len().saturating_sub(visible_count);
     let scroll = champ_scroll_offset.min(max_scroll);
 
@@ -783,15 +865,30 @@ fn render_championships_tab(
     let pill_gap = scaler.s(6.0);
     let mut px = x + pad;
 
-    fonts.draw_ui_bold("FILTER:", px, cy + scaler.s(16.0), scaler.font_s(11.0), Palette::NEON_GOLD);
-    px += scaler.s(55.0);
+    let filter_label_col = if is_filter_focused {
+        Palette::NEON_CYAN
+    } else {
+        Palette::NEON_GOLD
+    };
+    fonts.draw_ui_bold(
+        if is_filter_focused { "FILTER [◄/►]:" } else { "FILTER:" },
+        px,
+        cy + scaler.s(16.0),
+        scaler.font_s(11.0),
+        filter_label_col,
+    );
+    px += scaler.s(if is_filter_focused { 84.0 } else { 55.0 });
 
     for (f_idx, (f_name, _)) in TELEMETRY_CATEGORY_FILTERS.iter().enumerate() {
         let is_sel = f_idx == filter_category_idx;
         let pill_w = scaler.s(if *f_name == "ALL" { 48.0 } else { 75.0 });
 
         let p_bg = if is_sel {
-            Palette::UI_CARD_BG_HOVER
+            if is_filter_focused {
+                Color::new(0.10, 0.26, 0.38, 0.95)
+            } else {
+                Palette::UI_CARD_BG_HOVER
+            }
         } else {
             Color::new(0.08, 0.10, 0.14, 0.70)
         };
@@ -802,30 +899,53 @@ fn render_championships_tab(
         };
 
         draw_rectangle(px, cy, pill_w, pill_h, p_bg);
-        draw_rectangle_lines(px, cy, pill_w, pill_h, if is_sel { 1.8 } else { 1.0 }, p_border);
+        let border_thickness = if is_sel && is_filter_focused {
+            2.4
+        } else if is_sel {
+            1.8
+        } else {
+            1.0
+        };
+        draw_rectangle_lines(px, cy, pill_w, pill_h, border_thickness, p_border);
+
+        if is_sel && is_filter_focused {
+            // Neon top and bottom accent lines on active focused filter pill
+            draw_rectangle(px, cy, pill_w, scaler.s(2.0), Palette::NEON_CYAN);
+            draw_rectangle(px, cy + pill_h - scaler.s(2.0), pill_w, scaler.s(2.0), Palette::NEON_CYAN);
+        }
+
+        let label_text = if is_sel && is_filter_focused {
+            format!("◄ {} ►", f_name)
+        } else {
+            f_name.to_string()
+        };
 
         fonts.draw_ui_bold_centered(
-            f_name,
+            &label_text,
             px + pill_w * 0.5,
             cy + scaler.s(16.5),
-            scaler.font_s(10.5),
+            scaler.font_s(if is_sel && is_filter_focused { 10.0 } else { 10.5 }),
             if is_sel { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
         );
 
         px += pill_w + pill_gap;
     }
 
-    let filter_hint = if max_scroll > 0 {
-        "[F] Filter  •  [▲ / ▼ / WHEEL] Scroll"
+    let filter_hint = if is_filter_focused {
+        "[◄ / ►] Select Filter  •  [▼] Browse  •  [▲] Tabs"
+    } else if is_content_focused {
+        "[▲ / ▼] Navigate  •  [ENTER] Enter Championship  •  [▲ at top] Filters"
+    } else if max_scroll > 0 {
+        "[▼] Module Filters  •  [▲ / ▼ / WHEEL] Scroll"
     } else {
-        "[F] Change Category Filter"
+        "[▼] Module Filters  •  [F] Quick Filter"
     };
     fonts.draw_ui_regular(
         filter_hint,
-        x + pad + inner_w - scaler.s(220.0),
+        x + pad + inner_w - scaler.s(310.0),
         cy + scaler.s(16.5),
         scaler.font_s(11.0),
-        Palette::UI_TEXT_MUTED,
+        if is_filter_focused || is_content_focused { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
     );
 
     cy += pill_h + scaler.s(10.0);
@@ -841,11 +961,11 @@ fn render_championships_tab(
         return;
     }
 
-    // Livery colors from selected player profile
-    let default_scheme = CarColorScheme::from_index(0);
-    let livery = sel_profile.map(|p| &p.color_scheme).unwrap_or(&default_scheme);
+    for (rel_i, champ) in filtered_champs.iter().skip(scroll).take(visible_count).enumerate() {
+        let abs_champ_idx = scroll + rel_i;
+        let is_card_selected = is_content_focused && abs_champ_idx == champ_selected_idx;
+        let is_unlocked = is_dev_mode || champ.series.tier <= 1 || champ.series.tier <= career_level;
 
-    for champ in filtered_champs.iter().skip(scroll).take(visible_count) {
         // Query history for this specific championship
         let champ_entries: Vec<&RaceHistoryEntry> = history
             .iter()
@@ -907,7 +1027,46 @@ fn render_championships_tab(
             (format!("0/{} ROUNDS (AVAILABLE)", total_rounds), Palette::UI_TEXT_MUTED)
         };
 
-        let (status_text, status_col, status_bg, card_border) = if wins > 0 && is_completed {
+        let (status_text, status_col, status_bg, card_border) = if !is_unlocked {
+            if is_card_selected {
+                (
+                    format!("🔒 LOCKED [TIER {} REQUIRED]", champ.series.tier),
+                    Color::new(0.92, 0.45, 0.45, 1.0),
+                    Color::new(0.22, 0.08, 0.08, 0.95),
+                    Color::new(0.70, 0.25, 0.25, 0.95),
+                )
+            } else {
+                (
+                    format!("🔒 TIER {} REQUIRED", champ.series.tier),
+                    Palette::UI_TEXT_MUTED,
+                    Color::new(0.08, 0.09, 0.12, 0.70),
+                    Palette::UI_CARD_BORDER,
+                )
+            }
+        } else if is_card_selected {
+            if is_active_session {
+                (
+                    format!("[ENTER] RESUME ROUND {} ▶", completed_rounds + 1),
+                    Palette::WHITE,
+                    Color::new(0.25, 0.20, 0.05, 0.98),
+                    Palette::NEON_GOLD,
+                )
+            } else if is_completed {
+                (
+                    "[ENTER] RESTART CUP ▶".to_string(),
+                    Palette::WHITE,
+                    Color::new(0.05, 0.22, 0.12, 0.98),
+                    Palette::NEON_GREEN,
+                )
+            } else {
+                (
+                    "[ENTER] START CUP ▶".to_string(),
+                    Palette::WHITE,
+                    Color::new(0.06, 0.24, 0.35, 0.98),
+                    Palette::NEON_CYAN,
+                )
+            }
+        } else if wins > 0 && is_completed {
             ("CHAMPION [GOLD 🏆]".to_string(), Palette::NEON_GOLD, Color::new(0.25, 0.20, 0.05, 0.90), Palette::NEON_GOLD)
         } else if podiums > 0 && is_completed {
             ("PODIUM FINISHER 🥈".to_string(), Color::new(0.85, 0.88, 0.95, 1.0), Color::new(0.12, 0.16, 0.24, 0.90), Color::new(0.85, 0.88, 0.95, 0.6))
@@ -920,7 +1079,34 @@ fn render_championships_tab(
         };
 
         // Render card background
-        scaler.draw_glass_card(x + pad, cy, inner_w, item_h, Color::new(0.06, 0.08, 0.12, 0.90), card_border, 1.0);
+        let card_bg = if is_card_selected {
+            if is_unlocked {
+                Color::new(0.08, 0.14, 0.22, 0.95)
+            } else {
+                Color::new(0.12, 0.07, 0.08, 0.95)
+            }
+        } else if !is_unlocked {
+            Color::new(0.05, 0.06, 0.08, 0.80)
+        } else {
+            Color::new(0.06, 0.08, 0.12, 0.90)
+        };
+
+        let border_thickness = if is_card_selected { 2.2 } else { 1.0 };
+        scaler.draw_glass_card(x + pad, cy, inner_w, item_h, card_bg, card_border, border_thickness);
+
+        if is_card_selected {
+            draw_rectangle(
+                x + pad,
+                cy,
+                scaler.s(4.5),
+                item_h,
+                if is_unlocked {
+                    if is_active_session { Palette::NEON_GOLD } else { Palette::NEON_CYAN }
+                } else {
+                    Color::new(0.85, 0.35, 0.35, 1.0)
+                },
+            );
+        }
 
         // ---------------------------------------------------------------------
         // 1. LEFT SIDE: CAR LATERAL THUMBNAIL (256x128 aspect ratio 2:1)
@@ -940,21 +1126,38 @@ fn render_championships_tab(
         let car_x = img_box_x + (img_box_w - car_thumb_w) * 0.5;
         let car_y = img_box_y + (img_box_h - car_thumb_h) * 0.5;
 
-        if let Some(texture) = get_vehicle_lateral_texture(model_id, livery.primary, livery.secondary, false) {
+        let model = crate::catalog::find_model_by_id(model_id);
+        let (factory_prim, factory_sec) = model
+            .map(|m| (m.primary_color, m.secondary_color))
+            .unwrap_or((Palette::WHITE, Palette::WHITE));
+
+        // Use factory colors so is_factory evaluates to true and get_vehicle_lateral_texture
+        // returns the base image directly without any red livery mask or tinting.
+        if let Some(texture) = get_vehicle_lateral_texture(model_id, factory_prim, factory_sec, false) {
+            let img_tint = if is_unlocked {
+                Palette::WHITE
+            } else {
+                Color::new(0.60, 0.65, 0.70, 0.85)
+            };
             draw_texture_ex(
                 &texture,
                 car_x,
                 car_y,
-                Palette::WHITE,
+                img_tint,
                 DrawTextureParams {
                     dest_size: Some(Vec2::new(car_thumb_w, car_thumb_h)),
                     ..Default::default()
                 },
             );
         } else {
+            let factory_scheme = CarColorScheme {
+                primary: factory_prim,
+                secondary: factory_sec,
+                helmet: Palette::WHITE,
+            };
             render_real_car_lateral_by_id(
                 model_id,
-                livery,
+                &factory_scheme,
                 img_box_x + img_box_w * 0.5,
                 img_box_y + img_box_h * 0.5,
                 scaler.s(0.35),
@@ -966,13 +1169,13 @@ fn render_championships_tab(
         // ---------------------------------------------------------------------
         // 2. RIGHT SIDE: STATUS BADGE & STATS COUNTER
         // ---------------------------------------------------------------------
-        let badge_w = scaler.s(150.0);
+        let badge_w = scaler.s(if is_card_selected { 172.0 } else { 150.0 });
         let badge_x = x + pad + inner_w - badge_w - scaler.s(10.0);
         let badge_y = cy + scaler.s(10.0);
         let badge_h = scaler.s(22.0);
 
         draw_rectangle(badge_x, badge_y, badge_w, badge_h, status_bg);
-        draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, 1.0, status_col);
+        draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, if is_card_selected { 1.8 } else { 1.0 }, status_col);
         fonts.draw_ui_bold_centered(&status_text, badge_x + badge_w * 0.5, badge_y + scaler.s(15.5), scaler.font_s(10.0), status_col);
 
         let stats_summary = format!("WINS: {}  •  PODIUMS: {}", wins, podiums);
@@ -1001,7 +1204,14 @@ fn render_championships_tab(
         let info_x = img_box_x + img_box_w + scaler.s(12.0);
 
         // Row 1: Title
-        fonts.draw_ui_bold(&champ.series.name, info_x, cy + scaler.s(19.0), scaler.font_s(13.0), Palette::WHITE);
+        let title_col = if !is_unlocked {
+            Palette::UI_TEXT_MUTED
+        } else if is_card_selected {
+            Palette::WHITE
+        } else {
+            Color::new(0.92, 0.94, 0.98, 1.0)
+        };
+        fonts.draw_ui_bold(&champ.series.name, info_x, cy + scaler.s(19.0), scaler.font_s(13.0), title_col);
 
         // Row 2: Tag
         let disc_tag = format!(
@@ -1012,7 +1222,12 @@ fn render_championships_tab(
             champ.series.laps_per_round,
             champ.scoring.system.to_uppercase()
         );
-        fonts.draw_ui_bold(&disc_tag, info_x, cy + scaler.s(34.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+        let tag_col = if !is_unlocked {
+            Color::new(0.55, 0.55, 0.60, 0.8)
+        } else {
+            Palette::NEON_CYAN
+        };
+        fonts.draw_ui_bold(&disc_tag, info_x, cy + scaler.s(34.0), scaler.font_s(10.0), tag_col);
 
         // Row 3: Car name in use & Calendar preview
         let track_names: Vec<String> = champ.rounds.iter().take(3).map(|r| {
@@ -1058,6 +1273,7 @@ fn render_telemetry_tab(
     _h: f32,
     history: &[RaceHistoryEntry],
     filter_category_idx: usize,
+    is_filter_focused: bool,
 ) {
     let pad = scaler.s(14.0);
     let inner_w = w - pad * 2.0;
@@ -1069,15 +1285,30 @@ fn render_telemetry_tab(
     let pill_gap = scaler.s(6.0);
     let mut px = x + pad;
 
-    fonts.draw_ui_bold("FILTER:", px, cy + scaler.s(16.0), scaler.font_s(11.0), Palette::NEON_GOLD);
-    px += scaler.s(55.0);
+    let filter_label_col = if is_filter_focused {
+        Palette::NEON_CYAN
+    } else {
+        Palette::NEON_GOLD
+    };
+    fonts.draw_ui_bold(
+        if is_filter_focused { "FILTER [◄/►]:" } else { "FILTER:" },
+        px,
+        cy + scaler.s(16.0),
+        scaler.font_s(11.0),
+        filter_label_col,
+    );
+    px += scaler.s(if is_filter_focused { 84.0 } else { 55.0 });
 
     for (f_idx, (f_name, _)) in TELEMETRY_CATEGORY_FILTERS.iter().enumerate() {
         let is_sel = f_idx == filter_category_idx;
         let pill_w = scaler.s(if *f_name == "ALL" { 48.0 } else { 75.0 });
 
         let p_bg = if is_sel {
-            Palette::UI_CARD_BG_HOVER
+            if is_filter_focused {
+                Color::new(0.10, 0.26, 0.38, 0.95)
+            } else {
+                Palette::UI_CARD_BG_HOVER
+            }
         } else {
             Color::new(0.08, 0.10, 0.14, 0.70)
         };
@@ -1088,26 +1319,49 @@ fn render_telemetry_tab(
         };
 
         draw_rectangle(px, cy, pill_w, pill_h, p_bg);
-        draw_rectangle_lines(px, cy, pill_w, pill_h, if is_sel { 1.8 } else { 1.0 }, p_border);
+        let border_thickness = if is_sel && is_filter_focused {
+            2.4
+        } else if is_sel {
+            1.8
+        } else {
+            1.0
+        };
+        draw_rectangle_lines(px, cy, pill_w, pill_h, border_thickness, p_border);
+
+        if is_sel && is_filter_focused {
+            // Neon top and bottom accent lines on active focused filter pill
+            draw_rectangle(px, cy, pill_w, scaler.s(2.0), Palette::NEON_CYAN);
+            draw_rectangle(px, cy + pill_h - scaler.s(2.0), pill_w, scaler.s(2.0), Palette::NEON_CYAN);
+        }
+
+        let label_text = if is_sel && is_filter_focused {
+            format!("◄ {} ►", f_name)
+        } else {
+            f_name.to_string()
+        };
 
         fonts.draw_ui_bold_centered(
-            f_name,
+            &label_text,
             px + pill_w * 0.5,
             cy + scaler.s(16.5),
-            scaler.font_s(10.5),
+            scaler.font_s(if is_sel && is_filter_focused { 10.0 } else { 10.5 }),
             if is_sel { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
         );
 
         px += pill_w + pill_gap;
     }
 
-    let filter_hint = "[F] Change Category Filter";
+    let filter_hint = if is_filter_focused {
+        "[◄ / ►] Select Filter  •  [▼] Logs  •  [▲] Tabs"
+    } else {
+        "[▼] Module Filters  •  [F] Quick Filter"
+    };
     fonts.draw_ui_regular(
         filter_hint,
-        x + pad + inner_w - scaler.s(180.0),
+        x + pad + inner_w - scaler.s(250.0),
         cy + scaler.s(16.5),
         scaler.font_s(11.0),
-        Palette::UI_TEXT_MUTED,
+        if is_filter_focused { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
     );
 
     cy += pill_h + scaler.s(10.0);

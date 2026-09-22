@@ -45,7 +45,11 @@ pub use menu::{
     MenuPanelFocus, ModalityCategory, ModalityItem, ModalityModal, PauseMenuButtonLayout,
     RaceResultEntry, TrackCatalogFilter, TrackChoice,
 };
-pub use profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
+pub use profile_ui::{
+    championship_visible_count, get_sorted_championships, render_profile_badge,
+    render_profile_create_screen, render_profile_manager_screen, ProfileFocusArea,
+    TELEMETRY_CATEGORY_FILTERS,
+};
 pub use scaler::UiScaler;
 pub use starting_grid::{
     render_starting_grid_screen, starting_grid_footer_prompt, starting_grid_footer_prompt_with_mode,
