@@ -482,6 +482,11 @@ fn test_starting_grid_footer_prompt_space_reserved_for_launch() {
     let card2_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 2);
     assert!(card2_prompt.contains("LAUNCH RACE"));
 
+    // Card 3 (Player Profile): Enter opens Profile, Space is reserved for Launch
+    let card3_prompt = starting_grid_footer_prompt(false, StartingGridFocus::LeftSetup, 3);
+    assert!(card3_prompt.contains("[ENTER] Open Profile"), "Card 3 prompt: {}", card3_prompt);
+    assert!(card3_prompt.contains("[SPACE] Launch"));
+
     // Right Roster panel: Enter opens Dossier, Space is reserved for Launch
     let roster_prompt = starting_grid_footer_prompt(false, StartingGridFocus::RightRoster, 0);
     assert!(roster_prompt.contains("[ENTER / D] View Dossier"));
@@ -491,6 +496,11 @@ fn test_starting_grid_footer_prompt_space_reserved_for_launch() {
     let gp_prompt = starting_grid_footer_prompt(true, StartingGridFocus::LeftSetup, 0);
     assert!(gp_prompt.contains("[A] Open Garage"));
     assert!(gp_prompt.contains("[START] Launch"));
+
+    // Gamepad Card 3 prompt: A opens Profile, START launches
+    let gp3_prompt = starting_grid_footer_prompt(true, StartingGridFocus::LeftSetup, 3);
+    assert!(gp3_prompt.contains("[A] Open Profile"));
+    assert!(gp3_prompt.contains("[START] Launch"));
 }
 
 #[test]

@@ -1,4 +1,4 @@
-use tdrace_app::game::{GameState, RaceSession, StartingGridFocus};
+use tdrace_app::game::{GameState, ProfileOrigin, RaceSession, StartingGridFocus};
 use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 use tdrace_core::track::presets::{
     classic_grand_prix, classic_rallycross, drift_park, kart_arena, oasis_rally, oval_speedway,
@@ -405,4 +405,83 @@ fn test_starting_grid_card_2_and_space_launch_transition() {
     assert!(session.transition.is_some());
     assert_eq!(session.pending_state, Some(GameState::Countdown(3.5)));
 }
+
+#[test]
+fn test_starting_grid_player_card_selection_and_profile_flow() {
+    let (px, py, pw, ph) = tdrace_app::ui::starting_grid_player_card_rect(1280.0, 720.0);
+    assert!(pw > 200.0);
+    assert!(ph > 50.0);
+    assert!(px > 0.0);
+    assert!(py > 0.0);
+
+    let mut session = RaceSession::new();
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+    session.init_race();
+
+    // Default state: LeftSetup, Card 0 (Garage)
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.starting_grid_focus, StartingGridFocus::LeftSetup);
+    assert_eq!(session.starting_grid_card_idx, 0);
+
+    // 1. Navigate UP from Garage (0) -> selects Player Profile Card (3)
+    session.input.gamepad.snapshot.nav_up = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_up = false;
+    assert_eq!(session.starting_grid_card_idx, 3);
+
+    // 2. Navigate UP from Player Card (3) -> wraps around to Launch Race (2)
+    session.input.gamepad.snapshot.nav_up = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_up = false;
+    assert_eq!(session.starting_grid_card_idx, 2);
+
+    // 3. Navigate UP from Launch Race (2) -> moves to Garage (0)
+    session.input.gamepad.snapshot.nav_up = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_up = false;
+    assert_eq!(session.starting_grid_card_idx, 0);
+
+    // 4. Navigate DOWN from Garage (0) -> moves to Launch Race (2)
+    session.input.gamepad.snapshot.nav_down = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_down = false;
+    assert_eq!(session.starting_grid_card_idx, 2);
+
+    // 5. Navigate DOWN from Launch Race (2) -> wraps around to Player Card (3)
+    session.input.gamepad.snapshot.nav_down = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_down = false;
+    assert_eq!(session.starting_grid_card_idx, 3);
+
+    // 6. Navigate DOWN from Player Card (3) -> moves to Garage (0)
+    session.input.gamepad.snapshot.nav_down = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_down = false;
+    assert_eq!(session.starting_grid_card_idx, 0);
+
+    // 7. Select Player Card (3) and hit Enter/Confirm -> loads ProfileManager
+    session.starting_grid_card_idx = 3;
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert!(matches!(session.state, GameState::ProfileManager { .. }));
+    assert_eq!(session.profile_origin, ProfileOrigin::StartingGrid);
+
+    // 8. Return from ProfileManager with Cancel (Escape/Gamepad B) -> returns to StartingGrid
+    session.input.gamepad.snapshot.btn_cancel_pressed = true;
+    let sel_idx = match session.state {
+        GameState::ProfileManager { selected_idx } => selected_idx,
+        _ => 0,
+    };
+    session.update_profile_manager(sel_idx);
+    session.input.gamepad.snapshot.btn_cancel_pressed = false;
+    assert_eq!(session.state, GameState::StartingGrid);
+
+    // 9. Verify open_profile_from_starting_grid directly
+    session.open_profile_from_starting_grid();
+    assert!(matches!(session.state, GameState::ProfileManager { .. }));
+    assert_eq!(session.profile_origin, ProfileOrigin::StartingGrid);
+}
+
 

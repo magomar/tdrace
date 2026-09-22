@@ -20,6 +20,16 @@ pub enum StartingGridFocus {
     RightRoster,
 }
 
+/// Returns the rectangle (x, y, w, h) of the Player Profile card on the Starting Grid.
+pub fn starting_grid_player_card_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
+    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let panel_y = scaler.s(60.0);
+    let p1_h = scaler.s(88.0);
+    (col1_x, panel_y, col_w, p1_h)
+}
+
 /// Returns the rectangle (x, y, w, h) of the Garage access card on the Starting Grid.
 pub fn starting_grid_garage_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
@@ -140,10 +150,25 @@ pub fn render_starting_grid_screen(
     // LEFT PANEL: Player Details, Track Details, Game Mode, Car Specs
     // =========================================================================
     let mut curr_y = panel_y;
+    let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
 
-    // Card 1: Player Profile & Circuit Dossier Card
+    // Card 1 (Index 3): Player Profile & Circuit Dossier Card
     let p1_h = scaler.s(88.0);
-    scaler.draw_glass_card(col1_x, curr_y, col_w, p1_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.2);
+    let is_player_active = is_left_focused && active_card_idx == 3;
+    let is_player_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + p1_h;
+    let is_player_highlighted = is_player_active || is_player_hovered;
+
+    let player_border = if is_player_highlighted {
+        Palette::NEON_GOLD
+    } else {
+        Palette::NEON_CYAN
+    };
+    let player_bg = if is_player_highlighted {
+        Palette::UI_CARD_BG_HOVER
+    } else {
+        Palette::UI_CARD_BG
+    };
+    scaler.draw_glass_card(col1_x, curr_y, col_w, p1_h, player_bg, player_border, if is_player_highlighted { 2.4 } else { 1.2 });
 
     // Line 1: Player Profile info
     let flag_w = scaler.s(32.0);
@@ -164,7 +189,7 @@ pub fn render_starting_grid_screen(
         col1_x + scaler.s(52.0),
         curr_y + scaler.s(23.0),
         scaler.font_s(14.0),
-        Palette::WHITE,
+        if is_player_highlighted { Palette::NEON_GOLD } else { Palette::WHITE },
     );
 
     // Team Livery Swatches on right of player row
@@ -182,7 +207,7 @@ pub fn render_starting_grid_screen(
     // Divider Line
     draw_rectangle(col1_x + scaler.s(12.0), curr_y + scaler.s(38.0), col_w - scaler.s(24.0), 1.0, Color::new(0.20, 0.30, 0.45, 0.40));
 
-    // Line 2: Track Information
+    // Line 2: Track Information & Profile Action Hint
     fonts.draw_ui_bold(
         &format!("CIRCUIT: {}", track.name.to_uppercase()),
         col1_x + scaler.s(12.0),
@@ -190,6 +215,20 @@ pub fn render_starting_grid_screen(
         scaler.font_s(12.5),
         Palette::NEON_GOLD,
     );
+
+    let profile_hint = if is_player_highlighted {
+        "OPEN PROFILE [ENTER]"
+    } else {
+        "PROFILE [P]"
+    };
+    fonts.draw_ui_bold(
+        profile_hint,
+        col1_x + col_w - scaler.s(135.0),
+        curr_y + scaler.s(56.0),
+        scaler.font_s(10.0),
+        if is_player_highlighted { Palette::NEON_GOLD } else { Palette::NEON_CYAN },
+    );
+
     fonts.draw_ui_regular(
         &format!("{}m Length  •  {} Laps  •  {}", track_len_m, total_laps, track.surface_summary_string()),
         col1_x + scaler.s(12.0),
@@ -203,7 +242,6 @@ pub fn render_starting_grid_screen(
     // Card 2 (Index 0): Enlarged Motorsport Garage & Active Car Card
     let is_garage_active = is_left_focused && active_card_idx == 0;
     let garage_card_h = scaler.s(420.0);
-    let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
     let is_garage_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + garage_card_h;
     let is_garage_highlighted = is_garage_active || is_garage_hovered;
 
@@ -783,6 +821,7 @@ pub fn starting_grid_footer_prompt_with_mode(
                 } else {
                     "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [ROSTER LOCKED]  |  [START] Launch  |  [B] Menu"
                 },
+                3 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A] Open Profile  |  [START] Launch  |  [B] Menu",
                 _ => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A / START] LAUNCH RACE  |  [B] Menu",
             },
             StartingGridFocus::RightRoster => {
@@ -806,6 +845,7 @@ pub fn starting_grid_footer_prompt_with_mode(
                 } else {
                     "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ROSTER LOCKED]  |  [SPACE] Launch  |  [ESC] Menu"
                 },
+                3 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER] Open Profile  |  [SPACE] Launch  |  [ESC] Menu",
                 _ => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / SPACE / CLICK] LAUNCH RACE  |  [ESC] Menu",
             },
             StartingGridFocus::RightRoster => {

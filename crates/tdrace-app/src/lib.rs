@@ -34,7 +34,7 @@ pub use db::{HallOfFameDb, HallOfFameEntry};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{
     AcrobaticStats, DriverCardsOrigin, EditorOrigin, FinishedScreenView, GameState, GridParticipant, LapTelemetry,
-    PlayerRaceTelemetry, RaceSession, XpAwardReceipt,
+    PlayerRaceTelemetry, ProfileOrigin, RaceSession, XpAwardReceipt,
 };
 pub use module::{
     ClassicGameModule, EngineAudioProfile, ExtremeOffRoadModule, GameModule,
@@ -67,5 +67,5 @@ pub use ui::profile_ui::{render_profile_badge, render_profile_create_screen, ren
 pub use ui::garage::{garage_select_button_rect, render_garage_screen, GarageViewMode};
 pub use ui::starting_grid::{
     render_starting_grid_screen, starting_grid_garage_button_rect, starting_grid_grid_button_rect,
-    starting_grid_launch_button_rect, StartingGridFocus,
+    starting_grid_launch_button_rect, starting_grid_player_card_rect, StartingGridFocus,
 };
