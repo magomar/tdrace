@@ -226,9 +226,53 @@ pub fn render_ground_track(track: &Track) {
     render_ground_track_culled(track, None);
 }
 
+/// Renders a textured ground plane across the visible camera viewport for the track's default surface.
+pub fn render_backdrop_ground_pass(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
+    let quality = get_surface_texture_quality();
+    if quality == SurfaceTextureQuality::Off {
+        return;
+    }
+    let default_surf = track.default_surface;
+    let (tex, scale, _) = get_surface_material_info(default_surf);
+    if tex.is_none() {
+        return;
+    }
+
+    let (min, max) = match view_bounds {
+        Some((b_min, b_max)) => (b_min, b_max),
+        None => {
+            if track.spline.samples.is_empty() {
+                return;
+            }
+            let mut min = track.spline.samples[0].point;
+            let mut max = track.spline.samples[0].point;
+            for s in &track.spline.samples {
+                min = min.min(s.point);
+                max = max.max(s.point);
+            }
+            (min - Vec2::splat(60.0), max + Vec2::splat(60.0))
+        }
+    };
+
+    let p0 = Vec2::new(min.x, min.y);
+    let p1 = Vec2::new(max.x, min.y);
+    let p2 = Vec2::new(max.x, max.y);
+    let p3 = Vec2::new(min.x, max.y);
+
+    let uv0 = macroquad::prelude::Vec2::new(p0.x / scale, p0.y / scale);
+    let uv1 = macroquad::prelude::Vec2::new(p1.x / scale, p1.y / scale);
+    let uv2 = macroquad::prelude::Vec2::new(p2.x / scale, p2.y / scale);
+    let uv3 = macroquad::prelude::Vec2::new(p3.x / scale, p3.y / scale);
+
+    draw_textured_quad(p0, uv0, p1, uv1, p2, uv2, p3, uv3, tex.as_ref(), WHITE);
+}
+
 /// Renders ground track ribbon and surface features with camera viewport culling.
 pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
     ensure_surface_registry();
+
+    // 0. Render active camera viewport ground backdrop plane
+    render_backdrop_ground_pass(track, view_bounds);
 
     // 1. Render base off-track surface zones (BelowTrack: sand traps, asphalt runoff, dirt areas beneath road)
     render_surface_zones_layer(track, SurfaceLayer::BelowTrack);
@@ -1345,30 +1389,18 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let mid_r0 = s0.point - s0.normal * (hw0 * 0.33);
                 let mid_r1 = s1.point - s1.normal * (hw1 * 0.33);
 
+                // Isotropic 1:1 metric UV mapping: scale lateral U by physical track width
+                let u_span0 = s0.width / tile_scale;
+                let u_span1 = s1.width / tile_scale;
+
                 let uv_l0 = macroquad::prelude::Vec2::new(0.0, v0);
                 let uv_l1 = macroquad::prelude::Vec2::new(0.0, v1);
-                let uv_ml0 = macroquad::prelude::Vec2::new(0.335, v0);
-                let uv_ml1 = macroquad::prelude::Vec2::new(0.335, v1);
-                let uv_mr0 = macroquad::prelude::Vec2::new(0.665, v0);
-                let uv_mr1 = macroquad::prelude::Vec2::new(0.665, v1);
-                let uv_r0 = macroquad::prelude::Vec2::new(1.0, v0);
-                let uv_r1 = macroquad::prelude::Vec2::new(1.0, v1);
-
-                // Static apex rubbering based on instantaneous curvature
-                let kappa = compute_segment_curvature(s0, s1);
-                let abs_k = kappa.abs();
-                let rho_apex = (abs_k * 6.0).clamp(0.0, 0.35);
-
-                // Darken apex trajectory:
-                // If kappa > 0, turning left -> apex on left
-                // If kappa < 0, turning right -> apex on right
-                let (rho_l, rho_m, rho_r) = if abs_k <= 0.002 {
-                    (0.0, 0.0, 0.0)
-                } else if kappa > 0.0 {
-                    (rho_apex, rho_apex * 0.65, rho_apex * 0.15)
-                } else {
-                    (rho_apex * 0.15, rho_apex * 0.65, rho_apex)
-                };
+                let uv_ml0 = macroquad::prelude::Vec2::new(u_span0 * 0.335, v0);
+                let uv_ml1 = macroquad::prelude::Vec2::new(u_span1 * 0.335, v1);
+                let uv_mr0 = macroquad::prelude::Vec2::new(u_span0 * 0.665, v0);
+                let uv_mr1 = macroquad::prelude::Vec2::new(u_span1 * 0.665, v1);
+                let uv_r0 = macroquad::prelude::Vec2::new(u_span0, v0);
+                let uv_r1 = macroquad::prelude::Vec2::new(u_span1, v1);
 
                 // Longitudinal slope lighting factor
                 let avg_slope = (s0.grade_slope + s1.grade_slope) * 0.5;
@@ -1401,18 +1433,14 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     let m_r0 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(right0.x, right0.y) * 0.18 } else { 1.0 };
                     let m_r1 = if quality == SurfaceTextureQuality::High { 1.0 + evaluate_macro_modulation(right1.x, right1.y) * 0.18 } else { 1.0 };
 
-                    let rub_l = 1.0 - 0.60 * rho_l;
-                    let rub_m = 1.0 - 0.60 * rho_m;
-                    let rub_r = 1.0 - 0.60 * rho_r;
-
-                    let f_l0 = (bank_l * slope_factor * rub_l * m_l0).clamp(0.2, 1.8);
-                    let f_l1 = (bank_l * slope_factor * rub_l * m_l1).clamp(0.2, 1.8);
-                    let f_ml0 = (bank_m * slope_factor * rub_m * m_ml0).clamp(0.2, 1.8);
-                    let f_ml1 = (bank_m * slope_factor * rub_m * m_ml1).clamp(0.2, 1.8);
-                    let f_mr0 = (bank_m * slope_factor * rub_m * m_mr0).clamp(0.2, 1.8);
-                    let f_mr1 = (bank_m * slope_factor * rub_m * m_mr1).clamp(0.2, 1.8);
-                    let f_r0 = (bank_r * slope_factor * rub_r * m_r0).clamp(0.2, 1.8);
-                    let f_r1 = (bank_r * slope_factor * rub_r * m_r1).clamp(0.2, 1.8);
+                    let f_l0 = (bank_l * slope_factor * m_l0).clamp(0.2, 1.8);
+                    let f_l1 = (bank_l * slope_factor * m_l1).clamp(0.2, 1.8);
+                    let f_ml0 = (bank_m * slope_factor * m_ml0).clamp(0.2, 1.8);
+                    let f_ml1 = (bank_m * slope_factor * m_ml1).clamp(0.2, 1.8);
+                    let f_mr0 = (bank_m * slope_factor * m_mr0).clamp(0.2, 1.8);
+                    let f_mr1 = (bank_m * slope_factor * m_mr1).clamp(0.2, 1.8);
+                    let f_r0 = (bank_r * slope_factor * m_r0).clamp(0.2, 1.8);
+                    let f_r1 = (bank_r * slope_factor * m_r1).clamp(0.2, 1.8);
 
                     let c_l0 = Color::new(f_l0, f_l0, f_l0, 1.0);
                     let c_l1 = Color::new(f_l1, f_l1, f_l1, 1.0);
@@ -1442,24 +1470,9 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                         (Palette::ASPHALT, Palette::ASPHALT, Palette::ASPHALT)
                     };
 
-                    let c_l = Color::new(
-                        (base_l.r * (1.0 - rho_l * 0.5)).clamp(0.05, 1.0),
-                        (base_l.g * (1.0 - rho_l * 0.5)).clamp(0.05, 1.0),
-                        (base_l.b * (1.0 - rho_l * 0.5)).clamp(0.05, 1.0),
-                        1.0,
-                    );
-                    let c_m = Color::new(
-                        (base_m.r * (1.0 - rho_m * 0.5)).clamp(0.05, 1.0),
-                        (base_m.g * (1.0 - rho_m * 0.5)).clamp(0.05, 1.0),
-                        (base_m.b * (1.0 - rho_m * 0.5)).clamp(0.05, 1.0),
-                        1.0,
-                    );
-                    let c_r = Color::new(
-                        (base_r.r * (1.0 - rho_r * 0.5)).clamp(0.05, 1.0),
-                        (base_r.g * (1.0 - rho_r * 0.5)).clamp(0.05, 1.0),
-                        (base_r.b * (1.0 - rho_r * 0.5)).clamp(0.05, 1.0),
-                        1.0,
-                    );
+                    let c_l = base_l;
+                    let c_m = base_m;
+                    let c_r = base_r;
 
                     builder.push_quad(left0, uv_l0, c_l, left1, uv_l1, c_l, mid_l1, uv_ml1, c_l, mid_l0, uv_ml0, c_l);
                     builder.push_quad(mid_l0, uv_ml0, c_m, mid_l1, uv_ml1, c_m, mid_r1, uv_mr1, c_m, mid_r0, uv_mr0, c_m);

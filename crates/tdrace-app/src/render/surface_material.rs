@@ -281,36 +281,70 @@ fn pseudo_noise_f32(x: u32, y: u32, seed: u32) -> f32 {
     (pseudo_hash(x, y, seed) & 0xFFFF) as f32 / 65535.0
 }
 
+#[inline]
+fn smoothstep(t: f32) -> f32 {
+    t * t * (3.0 - 2.0 * t)
+}
+
+/// Evaluates a 2D periodic (toroidal) value noise field that wraps seamlessly at `grid_w` and `grid_h`.
+fn sample_periodic_noise(x: f32, y: f32, grid_w: u32, grid_h: u32, seed: u32) -> f32 {
+    let gw = grid_w as f32;
+    let gh = grid_h as f32;
+    let gx = (x % gw + gw) % gw;
+    let gy = (y % gh + gh) % gh;
+    let x0 = gx as u32;
+    let y0 = gy as u32;
+    let x1 = (x0 + 1) % grid_w;
+    let y1 = (y0 + 1) % grid_h;
+    let fx = smoothstep(gx - x0 as f32);
+    let fy = smoothstep(gy - y0 as f32);
+
+    let v00 = pseudo_noise_f32(x0, y0, seed);
+    let v10 = pseudo_noise_f32(x1, y0, seed);
+    let v01 = pseudo_noise_f32(x0, y1, seed);
+    let v11 = pseudo_noise_f32(x1, y1, seed);
+
+    let top = v00 * (1.0 - fx) + v10 * fx;
+    let bot = v01 * (1.0 - fx) + v11 * fx;
+    top * (1.0 - fy) + bot * fy
+}
+
 /// Generates an in-memory physical micro-texture Image for a given surface type.
 pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> Image {
     let mut bytes = vec![0u8; width as usize * height as usize * 4];
 
     match surface {
         SurfaceType::Asphalt => {
-            // Fine basalt bitumen aggregate: dark matrix with ~8% lighter mineral aggregate specks
+            // Isotropic matte bitumen aggregate: smooth multi-scale matrix with subtle crushed stone specks
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let n = pseudo_noise_f32(x as u32, y as u32, 101);
-                    let n2 = pseudo_noise_f32(x as u32, y as u32, 202);
+                    let n_coarse = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        101,
+                    );
+                    let n_fine = sample_periodic_noise(
+                        x as f32 * (128.0 / width as f32),
+                        y as f32 * (128.0 / height as f32),
+                        128,
+                        128,
+                        202,
+                    );
+                    let jitter = (pseudo_noise_f32(x as u32, y as u32, 303) - 0.5) * 6.0;
 
-                    let (r, g, b) = if n > 0.93 {
-                        // High-reflectance granite / quartz speck
-                        let v = (110.0 + n2 * 45.0) as u8;
-                        (v, v, (v as f32 * 1.05).min(255.0) as u8)
-                    } else if n > 0.82 {
-                        // Basalt aggregate mineral grain
-                        let v = (58.0 + n2 * 25.0) as u8;
-                        (v, (v as f32 * 1.02) as u8, (v as f32 * 1.06) as u8)
-                    } else {
-                        // Bitumen matrix with micro-jitter
-                        let v = (30.0 + n * 14.0) as u8;
-                        (v, (v as f32 * 1.04) as u8, (v as f32 * 1.08) as u8)
-                    };
+                    let mut base = 33.0 + n_coarse * 8.0 + n_fine * 4.0 + jitter;
+                    // Low-contrast crushed aggregate specks (soft +12 luminance jump, anti-aliased)
+                    if pseudo_noise_f32(x as u32, y as u32, 404) > 0.96 {
+                        base += 12.0;
+                    }
+                    let base_clamped = base.clamp(26.0, 52.0);
 
-                    bytes[idx] = r;
-                    bytes[idx + 1] = g;
-                    bytes[idx + 2] = b;
+                    bytes[idx] = (base_clamped * 0.97) as u8;
+                    bytes[idx + 1] = (base_clamped * 0.99) as u8;
+                    bytes[idx + 2] = (base_clamped * 1.03) as u8;
                     bytes[idx + 3] = 255;
                 }
             }
@@ -337,18 +371,29 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             }
         }
         SurfaceType::Grass => {
-            // Manicured paddock lawn: organic thatch with blade micro-streaks and subtle diagonal mower lines
+            // Fine seamless turf: periodic multi-scale organic lawn noise without square borders or seams
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let diag_band = (((x as f32 + y as f32) / (width as f32 * 0.40)).sin() * 0.06).clamp(-0.06, 0.06);
-                    let blade_noise = pseudo_noise_f32(x as u32, (y as u32 * 2) % height as u32, 505);
-                    let thatch_noise = pseudo_noise_f32(x as u32 / 4, y as u32 / 4, 606);
+                    let n1 = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        505,
+                    );
+                    let n2 = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        606,
+                    );
+                    let val = n1 * 0.70 + n2 * 0.30;
 
-                    let factor = 0.85 + diag_band + (blade_noise - 0.5) * 0.20 + (thatch_noise - 0.5) * 0.14;
-                    let r = (55.0 * factor).clamp(30.0, 110.0) as u8;
-                    let g = (112.0 * factor).clamp(65.0, 175.0) as u8;
-                    let b = (45.0 * factor).clamp(25.0, 95.0) as u8;
+                    let r = (30.0 + val * 26.0).clamp(24.0, 70.0) as u8;
+                    let g = (78.0 + val * 52.0).clamp(65.0, 150.0) as u8;
+                    let b = (34.0 + val * 30.0).clamp(26.0, 80.0) as u8;
 
                     bytes[idx] = r;
                     bytes[idx + 1] = g;

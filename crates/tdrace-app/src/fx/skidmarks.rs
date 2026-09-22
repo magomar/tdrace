@@ -6,6 +6,15 @@ use tdrace_core::physics::surface::SurfaceType;
 use crate::render::color::Palette;
 use crate::render::track::draw_quad;
 
+#[inline]
+fn skid_noise(p: Vec2, seed: u32) -> f32 {
+    let ix = (p.x * 100.0) as i32 as u32;
+    let iy = (p.y * 100.0) as i32 as u32;
+    let mut h = ix.wrapping_mul(374761393) ^ iy.wrapping_mul(668265263) ^ seed.wrapping_mul(1274126177);
+    h = (h ^ (h >> 13)).wrapping_mul(1274126177);
+    ((h ^ (h >> 16)) & 0xFFFF) as f32 / 65535.0
+}
+
 /// A single persistent 2D skid mark quad segment.
 #[derive(Debug, Clone, Copy)]
 pub struct SkidSegment {
@@ -95,7 +104,6 @@ impl SkidmarkBuffer {
                             };
 
                             let alpha = (telemetry.skid_intensity * alpha_mult).clamp(0.08, 0.85);
-                            let color = Color::new(base_col.r, base_col.g, base_col.b, alpha);
 
                             // Calculate quad perpendicular to travel direction or tire orientation
                             let seg_right = if dist > 1e-4 {
@@ -104,17 +112,42 @@ impl SkidmarkBuffer {
                                 car_right
                             };
 
-                            let p0 = prev_pos - seg_right * half_tire_w;
-                            let p1 = prev_pos + seg_right * half_tire_w;
-                            let p2 = curr_pos + seg_right * half_tire_w;
-                            let p3 = curr_pos - seg_right * half_tire_w;
+                            // Contact chatter modulation (pulsing alpha along stroke)
+                            let chatter = 0.82 + skid_noise(curr_pos, 101) * 0.36;
+                            let alpha_mod = (alpha * chatter).clamp(0.06, 0.90);
+                            let col_outer = Color::new(base_col.r, base_col.g, base_col.b, alpha_mod);
+                            let col_inner = Color::new(base_col.r, base_col.g, base_col.b, (alpha_mod * 0.90).clamp(0.05, 0.85));
+
+                            // Multi-ribbon tread contact striations with ragged edge jitter
+                            let jitter = (skid_noise(curr_pos, 202) - 0.5) * (half_tire_w * 0.22);
+                            let sub_w = half_tire_w * 0.38;
+                            let offset = half_tire_w * 0.44 + jitter;
+
+                            // Ribbon A: Outer shoulder tread contact track
+                            let p0_a = (prev_pos - seg_right * offset) - seg_right * sub_w;
+                            let p1_a = (prev_pos - seg_right * offset) + seg_right * sub_w;
+                            let p2_a = (curr_pos - seg_right * offset) + seg_right * sub_w;
+                            let p3_a = (curr_pos - seg_right * offset) - seg_right * sub_w;
+
+                            // Ribbon B: Inner shoulder tread contact track
+                            let p0_b = (prev_pos + seg_right * offset) - seg_right * sub_w;
+                            let p1_b = (prev_pos + seg_right * offset) + seg_right * sub_w;
+                            let p2_b = (curr_pos + seg_right * offset) + seg_right * sub_w;
+                            let p3_b = (curr_pos + seg_right * offset) - seg_right * sub_w;
 
                             self.add_segment(SkidSegment {
-                                p0,
-                                p1,
-                                p2,
-                                p3,
-                                color,
+                                p0: p0_a,
+                                p1: p1_a,
+                                p2: p2_a,
+                                p3: p3_a,
+                                color: col_outer,
+                            });
+                            self.add_segment(SkidSegment {
+                                p0: p0_b,
+                                p1: p1_b,
+                                p2: p2_b,
+                                p3: p3_b,
+                                color: col_inner,
                             });
                         }
                     }

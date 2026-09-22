@@ -690,7 +690,7 @@ impl RaceSession {
             profile_telemetry_filter_idx: 0,
             profile_focus_card: false,
 
-            fx: EffectsManager::new(8000, 1500),
+            fx: EffectsManager::new(32000, 1500),
             camera,
             camera_p2,
             split_layout: SplitLayout::Vertical,

@@ -168,3 +168,22 @@ fn test_no_particles_while_car_is_on_the_air() {
     fx.update(&grounded_cars, &surfaces_asphalt, &[], &[], 0.016);
     assert!(fx.particles.count() > 0, "Grounded car with skid intensity should emit tire smoke");
 }
+
+#[test]
+fn test_skidmarks_dual_tread_and_irregularity() {
+    let mut buffer = SkidmarkBuffer::new(50);
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.wheels[0].skid_intensity = 0.6;
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 0);
+
+    // Car moves forward 0.5m while skidding
+    car.state.position = Vec2::new(0.5, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    // One skidding wheel produces 2 sub-ribbon tread tracks for realistic texturing
+    assert_eq!(buffer.count(), 2, "Single skidding wheel should produce dual-tread ribbons for texturing");
+}

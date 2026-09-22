@@ -1021,6 +1021,51 @@ fn test_track_render_execution_under_all_quality_tiers_headless_safety() {
     }
 }
 
+#[test]
+fn test_seamless_periodic_grass_and_asphalt_generators() {
+    use tdrace_app::render::generate_surface_image;
+    use tdrace_core::physics::surface::SurfaceType;
+
+    let grass_img = generate_surface_image(SurfaceType::Grass, 256, 256);
+    assert_eq!(grass_img.width, 256);
+    assert_eq!(grass_img.height, 256);
+    assert_eq!(grass_img.bytes.len(), 256 * 256 * 4);
+
+    let asphalt_img = generate_surface_image(SurfaceType::Asphalt, 256, 256);
+    assert_eq!(asphalt_img.width, 256);
+    assert_eq!(asphalt_img.height, 256);
+    assert_eq!(asphalt_img.bytes.len(), 256 * 256 * 4);
+
+    // Verify mean luminance range for isotropic matte asphalt (deep charcoal)
+    let mut sum_lum = 0u64;
+    for y in 0..256 {
+        for x in 0..256 {
+            let idx = (y * 256 + x) * 4;
+            sum_lum += asphalt_img.bytes[idx] as u64;
+        }
+    }
+    let mean_asphalt = sum_lum as f64 / (256.0 * 256.0);
+    assert!(mean_asphalt > 25.0 && mean_asphalt < 55.0, "Asphalt mean must be matte charcoal, got {}", mean_asphalt);
+}
+
+#[test]
+fn test_backdrop_ground_pass_execution() {
+    use tdrace_app::render::track::{render_backdrop_ground_pass, render_ground_track_culled, set_surface_texture_quality};
+    use tdrace_app::render::surface_material::SurfaceTextureQuality;
+    use tdrace_core::track::presets::classic_grand_prix;
+    use glam::Vec2;
+
+    let track = classic_grand_prix();
+    let bounds = Some((Vec2::new(-50.0, -50.0), Vec2::new(300.0, 300.0)));
+
+    for &q in &[SurfaceTextureQuality::Off, SurfaceTextureQuality::Standard, SurfaceTextureQuality::High] {
+        set_surface_texture_quality(q);
+        render_backdrop_ground_pass(&track, bounds);
+        render_backdrop_ground_pass(&track, None);
+        render_ground_track_culled(&track, bounds);
+    }
+}
+
 
 
 
