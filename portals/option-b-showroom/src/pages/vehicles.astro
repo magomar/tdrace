@@ -5,12 +5,12 @@ import GlobalViewSwitcher from '../components/GlobalViewSwitcher.astro';
 import vehiclesData from '../../../shared/data/vehicles.json';
 
 const modules = [
-  'All Modules',
-  'Gran Turismo & Endurance',
-  'NASCAR Stock Car Racing',
-  'Rallycross & All-Terrain',
-  'Extreme Off-Road & Arenas',
-  'Karting & Micro-Racers',
+  { label: 'All Modules', value: 'All Modules' },
+  { label: 'Gran Turismo', value: 'Gran Turismo & Endurance' },
+  { label: 'NASCAR', value: 'NASCAR Stock Car Racing' },
+  { label: 'Rally & All terrain', value: 'Rallycross & All-Terrain' },
+  { label: 'Extrem Off-Road', value: 'Extreme Off-Road & Arenas' },
+  { label: 'Karting', value: 'Karting & Micro-Racers' },
 ];
 ---
 
@@ -49,9 +49,9 @@ const modules = [
               ? 'active bg-racing-blue text-white font-bold shadow-lg shadow-racing-blue/20'
               : 'bg-racing-surface border border-racing-border text-racing-muted hover:text-white hover:bg-racing-surface2'
           }`}
-          data-module={m}
+          data-module={m.value}
         >
-          {m}
+          {m.label}
         </button>
       ))}
     </div>
