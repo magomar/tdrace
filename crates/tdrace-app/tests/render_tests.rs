@@ -394,6 +394,90 @@ fn test_vortex_dune_crusher_topdown_sprite_orientation() {
 }
 
 #[test]
+fn test_peugeot_208_rally4_topdown_sprite_orientation() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/rally/rally_peugeot_208_rally4.png");
+    let bytes = std::fs::read(&path).expect("Failed to read rally_peugeot_208_rally4 topdown sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse rally_peugeot_208_rally4 image");
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut left_red = 0;
+    let mut right_red = 0;
+
+    for y in 0..height {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let r = img.bytes[idx];
+            let g = img.bytes[idx + 1];
+            let b = img.bytes[idx + 2];
+            let a = img.bytes[idx + 3];
+
+            // Red hood bodywork pixels (front of car)
+            if a > 200 && r > 180 && g < 60 && b < 60 {
+                if x < width / 2 {
+                    left_red += 1;
+                } else {
+                    right_red += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        right_red > left_red * 2,
+        "Peugeot 208 Rally 4 front hood must face forward (+X, right side). Found right: {}, left: {}",
+        right_red,
+        left_red
+    );
+}
+
+#[test]
+fn test_tony_kart_topdown_sprite_orientation() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/kart/kart_tony_kart_racer_ok.png");
+    let bytes = std::fs::read(&path).expect("Failed to read kart_tony_kart_racer_ok topdown sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart image");
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut left_yellow = 0;
+    let mut right_yellow = 0;
+
+    for y in 0..height {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let r = img.bytes[idx];
+            let g = img.bytes[idx + 1];
+            let b = img.bytes[idx + 2];
+            let a = img.bytes[idx + 3];
+
+            // Yellow front nosecone number plate
+            if a > 200 && r > 200 && g > 180 && b < 50 {
+                if x < width / 2 {
+                    left_yellow += 1;
+                } else {
+                    right_yellow += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        right_yellow > left_yellow * 2,
+        "Tony Kart front noseplate must face forward (+X, right side). Found right: {}, left: {}",
+        right_yellow,
+        left_yellow
+    );
+}
+
+#[test]
 fn test_classic_mask_tinting_transforms_bodywork_pixels() {
     use macroquad::color::Color;
     use macroquad::texture::Image;
