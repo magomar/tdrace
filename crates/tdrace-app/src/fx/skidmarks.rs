@@ -4,7 +4,6 @@ use tdrace_core::physics::car::Car;
 use tdrace_core::physics::surface::SurfaceType;
 
 use crate::render::color::Palette;
-use crate::render::track::draw_quad;
 
 #[inline]
 fn skid_noise(p: Vec2, seed: u32) -> f32 {
@@ -15,13 +14,17 @@ fn skid_noise(p: Vec2, seed: u32) -> f32 {
     ((h ^ (h >> 16)) & 0xFFFF) as f32 / 65535.0
 }
 
-/// A single persistent 2D skid mark quad segment.
+/// A single persistent 2D skid mark quad segment with UV coordinates for realistic tire tread rendering.
 #[derive(Debug, Clone, Copy)]
 pub struct SkidSegment {
     pub p0: Vec2,
     pub p1: Vec2,
     pub p2: Vec2,
     pub p3: Vec2,
+    pub uv0: macroquad::prelude::Vec2,
+    pub uv1: macroquad::prelude::Vec2,
+    pub uv2: macroquad::prelude::Vec2,
+    pub uv3: macroquad::prelude::Vec2,
     pub color: Color,
 }
 
@@ -33,6 +36,7 @@ pub struct SkidmarkBuffer {
     write_idx: usize,
     total_count: usize,
     prev_wheel_positions: Vec<[Option<Vec2>; 4]>,
+    wheel_accum_v: Vec<[f32; 4]>,
 }
 
 impl SkidmarkBuffer {
@@ -43,6 +47,7 @@ impl SkidmarkBuffer {
             write_idx: 0,
             total_count: 0,
             prev_wheel_positions: Vec::new(),
+            wheel_accum_v: Vec::new(),
         }
     }
 
@@ -52,6 +57,7 @@ impl SkidmarkBuffer {
         self.write_idx = 0;
         self.total_count = 0;
         self.prev_wheel_positions.clear();
+        self.wheel_accum_v.clear();
     }
 
     /// Number of active skid mark segments.
@@ -64,6 +70,7 @@ impl SkidmarkBuffer {
         // Ensure tracking storage matches cars length
         if self.prev_wheel_positions.len() < cars.len() {
             self.prev_wheel_positions.resize(cars.len(), [None; 4]);
+            self.wheel_accum_v.resize(cars.len(), [0.0; 4]);
         }
 
         for (car_idx, car) in cars.iter().enumerate() {
@@ -123,23 +130,42 @@ impl SkidmarkBuffer {
                             let sub_w = half_tire_w * 0.38;
                             let offset = half_tire_w * 0.44 + jitter;
 
-                            // Ribbon A: Outer shoulder tread contact track
+                            // Texture UV longitudinal coordinate mapping (tread pattern repeats every 0.75m)
+                            let v0 = self.wheel_accum_v[car_idx][wheel_id];
+                            let v1 = v0 + dist / 0.75;
+                            self.wheel_accum_v[car_idx][wheel_id] = v1 % 1000.0;
+
+                            // Ribbon A: Outer shoulder tread contact track (UV u: 0.00 .. 0.48)
                             let p0_a = (prev_pos - seg_right * offset) - seg_right * sub_w;
                             let p1_a = (prev_pos - seg_right * offset) + seg_right * sub_w;
                             let p2_a = (curr_pos - seg_right * offset) + seg_right * sub_w;
                             let p3_a = (curr_pos - seg_right * offset) - seg_right * sub_w;
 
-                            // Ribbon B: Inner shoulder tread contact track
+                            let uv0_a = macroquad::prelude::Vec2::new(0.0, v0);
+                            let uv1_a = macroquad::prelude::Vec2::new(0.48, v0);
+                            let uv2_a = macroquad::prelude::Vec2::new(0.48, v1);
+                            let uv3_a = macroquad::prelude::Vec2::new(0.0, v1);
+
+                            // Ribbon B: Inner shoulder tread contact track (UV u: 0.52 .. 1.00)
                             let p0_b = (prev_pos + seg_right * offset) - seg_right * sub_w;
                             let p1_b = (prev_pos + seg_right * offset) + seg_right * sub_w;
                             let p2_b = (curr_pos + seg_right * offset) + seg_right * sub_w;
                             let p3_b = (curr_pos + seg_right * offset) - seg_right * sub_w;
+
+                            let uv0_b = macroquad::prelude::Vec2::new(0.52, v0);
+                            let uv1_b = macroquad::prelude::Vec2::new(1.00, v0);
+                            let uv2_b = macroquad::prelude::Vec2::new(1.00, v1);
+                            let uv3_b = macroquad::prelude::Vec2::new(0.52, v1);
 
                             self.add_segment(SkidSegment {
                                 p0: p0_a,
                                 p1: p1_a,
                                 p2: p2_a,
                                 p3: p3_a,
+                                uv0: uv0_a,
+                                uv1: uv1_a,
+                                uv2: uv2_a,
+                                uv3: uv3_a,
                                 color: col_outer,
                             });
                             self.add_segment(SkidSegment {
@@ -147,6 +173,10 @@ impl SkidmarkBuffer {
                                 p1: p1_b,
                                 p2: p2_b,
                                 p3: p3_b,
+                                uv0: uv0_b,
+                                uv1: uv1_b,
+                                uv2: uv2_b,
+                                uv3: uv3_b,
                                 color: col_inner,
                             });
                         }
@@ -171,10 +201,29 @@ impl SkidmarkBuffer {
         self.total_count += 1;
     }
 
-    /// Renders all active skid marks.
+    /// Renders all active skid marks using the global surface material registry's tire rubber texture.
     pub fn render(&self) {
-        for seg in &self.segments {
-            draw_quad(seg.p0, seg.p1, seg.p2, seg.p3, seg.color);
+        let tex = crate::render::track::with_surface_registry(|reg| {
+            reg.tire_rubber_texture().cloned()
+        }).flatten();
+        self.render_textured(tex.as_ref());
+    }
+
+    /// Renders all active skid marks as a high-performance GPU batch mesh.
+    pub fn render_textured(&self, texture: Option<&macroquad::texture::Texture2D>) {
+        if self.segments.is_empty() {
+            return;
         }
+
+        let mut builder = crate::render::track::BatchMeshBuilder::new(texture.cloned());
+        for seg in &self.segments {
+            builder.push_quad(
+                seg.p0, seg.uv0, seg.color,
+                seg.p1, seg.uv1, seg.color,
+                seg.p2, seg.uv2, seg.color,
+                seg.p3, seg.uv3, seg.color,
+            );
+        }
+        builder.flush();
     }
 }

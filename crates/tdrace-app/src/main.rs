@@ -96,6 +96,12 @@ async fn main() {
         .position(|a| a == "--screenshot")
         .and_then(|i| args.get(i + 1))
         .cloned();
+    let max_frames: u32 = args
+        .iter()
+        .position(|a| a == "--frames")
+        .and_then(|i| args.get(i + 1))
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(10);
     let mut frame_count: u32 = 0;
 
     loop {
@@ -110,7 +116,7 @@ async fn main() {
 
         frame_count += 1;
         if let Some(path) = &screenshot_path {
-            if frame_count >= 10 {
+            if frame_count >= max_frames {
                 let img = get_screen_data();
                 img.export_png(path);
                 println!("Screenshot exported to {}", path);

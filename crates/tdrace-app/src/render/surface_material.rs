@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use macroquad::color::Color;
-use macroquad::texture::{FilterMode, Image, Texture2D};
+use macroquad::texture::{Image, Texture2D};
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::surface::SurfaceType;
 
@@ -71,6 +71,7 @@ pub struct SurfaceMaterialRegistry {
     curb_material: Option<SurfaceMaterial>,
     edge_fringe_texture: Option<Texture2D>,
     macro_noise_texture: Option<Texture2D>,
+    tire_rubber_texture: Option<Texture2D>,
     quality: SurfaceTextureQuality,
 }
 
@@ -87,6 +88,7 @@ impl SurfaceMaterialRegistry {
             curb_material: None,
             edge_fringe_texture: None,
             macro_noise_texture: None,
+            tire_rubber_texture: None,
             quality,
         };
 
@@ -109,9 +111,18 @@ impl SurfaceMaterialRegistry {
                 self.curb_material = None;
                 self.edge_fringe_texture = None;
                 self.macro_noise_texture = None;
+                self.tire_rubber_texture = None;
             } else {
                 self.load_or_generate_all();
             }
+        }
+    }
+
+    pub fn tire_rubber_texture(&self) -> Option<&Texture2D> {
+        if self.quality == SurfaceTextureQuality::Off {
+            None
+        } else {
+            self.tire_rubber_texture.as_ref()
         }
     }
 
@@ -190,8 +201,7 @@ impl SurfaceMaterialRegistry {
         let fringe_tex = if let Some(bytes) = Self::find_surface_asset_file("edge_fringe_mask.png") {
             if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 let t = Texture2D::from_file_with_format(&bytes, None);
-                t.set_filter(FilterMode::Linear);
-                Self::set_texture_repeat(&t);
+                Self::set_texture_repeat_and_mipmaps(&t);
                 t
             })) {
                 Some(tex)
@@ -207,6 +217,26 @@ impl SurfaceMaterialRegistry {
 
         let noise_img = generate_macro_noise_image(128, 128);
         self.macro_noise_texture = Self::upload_texture(&noise_img);
+
+        // Tire rubber texture
+        let rubber_tex = if let Some(bytes) = Self::find_surface_asset_file("tire_rubber.png")
+            .or_else(|| Self::find_surface_asset_file("asphalt_groove.png"))
+        {
+            if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let t = Texture2D::from_file_with_format(&bytes, None);
+                Self::set_texture_repeat_and_mipmaps(&t);
+                t
+            })) {
+                Some(tex)
+            } else {
+                let rubber_img = generate_tire_rubber_image(128, 256);
+                Self::upload_texture(&rubber_img)
+            }
+        } else {
+            let rubber_img = generate_tire_rubber_image(128, 256);
+            Self::upload_texture(&rubber_img)
+        };
+        self.tire_rubber_texture = rubber_tex;
     }
 
     fn find_surface_asset_file(filename: &str) -> Option<Vec<u8>> {
@@ -244,8 +274,7 @@ impl SurfaceMaterialRegistry {
         if let Some(bytes) = Self::find_surface_asset_file(filename) {
             if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 let t = Texture2D::from_file_with_format(&bytes, None);
-                t.set_filter(FilterMode::Linear);
-                Self::set_texture_repeat(&t);
+                Self::set_texture_repeat_and_mipmaps(&t);
                 t
             })) {
                 return Some(tex);
@@ -261,8 +290,7 @@ impl SurfaceMaterialRegistry {
         if let Some(bytes) = Self::find_surface_asset_file("curb_teeth.png") {
             if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 let t = Texture2D::from_file_with_format(&bytes, None);
-                t.set_filter(FilterMode::Linear);
-                Self::set_texture_repeat(&t);
+                Self::set_texture_repeat_and_mipmaps(&t);
                 t
             })) {
                 return Some(tex);
@@ -272,12 +300,19 @@ impl SurfaceMaterialRegistry {
         Self::upload_texture(&img)
     }
 
-    fn set_texture_repeat(tex: &Texture2D) {
+    fn set_texture_repeat_and_mipmaps(tex: &Texture2D) {
         let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             unsafe {
                 let gl_ctx = macroquad::window::get_internal_gl();
+                let id = tex.raw_miniquad_id();
+                gl_ctx.quad_context.texture_generate_mipmaps(id);
+                gl_ctx.quad_context.texture_set_filter(
+                    id,
+                    macroquad::miniquad::FilterMode::Linear,
+                    macroquad::miniquad::MipmapFilterMode::Linear,
+                );
                 gl_ctx.quad_context.texture_set_wrap(
-                    tex.raw_miniquad_id(),
+                    id,
                     macroquad::miniquad::TextureWrap::Repeat,
                     macroquad::miniquad::TextureWrap::Repeat,
                 );
@@ -289,8 +324,7 @@ impl SurfaceMaterialRegistry {
         // Safe upload: catches panic if running in headless environments without window context.
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let tex = Texture2D::from_image(img);
-            tex.set_filter(FilterMode::Linear);
-            Self::set_texture_repeat(&tex);
+            Self::set_texture_repeat_and_mipmaps(&tex);
             tex
         })).ok()
     }
@@ -364,14 +398,14 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                         128,
                         202,
                     );
-                    let jitter = (pseudo_noise_f32(x as u32, y as u32, 303) - 0.5) * 6.0;
+                    let jitter = (pseudo_noise_f32(x as u32, y as u32, 303) - 0.5) * 3.0;
 
-                    let mut base = 33.0 + n_coarse * 8.0 + n_fine * 4.0 + jitter;
-                    // Low-contrast crushed aggregate specks (soft +12 luminance jump, anti-aliased)
-                    if pseudo_noise_f32(x as u32, y as u32, 404) > 0.96 {
-                        base += 12.0;
+                    let mut base = 35.0 + n_coarse * 6.0 + n_fine * 3.0 + jitter;
+                    // Low-contrast crushed aggregate specks (soft +5 luminance jump, anti-aliased)
+                    if pseudo_noise_f32(x as u32, y as u32, 404) > 0.97 {
+                        base += 5.0;
                     }
-                    let base_clamped = base.clamp(26.0, 52.0);
+                    let base_clamped = base.clamp(28.0, 48.0);
 
                     bytes[idx] = (base_clamped * 0.97) as u8;
                     bytes[idx + 1] = (base_clamped * 0.99) as u8;
@@ -389,10 +423,10 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                     let n = pseudo_noise_f32(x as u32, y as u32, 303);
                     let n_rut = pseudo_noise_f32(x as u32 / 3, y as u32, 404);
 
-                    let base_lum = 0.55 + rut_wave * 0.08 + (n - 0.5) * 0.16 + (n_rut - 0.5) * 0.12;
-                    let r = (145.0 * base_lum).clamp(60.0, 210.0) as u8;
-                    let g = (100.0 * base_lum).clamp(40.0, 160.0) as u8;
-                    let b = (62.0 * base_lum).clamp(24.0, 115.0) as u8;
+                    let base_lum = 0.58 + rut_wave * 0.05 + (n - 0.5) * 0.09 + (n_rut - 0.5) * 0.07;
+                    let r = (145.0 * base_lum).clamp(80.0, 190.0) as u8;
+                    let g = (100.0 * base_lum).clamp(55.0, 140.0) as u8;
+                    let b = (62.0 * base_lum).clamp(32.0, 95.0) as u8;
 
                     bytes[idx] = r;
                     bytes[idx + 1] = g;
@@ -422,9 +456,9 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                     );
                     let val = n1 * 0.70 + n2 * 0.30;
 
-                    let r = (30.0 + val * 26.0).clamp(24.0, 70.0) as u8;
-                    let g = (78.0 + val * 52.0).clamp(65.0, 150.0) as u8;
-                    let b = (34.0 + val * 30.0).clamp(26.0, 80.0) as u8;
+                    let r = (32.0 + val * 16.0).clamp(28.0, 60.0) as u8;
+                    let g = (86.0 + val * 30.0).clamp(76.0, 130.0) as u8;
+                    let b = (36.0 + val * 18.0).clamp(30.0, 68.0) as u8;
 
                     bytes[idx] = r;
                     bytes[idx + 1] = g;
@@ -448,10 +482,10 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                     // Top-left highlight, bottom-right micro-shadow
                     let relief = (4.0 - (in_cell_x + in_cell_y)) * 0.12 - 0.24;
 
-                    let base = 135.0 + (pebble_hue - 0.5) * 45.0 + relief * 50.0;
-                    let r = base.clamp(60.0, 215.0) as u8;
-                    let g = (base * 0.98).clamp(58.0, 210.0) as u8;
-                    let b = (base * 0.94).clamp(55.0, 205.0) as u8;
+                    let base = 135.0 + (pebble_hue - 0.5) * 18.0 + relief * 20.0;
+                    let r = base.clamp(90.0, 175.0) as u8;
+                    let g = (base * 0.98).clamp(88.0, 172.0) as u8;
+                    let b = (base * 0.94).clamp(85.0, 168.0) as u8;
 
                     bytes[idx] = r;
                     bytes[idx + 1] = g;
@@ -696,6 +730,51 @@ pub fn generate_macro_noise_image(width: u16, height: u16) -> Image {
             bytes[idx + 1] = val;
             bytes[idx + 2] = val;
             bytes[idx + 3] = 255;
+        }
+    }
+
+    Image {
+        bytes,
+        width,
+        height,
+    }
+}
+
+/// Generates a realistic tire rubber contact texture with multi-rib tread striations,
+/// feathered organic edges, rubber clumping, and slip chatter.
+pub fn generate_tire_rubber_image(width: u16, height: u16) -> Image {
+    let mut bytes = vec![0u8; width as usize * height as usize * 4];
+
+    for y in 0..height {
+        let v = y as f32 / height as f32;
+        let chatter = sample_periodic_noise(0.0, v * 16.0, 1, 16, 777);
+        let clump = sample_periodic_noise(0.0, v * 32.0, 1, 32, 888);
+
+        for x in 0..width {
+            let idx = (y as usize * width as usize + x as usize) * 4;
+            let u = x as f32 / width as f32;
+
+            // Feathered soft contact edge with subtle micro-ragged jitter
+            let edge_noise = (pseudo_noise_f32(x as u32, y as u32, 999) - 0.5) * 0.08;
+            let u_noisy = (u + edge_noise).clamp(0.0, 1.0);
+            let edge_dist = (u_noisy * 2.5).min((1.0 - u_noisy) * 2.5).clamp(0.0, 1.0);
+            let edge_feather = smoothstep(edge_dist);
+
+            // Multi-rib tread striation pattern: 3 groove voids and 4 contact ribs
+            let rib_wave = ((u * std::f32::consts::PI * 6.0).sin().abs()).powf(0.8);
+            let tread_profile = 0.35 + rib_wave * 0.65;
+
+            // Micro-grain and molten rubber clumping
+            let grain = (pseudo_noise_f32(x as u32, y as u32, 1010) - 0.5) * 0.15;
+            let rubber_density = (tread_profile * (0.80 + chatter * 0.25 + clump * 0.15) + grain).clamp(0.0, 1.0);
+
+            let alpha = (edge_feather * rubber_density * 255.0).clamp(0.0, 255.0) as u8;
+
+            // Pure white RGB with modulated alpha so tint color is preserved
+            bytes[idx] = 255;
+            bytes[idx + 1] = 255;
+            bytes[idx + 2] = 255;
+            bytes[idx + 3] = alpha;
         }
     }
 

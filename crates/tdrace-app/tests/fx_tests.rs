@@ -187,3 +187,28 @@ fn test_skidmarks_dual_tread_and_irregularity() {
     // One skidding wheel produces 2 sub-ribbon tread tracks for realistic texturing
     assert_eq!(buffer.count(), 2, "Single skidding wheel should produce dual-tread ribbons for texturing");
 }
+
+#[test]
+fn test_skidmarks_uv_mapping_and_persistent_capacity() {
+    let mut buffer = SkidmarkBuffer::new(64000);
+    assert_eq!(buffer.count(), 0);
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.wheels[0].skid_intensity = 0.8;
+    car.state.wheels[1].skid_intensity = 0.8;
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    // Car slides forward across multiple steps
+    for step in 1..=10 {
+        car.state.position = Vec2::new(step as f32 * 0.4, 0.0);
+        buffer.update_for_cars(&[car.clone()], &surfaces);
+    }
+
+    // 2 wheels skidding * 2 ribbons * 10 steps = 40 segments
+    assert_eq!(buffer.count(), 40);
+
+    // Verify safe batch rendering call
+    buffer.render();
+}

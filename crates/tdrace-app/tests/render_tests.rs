@@ -802,6 +802,21 @@ fn test_procedural_surface_image_generators_all_12_surfaces() {
     // Verify macro noise image
     let macro_noise = generate_macro_noise_image(32, 32);
     assert_eq!(macro_noise.bytes.len(), 32 * 32 * 4);
+
+    // Verify tire rubber contact texture (feathered edges, multi-rib striations, white RGB)
+    let rubber = tdrace_app::render::generate_tire_rubber_image(64, 128);
+    assert_eq!(rubber.width, 64);
+    assert_eq!(rubber.height, 128);
+    assert_eq!(rubber.bytes.len(), 64 * 128 * 4);
+
+    // Edge pixel (x=0, y=64) should have zero/minimal alpha due to edge feathering
+    let edge_idx = (64 * 64 + 0) * 4;
+    assert_eq!(rubber.bytes[edge_idx], 255, "RGB must be white for vertex tinting");
+    assert!(rubber.bytes[edge_idx + 3] < 30, "Outer edge must feather to near-zero alpha: got {}", rubber.bytes[edge_idx + 3]);
+
+    // Check that contact ribs reach solid rubber density (> 180 alpha)
+    let max_patch_alpha = (0..64).map(|x| rubber.bytes[(64 * 64 + x) * 4 + 3]).max().unwrap();
+    assert!(max_patch_alpha > 180, "Contact ribs must reach solid rubber density: got {}", max_patch_alpha);
 }
 
 #[test]

@@ -31,8 +31,8 @@ pub use scenery::{
 };
 pub use surface_material::{
     evaluate_macro_modulation, generate_curb_image, generate_edge_fringe_mask,
-    generate_macro_noise_image, generate_surface_image, SurfaceMaterial, SurfaceMaterialRegistry,
-    SurfaceTextureQuality, TrackWearState,
+    generate_macro_noise_image, generate_surface_image, generate_tire_rubber_image,
+    SurfaceMaterial, SurfaceMaterialRegistry, SurfaceTextureQuality, TrackWearState,
 };
 pub use track::{
     get_track_backdrop_color, render_elevated_track, render_elevated_track_culled,
