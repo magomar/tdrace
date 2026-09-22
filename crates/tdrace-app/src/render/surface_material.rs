@@ -219,9 +219,7 @@ impl SurfaceMaterialRegistry {
         self.macro_noise_texture = Self::upload_texture(&noise_img);
 
         // Tire rubber texture
-        let rubber_tex = if let Some(bytes) = Self::find_surface_asset_file("tire_rubber.png")
-            .or_else(|| Self::find_surface_asset_file("asphalt_groove.png"))
-        {
+        let rubber_tex = if let Some(bytes) = Self::find_surface_asset_file("tire_rubber.png") {
             if let Ok(tex) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 let t = Texture2D::from_file_with_format(&bytes, None);
                 Self::set_texture_repeat_and_mipmaps(&t);
@@ -229,11 +227,11 @@ impl SurfaceMaterialRegistry {
             })) {
                 Some(tex)
             } else {
-                let rubber_img = generate_tire_rubber_image(128, 256);
+                let rubber_img = generate_tire_rubber_image(256, 512);
                 Self::upload_texture(&rubber_img)
             }
         } else {
-            let rubber_img = generate_tire_rubber_image(128, 256);
+            let rubber_img = generate_tire_rubber_image(256, 512);
             Self::upload_texture(&rubber_img)
         };
         self.tire_rubber_texture = rubber_tex;
@@ -419,11 +417,23 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
+                    let n_coarse = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        303,
+                    );
+                    let n_fine = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        404,
+                    );
                     let rut_wave = ((x as f32 / width as f32) * std::f32::consts::PI * 8.0).sin();
-                    let n = pseudo_noise_f32(x as u32, y as u32, 303);
-                    let n_rut = pseudo_noise_f32(x as u32 / 3, y as u32, 404);
 
-                    let base_lum = 0.58 + rut_wave * 0.05 + (n - 0.5) * 0.09 + (n_rut - 0.5) * 0.07;
+                    let base_lum = 0.58 + rut_wave * 0.04 + (n_coarse - 0.5) * 0.07 + (n_fine - 0.5) * 0.04;
                     let r = (145.0 * base_lum).clamp(80.0, 190.0) as u8;
                     let g = (100.0 * base_lum).clamp(55.0, 140.0) as u8;
                     let b = (62.0 * base_lum).clamp(32.0, 95.0) as u8;
@@ -468,24 +478,36 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             }
         }
         SurfaceType::Gravel => {
-            // Crushed angular limestone & slate scree with cast micro-shadows
+            // Crushed angular limestone & slate scree: multi-scale seamless periodic pebbles
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let cell_x = (x / 4) as u32;
-                    let cell_y = (y / 4) as u32;
-                    let pebble_id = pseudo_hash(cell_x, cell_y, 707);
-                    let pebble_hue = (pebble_id & 0xFF) as f32 / 255.0;
+                    let n_coarse = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        707,
+                    );
+                    let n_pebbles = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        808,
+                    );
+                    let n_speck = sample_periodic_noise(
+                        x as f32 * (128.0 / width as f32),
+                        y as f32 * (128.0 / height as f32),
+                        128,
+                        128,
+                        909,
+                    );
 
-                    let in_cell_x = (x % 4) as f32;
-                    let in_cell_y = (y % 4) as f32;
-                    // Top-left highlight, bottom-right micro-shadow
-                    let relief = (4.0 - (in_cell_x + in_cell_y)) * 0.12 - 0.24;
-
-                    let base = 135.0 + (pebble_hue - 0.5) * 18.0 + relief * 20.0;
-                    let r = base.clamp(90.0, 175.0) as u8;
-                    let g = (base * 0.98).clamp(88.0, 172.0) as u8;
-                    let b = (base * 0.94).clamp(85.0, 168.0) as u8;
+                    let base = 135.0 + (n_coarse - 0.5) * 14.0 + (n_pebbles - 0.5) * 12.0 + (n_speck - 0.5) * 8.0;
+                    let r = base.clamp(100.0, 170.0) as u8;
+                    let g = (base * 0.98).clamp(98.0, 168.0) as u8;
+                    let b = (base * 0.94).clamp(94.0, 165.0) as u8;
 
                     bytes[idx] = r;
                     bytes[idx + 1] = g;
@@ -495,28 +517,33 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             }
         }
         SurfaceType::Concrete => {
-            // Brushed industrial slabs with fine directional micro-grooves and expansion joint
+            // Brushed industrial slabs: seamless directional micro-grooves and aggregate grain
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let is_joint = y == height / 2 || y == height / 2 + 1;
-                    if is_joint {
-                        bytes[idx] = 60;
-                        bytes[idx + 1] = 62;
-                        bytes[idx + 2] = 65;
-                        bytes[idx + 3] = 255;
-                    } else {
-                        let brush = pseudo_noise_f32(x as u32, y as u32 / 2, 808);
-                        let n = pseudo_noise_f32(x as u32, y as u32, 909);
-                        let base = 155.0 + (brush - 0.5) * 22.0 + (n - 0.5) * 12.0;
-                        let r = base.clamp(110.0, 210.0) as u8;
-                        let g = (base * 1.01).clamp(112.0, 212.0) as u8;
-                        let b = (base * 1.03).clamp(115.0, 215.0) as u8;
-                        bytes[idx] = r;
-                        bytes[idx + 1] = g;
-                        bytes[idx + 2] = b;
-                        bytes[idx + 3] = 255;
-                    }
+                    let n_brush = sample_periodic_noise(
+                        x as f32 * (128.0 / width as f32),
+                        y as f32 * (16.0 / height as f32),
+                        128,
+                        16,
+                        1011,
+                    );
+                    let n_grain = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        1112,
+                    );
+                    let base = 158.0 + (n_brush - 0.5) * 14.0 + (n_grain - 0.5) * 10.0;
+                    let r = base.clamp(130.0, 190.0) as u8;
+                    let g = (base * 1.01).clamp(132.0, 192.0) as u8;
+                    let b = (base * 1.03).clamp(135.0, 195.0) as u8;
+
+                    bytes[idx] = r;
+                    bytes[idx + 1] = g;
+                    bytes[idx + 2] = b;
+                    bytes[idx + 3] = 255;
                 }
             }
         }
@@ -525,32 +552,56 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let wave = ((y as f32 / height as f32) * std::f32::consts::PI * 6.0).sin();
-                    let n = pseudo_noise_f32(x as u32, y as u32, 1010);
-                    let base = 190.0 + wave * 18.0 + (n - 0.5) * 16.0;
+                    let wave = ((y as f32 / height as f32) * std::f32::consts::PI * 8.0).sin();
+                    let n_dune = sample_periodic_noise(
+                        x as f32 * (16.0 / width as f32),
+                        y as f32 * (16.0 / height as f32),
+                        16,
+                        16,
+                        1213,
+                    );
+                    let n_grain = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        1314,
+                    );
+                    let base = 192.0 + wave * 9.0 + (n_dune - 0.5) * 12.0 + (n_grain - 0.5) * 8.0;
 
-                    bytes[idx] = base.clamp(140.0, 235.0) as u8;
-                    bytes[idx + 1] = (base * 0.86).clamp(120.0, 205.0) as u8;
-                    bytes[idx + 2] = (base * 0.60).clamp(80.0, 155.0) as u8;
+                    bytes[idx] = base.clamp(150.0, 225.0) as u8;
+                    bytes[idx + 1] = (base * 0.86).clamp(130.0, 198.0) as u8;
+                    bytes[idx + 2] = (base * 0.60).clamp(90.0, 145.0) as u8;
                     bytes[idx + 3] = 255;
                 }
             }
         }
         SurfaceType::Mud => {
-            // Saturated chocolate churned earth with glossy wet highlight pools
+            // Saturated chocolate churned earth with glossy wet specular sheen
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let n = pseudo_noise_f32(x as u32, y as u32, 1111);
-                    let wet_pool = pseudo_noise_f32(x as u32 / 8, y as u32 / 8, 1212);
-                    let is_wet = wet_pool > 0.68;
+                    let n_silt = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        1415,
+                    );
+                    let wet_pool = sample_periodic_noise(
+                        x as f32 * (16.0 / width as f32),
+                        y as f32 * (16.0 / height as f32),
+                        16,
+                        16,
+                        1516,
+                    );
+                    let is_wet = wet_pool > 0.65;
 
                     let (r, g, b) = if is_wet {
-                        // Glossy dark specular sheen
-                        let spec = (n * 35.0) as u8;
-                        (68 + spec, 45 + spec, 30 + spec)
+                        let spec = (n_silt * 20.0) as u8;
+                        (62 + spec, 42 + spec, 28 + spec)
                     } else {
-                        let base = 62.0 + (n - 0.5) * 18.0;
+                        let base = 62.0 + (n_silt - 0.5) * 10.0;
                         (base as u8, (base * 0.72) as u8, (base * 0.45) as u8)
                     };
 
@@ -566,19 +617,25 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let n = pseudo_noise_f32(x as u32, y as u32, 1313);
-                    let is_glint = n > 0.96;
+                    let n_drift = sample_periodic_noise(
+                        x as f32 * (16.0 / width as f32),
+                        y as f32 * (16.0 / height as f32),
+                        16,
+                        16,
+                        1617,
+                    );
+                    let n_sparkle = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        1718,
+                    );
+                    let v = 232.0 + (n_drift - 0.5) * 14.0 + (n_sparkle - 0.5) * 6.0;
 
-                    let (r, g, b) = if is_glint {
-                        (255, 255, 255)
-                    } else {
-                        let v = 228.0 + n * 20.0;
-                        ((v * 0.96) as u8, (v * 0.98) as u8, v as u8)
-                    };
-
-                    bytes[idx] = r;
-                    bytes[idx + 1] = g;
-                    bytes[idx + 2] = b;
+                    bytes[idx] = (v * 0.96).clamp(210.0, 255.0) as u8;
+                    bytes[idx + 1] = (v * 0.98).clamp(215.0, 255.0) as u8;
+                    bytes[idx + 2] = v.clamp(220.0, 255.0) as u8;
                     bytes[idx + 3] = 255;
                 }
             }
@@ -588,20 +645,26 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let crack = ((x as i32 * 3 + y as i32 * 7) % 67).abs() == 0;
-                    let n = pseudo_noise_f32(x as u32, y as u32, 1414);
+                    let n_sheet = sample_periodic_noise(
+                        x as f32 * (16.0 / width as f32),
+                        y as f32 * (16.0 / height as f32),
+                        16,
+                        16,
+                        1819,
+                    );
+                    let n_rime = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        1920,
+                    );
+                    let base = 200.0 + (n_sheet - 0.5) * 16.0 + (n_rime - 0.5) * 8.0;
 
-                    let (r, g, b, a) = if crack {
-                        (245, 252, 255, 250)
-                    } else {
-                        let base = 195.0 + n * 30.0;
-                        ((base * 0.88) as u8, (base * 0.95) as u8, base as u8, 230)
-                    };
-
-                    bytes[idx] = r;
-                    bytes[idx + 1] = g;
-                    bytes[idx + 2] = b;
-                    bytes[idx + 3] = a;
+                    bytes[idx] = (base * 0.88).clamp(160.0, 230.0) as u8;
+                    bytes[idx + 1] = (base * 0.95).clamp(175.0, 240.0) as u8;
+                    bytes[idx + 2] = base.clamp(185.0, 250.0) as u8;
+                    bytes[idx + 3] = 240;
                 }
             }
         }
@@ -610,11 +673,21 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let wave = (((x as f32 * 0.15).sin() + (y as f32 * 0.18).cos()) * 0.5 + 0.5) * 35.0;
-                    bytes[idx] = (40.0 + wave * 0.6) as u8;
-                    bytes[idx + 1] = (115.0 + wave) as u8;
-                    bytes[idx + 2] = (175.0 + wave * 0.8) as u8;
-                    bytes[idx + 3] = 220;
+                    let wave1 = ((x as f32 / width as f32) * std::f32::consts::PI * 6.0).sin();
+                    let wave2 = ((y as f32 / height as f32) * std::f32::consts::PI * 8.0).cos();
+                    let n_caustic = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        2021,
+                    );
+                    let wave = ((wave1 + wave2) * 0.5 + 0.5) * 18.0 + (n_caustic - 0.5) * 12.0;
+
+                    bytes[idx] = (40.0 + wave * 0.5).clamp(30.0, 75.0) as u8;
+                    bytes[idx + 1] = (115.0 + wave * 0.8).clamp(95.0, 150.0) as u8;
+                    bytes[idx + 2] = (175.0 + wave).clamp(150.0, 215.0) as u8;
+                    bytes[idx + 3] = 225;
                 }
             }
         }
@@ -623,14 +696,25 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;
-                    let dist_center = ((x as f32 - width as f32 * 0.5).powi(2)
-                        + (y as f32 - height as f32 * 0.5).powi(2))
-                    .sqrt();
-                    let fringe = (dist_center * 0.25).sin() * 0.5 + 0.5;
+                    let n_swirl1 = sample_periodic_noise(
+                        x as f32 * (16.0 / width as f32),
+                        y as f32 * (16.0 / height as f32),
+                        16,
+                        16,
+                        2122,
+                    );
+                    let n_swirl2 = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        2223,
+                    );
+                    let fringe = (n_swirl1 * 0.70 + n_swirl2 * 0.30).clamp(0.0, 1.0);
 
-                    let r = (20.0 + fringe * 45.0) as u8;
-                    let g = (18.0 + (1.0 - fringe) * 35.0) as u8;
-                    let b = (25.0 + (fringe * 0.5) * 55.0) as u8;
+                    let r = (24.0 + fringe * 30.0) as u8;
+                    let g = (22.0 + (1.0 - fringe) * 24.0) as u8;
+                    let b = (28.0 + fringe * 36.0) as u8;
 
                     bytes[idx] = r;
                     bytes[idx + 1] = g;
@@ -698,8 +782,14 @@ pub fn generate_edge_fringe_mask(width: u16, height: u16) -> Image {
         let falloff = y as f32 / height as f32;
         for x in 0..width {
             let idx = (y as usize * width as usize + x as usize) * 4;
-            let n = pseudo_noise_f32(x as u32, y as u32, 1515);
-            let alpha = ((falloff + (n - 0.5) * 0.35).clamp(0.0, 1.0) * 255.0) as u8;
+            let n = sample_periodic_noise(
+                x as f32 * (32.0 / width as f32),
+                y as f32 * (32.0 / height as f32),
+                32,
+                32,
+                1515,
+            );
+            let alpha = ((falloff + (n - 0.5) * 0.28).clamp(0.0, 1.0) * 255.0) as u8;
 
             bytes[idx] = 255;
             bytes[idx + 1] = 255;
@@ -722,9 +812,21 @@ pub fn generate_macro_noise_image(width: u16, height: u16) -> Image {
     for y in 0..height {
         for x in 0..width {
             let idx = (y as usize * width as usize + x as usize) * 4;
-            let n1 = pseudo_noise_f32(x as u32 / 8, y as u32 / 8, 1616);
-            let n2 = pseudo_noise_f32(x as u32 / 16, y as u32 / 16, 1717);
-            let val = ((0.5 + (n1 - 0.5) * 0.3 + (n2 - 0.5) * 0.4).clamp(0.0, 1.0) * 255.0) as u8;
+            let n1 = sample_periodic_noise(
+                x as f32 * (8.0 / width as f32),
+                y as f32 * (8.0 / height as f32),
+                8,
+                8,
+                1616,
+            );
+            let n2 = sample_periodic_noise(
+                x as f32 * (16.0 / width as f32),
+                y as f32 * (16.0 / height as f32),
+                16,
+                16,
+                1717,
+            );
+            let val = ((0.5 + (n1 - 0.5) * 0.25 + (n2 - 0.5) * 0.25).clamp(0.0, 1.0) * 255.0) as u8;
 
             bytes[idx] = val;
             bytes[idx + 1] = val;
@@ -747,6 +849,7 @@ pub fn generate_tire_rubber_image(width: u16, height: u16) -> Image {
 
     for y in 0..height {
         let v = y as f32 / height as f32;
+        // Periodic slip chatter along longitudinal rolling direction
         let chatter = sample_periodic_noise(0.0, v * 16.0, 1, 16, 777);
         let clump = sample_periodic_noise(0.0, v * 32.0, 1, 32, 888);
 
@@ -754,23 +857,27 @@ pub fn generate_tire_rubber_image(width: u16, height: u16) -> Image {
             let idx = (y as usize * width as usize + x as usize) * 4;
             let u = x as f32 / width as f32;
 
-            // Feathered soft contact edge with subtle micro-ragged jitter
-            let edge_noise = (pseudo_noise_f32(x as u32, y as u32, 999) - 0.5) * 0.08;
-            let u_noisy = (u + edge_noise).clamp(0.0, 1.0);
-            let edge_dist = (u_noisy * 2.5).min((1.0 - u_noisy) * 2.5).clamp(0.0, 1.0);
+            // Feathered soft outer contact edges (at u = 0.0 and u = 1.0)
+            let edge_dist = (u * 6.0).min((1.0 - u) * 6.0).clamp(0.0, 1.0);
             let edge_feather = smoothstep(edge_dist);
 
-            // Multi-rib tread striation pattern: 3 groove voids and 4 contact ribs
-            let rib_wave = ((u * std::f32::consts::PI * 6.0).sin().abs()).powf(0.8);
-            let tread_profile = 0.35 + rib_wave * 0.65;
+            // Multi-rib tread contact striations across the contact patch
+            let rib_wave = ((u * std::f32::consts::PI * 6.0).sin().abs()).powf(0.7);
+            let tread_profile = 0.45 + rib_wave * 0.55;
 
             // Micro-grain and molten rubber clumping
-            let grain = (pseudo_noise_f32(x as u32, y as u32, 1010) - 0.5) * 0.15;
-            let rubber_density = (tread_profile * (0.80 + chatter * 0.25 + clump * 0.15) + grain).clamp(0.0, 1.0);
+            let grain = sample_periodic_noise(
+                x as f32 * (64.0 / width as f32),
+                y as f32 * (64.0 / height as f32),
+                64,
+                64,
+                999,
+            );
+            let rubber_density = (tread_profile * (0.82 + chatter * 0.22 + clump * 0.16) + (grain - 0.5) * 0.12).clamp(0.0, 1.0);
 
             let alpha = (edge_feather * rubber_density * 255.0).clamp(0.0, 255.0) as u8;
 
-            // Pure white RGB with modulated alpha so tint color is preserved
+            // Pure white RGB so vertex color multiplier renders exact rich tint
             bytes[idx] = 255;
             bytes[idx + 1] = 255;
             bytes[idx + 2] = 255;

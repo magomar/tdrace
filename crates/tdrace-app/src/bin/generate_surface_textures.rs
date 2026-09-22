@@ -2,6 +2,7 @@ use std::fs;
 use std::path::Path;
 use tdrace_app::render::{
     generate_curb_image, generate_edge_fringe_mask, generate_surface_image,
+    generate_tire_rubber_image,
 };
 use tdrace_core::physics::surface::SurfaceType;
 
@@ -54,6 +55,12 @@ fn main() {
     let fringe_path = target_dir.join("edge_fringe_mask.png");
     fringe_img.export_png(fringe_path.to_str().unwrap());
     println!("  ✓ Saved edge_fringe_mask.png (256x256)");
+
+    // Dedicated realistic tire rubber contact texture
+    let rubber_img = generate_tire_rubber_image(256, 512);
+    let rubber_path = target_dir.join("tire_rubber.png");
+    rubber_img.export_png(rubber_path.to_str().unwrap());
+    println!("  ✓ Saved tire_rubber.png (256x512)");
 
     // Asphalt racing groove overlay (dark rubber streak)
     let mut groove_bytes = vec![0u8; 512 * 512 * 4];

@@ -120,7 +120,7 @@ impl BatchMeshBuilder {
         p2: Vec2, uv2: macroquad::prelude::Vec2, c2: Color,
         p3: Vec2, uv3: macroquad::prelude::Vec2, c3: Color,
     ) {
-        if self.vertices.len() + 4 > 65000 {
+        if self.vertices.len() + 4 > 2000 {
             self.flush();
         }
         let base = self.vertices.len() as u16;
@@ -143,7 +143,7 @@ impl BatchMeshBuilder {
         p1: Vec2, uv1: macroquad::prelude::Vec2, c1: Color,
         p2: Vec2, uv2: macroquad::prelude::Vec2, c2: Color,
     ) {
-        if self.vertices.len() + 3 > 65000 {
+        if self.vertices.len() + 3 > 2000 {
             self.flush();
         }
         let base = self.vertices.len() as u16;
