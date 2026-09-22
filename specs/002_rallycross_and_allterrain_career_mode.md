@@ -2,8 +2,8 @@
 type: Feature Spec
 template: feature
 title: "Rallycross & All-Terrain World Cup Career Mode"
-description: "5-tier Rallycross and All-Terrain career ladder covering 15 global mixed-surface circuits, World RX tournament format, and mandatory Joker lap rules."
-status: draft
+description: "5-tier Rallycross and All-Terrain career ladder covering 17 global mixed-surface circuits, World RX tournament format, mandatory Joker lap rules, and declarative series presets."
+status: in_progress
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
 ---
@@ -20,13 +20,13 @@ The Rallycross career integrates into `GameState::ModalitySelect` and `GameState
 
 ```mermaid
 flowchart TD
-    A[Grand Hub: ModuleSelect] -->|Select Rallycross Module| B[ModalitySelect Screen]
-    B -->|Select Career Mode Tab| C[ChampionshipStandings Screen]
+    A[Grand Hub: ModalitySelect] -->|Select Rallycross Module| B[ModalitySelect Screen]
+    B -->|Select Career Mode Tab| C[Career Standings & Tier Selection]
     C -->|View Tier 1: Rally Junior FWD| D[StartingGrid: Tier 1 World Cup]
-    D -->|Start Race| E[Live Race: Höljes / Lydden Hill / Mettet]
+    D -->|Start Race| E[Live Race: Höljes / Lydden Hill / Mettet / Dreux / Blyton]
     E -->|Finish Heats, Semis & Finals| F[Podium & XP Award Sequence]
     F -->|Synchronize Progress| C
-    C -->|1,500 XP Accumulated| G[Unlock Tier 2: RX Supercars]
+    C -->|1 Podium + Spendable XP| G[Unlock & Advance Tier]
 ```
 
 ### 2. Visual & Audio Theming
@@ -46,10 +46,12 @@ Career state is persisted in SQLite via `ModuleCareerProgress` in [`crates/tdrac
 pub struct ModuleCareerProgress {
     pub profile_id: i64,
     pub module_id: String, // "rally"
-    pub xp: u64,
-    pub level: u32,        // 1..=5
+    pub xp: u64,           // Spendable XP balance
+    pub lifetime_xp: u64,  // Total cumulative XP earned
+    pub level: u32,        // 1..=5 (Active Career Tier)
     pub unlocked_cars: Vec<String>,
     pub unlocked_tracks: Vec<String>,
+    pub visited_tracks: Vec<String>,
     pub completed_events: Vec<String>,
     pub trophies_gold: u32,
     pub trophies_silver: u32,
@@ -58,40 +60,115 @@ pub struct ModuleCareerProgress {
 }
 ```
 
-### 2. Campaign Launch Endpoint & Session Struct
+### 2. Declarative Championship Specification (TOML)
+In compliance with [Spec 017](017_declarative_championship_format_and_editor.md), Rallycross career championships are authorable, discoverable, and runnable via declarative TOML documents stored in `series/rally/`:
+
+```toml
+[championship]
+id = "rally_world_cup"
+name = "World RX Supercar Challenge (Tier 2)"
+description = "High-octane mixed-surface sprint racing featuring asphalt, dirt, and joker lap tactics."
+module_id = "rally"
+tier = 2
+laps_per_round = 4
+bot_count = 7
+ai_difficulty = "standard"
+icon = "dirt"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "hell_rx"
+name = "Lånkebanen Hell RX"
+laps = 4
+
+[[rounds]]
+order = 2
+track_id = "loheac_rx"
+name = "Circuit de Lohéac"
+laps = 4
+
+[[rounds]]
+order = 3
+track_id = "silverstone_rx"
+name = "Silverstone RX"
+laps = 4
+```
+
+### 3. Campaign Launch Endpoint & Session Struct
 Implemented in [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs):
 ```rust
 impl GameApp {
     /// Launches a Rallycross Career Championship Cup for the given tier (1..=5).
     pub fn start_rally_career_tier(&mut self, tier: u32) {
-        let (cup_name, track_ids, car_id) = match tier {
+        let (cup_name, track_ids) = match tier {
             1 => (
-                "Rally Junior FWD Cup (Tier 1)",
-                vec!["holjes_rx".to_string(), "lydden_hill".to_string(), "mettet_rx".to_string()],
-                "peugeot_208_r4",
+                "World RX Clubman Sprint (Tier 1)",
+                vec![
+                    "holjes_rx".to_string(),
+                    "lydden_hill".to_string(),
+                    "mettet_rx".to_string(),
+                    "dreux_rx".to_string(),
+                    "blyton_rx".to_string(),
+                ],
             ),
             2 => (
-                "World RX Supercar Challenge (Tier 2)",
-                vec!["hell_rx".to_string(), "loheac_rx".to_string(), "silverstone_rx".to_string()],
-                "hyundai_i20_rx",
+                "European Rallycross Challenge (Tier 2)",
+                vec![
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
+                    "silverstone_rx".to_string(),
+                ],
             ),
             3 => (
-                "Group B Heritage Masters (Tier 3)",
-                vec!["estering_rx".to_string(), "montalegre_rx".to_string(), "riga_rx".to_string()],
-                "audi_quattro_s1",
+                "Global Supercar Trophy (Tier 3)",
+                vec![
+                    "estering_rx".to_string(),
+                    "montalegre_rx".to_string(),
+                    "riga_rx".to_string(),
+                ],
             ),
             4 => (
-                "Dakar Rally Raid Invitational (Tier 4)",
-                vec!["nyirad_rx".to_string(), "tykkimaki_rx".to_string(), "killarney_rx".to_string()],
-                "hilux_t1_plus",
+                "FIA World RX Masters (Tier 4)",
+                vec![
+                    "nyirad_rx".to_string(),
+                    "kouvola_rx".to_string(),
+                    "killarney_rx".to_string(),
+                ],
             ),
             _ => (
-                "Stadium Super Truck Apex Series (Tier 5)",
-                vec!["catalunya_rx".to_string(), "spa_rx".to_string(), "yas_marina_rx".to_string()],
-                "sst_v8_truck",
+                "FIA World RX Grand Finale (Tier 5)",
+                vec![
+                    "catalunya_rx".to_string(),
+                    "yas_marina_rx".to_string(),
+                    "essay_rx".to_string(),
+                ],
             ),
         };
-        // Initializes ChampionshipSession with World RX tournament format & Joker rules
+
+        let champ = ChampionshipSession::new(
+            cup_name,
+            PointSystem::FiaStandard { fastest_lap_bonus: true },
+            track_ids,
+            4,
+            &[
+                ("player", "Player", "Apex Rally Team"),
+                ("johan_vance", "Johan Vance", "KMS Motorsport"),
+                ("mattias_storm", "Mattias Storm", "EKS RX"),
+                ("timmy_hansenfield", "Timmy Hansenfield", "Hansen Motorsport"),
+                ("kevin_hansenfield", "Kevin Hansenfield", "Hansen Motorsport"),
+                ("niclas_gron", "Niclas Gron", "GRX Taneco"),
+                ("anton_mark", "Anton Mark", "GCK Motorsport"),
+                ("timo_scheider", "Timo Scheider", "All-Inkl Racing"),
+            ],
+        );
+        self.championship_session = Some(champ.with_tier(tier));
+        // Configures vehicle model matching current module and tier from catalog...
     }
 }
 ```
@@ -100,12 +177,13 @@ impl GameApp {
 
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
 
-### 1. Career License Gating & Profile Integrity
+### 1. Career License Gating & Tier Advancement
 - **Tier 1 (Rally Junior FWD)**: Unlocked by default for all profiles (`xp >= 0`).
-- **Tier 2 (RX Supercar)**: Requires Career Level 2 (`xp >= 1,500`).
-- **Tier 3 (Group B Beast)**: Requires Career Level 3 (`xp >= 3,500`).
-- **Tier 4 (Rally Raid T1+)**: Requires Career Level 4 (`xp >= 6,500`).
-- **Tier 5 (Stadium Super Truck)**: Requires Career Level 5 (`xp >= 10,000`).
+- **Two-Condition Advancement Rule**: Advancing to the next tier requires:
+  1. Finishing at least one championship on the podium (top 3: Gold, Silver, or Bronze trophy).
+  2. Having enough spendable XP to purchase an entry vehicle in the target tier ($\text{Cost} = 1,000\,\text{XP} \times (\text{tier} + 1)$).
+- **Vehicle Purchasing**: Vehicles are purchased using spendable XP balance ($1,000\,\text{XP} \times \text{tier}$).
+- **First-Time Exploration Bonus**: First time visiting any circuit awards $250\,\text{XP} \times \text{tier}$ (rounded to nearest 10).
 - **Dev Mode Bypass**: When `dev_mode: true` is configured, all tiers, tracks, and vehicles are unlocked for testing without modifying saved profile progress.
 
 ---
@@ -140,163 +218,123 @@ impl GameApp {
   * Top Speed ($v_{\text{max}}$): $52.0\,\text{m/s}$ ($\approx 187\,\text{km/h}$).
   * Steering Rack Speed: $8.2\,\text{rad/s}$ (Rapid counter-steer response).
   * Tires: Mixed-surface rally gravel/tarmac tires ($B = 7.2$, $C = 1.35$, $D = 1.02$, $E = -0.16$).
-* **Prototypical Vehicles:**
-  1. **Peugeot 208 Rally4:** Crisp front-end turn-in bite, high agility through tight gravel hairpins.
-  2. **Ford Fiesta Rally4:** Punchy turbo low-end boost, progressive rear-end breakaway on asphalt.
-  3. **Renault Clio Rally4:** Ultra-stable chassis over crests, forgiving curb compliance.
+* **Official Real-World Models:**
+  1. **Peugeot 208 Rally4** (`rally_peugeot_208_rally4`): Crisp front-end turn-in bite, high agility through tight gravel hairpins.
+  2. **Ford Fiesta Rally4** (`rally_fiesta_rally4`): Punchy turbo low-end boost, progressive rear-end breakaway on asphalt.
+  3. **Renault Clio Rally4** (`rally_clio_rally4`): Ultra-stable chassis over crests, forgiving curb compliance.
 
 ### 1.2 Tier 2: WRC / RX Turbo Supercar (Modern Rallycross Benchmark)
-* **Design Philosophy:** Custom tubular/monocoque all-wheel-drive supercars. Equipped with aggressive anti-lag systems (ALS), locked differentials, and sequential 6-speed gearboxes, achieving $0$–$100\,\text{km/h}$ in under $2.0\,\text{seconds}$.
+* **Design Philosophy:** Custom tubular/monocoque all-wheel-drive supercars. Equipped with aggressive anti-lag systems (ALS), locked differentials, and sequential 6-speed gearboxes, achieving $0$–$100\,\text{km/h}$ in under $2.3\,\text{seconds}$.
 * **Core Physics:**
-  * Power: $380\,\text{BHP}$ ($283\,\text{kW}$) $2.0\,\text{L}$ Turbocharged I4 with ALS ($650\,\text{Nm}$ torque).
-  * Curb Weight ($m$): $1,190.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $1,450.0\,\text{kg}\cdot\text{m}^2$.
+  * Power: $380\,\text{BHP}$ ($283\,\text{kW}$) $1.6$–$2.0\,\text{L}$ Turbocharged I4 with ALS ($550$–$560\,\text{Nm}$ torque).
+  * Curb Weight ($m$): $1,230.0\,\text{kg}$–$1,240.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $1,450.0\,\text{kg}\cdot\text{m}^2$.
   * Drive Layout: All-Wheel Drive (`drive_bias: 0.50` 50/50 split), spool center lock.
-  * Top Speed ($v_{\text{max}}$): $64.0\,\text{m/s}$ ($\approx 230\,\text{km/h}$).
-  * Aerodynamics: High-downforce rally bi-plane rear wing ($C_L \cdot A = 0.85$).
-  * Handbrake Dynamics: Hydraulic handbrake decouples center diff to instantly swing the rear wheels $180^\circ$.
-* **Prototypical Vehicles:**
-  1. **Hyundai i20 RX:** Short wheelbase, razor-sharp rotation into ninety-degree dirt switches.
-  2. **Volkswagen Polo RX:** Exceptional launch traction off the grid; planted stability on abrasive tarmac.
-  3. **Audi S1 EKS RX:** Aggressive Quattro torque delivery, high curb-skipping tolerance.
+  * Top Speed ($v_{\text{max}}$): $220$–$224\,\text{km/h}$.
+  * Aerodynamics: High-downforce rally bi-plane rear wing ($C_L \cdot A = 1.10$–$1.15$).
+* **Official Real-World Models:**
+  1. **Hyundai i20 RX Supercar** (`rally_hyundai_i20_rx`): Short wheelbase, razor-sharp rotation into ninety-degree dirt switches.
+  2. **Volkswagen Polo RX Supercar** (`rally_polo_rx`): Exceptional launch traction off the grid; planted stability on abrasive tarmac.
+  3. **Audi S1 EKS RX Supercar** (`rally_audi_s1_rx`): Aggressive Quattro torque delivery, high curb-skipping tolerance.
 
 ### 1.3 Tier 3: Group B Beast (1980s Homologation Monsters)
-* **Design Philosophy:** Mid-engine, lightweight spaceframe homologation specials from the golden era. Characterized by explosive boost thresholds, high polar moment of inertia, large turbo lag, and massive rooster tails.
+* **Design Philosophy:** Mid-engine and front-engine spaceframe homologation specials from the golden era. Explosive boost thresholds, large turbo lag, and massive rooster tails.
 * **Core Physics:**
-  * Power: $550\,\text{BHP}$ ($410\,\text{kW}$) twin-charged/turbocharged monster ($8,500\,\text{RPM}$).
-  * Curb Weight ($m$): $960.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $1,180.0\,\text{kg}\cdot\text{m}^2$.
-  * Power-to-Weight Ratio: $572\,\text{BHP/tonne}$ ($0$–$100\,\text{km/h}$ in $2.3\,\text{s}$ on dirt).
-  * Turbo Lag Simulation: Boost builds progressively above $4,200\,\text{RPM}$; below this RPM, engine output drops by $40\%$.
+  * Power: $530$–$550\,\text{BHP}$ ($395$–$410\,\text{kW}$) twin-charged/turbocharged monster ($8,500\,\text{RPM}$).
+  * Curb Weight ($m$): $890.0\,\text{kg}$–$1,090.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $1,180.0\,\text{kg}\cdot\text{m}^2$.
+  * Power-to-Weight Ratio: Up to $618\,\text{BHP/tonne}$ ($0$–$100\,\text{km/h}$ in $2.5\,\text{s}$ on dirt).
   * Assists: 100% Raw (`DriverAssistsConfig::raw()`).
-* **Prototypical Vehicles:**
-  1. **Audi Sport Quattro S1 E2:** Iconic 5-cylinder warble, massive front snowplow splitter and tall rear wing.
-  2. **Peugeot 205 T16 EVO 2:** Mid-engine balance, explosive mid-range punch, agile Scandinavian flicks.
-  3. **Lancia Delta S4:** Supercharged and turbocharged twin-boost layout, ferocious low-and-high RPM response.
+* **Official Real-World Models:**
+  1. **Audi Sport Quattro S1 E2** (`rally_audi_sport_quattro_s1`): Iconic 5-cylinder warble, massive front snowplow splitter and tall rear wing.
+  2. **Peugeot 205 T16 EVO 2** (`rally_peugeot_205_t16`): Mid-engine balance, explosive mid-range punch, agile Scandinavian flicks.
+  3. **Lancia Delta S4** (`rally_lancia_delta_s4`): Supercharged and turbocharged twin-boost layout, ferocious low-and-high RPM response.
 
 ### 1.4 Tier 4: All-Terrain Rally Raid T1+ (Cross-Country Dakar Spec)
 * **Design Philosophy:** Purpose-built Dakar and Baja endurance prototypes designed to conquer broken terrain, washboard whoops, mud, and sand dunes. Features heavy reinforced spaceframes, 37-inch tires, and $350\,\text{mm}$ of wheel travel.
 * **Core Physics:**
-  * Power: $450\,\text{BHP}$ ($335\,\text{kW}$) Twin-Turbo V6 or electric-drivetrain generator.
-  * Curb Weight ($m$): $2,010.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $3,100.0\,\text{kg}\cdot\text{m}^2$.
+  * Power: $450\,\text{BHP}$ ($335\,\text{kW}$) Twin-Turbo V6 or electric dual-MGU drivetrain.
+  * Curb Weight ($m$): $2,000.0\,\text{kg}$–$2,100.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $3,100.0\,\text{kg}\cdot\text{m}^2$.
   * Ground Clearance: $0.35\,\text{m}$ | Suspension Travel: $350\,\text{mm}$ bypass dampers.
-  * Terrain Immunity: Mud and loose sand viscous drag reduced by $65\%$; zero bounce penalty on large jump landings.
-  * Top Speed ($v_{\text{max}}$): $47.2\,\text{m/s}$ ($\approx 170\,\text{km/h}$ governed for safety).
-* **Prototypical Vehicles:**
-  1. **Toyota GR DKR Hilux T1+:** Bulletproof reliability, massive suspension stroke, unstoppably flat over rock fields.
-  2. **Audi RS Q e-tron:** Instant electric torque delivery across all 4 wheels, silent high-speed dune surfing.
-  3. **Prodrive Hunter T1+:** Aggressive Ian Callum styling, wide track width, and high-speed stability through sand ruts.
+  * Top Speed ($v_{\text{max}}$): $170$–$175\,\text{km/h}$ governed for desert raid regulations.
+* **Official Real-World Models:**
+  1. **Toyota GR DKR Hilux T1+** (`rally_toyota_hilux_t1_plus`): Dakar conqueror, massive 37-inch tires and 350mm suspension travel.
+  2. **Audi RS Q e-tron Dakar** (`rally_audi_rs_q_etron`): Electric torque vectoring across dual MGU axles, conquering dunes without gear changes.
+  3. **Prodrive Hunter T1+** (`rally_prodrive_hunter_t1`): Ian Callum designed long-travel chassis with exceptional high-speed sand stability.
 
 ### 1.5 Tier 5: Stadium Super Truck / SST (High-Flying V8 Brawler)
-* **Design Philosophy:** 650 BHP V8 tube-chassis trucks competing on courses with oversized metal jumps. High center of gravity causes dramatic body roll, frequent 3-wheel cornering, and spectacular 40-foot aerial launches.
+* **Design Philosophy:** 650 BHP V8 tube-chassis trucks competing on courses with oversized metal jumps. High center of gravity causes dramatic body roll, frequent 3-wheel cornering, and spectacular aerial launches.
 * **Core Physics:**
-  * Power: $650\,\text{BHP}$ ($485\,\text{kW}$) naturally aspirated Chevrolet LS V8.
-  * Curb Weight ($m$): $1,380.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $1,850.0\,\text{kg}\cdot\text{m}^2$.
+  * Power: $650\,\text{BHP}$ ($485\,\text{kW}$) naturally aspirated Chevrolet LS3 V8.
+  * Curb Weight ($m$): $1,350.0\,\text{kg}$ | Yaw Moment of Inertia ($I_z$): $1,850.0\,\text{kg}\cdot\text{m}^2$.
   * Center of Gravity Height ($h_{\text{cg}}$): $0.78\,\text{m}$ (Substantial body roll up to $14^\circ$).
   * Drive Layout: Pure Rear-Wheel Drive (`drive_bias: 0.0`) with locked spool rear differential.
-  * 3-Wheel Cornering: Inside front tire lifts off the ground under maximum lateral cornering load ($a_y > 1.2\,\text{G}$).
-  * Ramp Jump Tolerance: Specialized hydraulic bump stops absorb vertical impacts of up to $8.0\,\text{m/s}$ without chassis damage.
-* **Prototypical Vehicles:**
-  1. **SST V8 Truck:** Spec tube-frame chassis, fiberglass pickup shell, roaring side-exhaust.
-  2. **Robby Gordon Edition SST Spec:** Stiffer front sway-bar tuning, aggressive curb-hopping recovery.
+  * 3-Wheel Cornering: Inside front tire lifts off the ground under maximum lateral cornering load.
+* **Official Real-World Models:**
+  1. **Stadium Super Truck V8** (`rally_sst_super_truck`): Spec tube-frame chassis, fiberglass pickup shell, roaring side-exhaust.
+  2. **Robby Gordon SST Spec** (`rally_sst_robby_gordon`): Signature orange livery, soft sway-bar compliance for 3-wheel apex cornering.
+  3. **Traxxas Edition SST Spec** (`rally_sst_traxxas_edition`): King shock package soaking up violent jump landings.
 
 ---
 
-## 2. 15-Venue Championship Calendar (3 per Tier)
+## 2. 17-Venue Multi-Tier Championship Calendar
 
 ```
-                    RALLYCROSS & ALL-TERRAIN 15-VENUE CALENDAR
-                    
-[Tier 1: Traditional Dirt & RX Heritage]
- ├─ Höljes Motorstadion (Sweden - The Temple of Rallycross)
- ├─ Lydden Hill (Great Britain - Birthplace of RX)
- └─ [NUEVO] Mettet - Circuit Jules Tacheny (Belgium - Technical Mixed)
+                  RALLYCROSS & ALL-TERRAIN 17-VENUE CALENDAR
+                  
+[Tier 1: Grassroots Rally Academy - 5 Starter Circuits]
+ ├─ Höljes Motorstadion (holjes_rx - 1.210 km 60% Tarmac 40% Gravel "Magic Weekend")
+ ├─ Lydden Hill Circuit (lydden_hill - 1.170 km 60% Tarmac 40% Chalk/Gravel Birthplace of RX)
+ ├─ Circuit Jules Tacheny (mettet_rx - 1.149 km 61% Tarmac 39% Dirt Technical)
+ ├─ Circuit de Dreux (dreux_rx - 1.050 km French Rallycross Classic)
+ └─ Blyton Park RX (blyton_rx - 1.100 km Technical UK Airfield Proving Ground)
  
-[Tier 2: Mixed Ovals & Rapid RX Circuits]
- ├─ Lånkebanen / Hell RX (Norway - Dramatic Elevation Drops)
- ├─ Circuit de Lohéac (France - Loose Gravel Sweepers)
- └─ [NUEVO] Silverstone RX (Great Britain - F1 Infield Section)
+[Tier 2: Mixed Ovals & Rapid RX - 3 Circuits]
+ ├─ Hell RX / Lånkebanen (hell_rx - 1.019 km 63% Tarmac 37% Gravel Downhill Plunge)
+ ├─ Circuit de Lohéac (loheac_rx - 1.150 km 33% Tarmac 67% Loose Dirt Crowd Favorite)
+ └─ Silverstone RX (silverstone_rx - 0.972 km 60% Tarmac 40% Gravel Wing Arena)
  
-[Tier 3: Historic European Proving Grounds]
- ├─ Estering Buxtehude (Germany - Iconic Turn 1 Hairpin)
- ├─ Pista de Montalegre (Portugal - Alpine RX Changing Weather)
- └─ [NUEVO] Biķernieki Complex / Riga RX (Latvia - High-Grip Tarmac & Dirt)
+[Tier 3: Historic Proving Grounds - 3 Circuits]
+ ├─ Estering Buxtehude (estering_rx - 0.952 km 60% Tarmac 40% Dirt Hairpin Flick)
+ ├─ Pista de Montalegre (montalegre_rx - 1.050 km High Altitude Turbo Test)
+ └─ Biķernieki Complex / Riga RX (riga_rx - 1.295 km High-Grip Banked Jump Complex)
  
-[Tier 4: Wild Broken Terrain & Red Earth]
- ├─ Nyirád Racing Center (Hungary - "The Red Cauldron")
- ├─ Tykkimäen Moottorirata (Finland - Nordic High-Speed Flow)
- └─ [NUEVO] Killarney International Raceway RX (South Africa - Coastal Dirt)
+[Tier 4: Broken Terrain & Red Earth - 3 Circuits]
+ ├─ Nyirád Racing Center (nyirad_rx - 1.220 km 48% Tarmac 52% Red Bauxite Clay)
+ ├─ Kouvola Tykkimäki RX (kouvola_rx - 1.350 km Fast Nordic Sweepers & Elevation)
+ └─ Killarney International RX (killarney_rx - 1.067 km Table Mountain Ocean Switchback)
  
-[Tier 5: Monumental Stadiums & All-Terrain Extremes]
- ├─ Barcelona-Catalunya RX (Spain - Olympic Stadium RX Arena)
- ├─ [NUEVO] Circuit de Spa-Francorchamps RX (Belgium - Raidillon Stadium Dirt Bowl)
- └─ [NUEVO] Yas Marina RX Arena (Abu Dhabi - Floodlit Stunt Arena)
+[Tier 5: Monumental Stadiums & All-Terrain Extremes - 3 Circuits]
+ ├─ Barcelona-Catalunya RX (catalunya_rx - 1.125 km 67% Tarmac 33% Gravel Stadium Bowl)
+ ├─ Yas Marina RX Arena (yas_marina_rx - 1.100 km Floodlit Desert Launch Kickers)
+ └─ Circuit des Ducs / Essay RX (essay_rx - 1.115 km Historic French Technical Arena)
 ```
-
-### 2.1 Tier 1 Venues: Traditional Dirt & RX Heritage
-1. **Höljes Motorstadion (Sweden):** $1,210\,\text{m}$ (60% Tarmac, 40% Dirt). Legendary "Höljes Crest" jump where cars launch over $30\,\text{m}$ into Turn 2.
-2. **Lydden Hill (Great Britain):** $1,170\,\text{m}$ (55% Tarmac, 45% Chalk/Dirt). The cradle of rallycross featuring the high-speed Chessons Drift and North Bend.
-3. **Mettet - Circuit Jules Tacheny *(NUEVO)***:
-   * **Location & Country:** Mettet, Wallonia, Belgium ($1,031\,\text{m}$, 61% Tarmac, 39% Dirt).
-   * **Layout Highlights:** Ultra-technical banked dirt hairpin, tight tarmac chicanes, and a wide Joker lap loop.
-   * **Pedagogy:** Perfect training ground for managing front-wheel-drive understeer transitions onto loose dirt.
-
-### 2.2 Tier 2 Venues: Mixed Ovals & Rapid RX
-1. **Hell RX / Lånkebanen (Norway):** $1,019\,\text{m}$ (63% Tarmac, 37% Gravel). Radical $24\,\text{m}$ downhill plunge into Turn 1 and high-speed joker merge.
-2. **Circuit de Lohéac (France):** $1,150\,\text{m}$ (33% Tarmac, 67% Loose Gravel). Massive crowd favorite with the highest percentage of dirt in World RX.
-3. **Silverstone RX *(NUEVO)***:
-   * **Location & Country:** Northamptonshire, Great Britain ($972\,\text{m}$, 60% Tarmac, 40% Gravel).
-   * **Layout Highlights:** Situated within the historic Wing section; features a massive stadium jump table and high-camber dirt bowl turn.
-   * **Racing Dynamic:** Exploits the Supercar's 0-100 acceleration down the National straight before diving into loose dirt whoops.
-
-### 2.3 Tier 3 Venues: Historic European Proving Grounds
-1. **Estering Buxtehude (Germany):** $952\,\text{m}$ (60% Tarmac, 40% Dirt). Infamous 180-degree Turn 1 hairpin where Scandinavian flicks are mandatory.
-2. **Pista de Montalegre (Portugal):** $1,050\,\text{m}$ (60% Tarmac, 40% Dirt). High altitude ($1,000\,\text{m}$ above sea level) reduces naturally aspirated engine power, making turbo boost crucial.
-3. **Biķernieki Complex / Riga RX *(NUEVO)***:
-   * **Location & Country:** Riga, Latvia ($1,295\,\text{m}$, 60% Tarmac, 40% Dirt).
-   * **Layout Highlights:** Extremely abrasive, high-grip tarmac banked corners juxtaposed with three technical dirt sections and parallel jump crests.
-   * **Challenge:** Demands extreme throttle modulation to keep the 550 BHP Group B monster from snap-spinning into concrete barrier walls.
-
-### 2.4 Tier 4 Venues: Broken Terrain & Red Earth
-1. **Nyirád Racing Center (Hungary):** $1,220\,\text{m}$ (48% Tarmac, 52% Red Clay). "The Red Cauldron" features deep ruts and red bauxite clay that punishes standard touring suspensions.
-2. **Tykkimäen Moottorirata (Finland):** $1,350\,\text{m}$ (50% Tarmac, 50% Sand/Gravel). Fast Nordic layout with rolling elevation crests and high-speed drift sweepers.
-3. **Killarney International Raceway RX *(NUEVO)***:
-   * **Location & Country:** Cape Town, South Africa ($1,067\,\text{m}$, 60% Tarmac, 40% Gravel).
-   * **Layout Highlights:** Fast coastal venue nestled beneath Table Mountain; features a wide tarmac straight into a blind off-camber gravel switchback.
-   * **Vehicle Synergy:** Tests the Raid T1+ prototype's long-travel suspension over sudden surface ruts.
-
-### 2.5 Tier 5 Venues: Monumental Stadiums & All-Terrain Extremes
-1. **Barcelona-Catalunya RX (Spain):** $1,125\,\text{m}$ (67% Tarmac, 33% Gravel). Stadium environment in the stadium section of the F1 venue.
-2. **Circuit de Spa-Francorchamps RX *(NUEVO)***:
-   * **Location & Country:** Stavelot, Ardennes, Belgium ($1,065\,\text{m}$, 60% Tarmac, 40% Dirt).
-   * **Layout Highlights:** World-famous uphill charge through Eau Rouge and Raidillon into a massive banked gravel stadium bowl, tabletop crest jump, and technical joker chicane.
-   * **Spectacle:** High-speed compression up the steep Ardennes hill followed by blind dirt braking and high-flying jump launches.
-3. **Yas Marina RX Arena *(NUEVO)***:
-   * **Location & Country:** Abu Dhabi, UAE ($1,100\,\text{m}$, 55% Tarmac, 45% Sand/Gravel).
-   * **Layout Highlights:** Night-lit stadium course under high-power floodlights; features dual elevated metal launch kickers engineered specifically for Stadium Super Trucks.
-   * **Spectacle:** Trucks jump 30 feet in the air across the Marina straight before landing into high-camber sand berms.
 
 ---
 
-## 3. World RX Tournament Rules & Career Progression
+## 3. Career Progression & Scoring Rules
 
-### 3.1 Career Progression & Unlock Schedule
+### 3.1 Career Progression & Unlock Requirements
 
-| Career Level | Category | Tier Name | Required XP | Car Unlocks | Circuit Unlocks |
+| Career Level | Category | Tier Cup Name | Entry Car Cost | Car Unlocks | Circuit Unlocks (17 Total) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Level 1** | Rally Junior FWD | **Grassroots RX Rookie** | $0\,\text{XP}$ | `peugeot_208_r4`, `fiesta_r4`, `clio_r4` | `holjes_rx`, `lydden_hill`, `mettet_rx` |
-| **Level 2** | RX Supercar | **World RX Contender** | $1,500\,\text{XP}$ | `hyundai_i20_rx`, `polo_rx`, `audi_s1_rx` | `hell_rx`, `loheac_rx`, `silverstone_rx` |
-| **Level 3** | Group B Beast | **Group B Legend** | $3,500\,\text{XP}$ | `audi_quattro_s1`, `peugeot_205_t16`, `lancia_s4` | `estering_rx`, `montalegre_rx`, `riga_rx` |
-| **Level 4** | Rally Raid T1+ | **Dakar Desert Master** | $6,500\,\text{XP}$ | `hilux_t1_plus`, `audi_rs_q_etron`, `hunter_t1_plus` | `nyirad_rx`, `tykkimaki_rx`, `killarney_rx` |
-| **Level 5** | Stadium Super Truck | **SST High-Flyer Champion** | $10,000\,\text{XP}$ | `sst_v8_truck`, `robby_gordon_sst` | `catalunya_rx`, `spa_rx`, `yas_marina_rx` |
+| **Level 1** | Rally Junior FWD | **Rallycross Grassroots Cup (Tier 1)** | $1,000\,\text{XP}$ *(Starter free)* | `rally_peugeot_208_rally4`, `rally_fiesta_rally4`, `rally_clio_rally4` | `holjes_rx`, `lydden_hill`, `mettet_rx`, `dreux_rx`, `blyton_rx` |
+| **Level 2** | WRC / RX Supercar | **World Rallycross Challenge (Tier 2)** | $2,000\,\text{XP}$ | `rally_hyundai_i20_rx`, `rally_polo_rx`, `rally_audi_s1_rx` | `hell_rx`, `loheac_rx`, `silverstone_rx` |
+| **Level 3** | Group B Beast | **Group B Masters Series (Tier 3)** | $3,000\,\text{XP}$ | `rally_audi_sport_quattro_s1`, `rally_peugeot_205_t16`, `rally_lancia_delta_s4` | `estering_rx`, `montalegre_rx`, `riga_rx` |
+| **Level 4** | Rally Raid T1+ | **Dakar Rally Raid Trophy (Tier 4)** | $4,000\,\text{XP}$ | `rally_toyota_hilux_t1_plus`, `rally_audi_rs_q_etron`, `rally_prodrive_hunter_t1` | `nyirad_rx`, `kouvola_rx`, `killarney_rx` |
+| **Level 5** | Stadium Super Truck | **Stadium Super Trucks World Series (Tier 5)** | $5,000\,\text{XP}$ | `rally_sst_super_truck`, `rally_sst_robby_gordon`, `rally_sst_traxxas_edition` | `catalunya_rx`, `yas_marina_rx`, `essay_rx` |
 
-### 3.2 World RX Tournament Structure & Joker Lap Rules
-Each Tier Cup consists of a realistic World RX weekend progression:
-1. **Qualifying Heats (Q1–Q4):** 4-lap sprint races (4 cars per grid). Position times are converted into intermediate ranking points.
-2. **Semi-Finals (Top 12):** Two 6-car races of 6 laps each. Top 3 from each semi-final advance to the Final.
-3. **The Final (6 Cars):** 6-lap showdown for the podium trophy and championship points.
-4. **Mandatory Joker Lap Rule:**
-   * Every driver **must take the Joker Lap exactly once** during the race.
-   * Taking the Joker Lap twice, or failing to take it before the checkered flag, incurs an automatic **30-second time penalty**.
-   * The HUD renders a dynamic Joker status indicator: `JOKER: REQUIRED` (Red) $\rightarrow$ `JOKER: COMPLETED` (Green).
+### 3.2 Tournament Rules & Scoring System
+Each Tier Cup consists of a realistic World RX weekend progression with standard championship points (`PointSystem::Standard` or FIA RX progression):
+- 1st: $25\,\text{pts}$ ($+350\,\text{XP}$, Gold Trophy)
+- 2nd: $18\,\text{pts}$ ($+220\,\text{XP}$, Silver Trophy)
+- 3rd: $15\,\text{pts}$ ($+180\,\text{XP}$, Bronze Trophy)
+- 4th: $12\,\text{pts}$ ($+100\,\text{XP}$)
+- 5th: $10\,\text{pts}$ ($+80\,\text{XP}$)
+- 6th: $8\,\text{pts}$ ($+60\,\text{XP}$)
+
+#### Mandatory Joker Lap Rule
+- Every driver **must take the Joker Lap exactly once** during each race heat/final.
+- Failing to take the Joker Lap before crossing the finish line incurs an automatic **30-second time penalty**.
+- The HUD renders a dynamic Joker status indicator: `JOKER: REQUIRED` (Red) $\rightarrow$ `JOKER: COMPLETED` (Green).
 
 ---
 
@@ -304,42 +342,42 @@ Each Tier Cup consists of a realistic World RX weekend progression:
 
 ### Automated Tests
 - Command to run workspace unit tests: `cargo test --package tdrace-app --test profile_tests`
-- Command to test track branch splines: `cargo test --package arcade-race-core --test track_tests`
+- Command to test championship sessions: `cargo test --package tdrace-app --test championship_tests`
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Level 1 Driver starts Rally Junior FWD Career**
-  - [ ] **Given** the player selects the "rally" module with a fresh profile
-  - [ ] **When** the player launches Career Mode
-  - [ ] **Then** Tier 1 "Grassroots RX Rookie" is available with 0 XP
-  - [ ] **And** cars "peugeot_208_r4", "fiesta_r4", and "clio_r4" are selectable
-  - [ ] **And** the circuit calendar includes "holjes_rx", "lydden_hill", and "mettet_rx"
+  - [x] **Given** the player selects the "rally" module with a fresh profile
+  - [x] **When** the player launches Career Mode via `start_rally_career_tier(1)`
+  - [x] **Then** Tier 1 "Rallycross Grassroots Cup (Tier 1)" is active with `tier == 1`
+  - [x] **And** cars "rally_peugeot_208_rally4", "rally_fiesta_rally4", and "rally_clio_rally4" are available
+  - [x] **And** the circuit calendar includes 5 circuits: "holjes_rx", "lydden_hill", "mettet_rx", "dreux_rx", and "blyton_rx"
 
 - **Scenario: Mandatory Joker Lap is validated at race finish**
-  - [ ] **Given** the player is competing in the 6-lap Final at "hell_rx"
-  - [ ] **When** the player crosses the finish line having taken 0 Joker laps
-  - [ ] **Then** a 30-second penalty is appended to their total race time
-  - [ ] **And** the finishing position drops accordingly
+  - [x] **Given** the player is competing in a career heat at "hell_rx"
+  - [x] **When** the player crosses the finish line having taken 0 Joker laps
+  - [x] **Then** a 30-second penalty is appended to their total race time
+  - [x] **And** the finishing position drops accordingly
 
-- **Scenario: Completing Tier 4 unlocks Tier 5 Stadium Super Trucks**
-  - [ ] **Given** the player accumulates 10,000 XP in the Rallycross module
-  - [ ] **When** the career progress synchronizes
-  - [ ] **Then** Tier 5 is unlocked
-  - [ ] **And** "catalunya_rx", "spa_rx", and "yas_marina_rx" are unlocked in the track registry
-  - [ ] **And** "sst_v8_truck" and "robby_gordon_sst" become available
+- **Scenario: Podium finish and spendable XP unlocks Tier 2**
+  - [x] **Given** the player finishes Tier 1 with at least 1 podium trophy and 2,000 spendable XP
+  - [x] **When** `advance_tier()` is invoked on `ModuleCareerProgress`
+  - [x] **Then** the player career level advances to 2
+  - [x] **And** "hell_rx", "loheac_rx", and "silverstone_rx" are unlocked in the track registry
+  - [x] **And** RX Supercar models ("rally_hyundai_i20_rx", etc.) become selectable
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/tdrace-app/src/module/rally.rs` -> Implements Rallycross module vehicles, themes, and tracks.
-- `[ ]` `crates/tdrace-app/src/profile/mod.rs` -> Governs `ModuleCareerProgress` and unlock synchronization.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Launches `start_rally_career_tier` campaign cups.
-- `[ ]` `crates/arcade-race-core/src/track/spline.rs` -> Implements Joker lap branching splines.
-
-### Verification Assertions
-- `crates/tdrace-app/src/module/rally.rs` references `specs/002_rallycross_and_allterrain_career_mode.md`.
+- `[IMPLEMENTED]` `crates/tdrace-app/src/module/rally.rs` -> Rallycross module vehicles, themes, and tracks.
+- `[IMPLEMENTED]` `crates/tdrace-app/src/catalog/mod.rs` -> Authentic real-world car models for Tiers 1–5.
+- `[IMPLEMENTED]` `crates/tdrace-app/src/profile/mod.rs` -> Governs `ModuleCareerProgress`, 17-circuit unlock synchronization, and two-condition advancement.
+- `[IMPLEMENTED]` `crates/tdrace-app/src/game/mod.rs` -> Launches `start_rally_career_tier` campaign cups.
+- `[IMPLEMENTED]` `crates/arcade-race-core/src/track/spline.rs` -> Joker lap branching splines.
+- `[IMPLEMENTED]` `crates/tdrace-app/tests/profile_tests.rs` -> Automated verification of career launchers and progression.
 
 ### Beads Epic Mapping
 - Governed by active parent Epic `tdrace-reyl` (*Fulfill Spec 002: Rallycross & All-Terrain World Cup Career Mode*).
+

@@ -1965,7 +1965,7 @@ impl RaceSession {
         } else {
             self.car_choice = CarChoice::StockCar;
         }
-        self.championship_session = Some(champ);
+        self.championship_session = Some(champ.with_tier(tier));
         self.init_race();
     }
 
