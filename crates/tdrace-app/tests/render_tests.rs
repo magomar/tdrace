@@ -349,6 +349,51 @@ fn test_classic_arcade_fantasy_sprites_presence() {
 }
 
 #[test]
+fn test_vortex_dune_crusher_topdown_sprite_orientation() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_offroad.png");
+    let bytes = std::fs::read(&path).expect("Failed to read classic_offroad topdown sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse classic_offroad image");
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut left_nose_pixels = 0;
+    let mut right_nose_pixels = 0;
+
+    for y in 0..height {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let r = img.bytes[idx];
+            let g = img.bytes[idx + 1];
+            let b = img.bytes[idx + 2];
+            let a = img.bytes[idx + 3];
+
+            // Orange nosecone pixels: vibrant orange bodywork
+            if a > 128 && r > 180 && g > 50 && g < 150 && b < 50 {
+                if x < width / 2 {
+                    left_nose_pixels += 1;
+                } else {
+                    right_nose_pixels += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        right_nose_pixels > 5000,
+        "Vortex Dune Crusher front nosecone must face forward (+X, right side). Found {} pixels",
+        right_nose_pixels
+    );
+    assert_eq!(
+        left_nose_pixels, 0,
+        "Vortex Dune Crusher must not have nosecone pixels in the rear (-X, left side)"
+    );
+}
+
+#[test]
 fn test_classic_mask_tinting_transforms_bodywork_pixels() {
     use macroquad::color::Color;
     use macroquad::texture::Image;
