@@ -78,19 +78,24 @@ fn test_random_car_assignment_variety_in_gt_race() {
 
     assert_eq!(opponent_cars.len(), 7);
 
-    let unique_cars: HashSet<CarChoice> = opponent_cars.into_iter().collect();
-    // In a 7-bot GT race with 5 car options, there must be variety (> 1 distinct car model)
-    assert!(
-        unique_cars.len() >= 2,
-        "Expected variety among GT opponents, but got: {:?}",
-        unique_cars
-    );
-
     // Verify all assigned cars belong to the GT pool
     let gt_pool = session.eligible_opponent_cars();
-    for car in &unique_cars {
+    for car in &opponent_cars {
         assert!(gt_pool.contains(car), "Car {:?} must be in GT pool", car);
     }
+
+    // In a 7-bot GT race, there must be variety (> 1 distinct car model) among opponents
+    let unique_models: HashSet<&str> = session
+        .grid_participants
+        .iter()
+        .filter(|p| !p.is_player)
+        .map(|p| p.car_title.as_str())
+        .collect();
+    assert!(
+        unique_models.len() >= 2,
+        "Expected variety among GT opponents, but got: {:?}",
+        unique_models
+    );
 }
 
 #[test]

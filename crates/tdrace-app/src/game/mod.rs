@@ -2414,15 +2414,19 @@ impl RaceSession {
         let player_model = if effective_module != "classic" {
             self.selected_car_model_id
                 .and_then(crate::catalog::find_model_by_id)
-                .filter(|m| m.module_id == effective_module && (!self.free_car_selection || m.base_car_choice == player_car_choice))
+                .filter(|m| m.module_id == effective_module && m.base_car_choice == player_car_choice)
                 .or_else(|| {
-                    if self.free_car_selection {
-                        crate::catalog::get_models_for_module(effective_module)
-                            .into_iter()
-                            .find(|m| m.base_car_choice == player_car_choice)
-                    } else {
-                        None
-                    }
+                    crate::catalog::get_models_for_module(effective_module)
+                        .into_iter()
+                        .find(|m| {
+                            m.base_car_choice == player_car_choice
+                                && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode())
+                        })
+                        .or_else(|| {
+                            crate::catalog::get_models_for_module(effective_module)
+                                .into_iter()
+                                .find(|m| m.base_car_choice == player_car_choice)
+                        })
                 })
         } else {
             if self.free_car_selection {

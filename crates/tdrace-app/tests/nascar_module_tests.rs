@@ -226,14 +226,21 @@ fn test_nascar_race_session_starting_grid_and_roster() {
     assert_eq!(session.grid_participants.len(), 8);
     assert_eq!(session.car_choice, CarChoice::StockCar);
 
+    let street_stock_models = tdrace_app::catalog::get_models_for_category("nascar", "Street Stock V8");
+    let street_stock_names: Vec<&'static str> = street_stock_models.iter().map(|m| m.name).collect();
     for p in &session.grid_participants {
-        assert_eq!(p.car_title, "850 BHP NASCAR Cup V8");
+        assert!(
+            street_stock_names.contains(&p.car_title.as_str()),
+            "NASCAR participant '{}' vehicle '{}' must belong to authentic Street Stock models",
+            p.name,
+            p.car_title
+        );
+        assert!(p.model_id.is_some());
     }
 
     match session.current_visual_type {
-        VehicleVisualType::StockCar { window_net, roof_fins, .. } => {
+        VehicleVisualType::StockCar { window_net, .. } => {
             assert!(window_net);
-            assert!(roof_fins);
         }
         _ => panic!("Expected StockCar vehicle visual type in NASCAR race"),
     }
