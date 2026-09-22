@@ -857,6 +857,8 @@ pub struct RaceResultEntry {
     pub total_time: f32,
     pub best_lap: Option<f32>,
     pub delta_to_leader: f32,
+    #[serde(default)]
+    pub car_idx: usize,
 }
 
 use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats};

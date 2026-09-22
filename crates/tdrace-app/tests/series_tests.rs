@@ -462,3 +462,154 @@ is_player = false
     assert_eq!(session.total_rounds(), 2);
     assert_eq!(session.tier, 2);
 }
+
+#[test]
+fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_rounds() {
+    let mut session = RaceSession::new();
+    session.start_rally_career_tier(1);
+
+    // 1. Verify championship session initialization
+    assert!(session.championship_session.is_some());
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.standings.len(), 8);
+    let standing_ids: Vec<String> = champ.standings.iter().map(|s| s.driver_id.clone()).collect();
+    assert!(standing_ids.contains(&"player".to_string()));
+    assert!(standing_ids.contains(&"johan_vance".to_string()));
+    assert!(standing_ids.contains(&"mattias_storm".to_string()));
+
+    // 2. Init race for Round 1
+    session.init_race();
+    assert_eq!(session.cars.len(), 8);
+    assert_eq!(session.opponent_drivers.len(), 7);
+    for opp in &session.opponent_drivers {
+        assert!(
+            standing_ids.contains(&opp.id.to_string()),
+            "Opponent driver '{}' must exist in championship standings",
+            opp.id
+        );
+    }
+
+    // 3. Simulate race finish where:
+    // Car 1 (Johan Vance) finishes 1st (with fastest lap)
+    // Car 2 (Mattias Storm) finishes 2nd
+    // Car 0 (Player) finishes 3rd
+    // Cars 3..7 finish 4th..8th
+    for (idx, tracker) in session.trackers.iter_mut().enumerate() {
+        tracker.current_lap = session.total_laps + 1;
+        tracker.normalized_progress = match idx {
+            1 => 0.99, // 1st
+            2 => 0.90, // 2nd
+            0 => 0.80, // 3rd (Player)
+            3 => 0.70, // 4th
+            4 => 0.60, // 5th
+            5 => 0.50, // 6th
+            6 => 0.40, // 7th
+            7 => 0.30, // 8th
+            _ => 0.10,
+        };
+        tracker.best_lap_time = Some(40.0 + idx as f32);
+    }
+    session.trackers[1].best_lap_time = Some(38.5);
+
+    session.check_race_finish();
+    assert_eq!(session.state, GameState::ChampionshipStandings);
+
+    // 4. Verify Round 1 standings
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.current_round, 1);
+
+    // Player finished 3rd -> 15 points (FIA standard)
+    let player_standing = champ.standings.iter().find(|s| s.driver_id == "player").unwrap();
+    assert_eq!(player_standing.points, 15, "Player finishing 3rd must receive 15 FIA points");
+    assert_eq!(player_standing.podiums, 1);
+
+    // Other AI drivers MUST have points awarded, not 0!
+    for standing in &champ.standings {
+        assert!(
+            standing.points > 0,
+            "Driver '{}' finished the race and must receive points (got 0)",
+            standing.driver_name
+        );
+    }
+
+    // Car 1 driver was 1st with fastest lap: 25 + 1 = 26 points
+    let car1_driver_id = session.opponent_drivers[0].id;
+    let winner_standing = champ.standings.iter().find(|s| s.driver_id == car1_driver_id).unwrap();
+    assert_eq!(winner_standing.points, 26, "1st place with fastest lap gets 25 + 1 = 26 points");
+    assert_eq!(winner_standing.wins, 1);
+
+    // 5. Advance to Round 2
+    session.advance_championship_round();
+    assert_eq!(session.opponent_drivers.len(), 7);
+    for opp in &session.opponent_drivers {
+        assert!(
+            standing_ids.contains(&opp.id.to_string()),
+            "Opponent driver '{}' in Round 2 must still match championship roster",
+            opp.id
+        );
+    }
+
+    // 6. Simulate Round 2 finish: Player wins (1st with fastest lap), Car 1 finishes 2nd
+    for (idx, tracker) in session.trackers.iter_mut().enumerate() {
+        tracker.current_lap = session.total_laps + 1;
+        tracker.normalized_progress = match idx {
+            0 => 0.99, // 1st (Player)
+            1 => 0.90, // 2nd
+            2 => 0.80, // 3rd
+            3 => 0.70, // 4th
+            4 => 0.60, // 5th
+            5 => 0.50, // 6th
+            6 => 0.40, // 7th
+            7 => 0.30, // 8th
+            _ => 0.10,
+        };
+        tracker.best_lap_time = Some(42.0);
+    }
+    session.trackers[0].best_lap_time = Some(39.0);
+
+    session.check_race_finish();
+    assert_eq!(session.state, GameState::ChampionshipStandings);
+
+    // 7. Verify accumulated points after Round 2
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.current_round, 2);
+
+    let player_after_r2 = champ.standings.iter().find(|s| s.driver_id == "player").unwrap();
+    // 15 from R1 + (25 + 1) from R2 = 41 points
+    assert_eq!(player_after_r2.points, 41, "Player points must accumulate across rounds");
+    assert_eq!(player_after_r2.wins, 1);
+    assert_eq!(player_after_r2.podiums, 2);
+
+    let winner_after_r2 = champ.standings.iter().find(|s| s.driver_id == car1_driver_id).unwrap();
+    // 26 from R1 + 18 from R2 = 44 points
+    assert_eq!(winner_after_r2.points, 44, "AI driver points must accumulate across rounds");
+}
+
+#[test]
+fn test_kart_and_gt_championship_rosters_match_modules() {
+    let mut session = RaceSession::new();
+    session.start_kart_career_tier(1);
+    session.init_race();
+    assert_eq!(session.opponent_drivers.len(), 7);
+    let kart_champ = session.championship_session.as_ref().unwrap();
+    for opp in &session.opponent_drivers {
+        assert!(
+            kart_champ.standings.iter().any(|s| s.driver_id == opp.id),
+            "Kart driver '{}' must match championship standings",
+            opp.id
+        );
+    }
+
+    session.start_gt_championship();
+    session.init_race();
+    assert_eq!(session.opponent_drivers.len(), 7);
+    let gt_champ = session.championship_session.as_ref().unwrap();
+    for opp in &session.opponent_drivers {
+        assert!(
+            gt_champ.standings.iter().any(|s| s.driver_id == opp.id),
+            "GT driver '{}' must match championship standings",
+            opp.id
+        );
+    }
+}
+
