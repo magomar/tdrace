@@ -9,7 +9,7 @@ Classic Arcade fantasy vehicles:
 
 Outputs:
 - assets/textures/vehicles/laterals/classic/{id}.png (1024x512)
-- assets/textures/vehicles/laterals/classic/{id}_thumb.png (256x85)
+- assets/textures/vehicles/laterals/classic/{id}_thumb.png (256x128)
 - assets/textures/vehicles/topdown/classic/{id}.png (512x512)
 """
 
@@ -195,7 +195,7 @@ def generate_classic_gt():
 
     lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
     lat_img.save(LATERAL_DIR / "classic_gt.png")
-    lat_thumb = lat_img.resize((256, 85), Image.Resampling.LANCZOS)
+    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
     lat_thumb.save(LATERAL_DIR / "classic_gt_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
@@ -365,7 +365,7 @@ def generate_classic_nascar():
 
     lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
     lat_img.save(LATERAL_DIR / "classic_nascar.png")
-    lat_thumb = lat_img.resize((256, 85), Image.Resampling.LANCZOS)
+    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
     lat_thumb.save(LATERAL_DIR / "classic_nascar_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
@@ -510,7 +510,7 @@ def generate_classic_offroad():
 
     lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
     lat_img.save(LATERAL_DIR / "classic_offroad.png")
-    lat_thumb = lat_img.resize((256, 85), Image.Resampling.LANCZOS)
+    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
     lat_thumb.save(LATERAL_DIR / "classic_offroad_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
@@ -660,7 +660,7 @@ def generate_classic_kart():
 
     lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
     lat_img.save(LATERAL_DIR / "classic_kart.png")
-    lat_thumb = lat_img.resize((256, 85), Image.Resampling.LANCZOS)
+    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
     lat_thumb.save(LATERAL_DIR / "classic_kart_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
@@ -923,7 +923,7 @@ def generate_classic_rally():
 
     lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
     lat_img.save(LATERAL_DIR / "classic_rally.png")
-    lat_thumb = lat_img.resize((256, 85), Image.Resampling.LANCZOS)
+    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
     lat_thumb.save(LATERAL_DIR / "classic_rally_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---

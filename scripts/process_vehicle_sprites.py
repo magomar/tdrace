@@ -4,7 +4,7 @@ Process raw generated lateral and top-down vehicle images:
 - Chroma-key out pure magenta background (#FF00FF)
 - Crop tightly to car bounding box
 - Place in 1024x512 transparent canvas for lateral view (aligned to ground)
-- Downscale to 256x85 for menu thumbnails
+- Downscale to 256x128 for menu thumbnails
 - Place in 512x512 transparent canvas for top-down racing view (centered)
 """
 
@@ -47,11 +47,11 @@ def process_lateral(raw_path: Path, out_path: Path, thumb_path: Path):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out_path, format="PNG")
 
-    thumb = canvas.resize((256, 85), Image.Resampling.LANCZOS)
+    thumb = canvas.resize((256, 128), Image.Resampling.LANCZOS)
     thumb_path.parent.mkdir(parents=True, exist_ok=True)
     thumb.save(thumb_path, format="PNG")
     print(f"✓ Lateral (1024x512) -> {out_path}")
-    print(f"✓ Thumbnail (256x85) -> {thumb_path}")
+    print(f"✓ Thumbnail (256x128) -> {thumb_path}")
 
 def process_topdown(raw_path: Path, out_path: Path):
     im = Image.open(raw_path)
@@ -64,8 +64,8 @@ def process_topdown(raw_path: Path, out_path: Path):
     scaled = cropped.resize((nw, nh), Image.Resampling.LANCZOS)
     canvas.paste(scaled, ((512 - nw) // 2, (512 - nh) // 2))
 
-    # Rotate 90 degrees counter-clockwise (270 CW) so vehicle nose points to the RIGHT (+X, forward heading)
-    canvas = canvas.transpose(Image.Transpose.ROTATE_90)
+    # Rotate 90 degrees clockwise (ROTATE_270 in PIL) so vehicle nose points to the RIGHT (+X, forward heading)
+    canvas = canvas.transpose(Image.Transpose.ROTATE_270)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out_path, format="PNG")
