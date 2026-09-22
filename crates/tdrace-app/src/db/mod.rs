@@ -658,6 +658,15 @@ impl HallOfFameDb {
         Ok(())
     }
 
+    /// Clears all race history logs for a specific championship across all player profiles.
+    pub fn clear_race_history_for_championship(&self, championship_name: &str) -> Result<()> {
+        self.conn.execute(
+            "DELETE FROM race_history WHERE championship_name = ?1 COLLATE NOCASE",
+            params![championship_name],
+        )?;
+        Ok(())
+    }
+
     /// Clears all Hall of Fame records and race history logs for a specific track.
     pub fn clear_track_history(&self, track_id: &str) -> Result<()> {
         self.clear_hall_of_fame_for_track(track_id)?;
@@ -1038,6 +1047,16 @@ impl HallOfFameDb {
     pub fn clear_race_history_for_track(&self, track_id: &str) -> Result<()> {
         let mut guard = self.history.lock().unwrap();
         guard.retain(|r| r.track_id != track_id);
+        Ok(())
+    }
+
+    pub fn clear_race_history_for_championship(&self, championship_name: &str) -> Result<()> {
+        let mut guard = self.history.lock().unwrap();
+        guard.retain(|r| {
+            !r.championship_name
+                .as_deref()
+                .is_some_and(|n| n.eq_ignore_ascii_case(championship_name))
+        });
         Ok(())
     }
 

@@ -613,3 +613,48 @@ fn test_kart_and_gt_championship_rosters_match_modules() {
     }
 }
 
+#[test]
+fn test_reset_championship_clears_session_and_database_history() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    session.start_rally_career_tier(1);
+    session.init_race();
+    assert!(session.championship_session.is_some());
+
+    // Complete round 1
+    session.trackers[0].current_lap = session.total_laps + 1;
+    session.check_race_finish();
+    assert_eq!(session.state, GameState::ChampionshipStandings);
+
+    // Verify race history has logged this championship round
+    let history = session.hof_db.as_ref().unwrap().get_history_for_profile(1, 10).unwrap();
+    assert!(
+        history.iter().any(|r| r.championship_name.as_deref() == Some("Rallycross Grassroots Cup (Tier 1)")),
+        "Race history must have logged championship round"
+    );
+
+    // Now reset the championship
+    session.reset_championship("Rallycross Grassroots Cup (Tier 1)", "rallycross_grassroots_cup");
+    assert!(session.championship_session.is_none(), "Active championship session must be cleared");
+
+    // Verify database history for this championship has been wiped
+    let history_after = session.hof_db.as_ref().unwrap().get_history_for_profile(1, 10).unwrap();
+    assert!(
+        history_after.iter().all(|r| r.championship_name.as_deref() != Some("Rallycross Grassroots Cup (Tier 1)")),
+        "Race history for this championship must be cleared"
+    );
+
+    // Restart championship and confirm it begins at Round 0 with clean 0 points
+    session.start_rally_career_tier(1);
+    let fresh_champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(fresh_champ.current_round, 0);
+    for s in &fresh_champ.standings {
+        assert_eq!(s.points, 0, "All drivers must have 0 points on fresh restart");
+    }
+}
+
+

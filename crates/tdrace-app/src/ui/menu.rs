@@ -2494,11 +2494,10 @@ pub fn render_championship_standings_screen(
         row_y += scaler.s(28.0);
     }
 
-    // Bottom Action Prompt
     let next_prompt = if champ.is_completed {
         "SEASON COMPLETE! PRESS [ENTER/SPACE] OR GAMEPAD [A] TO RETURN TO MENU"
     } else {
-        "PRESS [ENTER/SPACE] OR GAMEPAD [A] TO START NEXT ROUND | [ESC] EXIT"
+        "PRESS [ENTER/SPACE] TO ADVANCE ROUND | [R] RESET CHAMPIONSHIP | [ESC] EXIT"
     };
 
     fonts.draw_ui_bold_centered(

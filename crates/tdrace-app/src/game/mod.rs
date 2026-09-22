@@ -3778,6 +3778,18 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.advance_championship_round();
                 }
+                if is_key_pressed(KeyCode::R) || is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if let Some(champ) = &self.championship_session {
+                        let name = champ.name.clone();
+                        if let Some(db) = &self.hof_db {
+                            let _ = db.clear_race_history_for_championship(&name);
+                        }
+                    }
+                    self.championship_session = None;
+                    self.state = GameState::Menu;
+                    self.spawn_hud_alert("CHAMPIONSHIP RESET".to_string(), Palette::NEON_CYAN);
+                }
                 if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
@@ -4961,6 +4973,22 @@ impl RaceSession {
                             } else {
                                 self.audio.play_sfx(SfxType::UiMove);
                             }
+                        }
+                    }
+
+                    // Reset/restart championship shortcut (R, X, Backspace, Delete, Gamepad X)
+                    if is_key_pressed(KeyCode::R)
+                        || is_key_pressed(KeyCode::X)
+                        || is_key_pressed(KeyCode::Backspace)
+                        || is_key_pressed(KeyCode::Delete)
+                        || self.input.gamepad.snapshot.btn_x_pressed
+                    {
+                        let target_series = filtered_champs
+                            .get(self.profile_champ_selected_idx)
+                            .map(|c| (c.series.name.clone(), c.series.id.clone()));
+                        drop(filtered_champs);
+                        if let Some((name, id)) = target_series {
+                            self.reset_championship(&name, &id);
                         }
                     }
                 } else if self.profile_manager_tab == 3 {
@@ -10165,6 +10193,22 @@ impl RaceSession {
         }
 
         self.init_race();
+    }
+
+    /// Resets an active or saved championship season so the player can restart it afresh.
+    pub fn reset_championship(&mut self, series_name: &str, series_id: &str) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        if self.championship_session.as_ref().is_some_and(|s| {
+            s.name.eq_ignore_ascii_case(series_name) || s.name.eq_ignore_ascii_case(series_id)
+        }) {
+            self.championship_session = None;
+        }
+        if let Some(db) = &self.hof_db {
+            let _ = db.clear_race_history_for_championship(series_name);
+            let _ = db.clear_race_history_for_championship(series_id);
+        }
+        self.refresh_profiles_and_stats();
+        self.spawn_hud_alert(format!("{} RESET TO ROUND 1", series_name), Palette::NEON_CYAN);
     }
 
     /// Renders the full-screen Championship Editor studio.

@@ -427,7 +427,7 @@ pub fn render_profile_manager_screen(
         }
         ProfileFocusArea::Content => {
             if active_tab == 2 {
-                "[ENTER / CLICK] Enter Championship  |  [▲ / ▼] Navigate  |  [▲ at top] Filters  |  [ESC] Exit"
+                "[ENTER] Enter Cup  |  [R] Reset Cup  |  [▲ / ▼] Navigate  |  [▲ at top] Filters  |  [ESC] Exit"
             } else {
                 "[▲] Focus Filters  |  [▲ / ▼] Browse Telemetry  |  [F] Quick Filter  |  [ESC] Exit"
             }
@@ -1046,7 +1046,7 @@ fn render_championships_tab(
         } else if is_card_selected {
             if is_active_session {
                 (
-                    format!("[ENTER] RESUME ROUND {} ▶", completed_rounds + 1),
+                    format!("[ENTER] RESUME R{}  [R] RESET", completed_rounds + 1),
                     Palette::WHITE,
                     Color::new(0.25, 0.20, 0.05, 0.98),
                     Palette::NEON_GOLD,
@@ -1057,6 +1057,13 @@ fn render_championships_tab(
                     Palette::WHITE,
                     Color::new(0.05, 0.22, 0.12, 0.98),
                     Palette::NEON_GREEN,
+                )
+            } else if completed_rounds > 0 {
+                (
+                    format!("[ENTER] ENTER R{}  [R] RESET", completed_rounds + 1),
+                    Palette::WHITE,
+                    Color::new(0.06, 0.24, 0.35, 0.98),
+                    Palette::NEON_CYAN,
                 )
             } else {
                 (
