@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-20
 generated: { by: agent/antigravity, at: 2026-09-20T21:45:00Z }
 ---
-
 # Feature Spec: Player Profile Enhancement & Career Dossier 🌟
 
 A comprehensive overhaul of the **Player Profile (`GameState::ProfileManager`)** in **TdRace**. This specification eliminates the legacy two-column constraint—which permanently allocated 36% of the screen width to a static driver roster list—and expands the player dossier across the entire viewport. The enhanced profile models a hierarchical motorsport career system (**Global Driver Lifetime → Discipline Categories [GT, NASCAR, Rally, Off-Road, Kart, Classic] → Multi-Round Championships → Race Telemetry**) with rich tracking of race podiums (P1, P2, P3), acrobatic stunt points, and collision incident metrics. Furthermore, this specification codifies **three distinct layout alternatives** (Tabbed Telemetry Dashboard, 3-Column Executive Widescreen, and Hierarchical Drill-Down Dossier) to be implemented and evaluated across dedicated Git worktrees.

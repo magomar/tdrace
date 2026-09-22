@@ -32,6 +32,9 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Segment Runoff Terrain & Virtual Track Boundaries](../014_segment_runoff_terrain_and_virtual_track_boundaries.md)**: Track-segment runoff terrain properties (e.g. gravel margins, tarmac runoff) and non-physical virtual boundary barriers for fluid off-track surface transitions.
 - `[ ]` **[Surface Textures & Environmental Materials](../016_surface_textures_and_environmental_materials.md)**: High-fidelity tileable texture mapping, dual spline/world UV pipeline, macro-modulation, and organic terrain transitions across all 12 racing surfaces.
 
+### Phase 5: Tournament & Career Engine (Priority: High)
+- `[ ]` **[Declarative Championship Format & In-Game Championship Editor](../017_declarative_championship_format_and_editor.md)**: Declarative TOML championship format, discovery engine, and interactive developer Championship Editor studio.
+
 ---
 
 ## 🛠 Technical Debt & Maintenance

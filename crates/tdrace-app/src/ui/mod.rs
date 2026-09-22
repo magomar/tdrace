@@ -1,4 +1,5 @@
 pub mod career_hub;
+pub mod championship_editor;
 pub mod curve_indicator;
 pub mod driver_card;
 pub mod font;
@@ -48,6 +49,10 @@ pub use starting_grid::{
 };
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,
+};
+pub use championship_editor::{
+    handle_championship_editor_input, render_championship_editor, ChampionshipEditorAction,
+    ChampionshipEditorModal, ChampionshipEditorState, ChampionshipEditorTab,
 };
 pub use track_preview::{compute_track_bounds, render_track_detailed_preview, render_track_thumbnail};
 pub use cabinet::state::{

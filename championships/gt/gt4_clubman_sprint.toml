@@ -1,0 +1,117 @@
+# ==============================================================================
+# TdRace Championship Specification
+# GT World Challenge: GT4 Clubman Sprint Cup (Tier 1)
+# ==============================================================================
+
+[championship]
+id = "gt4_clubman_sprint"
+name = "GT4 Clubman Sprint Cup (Tier 1)"
+description = "Entry-level sprint cup featuring homologated GT4 sports cars across European circuits."
+module_id = "gt"
+tier = 1
+laps_per_round = 4
+bot_count = 7
+ai_difficulty = "standard"
+icon = "trophy"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "monza"
+name = "Autodromo Nazionale Monza"
+laps = 4
+
+[[rounds]]
+order = 2
+track_id = "spa"
+name = "Circuit de Spa-Francorchamps"
+laps = 4
+
+[[rounds]]
+order = 3
+track_id = "silverstone"
+name = "Silverstone Circuit"
+laps = 4
+
+[[rounds]]
+order = 4
+track_id = "classic_grand_prix"
+name = "Autodromo di Modena"
+laps = 4
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex GT Racing"
+is_player = true
+car_model_id = "gt_toyota_supra_gt4"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "max_hunter"
+name = "Max Hunter"
+team = "Red Bull GT"
+car_model_id = "gt_porsche_718_cayman_gt4_rs"
+country = "NED"
+ai_character = "aggressive"
+livery_idx = 1
+
+[[drivers]]
+id = "charles_laurent"
+name = "Charles Laurent"
+team = "Scuderia GT"
+car_model_id = "gt_bmw_m4_gt4_g82"
+country = "MCO"
+ai_character = "smooth"
+livery_idx = 2
+
+[[drivers]]
+id = "lewis_vance"
+name = "Lewis Vance"
+team = "Scuderia GT"
+car_model_id = "gt_mercedes_amg_gt4"
+country = "GBR"
+ai_character = "strategic"
+livery_idx = 3
+
+[[drivers]]
+id = "fernando_toro"
+name = "Fernando Toro"
+team = "Aston GT"
+car_model_id = "gt_aston_martin_vantage_amr_gt4"
+country = "ESP"
+ai_character = "tenacious"
+livery_idx = 4
+
+[[drivers]]
+id = "bot_5"
+name = "George Speed"
+team = "Mercedes-AMG GT"
+car_model_id = "gt_mercedes_amg_gt4"
+country = "GBR"
+ai_character = "balanced"
+livery_idx = 5
+
+[[drivers]]
+id = "bot_6"
+name = "Lando Vance"
+team = "McLaren GT"
+car_model_id = "gt_mclaren_artura_gt4"
+country = "GBR"
+ai_character = "fast"
+livery_idx = 6
+
+[[drivers]]
+id = "bot_7"
+name = "Oscar Rocket"
+team = "McLaren GT"
+car_model_id = "gt_audi_r8_lms_gt4"
+country = "AUS"
+ai_character = "calculating"
+livery_idx = 7

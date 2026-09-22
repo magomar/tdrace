@@ -1,4 +1,4 @@
-use tdrace_app::game::RaceSession;
+use tdrace_app::game::{GameState, RaceSession, StartingGridFocus};
 use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 use tdrace_core::track::presets::{
     classic_grand_prix, classic_rallycross, drift_park, kart_arena, oasis_rally, oval_speedway,
@@ -337,5 +337,72 @@ fn test_combined_garage_button_rect_and_launch_button_rect() {
     assert!(grid_w > 350.0);
     assert!(grid_h > 40.0);
     assert_eq!(grid_y, 60.0);
+}
+
+#[test]
+fn test_launch_race_eligibility_across_all_classic_tracks() {
+    let mut session = RaceSession::new();
+    let tracks = session.active_module_tracks();
+    for track in tracks {
+        session.track_choice = track.clone();
+        let loaded = tdrace_app::ui::menu::resolve_track_for_menu(&session.track_choice);
+        session.car_choice = tdrace_app::ui::menu::resolve_predefined_car_for_track(loaded.as_ref(), session.active_module_id);
+        session.init_race();
+
+        let player_car = session.active_player_car_choice();
+        let req_tier = session.current_race_required_tier();
+        let eligible = player_car.is_eligible_for_race_tier(req_tier, session.is_dev_mode());
+        let unlocked = session.is_car_unlocked(player_car);
+
+        assert!(unlocked, "Predefined car {:?} on track {} must be unlocked", player_car, track.track_id());
+        assert!(eligible, "Predefined car {:?} on track {} must be eligible (tier {} <= req {})", player_car, track.track_id(), player_car.tier(), req_tier);
+
+        // Verify that starting grid launch condition succeeds
+        assert!(eligible && unlocked, "Starting grid launch must be allowed for track {}", track.track_id());
+    }
+}
+
+#[test]
+fn test_launch_race_eligibility_across_specialized_modules() {
+    let mut session = RaceSession::new();
+    let modules = ["gt", "nascar", "rally", "kart", "extreme_offroad"];
+    for mod_id in modules {
+        session.switch_to_module(mod_id);
+        let tracks = session.active_module_tracks();
+        for track in tracks.iter().take(3) {
+            session.track_choice = track.clone();
+            let loaded = tdrace_app::ui::menu::resolve_track_for_menu(&session.track_choice);
+            session.car_choice = tdrace_app::ui::menu::resolve_predefined_car_for_track(loaded.as_ref(), session.active_module_id);
+            session.init_race();
+
+            let player_car = session.active_player_car_choice();
+            let req_tier = session.current_race_required_tier();
+            let eligible = player_car.is_eligible_for_race_tier(req_tier, session.is_dev_mode());
+            let unlocked = session.is_car_unlocked(player_car);
+
+            assert!(unlocked, "Module {} track {} car {:?} must be unlocked", mod_id, track.track_id(), player_car);
+            assert!(eligible, "Module {} track {} car {:?} must be eligible (tier {} <= req {})", mod_id, track.track_id(), player_car, player_car.tier(), req_tier);
+        }
+    }
+}
+
+#[test]
+fn test_starting_grid_card_2_and_space_launch_transition() {
+    let mut session = RaceSession::new();
+    session.init_race();
+    assert_eq!(session.state, GameState::StartingGrid);
+
+    // Starting grid launch prerequisite check
+    let player_car = session.active_player_car_choice();
+    let req_tier = session.current_race_required_tier();
+    assert!(player_car.is_eligible_for_race_tier(req_tier, session.is_dev_mode()));
+    assert!(session.is_car_unlocked(player_car));
+
+    // Card 2 simulates selecting Launch Race button and pressing Enter
+    session.starting_grid_focus = StartingGridFocus::LeftSetup;
+    session.starting_grid_card_idx = 2;
+    session.transition_iris_to(GameState::Countdown(3.5), 0.45);
+    assert!(session.transition.is_some());
+    assert_eq!(session.pending_state, Some(GameState::Countdown(3.5)));
 }
 

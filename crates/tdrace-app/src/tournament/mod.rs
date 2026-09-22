@@ -1,5 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+pub mod format;
+pub use format::*;
+pub mod manager;
+pub use manager::*;
+
 /// Scoring system for championship tournaments.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PointSystem {
@@ -136,6 +141,10 @@ pub struct ChampionshipRoundResult {
     pub results: Vec<RoundDriverResult>,
 }
 
+fn default_session_tier() -> u32 {
+    1
+}
+
 /// Multi-round championship tournament manager.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ChampionshipSession {
@@ -147,6 +156,8 @@ pub struct ChampionshipSession {
     pub standings: Vec<TournamentStandingEntry>,
     pub history: Vec<ChampionshipRoundResult>,
     pub is_completed: bool,
+    #[serde(default = "default_session_tier")]
+    pub tier: u32,
 }
 
 impl ChampionshipSession {
@@ -171,7 +182,14 @@ impl ChampionshipSession {
             standings,
             history: Vec::new(),
             is_completed: false,
+            tier: 1,
         }
+    }
+
+    /// Sets the motorsport category tier (1..=5) for this championship.
+    pub fn with_tier(mut self, tier: u32) -> Self {
+        self.tier = tier;
+        self
     }
 
     pub fn current_track_id(&self) -> Option<&str> {

@@ -13,6 +13,12 @@ pub const ENV_USER_TRACKS_DIR: &str = "TDRACE_USER_TRACKS_DIR";
 /// Environment variable to override the git tracks directory (e.g. in tests).
 pub const ENV_GIT_TRACKS_DIR: &str = "TDRACE_GIT_TRACKS_DIR";
 
+/// Environment variable to override the user championships directory.
+pub const ENV_USER_CHAMPIONSHIPS_DIR: &str = "TDRACE_USER_CHAMPIONSHIPS_DIR";
+
+/// Environment variable to override the git championships directory (e.g. in tests).
+pub const ENV_GIT_CHAMPIONSHIPS_DIR: &str = "TDRACE_GIT_CHAMPIONSHIPS_DIR";
+
 /// Environment variable indicating developer mode execution.
 pub const ENV_DEV_MODE: &str = "TDRACE_DEV";
 
@@ -79,6 +85,33 @@ pub fn resolve_git_tracks_dir() -> Option<PathBuf> {
         PathBuf::from("tracks"),
         PathBuf::from("../tracks"),
         PathBuf::from("../../tracks"),
+    ];
+    for c in &candidates {
+        if c.is_dir() {
+            let parent = c.parent().unwrap_or(std::path::Path::new("."));
+            if parent.join("crates").is_dir() || parent.join(".git").exists() {
+                return c.canonicalize().ok().or_else(|| Some(c.clone()));
+            }
+        }
+    }
+    None
+}
+
+/// Resolves the repository's git-tracked `championships/` directory when running in dev mode.
+/// Checks current working directory (`championships`), parent directory, or relative paths.
+pub fn resolve_git_championships_dir() -> Option<PathBuf> {
+    if let Ok(val) = std::env::var(ENV_GIT_CHAMPIONSHIPS_DIR) {
+        if !val.trim().is_empty() {
+            let p = PathBuf::from(val);
+            if p.is_dir() {
+                return p.canonicalize().ok().or_else(|| Some(p));
+            }
+        }
+    }
+    let candidates = [
+        PathBuf::from("championships"),
+        PathBuf::from("../championships"),
+        PathBuf::from("../../championships"),
     ];
     for c in &candidates {
         if c.is_dir() {
@@ -274,6 +307,25 @@ pub fn resolve_user_tracks_dir() -> PathBuf {
     }
 
     let p = resolve_user_data_dir().join("tracks");
+    let _ = fs::create_dir_all(&p);
+    p
+}
+
+/// Resolves the user-specific championships directory (`<user_data_dir>/championships`).
+///
+/// Priority order:
+/// 1. `TDRACE_USER_CHAMPIONSHIPS_DIR` environment variable
+/// 2. `<resolve_user_data_dir()>/championships`
+pub fn resolve_user_championships_dir() -> PathBuf {
+    if let Ok(override_dir) = std::env::var(ENV_USER_CHAMPIONSHIPS_DIR) {
+        if !override_dir.trim().is_empty() {
+            let p = PathBuf::from(override_dir);
+            let _ = fs::create_dir_all(&p);
+            return p;
+        }
+    }
+
+    let p = resolve_user_data_dir().join("championships");
     let _ = fs::create_dir_all(&p);
     p
 }

@@ -1,0 +1,147 @@
+# ==============================================================================
+# TdRace Championship Specification
+# NASCAR Cup Series Championship (Tier 5)
+# ==============================================================================
+
+[championship]
+id = "nascar_cup_tier5"
+name = "NASCAR Cup Series Championship (Tier 5)"
+description = "Premier high-banked superspeedway and tri-oval stock car racing championship."
+module_id = "nascar"
+tier = 5
+laps_per_round = 4
+bot_count = 11
+ai_difficulty = "pro"
+icon = "flag_checkered"
+
+[scoring]
+system = "nascar"
+fastest_lap_bonus = false
+stage_win_bonus = true
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "daytona_superspeedway"
+name = "Daytona International Speedway"
+laps = 4
+
+[[rounds]]
+order = 2
+track_id = "talladega_superspeedway"
+name = "Talladega Superspeedway"
+laps = 4
+
+[[rounds]]
+order = 3
+track_id = "phoenix_raceway"
+name = "Phoenix Raceway"
+laps = 4
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex Stock Car"
+is_player = true
+car_model_id = "nascar_chevrolet_camaro_zl1"
+country = "USA"
+livery_idx = 0
+
+[[drivers]]
+id = "dale_vance"
+name = "Dale 'The Intimidator' Vance"
+team = "Richard Childress Racing"
+car_model_id = "nascar_chevrolet_monte_carlo"
+country = "USA"
+ai_character = "aggressive"
+livery_idx = 1
+
+[[drivers]]
+id = "chase_gordon"
+name = "Chase 'Rainbow' Gordon"
+team = "Hendrick Motorsports"
+car_model_id = "nascar_chevrolet_camaro_zl1"
+country = "USA"
+ai_character = "smooth"
+livery_idx = 2
+
+[[drivers]]
+id = "richard_pettyfield"
+name = "Richard 'The King' Pettyfield"
+team = "Petty Enterprises"
+car_model_id = "nascar_plymouth_superbird"
+country = "USA"
+ai_character = "legendary"
+livery_idx = 3
+
+[[drivers]]
+id = "rowdy_busch"
+name = "Rowdy 'Wild Thing' Busch"
+team = "Joe Gibbs Racing"
+car_model_id = "nascar_toyota_camry_xse"
+country = "USA"
+ai_character = "tenacious"
+livery_idx = 4
+
+[[drivers]]
+id = "jimmie_johnson"
+name = "Jimmie 'Seven-Time' Johnson"
+team = "Hendrick Motorsports"
+car_model_id = "nascar_chevrolet_camaro_zl1"
+country = "USA"
+ai_character = "strategic"
+livery_idx = 5
+
+[[drivers]]
+id = "tony_stewart"
+name = "Tony 'Smoke' Stewart"
+team = "Stewart-Haas Racing"
+car_model_id = "nascar_ford_mustang_dark_horse"
+country = "USA"
+ai_character = "aggressive"
+livery_idx = 6
+
+[[drivers]]
+id = "bobby_allison"
+name = "Bobby 'Alabama' Allison"
+team = "Alabama Gang"
+car_model_id = "nascar_buick_regal"
+country = "USA"
+ai_character = "balanced"
+livery_idx = 7
+
+[[drivers]]
+id = "bubba_wallace"
+name = "Bubba 'The Rocket' Wallace"
+team = "23XI Racing"
+car_model_id = "nascar_toyota_camry_xse"
+country = "USA"
+ai_character = "fast"
+livery_idx = 8
+
+[[drivers]]
+id = "joey_logano"
+name = "Joey 'Sliced Bread' Logano"
+team = "Team Penske"
+car_model_id = "nascar_ford_mustang_dark_horse"
+country = "USA"
+ai_character = "strategic"
+livery_idx = 9
+
+[[drivers]]
+id = "bill_elliott"
+name = "Bill 'Awesome Bill' Elliott"
+team = "Melling Racing"
+car_model_id = "nascar_ford_thunderbird"
+country = "USA"
+ai_character = "calculating"
+livery_idx = 10
+
+[[drivers]]
+id = "cale_yarborough"
+name = "Cale 'The Iron Man' Yarborough"
+team = "Junior Johnson Racing"
+car_model_id = "nascar_oldsmobile_cutlass"
+country = "USA"
+ai_character = "tenacious"
+livery_idx = 11

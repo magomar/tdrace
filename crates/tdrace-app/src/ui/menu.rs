@@ -2561,6 +2561,7 @@ impl ModalityCategory {
                 ModalityItem::PlayerProfile,
                 ModalityItem::Garage,
                 ModalityItem::TrackEditor,
+                ModalityItem::ChampionshipEditor,
                 ModalityItem::Settings,
             ],
         }
@@ -2581,6 +2582,7 @@ pub enum ModalityItem {
     PlayerProfile,
     Garage,
     TrackEditor,
+    ChampionshipEditor,
     Settings,
 }
 
@@ -2598,6 +2600,7 @@ impl ModalityItem {
             Self::PlayerProfile => "Player Profile",
             Self::Garage => "Garage Showroom",
             Self::TrackEditor => "Track Editor",
+            Self::ChampionshipEditor => "Championship Editor",
             Self::Settings => "Settings",
         }
     }
@@ -2615,6 +2618,7 @@ impl ModalityItem {
             Self::PlayerProfile => "DRIVER RECORDS • CAREER STATS & SLOTS",
             Self::Garage => "360° VEHICLE TURNTABLE & TECHNICAL DOSSIER",
             Self::TrackEditor => "INTERACTIVE CAD STUDIO • CUSTOM CIRCUITS",
+            Self::ChampionshipEditor => "CUSTOM CUP CREATOR • TOML WORKBENCH",
             Self::Settings => "AUDIO • CONTROLS • ASSISTS • DISPLAY CONFIG",
         }
     }
@@ -2632,6 +2636,7 @@ impl ModalityItem {
             Self::PlayerProfile => "Inspect career statistics, manage driver slots, change nationality and custom car liveries.",
             Self::Garage => "Inspect active motorsport machines in fullscreen 360° turntable, check BHP and weight, and rev engine.",
             Self::TrackEditor => "Design custom circuits, shape splines, place surface zones, and test drive your tracks.",
+            Self::ChampionshipEditor => "Author declarative tournament cups, configure calendars and driver grids, and launch test cups.",
             Self::Settings => "Configure sound levels, gamepad and keyboard mappings, steering assists, and display settings.",
         }
     }
@@ -2653,6 +2658,7 @@ impl ModalityItem {
             Self::PlayerProfile => Palette::NEON_CYAN,
             Self::Garage => Palette::NEON_GOLD,
             Self::TrackEditor => Palette::NEON_GREEN,
+            Self::ChampionshipEditor => Palette::NEON_GOLD,
             Self::Settings => Palette::NEON_MAGENTA,
         }
     }
@@ -2671,8 +2677,8 @@ static MODALITY_GARAGE_PNG: &[u8] = include_bytes!("../../../../assets/icons/mod
 static MODALITY_TRACK_EDITOR_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/track_editor-128.png");
 static MODALITY_SETTINGS_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/settings-128.png");
 
-static MODALITY_ICON_TEXTURES: std::sync::Mutex<[Option<Texture2D>; 12]> = std::sync::Mutex::new([
-    None, None, None, None, None, None, None, None, None, None, None, None,
+static MODALITY_ICON_TEXTURES: std::sync::Mutex<[Option<Texture2D>; 13]> = std::sync::Mutex::new([
+    None, None, None, None, None, None, None, None, None, None, None, None, None,
 ]);
 
 /// Lazily decodes or retrieves the cached 128x128 texture for a given ModalityItem.
@@ -2689,7 +2695,8 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::PlayerProfile => 8,
         ModalityItem::Garage => 9,
         ModalityItem::TrackEditor => 10,
-        ModalityItem::Settings => 11,
+        ModalityItem::ChampionshipEditor => 11,
+        ModalityItem::Settings => 12,
     };
     let mut guard = MODALITY_ICON_TEXTURES.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(tex) = guard[idx].as_ref() {
@@ -2707,6 +2714,7 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::PlayerProfile => MODALITY_PLAYER_PROFILE_PNG,
         ModalityItem::Garage => MODALITY_GARAGE_PNG,
         ModalityItem::TrackEditor => MODALITY_TRACK_EDITOR_PNG,
+        ModalityItem::ChampionshipEditor => MODALITY_CAREER_MODE_PNG,
         ModalityItem::Settings => MODALITY_SETTINGS_PNG,
     };
     let img = Image::from_file_with_format(png_bytes, None)
@@ -3131,6 +3139,15 @@ pub fn render_modality_select_screen(
                             Palette::NEON_GREEN,
                         );
                     }
+                    ModalityItem::ChampionshipEditor => {
+                        fonts.draw_ui_bold(
+                            "🏆 CUP CREATOR",
+                            col_x + col_w - scaler.s(160.0),
+                            curr_y + opt_card_h * 0.25,
+                            scaler.font_s(10.0),
+                            Palette::NEON_GOLD,
+                        );
+                    }
                     ModalityItem::Settings => {
                         fonts.draw_ui_bold(
                             "⚙️ ARCADE CONFIG",
@@ -3169,6 +3186,7 @@ pub fn render_modality_select_screen(
                         ModalityItem::PlayerProfile => "PRESS [ENTER] OR [P] TO OPEN ▶",
                         ModalityItem::Garage => "PRESS [ENTER] OR [G] TO ENTER ▶",
                         ModalityItem::TrackEditor => "PRESS [ENTER] OR [E] TO EDIT ▶",
+                        ModalityItem::ChampionshipEditor => "PRESS [ENTER] OR [C] TO CREATE ▶",
                         ModalityItem::Settings => "PRESS [ENTER] OR [X] TO CONFIGURE ▶",
                         _ => "PRESS [ENTER] TO SELECT ▶",
                     };

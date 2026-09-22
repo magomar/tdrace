@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-21
 generated: { by: agent/antigravity, at: 2026-09-21T20:45:00Z }
 ---
-
 # Feature Spec: Segment Runoff Terrain and Virtual Track Boundaries 🏎️🪨
 
 A comprehensive architectural, physics, and rendering specification enabling track designers and procedural circuit generators to define localized off-track terrain (e.g. gravel traps, tarmac runoff strips, sand verges, or dirt shoulders) as direct properties of track segments between the ribbon edge and perimeter barriers. Additionally introduces non-physical **Virtual Barriers** (`BarrierType::Virtual`)—invisible geometric boundary lines that delimit surface transitions without physically impeding, deflecting, or damaging vehicles—allowing fluid transitions between localized segment runoffs and the global circuit backdrop (e.g. Grass).

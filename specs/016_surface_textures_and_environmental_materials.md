@@ -7,7 +7,6 @@ status: draft
 created: 2026-09-21
 generated: { by: agent/antigravity, at: 2026-09-21T21:18:13Z }
 ---
-
 # Feature Spec: Surface Textures & Environmental Materials 🏁🌿🪨
 
 A comprehensive rendering, asset pipeline, and material specification introducing tactile, high-fidelity textured surfaces across all 12 terrain types in **TdRace**. Moving beyond flat-shaded vector polygons, this architecture provides authentic aggregate detail (asphalt bitumen, loose gravel scree, fibrous grass, compacted dirt ruts, viscous mud, and iridescent oil) engineered specifically for **cenital (top-down / bird's-eye) perspective**, with seamless world-space tiling, track-aligned spline ribbon UV mapping, multi-frequency macro-modulation to eliminate repetitive tiling grids, and zero-overhead fallback guarantees for headless simulations.

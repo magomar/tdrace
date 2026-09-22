@@ -598,9 +598,9 @@ fn test_modality_single_selected_menu_isolation() {
             modal: None,
         }
     );
-    assert_eq!(ModalityCategory::Options.items().len(), 4);
+    assert_eq!(ModalityCategory::Options.items().len(), 5);
 
-    // 4. Wrapping within Options menu (4 items: 0=Profile, 1=Garage, 2=TrackEditor, 3=Settings)
+    // 4. Wrapping within Options menu (5 items: 0=Profile, 1=Garage, 2=TrackEditor, 3=ChampionshipEditor, 4=Settings)
     session.input.gamepad.snapshot.dpad_up_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.dpad_up_pressed = false;
@@ -609,7 +609,7 @@ fn test_modality_single_selected_menu_isolation() {
         session.state,
         GameState::ModalitySelect {
             category: ModalityCategory::Options,
-            selected_idx: 3,
+            selected_idx: 4,
             modal: None,
         }
     );
@@ -698,15 +698,43 @@ fn test_modality_select_options_track_editor_flow() {
 }
 
 #[test]
+fn test_modality_select_options_championship_editor_flow() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::Options,
+        selected_idx: 3, // ChampionshipEditor
+        modal: None,
+    };
+
+    // Confirm on Championship Editor card (idx 3) opens Championship Editor
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_modality_select();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert_eq!(session.state, GameState::ChampionshipEditor);
+    assert!(session.championship_editor_state.is_some());
+
+    // Direct shortcut [C] from ModalitySelect
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::Options,
+        selected_idx: 0,
+        modal: None,
+    };
+    session.enter_championship_editor(None);
+    assert_eq!(session.state, GameState::ChampionshipEditor);
+    assert!(session.championship_editor_state.is_some());
+}
+
+#[test]
 fn test_modality_select_options_settings_modal_flow() {
     let mut session = RaceSession::new();
     session.state = GameState::ModalitySelect {
         category: ModalityCategory::Options,
-        selected_idx: 3, // Settings
+        selected_idx: 4, // Settings
         modal: None,
     };
 
-    // Confirm on Settings card (idx 3) opens Settings Modal
+    // Confirm on Settings card (idx 4) opens Settings Modal
     session.input.gamepad.snapshot.btn_confirm_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_confirm_pressed = false;
@@ -716,7 +744,7 @@ fn test_modality_select_options_settings_modal_flow() {
         session.state,
         GameState::ModalitySelect {
             category: ModalityCategory::Options,
-            selected_idx: 3,
+            selected_idx: 4,
             modal: None,
         }
     ));

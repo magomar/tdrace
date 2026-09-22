@@ -101,8 +101,13 @@ use crate::render::{
     render_tree_trunks_culled, PlayerVisibilityOptions,
 };
 use crate::replay::{ReplayPlayer, ReplayRecorder};
-use crate::tournament::{ChampionshipSession, PointSystem, RoundDriverResult};
+use crate::tournament::format::ChampionshipDefinition;
+use crate::tournament::{ChampionshipManager, ChampionshipSession, PointSystem, RoundDriverResult};
 use crate::track_manager::TrackManager;
+use crate::ui::championship_editor::{
+    handle_championship_editor_input, render_championship_editor, ChampionshipEditorAction,
+    ChampionshipEditorState,
+};
 use crate::ui::driver_card::render_driver_cards_screen;
 use crate::ui::font::Fonts;
 use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
@@ -225,6 +230,7 @@ pub enum GameState {
         modal: TrackManagerModal,
     },
     TrackEditor,
+    ChampionshipEditor,
 }
 
 /// Active view within the post-race Finished state.
@@ -364,6 +370,8 @@ pub struct RaceSession {
 
     pub active_module_id: &'static str,
     pub championship_session: Option<ChampionshipSession>,
+    pub championship_manager: ChampionshipManager,
+    pub championship_editor_state: Option<ChampionshipEditorState>,
     pub random_car_assignment: bool,
     pub roster_seed: u64,
     pub current_visual_type: VehicleVisualType,
@@ -637,6 +645,8 @@ impl RaceSession {
 
             active_module_id: "classic",
             championship_session: None,
+            championship_manager: ChampionshipManager::new(),
+            championship_editor_state: None,
             random_car_assignment: true,
             roster_seed: 42,
             current_visual_type: VehicleVisualType::TouringGT {
@@ -1133,7 +1143,13 @@ impl RaceSession {
     /// Returns the required motorsport category tier (1..=5) for the current race.
     pub fn current_race_required_tier(&self) -> u8 {
         if self.active_module_id == "classic" {
-            1
+            5
+        } else if let Some(champ) = &self.championship_session {
+            (champ.tier as u8).clamp(1, 5)
+        } else if self.game_mode == GameMode::Career {
+            (self.active_career_progress.level as u8).clamp(1, 5)
+        } else if self.free_car_selection {
+            self.car_choice.tier()
         } else {
             self.resolve_predefined_car().tier()
         }
@@ -1768,7 +1784,7 @@ impl RaceSession {
             ],
         );
         self.switch_to_gt();
-        self.championship_session = Some(champ);
+        self.championship_session = Some(champ.with_tier(2));
         self.init_race();
     }
 
@@ -1844,7 +1860,7 @@ impl RaceSession {
         } else {
             self.car_choice = car_choice;
         }
-        self.championship_session = Some(champ);
+        self.championship_session = Some(champ.with_tier(tier));
         if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
             if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
                 self.track = t;
@@ -2004,13 +2020,13 @@ impl RaceSession {
             4,
             &[
                 ("player", "Player", "Apex Rally Team"),
-                ("johan_kristoffersson", "Johan Kristoffersson", "KMS Volkswagen"),
-                ("timmy_hansen", "Timmy Hansen", "Hansen Motorsport"),
-                ("mattias_ekstrom", "Mattias Ekström", "EKS RX"),
-                ("petter_solberg", "Petter Solberg", "PSRX Volkswagen"),
-                ("andreas_bakkerud", "Andreas Bakkerud", "Monster Energy RX"),
-                ("niclas_gronholm", "Niclas Grönholm", "GRX Taneco"),
-                ("kevin_hansen", "Kevin Hansen", "Hansen Motorsport"),
+                ("johan_vance", "Johan Vance", "KMS Motorsport"),
+                ("mattias_storm", "Mattias Storm", "EKS RX"),
+                ("timmy_hansenfield", "Timmy Hansenfield", "Hansen Motorsport"),
+                ("kevin_hansenfield", "Kevin Hansenfield", "Hansen Motorsport"),
+                ("niclas_gron", "Niclas Gron", "GRX Taneco"),
+                ("anton_mark", "Anton Mark", "GCK Motorsport"),
+                ("timo_scheider", "Timo Scheider", "All-Inkl Racing"),
             ],
         );
         let prev_selected = self.selected_car_model_id;
@@ -2039,7 +2055,7 @@ impl RaceSession {
         } else {
             self.car_choice = CarChoice::RallyCar;
         }
-        self.championship_session = Some(champ);
+        self.championship_session = Some(champ.with_tier(tier));
         self.init_race();
     }
 
@@ -2059,25 +2075,25 @@ impl RaceSession {
             2 => (
                 "National Kart Championship (Tier 2)",
                 vec![
-                    "sarno".to_string(),
-                    "kristianstad".to_string(),
-                    "seven_laghi".to_string(),
+                    "pf_international".to_string(),
+                    "salbris".to_string(),
+                    "zuera".to_string(),
                 ],
             ),
             3 => (
-                "Continental KZ2 Trophy (Tier 3)",
+                "Continental Rotax Trophy (Tier 3)",
                 vec![
-                    "pfi".to_string(),
-                    "franciacorta".to_string(),
-                    "ampfing".to_string(),
+                    "sarno".to_string(),
+                    "alghero".to_string(),
+                    "castelletto".to_string(),
                 ],
             ),
             4 => (
-                "FIA Karting International Masters (Tier 4)",
+                "FIA Karting European Championship (Tier 4)",
                 vec![
-                    "zuera".to_string(),
-                    "silverstone_national_kart".to_string(),
-                    "le_mans_kart".to_string(),
+                    "angerville".to_string(),
+                    "kristianstad".to_string(),
+                    "lemans_kart".to_string(),
                 ],
             ),
             _ => (
@@ -2132,7 +2148,7 @@ impl RaceSession {
         } else {
             self.car_choice = CarChoice::Kart;
         }
-        self.championship_session = Some(champ);
+        self.championship_session = Some(champ.with_tier(tier));
         self.init_race();
     }
 
@@ -2150,7 +2166,7 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "Canyon & Baja Trail Challenge (Tier 2)",
+                "Red Rock Canyon Raid (Tier 2)",
                 vec![
                     "red_rock_canyon".to_string(),
                     "mud_slough_arena".to_string(),
@@ -2158,7 +2174,7 @@ impl RaceSession {
                 ],
             ),
             3 => (
-                "Sub-Zero Polar Expedition (Tier 3)",
+                "Arctic Glacial Challenge (Tier 3)",
                 vec![
                     "arctic_frozen_lake".to_string(),
                     "alpine_snow_ridge".to_string(),
@@ -2166,7 +2182,7 @@ impl RaceSession {
                 ],
             ),
             4 => (
-                "Stadium Super Trucks Arena Tour (Tier 4)",
+                "Supercross & Mud Masters (Tier 4)",
                 vec![
                     "supercross_stadium_arena".to_string(),
                     "gravel_quarry_chasm".to_string(),
@@ -2226,7 +2242,7 @@ impl RaceSession {
         } else {
             self.car_choice = CarChoice::SandRail;
         }
-        self.championship_session = Some(champ);
+        self.championship_session = Some(champ.with_tier(tier));
         self.init_race();
     }
 
@@ -2266,7 +2282,7 @@ impl RaceSession {
             ],
         );
         self.switch_to_nascar();
-        self.championship_session = Some(champ);
+        self.championship_session = Some(champ.with_tier(5));
         self.init_race();
     }
 
@@ -2306,7 +2322,7 @@ impl RaceSession {
             ],
         );
         self.switch_to_extreme_offroad();
-        self.championship_session = Some(champ);
+        self.championship_session = Some(champ.with_tier(1));
         self.init_race();
     }
 
@@ -2883,8 +2899,16 @@ impl RaceSession {
             }
         }
 
-        // Predefined balanced lap count from track
-        self.total_laps = self.track.default_laps;
+        // Predefined balanced lap count from track (or championship override)
+        self.total_laps = if let Some(champ) = &self.championship_session {
+            if champ.laps_per_round > 0 {
+                champ.laps_per_round
+            } else {
+                self.track.default_laps
+            }
+        } else {
+            self.track.default_laps
+        };
 
         // 2. Setup camera
         self.camera.setup_for_track(&self.track);
@@ -3131,6 +3155,7 @@ impl RaceSession {
                 GameState::ProfileCreate { .. }
                     | GameState::PlayerRosterManager { active_column: 1, field_idx: 0..=1, .. }
                     | GameState::TrackManager { .. }
+                    | GameState::ChampionshipEditor
             )
             || (matches!(self.state, GameState::TrackEditor) && self.editor_modal != EditorModal::None);
 
@@ -3180,6 +3205,12 @@ impl RaceSession {
                 SplitLayout::Horizontal => SplitLayout::Vertical,
             };
             self.audio.play_sfx(SfxType::UiSelect);
+        }
+
+        // Open Championship Editor studio (F11 key)
+        if is_key_pressed(KeyCode::F11) {
+            self.enter_championship_editor(None);
+            return;
         }
 
         // Handle camera toggle / zoom cycle (Tab key for P1, Gamepad Cam Toggle for P2 in Split Screen, or either in Single Player)
@@ -3398,6 +3429,11 @@ impl RaceSession {
 
         if self.state == GameState::TrackEditor {
             self.update_track_editor(frame_dt);
+            return;
+        }
+
+        if self.state == GameState::ChampionshipEditor {
+            self.update_championship_editor(frame_dt);
             return;
         }
 
@@ -4308,7 +4344,8 @@ impl RaceSession {
             | GameState::ProfileCreate { .. }
             | GameState::PlayerRosterManager { .. }
             | GameState::TrackManager { .. }
-            | GameState::TrackEditor => {}
+            | GameState::TrackEditor
+            | GameState::ChampionshipEditor => {}
 
         }
     }
@@ -5508,6 +5545,12 @@ impl RaceSession {
             return;
         }
 
+        // Direct Championship Editor shortcut (C key)
+        if is_key_pressed(KeyCode::C) {
+            self.enter_championship_editor(None);
+            return;
+        }
+
         // Direct Settings shortcut (X key)
         if is_key_pressed(KeyCode::X) {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -5656,6 +5699,10 @@ impl RaceSession {
                     }
                     ModalityItem::TrackEditor => {
                         self.enter_track_editor_from_modality_select();
+                        return;
+                    }
+                    ModalityItem::ChampionshipEditor => {
+                        self.enter_championship_editor(None);
                         return;
                     }
                     ModalityItem::Settings => {
@@ -8997,7 +9044,9 @@ impl RaceSession {
                     .find(|p| p.is_player)
                     .and_then(|p| p.best_lap)
                     .or_else(|| self.ghost_recorder.best_ghost_lap.as_ref().map(|g| g.lap_time));
+                let req_tier = self.current_race_required_tier();
                 let is_unlocked = self.is_car_unlocked(active_car);
+                let is_eligible = active_car.is_eligible_for_race_tier(req_tier, self.is_dev_mode());
                 let unlock_level = active_car.unlock_level();
                 render_starting_grid_screen(
                     &self.fonts,
@@ -9016,6 +9065,8 @@ impl RaceSession {
                     self.starting_grid_card_idx,
                     self.starting_grid_roster_idx,
                     is_unlocked,
+                    is_eligible,
+                    req_tier,
                     unlock_level,
                     self.selected_car_model_id,
                 );
@@ -9180,6 +9231,9 @@ impl RaceSession {
             GameState::TrackEditor => {
                 self.render_track_editor();
             }
+            GameState::ChampionshipEditor => {
+                self.render_championship_editor();
+            }
         }
 
         // Render CRT & Retro Scanline post-processing overlay
@@ -9248,6 +9302,108 @@ impl RaceSession {
             }
         };
         self.enter_track_editor_with_path(track, file_path);
+    }
+
+    /// Transitions into the Championship Editor studio with an optional initial definition.
+    pub fn enter_championship_editor(&mut self, def: Option<ChampionshipDefinition>) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        self.championship_editor_state = Some(ChampionshipEditorState::new(def));
+        self.state = GameState::ChampionshipEditor;
+    }
+
+    /// Handles frame update & user interaction in the Championship Editor.
+    pub fn update_championship_editor(&mut self, dt: f32) {
+        if let Some(mut state) = self.championship_editor_state.take() {
+            if let Some((_, ref mut timer)) = state.status_msg {
+                *timer -= dt;
+                if *timer <= 0.0 {
+                    state.status_msg = None;
+                }
+            }
+
+            let tracks = self.track_manager.main_track_choices();
+            let action = handle_championship_editor_input(&mut state, &tracks, self.is_dev_mode());
+            match action {
+                ChampionshipEditorAction::None => {
+                    self.championship_editor_state = Some(state);
+                }
+                ChampionshipEditorAction::Exit => {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.championship_editor_state = None;
+                    self.state = GameState::ModalitySelect {
+                        category: ModalityCategory::Options,
+                        selected_idx: 3,
+                        modal: None,
+                    };
+                }
+                ChampionshipEditorAction::SaveUser => {
+                    match self.championship_manager.save_user_championship(&state.def) {
+                        Ok(path) => {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            let filename = path
+                                .file_name()
+                                .map(|f| f.to_string_lossy().to_string())
+                                .unwrap_or_else(|| "custom.toml".to_string());
+                            state.status_msg = Some((format!("SAVED USER CUP: {}", filename), 3.0));
+                        }
+                        Err(e) => {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            state.status_msg = Some((format!("SAVE ERROR: {}", e), 4.0));
+                        }
+                    }
+                    self.championship_editor_state = Some(state);
+                }
+                ChampionshipEditorAction::SavePreset => {
+                    if self.is_dev_mode() {
+                        match self.championship_manager.save_preset_championship(&state.def) {
+                            Ok(path) => {
+                                self.audio.play_sfx(SfxType::UiSelect);
+                                let filename = path
+                                    .file_name()
+                                    .map(|f| f.to_string_lossy().to_string())
+                                    .unwrap_or_else(|| "preset.toml".to_string());
+                                state.status_msg = Some((format!("SAVED PRESET: {}", filename), 3.0));
+                            }
+                            Err(e) => {
+                                self.audio.play_sfx(SfxType::UiSelect);
+                                state.status_msg = Some((format!("SAVE ERROR: {}", e), 4.0));
+                            }
+                        }
+                    }
+                    self.championship_editor_state = Some(state);
+                }
+                ChampionshipEditorAction::LaunchTestCup(def) => {
+                    self.launch_championship_test_cup(def);
+                }
+            }
+        }
+    }
+
+    /// Converts a ChampionshipDefinition to a runtime ChampionshipSession, switches module, and starts race.
+    pub fn launch_championship_test_cup(&mut self, def: ChampionshipDefinition) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        let champ = def.to_session();
+        self.switch_to_module(&def.championship.module_id);
+        self.championship_session = Some(champ);
+        self.championship_editor_state = None;
+        self.init_race();
+    }
+
+    /// Renders the full-screen Championship Editor studio.
+    pub fn render_championship_editor(&self) {
+        if let Some(state) = &self.championship_editor_state {
+            let sw = screen_width_safe();
+            let sh = screen_height_safe();
+            let scaler = UiScaler::new(sw, sh);
+            let tracks = self.track_manager.main_track_choices();
+            render_championship_editor(
+                &self.fonts,
+                &scaler,
+                state,
+                &tracks,
+                self.is_dev_mode(),
+            );
+        }
     }
 
     /// Exits Track Studio editor and navigates cleanly back to the Track Manager screen,

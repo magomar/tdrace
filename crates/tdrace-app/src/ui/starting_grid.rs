@@ -76,6 +76,8 @@ pub fn render_starting_grid_screen(
     active_card_idx: usize,
     active_roster_idx: usize,
     is_car_unlocked: bool,
+    is_car_eligible: bool,
+    required_tier: u8,
     unlock_level: u32,
     selected_model_id: Option<&str>,
 ) {
@@ -410,6 +412,13 @@ pub fn render_starting_grid_screen(
             "🔒 VEHICLE LOCKED",
             format!("Advance Career to Level {} to Unlock", unlock_level),
         )
+    } else if !is_car_eligible {
+        (
+            Color::new(0.35, 0.10, 0.10, 0.95),
+            Palette::RED,
+            "🚫 INELIGIBLE CATEGORY",
+            format!("Requires Tier {} or Lower (Selected: Tier {})", required_tier, active_car.tier()),
+        )
     } else if is_launch_active {
         (
             Color::new(0.12, 0.68, 0.32, 0.98),
@@ -432,7 +441,7 @@ pub fn render_starting_grid_screen(
         curr_y,
         col_w,
         launch_h,
-        if is_launch_active || !is_car_unlocked { 2.8 * scaler.scale } else { 1.6 * scaler.scale },
+        if is_launch_active || !is_car_unlocked || !is_car_eligible { 2.8 * scaler.scale } else { 1.6 * scaler.scale },
         launch_border,
     );
 

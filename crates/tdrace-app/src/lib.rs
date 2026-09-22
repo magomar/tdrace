@@ -41,9 +41,12 @@ pub use module::{
     TrackDefinition, VehicleModelDefinition, VehicleVisualType,
 };
 pub use tournament::{
-    ChampionshipRoundResult, ChampionshipSession, EliminationSession, PointSystem, QualifyingResult,
+    ChampionshipManager, ChampionshipRoundResult, ChampionshipSession, EliminationSession, PointSystem, QualifyingResult,
     QualifyingSession, RallyStageResult, RoundDriverResult, StageRallySession, TournamentFormat,
     TournamentStandingEntry,
+};
+pub use tournament::format::{
+    ChampionshipDefinition, ChampionshipMeta, DriverConfig, RoundConfig, ScoringConfig,
 };
 pub use track_manager::{CustomTrackInfo, TrackManager};
 
