@@ -1,17 +1,17 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Karting Career Mode: Rotax Junior Karting Academy (Tier 1)
+# Karting Career Mode: Continental Rotax Trophy (Tier 3)
 # ==============================================================================
 
 [championship]
-id = "kart_world_cup"
-name = "Rotax Junior Karting Academy"
-description = "Tight, technical grassroots karting championship testing racecraft and momentum preservation across 5 European circuits."
+id = "kart_continental_trophy"
+name = "Continental Rotax Trophy"
+description = "Brutal 125cc 6-speed KZ2 shifter karts pulling 3.5G lateral cornering grip and 0-100 km/h in 2.8s across 9 international kart circuits."
 module_id = "kart"
-tier = 1
+tier = 3
 laps_per_round = 4
 bot_count = 7
-ai_difficulty = "standard"
+ai_difficulty = "pro"
 icon = "kart"
 
 [scoring]
@@ -22,30 +22,54 @@ clean_race_bonus = false
 
 [[rounds]]
 order = 1
+track_id = "pfi"
+name = "PF International Kart Circuit"
+laps = 4
+
+[[rounds]]
+order = 2
+track_id = "franciacorta"
+name = "Franciacorta Karting Track"
+laps = 4
+
+[[rounds]]
+order = 3
+track_id = "ampfing"
+name = "Kartshop Ampfing"
+laps = 4
+
+[[rounds]]
+order = 4
+track_id = "sarno"
+name = "Circuito Internazionale Napoli Sarno"
+laps = 4
+
+[[rounds]]
+order = 5
+track_id = "kristianstad"
+name = "Åsum Ring Kristianstad"
+laps = 4
+
+[[rounds]]
+order = 6
+track_id = "seven_laghi"
+name = "Circuito 7 Laghi Castelletto"
+laps = 4
+
+[[rounds]]
+order = 7
 track_id = "lonato"
 name = "South Garda Karting Lonato"
 laps = 4
 
 [[rounds]]
-order = 2
-track_id = "genk"
-name = "Karting Genk Home of Champions"
-laps = 4
-
-[[rounds]]
-order = 3
+order = 8
 track_id = "wackersdorf"
 name = "Prokart Raceland Wackersdorf"
 laps = 4
 
 [[rounds]]
-order = 4
-track_id = "laval_kart"
-name = "Circuit Beausoleil Laval"
-laps = 4
-
-[[rounds]]
-order = 5
+order = 9
 track_id = "whilton_mill"
 name = "Whilton Mill Kart Circuit"
 laps = 4
@@ -55,7 +79,7 @@ id = "player"
 name = "Player"
 team = "Apex Kart Racing"
 is_player = true
-car_model_id = "kart_crg_hero_60"
+car_model_id = "kart_birel_art_kz2"
 country = "ESP"
 livery_idx = 0
 
@@ -63,7 +87,7 @@ livery_idx = 0
 id = "marco_armani"
 name = "Marco Armani"
 team = "Tony Kart Racing"
-car_model_id = "kart_tony_kart_neos"
+car_model_id = "kart_tony_kart_racer_kz"
 country = "ITA"
 ai_character = "smooth"
 livery_idx = 1
@@ -72,7 +96,7 @@ livery_idx = 1
 id = "lucas_vance"
 name = "Lucas Vance"
 team = "CRG Factory Team"
-car_model_id = "kart_crg_hero_60"
+car_model_id = "kart_crg_road_rebel_kz"
 country = "GBR"
 ai_character = "aggressive"
 livery_idx = 2
@@ -81,7 +105,7 @@ livery_idx = 2
 id = "alex_rossi"
 name = "Alex Rossi"
 team = "Birel ART"
-car_model_id = "kart_birel_c28"
+car_model_id = "kart_birel_art_kz2"
 country = "ITA"
 ai_character = "tenacious"
 livery_idx = 3
@@ -90,7 +114,7 @@ livery_idx = 3
 id = "sofia_lind"
 name = "Sofia Lind"
 team = "Kosmic Racing"
-car_model_id = "kart_tony_kart_neos"
+car_model_id = "kart_tony_kart_racer_kz"
 country = "SWE"
 ai_character = "calculating"
 livery_idx = 4
@@ -99,7 +123,7 @@ livery_idx = 4
 id = "finn_korhonen"
 name = "Finn Korhonen"
 team = "Sodi Kart"
-car_model_id = "kart_birel_c28"
+car_model_id = "kart_birel_art_kz2"
 country = "FIN"
 ai_character = "fast"
 livery_idx = 5
@@ -108,7 +132,7 @@ livery_idx = 5
 id = "leo_dupont"
 name = "Leo Dupont"
 team = "Energy Corse"
-car_model_id = "kart_crg_hero_60"
+car_model_id = "kart_crg_road_rebel_kz"
 country = "FRA"
 ai_character = "balanced"
 livery_idx = 6
@@ -117,7 +141,7 @@ livery_idx = 6
 id = "mateo_silva"
 name = "Mateo Silva"
 team = "Parolin Motorsport"
-car_model_id = "kart_tony_kart_neos"
+car_model_id = "kart_tony_kart_racer_kz"
 country = "BRA"
 ai_character = "strategic"
 livery_idx = 7

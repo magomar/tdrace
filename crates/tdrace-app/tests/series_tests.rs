@@ -387,6 +387,148 @@ fn test_gt_tiers_1_to_5_specifications() {
 }
 
 #[test]
+fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
+    let mgr = ChampionshipManager::new();
+
+    let modules_and_expected = [
+        (
+            "gt",
+            vec![
+                (1, "gt4_clubman_sprint", 5, "gt_toyota_supra_gt4"),
+                (2, "gt3_european_challenge", 7, "gt_porsche_911_gt3r"),
+                (3, "gt2_power_masters", 9, "gt_porsche_911_gt2_rs"),
+                (4, "gt1_heritage_trophy", 10, "gt_porsche_911_gt1_98"),
+                (5, "hypercar_world_gp", 12, "gt_ferrari_499p"),
+            ],
+        ),
+        (
+            "nascar",
+            vec![
+                (1, "nascar_short_track_series", 5, "nascar_monte_carlo_ss"),
+                (2, "nascar_intermediate_oval_challenge", 7, "nascar_super_late_model"),
+                (3, "nascar_national_tour", 9, "nascar_arca_chevy_ss"),
+                (4, "nascar_premier_speedway_trophy", 10, "nascar_silverado_truck"),
+                (5, "nascar_cup_tier5", 12, "nascar_corvette_ta1"),
+            ],
+        ),
+        (
+            "rally",
+            vec![
+                (1, "rally_grassroots_cup", 5, "rally_peugeot_208_rally4"),
+                (2, "rally_world_cup", 7, "rally_polo_rx"),
+                (3, "rally_group_b_masters", 9, "rally_audi_sport_quattro_s1"),
+                (4, "rally_dakar_raid_trophy", 10, "rally_toyota_hilux_t1_plus"),
+                (5, "rally_super_trucks_series", 12, "rally_sst_super_truck"),
+            ],
+        ),
+        (
+            "kart",
+            vec![
+                (1, "kart_world_cup", 5, "kart_crg_hero_60"),
+                (2, "kart_national_championship", 7, "kart_tony_kart_racer_ok"),
+                (3, "kart_continental_trophy", 9, "kart_birel_art_kz2"),
+                (4, "kart_european_championship", 10, "kart_honda_mean_mower"),
+                (5, "kart_superkart_world_series", 12, "kart_anderson_cs250"),
+            ],
+        ),
+        (
+            "extreme_offroad",
+            vec![
+                (1, "extreme_desert_sand_sprint", 5, "offroad_sand_rail_buggy"),
+                (2, "extreme_canyon_raid", 7, "offroad_baja_trophy_truck"),
+                (3, "extreme_offroad_cup", 9, "offroad_subaru_ice_racer"),
+                (4, "extreme_mud_masters", 10, "offroad_mega_mud_truck"),
+                (5, "extreme_ultimate_championship", 12, "offroad_grave_crusher"),
+            ],
+        ),
+    ];
+
+    for (module_id, expected_tiers) in modules_and_expected {
+        let module_champs: Vec<_> = mgr
+            .all_sorted()
+            .into_iter()
+            .filter(|c| c.series.module_id == module_id)
+            .collect();
+
+        assert_eq!(
+            module_champs.len(),
+            5,
+            "Module '{}' must have exactly 5 tier championships registered",
+            module_id
+        );
+
+        for (tier, id, rounds_len, expected_car) in expected_tiers {
+            let def = mgr
+                .get(id)
+                .unwrap_or_else(|| panic!("Module '{}' missing preset '{}'", module_id, id));
+
+            assert_eq!(def.series.module_id, module_id);
+            assert_eq!(def.series.tier, tier);
+            assert_eq!(
+                def.rounds.len(),
+                rounds_len,
+                "Championship '{}' in module '{}' tier {} must have {} rounds",
+                id,
+                module_id,
+                tier,
+                rounds_len
+            );
+            assert_eq!(
+                def.drivers.len(),
+                8,
+                "Championship '{}' must have exactly 8 drivers",
+                id
+            );
+
+            // Verify player driver exists with valid starter car
+            let player = def
+                .drivers
+                .iter()
+                .find(|d| d.is_player)
+                .unwrap_or_else(|| panic!("Championship '{}' must have a player driver", id));
+            assert_eq!(
+                player.car_model_id.as_deref(),
+                Some(expected_car),
+                "Player car in '{}' tier {} must be {}",
+                id,
+                tier,
+                expected_car
+            );
+
+            // Verify all driver car models exist in vehicle catalog
+            for driver in &def.drivers {
+                let model_id = driver
+                    .car_model_id
+                    .as_deref()
+                    .unwrap_or_else(|| panic!("Driver '{}' in '{}' missing car model", driver.id, id));
+                let model = tdrace_app::catalog::find_model_by_id(model_id);
+                assert!(
+                    model.is_some(),
+                    "Car model '{}' in '{}' must exist in ALL_REAL_CARS",
+                    model_id,
+                    id
+                );
+            }
+
+            // Verify round ordering is strictly 1..=rounds_len
+            for (idx, round) in def.rounds.iter().enumerate() {
+                assert_eq!(
+                    round.order,
+                    idx + 1,
+                    "Round order mismatch in '{}'",
+                    id
+                );
+            }
+
+            // Verify runtime conversion
+            let session = def.to_session();
+            assert_eq!(session.total_rounds(), rounds_len);
+            assert_eq!(session.tier, tier);
+        }
+    }
+}
+
+#[test]
 fn test_championship_editor_open_and_load_modal() {
     use tdrace_app::ui::championship_editor::{
         ChampionshipEditorAction, ChampionshipEditorModal, ChampionshipEditorState,

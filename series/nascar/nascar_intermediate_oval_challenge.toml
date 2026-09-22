@@ -1,17 +1,17 @@
 # ==============================================================================
 # TdRace Championship Specification
-# NASCAR Career Mode: NASCAR Cup Series Championship (Tier 5)
+# NASCAR Career Mode: NASCAR Intermediate Oval Challenge (Tier 2)
 # ==============================================================================
 
 [championship]
-id = "nascar_cup_tier5"
-name = "NASCAR Cup Series Championship"
-description = "The pinnacle of American stock and silhouette racing: 850 BHP monsters battling across 12 iconic superspeedways and road courses."
+id = "nascar_intermediate_oval_challenge"
+name = "NASCAR Intermediate Oval Challenge"
+description = "Purpose-built tubular Late Model Stock cars battling on high-banked intermediate ovals and iconic bullrings."
 module_id = "nascar"
-tier = 5
+tier = 2
 laps_per_round = 4
 bot_count = 7
-ai_difficulty = "legend"
+ai_difficulty = "standard"
 icon = "flag_checkered"
 
 [scoring]
@@ -22,74 +22,44 @@ clean_race_bonus = false
 
 [[rounds]]
 order = 1
-track_id = "daytona_superspeedway"
-name = "Daytona International Speedway"
-laps = 4
-
-[[rounds]]
-order = 2
-track_id = "talladega_superspeedway"
-name = "Talladega Superspeedway"
-laps = 4
-
-[[rounds]]
-order = 3
-track_id = "phoenix_raceway"
-name = "Phoenix Raceway"
-laps = 4
-
-[[rounds]]
-order = 4
-track_id = "indianapolis_motor_speedway"
-name = "Indianapolis Motor Speedway"
-laps = 4
-
-[[rounds]]
-order = 5
-track_id = "pocono_raceway"
-name = "Pocono Raceway"
-laps = 4
-
-[[rounds]]
-order = 6
 track_id = "charlotte_motor_speedway"
 name = "Charlotte Motor Speedway"
 laps = 4
 
 [[rounds]]
-order = 7
+order = 2
 track_id = "darlington_raceway"
 name = "Darlington Raceway"
 laps = 4
 
 [[rounds]]
-order = 8
-track_id = "watkins_glen_nascar"
-name = "Watkins Glen International"
+order = 3
+track_id = "north_wilkesboro_speedway"
+name = "North Wilkesboro Speedway"
 laps = 4
 
 [[rounds]]
-order = 9
-track_id = "road_america"
-name = "Road America"
-laps = 4
-
-[[rounds]]
-order = 10
-track_id = "bristol_motor_speedway"
-name = "Bristol Motor Speedway"
-laps = 4
-
-[[rounds]]
-order = 11
+order = 4
 track_id = "martinsville_speedway"
 name = "Martinsville Speedway"
 laps = 4
 
 [[rounds]]
-order = 12
-track_id = "chicago_street_course"
-name = "Chicago Street Course"
+order = 5
+track_id = "bristol_motor_speedway"
+name = "Bristol Motor Speedway"
+laps = 4
+
+[[rounds]]
+order = 6
+track_id = "eldora_speedway"
+name = "Eldora Speedway"
+laps = 4
+
+[[rounds]]
+order = 7
+track_id = "bowman_gray_stadium"
+name = "Bowman Gray Stadium"
 laps = 4
 
 [[drivers]]
@@ -97,7 +67,7 @@ id = "player"
 name = "Player"
 team = "Apex Stock Car"
 is_player = true
-car_model_id = "nascar_corvette_ta1"
+car_model_id = "nascar_super_late_model"
 country = "USA"
 livery_idx = 0
 
@@ -105,7 +75,7 @@ livery_idx = 0
 id = "dale_vance"
 name = "Dale 'The Intimidator' Vance"
 team = "Richard Childress Racing"
-car_model_id = "nascar_corvette_ta1"
+car_model_id = "nascar_super_late_model"
 country = "USA"
 ai_character = "aggressive"
 livery_idx = 1
@@ -114,7 +84,7 @@ livery_idx = 1
 id = "chase_gordon"
 name = "Chase 'Rainbow' Gordon"
 team = "Hendrick Motorsports"
-car_model_id = "nascar_mustang_ta1"
+car_model_id = "nascar_mustang_super_late_model"
 country = "USA"
 ai_character = "smooth"
 livery_idx = 2
@@ -123,7 +93,7 @@ livery_idx = 2
 id = "richard_pettyfield"
 name = "Richard 'The King' Pettyfield"
 team = "Petty Enterprises"
-car_model_id = "nascar_challenger_ta1"
+car_model_id = "nascar_late_model_stock_car"
 country = "USA"
 ai_character = "tenacious"
 livery_idx = 3
@@ -132,7 +102,7 @@ livery_idx = 3
 id = "rowdy_busch"
 name = "Rowdy 'Wild Thing' Busch"
 team = "Joe Gibbs Racing"
-car_model_id = "nascar_corvette_ta1"
+car_model_id = "nascar_super_late_model"
 country = "USA"
 ai_character = "aggressive"
 livery_idx = 4
@@ -141,7 +111,7 @@ livery_idx = 4
 id = "jimmie_johnson"
 name = "Jimmie 'Seven-Time' Johnson"
 team = "Hendrick Motorsports"
-car_model_id = "nascar_mustang_ta1"
+car_model_id = "nascar_mustang_super_late_model"
 country = "USA"
 ai_character = "calculating"
 livery_idx = 5
@@ -150,7 +120,7 @@ livery_idx = 5
 id = "tony_stewart"
 name = "Tony 'Smoke' Stewart"
 team = "Stewart-Haas Racing"
-car_model_id = "nascar_challenger_ta1"
+car_model_id = "nascar_late_model_stock_car"
 country = "USA"
 ai_character = "tenacious"
 livery_idx = 6
@@ -159,7 +129,7 @@ livery_idx = 6
 id = "bobby_allison"
 name = "Bobby 'Alabama' Allison"
 team = "Alabama Gang"
-car_model_id = "nascar_mustang_ta1"
+car_model_id = "nascar_mustang_super_late_model"
 country = "USA"
 ai_character = "strategic"
 livery_idx = 7

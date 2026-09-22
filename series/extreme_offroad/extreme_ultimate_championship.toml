@@ -1,0 +1,165 @@
+# ==============================================================================
+# TdRace Championship Specification
+# Extreme Off-Road Career Mode: Extreme Off-Road Ultimate Championship (Tier 5)
+# ==============================================================================
+
+[championship]
+id = "extreme_ultimate_championship"
+name = "Extreme Off-Road Ultimate Championship"
+description = "66-inch tire 1500HP monster truck titans battling across stunt megastructures, glacial crests, and stadium colosseums across 12 premier venues."
+module_id = "extreme_offroad"
+tier = 5
+laps_per_round = 3
+bot_count = 7
+ai_difficulty = "legend"
+icon = "wheel"
+
+[scoring]
+system = "arcade"
+fastest_lap_bonus = false
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "monster_colosseum"
+name = "Monster Colosseum"
+laps = 3
+
+[[rounds]]
+order = 2
+track_id = "glacier_crest_pass"
+name = "Glacier Crest Pass"
+laps = 3
+
+[[rounds]]
+order = 3
+track_id = "stunt_city_megastructure"
+name = "Stunt City Megastructure"
+laps = 3
+
+[[rounds]]
+order = 4
+track_id = "supercross_stadium_arena"
+name = "Supercross Stadium Arena"
+laps = 3
+
+[[rounds]]
+order = 5
+track_id = "gravel_quarry_chasm"
+name = "Gravel Quarry Chasm"
+laps = 3
+
+[[rounds]]
+order = 6
+track_id = "arctic_frozen_lake"
+name = "Arctic Frozen Lake"
+laps = 3
+
+[[rounds]]
+order = 7
+track_id = "alpine_snow_ridge"
+name = "Alpine Snow Ridge"
+laps = 3
+
+[[rounds]]
+order = 8
+track_id = "louisiana_mud_swampland"
+name = "Louisiana Mud Swampland"
+laps = 3
+
+[[rounds]]
+order = 9
+track_id = "red_rock_canyon"
+name = "Red Rock Canyon Pass"
+laps = 3
+
+[[rounds]]
+order = 10
+track_id = "rovaniemi_ice_ring"
+name = "Rovaniemi Ice Ring"
+laps = 3
+
+[[rounds]]
+order = 11
+track_id = "baja_500_desert_scrub"
+name = "Baja 500 Desert Scrub"
+laps = 3
+
+[[rounds]]
+order = 12
+track_id = "sahara_dune_crossing"
+name = "Sahara Dune Crossing"
+laps = 3
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex Monster Jam"
+is_player = true
+car_model_id = "offroad_grave_crusher"
+country = "USA"
+livery_idx = 0
+
+[[drivers]]
+id = "travis_mcgrath"
+name = "Travis 'Nitro' McGrath"
+team = "Redline Freestyle"
+car_model_id = "offroad_max_d_monster"
+country = "USA"
+ai_character = "fast"
+livery_idx = 1
+
+[[drivers]]
+id = "bubba_beauregard"
+name = "Bubba 'Mud Slinger' Beauregard"
+team = "Bayou Heavy Traction"
+car_model_id = "offroad_bigfoot_crusher"
+country = "USA"
+ai_character = "aggressive"
+livery_idx = 2
+
+[[drivers]]
+id = "cruz_morales"
+name = "Cruz 'Chasm Jumper' Morales"
+team = "Quarry Stunt Squad"
+car_model_id = "offroad_grave_crusher"
+country = "USA"
+ai_character = "bold"
+livery_idx = 3
+
+[[drivers]]
+id = "wyatt_cole"
+name = "Wyatt 'Dust Devil' Cole"
+team = "Mojave Sandworks"
+car_model_id = "offroad_max_d_monster"
+country = "USA"
+ai_character = "tenacious"
+livery_idx = 4
+
+[[drivers]]
+id = "jaxson_rivera"
+name = "Jaxson 'Baja King' Rivera"
+team = "Baja Trophy Racing"
+car_model_id = "offroad_bigfoot_crusher"
+country = "MEX"
+ai_character = "aggressive"
+livery_idx = 5
+
+[[drivers]]
+id = "roxie_vance"
+name = "Roxie 'Rock Hound' Vance"
+team = "Canyon Crawler Team"
+car_model_id = "offroad_grave_crusher"
+country = "USA"
+ai_character = "smooth"
+livery_idx = 6
+
+[[drivers]]
+id = "astrid_lindholm"
+name = "Astrid 'Ice Queen' Lindholm"
+team = "Nordic Glacier Works"
+car_model_id = "offroad_max_d_monster"
+country = "SWE"
+ai_character = "calculating"
+livery_idx = 7

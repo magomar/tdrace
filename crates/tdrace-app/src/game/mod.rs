@@ -2025,6 +2025,10 @@ impl RaceSession {
                     "charlotte_motor_speedway".to_string(),
                     "darlington_raceway".to_string(),
                     "north_wilkesboro_speedway".to_string(),
+                    "martinsville_speedway".to_string(),
+                    "bristol_motor_speedway".to_string(),
+                    "eldora_speedway".to_string(),
+                    "lucas_oil_irp".to_string(),
                 ],
             ),
             3 => (
@@ -2033,6 +2037,12 @@ impl RaceSession {
                     "iowa_speedway".to_string(),
                     "watkins_glen_nascar".to_string(),
                     "road_america".to_string(),
+                    "charlotte_motor_speedway".to_string(),
+                    "darlington_raceway".to_string(),
+                    "north_wilkesboro_speedway".to_string(),
+                    "martinsville_speedway".to_string(),
+                    "bristol_motor_speedway".to_string(),
+                    "lucas_oil_irp".to_string(),
                 ],
             ),
             4 => (
@@ -2041,6 +2051,13 @@ impl RaceSession {
                     "indianapolis_motor_speedway".to_string(),
                     "pocono_raceway".to_string(),
                     "chicago_street_course".to_string(),
+                    "iowa_speedway".to_string(),
+                    "watkins_glen_nascar".to_string(),
+                    "road_america".to_string(),
+                    "charlotte_motor_speedway".to_string(),
+                    "darlington_raceway".to_string(),
+                    "bristol_motor_speedway".to_string(),
+                    "martinsville_speedway".to_string(),
                 ],
             ),
             _ => (
@@ -2049,6 +2066,15 @@ impl RaceSession {
                     "daytona_superspeedway".to_string(),
                     "talladega_superspeedway".to_string(),
                     "phoenix_raceway".to_string(),
+                    "indianapolis_motor_speedway".to_string(),
+                    "pocono_raceway".to_string(),
+                    "chicago_street_course".to_string(),
+                    "iowa_speedway".to_string(),
+                    "watkins_glen_nascar".to_string(),
+                    "road_america".to_string(),
+                    "charlotte_motor_speedway".to_string(),
+                    "darlington_raceway".to_string(),
+                    "martinsville_speedway".to_string(),
                 ],
             ),
         };
@@ -2122,6 +2148,10 @@ impl RaceSession {
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
                     "silverstone_rx".to_string(),
+                    "holjes_rx".to_string(),
+                    "lydden_hill".to_string(),
+                    "mettet_rx".to_string(),
+                    "blyton_rx".to_string(),
                 ],
             ),
             3 => (
@@ -2130,6 +2160,12 @@ impl RaceSession {
                     "estering_rx".to_string(),
                     "montalegre_rx".to_string(),
                     "riga_rx".to_string(),
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
+                    "silverstone_rx".to_string(),
+                    "holjes_rx".to_string(),
+                    "lydden_hill".to_string(),
+                    "mettet_rx".to_string(),
                 ],
             ),
             4 => (
@@ -2138,6 +2174,13 @@ impl RaceSession {
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
                     "killarney_rx".to_string(),
+                    "estering_rx".to_string(),
+                    "montalegre_rx".to_string(),
+                    "riga_rx".to_string(),
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
+                    "silverstone_rx".to_string(),
+                    "holjes_rx".to_string(),
                 ],
             ),
             _ => (
@@ -2146,6 +2189,15 @@ impl RaceSession {
                     "catalunya_rx".to_string(),
                     "yas_marina_rx".to_string(),
                     "essay_rx".to_string(),
+                    "nyirad_rx".to_string(),
+                    "kouvola_rx".to_string(),
+                    "killarney_rx".to_string(),
+                    "estering_rx".to_string(),
+                    "montalegre_rx".to_string(),
+                    "riga_rx".to_string(),
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
+                    "holjes_rx".to_string(),
                 ],
             ),
         };
@@ -2215,6 +2267,10 @@ impl RaceSession {
                     "sarno".to_string(),
                     "kristianstad".to_string(),
                     "seven_laghi".to_string(),
+                    "lonato".to_string(),
+                    "genk".to_string(),
+                    "wackersdorf".to_string(),
+                    "whilton_mill".to_string(),
                 ],
             ),
             3 => (
@@ -2223,6 +2279,12 @@ impl RaceSession {
                     "pfi".to_string(),
                     "franciacorta".to_string(),
                     "ampfing".to_string(),
+                    "sarno".to_string(),
+                    "kristianstad".to_string(),
+                    "seven_laghi".to_string(),
+                    "lonato".to_string(),
+                    "genk".to_string(),
+                    "wackersdorf".to_string(),
                 ],
             ),
             4 => (
@@ -2231,6 +2293,13 @@ impl RaceSession {
                     "zuera".to_string(),
                     "silverstone_national_kart".to_string(),
                     "le_mans_kart".to_string(),
+                    "pfi".to_string(),
+                    "franciacorta".to_string(),
+                    "ampfing".to_string(),
+                    "sarno".to_string(),
+                    "kristianstad".to_string(),
+                    "seven_laghi".to_string(),
+                    "lonato".to_string(),
                 ],
             ),
             _ => (
@@ -2239,6 +2308,15 @@ impl RaceSession {
                     "portimao_kart".to_string(),
                     "valencia_kart".to_string(),
                     "campillos".to_string(),
+                    "zuera".to_string(),
+                    "silverstone_national_kart".to_string(),
+                    "le_mans_kart".to_string(),
+                    "pfi".to_string(),
+                    "franciacorta".to_string(),
+                    "ampfing".to_string(),
+                    "sarno".to_string(),
+                    "kristianstad".to_string(),
+                    "lonato".to_string(),
                 ],
             ),
         };
@@ -2308,6 +2386,10 @@ impl RaceSession {
                     "red_rock_canyon".to_string(),
                     "mud_slough_arena".to_string(),
                     "baja_500_desert_scrub".to_string(),
+                    "sahara_dune_crossing".to_string(),
+                    "dirt_figure_eight".to_string(),
+                    "atacama_sand_basin".to_string(),
+                    "crandon_short_course".to_string(),
                 ],
             ),
             3 => (
@@ -2316,6 +2398,12 @@ impl RaceSession {
                     "arctic_frozen_lake".to_string(),
                     "alpine_snow_ridge".to_string(),
                     "rovaniemi_ice_ring".to_string(),
+                    "red_rock_canyon".to_string(),
+                    "mud_slough_arena".to_string(),
+                    "baja_500_desert_scrub".to_string(),
+                    "sahara_dune_crossing".to_string(),
+                    "dirt_figure_eight".to_string(),
+                    "crandon_short_course".to_string(),
                 ],
             ),
             4 => (
@@ -2324,6 +2412,13 @@ impl RaceSession {
                     "supercross_stadium_arena".to_string(),
                     "gravel_quarry_chasm".to_string(),
                     "louisiana_mud_swampland".to_string(),
+                    "arctic_frozen_lake".to_string(),
+                    "alpine_snow_ridge".to_string(),
+                    "red_rock_canyon".to_string(),
+                    "mud_slough_arena".to_string(),
+                    "rovaniemi_ice_ring".to_string(),
+                    "baja_500_desert_scrub".to_string(),
+                    "sahara_dune_crossing".to_string(),
                 ],
             ),
             _ => (
@@ -2332,6 +2427,15 @@ impl RaceSession {
                     "monster_colosseum".to_string(),
                     "glacier_crest_pass".to_string(),
                     "stunt_city_megastructure".to_string(),
+                    "supercross_stadium_arena".to_string(),
+                    "gravel_quarry_chasm".to_string(),
+                    "arctic_frozen_lake".to_string(),
+                    "alpine_snow_ridge".to_string(),
+                    "louisiana_mud_swampland".to_string(),
+                    "red_rock_canyon".to_string(),
+                    "rovaniemi_ice_ring".to_string(),
+                    "baja_500_desert_scrub".to_string(),
+                    "sahara_dune_crossing".to_string(),
                 ],
             ),
         };
@@ -10163,33 +10267,37 @@ impl RaceSession {
 
         self.game_mode = GameMode::Career;
 
+        let prev_selected = self.selected_car_model_id;
         let player_car_model_id = def
             .drivers
             .iter()
             .find(|d| d.is_player)
             .and_then(|d| d.car_model_id.as_deref());
 
-        if let Some(model_id) = player_car_model_id {
-            if let Some(m) = crate::catalog::find_model_by_id(model_id) {
-                self.selected_car_model_id = Some(m.id);
-                self.car_choice = m.base_car_choice;
-                self.current_visual_type = m.visual_type;
-                self.free_car_selection = true;
-            }
-        } else {
-            let tier = def.series.tier as u8;
-            let models = crate::catalog::get_models_for_module_and_tier(&def.series.module_id, tier);
-            let chosen_model = models
-                .iter()
-                .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
-                .or_else(|| models.first());
+        let tier = def.series.tier as u8;
+        let chosen_model = prev_selected
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == def.series.module_id && m.tier == tier && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .or_else(|| {
+                player_car_model_id
+                    .and_then(crate::catalog::find_model_by_id)
+                    .filter(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            })
+            .or_else(|| {
+                let models = crate::catalog::get_models_for_module_and_tier(&def.series.module_id, tier);
+                models
+                    .into_iter()
+                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            })
+            .or_else(|| {
+                player_car_model_id.and_then(crate::catalog::find_model_by_id)
+            });
 
-            if let Some(m) = chosen_model {
-                self.selected_car_model_id = Some(m.id);
-                self.car_choice = m.base_car_choice;
-                self.current_visual_type = m.visual_type;
-                self.free_car_selection = true;
-            }
+        if let Some(m) = chosen_model {
+            self.selected_car_model_id = Some(m.id);
+            self.car_choice = m.base_car_choice;
+            self.current_visual_type = m.visual_type;
+            self.free_car_selection = true;
         }
 
         self.init_race();

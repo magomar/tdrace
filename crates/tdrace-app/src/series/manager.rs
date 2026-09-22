@@ -7,15 +7,36 @@ use super::format::SeriesDefinition;
 /// Default embedded presets compiled into binary to ensure zero-failure fallback
 /// even if filesystem is missing, sandboxed, or running in WebAssembly.
 pub const EMBEDDED_PRESETS: &[(&str, &str)] = &[
+    // GT Championships (Tiers 1-5)
     ("gt4_clubman_sprint", include_str!("../../../../series/gt/gt4_clubman_sprint.toml")),
     ("gt3_european_challenge", include_str!("../../../../series/gt/gt3_european_challenge.toml")),
     ("gt2_power_masters", include_str!("../../../../series/gt/gt2_power_masters.toml")),
     ("gt1_heritage_trophy", include_str!("../../../../series/gt/gt1_heritage_trophy.toml")),
     ("hypercar_world_gp", include_str!("../../../../series/gt/hypercar_world_gp.toml")),
+    // NASCAR Championships (Tiers 1-5)
+    ("nascar_short_track_series", include_str!("../../../../series/nascar/nascar_short_track_series.toml")),
+    ("nascar_intermediate_oval_challenge", include_str!("../../../../series/nascar/nascar_intermediate_oval_challenge.toml")),
+    ("nascar_national_tour", include_str!("../../../../series/nascar/nascar_national_tour.toml")),
+    ("nascar_premier_speedway_trophy", include_str!("../../../../series/nascar/nascar_premier_speedway_trophy.toml")),
     ("nascar_cup_tier5", include_str!("../../../../series/nascar/nascar_cup_tier5.toml")),
+    // Rallycross Championships (Tiers 1-5)
+    ("rally_grassroots_cup", include_str!("../../../../series/rally/rally_grassroots_cup.toml")),
     ("rally_world_cup", include_str!("../../../../series/rally/rally_world_cup.toml")),
+    ("rally_group_b_masters", include_str!("../../../../series/rally/rally_group_b_masters.toml")),
+    ("rally_dakar_raid_trophy", include_str!("../../../../series/rally/rally_dakar_raid_trophy.toml")),
+    ("rally_super_trucks_series", include_str!("../../../../series/rally/rally_super_trucks_series.toml")),
+    // Karting Championships (Tiers 1-5)
     ("kart_world_cup", include_str!("../../../../series/kart/kart_world_cup.toml")),
+    ("kart_national_championship", include_str!("../../../../series/kart/kart_national_championship.toml")),
+    ("kart_continental_trophy", include_str!("../../../../series/kart/kart_continental_trophy.toml")),
+    ("kart_european_championship", include_str!("../../../../series/kart/kart_european_championship.toml")),
+    ("kart_superkart_world_series", include_str!("../../../../series/kart/kart_superkart_world_series.toml")),
+    // Extreme Off-Road Championships (Tiers 1-5)
+    ("extreme_desert_sand_sprint", include_str!("../../../../series/extreme_offroad/extreme_desert_sand_sprint.toml")),
+    ("extreme_canyon_raid", include_str!("../../../../series/extreme_offroad/extreme_canyon_raid.toml")),
     ("extreme_offroad_cup", include_str!("../../../../series/extreme_offroad/extreme_offroad_cup.toml")),
+    ("extreme_mud_masters", include_str!("../../../../series/extreme_offroad/extreme_mud_masters.toml")),
+    ("extreme_ultimate_championship", include_str!("../../../../series/extreme_offroad/extreme_ultimate_championship.toml")),
 ];
 
 /// Manages discovery, loading, saving, and cataloging of declarative racing series and championships.

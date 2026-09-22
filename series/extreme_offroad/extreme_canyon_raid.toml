@@ -1,17 +1,17 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Extreme Off-Road Career Mode: Arctic Glacial Challenge (Tier 3)
+# Extreme Off-Road Career Mode: Red Rock Canyon Raid (Tier 2)
 # ==============================================================================
 
 [championship]
-id = "extreme_offroad_cup"
-name = "Arctic Glacial Challenge"
-description = "Tungsten carbide studded ice racers pulling 60-degree slip angles across mirror-sheen frozen lakes and sub-zero snow courses across 9 extreme venues."
+id = "extreme_canyon_raid"
+name = "Red Rock Canyon Raid"
+description = "800 BHP unlimited AWD Trophy Trucks skimming across desert whoops and rocky canyons at over 200 km/h across 7 demanding venues."
 module_id = "extreme_offroad"
-tier = 3
+tier = 2
 laps_per_round = 3
 bot_count = 7
-ai_difficulty = "pro"
+ai_difficulty = "standard"
 icon = "wheel"
 
 [scoring]
@@ -22,56 +22,44 @@ clean_race_bonus = false
 
 [[rounds]]
 order = 1
-track_id = "arctic_frozen_lake"
-name = "Arctic Frozen Lake"
-laps = 3
-
-[[rounds]]
-order = 2
-track_id = "alpine_snow_ridge"
-name = "Alpine Snow Ridge"
-laps = 3
-
-[[rounds]]
-order = 3
-track_id = "rovaniemi_ice_ring"
-name = "Rovaniemi Ice Ring"
-laps = 3
-
-[[rounds]]
-order = 4
 track_id = "red_rock_canyon"
 name = "Red Rock Canyon Pass"
 laps = 3
 
 [[rounds]]
-order = 5
+order = 2
 track_id = "mud_slough_arena"
 name = "Mud Slough Arena"
 laps = 3
 
 [[rounds]]
-order = 6
+order = 3
 track_id = "baja_500_desert_scrub"
 name = "Baja 500 Desert Scrub"
 laps = 3
 
 [[rounds]]
-order = 7
+order = 4
 track_id = "sahara_dune_crossing"
 name = "Sahara Dune Crossing"
 laps = 3
 
 [[rounds]]
-order = 8
+order = 5
 track_id = "dirt_figure_eight"
 name = "Dirt Figure-8 Arena"
 laps = 3
 
 [[rounds]]
-order = 9
-track_id = "crandon_short_course"
-name = "Crandon International Off-Road Raceway"
+order = 6
+track_id = "atacama_sand_basin"
+name = "Atacama Sand Basin"
+laps = 3
+
+[[rounds]]
+order = 7
+track_id = "glamis_dunes"
+name = "Glamis Imperial Dunes"
 laps = 3
 
 [[drivers]]
@@ -79,7 +67,7 @@ id = "player"
 name = "Player"
 team = "Sand Rail Dynamics"
 is_player = true
-car_model_id = "offroad_subaru_ice_racer"
+car_model_id = "offroad_baja_trophy_truck"
 country = "USA"
 livery_idx = 0
 
@@ -87,7 +75,7 @@ livery_idx = 0
 id = "wyatt_cole"
 name = "Wyatt 'Dust Devil' Cole"
 team = "Mojave Sandworks"
-car_model_id = "offroad_subaru_ice_racer"
+car_model_id = "offroad_baja_trophy_truck"
 country = "USA"
 ai_character = "aggressive"
 livery_idx = 1
@@ -96,7 +84,7 @@ livery_idx = 1
 id = "jaxson_rivera"
 name = "Jaxson 'Baja King' Rivera"
 team = "Baja Trophy Racing"
-car_model_id = "offroad_audi_quattro_ice"
+car_model_id = "offroad_mason_awd_truck"
 country = "MEX"
 ai_character = "tenacious"
 livery_idx = 2
@@ -105,7 +93,7 @@ livery_idx = 2
 id = "astrid_lindholm"
 name = "Astrid 'Ice Queen' Lindholm"
 team = "Nordic Glacier Works"
-car_model_id = "offroad_lancer_evo_ice"
+car_model_id = "offroad_bettantown_trophy_truck"
 country = "SWE"
 ai_character = "calculating"
 livery_idx = 3
@@ -114,7 +102,7 @@ livery_idx = 3
 id = "bubba_beauregard"
 name = "Bubba 'Mud Slinger' Beauregard"
 team = "Bayou Heavy Traction"
-car_model_id = "offroad_subaru_ice_racer"
+car_model_id = "offroad_baja_trophy_truck"
 country = "USA"
 ai_character = "aggressive"
 livery_idx = 4
@@ -123,7 +111,7 @@ livery_idx = 4
 id = "travis_mcgrath"
 name = "Travis 'Nitro' McGrath"
 team = "Redline Freestyle"
-car_model_id = "offroad_audi_quattro_ice"
+car_model_id = "offroad_mason_awd_truck"
 country = "USA"
 ai_character = "fast"
 livery_idx = 5
@@ -132,7 +120,7 @@ livery_idx = 5
 id = "roxie_vance"
 name = "Roxie 'Rock Hound' Vance"
 team = "Canyon Crawler Team"
-car_model_id = "offroad_lancer_evo_ice"
+car_model_id = "offroad_bettantown_trophy_truck"
 country = "USA"
 ai_character = "smooth"
 livery_idx = 6
@@ -141,7 +129,7 @@ livery_idx = 6
 id = "sven_lindqvist"
 name = "Sven 'Blizzard' Lindqvist"
 team = "Arctic Circle Rally"
-car_model_id = "offroad_audi_quattro_ice"
+car_model_id = "offroad_mason_awd_truck"
 country = "NOR"
 ai_character = "strategic"
 livery_idx = 7
