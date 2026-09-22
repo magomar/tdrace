@@ -105,6 +105,32 @@ impl SurfaceType {
         )
     }
 
+    /// Whether this surface is a loose or deformable terrain where tires physically
+    /// displace and indent material rather than depositing vulcanized rubber.
+    #[inline]
+    pub const fn is_loose_deformable(self) -> bool {
+        matches!(
+            self,
+            Self::Gravel | Self::Sand | Self::Dirt | Self::Mud | Self::Snow
+        )
+    }
+
+    /// Whether this surface is a rigid, non-deformable pavement where marks
+    /// result purely from friction rubber transfer.
+    #[inline]
+    pub const fn is_rigid_pavement(self) -> bool {
+        matches!(self, Self::Asphalt | Self::Concrete | Self::Curb)
+    }
+
+    /// Whether rolling tires leave visible depression ruts without requiring wheel slip.
+    #[inline]
+    pub const fn leaves_rolling_rut(self) -> bool {
+        matches!(
+            self,
+            Self::Gravel | Self::Sand | Self::Dirt | Self::Mud | Self::Snow | Self::Grass
+        )
+    }
+
     /// Whether this surface produces water splash and spray plumes.
     #[inline]
     pub const fn produces_water_splash(self) -> bool {
@@ -279,5 +305,31 @@ mod tests {
         let props = sampler.sample_surface(Vec2::new(100.0, -50.0));
         assert_eq!(props.surface_type, SurfaceType::Dirt);
         assert_eq!(props.friction, SurfaceType::Dirt.friction_coefficient());
+    }
+
+    #[test]
+    fn test_surface_taxonomy_and_properties() {
+        assert!(SurfaceType::Gravel.is_loose_deformable());
+        assert!(SurfaceType::Sand.is_loose_deformable());
+        assert!(SurfaceType::Dirt.is_loose_deformable());
+        assert!(SurfaceType::Mud.is_loose_deformable());
+        assert!(SurfaceType::Snow.is_loose_deformable());
+        assert!(!SurfaceType::Asphalt.is_loose_deformable());
+        assert!(!SurfaceType::Concrete.is_loose_deformable());
+
+        assert!(SurfaceType::Asphalt.is_rigid_pavement());
+        assert!(SurfaceType::Concrete.is_rigid_pavement());
+        assert!(SurfaceType::Curb.is_rigid_pavement());
+        assert!(!SurfaceType::Gravel.is_rigid_pavement());
+        assert!(!SurfaceType::Grass.is_rigid_pavement());
+
+        assert!(SurfaceType::Gravel.leaves_rolling_rut());
+        assert!(SurfaceType::Sand.leaves_rolling_rut());
+        assert!(SurfaceType::Dirt.leaves_rolling_rut());
+        assert!(SurfaceType::Mud.leaves_rolling_rut());
+        assert!(SurfaceType::Snow.leaves_rolling_rut());
+        assert!(SurfaceType::Grass.leaves_rolling_rut());
+        assert!(!SurfaceType::Asphalt.leaves_rolling_rut());
+        assert!(!SurfaceType::Concrete.leaves_rolling_rut());
     }
 }

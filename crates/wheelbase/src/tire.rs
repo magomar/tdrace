@@ -74,6 +74,12 @@ pub struct WheelTelemetry {
     pub is_skidding: bool,
     /// Surface type currently under this wheel.
     pub surface: SurfaceType,
+    /// Surface contamination level [0.0 = clean rubber, 1.0 = heavily coated with off-track dirt/gravel/sand/mud].
+    #[serde(default)]
+    pub dirt_contamination: f32,
+    /// Surface material that coated the tire tread.
+    #[serde(default)]
+    pub dirt_surface: SurfaceType,
 }
 
 impl Default for WheelTelemetry {
@@ -91,6 +97,8 @@ impl Default for WheelTelemetry {
             skid_intensity: 0.0,
             is_skidding: false,
             surface: SurfaceType::Asphalt,
+            dirt_contamination: 0.0,
+            dirt_surface: SurfaceType::Asphalt,
         }
     }
 }

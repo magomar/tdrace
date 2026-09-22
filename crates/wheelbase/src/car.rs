@@ -735,7 +735,15 @@ impl Car {
 
             // Surface properties
             let surf = surfaces[i];
-            let mu = surf.friction_coefficient();
+            let mut mu = surf.friction_coefficient();
+            let prev_dirt = self.state.wheels[i].dirt_contamination;
+            let prev_dirt_surface = self.state.wheels[i].dirt_surface;
+
+            // Apply minor temporary grip penalty if tire is contaminated with loose dirt/gravel on pavement
+            if surf.is_rigid_pavement() && prev_dirt > 0.02 {
+                mu *= (1.0 - 0.20 * prev_dirt).max(0.65);
+            }
+
             let fz = normal_loads[i];
             let max_friction = mu * fz;
 
@@ -916,6 +924,17 @@ impl Car {
             let torque = offset_world.x * wheel_force_world.y - offset_world.y * wheel_force_world.x;
             total_wheel_torque += torque;
 
+            let (new_dirt, new_dirt_surface) = if surf.is_loose_deformable() || surf == SurfaceType::Grass {
+                let accumulated = (prev_dirt + 3.5 * dt).min(1.0);
+                (accumulated, surf)
+            } else if surf.is_rigid_pavement() {
+                let speed = wheel_v_world.length();
+                let scrubbed = (prev_dirt - 0.08 * (speed / 10.0).max(0.1) * dt).max(0.0);
+                (scrubbed, if scrubbed > 0.001 { prev_dirt_surface } else { surf })
+            } else {
+                (prev_dirt, prev_dirt_surface)
+            };
+
             // Store telemetry
             self.state.wheels[i] = WheelTelemetry {
                 id: wheel_id,
@@ -930,6 +949,8 @@ impl Car {
                 skid_intensity,
                 is_skidding,
                 surface: surf,
+                dirt_contamination: new_dirt,
+                dirt_surface: new_dirt_surface,
             };
         }
         self.state.abs_active = abs_active;
