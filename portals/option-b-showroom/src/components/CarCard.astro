@@ -49,27 +49,16 @@ const badgeColors: Record<string, string> = {
 const moduleColor = badgeColors[car.module] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
 const hasVisuals = Boolean(car.image_lateral || car.image_topdown || car.image_ref);
 
-// Determine topdown orientation: 24 cars naturally face right in raw asset, while 61 face left and need 180° rotation to face right in showroom
-const naturallyFacesRight = [
-  // Classic Module (all 5 face right)
-  'classic_gt', 'classic_nascar', 'classic_offroad', 'classic_kart', 'classic_rally',
-  // Gran Turismo (11 face right, 9 rotated to face right)
-  'gt_porsche_718_gt4', 'gt_bmw_m4_gt4', 'gt_aston_vantage_gt4', 'gt_toyota_supra_gt4',
-  'gt_ferrari_296_gt3', 'gt_audi_r8_gt3_evo2', 'gt_brabham_bt62_gt2', 'gt_maserati_mc20_gt2',
-  'gt_mercedes_clk_gtr', 'gt_nissan_r390_gt1', 'gt_toyota_gr010',
-  // NASCAR (7 face right: 3 Trans-Am TA1 and 4 stock cars)
-  'nascar_corvette_ta1', 'nascar_mustang_ta1', 'nascar_challenger_ta1',
-  'nascar_mustang_street_stock', 'nascar_mustang_super_late_model',
-  'nascar_late_model_stock_car', 'nascar_arca_chevy_ss',
-  // Rallycross (1 faces right)
-  'rally_audi_sport_quattro_s1',
-].includes(car.id);
 
-const topdownClass = naturallyFacesRight ? '' : 'rotate-180';
+const isWideTrack = car.module === 'Karting & Micro-Racers' || car.module === 'Extreme Off-Road & Arenas' || car.id === 'classic_kart';
+const topdownCropStyle = isWideTrack
+  ? 'object-view-box: inset(12% 0% 12% 0%);'
+  : 'object-view-box: inset(18% 0% 18% 0%);';
+
 const availableCount = [car.image_lateral, car.image_topdown, car.image_ref].filter(Boolean).length;
 const showButtons = availableCount > 1;
 
-const assetVersion = '?v=20260922b';
+const assetVersion = '?v=20260922d';
 const imageLateralSrc = car.image_lateral ? `${car.image_lateral}${assetVersion}` : null;
 const imageTopdownSrc = car.image_topdown ? `${car.image_topdown}${assetVersion}` : null;
 const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
@@ -107,7 +96,7 @@ const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
                 data-target="lateral"
                 data-car={car.id}
               >
-                Side View
+                Side
               </button>
             )}
             {car.image_topdown && (
@@ -117,7 +106,7 @@ const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
                 data-target="topdown"
                 data-car={car.id}
               >
-                Top View
+                Top
               </button>
             )}
             {car.image_ref && (
@@ -127,7 +116,7 @@ const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
                 data-target="ref"
                 data-car={car.id}
               >
-                Real Ref
+                Real
               </button>
             )}
           </div>
@@ -155,7 +144,8 @@ const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
               <img
                 src={imageTopdownSrc}
                 alt={`${car.name} Top View`}
-                class={`max-h-28 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300 ${topdownClass}`}
+                class="max-h-28 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300"
+                style={topdownCropStyle}
                 loading="lazy"
               />
               <div class="w-3/4 h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent blur-[1px] mt-1"></div>
@@ -219,7 +209,7 @@ const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
   <div class="p-5 space-y-2.5 flex-1 flex flex-col justify-center">
     <div class="space-y-1">
       <div class="flex justify-between text-[11px] font-mono">
-        <span class="text-racing-muted">Pace / Top Speed</span>
+        <span class="text-racing-muted">Top Speed</span>
         <span class="text-racing-text">{car.stats.speed}%</span>
       </div>
       <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
@@ -239,7 +229,7 @@ const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
 
     <div class="space-y-1">
       <div class="flex justify-between text-[11px] font-mono">
-        <span class="text-racing-muted">Apex Grip (Pacejka D)</span>
+        <span class="text-racing-muted">Cornering Grip</span>
         <span class="text-racing-text">{car.stats.grip}%</span>
       </div>
       <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
@@ -249,7 +239,7 @@ const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
 
     <div class="space-y-1">
       <div class="flex justify-between text-[11px] font-mono">
-        <span class="text-racing-muted">Downforce ($C_l$)</span>
+        <span class="text-racing-muted">Downforce</span>
         <span class="text-racing-text">{car.downforce.toFixed(2)}</span>
       </div>
       <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
