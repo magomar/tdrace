@@ -1,0 +1,147 @@
+# ==============================================================================
+# TdRace Championship Specification
+# GT World Challenge: SRO GT2 Power Masters (Tier 3)
+# ==============================================================================
+
+[championship]
+id = "gt2_power_masters"
+name = "SRO GT2 Power Masters"
+description = "High-horsepower biturbo GT2 sports cars racing across 9 international circuits."
+module_id = "gt"
+tier = 3
+laps_per_round = 3
+bot_count = 7
+ai_difficulty = "pro"
+icon = "trophy"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "spa"
+name = "Circuit de Spa-Francorchamps"
+laps = 3
+
+[[rounds]]
+order = 2
+track_id = "cota"
+name = "Circuit of the Americas (COTA)"
+laps = 3
+
+[[rounds]]
+order = 3
+track_id = "bahrain"
+name = "Bahrain International Circuit"
+laps = 3
+
+[[rounds]]
+order = 4
+track_id = "monza"
+name = "Monza Autodromo Nazionale"
+laps = 3
+
+[[rounds]]
+order = 5
+track_id = "silverstone"
+name = "Silverstone GP Circuit"
+laps = 3
+
+[[rounds]]
+order = 6
+track_id = "catalunya"
+name = "Circuit de Barcelona-Catalunya"
+laps = 3
+
+[[rounds]]
+order = 7
+track_id = "red_bull_ring"
+name = "Red Bull Ring (Spielberg)"
+laps = 3
+
+[[rounds]]
+order = 8
+track_id = "nurburgring_gp"
+name = "Nürburgring GP-Strecke"
+laps = 3
+
+[[rounds]]
+order = 9
+track_id = "montreal"
+name = "Circuit Gilles Villeneuve"
+laps = 3
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Porsche Motorsport GT"
+is_player = true
+car_model_id = "gt_porsche_911_gt2_rs"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "david_brabham"
+name = "David Brabham"
+team = "Brabham Motorsport"
+car_model_id = "gt_brabham_bt62_gt2"
+country = "AUS"
+ai_character = "aggressive"
+livery_idx = 1
+
+[[drivers]]
+id = "matteo_bobbi"
+name = "Matteo Bobbi"
+team = "Maserati Corse"
+car_model_id = "gt_maserati_mc20_gt2"
+country = "ITA"
+ai_character = "smooth"
+livery_idx = 2
+
+[[drivers]]
+id = "markus_winkelhock"
+name = "Markus Winkelhock"
+team = "Audi Sport Customer Racing"
+car_model_id = "gt_audi_r8_gt2"
+country = "GER"
+ai_character = "strategic"
+livery_idx = 3
+
+[[drivers]]
+id = "jorg_bergmeister"
+name = "Jörg Bergmeister"
+team = "Porsche Motorsport GT"
+car_model_id = "gt_porsche_911_gt2_rs"
+country = "GER"
+ai_character = "tenacious"
+livery_idx = 4
+
+[[drivers]]
+id = "luke_youlden"
+name = "Luke Youlden"
+team = "Brabham Motorsport"
+car_model_id = "gt_brabham_bt62_gt2"
+country = "AUS"
+ai_character = "fast"
+livery_idx = 5
+
+[[drivers]]
+id = "andrea_bertolini"
+name = "Andrea Bertolini"
+team = "Maserati Corse"
+car_model_id = "gt_maserati_mc20_gt2"
+country = "ITA"
+ai_character = "calculating"
+livery_idx = 6
+
+[[drivers]]
+id = "frank_stippler"
+name = "Frank Stippler"
+team = "Audi Sport Customer Racing"
+car_model_id = "gt_audi_r8_gt2"
+country = "GER"
+ai_character = "balanced"
+livery_idx = 7

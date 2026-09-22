@@ -1,5 +1,6 @@
 pub mod career_hub;
-pub mod championship_editor;
+pub mod series_editor;
+pub use series_editor as championship_editor;
 pub mod curve_indicator;
 pub mod driver_card;
 pub mod font;
@@ -50,7 +51,7 @@ pub use starting_grid::{
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,
 };
-pub use championship_editor::{
+pub use series_editor::{
     handle_championship_editor_input, render_championship_editor, ChampionshipEditorAction,
     ChampionshipEditorModal, ChampionshipEditorState, ChampionshipEditorTab,
 };

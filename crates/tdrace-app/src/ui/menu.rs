@@ -2561,7 +2561,7 @@ impl ModalityCategory {
                 ModalityItem::PlayerProfile,
                 ModalityItem::Garage,
                 ModalityItem::TrackEditor,
-                ModalityItem::ChampionshipEditor,
+                ModalityItem::SeriesEditor,
                 ModalityItem::Settings,
             ],
         }
@@ -2582,7 +2582,7 @@ pub enum ModalityItem {
     PlayerProfile,
     Garage,
     TrackEditor,
-    ChampionshipEditor,
+    SeriesEditor,
     Settings,
 }
 
@@ -2600,7 +2600,7 @@ impl ModalityItem {
             Self::PlayerProfile => "Player Profile",
             Self::Garage => "Garage Showroom",
             Self::TrackEditor => "Track Editor",
-            Self::ChampionshipEditor => "Championship Editor",
+            Self::SeriesEditor => "Series Editor",
             Self::Settings => "Settings",
         }
     }
@@ -2618,7 +2618,7 @@ impl ModalityItem {
             Self::PlayerProfile => "DRIVER RECORDS • CAREER STATS & SLOTS",
             Self::Garage => "360° VEHICLE TURNTABLE & TECHNICAL DOSSIER",
             Self::TrackEditor => "INTERACTIVE CAD STUDIO • CUSTOM CIRCUITS",
-            Self::ChampionshipEditor => "CUSTOM CUP CREATOR • TOML WORKBENCH",
+            Self::SeriesEditor => "CUSTOM SERIES & CUPS • TOML WORKBENCH",
             Self::Settings => "AUDIO • CONTROLS • ASSISTS • DISPLAY CONFIG",
         }
     }
@@ -2636,7 +2636,7 @@ impl ModalityItem {
             Self::PlayerProfile => "Inspect career statistics, manage driver slots, change nationality and custom car liveries.",
             Self::Garage => "Inspect active motorsport machines in fullscreen 360° turntable, check BHP and weight, and rev engine.",
             Self::TrackEditor => "Design custom circuits, shape splines, place surface zones, and test drive your tracks.",
-            Self::ChampionshipEditor => "Author declarative tournament cups, configure calendars and driver grids, and launch test cups.",
+            Self::SeriesEditor => "Author declarative multi-race series and cups, configure calendars and driver grids, and launch test runs.",
             Self::Settings => "Configure sound levels, gamepad and keyboard mappings, steering assists, and display settings.",
         }
     }
@@ -2658,7 +2658,7 @@ impl ModalityItem {
             Self::PlayerProfile => Palette::NEON_CYAN,
             Self::Garage => Palette::NEON_GOLD,
             Self::TrackEditor => Palette::NEON_GREEN,
-            Self::ChampionshipEditor => Palette::NEON_GOLD,
+            Self::SeriesEditor => Palette::NEON_GOLD,
             Self::Settings => Palette::NEON_MAGENTA,
         }
     }
@@ -2695,7 +2695,7 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::PlayerProfile => 8,
         ModalityItem::Garage => 9,
         ModalityItem::TrackEditor => 10,
-        ModalityItem::ChampionshipEditor => 11,
+        ModalityItem::SeriesEditor => 11,
         ModalityItem::Settings => 12,
     };
     let mut guard = MODALITY_ICON_TEXTURES.lock().unwrap_or_else(|e| e.into_inner());
@@ -2714,7 +2714,7 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::PlayerProfile => MODALITY_PLAYER_PROFILE_PNG,
         ModalityItem::Garage => MODALITY_GARAGE_PNG,
         ModalityItem::TrackEditor => MODALITY_TRACK_EDITOR_PNG,
-        ModalityItem::ChampionshipEditor => MODALITY_CAREER_MODE_PNG,
+        ModalityItem::SeriesEditor => MODALITY_CAREER_MODE_PNG,
         ModalityItem::Settings => MODALITY_SETTINGS_PNG,
     };
     let img = Image::from_file_with_format(png_bytes, None)
@@ -3139,9 +3139,9 @@ pub fn render_modality_select_screen(
                             Palette::NEON_GREEN,
                         );
                     }
-                    ModalityItem::ChampionshipEditor => {
+                    ModalityItem::SeriesEditor => {
                         fonts.draw_ui_bold(
-                            "🏆 CUP CREATOR",
+                            "🏆 SERIES STUDIO",
                             col_x + col_w - scaler.s(160.0),
                             curr_y + opt_card_h * 0.25,
                             scaler.font_s(10.0),
@@ -3186,7 +3186,7 @@ pub fn render_modality_select_screen(
                         ModalityItem::PlayerProfile => "PRESS [ENTER] OR [P] TO OPEN ▶",
                         ModalityItem::Garage => "PRESS [ENTER] OR [G] TO ENTER ▶",
                         ModalityItem::TrackEditor => "PRESS [ENTER] OR [E] TO EDIT ▶",
-                        ModalityItem::ChampionshipEditor => "PRESS [ENTER] OR [C] TO CREATE ▶",
+                        ModalityItem::SeriesEditor => "PRESS [ENTER] OR [C] TO CREATE ▶",
                         ModalityItem::Settings => "PRESS [ENTER] OR [X] TO CONFIGURE ▶",
                         _ => "PRESS [ENTER] TO SELECT ▶",
                     };

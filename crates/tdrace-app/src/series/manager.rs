@@ -2,65 +2,71 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use super::format::ChampionshipDefinition;
+use super::format::SeriesDefinition;
 
 /// Default embedded presets compiled into binary to ensure zero-failure fallback
 /// even if filesystem is missing, sandboxed, or running in WebAssembly.
 pub const EMBEDDED_PRESETS: &[(&str, &str)] = &[
-    ("gt4_clubman_sprint", include_str!("../../../../championships/gt/gt4_clubman_sprint.toml")),
-    ("nascar_cup_tier5", include_str!("../../../../championships/nascar/nascar_cup_tier5.toml")),
-    ("rally_world_cup", include_str!("../../../../championships/rally/rally_world_cup.toml")),
-    ("kart_world_cup", include_str!("../../../../championships/kart/kart_world_cup.toml")),
-    ("extreme_offroad_cup", include_str!("../../../../championships/extreme_offroad/extreme_offroad_cup.toml")),
+    ("gt4_clubman_sprint", include_str!("../../../../series/gt/gt4_clubman_sprint.toml")),
+    ("gt3_european_challenge", include_str!("../../../../series/gt/gt3_european_challenge.toml")),
+    ("gt2_power_masters", include_str!("../../../../series/gt/gt2_power_masters.toml")),
+    ("gt1_heritage_trophy", include_str!("../../../../series/gt/gt1_heritage_trophy.toml")),
+    ("hypercar_world_gp", include_str!("../../../../series/gt/hypercar_world_gp.toml")),
+    ("nascar_cup_tier5", include_str!("../../../../series/nascar/nascar_cup_tier5.toml")),
+    ("rally_world_cup", include_str!("../../../../series/rally/rally_world_cup.toml")),
+    ("kart_world_cup", include_str!("../../../../series/kart/kart_world_cup.toml")),
+    ("extreme_offroad_cup", include_str!("../../../../series/extreme_offroad/extreme_offroad_cup.toml")),
 ];
 
-/// Manages discovery, loading, saving, and cataloging of declarative championships.
+/// Manages discovery, loading, saving, and cataloging of declarative racing series and championships.
 #[derive(Debug, Clone)]
-pub struct ChampionshipManager {
+pub struct SeriesManager {
     pub user_dir: PathBuf,
     pub git_dir: Option<PathBuf>,
-    pub championships: HashMap<String, ChampionshipDefinition>,
+    pub series: HashMap<String, SeriesDefinition>,
 }
 
-impl Default for ChampionshipManager {
+pub type ChampionshipManager = SeriesManager;
+
+impl Default for SeriesManager {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ChampionshipManager {
-    /// Creates a new ChampionshipManager using standard platform storage directories.
+impl SeriesManager {
+    /// Creates a new SeriesManager using standard platform storage directories.
     pub fn new() -> Self {
-        let user_dir = crate::storage::resolve_user_championships_dir();
-        let git_dir = crate::storage::resolve_git_championships_dir();
+        let user_dir = crate::storage::resolve_user_series_dir();
+        let git_dir = crate::storage::resolve_git_series_dir();
         let mut mgr = Self {
             user_dir,
             git_dir,
-            championships: HashMap::new(),
+            series: HashMap::new(),
         };
         mgr.scan_all();
         mgr
     }
 
-    /// Creates a ChampionshipManager with explicit directories (useful for sandboxed testing).
+    /// Creates a SeriesManager with explicit directories (useful for sandboxed testing).
     pub fn with_dirs(user_dir: PathBuf, git_dir: Option<PathBuf>) -> Self {
         let mut mgr = Self {
             user_dir,
             git_dir,
-            championships: HashMap::new(),
+            series: HashMap::new(),
         };
         mgr.scan_all();
         mgr
     }
 
-    /// Rescans all championships from embedded presets, git repo directory, and user storage.
+    /// Rescans all series from embedded presets, git repo directory, and user storage.
     pub fn scan_all(&mut self) {
-        self.championships.clear();
+        self.series.clear();
 
         // 1. Load embedded presets
         for &(id, content) in EMBEDDED_PRESETS {
-            if let Ok(def) = ChampionshipDefinition::from_toml(content) {
-                self.championships.insert(id.to_string(), def);
+            if let Ok(def) = SeriesDefinition::from_toml(content) {
+                self.series.insert(id.to_string(), def);
             }
         }
 
@@ -71,7 +77,7 @@ impl ChampionshipManager {
             }
         }
 
-        // 3. Scan user custom championships
+        // 3. Scan user custom series
         let user_dir = self.user_dir.clone();
         if user_dir.is_dir() {
             self.scan_directory_recursive(&user_dir);
@@ -86,8 +92,8 @@ impl ChampionshipManager {
                     self.scan_directory_recursive(&path);
                 } else if path.extension().and_then(|e| e.to_str()) == Some("toml") {
                     if let Ok(content) = fs::read_to_string(&path) {
-                        if let Ok(def) = ChampionshipDefinition::from_toml(&content) {
-                            self.championships.insert(def.championship.id.clone(), def);
+                        if let Ok(def) = SeriesDefinition::from_toml(&content) {
+                            self.series.insert(def.series.id.clone(), def);
                         }
                     }
                 }
@@ -95,41 +101,41 @@ impl ChampionshipManager {
         }
     }
 
-    /// Retrieves a championship definition by its unique identifier slug.
-    pub fn get(&self, id: &str) -> Option<&ChampionshipDefinition> {
-        self.championships.get(id)
+    /// Retrieves a series definition by its unique identifier slug.
+    pub fn get(&self, id: &str) -> Option<&SeriesDefinition> {
+        self.series.get(id)
     }
 
-    /// Retrieves all championships matching a motorsport module (e.g. "gt", "nascar").
-    pub fn get_by_module(&self, module_id: &str) -> Vec<&ChampionshipDefinition> {
-        self.championships
+    /// Retrieves all series matching a motorsport module (e.g. "gt", "nascar").
+    pub fn get_by_module(&self, module_id: &str) -> Vec<&SeriesDefinition> {
+        self.series
             .values()
-            .filter(|c| c.championship.module_id.eq_ignore_ascii_case(module_id))
+            .filter(|c| c.series.module_id.eq_ignore_ascii_case(module_id))
             .collect()
     }
 
-    /// Retrieves a championship matching a module and specific career tier (1..=5).
-    pub fn get_by_module_and_tier(&self, module_id: &str, tier: u32) -> Option<&ChampionshipDefinition> {
-        self.championships
+    /// Retrieves a series matching a module and specific career tier (1..=5).
+    pub fn get_by_module_and_tier(&self, module_id: &str, tier: u32) -> Option<&SeriesDefinition> {
+        self.series
             .values()
-            .find(|c| c.championship.module_id.eq_ignore_ascii_case(module_id) && c.championship.tier == tier)
+            .find(|c| c.series.module_id.eq_ignore_ascii_case(module_id) && c.series.tier == tier)
     }
 
-    /// Returns a list of all known championship definitions sorted by module, tier, and name.
-    pub fn all_sorted(&self) -> Vec<&ChampionshipDefinition> {
-        let mut list: Vec<&ChampionshipDefinition> = self.championships.values().collect();
+    /// Returns a list of all known series definitions sorted by module, tier, and name.
+    pub fn all_sorted(&self) -> Vec<&SeriesDefinition> {
+        let mut list: Vec<&SeriesDefinition> = self.series.values().collect();
         list.sort_by(|a, b| {
-            a.championship
+            a.series
                 .module_id
-                .cmp(&b.championship.module_id)
-                .then_with(|| a.championship.tier.cmp(&b.championship.tier))
-                .then_with(|| a.championship.name.cmp(&b.championship.name))
+                .cmp(&b.series.module_id)
+                .then_with(|| a.series.tier.cmp(&b.series.tier))
+                .then_with(|| a.series.name.cmp(&b.series.name))
         });
         list
     }
 
-    /// Saves a championship definition to the user's custom championships folder.
-    pub fn save_user_championship(&mut self, def: &ChampionshipDefinition) -> Result<PathBuf, std::io::Error> {
+    /// Saves a series definition to the user's custom series folder.
+    pub fn save_user_series(&mut self, def: &SeriesDefinition) -> Result<PathBuf, std::io::Error> {
         if let Err(errs) = def.validate() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
@@ -138,7 +144,7 @@ impl ChampionshipManager {
         }
 
         let _ = fs::create_dir_all(&self.user_dir);
-        let filename = format!("{}.toml", def.championship.id);
+        let filename = format!("{}.toml", def.series.id);
         let target_path = self.user_dir.join(filename);
 
         let toml_str = def
@@ -146,13 +152,18 @@ impl ChampionshipManager {
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
         fs::write(&target_path, toml_str)?;
-        self.championships.insert(def.championship.id.clone(), def.clone());
+        self.series.insert(def.series.id.clone(), def.clone());
 
         Ok(target_path)
     }
 
-    /// Saves a championship definition directly into the repository presets (dev mode only).
-    pub fn save_preset_championship(&mut self, def: &ChampionshipDefinition) -> Result<PathBuf, std::io::Error> {
+    /// Backwards compatibility alias for `save_user_series`.
+    pub fn save_user_championship(&mut self, def: &SeriesDefinition) -> Result<PathBuf, std::io::Error> {
+        self.save_user_series(def)
+    }
+
+    /// Saves a series definition directly into the repository presets (dev mode only).
+    pub fn save_preset_series(&mut self, def: &SeriesDefinition) -> Result<PathBuf, std::io::Error> {
         if let Err(errs) = def.validate() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
@@ -163,13 +174,13 @@ impl ChampionshipManager {
         let git_dir = self.git_dir.as_ref().ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::NotFound,
-                "Git championships directory not available or not running in dev mode",
+                "Git series directory not available or not running in dev mode",
             )
         })?;
 
-        let module_dir = git_dir.join(&def.championship.module_id);
+        let module_dir = git_dir.join(&def.series.module_id);
         let _ = fs::create_dir_all(&module_dir);
-        let filename = format!("{}.toml", def.championship.id);
+        let filename = format!("{}.toml", def.series.id);
         let target_path = module_dir.join(filename);
 
         let toml_str = def
@@ -177,33 +188,43 @@ impl ChampionshipManager {
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
         fs::write(&target_path, toml_str)?;
-        self.championships.insert(def.championship.id.clone(), def.clone());
+        self.series.insert(def.series.id.clone(), def.clone());
 
         Ok(target_path)
     }
 
-    /// Deletes a custom championship file from user storage.
-    pub fn delete_user_championship(&mut self, id: &str) -> Result<bool, std::io::Error> {
+    /// Backwards compatibility alias for `save_preset_series`.
+    pub fn save_preset_championship(&mut self, def: &SeriesDefinition) -> Result<PathBuf, std::io::Error> {
+        self.save_preset_series(def)
+    }
+
+    /// Deletes a custom series file from user storage.
+    pub fn delete_user_series(&mut self, id: &str) -> Result<bool, std::io::Error> {
         let filename = format!("{}.toml", id);
         let target_path = self.user_dir.join(filename);
         if target_path.exists() {
             fs::remove_file(target_path)?;
-            self.championships.remove(id);
+            self.series.remove(id);
             Ok(true)
         } else {
             Ok(false)
         }
+    }
+
+    /// Backwards compatibility alias for `delete_user_series`.
+    pub fn delete_user_championship(&mut self, id: &str) -> Result<bool, std::io::Error> {
+        self.delete_user_series(id)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tournament::format::{ChampionshipMeta, DriverConfig, RoundConfig, ScoringConfig};
+    use crate::series::format::{DriverConfig, RoundConfig, ScoringConfig, SeriesMeta};
 
     #[test]
     fn test_manager_loads_embedded_presets() {
-        let mgr = ChampionshipManager::new();
+        let mgr = SeriesManager::new();
         assert!(mgr.get("gt4_clubman_sprint").is_some());
         assert!(mgr.get("nascar_cup_tier5").is_some());
         assert!(mgr.get("rally_world_cup").is_some());
@@ -212,22 +233,22 @@ mod tests {
 
         let gt_cups = mgr.get_by_module("gt");
         assert!(!gt_cups.is_empty());
-        assert_eq!(gt_cups[0].championship.module_id, "gt");
+        assert_eq!(gt_cups[0].series.module_id, "gt");
 
         let tier1_gt = mgr.get_by_module_and_tier("gt", 1);
         assert!(tier1_gt.is_some());
-        assert_eq!(tier1_gt.unwrap().championship.id, "gt4_clubman_sprint");
+        assert_eq!(tier1_gt.unwrap().series.id, "gt4_clubman_sprint");
     }
 
     #[test]
     fn test_manager_save_and_delete_user_championship() {
-        let temp_dir = std::env::temp_dir().join("tdrace_champ_mgr_test");
+        let temp_dir = std::env::temp_dir().join("tdrace_series_mgr_test");
         let _ = fs::create_dir_all(&temp_dir);
 
-        let mut mgr = ChampionshipManager::with_dirs(temp_dir.clone(), None);
+        let mut mgr = SeriesManager::with_dirs(temp_dir.clone(), None);
 
-        let test_def = ChampionshipDefinition {
-            championship: ChampionshipMeta {
+        let test_def = SeriesDefinition {
+            series: SeriesMeta {
                 id: "test_custom_sprint".to_string(),
                 name: "Test Custom Sprint".to_string(),
                 description: "Sandbox test".to_string(),

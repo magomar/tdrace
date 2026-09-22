@@ -8,8 +8,8 @@ use macroquad::shapes::draw_rectangle;
 use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::render::color::Palette;
-use crate::tournament::format::{
-    ChampionshipDefinition, DriverConfig, RoundConfig,
+use crate::series::format::{
+    ChampionshipDefinition, DriverConfig, RoundConfig, SeriesDefinition,
 };
 use crate::ui::menu::TrackChoice;
 
@@ -17,9 +17,9 @@ const COLOR_LIGHT_GRAY: Color = Color::new(0.80, 0.82, 0.85, 1.0);
 const COLOR_DARK_GRAY: Color = Color::new(0.45, 0.48, 0.52, 1.0);
 const COLOR_TRANSPARENT: Color = Color::new(0.0, 0.0, 0.0, 0.0);
 
-/// Tab views available inside the Championship Editor.
+/// Tab views available inside the Series Editor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ChampionshipEditorTab {
+pub enum SeriesEditorTab {
     #[default]
     Rules,
     Calendar,
@@ -27,7 +27,9 @@ pub enum ChampionshipEditorTab {
     Export,
 }
 
-impl ChampionshipEditorTab {
+pub type ChampionshipEditorTab = SeriesEditorTab;
+
+impl SeriesEditorTab {
     pub const ALL: [Self; 4] = [Self::Rules, Self::Calendar, Self::Grid, Self::Export];
 
     pub fn title(&self) -> &'static str {
@@ -58,10 +60,13 @@ impl ChampionshipEditorTab {
     }
 }
 
-/// Modal overlays inside the Championship Editor.
+/// Modal overlays inside the Series Editor.
 #[derive(Debug, Clone, PartialEq)]
-pub enum ChampionshipEditorModal {
+pub enum SeriesEditorModal {
     None,
+    OpenChampionship {
+        selected_idx: usize,
+    },
     AddTrack {
         selected_idx: usize,
     },
@@ -76,6 +81,8 @@ pub enum ChampionshipEditorModal {
     },
 }
 
+pub type ChampionshipEditorModal = SeriesEditorModal;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TextEditTarget {
     Id,
@@ -85,47 +92,53 @@ pub enum TextEditTarget {
     DriverTeam(usize),
 }
 
-/// Dispatched actions from Championship Editor user input.
+/// Dispatched actions from Series Editor user input.
 #[derive(Debug, Clone, PartialEq)]
-pub enum ChampionshipEditorAction {
+pub enum SeriesEditorAction {
     None,
     Exit,
+    LoadChampionship(ChampionshipDefinition),
+    NewChampionship,
     SaveUser,
     SavePreset,
-    LaunchTestCup(ChampionshipDefinition),
+    LaunchTestCup(SeriesDefinition),
 }
 
-/// Active interactive state of the Championship Editor.
+pub type ChampionshipEditorAction = SeriesEditorAction;
+
+/// Active interactive state of the Series Editor.
 #[derive(Debug, Clone, PartialEq)]
-pub struct ChampionshipEditorState {
-    pub active_tab: ChampionshipEditorTab,
-    pub def: ChampionshipDefinition,
+pub struct SeriesEditorState {
+    pub active_tab: SeriesEditorTab,
+    pub def: SeriesDefinition,
     pub rules_field_idx: usize,
     pub selected_round_idx: usize,
     pub selected_driver_idx: usize,
-    pub modal: ChampionshipEditorModal,
+    pub modal: SeriesEditorModal,
     pub status_msg: Option<(String, f32)>,
 }
 
-impl Default for ChampionshipEditorState {
+pub type ChampionshipEditorState = SeriesEditorState;
+
+impl Default for SeriesEditorState {
     fn default() -> Self {
         Self::new(None)
     }
 }
 
-impl ChampionshipEditorState {
-    pub fn new(initial_def: Option<ChampionshipDefinition>) -> Self {
-        let mut def = initial_def.unwrap_or_else(ChampionshipDefinition::default);
+impl SeriesEditorState {
+    pub fn new(initial_def: Option<SeriesDefinition>) -> Self {
+        let mut def = initial_def.unwrap_or_else(SeriesDefinition::default);
         if def.drivers.is_empty() {
             autofill_grid_for_module(&mut def);
         }
         Self {
-            active_tab: ChampionshipEditorTab::Rules,
+            active_tab: SeriesEditorTab::Rules,
             def,
             rules_field_idx: 0,
             selected_round_idx: 0,
             selected_driver_idx: 0,
-            modal: ChampionshipEditorModal::None,
+            modal: SeriesEditorModal::None,
             status_msg: None,
         }
     }
@@ -153,8 +166,8 @@ impl ChampionshipEditorState {
 
 /// Autofills realistic driver roster and car models matching the championship's module and tier.
 pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
-    let module = def.championship.module_id.to_lowercase();
-    let tier = def.championship.tier.clamp(1, 5) as u8;
+    let module = def.series.module_id.to_lowercase();
+    let tier = def.series.tier.clamp(1, 5) as u8;
 
     let available_models = crate::catalog::get_models_for_module_and_tier(&module, tier);
     let default_model_id = available_models
@@ -266,6 +279,7 @@ pub fn render_championship_editor(
     scaler: &UiScaler,
     state: &ChampionshipEditorState,
     all_tracks: &[TrackChoice],
+    available_championships: &[&ChampionshipDefinition],
     is_dev: bool,
 ) {
     let sw = screen_width();
@@ -284,7 +298,7 @@ pub fn render_championship_editor(
     let title_str = format!("CHAMPIONSHIP STUDIO{}", dev_tag);
     fonts.draw_ui_bold(&title_str, scaler.s(20.0), scaler.s(22.0), scaler.font_s(14.0), Palette::NEON_GOLD);
     fonts.draw_ui_regular(
-        &format!("Editing: {}.toml", state.def.championship.id),
+        &format!("Editing: {}.toml", state.def.series.id),
         scaler.s(20.0),
         scaler.s(40.0),
         scaler.font_s(10.5),
@@ -325,12 +339,26 @@ pub fn render_championship_editor(
         );
     }
 
+    // Open & New Cup Action Buttons on Right Header
+    let btn_h = scaler.s(32.0);
+    let new_btn_w = scaler.s(92.0);
+    let open_btn_w = scaler.s(108.0);
+    let new_btn_x = sw - new_btn_w - scaler.s(20.0);
+    let open_btn_x = new_btn_x - open_btn_w - scaler.s(8.0);
+    let btn_y = scaler.s(10.0);
+
+    scaler.draw_glass_card(open_btn_x, btn_y, open_btn_w, btn_h, Color::new(0.08, 0.16, 0.28, 0.90), Palette::NEON_CYAN, 1.3);
+    fonts.draw_ui_bold("[O] OPEN CUP", open_btn_x + scaler.s(12.0), btn_y + scaler.s(20.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+
+    scaler.draw_glass_card(new_btn_x, btn_y, new_btn_w, btn_h, Color::new(0.18, 0.14, 0.06, 0.90), Palette::NEON_GOLD, 1.3);
+    fonts.draw_ui_bold("[N] NEW CUP", new_btn_x + scaler.s(10.0), btn_y + scaler.s(20.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+
     // Status Message Toast
     if let Some((ref msg, _)) = state.status_msg {
-        let toast_w = scaler.s(320.0);
-        let toast_h = scaler.s(32.0);
-        let toast_x = sw - toast_w - scaler.s(20.0);
-        let toast_y = scaler.s(10.0);
+        let toast_w = scaler.s(340.0);
+        let toast_h = scaler.s(28.0);
+        let toast_x = (sw - toast_w) * 0.5;
+        let toast_y = header_h + scaler.s(4.0);
         scaler.draw_glass_card(
             toast_x,
             toast_y,
@@ -340,7 +368,7 @@ pub fn render_championship_editor(
             Palette::NEON_GREEN,
             1.5,
         );
-        fonts.draw_ui_bold(msg, toast_x + scaler.s(12.0), toast_y + scaler.s(20.0), scaler.font_s(11.0), Palette::WHITE);
+        fonts.draw_ui_bold(msg, toast_x + scaler.s(12.0), toast_y + scaler.s(18.0), scaler.font_s(10.5), Palette::WHITE);
     }
 
     // Body Workspace (based on active tab)
@@ -368,7 +396,7 @@ pub fn render_championship_editor(
     render_footer(fonts, scaler, state, is_dev);
 
     // Modal Overlays
-    render_modal(fonts, scaler, state, all_tracks);
+    render_modal(fonts, scaler, state, all_tracks, available_championships);
 }
 
 fn render_tab_rules(
@@ -386,16 +414,16 @@ fn render_tab_rules(
 
     fonts.draw_ui_bold("CHAMPIONSHIP REGULATIONS & METADATA", x, y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_GOLD);
 
-    let module_upper = state.def.championship.module_id.to_uppercase();
+    let module_upper = state.def.series.module_id.to_uppercase();
     let scoring_upper = state.def.scoring.system.to_uppercase();
 
     let fields = [
-        ("Identifier Slug", state.def.championship.id.as_str(), "[Click / Enter to Edit]"),
-        ("Display Title", state.def.championship.name.as_str(), "[Click / Enter to Edit]"),
-        ("Description", state.def.championship.description.as_str(), "[Click / Enter to Edit]"),
+        ("Identifier Slug", state.def.series.id.as_str(), "[Click / Enter to Edit]"),
+        ("Display Title", state.def.series.name.as_str(), "[Click / Enter to Edit]"),
+        ("Description", state.def.series.description.as_str(), "[Click / Enter to Edit]"),
         ("Motorsport Module", module_upper.as_str(), "[Left/Right or Click to Cycle]"),
-        ("Career Tier", format!("Tier {}", state.def.championship.tier).leak(), "[Left/Right or Click to Cycle]"),
-        ("Default Laps", format!("{} Laps", state.def.championship.laps_per_round).leak(), "[Left/Right or Click +/-]"),
+        ("Career Tier", format!("Tier {}", state.def.series.tier).leak(), "[Left/Right or Click to Cycle]"),
+        ("Default Laps", format!("{} Laps", state.def.series.laps_per_round).leak(), "[Left/Right or Click +/-]"),
         ("Point System", scoring_upper.as_str(), "[Left/Right to Cycle]"),
         ("Fastest Lap Bonus", if state.def.scoring.fastest_lap_bonus { "ENABLED (+1 pt top 10)" } else { "DISABLED" }, "[Space/Enter to Toggle]"),
         ("Clean Race Bonus", if state.def.scoring.clean_race_bonus { "ENABLED" } else { "DISABLED" }, "[Space/Enter to Toggle]"),
@@ -506,7 +534,7 @@ fn render_tab_calendar(
         );
 
         // Laps
-        let laps_str = format!("{} LAPS", round.laps.unwrap_or(state.def.championship.laps_per_round));
+        let laps_str = format!("{} LAPS", round.laps.unwrap_or(state.def.series.laps_per_round));
         fonts.draw_ui_bold(&laps_str, x + w - scaler.s(240.0), card_y + scaler.s(26.0), scaler.font_s(11.0), Palette::NEON_CYAN);
 
         // Actions hint
@@ -711,10 +739,10 @@ fn render_footer(
     scaler.draw_glass_card(0.0, y, sw, 1.0, COLOR_TRANSPARENT, Palette::UI_CARD_BORDER, 1.0);
 
     let hints = match state.active_tab {
-        ChampionshipEditorTab::Rules => "[Tab] Next Tab • [Up/Down] Select Field • [Enter] Edit • [Esc] Exit",
-        ChampionshipEditorTab::Calendar => "[Tab] Next Tab • [A] Add Round • [Up/Down] Reorder • [D] Delete Round • [Esc] Exit",
-        ChampionshipEditorTab::Grid => "[Tab] Next Tab • [Up/Down] Select Driver • [Enter] Edit Name • [M] Change Car • [Esc] Exit",
-        ChampionshipEditorTab::Export => "[Tab] Next Tab • [L / F5] Launch Test Cup • [S] Save TOML • [Esc] Exit",
+        ChampionshipEditorTab::Rules => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Field • [Enter] Edit • [Esc] Exit",
+        ChampionshipEditorTab::Calendar => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [A] Add Round • [Up/Down] Reorder • [D] Delete Round • [Esc] Exit",
+        ChampionshipEditorTab::Grid => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Driver • [Enter] Edit Name • [M] Change Car • [Esc] Exit",
+        ChampionshipEditorTab::Export => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [L / F5] Launch Test Cup • [S] Save TOML • [Esc] Exit",
     };
 
     fonts.draw_ui_regular(hints, scaler.s(24.0), y + scaler.s(22.0), scaler.font_s(11.0), COLOR_LIGHT_GRAY);
@@ -725,12 +753,47 @@ fn render_modal(
     scaler: &UiScaler,
     state: &ChampionshipEditorState,
     all_tracks: &[TrackChoice],
+    available_championships: &[&ChampionshipDefinition],
 ) {
     let sw = screen_width();
     let sh = screen_height();
 
     match state.modal {
         ChampionshipEditorModal::None => {}
+        ChampionshipEditorModal::OpenChampionship { selected_idx } => {
+            draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.70));
+
+            let modal_w = scaler.s(560.0);
+            let modal_h = scaler.s(430.0);
+            let mx = (sw - modal_w) * 0.5;
+            let my = (sh - modal_h) * 0.5;
+
+            scaler.draw_glass_card(mx, my, modal_w, modal_h, Color::new(0.08, 0.10, 0.16, 0.98), Palette::NEON_CYAN, 2.0);
+            fonts.draw_ui_bold("OPEN CHAMPIONSHIP PRESET / USER CUP", mx + scaler.s(20.0), my + scaler.s(28.0), scaler.font_s(13.5), Palette::NEON_CYAN);
+            fonts.draw_ui_regular("Select a championship to load into the editor studio", mx + scaler.s(20.0), my + scaler.s(45.0), scaler.font_s(10.0), COLOR_LIGHT_GRAY);
+
+            let row_h = scaler.s(36.0);
+            let start_y = my + scaler.s(58.0);
+            let max_visible = 8;
+            let scroll_offset = selected_idx.saturating_sub(max_visible - 1);
+
+            for (i, cup) in available_championships.iter().skip(scroll_offset).take(max_visible).enumerate() {
+                let actual_idx = scroll_offset + i;
+                let card_y = start_y + (i as f32) * (row_h + scaler.s(4.0));
+                let is_sel = actual_idx == selected_idx;
+
+                let bg = if is_sel { Color::new(0.15, 0.22, 0.38, 0.90) } else { Color::new(0.05, 0.07, 0.12, 0.60) };
+                let border = if is_sel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
+
+                scaler.draw_glass_card(mx + scaler.s(16.0), card_y, modal_w - scaler.s(32.0), row_h, bg, border, if is_sel { 1.5 } else { 1.0 });
+                fonts.draw_ui_bold(&cup.series.name, mx + scaler.s(28.0), card_y + scaler.s(22.0), scaler.font_s(11.5), Palette::WHITE);
+
+                let badge = format!("{} • TIER {} • {} ROUNDS", cup.series.module_id.to_uppercase(), cup.series.tier, cup.rounds.len());
+                fonts.draw_ui_regular(&badge, mx + modal_w - scaler.s(210.0), card_y + scaler.s(22.0), scaler.font_s(9.5), if is_sel { Palette::NEON_CYAN } else { COLOR_LIGHT_GRAY });
+            }
+
+            fonts.draw_ui_regular("[Up/Down] Navigate • [Enter] Load Cup • [Esc] Cancel", mx + scaler.s(20.0), my + modal_h - scaler.s(16.0), scaler.font_s(10.0), COLOR_DARK_GRAY);
+        }
         ChampionshipEditorModal::AddTrack { selected_idx } => {
             draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.65));
 
@@ -775,7 +838,7 @@ fn render_modal(
             let driver_name = state.def.drivers.get(driver_idx).map(|d| d.name.as_str()).unwrap_or("Driver");
             fonts.draw_ui_bold(&format!("SELECT VEHICLE: {}", driver_name), mx + scaler.s(20.0), my + scaler.s(30.0), scaler.font_s(13.0), Palette::NEON_CYAN);
 
-            let models = crate::catalog::get_models_for_module(&state.def.championship.module_id);
+            let models = crate::catalog::get_models_for_module(&state.def.series.module_id);
             let row_h = scaler.s(34.0);
             let start_y = my + scaler.s(50.0);
             let max_visible = 8;
@@ -837,10 +900,59 @@ fn render_modal(
 pub fn handle_championship_editor_input(
     state: &mut ChampionshipEditorState,
     all_tracks: &[TrackChoice],
+    available_championships: &[&ChampionshipDefinition],
     is_dev: bool,
 ) -> ChampionshipEditorAction {
     // 1. Modal Input Handling
     match state.modal {
+        ChampionshipEditorModal::OpenChampionship { ref mut selected_idx } => {
+            if is_key_pressed(KeyCode::Escape) {
+                state.modal = ChampionshipEditorModal::None;
+                return ChampionshipEditorAction::None;
+            }
+            if is_key_pressed(KeyCode::Up) {
+                *selected_idx = selected_idx.saturating_sub(1);
+            }
+            if is_key_pressed(KeyCode::Down) && !available_championships.is_empty() {
+                *selected_idx = (*selected_idx + 1).min(available_championships.len() - 1);
+            }
+            if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
+                if let Some(cup) = available_championships.get(*selected_idx) {
+                    let chosen = (*cup).clone();
+                    state.modal = ChampionshipEditorModal::None;
+                    return ChampionshipEditorAction::LoadChampionship(chosen);
+                }
+            }
+            if is_mouse_button_pressed(MouseButton::Left) {
+                let (mx, my) = mouse_position();
+                let sw = screen_width();
+                let sh = screen_height();
+                let scaler = UiScaler::new(sw, sh);
+                let modal_w = scaler.s(560.0);
+                let modal_h = scaler.s(430.0);
+                let mx_box = (sw - modal_w) * 0.5;
+                let my_box = (sh - modal_h) * 0.5;
+                let row_h = scaler.s(36.0);
+                let start_y = my_box + scaler.s(58.0);
+                let max_visible = 8;
+                let scroll_offset = (*selected_idx).saturating_sub(max_visible - 1);
+
+                for (i, cup) in available_championships.iter().skip(scroll_offset).take(max_visible).enumerate() {
+                    let actual_idx = scroll_offset + i;
+                    let card_y = start_y + (i as f32) * (row_h + scaler.s(4.0));
+                    if mx >= mx_box + scaler.s(16.0) && mx <= mx_box + modal_w - scaler.s(16.0) && my >= card_y && my <= card_y + row_h {
+                        if actual_idx == *selected_idx {
+                            let chosen = (*cup).clone();
+                            state.modal = ChampionshipEditorModal::None;
+                            return ChampionshipEditorAction::LoadChampionship(chosen);
+                        } else {
+                            *selected_idx = actual_idx;
+                        }
+                    }
+                }
+            }
+            return ChampionshipEditorAction::None;
+        }
         ChampionshipEditorModal::AddTrack { ref mut selected_idx } => {
             if is_key_pressed(KeyCode::Escape) {
                 state.modal = ChampionshipEditorModal::None;
@@ -869,7 +981,7 @@ pub fn handle_championship_editor_input(
             return ChampionshipEditorAction::None;
         }
         ChampionshipEditorModal::SelectCarModel { driver_idx, ref mut selected_idx } => {
-            let models = crate::catalog::get_models_for_module(&state.def.championship.module_id);
+            let models = crate::catalog::get_models_for_module(&state.def.series.module_id);
             if is_key_pressed(KeyCode::Escape) {
                 state.modal = ChampionshipEditorModal::None;
                 return ChampionshipEditorAction::None;
@@ -912,13 +1024,13 @@ pub fn handle_championship_editor_input(
             if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
                 match target {
                     TextEditTarget::Id => {
-                        state.def.championship.id = value.trim().to_lowercase().replace(' ', "_");
+                        state.def.series.id = value.trim().to_lowercase().replace(' ', "_");
                     }
                     TextEditTarget::Name => {
-                        state.def.championship.name = value.trim().to_string();
+                        state.def.series.name = value.trim().to_string();
                     }
                     TextEditTarget::Description => {
-                        state.def.championship.description = value.trim().to_string();
+                        state.def.series.description = value.trim().to_string();
                     }
                     TextEditTarget::DriverName(idx) => {
                         if let Some(d) = state.def.drivers.get_mut(idx) {
@@ -942,6 +1054,15 @@ pub fn handle_championship_editor_input(
     // 2. Global Hotkeys
     if is_key_pressed(KeyCode::Escape) {
         return ChampionshipEditorAction::Exit;
+    }
+
+    if is_key_pressed(KeyCode::O) {
+        state.modal = ChampionshipEditorModal::OpenChampionship { selected_idx: 0 };
+        return ChampionshipEditorAction::None;
+    }
+
+    if is_key_pressed(KeyCode::N) {
+        return ChampionshipEditorAction::NewChampionship;
     }
 
     if is_key_pressed(KeyCode::Tab) {
@@ -972,28 +1093,28 @@ pub fn handle_championship_editor_input(
                 match state.rules_field_idx {
                     3 => { // Module cycle
                         let modules = ["gt", "nascar", "rally", "kart", "extreme_offroad", "classic"];
-                        let curr_pos = modules.iter().position(|&m| m == state.def.championship.module_id).unwrap_or(0);
+                        let curr_pos = modules.iter().position(|&m| m == state.def.series.module_id).unwrap_or(0);
                         let next_pos = if is_key_pressed(KeyCode::Right) {
                             (curr_pos + 1) % modules.len()
                         } else {
                             (curr_pos + modules.len() - 1) % modules.len()
                         };
-                        state.def.championship.module_id = modules[next_pos].to_string();
+                        state.def.series.module_id = modules[next_pos].to_string();
                         autofill_grid_for_module(&mut state.def);
                     }
                     4 => { // Tier cycle (1..=5)
                         if is_key_pressed(KeyCode::Right) {
-                            state.def.championship.tier = (state.def.championship.tier % 5) + 1;
+                            state.def.series.tier = (state.def.series.tier % 5) + 1;
                         } else {
-                            state.def.championship.tier = if state.def.championship.tier <= 1 { 5 } else { state.def.championship.tier - 1 };
+                            state.def.series.tier = if state.def.series.tier <= 1 { 5 } else { state.def.series.tier - 1 };
                         }
                         autofill_grid_for_module(&mut state.def);
                     }
                     5 => { // Default laps
                         if is_key_pressed(KeyCode::Right) {
-                            state.def.championship.laps_per_round = (state.def.championship.laps_per_round + 1).min(50);
+                            state.def.series.laps_per_round = (state.def.series.laps_per_round + 1).min(50);
                         } else {
-                            state.def.championship.laps_per_round = state.def.championship.laps_per_round.saturating_sub(1).max(1);
+                            state.def.series.laps_per_round = state.def.series.laps_per_round.saturating_sub(1).max(1);
                         }
                     }
                     6 => { // Point system
@@ -1010,21 +1131,21 @@ pub fn handle_championship_editor_input(
                     0 => {
                         state.modal = ChampionshipEditorModal::EditTextField {
                             target: TextEditTarget::Id,
-                            value: state.def.championship.id.clone(),
+                            value: state.def.series.id.clone(),
                             cursor_timer: 0.0,
                         };
                     }
                     1 => {
                         state.modal = ChampionshipEditorModal::EditTextField {
                             target: TextEditTarget::Name,
-                            value: state.def.championship.name.clone(),
+                            value: state.def.series.name.clone(),
                             cursor_timer: 0.0,
                         };
                     }
                     2 => {
                         state.modal = ChampionshipEditorModal::EditTextField {
                             target: TextEditTarget::Description,
-                            value: state.def.championship.description.clone(),
+                            value: state.def.series.description.clone(),
                             cursor_timer: 0.0,
                         };
                     }
@@ -1062,7 +1183,7 @@ pub fn handle_championship_editor_input(
             // Adjust per-round laps
             if is_key_pressed(KeyCode::L) {
                 if let Some(r) = state.def.rounds.get_mut(state.selected_round_idx) {
-                    let cur = r.laps.unwrap_or(state.def.championship.laps_per_round);
+                    let cur = r.laps.unwrap_or(state.def.series.laps_per_round);
                     r.laps = Some((cur % 10) + 1);
                 }
             }
@@ -1114,12 +1235,49 @@ pub fn handle_championship_editor_input(
         }
     }
 
-    // Mouse click handling for interactive action buttons on Export Tab
+    // Mouse click handling
     if is_mouse_button_pressed(MouseButton::Left) {
         let (mx, my) = mouse_position();
         let sw = screen_width();
         let sh = screen_height();
         let scaler = UiScaler::new(sw, sh);
+
+        // Header buttons: [O] OPEN CUP & [N] NEW CUP
+        let btn_h_hdr = scaler.s(32.0);
+        let btn_y_hdr = scaler.s(10.0);
+        let new_btn_w = scaler.s(92.0);
+        let open_btn_w = scaler.s(108.0);
+        let new_btn_x = sw - new_btn_w - scaler.s(20.0);
+        let open_btn_x = new_btn_x - open_btn_w - scaler.s(8.0);
+
+        if my >= btn_y_hdr && my <= btn_y_hdr + btn_h_hdr {
+            if mx >= open_btn_x && mx <= open_btn_x + open_btn_w {
+                state.modal = ChampionshipEditorModal::OpenChampionship { selected_idx: 0 };
+                return ChampionshipEditorAction::None;
+            }
+            if mx >= new_btn_x && mx <= new_btn_x + new_btn_w {
+                return ChampionshipEditorAction::NewChampionship;
+            }
+        }
+
+        // Header tab switching clicks
+        let tab_w = scaler.s(150.0);
+        let tab_gap = scaler.s(8.0);
+        let total_tabs_w = tab_w * 4.0 + tab_gap * 3.0;
+        let tabs_x = (sw - total_tabs_w) * 0.5;
+        let tabs_y = scaler.s(10.0);
+        let tab_h = scaler.s(32.0);
+
+        if my >= tabs_y && my <= tabs_y + tab_h {
+            for (idx, tab) in ChampionshipEditorTab::ALL.iter().enumerate() {
+                let tx = tabs_x + (idx as f32) * (tab_w + tab_gap);
+                if mx >= tx && mx <= tx + tab_w {
+                    state.active_tab = *tab;
+                    return ChampionshipEditorAction::None;
+                }
+            }
+        }
+
         let pad_x = scaler.s(24.0);
         let col_w = (sw - pad_x * 2.0 - scaler.s(24.0)) * 0.5;
         let btn_y = scaler.s(286.0);
@@ -1151,3 +1309,6 @@ pub fn handle_championship_editor_input(
 
     ChampionshipEditorAction::None
 }
+
+pub use handle_championship_editor_input as handle_series_editor_input;
+pub use render_championship_editor as render_series_editor;

@@ -487,7 +487,9 @@ fn test_personal_best_notification_struct_and_delta() {
 fn test_race_session_input_map_integration_and_rebinding() {
     use cabinet::input::{ArcadeAction, ArcadeKey, InputMap, InputSource};
 
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("session_tests_input");
     let mut session = RaceSession::new();
+    session.input.input_map = InputMap::default_racing();
     session.init_race();
 
     // Verify initial input map is default racing

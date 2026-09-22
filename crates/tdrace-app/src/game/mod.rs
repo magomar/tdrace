@@ -101,10 +101,12 @@ use crate::render::{
     render_tree_trunks_culled, PlayerVisibilityOptions,
 };
 use crate::replay::{ReplayPlayer, ReplayRecorder};
-use crate::tournament::format::ChampionshipDefinition;
-use crate::tournament::{ChampionshipManager, ChampionshipSession, PointSystem, RoundDriverResult};
+use crate::series::format::ChampionshipDefinition;
+use crate::series::{
+    ChampionshipManager, ChampionshipSession, PointSystem, RoundDriverResult,
+};
 use crate::track_manager::TrackManager;
-use crate::ui::championship_editor::{
+use crate::ui::series_editor::{
     handle_championship_editor_input, render_championship_editor, ChampionshipEditorAction,
     ChampionshipEditorState,
 };
@@ -1771,7 +1773,7 @@ impl RaceSession {
             "GT World Challenge Championship 2026",
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             vec!["monza".to_string(), "spa".to_string(), "silverstone".to_string(), "classic_grand_prix".to_string()],
-            5,
+            3,
             &[
                 ("player", "Player", "Apex GT Racing"),
                 ("max_hunter", "Max Hunter", "Red Bull GT"),
@@ -1822,7 +1824,7 @@ impl RaceSession {
             cup_name,
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             track_ids,
-            4,
+            3,
             &[
                 ("player", "Player", "Apex GT Racing"),
                 ("max_hunter", "Max Hunter", "Red Bull GT"),
@@ -2326,10 +2328,15 @@ impl RaceSession {
         self.init_race();
     }
 
-    /// Advances to the next round in an active championship season.
     pub fn advance_championship_round(&mut self) {
-        if let Some(champ) = &self.championship_session {
-            if let Some(track_id) = champ.current_track_id() {
+        let next_track_id = self
+            .championship_session
+            .as_ref()
+            .and_then(|champ| champ.current_track_id().map(|s| s.to_string()));
+        let has_session = self.championship_session.is_some();
+
+        if has_session {
+            if let Some(track_id) = next_track_id {
                 self.track = self
                     .track_manager
                     .load_track_by_slug(&track_id)
@@ -5701,7 +5708,7 @@ impl RaceSession {
                         self.enter_track_editor_from_modality_select();
                         return;
                     }
-                    ModalityItem::ChampionshipEditor => {
+                    ModalityItem::SeriesEditor => {
                         self.enter_championship_editor(None);
                         return;
                     }
@@ -9307,7 +9314,16 @@ impl RaceSession {
     /// Transitions into the Championship Editor studio with an optional initial definition.
     pub fn enter_championship_editor(&mut self, def: Option<ChampionshipDefinition>) {
         self.audio.play_sfx(SfxType::UiSelect);
-        self.championship_editor_state = Some(ChampionshipEditorState::new(def));
+        let initial_def = def.or_else(|| {
+            // Default to the championship preset matching active module and garage tier, or module first, or any sorted preset
+            self.championship_manager
+                .get_by_module_and_tier(&self.active_module_id, self.garage_tier as u32)
+                .cloned()
+                .or_else(|| self.championship_manager.get_by_module(&self.active_module_id).first().map(|d| (*d).clone()))
+                .or_else(|| self.championship_manager.get("gt4_clubman_sprint").cloned())
+                .or_else(|| self.championship_manager.all_sorted().first().map(|d| (*d).clone()))
+        });
+        self.championship_editor_state = Some(ChampionshipEditorState::new(initial_def));
         self.state = GameState::ChampionshipEditor;
     }
 
@@ -9322,7 +9338,8 @@ impl RaceSession {
             }
 
             let tracks = self.track_manager.main_track_choices();
-            let action = handle_championship_editor_input(&mut state, &tracks, self.is_dev_mode());
+            let available_champs = self.championship_manager.all_sorted();
+            let action = handle_championship_editor_input(&mut state, &tracks, &available_champs, self.is_dev_mode());
             match action {
                 ChampionshipEditorAction::None => {
                     self.championship_editor_state = Some(state);
@@ -9335,6 +9352,26 @@ impl RaceSession {
                         selected_idx: 3,
                         modal: None,
                     };
+                }
+                ChampionshipEditorAction::LoadChampionship(new_def) => {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let name = new_def.series.name.clone();
+                    state.def = new_def;
+                    state.selected_round_idx = 0;
+                    state.selected_driver_idx = 0;
+                    state.set_status(format!("LOADED CUP: {}", name), 3.0);
+                    self.championship_editor_state = Some(state);
+                }
+                ChampionshipEditorAction::NewChampionship => {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let mut blank_def = ChampionshipDefinition::default();
+                    blank_def.series.module_id = self.active_module_id.to_string();
+                    crate::ui::championship_editor::autofill_grid_for_module(&mut blank_def);
+                    state.def = blank_def;
+                    state.selected_round_idx = 0;
+                    state.selected_driver_idx = 0;
+                    state.set_status("CREATED NEW CHAMPIONSHIP", 2.5);
+                    self.championship_editor_state = Some(state);
                 }
                 ChampionshipEditorAction::SaveUser => {
                     match self.championship_manager.save_user_championship(&state.def) {
@@ -9383,7 +9420,7 @@ impl RaceSession {
     pub fn launch_championship_test_cup(&mut self, def: ChampionshipDefinition) {
         self.audio.play_sfx(SfxType::UiSelect);
         let champ = def.to_session();
-        self.switch_to_module(&def.championship.module_id);
+        self.switch_to_module(&def.series.module_id);
         self.championship_session = Some(champ);
         self.championship_editor_state = None;
         self.init_race();
@@ -9396,11 +9433,13 @@ impl RaceSession {
             let sh = screen_height_safe();
             let scaler = UiScaler::new(sw, sh);
             let tracks = self.track_manager.main_track_choices();
+            let available_champs = self.championship_manager.all_sorted();
             render_championship_editor(
                 &self.fonts,
                 &scaler,
                 state,
                 &tracks,
+                &available_champs,
                 self.is_dev_mode(),
             );
         }

@@ -14,7 +14,8 @@ pub mod profile;
 pub mod render;
 pub mod replay;
 pub mod storage;
-pub mod tournament;
+pub mod series;
+pub use series as tournament;
 pub mod track_manager;
 pub mod tracks;
 pub mod ui;
@@ -40,13 +41,14 @@ pub use module::{
     GtWorldChallengeModule, KartGameModule, ModuleTheme, NascarGameModule, RallyGameModule,
     TrackDefinition, VehicleModelDefinition, VehicleVisualType,
 };
-pub use tournament::{
+pub use series::{
     ChampionshipManager, ChampionshipRoundResult, ChampionshipSession, EliminationSession, PointSystem, QualifyingResult,
-    QualifyingSession, RallyStageResult, RoundDriverResult, StageRallySession, TournamentFormat,
-    TournamentStandingEntry,
+    QualifyingSession, RallyStageResult, RoundDriverResult, SeriesFormat, SeriesManager, SeriesRoundResult,
+    SeriesSession, SeriesStandingEntry, StageRallySession, TournamentFormat, TournamentStandingEntry,
 };
-pub use tournament::format::{
-    ChampionshipDefinition, ChampionshipMeta, DriverConfig, RoundConfig, ScoringConfig,
+pub use series::format::{
+    ChampionshipDefinition, ChampionshipMeta, DriverConfig, RoundConfig, ScoringConfig, SeriesDefinition,
+    SeriesMeta,
 };
 pub use track_manager::{CustomTrackInfo, TrackManager};
 

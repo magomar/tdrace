@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ChampionshipSession, PointSystem};
+use super::{SeriesSession, PointSystem};
 
 fn default_module() -> String {
     "gt".to_string()
@@ -22,9 +22,9 @@ fn default_true() -> bool {
     true
 }
 
-/// Metadata describing a championship cup or tournament.
+/// Metadata describing a multi-race series, championship, or cup.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ChampionshipMeta {
+pub struct SeriesMeta {
     pub id: String,
     pub name: String,
     #[serde(default)]
@@ -43,12 +43,14 @@ pub struct ChampionshipMeta {
     pub icon: Option<String>,
 }
 
-impl Default for ChampionshipMeta {
+pub type ChampionshipMeta = SeriesMeta;
+
+impl Default for SeriesMeta {
     fn default() -> Self {
         Self {
-            id: "custom_cup".to_string(),
-            name: "Custom Championship Cup".to_string(),
-            description: "Custom multi-round tournament".to_string(),
+            id: "custom_series".to_string(),
+            name: "Custom Series".to_string(),
+            description: "Custom multi-round racing series".to_string(),
             module_id: default_module(),
             tier: default_tier(),
             laps_per_round: default_laps(),
@@ -179,20 +181,23 @@ pub struct DriverConfig {
     pub livery_idx: Option<u8>,
 }
 
-/// Full declarative championship specification file document.
+/// Full declarative multi-race series specification file document.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ChampionshipDefinition {
-    pub championship: ChampionshipMeta,
+pub struct SeriesDefinition {
+    #[serde(alias = "championship", alias = "cup")]
+    pub series: SeriesMeta,
     #[serde(default)]
     pub scoring: ScoringConfig,
     pub rounds: Vec<RoundConfig>,
     pub drivers: Vec<DriverConfig>,
 }
 
-impl Default for ChampionshipDefinition {
+pub type ChampionshipDefinition = SeriesDefinition;
+
+impl Default for SeriesDefinition {
     fn default() -> Self {
         Self {
-            championship: ChampionshipMeta::default(),
+            series: SeriesMeta::default(),
             scoring: ScoringConfig::default(),
             rounds: Vec::new(),
             drivers: Vec::new(),
@@ -200,42 +205,58 @@ impl Default for ChampionshipDefinition {
     }
 }
 
-impl ChampionshipDefinition {
-    /// Deserializes a declarative championship definition from TOML format.
+impl SeriesDefinition {
+    pub fn championship(&self) -> &SeriesMeta {
+        &self.series
+    }
+
+    pub fn championship_mut(&mut self) -> &mut SeriesMeta {
+        &mut self.series
+    }
+
+    pub fn cup(&self) -> &SeriesMeta {
+        &self.series
+    }
+
+    pub fn cup_mut(&mut self) -> &mut SeriesMeta {
+        &mut self.series
+    }
+
+    /// Deserializes a declarative series definition from TOML format.
     pub fn from_toml(content: &str) -> Result<Self, toml::de::Error> {
         toml::from_str(content)
     }
 
-    /// Serializes this championship definition to a formatted TOML string.
+    /// Serializes this series definition to a formatted TOML string.
     pub fn to_toml(&self) -> Result<String, toml::ser::Error> {
         toml::to_string_pretty(self)
     }
 
-    /// Validates the structural integrity and logic of the championship definition.
+    /// Validates the structural integrity and logic of the series definition.
     ///
     /// Returns `Ok(())` if valid, or `Err(Vec<String>)` containing all diagnostic errors.
     pub fn validate(&self) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
 
-        // 1. Championship ID & Name checks
-        let id_trimmed = self.championship.id.trim();
+        // 1. Series ID & Name checks
+        let id_trimmed = self.series.id.trim();
         if id_trimmed.is_empty() {
-            errors.push("Championship ID cannot be empty".to_string());
+            errors.push("Series ID cannot be empty".to_string());
         } else if !id_trimmed.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
-            errors.push("Championship ID must contain only alphanumeric, hyphen, and underscore characters".to_string());
+            errors.push("Series ID must contain only alphanumeric, hyphen, and underscore characters".to_string());
         }
 
-        if self.championship.name.trim().is_empty() {
-            errors.push("Championship name cannot be empty".to_string());
+        if self.series.name.trim().is_empty() {
+            errors.push("Series name cannot be empty".to_string());
         }
 
-        if self.championship.laps_per_round == 0 {
+        if self.series.laps_per_round == 0 {
             errors.push("Default laps per round must be greater than 0".to_string());
         }
 
         // 2. Rounds checks
         if self.rounds.is_empty() {
-            errors.push("Championship must contain at least 1 round".to_string());
+            errors.push("Series must contain at least 1 round".to_string());
         }
         let mut seen_orders = std::collections::HashSet::new();
         for (idx, r) in self.rounds.iter().enumerate() {
@@ -254,14 +275,14 @@ impl ChampionshipDefinition {
 
         // 3. Drivers checks
         if self.drivers.len() < 2 {
-            errors.push("Championship grid must contain at least 2 drivers".to_string());
+            errors.push("Series grid must contain at least 2 drivers".to_string());
         }
 
         let player_count = self.drivers.iter().filter(|d| d.is_player).count();
         if player_count == 0 {
-            errors.push("Championship must designate exactly 1 player driver (found 0)".to_string());
+            errors.push("Series must designate exactly 1 player driver (found 0)".to_string());
         } else if player_count > 1 {
-            errors.push(format!("Championship can only have 1 player driver (found {})", player_count));
+            errors.push(format!("Series can only have 1 player driver (found {})", player_count));
         }
 
         let mut seen_ids = std::collections::HashSet::new();
@@ -283,8 +304,8 @@ impl ChampionshipDefinition {
         }
     }
 
-    /// Converts this declarative championship definition into an active runtime `ChampionshipSession`.
-    pub fn to_session(&self) -> ChampionshipSession {
+    /// Converts this declarative series definition into an active runtime `SeriesSession`.
+    pub fn to_session(&self) -> SeriesSession {
         let point_system = self.scoring.to_point_system();
         let track_ids: Vec<String> = self.rounds.iter().map(|r| r.track_id.clone()).collect();
         let initial_drivers: Vec<(&str, &str, &str)> = self
@@ -293,18 +314,18 @@ impl ChampionshipDefinition {
             .map(|d| (d.id.as_str(), d.name.as_str(), d.team.as_str()))
             .collect();
 
-        ChampionshipSession::new(
-            &self.championship.name,
+        SeriesSession::new(
+            &self.series.name,
             point_system,
             track_ids,
-            self.championship.laps_per_round,
+            self.series.laps_per_round,
             &initial_drivers,
         )
-        .with_tier(self.championship.tier)
+        .with_tier(self.series.tier)
     }
 
-    /// Recovers a declarative championship definition from an active runtime `ChampionshipSession`.
-    pub fn from_session(session: &ChampionshipSession, module_id: &str, tier: u32) -> Self {
+    /// Recovers a declarative series definition from an active runtime `SeriesSession`.
+    pub fn from_session(session: &SeriesSession, module_id: &str, tier: u32) -> Self {
         let slug = session
             .name
             .to_lowercase()
@@ -313,10 +334,10 @@ impl ChampionshipDefinition {
             .filter(|c| c.is_ascii_alphanumeric() || *c == '_')
             .collect::<String>();
 
-        let championship = ChampionshipMeta {
+        let series = SeriesMeta {
             id: slug,
             name: session.name.clone(),
-            description: format!("{} tournament series", session.name),
+            description: format!("{} series", session.name),
             module_id: module_id.to_string(),
             tier,
             laps_per_round: session.laps_per_round,
@@ -357,7 +378,7 @@ impl ChampionshipDefinition {
             .collect();
 
         Self {
-            championship,
+            series,
             scoring,
             rounds,
             drivers,
@@ -409,8 +430,8 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
 "#;
 
         let def = ChampionshipDefinition::from_toml(toml_str).expect("Valid TOML should deserialize");
-        assert_eq!(def.championship.id, "gt4_sprint");
-        assert_eq!(def.championship.name, "GT4 European Sprint");
+        assert_eq!(def.series.id, "gt4_sprint");
+        assert_eq!(def.series.name, "GT4 European Sprint");
         assert_eq!(def.rounds.len(), 2);
         assert_eq!(def.rounds[0].track_id, "monza");
         assert_eq!(def.rounds[1].laps, Some(5));
@@ -427,9 +448,9 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
     #[test]
     fn test_validation_catches_invalid_inputs() {
         let mut def = ChampionshipDefinition::default();
-        def.championship.id = "bad id with spaces!".to_string();
-        def.championship.name = "".to_string();
-        def.championship.laps_per_round = 0;
+        def.series.id = "bad id with spaces!".to_string();
+        def.series.name = "".to_string();
+        def.series.laps_per_round = 0;
         def.rounds = vec![];
         def.drivers = vec![];
 
@@ -440,9 +461,9 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
         assert!(errs.iter().any(|e| e.contains("at least 2 drivers")));
 
         // Test duplicate driver id and 0 player slots
-        def.championship.id = "valid_id".to_string();
-        def.championship.name = "Valid Cup".to_string();
-        def.championship.laps_per_round = 3;
+        def.series.id = "valid_id".to_string();
+        def.series.name = "Valid Cup".to_string();
+        def.series.laps_per_round = 3;
         def.rounds = vec![RoundConfig {
             order: 1,
             track_id: "monza".to_string(),
@@ -480,7 +501,7 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
     #[test]
     fn test_session_conversion() {
         let def = ChampionshipDefinition {
-            championship: ChampionshipMeta {
+            series: SeriesMeta {
                 id: "nascar_tier1".to_string(),
                 name: "NASCAR Grassroots Cup".to_string(),
                 description: "Oval racing".to_string(),
@@ -544,7 +565,7 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
         );
 
         let recovered = ChampionshipDefinition::from_session(&session, "nascar", 1);
-        assert_eq!(recovered.championship.name, "NASCAR Grassroots Cup");
+        assert_eq!(recovered.series.name, "NASCAR Grassroots Cup");
         assert_eq!(recovered.scoring.system, "nascar");
         assert_eq!(recovered.rounds.len(), 1);
         assert_eq!(recovered.rounds[0].track_id, "oval_speedway");

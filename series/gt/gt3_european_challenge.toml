@@ -1,0 +1,135 @@
+# ==============================================================================
+# TdRace Championship Specification
+# GT World Challenge: FIA GT3 European Challenge (Tier 2)
+# ==============================================================================
+
+[championship]
+id = "gt3_european_challenge"
+name = "FIA GT3 European Challenge"
+description = "Premier European GT3 championship featuring high-downforce GT3 machinery across 7 historic circuits."
+module_id = "gt"
+tier = 2
+laps_per_round = 3
+bot_count = 7
+ai_difficulty = "standard"
+icon = "trophy"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "monza"
+name = "Monza Autodromo Nazionale"
+laps = 3
+
+[[rounds]]
+order = 2
+track_id = "silverstone"
+name = "Silverstone GP Circuit"
+laps = 3
+
+[[rounds]]
+order = 3
+track_id = "catalunya"
+name = "Circuit de Barcelona-Catalunya"
+laps = 3
+
+[[rounds]]
+order = 4
+track_id = "red_bull_ring"
+name = "Red Bull Ring (Spielberg)"
+laps = 3
+
+[[rounds]]
+order = 5
+track_id = "zandvoort"
+name = "Circuit Zandvoort"
+laps = 3
+
+[[rounds]]
+order = 6
+track_id = "nurburgring_gp"
+name = "Nürburgring GP-Strecke"
+laps = 3
+
+[[rounds]]
+order = 7
+track_id = "portimao_gp"
+name = "Autódromo do Algarve (Portimão)"
+laps = 3
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Manthey EMA"
+is_player = true
+car_model_id = "gt_porsche_911_gt3r"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "alessandro_rossi"
+name = "Alessandro Rossi"
+team = "Scuderia AF Corse"
+car_model_id = "gt_ferrari_296_gt3"
+country = "ITA"
+ai_character = "aggressive"
+livery_idx = 1
+
+[[drivers]]
+id = "lucas_auer"
+name = "Lucas Auer"
+team = "Akkodis ASP Team"
+car_model_id = "gt_amg_gt3_evo"
+country = "AUT"
+ai_character = "strategic"
+livery_idx = 2
+
+[[drivers]]
+id = "dries_vanthoor"
+name = "Dries Vanthoor"
+team = "Team WRT"
+car_model_id = "gt_audi_r8_gt3_evo2"
+country = "BEL"
+ai_character = "fast"
+livery_idx = 3
+
+[[drivers]]
+id = "kevin_estre"
+name = "Kévin Estre"
+team = "Manthey EMA"
+car_model_id = "gt_porsche_911_gt3r"
+country = "FRA"
+ai_character = "tenacious"
+livery_idx = 4
+
+[[drivers]]
+id = "antonio_fuoco"
+name = "Antonio Fuoco"
+team = "Scuderia AF Corse"
+car_model_id = "gt_ferrari_296_gt3"
+country = "ITA"
+ai_character = "smooth"
+livery_idx = 5
+
+[[drivers]]
+id = "maro_engel"
+name = "Maro Engel"
+team = "Akkodis ASP Team"
+car_model_id = "gt_amg_gt3_evo"
+country = "GER"
+ai_character = "calculating"
+livery_idx = 6
+
+[[drivers]]
+id = "charles_weerts"
+name = "Charles Weerts"
+team = "Team WRT"
+car_model_id = "gt_audi_r8_gt3_evo2"
+country = "BEL"
+ai_character = "balanced"
+livery_idx = 7

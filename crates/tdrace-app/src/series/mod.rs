@@ -91,9 +91,9 @@ impl PointSystem {
     }
 }
 
-/// Standings entry for a driver in a tournament.
+/// Standings entry for a driver in a series or tournament.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TournamentStandingEntry {
+pub struct SeriesStandingEntry {
     pub driver_id: String,
     pub driver_name: String,
     pub team_name: String,
@@ -104,7 +104,9 @@ pub struct TournamentStandingEntry {
     pub total_race_time: f32,
 }
 
-impl TournamentStandingEntry {
+pub type TournamentStandingEntry = SeriesStandingEntry;
+
+impl SeriesStandingEntry {
     pub fn new(driver_id: impl Into<String>, driver_name: impl Into<String>, team_name: impl Into<String>) -> Self {
         Self {
             driver_id: driver_id.into(),
@@ -132,35 +134,39 @@ pub struct RoundDriverResult {
     pub has_fastest_lap: bool,
 }
 
-/// Detailed results of a finished championship round.
+/// Detailed results of a finished series round.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ChampionshipRoundResult {
+pub struct SeriesRoundResult {
     pub round_index: usize,
     pub track_id: String,
     pub track_title: String,
     pub results: Vec<RoundDriverResult>,
 }
 
+pub type ChampionshipRoundResult = SeriesRoundResult;
+
 fn default_session_tier() -> u32 {
     1
 }
 
-/// Multi-round championship tournament manager.
+/// Multi-round series / championship session manager.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ChampionshipSession {
+pub struct SeriesSession {
     pub name: String,
     pub point_system: PointSystem,
     pub track_ids: Vec<String>,
     pub laps_per_round: u32,
     pub current_round: usize,
-    pub standings: Vec<TournamentStandingEntry>,
-    pub history: Vec<ChampionshipRoundResult>,
+    pub standings: Vec<SeriesStandingEntry>,
+    pub history: Vec<SeriesRoundResult>,
     pub is_completed: bool,
     #[serde(default = "default_session_tier")]
     pub tier: u32,
 }
 
-impl ChampionshipSession {
+pub type ChampionshipSession = SeriesSession;
+
+impl SeriesSession {
     pub fn new(
         name: impl Into<String>,
         point_system: PointSystem,
@@ -170,7 +176,7 @@ impl ChampionshipSession {
     ) -> Self {
         let standings = initial_drivers
             .iter()
-            .map(|&(id, name, team)| TournamentStandingEntry::new(id, name, team))
+            .map(|&(id, name, team)| SeriesStandingEntry::new(id, name, team))
             .collect();
 
         Self {
@@ -186,7 +192,7 @@ impl ChampionshipSession {
         }
     }
 
-    /// Sets the motorsport category tier (1..=5) for this championship.
+    /// Sets the motorsport category tier (1..=5) for this series or championship.
     pub fn with_tier(mut self, tier: u32) -> Self {
         self.tier = tier;
         self
@@ -228,7 +234,7 @@ impl ChampionshipSession {
         // Sort standings by points (descending), then wins, then best finish, then total time
         self.sort_standings();
 
-        self.history.push(ChampionshipRoundResult {
+        self.history.push(SeriesRoundResult {
             round_index: self.current_round,
             track_id,
             track_title: track_title.to_string(),
@@ -251,7 +257,7 @@ impl ChampionshipSession {
         });
     }
 
-    pub fn leader(&self) -> Option<&TournamentStandingEntry> {
+    pub fn leader(&self) -> Option<&SeriesStandingEntry> {
         self.standings.first()
     }
 }
@@ -375,16 +381,19 @@ impl EliminationSession {
     }
 }
 
-/// High-level tournament format descriptor.
+/// High-level series / race format descriptor.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum TournamentFormat {
+pub enum SeriesFormat {
     QuickRace { default_laps: u32, default_bots: usize },
     TimeAttack,
     Championship { name: String, point_system: PointSystem, track_ids: Vec<String>, laps_per_round: u32 },
+    Series { name: String, point_system: PointSystem, track_ids: Vec<String>, laps_per_round: u32 },
     QualifyingShootout { time_limit: f32 },
     StageRally { name: String, stage_track_ids: Vec<String> },
     EliminationCup { elimination_interval: u32 },
 }
+
+pub type TournamentFormat = SeriesFormat;
 
 #[cfg(test)]
 mod tests {

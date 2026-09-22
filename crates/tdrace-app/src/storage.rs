@@ -13,11 +13,13 @@ pub const ENV_USER_TRACKS_DIR: &str = "TDRACE_USER_TRACKS_DIR";
 /// Environment variable to override the git tracks directory (e.g. in tests).
 pub const ENV_GIT_TRACKS_DIR: &str = "TDRACE_GIT_TRACKS_DIR";
 
-/// Environment variable to override the user championships directory.
-pub const ENV_USER_CHAMPIONSHIPS_DIR: &str = "TDRACE_USER_CHAMPIONSHIPS_DIR";
+/// Environment variable to override the git series/championships directory (e.g. in tests).
+pub const ENV_GIT_SERIES_DIR: &str = "TDRACE_GIT_SERIES_DIR";
+pub const ENV_USER_SERIES_DIR: &str = "TDRACE_USER_SERIES_DIR";
 
-/// Environment variable to override the git championships directory (e.g. in tests).
-pub const ENV_GIT_CHAMPIONSHIPS_DIR: &str = "TDRACE_GIT_CHAMPIONSHIPS_DIR";
+/// Backwards-compatibility aliases
+pub const ENV_GIT_CHAMPIONSHIPS_DIR: &str = ENV_GIT_SERIES_DIR;
+pub const ENV_USER_CHAMPIONSHIPS_DIR: &str = ENV_USER_SERIES_DIR;
 
 /// Environment variable indicating developer mode execution.
 pub const ENV_DEV_MODE: &str = "TDRACE_DEV";
@@ -97,10 +99,10 @@ pub fn resolve_git_tracks_dir() -> Option<PathBuf> {
     None
 }
 
-/// Resolves the repository's git-tracked `championships/` directory when running in dev mode.
-/// Checks current working directory (`championships`), parent directory, or relative paths.
-pub fn resolve_git_championships_dir() -> Option<PathBuf> {
-    if let Ok(val) = std::env::var(ENV_GIT_CHAMPIONSHIPS_DIR) {
+/// Resolves the repository's git-tracked `series/` (or `championships/`) directory when running in dev mode.
+/// Checks current working directory (`series`, `championships`), parent directory, or relative paths.
+pub fn resolve_git_series_dir() -> Option<PathBuf> {
+    if let Ok(val) = std::env::var(ENV_GIT_SERIES_DIR) {
         if !val.trim().is_empty() {
             let p = PathBuf::from(val);
             if p.is_dir() {
@@ -109,6 +111,9 @@ pub fn resolve_git_championships_dir() -> Option<PathBuf> {
         }
     }
     let candidates = [
+        PathBuf::from("series"),
+        PathBuf::from("../series"),
+        PathBuf::from("../../series"),
         PathBuf::from("championships"),
         PathBuf::from("../championships"),
         PathBuf::from("../../championships"),
@@ -122,6 +127,11 @@ pub fn resolve_git_championships_dir() -> Option<PathBuf> {
         }
     }
     None
+}
+
+/// Backwards compatibility alias for `resolve_git_series_dir`.
+pub fn resolve_git_championships_dir() -> Option<PathBuf> {
+    resolve_git_series_dir()
 }
 
 /// Resolves the user-specific storage root directory for local game data, profiles, and tracks.
@@ -311,13 +321,13 @@ pub fn resolve_user_tracks_dir() -> PathBuf {
     p
 }
 
-/// Resolves the user-specific championships directory (`<user_data_dir>/championships`).
+/// Resolves the user-specific series directory (`<user_data_dir>/series`).
 ///
 /// Priority order:
-/// 1. `TDRACE_USER_CHAMPIONSHIPS_DIR` environment variable
-/// 2. `<resolve_user_data_dir()>/championships`
-pub fn resolve_user_championships_dir() -> PathBuf {
-    if let Ok(override_dir) = std::env::var(ENV_USER_CHAMPIONSHIPS_DIR) {
+/// 1. `TDRACE_USER_SERIES_DIR` / `TDRACE_USER_CHAMPIONSHIPS_DIR` environment variable
+/// 2. `<resolve_user_data_dir()>/series`
+pub fn resolve_user_series_dir() -> PathBuf {
+    if let Ok(override_dir) = std::env::var(ENV_USER_SERIES_DIR) {
         if !override_dir.trim().is_empty() {
             let p = PathBuf::from(override_dir);
             let _ = fs::create_dir_all(&p);
@@ -325,9 +335,14 @@ pub fn resolve_user_championships_dir() -> PathBuf {
         }
     }
 
-    let p = resolve_user_data_dir().join("championships");
+    let p = resolve_user_data_dir().join("series");
     let _ = fs::create_dir_all(&p);
     p
+}
+
+/// Backwards compatibility alias for `resolve_user_series_dir`.
+pub fn resolve_user_championships_dir() -> PathBuf {
+    resolve_user_series_dir()
 }
 
 /// Loads custom input mappings from `<user_data_dir>/input_bindings.json`, if present.

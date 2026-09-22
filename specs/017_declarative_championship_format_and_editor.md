@@ -1,27 +1,34 @@
 ---
 type: Feature Spec
 template: feature
-title: "Declarative Championship Format and In-Game Championship Editor"
-description: "Human-readable declarative TOML championship specification format, file discovery engine, and developer Championship Editor for authoring, validating, and testing custom cups."
+title: "Declarative Series Format and Series Studio Editor (Championships & Cups)"
+description: "Human-readable declarative TOML series specification format, file discovery engine, and Series Studio editor for authoring, validating, and testing championships and cups."
 status: implemented
 created: 2026-09-22
 generated: { by: agent/antigravity, at: 2026-09-22T08:35:00Z }
 ---
-# Feature Spec: Declarative Championship Format & In-Game Championship Editor 🏆📜🛠️
+# Feature Spec: Declarative Series Format & In-Game Series Studio 🏆📜🛠️
 
-A declarative, human-readable data format (TOML) and interactive visual authoring environment enabling developers and players to define, customize, validate, export, and compete in multi-round racing championships across all motorsport modules (**GT World Challenge**, **NASCAR**, **Rallycross**, **Karting**, **Extreme Off-Road**, and **Classic Arcade**).
+A declarative, human-readable data format (TOML) and interactive visual authoring environment enabling developers and players to define, customize, validate, export, and compete in multi-round racing series across all motorsport modules (**GT World Challenge**, **NASCAR**, **Rallycross**, **Karting**, **Extreme Off-Road**, and **Classic Arcade**).
+
+### 🏷️ Motorsport Taxonomy & Terminology
+To maintain clear domain semantics across the codebase and user interface:
+- **`Series`** (Generic Term): The generic engine, data structure, module, and container for any multi-round competition (`SeriesDefinition`, `SeriesSession`, `SeriesManager`, `SeriesEditor`, `series/` folder).
+- **`Championship`** (Specific Event): Formal multi-tier career progression events (e.g., GT World Challenge Tier 1–5, NASCAR Cup Series).
+- **`Cup`** (Specific Event): Bite-sized, custom, or standalone community/player multi-race events (e.g., Clubman Sprint Cup, Grassroots Cup).
+- Full backwards-compatibility is maintained via Serde aliases (`#[serde(alias = "championship", alias = "cup")]`), storage aliases, and public type re-exports (`pub type Championship* = Series*`, `pub use series as tournament;`).
 
 ---
 
 ## 🎯 Executive Summary & Context
 
-Prior to this specification, championships and career cups in **TdRace** were hardcoded into Rust imperative functions (`start_gt_championship`, `start_nascar_career_tier`, `start_rally_career_tier`, etc.) within `crates/tdrace-app/src/game/mod.rs`. Modifying track calendars, tweaking lap counts, altering scoring systems, rebalancing AI driver rosters, or introducing custom community cups required modifying and recompiling Rust source code.
+Prior to this specification, championships, series, and career cups in **TdRace** were hardcoded into Rust imperative functions (`start_gt_championship`, `start_nascar_career_tier`, `start_rally_career_tier`, etc.) within `crates/tdrace-app/src/game/mod.rs`. Modifying track calendars, tweaking lap counts, altering scoring systems, rebalancing AI driver rosters, or introducing custom community cups required modifying and recompiling Rust source code.
 
 This specification introduces:
-1. **Declarative Championship Data Format (TOML)**: A clean, human-readable schema specifying metadata, regulations, point systems, multi-circuit calendars, and driver/car rosters.
-2. **Championship File Discovery & Storage Engine (`ChampionshipManager`)**: Dual directory resolution scanning repository presets (`championships/{module}/`), user-authored creations (`$XDG_DATA_HOME/tdrace/championships/`), and standalone embedded compile-time presets.
-3. **In-Game / Developer Championship Editor (`GameState::ChampionshipEditor`)**: A full-screen interactive CAD-style cup authoring studio featuring tabbed metadata configuration, visual circuit picking with length/surface previews, vehicle roster grid management with vehicle catalog integration, real-time schema validation, syntax-highlighted TOML export, and instant "Launch Test Cup" race simulation.
-4. **Modality Hub Integration**: Seamless access via **Modality Selector Hub (`GameState::ModalitySelect`)** under Options column, developer hotkeys, and Track Manager cross-linking.
+1. **Declarative Series Data Format (TOML)**: A clean, human-readable schema specifying metadata, regulations, point systems, multi-circuit calendars, and driver/car rosters. Supports `[series]`, `[championship]`, and `[cup]` table headers interchangeably.
+2. **Series File Discovery & Storage Engine (`SeriesManager`)**: Dual directory resolution scanning repository presets (`series/{module}/`), user-authored creations (`$XDG_DATA_HOME/tdrace/series/`), and standalone embedded compile-time presets.
+3. **In-Game / Developer Series Studio (`GameState::SeriesEditor`)**: A full-screen interactive CAD-style cup authoring studio featuring tabbed metadata configuration, visual circuit picking with length/surface previews, vehicle roster grid management with vehicle catalog integration, real-time schema validation, syntax-highlighted TOML export, and instant "Launch Test Cup" race simulation.
+4. **Modality Hub Integration**: Seamless access via **Modality Selector Hub (`GameState::ModalitySelect`)** under Options column ("Series Editor"), developer hotkeys, and Track Manager cross-linking.
 
 ---
 
@@ -188,11 +195,11 @@ livery_idx = 3
 
 ## ⚙️ Backend Models & API Endpoints
 
-### 1. Serde Data Types (`tournament::format`)
+### 1. Serde Data Types (`series::format`)
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ChampionshipMeta {
+pub struct SeriesMeta {
     pub id: String,
     pub name: String,
     #[serde(default)]
@@ -210,6 +217,8 @@ pub struct ChampionshipMeta {
     #[serde(default)]
     pub icon: Option<String>,
 }
+
+pub type ChampionshipMeta = SeriesMeta;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ScoringConfig {
@@ -256,24 +265,27 @@ pub struct DriverConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ChampionshipDefinition {
-    pub championship: ChampionshipMeta,
+pub struct SeriesDefinition {
+    #[serde(alias = "championship", alias = "cup")]
+    pub series: SeriesMeta,
     #[serde(default)]
     pub scoring: ScoringConfig,
     pub rounds: Vec<RoundConfig>,
     pub drivers: Vec<DriverConfig>,
 }
+
+pub type ChampionshipDefinition = SeriesDefinition;
 ```
 
 ### 2. Runtime Conversion & Session Bridging
 
-`ChampionshipDefinition` provides direct lossless conversion to and from `ChampionshipSession`:
-* `pub fn to_session(&self) -> ChampionshipSession`:
+`SeriesDefinition` provides direct lossless conversion to and from `SeriesSession` (aliased as `ChampionshipSession`):
+* `pub fn to_session(&self) -> SeriesSession`:
   * Maps `scoring` to `PointSystem`.
   * Extracts ordered `track_ids`.
-  * Populates `TournamentStandingEntry` for each driver in `drivers`.
+  * Populates `SeriesStandingEntry` for each driver in `drivers`.
   * Sets `laps_per_round`.
-* `pub fn from_session(session: &ChampionshipSession, module_id: &str, tier: u32) -> Self`:
+* `pub fn from_session(session: &SeriesSession, module_id: &str, tier: u32) -> Self`:
   * Recovers a structured definition from an active runtime session.
 
 ---
@@ -334,18 +346,19 @@ pub struct ChampionshipDefinition {
 
 ### Created/Modified Files
 - `[NEW]` `specs/017_declarative_championship_format_and_editor.md` -> Formal specification document.
-- `[NEW]` `crates/tdrace-app/src/tournament/format.rs` -> Declarative TOML structs, Serde attributes, validation, and conversion methods.
-- `[NEW]` `crates/tdrace-app/src/tournament/manager.rs` -> `ChampionshipManager` file scanner, directory resolver, cache, and save/load engine.
-- `[MODIFY]` `crates/tdrace-app/src/tournament/mod.rs` -> Re-export `format` and `manager` modules.
-- `[MODIFY]` `crates/tdrace-app/src/storage.rs` -> `resolve_user_championships_dir()` and `resolve_git_championships_dir()`.
-- `[NEW]` `crates/tdrace-app/src/ui/championship_editor.rs` -> Full-screen interactive Championship Editor studio UI.
-- `[MODIFY]` `crates/tdrace-app/src/ui/menu.rs` -> Add `ModalityItem::ChampionshipEditor` to Options column and modal dispatch.
-- `[MODIFY]` `crates/tdrace-app/src/game/mod.rs` -> Integrate `GameState::ChampionshipEditor`, hotkeys, and test cup launcher.
-- `[NEW]` `championships/gt/gt4_clubman_sprint.toml` -> Built-in GT Tier 1 preset.
-- `[NEW]` `championships/nascar/nascar_cup_tier5.toml` -> Built-in NASCAR Tier 5 preset.
-- `[NEW]` `championships/rally/rally_world_cup.toml` -> Built-in Rallycross preset.
-- `[NEW]` `championships/kart/kart_world_cup.toml` -> Built-in Karting preset.
-- `[NEW]` `championships/extreme_offroad/extreme_offroad_cup.toml` -> Built-in Extreme Offroad preset.
-- `[NEW]` `crates/tdrace-app/tests/championship_tests.rs` -> Comprehensive unit test suite for TOML serialization, validation, and session bridging.
+- `[NEW]` `crates/tdrace-app/src/series/format.rs` -> Declarative TOML structs, Serde attributes, validation, and conversion methods.
+- `[NEW]` `crates/tdrace-app/src/series/manager.rs` -> `SeriesManager` file scanner, directory resolver, cache, and save/load engine.
+- `[MODIFY]` `crates/tdrace-app/src/series/mod.rs` -> Re-export `format` and `manager` modules, session runtime, and backwards-compatible aliases.
+- `[MODIFY]` `crates/tdrace-app/src/lib.rs` -> Export `pub mod series;` and backwards-compatible `pub use series as tournament;`.
+- `[MODIFY]` `crates/tdrace-app/src/storage.rs` -> `resolve_user_series_dir()` and `resolve_git_series_dir()`.
+- `[NEW]` `crates/tdrace-app/src/ui/series_editor.rs` -> Full-screen interactive Series Studio editor UI.
+- `[MODIFY]` `crates/tdrace-app/src/ui/menu.rs` -> Add `ModalityItem::SeriesEditor` to Options column and modal dispatch.
+- `[MODIFY]` `crates/tdrace-app/src/game/mod.rs` -> Integrate `GameState::SeriesEditor`, hotkeys, and test cup launcher.
+- `[NEW]` `series/gt/gt4_clubman_sprint.toml` -> Built-in GT Tier 1 preset.
+- `[NEW]` `series/nascar/nascar_cup_tier5.toml` -> Built-in NASCAR Tier 5 preset.
+- `[NEW]` `series/rally/rally_world_cup.toml` -> Built-in Rallycross preset.
+- `[NEW]` `series/kart/kart_world_cup.toml` -> Built-in Karting preset.
+- `[NEW]` `series/extreme_offroad/extreme_offroad_cup.toml` -> Built-in Extreme Offroad preset.
+- `[NEW]` `crates/tdrace-app/tests/series_tests.rs` -> Comprehensive unit test suite for TOML serialization, validation, and session bridging.
 - `[MODIFY]` `specs/index.md` -> Registered Spec 017.
 - `[MODIFY]` `specs/constitution/ROADMAP.md` -> Milestone registration.
