@@ -156,7 +156,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX SWEDEN",
                 description: "The holy grail of Rallycross featuring the iconic Höljes jump crest, banked Velodrome & mixed gravel sliding.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: holjes_rx,
             },
             TrackDefinition {
@@ -165,7 +165,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX GREAT BRITAIN",
                 description: "The historic birthplace of Rallycross featuring Chessons Drift gravel slide, North Bend & Devil's Elbow.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: lydden_hill,
             },
             TrackDefinition {
@@ -174,7 +174,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX NORWAY",
                 description: "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: hell_rx,
             },
             TrackDefinition {
@@ -183,7 +183,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX FRANCE",
                 description: "The French Rallycross classic with long asphalt drag straight, gravel tabletop jump & tight switchbacks.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: loheac_rx,
             },
             TrackDefinition {
@@ -192,7 +192,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX GERMANY",
                 description: "The cathedral of German Rallycross featuring the iconic Turn 1 hairpin dive, high-speed forest drag and technical gravel carousel.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: estering_rx,
             },
             TrackDefinition {
@@ -201,7 +201,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX PORTUGAL",
                 description: "High-altitude mountain thriller in Portugal featuring an undulating drag straight, gravel stadium section and fast table crest.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: montalegre_rx,
             },
             TrackDefinition {
@@ -210,7 +210,7 @@ impl GameModule for RallyGameModule {
                 tag: "EURO RX HUNGARY",
                 description: "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
                 category: "Euro RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: nyirad_rx,
             },
             TrackDefinition {
@@ -219,7 +219,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX FINLAND",
                 description: "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkimäki dirt crest.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: kouvola_rx,
             },
             TrackDefinition {
@@ -228,7 +228,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX SPAIN",
                 description: "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: catalunya_rx,
             },
             TrackDefinition {
@@ -237,7 +237,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX BELGIUM",
                 description: "Fast technical Belgian rallycross circuit featuring the iconic Mettet dirt jump, rapid asphalt sweeper and tight infield hairpin.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: mettet_rx,
             },
             TrackDefinition {
@@ -246,7 +246,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX SPEEDMACHINE",
                 description: "Speedmachine rallycross stadium in the heart of Silverstone, featuring high-speed tarmac sweeps, arena jump and technical loose dirt esses.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: silverstone_rx,
             },
             TrackDefinition {
@@ -255,7 +255,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX LATVIA",
                 description: "Historic Riga forest arena featuring high-grip parallel asphalt drags, double jump crests and heavy-braking sandy gravel switchbacks.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: riga_rx,
             },
             TrackDefinition {
@@ -264,7 +264,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX SOUTH AFRICA",
                 description: "Cape Town rallycross thriller with Table Mountain backdrop, fast straight, technical infield dirt kickers and sweeping final turn.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: killarney_rx,
             },
             TrackDefinition {
@@ -273,7 +273,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX ABU DHABI",
                 description: "Spectacular twilight rallycross inside the Yas Marina amphitheater, featuring stadium dirt jumps, tight desert hairpins and high-speed grandstand sweeps.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: yas_marina_rx,
             },
             TrackDefinition {
@@ -282,7 +282,7 @@ impl GameModule for RallyGameModule {
                 tag: "WORLD RX FRANCE",
                 description: "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, technical sweeping switchbacks, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
                 category: "World RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: essay_rx,
             },
             TrackDefinition {
@@ -291,7 +291,7 @@ impl GameModule for RallyGameModule {
                 tag: "EURO RX FRANCE",
                 description: "Classic French mixed-surface rallycross circuit with fast flowing dirt curves and wide asphalt launch.",
                 category: "Euro RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: dreux_rx,
             },
             TrackDefinition {
@@ -300,7 +300,7 @@ impl GameModule for RallyGameModule {
                 tag: "BRITISH RX",
                 description: "Renowned UK mixed-surface proving ground with technical chalk/dirt transitions and jump crests.",
                 category: "Euro RX",
-                default_laps: 4,
+                default_laps: 5,
                 generator: blyton_park_rx,
             },
         ]
@@ -525,10 +525,10 @@ impl GameModule for RallyGameModule {
                     "yas_marina_rx".to_string(),
                     "essay_rx".to_string(),
                 ],
-                laps_per_round: 4,
+                laps_per_round: 5,
             },
             TournamentFormat::QuickRace {
-                default_laps: 4,
+                default_laps: 5,
                 default_bots: 7,
             },
             TournamentFormat::TimeAttack,

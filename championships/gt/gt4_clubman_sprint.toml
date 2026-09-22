@@ -9,7 +9,7 @@ name = "GT4 Clubman Sprint Cup (Tier 1)"
 description = "Entry-level sprint cup featuring homologated GT4 sports cars across European circuits."
 module_id = "gt"
 tier = 1
-laps_per_round = 4
+laps_per_round = 3
 bot_count = 7
 ai_difficulty = "standard"
 icon = "trophy"
@@ -24,25 +24,25 @@ clean_race_bonus = false
 order = 1
 track_id = "monza"
 name = "Autodromo Nazionale Monza"
-laps = 4
+laps = 3
 
 [[rounds]]
 order = 2
 track_id = "spa"
 name = "Circuit de Spa-Francorchamps"
-laps = 4
+laps = 3
 
 [[rounds]]
 order = 3
 track_id = "silverstone"
 name = "Silverstone Circuit"
-laps = 4
+laps = 3
 
 [[rounds]]
 order = 4
 track_id = "classic_grand_prix"
 name = "Autodromo di Modena"
-laps = 4
+laps = 3
 
 [[drivers]]
 id = "player"

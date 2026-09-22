@@ -337,7 +337,7 @@ fn test_external_module_files_and_hierarchy_precedence() {
     // 1. GT Module loads config.gt.toml overrides
     let gt_cfg = base_cfg.for_module("gt");
     assert_eq!(gt_cfg.gameplay.default_track, "monza");
-    assert_eq!(gt_cfg.gameplay.default_laps, 5);
+    assert_eq!(gt_cfg.gameplay.default_laps, 3);
     assert_eq!(gt_cfg.gameplay.default_assist_profile, "pro");
     assert!((gt_cfg.camera.velocity_lookahead_time - 0.50).abs() < 1e-4);
     assert!((gt_cfg.camera.position_smoothing - 9.5).abs() < 1e-4);
@@ -352,7 +352,7 @@ fn test_external_module_files_and_hierarchy_precedence() {
     // 3. Kart Module loads config.kart.toml overrides
     let kart_cfg = base_cfg.for_module("kart");
     assert_eq!(kart_cfg.gameplay.default_track, "kart_arena");
-    assert_eq!(kart_cfg.gameplay.default_laps, 6);
+    assert_eq!(kart_cfg.gameplay.default_laps, 5);
     assert!((kart_cfg.input.steer_rise_rate - 8.5).abs() < 1e-4);
 
     // 4. Precedence: Custom in-file override vs external merge override

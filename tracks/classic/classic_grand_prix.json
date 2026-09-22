@@ -26742,7 +26742,7 @@
       ]
     }
   },
-  "default_laps": 3,
+  "default_laps": 5,
   "car_category": "gt",
   "module_id": "classic",
   "modules": [

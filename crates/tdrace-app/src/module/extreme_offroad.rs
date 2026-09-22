@@ -110,7 +110,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "STADIUM FIGURE 8",
                 description: "High-speed dirt figure-eight crossover with twin jumps and 18-degree banked outer berms.",
                 category: "Stunt Arenas",
-                default_laps: 4,
+                default_laps: 5,
                 generator: dirt_figure_eight,
             },
             TrackDefinition {
@@ -128,7 +128,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "CANYON RAID",
                 description: "Narrow technical gorge between red sandstone towers with rough dirt trails and hairpin climbs.",
                 category: "Desert Raid",
-                default_laps: 3,
+                default_laps: 4,
                 generator: red_rock_canyon,
             },
             TrackDefinition {
@@ -146,7 +146,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "BAJA ENDURO",
                 description: "Punishing open desert enduro course across arid scrubland, silt flats, washboard whoops, and high-speed jumps.",
                 category: "Desert Raid",
-                default_laps: 2,
+                default_laps: 3,
                 generator: baja_500_desert_scrub,
             },
             TrackDefinition {
@@ -155,7 +155,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "ICE ARENA",
                 description: "Wide-open frozen glacial lake arena with slick blue ice, compacted snow banks, and perimeter snow berms.",
                 category: "Arctic Frost",
-                default_laps: 3,
+                default_laps: 5,
                 generator: arctic_frozen_lake,
             },
             TrackDefinition {
@@ -164,7 +164,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "SNOW RIDGE",
                 description: "Sub-zero mountain climb along high snow ridges, icy switchbacks, and sheer cliff edges.",
                 category: "Arctic Frost",
-                default_laps: 2,
+                default_laps: 4,
                 generator: alpine_snow_ridge,
             },
             TrackDefinition {
@@ -182,7 +182,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "SUPERCROSS ARENA",
                 description: "Indoor supercross colosseum featuring rhythmic triple jumps, whoop sections, and banked bowl turns.",
                 category: "Stunt Arenas",
-                default_laps: 4,
+                default_laps: 5,
                 generator: supercross_stadium_arena,
             },
             TrackDefinition {
@@ -191,7 +191,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "QUARRY CHASM",
                 description: "Multi-tiered industrial quarry chasm with vertical drops, loose gravel slides, and rock walls.",
                 category: "Mud & Quarry",
-                default_laps: 3,
+                default_laps: 4,
                 generator: gravel_quarry_chasm,
             },
             TrackDefinition {
@@ -200,7 +200,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "SWAMP BASIN",
                 description: "Treacherous bayou basin featuring deep mud bogs, slippery cypress roots, and submerged dirt roads.",
                 category: "Mud & Quarry",
-                default_laps: 3,
+                default_laps: 4,
                 generator: louisiana_mud_swampland,
             },
             TrackDefinition {
@@ -218,7 +218,7 @@ impl GameModule for ExtremeOffRoadModule {
                 tag: "GLACIAL PASS",
                 description: "Treacherous high-altitude circuit over blue glacial ice crevasses, frozen tunnels, and blinding snow ridges.",
                 category: "Arctic Frost",
-                default_laps: 2,
+                default_laps: 4,
                 generator: glacier_crest_pass,
             },
             TrackDefinition {

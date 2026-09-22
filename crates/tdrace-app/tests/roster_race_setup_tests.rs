@@ -10,7 +10,7 @@ use tdrace_core::CarCategory;
 #[test]
 fn test_preset_tracks_predefined_cars_and_balanced_laps() {
     let gp = classic_grand_prix();
-    assert_eq!(gp.default_laps, 3);
+    assert_eq!(gp.default_laps, 5);
     assert_eq!(gp.car_category, CarCategory::Gt);
 
     let oval = oval_speedway();
@@ -18,7 +18,7 @@ fn test_preset_tracks_predefined_cars_and_balanced_laps() {
     assert_eq!(oval.car_category, CarCategory::Nascar);
 
     let drift = drift_park();
-    assert_eq!(drift.default_laps, 3);
+    assert_eq!(drift.default_laps, 5);
     assert_eq!(drift.car_category, CarCategory::Gt);
 
     let kart = kart_arena();
@@ -26,15 +26,15 @@ fn test_preset_tracks_predefined_cars_and_balanced_laps() {
     assert_eq!(kart.car_category, CarCategory::Kart);
 
     let ramp = ramp_raceway();
-    assert_eq!(ramp.default_laps, 3);
+    assert_eq!(ramp.default_laps, 5);
     assert_eq!(ramp.car_category, CarCategory::Rally);
 
     let oasis = oasis_rally();
-    assert_eq!(oasis.default_laps, 3);
+    assert_eq!(oasis.default_laps, 5);
     assert_eq!(oasis.car_category, CarCategory::OffRoad);
 
     let rx = classic_rallycross();
-    assert_eq!(rx.default_laps, 3);
+    assert_eq!(rx.default_laps, 5);
     assert_eq!(rx.car_category, CarCategory::Rally);
 }
 
@@ -62,13 +62,13 @@ fn test_enforced_predefined_car_in_race_session() {
         assert!((bot_car.config.top_speed_mps - 32.0).abs() < 1.0);
     }
 
-    // 2. Select Drift Park (enforced car = SportsCar / classic_gt, laps = 3)
+    // 2. Select Drift Park (enforced car = SportsCar / classic_gt, laps = 5)
     session.track_choice = TrackChoice::DriftPark;
     session.free_car_selection = false;
     session.random_car_assignment = false;
     session.init_race();
 
-    assert_eq!(session.total_laps, 3);
+    assert_eq!(session.total_laps, 5);
     assert_eq!(session.resolve_predefined_car(), CarChoice::SportsCar);
     assert_eq!(session.active_player_car_choice(), CarChoice::SportsCar);
 
@@ -143,7 +143,7 @@ fn test_track_serde_default_laps_and_car_category_roundtrip() {
     let json = track.to_json_pretty().expect("Must serialize to JSON");
 
     let deserialized = Track::from_json(&json).expect("Must deserialize from JSON");
-    assert_eq!(deserialized.default_laps, 3);
+    assert_eq!(deserialized.default_laps, 5);
     assert_eq!(deserialized.car_category, CarCategory::Gt);
 
     // Test backwards-compatibility when fields are missing from JSON

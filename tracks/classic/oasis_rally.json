@@ -26782,7 +26782,7 @@
   ],
   "default_surface": "Sand",
   "pit_box_area": null,
-  "default_laps": 3,
+  "default_laps": 5,
   "car_category": "off_road",
   "module_id": "classic",
   "modules": [

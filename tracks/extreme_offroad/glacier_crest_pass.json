@@ -21562,7 +21562,7 @@
   ],
   "default_surface": "Ice",
   "pit_box_area": null,
-  "default_laps": 2,
+  "default_laps": 4,
   "car_category": "off_road",
   "module_id": "extreme_offroad",
   "modules": [

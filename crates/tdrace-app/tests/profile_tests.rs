@@ -247,7 +247,7 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
     assert_eq!(session.cars.len(), 8); // 1 player + 7 bots default (8 pilots)
 
     // Simulate winning race completion
-    session.trackers[0].current_lap = 4; // Completed 3 laps
+    session.trackers[0].current_lap = session.total_laps + 1; // Completed all laps
     session.trackers[0].best_lap_time = Some(23.4);
     session.session_time = 71.5;
 
@@ -470,7 +470,7 @@ fn test_clear_profile_history_and_hall_of_fame() {
     // Simulate winning race to populate in-memory session caches
     session.track_choice = TrackChoice::ClassicGrandPrix;
     session.init_race();
-    session.trackers[0].current_lap = 4;
+    session.trackers[0].current_lap = session.total_laps + 1;
     session.trackers[0].best_lap_time = Some(23.0);
     session.session_time = 70.0;
     session.check_race_finish();

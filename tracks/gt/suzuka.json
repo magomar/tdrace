@@ -59796,7 +59796,7 @@
   ],
   "default_surface": "Grass",
   "pit_box_area": null,
-  "default_laps": 4,
+  "default_laps": 3,
   "car_category": "gt",
   "module_id": "gt",
   "modules": [

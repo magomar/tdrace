@@ -244,7 +244,7 @@ impl GameModule for ClassicGameModule {
                 tag: "FIA GP CIRCUIT",
                 description: "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
                 category: "Asphalt Circuit",
-                default_laps: 3,
+                default_laps: 5,
                 generator: classic_grand_prix,
             },
             TrackDefinition {
@@ -271,7 +271,7 @@ impl GameModule for ClassicGameModule {
                 tag: "ASPHALT CROSSOVER",
                 description: "High-speed asphalt figure-8 arena with at-grade flat crossover and concrete safety walls.",
                 category: "Figure-8 Arena",
-                default_laps: 4,
+                default_laps: 5,
                 generator: figure_eight,
             },
             TrackDefinition {
@@ -280,7 +280,7 @@ impl GameModule for ClassicGameModule {
                 tag: "DIRT CROSSOVER",
                 description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.",
                 category: "Figure-8 Arena",
-                default_laps: 4,
+                default_laps: 5,
                 generator: dirt_figure_eight,
             },
             TrackDefinition {
@@ -289,7 +289,7 @@ impl GameModule for ClassicGameModule {
                 tag: "TECHNICAL DRIFT",
                 description: "Technical hairpin slides, wide transitions & dynamic apex clipping zones.",
                 category: "Drift Arena",
-                default_laps: 3,
+                default_laps: 5,
                 generator: drift_park,
             },
             TrackDefinition {
@@ -298,7 +298,7 @@ impl GameModule for ClassicGameModule {
                 tag: "AGILE SPRINT",
                 description: "Tight 90-degree corners, rapid switchbacks & aggressive rumble curbs.",
                 category: "Sprint Arena",
-                default_laps: 4,
+                default_laps: 5,
                 generator: kart_arena,
             },
             TrackDefinition {
@@ -307,7 +307,7 @@ impl GameModule for ClassicGameModule {
                 tag: "DIRT STUNT RAMPS",
                 description: "High-speed dirt stadium circuit with launch ramps, water hazards & gap jumps.",
                 category: "Dirt Stunt Track",
-                default_laps: 3,
+                default_laps: 5,
                 generator: ramp_raceway,
             },
             TrackDefinition {
@@ -316,7 +316,7 @@ impl GameModule for ClassicGameModule {
                 tag: "DESERT DIRT RALLY",
                 description: "Pure dirt desert rally circuit with oasis water hazards & sand traps.",
                 category: "Desert Rally",
-                default_laps: 3,
+                default_laps: 5,
                 generator: oasis_rally,
             },
             TrackDefinition {
@@ -325,7 +325,7 @@ impl GameModule for ClassicGameModule {
                 tag: "HYBRID RALLYCROSS",
                 description: "Dynamic 1.0 km mixed-surface rallycross circuit with asphalt straights, dirt hairpins & tabletop jumps.",
                 category: "Mixed Surface RX",
-                default_laps: 3,
+                default_laps: 5,
                 generator: classic_rallycross,
             },
         ]
@@ -342,7 +342,7 @@ impl GameModule for ClassicGameModule {
     fn supported_game_modes(&self) -> Vec<TournamentFormat> {
         vec![
             TournamentFormat::QuickRace {
-                default_laps: 3,
+                default_laps: 5,
                 default_bots: 7,
             },
             TournamentFormat::TimeAttack,
@@ -356,7 +356,7 @@ impl GameModule for ClassicGameModule {
                     "oasis_rally".to_string(),
                     "classic_rallycross".to_string(),
                 ],
-                laps_per_round: 3,
+                laps_per_round: 5,
             },
             TournamentFormat::EliminationCup {
                 elimination_interval: 1,

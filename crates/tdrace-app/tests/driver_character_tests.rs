@@ -86,7 +86,7 @@ fn test_race_session_driver_spawning_and_names() {
 
     // Verify standings & results contain real driver aliases
     session.session_time = 65.0;
-    session.trackers[0].current_lap = 4; // Player finished 3 laps
+    session.trackers[0].current_lap = session.total_laps + 1; // Player finished all laps
     for t in &mut session.trackers {
         t.best_lap_time = Some(21.5);
     }

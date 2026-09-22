@@ -1854,7 +1854,7 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
     assert_eq!(t_mb.car_category, tdrace_core::CarCategory::Gt);
     assert_eq!(t_mb.module_id.as_deref(), Some("gt"));
     assert!(t_mb.modules.contains(&"gt".to_string()));
-    assert_eq!(t_mb.default_laps, 4);
+    assert_eq!(t_mb.default_laps, 3);
 
     // Verify 50% length scaling (FIA: 4940m -> ~2300-2480m)
     let len = t_mb.spline.total_length();

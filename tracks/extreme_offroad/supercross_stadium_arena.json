@@ -7918,7 +7918,7 @@
   ],
   "default_surface": "Dirt",
   "pit_box_area": null,
-  "default_laps": 4,
+  "default_laps": 5,
   "car_category": "off_road",
   "module_id": "extreme_offroad",
   "modules": [
