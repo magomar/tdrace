@@ -5,6 +5,11 @@ use tdrace_core::physics::CarConfig;
 use crate::render::surface_material::SurfaceTextureQuality;
 use crate::ui::menu::CarChoice;
 
+/// Baseline reference display resolution for camera zoom calibration (1280x720 HD).
+pub const REFERENCE_SCREEN_WIDTH: f32 = 1280.0;
+/// Baseline reference display height for camera zoom calibration.
+pub const REFERENCE_SCREEN_HEIGHT: f32 = 720.0;
+
 /// Configuration for a specific camera zoom level or mode.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -33,6 +38,30 @@ impl Default for ZoomLevelConfig {
 impl ZoomLevelConfig {
     pub fn is_overview(&self) -> bool {
         self.mode.eq_ignore_ascii_case("overview")
+    }
+
+    /// Computes the resolution scale factor relative to the reference screen height (720p).
+    ///
+    /// Predefined zoom levels were calibrated for 1280x720. If screen resolution has
+    /// a height twice that (e.g. 1440p), the zoom scale factor increases by 2.0.
+    #[inline]
+    pub fn resolution_scale(screen_h: f32) -> f32 {
+        (screen_h / REFERENCE_SCREEN_HEIGHT).max(0.1)
+    }
+
+    /// Returns a new `ZoomLevelConfig` with min_zoom and max_zoom multiplied by `factor`.
+    pub fn scaled(&self, factor: f32) -> Self {
+        Self {
+            name: self.name.clone(),
+            mode: self.mode.clone(),
+            min_zoom: self.min_zoom * factor,
+            max_zoom: self.max_zoom * factor,
+        }
+    }
+
+    /// Returns a new `ZoomLevelConfig` scaled relative to the reference screen height (720p).
+    pub fn scaled_for_screen(&self, screen_h: f32) -> Self {
+        self.scaled(Self::resolution_scale(screen_h))
     }
 }
 

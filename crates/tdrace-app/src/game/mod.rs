@@ -124,6 +124,7 @@ use crate::ui::menu::{
 };
 use crate::ui::profile_ui::{
     render_player_roster_manager_screen, render_profile_create_screen, render_profile_manager_screen,
+    ProfileFocusArea,
 };
 use crate::ui::starting_grid::render_starting_grid_screen;
 pub use crate::ui::starting_grid::StartingGridFocus;
@@ -415,6 +416,7 @@ pub struct RaceSession {
     pub profile_telemetry_filter_idx: usize,
     pub profile_focus_card: bool,
     pub profile_champ_scroll: usize,
+    pub profile_focus_area: ProfileFocusArea,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -628,9 +630,10 @@ impl RaceSession {
         input.filter.config.throttle_rise_rate = config.input.throttle_rise_rate;
         input.filter.config.brake_rise_rate = config.input.brake_rise_rate;
 
-        let camera = RaceCamera::from_config(&config.camera);
-        let camera_p2 = RaceCamera::from_config(&config.camera);
-        let editor_camera = EditorCamera::from_config(&config.camera);
+        let (sw, sh) = (screen_width_safe(), screen_height_safe());
+        let camera = RaceCamera::from_config_with_viewport(&config.camera, sw, sh);
+        let camera_p2 = RaceCamera::from_config_with_viewport(&config.camera, sw, sh);
+        let editor_camera = EditorCamera::from_config_with_viewport(&config.camera, sw, sh);
         let crt_overlay = config.display.to_crt_overlay();
         crate::render::track::set_surface_texture_quality(config.display.surface_texture_quality);
 
@@ -696,6 +699,7 @@ impl RaceSession {
             profile_telemetry_filter_idx: 0,
             profile_focus_card: false,
             profile_champ_scroll: 0,
+            profile_focus_area: ProfileFocusArea::Tabs,
 
             fx: EffectsManager::new_persistent(1500),
             camera,
@@ -1075,6 +1079,9 @@ impl RaceSession {
                 self.config.display.window_height = sel_h;
                 self.config.display.fullscreen = is_fs;
                 self.config.display.vehicle_shadows = modal.vehicle_shadows();
+                self.camera.set_screen_height(sel_h as f32);
+                self.camera_p2.set_screen_height(sel_h as f32);
+                self.editor_camera.set_screen_height(sel_h as f32);
                 self.config.display.scanline_mode = match selected_mode {
                     ScanlineMode::Subtle => "subtle".to_string(),
                     ScanlineMode::ArcadeCrt => "arcade_crt".to_string(),
@@ -4681,125 +4688,225 @@ impl RaceSession {
             self.refresh_profiles_and_stats();
         }
 
-        // Top Hero Card Focus vs Tab Focus
-        if !self.profile_focus_card {
-            // Focus card when pressing Up (or scroll up in Tab 2 if scrolled down)
-            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
-                if self.profile_manager_tab == 2 && self.profile_champ_scroll > 0 {
+        // Synchronize legacy profile_focus_card with profile_focus_area if modified externally
+        if self.profile_focus_card && self.profile_focus_area != ProfileFocusArea::HeroCard {
+            self.profile_focus_area = ProfileFocusArea::HeroCard;
+        } else if !self.profile_focus_card && self.profile_focus_area == ProfileFocusArea::HeroCard {
+            self.profile_focus_area = ProfileFocusArea::Tabs;
+        }
+
+        // Navigation state machine across HeroCard, Tabs, Module Filters, and Content
+        match self.profile_focus_area {
+            ProfileFocusArea::HeroCard => {
+                // Pressing Down returns focus to Tabs
+                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
                     self.audio.play_sfx(SfxType::UiMove);
-                    self.profile_champ_scroll = self.profile_champ_scroll.saturating_sub(1);
-                } else {
+                    self.profile_focus_area = ProfileFocusArea::Tabs;
+                }
+
+                // Enter on focused hero card opens Player Roster Manager
+                if is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Space)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    self.open_player_roster_manager(current_idx);
+                    return;
+                }
+
+                // Inline driver cycling while focused on card
+                let cycle_prev = is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::Q);
+                let cycle_next = is_key_pressed(KeyCode::Right);
+
+                if cycle_prev {
                     self.audio.play_sfx(SfxType::UiMove);
-                    self.profile_focus_card = true;
+                    if current_idx == 0 {
+                        current_idx = self.profile_list.len().saturating_sub(1);
+                    } else {
+                        current_idx -= 1;
+                    }
+                    if let Some(p) = self.profile_list.get(current_idx) {
+                        if let Some(pid) = p.id {
+                            if let Some(db) = &self.hof_db {
+                                self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
+                                self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+                            }
+                        }
+                    }
                 }
-            }
 
-            // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-4)
-            let tab_prev = is_key_pressed(KeyCode::Left) || self.input.gamepad.snapshot.nav_left;
-            let tab_next = is_key_pressed(KeyCode::Right)
-                || is_key_pressed(KeyCode::Tab)
-                || self.input.gamepad.snapshot.nav_right;
-
-            if tab_prev {
-                self.audio.play_sfx(SfxType::UiMove);
-                if self.profile_manager_tab == 0 {
-                    self.profile_manager_tab = 3;
-                } else {
-                    self.profile_manager_tab -= 1;
-                }
-                self.profile_champ_scroll = 0;
-            }
-            if tab_next {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
-                self.profile_champ_scroll = 0;
-            }
-
-            if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Kp1) {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_manager_tab = 0;
-                self.profile_champ_scroll = 0;
-            }
-            if is_key_pressed(KeyCode::Key2) || is_key_pressed(KeyCode::Kp2) {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_manager_tab = 1;
-                self.profile_champ_scroll = 0;
-            }
-            if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::Kp3) {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_manager_tab = 2;
-                self.profile_champ_scroll = 0;
-            }
-            if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_manager_tab = 3;
-                self.profile_champ_scroll = 0;
-            }
-        } else {
-            // On Card Focus: Pressing Down returns focus to Tabs
-            if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_focus_card = false;
-            }
-
-            // Enter on focused hero card opens Player Roster Manager
-            if is_key_pressed(KeyCode::Enter)
-                || is_key_pressed(KeyCode::KpEnter)
-                || is_key_pressed(KeyCode::Space)
-                || self.input.gamepad.snapshot.btn_confirm_pressed
-                || self.input.gamepad.snapshot.btn_a_pressed
-            {
-                self.open_player_roster_manager(current_idx);
-                return;
-            }
-
-            // Inline driver cycling while focused on card
-            let cycle_prev = is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::Q);
-            let cycle_next = is_key_pressed(KeyCode::Right);
-
-            if cycle_prev {
-                self.audio.play_sfx(SfxType::UiMove);
-                if current_idx == 0 {
-                    current_idx = self.profile_list.len().saturating_sub(1);
-                } else {
-                    current_idx -= 1;
-                }
-                if let Some(p) = self.profile_list.get(current_idx) {
-                    if let Some(pid) = p.id {
-                        if let Some(db) = &self.hof_db {
-                            self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
-                            self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+                if cycle_next {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if !self.profile_list.is_empty() {
+                        current_idx = (current_idx + 1) % self.profile_list.len();
+                    }
+                    if let Some(p) = self.profile_list.get(current_idx) {
+                        if let Some(pid) = p.id {
+                            if let Some(db) = &self.hof_db {
+                                self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
+                                self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+                            }
                         }
                     }
                 }
             }
-
-            if cycle_next {
-                self.audio.play_sfx(SfxType::UiMove);
-                if !self.profile_list.is_empty() {
-                    current_idx = (current_idx + 1) % self.profile_list.len();
+            ProfileFocusArea::Tabs => {
+                // Focus hero card when pressing Up
+                if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_focus_area = ProfileFocusArea::HeroCard;
                 }
-                if let Some(p) = self.profile_list.get(current_idx) {
-                    if let Some(pid) = p.id {
-                        if let Some(db) = &self.hof_db {
-                            self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
-                            self.profile_history = db.get_history_for_profile(pid, 20).unwrap_or_default();
+
+                // Focus module filters (or content) when pressing Down
+                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if self.profile_manager_tab == 2 || self.profile_manager_tab == 3 {
+                        self.profile_focus_area = ProfileFocusArea::Filters;
+                    } else {
+                        self.profile_focus_area = ProfileFocusArea::Content;
+                    }
+                }
+
+                // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-4)
+                let tab_prev = is_key_pressed(KeyCode::Left) || self.input.gamepad.snapshot.nav_left;
+                let tab_next = is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::Tab)
+                    || self.input.gamepad.snapshot.nav_right;
+
+                if tab_prev {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if self.profile_manager_tab == 0 {
+                        self.profile_manager_tab = 3;
+                    } else {
+                        self.profile_manager_tab -= 1;
+                    }
+                    self.profile_champ_scroll = 0;
+                }
+                if tab_next {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+                    self.profile_champ_scroll = 0;
+                }
+            }
+            ProfileFocusArea::Filters => {
+                // Return focus to Tabs when pressing Up
+                if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_focus_area = ProfileFocusArea::Tabs;
+                }
+
+                // Select previous module filter with Left arrow or A key
+                if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if self.profile_telemetry_filter_idx == 0 {
+                        self.profile_telemetry_filter_idx = 6;
+                    } else {
+                        self.profile_telemetry_filter_idx -= 1;
+                    }
+                    self.profile_champ_scroll = 0;
+                }
+
+                // Select next module filter with Right arrow or D key
+                if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_telemetry_filter_idx = (self.profile_telemetry_filter_idx + 1) % 7;
+                    self.profile_champ_scroll = 0;
+                }
+
+                // Move down into Content list when pressing Down
+                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_focus_area = ProfileFocusArea::Content;
+                }
+
+                // Tab key cycles tabs
+                if is_key_pressed(KeyCode::Tab) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+                    self.profile_focus_area = ProfileFocusArea::Tabs;
+                    self.profile_champ_scroll = 0;
+                }
+            }
+            ProfileFocusArea::Content => {
+                if self.profile_manager_tab == 2 {
+                    // Scrolling championships list
+                    if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.profile_champ_scroll = self.profile_champ_scroll.saturating_add(1);
+                    }
+                    if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                        if self.profile_champ_scroll > 0 {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.profile_champ_scroll = self.profile_champ_scroll.saturating_sub(1);
+                        } else {
+                            // At top of championship list, Up returns focus to Filters
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.profile_focus_area = ProfileFocusArea::Filters;
                         }
                     }
+                } else if self.profile_manager_tab == 3 {
+                    // Telemetry tab: Up returns focus to Filters
+                    if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.profile_focus_area = ProfileFocusArea::Filters;
+                    }
+                } else {
+                    // Tab 0/1: Up returns focus to Tabs
+                    if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.profile_focus_area = ProfileFocusArea::Tabs;
+                    }
+                }
+
+                // Tab key cycles tabs
+                if is_key_pressed(KeyCode::Tab) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+                    self.profile_focus_area = ProfileFocusArea::Tabs;
+                    self.profile_champ_scroll = 0;
                 }
             }
         }
 
-        // Mouse click on Hero Card or Tab bar
+        // Direct tab jump hotkeys 1-4
+        if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Kp1) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 0;
+            self.profile_focus_area = ProfileFocusArea::Tabs;
+            self.profile_champ_scroll = 0;
+        }
+        if is_key_pressed(KeyCode::Key2) || is_key_pressed(KeyCode::Kp2) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 1;
+            self.profile_focus_area = ProfileFocusArea::Tabs;
+            self.profile_champ_scroll = 0;
+        }
+        if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::Kp3) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 2;
+            self.profile_focus_area = ProfileFocusArea::Tabs;
+            self.profile_champ_scroll = 0;
+        }
+        if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 3;
+            self.profile_focus_area = ProfileFocusArea::Tabs;
+            self.profile_champ_scroll = 0;
+        }
+
+        // Sync legacy boolean
+        self.profile_focus_card = self.profile_focus_area == ProfileFocusArea::HeroCard;
+
+        // Mouse click on Hero Card, Tab bar, or Module Filter Pills
         if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
             let (mx, my) = macroquad::input::mouse_position();
             let sw = screen_width();
             let sh = screen_height();
             let scaler = UiScaler::new(sw, sh);
-            let full_w = sw * 0.96;
-            let full_h = sh * 0.92;
+            let full_w = (sw * 0.96).max(scaler.s(720.0));
             let px = (sw - full_w) * 0.5;
-            let py = (sh - full_h) * 0.5 + scaler.s(16.0);
+            let py = scaler.s(16.0);
             let hero_h = scaler.s(74.0);
 
             // Clicked hero card -> open roster manager
@@ -4820,35 +4927,59 @@ impl RaceSession {
                         if self.profile_manager_tab != i {
                             self.audio.play_sfx(SfxType::UiMove);
                             self.profile_manager_tab = i;
-                            self.profile_focus_card = false;
                             self.profile_champ_scroll = 0;
                         }
+                        self.profile_focus_area = ProfileFocusArea::Tabs;
+                        self.profile_focus_card = false;
                         break;
+                    }
+                }
+            }
+
+            // Clicked Module Filter Pills (Tab 2 or Tab 3)
+            if self.profile_manager_tab == 2 || self.profile_manager_tab == 3 {
+                let content_y = tab_y + tab_bar_h + scaler.s(8.0);
+                let pad = if self.profile_manager_tab == 2 { scaler.s(16.0) } else { scaler.s(14.0) };
+                let filter_y = if self.profile_manager_tab == 2 {
+                    content_y + pad + scaler.s(40.0)
+                } else {
+                    content_y + pad
+                };
+                let pill_h = scaler.s(24.0);
+                let pill_gap = scaler.s(6.0);
+                let label_w = scaler.s(if self.profile_focus_area == ProfileFocusArea::Filters { 84.0 } else { 55.0 });
+                let mut pill_x = px + pad + label_w;
+
+                if my >= filter_y && my <= filter_y + pill_h {
+                    for (f_idx, (f_name, _)) in crate::ui::profile_ui::TELEMETRY_CATEGORY_FILTERS.iter().enumerate() {
+                        let pill_w = scaler.s(if *f_name == "ALL" { 48.0 } else { 75.0 });
+                        if mx >= pill_x && mx <= pill_x + pill_w {
+                            if self.profile_telemetry_filter_idx != f_idx {
+                                self.audio.play_sfx(SfxType::UiMove);
+                                self.profile_telemetry_filter_idx = f_idx;
+                                self.profile_champ_scroll = 0;
+                            }
+                            self.profile_focus_area = ProfileFocusArea::Filters;
+                            break;
+                        }
+                        pill_x += pill_w + pill_gap;
                     }
                 }
             }
         }
 
-        // Championship Tab (Tab 2) Scrolling
+        // Mouse wheel and PageUp/PageDown scrolling for Tab 2
         if self.profile_manager_tab == 2 {
             let wheel_y = mouse_wheel_safe().1;
             if wheel_y < -0.01 || is_key_pressed(KeyCode::PageDown) {
                 self.profile_champ_scroll = self.profile_champ_scroll.saturating_add(1);
+                self.profile_focus_area = ProfileFocusArea::Content;
             } else if wheel_y > 0.01 || is_key_pressed(KeyCode::PageUp) {
                 self.profile_champ_scroll = self.profile_champ_scroll.saturating_sub(1);
             }
-
-            if !self.profile_focus_card
-                && (is_key_pressed(KeyCode::Down)
-                    || is_key_pressed(KeyCode::S)
-                    || self.input.gamepad.snapshot.nav_down)
-            {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_champ_scroll = self.profile_champ_scroll.saturating_add(1);
-            }
         }
 
-        // Category Filter Cycling (F key when on Tab 2 or Tab 3)
+        // Category Filter Cycling (F key shortcut anywhere on Tab 2 or Tab 3)
         if (self.profile_manager_tab == 2 || self.profile_manager_tab == 3) && is_key_pressed(KeyCode::F) {
             self.audio.play_sfx(SfxType::UiMove);
             self.profile_telemetry_filter_idx = (self.profile_telemetry_filter_idx + 1) % 7;
@@ -9504,7 +9635,7 @@ impl RaceSession {
                     &self.active_profile_stats,
                     self.profile_manager_tab,
                     self.profile_telemetry_filter_idx,
-                    self.profile_focus_card,
+                    self.profile_focus_area,
                     &self.championship_manager,
                     self.championship_session.as_ref(),
                     self.profile_champ_scroll,

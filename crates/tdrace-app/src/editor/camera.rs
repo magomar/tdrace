@@ -35,8 +35,14 @@ impl EditorCamera {
         Self::from_config(&CameraConfig::default())
     }
 
-    /// Constructs camera instance from a `CameraConfig`.
+    /// Constructs camera instance from a `CameraConfig` using safe screen dimensions.
     pub fn from_config(config: &CameraConfig) -> Self {
+        let (sw, sh) = Self::get_screen_dimensions();
+        Self::from_config_with_viewport(config, sw, sh)
+    }
+
+    /// Constructs camera instance from a `CameraConfig` with explicit viewport dimensions.
+    pub fn from_config_with_viewport(config: &CameraConfig, _sw: f32, sh: f32) -> Self {
         let levels = if config.levels.is_empty() {
             CameraConfig::default().levels
         } else {
@@ -45,19 +51,21 @@ impl EditorCamera {
 
         let initial_idx = config.default_level_index.min(levels.len().saturating_sub(1));
         let active_level = &levels[initial_idx];
-        let initial_zoom = if active_level.is_overview() {
+        let res_scale = ZoomLevelConfig::resolution_scale(sh);
+        let base_zoom = if active_level.is_overview() {
             active_level.min_zoom
         } else {
             active_level.max_zoom
         };
+        let initial_zoom = base_zoom * res_scale;
 
         Self {
             center: Vec2::new(100.0, 100.0),
             target_center: Vec2::new(100.0, 100.0),
             zoom: initial_zoom,
             target_zoom: initial_zoom,
-            min_zoom: 0.5,
-            max_zoom: 60.0,
+            min_zoom: 0.5 * res_scale,
+            max_zoom: 60.0 * res_scale,
             pan_smoothing: 18.0,
             zoom_smoothing: 16.0,
             is_panning: false,
@@ -66,6 +74,13 @@ impl EditorCamera {
             levels,
             current_level_idx: initial_idx,
         }
+    }
+
+    /// Synchronizes editor zoom bounds with screen height.
+    pub fn set_screen_height(&mut self, sh: f32) {
+        let res_scale = ZoomLevelConfig::resolution_scale(sh);
+        self.min_zoom = 0.5 * res_scale;
+        self.max_zoom = 60.0 * res_scale;
     }
 
     /// Returns the currently active zoom level configuration.
@@ -92,19 +107,20 @@ impl EditorCamera {
         }
         self.current_level_idx = idx % self.levels.len();
         let lvl = self.levels[self.current_level_idx].clone();
+        let res_scale = ZoomLevelConfig::resolution_scale(sh);
 
         if lvl.is_overview() {
             if let Some((min, max)) = bounds {
                 if min.x <= max.x {
                     self.focus_bounds(min, max, sw, sh);
                 } else {
-                    self.target_zoom = lvl.min_zoom;
+                    self.target_zoom = lvl.min_zoom * res_scale;
                 }
             } else {
-                self.target_zoom = lvl.min_zoom;
+                self.target_zoom = lvl.min_zoom * res_scale;
             }
         } else {
-            self.target_zoom = lvl.max_zoom;
+            self.target_zoom = lvl.max_zoom * res_scale;
         }
 
         lvl

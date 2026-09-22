@@ -527,6 +527,32 @@ fn test_editor_camera_overview_with_bounds_framing() {
 }
 
 #[test]
+fn test_editor_camera_resolution_relative_zoom() {
+    // 1. Reference 720p resolution
+    let cam_720 = EditorCamera::from_config_with_viewport(&CameraConfig::default(), 1280.0, 720.0);
+    assert_eq!(cam_720.current_zoom_level().name, "Close");
+    assert!((cam_720.target_zoom - 22.0).abs() < 1e-4);
+
+    // 2. Twice reference height (1440p) -> zoom increases by 2
+    let mut cam_1440 = EditorCamera::from_config_with_viewport(&CameraConfig::default(), 2560.0, 1440.0);
+    assert_eq!(cam_1440.current_zoom_level().name, "Close");
+    assert!((cam_1440.target_zoom - 44.0).abs() < 1e-4);
+
+    // Cycling levels scales all predefined zoom targets by 2.0 at 1440p
+    cam_1440.cycle_zoom_level_with_bounds(None, 2560.0, 1440.0);
+    assert_eq!(cam_1440.current_zoom_level().name, "Medium");
+    assert!((cam_1440.target_zoom - 33.0).abs() < 1e-4);
+
+    cam_1440.cycle_zoom_level_with_bounds(None, 2560.0, 1440.0);
+    assert_eq!(cam_1440.current_zoom_level().name, "Far");
+    assert!((cam_1440.target_zoom - 23.0).abs() < 1e-4);
+
+    cam_1440.cycle_zoom_level_with_bounds(None, 2560.0, 1440.0);
+    assert_eq!(cam_1440.current_zoom_level().name, "Very Far");
+    assert!((cam_1440.target_zoom - 16.0).abs() < 1e-4);
+}
+
+#[test]
 fn test_obstacle_duplication_and_undo() {
     use tdrace_app::editor::{Selection, ToolSettings};
     use tdrace_core::track::geometry::Obstacle;

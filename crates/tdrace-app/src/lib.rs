@@ -29,8 +29,10 @@ pub use tracks::{DevTrackStore, PresetCatalog, UserTrackStore};
 pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverStats};
 pub use audio::{AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType};
 pub use camera::{CameraMode, RaceCamera, SplitLayout};
-pub use config::{AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, ZoomLevelConfig};
-pub use db::{HallOfFameDb, HallOfFameEntry};
+pub use config::{
+    AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, ZoomLevelConfig,
+    REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
+};
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{
     AcrobaticStats, DriverCardsOrigin, EditorOrigin, FinishedScreenView, GameState, GridParticipant, LapTelemetry,
@@ -63,7 +65,7 @@ pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKe
 pub use ui::curve_indicator::CurveColorScheme;
 pub use ui::hud::{render_hud, render_split_hud, PersonalBestNotification, VisibilityToast};
 pub use ui::menu::{CarChoice, GameMode, GameModeChoice, RaceResultEntry, TrackChoice};
-pub use ui::profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen};
+pub use ui::profile_ui::{render_profile_badge, render_profile_create_screen, render_profile_manager_screen, ProfileFocusArea};
 pub use ui::garage::{garage_select_button_rect, render_garage_screen, GarageViewMode};
 pub use ui::starting_grid::{
     render_starting_grid_screen, starting_grid_garage_button_rect, starting_grid_grid_button_rect,

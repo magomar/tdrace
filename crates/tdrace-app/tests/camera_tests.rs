@@ -353,3 +353,100 @@ fn test_camera_split_layout_viewports_and_rects() {
     assert!((cam2d.zoom.y - (-2.0 * 20.0 / 720.0)).abs() < 1e-4);
 }
 
+#[test]
+fn test_predefined_zoom_levels_relative_to_resolution() {
+    use tdrace_app::config::{CameraConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH};
+
+    assert_eq!(REFERENCE_SCREEN_WIDTH, 1280.0);
+    assert_eq!(REFERENCE_SCREEN_HEIGHT, 720.0);
+
+    // 1. Reference baseline resolution: 1280x720 (scale = 1.0)
+    let cam_720 = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 1280.0, 720.0);
+    assert_eq!(cam_720.resolution_scale(), 1.0);
+    assert_eq!(cam_720.current_zoom_level().name, "Close");
+    assert!((cam_720.min_zoom_scale - 13.5).abs() < 1e-4);
+    assert!((cam_720.max_zoom_scale - 22.0).abs() < 1e-4);
+    assert!((cam_720.current_zoom - 22.0).abs() < 1e-4);
+
+    // 2. Double reference height resolution: 2560x1440 (scale = 2.0)
+    let mut cam_1440 = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 2560.0, 1440.0);
+    assert_eq!(cam_1440.resolution_scale(), 2.0);
+    assert_eq!(cam_1440.current_zoom_level().name, "Close");
+    // Predefined Close: 13.5 min, 22.0 max -> scaled by 2.0: 27.0 min, 44.0 max
+    assert!((cam_1440.min_zoom_scale - 27.0).abs() < 1e-4);
+    assert!((cam_1440.max_zoom_scale - 44.0).abs() < 1e-4);
+    assert!((cam_1440.current_zoom - 44.0).abs() < 1e-4);
+
+    // Cycle to Medium (predefined: 10.0 min, 16.5 max -> scaled by 2.0: 20.0 min, 33.0 max)
+    cam_1440.cycle_zoom_level();
+    assert_eq!(cam_1440.current_zoom_level().name, "Medium");
+    assert!((cam_1440.min_zoom_scale - 20.0).abs() < 1e-4);
+    assert!((cam_1440.max_zoom_scale - 33.0).abs() < 1e-4);
+
+    // Cycle to Far (predefined: 7.0 min, 11.5 max -> scaled by 2.0: 14.0 min, 23.0 max)
+    cam_1440.cycle_zoom_level();
+    assert_eq!(cam_1440.current_zoom_level().name, "Far");
+    assert!((cam_1440.min_zoom_scale - 14.0).abs() < 1e-4);
+    assert!((cam_1440.max_zoom_scale - 23.0).abs() < 1e-4);
+
+    // Cycle to Very Far (predefined: 5.0 min, 8.0 max -> scaled by 2.0: 10.0 min, 16.0 max)
+    cam_1440.cycle_zoom_level();
+    assert_eq!(cam_1440.current_zoom_level().name, "Very Far");
+    assert!((cam_1440.min_zoom_scale - 10.0).abs() < 1e-4);
+    assert!((cam_1440.max_zoom_scale - 16.0).abs() < 1e-4);
+
+    // 3. 1080p resolution: 1920x1080 (scale = 1.5)
+    let cam_1080 = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 1920.0, 1080.0);
+    assert_eq!(cam_1080.resolution_scale(), 1.5);
+    assert_eq!(cam_1080.current_zoom_level().name, "Close");
+    assert!((cam_1080.min_zoom_scale - (13.5 * 1.5)).abs() < 1e-4);
+    assert!((cam_1080.max_zoom_scale - (22.0 * 1.5)).abs() < 1e-4);
+    assert!((cam_1080.current_zoom - (22.0 * 1.5)).abs() < 1e-4);
+}
+
+#[test]
+fn test_dynamic_resolution_resize_scales_zoom_proportionally() {
+    use tdrace_app::config::CameraConfig;
+
+    // Start at 720p (reference)
+    let mut camera = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 1280.0, 720.0);
+    assert_eq!(camera.resolution_scale(), 1.0);
+    assert!((camera.current_zoom - 22.0).abs() < 1e-4);
+    assert!((camera.min_zoom_scale - 13.5).abs() < 1e-4);
+    assert!((camera.max_zoom_scale - 22.0).abs() < 1e-4);
+
+    // Dynamic resize to 1440p (2x height)
+    camera.set_screen_height(1440.0);
+    assert_eq!(camera.resolution_scale(), 2.0);
+    assert!((camera.current_zoom - 44.0).abs() < 1e-4);
+    assert!((camera.min_zoom_scale - 27.0).abs() < 1e-4);
+    assert!((camera.max_zoom_scale - 44.0).abs() < 1e-4);
+
+    // Dynamic resize back to 720p
+    camera.set_screen_height(720.0);
+    assert_eq!(camera.resolution_scale(), 1.0);
+    assert!((camera.current_zoom - 22.0).abs() < 1e-4);
+    assert!((camera.min_zoom_scale - 13.5).abs() < 1e-4);
+    assert!((camera.max_zoom_scale - 22.0).abs() < 1e-4);
+}
+
+#[test]
+fn test_zoom_level_config_helper_methods() {
+    use tdrace_app::config::ZoomLevelConfig;
+
+    assert_eq!(ZoomLevelConfig::resolution_scale(720.0), 1.0);
+    assert_eq!(ZoomLevelConfig::resolution_scale(1440.0), 2.0);
+    assert_eq!(ZoomLevelConfig::resolution_scale(1080.0), 1.5);
+    assert_eq!(ZoomLevelConfig::resolution_scale(360.0), 0.5);
+
+    let default_level = ZoomLevelConfig::default(); // Medium: 10.0 min, 16.5 max
+    let scaled_2x = default_level.scaled(2.0);
+    assert_eq!(scaled_2x.min_zoom, 20.0);
+    assert_eq!(scaled_2x.max_zoom, 33.0);
+    assert_eq!(scaled_2x.name, "Medium");
+
+    let scaled_for_1440 = default_level.scaled_for_screen(1440.0);
+    assert_eq!(scaled_for_1440.min_zoom, 20.0);
+    assert_eq!(scaled_for_1440.max_zoom, 33.0);
+}
+

@@ -3,7 +3,9 @@ use macroquad::prelude::{screen_height, screen_width};
 use glam::Vec2;
 use tdrace_core::physics::car::Car;
 use tdrace_core::track::Track;
-pub use crate::config::{CameraConfig, ZoomLevelConfig};
+pub use crate::config::{
+    CameraConfig, ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
+};
 
 pub use cabinet::fx::ScreenShake;
 
@@ -96,6 +98,9 @@ pub struct RaceCamera {
 
     // Follow level preserved when paused overview is active
     pub paused_from_follow: Option<usize>,
+
+    /// Active screen height used for relative resolution zoom calibration (baseline: 720p).
+    pub screen_height: f32,
 }
 
 impl Default for RaceCamera {
@@ -109,8 +114,17 @@ impl RaceCamera {
         Self::from_config(&CameraConfig::default())
     }
 
-    /// Constructs camera instance from a `CameraConfig`.
+    /// Constructs camera instance from a `CameraConfig` using safe screen dimensions.
     pub fn from_config(config: &CameraConfig) -> Self {
+        let (sw, sh) = Self::get_screen_dimensions_safe();
+        Self::from_config_with_viewport(config, sw, sh)
+    }
+
+    /// Constructs camera instance from a `CameraConfig` with explicit screen viewport dimensions.
+    ///
+    /// Predefined zoom levels are calibrated relative to 720p baseline height. If `sh` is twice
+    /// that (1440p), zoom levels are scaled by 2.0.
+    pub fn from_config_with_viewport(config: &CameraConfig, _sw: f32, sh: f32) -> Self {
         let levels = if config.levels.is_empty() {
             CameraConfig::default().levels
         } else {
@@ -126,22 +140,27 @@ impl RaceCamera {
         };
 
         let shake = ScreenShake::new(config.max_shake_offset, config.trauma_decay);
+        let sh_effective = sh.max(240.0);
+        let res_scale = ZoomLevelConfig::resolution_scale(sh_effective);
+
+        let initial_min = active_level.min_zoom * res_scale;
+        let initial_max = active_level.max_zoom * res_scale;
 
         Self {
             mode,
             target_pos: Vec2::ZERO,
             current_pos: Vec2::ZERO,
-            current_zoom: active_level.max_zoom,
-            target_zoom: active_level.max_zoom,
+            current_zoom: initial_max,
+            target_zoom: initial_max,
 
             position_smoothing: config.position_smoothing,
             zoom_smoothing: config.zoom_smoothing,
             velocity_lookahead_time: config.velocity_lookahead_time,
-            min_zoom_scale: active_level.min_zoom,
-            max_zoom_scale: active_level.max_zoom,
+            min_zoom_scale: initial_min,
+            max_zoom_scale: initial_max,
 
             overview_center: Vec2::ZERO,
-            overview_zoom: 3.5,
+            overview_zoom: 3.5 * res_scale,
 
             levels,
             current_level_idx: initial_idx,
@@ -152,6 +171,32 @@ impl RaceCamera {
             max_shake_offset: config.max_shake_offset,
 
             paused_from_follow: None,
+            screen_height: sh_effective,
+        }
+    }
+
+    /// Returns the resolution scaling factor relative to 720p reference screen height.
+    #[inline]
+    pub fn resolution_scale(&self) -> f32 {
+        ZoomLevelConfig::resolution_scale(self.screen_height)
+    }
+
+    /// Synchronizes the camera's resolution scaling with the current screen height.
+    /// If screen height changed (e.g. window resize or resolution switch), scales
+    /// the active zoom properties proportionally so visual appearance is preserved.
+    pub fn set_screen_height(&mut self, sh: f32) {
+        let sh = sh.max(240.0);
+        if (self.screen_height - sh).abs() > 1e-3 {
+            let old_scale = self.resolution_scale();
+            self.screen_height = sh;
+            let new_scale = self.resolution_scale();
+            let ratio = new_scale / old_scale;
+
+            self.min_zoom_scale *= ratio;
+            self.max_zoom_scale *= ratio;
+            self.target_zoom *= ratio;
+            self.current_zoom *= ratio;
+            self.overview_zoom *= ratio;
         }
     }
 
@@ -162,20 +207,27 @@ impl RaceCamera {
 
     /// Explicitly activates a zoom level by index and returns its configuration.
     pub fn set_zoom_level(&mut self, idx: usize) -> ZoomLevelConfig {
+        self.set_zoom_level_with_screen_height(idx, self.screen_height)
+    }
+
+    /// Explicitly activates a zoom level by index with a specific screen height and returns its configuration.
+    pub fn set_zoom_level_with_screen_height(&mut self, idx: usize, sh: f32) -> ZoomLevelConfig {
         if self.levels.is_empty() {
             self.levels = CameraConfig::default().levels;
         }
         self.current_level_idx = idx % self.levels.len();
+        self.screen_height = sh.max(240.0);
         let lvl = self.levels[self.current_level_idx].clone();
+        let scale = self.resolution_scale();
 
         if lvl.is_overview() {
             self.mode = CameraMode::StaticOverview;
-            self.min_zoom_scale = lvl.min_zoom;
-            self.max_zoom_scale = lvl.max_zoom;
+            self.min_zoom_scale = lvl.min_zoom * scale;
+            self.max_zoom_scale = lvl.max_zoom * scale;
         } else {
             self.mode = CameraMode::SmoothFollow;
-            self.min_zoom_scale = lvl.min_zoom;
-            self.max_zoom_scale = lvl.max_zoom;
+            self.min_zoom_scale = lvl.min_zoom * scale;
+            self.max_zoom_scale = lvl.max_zoom * scale;
         }
 
         lvl
@@ -270,20 +322,21 @@ impl RaceCamera {
         let base_rate = 2.5f32;
         let exponent = zoom_dir * speed_multiplier * dt;
         let factor = base_rate.powf(exponent);
+        let scale = self.resolution_scale();
 
         match self.mode {
             CameraMode::SmoothFollow => {
-                let new_min = (self.min_zoom_scale * factor).clamp(1.0, 40.0);
-                let new_max = (self.max_zoom_scale * factor).clamp(1.0, 50.0);
+                let new_min = (self.min_zoom_scale * factor).clamp(1.0 * scale, 40.0 * scale);
+                let new_max = (self.max_zoom_scale * factor).clamp(1.0 * scale, 50.0 * scale);
                 self.min_zoom_scale = new_min;
                 self.max_zoom_scale = new_max;
-                self.target_zoom = (self.target_zoom * factor).clamp(1.0, 50.0);
-                self.current_zoom = (self.current_zoom * factor).clamp(1.0, 50.0);
+                self.target_zoom = (self.target_zoom * factor).clamp(1.0 * scale, 50.0 * scale);
+                self.current_zoom = (self.current_zoom * factor).clamp(1.0 * scale, 50.0 * scale);
             }
             CameraMode::StaticOverview => {
-                self.overview_zoom = (self.overview_zoom * factor).clamp(0.5, 30.0);
-                self.target_zoom = (self.target_zoom * factor).clamp(0.5, 30.0);
-                self.current_zoom = (self.current_zoom * factor).clamp(0.5, 30.0);
+                self.overview_zoom = (self.overview_zoom * factor).clamp(0.5 * scale, 30.0 * scale);
+                self.target_zoom = (self.target_zoom * factor).clamp(0.5 * scale, 30.0 * scale);
+                self.current_zoom = (self.current_zoom * factor).clamp(0.5 * scale, 30.0 * scale);
             }
         }
     }
@@ -297,6 +350,8 @@ impl RaceCamera {
 
     /// Initializes camera parameters for a given track circuit with explicit viewport dimensions.
     pub fn setup_for_track_with_viewport(&mut self, track: &Track, sw: f32, sh: f32) {
+        self.set_screen_height(sh);
+
         if track.spline.samples.is_empty() {
             return;
         }
@@ -367,6 +422,11 @@ impl RaceCamera {
 
     /// Updates camera positioning, speed-dependent zoom, and shake.
     pub fn update(&mut self, target_car: &Car, dt: f32) {
+        // Safely check if screen height changed at runtime (e.g. window resize)
+        if let Ok(live_sh) = std::panic::catch_unwind(screen_height) {
+            self.set_screen_height(live_sh);
+        }
+
         // Sync trauma state with cabinet ScreenShake
         if (self.trauma - self.shake.trauma).abs() > 1e-5 {
             self.shake.trauma = self.trauma;
