@@ -1476,6 +1476,103 @@ fn test_gt_career_tier_launch_with_custom_calendar() {
     assert_eq!(champ_fallback.track_ids[0], "monza");
 }
 
+#[test]
+fn test_real_championships_listing_and_filter() {
+    use tdrace_app::series::ChampionshipManager;
+    let manager = ChampionshipManager::new();
+    let all_champs = manager.all_sorted();
+    assert!(!all_champs.is_empty(), "Embedded presets must ensure championships exist");
+
+    // Verify all championships have valid configuration
+    for c in &all_champs {
+        assert!(!c.series.id.is_empty(), "Series ID must not be empty");
+        assert!(!c.series.name.is_empty(), "Series Name must not be empty");
+        assert!(!c.series.module_id.is_empty(), "Module ID must not be empty");
+        assert!(!c.rounds.is_empty(), "Championship must have at least one round");
+        assert!(c.series.tier >= 1, "Series tier must be >= 1");
+    }
+
+    // Verify filtering by category
+    let gt_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("gt")).collect();
+    assert!(!gt_champs.is_empty(), "GT championships must exist");
+
+    let nascar_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("nascar")).collect();
+    assert!(!nascar_champs.is_empty(), "NASCAR championships must exist");
+
+    let rally_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("rally")).collect();
+    assert!(!rally_champs.is_empty(), "Rally championships must exist");
+
+    let kart_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("kart")).collect();
+    assert!(!kart_champs.is_empty(), "Kart championships must exist");
+
+    let offroad_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("extreme_offroad")).collect();
+    assert!(!offroad_champs.is_empty(), "Extreme offroad championships must exist");
+}
+
+#[test]
+fn test_resolve_championship_car_model_id_fallback_and_history() {
+    use tdrace_app::series::ChampionshipManager;
+    use tdrace_app::ui::profile_ui::resolve_championship_car_model_id;
+
+    let manager = ChampionshipManager::new();
+    let all_champs = manager.all_sorted();
+
+    // 1. Without history, each championship resolves to a valid entry car
+    for c in &all_champs {
+        let (model_id, display_name, has_raced) = resolve_championship_car_model_id(c, &[]);
+        assert!(!has_raced, "Without history, has_raced must be false");
+        assert!(!model_id.is_empty(), "Model ID must not be empty");
+        assert!(!display_name.is_empty(), "Display name must not be empty");
+
+        // Verify model exists in catalog
+        let model = tdrace_app::catalog::find_model_by_id(model_id);
+        assert!(model.is_some(), "Resolved model '{}' must exist in catalog", model_id);
+    }
+
+    // 2. With history, championship resolves to the latest car raced by player
+    let gt_champ = all_champs.iter().find(|c| c.series.module_id == "gt").expect("GT championship exists");
+    let fake_history = vec![
+        RaceHistoryEntry {
+            profile_id: 1,
+            category: "gt".to_string(),
+            track_id: "monza".to_string(),
+            car_name: "gt_bmw_m4_gt4".to_string(),
+            position: 1,
+            total_time: 120.0,
+            best_lap: Some(60.0),
+            championship_name: Some(gt_champ.series.name.clone()),
+            ..RaceHistoryEntry::default()
+        }
+    ];
+
+    let (model_id, display_name, has_raced) = resolve_championship_car_model_id(gt_champ, &fake_history);
+    assert!(has_raced, "With matching history, has_raced must be true");
+    assert_eq!(model_id, "gt_bmw_m4_gt4");
+    assert!(display_name.contains("BMW") || display_name.contains("M4"));
+}
+
+#[test]
+fn test_profile_champ_tab_navigation_and_scroll() {
+    let mut session = RaceSession::new();
+    assert_eq!(session.profile_champ_scroll, 0);
+
+    // Scroll down
+    session.profile_champ_scroll = 4;
+    assert_eq!(session.profile_champ_scroll, 4);
+
+    // Tab switch resets scroll
+    session.profile_manager_tab = 1;
+    session.profile_champ_scroll = 0;
+    assert_eq!(session.profile_champ_scroll, 0);
+
+    // Filter reset
+    session.profile_champ_scroll = 3;
+    session.profile_telemetry_filter_idx = (session.profile_telemetry_filter_idx + 1) % 7;
+    session.profile_champ_scroll = 0;
+    assert_eq!(session.profile_champ_scroll, 0);
+}
+
+
 
 
 

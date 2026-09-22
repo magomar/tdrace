@@ -414,6 +414,7 @@ pub struct RaceSession {
     pub profile_manager_tab: usize,
     pub profile_telemetry_filter_idx: usize,
     pub profile_focus_card: bool,
+    pub profile_champ_scroll: usize,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -694,6 +695,7 @@ impl RaceSession {
             profile_manager_tab: 0,
             profile_telemetry_filter_idx: 0,
             profile_focus_card: false,
+            profile_champ_scroll: 0,
 
             fx: EffectsManager::new_persistent(1500),
             camera,
@@ -4681,10 +4683,15 @@ impl RaceSession {
 
         // Top Hero Card Focus vs Tab Focus
         if !self.profile_focus_card {
-            // Focus card when pressing Up
+            // Focus card when pressing Up (or scroll up in Tab 2 if scrolled down)
             if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.profile_focus_card = true;
+                if self.profile_manager_tab == 2 && self.profile_champ_scroll > 0 {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_champ_scroll = self.profile_champ_scroll.saturating_sub(1);
+                } else {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.profile_focus_card = true;
+                }
             }
 
             // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-4)
@@ -4700,27 +4707,33 @@ impl RaceSession {
                 } else {
                     self.profile_manager_tab -= 1;
                 }
+                self.profile_champ_scroll = 0;
             }
             if tab_next {
                 self.audio.play_sfx(SfxType::UiMove);
                 self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+                self.profile_champ_scroll = 0;
             }
 
             if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Kp1) {
                 self.audio.play_sfx(SfxType::UiMove);
                 self.profile_manager_tab = 0;
+                self.profile_champ_scroll = 0;
             }
             if is_key_pressed(KeyCode::Key2) || is_key_pressed(KeyCode::Kp2) {
                 self.audio.play_sfx(SfxType::UiMove);
                 self.profile_manager_tab = 1;
+                self.profile_champ_scroll = 0;
             }
             if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::Kp3) {
                 self.audio.play_sfx(SfxType::UiMove);
                 self.profile_manager_tab = 2;
+                self.profile_champ_scroll = 0;
             }
             if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
                 self.audio.play_sfx(SfxType::UiMove);
                 self.profile_manager_tab = 3;
+                self.profile_champ_scroll = 0;
             }
         } else {
             // On Card Focus: Pressing Down returns focus to Tabs
@@ -4808,6 +4821,7 @@ impl RaceSession {
                             self.audio.play_sfx(SfxType::UiMove);
                             self.profile_manager_tab = i;
                             self.profile_focus_card = false;
+                            self.profile_champ_scroll = 0;
                         }
                         break;
                     }
@@ -4815,10 +4829,30 @@ impl RaceSession {
             }
         }
 
-        // Telemetry Category Filter Cycling (F key when on Tab 3)
-        if self.profile_manager_tab == 3 && is_key_pressed(KeyCode::F) {
+        // Championship Tab (Tab 2) Scrolling
+        if self.profile_manager_tab == 2 {
+            let wheel_y = mouse_wheel_safe().1;
+            if wheel_y < -0.01 || is_key_pressed(KeyCode::PageDown) {
+                self.profile_champ_scroll = self.profile_champ_scroll.saturating_add(1);
+            } else if wheel_y > 0.01 || is_key_pressed(KeyCode::PageUp) {
+                self.profile_champ_scroll = self.profile_champ_scroll.saturating_sub(1);
+            }
+
+            if !self.profile_focus_card
+                && (is_key_pressed(KeyCode::Down)
+                    || is_key_pressed(KeyCode::S)
+                    || self.input.gamepad.snapshot.nav_down)
+            {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.profile_champ_scroll = self.profile_champ_scroll.saturating_add(1);
+            }
+        }
+
+        // Category Filter Cycling (F key when on Tab 2 or Tab 3)
+        if (self.profile_manager_tab == 2 || self.profile_manager_tab == 3) && is_key_pressed(KeyCode::F) {
             self.audio.play_sfx(SfxType::UiMove);
             self.profile_telemetry_filter_idx = (self.profile_telemetry_filter_idx + 1) % 7;
+            self.profile_champ_scroll = 0;
         }
 
         // Q key cycles driver prev anywhere in ProfileManager
@@ -9471,6 +9505,9 @@ impl RaceSession {
                     self.profile_manager_tab,
                     self.profile_telemetry_filter_idx,
                     self.profile_focus_card,
+                    &self.championship_manager,
+                    self.championship_session.as_ref(),
+                    self.profile_champ_scroll,
                 );
             }
             GameState::PlayerRosterManager {

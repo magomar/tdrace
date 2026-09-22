@@ -1,12 +1,17 @@
 use macroquad::color::Color;
+use macroquad::math::Vec2;
 use macroquad::prelude::{screen_height, screen_width};
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
+use macroquad::texture::{draw_texture_ex, DrawTextureParams};
 
 use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::profile::{draw_country_banner, AssistProfile, CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::color::{CarColorScheme, Palette};
+use crate::render::lateral::render_real_car_lateral_by_id;
+use crate::render::vehicle_assets::get_vehicle_lateral_texture;
+use crate::series::{ChampionshipManager, ChampionshipSession, SeriesDefinition};
 
 /// Renders the Player Profile Badge for menus, supporting both compact mode and enlarged navigable card mode.
 pub fn render_profile_badge(
@@ -126,6 +131,9 @@ pub fn render_profile_manager_screen(
     active_tab: usize,
     filter_category_idx: usize,
     focus_card: bool,
+    championship_manager: &ChampionshipManager,
+    active_championship: Option<&ChampionshipSession>,
+    champ_scroll_offset: usize,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -344,7 +352,21 @@ pub fn render_profile_manager_screen(
     match active_tab {
         0 => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
         1 => render_disciplines_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
-        2 => render_championships_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
+        2 => render_championships_tab(
+            &scaler,
+            fonts,
+            x,
+            cur_y,
+            full_w,
+            content_h,
+            stats,
+            history,
+            sel_profile,
+            championship_manager,
+            active_championship,
+            filter_category_idx,
+            champ_scroll_offset,
+        ),
         3 => render_telemetry_tab(&scaler, fonts, x, cur_y, full_w, content_h, history, filter_category_idx),
         _ => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
     }
@@ -355,6 +377,8 @@ pub fn render_profile_manager_screen(
     let foot_y = sh - scaler.s(20.0);
     let footer_prompt = if focus_card {
         "[ENTER / E] Open Driver Manager  |  [▼] Focus Tabs  |  [◄ / ►] [Q] Cycle Driver  |  [ESC] Exit"
+    } else if active_tab == 2 {
+        "[▲] Focus Driver Card  |  [◄ / ►] [1-4] Tabs  |  [F] Filter  |  [▲ / ▼ / WHEEL] Scroll  |  [ESC] Exit"
     } else {
         "[▲] Focus Driver Card  |  [◄ / ►] [1-4] Tabs  |  [E] Manage Roster  |  [ESC] Exit"
     };
@@ -567,68 +591,458 @@ fn render_disciplines_tab(
 // =============================================================================
 // TAB 2: CHAMPIONSHIPS REGISTRY & STANDINGS
 // =============================================================================
+
+/// Helper to resolve a car name string (e.g. from history entry or catalog) to a known RealCarModel.
+pub fn find_car_model_by_identifier(ident: &str) -> Option<&'static crate::catalog::RealCarModel> {
+    let trimmed = ident.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    // 1. Direct ID match
+    if let Some(m) = crate::catalog::find_model_by_id(trimmed) {
+        return Some(m);
+    }
+
+    // 2. Direct Name match (case-insensitive) in all real cars
+    for m in crate::catalog::get_all_models() {
+        if m.name.eq_ignore_ascii_case(trimmed) || m.id.eq_ignore_ascii_case(trimmed) {
+            return Some(m);
+        }
+    }
+
+    // 3. Direct match in classic arcade cars
+    for m in crate::catalog::CLASSIC_ARCADE_CARS.iter() {
+        if m.name.eq_ignore_ascii_case(trimmed) || m.id.eq_ignore_ascii_case(trimmed) {
+            return Some(m);
+        }
+    }
+
+    // 4. Match against CarChoice titles / common naming patterns
+    let lower = trimmed.to_lowercase();
+    if lower.contains("gt4") {
+        crate::catalog::find_model_by_id("gt_toyota_supra_gt4")
+            .or_else(|| crate::catalog::find_model_by_id("gt_porsche_718_gt4"))
+    } else if lower.contains("gt3") {
+        crate::catalog::find_model_by_id("gt_porsche_911_gt3r")
+    } else if lower.contains("gt2") {
+        crate::catalog::find_model_by_id("gt_porsche_911_gt2_rs")
+    } else if lower.contains("gt1") {
+        crate::catalog::find_model_by_id("gt_porsche_911_gt1_98")
+    } else if lower.contains("hypercar") || lower.contains("lmh") || lower.contains("prototype") {
+        crate::catalog::find_model_by_id("gt_ferrari_499p")
+    } else if lower.contains("nascar") || lower.contains("stock car") {
+        crate::catalog::find_model_by_id("nascar_monte_carlo_ss")
+    } else if lower.contains("rally") {
+        crate::catalog::find_model_by_id("rally_polo_rx")
+            .or_else(|| crate::catalog::find_model_by_id("rally_peugeot_208_rally4"))
+    } else if lower.contains("kart") {
+        crate::catalog::find_model_by_id("kart_birel_art_kz2")
+            .or_else(|| crate::catalog::find_model_by_id("kart_crg_hero_60"))
+    } else if lower.contains("offroad") || lower.contains("sand rail") || lower.contains("buggy") {
+        crate::catalog::find_model_by_id("offroad_sand_rail_buggy")
+            .or_else(|| crate::catalog::find_model_by_id("offroad_baja_trophy_truck"))
+    } else if lower.contains("drift") || lower.contains("sports coupe") {
+        crate::catalog::find_model_by_id("classic_gt")
+    } else {
+        None
+    }
+}
+
+/// Resolves the car model ID and display name to show for a championship row:
+/// 1. Latest car used by the player in this championship (from history)
+/// 2. Or the player's configured car model from the championship definition
+/// 3. Or the entry car of the category for that modality
+pub fn resolve_championship_car_model_id(
+    champ: &SeriesDefinition,
+    history: &[RaceHistoryEntry],
+) -> (&'static str, String, bool) {
+    // 1. Look for the latest race in history for this championship
+    let latest_race = history.iter().find(|e| {
+        e.championship_name.as_deref().is_some_and(|name| {
+            name.eq_ignore_ascii_case(&champ.series.name)
+                || name.eq_ignore_ascii_case(&champ.series.id)
+                || champ.series.name.to_lowercase().contains(&name.to_lowercase())
+                || name.to_lowercase().contains(&champ.series.name.to_lowercase())
+        })
+    });
+
+    if let Some(entry) = latest_race {
+        if let Some(model) = find_car_model_by_identifier(&entry.car_name) {
+            return (model.id, model.name.to_string(), true);
+        }
+    }
+
+    // 2. Try the player's configured car in the championship definition
+    if let Some(player_driver) = champ.drivers.iter().find(|d| d.is_player) {
+        if let Some(model_id) = &player_driver.car_model_id {
+            if let Some(model) = find_car_model_by_identifier(model_id) {
+                return (model.id, model.name.to_string(), false);
+            }
+        }
+    }
+
+    // 3. Fallback: Entry car of the category for that modality
+    // First try the specific tier entry car of the championship
+    if let Some(model) = crate::catalog::get_models_for_module_and_tier(&champ.series.module_id, champ.series.tier as u8).first() {
+        return (model.id, model.name.to_string(), false);
+    }
+
+    // Then try Tier 1 entry car of that module
+    if let Some(model) = crate::catalog::get_models_for_module_and_tier(&champ.series.module_id, 1).first() {
+        return (model.id, model.name.to_string(), false);
+    }
+
+    // Then any car of that module
+    if let Some(model) = crate::catalog::get_models_for_module(&champ.series.module_id).first() {
+        return (model.id, model.name.to_string(), false);
+    }
+
+    // Final fallback
+    ("gt_porsche_718_gt4", "Porsche 718 Cayman GT4 RS".to_string(), false)
+}
+
 fn render_championships_tab(
     scaler: &UiScaler,
     fonts: &Fonts,
     x: f32,
     y: f32,
     w: f32,
-    _h: f32,
-    stats: &ProfileCareerStats,
+    h: f32,
+    _stats: &ProfileCareerStats,
+    history: &[RaceHistoryEntry],
+    sel_profile: Option<&PlayerProfile>,
+    championship_manager: &ChampionshipManager,
+    active_championship: Option<&ChampionshipSession>,
+    filter_category_idx: usize,
+    champ_scroll_offset: usize,
 ) {
     let pad = scaler.s(16.0);
     let inner_w = w - pad * 2.0;
     let mut cy = y + pad;
 
-    fonts.draw_ui_bold("CHAMPIONSHIP REGISTRY & MOTORSPORT TROPHIES", x + pad, cy + scaler.s(16.0), scaler.font_s(15.0), Palette::NEON_GOLD);
-    fonts.draw_ui_regular("Official multi-round tournaments across circuit and stage disciplines", x + pad, cy + scaler.s(32.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_bold(
+        "CHAMPIONSHIP REGISTRY & MOTORSPORT TROPHIES",
+        x + pad,
+        cy + scaler.s(16.0),
+        scaler.font_s(15.0),
+        Palette::NEON_GOLD,
+    );
+    fonts.draw_ui_regular(
+        "Official multi-round tournaments across circuit and stage disciplines",
+        x + pad,
+        cy + scaler.s(32.0),
+        scaler.font_s(11.5),
+        Palette::UI_TEXT_MUTED,
+    );
 
-    cy += scaler.s(44.0);
+    // --- Category Filter Pills Row ---
+    let active_filter = TELEMETRY_CATEGORY_FILTERS
+        .get(filter_category_idx)
+        .copied()
+        .unwrap_or(TELEMETRY_CATEGORY_FILTERS[0]);
 
-    let championships = [
-        ("gt", "GT World Challenge Championship", "3 Rounds: Monza GP • Spa Francorchamps • Circuit de la Sarthe", 3),
-        ("nascar", "NASCAR Cup Series Championship", "4 Rounds: Daytona Tri-Oval • Talladega • Bristol Short Track • Charlotte", 4),
-        ("rally", "WRC Alpine Stages Championship", "3 Rounds: Monte Carlo Tarmac • Finnish Gravel • Acropolis Mountain", 3),
-        ("extreme_offroad", "Baja 1000 Desert Dune Trophy", "3 Rounds: Baja 1000 Dunes • Canyon Jump Run • Stunt Arena Freestyle", 3),
-        ("kart", "CIK-FIA Karting World Cup", "3 Rounds: South Garda • Franciacorta • Campillos Kartcenter", 3),
-        ("classic", "Historic Grand Prix Legends Cup", "2 Rounds: Historic Monaco • Monza Retro 1966 Banking", 2),
-    ];
+    let all_champs = championship_manager.all_sorted();
+    let filtered_champs: Vec<&SeriesDefinition> = all_champs
+        .into_iter()
+        .filter(|c| match active_filter.1 {
+            Some(mod_id) => c.series.module_id.eq_ignore_ascii_case(mod_id),
+            None => true,
+        })
+        .collect();
 
-    let item_h = scaler.s(48.0);
-    let item_gap = scaler.s(8.0);
+    // Scroll counter on top right
+    let item_h = scaler.s(64.0);
+    let item_gap = scaler.s(7.0);
+    let header_space = scaler.s(82.0);
+    let available_h = (h - header_space - scaler.s(12.0)).max(scaler.s(100.0));
+    let visible_count = ((available_h + item_gap) / (item_h + item_gap)).floor().max(1.0) as usize;
+    let max_scroll = filtered_champs.len().saturating_sub(visible_count);
+    let scroll = champ_scroll_offset.min(max_scroll);
 
-    for (cat_key, champ_name, champ_desc, rounds) in championships.iter() {
-        scaler.draw_glass_card(x + pad, cy, inner_w, item_h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.0);
+    if !filtered_champs.is_empty() {
+        let count_str = format!(
+            "{}-{} OF {} CHAMPIONSHIPS",
+            scroll + 1,
+            (scroll + visible_count).min(filtered_champs.len()),
+            filtered_champs.len()
+        );
+        fonts.draw_ui_regular(
+            &count_str,
+            x + pad + inner_w - scaler.s(220.0),
+            cy + scaler.s(16.0),
+            scaler.font_s(10.5),
+            Palette::NEON_CYAN,
+        );
+    }
 
-        let cat_stat = stats.category_stats.get(*cat_key);
-        let wins = cat_stat.map(|s| s.wins).unwrap_or(0);
-        let podiums = cat_stat.map(|s| s.podiums).unwrap_or(0);
+    cy += scaler.s(40.0);
 
-        // Status Badge
-        let (status_text, status_col, status_bg) = if wins > 0 {
-            ("CHAMPION [GOLD 🏆]", Palette::NEON_GOLD, Color::new(0.25, 0.20, 0.05, 0.90))
-        } else if podiums > 0 {
-            ("PODIUM FINISHER [SILVER 🥈]", Color::new(0.85, 0.88, 0.95, 1.0), Color::new(0.12, 0.16, 0.24, 0.90))
+    // Draw filter pills
+    let pill_h = scaler.s(24.0);
+    let pill_gap = scaler.s(6.0);
+    let mut px = x + pad;
+
+    fonts.draw_ui_bold("FILTER:", px, cy + scaler.s(16.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+    px += scaler.s(55.0);
+
+    for (f_idx, (f_name, _)) in TELEMETRY_CATEGORY_FILTERS.iter().enumerate() {
+        let is_sel = f_idx == filter_category_idx;
+        let pill_w = scaler.s(if *f_name == "ALL" { 48.0 } else { 75.0 });
+
+        let p_bg = if is_sel {
+            Palette::UI_CARD_BG_HOVER
         } else {
-            ("AVAILABLE TO ENTER", Palette::NEON_CYAN, Color::new(0.08, 0.14, 0.20, 0.90))
+            Color::new(0.08, 0.10, 0.14, 0.70)
+        };
+        let p_border = if is_sel {
+            Palette::NEON_CYAN
+        } else {
+            Palette::UI_CARD_BORDER
         };
 
-        let badge_w = scaler.s(160.0);
-        let badge_x = x + pad + inner_w - badge_w - scaler.s(12.0);
-        let badge_y = cy + scaler.s(12.0);
-        draw_rectangle(badge_x, badge_y, badge_w, scaler.s(24.0), status_bg);
-        draw_rectangle_lines(badge_x, badge_y, badge_w, scaler.s(24.0), 1.0, status_col);
-        fonts.draw_ui_bold_centered(status_text, badge_x + badge_w * 0.5, badge_y + scaler.s(16.5), scaler.font_s(10.5), status_col);
+        draw_rectangle(px, cy, pill_w, pill_h, p_bg);
+        draw_rectangle_lines(px, cy, pill_w, pill_h, if is_sel { 1.8 } else { 1.0 }, p_border);
 
-        // Championship Title & Rounds
-        fonts.draw_ui_bold(champ_name, x + pad + scaler.s(14.0), cy + scaler.s(20.0), scaler.font_s(13.0), Palette::WHITE);
-        fonts.draw_ui_regular(champ_desc, x + pad + scaler.s(14.0), cy + scaler.s(36.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold_centered(
+            f_name,
+            px + pill_w * 0.5,
+            cy + scaler.s(16.5),
+            scaler.font_s(10.5),
+            if is_sel { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+        );
 
-        // Round count tag
-        let rnd_tag = format!("{} ROUNDS", rounds);
-        fonts.draw_ui_bold(&rnd_tag, badge_x - scaler.s(90.0), cy + scaler.s(28.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+        px += pill_w + pill_gap;
+    }
+
+    let filter_hint = if max_scroll > 0 {
+        "[F] Filter  •  [▲ / ▼ / WHEEL] Scroll"
+    } else {
+        "[F] Change Category Filter"
+    };
+    fonts.draw_ui_regular(
+        filter_hint,
+        x + pad + inner_w - scaler.s(220.0),
+        cy + scaler.s(16.5),
+        scaler.font_s(11.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    cy += pill_h + scaler.s(10.0);
+
+    if filtered_champs.is_empty() {
+        fonts.draw_ui_regular_centered(
+            "No official championships registered in this category. Use the Championship Editor to create custom series!",
+            x + pad + inner_w * 0.5,
+            cy + scaler.s(45.0),
+            scaler.font_s(12.0),
+            Palette::UI_TEXT_MUTED,
+        );
+        return;
+    }
+
+    // Livery colors from selected player profile
+    let default_scheme = CarColorScheme::from_index(0);
+    let livery = sel_profile.map(|p| &p.color_scheme).unwrap_or(&default_scheme);
+
+    for champ in filtered_champs.iter().skip(scroll).take(visible_count) {
+        // Query history for this specific championship
+        let champ_entries: Vec<&RaceHistoryEntry> = history
+            .iter()
+            .filter(|e| {
+                e.championship_name.as_deref().is_some_and(|name| {
+                    name.eq_ignore_ascii_case(&champ.series.name)
+                        || name.eq_ignore_ascii_case(&champ.series.id)
+                        || champ.series.name.to_lowercase().contains(&name.to_lowercase())
+                        || name.to_lowercase().contains(&champ.series.name.to_lowercase())
+                })
+            })
+            .collect();
+
+        let races_count = champ_entries.len();
+        let wins = champ_entries.iter().filter(|e| e.position == 1).count();
+        let podiums = champ_entries.iter().filter(|e| e.position >= 1 && e.position <= 3).count();
+        let best_pos = champ_entries.iter().map(|e| e.position).min();
+        let best_finish_str = best_pos.map(|p| format!("P{}", p)).unwrap_or_else(|| "P--".to_string());
+        let best_lap_val = champ_entries.iter().filter_map(|e| e.best_lap).min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let best_lap_str = best_lap_val.map(format_lap_time).unwrap_or_else(|| "--:--.---".to_string());
+
+        let total_rounds = champ.rounds.len().max(1);
+        let is_active_session = active_championship.is_some_and(|s| {
+            s.name.eq_ignore_ascii_case(&champ.series.name)
+                || s.name.eq_ignore_ascii_case(&champ.series.id)
+        });
+
+        let completed_rounds = if let Some(active) = active_championship.filter(|s| {
+            s.name.eq_ignore_ascii_case(&champ.series.name)
+                || s.name.eq_ignore_ascii_case(&champ.series.id)
+        }) {
+            active.current_round.min(total_rounds)
+        } else {
+            races_count.min(total_rounds)
+        };
+
+        let is_completed = if let Some(active) = active_championship.filter(|s| {
+            s.name.eq_ignore_ascii_case(&champ.series.name)
+                || s.name.eq_ignore_ascii_case(&champ.series.id)
+        }) {
+            active.is_completed
+        } else {
+            races_count >= total_rounds || (wins > 0 && races_count > 0)
+        };
+
+        let progress_ratio = if is_completed {
+            1.0
+        } else {
+            (completed_rounds as f32 / total_rounds as f32).clamp(0.0, 1.0)
+        };
+
+        let (progress_label, progress_col) = if is_completed {
+            (format!("COMPLETED ({}/{} ROUNDS)", total_rounds, total_rounds), Palette::NEON_GREEN)
+        } else if is_active_session {
+            (format!("LIVE: ROUND {}/{} ({:.0}%)", completed_rounds + 1, total_rounds, progress_ratio * 100.0), Palette::NEON_GOLD)
+        } else if completed_rounds > 0 {
+            (format!("PROGRESS: {}/{} ({:.0}%)", completed_rounds, total_rounds, progress_ratio * 100.0), Palette::NEON_CYAN)
+        } else {
+            (format!("0/{} ROUNDS (AVAILABLE)", total_rounds), Palette::UI_TEXT_MUTED)
+        };
+
+        let (status_text, status_col, status_bg, card_border) = if wins > 0 && is_completed {
+            ("CHAMPION [GOLD 🏆]".to_string(), Palette::NEON_GOLD, Color::new(0.25, 0.20, 0.05, 0.90), Palette::NEON_GOLD)
+        } else if podiums > 0 && is_completed {
+            ("PODIUM FINISHER 🥈".to_string(), Color::new(0.85, 0.88, 0.95, 1.0), Color::new(0.12, 0.16, 0.24, 0.90), Color::new(0.85, 0.88, 0.95, 0.6))
+        } else if is_active_session {
+            (format!("ROUND {} IN PROGRESS", completed_rounds + 1), Palette::NEON_CYAN, Color::new(0.08, 0.20, 0.28, 0.90), Palette::NEON_CYAN)
+        } else if completed_rounds > 0 {
+            (format!("{}/{} ROUNDS DONE", completed_rounds, total_rounds), Palette::NEON_CYAN, Color::new(0.08, 0.14, 0.20, 0.90), Palette::UI_CARD_BORDER)
+        } else {
+            ("AVAILABLE TO ENTER".to_string(), Palette::UI_TEXT_MUTED, Color::new(0.06, 0.08, 0.12, 0.70), Palette::UI_CARD_BORDER)
+        };
+
+        // Render card background
+        scaler.draw_glass_card(x + pad, cy, inner_w, item_h, Color::new(0.06, 0.08, 0.12, 0.90), card_border, 1.0);
+
+        // ---------------------------------------------------------------------
+        // 1. LEFT SIDE: CAR LATERAL THUMBNAIL (256x128 aspect ratio 2:1)
+        // ---------------------------------------------------------------------
+        let (model_id, display_car_name, has_raced) = resolve_championship_car_model_id(champ, history);
+
+        let img_box_w = scaler.s(92.0);
+        let img_box_h = scaler.s(50.0);
+        let img_box_x = x + pad + scaler.s(7.0);
+        let img_box_y = cy + (item_h - img_box_h) * 0.5;
+
+        draw_rectangle(img_box_x, img_box_y, img_box_w, img_box_h, Color::new(0.04, 0.05, 0.08, 0.95));
+        draw_rectangle_lines(img_box_x, img_box_y, img_box_w, img_box_h, 1.0, Palette::UI_CARD_BORDER);
+
+        let car_thumb_w = scaler.s(84.0);
+        let car_thumb_h = scaler.s(42.0); // Exactly 2:1 aspect ratio!
+        let car_x = img_box_x + (img_box_w - car_thumb_w) * 0.5;
+        let car_y = img_box_y + (img_box_h - car_thumb_h) * 0.5;
+
+        if let Some(texture) = get_vehicle_lateral_texture(model_id, livery.primary, livery.secondary, false) {
+            draw_texture_ex(
+                &texture,
+                car_x,
+                car_y,
+                Palette::WHITE,
+                DrawTextureParams {
+                    dest_size: Some(Vec2::new(car_thumb_w, car_thumb_h)),
+                    ..Default::default()
+                },
+            );
+        } else {
+            render_real_car_lateral_by_id(
+                model_id,
+                livery,
+                img_box_x + img_box_w * 0.5,
+                img_box_y + img_box_h * 0.5,
+                scaler.s(0.35),
+                0.0,
+                false,
+            );
+        }
+
+        // ---------------------------------------------------------------------
+        // 2. RIGHT SIDE: STATUS BADGE & STATS COUNTER
+        // ---------------------------------------------------------------------
+        let badge_w = scaler.s(150.0);
+        let badge_x = x + pad + inner_w - badge_w - scaler.s(10.0);
+        let badge_y = cy + scaler.s(10.0);
+        let badge_h = scaler.s(22.0);
+
+        draw_rectangle(badge_x, badge_y, badge_w, badge_h, status_bg);
+        draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, 1.0, status_col);
+        fonts.draw_ui_bold_centered(&status_text, badge_x + badge_w * 0.5, badge_y + scaler.s(15.5), scaler.font_s(10.0), status_col);
+
+        let stats_summary = format!("WINS: {}  •  PODIUMS: {}", wins, podiums);
+        fonts.draw_ui_bold_centered(&stats_summary, badge_x + badge_w * 0.5, cy + scaler.s(48.0), scaler.font_s(10.5), Palette::WHITE);
+
+        // ---------------------------------------------------------------------
+        // 3. MIDDLE-RIGHT: PROGRESS BAR & PERSONAL BEST STATS
+        // ---------------------------------------------------------------------
+        let prog_w = scaler.s(140.0);
+        let prog_x = badge_x - prog_w - scaler.s(16.0);
+
+        fonts.draw_ui_bold(&progress_label, prog_x, cy + scaler.s(19.0), scaler.font_s(10.0), progress_col);
+
+        let bar_h = scaler.s(6.0);
+        let bar_y = cy + scaler.s(26.0);
+        draw_rectangle(prog_x, bar_y, prog_w, bar_h, Color::new(0.10, 0.13, 0.18, 0.90));
+        draw_rectangle(prog_x, bar_y, prog_w * progress_ratio, bar_h, progress_col);
+        draw_rectangle_lines(prog_x, bar_y, prog_w, bar_h, 1.0, Palette::UI_CARD_BORDER);
+
+        let best_str = format!("BEST: {}  •  LAP: {}", best_finish_str, best_lap_str);
+        fonts.draw_ui_regular(&best_str, prog_x, cy + scaler.s(48.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
+
+        // ---------------------------------------------------------------------
+        // 4. MIDDLE-LEFT: CHAMPIONSHIP TITLE, DISCIPLINE TAG & CAR/TRACK SUMMARY
+        // ---------------------------------------------------------------------
+        let info_x = img_box_x + img_box_w + scaler.s(12.0);
+
+        // Row 1: Title
+        fonts.draw_ui_bold(&champ.series.name, info_x, cy + scaler.s(19.0), scaler.font_s(13.0), Palette::WHITE);
+
+        // Row 2: Tag
+        let disc_tag = format!(
+            "{} • TIER {} • {} ROUNDS ({} LAPS) • {} PTS",
+            champ.series.module_id.to_uppercase(),
+            champ.series.tier,
+            total_rounds,
+            champ.series.laps_per_round,
+            champ.scoring.system.to_uppercase()
+        );
+        fonts.draw_ui_bold(&disc_tag, info_x, cy + scaler.s(34.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+
+        // Row 3: Car name in use & Calendar preview
+        let track_names: Vec<String> = champ.rounds.iter().take(3).map(|r| {
+            if let Some(n) = &r.name {
+                n.clone()
+            } else {
+                r.track_id.replace('_', " ").to_uppercase()
+            }
+        }).collect();
+        let track_preview = if champ.rounds.len() > 3 {
+            format!("{} +{} more", track_names.join(" • "), champ.rounds.len() - 3)
+        } else {
+            track_names.join(" • ")
+        };
+
+        let car_prefix = if has_raced { "RACED:" } else { "ENTRY:" };
+        let meta_line = format!("{} {}  •  {}", car_prefix, display_car_name, track_preview);
+        fonts.draw_ui_regular(&meta_line, info_x, cy + scaler.s(49.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
 
         cy += item_h + item_gap;
+    }
+
+    // Scrollbar indicator
+    if max_scroll > 0 {
+        let scrollbar_x = x + pad + inner_w - scaler.s(3.0);
+        let scrollbar_h = cy - (y + pad + scaler.s(74.0));
+        let thumb_h = (scrollbar_h * (visible_count as f32 / filtered_champs.len() as f32)).max(scaler.s(20.0));
+        let thumb_y = (y + pad + scaler.s(74.0)) + (scrollbar_h - thumb_h) * (scroll as f32 / max_scroll as f32);
+        draw_rectangle(scrollbar_x, y + pad + scaler.s(74.0), scaler.s(3.0), scrollbar_h, Color::new(0.12, 0.15, 0.20, 0.60));
+        draw_rectangle(scrollbar_x, thumb_y, scaler.s(3.0), thumb_h, Palette::NEON_CYAN);
     }
 }
 
