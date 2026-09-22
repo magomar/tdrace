@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Rallycross & All-Terrain World Cup Career Mode"
 description: "5-tier Rallycross and All-Terrain career ladder covering 17 global mixed-surface circuits, World RX tournament format, mandatory Joker lap rules, and declarative series presets."
-status: in_progress
+status: implemented
+verified: { by: "human:mario", at: "2026-09-22T17:45:00Z" }
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
 ---
@@ -108,7 +109,7 @@ impl GameApp {
     pub fn start_rally_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
-                "World RX Clubman Sprint (Tier 1)",
+                "Rallycross Grassroots Cup (Tier 1)",
                 vec![
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
@@ -118,7 +119,7 @@ impl GameApp {
                 ],
             ),
             2 => (
-                "European Rallycross Challenge (Tier 2)",
+                "World Rallycross Challenge (Tier 2)",
                 vec![
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
@@ -126,7 +127,7 @@ impl GameApp {
                 ],
             ),
             3 => (
-                "Global Supercar Trophy (Tier 3)",
+                "Group B Masters Series (Tier 3)",
                 vec![
                     "estering_rx".to_string(),
                     "montalegre_rx".to_string(),
@@ -134,7 +135,7 @@ impl GameApp {
                 ],
             ),
             4 => (
-                "FIA World RX Masters (Tier 4)",
+                "Dakar Rally Raid Trophy (Tier 4)",
                 vec![
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
@@ -142,7 +143,7 @@ impl GameApp {
                 ],
             ),
             _ => (
-                "FIA World RX Grand Finale (Tier 5)",
+                "Stadium Super Trucks World Series (Tier 5)",
                 vec![
                     "catalunya_rx".to_string(),
                     "yas_marina_rx".to_string(),

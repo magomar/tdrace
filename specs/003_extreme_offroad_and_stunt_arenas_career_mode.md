@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Extreme Off-Road & Stunt Arenas Career Mode"
 description: "5-tier career progression combining open desert raids, ice drifting, deep mud bogs, supercross stadium whoops, and monster truck freestyle stunt arenas across a 17-venue calendar."
-status: in_progress
+status: implemented
+verified: { by: "human:mario", at: "2026-09-22T17:45:00Z" }
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
 ---

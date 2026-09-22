@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "NASCAR & Trans-Am TA1 Career Mode"
 description: "5-tier American stock car and Trans-Am TA1 career progression featuring 17 circuits, stage racing rules, pack drafting dynamics, declarative series presets, and XP unlocks."
-status: in_progress
+status: implemented
+verified: { by: "human:mario", at: "2026-09-22T17:45:00Z" }
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:20:00Z }
 ---
