@@ -47,7 +47,32 @@ const badgeColors: Record<string, string> = {
 };
 
 const moduleColor = badgeColors[car.module] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
-const hasVisuals = Boolean(car.image_lateral || car.image_ref);
+const hasVisuals = Boolean(car.image_lateral || car.image_topdown || car.image_ref);
+
+// Determine topdown orientation: 24 cars naturally face right in raw asset, while 61 face left and need 180° rotation to face right in showroom
+const naturallyFacesRight = [
+  // Classic Module (all 5 face right)
+  'classic_gt', 'classic_nascar', 'classic_offroad', 'classic_kart', 'classic_rally',
+  // Gran Turismo (11 face right, 9 rotated to face right)
+  'gt_porsche_718_gt4', 'gt_bmw_m4_gt4', 'gt_aston_vantage_gt4', 'gt_toyota_supra_gt4',
+  'gt_ferrari_296_gt3', 'gt_audi_r8_gt3_evo2', 'gt_brabham_bt62_gt2', 'gt_maserati_mc20_gt2',
+  'gt_mercedes_clk_gtr', 'gt_nissan_r390_gt1', 'gt_toyota_gr010',
+  // NASCAR (7 face right: 3 Trans-Am TA1 and 4 stock cars)
+  'nascar_corvette_ta1', 'nascar_mustang_ta1', 'nascar_challenger_ta1',
+  'nascar_mustang_street_stock', 'nascar_mustang_super_late_model',
+  'nascar_late_model_stock_car', 'nascar_arca_chevy_ss',
+  // Rallycross (1 faces right)
+  'rally_audi_sport_quattro_s1',
+].includes(car.id);
+
+const topdownClass = naturallyFacesRight ? '' : 'rotate-180';
+const availableCount = [car.image_lateral, car.image_topdown, car.image_ref].filter(Boolean).length;
+const showButtons = availableCount > 1;
+
+const assetVersion = '?v=20260922b';
+const imageLateralSrc = car.image_lateral ? `${car.image_lateral}${assetVersion}` : null;
+const imageTopdownSrc = car.image_topdown ? `${car.image_topdown}${assetVersion}` : null;
+const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
 ---
 
 <div class="bg-racing-surface rounded-xl border border-racing-border overflow-hidden hover:border-racing-blue/50 hover:shadow-xl hover:shadow-racing-blue/5 transition-all flex flex-col justify-between group">
@@ -73,47 +98,75 @@ const hasVisuals = Boolean(car.image_lateral || car.image_ref);
   <div class="relative bg-racing-bg/80 border-b border-racing-border/60 overflow-hidden h-44 flex flex-col justify-between p-3 group/view" data-car-id={car.id}>
     {hasVisuals ? (
       <>
-        {car.image_lateral && car.image_ref && (
+        {showButtons && (
           <div class="absolute top-2.5 right-2.5 z-10 flex gap-1 bg-racing-surface/90 border border-racing-border/80 rounded-md p-0.5 shadow-md text-[10px] font-mono">
-            <button
-              type="button"
-              class="view-toggle-btn px-2 py-0.5 rounded text-white bg-racing-blue font-semibold transition-all active-toggle"
-              data-target="lateral"
-              data-car={car.id}
-            >
-              2D Sprite
-            </button>
-            <button
-              type="button"
-              class="view-toggle-btn px-2 py-0.5 rounded text-racing-muted hover:text-white transition-all"
-              data-target="ref"
-              data-car={car.id}
-            >
-              Real Ref
-            </button>
+            {car.image_lateral && (
+              <button
+                type="button"
+                class="view-toggle-btn px-2 py-0.5 rounded text-white bg-racing-blue font-semibold transition-all active-toggle"
+                data-target="lateral"
+                data-car={car.id}
+              >
+                Side View
+              </button>
+            )}
+            {car.image_topdown && (
+              <button
+                type="button"
+                class="view-toggle-btn px-2 py-0.5 rounded text-racing-muted hover:text-white transition-all"
+                data-target="topdown"
+                data-car={car.id}
+              >
+                Top View
+              </button>
+            )}
+            {car.image_ref && (
+              <button
+                type="button"
+                class="view-toggle-btn px-2 py-0.5 rounded text-racing-muted hover:text-white transition-all"
+                data-target="ref"
+                data-car={car.id}
+              >
+                Real Ref
+              </button>
+            )}
           </div>
         )}
 
         <div class="view-pane flex-1 flex items-center justify-center relative w-full h-full" id={`pane-lateral-${car.id}`}>
-          {car.image_lateral ? (
+          {imageLateralSrc ? (
             <div class="relative w-full h-full flex flex-col items-center justify-center p-2">
               <img
-                src={car.image_lateral}
-                alt={`${car.name} 2D Game Asset`}
+                src={imageLateralSrc}
+                alt={`${car.name} Side View`}
                 class="max-h-28 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
               />
               <div class="w-3/4 h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent blur-[1px] mt-1"></div>
             </div>
           ) : (
-            <div class="text-xs font-mono text-racing-muted/60 italic">2D Game Asset Pending</div>
+            <div class="text-xs font-mono text-racing-muted/60 italic">Side View Pending</div>
           )}
         </div>
 
-        {car.image_ref && (
+        {imageTopdownSrc && (
+          <div class="view-pane flex-1 hidden items-center justify-center relative w-full h-full" id={`pane-topdown-${car.id}`}>
+            <div class="relative w-full h-full flex flex-col items-center justify-center p-2">
+              <img
+                src={imageTopdownSrc}
+                alt={`${car.name} Top View`}
+                class={`max-h-28 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300 ${topdownClass}`}
+                loading="lazy"
+              />
+              <div class="w-3/4 h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent blur-[1px] mt-1"></div>
+            </div>
+          </div>
+        )}
+
+        {imageRefSrc && (
           <div class="view-pane flex-1 hidden items-center justify-center relative w-full h-full overflow-hidden rounded" id={`pane-ref-${car.id}`}>
             <img
-              src={car.image_ref}
+              src={imageRefSrc}
               alt={`${car.name} Real Motorsport Reference`}
               class="w-full h-full object-cover rounded border border-racing-border/40"
               loading="lazy"
@@ -212,42 +265,72 @@ const hasVisuals = Boolean(car.image_lateral || car.image_ref);
 </div>
 
 <script>
+  function switchCardView(card: HTMLElement, targetView: string) {
+    const carId = card.dataset.carId;
+    if (!carId) return;
+
+    const paneLateral = card.querySelector<HTMLElement>(`#pane-lateral-${carId}`);
+    const paneTopdown = card.querySelector<HTMLElement>(`#pane-topdown-${carId}`);
+    const paneRef = card.querySelector<HTMLElement>(`#pane-ref-${carId}`);
+
+    let effectiveView = targetView;
+    if (effectiveView === 'ref' && !paneRef) {
+      effectiveView = 'lateral';
+    } else if (effectiveView === 'topdown' && !paneTopdown) {
+      effectiveView = 'lateral';
+    } else if (effectiveView === 'lateral' && !paneLateral) {
+      effectiveView = paneTopdown ? 'topdown' : 'ref';
+    }
+
+    const panes = [
+      { view: 'lateral', el: paneLateral },
+      { view: 'topdown', el: paneTopdown },
+      { view: 'ref', el: paneRef },
+    ];
+
+    panes.forEach(({ view, el }) => {
+      if (!el) return;
+      if (view === effectiveView) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+      } else {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }
+    });
+
+    const buttons = card.querySelectorAll<HTMLButtonElement>('.view-toggle-btn');
+    buttons.forEach((b) => {
+      if (b.dataset.target === effectiveView) {
+        b.classList.add('text-white', 'bg-racing-blue', 'font-semibold', 'active-toggle');
+        b.classList.remove('text-racing-muted');
+      } else {
+        b.classList.remove('text-white', 'bg-racing-blue', 'font-semibold', 'active-toggle');
+        b.classList.add('text-racing-muted');
+      }
+    });
+  }
+
   function initViewToggles() {
-    document.querySelectorAll('.view-toggle-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const target = e.currentTarget as HTMLButtonElement;
-        const carId = target.dataset.car;
-        const viewMode = target.dataset.target;
-
-        const card = target.closest('[data-car-id]');
-        if (!card) return;
-
-        const paneLateral = card.querySelector(`#pane-lateral-${carId}`);
-        const paneRef = card.querySelector(`#pane-ref-${carId}`);
-
-        const buttons = card.querySelectorAll('.view-toggle-btn');
-        buttons.forEach((b) => {
-          b.classList.remove('text-white', 'bg-racing-blue', 'font-semibold', 'active-toggle');
-          b.classList.add('text-racing-muted');
+    document.querySelectorAll<HTMLElement>('[data-car-id]').forEach((card) => {
+      card.querySelectorAll<HTMLButtonElement>('.view-toggle-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const viewMode = btn.dataset.target;
+          if (viewMode) {
+            switchCardView(card, viewMode);
+          }
         });
-
-        target.classList.add('text-white', 'bg-racing-blue', 'font-semibold', 'active-toggle');
-        target.classList.remove('text-racing-muted');
-
-        if (viewMode === 'lateral') {
-          paneLateral?.classList.remove('hidden');
-          paneLateral?.classList.add('flex');
-          paneRef?.classList.add('hidden');
-          paneRef?.classList.remove('flex');
-        } else {
-          paneRef?.classList.remove('hidden');
-          paneRef?.classList.add('flex');
-          paneLateral?.classList.add('hidden');
-          paneLateral?.classList.remove('flex');
-        }
       });
     });
+
+    window.addEventListener('showroom-view-change', ((e: CustomEvent<{ view: string }>) => {
+      const targetView = e.detail?.view;
+      if (!targetView) return;
+      document.querySelectorAll<HTMLElement>('[data-car-id]').forEach((card) => {
+        switchCardView(card, targetView);
+      });
+    }) as EventListener);
   }
 
   if (document.readyState === 'loading') {

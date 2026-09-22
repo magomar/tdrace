@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import CarCard from '../components/CarCard.astro';
+import GlobalViewSwitcher from '../components/GlobalViewSwitcher.astro';
 import vehiclesData from '../../../shared/data/vehicles.json';
 
 const modules = [
@@ -15,7 +16,7 @@ const modules = [
 
 <Layout title="Garage Showroom & Vehicle Catalog" description="Explore 25 progression categories across 5 motorsport modules with full specifications and telemetry radar.">
   <div class="py-6 border-b border-racing-border">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div>
         <h1 class="text-3xl font-extrabold text-white tracking-tight">Interactive Garage Showroom</h1>
         <p class="text-sm text-racing-muted font-mono mt-1">
@@ -23,14 +24,18 @@ const modules = [
         </p>
       </div>
 
-      <!-- Quick Search Input -->
-      <div class="w-full md:w-72">
-        <input
-          type="text"
-          id="car-search"
-          placeholder="Search by car name, brand, class, engine..."
-          class="w-full px-4 py-2 bg-racing-surface border border-racing-border rounded-lg text-xs font-mono text-white placeholder-racing-muted focus:outline-none focus:border-racing-blue"
-        />
+      <!-- Controls: Global View Switcher & Quick Search Input -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <GlobalViewSwitcher />
+
+        <div class="w-full sm:w-64">
+          <input
+            type="text"
+            id="car-search"
+            placeholder="Search by car name, brand, class..."
+            class="w-full px-4 py-2 bg-racing-surface border border-racing-border rounded-lg text-xs font-mono text-white placeholder-racing-muted focus:outline-none focus:border-racing-blue"
+          />
+        </div>
       </div>
     </div>
 
