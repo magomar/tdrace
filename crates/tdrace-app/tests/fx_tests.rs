@@ -333,3 +333,133 @@ fn test_slow_speed_hairpin_distance_accumulation() {
     buffer.update_for_cars(&[car.clone()], &surfaces);
     assert_eq!(buffer.count(), 2, "Cumulative distance reaching 0.20m must cleanly emit dual-tread segments");
 }
+
+#[test]
+fn test_gravel_rolling_rut_without_slip() {
+    let mut buffer = SkidmarkBuffer::new(100);
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.speed = 10.0;
+    car.state.velocity = Vec2::new(10.0, 0.0);
+    // Zero slip on all wheels
+    for w in 0..4 {
+        car.state.wheels[w].skid_intensity = 0.0;
+        car.state.wheels[w].is_skidding = false;
+        car.state.wheels[w].slip_ratio = 0.0;
+        car.state.wheels[w].slip_angle = 0.0;
+    }
+    let surfaces = vec![[SurfaceType::Gravel; 4]];
+
+    // Step 0: Anchor
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 0);
+
+    // Step 1: Move forward 0.5m on gravel
+    car.state.position = Vec2::new(0.5, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    // Deformable terrain leaves rolling ruts even without slip!
+    assert!(
+        buffer.count() > 0,
+        "Rolling on gravel without slip must still create visible depression ruts"
+    );
+
+    let seg = &buffer.segments()[0];
+    // Gravel color should be dark slate (r ~ 0.28, g ~ 0.26, b ~ 0.24), NOT asphalt black or sand yellow
+    assert!((seg.color.r - 0.28).abs() < 0.05);
+    assert!((seg.color.g - 0.26).abs() < 0.05);
+    assert!((seg.color.b - 0.24).abs() < 0.05);
+}
+
+#[test]
+fn test_dirt_contamination_deposit_on_pavement() {
+    let mut buffer = SkidmarkBuffer::new(100);
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.speed = 12.0;
+    car.state.velocity = Vec2::new(12.0, 0.0);
+    for w in 0..4 {
+        car.state.wheels[w].skid_intensity = 0.0;
+        car.state.wheels[w].is_skidding = false;
+        car.state.wheels[w].slip_ratio = 0.0;
+        car.state.wheels[w].slip_angle = 0.0;
+        // Contaminated wheel from previous off-track excursion
+        car.state.wheels[w].dirt_contamination = 0.75;
+        car.state.wheels[w].dirt_surface = SurfaceType::Dirt;
+    }
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    // Step 0: Anchor
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 0);
+
+    // Step 1: Car moves onto clean asphalt with dirty tires
+    car.state.position = Vec2::new(0.5, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    assert!(
+        buffer.count() > 0,
+        "Contaminated tires rolling on clean pavement must deposit dirt trails without needing slip"
+    );
+
+    let seg = &buffer.segments()[0];
+    // Color should reflect dirt (r ~ 0.35, g ~ 0.22, b ~ 0.12)
+    assert!((seg.color.r - 0.35).abs() < 0.05);
+    assert!((seg.color.g - 0.22).abs() < 0.05);
+    assert!((seg.color.b - 0.12).abs() < 0.05);
+}
+
+#[test]
+fn test_multi_surface_skidmark_distinct_palettes() {
+    let test_cases = [
+        (SurfaceType::Sand, 0.65, 0.52, 0.28),
+        (SurfaceType::Mud, 0.18, 0.12, 0.06),
+        (SurfaceType::Snow, 0.65, 0.72, 0.82),
+        (SurfaceType::Ice, 0.92, 0.96, 1.0),
+    ];
+
+    for (surf, exp_r, exp_g, exp_b) in test_cases {
+        let mut buffer = SkidmarkBuffer::new(50);
+        let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+        car.state.speed = 15.0;
+        car.state.wheels[0].skid_intensity = 0.8;
+        let surfaces = vec![[surf; 4]];
+
+        buffer.update_for_cars(&[car.clone()], &surfaces);
+        car.state.position = Vec2::new(0.5, 0.0);
+        buffer.update_for_cars(&[car.clone()], &surfaces);
+
+        assert!(buffer.count() > 0, "Surface {:?} should emit skidmarks", surf);
+        let seg = &buffer.segments()[0];
+        assert!(
+            (seg.color.r - exp_r).abs() < 0.06 && (seg.color.g - exp_g).abs() < 0.06 && (seg.color.b - exp_b).abs() < 0.06,
+            "Surface {:?} color ({}, {}, {}) did not match expected ({}, {}, {})",
+            surf, seg.color.r, seg.color.g, seg.color.b, exp_r, exp_g, exp_b
+        );
+    }
+}
+
+#[test]
+fn test_debris_roost_particle_emission_by_surface() {
+    let mut ps = ParticleSystem::new(200);
+
+    // Gravel roost
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Gravel, Vec2::new(10.0, 0.0));
+    let count_after_gravel = ps.count();
+    assert!(count_after_gravel > 0, "Gravel should produce roost particles");
+
+    // Mud roost
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Mud, Vec2::new(10.0, 0.0));
+    let count_after_mud = ps.count();
+    assert!(count_after_mud > count_after_gravel, "Mud should produce roost particles");
+
+    // Snow roost
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Snow, Vec2::new(10.0, 0.0));
+    let count_after_snow = ps.count();
+    assert!(count_after_snow > count_after_mud, "Snow should produce roost particles");
+
+    // Asphalt - should NOT produce roost particles
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Asphalt, Vec2::new(10.0, 0.0));
+    assert_eq!(ps.count(), count_after_snow, "Asphalt must NOT produce dirt roost particles");
+}
+
