@@ -323,18 +323,8 @@ impl Track {
             if proj.is_on_curb {
                 return SurfaceType::Curb;
             }
-        }
 
-        // 4. Check explicit off-track surface zones (e.g. hand-placed sand traps, asphalt runoffs):
-        for zone in &self.geometry.surface_zones {
-            if !zone.is_above_track() && zone.contains(point) {
-                return zone.surface;
-            }
-        }
-
-        // 5. Segment runoff corridor (off-track terrain between track/curb edge and boundary wall):
-        if self.spline.waypoints.len() >= 2 {
-            let proj = self.spline.project_point(point);
+            // 4. Segment runoff corridor (off-track terrain between track/curb edge and boundary wall):
             let half_w = proj.track_width * 0.5;
             let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
             let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
@@ -357,7 +347,7 @@ impl Track {
             }
         }
 
-        // 6. Check Arena / Hybrid floor surface inside boundary hull:
+        // 5. Check Arena / Hybrid floor surface inside boundary hull:
         match &self.kind {
             TrackKind::Arena { boundary_hull, floor_surface, .. } => {
                 if point_in_polygon(point, boundary_hull) {
@@ -370,6 +360,13 @@ impl Track {
                 }
             }
             TrackKind::Circuit => {}
+        }
+
+        // 6. Check explicit off-track surface zones (e.g. hand-placed sand traps, asphalt runoffs):
+        for zone in &self.geometry.surface_zones {
+            if !zone.is_above_track() && zone.contains(point) {
+                return zone.surface;
+            }
         }
 
         // 7. Check grandstand concrete aprons
@@ -432,14 +429,7 @@ impl Track {
             return SurfaceType::Curb;
         }
 
-        // 4. Check explicit off-track surface zones
-        for zone in &self.geometry.surface_zones {
-            if !zone.is_above_track() && zone.contains(point) {
-                return zone.surface;
-            }
-        }
-
-        // 5. Segment runoff corridor check
+        // 4. Segment runoff corridor check
         let half_w = proj.track_width * 0.5;
         let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
         let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
@@ -461,15 +451,36 @@ impl Track {
             }
         }
 
+        // 5. Check Arena / Hybrid floor surface inside boundary hull:
+        match &self.kind {
+            TrackKind::Arena { boundary_hull, floor_surface, .. } => {
+                if point_in_polygon(point, boundary_hull) {
+                    return *floor_surface;
+                }
+            }
+            TrackKind::Hybrid { boundary_hull, floor_surface, .. } => {
+                if point_in_polygon(point, boundary_hull) {
+                    return *floor_surface;
+                }
+            }
+            TrackKind::Circuit => {}
+        }
 
-        // 5. Check grandstand concrete aprons
+        // 6. Check explicit off-track surface zones
+        for zone in &self.geometry.surface_zones {
+            if !zone.is_above_track() && zone.contains(point) {
+                return zone.surface;
+            }
+        }
+
+        // 7. Check grandstand concrete aprons
         for grandstand in &self.geometry.grandstands {
             if grandstand.contains(point) {
                 return SurfaceType::Concrete;
             }
         }
 
-        // 6. Default terrain
+        // 8. Default terrain
         self.default_surface
     }
 }
@@ -927,9 +938,16 @@ mod tests {
         let surf_far = track.sample_surface(Vec2::new(0.0, -100.0));
         assert_eq!(surf_far, SurfaceType::Grass);
 
-        // Sample inside sand trap
+        // Sample inside sand trap beyond wall barrier
         let surf_sand = track.sample_surface(Vec2::new(180.0, 235.0));
         assert_eq!(surf_sand, SurfaceType::Sand);
+
+        let p = Vec2::new(180.0, 225.0);
+        let proj = track.spline.project_point(p);
+        let surf_runoff = track.sample_surface(p);
+        assert_eq!(surf_runoff, SurfaceType::Gravel);
+        let surf_runoff_near = track.sample_surface_near(p, proj.progress_distance);
+        assert_eq!(surf_runoff_near, SurfaceType::Gravel);
 
         // Regression: sand trap AABB overlaps the hairpin ribbon (centerline y=210,
         // half-width 6, zone starts at y=215). On-track points must stay Asphalt.
