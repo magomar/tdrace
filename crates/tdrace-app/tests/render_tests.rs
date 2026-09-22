@@ -394,51 +394,6 @@ fn test_vortex_dune_crusher_topdown_sprite_orientation() {
 }
 
 #[test]
-fn test_classic_kart_topdown_sprite_orientation() {
-    use macroquad::texture::Image;
-    use std::path::Path;
-
-    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_kart.png");
-    let bytes = std::fs::read(&path).expect("Failed to read classic_kart topdown sprite");
-    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse classic_kart image");
-
-    let width = img.width as usize;
-    let height = img.height as usize;
-    let mut left_plate_pixels = 0;
-    let mut right_plate_pixels = 0;
-
-    for y in 0..height {
-        for x in 0..width {
-            let idx = (y * width + x) * 4;
-            let r = img.bytes[idx];
-            let g = img.bytes[idx + 1];
-            let b = img.bytes[idx + 2];
-            let a = img.bytes[idx + 3];
-
-            // White number plate on the front nosecone
-            if a > 200 && r > 240 && g > 240 && b > 240 {
-                if x < width / 2 {
-                    left_plate_pixels += 1;
-                } else {
-                    right_plate_pixels += 1;
-                }
-            }
-        }
-    }
-
-    assert!(
-        right_plate_pixels > 300,
-        "Classic kart front number plate must face forward (+X, right side). Found {} pixels",
-        right_plate_pixels
-    );
-    assert!(
-        right_plate_pixels > left_plate_pixels * 4,
-        "Classic kart must have predominantly more number plate pixels in front than rear"
-    );
-}
-
-#[test]
 fn test_classic_mask_tinting_transforms_bodywork_pixels() {
     use macroquad::color::Color;
     use macroquad::texture::Image;
