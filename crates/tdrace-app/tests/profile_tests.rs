@@ -1123,12 +1123,55 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
     }
 
     // 3. Karting Career Tiers
-    session.start_kart_career_tier(1);
-    assert_eq!(session.game_mode, GameMode::Career);
-    assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 5);
-    for tier in 2..=5 {
+    use tdrace_app::module::GameModule;
+    let kart_module = tdrace_app::module::kart::KartGameModule::new();
+    let kart_registered_tracks: std::collections::HashSet<_> = kart_module
+        .tracks()
+        .into_iter()
+        .map(|t| t.id.to_string())
+        .collect();
+
+    let expected_kart_tiers: [(&str, Vec<&str>); 5] = [
+        (
+            "Rotax Junior Academy (Tier 1)",
+            vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"],
+        ),
+        (
+            "National Kart Championship (Tier 2)",
+            vec!["sarno", "kristianstad", "seven_laghi"],
+        ),
+        (
+            "Continental Rotax Trophy (Tier 3)",
+            vec!["pfi", "franciacorta", "ampfing"],
+        ),
+        (
+            "FIA Karting European Championship (Tier 4)",
+            vec!["zuera", "silverstone_national_kart", "le_mans_kart"],
+        ),
+        (
+            "FIA Karting World Championship (Tier 5)",
+            vec!["portimao_kart", "valencia_kart", "campillos"],
+        ),
+    ];
+
+    for (tier_idx, (expected_cup_name, expected_tracks)) in expected_kart_tiers.iter().enumerate() {
+        let tier = (tier_idx + 1) as u32;
         session.start_kart_career_tier(tier);
-        assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
+        assert_eq!(session.game_mode, GameMode::Career);
+        let champ = session.championship_session.as_ref().unwrap();
+        assert_eq!(champ.name, *expected_cup_name);
+        assert_eq!(champ.tier, tier);
+        assert_eq!(champ.track_ids.len(), expected_tracks.len());
+        for track_id in &champ.track_ids {
+            assert!(
+                kart_registered_tracks.contains(track_id),
+                "Kart tier {} track '{}' must exist in KartGameModule tracks",
+                tier,
+                track_id
+            );
+        }
+        let actual_ids: Vec<&str> = champ.track_ids.iter().map(|s| s.as_str()).collect();
+        assert_eq!(actual_ids, *expected_tracks);
     }
 
     // 4. Extreme Off-Road Career Tiers
