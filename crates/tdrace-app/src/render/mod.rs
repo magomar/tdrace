@@ -5,6 +5,7 @@ pub mod ghost;
 pub mod lateral;
 pub mod marker;
 pub mod scenery;
+pub mod surface_material;
 pub mod track;
 pub mod vehicle_assets;
 
@@ -27,6 +28,11 @@ pub use marker::{
 pub use scenery::{
     render_grandstand, render_grandstand_shadows_culled, render_grandstands_culled,
     render_tree_canopies_culled, render_tree_shadows_culled, render_tree_trunks_culled,
+};
+pub use surface_material::{
+    evaluate_macro_modulation, generate_curb_image, generate_edge_fringe_mask,
+    generate_macro_noise_image, generate_surface_image, generate_tire_rubber_image,
+    SurfaceMaterial, SurfaceMaterialRegistry, SurfaceTextureQuality, TrackWearState,
 };
 pub use track::{
     get_track_backdrop_color, render_elevated_track, render_elevated_track_culled,

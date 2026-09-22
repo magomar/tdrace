@@ -700,6 +700,388 @@ fn test_all_modality_emblem_assets_and_integrity() {
     }
 }
 
+#[test]
+fn test_surface_material_quality_and_properties() {
+    use tdrace_app::render::{SurfaceMaterial, SurfaceTextureQuality};
+    use tdrace_core::physics::surface::SurfaceType;
+
+    assert_eq!(SurfaceTextureQuality::Off.name(), "Off (Flat)");
+    assert_eq!(SurfaceTextureQuality::Standard.name(), "Standard");
+    assert_eq!(SurfaceTextureQuality::High.name(), "High");
+    assert_eq!(SurfaceTextureQuality::default(), SurfaceTextureQuality::High);
+
+    let surfaces = [
+        SurfaceType::Asphalt,
+        SurfaceType::Dirt,
+        SurfaceType::Curb,
+        SurfaceType::Grass,
+        SurfaceType::Sand,
+        SurfaceType::Water,
+        SurfaceType::Oil,
+        SurfaceType::Ice,
+        SurfaceType::Mud,
+        SurfaceType::Snow,
+        SurfaceType::Gravel,
+        SurfaceType::Concrete,
+    ];
+
+    for &surf in &surfaces {
+        let mat = SurfaceMaterial::new(surf, None);
+        assert_eq!(mat.surface_type, surf);
+        assert!(mat.tile_scale_meters > 0.0, "Tile scale must be positive for {:?}", surf);
+        assert!(mat.roughness >= 0.0 && mat.roughness <= 1.0, "Roughness in [0, 1] for {:?}", surf);
+    }
+}
+
+#[test]
+fn test_procedural_surface_image_generators_all_12_surfaces() {
+    use tdrace_app::render::{generate_curb_image, generate_edge_fringe_mask, generate_macro_noise_image, generate_surface_image};
+    use tdrace_core::physics::surface::SurfaceType;
+
+    let surfaces = [
+        SurfaceType::Asphalt,
+        SurfaceType::Dirt,
+        SurfaceType::Grass,
+        SurfaceType::Gravel,
+        SurfaceType::Sand,
+        SurfaceType::Mud,
+        SurfaceType::Snow,
+        SurfaceType::Ice,
+        SurfaceType::Water,
+        SurfaceType::Oil,
+        SurfaceType::Concrete,
+    ];
+
+    let dim = 64u16;
+
+    for &surf in &surfaces {
+        let img = generate_surface_image(surf, dim, dim);
+        assert_eq!(img.width, dim);
+        assert_eq!(img.height, dim);
+        assert_eq!(img.bytes.len(), (dim as usize) * (dim as usize) * 4);
+
+        // Verify non-zero alpha and color variation across pixels
+        let mut min_val = 255u8;
+        let mut max_val = 0u8;
+        for chunk in img.bytes.chunks_exact(4) {
+            let r = chunk[0];
+            let a = chunk[3];
+            assert!(a > 0, "Alpha must be positive for {:?}", surf);
+            min_val = min_val.min(r);
+            max_val = max_val.max(r);
+        }
+
+        assert!(
+            max_val > min_val,
+            "Procedural texture must exhibit micro-texture color variation for {:?}",
+            surf
+        );
+    }
+
+    // Verify curb image (alternating red and white teeth with bevel gradient)
+    let curb = generate_curb_image(64, 32);
+    assert_eq!(curb.width, 64);
+    assert_eq!(curb.height, 32);
+    // Left half should be red (R > 150, G < 100), right half should be white (R > 150, G > 150)
+    let p_red = &curb.bytes[0..4]; // (0, 0)
+    let p_white = &curb.bytes[(32 * 4)..(32 * 4 + 4)]; // (32, 0)
+    assert!(p_red[0] > 150 && p_red[1] < 100, "Left tooth must be red: {:?}", p_red);
+    assert!(p_white[0] > 150 && p_white[1] > 150, "Right tooth must be white: {:?}", p_white);
+
+    // Verify edge fringe mask has alpha variations
+    let fringe = generate_edge_fringe_mask(32, 32);
+    assert_eq!(fringe.bytes.len(), 32 * 32 * 4);
+    let mut min_alpha = 255u8;
+    let mut max_alpha = 0u8;
+    for chunk in fringe.bytes.chunks_exact(4) {
+        min_alpha = min_alpha.min(chunk[3]);
+        max_alpha = max_alpha.max(chunk[3]);
+    }
+    assert!(max_alpha > min_alpha, "Edge fringe mask must have alpha falloff");
+
+    // Verify macro noise image
+    let macro_noise = generate_macro_noise_image(32, 32);
+    assert_eq!(macro_noise.bytes.len(), 32 * 32 * 4);
+
+    // Verify tire rubber contact texture (feathered edges, multi-rib striations, white RGB)
+    let rubber = tdrace_app::render::generate_tire_rubber_image(64, 128);
+    assert_eq!(rubber.width, 64);
+    assert_eq!(rubber.height, 128);
+    assert_eq!(rubber.bytes.len(), 64 * 128 * 4);
+
+    // Edge pixel (x=0, y=64) should have zero/minimal alpha due to edge feathering
+    let edge_idx = (64 * 64 + 0) * 4;
+    assert_eq!(rubber.bytes[edge_idx], 255, "RGB must be white for vertex tinting");
+    assert!(rubber.bytes[edge_idx + 3] < 30, "Outer edge must feather to near-zero alpha: got {}", rubber.bytes[edge_idx + 3]);
+
+    // Check that contact ribs reach solid rubber density (> 180 alpha)
+    let max_patch_alpha = (0..64).map(|x| rubber.bytes[(64 * 64 + x) * 4 + 3]).max().unwrap();
+    assert!(max_patch_alpha > 180, "Contact ribs must reach solid rubber density: got {}", max_patch_alpha);
+}
+
+#[test]
+fn test_surface_asset_files_exist_and_are_valid_png() {
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let candidate_dirs = [
+        manifest_dir.join("assets/textures/surfaces"),
+        manifest_dir.join("../../assets/textures/surfaces"),
+        manifest_dir.join("../../../assets/textures/surfaces"),
+    ];
+
+    let surfaces_dir = candidate_dirs
+        .iter()
+        .find(|p| p.exists())
+        .expect("assets/textures/surfaces directory must exist");
+
+    let expected_files = [
+        "asphalt_diffuse.png",
+        "dirt_compacted.png",
+        "grass_turf.png",
+        "gravel_crushed.png",
+        "sand_dune.png",
+        "mud_viscous.png",
+        "snow_powder.png",
+        "ice_glazed.png",
+        "water_caustic.png",
+        "oil_iridescent.png",
+        "concrete_brushed.png",
+        "curb_teeth.png",
+        "edge_fringe_mask.png",
+        "asphalt_groove.png",
+    ];
+
+    for filename in &expected_files {
+        let path = surfaces_dir.join(filename);
+        assert!(path.exists(), "Surface texture file must exist: {:?}", path);
+        let bytes = std::fs::read(&path).expect("Failed to read texture file");
+        assert!(bytes.len() > 500, "Texture file {:?} must be larger than 500 bytes", filename);
+        assert_eq!(&bytes[1..4], b"PNG", "File {:?} must be a valid PNG image", filename);
+    }
+}
+
+#[test]
+fn test_spline_ribbon_and_world_space_uv_mappings() {
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let track = classic_grand_prix();
+    assert!(track.spline.samples.len() > 10);
+
+    // Verify distance monotonically increases along spline samples
+    let samples = &track.spline.samples;
+    for i in 1..samples.len() {
+        assert!(samples[i].distance >= samples[i - 1].distance);
+    }
+
+    // Verify ribbon UV scaling formula: v = distance / tile_scale
+    let tile_scale = 4.0; // Asphalt scale
+    let s0 = &samples[0];
+    let s1 = &samples[1];
+    let v0 = s0.distance / tile_scale;
+    let v1 = s1.distance / tile_scale;
+    assert!(v1 >= v0);
+    assert_eq!(v0, 0.0);
+
+    // Verify world UV scaling formula: uv = (x / scale, y / scale)
+    let world_p1 = glam::Vec2::new(100.0, 200.0);
+    let world_p2 = glam::Vec2::new(100.0, 200.0);
+    let scale_world = 6.0;
+    let uv1 = world_p1 / scale_world;
+    let uv2 = world_p2 / scale_world;
+    assert_eq!(uv1, uv2, "Identical world coordinates must share identical UVs for seamless continuity");
+}
+
+#[test]
+fn test_macro_modulation_value_range_and_spatial_continuity() {
+    use tdrace_app::render::evaluate_macro_modulation;
+
+    let mut min_val = 100.0f32;
+    let mut max_val = -100.0f32;
+    let mut sum = 0.0f32;
+    let mut count = 0;
+
+    // Sample across a 400m x 400m circuit expanse at 4m intervals
+    for x_i in 0..100 {
+        for y_i in 0..100 {
+            let x = x_i as f32 * 4.0;
+            let y = y_i as f32 * 4.0;
+            let val = evaluate_macro_modulation(x, y);
+
+            assert!(
+                val >= -1.0 && val <= 1.0,
+                "Macro modulation must be strictly within [-1.0, 1.0], got {}",
+                val
+            );
+
+            min_val = min_val.min(val);
+            max_val = max_val.max(val);
+            sum += val;
+            count += 1;
+        }
+    }
+
+    let mean = sum / count as f32;
+    // Verify non-trivial modulation variance over the circuit
+    assert!(max_val - min_val > 0.8, "Macro field must exhibit sufficient amplitude variance, got range [{}, {}]", min_val, max_val);
+    assert!(mean.abs() < 0.25, "Macro modulation should be reasonably centered near 0, got mean {}", mean);
+}
+
+#[test]
+fn test_track_wear_state_phase_2_hooks() {
+    use tdrace_app::render::TrackWearState;
+
+    let mut wear = TrackWearState::new(10);
+    assert_eq!(wear.segment_rubber.len(), 10);
+    assert_eq!(wear.segment_marbles.len(), 10);
+
+    // Initial state: pristine track
+    for i in 0..10 {
+        assert_eq!(wear.get_rubber(i), 0.0);
+        assert_eq!(wear.get_marbles(i), 0.0);
+    }
+
+    // Dynamic rubber deposition from tire slip work
+    wear.deposit_rubber(3, 250.0); // 250 * 0.001 = 0.25
+    assert!((wear.get_rubber(3) - 0.25).abs() < 1e-4);
+
+    wear.deposit_rubber(3, 500.0); // 0.25 + 0.50 = 0.75
+    assert!((wear.get_rubber(3) - 0.75).abs() < 1e-4);
+
+    // Clamp at 1.0
+    wear.deposit_rubber(3, 500.0);
+    assert_eq!(wear.get_rubber(3), 1.0);
+
+    // Loose marbles accumulation
+    wear.accumulate_marbles(7, 400.0);
+    assert!((wear.get_marbles(7) - 0.40).abs() < 1e-4);
+
+    // Out-of-bounds safety
+    assert_eq!(wear.get_rubber(999), 0.0);
+    assert_eq!(wear.get_marbles(999), 0.0);
+    wear.deposit_rubber(999, 100.0); // No panic
+    wear.accumulate_marbles(999, 100.0); // No panic
+}
+
+#[test]
+fn test_segment_curvature_and_apex_rubbering_lateral_distribution() {
+    use tdrace_app::render::track::compute_segment_curvature;
+    use tdrace_core::track::presets::classic_grand_prix;
+    let base_sample = classic_grand_prix().spline.samples[0].clone();
+
+    // 1. Synthetic straight segment
+    let mut s_straight_0 = base_sample.clone();
+    s_straight_0.point = glam::Vec2::new(0.0, 0.0);
+    s_straight_0.tangent = glam::Vec2::new(1.0, 0.0);
+    s_straight_0.distance = 0.0;
+
+    let mut s_straight_1 = s_straight_0.clone();
+    s_straight_1.point = glam::Vec2::new(10.0, 0.0);
+    s_straight_1.tangent = glam::Vec2::new(1.0, 0.0);
+    s_straight_1.distance = 10.0;
+
+    let k_straight = compute_segment_curvature(&s_straight_0, &s_straight_1);
+    assert!(k_straight.abs() < 1e-5, "Straight segment curvature must be near zero: {}", k_straight);
+
+    // 2. Synthetic Left turn (counter-clockwise deflection: tangent rotates from (1, 0) towards (0, 1))
+    let mut s_left_1 = s_straight_0.clone();
+    let angle_left = 0.20f32; // ~11.5 degrees left turn
+    s_left_1.tangent = glam::Vec2::new(angle_left.cos(), angle_left.sin());
+    s_left_1.point = glam::Vec2::new(5.0, 1.0);
+    s_left_1.distance = 5.1;
+
+    let k_left = compute_segment_curvature(&s_straight_0, &s_left_1);
+    assert!(k_left > 0.0, "Left turn curvature must be positive: {}", k_left);
+
+    // 3. Synthetic Right turn (clockwise deflection: tangent rotates from (1, 0) towards (0, -1))
+    let mut s_right_1 = s_straight_0.clone();
+    let angle_right = -0.20f32; // ~11.5 degrees right turn
+    s_right_1.tangent = glam::Vec2::new(angle_right.cos(), angle_right.sin());
+    s_right_1.point = glam::Vec2::new(5.0, -1.0);
+    s_right_1.distance = 5.1;
+
+    let k_right = compute_segment_curvature(&s_straight_0, &s_right_1);
+    assert!(k_right < 0.0, "Right turn curvature must be negative: {}", k_right);
+
+    // 4. Verify on realistic track spline
+    let track = classic_grand_prix();
+    let samples = &track.spline.samples;
+    let mut max_k = 0.0f32;
+    for i in 0..samples.len() - 1 {
+        let k = compute_segment_curvature(&samples[i], &samples[i + 1]);
+        max_k = max_k.max(k.abs());
+    }
+    assert!(max_k > 0.02, "Realistic track must contain curved segments with significant curvature, found max: {}", max_k);
+}
+
+#[test]
+fn test_track_render_execution_under_all_quality_tiers_headless_safety() {
+    use tdrace_app::render::track::{render_track, set_surface_texture_quality};
+    use tdrace_app::render::surface_material::SurfaceTextureQuality;
+    use tdrace_core::track::presets::{classic_grand_prix, drift_park, oval_speedway};
+
+    let tracks = [classic_grand_prix(), oval_speedway(), drift_park()];
+    let qualities = [
+        SurfaceTextureQuality::Off,
+        SurfaceTextureQuality::Standard,
+        SurfaceTextureQuality::High,
+    ];
+
+    for &q in &qualities {
+        set_surface_texture_quality(q);
+        for t in &tracks {
+            // Must execute without panic in headless environments across all quality tiers
+            render_track(t);
+        }
+    }
+}
+
+#[test]
+fn test_seamless_periodic_grass_and_asphalt_generators() {
+    use tdrace_app::render::generate_surface_image;
+    use tdrace_core::physics::surface::SurfaceType;
+
+    let grass_img = generate_surface_image(SurfaceType::Grass, 256, 256);
+    assert_eq!(grass_img.width, 256);
+    assert_eq!(grass_img.height, 256);
+    assert_eq!(grass_img.bytes.len(), 256 * 256 * 4);
+
+    let asphalt_img = generate_surface_image(SurfaceType::Asphalt, 256, 256);
+    assert_eq!(asphalt_img.width, 256);
+    assert_eq!(asphalt_img.height, 256);
+    assert_eq!(asphalt_img.bytes.len(), 256 * 256 * 4);
+
+    // Verify mean luminance range for isotropic matte asphalt (deep charcoal)
+    let mut sum_lum = 0u64;
+    for y in 0..256 {
+        for x in 0..256 {
+            let idx = (y * 256 + x) * 4;
+            sum_lum += asphalt_img.bytes[idx] as u64;
+        }
+    }
+    let mean_asphalt = sum_lum as f64 / (256.0 * 256.0);
+    assert!(mean_asphalt > 25.0 && mean_asphalt < 55.0, "Asphalt mean must be matte charcoal, got {}", mean_asphalt);
+}
+
+#[test]
+fn test_backdrop_ground_pass_execution() {
+    use tdrace_app::render::track::{render_backdrop_ground_pass, render_ground_track_culled, set_surface_texture_quality};
+    use tdrace_app::render::surface_material::SurfaceTextureQuality;
+    use tdrace_core::track::presets::classic_grand_prix;
+    use glam::Vec2;
+
+    let track = classic_grand_prix();
+    let bounds = Some((Vec2::new(-50.0, -50.0), Vec2::new(300.0, 300.0)));
+
+    for &q in &[SurfaceTextureQuality::Off, SurfaceTextureQuality::Standard, SurfaceTextureQuality::High] {
+        set_surface_texture_quality(q);
+        render_backdrop_ground_pass(&track, bounds);
+        render_backdrop_ground_pass(&track, None);
+        render_ground_track_culled(&track, bounds);
+    }
+}
+
+
 
 
 

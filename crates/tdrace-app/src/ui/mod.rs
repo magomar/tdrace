@@ -11,9 +11,12 @@ pub mod menu;
 pub mod profile_ui;
 pub mod race_stats;
 pub mod scaler;
+pub mod settings;
 pub mod starting_grid;
 pub mod track_manager_ui;
 pub mod track_preview;
+
+pub use settings::{cycle_surface_texture_quality, SurfaceTextureSettings};
 
 pub use career_hub::{
     cycle_calendar_slot, gt_default_calendar, gt_eligible_previous_tracks,

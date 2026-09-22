@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::CarConfig;
+use crate::render::surface_material::SurfaceTextureQuality;
 use crate::ui::menu::CarChoice;
 
 /// Configuration for a specific camera zoom level or mode.
@@ -203,6 +204,8 @@ pub struct DisplayConfig {
     pub custom_opacity: Option<f32>,
     /// Whether realistic vehicle ground shadows are rendered under vehicles.
     pub vehicle_shadows: bool,
+    /// Graphics quality tier for surface textures and terrain material shaders.
+    pub surface_texture_quality: SurfaceTextureQuality,
 }
 
 impl Default for DisplayConfig {
@@ -217,6 +220,7 @@ impl Default for DisplayConfig {
             line_spacing: 3.0,
             custom_opacity: None,
             vehicle_shadows: true,
+            surface_texture_quality: SurfaceTextureQuality::High,
         }
     }
 }

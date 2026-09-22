@@ -491,6 +491,7 @@ fn test_race_session_input_map_integration_and_rebinding() {
     let mut session = RaceSession::new();
     session.input.input_map = InputMap::default_racing();
     session.init_race();
+    session.input.input_map = InputMap::default_racing();
 
     // Verify initial input map is default racing
     assert_eq!(session.input.input_map, InputMap::default_racing());

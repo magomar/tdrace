@@ -628,6 +628,7 @@ impl RaceSession {
         let camera_p2 = RaceCamera::from_config(&config.camera);
         let editor_camera = EditorCamera::from_config(&config.camera);
         let crt_overlay = config.display.to_crt_overlay();
+        crate::render::track::set_surface_texture_quality(config.display.surface_texture_quality);
 
         let mut session = Self {
             state: GameState::ModuleSelect { selected_idx: 0 },
@@ -691,7 +692,7 @@ impl RaceSession {
             profile_telemetry_filter_idx: 0,
             profile_focus_card: false,
 
-            fx: EffectsManager::new(8000, 1500),
+            fx: EffectsManager::new(64000, 1500),
             camera,
             camera_p2,
             split_layout: SplitLayout::Vertical,
