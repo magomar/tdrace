@@ -1104,26 +1104,155 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
     session.hof_db = Some(mem_db);
     session.refresh_profiles_and_stats();
 
+    use tdrace_app::module::GameModule;
+
     // 1. NASCAR Career Tiers
-    session.start_nascar_career_tier(1);
-    assert_eq!(session.game_mode, GameMode::Career);
-    assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 5);
-    for tier in 2..=5 {
+    let nascar_module = tdrace_app::module::nascar::NascarGameModule::new();
+    let nascar_registered_tracks: std::collections::HashSet<_> = nascar_module
+        .tracks()
+        .into_iter()
+        .map(|t| t.id.to_string())
+        .collect();
+
+    let expected_nascar_tiers: [(&str, Vec<&str>); 5] = [
+        (
+            "NASCAR Weekly Short Track Series (Tier 1)",
+            vec![
+                "martinsville_speedway",
+                "bristol_motor_speedway",
+                "eldora_speedway",
+                "bowman_gray_stadium",
+                "lucas_oil_irp",
+            ],
+        ),
+        (
+            "NASCAR Intermediate Oval Challenge (Tier 2)",
+            vec![
+                "charlotte_motor_speedway",
+                "darlington_raceway",
+                "north_wilkesboro_speedway",
+            ],
+        ),
+        (
+            "NASCAR National Road & Oval Tour (Tier 3)",
+            vec![
+                "iowa_speedway",
+                "watkins_glen_nascar",
+                "road_america",
+            ],
+        ),
+        (
+            "NASCAR Premier Speedway Trophy (Tier 4)",
+            vec![
+                "indianapolis_motor_speedway",
+                "pocono_raceway",
+                "chicago_street_course",
+            ],
+        ),
+        (
+            "NASCAR Cup Series Championship (Tier 5)",
+            vec![
+                "daytona_superspeedway",
+                "talladega_superspeedway",
+                "phoenix_raceway",
+            ],
+        ),
+    ];
+
+    for (tier_idx, (expected_cup_name, expected_tracks)) in expected_nascar_tiers.iter().enumerate() {
+        let tier = (tier_idx + 1) as u32;
         session.start_nascar_career_tier(tier);
-        assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
+        assert_eq!(session.game_mode, GameMode::Career);
+        let champ = session.championship_session.as_ref().unwrap();
+        assert_eq!(champ.name, *expected_cup_name);
+        assert_eq!(champ.tier, tier);
+        assert_eq!(champ.track_ids.len(), expected_tracks.len());
+        for track_id in &champ.track_ids {
+            assert!(
+                nascar_registered_tracks.contains(track_id),
+                "NASCAR tier {} track '{}' must exist in NascarGameModule tracks",
+                tier,
+                track_id
+            );
+        }
+        let actual_ids: Vec<&str> = champ.track_ids.iter().map(|s| s.as_str()).collect();
+        assert_eq!(actual_ids, *expected_tracks);
     }
 
     // 2. Rallycross Career Tiers
-    session.start_rally_career_tier(1);
-    assert_eq!(session.game_mode, GameMode::Career);
-    assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 5);
-    for tier in 2..=5 {
+    let rally_module = tdrace_app::module::rally::RallyGameModule::new();
+    let rally_registered_tracks: std::collections::HashSet<_> = rally_module
+        .tracks()
+        .into_iter()
+        .map(|t| t.id.to_string())
+        .collect();
+
+    let expected_rally_tiers: [(&str, Vec<&str>); 5] = [
+        (
+            "Rallycross Grassroots Cup (Tier 1)",
+            vec![
+                "holjes_rx",
+                "lydden_hill",
+                "mettet_rx",
+                "dreux_rx",
+                "blyton_rx",
+            ],
+        ),
+        (
+            "World Rallycross Challenge (Tier 2)",
+            vec![
+                "hell_rx",
+                "loheac_rx",
+                "silverstone_rx",
+            ],
+        ),
+        (
+            "Group B Masters Series (Tier 3)",
+            vec![
+                "estering_rx",
+                "montalegre_rx",
+                "riga_rx",
+            ],
+        ),
+        (
+            "Dakar Rally Raid Trophy (Tier 4)",
+            vec![
+                "nyirad_rx",
+                "kouvola_rx",
+                "killarney_rx",
+            ],
+        ),
+        (
+            "Stadium Super Trucks World Series (Tier 5)",
+            vec![
+                "catalunya_rx",
+                "yas_marina_rx",
+                "essay_rx",
+            ],
+        ),
+    ];
+
+    for (tier_idx, (expected_cup_name, expected_tracks)) in expected_rally_tiers.iter().enumerate() {
+        let tier = (tier_idx + 1) as u32;
         session.start_rally_career_tier(tier);
-        assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
+        assert_eq!(session.game_mode, GameMode::Career);
+        let champ = session.championship_session.as_ref().unwrap();
+        assert_eq!(champ.name, *expected_cup_name);
+        assert_eq!(champ.tier, tier);
+        assert_eq!(champ.track_ids.len(), expected_tracks.len());
+        for track_id in &champ.track_ids {
+            assert!(
+                rally_registered_tracks.contains(track_id),
+                "Rally tier {} track '{}' must exist in RallyGameModule tracks",
+                tier,
+                track_id
+            );
+        }
+        let actual_ids: Vec<&str> = champ.track_ids.iter().map(|s| s.as_str()).collect();
+        assert_eq!(actual_ids, *expected_tracks);
     }
 
     // 3. Karting Career Tiers
-    use tdrace_app::module::GameModule;
     let kart_module = tdrace_app::module::kart::KartGameModule::new();
     let kart_registered_tracks: std::collections::HashSet<_> = kart_module
         .tracks()
@@ -1175,12 +1304,76 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
     }
 
     // 4. Extreme Off-Road Career Tiers
-    session.start_extreme_offroad_career_tier(1);
-    assert_eq!(session.game_mode, GameMode::Career);
-    assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 5);
-    for tier in 2..=5 {
+    let offroad_module = tdrace_app::module::extreme_offroad::ExtremeOffRoadModule::new();
+    let offroad_registered_tracks: std::collections::HashSet<_> = offroad_module
+        .tracks()
+        .into_iter()
+        .map(|t| t.id.to_string())
+        .collect();
+
+    let expected_offroad_tiers: [(&str, Vec<&str>); 5] = [
+        (
+            "Desert Sand Sprint Series (Tier 1)",
+            vec![
+                "sahara_dune_crossing",
+                "dirt_figure_eight",
+                "atacama_sand_basin",
+                "glamis_dunes",
+                "crandon_short_course",
+            ],
+        ),
+        (
+            "Red Rock Canyon Raid (Tier 2)",
+            vec![
+                "red_rock_canyon",
+                "mud_slough_arena",
+                "baja_500_desert_scrub",
+            ],
+        ),
+        (
+            "Arctic Glacial Challenge (Tier 3)",
+            vec![
+                "arctic_frozen_lake",
+                "alpine_snow_ridge",
+                "rovaniemi_ice_ring",
+            ],
+        ),
+        (
+            "Supercross & Mud Masters (Tier 4)",
+            vec![
+                "supercross_stadium_arena",
+                "gravel_quarry_chasm",
+                "louisiana_mud_swampland",
+            ],
+        ),
+        (
+            "Extreme Off-Road Ultimate Championship (Tier 5)",
+            vec![
+                "monster_colosseum",
+                "glacier_crest_pass",
+                "stunt_city_megastructure",
+            ],
+        ),
+    ];
+
+    for (tier_idx, (expected_cup_name, expected_tracks)) in expected_offroad_tiers.iter().enumerate() {
+        let tier = (tier_idx + 1) as u32;
         session.start_extreme_offroad_career_tier(tier);
-        assert_eq!(session.championship_session.as_ref().unwrap().track_ids.len(), 3);
+        assert_eq!(session.game_mode, GameMode::Career);
+        let champ = session.championship_session.as_ref().unwrap();
+        assert_eq!(champ.name, *expected_cup_name);
+        assert_eq!(champ.tier, tier);
+        assert_eq!(champ.track_ids.len(), expected_tracks.len());
+        for track_id in &champ.track_ids {
+            assert!(
+                offroad_registered_tracks.contains(track_id),
+                "Off-Road tier {} track '{}' must exist in ExtremeOffRoadGameModule tracks",
+                tier,
+                track_id
+            );
+        }
+        let actual_ids: Vec<&str> = champ.track_ids.iter().map(|s| s.as_str()).collect();
+        assert_eq!(actual_ids, *expected_tracks);
     }
 }
 

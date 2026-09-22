@@ -1973,7 +1973,7 @@ impl RaceSession {
     pub fn start_rally_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
-                "World RX Clubman Sprint (Tier 1)",
+                "Rallycross Grassroots Cup (Tier 1)",
                 vec![
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
@@ -1983,7 +1983,7 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "European Rallycross Challenge (Tier 2)",
+                "World Rallycross Challenge (Tier 2)",
                 vec![
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
@@ -1991,7 +1991,7 @@ impl RaceSession {
                 ],
             ),
             3 => (
-                "Global Supercar Trophy (Tier 3)",
+                "Group B Masters Series (Tier 3)",
                 vec![
                     "estering_rx".to_string(),
                     "montalegre_rx".to_string(),
@@ -1999,7 +1999,7 @@ impl RaceSession {
                 ],
             ),
             4 => (
-                "FIA World RX Masters (Tier 4)",
+                "Dakar Rally Raid Trophy (Tier 4)",
                 vec![
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
@@ -2007,7 +2007,7 @@ impl RaceSession {
                 ],
             ),
             _ => (
-                "FIA World RX Grand Finale (Tier 5)",
+                "Stadium Super Trucks World Series (Tier 5)",
                 vec![
                     "catalunya_rx".to_string(),
                     "yas_marina_rx".to_string(),
