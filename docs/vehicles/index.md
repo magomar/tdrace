@@ -34,4 +34,12 @@ $$\text{Lap Pace Index} = w_1 \cdot \frac{F_{\text{engine}}}{m} + w_2 \cdot D_{\
 * **Lightweight Cornering Specialists**: Lower mass ($m$), lower top speed, higher cornering apex grip ($D$).
 * **Power & Straight-Line Brawlers**: Higher horsepower ($F_{\text{engine}}$), higher mass, higher top speed ($v_{\text{top}}$).
 
+---
+
+## 📊 Telemetry & Handling Dynamics Guide
+
+For an in-depth breakdown of the 6-stat telemetry standard (`Speed`, `Accel`, `Grip`, `Agility`, `Braking`, `Downforce`), macro-category vs. micro-model handling profiles, and exact simulation engine derivations (`to_car_config`), see:
+
+* 🏎️ **[Vehicle Specifications & Handling Dynamics](specs.md)** — Comprehensive guide to vehicle telemetry, physical differentiation, and dynamic parameter scaling.
+
 Select a module above to view detailed car specifications and telemetry profiles, or explore the [Circuits Directory](../circuits/index.md).

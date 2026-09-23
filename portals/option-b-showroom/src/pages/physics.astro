@@ -115,4 +115,141 @@ import SurfaceMatrix from '../components/SurfaceMatrix.astro';
       </div>
     </div>
   </section>
+
+  <!-- Individual Vehicle Parameter Derivation Section -->
+  <section class="py-8 border-t border-racing-border space-y-6">
+    <div class="mb-2">
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-racing-blue/20 text-racing-cyan border border-racing-blue/30">
+          to_car_config()
+        </span>
+        <h2 class="text-xl font-bold text-white tracking-tight">4. Individual Vehicle Dynamic Parameter Derivation</h2>
+      </div>
+      <p class="text-xs text-racing-muted font-mono mt-1">
+        Active mathematical formulations implemented in crates/tdrace-app/src/catalog/mod.rs deriving physical parameters from homologated vehicle specs.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 font-mono text-xs">
+      <!-- Braking Force -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Braking Deceleration Scaling</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Caliper force scales with curb mass ratio and the vehicle's hardware braking rating:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-orange-300 overflow-x-auto">
+          F_brake = F_base · (m / m_base) · clamp(0.80 + 0.40 · stats.4, 0.5, 1.5)
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Compensates for vehicle mass while granting carbon-ceramic packages shorter stopping zones.
+        </p>
+      </div>
+
+      <!-- Lateral Tire Grip -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Pacejka Lateral Peak Grip (D)</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Scales the Pacejka '96 lateral friction peak factor D based on tire compound and track width:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-emerald-300 overflow-x-auto">
+          D_lateral = clamp(D_base · (0.85 + 0.30 · stats.2), 0.5, 1.8)
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Governs peak cornering adhesion before breakaway into progressive lateral slide.
+        </p>
+      </div>
+
+      <!-- Steering Rack Speed -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-fuchsia-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Steering Turn-In Responsiveness</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Modulates steering rack angular velocity ω_steer based on agility and front-axle geometry:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-fuchsia-300 overflow-x-auto">
+          ω_steer = clamp(ω_base · (0.80 + 0.40 · stats.3), 2.0, 15.0)
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Enables instantaneous darting turn-in on karts vs deliberate rotation on stock cars.
+        </p>
+      </div>
+
+      <!-- Yaw Inertia -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Chassis Yaw Moment of Inertia</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Rotational resistance around the vertical z-axis scaled by mass and agility rating:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-purple-300 overflow-x-auto">
+          I_z = max(I_base · (m / m_base) · (1.15 - 0.30 · stats.3), 10.0)
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Centralized mid-engine chassis transition rapidly through chicanes without sluggish inertia.
+        </p>
+      </div>
+
+      <!-- Aerodynamics Parsing -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-white"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Homologated Aero Extraction</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Parses lift (Cl) and drag (Cd) coefficients directly from vehicle homologation strings:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-slate-200 overflow-x-auto">
+          C_downforce = C_l · 0.76<br />
+          C_air_drag = C_d
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Injects speed-squared vertical downforce while penalizing high drag at terminal velocity.
+        </p>
+      </div>
+
+      <!-- Engine Tractive Force -->
+      <div class="p-5 rounded-xl bg-racing-surface border border-racing-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+          <h3 class="text-sm font-bold text-white font-sans">Engine Tractive Force by Module</h3>
+        </div>
+        <p class="text-racing-muted font-sans text-xs">
+          Calculates peak driving thrust from homologated BHP with module powertrain scaling:
+        </p>
+        <div class="p-3 bg-racing-surface2 rounded border border-racing-border/60 text-amber-300 overflow-x-auto">
+          F_engine = BHP · k_force<br />
+          k = 38.0 (Kart) | 14.0 (OffRoad T4-5) | 17.5 (Std)
+        </div>
+        <p class="text-racing-muted font-sans text-[11px]">
+          Calibrated to yield authentic real-world 0–100 km/h sprint benchmarks across all disciplines.
+        </p>
+      </div>
+    </div>
+
+    <!-- Telemetry Parity Banner -->
+    <div class="p-5 rounded-xl bg-gradient-to-r from-racing-surface2 to-racing-surface border border-racing-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h4 class="text-sm font-bold text-white">Unified 6-Stat Telemetry Alignment</h4>
+        <p class="text-xs text-racing-muted font-mono mt-0.5">
+          All 80 models in the Showroom and In-Game Garage reflect these dynamic parameters across Speed, Accel, Grip, Agility, Braking, and Downforce.
+        </p>
+      </div>
+      <a
+        href="/vehicles"
+        class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-racing-blue hover:bg-racing-blue/80 text-white text-xs font-mono font-bold transition-colors shrink-0"
+      >
+        Explore Garage Showroom &rarr;
+      </a>
+    </div>
+  </section>
 </Layout>
