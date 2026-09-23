@@ -92,7 +92,7 @@ fn test_suzuka_circuit_grid_and_crossover_geometry() {
     use tdrace_app::module::gt::GtWorldChallengeModule;
     let suzuka = GtWorldChallengeModule::track_suzuka();
 
-    assert_eq!(suzuka.grid_positions.len(), 20);
+    assert_eq!(suzuka.grid_positions.len(), 18);
 
     // Verify all 20 grid positions are aligned forward along the main straight (tangent ~ (1, 0))
     for (idx, pose) in suzuka.grid_positions.iter().enumerate() {

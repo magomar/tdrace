@@ -59,7 +59,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 4.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Monza Autodromo Nazionale".to_string(),
@@ -139,7 +139,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 4.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Circuit de Spa-Francorchamps".to_string(),
@@ -217,7 +217,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Silverstone Grand Prix Circuit".to_string(),
@@ -291,7 +291,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Circuit de Monaco".to_string(),
@@ -373,7 +373,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.8, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Suzuka International Racing Course".to_string(),
@@ -449,7 +449,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Autodromo Jose Carlos Pace (Interlagos)".to_string(),
@@ -525,7 +525,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.0, BarrierType::Concrete);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Circuit Gilles Villeneuve (Montreal)".to_string(),
@@ -599,7 +599,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Red Bull Ring (Spielberg)".to_string(),
@@ -675,7 +675,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Circuit de Barcelona-Catalunya".to_string(),
@@ -751,7 +751,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Circuit Zandvoort".to_string(),
@@ -829,7 +829,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.8, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Bahrain International Circuit (Sakhir)".to_string(),
@@ -907,7 +907,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Marina Bay Street Circuit (Singapore)".to_string(),
@@ -985,7 +985,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Circuit of the Americas (COTA)".to_string(),
@@ -1063,7 +1063,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.5, BarrierType::Concrete);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "MadRing Circuito de Madrid".to_string(),
@@ -1141,7 +1141,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Nurburgring Grand Prix-Strecke".to_string(),
@@ -1221,7 +1221,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 3.5, BarrierType::Concrete);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Mount Panorama (Bathurst)".to_string(),
@@ -1297,7 +1297,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Autodromo Internacional do Algarve".to_string(),
@@ -1381,7 +1381,7 @@ impl GtWorldChallengeModule {
             generate_walls_from_spline(&spline, 4.5, BarrierType::Steel);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
         Track {
             name: "Circuit de la Sarthe (Le Mans)".to_string(),

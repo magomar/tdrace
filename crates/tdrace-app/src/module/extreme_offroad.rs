@@ -32,6 +32,16 @@ impl ExtremeOffRoadModule {
     pub fn car_sand_rail() -> CarConfig {
         CarConfig::sand_rail()
     }
+
+    /// Dirt Figure Eight track configured for Extreme Off-Road with 12 grid slots.
+    pub fn track_dirt_figure_eight() -> tdrace_core::track::Track {
+        let mut track = dirt_figure_eight();
+        let (spacing, stagger) = track.default_grid_spacing_and_stagger();
+        track.auto_generate_grid(12, spacing, stagger);
+        track.module_id = Some("extreme_offroad".to_string());
+        track.modules = vec!["extreme_offroad".to_string()];
+        track
+    }
 }
 
 impl Default for ExtremeOffRoadModule {
@@ -111,7 +121,7 @@ impl GameModule for ExtremeOffRoadModule {
                 description: "High-speed dirt figure-eight crossover with twin jumps and 18-degree banked outer berms.",
                 category: "Stunt Arenas",
                 default_laps: 5,
-                generator: dirt_figure_eight,
+                generator: Self::track_dirt_figure_eight,
             },
             TrackDefinition {
                 id: "atacama_sand_basin",

@@ -2586,9 +2586,9 @@ fn render_inspector(
             curr_y += scaler.s(24.0);
 
             let btn_step_w = scaler.s(30.0);
-            let presets = [4, 8, 12, 16, 20];
+            let presets = [8, 10, 12, 14, 16, 18];
             let avail_w = w - scaler.s(24.0) - btn_step_w * 2.0 - scaler.s(8.0) * 2.0;
-            let chip_w = (avail_w - scaler.s(4.0) * 4.0) / 5.0;
+            let chip_w = (avail_w - scaler.s(4.0) * (presets.len() as f32 - 1.0)) / (presets.len() as f32);
 
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_step_w, scaler.s(22.0), "-1", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
                 if grid_cnt > 1 {

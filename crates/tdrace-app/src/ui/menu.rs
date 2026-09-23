@@ -1384,9 +1384,9 @@ pub fn render_track_select_menu(
             "Checkpoints".to_string()
         };
         let grid_str = if let Some(tr) = tr_ref {
-            format!("{} Grid Slots", tr.grid_positions.len().min(8))
+            format!("{} Grid Slots", tr.grid_positions.len())
         } else {
-            "8 Slots".to_string()
+            "10 Slots".to_string()
         };
         let scale_str = if let Some(tr) = tr_ref {
             if tr.scale() != "1:1" {

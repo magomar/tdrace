@@ -1896,7 +1896,7 @@ fn test_auto_grid_placement_and_circuit_property() {
     state.track.auto_generate_checkpoints(8, 3);
     assert!(state.track.has_finish_line());
     assert!(state.auto_generate_grid());
-    assert_eq!(state.track.grid_positions.len(), 8);
+    assert_eq!(state.track.grid_positions.len(), 10);
 
     let finish_cp = state.track.checkpoints.iter().find(|cp| cp.is_finish_line).unwrap();
     let finish_center = (finish_cp.gate.start + finish_cp.gate.end) * 0.5;

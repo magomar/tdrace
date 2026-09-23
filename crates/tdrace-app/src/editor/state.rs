@@ -579,7 +579,7 @@ impl EditorState {
     /// Returns the current number of starting grid positions configured for the circuit.
     pub fn grid_count(&self) -> usize {
         if self.track.grid_positions.is_empty() {
-            8
+            self.track.default_grid_count()
         } else {
             self.track.grid_positions.len()
         }

@@ -67,7 +67,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "South Garda Karting (Lonato)".to_string(),
@@ -145,7 +145,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 24, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Circuito Internazionale Napoli (Sarno)".to_string(),
@@ -221,7 +221,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Karting Genk (Home of Champions)".to_string(),
@@ -299,7 +299,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 24, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "PF International Kart Circuit (PFI)".to_string(),
@@ -377,7 +377,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 24, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Circuito Internacional de Zuera".to_string(),
@@ -453,7 +453,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Le Mans Karting International".to_string(),
@@ -531,7 +531,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 24, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Kartodromo Internacional do Algarve".to_string(),
@@ -607,7 +607,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Franciacorta Karting Track".to_string(),
@@ -684,7 +684,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Prokart Raceland Wackersdorf".to_string(),
@@ -761,7 +761,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Kristianstad Karting Klubb (Åsum Ring)".to_string(),
@@ -838,7 +838,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Circuito Internazionale 7 Laghi (Castelletto)".to_string(),
@@ -913,7 +913,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Schweppermannring Ampfing".to_string(),
@@ -984,7 +984,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 16, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Silverstone National Karting Circuit".to_string(),
@@ -1063,7 +1063,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Kartodromo Internacional Lucas Guerrero (Valencia)".to_string(),
@@ -1142,7 +1142,7 @@ impl KartGameModule {
             generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
         let checkpoints = generate_checkpoints(&spline, 20, 3);
-        let starting_grid = generate_grid_positions(&spline, 16, 5.5, 1.8);
+        let starting_grid = generate_grid_positions(&spline, 14, 5.5, 1.8);
 
         Track {
             name: "Kartcenter Campillos".to_string(),

@@ -306,7 +306,7 @@ mod tests {
             assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
             assert!(track.spline.total_length() > 300.0, "Track length too short for {}", track_def.id);
             assert!(track.checkpoints.len() >= 10, "Checkpoints too few for {}", track_def.id);
-            assert_eq!(track.grid_positions.len(), 20.min(track.grid_positions.len()), "Grid slots check for {}", track_def.id);
+            assert_eq!(track.grid_positions.len(), 18, "Grid slots check for {}", track_def.id);
 
             let diagnostics = tdrace_core::track::validation::validate_track(&track);
             let errors: Vec<_> = diagnostics
