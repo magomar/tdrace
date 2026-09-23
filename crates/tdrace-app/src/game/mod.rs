@@ -68,7 +68,7 @@ use tdrace_core::track::geometry::{JumpRampCarExt, SpawnPose};
 use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::{Track, TrackCategory};
 
-use crate::ai::{BotAiDriver, DriverCharacter, DriverPersonalityOffsets, DriverTier, DrivingStyle};
+use crate::ai::{BotAiDriver, CareerRivalEntry, DriverCharacter, DriverPersonalityOffsets, DriverTier, DrivingStyle};
 use crate::audio::{AudioManager, EngineSoundType, MusicTrack, SfxType};
 use crate::camera::{RaceCamera, SplitLayout, ZoomLevelConfig};
 use crate::config::GameConfig;
@@ -359,6 +359,13 @@ impl GridParticipant {
     }
 }
 
+/// User preference memory for a specific casual race modality.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ModalityPreference {
+    pub racer_count: usize,
+    pub difficulty: DriverTier,
+}
+
 /// Root controller orchestrating track geometry, cars, physics, UI, and audio.
 pub struct RaceSession {
     pub state: GameState,
@@ -393,6 +400,9 @@ pub struct RaceSession {
     pub opponent_drivers: Vec<DriverCharacter>,
     pub opponent_tiers: Vec<DriverTier>,
     pub casual_ai_difficulty: DriverTier,
+    pub modality_preferences: std::collections::HashMap<GameMode, ModalityPreference>,
+    pub prev_num_bots: usize,
+    pub prev_casual_ai_difficulty: DriverTier,
     pub grid_participants: Vec<GridParticipant>,
     pub driver_cards_idx: usize,
 
@@ -682,7 +692,10 @@ impl RaceSession {
             ai_drivers: Vec::new(),
             opponent_drivers: Vec::new(),
             opponent_tiers: Vec::new(),
-            casual_ai_difficulty: DriverTier::Contender,
+            casual_ai_difficulty: DriverTier::Rookie,
+            modality_preferences: std::collections::HashMap::new(),
+            prev_num_bots: config.gameplay.default_num_bots,
+            prev_casual_ai_difficulty: DriverTier::Rookie,
             grid_participants: Vec::new(),
             driver_cards_idx: 0,
 
@@ -2048,7 +2061,7 @@ impl RaceSession {
             _ => CarChoice::HypercarPrototype,
         };
 
-        let champ = ChampionshipSession::new(
+        let mut champ = ChampionshipSession::new(
             cup_name,
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             track_ids,
@@ -2064,6 +2077,26 @@ impl RaceSession {
                 ("oscar_rocket", "Oscar Rocket", "McLaren GT"),
             ],
         );
+        if !self.active_career_progress.career_rivals.is_empty() {
+            champ.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
+        } else {
+            let rivals = champ
+                .standings
+                .iter()
+                .filter(|s| s.driver_id != "player")
+                .map(|s| {
+                    let char_def = DriverCharacter::find_global(&s.driver_id);
+                    let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
+                    CareerRivalEntry {
+                        driver_id: s.driver_id.clone(),
+                        driver_name: s.driver_name.clone(),
+                        style,
+                        tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                    }
+                })
+                .collect();
+            self.active_career_progress.career_rivals = rivals;
+        }
         let prev_selected = self.selected_car_model_id;
         self.switch_to_gt();
         self.game_mode = GameMode::Career;
@@ -2176,7 +2209,7 @@ impl RaceSession {
             ),
         };
 
-        let champ = ChampionshipSession::new(
+        let mut champ = ChampionshipSession::new(
             cup_name,
             PointSystem::NascarCup { stage_win_bonus: true },
             track_ids,
@@ -2196,6 +2229,26 @@ impl RaceSession {
                 ("cale_yarborough", "Cale 'The Iron Man' Yarborough", "Junior Johnson Racing"),
             ],
         );
+        if !self.active_career_progress.career_rivals.is_empty() {
+            champ.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
+        } else {
+            let rivals = champ
+                .standings
+                .iter()
+                .filter(|s| s.driver_id != "player")
+                .map(|s| {
+                    let char_def = DriverCharacter::find_global(&s.driver_id);
+                    let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
+                    CareerRivalEntry {
+                        driver_id: s.driver_id.clone(),
+                        driver_name: s.driver_name.clone(),
+                        style,
+                        tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                    }
+                })
+                .collect();
+            self.active_career_progress.career_rivals = rivals;
+        }
         let prev_selected = self.selected_car_model_id;
         self.switch_to_nascar();
         self.game_mode = GameMode::Career;
@@ -2303,7 +2356,7 @@ impl RaceSession {
             ),
         };
 
-        let champ = ChampionshipSession::new(
+        let mut champ = ChampionshipSession::new(
             cup_name,
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             track_ids,
@@ -2319,6 +2372,26 @@ impl RaceSession {
                 ("timo_scheider", "Timo Scheider", "All-Inkl Racing"),
             ],
         );
+        if !self.active_career_progress.career_rivals.is_empty() {
+            champ.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
+        } else {
+            let rivals = champ
+                .standings
+                .iter()
+                .filter(|s| s.driver_id != "player")
+                .map(|s| {
+                    let char_def = DriverCharacter::find_global(&s.driver_id);
+                    let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
+                    CareerRivalEntry {
+                        driver_id: s.driver_id.clone(),
+                        driver_name: s.driver_name.clone(),
+                        style,
+                        tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                    }
+                })
+                .collect();
+            self.active_career_progress.career_rivals = rivals;
+        }
         let prev_selected = self.selected_car_model_id;
         self.switch_to_rally();
         self.game_mode = GameMode::Career;
@@ -2426,7 +2499,7 @@ impl RaceSession {
             ),
         };
 
-        let champ = ChampionshipSession::new(
+        let mut champ = ChampionshipSession::new(
             cup_name,
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             track_ids,
@@ -2442,6 +2515,26 @@ impl RaceSession {
                 ("mateo_silva", "Mateo Silva", "Parolin Motorsport"),
             ],
         );
+        if !self.active_career_progress.career_rivals.is_empty() {
+            champ.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
+        } else {
+            let rivals = champ
+                .standings
+                .iter()
+                .filter(|s| s.driver_id != "player")
+                .map(|s| {
+                    let char_def = DriverCharacter::find_global(&s.driver_id);
+                    let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
+                    CareerRivalEntry {
+                        driver_id: s.driver_id.clone(),
+                        driver_name: s.driver_name.clone(),
+                        style,
+                        tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                    }
+                })
+                .collect();
+            self.active_career_progress.career_rivals = rivals;
+        }
         let prev_selected = self.selected_car_model_id;
         self.switch_to_kart();
         self.game_mode = GameMode::Career;
@@ -2565,7 +2658,7 @@ impl RaceSession {
             })
             .collect();
 
-        let champ = ChampionshipSession::new(
+        let mut champ = ChampionshipSession::new(
             cup_name,
             PointSystem::FiaStandard { fastest_lap_bonus: false },
             track_ids,
@@ -2583,6 +2676,26 @@ impl RaceSession {
             ],
         )
         .with_round_laps(round_laps);
+        if !self.active_career_progress.career_rivals.is_empty() {
+            champ.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
+        } else {
+            let rivals = champ
+                .standings
+                .iter()
+                .filter(|s| s.driver_id != "player")
+                .map(|s| {
+                    let char_def = DriverCharacter::find_global(&s.driver_id);
+                    let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
+                    CareerRivalEntry {
+                        driver_id: s.driver_id.clone(),
+                        driver_name: s.driver_name.clone(),
+                        style,
+                        tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                    }
+                })
+                .collect();
+            self.active_career_progress.career_rivals = rivals;
+        }
         let prev_selected = self.selected_car_model_id;
         self.switch_to_extreme_offroad();
         self.game_mode = GameMode::Career;
@@ -2792,14 +2905,83 @@ impl RaceSession {
             DriverTier::Pro => DriverTier::Legend,
             DriverTier::Legend => DriverTier::Rookie,
         };
-        self.casual_ai_difficulty = next_tier;
-        self.rebuild_roster_participants();
+        self.set_casual_ai_difficulty(next_tier);
     }
 
     /// Sets the target difficulty tier for casual races and rebuilds grid tiers.
     pub fn set_casual_ai_difficulty(&mut self, tier: DriverTier) {
         self.casual_ai_difficulty = tier;
+        self.prev_casual_ai_difficulty = tier;
+        if self.game_mode != GameMode::Career && self.championship_session.is_none() {
+            let human_count = if self.is_split_screen() { 2 } else { 1 };
+            let racer_count = human_count + self.num_bots;
+            if let Some(pref) = self.modality_preferences.get_mut(&self.game_mode) {
+                pref.difficulty = tier;
+            } else {
+                self.modality_preferences.insert(
+                    self.game_mode,
+                    ModalityPreference {
+                        racer_count,
+                        difficulty: tier,
+                    },
+                );
+            }
+        }
         self.rebuild_roster_participants();
+    }
+
+    /// Sets bot count and records preference for active non-career modality.
+    pub fn set_num_bots(&mut self, bots: usize) {
+        self.num_bots = bots;
+        self.prev_num_bots = bots;
+        self.update_active_modality_racer_count();
+        self.rebuild_roster_participants();
+    }
+
+    /// Records the current racer count into modality preferences.
+    pub fn update_active_modality_racer_count(&mut self) {
+        if self.game_mode != GameMode::Career && self.championship_session.is_none() {
+            let human_count = if self.is_split_screen() { 2 } else { 1 };
+            let racer_count = human_count + self.num_bots;
+            if let Some(pref) = self.modality_preferences.get_mut(&self.game_mode) {
+                pref.racer_count = racer_count;
+            } else {
+                self.modality_preferences.insert(
+                    self.game_mode,
+                    ModalityPreference {
+                        racer_count,
+                        difficulty: self.casual_ai_difficulty,
+                    },
+                );
+            }
+            self.prev_num_bots = self.num_bots;
+        }
+    }
+
+    /// Explicitly updates saved preference for a game mode.
+    pub fn update_modality_preference(&mut self, mode: GameMode, racer_count: usize, difficulty: DriverTier) {
+        self.modality_preferences.insert(
+            mode,
+            ModalityPreference {
+                racer_count,
+                difficulty,
+            },
+        );
+        if self.game_mode == mode {
+            let human_count = if self.is_split_screen() { 2 } else { 1 };
+            let max_grid = self.max_grid_participants();
+            let clamped = racer_count.clamp(human_count, max_grid);
+            self.num_bots = clamped.saturating_sub(human_count).max(1);
+            self.casual_ai_difficulty = difficulty;
+            self.prev_num_bots = self.num_bots;
+            self.prev_casual_ai_difficulty = difficulty;
+            self.rebuild_roster_participants();
+        }
+    }
+
+    /// Returns the remembered preference for a game mode, if any.
+    pub fn modality_preference(&self, mode: GameMode) -> Option<ModalityPreference> {
+        self.modality_preferences.get(&mode).copied()
     }
 
     /// Reconstructs participant cars, trackers, and AI drivers for the active roster.
@@ -2892,11 +3074,17 @@ impl RaceSession {
                     self.opponent_drivers = champ_opponents.into_iter().take(target_opponents).collect();
                 }
             } else if self.game_mode == GameMode::Career {
-                if !module_opponents.is_empty() {
-                    self.opponent_drivers = DriverCharacter::sample_from_slice(&module_opponents, target_opponents, seed);
-                } else {
-                    self.opponent_drivers = DriverCharacter::sample_opponents(target_opponents, seed);
+                let rivals = self.active_career_progress.ensure_career_rivals_with_pool(&module_opponents, target_opponents, seed).to_vec();
+                let mut resolved_drivers = Vec::new();
+                let mut resolved_tiers = Vec::new();
+                for r in rivals.iter().take(target_opponents) {
+                    if let Some(c) = r.resolve_character() {
+                        resolved_drivers.push(c);
+                        resolved_tiers.push(r.tier);
+                    }
                 }
+                self.opponent_drivers = resolved_drivers;
+                self.opponent_tiers = resolved_tiers;
             } else {
                 // Casual races (Quick Race / StandardRace, Custom Race / ExperimentalRace, SplitScreen, Multiplayer):
                 // Sample across the entire global 72-driver pool with uniform 1/6 driving style distribution.
@@ -2909,7 +3097,9 @@ impl RaceSession {
         } else {
             Vec::new()
         };
-        self.opponent_tiers = casual_tiers.clone();
+        if self.game_mode != GameMode::Career && self.championship_session.is_none() {
+            self.opponent_tiers = casual_tiers.clone();
+        }
 
         // Resolve the real or fantasy car model
         let player_model = if effective_module != "classic" {
@@ -3072,6 +3262,26 @@ impl RaceSession {
             self.active_player_car_tier().clamp(1, 5)
         };
 
+        if self.championship_session.is_some() {
+            self.opponent_tiers = self
+                .opponent_drivers
+                .iter()
+                .map(|character| {
+                    self.championship_session
+                        .as_ref()
+                        .and_then(|champ| {
+                            champ
+                                .standings
+                                .iter()
+                                .find(|s| s.driver_id == character.id)
+                                .and_then(|s| s.ai_tier)
+                                .map(DriverTier::from_u8)
+                        })
+                        .unwrap_or_else(|| DriverTier::from_u8(current_tier))
+                })
+                .collect();
+        }
+
         let category_models = if effective_module == "classic" {
             if self.game_mode == GameMode::ExperimentalRace {
                 if let Some(pm) = player_model {
@@ -3191,7 +3401,7 @@ impl RaceSession {
                     .map(DriverTier::from_u8)
                     .unwrap_or_else(|| DriverTier::from_u8(current_tier))
             } else if self.game_mode == GameMode::Career {
-                DriverTier::from_u8(current_tier)
+                self.opponent_tiers.get(bot_idx).copied().unwrap_or_else(|| DriverTier::from_u8(current_tier))
             } else {
                 casual_tiers.get(bot_idx).copied().unwrap_or(self.casual_ai_difficulty)
             };
@@ -3398,7 +3608,7 @@ impl RaceSession {
                     .map(DriverTier::from_u8)
                     .unwrap_or_else(|| DriverTier::from_u8(current_tier))
             } else if self.game_mode == GameMode::Career {
-                DriverTier::from_u8(current_tier)
+                self.opponent_tiers.get(bot_idx).copied().unwrap_or_else(|| DriverTier::from_u8(current_tier))
             } else {
                 self.opponent_tiers.get(bot_idx).copied().unwrap_or(self.casual_ai_difficulty)
             };
@@ -3450,6 +3660,49 @@ impl RaceSession {
         // 2. Setup camera
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
+
+        // Apply or initialize modality user preferences (for non-career races with grid participants)
+        let is_career = self.game_mode == GameMode::Career || self.championship_session.is_some();
+        if !is_career && !self.is_time_attack {
+            let human_count = if self.is_split_screen() { 2 } else { 1 };
+            let max_grid = self.max_grid_participants();
+
+            // Detect direct explicit assignment to num_bots or casual_ai_difficulty (e.g. from tests or prior calls)
+            let explicit_bots = (self.num_bots != self.prev_num_bots).then_some(self.num_bots);
+            let explicit_difficulty = (self.casual_ai_difficulty != self.prev_casual_ai_difficulty).then_some(self.casual_ai_difficulty);
+
+            if let Some(pref) = self.modality_preferences.get_mut(&self.game_mode) {
+                if let Some(bots) = explicit_bots {
+                    pref.racer_count = human_count + bots;
+                }
+                if let Some(diff) = explicit_difficulty {
+                    pref.difficulty = diff;
+                }
+                let target_racers = pref.racer_count.clamp(human_count, max_grid);
+                self.num_bots = target_racers.saturating_sub(human_count).max(1);
+                self.casual_ai_difficulty = pref.difficulty;
+            } else {
+                // First initialization of this modality: initialize roster with slots available in grid and difficulty T1 (Rookie)
+                let target_difficulty = explicit_difficulty.unwrap_or(DriverTier::Rookie);
+                let target_racers = explicit_bots
+                    .map(|b| human_count + b)
+                    .unwrap_or(max_grid)
+                    .clamp(human_count, max_grid);
+                self.num_bots = target_racers.saturating_sub(human_count).max(1);
+                self.casual_ai_difficulty = target_difficulty;
+
+                self.modality_preferences.insert(
+                    self.game_mode,
+                    ModalityPreference {
+                        racer_count: target_racers,
+                        difficulty: target_difficulty,
+                    },
+                );
+            }
+
+            self.prev_num_bots = self.num_bots;
+            self.prev_casual_ai_difficulty = self.casual_ai_difficulty;
+        }
 
         // 3. Build participants & cars
         self.rebuild_roster_participants();
@@ -4608,6 +4861,7 @@ impl RaceSession {
                     self.num_bots = 1;
                 }
                 self.rebuild_roster_participants();
+                self.update_active_modality_racer_count();
             }
             return;
         }
@@ -4747,6 +5001,7 @@ impl RaceSession {
                                     self.num_bots = 1;
                                 }
                                 self.rebuild_roster_participants();
+                                self.update_active_modality_racer_count();
                             }
                             if is_key_pressed(KeyCode::LeftBracket) || is_key_pressed(KeyCode::Minus) {
                                 self.audio.play_sfx(SfxType::UiMove);
@@ -4756,6 +5011,7 @@ impl RaceSession {
                                     self.num_bots = max_bots;
                                 }
                                 self.rebuild_roster_participants();
+                                self.update_active_modality_racer_count();
                             }
                         }
                     }
@@ -4844,6 +5100,7 @@ impl RaceSession {
                                 self.num_bots = 1;
                             }
                             self.rebuild_roster_participants();
+                            self.update_active_modality_racer_count();
                         }
                         if is_key_pressed(KeyCode::LeftBracket) || is_key_pressed(KeyCode::Minus) {
                             self.audio.play_sfx(SfxType::UiMove);
@@ -4853,6 +5110,7 @@ impl RaceSession {
                                 self.num_bots = max_bots;
                             }
                             self.rebuild_roster_participants();
+                            self.update_active_modality_racer_count();
                         }
                     }
                 } else {
@@ -6743,6 +7001,9 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiSelect);
                         if self.active_career_progress.can_advance_tier() {
                             if let Ok(new_tier) = self.active_career_progress.advance_tier() {
+                                if let Some(champ) = &mut self.championship_session {
+                                    champ.update_from_career_rivals(new_tier, &self.active_career_progress.career_rivals);
+                                }
                                 if let Some(db) = &self.hof_db {
                                     let _ = db.save_module_progress(&self.active_career_progress);
                                 }
@@ -7162,6 +7423,9 @@ impl RaceSession {
                 && self.active_career_progress.can_advance_tier()
             {
                 if let Ok(new_tier) = self.active_career_progress.advance_tier() {
+                    if let Some(champ) = &mut self.championship_session {
+                        champ.update_from_career_rivals(new_tier, &self.active_career_progress.career_rivals);
+                    }
                     if let Some(db) = &self.hof_db {
                         let _ = db.save_module_progress(&self.active_career_progress);
                     }

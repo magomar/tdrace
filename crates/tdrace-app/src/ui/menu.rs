@@ -735,7 +735,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
 }
 
 /// Racing game modes supported across single-player practice, time trial, and grid racing.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum GameMode {
     /// Standard Race: all drivers use the circuit's predefined car.
     StandardRace,

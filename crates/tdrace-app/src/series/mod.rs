@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::ai::{CareerRivalEntry, DriverTier, DrivingStyle, RosterEvolutionEngine, RosterEvolutionReport};
 
 pub mod format;
 pub use format::*;
@@ -213,6 +214,81 @@ impl SeriesSession {
             tier: 1,
             round_laps: Vec::new(),
         }
+    }
+
+    /// Creates a series session populated with a player and persistent career rivals.
+    pub fn from_career_rivals(
+        name: impl Into<String>,
+        point_system: PointSystem,
+        track_ids: Vec<String>,
+        laps_per_round: u32,
+        player_team: &str,
+        rivals: &[CareerRivalEntry],
+    ) -> Self {
+        let mut standings = Vec::with_capacity(rivals.len() + 1);
+        standings.push(SeriesStandingEntry::new("player", "Player", player_team));
+        for rival in rivals {
+            let team = format!("{} Racing", rival.driver_name.split_whitespace().last().unwrap_or("Rival"));
+            let mut entry = SeriesStandingEntry::new(&rival.driver_id, &rival.driver_name, team);
+            entry = entry.with_ai_style_and_tier(Some(rival.style.as_str().to_string()), Some(rival.tier.to_u8()));
+            standings.push(entry);
+        }
+        Self {
+            name: name.into(),
+            point_system,
+            track_ids,
+            laps_per_round,
+            current_round: 0,
+            standings,
+            history: Vec::new(),
+            is_completed: false,
+            tier: 1,
+            round_laps: Vec::new(),
+        }
+    }
+
+    /// Syncs series standings from a slice of career rivals and sets the current tier.
+    pub fn update_from_career_rivals(&mut self, new_tier: u32, rivals: &[CareerRivalEntry]) {
+        self.tier = new_tier;
+        let player_entry = self.standings.iter().find(|s| s.driver_id == "player").cloned().unwrap_or_else(|| {
+            SeriesStandingEntry::new("player", "Player", "Apex Racing")
+        });
+        let mut new_standings = vec![player_entry];
+        for rival in rivals {
+            let team = format!("{} Racing", rival.driver_name.split_whitespace().last().unwrap_or("Rival"));
+            let mut entry = SeriesStandingEntry::new(&rival.driver_id, &rival.driver_name, team);
+            entry = entry.with_ai_style_and_tier(Some(rival.style.as_str().to_string()), Some(rival.tier.to_u8()));
+            new_standings.push(entry);
+        }
+        self.standings = new_standings;
+    }
+
+    /// Evolves the series standings using RosterEvolutionEngine upon tier unlock.
+    pub fn trigger_roster_evolution(&mut self, new_tier: u32, seed: u64) -> RosterEvolutionReport {
+        let current_rivals: Vec<CareerRivalEntry> = self
+            .standings
+            .iter()
+            .filter(|s| s.driver_id != "player")
+            .map(|s| {
+                let style = s.ai_style.as_deref().map(DrivingStyle::from_str_lossy).unwrap_or(DrivingStyle::Balanced);
+                let tier = s.ai_tier.map(DriverTier::from_u8).unwrap_or_else(|| DriverTier::from_u8(self.tier as u8));
+                CareerRivalEntry {
+                    driver_id: s.driver_id.clone(),
+                    driver_name: s.driver_name.clone(),
+                    style,
+                    tier,
+                }
+            })
+            .collect();
+
+        let (new_roster, report) = RosterEvolutionEngine::evolve_roster(
+            &current_rivals,
+            DriverTier::from_u8(new_tier.clamp(1, 5) as u8),
+            seed,
+        );
+
+        self.update_from_career_rivals(new_tier, &new_roster);
+        report
     }
 
     /// Sets the motorsport category tier (1..=5) for this series or championship.

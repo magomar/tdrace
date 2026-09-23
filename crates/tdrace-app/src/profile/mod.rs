@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
+use crate::ai::{CareerRivalEntry, DriverTier, RosterEvolutionEngine, RosterEvolutionReport};
 use crate::render::color::CarColorScheme;
 pub use tdrace_core::physics::config::AssistProfile;
 pub use cabinet::profile::country::{draw_country_banner, CountryInfo, CountryRegistry};
@@ -295,6 +296,8 @@ pub struct ModuleCareerProgress {
     pub trophies_silver: u32,
     pub trophies_bronze: u32,
     pub updated_at: String,
+    #[serde(default)]
+    pub career_rivals: Vec<CareerRivalEntry>,
 }
 
 impl ModuleCareerProgress {
@@ -375,6 +378,7 @@ impl ModuleCareerProgress {
             trophies_silver: 0,
             trophies_bronze: 0,
             updated_at: String::new(),
+            career_rivals: Vec::new(),
         };
         progress.sync_unlocks_for_level();
         progress
@@ -467,8 +471,43 @@ impl ModuleCareerProgress {
         has_podium && has_xp
     }
 
-    /// Advances to the next career tier if all conditions are met.
-    pub fn advance_tier(&mut self) -> Result<u32, String> {
+    /// Ensures career rivals are initialized for this module progress record.
+    pub fn ensure_career_rivals(&mut self, opponent_count: usize, seed: u64) -> &[CareerRivalEntry] {
+        self.ensure_career_rivals_with_pool(&[], opponent_count, seed)
+    }
+
+    /// Ensures career rivals are initialized from an optional driver pool.
+    pub fn ensure_career_rivals_with_pool(
+        &mut self,
+        pool: &[crate::ai::DriverCharacter],
+        opponent_count: usize,
+        seed: u64,
+    ) -> &[CareerRivalEntry] {
+        if self.career_rivals.is_empty() {
+            let tier = DriverTier::from_u8(self.level.clamp(1, 5) as u8);
+            self.career_rivals = RosterEvolutionEngine::initialize_career_roster_from_pool(pool, opponent_count, tier, seed);
+        } else if self.career_rivals.len() < opponent_count {
+            let diff = opponent_count - self.career_rivals.len();
+            let tier = DriverTier::from_u8(self.level.clamp(1, 5) as u8);
+            let extra = RosterEvolutionEngine::initialize_career_roster_from_pool(pool, diff, tier, seed.wrapping_add(12345));
+            for r in extra {
+                if !self.career_rivals.iter().any(|existing| existing.driver_id == r.driver_id) {
+                    self.career_rivals.push(r);
+                }
+            }
+        }
+        &self.career_rivals
+    }
+
+    /// Evolves the career rival roster upon unlocking a new tier.
+    pub fn evolve_career_rivals(&mut self, new_tier: DriverTier, seed: u64) -> RosterEvolutionReport {
+        let (updated, report) = RosterEvolutionEngine::evolve_roster(&self.career_rivals, new_tier, seed);
+        self.career_rivals = updated;
+        report
+    }
+
+    /// Advances to the next career tier using an explicit deterministic seed for roster evolution.
+    pub fn advance_tier_with_seed(&mut self, seed: u64) -> Result<(u32, RosterEvolutionReport), String> {
         if !self.can_advance_tier() {
             return Err(format!(
                 "Cannot advance to Tier {}: Requires at least 1 championship podium and {} spendable XP (current: {})",
@@ -479,7 +518,14 @@ impl ModuleCareerProgress {
         }
         self.level += 1;
         self.sync_unlocks_for_level();
-        Ok(self.level)
+        let report = self.evolve_career_rivals(DriverTier::from_u8(self.level.clamp(1, 5) as u8), seed);
+        Ok((self.level, report))
+    }
+
+    /// Advances to the next career tier if all conditions are met and evolves rivals.
+    pub fn advance_tier(&mut self) -> Result<u32, String> {
+        let seed = (self.level as u64).wrapping_mul(0x9E3779B97F4A7C15).wrapping_add(self.lifetime_xp);
+        self.advance_tier_with_seed(seed).map(|(lvl, _)| lvl)
     }
 
     /// Ensures unlocked tracks and starter cars match or exceed current level.

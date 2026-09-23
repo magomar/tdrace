@@ -1,6 +1,11 @@
+pub mod career;
 pub mod driver;
 
-pub use driver::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DriverStats};
+pub use career::{
+    CareerRivalEntry, RetainedRivalReport, RosterEvolutionEngine, RosterEvolutionReport,
+    SkillProgressionOutcome,
+};
+pub use driver::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DriverStats, LcgRng};
 
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
@@ -8,7 +13,7 @@ use tdrace_core::physics::car::{normalize_angle, Car, CarControls};
 use tdrace_core::track::Track;
 
 /// Tactical philosophy and driving personality (6 styles).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DrivingStyle {
     Smooth,
