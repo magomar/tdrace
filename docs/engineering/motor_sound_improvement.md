@@ -1,10 +1,10 @@
 ---
 type: Architecture Spec
 title: "Motor Sound Synthesis & Audio Profile Improvements"
-description: "Dynamic audio synthesis, pitch modulation, exhaust pop harmonics, and Kira audio integration."
+description: "Dynamic audio synthesis, pitch modulation, exhaust pop harmonics, Kira integration, and 25-tier physical sound banks."
 status: active
 category: engineering
-tags: [audio, sound, synthesis, kira]
+tags: [audio, sound, synthesis, kira, spec-022]
 ---
 
 # Motor Sound Improvement Analysis: Procedural Synthesis vs. Real Sampled Audio
@@ -161,3 +161,55 @@ High-fidelity engine recordings can be sourced cleanly and legally:
 
 - **Graceful Fallback**: The existing procedural engine remains functional as a fallback if sample assets are missing or during headless test runs.
 - **Platform Separation**: Desktop targets (Linux, macOS, Windows) use `kira` with native `cpal`. Web targets can either use `kira`'s WebAudio backend or an extended miniquad audio plugin that exposes `playbackRate`.
+
+---
+
+## 7. Current Implementation Status & Staged Roadmap
+
+The audio subsystem has evolved through structured development phases, solving the legacy discrete-band organ chord issue and transitioning toward vehicle- and tier-specific physical motor sound synthesis.
+
+### A. Current Core Audio Architecture (Operational)
+- **Kira Dynamic Audio Backend (`crates/tdrace-app/src/audio/backend.rs`)**:
+  - Replaces legacy fixed-rate playback with dynamic pitch and volume modulation via `sound_handle.set_playback_rate()` and non-blocking audio channels.
+  - Desktop builds leverage native low-latency `cpal` streaming.
+  - Full support for simultaneous multi-car simulation: Player 1 and Player 2 maintain independent engine audio loops and auxiliary FX in split-screen mode.
+  - Dedicated independent toggles for Music (`M`) and Sound Effects (`S`) with individual gain controls.
+- **In-Memory Procedural Loop Synthesis (`crates/tdrace-app/src/audio/samples.rs`)**:
+  - Rather than requiring multi-megabyte disk assets, `ArchetypeSampleBank` procedurally generates 5 steady-state sample points (Idle, Mid-On, Mid-Off, High-On, High-Off) in memory at 44.1 kHz on startup.
+  - Physical combustion pulses, soft saturation, biquad low-pass filtering, and cylinder harmonics are synthesized in memory with zero asset loading latency.
+- **Runtime Dynamic Pitch Matching & Load Blending (`crates/tdrace-app/src/audio/engine_mixer.rs`)**:
+  - Eliminates the 28-band discrete crossfading and organ-chord dissonance.
+  - Evaluates instantaneous RPM and throttle load, dynamically pitch-shifting the nearest sample loops to the exact fundamental engine frequency with smooth 5–10ms volume interpolation.
+
+---
+
+### B. Stage 1: Vehicle-Aware Audio Resolution & Discipline Baselines (Delivered)
+- **Vehicle-Aware Audio Architecture**:
+  - `VehicleModelDefinition` carries `audio_profile: Option<EngineAudioProfile>`, resolved via `effective_audio_profile()` with fallback to module defaults.
+  - `RealCarModel` in the authentic vehicle catalog exposes `sound_type() -> EngineSoundType`.
+  - `RaceSession::resolve_active_sound_type(&self)` unifies audio selection across active race sessions and interactive garage showroom browsing.
+- **Discipline Baselines**:
+  - **Gran Turismo**: `SportGT` (Deep crossplane V8 rumble, high intake manifold roar).
+  - **NASCAR**: `NascarV8` (5.9L pushrod V8, open boom-tube side pipes, thunderous roar).
+  - **Rallycross**: `RallyTurbo` (Turbocharged 4-cylinder, anti-lag overrun pops, wastegate flutter).
+  - **Karting**: `Kart125cc` (High-revving 2-stroke buzz, expansion chamber resonance).
+  - **Extreme Off-Road**: `SandRailBoxer` (2.5L turbo flat-4 boxer thrum, blow-off valve hiss).
+- **Classic Arcade Tier 1 Normalization**:
+  - All 5 Classic Arcade fantasy models are explicitly mapped to the Tier 1 sound bank of their respective disciplines (`classic_gt` $\rightarrow$ `SportGT`, `classic_nascar` $\rightarrow$ `NascarV8`, `classic_offroad` $\rightarrow$ `SandRailBoxer`, `classic_kart` $\rightarrow$ `Kart125cc`, `classic_rally` $\rightarrow$ `RallyTurbo`).
+
+---
+
+### C. Stage 2: 25-Archetype Per-Tier Sound Banks & Physical Synthesis (In Progress)
+- **Governing Specification**: [Spec 022 (`specs/022_per_tier_engine_sound_banks_and_synthesis.md`)](../../specs/022_per_tier_engine_sound_banks_and_synthesis.md)
+- **Tracking Epic**: Beads Epic `tdrace-a1wl`
+- **Objective**: Expand from 5 shared discipline baselines to **25 distinct motorsport sound archetypes** across all 5 tiers of the 5 disciplines:
+  - **GT T1–T5**: `Gt4Clubsport` (4.0L Flat-6/V8) $\rightarrow$ `Gt3HighRev` (9,000 RPM scream) $\rightarrow$ `Gt2Biturbo` (700+ BHP forced induction) $\rightarrow$ `Gt1V12Analogue` (6.0L V12 howl) $\rightarrow$ `HypercarV6Hybrid` (Turbo V6 + MGU-K electric motor whine).
+  - **NASCAR T1–T5**: `LateModelV8` (Street small-block) $\rightarrow$ `ArcaSpecV8` (396 spec V8) $\rightarrow$ `SuperTruckV8` (Pushrod truck resonance) $\rightarrow$ `XfinityV8` (8,500 RPM X-pipe scream) $\rightarrow$ `NascarV8` (850 BHP open boom-tube thunder).
+  - **Rally T1–T5**: `CrossCarMotorcycle` (12,500 RPM bike engine) $\rightarrow$ `Super1600Atmo` (NA 1.6L intake bark) $\rightarrow$ `Rally2Turbo` (1.6L turbo + restrictor) $\rightarrow$ `SupercarRx1` (600 BHP 2-step anti-lag firecracker pops) $\rightarrow$ `GroupBInline5` (Iconic 5-cylinder syncopated warble).
+  - **Karting T1–T5**: `KartCadet60` (60cc gentle 2-stroke) $\rightarrow$ `RacingMowerV2` (V-Twin 4-stroke thumper) $\rightarrow$ `Kart125cc` (125cc expansion bite) $\rightarrow$ `KartShifterKZ` (6-speed sequential ignition-cut pops) $\rightarrow$ `Superkart250Twin` (Twin-cylinder 250cc GP wail at 240 km/h).
+  - **Off-Road T1–T5**: `SandRailBoxer` (Turbo flat-4) $\rightarrow$ `ProLiteV6` (High-rev desert V6) $\rightarrow$ `Ultra4V8` (7.0L LS big-block zoomies) $\rightarrow$ `Pro4UnlimitedV8` (900 BHP 4WD screamer) $\rightarrow$ `MonsterTruckBlower` (1,500 BHP methanol big block + screaming Roots blower whine).
+- **Physical Induction & Auxiliary FX**:
+  - Roots blower supercharger whine scaling directly with RPM.
+  - Dual-frequency MGU-K hybrid electric inverter whine during acceleration and regenerative braking.
+  - 15ms ignition-cut shift bangs on dog-box / sequential transmission upshifts.
+  - Aggressive 2-step anti-lag explosions on deceleration overrun.
