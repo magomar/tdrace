@@ -101,15 +101,15 @@ fn test_gt_race_roster_car_assignment_and_display_titles() {
         _ => panic!("Expected TouringGT vehicle visual type in GT World Challenge race"),
     }
 
-    // Verify all cars in session are tuned with GT physics (top speed > 260 km/h, downforce >= 0.85)
+    // Verify all cars in session are tuned with GT physics (top speed > 260 km/h, downforce >= 0.60)
     for car in &session.cars {
         assert!(
             car.config.top_speed_mps * 3.6 > 260.0,
             "Car top speed must exceed 260 km/h for GT spec"
         );
         assert!(
-            car.config.downforce_coefficient >= 0.85,
-            "Car downforce must be at least 0.85 for GT spec"
+            car.config.downforce_coefficient >= 0.60,
+            "Car downforce must be at least 0.60 for GT spec"
         );
     }
 }

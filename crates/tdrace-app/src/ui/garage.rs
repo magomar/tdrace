@@ -398,15 +398,15 @@ pub fn render_garage_screen(
 
         render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "SPEED", spd, Palette::NEON_CYAN);
         cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "ACCELERATION", acc, Palette::NEON_GOLD);
+        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "ACCEL", acc, Palette::NEON_GOLD);
         cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "LATERAL GRIP", grip, Palette::NEON_GREEN);
+        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "GRIP", grip, Palette::NEON_GREEN);
         cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "DRIFT AGILITY", drift, Palette::NEON_MAGENTA);
+        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "AGILITY", drift, Palette::NEON_MAGENTA);
         cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "BRAKING FORCE", brk, Palette::NEON_ORANGE);
+        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "BRAKING", brk, Palette::NEON_ORANGE);
         cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "AERODYNAMICS", aero, Palette::WHITE);
+        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "AERO", aero, Palette::WHITE);
     }
 
     // Action Button: Select Vehicle for Race / Purchase with XP / Locked Notice
@@ -697,7 +697,7 @@ fn render_garage_stat_bar(
     val: f32,
     color: Color,
 ) {
-    let lbl_w = scaler.s(90.0);
+    let lbl_w = scaler.s(65.0);
     let bar_h = scaler.s(7.0);
     let bar_w = w - lbl_w - scaler.s(45.0);
 

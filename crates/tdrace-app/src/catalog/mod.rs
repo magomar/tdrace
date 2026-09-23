@@ -2414,4 +2414,59 @@ mod tests {
             assert!(cfg.top_speed_mps > 0.0);
         }
     }
+
+    #[test]
+    fn test_all_cars_to_car_config_valid_and_bounded() {
+        for car in ALL_REAL_CARS {
+            let cfg = car.to_car_config();
+            assert!(cfg.mass > 0.0 && cfg.mass.is_finite(), "Car {} has invalid mass", car.id);
+            assert!(cfg.top_speed_mps > 0.0 && cfg.top_speed_mps.is_finite(), "Car {} has invalid top_speed", car.id);
+            assert!(cfg.max_engine_force > 0.0 && cfg.max_engine_force.is_finite(), "Car {} has invalid engine force", car.id);
+            assert!(cfg.max_brake_force >= 100.0 && cfg.max_brake_force.is_finite(), "Car {} has invalid brake force", car.id);
+            assert!(cfg.tire.peak_d >= 0.5 && cfg.tire.peak_d <= 1.8, "Car {} tire.peak_d {} out of bounds [0.5, 1.8]", car.id, cfg.tire.peak_d);
+            assert!(cfg.steer_speed >= 2.0 && cfg.steer_speed <= 15.0, "Car {} steer_speed {} out of bounds [2.0, 15.0]", car.id, cfg.steer_speed);
+            assert!(cfg.inertia >= 10.0 && cfg.inertia.is_finite(), "Car {} inertia {} out of bounds", car.id, cfg.inertia);
+            assert!(cfg.downforce_coefficient >= 0.0 && cfg.downforce_coefficient.is_finite(), "Car {} has invalid downforce", car.id);
+            assert!(cfg.air_drag_coefficient > 0.0 && cfg.air_drag_coefficient.is_finite(), "Car {} has invalid drag", car.id);
+        }
+    }
+
+    #[test]
+    fn test_parse_aero_downforce() {
+        let (cl1, cd1) = parse_aero_downforce("Cl 0.85 / Cd 0.42");
+        assert!((cl1 - 0.85).abs() < 1e-4);
+        assert!((cd1 - 0.42).abs() < 1e-4);
+
+        let (cl2, cd2) = parse_aero_downforce("Cl 2.10 / Cd 0.62");
+        assert!((cl2 - 2.10).abs() < 1e-4);
+        assert!((cd2 - 0.62).abs() < 1e-4);
+
+        let (cl_fb, cd_fb) = parse_aero_downforce("custom");
+        assert!((cl_fb - 0.50).abs() < 1e-4);
+        assert!((cd_fb - 0.45).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_intra_category_physics_differentiation() {
+        let toyota = find_model_by_id("gt_toyota_supra_gt4").expect("Toyota Supra GT4 must exist");
+        let bmw = find_model_by_id("gt_bmw_m4_gt4").expect("BMW M4 GT4 must exist");
+
+        let toyota_cfg = toyota.to_car_config();
+        let bmw_cfg = bmw.to_car_config();
+
+        // 1. Mass differentiation
+        assert!(toyota_cfg.mass < bmw_cfg.mass, "Toyota should be lighter than BMW");
+
+        // 2. Agility / Steer speed differentiation (Toyota higher agility)
+        assert!(toyota_cfg.steer_speed > bmw_cfg.steer_speed, "Toyota should have higher steer_speed");
+
+        // 3. Rotational inertia differentiation (Toyota lower inertia)
+        assert!(toyota_cfg.inertia < bmw_cfg.inertia, "Toyota should have lower yaw inertia");
+
+        // 4. Lateral tire grip differentiation (Toyota higher grip)
+        assert!(toyota_cfg.tire.peak_d > bmw_cfg.tire.peak_d, "Toyota should have higher peak lateral tire grip");
+
+        // 5. Engine force differentiation (BMW has 450 BHP vs Toyota 430 BHP)
+        assert!(bmw_cfg.max_engine_force > toyota_cfg.max_engine_force, "BMW should have higher engine tractive force");
+    }
 }
