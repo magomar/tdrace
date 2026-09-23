@@ -2,10 +2,12 @@ pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
 pub mod presets;
+pub mod provenance;
 pub mod scenery;
 pub mod spline;
 pub mod validation;
 
+pub use provenance::{get_circuit_provenance, CircuitProvenance, CIRCUIT_PROVENANCE_REGISTRY};
 pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
 pub use curve::{
     classify_curve_degree, compute_safe_apex_speed, evaluate_curve_approach,
@@ -212,6 +214,32 @@ impl Track {
     pub fn with_country(mut self, code: impl Into<String>, name: impl Into<String>) -> Self {
         self.country_code = Some(code.into());
         self.country_name = Some(name.into());
+        self
+    }
+
+    /// Sets complete real-world provenance metadata (country, OSM relation/way URL, Wikipedia URL).
+    pub fn with_provenance(
+        mut self,
+        country_code: &str,
+        country_name: &str,
+        osm_url: &str,
+        wikipedia_url: &str,
+    ) -> Self {
+        self.country_code = Some(country_code.to_string());
+        self.country_name = Some(country_name.to_string());
+        self.osm_url = Some(osm_url.to_string());
+        self.wikipedia_url = Some(wikipedia_url.to_string());
+        self
+    }
+
+    /// Attaches authentic OpenStreetMap and Wikipedia provenance if this circuit matches a known venue.
+    pub fn with_provenance_if_known(mut self, id_or_slug: &str) -> Self {
+        if let Some(prov) = crate::track::provenance::get_circuit_provenance(id_or_slug) {
+            self.country_code = Some(prov.country_code.to_string());
+            self.country_name = Some(prov.country_name.to_string());
+            self.osm_url = Some(prov.osm_url.to_string());
+            self.wikipedia_url = Some(prov.wikipedia_url.to_string());
+        }
         self
     }
 
@@ -671,9 +699,17 @@ impl Track {
         }
     }
 
-    /// Chainable helper applying default runoff surfaces.
+    /// Chainable helper applying default runoff surfaces and authentic circuit provenance if known.
     pub fn with_default_runoff_surfaces(mut self) -> Self {
         self.apply_default_runoff_surfaces();
+        if self.osm_url.is_none() {
+            if let Some(prov) = provenance::get_circuit_provenance(&self.name) {
+                self.country_code = Some(prov.country_code.to_string());
+                self.country_name = Some(prov.country_name.to_string());
+                self.osm_url = Some(prov.osm_url.to_string());
+                self.wikipedia_url = Some(prov.wikipedia_url.to_string());
+            }
+        }
         self
     }
 
@@ -688,6 +724,14 @@ impl Track {
             );
         }
         track.apply_default_runoff_surfaces();
+        if track.osm_url.is_none() {
+            if let Some(prov) = provenance::get_circuit_provenance(&track.name) {
+                track.country_code = Some(prov.country_code.to_string());
+                track.country_name = Some(prov.country_name.to_string());
+                track.osm_url = Some(prov.osm_url.to_string());
+                track.wikipedia_url = Some(prov.wikipedia_url.to_string());
+            }
+        }
         Ok(track)
     }
 

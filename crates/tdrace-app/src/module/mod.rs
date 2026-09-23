@@ -273,7 +273,7 @@ mod tests {
         assert!(!gt.vehicles().is_empty());
         assert_eq!(gt.vehicles().len(), 5);
         assert!(!gt.tracks().is_empty());
-        assert_eq!(gt.tracks().len(), 15);
+        assert_eq!(gt.tracks().len(), 18);
         assert_eq!(gt.drivers().len(), 12);
         assert!(!gt.supported_game_modes().is_empty());
 

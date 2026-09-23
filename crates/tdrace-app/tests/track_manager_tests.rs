@@ -1395,6 +1395,9 @@ fn test_export_canonical_presets_to_git_repo() {
             } else {
                 track_def.id
             };
+            track = track
+                .with_provenance_if_known(filename)
+                .with_provenance_if_known(track_def.id);
             let file_path = target_dir.join(format!("{}.json", filename));
             track.save_to_file(&file_path).expect("Failed to export canonical preset");
 
@@ -1403,6 +1406,21 @@ fn test_export_canonical_presets_to_git_repo() {
                 .expect("Failed to load exported canonical preset");
             assert_eq!(loaded.name, track.name);
             assert_eq!(loaded.category, TrackCategory::Main);
+
+            if let Some(prov) = tdrace_core::track::get_circuit_provenance(filename) {
+                assert!(
+                    loaded.osm_url.is_some(),
+                    "Real circuit {} must have osm_url preserved in exported json",
+                    filename
+                );
+                assert_eq!(
+                    loaded.osm_url.as_deref(),
+                    Some(prov.osm_url),
+                    "OSM URL mismatch on {}",
+                    filename
+                );
+            }
+
             total_exported += 1;
         }
     }
@@ -1926,6 +1944,158 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
     assert_eq!(menu_sp.name, "Marina Bay Street Circuit (Singapore)");
 
     let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_all_canonical_track_files_provenance_integrity() {
+    let tracks_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks");
+    assert!(tracks_root.exists(), "tracks/ repository directory must exist");
+
+    let mut total_tracks = 0;
+    let mut real_tracks_with_osm = 0;
+    let mut real_tracks_with_wiki = 0;
+    let mut fictional_tracks = 0;
+
+    let modules = ["classic", "gt", "kart", "nascar", "rally", "extreme_offroad"];
+    for mod_name in &modules {
+        let mod_dir = tracks_root.join(mod_name);
+        assert!(mod_dir.exists(), "Module directory {} must exist", mod_name);
+
+        for entry in fs::read_dir(&mod_dir).expect("Read module dir").flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("json") {
+                continue;
+            }
+            total_tracks += 1;
+            let track = tdrace_core::track::Track::load_from_file(&path)
+                .unwrap_or_else(|e| panic!("Failed loading {}: {}", path.display(), e));
+
+            let stem = path.file_stem().and_then(|s| s.to_str()).unwrap();
+            let is_real = tdrace_core::track::get_circuit_provenance(stem).is_some();
+
+            if is_real {
+                assert!(
+                    track.osm_url.is_some(),
+                    "Real track {} ({}) must have osm_url",
+                    stem,
+                    path.display()
+                );
+                assert!(
+                    track.wikipedia_url.is_some(),
+                    "Real track {} ({}) must have wikipedia_url",
+                    stem,
+                    path.display()
+                );
+                assert!(
+                    track.country_code.is_some(),
+                    "Real track {} ({}) must have country_code",
+                    stem,
+                    path.display()
+                );
+                assert!(
+                    track.country_name.is_some(),
+                    "Real track {} ({}) must have country_name",
+                    stem,
+                    path.display()
+                );
+
+                let osm = track.osm_url.as_ref().unwrap();
+                let wiki = track.wikipedia_url.as_ref().unwrap();
+                assert!(
+                    osm.starts_with("https://www.openstreetmap.org/"),
+                    "Track {} OSM URL must start with https://www.openstreetmap.org/ but got {}",
+                    stem,
+                    osm
+                );
+                assert!(
+                    wiki.starts_with("https://en.wikipedia.org/wiki/"),
+                    "Track {} Wiki URL must start with https://en.wikipedia.org/wiki/ but got {}",
+                    stem,
+                    wiki
+                );
+
+                real_tracks_with_osm += 1;
+                real_tracks_with_wiki += 1;
+            } else {
+                assert!(
+                    track.osm_url.is_none(),
+                    "Fictional track {} ({}) must NOT have osm_url",
+                    stem,
+                    path.display()
+                );
+                fictional_tracks += 1;
+            }
+        }
+    }
+
+    assert_eq!(total_tracks, 96, "Must have exactly 96 total track files");
+    assert_eq!(real_tracks_with_osm, 71, "Must have exactly 71 real circuits with verified OSM URLs");
+    assert_eq!(real_tracks_with_wiki, 71, "Must have exactly 71 real circuits with verified Wikipedia URLs");
+    assert_eq!(fictional_tracks, 25, "Must have exactly 25 fictional / inspired tracks");
+
+    // Specific regression validations for circuits highlighted in user issue
+    let bahrain = tdrace_core::track::Track::load_from_file(tracks_root.join("gt/bahrain.json"))
+        .expect("Load bahrain");
+    assert_eq!(
+        bahrain.osm_url.as_deref(),
+        Some("https://www.openstreetmap.org/relation/284538"),
+        "Bahrain must link to authentic raceway relation 284538"
+    );
+
+    let cota = tdrace_core::track::Track::load_from_file(tracks_root.join("gt/cota.json"))
+        .expect("Load cota");
+    assert_eq!(
+        cota.osm_url.as_deref(),
+        Some("https://www.openstreetmap.org/relation/6537729"),
+        "COTA must link to authentic relation 6537729"
+    );
+
+    let montreal = tdrace_core::track::Track::load_from_file(tracks_root.join("gt/montreal.json"))
+        .expect("Load montreal");
+    assert_eq!(
+        montreal.osm_url.as_deref(),
+        Some("https://www.openstreetmap.org/relation/284595"),
+        "Montreal must link to authentic relation 284595"
+    );
+}
+
+#[test]
+fn test_portal_circuits_catalog_provenance_integrity() {
+    let portal_json = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../portals/shared/data/circuits.json");
+    assert!(portal_json.exists(), "portals/shared/data/circuits.json must exist");
+
+    let raw = fs::read_to_string(&portal_json).expect("Read circuits.json");
+    let circuits: Vec<serde_json::Value> = serde_json::from_str(&raw).expect("Parse circuits.json");
+
+    assert_eq!(circuits.len(), 96, "Catalog must contain exactly 96 circuits");
+
+    let mut osm_count = 0;
+    let mut wiki_count = 0;
+    for c in &circuits {
+        let osm = c.get("osm_url").and_then(|v| v.as_str());
+        let wiki = c.get("wikipedia_url").and_then(|v| v.as_str());
+        let id = c.get("id").and_then(|v| v.as_str()).unwrap_or("");
+
+        if let Some(url) = osm {
+            assert!(url.starts_with("https://www.openstreetmap.org/"));
+            osm_count += 1;
+        }
+        if let Some(url) = wiki {
+            assert!(url.starts_with("https://en.wikipedia.org/wiki/"));
+            wiki_count += 1;
+        }
+
+        if id == "bahrain" {
+            assert_eq!(osm, Some("https://www.openstreetmap.org/relation/284538"));
+        } else if id == "cota" {
+            assert_eq!(osm, Some("https://www.openstreetmap.org/relation/6537729"));
+        } else if id == "montreal" {
+            assert_eq!(osm, Some("https://www.openstreetmap.org/relation/284595"));
+        }
+    }
+
+    assert_eq!(osm_count, 71, "Exactly 71 circuits in portal catalog must possess OSM URL");
+    assert_eq!(wiki_count, 71, "Exactly 71 circuits in portal catalog must possess Wikipedia URL");
 }
 
 

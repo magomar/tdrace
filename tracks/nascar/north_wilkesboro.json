@@ -34384,5 +34384,9 @@
     "nascar"
   ],
   "scale": "1:1",
+  "wikipedia_url": "https://en.wikipedia.org/wiki/North_Wilkesboro_Speedway",
+  "osm_url": "https://www.openstreetmap.org/way/18928710",
+  "country_code": "US",
+  "country_name": "United States",
   "is_inspired": false
 }

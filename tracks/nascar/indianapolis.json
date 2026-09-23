@@ -41309,5 +41309,9 @@
     "nascar"
   ],
   "scale": "1:1",
+  "wikipedia_url": "https://en.wikipedia.org/wiki/Indianapolis_Motor_Speedway",
+  "osm_url": "https://www.openstreetmap.org/way/589668075",
+  "country_code": "US",
+  "country_name": "United States",
   "is_inspired": false
 }

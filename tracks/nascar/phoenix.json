@@ -41256,5 +41256,9 @@
     "nascar"
   ],
   "scale": "1:1",
+  "wikipedia_url": "https://en.wikipedia.org/wiki/Phoenix_Raceway",
+  "osm_url": "https://www.openstreetmap.org/way/29333335",
+  "country_code": "US",
+  "country_name": "United States",
   "is_inspired": false
 }

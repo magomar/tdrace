@@ -1806,6 +1806,33 @@ impl GameModule for GtWorldChallengeModule {
                 default_laps: 3,
                 generator: Self::track_marina_bay,
             },
+            TrackDefinition {
+                id: "bahrain",
+                title: "Bahrain International Circuit",
+                tag: "DESERT ROLLERCOASTER",
+                description: "High-speed desert raceway in Sakhir featuring sharp braking zones and technical sweeping turns.",
+                category: "Official GP Circuit",
+                default_laps: 3,
+                generator: Self::track_bahrain,
+            },
+            TrackDefinition {
+                id: "montreal",
+                title: "Circuit Gilles Villeneuve",
+                tag: "WALL OF CHAMPIONS",
+                description: "Semi-permanent parkway circuit on Ile Notre-Dame with heavy chicanes and the notorious Wall of Champions.",
+                category: "Official GP Circuit",
+                default_laps: 3,
+                generator: Self::track_montreal,
+            },
+            TrackDefinition {
+                id: "cota",
+                title: "Circuit of the Americas",
+                tag: "AUSTIN ROLLERCOASTER",
+                description: "Premier purpose-built US Grand Prix track with uphill Turn 1, Maggotts-inspired esses, and multi-apex carousel.",
+                category: "Official GP Circuit",
+                default_laps: 3,
+                generator: Self::track_cota,
+            },
         ]
     }
 

@@ -27,7 +27,7 @@ fn test_gt_game_module_drivers_and_preferred_car() {
 fn test_gt_tracks_predefined_car_and_resolve_predefined_car() {
     let gt = GtWorldChallengeModule::new();
     let track_defs = gt.tracks();
-    assert_eq!(track_defs.len(), 15);
+    assert_eq!(track_defs.len(), 18);
 
     for t_def in &track_defs {
         let track = (t_def.generator)();

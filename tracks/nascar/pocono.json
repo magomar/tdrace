@@ -41338,5 +41338,9 @@
     "nascar"
   ],
   "scale": "0.5x",
+  "wikipedia_url": "https://en.wikipedia.org/wiki/Pocono_Raceway",
+  "osm_url": "https://www.openstreetmap.org/way/109767460",
+  "country_code": "US",
+  "country_name": "United States",
   "is_inspired": false
 }
