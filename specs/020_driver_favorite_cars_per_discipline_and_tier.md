@@ -104,7 +104,7 @@ graph TD
 | `jimmie_johnson` | **Jimmie 'Seven-Time' Johnson** | `nascar_monte_carlo_ss` | `nascar_super_late_model` | `nascar_arca_chevy_ss` | `nascar_silverado_truck` | `nascar_corvette_ta1` |
 | `tony_stewart` | **Tony 'Smoke' Stewart** | `nascar_dodge_dart_street_stock` | `nascar_late_model_stock_car` | `nascar_ford_fusion_arca` | `nascar_f150_truck` | `nascar_challenger_ta1` |
 | `bobby_allison` | **Bobby 'Alabama' Allison** | `nascar_monte_carlo_ss` | `nascar_late_model_stock_car` | `nascar_ford_fusion_arca` | `nascar_f150_truck` | `nascar_mustang_ta1` |
-| `bubba_wallace` | **Bubba 'The Rocket' Wallace** | `nascar_toyota_camry_arca` | `nascar_super_late_model` | `nascar_toyota_camry_arca` | `nascar_tundra_truck` | `nascar_mustang_ta1` |
+| `bubba_wallace` | **Bubba 'The Rocket' Wallace** | `nascar_dodge_dart_street_stock` | `nascar_super_late_model` | `nascar_toyota_camry_arca` | `nascar_tundra_truck` | `nascar_mustang_ta1` |
 | `joey_logano` | **Joey 'Sliced Bread' Logano** | `nascar_mustang_street_stock` | `nascar_mustang_super_late_model` | `nascar_ford_fusion_arca` | `nascar_f150_truck` | `nascar_mustang_ta1` |
 | `bill_elliott` | **Bill 'Awesome Bill' Elliott** | `nascar_mustang_street_stock` | `nascar_mustang_super_late_model` | `nascar_ford_fusion_arca` | `nascar_f150_truck` | `nascar_corvette_ta1` |
 | `cale_yarborough` | **Cale 'The Iron Man' Yarborough** | `nascar_dodge_dart_street_stock` | `nascar_late_model_stock_car` | `nascar_arca_chevy_ss` | `nascar_silverado_truck` | `nascar_challenger_ta1` |

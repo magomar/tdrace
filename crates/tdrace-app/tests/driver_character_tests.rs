@@ -6,7 +6,7 @@ use tdrace_app::ui::menu::TrackChoice;
 #[test]
 fn test_driver_roster_integrity_and_distinct_properties() {
     let roster = DriverCharacter::all();
-    assert_eq!(roster.len(), 8, "Must contain exactly 8 predefined driver characters");
+    assert_eq!(roster.len(), 12, "Must contain exactly 12 predefined driver characters");
 
     let mut ids = std::collections::HashSet::new();
     let mut names = std::collections::HashSet::new();
@@ -55,8 +55,8 @@ fn test_driver_roster_sampling_uniqueness() {
     }
 
     // Full roster sample
-    let full = DriverCharacter::sample_opponents(8, 42);
-    assert_eq!(full.len(), 8);
+    let full = DriverCharacter::sample_opponents(12, 42);
+    assert_eq!(full.len(), 12);
     let mut seen_full = std::collections::HashSet::new();
     for opp in &full {
         assert!(seen_full.insert(opp.id));
@@ -115,7 +115,7 @@ fn test_driver_cards_navigation_state() {
     // Cycle backward with wrap-around
     session.driver_cards_idx = 0;
     session.driver_cards_idx = (session.driver_cards_idx + roster_len - 1) % roster_len;
-    assert_eq!(session.driver_cards_idx, 7);
+    assert_eq!(session.driver_cards_idx, 11);
 }
 
 #[test]

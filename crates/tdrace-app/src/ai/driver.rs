@@ -1,4 +1,6 @@
+use macroquad::color::Color;
 use crate::ai::BotProfile;
+use crate::catalog::RealCarModel;
 use crate::render::color::CarColorScheme;
 use crate::ui::menu::CarChoice;
 
@@ -11,6 +13,374 @@ pub struct DriverStats {
     pub defense: f32,
 }
 
+/// Association between a motorsport discipline, performance tier (1..=5), and authentic car model ID.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DriverFavoriteCar {
+    pub discipline: &'static str,
+    pub tier: u8,
+    pub model_id: &'static str,
+}
+
+impl DriverFavoriteCar {
+    pub const fn new(discipline: &'static str, tier: u8, model_id: &'static str) -> Self {
+        Self {
+            discipline,
+            tier,
+            model_id,
+        }
+    }
+}
+
+// Favorite car mapping slices for all 12 core drivers across 6 disciplines (26 cars each)
+
+const SILVIA_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_gt"),
+    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
+    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
+    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
+    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+    DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];
+
+const MARCO_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_rally"),
+    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
+    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
+    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
+    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
+    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+    DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+];
+
+const KENJI_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_gt"),
+    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
+    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_nissan_r390_gt1"),
+    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
+    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+    DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
+    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+];
+
+const ELENA_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_gt"),
+    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
+    DriverFavoriteCar::new("gt", 3, "gt_audi_r8_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
+    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_mustang_super_late_model"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
+    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+    DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];
+
+const JAX_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_offroad"),
+    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
+    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
+    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
+    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
+    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+    DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+];
+
+const LEO_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_kart"),
+    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
+    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
+    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
+    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+    DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
+    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+];
+
+const VIKTOR_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_nascar"),
+    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
+    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
+    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
+    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+    DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];
+
+const MAYA_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_gt"),
+    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
+    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
+    DriverFavoriteCar::new("gt", 4, "gt_nissan_r390_gt1"),
+    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
+    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+    DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+];
+
+const DAMON_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_gt"),
+    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
+    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
+    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_mustang_super_late_model"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
+    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+    DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
+    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+];
+
+const CHLOE_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_rally"),
+    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
+    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
+    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
+    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
+    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+    DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];
+
+const HIROSHI_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_gt"),
+    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
+    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_nissan_r390_gt1"),
+    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
+    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+    DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+];
+
+const ZANE_FAVORITE_CARS: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("classic", 1, "classic_offroad"),
+    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
+    DriverFavoriteCar::new("gt", 3, "gt_audi_r8_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
+    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
+    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+    DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
+    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];
+
 /// Predefined motorsport driver character with unique personality, backstory, preferred car, and AI style.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DriverCharacter {
@@ -22,6 +392,7 @@ pub struct DriverCharacter {
     pub color_scheme: CarColorScheme,
     pub profile: BotProfile,
     pub stats: DriverStats,
+    pub favorite_cars: &'static [DriverFavoriteCar],
 }
 
 impl DriverCharacter {
@@ -49,6 +420,7 @@ impl DriverCharacter {
             precision: 0.98,
             defense: 0.85,
         },
+        favorite_cars: SILVIA_FAVORITE_CARS,
     };
 
     /// 2. Marco "Thunder" Rossi — High-Speed Brawler
@@ -75,6 +447,7 @@ impl DriverCharacter {
             precision: 0.75,
             defense: 0.88,
         },
+        favorite_cars: MARCO_FAVORITE_CARS,
     };
 
     /// 3. Kenji "Drift King" Sato — Touge Slide Maestro
@@ -101,6 +474,7 @@ impl DriverCharacter {
             precision: 0.84,
             defense: 0.72,
         },
+        favorite_cars: KENJI_FAVORITE_CARS,
     };
 
     /// 4. Elena "Viper" Frost — The Iceman of the Circuit
@@ -127,6 +501,7 @@ impl DriverCharacter {
             precision: 0.95,
             defense: 0.96,
         },
+        favorite_cars: ELENA_FAVORITE_CARS,
     };
 
     /// 5. Jax "Oversteer" Reed — The Wildcard Renegade
@@ -153,6 +528,7 @@ impl DriverCharacter {
             precision: 0.78,
             defense: 0.76,
         },
+        favorite_cars: JAX_FAVORITE_CARS,
     };
 
     /// 6. Leo "Pocket Rocket" Bianchi — Agile Shifter Prodigy
@@ -179,6 +555,7 @@ impl DriverCharacter {
             precision: 0.92,
             defense: 0.80,
         },
+        favorite_cars: LEO_FAVORITE_CARS,
     };
 
     /// 7. Viktor "The Wall" Sterling — Ironclad Veteran
@@ -205,6 +582,7 @@ impl DriverCharacter {
             precision: 0.88,
             defense: 0.99,
         },
+        favorite_cars: VIKTOR_FAVORITE_CARS,
     };
 
     /// 8. Maya "Phoenix" Lin — Telemetry Prodigy
@@ -231,10 +609,135 @@ impl DriverCharacter {
             precision: 0.94,
             defense: 0.86,
         },
+        favorite_cars: MAYA_FAVORITE_CARS,
     };
 
-    /// Complete registry of all 8 predefined driver characters.
-    pub const ROSTER: [Self; 8] = [
+    /// 9. Damon "The Ghost" Clark — Tactical Endurance Master
+    pub const DAMON_CLARK: Self = Self {
+        id: "damon_clark",
+        name: "Damon Clark",
+        alias: "The Ghost",
+        bio: "Quiet and hyper-calculating endurance specialist who runs relentless, identical lap times until his opponents crack.",
+        preferred_car: CarChoice::SportsCar,
+        color_scheme: CarColorScheme::new(
+            Color::new(0.50, 0.55, 0.60, 1.0),
+            Color::new(0.12, 0.14, 0.18, 1.0),
+            Color::new(0.95, 0.95, 0.98, 1.0),
+        ), // Slate Gray, Anthracite & Ghost Silver
+        profile: BotProfile {
+            name: "Damon Clark",
+            lookahead_time: 0.42,
+            speed_factor: 1.01,
+            steering_kp: 2.3,
+            steering_kd: 0.07,
+            brake_margin: 1.03,
+            aggression: 0.72,
+            avoidance_distance: 6.6,
+        },
+        stats: DriverStats {
+            speed: 0.91,
+            aggression: 0.72,
+            precision: 0.96,
+            defense: 0.90,
+        },
+        favorite_cars: DAMON_FAVORITE_CARS,
+    };
+
+    /// 10. Chloe "The Dynamo" Laurent — Hillclimb Phenom
+    pub const CHLOE_LAURENT: Self = Self {
+        id: "chloe_laurent",
+        name: "Chloe Laurent",
+        alias: "The Dynamo",
+        bio: "A fearless hybrid-era racer blending European hillclimb reflexes with blistering apex aggression in all conditions.",
+        preferred_car: CarChoice::RallyCar,
+        color_scheme: CarColorScheme::new(
+            Color::new(0.12, 0.78, 0.70, 1.0),
+            Color::new(0.95, 0.85, 0.20, 1.0),
+            Color::new(0.10, 0.10, 0.12, 1.0),
+        ), // Bright Teal, Neon Gold & Jet Black
+        profile: BotProfile {
+            name: "Chloe Laurent",
+            lookahead_time: 0.35,
+            speed_factor: 1.03,
+            steering_kp: 2.5,
+            steering_kd: 0.05,
+            brake_margin: 0.90,
+            aggression: 0.89,
+            avoidance_distance: 5.5,
+        },
+        stats: DriverStats {
+            speed: 0.94,
+            aggression: 0.90,
+            precision: 0.86,
+            defense: 0.82,
+        },
+        favorite_cars: CHLOE_FAVORITE_CARS,
+    };
+
+    /// 11. Hiroshi "Tarmac Samurai" Takahashi — Tire Conservation Virtuoso
+    pub const HIROSHI_TAKAHASHI: Self = Self {
+        id: "hiroshi_takahashi",
+        name: "Hiroshi Takahashi",
+        alias: "Tarmac Samurai",
+        bio: "Super GT veteran whose millimeter-perfect tire preservation and late-braking maneuvers dominate high-grip circuits.",
+        preferred_car: CarChoice::SportsCar,
+        color_scheme: CarColorScheme::new(
+            Color::new(0.55, 0.08, 0.12, 1.0),
+            Color::new(0.85, 0.75, 0.35, 1.0),
+            Color::new(0.98, 0.98, 0.98, 1.0),
+        ), // Deep Maroon, Warm Gold & Pure White
+        profile: BotProfile {
+            name: "Hiroshi Takahashi",
+            lookahead_time: 0.39,
+            speed_factor: 1.02,
+            steering_kp: 2.4,
+            steering_kd: 0.06,
+            brake_margin: 0.98,
+            aggression: 0.80,
+            avoidance_distance: 6.0,
+        },
+        stats: DriverStats {
+            speed: 0.93,
+            aggression: 0.78,
+            precision: 0.95,
+            defense: 0.88,
+        },
+        favorite_cars: HIROSHI_FAVORITE_CARS,
+    };
+
+    /// 12. Zane "Thunderbolt" Holland — Low-Traction Acrobat
+    pub const ZANE_HOLLAND: Self = Self {
+        id: "zane_holland",
+        name: "Zane Holland",
+        alias: "Thunderbolt",
+        bio: "Cross-discipline daredevil known for audacious divebombs and supernatural recovery saves in low-traction ruts.",
+        preferred_car: CarChoice::SandRail,
+        color_scheme: CarColorScheme::new(
+            Color::new(0.10, 0.35, 0.85, 1.0),
+            Color::new(0.98, 0.75, 0.08, 1.0),
+            Color::new(0.98, 0.98, 0.98, 1.0),
+        ), // Cobalt Blue, Lightning Yellow & Pure White
+        profile: BotProfile {
+            name: "Zane Holland",
+            lookahead_time: 0.33,
+            speed_factor: 1.04,
+            steering_kp: 2.6,
+            steering_kd: 0.05,
+            brake_margin: 0.88,
+            aggression: 0.94,
+            avoidance_distance: 5.1,
+        },
+        stats: DriverStats {
+            speed: 0.95,
+            aggression: 0.95,
+            precision: 0.80,
+            defense: 0.84,
+        },
+        favorite_cars: ZANE_FAVORITE_CARS,
+    };
+
+    /// Complete registry of all 12 predefined driver characters.
+    pub const ROSTER: [Self; 12] = [
         Self::SILVIA_TANAKA,
         Self::MARCO_ROSSI,
         Self::KENJI_SATO,
@@ -243,10 +746,14 @@ impl DriverCharacter {
         Self::LEO_BIANCHI,
         Self::VIKTOR_STERLING,
         Self::MAYA_LIN,
+        Self::DAMON_CLARK,
+        Self::CHLOE_LAURENT,
+        Self::HIROSHI_TAKAHASHI,
+        Self::ZANE_HOLLAND,
     ];
 
-    /// Returns a slice of all 8 predefined driver characters.
-    pub fn all() -> &'static [Self; 8] {
+    /// Returns a slice of all 12 predefined driver characters.
+    pub fn all() -> &'static [Self; 12] {
         &Self::ROSTER
     }
 
@@ -270,5 +777,74 @@ impl DriverCharacter {
 
         available.truncate(count);
         available
+    }
+
+    /// Normalizes raw discipline strings (e.g. "gt_challenge", "rx", "off_road") to canonical discipline keys.
+    pub fn normalize_discipline(discipline: &str) -> &'static str {
+        match discipline.to_ascii_lowercase().as_str() {
+            "classic" => "classic",
+            "gt" | "gt_challenge" | "gt_world_challenge" => "gt",
+            "nascar" | "stock_car" | "trans_am" => "nascar",
+            "rally" | "rallycross" | "rx" => "rally",
+            "kart" | "karting" => "kart",
+            "extreme_offroad" | "off_road" | "offroad" => "extreme_offroad",
+            _ => "classic",
+        }
+    }
+
+    /// Returns the signature vehicle model ID for a specific discipline and tier.
+    /// If discipline is "classic", tier is strictly normalized to Tier 1.
+    pub fn favorite_car_for_discipline_and_tier(&self, discipline: &str, tier: u8) -> Option<&'static str> {
+        let norm_disc = Self::normalize_discipline(discipline);
+        let effective_tier = if norm_disc == "classic" { 1 } else { tier.clamp(1, 5) };
+
+        // 1. Exact match for discipline and tier
+        if let Some(fav) = self.favorite_cars.iter().find(|f| f.discipline == norm_disc && f.tier == effective_tier) {
+            return Some(fav.model_id);
+        }
+        // 2. Fallback to any car in the same discipline
+        if let Some(fav) = self.favorite_cars.iter().find(|f| f.discipline == norm_disc) {
+            return Some(fav.model_id);
+        }
+        // 3. Fallback for classic discipline based on preferred_car
+        if norm_disc == "classic" {
+            return match self.preferred_car {
+                CarChoice::SportsCar
+                | CarChoice::DriftCar
+                | CarChoice::GT4Clubsport
+                | CarChoice::GT3Car
+                | CarChoice::GT2Biturbo
+                | CarChoice::GT1Legend
+                | CarChoice::HypercarPrototype => Some("classic_gt"),
+                CarChoice::StockCar => Some("classic_nascar"),
+                CarChoice::RallyCar => Some("classic_rally"),
+                CarChoice::Kart => Some("classic_kart"),
+                CarChoice::SandRail => Some("classic_offroad"),
+            };
+        }
+        None
+    }
+
+    /// Resolves the full RealCarModel definition from the authentic vehicle catalog.
+    pub fn favorite_model_for_discipline_and_tier(&self, discipline: &str, tier: u8) -> Option<&'static RealCarModel> {
+        let car_id = self.favorite_car_for_discipline_and_tier(discipline, tier)?;
+        crate::catalog::find_model_by_id(car_id)
+    }
+
+    /// Returns the appropriate CarChoice archetype enum matching the favorite vehicle.
+    pub fn effective_car_choice_for_discipline_and_tier(&self, discipline: &str, tier: u8) -> CarChoice {
+        if let Some(model) = self.favorite_model_for_discipline_and_tier(discipline, tier) {
+            model.base_car_choice
+        } else {
+            let norm_disc = Self::normalize_discipline(discipline);
+            match norm_disc {
+                "gt" => CarChoice::GT4Clubsport,
+                "nascar" => CarChoice::StockCar,
+                "rally" => CarChoice::RallyCar,
+                "kart" => CarChoice::Kart,
+                "extreme_offroad" => CarChoice::SandRail,
+                _ => self.preferred_car,
+            }
+        }
     }
 }

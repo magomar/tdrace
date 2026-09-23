@@ -1,6 +1,6 @@
 pub mod driver;
 
-pub use driver::{DriverCharacter, DriverStats};
+pub use driver::{DriverCharacter, DriverFavoriteCar, DriverStats};
 
 use glam::Vec2;
 use tdrace_core::physics::car::{normalize_angle, Car, CarControls};

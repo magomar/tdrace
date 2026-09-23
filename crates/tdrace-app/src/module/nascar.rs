@@ -301,6 +301,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.93,
                     defense: 0.96,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "chase_gordon",
@@ -325,6 +326,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.97,
                     defense: 0.91,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "richard_pettyfield",
@@ -349,6 +351,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.96,
                     defense: 0.98,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "rowdy_busch",
@@ -373,6 +376,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.90,
                     defense: 0.92,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "jimmie_johnson",
@@ -397,6 +401,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.99,
                     defense: 0.95,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "tony_stewart",
@@ -421,6 +426,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.94,
                     defense: 0.93,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "bobby_allison",
@@ -445,6 +451,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.95,
                     defense: 0.94,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "bubba_wallace",
@@ -469,6 +476,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.92,
                     defense: 0.92,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "joey_logano",
@@ -493,6 +501,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.93,
                     defense: 0.97,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "bill_elliott",
@@ -517,6 +526,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.96,
                     defense: 0.93,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "cale_yarborough",
@@ -541,6 +551,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.92,
                     defense: 0.95,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "rusty_wallace",
@@ -565,6 +576,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.95,
                     defense: 0.94,
                 },
+                favorite_cars: &[],
             },
         ]
     }

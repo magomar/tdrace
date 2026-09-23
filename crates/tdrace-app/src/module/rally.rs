@@ -335,6 +335,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.98,
                     defense: 0.95,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "mattias_storm",
@@ -359,6 +360,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "timmy_hansenfield",
@@ -383,6 +385,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.97,
                     defense: 0.93,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "kevin_hansenfield",
@@ -407,6 +410,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.93,
                     defense: 0.89,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "niclas_gron",
@@ -431,6 +435,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.95,
                     defense: 0.91,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "anton_mark",
@@ -455,6 +460,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.92,
                     defense: 0.96,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "timo_scheider",
@@ -479,6 +485,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.96,
                     defense: 0.94,
                 },
+                favorite_cars: &[],
             },
         ]
     }

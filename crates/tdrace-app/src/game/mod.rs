@@ -2853,6 +2853,7 @@ impl RaceSession {
                                 precision: 0.95,
                                 defense: 0.92,
                             },
+                            favorite_cars: &[],
                         });
                     }
                 }

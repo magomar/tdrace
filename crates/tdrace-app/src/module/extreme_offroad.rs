@@ -280,6 +280,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.92,
                     defense: 0.90,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "jaxson_rivera",
@@ -304,6 +305,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "astrid_lindholm",
@@ -328,6 +330,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.99,
                     defense: 0.94,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "bubba_beauregard",
@@ -352,6 +355,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.88,
                     defense: 0.96,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "travis_mcgrath",
@@ -376,6 +380,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.94,
                     defense: 0.88,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "roxie_vance",
@@ -400,6 +405,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.97,
                     defense: 0.95,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "sven_lindqvist",
@@ -424,6 +430,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.95,
                     defense: 0.93,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "cruz_morales",
@@ -448,6 +455,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.91,
                     defense: 0.89,
                 },
+                favorite_cars: &[],
             },
         ]
     }

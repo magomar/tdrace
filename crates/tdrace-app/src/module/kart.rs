@@ -1422,6 +1422,7 @@ impl GameModule for KartGameModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "lucas_vance",
@@ -1446,6 +1447,7 @@ impl GameModule for KartGameModule {
                     precision: 0.98,
                     defense: 0.94,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "alex_rossi",
@@ -1470,6 +1472,7 @@ impl GameModule for KartGameModule {
                     precision: 0.94,
                     defense: 0.90,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "sofia_lind",
@@ -1494,6 +1497,7 @@ impl GameModule for KartGameModule {
                     precision: 0.99,
                     defense: 0.91,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "finn_korhonen",
@@ -1518,6 +1522,7 @@ impl GameModule for KartGameModule {
                     precision: 0.95,
                     defense: 0.89,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "leo_dupont",
@@ -1542,6 +1547,7 @@ impl GameModule for KartGameModule {
                     precision: 0.96,
                     defense: 0.93,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "mateo_silva",
@@ -1566,6 +1572,7 @@ impl GameModule for KartGameModule {
                     precision: 0.93,
                     defense: 0.90,
                 },
+                favorite_cars: &[],
             },
         ]
     }

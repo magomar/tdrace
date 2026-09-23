@@ -1838,6 +1838,7 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.98,
                     defense: 0.95,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "charles_laurent",
@@ -1862,6 +1863,7 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 1.00,
                     defense: 0.86,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "lewis_vance",
@@ -1886,6 +1888,7 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.99,
                     defense: 0.98,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "fernando_toro",
@@ -1910,6 +1913,7 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.95,
                     defense: 1.00,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "george_speed",
@@ -1934,6 +1938,7 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.96,
                     defense: 0.90,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "lando_vance",
@@ -1958,6 +1963,7 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.95,
                     defense: 0.88,
                 },
+                favorite_cars: &[],
             },
             DriverCharacter {
                 id: "oscar_rocket",
@@ -1982,6 +1988,7 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.97,
                     defense: 0.92,
                 },
+                favorite_cars: &[],
             },
         ]
     }
