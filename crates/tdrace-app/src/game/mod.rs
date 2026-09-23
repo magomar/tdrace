@@ -3034,7 +3034,13 @@ impl RaceSession {
         };
 
         let category_models = if effective_module == "classic" {
-            if self.free_car_selection {
+            if self.game_mode == GameMode::ExperimentalRace {
+                if let Some(pm) = player_model {
+                    vec![pm]
+                } else {
+                    vec![crate::catalog::get_classic_model_for_category(player_car_choice.category())]
+                }
+            } else if self.free_car_selection {
                 crate::catalog::get_models_for_module("classic")
             } else if let Some(pm) = player_model {
                 vec![pm]

@@ -689,7 +689,7 @@ impl GameModule for RallyGameModule {
 }
 
 const JOHAN_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("rally", 1, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
     DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
@@ -697,7 +697,7 @@ const JOHAN_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
 ];
 
 const MATTIAS_STORM_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("rally", 1, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
     DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
@@ -706,7 +706,7 @@ const MATTIAS_STORM_FAVORITES: &[DriverFavoriteCar] = &[
 
 const TIMMY_HANSENFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
     DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
     DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
@@ -721,7 +721,7 @@ const KEVIN_HANSENFIELD_FAVORITES: &[DriverFavoriteCar] = &[
 ];
 
 const NICLAS_GRON_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("rally", 1, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
     DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
@@ -762,7 +762,7 @@ const PETTER_SOLBERGFIELD_FAVORITES: &[DriverFavoriteCar] = &[
 
 const KEN_BLASTER_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
     DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
     DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),

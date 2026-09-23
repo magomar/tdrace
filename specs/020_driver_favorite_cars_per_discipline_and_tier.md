@@ -116,16 +116,16 @@ graph TD
 
 | ID | Name & Nickname | T1 (Junior RX) | T2 (WRC Supercars) | T3 (Group B) | T4 (Raid T1+) | T5 (Stadium Super Trucks) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `johan_vance` | **Johan Vance** *"Ice Master"* | `rally_polo_rx` | `rally_polo_rx` | `rally_audi_sport_quattro_s1` | `rally_audi_rs_q_etron` | `rally_sst_super_truck` |
-| `mattias_storm` | **Mattias Storm** *"Stormy"* | `rally_audi_s1_rx` | `rally_audi_s1_rx` | `rally_audi_sport_quattro_s1` | `rally_audi_rs_q_etron` | `rally_sst_robby_gordon` |
-| `timmy_hansenfield` | **Timmy Hansenfield** *"Apex Predator"* | `rally_peugeot_208_rally4` | `rally_peugeot_208_rally4` | `rally_peugeot_205_t16` | `rally_toyota_hilux_t1_plus` | `rally_sst_traxxas_edition` |
+| `johan_vance` | **Johan Vance** *"Ice Master"* | `rally_peugeot_208_rally4` | `rally_polo_rx` | `rally_audi_sport_quattro_s1` | `rally_audi_rs_q_etron` | `rally_sst_super_truck` |
+| `mattias_storm` | **Mattias Storm** *"Stormy"* | `rally_clio_rally4` | `rally_audi_s1_rx` | `rally_audi_sport_quattro_s1` | `rally_audi_rs_q_etron` | `rally_sst_robby_gordon` |
+| `timmy_hansenfield` | **Timmy Hansenfield** *"Apex Predator"* | `rally_peugeot_208_rally4` | `rally_hyundai_i20_rx` | `rally_peugeot_205_t16` | `rally_toyota_hilux_t1_plus` | `rally_sst_traxxas_edition` |
 | `kevin_hansenfield` | **Kevin Hansenfield** *"Young Gun"* | `rally_peugeot_208_rally4` | `rally_hyundai_i20_rx` | `rally_peugeot_205_t16` | `rally_toyota_hilux_t1_plus` | `rally_sst_traxxas_edition` |
-| `niclas_gron` | **Niclas Gron** *"Flying Finn"* | `rally_hyundai_i20_rx` | `rally_hyundai_i20_rx` | `rally_lancia_delta_s4` | `rally_prodrive_hunter_t1` | `rally_sst_super_truck` |
+| `niclas_gron` | **Niclas Gron** *"Flying Finn"* | `rally_fiesta_rally4` | `rally_hyundai_i20_rx` | `rally_lancia_delta_s4` | `rally_prodrive_hunter_t1` | `rally_sst_super_truck` |
 | `anton_mark` | **Anton Mark** *"The Hammer"* | `rally_clio_rally4` | `rally_polo_rx` | `rally_audi_sport_quattro_s1` | `rally_audi_rs_q_etron` | `rally_sst_robby_gordon` |
 | `timo_scheider` | **Timo Scheider** *"The Veteran"* | `rally_fiesta_rally4` | `rally_audi_s1_rx` | `rally_lancia_delta_s4` | `rally_prodrive_hunter_t1` | `rally_sst_super_truck` |
 | `sebastien_loebfield` | **Sebastien Loebfield** *"The Maestro"* | `rally_peugeot_208_rally4` | `rally_hyundai_i20_rx` | `rally_peugeot_205_t16` | `rally_prodrive_hunter_t1` | `rally_sst_traxxas_edition` |
 | `petter_solbergfield` | **Petter Solbergfield** *"Hollywood"* | `rally_fiesta_rally4` | `rally_polo_rx` | `rally_audi_sport_quattro_s1` | `rally_toyota_hilux_t1_plus` | `rally_sst_robby_gordon` |
-| `ken_blaster` | **Ken Blaster** *"Gymkhana King"* | `rally_fiesta_rally4` | `rally_fiesta_rally4` | `rally_lancia_delta_s4` | `rally_audi_rs_q_etron` | `rally_sst_super_truck` |
+| `ken_blaster` | **Ken Blaster** *"Gymkhana King"* | `rally_fiesta_rally4` | `rally_polo_rx` | `rally_lancia_delta_s4` | `rally_audi_rs_q_etron` | `rally_sst_super_truck` |
 | `andreas_bakkerud` | **Andreas Bakkerud** *"Baby Blue"* | `rally_clio_rally4` | `rally_audi_s1_rx` | `rally_lancia_delta_s4` | `rally_toyota_hilux_t1_plus` | `rally_sst_traxxas_edition` |
 | `reinis_nitissfield` | **Reinis Nitissfield** *"Baltic Bullet"* | `rally_clio_rally4` | `rally_hyundai_i20_rx` | `rally_peugeot_205_t16` | `rally_prodrive_hunter_t1` | `rally_sst_robby_gordon` |
 
