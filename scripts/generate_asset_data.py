@@ -274,6 +274,7 @@ def generate_assets():
             "acceleration": int(round(raw_s[1] * 100)),
             "grip": int(round(raw_s[2] * 100)),
             "agility": int(round(raw_s[3] * 100)),
+            "braking": int(round(raw_s[4] * 100)),
             "downforce": int(round(raw_s[5] * 100)),
         }
 

@@ -26,6 +26,7 @@
       "acceleration": 82,
       "grip": 85,
       "agility": 70,
+      "braking": 82,
       "downforce": 65
     },
     "summary": "Mid-engine benchmark of customer racing. Introduced in 2022 featuring the screaming 911 GT3 engine, delivering surgical balance and razor-sharp apex turn-in.",
@@ -61,6 +62,7 @@
       "acceleration": 85,
       "grip": 82,
       "agility": 68,
+      "braking": 80,
       "downforce": 62
     },
     "summary": "Customer racing workhorse built on the G82 chassis. Renowned for its curb compliance, high mechanical grip, and massive twin-turbo mid-range punch.",
@@ -96,6 +98,7 @@
       "acceleration": 83,
       "grip": 84,
       "agility": 72,
+      "braking": 81,
       "downforce": 64
     },
     "summary": "Built at Prodrive in Banbury. Features perfect 50:50 weight distribution and a progressive V8 torque curve that forgivingly absorbs aggressive trail-braking.",
@@ -131,6 +134,7 @@
       "acceleration": 84,
       "grip": 86,
       "agility": 74,
+      "braking": 84,
       "downforce": 60
     },
     "summary": "Lightest car in the GT4 field with upgraded EVO braking and revised damper curves, providing lightning deceleration into tight chicanes.",
@@ -166,6 +170,7 @@
       "acceleration": 93,
       "grip": 95,
       "agility": 55,
+      "braking": 94,
       "downforce": 92
     },
     "summary": "The global benchmark rear-engine GT3 racer. Renowned for supreme corner-exit traction and high-speed trail-braking pivot capability.",
@@ -201,6 +206,7 @@
       "acceleration": 96,
       "grip": 95,
       "agility": 52,
+      "braking": 93,
       "downforce": 94
     },
     "summary": "Succeeded the 488 GT3. Powered by a 120\u00b0 Hot-V turbo V6. Claimed overall victory at the 2023 N\u00fcrburgring 24 Hours on its debut endurance season.",
@@ -236,6 +242,7 @@
       "acceleration": 92,
       "grip": 93,
       "agility": 56,
+      "braking": 92,
       "downforce": 90
     },
     "summary": "Front-mid mounted atmospheric 6.2L V8 monster. Celebrated for chassis stability over curbs and progressive, predictable throttle powerband.",
@@ -271,6 +278,7 @@
       "acceleration": 94,
       "grip": 94,
       "agility": 53,
+      "braking": 93,
       "downforce": 91
     },
     "summary": "Screaming naturally aspirated mid-engine V10 producing exceptional mechanical downforce and high-speed corner stability across endurance classics.",
@@ -306,6 +314,7 @@
       "acceleration": 97,
       "grip": 89,
       "agility": 65,
+      "braking": 90,
       "downforce": 78
     },
     "summary": "Raw 700 BHP biturbo missile created for high-velocity sprint racing. Features enormous straight-line top speed with lower aerodynamic drag.",
@@ -341,6 +350,7 @@
       "acceleration": 98,
       "grip": 92,
       "agility": 60,
+      "braking": 95,
       "downforce": 84
     },
     "summary": "Ultralight carbon monocoque from the legendary motorsport dynasty, generating savage acceleration from a 5.4L atmospheric quad-cam V8.",
@@ -376,6 +386,7 @@
       "acceleration": 95,
       "grip": 91,
       "agility": 62,
+      "braking": 91,
       "downforce": 80
     },
     "summary": "Marked Maserati's triumphant return to GT racing, utilizing the patented pre-chamber twin-spark Nettuno V6 in a full carbon monocoque.",
@@ -411,6 +422,7 @@
       "acceleration": 96,
       "grip": 90,
       "agility": 64,
+      "braking": 91,
       "downforce": 76
     },
     "summary": "Most powerful customer car ever produced by Audi Sport, crowned with a dramatic roof-mounted ram-air intake snorkel for high-speed cylinder filling.",
@@ -446,6 +458,7 @@
       "acceleration": 98,
       "grip": 93,
       "agility": 40,
+      "braking": 95,
       "downforce": 94
     },
     "summary": "Overall victor of the 1998 24 Hours of Le Mans. Crafted with a full carbon monocoque and analog unassisted steering, mastering the Mulsanne Straight.",
@@ -481,6 +494,7 @@
       "acceleration": 99,
       "grip": 92,
       "agility": 42,
+      "braking": 94,
       "downforce": 92
     },
     "summary": "Legendary central cockpit layout with an elongated rear deck designed to minimize aerodynamic drag, powered by Paul Rosche's atmospheric BMW V12.",
@@ -516,6 +530,7 @@
       "acceleration": 97,
       "grip": 93,
       "agility": 44,
+      "braking": 93,
       "downforce": 93
     },
     "summary": "Dominant 1997 FIA GT World Champion designed, fabricated, and winning on track in just 128 days from project initiation.",
@@ -551,6 +566,7 @@
       "acceleration": 97,
       "grip": 91,
       "agility": 45,
+      "braking": 92,
       "downforce": 91
     },
     "summary": "Built with TWR for the 1998 24 Hours of Le Mans, securing 3rd overall through relentless powertrain reliability and aerodynamic balance.",
@@ -586,6 +602,7 @@
       "acceleration": 99,
       "grip": 98,
       "agility": 35,
+      "braking": 98,
       "downforce": 99
     },
     "summary": "Back-to-back 24 Hours of Le Mans winner (2023, 2024). Full ground effect underbody tunnels with intelligent front-axle electric deployment.",
@@ -621,6 +638,7 @@
       "acceleration": 98,
       "grip": 97,
       "agility": 38,
+      "braking": 97,
       "downforce": 97
     },
     "summary": "IMSA and WEC endurance title contender built on the Multimatic monocoque with a twin-turbo V8 derived from the 918 Spyder.",
@@ -656,6 +674,7 @@
       "acceleration": 99,
       "grip": 98,
       "agility": 34,
+      "braking": 98,
       "downforce": 99
     },
     "summary": "Pioneered the LMH regulations, dominating World Endurance Championships with supreme hybrid regeneration and wet weather traction.",
@@ -691,6 +710,7 @@
       "acceleration": 98,
       "grip": 96,
       "agility": 40,
+      "braking": 96,
       "downforce": 96
     },
     "summary": "Celebrated for the visceral roar of its naturally aspirated 5.5L cross-plane V8, married to Dallara chassis dynamics and hybrid boost.",
@@ -726,6 +746,7 @@
       "acceleration": 74,
       "grip": 72,
       "agility": 85,
+      "braking": 70,
       "downforce": 45
     },
     "summary": "Grassroots short-track legend. Heavy steel body and spool rear differential teaching pure momentum preservation on tight dirt and asphalt bullrings.",
@@ -761,6 +782,7 @@
       "acceleration": 75,
       "grip": 73,
       "agility": 84,
+      "braking": 71,
       "downforce": 46
     },
     "summary": "Fox-body silhouette housing a carbureted Windsor V8. Slightly lighter nose gives keen turn-in on flat bullrings.",
@@ -796,6 +818,7 @@
       "acceleration": 75,
       "grip": 71,
       "agility": 86,
+      "braking": 69,
       "downforce": 44
     },
     "summary": "Classic Mopar muscle grassroots entry. Torquey 360 LA engine provides strong off-corner dig on dirt bullrings.",
@@ -831,6 +854,7 @@
       "acceleration": 86,
       "grip": 82,
       "agility": 88,
+      "braking": 80,
       "downforce": 60
     },
     "summary": "Tubular perimeter spaceframe chassis engineered for immense mid-corner speed and inside front tire lift on banked asphalt ovals.",
@@ -866,6 +890,7 @@
       "acceleration": 86,
       "grip": 83,
       "agility": 87,
+      "braking": 81,
       "downforce": 61
     },
     "summary": "Perimeter chassis with Mustang composite front clip. Agile mid-corner roll rate and sharp turn-in on asphalt ovals.",
@@ -901,6 +926,7 @@
       "acceleration": 84,
       "grip": 83,
       "agility": 86,
+      "braking": 81,
       "downforce": 58
     },
     "summary": "CARSTour staple spec. Two-barrel carbureted crate V8 demands high momentum conservation and tire management across long runs.",
@@ -936,6 +962,7 @@
       "acceleration": 87,
       "grip": 84,
       "agility": 86,
+      "braking": 83,
       "downforce": 68
     },
     "summary": "Stepping stone to national touring divisions. Employs composite body panels over Gen-6 chassis with potent drafting wake dynamics.",
@@ -971,6 +998,7 @@
       "acceleration": 87,
       "grip": 84,
       "agility": 85,
+      "braking": 83,
       "downforce": 69
     },
     "summary": "TRD-supported ARCA composite racer. High aerodynamic efficiency gives excellent straight-line draft pulling power.",
@@ -1006,6 +1034,7 @@
       "acceleration": 87,
       "grip": 85,
       "agility": 85,
+      "braking": 84,
       "downforce": 68
     },
     "summary": "Proven Gen-6 chassis platform with Roush Yates pedigree. Stable rear downforce through banked oval transitions.",
@@ -1041,6 +1070,7 @@
       "acceleration": 89,
       "grip": 85,
       "agility": 86,
+      "braking": 85,
       "downforce": 72
     },
     "summary": "Massive bluff aerodynamic drag creates immense drafting pull, leading to breathtaking 3-wide pack racing and bump drafting.",
@@ -1076,6 +1106,7 @@
       "acceleration": 89,
       "grip": 85,
       "agility": 86,
+      "braking": 85,
       "downforce": 73
     },
     "summary": "Aerodynamically tuned F-150 silhouette. Excels in pack drafting and high-speed bump drafting down superspeedway backstraights.",
@@ -1111,6 +1142,7 @@
       "acceleration": 89,
       "grip": 86,
       "agility": 85,
+      "braking": 85,
       "downforce": 73
     },
     "summary": "TRD championship contender. Features low-drag front fascia and aggressive spoiler pitch for drafting parity.",
@@ -1146,6 +1178,7 @@
       "acceleration": 90,
       "grip": 86,
       "agility": 88,
+      "braking": 88,
       "downforce": 78
     },
     "summary": "The apex of analog American spaceframe racing. 850 horsepower breathing through un-muffled boom tubes with giant rear wings.",
@@ -1181,6 +1214,7 @@
       "acceleration": 91,
       "grip": 86,
       "agility": 87,
+      "braking": 88,
       "downforce": 79
     },
     "summary": "Iconic American road racing weapon. Unrestricted 850 BHP V8 paired with lightweight spaceframe and massive high-mount rear wing.",
@@ -1216,6 +1250,7 @@
       "acceleration": 91,
       "grip": 85,
       "agility": 88,
+      "braking": 87,
       "downforce": 78
     },
     "summary": "Muscular silhouette with earth-shattering Mopar acoustic presence. Immense low-RPM tractive bite out of slow chicanes.",
@@ -1251,6 +1286,7 @@
       "acceleration": 72,
       "grip": 78,
       "agility": 76,
+      "braking": 74,
       "downforce": 40
     },
     "summary": "Front-wheel-drive academy star. Teaches precision Scandinavian flicks, trail-braking rotation, and lift-off oversteer on gravel.",
@@ -1286,6 +1322,7 @@
       "acceleration": 73,
       "grip": 78,
       "agility": 77,
+      "braking": 75,
       "downforce": 41
     },
     "summary": "M-Sport engineered junior benchmark. Short wheelbase and punchy 3-cylinder turbo provide instantaneous trail-braking flick recovery.",
@@ -1321,6 +1358,7 @@
       "acceleration": 74,
       "grip": 77,
       "agility": 76,
+      "braking": 75,
       "downforce": 42
     },
     "summary": "High torque from the 1.3L 4-cylinder engine allows aggressive mid-corner pull over loose gravel ruts.",
@@ -1356,6 +1394,7 @@
       "acceleration": 96,
       "grip": 92,
       "agility": 88,
+      "braking": 90,
       "downforce": 75
     },
     "summary": "Violent 0-100 km/h in 2.3 seconds with permanent mechanical AWD and relentless anti-lag explosions powering full-lock 4-wheel drifts.",
@@ -1391,6 +1430,7 @@
       "acceleration": 97,
       "grip": 92,
       "agility": 87,
+      "braking": 91,
       "downforce": 76
     },
     "summary": "Dominant World RX machine developed with PSRX. Incredible traction off the standing launch grid with neutral 50:50 AWD split.",
@@ -1426,6 +1466,7 @@
       "acceleration": 96,
       "grip": 93,
       "agility": 88,
+      "braking": 90,
       "downforce": 77
     },
     "summary": "Mattias Ekstr\u00f6m's championship-winning pocket rocket. Aggressive widebody aero kit and quick steering rack for hairpin agility.",
@@ -1461,6 +1502,7 @@
       "acceleration": 97,
       "grip": 88,
       "agility": 95,
+      "braking": 86,
       "downforce": 82
     },
     "summary": "Mythical monster of rally's golden era. Massive KKK turbo boost onset and distinctive 5-cylinder warble with extreme aerodynamic wings.",
@@ -1496,6 +1538,7 @@
       "acceleration": 96,
       "grip": 90,
       "agility": 94,
+      "braking": 87,
       "downforce": 80
     },
     "summary": "Mid-engine Group B conqueror. Featherweight 910 kg chassis with transverse turbo engine delivering telepathic drift balance.",
@@ -1531,6 +1574,7 @@
       "acceleration": 98,
       "grip": 89,
       "agility": 96,
+      "braking": 87,
       "downforce": 81
     },
     "summary": "Twincharged technological masterpiece. Volumex supercharger handles instant low-end launch until the giant KKK turbo takes over at high RPM.",
@@ -1566,6 +1610,7 @@
       "acceleration": 82,
       "grip": 86,
       "agility": 85,
+      "braking": 88,
       "downforce": 50
     },
     "summary": "Dakar Rally conqueror. Massive 37-inch tires and 350mm wheel travel soaking up boulders and giant dunes at top speed without flinching.",
@@ -1601,6 +1646,7 @@
       "acceleration": 85,
       "grip": 88,
       "agility": 84,
+      "braking": 89,
       "downforce": 52
     },
     "summary": "2024 Dakar overall winner. Electric torque vectoring delivers immediate power distribution across shifting sand dunes without gearshifts.",
@@ -1636,6 +1682,7 @@
       "acceleration": 83,
       "grip": 87,
       "agility": 85,
+      "braking": 88,
       "downforce": 51
     },
     "summary": "Ian Callum designed aerodynamic silhouette housing long-travel dampers. Engineered for extreme reliability over thousands of desert kilometers.",
@@ -1671,6 +1718,7 @@
       "acceleration": 92,
       "grip": 76,
       "agility": 96,
+      "braking": 82,
       "downforce": 40
     },
     "summary": "Spectacle on wheels created by Robby Gordon. Huge body roll, 3-wheel apex cornering, and soaring 60-meter launches off steel ramps.",
@@ -1706,6 +1754,7 @@
       "acceleration": 92,
       "grip": 77,
       "agility": 96,
+      "braking": 83,
       "downforce": 40
     },
     "summary": "Signature orange racing livery of founder Robby Gordon. Soft sway bars allow dramatic 3-wheel apex cornering and smooth flight off steel jump ramps.",
@@ -1741,6 +1790,7 @@
       "acceleration": 92,
       "grip": 76,
       "agility": 96,
+      "braking": 82,
       "downforce": 41
     },
     "summary": "Iconic high-contrast RC-inspired Traxxas livery. King shocks soak up violent landings from 20-foot jumps with zero rebound bouncing.",
@@ -1776,6 +1826,7 @@
       "acceleration": 96,
       "grip": 82,
       "agility": 94,
+      "braking": 80,
       "downforce": 42
     },
     "summary": "Ultralight chromoly tube chassis, rear paddle tires, and long-travel Fox live-valve shocks creating massive sand roosts over desert dunes.",
@@ -1811,6 +1862,7 @@
       "acceleration": 90,
       "grip": 85,
       "agility": 92,
+      "braking": 82,
       "downforce": 38
     },
     "summary": "Naturally aspirated 4-cylinder high-RPM power curve with 74-inch stance and 29 inches of usable travel for dune skimming.",
@@ -1846,6 +1898,7 @@
       "acceleration": 92,
       "grip": 80,
       "agility": 96,
+      "braking": 78,
       "downforce": 35
     },
     "summary": "Minimalist chromoly skeleton with rear-hung air-cooled turbo boxer. Left and right cutting brakes allow 360-degree sand pirouettes.",
@@ -1881,6 +1934,7 @@
       "acceleration": 91,
       "grip": 84,
       "agility": 92,
+      "braking": 86,
       "downforce": 45
     },
     "summary": "The king of Baja. Skims across 3-foot desert whoops at over 200 km/h with 30 inches of King bypass suspension travel.",
@@ -1916,6 +1970,7 @@
       "acceleration": 90,
       "grip": 83,
       "agility": 94,
+      "braking": 85,
       "downforce": 44
     },
     "summary": "Traditional rear-wheel-drive unlimited desert trophy truck. Immense power slide controllability across deep silt beds.",
@@ -1951,6 +2006,7 @@
       "acceleration": 92,
       "grip": 85,
       "agility": 91,
+      "braking": 86,
       "downforce": 46
     },
     "summary": "State-of-the-art all-wheel-drive trophy truck platform. Front differential traction pulls the truck straight out of boulder-strewn washes.",
@@ -1986,6 +2042,7 @@
       "acceleration": 94,
       "grip": 90,
       "agility": 98,
+      "braking": 88,
       "downforce": 65
     },
     "summary": "Equipped with 600 tungsten carbide tire studs per tire, pulling sustained 60-degree slip angles on mirror-sheen frozen lakes.",
@@ -2021,6 +2078,7 @@
       "acceleration": 95,
       "grip": 91,
       "agility": 97,
+      "braking": 89,
       "downforce": 66
     },
     "summary": "Short-wheelbase ice drifting weapon with custom 5mm ice spikes. Legendary 5-cylinder warble echoing across frozen Swedish lakes.",
@@ -2056,6 +2114,7 @@
       "acceleration": 94,
       "grip": 91,
       "agility": 98,
+      "braking": 88,
       "downforce": 64
     },
     "summary": "Super-All Wheel Control (S-AWC) and active yaw control providing pinpoint slide control on polished blue ice circuits.",
@@ -2091,6 +2150,7 @@
       "acceleration": 90,
       "grip": 82,
       "agility": 90,
+      "braking": 75,
       "downforce": 30
     },
     "summary": "Tall-riding mud monster fitted with 48-inch agricultural paddle tractor tires, slicing through deep mud slurries with ease.",
@@ -2126,6 +2186,7 @@
       "acceleration": 89,
       "grip": 81,
       "agility": 90,
+      "braking": 74,
       "downforce": 29
     },
     "summary": "Squarebody Chevy truck mounted on heavy 2.5-ton military axles with massive chevron tractor tires churning muddy trenches.",
@@ -2161,6 +2222,7 @@
       "acceleration": 90,
       "grip": 82,
       "agility": 89,
+      "braking": 75,
       "downforce": 30
     },
     "summary": "Supercharged high-riser with 18 inches of suspension lift and massive tractor tires throwing 50-foot rooster tails of thick mud.",
@@ -2196,6 +2258,7 @@
       "acceleration": 98,
       "grip": 80,
       "agility": 95,
+      "braking": 80,
       "downforce": 25
     },
     "summary": "1,500 horsepower supercharged methanol beast on 66-inch BKT tires. 4-wheel steering enables spin-donuts and gigantic arena stadium jumps.",
@@ -2231,6 +2294,7 @@
       "acceleration": 98,
       "grip": 81,
       "agility": 95,
+      "braking": 80,
       "downforce": 26
     },
     "summary": "Maximum Destruction. Spiked aerodynamic futuristic bodywork designed for explosive forward momentum, wheelies, and backflips.",
@@ -2266,6 +2330,7 @@
       "acceleration": 98,
       "grip": 80,
       "agility": 95,
+      "braking": 80,
       "downforce": 25
     },
     "summary": "The original monster truck that started the worldwide phenomenon. Classic blue Ford pickup body riding on massive 66-inch flotation tires.",
@@ -2301,6 +2366,7 @@
       "acceleration": 65,
       "grip": 88,
       "agility": 45,
+      "braking": 75,
       "downforce": 30
     },
     "summary": "The cradle of world motorsport champions. Pure momentum management where avoiding scrubbing speed in corners is the key to victory.",
@@ -2336,6 +2402,7 @@
       "acceleration": 65,
       "grip": 88,
       "agility": 45,
+      "braking": 75,
       "downforce": 30
     },
     "summary": "Italian karting pedigree. Red and white Freeline bodywork with balanced 28mm tubular frame for consistent corner exit speed.",
@@ -2371,6 +2438,7 @@
       "acceleration": 66,
       "grip": 89,
       "agility": 44,
+      "braking": 76,
       "downforce": 30
     },
     "summary": "The emerald green weapon from Prevalle. Renowned for its supple frame flex that generates instant grip in wet and dry conditions.",
@@ -2406,6 +2474,7 @@
       "acceleration": 85,
       "grip": 94,
       "agility": 42,
+      "braking": 88,
       "downforce": 35
     },
     "summary": "Direct-drive racing weapon without gearbox. Screams to 16,000 RPM, demanding tremendous neck strength and razor-sharp line discipline.",
@@ -2441,6 +2510,7 @@
       "acceleration": 85,
       "grip": 94,
       "agility": 43,
+      "braking": 88,
       "downforce": 35
     },
     "summary": "Black and gold racing livery with 30mm chrome-moly tubing. Demands aggressive steering inputs and rewards high apex commitment.",
@@ -2476,6 +2546,7 @@
       "acceleration": 86,
       "grip": 93,
       "agility": 42,
+      "braking": 88,
       "downforce": 36
     },
     "summary": "Red aerodynamic bodywork designed in collaboration with ART Grand Prix. Stable high-speed chassis for fast sweeping corners.",
@@ -2511,6 +2582,7 @@
       "acceleration": 96,
       "grip": 97,
       "agility": 40,
+      "braking": 96,
       "downforce": 40
     },
     "summary": "Peak karting intensity. 6-speed sequential gearbox firing off 0-100 km/h in under 3 seconds while pulling 3.5G lateral cornering grip.",
@@ -2546,6 +2618,7 @@
       "acceleration": 96,
       "grip": 97,
       "agility": 40,
+      "braking": 96,
       "downforce": 40
     },
     "summary": "Most successful shifter kart chassis in World Championship history. 32mm heavy tubular frame handles brutal torque without flexing out of line.",
@@ -2581,6 +2654,7 @@
       "acceleration": 96,
       "grip": 97,
       "agility": 40,
+      "braking": 97,
       "downforce": 40
     },
     "summary": "The benchmark of KZ shifter racing. Dual front hand-operated or foot-operated disc brakes offering devastating stopping power.",
@@ -2616,6 +2690,7 @@
       "acceleration": 88,
       "grip": 70,
       "agility": 92,
+      "braking": 80,
       "downforce": 20
     },
     "summary": "Guinness World Record heritage. High-center-of-gravity tuned lawnmower delivering hilarious lift-off oversteer and frantic curb hopping.",
@@ -2651,6 +2726,7 @@
       "acceleration": 86,
       "grip": 70,
       "agility": 93,
+      "braking": 79,
       "downforce": 20
     },
     "summary": "Classic British lawnmower racing silhouette in iconic green and yellow. Torquey V-Twin gives hilarious tire-spinning launches on grass tracks.",
@@ -2686,6 +2762,7 @@
       "acceleration": 88,
       "grip": 71,
       "agility": 92,
+      "braking": 81,
       "downforce": 20
     },
     "summary": "Austrian modified racing tractor with dropped front axle and reinforced chassis rails. Capable of surprising drift control through grass chicanes.",
@@ -2721,6 +2798,7 @@
       "acceleration": 98,
       "grip": 99,
       "agility": 35,
+      "braking": 97,
       "downforce": 85
     },
     "summary": "Full carbon bodywork aerodynamic monster that races on full-size Grand Prix circuits, capable of out-cornering Formula 3 cars at 245 km/h.",
@@ -2756,6 +2834,7 @@
       "acceleration": 98,
       "grip": 99,
       "agility": 35,
+      "braking": 97,
       "downforce": 86
     },
     "summary": "Czech engineering marvel with wind-tunnel developed fiberglass fairings and rear bi-plane wing. Glues the chassis to GP circuits.",
@@ -2791,6 +2870,7 @@
       "acceleration": 98,
       "grip": 99,
       "agility": 34,
+      "braking": 97,
       "downforce": 87
     },
     "summary": "British Superkart championship winner. The screaming 2-stroke DEA twin engine generates high straight-line speed on long straights.",
@@ -2826,6 +2906,7 @@
       "acceleration": 88,
       "grip": 90,
       "agility": 70,
+      "braking": 86,
       "downforce": 75
     },
     "summary": "Fictional flagship coupe built by Apex Dynamics for high-octane circuit dominance. Tuned for razor-sharp steering and forgiving slide recovery.",
@@ -2861,6 +2942,7 @@
       "acceleration": 90,
       "grip": 85,
       "agility": 80,
+      "braking": 88,
       "downforce": 82
     },
     "summary": "Thunderous fantasy stock car engineered to trade paint at 245 km/h. Featuring a planted chassis that makes pack-drafting and high-speed banking easy and thrilling.",
@@ -2896,6 +2978,7 @@
       "acceleration": 92,
       "grip": 88,
       "agility": 92,
+      "braking": 84,
       "downforce": 70
     },
     "summary": "Bespoke fantasy sand and stunt buggy with massive suspension articulation, forgiving jump landing dampeners, and unyielding multi-surface grip.",
@@ -2931,6 +3014,7 @@
       "acceleration": 96,
       "grip": 98,
       "agility": 45,
+      "braking": 90,
       "downforce": 40
     },
     "summary": "The ultimate pocket rocket from RocketKart Works. Delivers direct 1:1 steering response with magnetic apex adhesion, turning every tight corner into pure arcade fun.",
@@ -2966,6 +3050,7 @@
       "acceleration": 94,
       "grip": 92,
       "agility": 88,
+      "braking": 90,
       "downforce": 78
     },
     "summary": "Legendary fantasy Group B rally beast engineered for vicious 4WD acceleration, massive jump composure, and fearless slides across dirt, gravel, and asphalt.",

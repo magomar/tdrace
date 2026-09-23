@@ -48,6 +48,7 @@ export const vehicleSchema = z.object({
     acceleration: z.number(),
     grip: z.number(),
     agility: z.number(),
+    braking: z.number().optional(),
     downforce: z.number(),
   }),
   summary: z.string(),
