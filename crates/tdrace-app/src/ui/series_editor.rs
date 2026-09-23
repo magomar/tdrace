@@ -213,6 +213,8 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
         car_model_id: Some(default_model_id.clone()),
         country: Some("ESP".to_string()),
         ai_character: None,
+        ai_style: None,
+        ai_tier: None,
         livery_idx: Some(0),
     });
 
@@ -283,6 +285,7 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
             _ => "Apex Motorsport",
         };
 
+        let (style, tier_enum) = character.classify_style_and_tier();
         drivers.push(DriverConfig {
             id: character.id.to_string(),
             name: character.name.to_string(),
@@ -291,6 +294,8 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
             car_model_id: Some(model),
             country: Some("INT".to_string()),
             ai_character: Some(ai_char.to_string()),
+            ai_style: Some(style.as_str().to_string()),
+            ai_tier: Some(tier_enum.to_u8()),
             livery_idx: Some((idx + 1) as u8),
         });
     }

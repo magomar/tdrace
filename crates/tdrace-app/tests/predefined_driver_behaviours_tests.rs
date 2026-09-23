@@ -154,6 +154,8 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             car_model_id: Some("gt_toyota_supra_gt4".into()),
             country: None,
             ai_character: None,
+            ai_style: None,
+            ai_tier: None,
             livery_idx: None,
         },
         DriverConfig {
@@ -164,6 +166,8 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             car_model_id: Some("gt_porsche_718_gt4".into()),
             country: None,
             ai_character: Some("aggressive".into()),
+            ai_style: None,
+            ai_tier: None,
             livery_idx: None,
         },
         DriverConfig {
@@ -174,6 +178,8 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             car_model_id: Some("gt_bmw_m4_gt4".into()),
             country: None,
             ai_character: Some("smooth".into()),
+            ai_style: None,
+            ai_tier: None,
             livery_idx: None,
         },
         DriverConfig {
@@ -184,6 +190,8 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             car_model_id: Some("gt_aston_vantage_gt4".into()),
             country: None,
             ai_character: Some("calculating".into()),
+            ai_style: None,
+            ai_tier: None,
             livery_idx: None,
         },
         DriverConfig {
@@ -194,6 +202,8 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             car_model_id: Some("gt_amg_gt4".into()),
             country: None,
             ai_character: Some("bold".into()),
+            ai_style: None,
+            ai_tier: None,
             livery_idx: None,
         },
     ];

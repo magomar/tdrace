@@ -297,6 +297,8 @@ mod tests {
                     car_model_id: None,
                     country: None,
                     ai_character: None,
+                    ai_style: None,
+                    ai_tier: None,
                     livery_idx: None,
                 },
                 DriverConfig {
@@ -307,6 +309,8 @@ mod tests {
                     car_model_id: None,
                     country: None,
                     ai_character: None,
+                    ai_style: None,
+                    ai_tier: None,
                     livery_idx: None,
                 },
             ],

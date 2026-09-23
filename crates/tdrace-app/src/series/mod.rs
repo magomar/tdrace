@@ -104,6 +104,10 @@ pub struct SeriesStandingEntry {
     pub total_race_time: f32,
     #[serde(default)]
     pub ai_character: Option<String>,
+    #[serde(default)]
+    pub ai_style: Option<String>,
+    #[serde(default)]
+    pub ai_tier: Option<u8>,
 }
 
 pub type TournamentStandingEntry = SeriesStandingEntry;
@@ -120,11 +124,19 @@ impl SeriesStandingEntry {
             best_finish: usize::MAX,
             total_race_time: 0.0,
             ai_character: None,
+            ai_style: None,
+            ai_tier: None,
         }
     }
 
     pub fn with_ai_character(mut self, ai_character: Option<String>) -> Self {
         self.ai_character = ai_character;
+        self
+    }
+
+    pub fn with_ai_style_and_tier(mut self, ai_style: Option<String>, ai_tier: Option<u8>) -> Self {
+        self.ai_style = ai_style;
+        self.ai_tier = ai_tier;
         self
     }
 }

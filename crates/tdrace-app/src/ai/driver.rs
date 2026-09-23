@@ -1,5 +1,5 @@
 use macroquad::color::Color;
-use crate::ai::BotProfile;
+use crate::ai::{BotProfile, DriverQuality, DriverTier, DrivingStyle};
 use crate::catalog::RealCarModel;
 use crate::module::GameModule;
 use crate::render::color::CarColorScheme;
@@ -24,32 +24,62 @@ impl DriverStats {
         }
     }
 
+    pub fn from_style_and_quality(style: DrivingStyle, quality: &DriverQuality) -> Self {
+        let (base_speed_mult, base_agg, base_prec, base_def) = match style {
+            DrivingStyle::Smooth => (1.00, 0.65, 0.98, 0.85),
+            DrivingStyle::Aggressive => (1.02, 0.96, 0.80, 0.88),
+            DrivingStyle::Tenacious => (0.96, 0.82, 0.88, 0.98),
+            DrivingStyle::Calculating => (1.00, 0.72, 0.96, 0.90),
+            DrivingStyle::Bold => (1.01, 0.92, 0.78, 0.80),
+            DrivingStyle::Balanced => (0.97, 0.70, 0.85, 0.85),
+        };
+
+        let speed = (0.70 + (quality.pace_limit - 0.85) * 1.5 * base_speed_mult).clamp(0.65, 0.99);
+        let aggression = (base_agg * (0.90 + 0.10 * (1.0 - quality.composure))).clamp(0.40, 0.99);
+        let precision = (base_prec * (0.80 + 0.20 * quality.consistency)).clamp(0.50, 0.99);
+        let defense = (base_def * (0.80 + 0.20 * quality.composure)).clamp(0.50, 0.99);
+
+        Self {
+            speed,
+            aggression,
+            precision,
+            defense,
+        }
+    }
+
     pub fn from_archetype(name: &str) -> Self {
-        match name.to_ascii_lowercase().as_str() {
-            "smooth" => Self::new(0.92, 0.65, 0.98, 0.85),
-            "aggressive" | "brawler" => Self::new(0.96, 0.96, 0.82, 0.88),
-            "tenacious" | "defender" => Self::new(0.88, 0.82, 0.90, 0.98),
-            "calculating" | "tactical" => Self::new(0.92, 0.72, 0.96, 0.90),
-            "fast" | "pro" | "hotlap" => Self::new(0.99, 0.88, 0.94, 0.86),
-            "balanced" | "club" => Self::new(0.85, 0.70, 0.85, 0.85),
-            "strategic" | "draft" => Self::new(0.94, 0.85, 0.92, 0.90),
-            "bold" | "drift" | "renegade" => Self::new(0.95, 0.92, 0.80, 0.80),
-            "rookie" | "cautious" => Self::new(0.70, 0.50, 0.75, 0.70),
-            _ => Self::new(0.85, 0.70, 0.85, 0.85),
+        let norm = name.to_ascii_lowercase();
+        if let Some((s_str, t_str)) = norm.split_once('_') {
+            let style = DrivingStyle::from_str_lossy(s_str);
+            let tier = DriverTier::from_str_lossy(t_str);
+            return Self::from_style_and_quality(style, &DriverQuality::for_tier(tier));
+        }
+        match norm.as_str() {
+            "smooth" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Pro)),
+            "aggressive" | "brawler" => Self::from_style_and_quality(DrivingStyle::Aggressive, &DriverQuality::for_tier(DriverTier::Pro)),
+            "tenacious" | "defender" => Self::from_style_and_quality(DrivingStyle::Tenacious, &DriverQuality::for_tier(DriverTier::Pro)),
+            "calculating" | "tactical" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
+            "fast" | "pro" | "hotlap" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Legend)),
+            "balanced" | "club" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Contender)),
+            "strategic" | "draft" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
+            "bold" | "drift" | "renegade" => Self::from_style_and_quality(DrivingStyle::Bold, &DriverQuality::for_tier(DriverTier::Pro)),
+            "rookie" | "cautious" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Rookie)),
+            _ => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Pro)),
         }
     }
 
     pub fn archetype_for_index(idx: usize) -> Self {
-        match idx % 8 {
-            0 => Self::from_archetype("smooth"),
-            1 => Self::from_archetype("aggressive"),
-            2 => Self::from_archetype("tenacious"),
-            3 => Self::from_archetype("calculating"),
-            4 => Self::from_archetype("fast"),
-            5 => Self::from_archetype("balanced"),
-            6 => Self::from_archetype("strategic"),
-            _ => Self::from_archetype("bold"),
-        }
+        let (style, tier) = match idx % 8 {
+            0 => (DrivingStyle::Smooth, DriverTier::Pro),
+            1 => (DrivingStyle::Aggressive, DriverTier::Pro),
+            2 => (DrivingStyle::Tenacious, DriverTier::Pro),
+            3 => (DrivingStyle::Calculating, DriverTier::Pro),
+            4 => (DrivingStyle::Smooth, DriverTier::Legend),
+            5 => (DrivingStyle::Balanced, DriverTier::Contender),
+            6 => (DrivingStyle::Calculating, DriverTier::Legend),
+            _ => (DrivingStyle::Bold, DriverTier::Pro),
+        };
+        Self::from_style_and_quality(style, &DriverQuality::for_tier(tier))
     }
 }
 
@@ -913,5 +943,38 @@ impl DriverCharacter {
                 _ => self.preferred_car,
             }
         }
+    }
+
+    /// Classifies or infers the driving style and experience tier for this character based on their tuned parameters.
+    pub fn classify_style_and_tier(&self) -> (DrivingStyle, DriverTier) {
+        let style = if self.profile.aggression >= 0.90 {
+            if self.profile.steering_kd <= 0.05 {
+                DrivingStyle::Bold
+            } else {
+                DrivingStyle::Aggressive
+            }
+        } else if self.stats.defense >= 0.95 {
+            DrivingStyle::Tenacious
+        } else if self.stats.precision >= 0.96 && self.profile.brake_margin >= 1.01 {
+            DrivingStyle::Smooth
+        } else if self.profile.lookahead_time >= 0.38 && self.stats.precision >= 0.94 {
+            DrivingStyle::Calculating
+        } else {
+            DrivingStyle::Balanced
+        };
+
+        let tier = if self.stats.speed >= 0.98 && self.profile.speed_factor >= 1.05 {
+            DriverTier::Legend
+        } else if self.stats.speed >= 0.94 {
+            DriverTier::Pro
+        } else if self.stats.speed >= 0.88 {
+            DriverTier::Contender
+        } else if self.stats.speed >= 0.80 {
+            DriverTier::Amateur
+        } else {
+            DriverTier::Rookie
+        };
+
+        (style, tier)
     }
 }

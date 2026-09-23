@@ -178,6 +178,10 @@ pub struct DriverConfig {
     #[serde(default)]
     pub ai_character: Option<String>,
     #[serde(default)]
+    pub ai_style: Option<String>,
+    #[serde(default)]
+    pub ai_tier: Option<u8>,
+    #[serde(default)]
     pub livery_idx: Option<u8>,
 }
 
@@ -327,6 +331,8 @@ impl SeriesDefinition {
 
         for (standing, d) in session.standings.iter_mut().zip(&self.drivers) {
             standing.ai_character = d.ai_character.clone();
+            standing.ai_style = d.ai_style.clone();
+            standing.ai_tier = d.ai_tier;
         }
 
         session
@@ -381,6 +387,8 @@ impl SeriesDefinition {
                 car_model_id: None,
                 country: None,
                 ai_character: s.ai_character.clone(),
+                ai_style: s.ai_style.clone(),
+                ai_tier: s.ai_tier,
                 livery_idx: Some(idx as u8),
             })
             .collect();
@@ -488,6 +496,8 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
                 car_model_id: None,
                 country: None,
                 ai_character: None,
+                ai_style: None,
+                ai_tier: None,
                 livery_idx: None,
             },
             DriverConfig {
@@ -498,6 +508,8 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
                 car_model_id: None,
                 country: None,
                 ai_character: None,
+                ai_style: None,
+                ai_tier: None,
                 livery_idx: None,
             },
         ];
@@ -545,6 +557,8 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
                     car_model_id: None,
                     country: None,
                     ai_character: None,
+                    ai_style: None,
+                    ai_tier: None,
                     livery_idx: None,
                 },
                 DriverConfig {
@@ -555,6 +569,8 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
                     car_model_id: None,
                     country: None,
                     ai_character: None,
+                    ai_style: None,
+                    ai_tier: None,
                     livery_idx: None,
                 },
             ],

@@ -26,6 +26,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Vehicle Telemetry Alignment and Physics Differentiation](../018_vehicle_telemetry_alignment_and_physics_differentiation.md)**: 6-metric telemetry standardization with custom vector iconography and intra-category physics parameter differentiation.
 - `[x]` **[Per-Discipline and Per-Tier Driver Favorite Cars & 12-Pilot Rosters](../020_driver_favorite_cars_per_discipline_and_tier.md)**: Expands motorsport rosters to 12 unique pilots per discipline (72 total) and establishes authentic signature vehicle mappings per discipline and tier.
 - `[ ]` **[Per-Tier Engine Sound Banks and Physical Synthesis](../022_per_tier_engine_sound_banks_and_synthesis.md)**: Expands motor audio synthesis to 25 authentic physical archetypes across all 5 tiers of the 5 motorsport disciplines with turbo flutter, blower whine, and hybrid motor acoustics.
+- `[x]` **[Orthogonal AI Driving Styles and Quality Tiers](../023_orthogonal_ai_driving_styles_and_quality_tiers.md)**: Decouples driving style (tactical personality) from experience and quality (competence, consistency, execution) into orthogonal dimensions across 6 styles and 5 performance tiers.
 
 ### Phase 3: Game Asset Catalogue & Reference Portals (Priority: High)
 - `[x]` **[Game Asset Catalogue & Technical Reference Portals](../011_game_asset_catalogue_and_physics_reference_portals.md)**: Dual-site Astro architecture cataloguing 25 car categories, 90 circuits, and simulation physics under a unified Google OKF v0.2 knowledge graph.

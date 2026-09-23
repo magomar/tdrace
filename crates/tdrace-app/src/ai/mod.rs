@@ -3,8 +3,174 @@ pub mod driver;
 pub use driver::{DriverCharacter, DriverFavoriteCar, DriverStats};
 
 use glam::Vec2;
+use serde::{Deserialize, Serialize};
 use tdrace_core::physics::car::{normalize_angle, Car, CarControls};
 use tdrace_core::track::Track;
+
+/// Tactical philosophy and driving personality (6 styles).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DrivingStyle {
+    Smooth,
+    Aggressive,
+    Tenacious,
+    Calculating,
+    Bold,
+    Balanced,
+}
+
+impl DrivingStyle {
+    pub fn from_str_lossy(s: &str) -> Self {
+        match s.to_ascii_lowercase().as_str() {
+            "smooth" => Self::Smooth,
+            "aggressive" | "brawler" => Self::Aggressive,
+            "tenacious" | "defender" => Self::Tenacious,
+            "calculating" | "tactical" | "strategic" | "draft" => Self::Calculating,
+            "bold" | "drift" | "renegade" => Self::Bold,
+            "balanced" | "club" => Self::Balanced,
+            _ => Self::Balanced,
+        }
+    }
+
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Smooth => "smooth",
+            Self::Aggressive => "aggressive",
+            Self::Tenacious => "tenacious",
+            Self::Calculating => "calculating",
+            Self::Bold => "bold",
+            Self::Balanced => "balanced",
+        }
+    }
+
+    pub const fn display_name(self) -> &'static str {
+        match self {
+            Self::Smooth => "Smooth",
+            Self::Aggressive => "Aggressive",
+            Self::Tenacious => "Tenacious",
+            Self::Calculating => "Calculating",
+            Self::Bold => "Bold",
+            Self::Balanced => "Balanced",
+        }
+    }
+}
+
+/// 5-tier experience and performance ladder matching vehicle tiers 1..=5.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[repr(u8)]
+#[serde(rename_all = "snake_case")]
+pub enum DriverTier {
+    Rookie = 1,
+    Amateur = 2,
+    Contender = 3,
+    Pro = 4,
+    Legend = 5,
+}
+
+impl DriverTier {
+    pub const fn from_u8(val: u8) -> Self {
+        match val {
+            1 => Self::Rookie,
+            2 => Self::Amateur,
+            3 => Self::Contender,
+            4 => Self::Pro,
+            _ => Self::Legend,
+        }
+    }
+
+    pub const fn to_u8(self) -> u8 {
+        self as u8
+    }
+
+    pub fn from_str_lossy(s: &str) -> Self {
+        match s.to_ascii_lowercase().as_str() {
+            "1" | "rookie" | "novice" => Self::Rookie,
+            "2" | "amateur" | "club" | "clubman" => Self::Amateur,
+            "3" | "contender" | "semipro" | "semi_pro" | "national" => Self::Contender,
+            "4" | "pro" | "veteran" => Self::Pro,
+            "5" | "legend" | "elite" | "alien" | "champion" => Self::Legend,
+            _ => Self::Pro,
+        }
+    }
+
+    pub const fn title(self) -> &'static str {
+        match self {
+            Self::Rookie => "Tier 1: Rookie",
+            Self::Amateur => "Tier 2: Amateur",
+            Self::Contender => "Tier 3: Contender",
+            Self::Pro => "Tier 4: Pro",
+            Self::Legend => "Tier 5: Legend",
+        }
+    }
+
+    pub const fn short_name(self) -> &'static str {
+        match self {
+            Self::Rookie => "Rookie (T1)",
+            Self::Amateur => "Amateur (T2)",
+            Self::Contender => "Contender (T3)",
+            Self::Pro => "Pro (T4)",
+            Self::Legend => "Legend (T5)",
+        }
+    }
+}
+
+/// Operationalized performance attributes of a driver quality level.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DriverQuality {
+    pub tier: DriverTier,
+    pub pace_limit: f32,
+    pub brake_padding: f32,
+    pub avoidance_padding: f32,
+    pub consistency: f32,
+    pub composure: f32,
+}
+
+impl DriverQuality {
+    pub const fn for_tier(tier: DriverTier) -> Self {
+        match tier {
+            DriverTier::Rookie => Self {
+                tier,
+                pace_limit: 0.88,
+                brake_padding: 0.22,
+                avoidance_padding: 2.5,
+                consistency: 0.60,
+                composure: 0.50,
+            },
+            DriverTier::Amateur => Self {
+                tier,
+                pace_limit: 0.92,
+                brake_padding: 0.14,
+                avoidance_padding: 1.5,
+                consistency: 0.72,
+                composure: 0.65,
+            },
+            DriverTier::Contender => Self {
+                tier,
+                pace_limit: 0.96,
+                brake_padding: 0.07,
+                avoidance_padding: 0.8,
+                consistency: 0.83,
+                composure: 0.78,
+            },
+            DriverTier::Pro => Self {
+                tier,
+                pace_limit: 1.00,
+                brake_padding: 0.00,
+                avoidance_padding: 0.0,
+                consistency: 0.93,
+                composure: 0.90,
+            },
+            DriverTier::Legend => Self {
+                tier,
+                pace_limit: 1.04,
+                brake_padding: -0.03,
+                avoidance_padding: -0.5,
+                consistency: 0.99,
+                composure: 0.98,
+            },
+        }
+    }
+}
 
 
 /// Personality and tuning settings for an AI bot driver.
@@ -164,32 +330,61 @@ impl BotProfile {
         }
     }
 
+    pub fn from_style_and_quality(style: DrivingStyle, quality: &DriverQuality) -> Self {
+        let (base_lookahead, base_kp, base_kd, style_brake, style_aggression, style_avoidance, style_speed_mult) = match style {
+            DrivingStyle::Smooth => (0.40, 2.30, 0.08, 1.02, 0.70, 6.5, 1.01),
+            DrivingStyle::Aggressive => (0.32, 2.50, 0.05, 0.90, 0.95, 5.0, 1.02),
+            DrivingStyle::Tenacious => (0.42, 2.20, 0.08, 1.05, 0.82, 6.0, 0.99),
+            DrivingStyle::Calculating => (0.39, 2.40, 0.07, 1.00, 0.75, 6.5, 1.00),
+            DrivingStyle::Bold => (0.31, 2.70, 0.04, 0.88, 0.92, 5.2, 1.01),
+            DrivingStyle::Balanced => (0.38, 2.10, 0.07, 1.05, 0.65, 7.0, 0.98),
+        };
+
+        Self {
+            name: "Composite Bot",
+            lookahead_time: (base_lookahead * (0.80 + 0.20 * quality.consistency)).clamp(0.20, 0.55),
+            speed_factor: (quality.pace_limit * style_speed_mult).clamp(0.80, 1.15),
+            steering_kp: base_kp,
+            steering_kd: base_kd * (0.75 + 0.25 * quality.consistency),
+            brake_margin: (style_brake + quality.brake_padding).clamp(0.80, 1.45),
+            aggression: style_aggression,
+            avoidance_distance: (style_avoidance + quality.avoidance_padding).clamp(3.5, 12.0),
+        }
+    }
+
     pub fn from_archetype(name: &str) -> Self {
-        match name.to_ascii_lowercase().as_str() {
-            "smooth" => Self::smooth(),
-            "aggressive" | "brawler" => Self::aggressive(),
-            "tenacious" | "defender" => Self::tenacious(),
-            "calculating" | "tactical" => Self::calculating(),
-            "fast" | "pro" | "hotlap" => Self::fast(),
-            "balanced" | "club" => Self::balanced(),
-            "strategic" | "draft" => Self::strategic(),
-            "bold" | "drift" | "renegade" => Self::bold(),
-            "rookie" | "cautious" => Self::rookie(),
-            _ => Self::balanced(),
+        let norm = name.to_ascii_lowercase();
+        if let Some((s_str, t_str)) = norm.split_once('_') {
+            let style = DrivingStyle::from_str_lossy(s_str);
+            let tier = DriverTier::from_str_lossy(t_str);
+            return Self::from_style_and_quality(style, &DriverQuality::for_tier(tier));
+        }
+        match norm.as_str() {
+            "smooth" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Pro)),
+            "aggressive" | "brawler" => Self::from_style_and_quality(DrivingStyle::Aggressive, &DriverQuality::for_tier(DriverTier::Pro)),
+            "tenacious" | "defender" => Self::from_style_and_quality(DrivingStyle::Tenacious, &DriverQuality::for_tier(DriverTier::Pro)),
+            "calculating" | "tactical" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
+            "fast" | "pro" | "hotlap" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Legend)),
+            "balanced" | "club" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Contender)),
+            "strategic" | "draft" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
+            "bold" | "drift" | "renegade" => Self::from_style_and_quality(DrivingStyle::Bold, &DriverQuality::for_tier(DriverTier::Pro)),
+            "rookie" | "cautious" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Rookie)),
+            _ => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Pro)),
         }
     }
 
     pub fn archetype_for_index(idx: usize) -> Self {
-        match idx % 8 {
-            0 => Self::smooth(),
-            1 => Self::aggressive(),
-            2 => Self::tenacious(),
-            3 => Self::calculating(),
-            4 => Self::fast(),
-            5 => Self::balanced(),
-            6 => Self::strategic(),
-            _ => Self::bold(),
-        }
+        let (style, tier) = match idx % 8 {
+            0 => (DrivingStyle::Smooth, DriverTier::Pro),
+            1 => (DrivingStyle::Aggressive, DriverTier::Pro),
+            2 => (DrivingStyle::Tenacious, DriverTier::Pro),
+            3 => (DrivingStyle::Calculating, DriverTier::Pro),
+            4 => (DrivingStyle::Smooth, DriverTier::Legend),
+            5 => (DrivingStyle::Balanced, DriverTier::Contender),
+            6 => (DrivingStyle::Calculating, DriverTier::Legend),
+            _ => (DrivingStyle::Bold, DriverTier::Pro),
+        };
+        Self::from_style_and_quality(style, &DriverQuality::for_tier(tier))
     }
 }
 

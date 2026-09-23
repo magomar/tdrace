@@ -68,7 +68,7 @@ use tdrace_core::track::geometry::{JumpRampCarExt, SpawnPose};
 use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::{Track, TrackCategory};
 
-use crate::ai::{BotAiDriver, BotProfile, DriverCharacter, DriverStats};
+use crate::ai::{BotAiDriver, BotProfile, DriverCharacter, DriverQuality, DriverStats, DriverTier, DrivingStyle};
 use crate::audio::{AudioManager, EngineSoundType, MusicTrack, SfxType};
 use crate::camera::{RaceCamera, SplitLayout, ZoomLevelConfig};
 use crate::config::GameConfig;
@@ -2845,17 +2845,26 @@ impl RaceSession {
                         let static_id: &'static str = Box::leak(entry.driver_id.clone().into_boxed_str());
                         let static_name: &'static str = Box::leak(entry.driver_name.clone().into_boxed_str());
                         let scheme = CarColorScheme::from_index((idx + 1) % 9);
-                        let mut profile = if let Some(arch) = entry.ai_character.as_deref() {
-                            BotProfile::from_archetype(arch)
+                        let (mut profile, stats) = if let Some(style_str) = entry.ai_style.as_deref() {
+                            let style = DrivingStyle::from_str_lossy(style_str);
+                            let tier = entry.ai_tier.map(DriverTier::from_u8).unwrap_or(DriverTier::Pro);
+                            let quality = DriverQuality::for_tier(tier);
+                            (
+                                BotProfile::from_style_and_quality(style, &quality),
+                                DriverStats::from_style_and_quality(style, &quality),
+                            )
+                        } else if let Some(arch) = entry.ai_character.as_deref() {
+                            (
+                                BotProfile::from_archetype(arch),
+                                DriverStats::from_archetype(arch),
+                            )
                         } else {
-                            BotProfile::archetype_for_index(idx)
+                            (
+                                BotProfile::archetype_for_index(idx),
+                                DriverStats::archetype_for_index(idx),
+                            )
                         };
                         profile.name = static_name;
-                        let stats = if let Some(arch) = entry.ai_character.as_deref() {
-                            DriverStats::from_archetype(arch)
-                        } else {
-                            DriverStats::archetype_for_index(idx)
-                        };
                         champ_opponents.push(DriverCharacter {
                             id: static_id,
                             name: static_name,

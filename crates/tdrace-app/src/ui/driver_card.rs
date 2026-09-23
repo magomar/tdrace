@@ -157,19 +157,28 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     // --- Right Column: Driving Style & Operationalized Parameters ---
     scaler.draw_glass_card(col2_x, content_y, col_w, col_h, Color::new(0.06, 0.08, 0.12, 0.85), Palette::UI_CARD_BORDER, 1.2);
 
-    let mut right_y = content_y + scaler.s(24.0);
-    fonts.draw_ui_bold("OPERATIONALIZED DRIVING STYLE", col2_x + scaler.s(16.0), right_y, scaler.font_s(15.0), Palette::NEON_GREEN);
+    let (style, tier) = driver.classify_style_and_tier();
+
+    let mut right_y = content_y + scaler.s(22.0);
+    fonts.draw_ui_bold("DRIVING STYLE & COMPETENCE TIER", col2_x + scaler.s(16.0), right_y, scaler.font_s(14.0), Palette::NEON_GREEN);
+    right_y += scaler.s(20.0);
+
+    // Style & Tier Badges
+    let style_str = format!("STYLE: {}", style.display_name().to_uppercase());
+    let tier_str = format!("TIER: {}", tier.short_name().to_uppercase());
+    fonts.draw_ui_bold(&style_str, col2_x + scaler.s(16.0), right_y, scaler.font_s(12.0), Palette::NEON_CYAN);
+    fonts.draw_ui_bold(&tier_str, col2_x + col_w * 0.5, right_y, scaler.font_s(12.0), Palette::NEON_GOLD);
     right_y += scaler.s(22.0);
 
     // Skill Stat Bars
     render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "PACE & SPEED", driver.stats.speed, Palette::NEON_CYAN);
-    right_y += scaler.s(28.0);
+    right_y += scaler.s(26.0);
     render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "OVERTAKE AGGRESSION", driver.stats.aggression, Palette::RED);
-    right_y += scaler.s(28.0);
+    right_y += scaler.s(26.0);
     render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "APEX PRECISION", driver.stats.precision, Palette::NEON_GOLD);
-    right_y += scaler.s(28.0);
+    right_y += scaler.s(26.0);
     render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "DEFENSIVE POSITION", driver.stats.defense, Palette::NEON_GREEN);
-    right_y += scaler.s(36.0);
+    right_y += scaler.s(32.0);
 
     // Operationalized AI Parameters Table
     fonts.draw_ui_bold("AI TELEMETRY PARAMETERS", col2_x + scaler.s(16.0), right_y, scaler.font_s(13.5), Palette::UI_TEXT_MUTED);

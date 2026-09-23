@@ -67,6 +67,7 @@ Technical design documents, audio engine architectures, and performance profiles
 
 | Document | Type | Status | Description |
 | :--- | :--- | :---: | :--- |
+| [AI Driving Archetypes & Characters](engineering/ai_driving_archetypes_and_characters.md) | Architecture Spec | `active` | Orthogonal driving styles (6 styles) and quality tiers (5 tiers), physics control models, and 72 hand-tuned driver profiles across 6 modules. |
 | [Screen Architecture](engineering/screens_and_navigation.md) | Architecture Spec | `active` | UI screens, state machines, transition triggers, and navigation schemas. |
 | [UI & Screen Terminology](engineering/terminology.md) | Architecture Spec | `active` | Formal UI component hierarchy, Cabinet platform primitives, and canonical screen catalog. |
 | [Motor Sound Synthesis](engineering/motor_sound_improvement.md) | Architecture Spec | `active` | Procedural motor sound synthesis, pitch modulation, exhaust pop harmonics, and Kira integration. |
