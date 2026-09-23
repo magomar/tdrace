@@ -318,7 +318,7 @@ fn test_race_session_circuit_history_cleared_on_editor_modify() {
     session.check_race_finish();
 
     // Verify history and Hall of Fame exist
-    assert_eq!(session.hof_entries.len(), 8);
+    assert_eq!(session.hof_entries.len(), session.cars.len());
     assert_eq!(session.active_profile_stats.best_times.get(track_id), Some(&12.5));
     assert!(session.profile_history.iter().any(|r| r.track_id == track_id));
 

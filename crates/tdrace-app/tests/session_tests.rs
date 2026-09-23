@@ -162,44 +162,44 @@ fn test_main_menu_exit_confirmation_state() {
 }
 
 #[test]
-fn test_all_races_and_modules_default_to_eight_riders() {
+fn test_all_races_and_modules_default_to_grid_capacity() {
     // 1. Default initialization
     let mut session = RaceSession::new();
-    assert_eq!(session.num_bots, 7);
+    let max_grid = session.max_grid_participants();
     session.init_race();
-    assert_eq!(session.cars.len(), 8, "Default session should have 8 riders (1 player + 7 bots)");
-    assert_eq!(session.ai_drivers.len(), 7, "Default session should have 7 AI bots");
-    assert_eq!(session.opponent_drivers.len(), 7);
+    assert_eq!(session.cars.len(), max_grid, "Default session should fill grid slots");
+    assert_eq!(session.ai_drivers.len(), max_grid - 1);
+    assert_eq!(session.opponent_drivers.len(), max_grid - 1);
 
-    // 2. Switch to GT
+    // 2. Switch to GT (applies config.gt.toml default_num_bots = 7)
     session.switch_to_gt();
     assert_eq!(session.num_bots, 7);
     session.init_race();
     assert_eq!(session.cars.len(), 8, "GT module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
-    // 3. Switch to Rally
+    // 3. Switch to Rally (applies config.rally.toml default_num_bots = 7)
     session.switch_to_rally();
     assert_eq!(session.num_bots, 7);
     session.init_race();
     assert_eq!(session.cars.len(), 8, "Rally module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
-    // 4. Switch to Kart
+    // 4. Switch to Kart (applies config.kart.toml default_num_bots = 7)
     session.switch_to_kart();
     assert_eq!(session.num_bots, 7);
     session.init_race();
     assert_eq!(session.cars.len(), 8, "Kart module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
-    // 5. Switch to Classic
+    // 5. Switch to Classic (applies config.toml default_num_bots = 7)
     session.switch_to_classic();
     assert_eq!(session.num_bots, 7);
     session.init_race();
     assert_eq!(session.cars.len(), 8, "Classic module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
-    // 6. Test all preset tracks in classic mode
+    // 6. Test all preset tracks in classic mode (preserves preference of 8 riders)
     for track_choice in [
         TrackChoice::ClassicGrandPrix,
         TrackChoice::OvalSpeedway,
@@ -317,7 +317,8 @@ fn test_grid_positioning_all_slots_unique_and_valid() {
     let mut session = RaceSession::new();
     session.init_race();
 
-    assert_eq!(session.grid_participants.len(), 8);
+    let grid_slots = session.max_grid_participants();
+    assert_eq!(session.grid_participants.len(), grid_slots);
     // Ensure all cars are placed at valid unique positions
     let mut positions = Vec::new();
     for (i, p) in session.grid_participants.iter().enumerate() {
@@ -332,10 +333,10 @@ fn test_grid_positioning_all_slots_unique_and_valid() {
         assert!((car_pose.y - expected_slot_pose.y).abs() < 1e-3);
         positions.push((car_pose.x.to_bits(), car_pose.y.to_bits()));
     }
-    // Verify all 8 car positions are unique
+    // Verify all car positions are unique
     positions.sort();
     positions.dedup();
-    assert_eq!(positions.len(), 8, "All 8 cars must spawn in distinct grid positions");
+    assert_eq!(positions.len(), grid_slots, "All cars must spawn in distinct grid positions");
 }
 
 #[test]

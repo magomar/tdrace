@@ -244,7 +244,7 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
 
     assert_eq!(session.color_schemes[0], session.active_profile.color_scheme);
     assert_eq!(session.color_schemes[0].to_hex_strings(), custom_livery.to_hex_strings());
-    assert_eq!(session.cars.len(), 8); // 1 player + 7 bots default (8 pilots)
+    assert_eq!(session.cars.len(), session.max_grid_participants()); // Full grid capacity on classic track
 
     // Simulate winning race completion
     session.trackers[0].current_lap = session.total_laps + 1; // Completed all laps

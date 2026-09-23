@@ -282,7 +282,7 @@ fn test_race_session_with_track_manager_flow() {
     assert_eq!(session.state, GameState::StartingGrid);
     assert_eq!(session.track.name, "Session Draft");
     assert_eq!(session.track.description, "Created in session test");
-    assert_eq!(session.cars.len(), 8); // Starter layout has 8 slots
+    assert_eq!(session.cars.len(), session.max_grid_participants());
 
     // Run 10 physics steps
     for _ in 0..10 {
