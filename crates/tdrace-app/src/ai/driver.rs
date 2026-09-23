@@ -1,3 +1,4 @@
+use std::collections::{HashMap, HashSet};
 use macroquad::color::Color;
 use crate::ai::{BotProfile, DriverQuality, DriverTier, DrivingStyle};
 use crate::catalog::RealCarModel;
@@ -771,13 +772,8 @@ impl DriverCharacter {
         let count = n.min(pool.len());
         let mut available: Vec<Self> = pool.to_vec();
 
-        // Simple deterministic LCG shuffle using seed
-        let mut s = seed.wrapping_add(1442695040888963407);
-        for i in (1..available.len()).rev() {
-            s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
-            let j = (s >> 33) as usize % (i + 1);
-            available.swap(i, j);
-        }
+        let mut rng = LcgRng::new(seed);
+        rng.shuffle(&mut available);
 
         available.truncate(count);
         available
@@ -786,6 +782,88 @@ impl DriverCharacter {
     /// Selects `n` distinct opponents pseudo-randomly from the classic roster given a seed.
     pub fn sample_opponents(n: usize, seed: u64) -> Vec<Self> {
         Self::sample_from_slice(&Self::ROSTER, n, seed)
+    }
+
+    /// Samples `n` distinct opponents from a pool (or all 72 drivers across modules if pool is empty)
+    /// enforcing a balanced, discrete uniform distribution across the 6 driving styles (P = 1/6).
+    pub fn sample_casual_race_roster(pool: &[Self], n: usize, seed: u64) -> Vec<Self> {
+        let global_pool;
+        let effective_pool = if pool.is_empty() {
+            global_pool = Self::all_across_modules();
+            &global_pool[..]
+        } else {
+            pool
+        };
+
+        let count = n.min(effective_pool.len());
+        if count == 0 {
+            return Vec::new();
+        }
+
+        let mut rng = LcgRng::new(seed);
+
+        // Partition count into balanced quotas across the 6 driving styles
+        let base_quota = count / 6;
+        let remainder = count % 6;
+
+        let mut styles = DrivingStyle::ALL;
+        rng.shuffle(&mut styles);
+
+        let mut quotas = HashMap::new();
+        for (i, &style) in styles.iter().enumerate() {
+            let q = base_quota + if i < remainder { 1 } else { 0 };
+            quotas.insert(style, q);
+        }
+
+        let mut selected = Vec::with_capacity(count);
+        let mut selected_ids = HashSet::new();
+
+        // Sample drivers for each style quota
+        for &style in &DrivingStyle::ALL {
+            let needed = quotas.get(&style).copied().unwrap_or(0);
+            if needed == 0 {
+                continue;
+            }
+
+            let mut candidates: Vec<Self> = effective_pool
+                .iter()
+                .filter(|d| d.style == style && !selected_ids.contains(d.id))
+                .cloned()
+                .collect();
+
+            rng.shuffle(&mut candidates);
+
+            for driver in candidates.into_iter().take(needed) {
+                selected_ids.insert(driver.id);
+                selected.push(driver);
+            }
+        }
+
+        // Fallback: If any quota could not be fulfilled due to pool constraints, fill from remaining
+        if selected.len() < count {
+            let mut remaining: Vec<Self> = effective_pool
+                .iter()
+                .filter(|d| !selected_ids.contains(d.id))
+                .cloned()
+                .collect();
+            rng.shuffle(&mut remaining);
+
+            for driver in remaining.into_iter().take(count - selected.len()) {
+                selected_ids.insert(driver.id);
+                selected.push(driver);
+            }
+        }
+
+        // Final shuffle so grid order mixes driving styles evenly
+        rng.shuffle(&mut selected);
+        selected
+    }
+
+    /// Selects `n` distinct casual race opponents across all 72 drivers from all modules
+    /// with uniform driving style distribution.
+    pub fn sample_casual_race_opponents(n: usize, seed: u64) -> Vec<Self> {
+        let all = Self::all_across_modules();
+        Self::sample_casual_race_roster(&all, n, seed)
     }
 
     /// Normalizes raw discipline strings (e.g. "gt_challenge", "rx", "off_road") to canonical discipline keys.
@@ -857,3 +935,25 @@ impl DriverCharacter {
         }
     }
 }
+
+/// Deterministic linear congruential generator for reproducible roster sampling.
+struct LcgRng(u64);
+
+impl LcgRng {
+    fn new(seed: u64) -> Self {
+        Self(seed.wrapping_add(1442695040888963407))
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1);
+        self.0
+    }
+
+    fn shuffle<T>(&mut self, slice: &mut [T]) {
+        for i in (1..slice.len()).rev() {
+            let j = (self.next_u64() >> 33) as usize % (i + 1);
+            slice.swap(i, j);
+        }
+    }
+}
+
