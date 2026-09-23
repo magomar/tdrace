@@ -799,9 +799,24 @@ impl Track {
         }
     }
 
-    /// Automatically regenerates starting grid positions using current grid length (or 8) and module defaults.
+    /// Computes sensible default starting grid slot count tailored for the track's module.
+    pub fn default_grid_count(&self) -> usize {
+        if self.belongs_to_module("gt") {
+            18
+        } else if self.belongs_to_module("nascar") {
+            16
+        } else if self.belongs_to_module("kart") {
+            14
+        } else if self.belongs_to_module("rally") || self.belongs_to_module("extreme_offroad") {
+            12
+        } else {
+            10
+        }
+    }
+
+    /// Automatically regenerates starting grid positions using current grid length (or module default) and module defaults.
     pub fn auto_generate_grid_default(&mut self) -> bool {
-        let count = if self.grid_positions.is_empty() { 8 } else { self.grid_positions.len() };
+        let count = if self.grid_positions.is_empty() { self.default_grid_count() } else { self.grid_positions.len() };
         let (spacing, stagger) = self.default_grid_spacing_and_stagger();
         self.auto_generate_grid(count, spacing, stagger)
     }

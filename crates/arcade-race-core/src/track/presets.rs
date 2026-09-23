@@ -683,7 +683,7 @@ pub fn classic_grand_prix() -> Track {
     checkpoints.push(pit_entry);
     checkpoints.push(pit_exit);
 
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 10, 8.0, 2.5);
 
     Track {
         name: "Classic Grand Prix".to_string(),
@@ -749,7 +749,7 @@ pub fn oval_speedway() -> Track {
         generate_walls_from_spline(&spline, 1.5, BarrierType::Concrete);
 
     let checkpoints = generate_checkpoints(&spline, 8, 2);
-    let grid_positions = generate_grid_positions(&spline, 12, 7.0, 3.0);
+    let grid_positions = generate_grid_positions(&spline, 10, 7.0, 3.0);
 
     Track {
         name: "Oval Speedway".to_string(),
@@ -812,7 +812,7 @@ pub fn dirty_oval_speedway() -> Track {
         generate_walls_from_spline(&spline, 2.5, BarrierType::TireWall);
 
     let checkpoints = generate_checkpoints(&spline, 8, 2);
-    let grid_positions = generate_grid_positions(&spline, 12, 7.0, 3.0);
+    let grid_positions = generate_grid_positions(&spline, 10, 7.0, 3.0);
 
     Track {
         name: "Dirty Oval Speedway".to_string(),
@@ -903,7 +903,7 @@ pub fn drift_park() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 10, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 10, 8.0, 2.5);
 
     Track {
         name: "Drift Park".to_string(),
@@ -968,7 +968,7 @@ pub fn kart_arena() -> Track {
         generate_walls_from_spline(&spline, 2.0, BarrierType::TireWall);
 
     let checkpoints = generate_checkpoints(&spline, 8, 2);
-    let grid_positions = generate_grid_positions(&spline, 8, 5.5, 1.8);
+    let grid_positions = generate_grid_positions(&spline, 10, 5.5, 1.8);
 
     Track {
         name: "Kart Arena".to_string(),
@@ -1067,7 +1067,7 @@ pub fn ramp_raceway() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 8, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 10, 8.0, 2.5);
 
     Track {
         name: "Ramp Raceway".to_string(),
@@ -1174,7 +1174,7 @@ pub fn oasis_rally() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 10, 8.5, 2.8);
 
     Track {
         name: "Oasis Rally".to_string(),
@@ -1314,7 +1314,7 @@ pub fn dirt_figure_eight() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 16, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 10, 8.0, 2.5);
 
     Track {
         name: "Dirt Figure-8 Arena".to_string(),
@@ -1436,7 +1436,7 @@ pub fn classic_rallycross() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 12, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 10, 8.0, 2.5);
 
     Track {
         name: "Classic Rallycross".to_string(),
@@ -1553,7 +1553,7 @@ pub fn holjes_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Höljes Motorstadion (World RX Sweden)".to_string(),
@@ -1651,7 +1651,7 @@ pub fn lydden_hill() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Lydden Hill Circuit (World RX Great Britain)".to_string(),
@@ -1765,7 +1765,7 @@ pub fn hell_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Lånkebanen (World RX Norway)".to_string(),
@@ -1879,7 +1879,7 @@ pub fn loheac_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Circuit de Lohéac (World RX France)".to_string(),
@@ -1955,7 +1955,7 @@ pub fn estering_rx() -> Track {
         generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Estering Buxtehude (World RX Germany)".to_string(),
@@ -2061,7 +2061,7 @@ pub fn montalegre_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Pista Automóvel de Montalegre (World RX Portugal)".to_string(),
@@ -2141,7 +2141,7 @@ pub fn nyirad_rx() -> Track {
         generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Nyirád Racing Center (Euro RX Hungary)".to_string(),
@@ -2235,7 +2235,7 @@ pub fn kouvola_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Tykkimäen Moottorirata (World RX Finland)".to_string(),
@@ -2329,7 +2329,7 @@ pub fn catalunya_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Circuit de Barcelona-Catalunya RX (World RX Spain)".to_string(),
@@ -2436,7 +2436,7 @@ pub fn mettet_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Circuit Jules Tacheny Mettet (World RX Belgium)".to_string(),
@@ -2530,7 +2530,7 @@ pub fn silverstone_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Silverstone Circuit RX (World RX Great Britain)".to_string(),
@@ -2626,7 +2626,7 @@ pub fn riga_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Biķernieku Trase (World RX Latvia)".to_string(),
@@ -2720,7 +2720,7 @@ pub fn killarney_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Killarney International Raceway (World RX South Africa)".to_string(),
@@ -2811,7 +2811,7 @@ pub fn yas_marina_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 24, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Yas Marina RX Arena (World RX Abu Dhabi)".to_string(),
@@ -2915,7 +2915,7 @@ pub fn essay_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 20, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Circuit des Ducs (Essay RX)".to_string(),
@@ -3208,7 +3208,14 @@ pub fn create_prototypical_track(
         TrackShape::HorizontalEight => 16,
     };
     let checkpoints = generate_checkpoints(&spline, num_checkpoints, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+    let (num_slots, spacing, stagger) = match mod_str {
+        "gt" => (18, 10.0, 2.5),
+        "nascar" => (16, 8.5, 3.0),
+        "kart" => (14, 5.5, 1.8),
+        "rally" | "extreme_offroad" => (12, 8.5, 2.8),
+        _ => (10, 8.0, 2.5),
+    };
+    let grid_positions = generate_grid_positions(&spline, num_slots, spacing, stagger);
 
     let shape_name = match shape {
         TrackShape::Oval => "Oval",
@@ -4219,7 +4226,7 @@ pub fn cota() -> Track {
         generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
 
     let checkpoints = generate_checkpoints(&spline, 20, 3);
-    let starting_grid = generate_grid_positions(&spline, 20, 10.0, 2.5);
+    let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);
 
     Track {
         name: "Circuit of the Americas (COTA)".to_string(),
@@ -4552,7 +4559,7 @@ pub fn red_rock_canyon() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
-    let grid_positions = generate_grid_positions(&spline, 10, 8.5, 1.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 1.8);
 
     Track {
         name: "Red Rock Canyon".to_string(),
@@ -4767,7 +4774,7 @@ pub fn mud_slough_arena() -> Track {
         ).with_surface(SurfaceType::Mud),
     ];
 
-    let grid_positions = generate_arena_grid(Vec2::new(-20.0, 0.0), 0.0, 8, 8.0, 3.0);
+    let grid_positions = generate_arena_grid(Vec2::new(-20.0, 0.0), 0.0, 12, 8.0, 3.0);
     let checkpoints = vec![Checkpoint::new(
         0,
         LineSegment::new(Vec2::new(5.0, -16.0), Vec2::new(5.0, 16.0)),
@@ -4866,7 +4873,7 @@ pub fn gravel_quarry_chasm() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
-    let grid_positions = generate_grid_positions(&spline, 10, 8.5, 2.2);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.2);
 
     Track {
         name: "Gravel Quarry Chasm".to_string(),
@@ -4962,7 +4969,7 @@ pub fn louisiana_mud_swampland() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 12, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.0);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.0, 2.0);
 
     Track {
         name: "Louisiana Mud Swampland".to_string(),
@@ -5020,7 +5027,7 @@ pub fn arctic_frozen_lake() -> Track {
 
     let spline = TrackSpline::new(waypoints, true);
     let checkpoints = generate_checkpoints(&spline, 12, 3);
-    let grid_positions = generate_grid_positions(&spline, 10, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.0, 2.5);
 
     let floor_zone = SurfaceZone::new(
         SurfaceShape::Polygon { vertices: lake_hull.clone() },
@@ -5143,7 +5150,7 @@ pub fn alpine_snow_ridge() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
-    let grid_positions = generate_grid_positions(&spline, 10, 8.0, 2.0);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.0, 2.0);
 
     Track {
         name: "Alpine Snow Ridge".to_string(),
@@ -5222,7 +5229,7 @@ pub fn rovaniemi_ice_ring() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 12, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.0, 2.5);
 
     Track {
         name: "Rovaniemi Ice Ring".to_string(),
@@ -5331,7 +5338,7 @@ pub fn glacier_crest_pass() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.0);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.0);
 
     Track {
         name: "Glacier Crest Pass".to_string(),
@@ -5389,7 +5396,7 @@ pub fn supercross_stadium_arena() -> Track {
 
     let spline = TrackSpline::new(waypoints, true);
     let checkpoints = generate_checkpoints(&spline, 10, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.0, 2.5);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.0, 2.5);
 
     let floor_zone = SurfaceZone::new(
         SurfaceShape::Polygon { vertices: stadium_hull.clone() },
@@ -5536,7 +5543,7 @@ pub fn monster_colosseum() -> Track {
         Obstacle::circle(5, Vec2::new(60.0, -45.0), 2.5, "Pyrotechnic Tower SE"),
     ];
 
-    let grid_positions = generate_arena_grid(Vec2::new(-40.0, 0.0), 0.0, 10, 8.0, 3.5);
+    let grid_positions = generate_arena_grid(Vec2::new(-40.0, 0.0), 0.0, 12, 8.0, 3.5);
     let checkpoints = vec![Checkpoint::new(
         0,
         LineSegment::new(Vec2::new(0.0, -20.0), Vec2::new(0.0, 20.0)),
@@ -5640,7 +5647,7 @@ pub fn stunt_city_megastructure() -> Track {
         Obstacle::circle(2, Vec2::new(-10.0, -35.0), 2.0, "Structural Column South"),
     ];
 
-    let grid_positions = generate_arena_grid(Vec2::new(-50.0, 0.0), 0.0, 10, 8.0, 3.5);
+    let grid_positions = generate_arena_grid(Vec2::new(-50.0, 0.0), 0.0, 12, 8.0, 3.5);
     let checkpoints = vec![Checkpoint::new(
         0,
         LineSegment::new(Vec2::new(-10.0, -22.0), Vec2::new(-10.0, 22.0)),
@@ -6134,7 +6141,7 @@ pub fn dreux_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 16, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Circuit de l'Ouest Parisien (Dreux RX)".to_string(),
@@ -6236,7 +6243,7 @@ pub fn blyton_park_rx() -> Track {
     ];
 
     let checkpoints = generate_checkpoints(&spline, 16, 3);
-    let grid_positions = generate_grid_positions(&spline, 8, 8.5, 2.8);
+    let grid_positions = generate_grid_positions(&spline, 12, 8.5, 2.8);
 
     Track {
         name: "Blyton Park Rallycross Circuit".to_string(),
@@ -6324,7 +6331,7 @@ pub fn laval_kart() -> Track {
         generate_walls_from_spline(&spline, 2.0, BarrierType::TireWall);
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
-    let grid_positions = generate_grid_positions(&spline, 16, 6.0, 2.2);
+    let grid_positions = generate_grid_positions(&spline, 14, 6.0, 2.2);
 
     Track {
         name: "Laval Karting (Circuit Louis Beuvron)".to_string(),
@@ -6412,7 +6419,7 @@ pub fn whilton_mill_kart() -> Track {
         generate_walls_from_spline(&spline, 2.0, BarrierType::TireWall);
 
     let checkpoints = generate_checkpoints(&spline, 14, 3);
-    let grid_positions = generate_grid_positions(&spline, 16, 6.0, 2.2);
+    let grid_positions = generate_grid_positions(&spline, 14, 6.0, 2.2);
 
     Track {
         name: "Whilton Mill Kart Circuit".to_string(),
