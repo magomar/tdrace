@@ -11,7 +11,7 @@ use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, Track, TrackCategory, TrackKind};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
-use crate::ai::{BotProfile, DriverCharacter, DriverStats};
+use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
@@ -1422,7 +1422,7 @@ impl GameModule for KartGameModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
-                favorite_cars: &[],
+                favorite_cars: MARCO_ARMANI_FAVORITES,
             },
             DriverCharacter {
                 id: "lucas_vance",
@@ -1447,7 +1447,7 @@ impl GameModule for KartGameModule {
                     precision: 0.98,
                     defense: 0.94,
                 },
-                favorite_cars: &[],
+                favorite_cars: LUCAS_VANCE_FAVORITES,
             },
             DriverCharacter {
                 id: "alex_rossi",
@@ -1472,7 +1472,7 @@ impl GameModule for KartGameModule {
                     precision: 0.94,
                     defense: 0.90,
                 },
-                favorite_cars: &[],
+                favorite_cars: ALEX_ROSSI_FAVORITES,
             },
             DriverCharacter {
                 id: "sofia_lind",
@@ -1497,7 +1497,7 @@ impl GameModule for KartGameModule {
                     precision: 0.99,
                     defense: 0.91,
                 },
-                favorite_cars: &[],
+                favorite_cars: SOFIA_LIND_FAVORITES,
             },
             DriverCharacter {
                 id: "finn_korhonen",
@@ -1522,7 +1522,7 @@ impl GameModule for KartGameModule {
                     precision: 0.95,
                     defense: 0.89,
                 },
-                favorite_cars: &[],
+                favorite_cars: FINN_KORHONEN_FAVORITES,
             },
             DriverCharacter {
                 id: "leo_dupont",
@@ -1547,7 +1547,7 @@ impl GameModule for KartGameModule {
                     precision: 0.96,
                     defense: 0.93,
                 },
-                favorite_cars: &[],
+                favorite_cars: LEO_DUPONT_FAVORITES,
             },
             DriverCharacter {
                 id: "mateo_silva",
@@ -1572,7 +1572,148 @@ impl GameModule for KartGameModule {
                     precision: 0.93,
                     defense: 0.90,
                 },
-                favorite_cars: &[],
+                favorite_cars: MATEO_SILVA_FAVORITES,
+            },
+            DriverCharacter {
+                id: "dante_moretti",
+                name: "Dante Moretti",
+                alias: "Il Prodigio",
+                bio: "Italian junior kart prodigy with aggressive curb-hopping lines and phenomenal tire management in endurance heats.",
+                preferred_car: crate::ui::menu::CarChoice::Kart,
+                color_scheme: CarColorScheme::from_index(8),
+                profile: BotProfile {
+                    name: "Dante Moretti",
+                    lookahead_time: 0.31,
+                    speed_factor: 1.03,
+                    steering_kp: 3.1,
+                    steering_kd: 0.06,
+                    brake_margin: 0.98,
+                    aggression: 0.93,
+                    avoidance_distance: 4.5,
+                },
+                stats: DriverStats {
+                    speed: 0.96,
+                    aggression: 0.93,
+                    precision: 0.94,
+                    defense: 0.91,
+                },
+                favorite_cars: DANTE_MORETTI_FAVORITES,
+            },
+            DriverCharacter {
+                id: "marta_santos",
+                name: "Marta Santos",
+                alias: "Valkyrie",
+                bio: "Spanish kart champion known for razor-sharp late braking, defensive placement, and fearless damp-weather pace.",
+                preferred_car: crate::ui::menu::CarChoice::Kart,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.95, 0.40, 0.10, 1.0),
+                    macroquad::color::Color::new(0.15, 0.15, 0.20, 1.0),
+                    macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Marta Santos",
+                    lookahead_time: 0.32,
+                    speed_factor: 1.03,
+                    steering_kp: 3.0,
+                    steering_kd: 0.07,
+                    brake_margin: 1.00,
+                    aggression: 0.89,
+                    avoidance_distance: 4.7,
+                },
+                stats: DriverStats {
+                    speed: 0.96,
+                    aggression: 0.89,
+                    precision: 0.97,
+                    defense: 0.93,
+                },
+                favorite_cars: MARTA_SANTOS_FAVORITES,
+            },
+            DriverCharacter {
+                id: "kenzo_yamamoto",
+                name: "Kenzo Yamamoto",
+                alias: "Tarmac Whisperer",
+                bio: "Suzuka kart circuit specialist with silky smooth steering inputs and microscopic steering scrubbing through fast sweeps.",
+                preferred_car: crate::ui::menu::CarChoice::Kart,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
+                    macroquad::color::Color::new(0.85, 0.15, 0.15, 1.0),
+                    macroquad::color::Color::new(0.10, 0.10, 0.15, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Kenzo Yamamoto",
+                    lookahead_time: 0.33,
+                    speed_factor: 1.03,
+                    steering_kp: 2.9,
+                    steering_kd: 0.06,
+                    brake_margin: 1.01,
+                    aggression: 0.82,
+                    avoidance_distance: 4.9,
+                },
+                stats: DriverStats {
+                    speed: 0.95,
+                    aggression: 0.82,
+                    precision: 0.98,
+                    defense: 0.94,
+                },
+                favorite_cars: KENZO_YAMAMOTO_FAVORITES,
+            },
+            DriverCharacter {
+                id: "liam_callaghan",
+                name: "Liam Callaghan",
+                alias: "The Shamrock",
+                bio: "Irish indoor and outdoor kart veteran who thrives in tight chicanes and high-contact hairpins with fearless positioning.",
+                preferred_car: crate::ui::menu::CarChoice::Kart,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.10, 0.65, 0.25, 1.0),
+                    macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
+                    macroquad::color::Color::new(0.95, 0.60, 0.10, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Liam Callaghan",
+                    lookahead_time: 0.30,
+                    speed_factor: 1.02,
+                    steering_kp: 3.1,
+                    steering_kd: 0.07,
+                    brake_margin: 0.98,
+                    aggression: 0.95,
+                    avoidance_distance: 4.5,
+                },
+                stats: DriverStats {
+                    speed: 0.95,
+                    aggression: 0.95,
+                    precision: 0.92,
+                    defense: 0.92,
+                },
+                favorite_cars: LIAM_CALLAGHAN_FAVORITES,
+            },
+            DriverCharacter {
+                id: "charlie_webb",
+                name: "Charlie Webb",
+                alias: "Pocket Rocket",
+                bio: "British Superkart contender known for explosive acceleration out of slow corners and fearless draft slingshots.",
+                preferred_car: crate::ui::menu::CarChoice::Kart,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.55, 0.15, 0.75, 1.0),
+                    macroquad::color::Color::new(0.95, 0.85, 0.10, 1.0),
+                    macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Charlie Webb",
+                    lookahead_time: 0.32,
+                    speed_factor: 1.02,
+                    steering_kp: 3.0,
+                    steering_kd: 0.06,
+                    brake_margin: 0.99,
+                    aggression: 0.87,
+                    avoidance_distance: 4.8,
+                },
+                stats: DriverStats {
+                    speed: 0.94,
+                    aggression: 0.87,
+                    precision: 0.96,
+                    defense: 0.92,
+                },
+                favorite_cars: CHARLIE_WEBB_FAVORITES,
             },
         ]
     }
@@ -1616,3 +1757,99 @@ impl GameModule for KartGameModule {
         EngineAudioProfile::kart_2stroke()
     }
 }
+
+const MARCO_ARMANI_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+];
+
+const LUCAS_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+];
+
+const ALEX_ROSSI_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
+    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+];
+
+const SOFIA_LIND_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+];
+
+const FINN_KORHONEN_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+];
+
+const LEO_DUPONT_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
+    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+];
+
+const MATEO_SILVA_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+];
+
+const DANTE_MORETTI_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
+    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+];
+
+const MARTA_SANTOS_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+];
+
+const KENZO_YAMAMOTO_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+];
+
+const LIAM_CALLAGHAN_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
+    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+];
+
+const CHARLIE_WEBB_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+];

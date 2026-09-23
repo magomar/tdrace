@@ -7,7 +7,7 @@ use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
 fn test_gt_game_module_drivers_and_preferred_car() {
     let gt = GtWorldChallengeModule::new();
     let drivers = gt.drivers();
-    assert_eq!(drivers.len(), 7, "GT module must have 7 predefined driver characters");
+    assert_eq!(drivers.len(), 12, "GT module must have 12 predefined driver characters");
 
     for d in &drivers {
         assert_eq!(

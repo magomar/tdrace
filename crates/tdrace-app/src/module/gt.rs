@@ -8,7 +8,7 @@ use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, Track, TrackCategory, TrackKind};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
-use crate::ai::{BotProfile, DriverCharacter, DriverStats};
+use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
@@ -1838,7 +1838,7 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.98,
                     defense: 0.95,
                 },
-                favorite_cars: &[],
+                favorite_cars: MAX_HUNTER_FAVORITES,
             },
             DriverCharacter {
                 id: "charles_laurent",
@@ -1850,111 +1850,111 @@ impl GameModule for GtWorldChallengeModule {
                 profile: BotProfile {
                     name: "Charles Laurent",
                     lookahead_time: 0.38,
-                    speed_factor: 1.04,
+                    speed_factor: 1.06,
                     steering_kp: 2.7,
                     steering_kd: 0.07,
                     brake_margin: 1.00,
-                    aggression: 0.78,
+                    aggression: 0.84,
                     avoidance_distance: 6.2,
                 },
                 stats: DriverStats {
-                    speed: 0.98,
-                    aggression: 0.80,
-                    precision: 1.00,
-                    defense: 0.86,
+                    speed: 0.99,
+                    aggression: 0.85,
+                    precision: 0.99,
+                    defense: 0.90,
                 },
-                favorite_cars: &[],
+                favorite_cars: CHARLES_LAURENT_FAVORITES,
             },
             DriverCharacter {
                 id: "lewis_vance",
                 name: "Lewis Vance",
                 alias: "The Master",
-                bio: "7-time World Champion whose supreme tire management and legendary racecraft allow him to hunt down leaders from any grid slot.",
+                bio: "7-time World Champion with legendary wet-weather mastery, flawless tire preservation, and icy composure.",
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
-                color_scheme: CarColorScheme::from_index(1),
+                color_scheme: CarColorScheme::from_index(7),
                 profile: BotProfile {
                     name: "Lewis Vance",
                     lookahead_time: 0.44,
-                    speed_factor: 1.03,
+                    speed_factor: 1.04,
                     steering_kp: 2.5,
                     steering_kd: 0.09,
                     brake_margin: 1.03,
-                    aggression: 0.75,
-                    avoidance_distance: 6.8,
+                    aggression: 0.82,
+                    avoidance_distance: 6.5,
                 },
                 stats: DriverStats {
-                    speed: 0.97,
-                    aggression: 0.76,
+                    speed: 0.98,
+                    aggression: 0.82,
                     precision: 0.99,
                     defense: 0.98,
                 },
-                favorite_cars: &[],
+                favorite_cars: LEWIS_VANCE_FAVORITES,
             },
             DriverCharacter {
                 id: "fernando_toro",
                 name: "Fernando Toro",
                 alias: "El Matador",
-                bio: "Veteran motorsport warrior who exploits every millimeter of asphalt and turns defensive driving into high art.",
+                bio: "Relentless Spanish gladiator who wrestles ill-handling cars to the podium through sheer grit and racecraft.",
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(3),
                 profile: BotProfile {
                     name: "Fernando Toro",
-                    lookahead_time: 0.40,
-                    speed_factor: 1.02,
+                    lookahead_time: 0.36,
+                    speed_factor: 1.03,
                     steering_kp: 2.8,
-                    steering_kd: 0.08,
-                    brake_margin: 1.02,
-                    aggression: 0.95,
+                    steering_kd: 0.06,
+                    brake_margin: 0.98,
+                    aggression: 0.94,
                     avoidance_distance: 5.5,
                 },
                 stats: DriverStats {
-                    speed: 0.95,
-                    aggression: 0.98,
-                    precision: 0.95,
-                    defense: 1.00,
+                    speed: 0.96,
+                    aggression: 0.95,
+                    precision: 0.96,
+                    defense: 0.96,
                 },
-                favorite_cars: &[],
+                favorite_cars: FERNANDO_TORO_FAVORITES,
             },
             DriverCharacter {
                 id: "george_speed",
                 name: "George Speed",
                 alias: "The Silver Bullet",
-                bio: "Methodical British racer with blistering speed and unyielding qualifying pace for the Silver Arrows.",
+                bio: "Analytical young British ace who capitalizes on strategy and executes millimeter-perfect overtakes into hairpins.",
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
-                color_scheme: CarColorScheme::from_index(7),
+                color_scheme: CarColorScheme::from_index(1),
                 profile: BotProfile {
                     name: "George Speed",
-                    lookahead_time: 0.41,
-                    speed_factor: 1.02,
+                    lookahead_time: 0.40,
+                    speed_factor: 1.03,
                     steering_kp: 2.6,
                     steering_kd: 0.08,
                     brake_margin: 1.01,
-                    aggression: 0.82,
+                    aggression: 0.86,
                     avoidance_distance: 6.0,
                 },
                 stats: DriverStats {
-                    speed: 0.96,
-                    aggression: 0.84,
-                    precision: 0.96,
-                    defense: 0.90,
+                    speed: 0.97,
+                    aggression: 0.86,
+                    precision: 0.97,
+                    defense: 0.94,
                 },
-                favorite_cars: &[],
+                favorite_cars: GEORGE_SPEED_FAVORITES,
             },
             DriverCharacter {
                 id: "lando_vance",
                 name: "Lando Vance",
                 alias: "Papaya Prodigy",
-                bio: "High-octane fan favorite who excels in dynamic mixed conditions with aggressive late-braking passes.",
+                bio: "Twitch-reflex specialist with lightning high-speed chicane flicks and formidable wet-weather bravery.",
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(4),
                 profile: BotProfile {
                     name: "Lando Vance",
-                    lookahead_time: 0.39,
-                    speed_factor: 1.03,
+                    lookahead_time: 0.37,
+                    speed_factor: 1.04,
                     steering_kp: 2.7,
                     steering_kd: 0.07,
                     brake_margin: 0.99,
-                    aggression: 0.86,
+                    aggression: 0.88,
                     avoidance_distance: 5.8,
                 },
                 stats: DriverStats {
@@ -1963,13 +1963,13 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.95,
                     defense: 0.88,
                 },
-                favorite_cars: &[],
+                favorite_cars: LANDO_VANCE_FAVORITES,
             },
             DriverCharacter {
                 id: "oscar_rocket",
                 name: "Oscar Rocket",
                 alias: "Melbourne Missile",
-                bio: "Ultra-composed Australian rookie sensation known for ice-cold nerve and textbook race craft on high-speed circuits.",
+                bio: "Ultra-composed Australian sensation known for ice-cold nerve and textbook race craft on high-speed circuits.",
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(5),
                 profile: BotProfile {
@@ -1988,7 +1988,148 @@ impl GameModule for GtWorldChallengeModule {
                     precision: 0.97,
                     defense: 0.92,
                 },
-                favorite_cars: &[],
+                favorite_cars: OSCAR_ROCKET_FAVORITES,
+            },
+            DriverCharacter {
+                id: "carlos_sainzfield",
+                name: "Carlos Sainzfield",
+                alias: "Smooth Operator",
+                bio: "Methodical Iberian racer who reads tire degradation with micro-precision, making strategic overtakes look effortless.",
+                preferred_car: crate::ui::menu::CarChoice::GT3Car,
+                color_scheme: CarColorScheme::from_index(8),
+                profile: BotProfile {
+                    name: "Carlos Sainzfield",
+                    lookahead_time: 0.38,
+                    speed_factor: 1.03,
+                    steering_kp: 2.5,
+                    steering_kd: 0.07,
+                    brake_margin: 1.02,
+                    aggression: 0.82,
+                    avoidance_distance: 6.2,
+                },
+                stats: DriverStats {
+                    speed: 0.95,
+                    aggression: 0.82,
+                    precision: 0.97,
+                    defense: 0.94,
+                },
+                favorite_cars: CARLOS_SAINZFIELD_FAVORITES,
+            },
+            DriverCharacter {
+                id: "pierre_gaslyfield",
+                name: "Pierre Gaslyfield",
+                alias: "The Underdog",
+                bio: "Fiery underdog specialist whose daring late-braking passes through the chicane catch favorites off guard.",
+                preferred_car: crate::ui::menu::CarChoice::GT3Car,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.35, 0.38, 0.42, 1.0),
+                    macroquad::color::Color::new(0.60, 0.95, 0.10, 1.0),
+                    macroquad::color::Color::new(0.12, 0.12, 0.14, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Pierre Gaslyfield",
+                    lookahead_time: 0.36,
+                    speed_factor: 1.02,
+                    steering_kp: 2.6,
+                    steering_kd: 0.06,
+                    brake_margin: 0.98,
+                    aggression: 0.88,
+                    avoidance_distance: 5.8,
+                },
+                stats: DriverStats {
+                    speed: 0.93,
+                    aggression: 0.88,
+                    precision: 0.92,
+                    defense: 0.89,
+                },
+                favorite_cars: PIERRE_GASLYFIELD_FAVORITES,
+            },
+            DriverCharacter {
+                id: "esteban_connor",
+                name: "Esteban Connor",
+                alias: "The Sentinel",
+                bio: "Resolute defender who plants his machine on the apex line and refuses to concede an inch on narrow circuits.",
+                preferred_car: crate::ui::menu::CarChoice::GT3Car,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.08, 0.15, 0.45, 1.0),
+                    macroquad::color::Color::new(0.98, 0.40, 0.35, 1.0),
+                    macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Esteban Connor",
+                    lookahead_time: 0.40,
+                    speed_factor: 1.01,
+                    steering_kp: 2.4,
+                    steering_kd: 0.07,
+                    brake_margin: 1.04,
+                    aggression: 0.84,
+                    avoidance_distance: 6.5,
+                },
+                stats: DriverStats {
+                    speed: 0.92,
+                    aggression: 0.84,
+                    precision: 0.94,
+                    defense: 0.98,
+                },
+                favorite_cars: ESTEBAN_CONNOR_FAVORITES,
+            },
+            DriverCharacter {
+                id: "alexander_albonfield",
+                name: "Alexander Albonfield",
+                alias: "Apex Hunter",
+                bio: "Dynamic overtaker specializing in aggressive switchback cut-backs and high-speed outside line sweeps.",
+                preferred_car: crate::ui::menu::CarChoice::GT3Car,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.10, 0.38, 0.22, 1.0),
+                    macroquad::color::Color::new(0.92, 0.82, 0.50, 1.0),
+                    macroquad::color::Color::new(0.90, 0.85, 0.40, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Alexander Albonfield",
+                    lookahead_time: 0.35,
+                    speed_factor: 1.03,
+                    steering_kp: 2.7,
+                    steering_kd: 0.06,
+                    brake_margin: 0.96,
+                    aggression: 0.90,
+                    avoidance_distance: 5.6,
+                },
+                stats: DriverStats {
+                    speed: 0.94,
+                    aggression: 0.90,
+                    precision: 0.93,
+                    defense: 0.88,
+                },
+                favorite_cars: ALEXANDER_ALBONFIELD_FAVORITES,
+            },
+            DriverCharacter {
+                id: "nico_hulkenstorm",
+                name: "Nico Hulkenstorm",
+                alias: "The Hulk",
+                bio: "Iron-willed endurance veteran whose rock-solid pace and zero-mistake discipline make him a relentless podium threat.",
+                preferred_car: crate::ui::menu::CarChoice::GT3Car,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.98, 0.98, 0.98, 1.0),
+                    macroquad::color::Color::new(0.90, 0.15, 0.60, 1.0),
+                    macroquad::color::Color::new(0.10, 0.85, 0.95, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Nico Hulkenstorm",
+                    lookahead_time: 0.41,
+                    speed_factor: 1.02,
+                    steering_kp: 2.5,
+                    steering_kd: 0.08,
+                    brake_margin: 1.03,
+                    aggression: 0.83,
+                    avoidance_distance: 6.4,
+                },
+                stats: DriverStats {
+                    speed: 0.93,
+                    aggression: 0.83,
+                    precision: 0.96,
+                    defense: 0.95,
+                },
+                favorite_cars: NICO_HULKENSTORM_FAVORITES,
             },
         ]
     }
@@ -2032,3 +2173,100 @@ impl GameModule for GtWorldChallengeModule {
         EngineAudioProfile::gt_v8()
     }
 }
+
+
+const MAX_HUNTER_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
+    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
+    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
+    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+];
+
+const CHARLES_LAURENT_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
+    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
+    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+];
+
+const LEWIS_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
+    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
+    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+];
+
+const FERNANDO_TORO_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
+    DriverFavoriteCar::new("gt", 3, "gt_audi_r8_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_nissan_r390_gt1"),
+    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+];
+
+const GEORGE_SPEED_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
+    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
+    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+];
+
+const LANDO_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
+    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
+    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+];
+
+const OSCAR_ROCKET_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
+    DriverFavoriteCar::new("gt", 3, "gt_audi_r8_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
+    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+];
+
+const CARLOS_SAINZFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
+    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
+    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+];
+
+const PIERRE_GASLYFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
+    DriverFavoriteCar::new("gt", 3, "gt_audi_r8_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_nissan_r390_gt1"),
+    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+];
+
+const ESTEBAN_CONNOR_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
+    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
+    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
+    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+];
+
+const ALEXANDER_ALBONFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
+    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
+    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
+    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+];
+
+const NICO_HULKENSTORM_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
+    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
+    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
+    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
+    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+];

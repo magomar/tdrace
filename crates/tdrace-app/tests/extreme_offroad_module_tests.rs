@@ -123,7 +123,7 @@ fn test_extreme_offroad_tracks_and_geometry_validation() {
 fn test_extreme_offroad_roster_integrity() {
     let offroad = ExtremeOffRoadModule::new();
     let drivers = offroad.drivers();
-    assert_eq!(drivers.len(), 8, "Expected 8 off-road driver personalities");
+    assert_eq!(drivers.len(), 12, "Expected 12 off-road driver personalities");
 
     for driver in &drivers {
         assert_eq!(driver.preferred_car, CarChoice::SandRail);

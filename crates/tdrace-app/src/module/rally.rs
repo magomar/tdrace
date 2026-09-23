@@ -8,7 +8,7 @@ use tdrace_core::track::presets::{
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
-use crate::ai::{BotProfile, DriverCharacter, DriverStats};
+use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
@@ -335,7 +335,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.98,
                     defense: 0.95,
                 },
-                favorite_cars: &[],
+                favorite_cars: JOHAN_VANCE_FAVORITES,
             },
             DriverCharacter {
                 id: "mattias_storm",
@@ -360,7 +360,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
-                favorite_cars: &[],
+                favorite_cars: MATTIAS_STORM_FAVORITES,
             },
             DriverCharacter {
                 id: "timmy_hansenfield",
@@ -385,7 +385,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.97,
                     defense: 0.93,
                 },
-                favorite_cars: &[],
+                favorite_cars: TIMMY_HANSENFIELD_FAVORITES,
             },
             DriverCharacter {
                 id: "kevin_hansenfield",
@@ -410,7 +410,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.93,
                     defense: 0.89,
                 },
-                favorite_cars: &[],
+                favorite_cars: KEVIN_HANSENFIELD_FAVORITES,
             },
             DriverCharacter {
                 id: "niclas_gron",
@@ -435,7 +435,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.95,
                     defense: 0.91,
                 },
-                favorite_cars: &[],
+                favorite_cars: NICLAS_GRON_FAVORITES,
             },
             DriverCharacter {
                 id: "anton_mark",
@@ -460,7 +460,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.92,
                     defense: 0.96,
                 },
-                favorite_cars: &[],
+                favorite_cars: ANTON_MARK_FAVORITES,
             },
             DriverCharacter {
                 id: "timo_scheider",
@@ -485,7 +485,148 @@ impl GameModule for RallyGameModule {
                     precision: 0.96,
                     defense: 0.94,
                 },
-                favorite_cars: &[],
+                favorite_cars: TIMO_SCHEIDER_FAVORITES,
+            },
+            DriverCharacter {
+                id: "sebastien_loebfield",
+                name: "Sebastien Loebfield",
+                alias: "The Maestro",
+                bio: "Nine-time rally champion and rallycross titan whose unmatched car control, gravel line intuition, and poise conquer any surface.",
+                preferred_car: crate::ui::menu::CarChoice::RallyCar,
+                color_scheme: CarColorScheme::from_index(8),
+                profile: BotProfile {
+                    name: "Sebastien Loebfield",
+                    lookahead_time: 0.38,
+                    speed_factor: 1.05,
+                    steering_kp: 2.9,
+                    steering_kd: 0.08,
+                    brake_margin: 0.98,
+                    aggression: 0.93,
+                    avoidance_distance: 5.1,
+                },
+                stats: DriverStats {
+                    speed: 0.98,
+                    aggression: 0.93,
+                    precision: 0.98,
+                    defense: 0.95,
+                },
+                favorite_cars: SEBASTIEN_LOEBFIELD_FAVORITES,
+            },
+            DriverCharacter {
+                id: "petter_solbergfield",
+                name: "Petter Solbergfield",
+                alias: "Hollywood",
+                bio: "Showman and rallycross legend whose blistering sideways slides, crowd-thrilling entries, and raw pace ignite every stadium.",
+                preferred_car: crate::ui::menu::CarChoice::RallyCar,
+                color_scheme: CarColorScheme::new(
+                    Color::new(0.08, 0.22, 0.65, 1.0),
+                    Color::new(0.98, 0.85, 0.10, 1.0),
+                    Color::new(0.95, 0.95, 0.95, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Petter Solbergfield",
+                    lookahead_time: 0.35,
+                    speed_factor: 1.04,
+                    steering_kp: 2.8,
+                    steering_kd: 0.07,
+                    brake_margin: 0.96,
+                    aggression: 0.96,
+                    avoidance_distance: 4.9,
+                },
+                stats: DriverStats {
+                    speed: 0.97,
+                    aggression: 0.96,
+                    precision: 0.94,
+                    defense: 0.91,
+                },
+                favorite_cars: PETTER_SOLBERGFIELD_FAVORITES,
+            },
+            DriverCharacter {
+                id: "ken_blaster",
+                name: "Ken Blaster",
+                alias: "Gymkhana King",
+                bio: "Stunt drifting maestro and rally specialist famous for smoke-filled all-wheel-drive donuts, fearless jumps, and barrier-grazing slides.",
+                preferred_car: crate::ui::menu::CarChoice::RallyCar,
+                color_scheme: CarColorScheme::new(
+                    Color::new(0.12, 0.12, 0.14, 1.0),
+                    Color::new(0.15, 0.95, 0.30, 1.0),
+                    Color::new(0.10, 0.85, 0.95, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Ken Blaster",
+                    lookahead_time: 0.34,
+                    speed_factor: 1.04,
+                    steering_kp: 3.0,
+                    steering_kd: 0.07,
+                    brake_margin: 0.95,
+                    aggression: 0.97,
+                    avoidance_distance: 4.8,
+                },
+                stats: DriverStats {
+                    speed: 0.96,
+                    aggression: 0.97,
+                    precision: 0.93,
+                    defense: 0.90,
+                },
+                favorite_cars: KEN_BLASTER_FAVORITES,
+            },
+            DriverCharacter {
+                id: "andreas_bakkerud",
+                name: "Andreas Bakkerud",
+                alias: "Baby Blue",
+                bio: "Norwegian rallycross powerhouse with aggressive apex-hugging lines, explosive launches, and legendary Scandinavian flick entries.",
+                preferred_car: crate::ui::menu::CarChoice::RallyCar,
+                color_scheme: CarColorScheme::new(
+                    Color::new(0.20, 0.65, 0.95, 1.0),
+                    Color::new(0.98, 0.98, 0.98, 1.0),
+                    Color::new(0.15, 0.15, 0.20, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Andreas Bakkerud",
+                    lookahead_time: 0.36,
+                    speed_factor: 1.03,
+                    steering_kp: 2.7,
+                    steering_kd: 0.08,
+                    brake_margin: 0.97,
+                    aggression: 0.94,
+                    avoidance_distance: 5.1,
+                },
+                stats: DriverStats {
+                    speed: 0.96,
+                    aggression: 0.94,
+                    precision: 0.95,
+                    defense: 0.92,
+                },
+                favorite_cars: ANDREAS_BAKKERUD_FAVORITES,
+            },
+            DriverCharacter {
+                id: "reinis_nitissfield",
+                name: "Reinis Nitissfield",
+                alias: "Baltic Bullet",
+                bio: "The youngest European RX champion in history, famed for cold-blooded calculated overtakes and razor-sharp joker lap execution.",
+                preferred_car: crate::ui::menu::CarChoice::RallyCar,
+                color_scheme: CarColorScheme::new(
+                    Color::new(0.65, 0.10, 0.20, 1.0),
+                    Color::new(0.95, 0.95, 0.95, 1.0),
+                    Color::new(0.85, 0.70, 0.15, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Reinis Nitissfield",
+                    lookahead_time: 0.37,
+                    speed_factor: 1.03,
+                    steering_kp: 2.8,
+                    steering_kd: 0.08,
+                    brake_margin: 0.99,
+                    aggression: 0.91,
+                    avoidance_distance: 5.2,
+                },
+                stats: DriverStats {
+                    speed: 0.95,
+                    aggression: 0.91,
+                    precision: 0.96,
+                    defense: 0.93,
+                },
+                favorite_cars: REINIS_NITISSFIELD_FAVORITES,
             },
         ]
     }
@@ -546,3 +687,99 @@ impl GameModule for RallyGameModule {
         EngineAudioProfile::rally_turbo_antilag()
     }
 }
+
+const JOHAN_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
+    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+];
+
+const MATTIAS_STORM_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
+    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+];
+
+const TIMMY_HANSENFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
+    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+];
+
+const KEVIN_HANSENFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
+    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+];
+
+const NICLAS_GRON_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
+    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+];
+
+const ANTON_MARK_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
+    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+];
+
+const TIMO_SCHEIDER_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
+    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+];
+
+const SEBASTIEN_LOEBFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
+    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+];
+
+const PETTER_SOLBERGFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
+    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+];
+
+const KEN_BLASTER_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_fiesta_rally4"),
+    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
+    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+];
+
+const ANDREAS_BAKKERUD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
+    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+];
+
+const REINIS_NITISSFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
+    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
+    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
+    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+];

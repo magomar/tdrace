@@ -13,7 +13,7 @@ use super::{
     EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition,
     VehicleVisualType,
 };
-use crate::ai::{BotProfile, DriverCharacter, DriverStats};
+use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
@@ -280,7 +280,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.92,
                     defense: 0.90,
                 },
-                favorite_cars: &[],
+                favorite_cars: WYATT_COLE_FAVORITES,
             },
             DriverCharacter {
                 id: "jaxson_rivera",
@@ -305,7 +305,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
-                favorite_cars: &[],
+                favorite_cars: JAXSON_RIVERA_FAVORITES,
             },
             DriverCharacter {
                 id: "astrid_lindholm",
@@ -313,7 +313,7 @@ impl GameModule for ExtremeOffRoadModule {
                 alias: "Ice Queen",
                 bio: "Scandinavian ice pilot with ice in her veins, executing pinpoint drift transitions across frozen lakes and snowbanks.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
-                color_scheme: CarColorScheme::from_index(0),
+                color_scheme: CarColorScheme::from_index(8),
                 profile: BotProfile {
                     name: "Astrid Lindholm",
                     lookahead_time: 0.40,
@@ -330,7 +330,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.99,
                     defense: 0.94,
                 },
-                favorite_cars: &[],
+                favorite_cars: ASTRID_LINDHOLM_FAVORITES,
             },
             DriverCharacter {
                 id: "bubba_beauregard",
@@ -355,7 +355,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.88,
                     defense: 0.96,
                 },
-                favorite_cars: &[],
+                favorite_cars: BUBBA_BEAUREGARD_FAVORITES,
             },
             DriverCharacter {
                 id: "travis_mcgrath",
@@ -380,7 +380,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.94,
                     defense: 0.88,
                 },
-                favorite_cars: &[],
+                favorite_cars: TRAVIS_MCGRATH_FAVORITES,
             },
             DriverCharacter {
                 id: "roxie_vance",
@@ -405,7 +405,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.97,
                     defense: 0.95,
                 },
-                favorite_cars: &[],
+                favorite_cars: ROXIE_VANCE_FAVORITES,
             },
             DriverCharacter {
                 id: "sven_lindqvist",
@@ -430,7 +430,7 @@ impl GameModule for ExtremeOffRoadModule {
                     precision: 0.95,
                     defense: 0.93,
                 },
-                favorite_cars: &[],
+                favorite_cars: SVEN_LINDQVIST_FAVORITES,
             },
             DriverCharacter {
                 id: "cruz_morales",
@@ -450,12 +450,128 @@ impl GameModule for ExtremeOffRoadModule {
                     avoidance_distance: 5.1,
                 },
                 stats: DriverStats {
-                    speed: 0.96,
+                    speed: 0.95,
                     aggression: 0.97,
                     precision: 0.91,
                     defense: 0.89,
                 },
-                favorite_cars: &[],
+                favorite_cars: CRUZ_MORALES_FAVORITES,
+            },
+            DriverCharacter {
+                id: "dakota_black",
+                name: "Dakota Black",
+                alias: "Canyon Hawg",
+                bio: "Appalachian rock-crawling daredevil whose brute-force line choices and high-ground clearance conquer sheer granite shelves.",
+                preferred_car: crate::ui::menu::CarChoice::SandRail,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.18, 0.18, 0.20, 1.0),
+                    macroquad::color::Color::new(0.85, 0.40, 0.10, 1.0),
+                    macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Dakota Black",
+                    lookahead_time: 0.35,
+                    speed_factor: 1.03,
+                    steering_kp: 2.7,
+                    steering_kd: 0.08,
+                    brake_margin: 0.97,
+                    aggression: 0.95,
+                    avoidance_distance: 5.0,
+                },
+                stats: DriverStats {
+                    speed: 0.95,
+                    aggression: 0.95,
+                    precision: 0.93,
+                    defense: 0.94,
+                },
+                favorite_cars: DAKOTA_BLACK_FAVORITES,
+            },
+            DriverCharacter {
+                id: "colton_haze",
+                name: "Colton Haze",
+                alias: "Sandstorm",
+                bio: "Nevada desert raider famous for wide-open throttle jumps across dry lakebeds and aggressive roosting on switchbacks.",
+                preferred_car: crate::ui::menu::CarChoice::SandRail,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.88, 0.75, 0.25, 1.0),
+                    macroquad::color::Color::new(0.20, 0.45, 0.25, 1.0),
+                    macroquad::color::Color::new(0.10, 0.10, 0.12, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Colton Haze",
+                    lookahead_time: 0.36,
+                    speed_factor: 1.03,
+                    steering_kp: 2.8,
+                    steering_kd: 0.08,
+                    brake_margin: 0.98,
+                    aggression: 0.94,
+                    avoidance_distance: 5.1,
+                },
+                stats: DriverStats {
+                    speed: 0.95,
+                    aggression: 0.94,
+                    precision: 0.94,
+                    defense: 0.91,
+                },
+                favorite_cars: COLTON_HAZE_FAVORITES,
+            },
+            DriverCharacter {
+                id: "elise_roux",
+                name: "Elise Roux",
+                alias: "Alpine Lynx",
+                bio: "French rally-raid pioneer with exceptional suspension damping feel and laser-focused precision on mountain ridges.",
+                preferred_car: crate::ui::menu::CarChoice::SandRail,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.10, 0.70, 0.85, 1.0),
+                    macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
+                    macroquad::color::Color::new(0.10, 0.15, 0.30, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Elise Roux",
+                    lookahead_time: 0.38,
+                    speed_factor: 1.04,
+                    steering_kp: 2.9,
+                    steering_kd: 0.07,
+                    brake_margin: 1.00,
+                    aggression: 0.89,
+                    avoidance_distance: 5.3,
+                },
+                stats: DriverStats {
+                    speed: 0.96,
+                    aggression: 0.89,
+                    precision: 0.98,
+                    defense: 0.93,
+                },
+                favorite_cars: ELISE_ROUX_FAVORITES,
+            },
+            DriverCharacter {
+                id: "diego_valdez",
+                name: "Diego Valdez",
+                alias: "Trophy King",
+                bio: "Mexican SCORE champion who masters high-speed whoops sections, riverbed boulder hops, and dusk-to-dawn desert endurance.",
+                preferred_car: crate::ui::menu::CarChoice::SandRail,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.85, 0.15, 0.30, 1.0),
+                    macroquad::color::Color::new(0.95, 0.85, 0.15, 1.0),
+                    macroquad::color::Color::new(0.10, 0.55, 0.30, 1.0),
+                ),
+                profile: BotProfile {
+                    name: "Diego Valdez",
+                    lookahead_time: 0.37,
+                    speed_factor: 1.04,
+                    steering_kp: 2.8,
+                    steering_kd: 0.08,
+                    brake_margin: 0.99,
+                    aggression: 0.93,
+                    avoidance_distance: 5.2,
+                },
+                stats: DriverStats {
+                    speed: 0.96,
+                    aggression: 0.93,
+                    precision: 0.95,
+                    defense: 0.94,
+                },
+                favorite_cars: DIEGO_VALDEZ_FAVORITES,
             },
         ]
     }
@@ -510,3 +626,99 @@ impl GameModule for ExtremeOffRoadModule {
         EngineAudioProfile::sand_rail_boxer()
     }
 }
+
+const WYATT_COLE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+];
+
+const JAXSON_RIVERA_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+];
+
+const ASTRID_LINDHOLM_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];
+
+const BUBBA_BEAUREGARD_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+];
+
+const TRAVIS_MCGRATH_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+];
+
+const ROXIE_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];
+
+const SVEN_LINDQVIST_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+];
+
+const CRUZ_MORALES_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+];
+
+const DAKOTA_BLACK_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];
+
+const COLTON_HAZE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+];
+
+const ELISE_ROUX_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+];
+
+const DIEGO_VALDEZ_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+];

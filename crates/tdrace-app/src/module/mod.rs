@@ -274,7 +274,7 @@ mod tests {
         assert_eq!(gt.vehicles().len(), 5);
         assert!(!gt.tracks().is_empty());
         assert_eq!(gt.tracks().len(), 15);
-        assert_eq!(gt.drivers().len(), 7);
+        assert_eq!(gt.drivers().len(), 12);
         assert!(!gt.supported_game_modes().is_empty());
 
         assert_eq!(gt.default_vehicle_id(), "gt4_clubsport");
@@ -331,7 +331,7 @@ mod tests {
         assert!(!rally.vehicles().is_empty());
         assert!(rally.vehicles().len() >= 2);
         assert_eq!(rally.tracks().len(), 17);
-        assert_eq!(rally.drivers().len(), 7);
+        assert_eq!(rally.drivers().len(), 12);
         assert_eq!(rally.default_vehicle_id(), "wrc_turbo_rally");
         assert_eq!(rally.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
 
@@ -348,7 +348,7 @@ mod tests {
         assert!(kart.vehicles().len() >= 1);
         assert!(!kart.tracks().is_empty());
         assert_eq!(kart.tracks().len(), 17);
-        assert_eq!(kart.drivers().len(), 7);
+        assert_eq!(kart.drivers().len(), 12);
         assert_eq!(kart.default_vehicle_id(), "shifter_kart_125");
         assert_eq!(kart.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
 
@@ -469,7 +469,7 @@ mod tests {
         assert_eq!(offroad.title(), "EXTREME OFF-ROAD & STUNT ARENAS");
         assert_eq!(offroad.vehicles().len(), 1);
         assert_eq!(offroad.tracks().len(), 17);
-        assert_eq!(offroad.drivers().len(), 8);
+        assert_eq!(offroad.drivers().len(), 12);
         assert_eq!(offroad.default_vehicle_id(), "sand_rail_buggy");
         assert_eq!(offroad.default_track_id(), "sahara_dune_crossing");
         assert_eq!(offroad.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
