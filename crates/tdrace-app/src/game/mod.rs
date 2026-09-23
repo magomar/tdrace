@@ -1156,6 +1156,61 @@ impl RaceSession {
         self.active_career_progress.is_car_unlocked(car_id, self.is_dev_mode())
     }
 
+    /// Returns the motorsport tier (1..=5) of the player's active vehicle,
+    /// respecting authentic catalog selection (selected_car_model_id) if active.
+    pub fn active_player_car_tier(&self) -> u8 {
+        if let Some(model_id) = self.selected_car_model_id {
+            if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+                return model.tier;
+            }
+        }
+        self.active_player_car_choice().tier()
+    }
+
+    /// Returns the career unlock level required for the player's active vehicle.
+    pub fn active_player_car_unlock_level(&self) -> u32 {
+        if let Some(model_id) = self.selected_car_model_id {
+            if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+                return model.tier as u32;
+            }
+        }
+        self.active_player_car_choice().unlock_level()
+    }
+
+    /// Checks whether the player's active vehicle is eligible for a race with `required_tier`.
+    pub fn is_active_player_car_eligible(&self, required_tier: u8) -> bool {
+        self.is_dev_mode() || self.active_player_car_tier() <= required_tier
+    }
+
+    /// Checks whether the player's active vehicle is unlocked under career progression.
+    pub fn is_active_player_car_unlocked(&self) -> bool {
+        if self.is_dev_mode() || self.active_module_id == "classic" {
+            return true;
+        }
+        if let Some(model_id) = self.selected_car_model_id {
+            return self.active_career_progress.is_car_unlocked(model_id, self.is_dev_mode());
+        }
+        self.is_car_unlocked(self.active_player_car_choice())
+    }
+
+    /// Synchronizes active_career_progress with the current active_module_id from the database or default fallback.
+    pub fn sync_career_progress_for_active_module(&mut self) {
+        if let Some(db) = &self.hof_db {
+            if let Some(pid) = self.active_profile.id {
+                if let Ok(progress) = db.get_or_create_module_progress(pid, self.active_module_id) {
+                    self.active_career_progress = progress;
+                    return;
+                }
+            }
+        }
+        if self.active_career_progress.module_id != self.active_module_id {
+            self.active_career_progress = crate::profile::ModuleCareerProgress::default_for_module(
+                self.active_profile.id.unwrap_or(1),
+                self.active_module_id,
+            );
+        }
+    }
+
     /// Checks whether the specified track is unlocked under the active profile's career progress.
     pub fn is_track_unlocked(&self, track_id: &str) -> bool {
         if self.is_dev_mode() {
@@ -1196,7 +1251,7 @@ impl RaceSession {
         } else if self.game_mode == GameMode::Career {
             (self.active_career_progress.level as u8).clamp(1, 5)
         } else if self.free_car_selection {
-            self.car_choice.tier()
+            self.active_player_car_tier()
         } else {
             self.resolve_predefined_car().tier()
         }
@@ -1232,6 +1287,9 @@ impl RaceSession {
             ],
         };
         if self.active_module_id == "classic" {
+            return base_choices;
+        }
+        if self.active_module_id != "gt" && self.active_module_id != "gt_challenge" {
             return base_choices;
         }
         let req_tier = self.current_race_required_tier();
@@ -1506,6 +1564,7 @@ impl RaceSession {
             "extreme_offroad" | "offroad" => self.switch_to_extreme_offroad(),
             _ => self.switch_to_classic(),
         }
+        self.sync_career_progress_for_active_module();
     }
 
     /// Activates the NASCAR Cup Series & Trans-Am TA1 module.
@@ -1544,6 +1603,7 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
+        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -1583,6 +1643,7 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
+        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -1796,6 +1857,7 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
+        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -1829,6 +1891,7 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
+        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -1866,6 +1929,7 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
+        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -1899,6 +1963,7 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
+        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -4552,9 +4617,8 @@ impl RaceSession {
                             || self.input.gamepad.snapshot.btn_confirm_pressed
                             || self.input.gamepad.snapshot.btn_a_pressed
                         {
-                            let player_car = self.active_player_car_choice();
                             let req_tier = self.current_race_required_tier();
-                            if !player_car.is_eligible_for_race_tier(req_tier, self.is_dev_mode()) || !self.is_car_unlocked(player_car) {
+                            if !self.is_active_player_car_eligible(req_tier) || !self.is_active_player_car_unlocked() {
                                 self.audio.play_sfx(SfxType::UiMove);
                                 return;
                             }
@@ -4581,9 +4645,8 @@ impl RaceSession {
                             || self.input.gamepad.snapshot.btn_confirm_pressed
                             || self.input.gamepad.snapshot.btn_a_pressed
                         {
-                            let player_car = self.active_player_car_choice();
                             let req_tier = self.current_race_required_tier();
-                            if !player_car.is_eligible_for_race_tier(req_tier, self.is_dev_mode()) || !self.is_car_unlocked(player_car) {
+                            if !self.is_active_player_car_eligible(req_tier) || !self.is_active_player_car_unlocked() {
                                 self.audio.play_sfx(SfxType::UiMove);
                                 return;
                             }
@@ -4701,9 +4764,8 @@ impl RaceSession {
             || launch_btn_clicked
             || (self.starting_grid_focus == StartingGridFocus::LeftSetup && (self.starting_grid_card_idx == 1 || self.starting_grid_card_idx == 2) && (self.input.gamepad.snapshot.btn_confirm_pressed || self.input.gamepad.snapshot.btn_a_pressed))
         {
-            let player_car = self.active_player_car_choice();
             let req_tier = self.current_race_required_tier();
-            if !player_car.is_eligible_for_race_tier(req_tier, self.is_dev_mode()) || !self.is_car_unlocked(player_car) {
+            if !self.is_active_player_car_eligible(req_tier) || !self.is_active_player_car_unlocked() {
                 self.audio.play_sfx(SfxType::UiMove);
                 return;
             }
@@ -9865,9 +9927,9 @@ impl RaceSession {
                     .and_then(|p| p.best_lap)
                     .or_else(|| self.ghost_recorder.best_ghost_lap.as_ref().map(|g| g.lap_time));
                 let req_tier = self.current_race_required_tier();
-                let is_unlocked = self.is_car_unlocked(active_car);
-                let is_eligible = active_car.is_eligible_for_race_tier(req_tier, self.is_dev_mode());
-                let unlock_level = active_car.unlock_level();
+                let is_unlocked = self.is_active_player_car_unlocked();
+                let is_eligible = self.is_active_player_car_eligible(req_tier);
+                let unlock_level = self.active_player_car_unlock_level();
                 render_starting_grid_screen(
                     &self.fonts,
                     &self.track,

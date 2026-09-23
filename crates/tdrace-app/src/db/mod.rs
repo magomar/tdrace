@@ -821,14 +821,7 @@ impl HallOfFameDb {
         if let Some(p) = self.get_module_progress(profile_id, module_id)? {
             Ok(p)
         } else {
-            let def = match module_id {
-                "gt" | "f1" => ModuleCareerProgress::default_for_gt(profile_id),
-                _ => {
-                    let mut p = ModuleCareerProgress::default_for_gt(profile_id);
-                    p.module_id = module_id.to_string();
-                    p
-                }
-            };
+            let def = ModuleCareerProgress::default_for_module(profile_id, module_id);
             self.save_module_progress(&def)?;
             Ok(def)
         }
@@ -1128,14 +1121,7 @@ impl HallOfFameDb {
         if let Some(p) = self.get_module_progress(profile_id, module_id)? {
             Ok(p)
         } else {
-            let def = match module_id {
-                "gt" | "f1" => ModuleCareerProgress::default_for_gt(profile_id),
-                _ => {
-                    let mut p = ModuleCareerProgress::default_for_gt(profile_id);
-                    p.module_id = module_id.to_string();
-                    p
-                }
-            };
+            let def = ModuleCareerProgress::default_for_module(profile_id, module_id);
             self.save_module_progress(&def)?;
             Ok(def)
         }

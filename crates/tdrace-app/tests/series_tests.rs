@@ -799,4 +799,82 @@ fn test_reset_championship_clears_session_and_database_history() {
     }
 }
 
+#[test]
+fn test_rally_tier_1_championship_starting_grid_eligibility() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    let mgr = tdrace_app::series::ChampionshipManager::new();
+    let def = mgr.get("rally_grassroots_cup").expect("Rally Grassroots Cup preset must exist");
+
+    session.launch_or_resume_championship(&def);
+
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.selected_car_model_id, Some("rally_peugeot_208_rally4"));
+    assert_eq!(session.active_player_car_tier(), 1, "Peugeot 208 Rally 4 must be Tier 1");
+    let req_tier = session.current_race_required_tier();
+    assert_eq!(req_tier, 1, "Rally Grassroots Cup requires Tier 1");
+    assert!(
+        session.is_active_player_car_eligible(req_tier),
+        "Peugeot 208 Rally 4 must be eligible for Tier 1 Rally Championship"
+    );
+    assert!(
+        session.is_active_player_car_unlocked(),
+        "Peugeot 208 Rally 4 must be unlocked as Tier 1 starter"
+    );
+
+    // Verify StartingGrid launch condition succeeds
+    let launch_allowed = session.is_active_player_car_eligible(req_tier) && session.is_active_player_car_unlocked();
+    assert!(launch_allowed, "Launch must be allowed for Peugeot 208 Rally 4 in StartingGrid");
+}
+
+#[test]
+fn test_all_modules_tier_1_championship_starters_are_eligible_and_unlocked() {
+    let presets = [
+        ("gt", "gt4_clubman_sprint", 1),
+        ("rally", "rally_grassroots_cup", 1),
+        ("nascar", "nascar_short_track_series", 1),
+        ("kart", "kart_world_cup", 1),
+        ("extreme_offroad", "extreme_desert_sand_sprint", 1),
+    ];
+
+    let mgr = tdrace_app::series::ChampionshipManager::new();
+
+    for (mod_id, series_id, expected_tier) in presets {
+        let mut session = RaceSession::new();
+        let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+        let _ = mem_db.seed_default_profile_if_empty().unwrap();
+        session.hof_db = Some(mem_db);
+        session.refresh_profiles_and_stats();
+
+        let def = mgr.get(series_id).unwrap_or_else(|| panic!("Preset '{}' must exist", series_id));
+        session.launch_or_resume_championship(&def);
+
+        assert_eq!(session.state, GameState::StartingGrid, "Module {} must transition to StartingGrid", mod_id);
+        let req_tier = session.current_race_required_tier();
+        assert_eq!(req_tier, expected_tier, "Module {} required tier mismatch", mod_id);
+        assert_eq!(
+            session.active_player_car_tier(),
+            expected_tier,
+            "Module {} starter vehicle tier mismatch",
+            mod_id
+        );
+        assert!(
+            session.is_active_player_car_eligible(req_tier),
+            "Module {} starter vehicle must be eligible for Tier {}",
+            mod_id,
+            req_tier
+        );
+        assert!(
+            session.is_active_player_car_unlocked(),
+            "Module {} starter vehicle must be unlocked",
+            mod_id
+        );
+    }
+}
+
+
 

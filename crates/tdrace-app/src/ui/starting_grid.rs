@@ -443,6 +443,7 @@ pub fn render_starting_grid_screen(
     let is_launch_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + launch_h;
     let is_launch_active = is_launch_card || is_launch_hovered;
 
+    let active_tier = model_opt.map(|m| m.tier).unwrap_or_else(|| active_car.tier());
     let (launch_bg, launch_border, launch_title, launch_sub) = if !is_car_unlocked {
         (
             Color::new(0.35, 0.10, 0.10, 0.95),
@@ -455,7 +456,7 @@ pub fn render_starting_grid_screen(
             Color::new(0.35, 0.10, 0.10, 0.95),
             Palette::RED,
             "🚫 INELIGIBLE CATEGORY",
-            format!("Requires Tier {} or Lower (Selected: Tier {})", required_tier, active_car.tier()),
+            format!("Requires Tier {} or Lower (Selected: Tier {})", required_tier, active_tier),
         )
     } else if is_launch_active {
         (

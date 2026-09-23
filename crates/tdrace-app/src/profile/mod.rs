@@ -298,15 +298,43 @@ pub struct ModuleCareerProgress {
 }
 
 impl ModuleCareerProgress {
-    /// Initial starter career record for Gran Turismo & Endurance GT module.
-    pub fn default_for_gt(profile_id: i64) -> Self {
+    /// Returns the authentic starter car model IDs for a given motorsport module.
+    pub fn starter_cars_for_module(module_id: &str) -> Vec<String> {
+        match module_id {
+            "gt" | "gt_challenge" => vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
+            "rally" => vec![
+                "rally_peugeot_208_rally4".to_string(),
+                "rally_fiesta_rally4".to_string(),
+                "rally_clio_rally4".to_string(),
+            ],
+            "nascar" => vec![
+                "nascar_monte_carlo_ss".to_string(),
+                "nascar_mustang_street_stock".to_string(),
+                "nascar_dodge_dart_street_stock".to_string(),
+            ],
+            "kart" => vec![
+                "kart_crg_hero_60".to_string(),
+                "kart_birel_c28".to_string(),
+                "kart_tony_kart_neos".to_string(),
+            ],
+            "extreme_offroad" | "offroad" => vec![
+                "offroad_sand_rail_buggy".to_string(),
+                "offroad_polaris_rzr_pro_r".to_string(),
+                "offroad_vw_sand_rail".to_string(),
+            ],
+            _ => vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
+        }
+    }
+
+    /// Initial starter career record for a specific motorsport module.
+    pub fn default_for_module(profile_id: i64, module_id: &str) -> Self {
         let mut progress = Self {
             profile_id,
-            module_id: "gt".to_string(),
+            module_id: module_id.to_string(),
             xp: 0,
             lifetime_xp: 0,
             level: 1,
-            unlocked_cars: vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
+            unlocked_cars: Self::starter_cars_for_module(module_id),
             unlocked_tracks: Vec::new(),
             visited_tracks: Vec::new(),
             completed_events: Vec::new(),
@@ -317,6 +345,11 @@ impl ModuleCareerProgress {
         };
         progress.sync_unlocks_for_level();
         progress
+    }
+
+    /// Initial starter career record for Gran Turismo & Endurance GT module.
+    pub fn default_for_gt(profile_id: i64) -> Self {
+        Self::default_for_module(profile_id, "gt")
     }
 
     /// Purchasing cost for a vehicle of the specified tier (1,000 XP x tier).
@@ -416,8 +449,11 @@ impl ModuleCareerProgress {
         Ok(self.level)
     }
 
-    /// Ensures unlocked tracks match or exceed current level.
+    /// Ensures unlocked tracks and starter cars match or exceed current level.
     pub fn sync_unlocks_for_level(&mut self) {
+        for car in Self::starter_cars_for_module(&self.module_id) {
+            self.ensure_car(&car);
+        }
         match self.module_id.as_str() {
             "gt" | "gt_challenge" => {
                 // Tier 1 (5 circuits)
