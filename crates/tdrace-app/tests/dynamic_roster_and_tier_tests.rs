@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use tdrace_app::ai::{CareerRivalEntry, DriverCharacter, DriverTier, DrivingStyle, RosterEvolutionEngine, SkillProgressionOutcome};
 use tdrace_app::db::HallOfFameDb;
+use tdrace_app::module::GameModule;
 use tdrace_app::profile::{ModuleCareerProgress, PlayerProfile};
 use tdrace_app::series::{ChampionshipSession, PointSystem};
 
@@ -141,7 +142,7 @@ fn test_session_casual_race_dynamic_difficulty_and_bell_curve() {
     use tdrace_app::game::RaceSession;
 
     let mut session = RaceSession::new();
-    assert_eq!(session.casual_ai_difficulty, DriverTier::Contender);
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Rookie);
 
     session.set_casual_ai_difficulty(DriverTier::Legend);
     assert_eq!(session.casual_ai_difficulty, DriverTier::Legend);
@@ -389,3 +390,274 @@ fn test_championship_session_trigger_roster_evolution() {
         assert!(s.ai_tier.is_some(), "Rival in standings must have ai_tier set");
     }
 }
+
+#[test]
+fn test_spec024_scenario_72_characters_alignment_and_no_baked_in_tiers() {
+    let all = DriverCharacter::all_across_modules();
+    assert_eq!(all.len(), 72, "Total global drivers must be exactly 72");
+
+    // Check unique IDs
+    let mut ids = HashSet::new();
+    for d in &all {
+        assert!(ids.insert(d.id), "Duplicate driver ID: {}", d.id);
+    }
+
+    // Check global style count: exactly 12 per style
+    let mut global_counts = HashMap::new();
+    for d in &all {
+        *global_counts.entry(d.style).or_insert(0) += 1;
+    }
+    for style in DrivingStyle::ALL {
+        let count = global_counts.get(&style).copied().unwrap_or(0);
+        assert_eq!(count, 12, "Globally, style {:?} must have exactly 12 drivers, got {}", style, count);
+    }
+
+    // Check module breakdown: exactly 2 per style in each of the 6 modules
+    let modules: Vec<(&str, Vec<DriverCharacter>)> = vec![
+        ("Classic", DriverCharacter::ROSTER.to_vec()),
+        ("GT", tdrace_app::module::gt::GtWorldChallengeModule::new().drivers()),
+        ("NASCAR", tdrace_app::module::nascar::NascarGameModule::new().drivers()),
+        ("Rally", tdrace_app::module::rally::RallyGameModule::new().drivers()),
+        ("Kart", tdrace_app::module::kart::KartGameModule::new().drivers()),
+        ("ExtremeOffRoad", tdrace_app::module::extreme_offroad::ExtremeOffRoadModule::new().drivers()),
+    ];
+
+    for (mod_name, drivers) in modules {
+        assert_eq!(drivers.len(), 12, "Module {} must have exactly 12 drivers", mod_name);
+        let mut mod_counts = HashMap::new();
+        for d in &drivers {
+            *mod_counts.entry(d.style).or_insert(0) += 1;
+            // Verify offsets safety bounds
+            assert!(d.offsets.delta_lookahead.abs() <= 0.10, "Driver {} lookahead offset out of range", d.id);
+            assert!(d.offsets.delta_steering_kp.abs() <= 1.00, "Driver {} kp offset out of range", d.id);
+            assert!(d.offsets.delta_steering_kd.abs() <= 0.10, "Driver {} kd offset out of range", d.id);
+            assert!(d.offsets.delta_brake_margin.abs() <= 0.20, "Driver {} brake offset out of range", d.id);
+            assert!(d.offsets.delta_aggression.abs() <= 0.20, "Driver {} aggression offset out of range", d.id);
+            assert!(d.offsets.delta_avoidance.abs() <= 2.00, "Driver {} avoidance offset out of range", d.id);
+            assert!(d.offsets.delta_speed_factor.abs() <= 0.10, "Driver {} speed offset out of range", d.id);
+
+            // Verify dynamic resolution at all 5 tiers
+            for tier in [DriverTier::Rookie, DriverTier::Amateur, DriverTier::Contender, DriverTier::Pro, DriverTier::Legend] {
+                let profile = d.resolve_profile(tier);
+                assert!(profile.speed_factor >= 0.80 && profile.speed_factor <= 1.15);
+                assert!(profile.brake_margin >= 0.80 && profile.brake_margin <= 1.45);
+                assert!(profile.avoidance_distance >= 3.5 && profile.avoidance_distance <= 12.0);
+                assert!(profile.lookahead_time >= 0.20 && profile.lookahead_time <= 0.55);
+                assert!(profile.steering_kp >= 1.5 && profile.steering_kp <= 3.5);
+                assert!(profile.steering_kd >= 0.03 && profile.steering_kd <= 0.12);
+
+                let stats = d.resolve_stats(tier);
+                assert!(stats.speed >= 0.60 && stats.speed <= 0.99);
+                assert!(stats.aggression >= 0.40 && stats.aggression <= 0.99);
+                assert!(stats.precision >= 0.50 && stats.precision <= 0.99);
+                assert!(stats.defense >= 0.50 && stats.defense <= 0.99);
+            }
+        }
+        for style in DrivingStyle::ALL {
+            let count = mod_counts.get(&style).copied().unwrap_or(0);
+            assert_eq!(count, 2, "Module {} style {:?} must have exactly 2 drivers, got {}", mod_name, style, count);
+        }
+    }
+}
+
+#[test]
+fn test_spec024_scenario_uniform_sampling_12_driver_rosters_across_1000_seeds() {
+    let all = DriverCharacter::all_across_modules();
+    let trials = 1000;
+    let mut style_totals = HashMap::new();
+
+    for seed in 0..trials {
+        let roster = DriverCharacter::sample_casual_race_roster(&all, 12, seed as u64);
+        assert_eq!(roster.len(), 12);
+
+        let mut seed_style_counts = HashMap::new();
+        for driver in &roster {
+            *seed_style_counts.entry(driver.style).or_insert(0) += 1;
+            *style_totals.entry(driver.style).or_insert(0) += 1;
+        }
+
+        // For N=12, base quota = 2, remainder = 0.
+        // Therefore every single 12-driver grid has EXACTLY 2 of every style!
+        for style in DrivingStyle::ALL {
+            let count = seed_style_counts.get(&style).copied().unwrap_or(0);
+            assert_eq!(count, 2, "In 12-driver grid, style {:?} must have exactly 2 drivers for seed {}", style, seed);
+        }
+    }
+
+    // Mean across all trials is exactly 2.0
+    for style in DrivingStyle::ALL {
+        let total = style_totals.get(&style).copied().unwrap_or(0);
+        let mean = total as f64 / trials as f64;
+        assert_eq!(mean, 2.0, "Mean style count for {:?} must be 2.0", style);
+    }
+
+    // Non-multiple of 6 (e.g. N = 8): base = 1, remainder = 2. Expected mean = 8 / 6 = 1.333
+    let mut n8_totals = HashMap::new();
+    for seed in 0..trials {
+        let roster = DriverCharacter::sample_casual_race_roster(&all, 8, seed as u64);
+        for d in roster {
+            *n8_totals.entry(d.style).or_insert(0) += 1;
+        }
+    }
+    for style in DrivingStyle::ALL {
+        let total = n8_totals.get(&style).copied().unwrap_or(0);
+        let mean = total as f64 / trials as f64;
+        assert!(
+            (mean - 8.0 / 6.0).abs() < 0.08,
+            "Mean count for style {:?} in N=8 grids should be ~1.333, got {:.3}",
+            style, mean
+        );
+    }
+}
+
+#[test]
+fn test_spec024_scenario_bell_curve_tier_distribution_contender() {
+    let grids = 100;
+    let n = 12;
+    let total_bots = grids * n; // 1200
+    let mut tier_counts = HashMap::new();
+
+    for seed in 0..grids {
+        let tiers = DriverTier::Contender.sample_grid_tiers(n, seed as u64);
+        for t in tiers {
+            *tier_counts.entry(t).or_insert(0) += 1;
+        }
+    }
+
+    let t1 = tier_counts.get(&DriverTier::Rookie).copied().unwrap_or(0) as f64 / total_bots as f64;
+    let t2 = tier_counts.get(&DriverTier::Amateur).copied().unwrap_or(0) as f64 / total_bots as f64;
+    let t3 = tier_counts.get(&DriverTier::Contender).copied().unwrap_or(0) as f64 / total_bots as f64;
+    let t4 = tier_counts.get(&DriverTier::Pro).copied().unwrap_or(0) as f64 / total_bots as f64;
+    let t5 = tier_counts.get(&DriverTier::Legend).copied().unwrap_or(0) as f64 / total_bots as f64;
+
+    // Spec 024 Pseudo-Gherkin:
+    // Approximately 50-60% of opponents are Tier 3 (discrete weight: 50%)
+    assert!(t3 >= 0.45 && t3 <= 0.55, "Tier 3 proportion should be ~50%, got {:.3}", t3);
+    // Approximately 18-22% are Tier 2 and Tier 4 (discrete weights: 20% each)
+    assert!(t2 >= 0.16 && t2 <= 0.24, "Tier 2 proportion should be ~20%, got {:.3}", t2);
+    assert!(t4 >= 0.16 && t4 <= 0.24, "Tier 4 proportion should be ~20%, got {:.3}", t4);
+    // Boundary outliers (discrete weights: 5% each)
+    assert!(t1 >= 0.02 && t1 <= 0.08, "Tier 1 proportion should be ~5%, got {:.3}", t1);
+    assert!(t5 >= 0.02 && t5 <= 0.08, "Tier 5 proportion should be ~5%, got {:.3}", t5);
+}
+
+#[test]
+fn test_spec024_scenario_boundary_tier_distributions_rookie_and_legend() {
+    let grids = 100;
+    let n = 12;
+    let total_bots = grids * n;
+
+    // 1. Rookie Difficulty
+    let mut rookie_counts = HashMap::new();
+    for seed in 0..grids {
+        let tiers = DriverTier::Rookie.sample_grid_tiers(n, seed as u64);
+        for t in tiers {
+            assert!(t <= DriverTier::Contender, "Rookie grid must not exceed Contender tier, got {:?}", t);
+            *rookie_counts.entry(t).or_insert(0) += 1;
+        }
+    }
+    let r1 = rookie_counts.get(&DriverTier::Rookie).copied().unwrap_or(0) as f64 / total_bots as f64;
+    let r2 = rookie_counts.get(&DriverTier::Amateur).copied().unwrap_or(0) as f64 / total_bots as f64;
+    let r3 = rookie_counts.get(&DriverTier::Contender).copied().unwrap_or(0) as f64 / total_bots as f64;
+    // Expected weights: [55, 35, 10, 0, 0]
+    assert!(r1 >= 0.48 && r1 <= 0.62, "Rookie Tier 1 proportion should be ~55%, got {:.3}", r1);
+    assert!(r2 >= 0.28 && r2 <= 0.42, "Rookie Tier 2 proportion should be ~35%, got {:.3}", r2);
+    assert!(r3 >= 0.06 && r3 <= 0.15, "Rookie Tier 3 proportion should be ~10%, got {:.3}", r3);
+    assert_eq!(rookie_counts.get(&DriverTier::Pro).copied().unwrap_or(0), 0);
+    assert_eq!(rookie_counts.get(&DriverTier::Legend).copied().unwrap_or(0), 0);
+
+    // 2. Legend Difficulty
+    let mut legend_counts = HashMap::new();
+    for seed in 0..grids {
+        let tiers = DriverTier::Legend.sample_grid_tiers(n, seed as u64);
+        for t in tiers {
+            assert!(t >= DriverTier::Contender, "Legend grid must not drop below Contender tier, got {:?}", t);
+            *legend_counts.entry(t).or_insert(0) += 1;
+        }
+    }
+    let l5 = legend_counts.get(&DriverTier::Legend).copied().unwrap_or(0) as f64 / total_bots as f64;
+    let l4 = legend_counts.get(&DriverTier::Pro).copied().unwrap_or(0) as f64 / total_bots as f64;
+    let l3 = legend_counts.get(&DriverTier::Contender).copied().unwrap_or(0) as f64 / total_bots as f64;
+    // Expected weights: [0, 0, 10, 35, 55]
+    assert!(l5 >= 0.48 && l5 <= 0.62, "Legend Tier 5 proportion should be ~55%, got {:.3}", l5);
+    assert!(l4 >= 0.28 && l4 <= 0.42, "Legend Tier 4 proportion should be ~35%, got {:.3}", l4);
+    assert!(l3 >= 0.06 && l3 <= 0.15, "Legend Tier 3 proportion should be ~10%, got {:.3}", l3);
+    assert_eq!(legend_counts.get(&DriverTier::Rookie).copied().unwrap_or(0), 0);
+    assert_eq!(legend_counts.get(&DriverTier::Amateur).copied().unwrap_or(0), 0);
+}
+
+#[test]
+fn test_spec024_scenario_career_10_car_grid_90_10_churn() {
+    let initial = RosterEvolutionEngine::initialize_career_roster(10, DriverTier::Rookie, 777);
+    assert_eq!(initial.len(), 10);
+
+    let (evolved, report) = RosterEvolutionEngine::evolve_roster(&initial, DriverTier::Amateur, 888);
+    assert_eq!(evolved.len(), 10);
+
+    // With N=10, retained = floor(10 * 0.90) = 9, churn = 1
+    assert_eq!(report.retained_rivals.len(), 9);
+    assert_eq!(report.churned_out.len(), 1);
+    assert_eq!(report.churned_in.len(), 1);
+
+    // Top 3 podium drivers protected
+    let top_3_ids: Vec<String> = initial.iter().take(3).map(|r| r.driver_id.clone()).collect();
+    let churned_out_id = &report.churned_out[0].driver_id;
+    assert!(!top_3_ids.contains(churned_out_id));
+
+    // Style preserved
+    assert_eq!(report.churned_in[0].style, report.churned_out[0].style);
+
+    // Probabilistic skill check: majority advance to Tier 2 (Amateur)
+    let advanced_to_tier2 = report.retained_rivals.iter().filter(|r| r.new_tier >= DriverTier::Amateur).count();
+    assert!(
+        advanced_to_tier2 >= 6,
+        "Majority of retained rivals (>= 6 of 9) should advance to Tier 2+, got {}",
+        advanced_to_tier2
+    );
+}
+
+#[test]
+fn test_career_roster_evolution_end_to_end_multitier_progression() {
+    let mut progress = ModuleCareerProgress::default_for_module(42, "gt");
+    progress.ensure_career_rivals(10, 101);
+    assert_eq!(progress.career_rivals.len(), 10);
+
+    let initial_rival_ids: HashSet<String> = progress.career_rivals.iter().map(|r| r.driver_id.clone()).collect();
+    assert_eq!(initial_rival_ids.len(), 10);
+
+    // Simulate advancing through all tiers: 1 -> 2 -> 3 -> 4 -> 5
+    for target_tier in 2..=5 {
+        progress.trophies_gold += 1;
+        progress.add_xp(5000);
+        let (new_lvl, report) = progress.advance_tier_with_seed(1000 + target_tier as u64).expect("advance tier");
+        assert_eq!(new_lvl, target_tier);
+        assert_eq!(progress.career_rivals.len(), 10);
+
+        // Every tier unlock has 9 retained and 1 churned
+        assert_eq!(report.retained_rivals.len(), 9);
+        assert_eq!(report.churned_out.len(), 1);
+        assert_eq!(report.churned_in.len(), 1);
+
+        // Retained styles match
+        assert_eq!(report.churned_in[0].style, report.churned_out[0].style);
+    }
+
+    // At tier 5, several original rivals should still be in the roster (continuity)
+    let final_rival_ids: HashSet<String> = progress.career_rivals.iter().map(|r| r.driver_id.clone()).collect();
+    let retained_originals = initial_rival_ids.intersection(&final_rival_ids).count();
+    // Over 4 transitions with 1 churn each, at least 10 - 4 = 6 original rivals MUST survive
+    assert!(
+        retained_originals >= 6,
+        "Expected at least 6 original rivals to persist to Tier 5, found {}",
+        retained_originals
+    );
+
+    // Verify final tiers: at Tier 5, majority of rivals should be Tier 4 or 5
+    let high_tier_count = progress.career_rivals.iter().filter(|r| r.tier >= DriverTier::Pro).count();
+    assert!(
+        high_tier_count >= 7,
+        "By Tier 5, at least 7 of 10 rivals should be Pro or Legend, got {}",
+        high_tier_count
+    );
+}
+

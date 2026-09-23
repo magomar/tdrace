@@ -652,6 +652,7 @@ impl RaceSession {
         let camera_p2 = RaceCamera::from_config_with_viewport(&config.camera, sw, sh);
         let editor_camera = EditorCamera::from_config_with_viewport(&config.camera, sw, sh);
         let crt_overlay = config.display.to_crt_overlay();
+        let default_num_bots = config.gameplay.default_num_bots;
         crate::render::track::set_surface_texture_quality(config.display.surface_texture_quality);
 
         let mut session = Self {
@@ -665,7 +666,7 @@ impl RaceSession {
             assist_profile,
             assist_profile_p2,
             is_time_attack: false,
-            num_bots: config.gameplay.default_num_bots,
+            num_bots: default_num_bots,
             total_laps: config.gameplay.default_laps,
             config: config.clone(),
             base_config: config,
@@ -694,7 +695,7 @@ impl RaceSession {
             opponent_tiers: Vec::new(),
             casual_ai_difficulty: DriverTier::Rookie,
             modality_preferences: std::collections::HashMap::new(),
-            prev_num_bots: config.gameplay.default_num_bots,
+            prev_num_bots: default_num_bots,
             prev_casual_ai_difficulty: DriverTier::Rookie,
             grid_participants: Vec::new(),
             driver_cards_idx: 0,
@@ -2971,7 +2972,8 @@ impl RaceSession {
             let human_count = if self.is_split_screen() { 2 } else { 1 };
             let max_grid = self.max_grid_participants();
             let clamped = racer_count.clamp(human_count, max_grid);
-            self.num_bots = clamped.saturating_sub(human_count).max(1);
+            let min_bots = if self.is_split_screen() { 0 } else { 1 };
+            self.num_bots = clamped.saturating_sub(human_count).max(min_bots);
             self.casual_ai_difficulty = difficulty;
             self.prev_num_bots = self.num_bots;
             self.prev_casual_ai_difficulty = difficulty;
@@ -3671,6 +3673,8 @@ impl RaceSession {
             let explicit_bots = (self.num_bots != self.prev_num_bots).then_some(self.num_bots);
             let explicit_difficulty = (self.casual_ai_difficulty != self.prev_casual_ai_difficulty).then_some(self.casual_ai_difficulty);
 
+            let min_bots = if self.is_split_screen() { 0 } else { 1 };
+
             if let Some(pref) = self.modality_preferences.get_mut(&self.game_mode) {
                 if let Some(bots) = explicit_bots {
                     pref.racer_count = human_count + bots;
@@ -3679,7 +3683,7 @@ impl RaceSession {
                     pref.difficulty = diff;
                 }
                 let target_racers = pref.racer_count.clamp(human_count, max_grid);
-                self.num_bots = target_racers.saturating_sub(human_count).max(1);
+                self.num_bots = target_racers.saturating_sub(human_count).max(min_bots);
                 self.casual_ai_difficulty = pref.difficulty;
             } else {
                 // First initialization of this modality: initialize roster with slots available in grid and difficulty T1 (Rookie)
@@ -3688,7 +3692,7 @@ impl RaceSession {
                     .map(|b| human_count + b)
                     .unwrap_or(max_grid)
                     .clamp(human_count, max_grid);
-                self.num_bots = target_racers.saturating_sub(human_count).max(1);
+                self.num_bots = target_racers.saturating_sub(human_count).max(min_bots);
                 self.casual_ai_difficulty = target_difficulty;
 
                 self.modality_preferences.insert(
