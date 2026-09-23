@@ -3021,16 +3021,33 @@ impl RaceSession {
         };
         base_config.assists = self.assist_profile.to_config();
 
+        let current_tier: u8 = if effective_module == "classic" {
+            1
+        } else if let Some(champ) = &self.championship_session {
+            (champ.tier as u8).clamp(1, 5)
+        } else if let Some(pm) = player_model {
+            pm.tier.clamp(1, 5)
+        } else if self.game_mode == GameMode::Career {
+            (self.active_career_progress.level as u8).clamp(1, 5)
+        } else {
+            self.active_player_car_tier().clamp(1, 5)
+        };
+
         let category_models = if effective_module == "classic" {
-            if let Some(pm) = player_model {
+            if self.free_car_selection {
+                crate::catalog::get_models_for_module("classic")
+            } else if let Some(pm) = player_model {
                 vec![pm]
             } else {
                 vec![crate::catalog::get_classic_model_for_category(self.track.car_category)]
             }
-        } else if self.selected_car_model_id.is_some() {
-            player_model
-                .map(|pm| crate::catalog::get_models_for_category(pm.module_id, pm.category_name))
-                .unwrap_or_default()
+        } else if let Some(pm) = player_model {
+            let models = crate::catalog::get_models_for_category(pm.module_id, pm.category_name);
+            if !models.is_empty() {
+                models
+            } else {
+                crate::catalog::get_models_for_module_and_tier(effective_module, current_tier)
+            }
         } else {
             Vec::new()
         };
@@ -3119,7 +3136,13 @@ impl RaceSession {
             let bot_seed = seed.wrapping_add((bot_idx as u64 + 1).wrapping_mul(0x9E3779B97F4A7C15));
 
             let (bot_car_choice, bot_car_title, bot_model_id, bot_scheme) = if !category_models.is_empty() {
-                let bot_model = category_models[bot_idx % category_models.len()];
+                let favorite_model_opt = character
+                    .favorite_car_for_discipline_and_tier(effective_module, current_tier)
+                    .and_then(|fav_id| category_models.iter().copied().find(|m| m.id == fav_id));
+
+                let bot_model = favorite_model_opt.unwrap_or_else(|| {
+                    category_models[bot_idx % category_models.len()]
+                });
                 let scheme = Self::resolve_bot_color_scheme(
                     character.color_scheme,
                     Some(bot_model),

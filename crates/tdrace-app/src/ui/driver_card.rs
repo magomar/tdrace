@@ -94,13 +94,38 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     left_y += scaler.s(60.0);
 
     // Preferred Car Section
-    fonts.draw_ui_bold("PREFERRED VEHICLE", col1_x + scaler.s(16.0), left_y, scaler.font_s(14.0), Palette::NEON_GOLD);
+    fonts.draw_ui_bold("PREFERRED VEHICLE & SIGNATURE RIDES", col1_x + scaler.s(16.0), left_y, scaler.font_s(14.0), Palette::NEON_GOLD);
     left_y += scaler.s(18.0);
 
     let car_desc = format!("{} ({})", driver.preferred_car.title(), driver.preferred_car.tag());
     fonts.draw_ui_bold(&car_desc, col1_x + scaler.s(16.0), left_y, scaler.font_s(15.0), Palette::WHITE);
     left_y += scaler.s(16.0);
-    fonts.draw_ui_regular(driver.preferred_car.description(), col1_x + scaler.s(16.0), left_y, scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
+
+    let signature_summary = if !driver.favorite_cars.is_empty() {
+        let first_models: Vec<String> = driver
+            .favorite_cars
+            .iter()
+            .take(3)
+            .filter_map(|fav| {
+                crate::catalog::find_model_by_id(fav.model_id)
+                    .map(|m| format!("T{}: {}", fav.tier, m.name))
+            })
+            .collect();
+        if !first_models.is_empty() {
+            format!("Signature: {}", first_models.join(" | "))
+        } else {
+            driver.preferred_car.description().to_string()
+        }
+    } else {
+        driver.preferred_car.description().to_string()
+    };
+    fonts.draw_ui_regular(
+        &signature_summary,
+        col1_x + scaler.s(16.0),
+        left_y,
+        scaler.font_s(11.5),
+        if !driver.favorite_cars.is_empty() { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
+    );
     left_y += scaler.s(45.0);
 
     // Custom Car Livery Swatches
