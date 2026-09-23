@@ -26,6 +26,7 @@ interface Props {
       acceleration: number;
       grip: number;
       agility: number;
+      braking?: number;
       downforce: number;
     };
     summary: string;
@@ -62,6 +63,9 @@ const assetVersion = '?v=20260922d';
 const imageLateralSrc = car.image_lateral ? `${car.image_lateral}${assetVersion}` : null;
 const imageTopdownSrc = car.image_topdown ? `${car.image_topdown}${assetVersion}` : null;
 const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
+
+const brakingVal = car.stats.braking ?? Math.round(50 + (car.brakes_kn - 5.0) * 2.0);
+const brakingPct = Math.min(100, Math.max(0, brakingVal));
 ---
 
 <div class="bg-racing-surface rounded-xl border border-racing-border overflow-hidden hover:border-racing-blue/50 hover:shadow-xl hover:shadow-racing-blue/5 transition-all flex flex-col justify-between group">
@@ -205,45 +209,129 @@ const imageRefSrc = car.image_ref ? `${car.image_ref}${assetVersion}` : null;
     </div>
   )}
 
-  <!-- Performance Stat Bars -->
-  <div class="p-5 space-y-2.5 flex-1 flex flex-col justify-center">
-    <div class="space-y-1">
-      <div class="flex justify-between text-[11px] font-mono">
-        <span class="text-racing-muted">Top Speed</span>
-        <span class="text-racing-text">{car.stats.speed}%</span>
+  <!-- Performance Stat Bars (6-Dimensional Telemetry) -->
+  <div class="p-4 space-y-1.5 flex-1 flex flex-col justify-center">
+    <!-- 1. Speed -->
+    <div class="relative group/stat flex items-center gap-2 text-[11px] font-mono py-0.5">
+      <div class="w-24 flex items-center gap-1.5 shrink-0 text-slate-400">
+        <svg class="w-3.5 h-3.5 text-cyan-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 14v-4" />
+          <path d="M3.34 17a10 10 0 1 1 17.32 0" />
+        </svg>
+        <span class="truncate">Speed</span>
       </div>
-      <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
-        <div class="h-full bg-blue-500 rounded-full transition-all" style={`width: ${car.stats.speed}%`}></div>
+      <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class="h-full bg-cyan-400 rounded-full transition-all" style={`width: ${car.stats.speed}%`}></div>
+      </div>
+      <div class="w-10 text-right font-bold text-slate-200 shrink-0">
+        {car.stats.speed}%
+      </div>
+      <div class="pointer-events-none absolute left-1/2 -top-7 -translate-x-1/2 opacity-0 group-hover/stat:opacity-100 transition-opacity bg-slate-900/95 text-slate-200 border border-slate-700/80 px-2 py-0.5 rounded shadow-lg text-[10px] whitespace-nowrap z-30 font-sans">
+        🏎️ Top Speed: {car.top_speed_kmh} km/h
       </div>
     </div>
 
-    <div class="space-y-1">
-      <div class="flex justify-between text-[11px] font-mono">
-        <span class="text-racing-muted">Acceleration</span>
-        <span class="text-racing-text">{car.stats.acceleration}%</span>
+    <!-- 2. Accel -->
+    <div class="relative group/stat flex items-center gap-2 text-[11px] font-mono py-0.5">
+      <div class="w-24 flex items-center gap-1.5 shrink-0 text-slate-400">
+        <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        <span class="truncate">Accel</span>
       </div>
-      <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
-        <div class="h-full bg-cyan-500 rounded-full transition-all" style={`width: ${car.stats.acceleration}%`}></div>
+      <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class="h-full bg-amber-400 rounded-full transition-all" style={`width: ${car.stats.acceleration}%`}></div>
+      </div>
+      <div class="w-10 text-right font-bold text-slate-200 shrink-0">
+        {car.stats.acceleration}%
+      </div>
+      <div class="pointer-events-none absolute left-1/2 -top-7 -translate-x-1/2 opacity-0 group-hover/stat:opacity-100 transition-opacity bg-slate-900/95 text-slate-200 border border-slate-700/80 px-2 py-0.5 rounded shadow-lg text-[10px] whitespace-nowrap z-30 font-sans">
+        ⚡ 0-100: {car.accel_0_100 ? `${car.accel_0_100}s` : 'N/A'} ({car.power_bhp} BHP)
       </div>
     </div>
 
-    <div class="space-y-1">
-      <div class="flex justify-between text-[11px] font-mono">
-        <span class="text-racing-muted">Cornering Grip</span>
-        <span class="text-racing-text">{car.stats.grip}%</span>
+    <!-- 3. Grip -->
+    <div class="relative group/stat flex items-center gap-2 text-[11px] font-mono py-0.5">
+      <div class="w-24 flex items-center gap-1.5 shrink-0 text-slate-400">
+        <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7a5 5 0 0 1 5 5" />
+          <circle cx="12" cy="12" r="2" fill="currentColor" />
+        </svg>
+        <span class="truncate">Grip</span>
       </div>
-      <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
+      <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
         <div class="h-full bg-emerald-500 rounded-full transition-all" style={`width: ${car.stats.grip}%`}></div>
       </div>
+      <div class="w-10 text-right font-bold text-slate-200 shrink-0">
+        {car.stats.grip}%
+      </div>
+      <div class="pointer-events-none absolute left-1/2 -top-7 -translate-x-1/2 opacity-0 group-hover/stat:opacity-100 transition-opacity bg-slate-900/95 text-slate-200 border border-slate-700/80 px-2 py-0.5 rounded shadow-lg text-[10px] whitespace-nowrap z-30 font-sans">
+        🛞 Pacejka Lateral Grip: {car.stats.grip}%
+      </div>
     </div>
 
-    <div class="space-y-1">
-      <div class="flex justify-between text-[11px] font-mono">
-        <span class="text-racing-muted">Downforce</span>
-        <span class="text-racing-text">{car.downforce.toFixed(2)}</span>
+    <!-- 4. Agility -->
+    <div class="relative group/stat flex items-center gap-2 text-[11px] font-mono py-0.5">
+      <div class="w-24 flex items-center gap-1.5 shrink-0 text-slate-400">
+        <svg class="w-3.5 h-3.5 text-fuchsia-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 4c5 0 5 8 10 8s5 8 0 8" />
+          <circle cx="7" cy="4" r="1.5" fill="currentColor" />
+          <circle cx="17" cy="20" r="1.5" fill="currentColor" />
+        </svg>
+        <span class="truncate">Agility</span>
       </div>
-      <div class="h-1.5 w-full bg-racing-surface2 rounded-full overflow-hidden">
-        <div class="h-full bg-amber-500 rounded-full transition-all" style={`width: ${car.stats.downforce}%`}></div>
+      <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class="h-full bg-fuchsia-500 rounded-full transition-all" style={`width: ${car.stats.agility}%`}></div>
+      </div>
+      <div class="w-10 text-right font-bold text-slate-200 shrink-0">
+        {car.stats.agility}%
+      </div>
+      <div class="pointer-events-none absolute left-1/2 -top-7 -translate-x-1/2 opacity-0 group-hover/stat:opacity-100 transition-opacity bg-slate-900/95 text-slate-200 border border-slate-700/80 px-2 py-0.5 rounded shadow-lg text-[10px] whitespace-nowrap z-30 font-sans">
+        🔀 Steering Agility: {car.stats.agility}%
+      </div>
+    </div>
+
+    <!-- 5. Braking -->
+    <div class="relative group/stat flex items-center gap-2 text-[11px] font-mono py-0.5">
+      <div class="w-24 flex items-center gap-1.5 shrink-0 text-slate-400">
+        <svg class="w-3.5 h-3.5 text-orange-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
+          <line x1="7" y1="12" x2="17" y2="12" />
+        </svg>
+        <span class="truncate">Braking</span>
+      </div>
+      <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class="h-full bg-orange-500 rounded-full transition-all" style={`width: ${brakingPct}%`}></div>
+      </div>
+      <div class="w-10 text-right font-bold text-slate-200 shrink-0">
+        {car.brakes_kn}k
+      </div>
+      <div class="pointer-events-none absolute left-1/2 -top-7 -translate-x-1/2 opacity-0 group-hover/stat:opacity-100 transition-opacity bg-slate-900/95 text-slate-200 border border-slate-700/80 px-2 py-0.5 rounded shadow-lg text-[10px] whitespace-nowrap z-30 font-sans">
+        🛑 Braking: {car.brakes_desc || 'Brakes'} ({car.brakes_kn} kN)
+      </div>
+    </div>
+
+    <!-- 6. Downforce / Aero -->
+    <div class="relative group/stat flex items-center gap-2 text-[11px] font-mono py-0.5">
+      <div class="w-24 flex items-center gap-1.5 shrink-0 text-slate-400">
+        <svg class="w-3.5 h-3.5 text-amber-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8c6-2 12-2 18 0l-2 3c-5-1.5-9-1.5-14 0z" />
+          <path d="M7 11v5" />
+          <path d="M17 11v5" />
+          <path d="M12 11v7" />
+          <path d="M9 16l3 3 3-3" />
+        </svg>
+        <span class="truncate">Downforce</span>
+      </div>
+      <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class="h-full bg-amber-400 rounded-full transition-all" style={`width: ${car.stats.downforce}%`}></div>
+      </div>
+      <div class="w-10 text-right font-bold text-slate-200 shrink-0">
+        {car.downforce.toFixed(2)}
+      </div>
+      <div class="pointer-events-none absolute left-1/2 -top-7 -translate-x-1/2 opacity-0 group-hover/stat:opacity-100 transition-opacity bg-slate-900/95 text-slate-200 border border-slate-700/80 px-2 py-0.5 rounded shadow-lg text-[10px] whitespace-nowrap z-30 font-sans">
+        🪽 Aero: Cl {car.downforce.toFixed(2)}{car.drag ? ` / Cd ${car.drag.toFixed(2)}` : ''}
       </div>
     </div>
   </div>
