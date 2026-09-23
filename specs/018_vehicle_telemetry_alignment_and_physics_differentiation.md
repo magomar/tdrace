@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Vehicle Telemetry Alignment and Physics Differentiation"
 description: "Unify 6-stat performance telemetry across in-game garage and web showroom with custom vector icons, while dynamically hooking up individual vehicle parameters (braking, grip, agility, and aerodynamics) in the simulation engine."
-status: draft
+status: implemented
 created: 2026-09-22
 generated: { by: agent/antigravity, at: 2026-09-22T17:45:00Z }
 ---
@@ -138,33 +138,33 @@ Parsed directly from `self.aero_downforce` (format `"Cl X.XX / Cd Y.YY"`):
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Showroom displays 6 unified telemetry metrics**
-  - [ ] **Given** the user browses the Showroom vehicle catalog on any category card
-  - [ ] **When** the performance telemetry section renders
-  - [ ] **Then** exactly 6 horizontal single-row stats appear: Speed, Accel, Grip, Agility, Braking, and Downforce
-  - [ ] **And** each row displays its distinct icon, label, colored progress bar, and value
-  - [ ] **And** the total vertical card height does not exceed pre-redesign dimensions
+  - [x] **Given** the user browses the Showroom vehicle catalog on any category card
+  - [x] **When** the performance telemetry section renders
+  - [x] **Then** exactly 6 horizontal single-row stats appear: Speed, Accel, Grip, Agility, Braking, and Downforce
+  - [x] **And** each row displays its distinct icon, label, colored progress bar, and value
+  - [x] **And** the total vertical card height does not exceed pre-redesign dimensions
 
 - **Scenario: Showroom tooltips reveal detailed engineering specs**
-  - [ ] **Given** the user hovers over any telemetry stat row or icon
-  - [ ] **When** the cursor hovers on the element
-  - [ ] **Then** a high-contrast floating tooltip appears detailing exact physical metrics (km/h, 0-100s, kN braking, downforce $C_l$)
+  - [x] **Given** the user hovers over any telemetry stat row or icon
+  - [x] **When** the cursor hovers on the element
+  - [x] **Then** a high-contrast floating tooltip appears detailing exact physical metrics (km/h, 0-100s, kN braking, downforce $C_l$)
 
 - **Scenario: Intra-category physics differentiation**
-  - [ ] **Given** two vehicles from the same competition class (e.g. Toyota GR Supra GT4 vs BMW M4 GT4)
-  - [ ] **When** `to_car_config()` derives their physical simulation parameters
-  - [ ] **Then** the lighter vehicle (Toyota) has higher `steer_speed`, lower `inertia`, higher `max_brake_force`, and higher `tire.peak_d`
-  - [ ] **And** the heavier vehicle (BMW) produces higher straight-line engine tractive force but requires earlier braking
+  - [x] **Given** two vehicles from the same competition class (e.g. Toyota GR Supra GT4 vs BMW M4 GT4)
+  - [x] **When** `to_car_config()` derives their physical simulation parameters
+  - [x] **Then** the lighter vehicle (Toyota) has higher `steer_speed`, lower `inertia`, higher `max_brake_force`, and higher `tire.peak_d`
+  - [x] **And** the heavier vehicle (BMW) produces higher straight-line engine tractive force but requires earlier braking
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` [`portals/option-b-showroom/src/components/CarCard.astro`](../portals/option-b-showroom/src/components/CarCard.astro) -> 6-row inline telemetry layout with SVG icons, tooltips, and compact layout.
-- `[ ]` [`portals/shared/schemas/okf.ts`](../portals/shared/schemas/okf.ts) -> Optional `braking` schema attribute.
-- `[ ]` [`scripts/generate_asset_data.py`](../scripts/generate_asset_data.py) -> Export `braking` stat to `vehicles.json`.
-- `[ ]` [`portals/shared/data/vehicles.json`](../portals/shared/data/vehicles.json) -> Synchronized vehicle stats.
-- `[ ]` [`crates/tdrace-app/src/catalog/mod.rs`](../crates/tdrace-app/src/catalog/mod.rs) -> Differentiated `to_car_config()` derivation and unit tests.
-- `[ ]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) -> Telemetry HUD alignment.
-- `[ ]` [`specs/index.md`](index.md) -> Index registration of Spec 018.
-- `[ ]` [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) -> Milestone registration.
+- `[x]` [`portals/option-b-showroom/src/components/CarCard.astro`](../portals/option-b-showroom/src/components/CarCard.astro) -> 6-row inline telemetry layout with SVG icons, tooltips, and compact layout.
+- `[x]` [`portals/shared/schemas/okf.ts`](../portals/shared/schemas/okf.ts) -> Optional `braking` schema attribute.
+- `[x]` [`scripts/generate_asset_data.py`](../scripts/generate_asset_data.py) -> Export `braking` stat to `vehicles.json`.
+- `[x]` [`portals/shared/data/vehicles.json`](../portals/shared/data/vehicles.json) -> Synchronized vehicle stats.
+- `[x]` [`crates/tdrace-app/src/catalog/mod.rs`](../crates/tdrace-app/src/catalog/mod.rs) -> Differentiated `to_car_config()` derivation and unit tests.
+- `[x]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) -> Telemetry HUD alignment.
+- `[x]` [`specs/index.md`](index.md) -> Index registration of Spec 018.
+- `[x]` [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) -> Milestone registration.
