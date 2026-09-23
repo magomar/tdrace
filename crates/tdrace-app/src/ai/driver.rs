@@ -450,6 +450,51 @@ const ZANE_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
 ];
 
+/// Minor scalar offsets applied to the composite BotProfile so that drivers sharing
+/// the same style feel subtly unique without baking in a skill tier.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DriverPersonalityOffsets {
+    pub delta_lookahead: f32,
+    pub delta_steering_kp: f32,
+    pub delta_steering_kd: f32,
+    pub delta_brake_margin: f32,
+    pub delta_aggression: f32,
+    pub delta_avoidance: f32,
+    pub delta_speed_factor: f32,
+}
+
+impl DriverPersonalityOffsets {
+    pub const ZERO: Self = Self {
+        delta_lookahead: 0.0,
+        delta_steering_kp: 0.0,
+        delta_steering_kd: 0.0,
+        delta_brake_margin: 0.0,
+        delta_aggression: 0.0,
+        delta_avoidance: 0.0,
+        delta_speed_factor: 0.0,
+    };
+
+    pub const fn new(
+        delta_lookahead: f32,
+        delta_steering_kp: f32,
+        delta_steering_kd: f32,
+        delta_brake_margin: f32,
+        delta_aggression: f32,
+        delta_avoidance: f32,
+        delta_speed_factor: f32,
+    ) -> Self {
+        Self {
+            delta_lookahead,
+            delta_steering_kp,
+            delta_steering_kd,
+            delta_brake_margin,
+            delta_aggression,
+            delta_avoidance,
+            delta_speed_factor,
+        }
+    }
+}
+
 /// Predefined motorsport driver character with unique personality, backstory, preferred car, and AI style.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DriverCharacter {
@@ -460,12 +505,47 @@ pub struct DriverCharacter {
     pub style: DrivingStyle,
     pub preferred_car: CarChoice,
     pub color_scheme: CarColorScheme,
-    pub profile: BotProfile,
-    pub stats: DriverStats,
+    pub offsets: DriverPersonalityOffsets,
     pub favorite_cars: &'static [DriverFavoriteCar],
 }
 
 impl DriverCharacter {
+    /// Dynamically constructs the physics BotProfile for this character at the specified tier.
+    pub fn resolve_profile(&self, tier: DriverTier) -> BotProfile {
+        let quality = DriverQuality::for_tier(tier);
+        let mut profile = BotProfile::from_style_and_quality(self.style, &quality);
+        profile.name = self.name;
+        profile.lookahead_time = (profile.lookahead_time + self.offsets.delta_lookahead).clamp(0.20, 0.55);
+        profile.steering_kp = (profile.steering_kp + self.offsets.delta_steering_kp).clamp(1.5, 3.5);
+        profile.steering_kd = (profile.steering_kd + self.offsets.delta_steering_kd).clamp(0.03, 0.12);
+        profile.brake_margin = (profile.brake_margin + self.offsets.delta_brake_margin).clamp(0.80, 1.45);
+        profile.aggression = (profile.aggression + self.offsets.delta_aggression).clamp(0.20, 1.00);
+        profile.avoidance_distance = (profile.avoidance_distance + self.offsets.delta_avoidance).clamp(3.5, 12.0);
+        profile.speed_factor = (profile.speed_factor + self.offsets.delta_speed_factor).clamp(0.80, 1.15);
+        profile
+    }
+
+    /// Dynamically constructs the UI DriverStats for this character at the specified tier.
+    pub fn resolve_stats(&self, tier: DriverTier) -> DriverStats {
+        let quality = DriverQuality::for_tier(tier);
+        let mut stats = DriverStats::from_style_and_quality(self.style, &quality);
+        stats.speed = (stats.speed + self.offsets.delta_speed_factor * 1.5).clamp(0.60, 0.99);
+        stats.aggression = (stats.aggression + self.offsets.delta_aggression).clamp(0.40, 0.99);
+        stats.precision = (stats.precision + self.offsets.delta_steering_kd * 2.0).clamp(0.50, 0.99);
+        stats.defense = (stats.defense - self.offsets.delta_avoidance * 0.05).clamp(0.50, 0.99);
+        stats
+    }
+
+    /// Default profile for previewing in dossiers.
+    pub fn default_profile(&self) -> BotProfile {
+        self.resolve_profile(DriverTier::Pro)
+    }
+
+    /// Default stats for previewing in dossiers.
+    pub fn default_stats(&self) -> DriverStats {
+        self.resolve_stats(DriverTier::Pro)
+    }
+
     /// 1. Silvia "Apex" Tanaka — The Precision Master (Smooth)
     pub const SILVIA_TANAKA: Self = Self {
         id: "silvia_tanaka",
@@ -475,22 +555,7 @@ impl DriverCharacter {
         style: DrivingStyle::Smooth,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::from_index(1), // Electric Blue
-        profile: BotProfile {
-            name: "Silvia Tanaka",
-            lookahead_time: 0.40,
-            speed_factor: 1.02,
-            steering_kp: 2.4,
-            steering_kd: 0.07,
-            brake_margin: 1.02,
-            aggression: 0.75,
-            avoidance_distance: 6.5,
-        },
-        stats: DriverStats {
-            speed: 0.95,
-            aggression: 0.70,
-            precision: 0.98,
-            defense: 0.88,
-        },
+        offsets: DriverPersonalityOffsets::new(0.00, 0.1, -0.01, 0.00, 0.05, 0.0, 0.01),
         favorite_cars: SILVIA_FAVORITE_CARS,
     };
 
@@ -503,22 +568,7 @@ impl DriverCharacter {
         style: DrivingStyle::Aggressive,
         preferred_car: CarChoice::RallyCar,
         color_scheme: CarColorScheme::from_index(4), // Sunset Orange
-        profile: BotProfile {
-            name: "Marco Rossi",
-            lookahead_time: 0.32,
-            speed_factor: 1.05,
-            steering_kp: 2.6,
-            steering_kd: 0.05,
-            brake_margin: 0.88,
-            aggression: 0.95,
-            avoidance_distance: 5.0,
-        },
-        stats: DriverStats {
-            speed: 0.96,
-            aggression: 0.96,
-            precision: 0.80,
-            defense: 0.86,
-        },
+        offsets: DriverPersonalityOffsets::new(0.00, 0.1, 0.00, -0.02, 0.00, 0.0, 0.03),
         favorite_cars: MARCO_FAVORITE_CARS,
     };
 
@@ -531,22 +581,7 @@ impl DriverCharacter {
         style: DrivingStyle::Bold,
         preferred_car: CarChoice::DriftCar,
         color_scheme: CarColorScheme::from_index(5), // Synthwave Purple
-        profile: BotProfile {
-            name: "Kenji Sato",
-            lookahead_time: 0.34,
-            speed_factor: 1.03,
-            steering_kp: 2.5,
-            steering_kd: 0.04,
-            brake_margin: 0.92,
-            aggression: 0.88,
-            avoidance_distance: 5.8,
-        },
-        stats: DriverStats {
-            speed: 0.94,
-            aggression: 0.90,
-            precision: 0.85,
-            defense: 0.80,
-        },
+        offsets: DriverPersonalityOffsets::new(0.03, -0.2, 0.00, 0.04, -0.04, 0.6, 0.02),
         favorite_cars: KENJI_FAVORITE_CARS,
     };
 
@@ -559,22 +594,7 @@ impl DriverCharacter {
         style: DrivingStyle::Calculating,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::from_index(7), // Glacier White & Cyan
-        profile: BotProfile {
-            name: "Elena Frost",
-            lookahead_time: 0.38,
-            speed_factor: 0.99,
-            steering_kp: 2.2,
-            steering_kd: 0.06,
-            brake_margin: 1.05,
-            aggression: 0.70,
-            avoidance_distance: 7.2,
-        },
-        stats: DriverStats {
-            speed: 0.94,
-            aggression: 0.68,
-            precision: 0.97,
-            defense: 0.94,
-        },
+        offsets: DriverPersonalityOffsets::new(0.01, -0.1, 0.01, 0.05, -0.05, 0.5, 0.01),
         favorite_cars: ELENA_FAVORITE_CARS,
     };
 
@@ -587,22 +607,7 @@ impl DriverCharacter {
         style: DrivingStyle::Aggressive,
         preferred_car: CarChoice::RallyCar,
         color_scheme: CarColorScheme::from_index(3), // Sunburst Yellow & Crimson
-        profile: BotProfile {
-            name: "Jax Reed",
-            lookahead_time: 0.30,
-            speed_factor: 1.04,
-            steering_kp: 2.7,
-            steering_kd: 0.05,
-            brake_margin: 0.86,
-            aggression: 0.92,
-            avoidance_distance: 5.2,
-        },
-        stats: DriverStats {
-            speed: 0.95,
-            aggression: 0.94,
-            precision: 0.80,
-            defense: 0.82,
-        },
+        offsets: DriverPersonalityOffsets::new(-0.01, 0.2, -0.01, 0.03, 0.01, -0.2, 0.02),
         favorite_cars: JAX_FAVORITE_CARS,
     };
 
@@ -615,22 +620,7 @@ impl DriverCharacter {
         style: DrivingStyle::Balanced,
         preferred_car: CarChoice::Kart,
         color_scheme: CarColorScheme::from_index(2), // Viper Green
-        profile: BotProfile {
-            name: "Leo Bianchi",
-            lookahead_time: 0.36,
-            speed_factor: 0.97,
-            steering_kp: 2.3,
-            steering_kd: 0.07,
-            brake_margin: 1.08,
-            aggression: 0.65,
-            avoidance_distance: 6.8,
-        },
-        stats: DriverStats {
-            speed: 0.93,
-            aggression: 0.72,
-            precision: 0.92,
-            defense: 0.86,
-        },
+        offsets: DriverPersonalityOffsets::new(0.00, 0.1, 0.00, -0.01, 0.08, -0.5, 0.02),
         favorite_cars: LEO_FAVORITE_CARS,
     };
 
@@ -643,146 +633,71 @@ impl DriverCharacter {
         style: DrivingStyle::Tenacious,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::from_index(6), // Stealth Carbon Black
-        profile: BotProfile {
-            name: "Viktor Sterling",
-            lookahead_time: 0.44,
-            speed_factor: 0.95,
-            steering_kp: 2.0,
-            steering_kd: 0.08,
-            brake_margin: 1.14,
-            aggression: 0.78,
-            avoidance_distance: 7.8,
-        },
-        stats: DriverStats {
-            speed: 0.92,
-            aggression: 0.80,
-            precision: 0.90,
-            defense: 0.98,
-        },
+        offsets: DriverPersonalityOffsets::new(0.01, 0.0, 0.00, -0.01, 0.06, 0.0, 0.01),
         favorite_cars: VIKTOR_FAVORITE_CARS,
     };
 
-    /// 8. Maya "Phoenix" Lin — Telemetry Prodigy (Calculating)
+    /// 8. Maya "Phoenix" Lin — Telemetry Prodigy (Smooth)
     pub const MAYA_LIN: Self = Self {
         id: "maya_lin",
         name: "Maya Lin",
         alias: "Phoenix Lin",
         bio: "An engineering-minded racer who calculates optimal slip angles in real time, delivering blistering straight-line exits.",
-        style: DrivingStyle::Calculating,
+        style: DrivingStyle::Smooth,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::from_index(8), // Cyber Magenta & Neon Cyan
-        profile: BotProfile {
-            name: "Maya Lin",
-            lookahead_time: 0.37,
-            speed_factor: 1.01,
-            steering_kp: 2.3,
-            steering_kd: 0.06,
-            brake_margin: 1.00,
-            aggression: 0.82,
-            avoidance_distance: 6.2,
-        },
-        stats: DriverStats {
-            speed: 0.95,
-            aggression: 0.78,
-            precision: 0.96,
-            defense: 0.88,
-        },
+        offsets: DriverPersonalityOffsets::new(-0.03, 0.0, -0.02, -0.02, 0.12, -0.3, 0.00),
         favorite_cars: MAYA_FAVORITE_CARS,
     };
 
-    /// 9. Damon "The Ghost" Clark — Tactical Endurance Master (Balanced)
+    /// 9. Damon "The Ghost" Clark — Tactical Endurance Master (Tenacious)
     pub const DAMON_CLARK: Self = Self {
         id: "damon_clark",
         name: "Damon Clark",
         alias: "The Ghost",
         bio: "Quiet and hyper-calculating endurance specialist who runs relentless, identical lap times until his opponents crack.",
-        style: DrivingStyle::Balanced,
+        style: DrivingStyle::Tenacious,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::new(
             Color::new(0.50, 0.55, 0.60, 1.0),
             Color::new(0.12, 0.14, 0.18, 1.0),
             Color::new(0.95, 0.95, 0.98, 1.0),
         ), // Slate Gray, Anthracite & Ghost Silver
-        profile: BotProfile {
-            name: "Damon Clark",
-            lookahead_time: 0.42,
-            speed_factor: 1.01,
-            steering_kp: 2.3,
-            steering_kd: 0.07,
-            brake_margin: 1.03,
-            aggression: 0.72,
-            avoidance_distance: 6.6,
-        },
-        stats: DriverStats {
-            speed: 0.94,
-            aggression: 0.74,
-            precision: 0.93,
-            defense: 0.89,
-        },
+        offsets: DriverPersonalityOffsets::new(0.00, 0.1, -0.01, -0.02, 0.10, 0.6, 0.02),
         favorite_cars: DAMON_FAVORITE_CARS,
     };
 
-    /// 10. Chloe "The Dynamo" Laurent — Hillclimb Phenom (Smooth)
+    /// 10. Chloe "The Dynamo" Laurent — Hillclimb Phenom (Calculating)
     pub const CHLOE_LAURENT: Self = Self {
         id: "chloe_laurent",
         name: "Chloe Laurent",
         alias: "The Dynamo",
         bio: "A fearless hybrid-era racer blending European hillclimb reflexes with blistering apex aggression in all conditions.",
-        style: DrivingStyle::Smooth,
+        style: DrivingStyle::Calculating,
         preferred_car: CarChoice::RallyCar,
         color_scheme: CarColorScheme::new(
             Color::new(0.12, 0.78, 0.70, 1.0),
             Color::new(0.95, 0.85, 0.20, 1.0),
             Color::new(0.10, 0.10, 0.12, 1.0),
         ), // Bright Teal, Neon Gold & Jet Black
-        profile: BotProfile {
-            name: "Chloe Laurent",
-            lookahead_time: 0.35,
-            speed_factor: 1.03,
-            steering_kp: 2.5,
-            steering_kd: 0.05,
-            brake_margin: 0.90,
-            aggression: 0.89,
-            avoidance_distance: 5.5,
-        },
-        stats: DriverStats {
-            speed: 0.94,
-            aggression: 0.72,
-            precision: 0.97,
-            defense: 0.88,
-        },
+        offsets: DriverPersonalityOffsets::new(-0.04, 0.1, -0.01, -0.04, 0.11, -0.8, 0.01),
         favorite_cars: CHLOE_FAVORITE_CARS,
     };
 
-    /// 11. Hiroshi "Tarmac Samurai" Takahashi — Tire Conservation Virtuoso (Tenacious)
+    /// 11. Hiroshi "Tarmac Samurai" Takahashi — Tire Conservation Virtuoso (Balanced)
     pub const HIROSHI_TAKAHASHI: Self = Self {
         id: "hiroshi_takahashi",
         name: "Hiroshi Takahashi",
         alias: "Tarmac Samurai",
         bio: "Super GT veteran whose millimeter-perfect tire preservation and late-braking maneuvers dominate high-grip circuits.",
-        style: DrivingStyle::Tenacious,
+        style: DrivingStyle::Balanced,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::new(
             Color::new(0.55, 0.08, 0.12, 1.0),
             Color::new(0.85, 0.75, 0.35, 1.0),
             Color::new(0.98, 0.98, 0.98, 1.0),
         ), // Deep Maroon, Warm Gold & Pure White
-        profile: BotProfile {
-            name: "Hiroshi Takahashi",
-            lookahead_time: 0.39,
-            speed_factor: 1.02,
-            steering_kp: 2.4,
-            steering_kd: 0.06,
-            brake_margin: 0.98,
-            aggression: 0.80,
-            avoidance_distance: 6.0,
-        },
-        stats: DriverStats {
-            speed: 0.93,
-            aggression: 0.82,
-            precision: 0.95,
-            defense: 0.94,
-        },
+        offsets: DriverPersonalityOffsets::new(0.01, 0.3, -0.01, -0.07, 0.15, -1.0, 0.04),
         favorite_cars: HIROSHI_FAVORITE_CARS,
     };
 
@@ -799,22 +714,7 @@ impl DriverCharacter {
             Color::new(0.98, 0.75, 0.08, 1.0),
             Color::new(0.98, 0.98, 0.98, 1.0),
         ), // Cobalt Blue, Lightning Yellow & Pure White
-        profile: BotProfile {
-            name: "Zane Holland",
-            lookahead_time: 0.33,
-            speed_factor: 1.04,
-            steering_kp: 2.6,
-            steering_kd: 0.05,
-            brake_margin: 0.88,
-            aggression: 0.94,
-            avoidance_distance: 5.1,
-        },
-        stats: DriverStats {
-            speed: 0.95,
-            aggression: 0.93,
-            precision: 0.82,
-            defense: 0.82,
-        },
+        offsets: DriverPersonalityOffsets::new(0.02, -0.1, 0.01, 0.00, 0.02, -0.1, 0.03),
         favorite_cars: ZANE_FAVORITE_CARS,
     };
 

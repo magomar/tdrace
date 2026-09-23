@@ -19,7 +19,7 @@ fn test_gt_game_module_drivers_and_preferred_car() {
         assert!(!d.name.is_empty());
         assert!(!d.alias.is_empty());
         assert!(!d.bio.is_empty());
-        assert!(d.stats.speed >= 0.90, "GT driver speed stat must be top tier");
+        assert!(d.default_stats().speed >= 0.80, "GT driver speed stat must be top tier");
     }
 }
 

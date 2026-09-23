@@ -17,8 +17,8 @@ fn test_all_across_modules_integrity_and_distinct_ids() {
         assert!(ids.insert(d.id), "Duplicate driver ID found: {}", d.id);
         assert!(!d.name.is_empty(), "Driver name must not be empty");
         assert!(!d.bio.is_empty(), "Driver bio must not be empty");
-        assert!(d.profile.speed_factor > 0.0, "Speed factor must be positive for {}", d.name);
-        assert!(d.profile.lookahead_time > 0.0, "Lookahead must be positive for {}", d.name);
+        assert!(d.default_profile().speed_factor > 0.0, "Speed factor must be positive for {}", d.name);
+        assert!(d.default_profile().lookahead_time > 0.0, "Lookahead must be positive for {}", d.name);
         names.insert(d.name);
     }
     assert_eq!(names.len(), 72, "All 72 drivers should have unique names");
@@ -224,14 +224,14 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
     let d1_driver = session.opponent_drivers.iter().find(|d| d.id == "custom_d1").expect("custom_d1 driver");
     let d2_driver = session.opponent_drivers.iter().find(|d| d.id == "custom_d2").expect("custom_d2 driver");
 
-    assert_eq!(d1_driver.profile.aggression, BotProfile::aggressive().aggression);
-    assert_eq!(d2_driver.profile.aggression, BotProfile::smooth().aggression);
-    assert_ne!(d1_driver.profile.brake_margin, d2_driver.profile.brake_margin);
+    assert_eq!(d1_driver.default_profile().aggression, BotProfile::aggressive().aggression);
+    assert_eq!(d2_driver.default_profile().aggression, BotProfile::smooth().aggression);
+    assert_ne!(d1_driver.default_profile().brake_margin, d2_driver.default_profile().brake_margin);
 
     // Verify ai_drivers instantiated in the race session match the profile parameters
     assert_eq!(session.ai_drivers.len(), 4);
-    assert_eq!(session.ai_drivers[0].profile.aggression, d1_driver.profile.aggression);
-    assert_eq!(session.ai_drivers[1].profile.aggression, d2_driver.profile.aggression);
+    assert_eq!(session.ai_drivers[0].profile.aggression, d1_driver.default_profile().aggression);
+    assert_eq!(session.ai_drivers[1].profile.aggression, d2_driver.default_profile().aggression);
 }
 
 #[test]
@@ -253,9 +253,9 @@ fn test_all_modules_standard_race_instantiates_predefined_characters() {
         let mut opponent_names = HashSet::new();
         for opp in &session.opponent_drivers {
             assert!(opponent_names.insert(opp.name), "Module {} should have unique opponent names on grid", module_id);
-            assert!(opp.profile.speed_factor > 0.0);
-            assert!(opp.profile.lookahead_time > 0.0);
-            assert!(opp.stats.speed > 0.0);
+            assert!(opp.default_profile().speed_factor > 0.0);
+            assert!(opp.default_profile().lookahead_time > 0.0);
+            assert!(opp.default_stats().speed > 0.0);
         }
     }
 }

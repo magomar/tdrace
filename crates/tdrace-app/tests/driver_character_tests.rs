@@ -25,16 +25,18 @@ fn test_driver_roster_integrity_and_distinct_properties() {
         assert!(!alias_lower.contains("bot"), "Driver alias {} must not contain 'bot'", d.alias);
 
         // Verify stats are within normalized bounds [0.0..1.0]
-        assert!(d.stats.speed >= 0.5 && d.stats.speed <= 1.0);
-        assert!(d.stats.aggression >= 0.5 && d.stats.aggression <= 1.0);
-        assert!(d.stats.precision >= 0.5 && d.stats.precision <= 1.0);
-        assert!(d.stats.defense >= 0.5 && d.stats.defense <= 1.0);
+        let stats = d.default_stats();
+        assert!(stats.speed >= 0.5 && stats.speed <= 1.0);
+        assert!(stats.aggression >= 0.5 && stats.aggression <= 1.0);
+        assert!(stats.precision >= 0.5 && stats.precision <= 1.0);
+        assert!(stats.defense >= 0.5 && stats.defense <= 1.0);
 
         // Verify operationalized BotProfile parameters
-        assert!(d.profile.lookahead_time > 0.2 && d.profile.lookahead_time < 0.6);
-        assert!(d.profile.speed_factor > 0.85 && d.profile.speed_factor < 1.15);
-        assert!(d.profile.steering_kp > 1.5 && d.profile.steering_kp < 3.5);
-        assert!(d.profile.brake_margin > 0.7 && d.profile.brake_margin < 1.3);
+        let profile = d.default_profile();
+        assert!(profile.lookahead_time > 0.2 && profile.lookahead_time < 0.6);
+        assert!(profile.speed_factor > 0.85 && profile.speed_factor < 1.15);
+        assert!(profile.steering_kp > 1.5 && profile.steering_kp < 3.5);
+        assert!(profile.brake_margin > 0.7 && profile.brake_margin < 1.3);
 
         assert!(ids.insert(d.id), "Duplicate ID found: {}", d.id);
         assert!(names.insert(d.name), "Duplicate name found: {}", d.name);
@@ -79,8 +81,9 @@ fn test_race_session_driver_spawning_and_names() {
     for i in 0..3 {
         let character = &session.opponent_drivers[i];
         let ai = &session.ai_drivers[i];
-        assert_eq!(ai.profile.speed_factor, character.profile.speed_factor);
-        assert_eq!(ai.profile.steering_kp, character.profile.steering_kp);
+        let expected_profile = character.resolve_profile(tdrace_app::ai::DriverTier::Rookie);
+        assert_eq!(ai.profile.speed_factor, expected_profile.speed_factor);
+        assert_eq!(ai.profile.steering_kp, expected_profile.steering_kp);
         assert_eq!(session.color_schemes[i + 1], character.color_scheme);
     }
 

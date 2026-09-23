@@ -158,6 +158,8 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     scaler.draw_glass_card(col2_x, content_y, col_w, col_h, Color::new(0.06, 0.08, 0.12, 0.85), Palette::UI_CARD_BORDER, 1.2);
 
     let style = driver.style;
+    let preview_stats = driver.default_stats();
+    let preview_profile = driver.default_profile();
 
     let mut right_y = content_y + scaler.s(22.0);
     fonts.draw_ui_bold("DRIVING STYLE & RACECRAFT", col2_x + scaler.s(16.0), right_y, scaler.font_s(14.0), Palette::NEON_GREEN);
@@ -169,17 +171,17 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     right_y += scaler.s(22.0);
 
     // Skill Stat Bars
-    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "PACE & SPEED", driver.stats.speed, Palette::NEON_CYAN);
+    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "PACE & SPEED", preview_stats.speed, Palette::NEON_CYAN);
     right_y += scaler.s(26.0);
-    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "OVERTAKE AGGRESSION", driver.stats.aggression, Palette::RED);
+    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "OVERTAKE AGGRESSION", preview_stats.aggression, Palette::RED);
     right_y += scaler.s(26.0);
-    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "APEX PRECISION", driver.stats.precision, Palette::NEON_GOLD);
+    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "APEX PRECISION", preview_stats.precision, Palette::NEON_GOLD);
     right_y += scaler.s(26.0);
-    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "DEFENSIVE POSITION", driver.stats.defense, Palette::NEON_GREEN);
+    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "DEFENSIVE POSITION", preview_stats.defense, Palette::NEON_GREEN);
     right_y += scaler.s(32.0);
 
     // Operationalized AI Parameters Table
-    fonts.draw_ui_bold("AI TELEMETRY PARAMETERS", col2_x + scaler.s(16.0), right_y, scaler.font_s(13.5), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_bold("AI TELEMETRY PARAMETERS (PRO BASELINE)", col2_x + scaler.s(16.0), right_y, scaler.font_s(13.5), Palette::UI_TEXT_MUTED);
     right_y += scaler.s(20.0);
 
     let param_box_w = col_w - scaler.s(32.0);
@@ -187,10 +189,10 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     draw_rectangle(col2_x + scaler.s(16.0), right_y, param_box_w, param_box_h, Color::new(0.10, 0.12, 0.17, 0.90));
     draw_rectangle_lines(col2_x + scaler.s(16.0), right_y, param_box_w, param_box_h, 1.0, Palette::UI_CARD_BORDER);
 
-    let p1 = format!("• Corner Speed Factor: {:.2}x", driver.profile.speed_factor);
-    let p2 = format!("• Lookahead Horizon: {:.2}s", driver.profile.lookahead_time);
-    let p3 = format!("• Steering Gain (Kp): {:.1}", driver.profile.steering_kp);
-    let p4 = format!("• Braking Distance Margin: {:.2}x", driver.profile.brake_margin);
+    let p1 = format!("• Corner Speed Factor: {:.2}x", preview_profile.speed_factor);
+    let p2 = format!("• Lookahead Horizon: {:.2}s", preview_profile.lookahead_time);
+    let p3 = format!("• Steering Gain (Kp): {:.1}", preview_profile.steering_kp);
+    let p4 = format!("• Braking Distance Margin: {:.2}x", preview_profile.brake_margin);
 
     fonts.draw_ui_regular(&p1, col2_x + scaler.s(24.0), right_y + scaler.s(20.0), scaler.font_s(12.0), Color::new(0.85, 0.90, 0.96, 1.0));
     fonts.draw_ui_regular(&p2, col2_x + scaler.s(24.0), right_y + scaler.s(40.0), scaler.font_s(12.0), Color::new(0.85, 0.90, 0.96, 1.0));

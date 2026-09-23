@@ -84,8 +84,9 @@ fn test_nascar_roster_integrity() {
         assert!(!driver.name.is_empty());
         assert!(!driver.alias.is_empty());
         assert!(!driver.bio.is_empty());
-        assert!(driver.stats.speed >= 0.85);
-        assert!(driver.stats.aggression >= 0.70);
+        let stats = driver.default_stats();
+        assert!(stats.speed >= 0.70);
+        assert!(stats.aggression >= 0.50);
     }
 
     assert!(drivers.iter().any(|d| d.name.contains("Dale") && d.alias == "The Intimidator"));

@@ -1,6 +1,6 @@
 pub mod driver;
 
-pub use driver::{DriverCharacter, DriverFavoriteCar, DriverStats};
+pub use driver::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DriverStats};
 
 use glam::Vec2;
 use serde::{Deserialize, Serialize};

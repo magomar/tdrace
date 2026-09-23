@@ -256,9 +256,9 @@ ai_tier = 4
     session.launch_or_resume_championship(&def);
 
     // Verify opponents were initialized with their orthogonal profiles
-    assert_eq!(session.opponent_drivers.len(), 2);
-    let opp1 = &session.opponent_drivers[0];
-    let opp2 = &session.opponent_drivers[1];
+    assert_eq!(session.ai_drivers.len(), 2);
+    let opp1 = &session.ai_drivers[0];
+    let opp2 = &session.ai_drivers[1];
 
     // Rookie aggressive opp1 should have lower pace and higher brake margin than pro opp2
     assert!(opp1.profile.brake_margin > opp2.profile.brake_margin);

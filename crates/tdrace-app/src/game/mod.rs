@@ -68,7 +68,7 @@ use tdrace_core::track::geometry::{JumpRampCarExt, SpawnPose};
 use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::{Track, TrackCategory};
 
-use crate::ai::{BotAiDriver, BotProfile, DriverCharacter, DriverQuality, DriverStats, DriverTier, DrivingStyle};
+use crate::ai::{BotAiDriver, DriverCharacter, DriverPersonalityOffsets, DriverTier, DrivingStyle};
 use crate::audio::{AudioManager, EngineSoundType, MusicTrack, SfxType};
 use crate::camera::{RaceCamera, SplitLayout, ZoomLevelConfig};
 use crate::config::GameConfig;
@@ -2845,24 +2845,11 @@ impl RaceSession {
                         let static_id: &'static str = Box::leak(entry.driver_id.clone().into_boxed_str());
                         let static_name: &'static str = Box::leak(entry.driver_name.clone().into_boxed_str());
                         let scheme = CarColorScheme::from_index((idx + 1) % 9);
-                        let (mut profile, stats, style) = if let Some(style_str) = entry.ai_style.as_deref().or(entry.ai_character.as_deref()) {
-                            let style = DrivingStyle::from_str_lossy(style_str);
-                            let tier = entry.ai_tier.map(DriverTier::from_u8).unwrap_or(DriverTier::Pro);
-                            let quality = DriverQuality::for_tier(tier);
-                            (
-                                BotProfile::from_style_and_quality(style, &quality),
-                                DriverStats::from_style_and_quality(style, &quality),
-                                style,
-                            )
+                        let style = if let Some(style_str) = entry.ai_style.as_deref().or(entry.ai_character.as_deref()) {
+                            DrivingStyle::from_str_lossy(style_str)
                         } else {
-                            let style = DrivingStyle::ALL[idx % DrivingStyle::ALL.len()];
-                            (
-                                BotProfile::from_style(style),
-                                DriverStats::from_style(style),
-                                style,
-                            )
+                            DrivingStyle::ALL[idx % DrivingStyle::ALL.len()]
                         };
-                        profile.name = static_name;
                         champ_opponents.push(DriverCharacter {
                             id: static_id,
                             name: static_name,
@@ -2870,8 +2857,7 @@ impl RaceSession {
                             bio: "Championship contender battling for the season crown.",
                             preferred_car: player_car_choice,
                             color_scheme: scheme,
-                            profile,
-                            stats,
+                            offsets: DriverPersonalityOffsets::ZERO,
                             style,
                             favorite_cars: &[],
                         });
@@ -3356,8 +3342,20 @@ impl RaceSession {
             self.car_visual_types.push(bot_visual_type);
             self.color_schemes.push(bot_scheme);
             self.car_model_ids.push(bot_model_id);
-            self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
-            self.ai_drivers.push(BotAiDriver::new(character.profile));
+            let bot_tier = self
+                .championship_session
+                .as_ref()
+                .and_then(|champ| {
+                    champ
+                        .standings
+                        .iter()
+                        .find(|s| s.driver_id == character.id)
+                        .and_then(|s| s.ai_tier)
+                })
+                .map(DriverTier::from_u8)
+                .unwrap_or_else(|| DriverTier::from_u8(current_tier));
+            let bot_profile = character.resolve_profile(bot_tier);
+            self.ai_drivers.push(BotAiDriver::new(bot_profile));
         }
     }
 

@@ -230,21 +230,7 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
             })
             .unwrap_or_else(|| default_model_id.clone());
 
-        let ai_char = if character.profile.aggression > 0.90 {
-            "aggressive"
-        } else if character.profile.speed_factor >= 1.05 {
-            "fast"
-        } else if character.profile.steering_kd <= 0.05 {
-            "bold"
-        } else if character.stats.precision >= 0.95 {
-            "smooth"
-        } else if character.stats.defense >= 0.92 {
-            "tenacious"
-        } else if character.profile.lookahead_time >= 0.40 {
-            "calculating"
-        } else {
-            "balanced"
-        };
+        let ai_char = character.style.as_str();
 
         let team_name = match character.id {
             "dale_vance" => "Richard Childress Racing",

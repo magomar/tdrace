@@ -26,7 +26,7 @@ pub use storage::{
 };
 pub use tracks::{DevTrackStore, PresetCatalog, UserTrackStore};
 
-pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
+pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DriverStats};
 pub use audio::{AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType};
 pub use camera::{CameraMode, RaceCamera, SplitLayout};
 pub use config::{

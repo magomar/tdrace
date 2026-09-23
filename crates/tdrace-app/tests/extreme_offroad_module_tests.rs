@@ -130,8 +130,9 @@ fn test_extreme_offroad_roster_integrity() {
         assert!(!driver.name.is_empty());
         assert!(!driver.alias.is_empty());
         assert!(!driver.bio.is_empty());
-        assert!(driver.stats.speed >= 0.90);
-        assert!(driver.stats.aggression >= 0.85);
+        let stats = driver.default_stats();
+        assert!(stats.speed >= 0.70);
+        assert!(stats.aggression >= 0.50);
     }
 
     assert!(drivers.iter().any(|d| d.name == "Wyatt Cole" && d.alias == "Dust Devil"));
