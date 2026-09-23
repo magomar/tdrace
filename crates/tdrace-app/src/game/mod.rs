@@ -134,7 +134,7 @@ use crate::ui::track_manager_ui::{
 use crate::ui::{
     confirm_modal_layout,
     render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
-    ScreenAction, UiScaler, UniversalConfirmModal,
+    CareerHubFocus, ScreenAction, UiScaler, UniversalConfirmModal,
 };
 pub use cabinet::fx::crt::{CrtConfig, CrtOverlay, ScanlineMode};
 pub use cabinet::fx::floating_text::{FloatingTextItem, FloatingTextManager};
@@ -374,6 +374,7 @@ pub struct RaceSession {
 
     pub active_module_id: &'static str,
     pub championship_session: Option<ChampionshipSession>,
+    pub pending_championship_results: Option<Vec<RoundDriverResult>>,
     pub championship_manager: ChampionshipManager,
     pub championship_editor_state: Option<ChampionshipEditorState>,
     pub random_car_assignment: bool,
@@ -418,6 +419,7 @@ pub struct RaceSession {
     pub profile_champ_scroll: usize,
     pub profile_champ_selected_idx: usize,
     pub profile_focus_area: ProfileFocusArea,
+    pub career_hub_focus: CareerHubFocus,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -656,6 +658,7 @@ impl RaceSession {
 
             active_module_id: "classic",
             championship_session: None,
+            pending_championship_results: None,
             championship_manager: ChampionshipManager::new(),
             championship_editor_state: None,
             random_car_assignment: true,
@@ -702,6 +705,7 @@ impl RaceSession {
             profile_champ_scroll: 0,
             profile_champ_selected_idx: 0,
             profile_focus_area: ProfileFocusArea::Tabs,
+            career_hub_focus: CareerHubFocus::Tabs,
 
             fx: EffectsManager::new_persistent(1500),
             camera,
@@ -2694,6 +2698,7 @@ impl RaceSession {
                 if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
                     let tier = self.active_career_progress.level.clamp(1, 5);
                     let calendar = crate::ui::gt_default_calendar(tier);
+                    self.career_hub_focus = CareerHubFocus::Tabs;
                     self.state = GameState::CareerHub {
                         selected_tier: tier,
                         selected_slot: 0,
@@ -2709,6 +2714,7 @@ impl RaceSession {
             if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
                 let tier = self.active_career_progress.level.clamp(1, 5);
                 let calendar = crate::ui::gt_default_calendar(tier);
+                self.career_hub_focus = CareerHubFocus::Tabs;
                 self.state = GameState::CareerHub {
                     selected_tier: tier,
                     selected_slot: 0,
@@ -4012,6 +4018,7 @@ impl RaceSession {
                         } else {
                             crate::ui::gt_default_calendar(tier)
                         };
+                        self.career_hub_focus = CareerHubFocus::Tabs;
                         self.state = GameState::CareerHub {
                             selected_tier: tier,
                             selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
@@ -4854,6 +4861,7 @@ impl RaceSession {
                 } else {
                     crate::ui::gt_default_calendar(tier)
                 };
+                self.career_hub_focus = CareerHubFocus::Tabs;
                 self.transition_fade_to(
                     GameState::CareerHub {
                         selected_tier: tier,
@@ -6538,6 +6546,7 @@ impl RaceSession {
                                 } else {
                                     crate::ui::gt_default_calendar(tier)
                                 };
+                                self.career_hub_focus = CareerHubFocus::Tabs;
                                 self.state = GameState::CareerHub {
                                     selected_tier: tier,
                                     selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
@@ -6664,7 +6673,77 @@ impl RaceSession {
                 _ => return,
             };
 
-        // 1. Standings Toggle (Tab / Gamepad Y)
+        let mut tier_changed = false;
+
+        // 1. Mouse Interaction: Click tabs to select tier & focus tabs, click calendar to select slot & focus calendar
+        let sw = screen_width_safe();
+        let sh = screen_height_safe();
+        let scaler = UiScaler::new(sw, sh);
+        let full_w = (sw * 0.96).max(scaler.s(760.0));
+        let x = (sw - full_w) * 0.5;
+        let tab_bar_y = scaler.s(14.0) + scaler.s(56.0) + scaler.s(10.0);
+        let tab_bar_h = scaler.s(40.0);
+        let tier_count = 5;
+        let tab_gap = scaler.s(8.0);
+        let tab_w = (full_w - tab_gap * (tier_count as f32 - 1.0)) / tier_count as f32;
+
+        let (mx, my) = mouse_position_safe();
+        let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+
+        if mouse_clicked && my >= tab_bar_y && my <= tab_bar_y + tab_bar_h {
+            for t in 1..=tier_count {
+                let tx = x + (t - 1) as f32 * (tab_w + tab_gap);
+                if mx >= tx && mx <= tx + tab_w {
+                    if selected_tier != t as u32 {
+                        selected_tier = t as u32;
+                        tier_changed = true;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                    self.career_hub_focus = CareerHubFocus::Tabs;
+                    break;
+                }
+            }
+        }
+
+        // 2. Direct Number Key Shortcuts (1-5) for immediate tier selection
+        if is_key_pressed(KeyCode::Key1) {
+            if selected_tier != 1 {
+                selected_tier = 1;
+                tier_changed = true;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+            self.career_hub_focus = CareerHubFocus::Tabs;
+        } else if is_key_pressed(KeyCode::Key2) {
+            if selected_tier != 2 {
+                selected_tier = 2;
+                tier_changed = true;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+            self.career_hub_focus = CareerHubFocus::Tabs;
+        } else if is_key_pressed(KeyCode::Key3) {
+            if selected_tier != 3 {
+                selected_tier = 3;
+                tier_changed = true;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+            self.career_hub_focus = CareerHubFocus::Tabs;
+        } else if is_key_pressed(KeyCode::Key4) {
+            if selected_tier != 4 {
+                selected_tier = 4;
+                tier_changed = true;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+            self.career_hub_focus = CareerHubFocus::Tabs;
+        } else if is_key_pressed(KeyCode::Key5) {
+            if selected_tier != 5 {
+                selected_tier = 5;
+                tier_changed = true;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+            self.career_hub_focus = CareerHubFocus::Tabs;
+        }
+
+        // 3. Standings Toggle (Tab / Gamepad Y)
         if is_key_pressed(KeyCode::Tab) || self.input.gamepad.snapshot.btn_y_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
             showing_standings = !showing_standings;
@@ -6677,7 +6756,7 @@ impl RaceSession {
             return;
         }
 
-        // 2. Direct Garage Shortcut (G key)
+        // 4. Direct Garage Shortcut (G key)
         if is_key_pressed(KeyCode::G) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.garage_origin = GarageOrigin::CareerHub;
@@ -6685,8 +6764,7 @@ impl RaceSession {
             return;
         }
 
-        // 3. Tier Switching: Q / E, Gamepad LB / RB
-        let mut tier_changed = false;
+        // 5. Global Tier Bumper / Key Shortcuts (Q / E, Gamepad LB / RB)
         if is_key_pressed(KeyCode::Q) || self.input.gamepad.snapshot.btn_lb_pressed {
             if selected_tier > 1 {
                 self.audio.play_sfx(SfxType::UiMove);
@@ -6701,6 +6779,149 @@ impl RaceSession {
                 tier_changed = true;
             }
         }
+
+        let season_active = self
+            .championship_session
+            .as_ref()
+            .map(|c| !c.is_completed)
+            .unwrap_or(false);
+
+        // 6. Focus Navigation (Tabs vs Calendar)
+        match self.career_hub_focus {
+            CareerHubFocus::Tabs => {
+                // Horizontal navigation across championship tier tabs
+                let prev_tab = is_key_pressed(KeyCode::Left)
+                    || is_key_pressed(KeyCode::A)
+                    || self.input.gamepad.snapshot.dpad_left_pressed
+                    || self.input.gamepad.snapshot.nav_left;
+                let next_tab = is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::D)
+                    || self.input.gamepad.snapshot.dpad_right_pressed
+                    || self.input.gamepad.snapshot.nav_right;
+
+                if prev_tab && selected_tier > 1 {
+                    selected_tier -= 1;
+                    tier_changed = true;
+                    self.audio.play_sfx(SfxType::UiMove);
+                } else if next_tab && selected_tier < 5 {
+                    selected_tier += 1;
+                    tier_changed = true;
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+
+                // Vertical navigation: Down moves focus to calendar slots
+                if is_key_pressed(KeyCode::Down)
+                    || is_key_pressed(KeyCode::S)
+                    || self.input.gamepad.snapshot.dpad_down_pressed
+                    || self.input.gamepad.snapshot.nav_down
+                {
+                    self.career_hub_focus = CareerHubFocus::Calendar;
+                    selected_slot = 0;
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+            }
+            CareerHubFocus::Calendar => {
+                let num_slots = calendar_tracks.len();
+
+                // Mouse selection on calendar rows
+                if mouse_clicked {
+                    let col_gap = scaler.s(14.0);
+                    let left_w = full_w * 0.38;
+                    let right_inner_x = x + left_w + col_gap + scaler.s(16.0);
+                    let right_inner_w = full_w - left_w - col_gap - scaler.s(32.0);
+                    let body_h = (sh - (tab_bar_y + tab_bar_h + scaler.s(12.0)) - scaler.s(60.0)).max(scaler.s(410.0));
+                    let slot_h = ((body_h - scaler.s(80.0)) / num_slots as f32).clamp(scaler.s(24.0), scaler.s(36.0));
+                    let slot_gap = scaler.s(4.0);
+                    let start_ry = tab_bar_y + tab_bar_h + scaler.s(12.0) + scaler.s(16.0) + scaler.s(28.0) + scaler.s(10.0);
+
+                    if mx >= right_inner_x && mx <= right_inner_x + right_inner_w {
+                        for idx in 0..num_slots {
+                            let sy = start_ry + idx as f32 * (slot_h + slot_gap);
+                            if my >= sy && my <= sy + slot_h {
+                                if selected_slot != idx {
+                                    selected_slot = idx;
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Vertical navigation within calendar slots
+                if is_key_pressed(KeyCode::Down)
+                    || is_key_pressed(KeyCode::S)
+                    || self.input.gamepad.snapshot.dpad_down_pressed
+                    || self.input.gamepad.snapshot.nav_down
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if selected_slot + 1 < num_slots {
+                        selected_slot += 1;
+                    }
+                }
+
+                if is_key_pressed(KeyCode::Up)
+                    || is_key_pressed(KeyCode::W)
+                    || self.input.gamepad.snapshot.dpad_up_pressed
+                    || self.input.gamepad.snapshot.nav_up
+                {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if selected_slot > 0 {
+                        selected_slot -= 1;
+                    } else {
+                        // Returning to tabs from slot 0
+                        self.career_hub_focus = CareerHubFocus::Tabs;
+                    }
+                }
+
+                // Horizontal inputs while in Calendar
+                let left_pressed = is_key_pressed(KeyCode::Left)
+                    || is_key_pressed(KeyCode::A)
+                    || is_key_pressed(KeyCode::LeftBracket)
+                    || is_key_pressed(KeyCode::Comma)
+                    || self.input.gamepad.snapshot.dpad_left_pressed
+                    || self.input.gamepad.snapshot.nav_left;
+                let right_pressed = is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::D)
+                    || is_key_pressed(KeyCode::RightBracket)
+                    || is_key_pressed(KeyCode::Period)
+                    || self.input.gamepad.snapshot.dpad_right_pressed
+                    || self.input.gamepad.snapshot.nav_right;
+
+                let cur_track_id = calendar_tracks.get(selected_slot).cloned().unwrap_or_default();
+                let is_slot_swappable = !season_active
+                    && selected_tier > 1
+                    && !crate::ui::career_hub::is_slot_mandatory(selected_tier, &cur_track_id);
+
+                if is_slot_swappable {
+                    if left_pressed {
+                        if crate::ui::cycle_calendar_slot(selected_tier, &mut calendar_tracks, selected_slot, false) {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                        } else {
+                            self.audio.play_sfx(SfxType::UiMove);
+                        }
+                    } else if right_pressed {
+                        if crate::ui::cycle_calendar_slot(selected_tier, &mut calendar_tracks, selected_slot, true) {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                        } else {
+                            self.audio.play_sfx(SfxType::UiMove);
+                        }
+                    }
+                } else {
+                    // On non-swappable slots (e.g. Tier 1 or mandatory tracks), horizontal input navigates tabs
+                    if left_pressed && selected_tier > 1 {
+                        selected_tier -= 1;
+                        tier_changed = true;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    } else if right_pressed && selected_tier < 5 {
+                        selected_tier += 1;
+                        tier_changed = true;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                }
+            }
+        }
+
         if tier_changed {
             calendar_tracks = if let Some(champ) = &self.championship_session {
                 if champ.track_ids.len() == crate::ui::gt_default_calendar(selected_tier).len() {
@@ -6721,7 +6942,7 @@ impl RaceSession {
             return;
         }
 
-        // 4. Advance Tier Gate (P key)
+        // 7. Advance Tier Gate (P key)
         if is_key_pressed(KeyCode::P) {
             if selected_tier == self.active_career_progress.level
                 && self.active_career_progress.can_advance_tier()
@@ -6738,6 +6959,7 @@ impl RaceSession {
                     selected_tier = new_tier;
                     calendar_tracks = crate::ui::gt_default_calendar(new_tier);
                     selected_slot = 0;
+                    self.career_hub_focus = CareerHubFocus::Tabs;
                     self.state = GameState::CareerHub {
                         selected_tier,
                         selected_slot,
@@ -6749,7 +6971,7 @@ impl RaceSession {
             }
         }
 
-        // 5. Reset / Abandon Season (X key / Gamepad X)
+        // 8. Reset / Abandon Season (X key / Gamepad X)
         if is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
             if self.championship_session.is_some() {
                 self.championship_session = None;
@@ -6767,63 +6989,7 @@ impl RaceSession {
             }
         }
 
-        let season_active = self
-            .championship_session
-            .as_ref()
-            .map(|c| !c.is_completed)
-            .unwrap_or(false);
-
-        // 6. Navigate Calendar Slots (Up / Down, W / S, D-Pad Y)
-        let num_slots = calendar_tracks.len();
-        if is_key_pressed(KeyCode::Up)
-            || is_key_pressed(KeyCode::W)
-            || self.input.gamepad.snapshot.dpad_up_pressed
-            || self.input.gamepad.snapshot.nav_up
-        {
-            self.audio.play_sfx(SfxType::UiMove);
-            selected_slot = selected_slot.saturating_sub(1);
-        }
-        if is_key_pressed(KeyCode::Down)
-            || is_key_pressed(KeyCode::S)
-            || self.input.gamepad.snapshot.dpad_down_pressed
-            || self.input.gamepad.snapshot.nav_down
-        {
-            self.audio.play_sfx(SfxType::UiMove);
-            if selected_slot + 1 < num_slots {
-                selected_slot += 1;
-            }
-        }
-
-        // 7. Swap Optional Circuit in Selected Slot (Left / Right, A / D, [ / ], D-Pad X)
-        // Allowed only if season is not active
-        if !season_active && selected_tier > 1 {
-            let left_pressed = is_key_pressed(KeyCode::Left)
-                || is_key_pressed(KeyCode::A)
-                || is_key_pressed(KeyCode::LeftBracket)
-                || self.input.gamepad.snapshot.dpad_left_pressed
-                || self.input.gamepad.snapshot.nav_left;
-            let right_pressed = is_key_pressed(KeyCode::Right)
-                || is_key_pressed(KeyCode::D)
-                || is_key_pressed(KeyCode::RightBracket)
-                || self.input.gamepad.snapshot.dpad_right_pressed
-                || self.input.gamepad.snapshot.nav_right;
-
-            if left_pressed {
-                if crate::ui::cycle_calendar_slot(selected_tier, &mut calendar_tracks, selected_slot, false) {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                } else {
-                    self.audio.play_sfx(SfxType::UiMove);
-                }
-            } else if right_pressed {
-                if crate::ui::cycle_calendar_slot(selected_tier, &mut calendar_tracks, selected_slot, true) {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                } else {
-                    self.audio.play_sfx(SfxType::UiMove);
-                }
-            }
-        }
-
-        // 8. Confirm / Start / Resume Round (Enter, Space, KpEnter, Gamepad A)
+        // 9. Confirm / Start / Resume Round (Enter, Space, KpEnter, Gamepad A)
         if is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::KpEnter)
@@ -6854,7 +7020,7 @@ impl RaceSession {
             }
         }
 
-        // 9. Back to Modality Selection (Escape / Gamepad B / Back)
+        // 10. Back to Modality Selection (Escape / Gamepad B / Back)
         if is_key_pressed(KeyCode::Escape)
             || self.input.gamepad.snapshot.btn_b_pressed
             || self.input.gamepad.snapshot.btn_back_pressed
@@ -6934,6 +7100,7 @@ impl RaceSession {
                     } else {
                         crate::ui::gt_default_calendar(tier)
                     };
+                    self.career_hub_focus = CareerHubFocus::Tabs;
                     self.state = GameState::CareerHub {
                         selected_tier: tier,
                         selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
@@ -7220,6 +7387,7 @@ impl RaceSession {
                                 } else {
                                     crate::ui::gt_default_calendar(tier)
                                 };
+                                self.career_hub_focus = CareerHubFocus::Tabs;
                                 self.state = GameState::CareerHub {
                                     selected_tier: tier,
                                     selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
@@ -9732,6 +9900,7 @@ impl RaceSession {
                 best_lap: tracker.best_lap_time,
                 delta_to_leader: delta,
                 car_idx,
+                points_awarded: 0,
             });
         }
     }
@@ -9950,6 +10119,7 @@ impl RaceSession {
                     showing_standings,
                     self.selected_car_model_id,
                     self.input.gamepad.snapshot.is_connected,
+                    self.career_hub_focus,
                 );
             }
             GameState::ChampionshipStandings => {

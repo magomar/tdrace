@@ -255,6 +255,16 @@ fn format_number(n: u64) -> String {
     out
 }
 
+/// Focus area within the GT Career Hub screen.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum CareerHubFocus {
+    /// Championship Tier Tab bar focused (Left/Right arrow keys & Gamepad switch tiers)
+    #[default]
+    Tabs,
+    /// Championship Calendar focused (Up/Down navigates slots, Up from slot 0 returns to Tabs)
+    Calendar,
+}
+
 /// Primary Career Hub screen renderer.
 #[allow(clippy::too_many_arguments)]
 pub fn render_career_hub_screen(
@@ -268,6 +278,7 @@ pub fn render_career_hub_screen(
     showing_standings: bool,
     active_car_model_id: Option<&str>,
     is_gamepad: bool,
+    focus_area: CareerHubFocus,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -322,21 +333,27 @@ pub fn render_career_hub_screen(
     let tab_gap = scaler.s(8.0);
     let tab_w = (full_w - tab_gap * (tier_count as f32 - 1.0)) / tier_count as f32;
 
+    let is_tabs_focused = focus_area == CareerHubFocus::Tabs;
+
     for t in 1..=tier_count {
         let tx = x + (t - 1) as f32 * (tab_w + tab_gap);
         let is_selected = t == selected_tier;
         let is_unlocked = t <= career.level;
 
-        let (bg, border, text_col) = if is_selected {
-            (Color::new(0.12, 0.18, 0.28, 0.95), Palette::NEON_CYAN, Palette::NEON_CYAN)
+        let (bg, border, text_col, border_thickness) = if is_selected {
+            if is_tabs_focused {
+                (Color::new(0.14, 0.22, 0.35, 0.98), Palette::NEON_CYAN, Palette::NEON_CYAN, 2.5)
+            } else {
+                (Color::new(0.09, 0.13, 0.20, 0.90), Color::new(0.25, 0.45, 0.55, 0.80), Palette::NEON_CYAN, 1.2)
+            }
         } else if is_unlocked {
-            (Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, Palette::WHITE)
+            (Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, Palette::WHITE, 1.0)
         } else {
-            (Color::new(0.03, 0.04, 0.06, 0.80), Color::new(0.15, 0.18, 0.24, 0.50), Palette::UI_TEXT_MUTED)
+            (Color::new(0.03, 0.04, 0.06, 0.80), Color::new(0.15, 0.18, 0.24, 0.50), Palette::UI_TEXT_MUTED, 1.0)
         };
 
         draw_rectangle(tx, cur_y, tab_w, tab_bar_h, bg);
-        draw_rectangle_lines(tx, cur_y, tab_w, tab_bar_h, if is_selected { 2.0 } else { 1.0 }, border);
+        draw_rectangle_lines(tx, cur_y, tab_w, tab_bar_h, border_thickness, border);
 
         let tier_label = match t {
             1 => "1. GT4 CLUBMAN",
@@ -346,10 +363,22 @@ pub fn render_career_hub_screen(
             _ => "5. WEC HYPERCAR",
         };
 
-        let display_label = if is_unlocked {
+        let raw_label = if is_unlocked {
             tier_label.to_string()
         } else {
             format!("🔒 {}", tier_label)
+        };
+
+        let display_label = if is_selected && is_tabs_focused {
+            if t == 1 {
+                format!("{} ►", raw_label)
+            } else if t == tier_count {
+                format!("◄ {}", raw_label)
+            } else {
+                format!("◄ {} ►", raw_label)
+            }
+        } else {
+            raw_label
         };
 
         fonts.draw_ui_bold_centered(
@@ -361,7 +390,8 @@ pub fn render_career_hub_screen(
         );
 
         if is_selected {
-            draw_rectangle(tx, cur_y + tab_bar_h - scaler.s(3.0), tab_w, scaler.s(3.0), Palette::NEON_CYAN);
+            let bar_h = if is_tabs_focused { scaler.s(4.0) } else { scaler.s(2.5) };
+            draw_rectangle(tx, cur_y + tab_bar_h - bar_h, tab_w, bar_h, Palette::NEON_CYAN);
         }
     }
 
@@ -449,7 +479,7 @@ pub fn render_career_hub_screen(
     fonts.draw_ui_bold("ASSIGNED VEHICLE & GARAGE", left_inner_x, ly + scaler.s(12.0), scaler.font_s(12.0), Palette::NEON_CYAN);
     ly += scaler.s(22.0);
 
-    let tier_models = get_models_for_module_and_tier("gt", selected_tier as u8);
+    let tier_models = get_models_for_module_and_tier(&career.module_id, selected_tier as u8);
     let unlocked_count = tier_models.iter().filter(|m| career.is_car_unlocked(m.id, false)).count();
     let total_cars = tier_models.len();
 
@@ -549,6 +579,8 @@ pub fn render_career_hub_screen(
         let slot_h = ((body_h - scaler.s(80.0)) / visible_slots as f32).clamp(scaler.s(24.0), scaler.s(36.0));
         let slot_gap = scaler.s(4.0);
 
+        let is_calendar_focused = focus_area == CareerHubFocus::Calendar;
+
         for (idx, track_id) in calendar.iter().enumerate() {
             let is_cur_slot = idx == selected_slot;
             let is_mandatory = is_slot_mandatory(selected_tier, track_id);
@@ -556,7 +588,11 @@ pub fn render_career_hub_screen(
             let is_up_next = season_active && idx == active_round;
 
             let (bg, border, thickness) = if is_cur_slot {
-                (Color::new(0.12, 0.18, 0.28, 0.95), Palette::NEON_CYAN, 1.8)
+                if is_calendar_focused {
+                    (Color::new(0.12, 0.18, 0.28, 0.95), Palette::NEON_CYAN, 2.0)
+                } else {
+                    (Color::new(0.08, 0.11, 0.16, 0.85), Color::new(0.25, 0.40, 0.50, 0.70), 1.2)
+                }
             } else if is_up_next {
                 (Color::new(0.08, 0.16, 0.22, 0.90), Palette::NEON_GREEN, 1.4)
             } else if is_played {
@@ -645,9 +681,9 @@ fn draw_bottom_bar(
     fonts.draw_ui_bold(&full_action, x + scaler.s(16.0), y + scaler.s(23.0), scaler.font_s(12.5), text_col);
 
     let shortcuts = if is_gamepad {
-        "[LB/RB] Tier  •  [D-Pad] Slot/Swap  •  [Y] Standings  •  [X] Reset  •  [B] Back"
+        "[D-Pad / Sticks] Tier/Slot  •  [LB/RB] Tier  •  [Y] Standings  •  [X] Reset  •  [B] Back"
     } else {
-        "[Q/E] Tier  •  [UP/DN] Slot  •  [< / >] Swap  •  [TAB] Standings  •  [X] Reset  •  [ESC] Back"
+        "[◄/►] Tier  •  [▲/▼] Slot  •  [< / >] Swap  •  [TAB] Standings  •  [X] Reset  •  [ESC] Back"
     };
     draw_ui_regular_right(fonts, shortcuts, x + w - scaler.s(16.0), y + scaler.s(23.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
 }

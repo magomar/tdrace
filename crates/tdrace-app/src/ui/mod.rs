@@ -22,6 +22,7 @@ pub use career_hub::{
     cycle_calendar_slot, gt_default_calendar, gt_eligible_previous_tracks,
     gt_mandatory_tracks, gt_tier_class, gt_tier_title, is_slot_mandatory,
     render_career_hub_screen, track_country, track_length_meters, track_title,
+    CareerHubFocus,
 };
 
 pub use curve_indicator::{

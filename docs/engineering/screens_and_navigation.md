@@ -89,10 +89,11 @@ stateDiagram-v2
     CareerHub --> ModalitySelect: [ESC / B] (Back to Modality Selection)
     CareerHub --> StartingGrid: [SPACE / ENTER / A] (Launch Championship Cup)
     CareerHub --> Garage: [G] (Inspect Assigned Vehicle)
-    CareerHub --> CareerHub: [Q / E] (Switch Tier Tabs & Replay Cups)
-    CareerHub --> CareerHub: [< / > / A / D] (Customize Optional Calendar Slots)
+    CareerHub --> CareerHub: [Left / Right / Q / E / LB / RB / 1-5] (Switch Tier Tabs)
+    CareerHub --> CareerHub: [Up / Down / W / S] (Navigate Focus Between Tabs and Calendar Slots)
+    CareerHub --> CareerHub: [< / > / [ / ] / Left / Right on swappable slot] (Customize Optional Calendar Slots)
     CareerHub --> CareerHub: [P] (Advance / Promote Tier)
-    CareerHub --> CareerHub: [TAB / S] (Toggle Live Season Standings)
+    CareerHub --> CareerHub: [TAB / S / Y] (Toggle Live Season Standings)
 
     %% Menu transitions
     Menu --> ModalitySelect: [ESC / TAB / B] (Return to Modality Selection)
@@ -419,14 +420,14 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Q` / `E` / Bumpers | Switch Tier Tab | Selects previous / next unlocked tier tab (`1` to `career.level`) |
-| `Up` / `Down` / `W` / `S` / D-Pad | Navigate Calendar Slots | Selects circuit slot in the championship calendar |
-| `Left` / `Right` / `A` / `D` / `[` / `]` | Swap Optional Circuit | Cycles through eligible previous tier tracks for the selected optional slot |
+| `Left` / `Right` / `Q` / `E` / `LB` / `RB` / `1..=5` / Mouse | Switch Tier Tab | Selects previous / next unlocked tier tab (`1` to `5`) when Tabs are focused |
+| `Up` / `Down` / `W` / `S` / D-Pad / Sticks | Shift Focus / Slot Navigation | `Down` moves focus to Calendar slots; `Up` moves up through slots; `Up` from slot 0 returns focus to Tabs |
+| `<` / `>` / `[` / `]` / `Left` / `Right` (when Calendar slot focused) | Swap Optional Circuit | Cycles through eligible tracks for swappable optional slots (Tiers 2+) |
 | `Space` / `Enter` / Gamepad `A` | Start / Resume Championship Cup | Launches tier cup with current calendar -> `GameState::StartingGrid` |
-| `Tab` / `S` / Gamepad `X` | Toggle Live Standings | Toggles season standings overlay view |
-| `P` / Gamepad `Y` | Advance Career Tier | Promotes pilot to next tier when XP and podium requirements are satisfied |
+| `Tab` / `S` / Gamepad `Y` | Toggle Live Standings | Toggles season standings overlay view |
+| `P` | Advance Career Tier | Promotes pilot to next tier when XP and podium requirements are satisfied |
 | `G` | Inspect in Garage | Opens Garage Showroom for the assigned car -> `GameState::Garage` |
-| `X` | Reset Cup Progress | Resets active unfinished championship season to customize calendar anew |
+| `X` / Gamepad `X` | Reset Cup Progress | Resets active unfinished championship season to customize calendar anew |
 | `Escape` / Gamepad `B` | Back to Modalities | Returns to discipline modality selector -> `GameState::ModalitySelect` |
 
 ---

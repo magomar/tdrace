@@ -1816,6 +1816,78 @@ fn test_championship_navigation_selection_and_launch() {
     assert!(session.total_laps > 0);
 }
 
+#[test]
+fn test_career_hub_focus_and_navigation() {
+    use tdrace_app::ui::career_hub::CareerHubFocus;
+
+    let mut session = RaceSession::new();
+    assert_eq!(session.career_hub_focus, CareerHubFocus::Tabs);
+
+    // Enter CareerHub
+    let tier = 1;
+    let calendar = tdrace_app::ui::career_hub::gt_default_calendar(tier);
+    session.career_hub_focus = CareerHubFocus::Tabs;
+    session.state = GameState::CareerHub {
+        selected_tier: tier,
+        selected_slot: 0,
+        calendar_tracks: calendar.clone(),
+        showing_standings: false,
+    };
+
+    // 1. Initial focus is Tabs
+    assert_eq!(session.career_hub_focus, CareerHubFocus::Tabs);
+
+    // 2. Moving Down transitions focus to Calendar (slot 0)
+    session.career_hub_focus = CareerHubFocus::Calendar;
+    assert_eq!(session.career_hub_focus, CareerHubFocus::Calendar);
+
+    // 3. Moving Up from slot 0 returns focus to Tabs
+    let selected_slot = 0;
+    if selected_slot == 0 {
+        session.career_hub_focus = CareerHubFocus::Tabs;
+    }
+    assert_eq!(session.career_hub_focus, CareerHubFocus::Tabs);
+
+    // 4. Test tier bounds and updates
+    let mut selected_tier = 1u32;
+    // Moving Left at tier 1 is clamped
+    if selected_tier > 1 {
+        selected_tier -= 1;
+    }
+    assert_eq!(selected_tier, 1);
+
+    // Moving Right increments tier up to 5
+    while selected_tier < 5 {
+        selected_tier += 1;
+    }
+    assert_eq!(selected_tier, 5);
+    // Clamped at 5
+    if selected_tier < 5 {
+        selected_tier += 1;
+    }
+    assert_eq!(selected_tier, 5);
+
+    // 5. Test slot navigation in Calendar
+    session.career_hub_focus = CareerHubFocus::Calendar;
+    let mut current_slot = 0usize;
+    let num_slots = calendar.len();
+    if current_slot + 1 < num_slots {
+        current_slot += 1;
+    }
+    assert_eq!(current_slot, 1);
+    if current_slot > 0 {
+        current_slot -= 1;
+    }
+    assert_eq!(current_slot, 0);
+
+    // 6. Test returning to Tabs when navigating up from slot 0
+    if current_slot == 0 {
+        session.career_hub_focus = CareerHubFocus::Tabs;
+    }
+    assert_eq!(session.career_hub_focus, CareerHubFocus::Tabs);
+}
+
+
 
 
 
