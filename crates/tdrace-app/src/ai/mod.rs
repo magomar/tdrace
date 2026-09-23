@@ -85,6 +85,112 @@ impl BotProfile {
             avoidance_distance: 9.5,
         }
     }
+
+    pub const fn smooth() -> Self {
+        Self {
+            name: "Smooth Archetype",
+            lookahead_time: 0.40,
+            speed_factor: 1.02,
+            steering_kp: 2.3,
+            steering_kd: 0.08,
+            brake_margin: 1.02,
+            aggression: 0.70,
+            avoidance_distance: 6.8,
+        }
+    }
+
+    pub const fn tenacious() -> Self {
+        Self {
+            name: "Tenacious Archetype",
+            lookahead_time: 0.42,
+            speed_factor: 0.98,
+            steering_kp: 2.2,
+            steering_kd: 0.08,
+            brake_margin: 1.06,
+            aggression: 0.82,
+            avoidance_distance: 6.2,
+        }
+    }
+
+    pub const fn calculating() -> Self {
+        Self {
+            name: "Calculating Archetype",
+            lookahead_time: 0.39,
+            speed_factor: 1.01,
+            steering_kp: 2.4,
+            steering_kd: 0.07,
+            brake_margin: 1.01,
+            aggression: 0.75,
+            avoidance_distance: 6.5,
+        }
+    }
+
+    pub const fn fast() -> Self {
+        Self {
+            name: "Fast Archetype",
+            lookahead_time: 0.35,
+            speed_factor: 1.06,
+            steering_kp: 2.7,
+            steering_kd: 0.06,
+            brake_margin: 0.96,
+            aggression: 0.88,
+            avoidance_distance: 5.6,
+        }
+    }
+
+    pub const fn strategic() -> Self {
+        Self {
+            name: "Strategic Archetype",
+            lookahead_time: 0.38,
+            speed_factor: 1.02,
+            steering_kp: 2.4,
+            steering_kd: 0.07,
+            brake_margin: 1.00,
+            aggression: 0.85,
+            avoidance_distance: 6.0,
+        }
+    }
+
+    pub const fn bold() -> Self {
+        Self {
+            name: "Bold Archetype",
+            lookahead_time: 0.31,
+            speed_factor: 1.04,
+            steering_kp: 2.7,
+            steering_kd: 0.04,
+            brake_margin: 0.88,
+            aggression: 0.92,
+            avoidance_distance: 5.2,
+        }
+    }
+
+    pub fn from_archetype(name: &str) -> Self {
+        match name.to_ascii_lowercase().as_str() {
+            "smooth" => Self::smooth(),
+            "aggressive" | "brawler" => Self::aggressive(),
+            "tenacious" | "defender" => Self::tenacious(),
+            "calculating" | "tactical" => Self::calculating(),
+            "fast" | "pro" | "hotlap" => Self::fast(),
+            "balanced" | "club" => Self::balanced(),
+            "strategic" | "draft" => Self::strategic(),
+            "bold" | "drift" | "renegade" => Self::bold(),
+            "rookie" | "cautious" => Self::rookie(),
+            _ => Self::balanced(),
+        }
+    }
+
+    pub fn archetype_for_index(idx: usize) -> Self {
+        match idx % 8 {
+            0 => Self::smooth(),
+            1 => Self::aggressive(),
+            2 => Self::tenacious(),
+            3 => Self::calculating(),
+            4 => Self::fast(),
+            5 => Self::balanced(),
+            6 => Self::strategic(),
+            _ => Self::bold(),
+        }
+    }
 }
 
 /// Multi-car Bot Racing AI Controller.

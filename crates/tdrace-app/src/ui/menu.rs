@@ -810,6 +810,13 @@ impl GameMode {
         }
     }
 
+    pub fn allows_grid_customization(&self) -> bool {
+        match self {
+            Self::StandardRace | Self::ExperimentalRace | Self::SplitScreen => true,
+            Self::Career | Self::TimeTrial | Self::FreeRide => false,
+        }
+    }
+
     pub fn has_bots(&self) -> bool {
         match self {
             Self::StandardRace | Self::Career | Self::ExperimentalRace | Self::SplitScreen => true,

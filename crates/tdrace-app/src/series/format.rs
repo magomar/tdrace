@@ -315,7 +315,7 @@ impl SeriesDefinition {
             .map(|d| (d.id.as_str(), d.name.as_str(), d.team.as_str()))
             .collect();
 
-        SeriesSession::new(
+        let mut session = SeriesSession::new(
             &self.series.name,
             point_system,
             track_ids,
@@ -323,7 +323,13 @@ impl SeriesDefinition {
             &initial_drivers,
         )
         .with_tier(self.series.tier)
-        .with_round_laps(round_laps)
+        .with_round_laps(round_laps);
+
+        for (standing, d) in session.standings.iter_mut().zip(&self.drivers) {
+            standing.ai_character = d.ai_character.clone();
+        }
+
+        session
     }
 
     /// Recovers a declarative series definition from an active runtime `SeriesSession`.
@@ -374,7 +380,7 @@ impl SeriesDefinition {
                 is_player: idx == 0 || s.driver_id == "player",
                 car_model_id: None,
                 country: None,
-                ai_character: None,
+                ai_character: s.ai_character.clone(),
                 livery_idx: Some(idx as u8),
             })
             .collect();

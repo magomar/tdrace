@@ -7,6 +7,7 @@ use macroquad::shapes::draw_rectangle;
 
 use super::font::Fonts;
 use super::scaler::UiScaler;
+use crate::module::GameModule;
 use crate::render::color::Palette;
 use crate::series::format::{
     ChampionshipDefinition, DriverConfig, RoundConfig, SeriesDefinition,
@@ -175,66 +176,30 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
         .map(|m| m.id.to_string())
         .unwrap_or_else(|| "gt_toyota_supra_gt4".to_string());
 
-    let (team_prefix, bot_names) = match module.as_str() {
+    let (team_prefix, module_drivers) = match module.as_str() {
         "nascar" => (
             "Apex Stock Car",
-            vec![
-                ("dale_vance", "Dale 'The Intimidator' Vance", "Richard Childress Racing"),
-                ("chase_gordon", "Chase 'Rainbow' Gordon", "Hendrick Motorsports"),
-                ("richard_pettyfield", "Richard 'The King' Pettyfield", "Petty Enterprises"),
-                ("rowdy_busch", "Rowdy 'Wild Thing' Busch", "Joe Gibbs Racing"),
-                ("jimmie_johnson", "Jimmie 'Seven-Time' Johnson", "Hendrick Motorsports"),
-                ("tony_stewart", "Tony 'Smoke' Stewart", "Stewart-Haas Racing"),
-                ("bobby_allison", "Bobby 'Alabama' Allison", "Alabama Gang"),
-            ],
+            crate::module::nascar::NascarGameModule::new().drivers(),
         ),
         "rally" => (
             "Apex Rally Team",
-            vec![
-                ("johan_k", "Johan Kristoffersson", "KMS Volkswagen"),
-                ("timmy_h", "Timmy Hansen", "Hansen Motorsport"),
-                ("mattias_e", "Mattias Ekström", "EKS RX"),
-                ("petter_s", "Petter Solberg", "PSRX Volkswagen"),
-                ("andreas_b", "Andreas Bakkerud", "Monster Energy RX"),
-                ("niclas_g", "Niclas Grönholm", "GRX Taneco"),
-                ("kevin_h", "Kevin Hansen", "Hansen Motorsport"),
-            ],
+            crate::module::rally::RallyGameModule::new().drivers(),
         ),
         "kart" => (
             "Apex Kart Racing",
-            vec![
-                ("marco_a", "Marco Armani", "Tony Kart Racing"),
-                ("lucas_v", "Lucas Vance", "CRG Factory Team"),
-                ("alex_r", "Alex Rossi", "Birel ART"),
-                ("sofia_l", "Sofia Lind", "Kosmic Racing"),
-                ("finn_k", "Finn Korhonen", "Sodi Kart"),
-                ("leo_d", "Leo Dupont", "Energy Corse"),
-                ("mateo_s", "Mateo Silva", "Parolin Motorsport"),
-            ],
+            crate::module::kart::KartGameModule::new().drivers(),
         ),
         "extreme_offroad" => (
             "Sand Rail Dynamics",
-            vec![
-                ("wyatt_c", "Wyatt 'Dust Devil' Cole", "Mojave Sandworks"),
-                ("jaxson_r", "Jaxson 'Baja King' Rivera", "Baja Trophy Racing"),
-                ("astrid_l", "Astrid 'Ice Queen' Lindholm", "Nordic Glacier Works"),
-                ("bubba_b", "Bubba 'Mud Slinger' Beauregard", "Bayou Heavy Traction"),
-                ("travis_m", "Travis 'Nitro' McGrath", "Redline Freestyle"),
-                ("roxie_v", "Roxie 'Rock Hound' Vance", "Canyon Crawler Team"),
-                ("sven_l", "Sven 'Blizzard' Lindqvist", "Arctic Circle Rally"),
-            ],
+            crate::module::extreme_offroad::ExtremeOffRoadModule::new().drivers(),
+        ),
+        "classic" => (
+            "Apex Classic Racing",
+            crate::ai::DriverCharacter::all().to_vec(),
         ),
         _ => (
             "Apex GT Racing",
-            vec![
-                ("max_hunter", "Max Hunter", "Red Bull GT"),
-                ("charles_l", "Charles Laurent", "Scuderia GT"),
-                ("lewis_v", "Lewis Vance", "Scuderia GT"),
-                ("fernando_t", "Fernando Toro", "Aston GT"),
-                ("george_s", "George Speed", "Mercedes-AMG GT"),
-                ("lando_v", "Lando Vance", "McLaren GT"),
-                ("oscar_r", "Oscar Rocket", "McLaren GT"),
-            ],
+            crate::module::gt::GtWorldChallengeModule::new().drivers(),
         ),
     };
 
@@ -251,21 +216,81 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
         livery_idx: Some(0),
     });
 
-    // 2. Bots
-    for (idx, (id, name, team)) in bot_names.into_iter().enumerate() {
-        let model = available_models
-            .get(idx % available_models.len().max(1))
-            .map(|m| m.id.to_string())
+    // 2. Bots from the authentic module drivers
+    for (idx, character) in module_drivers.into_iter().take(7).enumerate() {
+        let model = character
+            .favorite_car_for_discipline_and_tier(&module, tier)
+            .map(|s| s.to_string())
+            .or_else(|| {
+                available_models
+                    .get(idx % available_models.len().max(1))
+                    .map(|m| m.id.to_string())
+            })
             .unwrap_or_else(|| default_model_id.clone());
 
+        let ai_char = if character.profile.aggression > 0.90 {
+            "aggressive"
+        } else if character.profile.speed_factor >= 1.05 {
+            "fast"
+        } else if character.profile.steering_kd <= 0.05 {
+            "bold"
+        } else if character.stats.precision >= 0.95 {
+            "smooth"
+        } else if character.stats.defense >= 0.92 {
+            "tenacious"
+        } else if character.profile.lookahead_time >= 0.40 {
+            "calculating"
+        } else {
+            "balanced"
+        };
+
+        let team_name = match character.id {
+            "dale_vance" => "Richard Childress Racing",
+            "chase_gordon" => "Hendrick Motorsports",
+            "richard_pettyfield" => "Petty Enterprises",
+            "rowdy_busch" => "Joe Gibbs Racing",
+            "jimmie_johnson" => "Hendrick Motorsports",
+            "tony_stewart" => "Stewart-Haas Racing",
+            "bobby_allison" => "Alabama Gang",
+            "max_hunter" => "Red Bull GT",
+            "charles_laurent" => "Scuderia GT",
+            "lewis_vance" => "Scuderia GT",
+            "fernando_toro" => "Aston GT",
+            "george_speed" => "Mercedes-AMG GT",
+            "lando_vance" => "McLaren GT",
+            "oscar_rocket" => "McLaren GT",
+            "johan_vance" => "KMS Motorsport",
+            "mattias_storm" => "EKS RX",
+            "timmy_hansenfield" => "Hansen Motorsport",
+            "kevin_hansenfield" => "Hansen Motorsport",
+            "niclas_gron" => "GRX Taneco",
+            "anton_mark" => "GCK Motorsport",
+            "timo_scheider" => "All-Inkl Racing",
+            "marco_armani" => "Tony Kart Racing",
+            "lucas_vance" => "CRG Factory Team",
+            "alex_rossi" => "Birel ART",
+            "sofia_lind" => "Kosmic Racing",
+            "finn_korhonen" => "Sodi Kart",
+            "leo_dupont" => "Energy Corse",
+            "mateo_silva" => "Parolin Motorsport",
+            "wyatt_cole" => "Mojave Sandworks",
+            "jaxson_rivera" => "Baja Trophy Racing",
+            "astrid_lindholm" => "Nordic Glacier Works",
+            "bubba_beauregard" => "Bayou Heavy Traction",
+            "travis_mcgrath" => "Redline Freestyle",
+            "roxie_vance" => "Canyon Crawler Team",
+            "sven_lindqvist" => "Arctic Circle Rally",
+            _ => "Apex Motorsport",
+        };
+
         drivers.push(DriverConfig {
-            id: id.to_string(),
-            name: name.to_string(),
-            team: team.to_string(),
+            id: character.id.to_string(),
+            name: character.name.to_string(),
+            team: team_name.to_string(),
             is_player: false,
             car_model_id: Some(model),
             country: Some("INT".to_string()),
-            ai_character: Some("standard".to_string()),
+            ai_character: Some(ai_char.to_string()),
             livery_idx: Some((idx + 1) as u8),
         });
     }

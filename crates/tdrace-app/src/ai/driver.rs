@@ -1,6 +1,7 @@
 use macroquad::color::Color;
 use crate::ai::BotProfile;
 use crate::catalog::RealCarModel;
+use crate::module::GameModule;
 use crate::render::color::CarColorScheme;
 use crate::ui::menu::CarChoice;
 
@@ -11,6 +12,45 @@ pub struct DriverStats {
     pub aggression: f32,
     pub precision: f32,
     pub defense: f32,
+}
+
+impl DriverStats {
+    pub const fn new(speed: f32, aggression: f32, precision: f32, defense: f32) -> Self {
+        Self {
+            speed,
+            aggression,
+            precision,
+            defense,
+        }
+    }
+
+    pub fn from_archetype(name: &str) -> Self {
+        match name.to_ascii_lowercase().as_str() {
+            "smooth" => Self::new(0.92, 0.65, 0.98, 0.85),
+            "aggressive" | "brawler" => Self::new(0.96, 0.96, 0.82, 0.88),
+            "tenacious" | "defender" => Self::new(0.88, 0.82, 0.90, 0.98),
+            "calculating" | "tactical" => Self::new(0.92, 0.72, 0.96, 0.90),
+            "fast" | "pro" | "hotlap" => Self::new(0.99, 0.88, 0.94, 0.86),
+            "balanced" | "club" => Self::new(0.85, 0.70, 0.85, 0.85),
+            "strategic" | "draft" => Self::new(0.94, 0.85, 0.92, 0.90),
+            "bold" | "drift" | "renegade" => Self::new(0.95, 0.92, 0.80, 0.80),
+            "rookie" | "cautious" => Self::new(0.70, 0.50, 0.75, 0.70),
+            _ => Self::new(0.85, 0.70, 0.85, 0.85),
+        }
+    }
+
+    pub fn archetype_for_index(idx: usize) -> Self {
+        match idx % 8 {
+            0 => Self::from_archetype("smooth"),
+            1 => Self::from_archetype("aggressive"),
+            2 => Self::from_archetype("tenacious"),
+            3 => Self::from_archetype("calculating"),
+            4 => Self::from_archetype("fast"),
+            5 => Self::from_archetype("balanced"),
+            6 => Self::from_archetype("strategic"),
+            _ => Self::from_archetype("bold"),
+        }
+    }
 }
 
 /// Association between a motorsport discipline, performance tier (1..=5), and authentic car model ID.
@@ -752,20 +792,42 @@ impl DriverCharacter {
         Self::ZANE_HOLLAND,
     ];
 
-    /// Returns a slice of all 12 predefined driver characters.
+    /// Returns a slice of all 12 predefined driver characters for the classic module.
     pub fn all() -> &'static [Self; 12] {
         &Self::ROSTER
     }
 
-    /// Finds a driver by their unique identifier string.
+    /// Finds a driver by their unique identifier string in the classic roster.
     pub fn find_by_id(id: &str) -> Option<&'static Self> {
         Self::ROSTER.iter().find(|d| d.id == id)
     }
 
-    /// Selects `n` distinct opponents pseudo-randomly from the roster given a seed.
-    pub fn sample_opponents(n: usize, seed: u64) -> Vec<Self> {
-        let count = n.min(Self::ROSTER.len());
-        let mut available: Vec<Self> = Self::ROSTER.to_vec();
+    /// Returns all 72 predefined driver characters across all 6 motorsport modules.
+    pub fn all_across_modules() -> Vec<Self> {
+        let mut all = Self::ROSTER.to_vec();
+        all.extend(crate::module::gt::GtWorldChallengeModule::new().drivers());
+        all.extend(crate::module::nascar::NascarGameModule::new().drivers());
+        all.extend(crate::module::rally::RallyGameModule::new().drivers());
+        all.extend(crate::module::kart::KartGameModule::new().drivers());
+        all.extend(crate::module::extreme_offroad::ExtremeOffRoadModule::new().drivers());
+        all
+    }
+
+    /// Finds a driver by ID across all 72 predefined drivers in all motorsport modules.
+    pub fn find_global(id: &str) -> Option<Self> {
+        if let Some(d) = Self::ROSTER.iter().find(|d| d.id == id) {
+            return Some(d.clone());
+        }
+        Self::all_across_modules().into_iter().find(|d| d.id == id)
+    }
+
+    /// Selects `n` distinct opponents pseudo-randomly from an arbitrary pool of driver characters given a seed.
+    pub fn sample_from_slice(pool: &[Self], n: usize, seed: u64) -> Vec<Self> {
+        if pool.is_empty() {
+            return Vec::new();
+        }
+        let count = n.min(pool.len());
+        let mut available: Vec<Self> = pool.to_vec();
 
         // Simple deterministic LCG shuffle using seed
         let mut s = seed.wrapping_add(1442695040888963407);
@@ -777,6 +839,11 @@ impl DriverCharacter {
 
         available.truncate(count);
         available
+    }
+
+    /// Selects `n` distinct opponents pseudo-randomly from the classic roster given a seed.
+    pub fn sample_opponents(n: usize, seed: u64) -> Vec<Self> {
+        Self::sample_from_slice(&Self::ROSTER, n, seed)
     }
 
     /// Normalizes raw discipline strings (e.g. "gt_challenge", "rx", "off_road") to canonical discipline keys.

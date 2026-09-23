@@ -512,7 +512,7 @@ pub fn render_starting_grid_screen(
     // =========================================================================
     let grid_y = panel_y;
     let grid_h = scaler.s(52.0);
-    let is_roster_locked = !game_mode.allows_roster_customization();
+    let is_roster_locked = !game_mode.allows_grid_customization();
     let is_grid_hovered = mx >= col2_x && mx <= col2_x + col_w && my >= grid_y && my <= grid_y + grid_h;
     let is_grid_active = (is_right_focused && active_card_idx == 1) || (is_left_focused && active_card_idx == 1) || is_grid_hovered;
 
@@ -731,7 +731,16 @@ pub fn render_starting_grid_screen(
             }
         }
         GameMode::StandardRace | GameMode::ExperimentalRace | GameMode::SplitScreen | GameMode::Career => {
-            for (i, participant) in grid_participants.iter().enumerate() {
+            let max_visible = (((roster_card_h - scaler.s(16.0)) / (row_h + row_gap)).floor() as usize).max(1);
+            let scroll_offset = if grid_participants.len() <= max_visible {
+                0
+            } else if active_roster_idx >= max_visible {
+                (active_roster_idx + 1 - max_visible).min(grid_participants.len().saturating_sub(max_visible))
+            } else {
+                0
+            };
+
+            for (i, participant) in grid_participants.iter().enumerate().skip(scroll_offset).take(max_visible) {
                 let slot = i + 1;
                 let is_row_sel = is_right_focused && active_card_idx != 1 && i == active_roster_idx;
                 let desc = if game_mode == GameMode::SplitScreen && i == 0 {
@@ -788,13 +797,24 @@ pub fn render_starting_grid_screen(
                 );
                 row_y += row_h + row_gap;
             }
+
+            if grid_participants.len() > max_visible {
+                let bar_w = scaler.s(3.0);
+                let bar_x = col2_x + col_w - scaler.s(6.0);
+                let track_y = roster_card_y + scaler.s(8.0);
+                let track_h = roster_card_h - scaler.s(16.0);
+                let thumb_h = (track_h * (max_visible as f32 / grid_participants.len() as f32)).max(scaler.s(20.0));
+                let max_scroll = (grid_participants.len() - max_visible) as f32;
+                let thumb_y = track_y + (track_h - thumb_h) * (scroll_offset as f32 / max_scroll);
+                draw_rectangle(bar_x, thumb_y, bar_w, thumb_h, Palette::NEON_CYAN);
+            }
         }
     }
 
     // =========================================================================
     // FOOTER PROMPTS
     // =========================================================================
-    let prompt = starting_grid_footer_prompt_with_mode(gamepad_connected, focused_panel, active_card_idx, game_mode.allows_roster_customization());
+    let prompt = starting_grid_footer_prompt_with_mode(gamepad_connected, focused_panel, active_card_idx, game_mode.allows_grid_customization());
 
     fonts.draw_ui_bold_centered(
         prompt,

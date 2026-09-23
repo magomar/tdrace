@@ -2762,6 +2762,21 @@ impl RaceSession {
         }
     }
 
+    /// Returns the maximum allowed participants based on the circuit's starting grid slots.
+    pub fn max_grid_participants(&self) -> usize {
+        if self.track.grid_positions.is_empty() {
+            self.track.default_grid_count()
+        } else {
+            self.track.grid_positions.len()
+        }
+    }
+
+    /// Returns the maximum allowed bot count for the active game mode.
+    pub fn max_bots(&self) -> usize {
+        let human_count = if self.is_split_screen() { 2 } else { 1 };
+        self.max_grid_participants().saturating_sub(human_count).max(1)
+    }
+
     /// Reconstructs participant cars, trackers, and AI drivers for the active roster.
     pub fn rebuild_roster_participants(&mut self) {
         if let Some(champ) = &self.championship_session {
@@ -2771,9 +2786,9 @@ impl RaceSession {
         let total_cars = if self.is_time_attack {
             1
         } else if self.is_split_screen() {
-            (2 + self.num_bots).min(self.track.grid_positions.len()).min(8)
+            (2 + self.num_bots).min(self.max_grid_participants())
         } else {
-            (1 + self.num_bots).min(self.track.grid_positions.len()).min(8)
+            (1 + self.num_bots).min(self.max_grid_participants())
         };
 
         self.cars.clear();
@@ -2824,12 +2839,23 @@ impl RaceSession {
                 {
                     if let Some(d) = module_opponents.iter().find(|d| d.id == entry.driver_id) {
                         champ_opponents.push(d.clone());
-                    } else if let Some(d) = DriverCharacter::find_by_id(&entry.driver_id) {
-                        champ_opponents.push(d.clone());
+                    } else if let Some(d) = DriverCharacter::find_global(&entry.driver_id) {
+                        champ_opponents.push(d);
                     } else {
                         let static_id: &'static str = Box::leak(entry.driver_id.clone().into_boxed_str());
                         let static_name: &'static str = Box::leak(entry.driver_name.clone().into_boxed_str());
                         let scheme = CarColorScheme::from_index((idx + 1) % 9);
+                        let mut profile = if let Some(arch) = entry.ai_character.as_deref() {
+                            BotProfile::from_archetype(arch)
+                        } else {
+                            BotProfile::archetype_for_index(idx)
+                        };
+                        profile.name = static_name;
+                        let stats = if let Some(arch) = entry.ai_character.as_deref() {
+                            DriverStats::from_archetype(arch)
+                        } else {
+                            DriverStats::archetype_for_index(idx)
+                        };
                         champ_opponents.push(DriverCharacter {
                             id: static_id,
                             name: static_name,
@@ -2837,22 +2863,8 @@ impl RaceSession {
                             bio: "Championship contender battling for the season crown.",
                             preferred_car: player_car_choice,
                             color_scheme: scheme,
-                            profile: BotProfile {
-                                name: static_name,
-                                lookahead_time: 0.36,
-                                speed_factor: 1.03,
-                                steering_kp: 2.8,
-                                steering_kd: 0.08,
-                                brake_margin: 0.99,
-                                aggression: 0.90,
-                                avoidance_distance: 5.2,
-                            },
-                            stats: DriverStats {
-                                speed: 0.96,
-                                aggression: 0.90,
-                                precision: 0.95,
-                                defense: 0.92,
-                            },
+                            profile,
+                            stats,
                             favorite_cars: &[],
                         });
                     }
@@ -2863,10 +2875,14 @@ impl RaceSession {
             } else if module_opponents.is_empty() {
                 self.opponent_drivers = DriverCharacter::sample_opponents(target_opponents, seed);
             } else if module_opponents.len() >= target_opponents {
-                self.opponent_drivers = module_opponents.into_iter().take(target_opponents).collect();
+                self.opponent_drivers = DriverCharacter::sample_from_slice(&module_opponents, target_opponents, seed);
             } else {
                 let remaining = target_opponents - module_opponents.len();
-                let sampled_extra = DriverCharacter::sample_opponents(remaining, seed);
+                let extra_pool: Vec<DriverCharacter> = DriverCharacter::all_across_modules()
+                    .into_iter()
+                    .filter(|d| !module_opponents.iter().any(|m| m.id == d.id))
+                    .collect();
+                let sampled_extra = DriverCharacter::sample_from_slice(&extra_pool, remaining, seed);
                 module_opponents.extend(sampled_extra);
                 self.opponent_drivers = module_opponents;
             }
@@ -4529,8 +4545,8 @@ impl RaceSession {
         if grid_btn_clicked {
             self.starting_grid_focus = StartingGridFocus::RightRoster;
             self.starting_grid_card_idx = 1;
-            if self.game_mode.has_bots() && self.game_mode.allows_roster_customization() {
-                let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+            if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
+                let max_bots = self.max_bots();
                 self.audio.play_sfx(SfxType::UiMove);
                 if self.num_bots < max_bots {
                     self.num_bots += 1;
@@ -4663,8 +4679,8 @@ impl RaceSession {
                     }
                     1 => {
                         // Backward-compatibility / direct test adjustment of Grid Configuration
-                        if self.game_mode.has_bots() && self.game_mode.allows_roster_customization() {
-                            let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+                        if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
+                            let max_bots = self.max_bots();
                             if is_key_pressed(KeyCode::Enter)
                                 || is_key_pressed(KeyCode::KpEnter)
                                 || is_key_pressed(KeyCode::RightBracket)
@@ -4760,8 +4776,8 @@ impl RaceSession {
                     }
 
                     // Adjust bots on Enter / + / - / [ / ]
-                    if self.game_mode.has_bots() && self.game_mode.allows_roster_customization() {
-                        let max_bots = (self.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+                    if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
+                        let max_bots = self.max_bots();
                         if is_key_pressed(KeyCode::Enter)
                             || is_key_pressed(KeyCode::KpEnter)
                             || is_key_pressed(KeyCode::RightBracket)
@@ -10263,7 +10279,7 @@ impl RaceSession {
             GameState::StartingGrid => {
                 self.render_world();
                 let predefined_car = self.resolve_predefined_car();
-                let max_grid_size = self.track.grid_positions.len().min(8);
+                let max_grid_size = self.max_grid_participants();
                 let active_car = self.active_player_car_choice();
                 let best_lap = self
                     .grid_participants

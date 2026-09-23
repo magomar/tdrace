@@ -103,18 +103,76 @@ fn test_starting_grid_audio_toggle_preserves_starting_grid_state() {
 fn test_starting_grid_driver_count_bounds() {
     let mut session = RaceSession::new();
     session.state = GameState::StartingGrid;
-    let max_bots = (session.track.grid_positions.len().saturating_sub(1)).clamp(1, 7);
+    let max_bots = session.max_bots();
 
     // Increase driver count up to max
     session.num_bots = max_bots;
     session.rebuild_roster_participants();
     assert_eq!(session.num_bots, max_bots);
+    assert_eq!(session.grid_participants.len(), session.max_grid_participants());
 
     // Decrease driver count down to 1
     session.num_bots = 1;
     session.rebuild_roster_participants();
     assert_eq!(session.num_bots, 1);
     assert_eq!(session.opponent_drivers.len(), 1);
+    assert_eq!(session.grid_participants.len(), 2);
+}
+
+#[test]
+fn test_starting_grid_scaling_across_discipline_capacities() {
+    let mut session = RaceSession::new();
+    session.state = GameState::StartingGrid;
+
+    // Classic: 10 grid positions -> 9 bots
+    if let Ok(track) = session.track_manager.load_track_by_slug("classic_grand_prix") {
+        session.track = track;
+        assert_eq!(session.max_grid_participants(), 10);
+        assert_eq!(session.max_bots(), 9);
+        session.num_bots = session.max_bots();
+        session.rebuild_roster_participants();
+        assert_eq!(session.grid_participants.len(), 10);
+    }
+
+    // Rally: 12 grid positions -> 11 bots
+    if let Ok(track) = session.track_manager.load_track_by_slug("holjes_rx") {
+        session.track = track;
+        assert_eq!(session.max_grid_participants(), 12);
+        assert_eq!(session.max_bots(), 11);
+        session.num_bots = session.max_bots();
+        session.rebuild_roster_participants();
+        assert_eq!(session.grid_participants.len(), 12);
+    }
+
+    // Kart: 14 grid positions -> 13 bots
+    if let Ok(track) = session.track_manager.load_track_by_slug("lonato") {
+        session.track = track;
+        assert_eq!(session.max_grid_participants(), 14);
+        assert_eq!(session.max_bots(), 13);
+        session.num_bots = session.max_bots();
+        session.rebuild_roster_participants();
+        assert_eq!(session.grid_participants.len(), 14);
+    }
+
+    // NASCAR: 16 grid positions -> 15 bots
+    if let Ok(track) = session.track_manager.load_track_by_slug("daytona") {
+        session.track = track;
+        assert_eq!(session.max_grid_participants(), 16);
+        assert_eq!(session.max_bots(), 15);
+        session.num_bots = session.max_bots();
+        session.rebuild_roster_participants();
+        assert_eq!(session.grid_participants.len(), 16);
+    }
+
+    // GT: 18 grid positions -> 17 bots
+    if let Ok(track) = session.track_manager.load_track_by_slug("monza") {
+        session.track = track;
+        assert_eq!(session.max_grid_participants(), 18);
+        assert_eq!(session.max_bots(), 17);
+        session.num_bots = session.max_bots();
+        session.rebuild_roster_participants();
+        assert_eq!(session.grid_participants.len(), 18);
+    }
 }
 
 #[test]
