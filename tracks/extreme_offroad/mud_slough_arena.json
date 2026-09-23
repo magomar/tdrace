@@ -1,10 +1,90 @@
 {
-  "name": "Mud Slough Arena",
-  "description": "Enclosed 140m x 105m mud bog stadium bowl with deep viscous mud ruts, heavy tire walls, and central mud jump.",
+  "car_category": "off_road",
   "category": "main",
-  "kind": {
-    "type": "arena",
-    "boundary_hull": [
+  "checkpoints": [
+    {
+      "direction": [
+        1.0,
+        0.0
+      ],
+      "elevation": 0.0,
+      "gate": {
+        "end": [
+          5.0,
+          16.0
+        ],
+        "start": [
+          5.0,
+          -16.0
+        ]
+      },
+      "id": 0,
+      "is_finish_line": true,
+      "is_pit_entry": false,
+      "is_pit_exit": false,
+      "sector": 0,
+      "target_distance": 0.0
+    }
+  ],
+  "default_laps": 3,
+  "default_surface": "Mud",
+  "description": "Enclosed 140m x 105m mud bog stadium bowl with deep viscous mud ruts, heavy tire walls, and central mud jump.",
+  "geometry": {
+    "grandstands": [],
+    "inner_walls": [],
+    "jump_ramps": [
+      {
+        "direction": [
+          1.0,
+          0.0
+        ],
+        "height": 2.2,
+        "id": 1,
+        "launch_speed": 5.0,
+        "name": "Central Clay Mound East",
+        "ramp_angle_deg": 16.0,
+        "shape": {
+          "OrientedBox": {
+            "angle": 0.0,
+            "center": [
+              0.0,
+              16.0
+            ],
+            "half_extents": [
+              6.0,
+              10.0
+            ]
+          }
+        },
+        "surface": "Mud"
+      },
+      {
+        "direction": [
+          -1.0,
+          -0.0
+        ],
+        "height": 2.2,
+        "id": 2,
+        "launch_speed": 5.0,
+        "name": "Central Clay Mound West",
+        "ramp_angle_deg": 16.0,
+        "shape": {
+          "OrientedBox": {
+            "angle": 3.1415927,
+            "center": [
+              0.0,
+              -16.0
+            ],
+            "half_extents": [
+              6.0,
+              10.0
+            ]
+          }
+        },
+        "surface": "Mud"
+      }
+    ],
+    "left_boundary_polyline": [
       [
         70.0,
         0.0
@@ -26,7 +106,7 @@
         49.93047
       ],
       [
-        -0.000003059797,
+        -3.059797e-6,
         52.5
       ],
       [
@@ -47,7 +127,7 @@
       ],
       [
         -70.0,
-        -0.000004589696
+        -4.589696e-6
       ],
       [
         -66.57395,
@@ -86,363 +166,435 @@
         -16.223389
       ]
     ],
-    "floor_surface": "Mud",
-    "perimeter_barrier": "TireWall"
-  },
-  "spline": {
-    "waypoints": [],
-    "closed": false,
-    "samples": [],
-    "total_length": 0.0,
-    "curves": []
-  },
-  "geometry": {
-    "inner_walls": [],
+    "obstacles": [],
     "outer_walls": [
       {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
         "segment": {
-          "start": [
-            70.0,
-            0.0
-          ],
           "end": [
             66.57396,
             16.223392
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            66.57396,
-            16.223392
           ],
-          "end": [
-            56.63119,
-            30.858725
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
           "start": [
-            56.63119,
-            30.858725
-          ],
-          "end": [
-            41.144962,
-            42.473396
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            41.144962,
-            42.473396
-          ],
-          "end": [
-            21.631187,
-            49.93047
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            21.631187,
-            49.93047
-          ],
-          "end": [
-            -0.000003059797,
-            52.5
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -0.000003059797,
-            52.5
-          ],
-          "end": [
-            -21.6312,
-            49.930466
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -21.6312,
-            49.930466
-          ],
-          "end": [
-            -41.144962,
-            42.473392
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -41.144962,
-            42.473392
-          ],
-          "end": [
-            -56.631195,
-            30.858723
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -56.631195,
-            30.858723
-          ],
-          "end": [
-            -66.57395,
-            16.223394
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -66.57395,
-            16.223394
-          ],
-          "end": [
-            -70.0,
-            -0.000004589696
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -70.0,
-            -0.000004589696
-          ],
-          "end": [
-            -66.57395,
-            -16.223404
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -66.57395,
-            -16.223404
-          ],
-          "end": [
-            -56.631172,
-            -30.858742
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -56.631172,
-            -30.858742
-          ],
-          "end": [
-            -41.14498,
-            -42.473385
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -41.14498,
-            -42.473385
-          ],
-          "end": [
-            -21.631197,
-            -49.930466
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -21.631197,
-            -49.930466
-          ],
-          "end": [
-            8.347416e-7,
-            -52.5
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            8.347416e-7,
-            -52.5
-          ],
-          "end": [
-            21.631199,
-            -49.930466
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            21.631199,
-            -49.930466
-          ],
-          "end": [
-            41.144985,
-            -42.473385
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            41.144985,
-            -42.473385
-          ],
-          "end": [
-            56.631187,
-            -30.858728
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            56.631187,
-            -30.858728
-          ],
-          "end": [
-            66.57396,
-            -16.223389
-          ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
-        "barrier_type": "TireWall",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            66.57396,
-            -16.223389
-          ],
-          "end": [
             70.0,
             0.0
           ]
-        },
-        "restitution": 0.18,
-        "friction": 0.8,
+        }
+      },
+      {
         "barrier_type": "TireWall",
         "elevation": 0.0,
-        "is_bridge": false
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            56.63119,
+            30.858725
+          ],
+          "start": [
+            66.57396,
+            16.223392
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            41.144962,
+            42.473396
+          ],
+          "start": [
+            56.63119,
+            30.858725
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            21.631187,
+            49.93047
+          ],
+          "start": [
+            41.144962,
+            42.473396
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -3.059797e-6,
+            52.5
+          ],
+          "start": [
+            21.631187,
+            49.93047
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -21.6312,
+            49.930466
+          ],
+          "start": [
+            -3.059797e-6,
+            52.5
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -41.144962,
+            42.473392
+          ],
+          "start": [
+            -21.6312,
+            49.930466
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -56.631195,
+            30.858723
+          ],
+          "start": [
+            -41.144962,
+            42.473392
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -66.57395,
+            16.223394
+          ],
+          "start": [
+            -56.631195,
+            30.858723
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -70.0,
+            -4.589696e-6
+          ],
+          "start": [
+            -66.57395,
+            16.223394
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -66.57395,
+            -16.223404
+          ],
+          "start": [
+            -70.0,
+            -4.589696e-6
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -56.631172,
+            -30.858742
+          ],
+          "start": [
+            -66.57395,
+            -16.223404
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -41.14498,
+            -42.473385
+          ],
+          "start": [
+            -56.631172,
+            -30.858742
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            -21.631197,
+            -49.930466
+          ],
+          "start": [
+            -41.14498,
+            -42.473385
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            8.347416e-7,
+            -52.5
+          ],
+          "start": [
+            -21.631197,
+            -49.930466
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            21.631199,
+            -49.930466
+          ],
+          "start": [
+            8.347416e-7,
+            -52.5
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            41.144985,
+            -42.473385
+          ],
+          "start": [
+            21.631199,
+            -49.930466
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            56.631187,
+            -30.858728
+          ],
+          "start": [
+            41.144985,
+            -42.473385
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            66.57396,
+            -16.223389
+          ],
+          "start": [
+            56.631187,
+            -30.858728
+          ]
+        }
+      },
+      {
+        "barrier_type": "TireWall",
+        "elevation": 0.0,
+        "friction": 0.8,
+        "is_bridge": false,
+        "restitution": 0.18,
+        "segment": {
+          "end": [
+            70.0,
+            0.0
+          ],
+          "start": [
+            66.57396,
+            -16.223389
+          ]
+        }
       }
     ],
-    "obstacles": [],
+    "right_boundary_polyline": [
+      [
+        70.0,
+        0.0
+      ],
+      [
+        66.57396,
+        16.223392
+      ],
+      [
+        56.63119,
+        30.858725
+      ],
+      [
+        41.144962,
+        42.473396
+      ],
+      [
+        21.631187,
+        49.93047
+      ],
+      [
+        -3.059797e-6,
+        52.5
+      ],
+      [
+        -21.6312,
+        49.930466
+      ],
+      [
+        -41.144962,
+        42.473392
+      ],
+      [
+        -56.631195,
+        30.858723
+      ],
+      [
+        -66.57395,
+        16.223394
+      ],
+      [
+        -70.0,
+        -4.589696e-6
+      ],
+      [
+        -66.57395,
+        -16.223404
+      ],
+      [
+        -56.631172,
+        -30.858742
+      ],
+      [
+        -41.14498,
+        -42.473385
+      ],
+      [
+        -21.631197,
+        -49.930466
+      ],
+      [
+        8.347416e-7,
+        -52.5
+      ],
+      [
+        21.631199,
+        -49.930466
+      ],
+      [
+        41.144985,
+        -42.473385
+      ],
+      [
+        56.631187,
+        -30.858728
+      ],
+      [
+        66.57396,
+        -16.223389
+      ]
+    ],
     "surface_zones": [
       {
+        "layer": "below_track",
+        "name": "Mud Slough Arena Floor",
         "shape": {
           "Polygon": {
             "vertices": [
@@ -467,7 +619,7 @@
                 49.93047
               ],
               [
-                -0.000003059797,
+                -3.059797e-6,
                 52.5
               ],
               [
@@ -488,7 +640,7 @@
               ],
               [
                 -70.0,
-                -0.000004589696
+                -4.589696e-6
               ],
               [
                 -66.57395,
@@ -529,11 +681,11 @@
             ]
           }
         },
-        "surface": "Mud",
-        "name": "Mud Slough Arena Floor",
-        "layer": "below_track"
+        "surface": "Mud"
       },
       {
+        "layer": "above_track",
+        "name": "Deep Mud Pond Hazard",
         "shape": {
           "Circle": {
             "center": [
@@ -543,329 +695,209 @@
             "radius": 16.0
           }
         },
-        "surface": "Water",
-        "name": "Deep Mud Pond Hazard",
-        "layer": "above_track"
+        "surface": "Water"
       }
     ],
-    "jump_ramps": [
-      {
-        "id": 1,
-        "shape": {
-          "OrientedBox": {
-            "center": [
-              0.0,
-              16.0
-            ],
-            "half_extents": [
-              6.0,
-              10.0
-            ],
-            "angle": 0.0
-          }
-        },
-        "direction": [
-          1.0,
-          0.0
-        ],
-        "launch_speed": 5.0,
-        "ramp_angle_deg": 16.0,
-        "height": 2.2,
-        "name": "Central Clay Mound East",
-        "surface": "Mud"
-      },
-      {
-        "id": 2,
-        "shape": {
-          "OrientedBox": {
-            "center": [
-              0.0,
-              -16.0
-            ],
-            "half_extents": [
-              6.0,
-              10.0
-            ],
-            "angle": 3.1415927
-          }
-        },
-        "direction": [
-          -1.0,
-          -0.0
-        ],
-        "launch_speed": 5.0,
-        "ramp_angle_deg": 16.0,
-        "height": 2.2,
-        "name": "Central Clay Mound West",
-        "surface": "Mud"
-      }
-    ],
-    "left_boundary_polyline": [
-      [
-        70.0,
-        0.0
-      ],
-      [
-        66.57396,
-        16.223392
-      ],
-      [
-        56.63119,
-        30.858725
-      ],
-      [
-        41.144962,
-        42.473396
-      ],
-      [
-        21.631187,
-        49.93047
-      ],
-      [
-        -0.000003059797,
-        52.5
-      ],
-      [
-        -21.6312,
-        49.930466
-      ],
-      [
-        -41.144962,
-        42.473392
-      ],
-      [
-        -56.631195,
-        30.858723
-      ],
-      [
-        -66.57395,
-        16.223394
-      ],
-      [
-        -70.0,
-        -0.000004589696
-      ],
-      [
-        -66.57395,
-        -16.223404
-      ],
-      [
-        -56.631172,
-        -30.858742
-      ],
-      [
-        -41.14498,
-        -42.473385
-      ],
-      [
-        -21.631197,
-        -49.930466
-      ],
-      [
-        8.347416e-7,
-        -52.5
-      ],
-      [
-        21.631199,
-        -49.930466
-      ],
-      [
-        41.144985,
-        -42.473385
-      ],
-      [
-        56.631187,
-        -30.858728
-      ],
-      [
-        66.57396,
-        -16.223389
-      ]
-    ],
-    "right_boundary_polyline": [
-      [
-        70.0,
-        0.0
-      ],
-      [
-        66.57396,
-        16.223392
-      ],
-      [
-        56.63119,
-        30.858725
-      ],
-      [
-        41.144962,
-        42.473396
-      ],
-      [
-        21.631187,
-        49.93047
-      ],
-      [
-        -0.000003059797,
-        52.5
-      ],
-      [
-        -21.6312,
-        49.930466
-      ],
-      [
-        -41.144962,
-        42.473392
-      ],
-      [
-        -56.631195,
-        30.858723
-      ],
-      [
-        -66.57395,
-        16.223394
-      ],
-      [
-        -70.0,
-        -0.000004589696
-      ],
-      [
-        -66.57395,
-        -16.223404
-      ],
-      [
-        -56.631172,
-        -30.858742
-      ],
-      [
-        -41.14498,
-        -42.473385
-      ],
-      [
-        -21.631197,
-        -49.930466
-      ],
-      [
-        8.347416e-7,
-        -52.5
-      ],
-      [
-        21.631199,
-        -49.930466
-      ],
-      [
-        41.144985,
-        -42.473385
-      ],
-      [
-        56.631187,
-        -30.858728
-      ],
-      [
-        66.57396,
-        -16.223389
-      ]
-    ],
-    "grandstands": [],
     "trees": []
   },
-  "checkpoints": [
-    {
-      "id": 0,
-      "gate": {
-        "start": [
-          5.0,
-          -16.0
-        ],
-        "end": [
-          5.0,
-          16.0
-        ]
-      },
-      "direction": [
-        1.0,
-        0.0
-      ],
-      "sector": 0,
-      "is_finish_line": true,
-      "is_pit_entry": false,
-      "is_pit_exit": false,
-      "target_distance": 0.0,
-      "elevation": 0.0
-    }
-  ],
   "grid_positions": [
     {
+      "angle": 0.0,
+      "grid_slot": 0,
       "position": [
         -20.0,
         -3.0
-      ],
-      "angle": 0.0,
-      "grid_slot": 0
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 1,
       "position": [
         -20.0,
         3.0
-      ],
-      "angle": 0.0,
-      "grid_slot": 1
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 2,
       "position": [
         -28.0,
         -3.0
-      ],
-      "angle": 0.0,
-      "grid_slot": 2
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 3,
       "position": [
         -28.0,
         3.0
-      ],
-      "angle": 0.0,
-      "grid_slot": 3
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 4,
       "position": [
         -36.0,
         -3.0
-      ],
-      "angle": 0.0,
-      "grid_slot": 4
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 5,
       "position": [
         -36.0,
         3.0
-      ],
-      "angle": 0.0,
-      "grid_slot": 5
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 6,
       "position": [
         -44.0,
         -3.0
-      ],
-      "angle": 0.0,
-      "grid_slot": 6
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 7,
       "position": [
         -44.0,
         3.0
-      ],
+      ]
+    },
+    {
       "angle": 0.0,
-      "grid_slot": 7
+      "grid_slot": 8,
+      "position": [
+        -52.0,
+        -3.0
+      ]
+    },
+    {
+      "angle": 0.0,
+      "grid_slot": 9,
+      "position": [
+        -52.0,
+        3.0
+      ]
+    },
+    {
+      "angle": 0.0,
+      "grid_slot": 10,
+      "position": [
+        -60.0,
+        -3.0
+      ]
+    },
+    {
+      "angle": 0.0,
+      "grid_slot": 11,
+      "position": [
+        -60.0,
+        3.0
+      ]
     }
   ],
-  "default_surface": "Mud",
-  "pit_box_area": null,
-  "default_laps": 3,
-  "car_category": "off_road",
+  "is_inspired": false,
+  "kind": {
+    "boundary_hull": [
+      [
+        70.0,
+        0.0
+      ],
+      [
+        66.57396,
+        16.223392
+      ],
+      [
+        56.63119,
+        30.858725
+      ],
+      [
+        41.144962,
+        42.473396
+      ],
+      [
+        21.631187,
+        49.93047
+      ],
+      [
+        -3.059797e-6,
+        52.5
+      ],
+      [
+        -21.6312,
+        49.930466
+      ],
+      [
+        -41.144962,
+        42.473392
+      ],
+      [
+        -56.631195,
+        30.858723
+      ],
+      [
+        -66.57395,
+        16.223394
+      ],
+      [
+        -70.0,
+        -4.589696e-6
+      ],
+      [
+        -66.57395,
+        -16.223404
+      ],
+      [
+        -56.631172,
+        -30.858742
+      ],
+      [
+        -41.14498,
+        -42.473385
+      ],
+      [
+        -21.631197,
+        -49.930466
+      ],
+      [
+        8.347416e-7,
+        -52.5
+      ],
+      [
+        21.631199,
+        -49.930466
+      ],
+      [
+        41.144985,
+        -42.473385
+      ],
+      [
+        56.631187,
+        -30.858728
+      ],
+      [
+        66.57396,
+        -16.223389
+      ]
+    ],
+    "floor_surface": "Mud",
+    "perimeter_barrier": "TireWall",
+    "type": "arena"
+  },
   "module_id": "extreme_offroad",
   "modules": [
     "extreme_offroad"
   ],
+  "name": "Mud Slough Arena",
+  "pit_box_area": null,
   "scale": "1:1",
-  "is_inspired": false
+  "spline": {
+    "closed": false,
+    "curves": [],
+    "samples": [],
+    "total_length": 0.0,
+    "waypoints": []
+  }
 }

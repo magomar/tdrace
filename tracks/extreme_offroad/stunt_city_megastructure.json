@@ -1,694 +1,51 @@
 {
-  "name": "Stunt City Megastructure",
-  "description": "Multi-level 220m x 170m urban stunt plaza with mega kickers, skyscraper wallrides, elevated gap ramps, and aerial stunt targets.",
+  "car_category": "off_road",
   "category": "main",
-  "kind": {
-    "type": "arena",
-    "boundary_hull": [
-      [
-        110.0,
+  "checkpoints": [
+    {
+      "direction": [
+        1.0,
         0.0
       ],
-      [
-        106.25184,
-        21.999619
-      ],
-      [
-        95.262794,
-        42.5
-      ],
-      [
-        77.781746,
-        60.104076
-      ],
-      [
-        54.999996,
-        73.61216
-      ],
-      [
-        28.470098,
-        82.10369
-      ],
-      [
-        -0.000004808253,
-        85.0
-      ],
-      [
-        -28.470095,
-        82.10369
-      ],
-      [
-        -55.000008,
-        73.61216
-      ],
-      [
-        -77.781746,
-        60.104076
-      ],
-      [
-        -95.262794,
-        42.500004
-      ],
-      [
-        -106.25185,
-        21.999609
-      ],
-      [
-        -110.0,
-        -0.000007430936
-      ],
-      [
-        -106.25183,
-        -21.999641
-      ],
-      [
-        -95.262794,
-        -42.499996
-      ],
-      [
-        -77.78173,
-        -60.104084
-      ],
-      [
-        -54.99999,
-        -73.61216
-      ],
-      [
-        -28.470089,
-        -82.1037
-      ],
-      [
-        0.0000013117369,
-        -85.0
-      ],
-      [
-        28.47014,
-        -82.10368
-      ],
-      [
-        54.99999,
-        -73.61216
-      ],
-      [
-        77.78177,
-        -60.104053
-      ],
-      [
-        95.26281,
-        -42.49998
-      ],
-      [
-        106.25185,
-        -21.999601
-      ]
-    ],
-    "floor_surface": "Asphalt",
-    "perimeter_barrier": "Steel"
-  },
-  "spline": {
-    "waypoints": [],
-    "closed": false,
-    "samples": [],
-    "total_length": 0.0,
-    "curves": []
-  },
+      "elevation": 0.0,
+      "gate": {
+        "end": [
+          -10.0,
+          22.0
+        ],
+        "start": [
+          -10.0,
+          -22.0
+        ]
+      },
+      "id": 0,
+      "is_finish_line": true,
+      "is_pit_entry": false,
+      "is_pit_exit": false,
+      "sector": 0,
+      "target_distance": 0.0
+    }
+  ],
+  "default_laps": 3,
+  "default_surface": "Asphalt",
+  "description": "Multi-level 220m x 170m urban stunt plaza with mega kickers, skyscraper wallrides, elevated gap ramps, and aerial stunt targets.",
   "geometry": {
+    "grandstands": [],
     "inner_walls": [],
-    "outer_walls": [
-      {
-        "segment": {
-          "start": [
-            110.0,
-            0.0
-          ],
-          "end": [
-            106.25184,
-            21.999619
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            106.25184,
-            21.999619
-          ],
-          "end": [
-            95.262794,
-            42.5
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            95.262794,
-            42.5
-          ],
-          "end": [
-            77.781746,
-            60.104076
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            77.781746,
-            60.104076
-          ],
-          "end": [
-            54.999996,
-            73.61216
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            54.999996,
-            73.61216
-          ],
-          "end": [
-            28.470098,
-            82.10369
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            28.470098,
-            82.10369
-          ],
-          "end": [
-            -0.000004808253,
-            85.0
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -0.000004808253,
-            85.0
-          ],
-          "end": [
-            -28.470095,
-            82.10369
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -28.470095,
-            82.10369
-          ],
-          "end": [
-            -55.000008,
-            73.61216
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -55.000008,
-            73.61216
-          ],
-          "end": [
-            -77.781746,
-            60.104076
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -77.781746,
-            60.104076
-          ],
-          "end": [
-            -95.262794,
-            42.500004
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -95.262794,
-            42.500004
-          ],
-          "end": [
-            -106.25185,
-            21.999609
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -106.25185,
-            21.999609
-          ],
-          "end": [
-            -110.0,
-            -0.000007430936
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -110.0,
-            -0.000007430936
-          ],
-          "end": [
-            -106.25183,
-            -21.999641
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -106.25183,
-            -21.999641
-          ],
-          "end": [
-            -95.262794,
-            -42.499996
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -95.262794,
-            -42.499996
-          ],
-          "end": [
-            -77.78173,
-            -60.104084
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -77.78173,
-            -60.104084
-          ],
-          "end": [
-            -54.99999,
-            -73.61216
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -54.99999,
-            -73.61216
-          ],
-          "end": [
-            -28.470089,
-            -82.1037
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            -28.470089,
-            -82.1037
-          ],
-          "end": [
-            0.0000013117369,
-            -85.0
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            0.0000013117369,
-            -85.0
-          ],
-          "end": [
-            28.47014,
-            -82.10368
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            28.47014,
-            -82.10368
-          ],
-          "end": [
-            54.99999,
-            -73.61216
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            54.99999,
-            -73.61216
-          ],
-          "end": [
-            77.78177,
-            -60.104053
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            77.78177,
-            -60.104053
-          ],
-          "end": [
-            95.26281,
-            -42.49998
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            95.26281,
-            -42.49998
-          ],
-          "end": [
-            106.25185,
-            -21.999601
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      },
-      {
-        "segment": {
-          "start": [
-            106.25185,
-            -21.999601
-          ],
-          "end": [
-            110.0,
-            0.0
-          ]
-        },
-        "restitution": 0.42,
-        "friction": 0.45,
-        "barrier_type": "Steel",
-        "elevation": 0.0,
-        "is_bridge": false
-      }
-    ],
-    "obstacles": [
-      {
-        "id": 1,
-        "shape": {
-          "Circle": {
-            "center": [
-              -10.0,
-              35.0
-            ],
-            "radius": 2.0
-          }
-        },
-        "restitution": 0.3,
-        "friction": 0.5,
-        "name": "Structural Column North",
-        "elevation": 0.0
-      },
-      {
-        "id": 2,
-        "shape": {
-          "Circle": {
-            "center": [
-              -10.0,
-              -35.0
-            ],
-            "radius": 2.0
-          }
-        },
-        "restitution": 0.3,
-        "friction": 0.5,
-        "name": "Structural Column South",
-        "elevation": 0.0
-      }
-    ],
-    "surface_zones": [
-      {
-        "shape": {
-          "Polygon": {
-            "vertices": [
-              [
-                110.0,
-                0.0
-              ],
-              [
-                106.25184,
-                21.999619
-              ],
-              [
-                95.262794,
-                42.5
-              ],
-              [
-                77.781746,
-                60.104076
-              ],
-              [
-                54.999996,
-                73.61216
-              ],
-              [
-                28.470098,
-                82.10369
-              ],
-              [
-                -0.000004808253,
-                85.0
-              ],
-              [
-                -28.470095,
-                82.10369
-              ],
-              [
-                -55.000008,
-                73.61216
-              ],
-              [
-                -77.781746,
-                60.104076
-              ],
-              [
-                -95.262794,
-                42.500004
-              ],
-              [
-                -106.25185,
-                21.999609
-              ],
-              [
-                -110.0,
-                -0.000007430936
-              ],
-              [
-                -106.25183,
-                -21.999641
-              ],
-              [
-                -95.262794,
-                -42.499996
-              ],
-              [
-                -77.78173,
-                -60.104084
-              ],
-              [
-                -54.99999,
-                -73.61216
-              ],
-              [
-                -28.470089,
-                -82.1037
-              ],
-              [
-                0.0000013117369,
-                -85.0
-              ],
-              [
-                28.47014,
-                -82.10368
-              ],
-              [
-                54.99999,
-                -73.61216
-              ],
-              [
-                77.78177,
-                -60.104053
-              ],
-              [
-                95.26281,
-                -42.49998
-              ],
-              [
-                106.25185,
-                -21.999601
-              ]
-            ]
-          }
-        },
-        "surface": "Asphalt",
-        "name": "Stunt Plaza Asphalt Floor",
-        "layer": "below_track"
-      },
-      {
-        "shape": {
-          "Aabb": {
-            "min": [
-              20.0,
-              -25.0
-            ],
-            "max": [
-              70.0,
-              25.0
-            ]
-          }
-        },
-        "surface": "Asphalt",
-        "name": "Elevated Stunt Deck",
-        "layer": "below_track"
-      }
-    ],
     "jump_ramps": [
       {
+        "direction": [
+          1.0,
+          0.0
+        ],
+        "height": 4.8,
         "id": 1,
+        "launch_speed": 8.5,
+        "name": "Downtown Mega Kicker",
+        "ramp_angle_deg": 32.0,
         "shape": {
           "OrientedBox": {
+            "angle": 0.0,
             "center": [
               -45.0,
               0.0
@@ -696,24 +53,24 @@
             "half_extents": [
               7.0,
               12.0
-            ],
-            "angle": 0.0
+            ]
           }
         },
-        "direction": [
-          1.0,
-          0.0
-        ],
-        "launch_speed": 8.5,
-        "ramp_angle_deg": 32.0,
-        "height": 4.8,
-        "name": "Downtown Mega Kicker",
         "surface": "Asphalt"
       },
       {
+        "direction": [
+          -1.0,
+          -0.0
+        ],
+        "height": 3.8,
         "id": 2,
+        "launch_speed": 7.5,
+        "name": "Plaza Rooftop Gap Launch",
+        "ramp_angle_deg": 24.0,
         "shape": {
           "OrientedBox": {
+            "angle": 3.1415927,
             "center": [
               45.0,
               30.0
@@ -721,18 +78,9 @@
             "half_extents": [
               6.0,
               10.0
-            ],
-            "angle": 3.1415927
+            ]
           }
         },
-        "direction": [
-          -1.0,
-          -0.0
-        ],
-        "launch_speed": 7.5,
-        "ramp_angle_deg": 24.0,
-        "height": 3.8,
-        "name": "Plaza Rooftop Gap Launch",
         "surface": "Asphalt"
       }
     ],
@@ -762,7 +110,7 @@
         82.10369
       ],
       [
-        -0.000004808253,
+        -4.808253e-6,
         85.0
       ],
       [
@@ -787,7 +135,7 @@
       ],
       [
         -110.0,
-        -0.000007430936
+        -7.430936e-6
       ],
       [
         -106.25183,
@@ -810,7 +158,7 @@
         -82.1037
       ],
       [
-        0.0000013117369,
+        1.3117369e-6,
         -85.0
       ],
       [
@@ -833,6 +181,450 @@
         106.25185,
         -21.999601
       ]
+    ],
+    "obstacles": [
+      {
+        "elevation": 0.0,
+        "friction": 0.5,
+        "id": 1,
+        "name": "Structural Column North",
+        "restitution": 0.3,
+        "shape": {
+          "Circle": {
+            "center": [
+              -10.0,
+              35.0
+            ],
+            "radius": 2.0
+          }
+        }
+      },
+      {
+        "elevation": 0.0,
+        "friction": 0.5,
+        "id": 2,
+        "name": "Structural Column South",
+        "restitution": 0.3,
+        "shape": {
+          "Circle": {
+            "center": [
+              -10.0,
+              -35.0
+            ],
+            "radius": 2.0
+          }
+        }
+      }
+    ],
+    "outer_walls": [
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            106.25184,
+            21.999619
+          ],
+          "start": [
+            110.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            95.262794,
+            42.5
+          ],
+          "start": [
+            106.25184,
+            21.999619
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            77.781746,
+            60.104076
+          ],
+          "start": [
+            95.262794,
+            42.5
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            54.999996,
+            73.61216
+          ],
+          "start": [
+            77.781746,
+            60.104076
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            28.470098,
+            82.10369
+          ],
+          "start": [
+            54.999996,
+            73.61216
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -4.808253e-6,
+            85.0
+          ],
+          "start": [
+            28.470098,
+            82.10369
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -28.470095,
+            82.10369
+          ],
+          "start": [
+            -4.808253e-6,
+            85.0
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -55.000008,
+            73.61216
+          ],
+          "start": [
+            -28.470095,
+            82.10369
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -77.781746,
+            60.104076
+          ],
+          "start": [
+            -55.000008,
+            73.61216
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -95.262794,
+            42.500004
+          ],
+          "start": [
+            -77.781746,
+            60.104076
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -106.25185,
+            21.999609
+          ],
+          "start": [
+            -95.262794,
+            42.500004
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -110.0,
+            -7.430936e-6
+          ],
+          "start": [
+            -106.25185,
+            21.999609
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -106.25183,
+            -21.999641
+          ],
+          "start": [
+            -110.0,
+            -7.430936e-6
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -95.262794,
+            -42.499996
+          ],
+          "start": [
+            -106.25183,
+            -21.999641
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -77.78173,
+            -60.104084
+          ],
+          "start": [
+            -95.262794,
+            -42.499996
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -54.99999,
+            -73.61216
+          ],
+          "start": [
+            -77.78173,
+            -60.104084
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            -28.470089,
+            -82.1037
+          ],
+          "start": [
+            -54.99999,
+            -73.61216
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            1.3117369e-6,
+            -85.0
+          ],
+          "start": [
+            -28.470089,
+            -82.1037
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            28.47014,
+            -82.10368
+          ],
+          "start": [
+            1.3117369e-6,
+            -85.0
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            54.99999,
+            -73.61216
+          ],
+          "start": [
+            28.47014,
+            -82.10368
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            77.78177,
+            -60.104053
+          ],
+          "start": [
+            54.99999,
+            -73.61216
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            95.26281,
+            -42.49998
+          ],
+          "start": [
+            77.78177,
+            -60.104053
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            106.25185,
+            -21.999601
+          ],
+          "start": [
+            95.26281,
+            -42.49998
+          ]
+        }
+      },
+      {
+        "barrier_type": "Steel",
+        "elevation": 0.0,
+        "friction": 0.45,
+        "is_bridge": false,
+        "restitution": 0.42,
+        "segment": {
+          "end": [
+            110.0,
+            0.0
+          ],
+          "start": [
+            106.25185,
+            -21.999601
+          ]
+        }
+      }
     ],
     "right_boundary_polyline": [
       [
@@ -860,7 +652,7 @@
         82.10369
       ],
       [
-        -0.000004808253,
+        -4.808253e-6,
         85.0
       ],
       [
@@ -885,7 +677,7 @@
       ],
       [
         -110.0,
-        -0.000007430936
+        -7.430936e-6
       ],
       [
         -106.25183,
@@ -908,7 +700,7 @@
         -82.1037
       ],
       [
-        0.0000013117369,
+        1.3117369e-6,
         -85.0
       ],
       [
@@ -932,124 +724,348 @@
         -21.999601
       ]
     ],
-    "grandstands": [],
+    "surface_zones": [
+      {
+        "layer": "below_track",
+        "name": "Stunt Plaza Asphalt Floor",
+        "shape": {
+          "Polygon": {
+            "vertices": [
+              [
+                110.0,
+                0.0
+              ],
+              [
+                106.25184,
+                21.999619
+              ],
+              [
+                95.262794,
+                42.5
+              ],
+              [
+                77.781746,
+                60.104076
+              ],
+              [
+                54.999996,
+                73.61216
+              ],
+              [
+                28.470098,
+                82.10369
+              ],
+              [
+                -4.808253e-6,
+                85.0
+              ],
+              [
+                -28.470095,
+                82.10369
+              ],
+              [
+                -55.000008,
+                73.61216
+              ],
+              [
+                -77.781746,
+                60.104076
+              ],
+              [
+                -95.262794,
+                42.500004
+              ],
+              [
+                -106.25185,
+                21.999609
+              ],
+              [
+                -110.0,
+                -7.430936e-6
+              ],
+              [
+                -106.25183,
+                -21.999641
+              ],
+              [
+                -95.262794,
+                -42.499996
+              ],
+              [
+                -77.78173,
+                -60.104084
+              ],
+              [
+                -54.99999,
+                -73.61216
+              ],
+              [
+                -28.470089,
+                -82.1037
+              ],
+              [
+                1.3117369e-6,
+                -85.0
+              ],
+              [
+                28.47014,
+                -82.10368
+              ],
+              [
+                54.99999,
+                -73.61216
+              ],
+              [
+                77.78177,
+                -60.104053
+              ],
+              [
+                95.26281,
+                -42.49998
+              ],
+              [
+                106.25185,
+                -21.999601
+              ]
+            ]
+          }
+        },
+        "surface": "Asphalt"
+      },
+      {
+        "layer": "below_track",
+        "name": "Elevated Stunt Deck",
+        "shape": {
+          "Aabb": {
+            "max": [
+              70.0,
+              25.0
+            ],
+            "min": [
+              20.0,
+              -25.0
+            ]
+          }
+        },
+        "surface": "Asphalt"
+      }
+    ],
     "trees": []
   },
-  "checkpoints": [
-    {
-      "id": 0,
-      "gate": {
-        "start": [
-          -10.0,
-          -22.0
-        ],
-        "end": [
-          -10.0,
-          22.0
-        ]
-      },
-      "direction": [
-        1.0,
-        0.0
-      ],
-      "sector": 0,
-      "is_finish_line": true,
-      "is_pit_entry": false,
-      "is_pit_exit": false,
-      "target_distance": 0.0,
-      "elevation": 0.0
-    }
-  ],
   "grid_positions": [
     {
+      "angle": 0.0,
+      "grid_slot": 0,
       "position": [
         -50.0,
         -3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 0
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 1,
       "position": [
         -50.0,
         3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 1
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 2,
       "position": [
         -58.0,
         -3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 2
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 3,
       "position": [
         -58.0,
         3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 3
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 4,
       "position": [
         -66.0,
         -3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 4
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 5,
       "position": [
         -66.0,
         3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 5
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 6,
       "position": [
         -74.0,
         -3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 6
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 7,
       "position": [
         -74.0,
         3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 7
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 8,
       "position": [
         -82.0,
         -3.5
-      ],
-      "angle": 0.0,
-      "grid_slot": 8
+      ]
     },
     {
+      "angle": 0.0,
+      "grid_slot": 9,
       "position": [
         -82.0,
         3.5
-      ],
+      ]
+    },
+    {
       "angle": 0.0,
-      "grid_slot": 9
+      "grid_slot": 10,
+      "position": [
+        -90.0,
+        -3.5
+      ]
+    },
+    {
+      "angle": 0.0,
+      "grid_slot": 11,
+      "position": [
+        -90.0,
+        3.5
+      ]
     }
   ],
-  "default_surface": "Asphalt",
-  "pit_box_area": null,
-  "default_laps": 3,
-  "car_category": "off_road",
+  "is_inspired": false,
+  "kind": {
+    "boundary_hull": [
+      [
+        110.0,
+        0.0
+      ],
+      [
+        106.25184,
+        21.999619
+      ],
+      [
+        95.262794,
+        42.5
+      ],
+      [
+        77.781746,
+        60.104076
+      ],
+      [
+        54.999996,
+        73.61216
+      ],
+      [
+        28.470098,
+        82.10369
+      ],
+      [
+        -4.808253e-6,
+        85.0
+      ],
+      [
+        -28.470095,
+        82.10369
+      ],
+      [
+        -55.000008,
+        73.61216
+      ],
+      [
+        -77.781746,
+        60.104076
+      ],
+      [
+        -95.262794,
+        42.500004
+      ],
+      [
+        -106.25185,
+        21.999609
+      ],
+      [
+        -110.0,
+        -7.430936e-6
+      ],
+      [
+        -106.25183,
+        -21.999641
+      ],
+      [
+        -95.262794,
+        -42.499996
+      ],
+      [
+        -77.78173,
+        -60.104084
+      ],
+      [
+        -54.99999,
+        -73.61216
+      ],
+      [
+        -28.470089,
+        -82.1037
+      ],
+      [
+        1.3117369e-6,
+        -85.0
+      ],
+      [
+        28.47014,
+        -82.10368
+      ],
+      [
+        54.99999,
+        -73.61216
+      ],
+      [
+        77.78177,
+        -60.104053
+      ],
+      [
+        95.26281,
+        -42.49998
+      ],
+      [
+        106.25185,
+        -21.999601
+      ]
+    ],
+    "floor_surface": "Asphalt",
+    "perimeter_barrier": "Steel",
+    "type": "arena"
+  },
   "module_id": "extreme_offroad",
   "modules": [
     "extreme_offroad"
   ],
+  "name": "Stunt City Megastructure",
+  "pit_box_area": null,
   "scale": "1:1",
-  "is_inspired": false
+  "spline": {
+    "closed": false,
+    "curves": [],
+    "samples": [],
+    "total_length": 0.0,
+    "waypoints": []
+  }
 }
