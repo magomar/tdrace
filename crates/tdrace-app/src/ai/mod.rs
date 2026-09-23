@@ -121,6 +121,44 @@ impl DriverTier {
             Self::Legend => "Legend (T5)",
         }
     }
+
+    /// Returns the discrete probability distribution [P(T1), P(T2), P(T3), P(T4), P(T5)]
+    /// (summing to 100%) for opponent tiers centered on this target difficulty tier.
+    pub const fn bell_curve_weights(self) -> [u8; 5] {
+        match self {
+            Self::Rookie => [55, 35, 10, 0, 0],
+            Self::Amateur => [20, 50, 25, 5, 0],
+            Self::Contender => [5, 20, 50, 20, 5],
+            Self::Pro => [0, 5, 25, 50, 20],
+            Self::Legend => [0, 0, 10, 35, 55],
+        }
+    }
+
+    /// Samples a tier from the discrete bell curve distribution using a pseudo-random value in 0..100.
+    pub fn sample_from_bell_curve(self, roll_0_to_99: u8) -> Self {
+        let weights = self.bell_curve_weights();
+        let mut accum = 0;
+        let roll = roll_0_to_99 % 100;
+        for (idx, &w) in weights.iter().enumerate() {
+            accum += w;
+            if roll < accum {
+                return Self::from_u8((idx + 1) as u8);
+            }
+        }
+        self
+    }
+
+    /// Samples `n` tiers for a grid of opponents given a target tier and deterministic seed.
+    pub fn sample_grid_tiers(self, n: usize, seed: u64) -> Vec<Self> {
+        let mut tiers = Vec::with_capacity(n);
+        let mut s = seed.wrapping_add(1442695040888963407);
+        for _ in 0..n {
+            s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
+            let roll = ((s >> 33) % 100) as u8;
+            tiers.push(self.sample_from_bell_curve(roll));
+        }
+        tiers
+    }
 }
 
 /// Operationalized performance attributes of a driver quality level.

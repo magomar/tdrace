@@ -6,6 +6,7 @@ use tdrace_core::track::Track;
 use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
+use crate::ai::DriverTier;
 use crate::game::GridParticipant;
 use crate::profile::{draw_country_banner, PlayerProfile};
 use crate::render::color::{CarColorScheme, Palette};
@@ -90,6 +91,7 @@ pub fn render_starting_grid_screen(
     required_tier: u8,
     unlock_level: u32,
     selected_model_id: Option<&str>,
+    casual_ai_difficulty: DriverTier,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -536,9 +538,9 @@ pub fn render_starting_grid_screen(
                 "GRID CONFIG: 🔒 LOCKED [Official Roster]"
             }
         } else if is_grid_active {
-            "GRID CONFIG [ACTIVE • ENTER / + / - to adjust]"
+            "GRID CONFIG [ACTIVE • ENTER/+/-: Bots • T: AI Difficulty]"
         } else {
-            "GRID CONFIG: [Up/Down to select • Click to adjust]"
+            "GRID CONFIG: [Up/Down to select • T to change difficulty]"
         };
         fonts.draw_ui_bold(
             grid_hdr,
@@ -552,12 +554,12 @@ pub fn render_starting_grid_screen(
         } else if game_mode == GameMode::SplitScreen {
             let bot_count = num_drivers.saturating_sub(2);
             if bot_count == 0 {
-                format!("2 Players (1v1 Head-to-Head Duel) • Max {} Slots", max_grid_size)
+                format!("2 Players (1v1 Duel) • Difficulty: {} • Max {} Slots", casual_ai_difficulty.short_name(), max_grid_size)
             } else {
-                format!("{} Racers (2 Players + {} AI Bots) • Max {} Slots", num_drivers, bot_count, max_grid_size)
+                format!("{} Racers (2 Players + {} Bots) • Difficulty: {} • Max {}", num_drivers, bot_count, casual_ai_difficulty.short_name(), max_grid_size)
             }
         } else {
-            format!("{} Racers ({} AI Opponents) • Max {} Slots", num_drivers, num_drivers.saturating_sub(1), max_grid_size)
+            format!("{} Racers ({} Bots) • Difficulty: {} • Max {}", num_drivers, num_drivers.saturating_sub(1), casual_ai_difficulty.short_name(), max_grid_size)
         };
         fonts.draw_ui_bold(
             &racer_desc,
@@ -752,7 +754,7 @@ pub fn render_starting_grid_screen(
                         "Player 2: Gamepad [NOT DETECTED - Connect Controller / Fallback Arrows]".to_string()
                     }
                 } else {
-                    match (participant.best_lap, participant.best_circuit_time) {
+                    let perf = match (participant.best_lap, participant.best_circuit_time) {
                         (Some(lap), Some(circ)) => {
                             format!("Best Lap: {}  •  Circuit: {}", format_lap_time(lap), format_lap_time(circ))
                         }
@@ -762,9 +764,14 @@ pub fn render_starting_grid_screen(
                             if participant.is_player {
                                 "No Prior Record  •  Grid Draw".to_string()
                             } else {
-                                "No Prior Record  •  Rookie Draw".to_string()
+                                "No Prior Record".to_string()
                             }
                         }
+                    };
+                    if let Some(tier) = participant.driver_tier {
+                        format!("{}  •  {}", tier.short_name(), perf)
+                    } else {
+                        perf
                     }
                 };
 
@@ -870,7 +877,7 @@ pub fn starting_grid_footer_prompt_with_mode(
             StartingGridFocus::LeftSetup => match active_card_idx {
                 0 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER] Open Garage  |  [SPACE] Launch  |  [ESC] Menu",
                 1 => if is_roster_customizable {
-                    "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / + / -] Adjust Bots  |  [SPACE] Launch  |  [ESC] Menu"
+                    "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / + / -] Adjust Bots  |  [T] Difficulty  |  [SPACE] Launch  |  [ESC] Menu"
                 } else {
                     "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ROSTER LOCKED]  |  [SPACE] Launch  |  [ESC] Menu"
                 },
@@ -880,7 +887,7 @@ pub fn starting_grid_footer_prompt_with_mode(
             StartingGridFocus::RightRoster => {
                 if active_card_idx == 1 {
                     if is_roster_customizable {
-                        "[Left/Right] Switch Panel  |  [Up/Down] Select Card/Driver  |  [ENTER / + / -] Adjust Bots  |  [SPACE] Launch  |  [ESC] Menu"
+                        "[Left/Right] Switch Panel  |  [Up/Down] Select Card/Driver  |  [ENTER / + / -] Adjust Bots  |  [T] Difficulty  |  [SPACE] Launch  |  [ESC] Menu"
                     } else {
                         "[Left/Right] Switch Panel  |  [Up/Down] Select Card/Driver  |  [ROSTER LOCKED]  |  [SPACE] Launch  |  [ESC] Menu"
                     }

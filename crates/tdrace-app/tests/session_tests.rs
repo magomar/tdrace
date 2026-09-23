@@ -251,7 +251,7 @@ fn test_grid_positioning_slower_lap_placed_behind() {
     session.track_choice = TrackChoice::ClassicGrandPrix;
 
     // All possible opponents have 20.0s in HoF
-    session.hof_entries = DriverCharacter::all()
+    session.hof_entries = DriverCharacter::all_across_modules()
         .iter()
         .map(|d| HallOfFameEntry {
             id: Some(1),
@@ -287,7 +287,7 @@ fn test_grid_positioning_tie_broken_by_circuit_time() {
     session.track_choice = TrackChoice::ClassicGrandPrix;
 
     // All opponents have 22.0s lap and 68.0s circuit time
-    session.hof_entries = DriverCharacter::all()
+    session.hof_entries = DriverCharacter::all_across_modules()
         .iter()
         .map(|d| HallOfFameEntry {
             id: Some(1),

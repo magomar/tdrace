@@ -136,12 +136,14 @@ fn test_gt_free_car_selection_toggle_in_roster() {
         "Tuned Drift Spec"
     );
 
-    // GT AI opponents retain their preferred GT3 cars
+    // AI opponents retain their character's preferred cars
     for p in session.grid_participants.iter().filter(|p| !p.is_player) {
+        let bot_idx = p.bot_index.unwrap();
+        let character = &session.opponent_drivers[bot_idx];
         assert_eq!(
             p.car_title,
-            "600 BHP GT3 Evo Racer",
-            "GT bot '{}' should prefer GT3 car even with free car selection enabled",
+            character.preferred_car.title(),
+            "Bot '{}' should retain their preferred car with free car selection enabled",
             p.name
         );
     }

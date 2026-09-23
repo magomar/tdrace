@@ -186,9 +186,7 @@ fn test_module_drivers_per_tier_favorite_cars_resolve_in_catalog() {
 #[test]
 fn test_gt_tier_starting_grid_assigns_signature_cars() {
     let mut session = RaceSession::new();
-    session.switch_to_gt();
-    session.num_bots = 7;
-    session.init_race();
+    session.start_gt_career_tier(1);
 
     assert_eq!(session.state, GameState::StartingGrid);
 
@@ -217,14 +215,12 @@ fn test_gt_tier_starting_grid_assigns_signature_cars() {
 #[test]
 fn test_nascar_starting_grid_assigns_signature_cars() {
     let mut session = RaceSession::new();
-    session.switch_to_nascar();
-    session.num_bots = 7;
-    session.init_race();
+    session.start_nascar_career_tier(1);
 
     assert_eq!(session.state, GameState::StartingGrid);
 
     let opponents: Vec<_> = session.grid_participants.iter().filter(|p| !p.is_player).collect();
-    assert_eq!(opponents.len(), 7);
+    assert_eq!(opponents.len(), 11);
 
     for p in &opponents {
         let driver = NascarGameModule::new()
@@ -245,9 +241,7 @@ fn test_nascar_starting_grid_assigns_signature_cars() {
 #[test]
 fn test_rally_starting_grid_assigns_signature_cars() {
     let mut session = RaceSession::new();
-    session.switch_to_rally();
-    session.num_bots = 7;
-    session.init_race();
+    session.start_rally_career_tier(1);
 
     assert_eq!(session.state, GameState::StartingGrid);
 
@@ -274,6 +268,7 @@ fn test_rally_starting_grid_assigns_signature_cars() {
 fn test_classic_free_car_selection_assigns_signature_cars() {
     let mut session = RaceSession::new();
     session.switch_to_classic();
+    session.game_mode = tdrace_app::ui::menu::GameMode::Career;
     session.free_car_selection = true;
     session.num_bots = 7;
     session.init_race();
@@ -302,9 +297,7 @@ fn test_classic_free_car_selection_assigns_signature_cars() {
 #[test]
 fn test_kart_starting_grid_assigns_signature_cars() {
     let mut session = RaceSession::new();
-    session.switch_to_kart();
-    session.num_bots = 7;
-    session.init_race();
+    session.start_kart_career_tier(1);
 
     assert_eq!(session.state, GameState::StartingGrid);
 
@@ -330,14 +323,12 @@ fn test_kart_starting_grid_assigns_signature_cars() {
 #[test]
 fn test_extreme_offroad_starting_grid_assigns_signature_cars() {
     let mut session = RaceSession::new();
-    session.switch_to_extreme_offroad();
-    session.num_bots = 7;
-    session.init_race();
+    session.start_extreme_offroad_career_tier(1);
 
     assert_eq!(session.state, GameState::StartingGrid);
 
     let opponents: Vec<_> = session.grid_participants.iter().filter(|p| !p.is_player).collect();
-    assert_eq!(opponents.len(), 7);
+    assert_eq!(opponents.len(), 8);
 
     for p in &opponents {
         let driver = ExtremeOffRoadModule::new()

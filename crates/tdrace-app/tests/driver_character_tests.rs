@@ -81,10 +81,12 @@ fn test_race_session_driver_spawning_and_names() {
     for i in 0..3 {
         let character = &session.opponent_drivers[i];
         let ai = &session.ai_drivers[i];
-        let expected_profile = character.resolve_profile(tdrace_app::ai::DriverTier::Rookie);
+        let expected_profile = character.resolve_profile(session.opponent_tiers[i]);
         assert_eq!(ai.profile.speed_factor, expected_profile.speed_factor);
         assert_eq!(ai.profile.steering_kp, expected_profile.steering_kp);
-        assert_eq!(session.color_schemes[i + 1], character.color_scheme);
+        let p = session.grid_participants.iter().find(|p| p.bot_index == Some(i)).expect("participant");
+        assert_eq!(session.color_schemes[i + 1], p.color_scheme);
+        assert_eq!(p.name, character.name);
     }
 
     // Verify standings & results contain real driver aliases
