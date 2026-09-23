@@ -315,7 +315,7 @@ const brakingPct = Math.min(100, Math.max(0, brakingVal));
     <!-- 6. Downforce / Aero -->
     <div class="relative group/stat flex items-center gap-2 text-[11px] font-mono py-0.5">
       <div class="w-24 flex items-center gap-1.5 shrink-0 text-slate-400">
-        <svg class="w-3.5 h-3.5 text-amber-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="w-3.5 h-3.5 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 8c6-2 12-2 18 0l-2 3c-5-1.5-9-1.5-14 0z" />
           <path d="M7 11v5" />
           <path d="M17 11v5" />
@@ -325,7 +325,7 @@ const brakingPct = Math.min(100, Math.max(0, brakingVal));
         <span class="truncate">Downforce</span>
       </div>
       <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-        <div class="h-full bg-amber-400 rounded-full transition-all" style={`width: ${car.stats.downforce}%`}></div>
+        <div class="h-full bg-white rounded-full transition-all" style={`width: ${car.stats.downforce}%`}></div>
       </div>
       <div class="w-10 text-right font-bold text-slate-200 shrink-0">
         {car.downforce.toFixed(2)}

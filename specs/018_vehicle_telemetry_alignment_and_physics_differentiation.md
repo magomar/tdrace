@@ -27,7 +27,7 @@ Every vehicle in TdRace is characterized across 6 distinct telemetry vectors, al
 | **3** | **Lateral Grip** | `Grip` | Neon Green (`#22c55e` / `#10b981`) | 🛞 **Apex Curve Vector**: Cornering arc with apex target dot and lateral adhesion vector. | Scales Pacejka Peak factor multiplier ($D$) on lateral tire slip curve ($F_y = D \cdot \sin(\dots)$). |
 | **4** | **Drift Agility** | `Agility` | Neon Magenta (`#e879f9` / `#a855f7`) | 🔀 **Chicane Slalom Flick**: S-curve chicane demonstrating rapid directional weight transfer. | Scales steering rack rate (`steer_speed`) and inverse yaw inertia ($I_z$). |
 | **5** | **Braking Force** | `Braking` | Neon Orange / Red (`#fb923c` / `#ef4444`) | 🛑 **Stop Sign**: Solid red disc with clean horizontal white bar. | Scales total caliper deceleration force (`max_brake_force`) based on brake package. |
-| **6** | **Aerodynamics** | `Aero` | Pure White / Amber (`#ffffff` / `#f59e0b`) | 🪽 **GT Downforce Wing**: High-efficiency rear wing foil with downward vertical pressure vectors. | Injects dynamic aerodynamic vertical loading ($F_{\text{downforce}} = 0.5 \cdot C_l \cdot A \cdot \rho \cdot v^2$). |
+| **6** | **Aerodynamics** | `Aero` | Pure White (`#ffffff`) | 🪽 **GT Downforce Wing**: High-efficiency rear wing foil with downward vertical pressure vectors. | Injects dynamic aerodynamic vertical loading ($F_{\text{downforce}} = 0.5 \cdot C_l \cdot A \cdot \rho \cdot v^2$). |
 
 ---
 
