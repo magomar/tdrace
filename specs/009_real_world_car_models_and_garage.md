@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Real-World Vehicle Rosters, Physics Balance & Interactive Garage"
 description: "Migration from prototypical archetypes to authentic real-world motorsport models across 5 modules and 25 categories, with BoP parity, dual-view 2D rendering, and interactive garage showroom."
-status: in_progress
+status: implemented
+verified: { by: "human:mario", at: "2026-09-23T11:04:00Z" }
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T14:15:00Z }
 ---
@@ -331,44 +332,44 @@ Target: All cars in a given category must achieve lap times within a **$\pm 0.35
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Full 5-module category and car navigation in garage**
-  - [ ] **Given** the player is in `GameState::Garage`
-  - [ ] **When** the player presses keys `1` through `5`
-  - [ ] **Then** the garage switches active module between GT, NASCAR, Rallycross, Extreme Off-Road, and Karting
-  - [ ] **When** the player presses `[Q]` or `[E]`
-  - [ ] **Then** the category cycles through the 5 tiers of that module
-  - [ ] **When** the player presses `[A]` or `[D]`
-  - [ ] **Then** the vehicle cycles through the authentic real-world models defined in this specification
+  - [x] **Given** the player is in `GameState::Garage`
+  - [x] **When** the player presses keys `1` through `5`
+  - [x] **Then** the garage switches active module between GT, NASCAR, Rallycross, Extreme Off-Road, and Karting
+  - [x] **When** the player presses `[Q]` or `[E]`
+  - [x] **Then** the category cycles through the 5 tiers of that module
+  - [x] **When** the player presses `[A]` or `[D]`
+  - [x] **Then** the vehicle cycles through the authentic real-world models defined in this specification
 
 - **Scenario: Dual-view inspection and turntable rotation**
-  - [ ] **Given** the player is inspecting a car in the Garage
-  - [ ] **When** the view mode is set to 2D Lateral View
-  - [ ] **Then** the car displays detailed side contours, spoke alloy rims, brake calipers, and polished floor reflections
-  - [ ] **When** the player presses `[TAB]`
-  - [ ] **Then** the view toggles to overhead Top-Down turntable view
-  - [ ] **When** the player holds `[LEFT]` or `[RIGHT]`
-  - [ ] **Then** the car rotates smoothly through 360 degrees
+  - [x] **Given** the player is inspecting a car in the Garage
+  - [x] **When** the view mode is set to 2D Lateral View
+  - [x] **Then** the car displays detailed side contours, spoke alloy rims, brake calipers, and polished floor reflections
+  - [x] **When** the player presses `[TAB]`
+  - [x] **Then** the view toggles to overhead Top-Down turntable view
+  - [x] **When** the player holds `[LEFT]` or `[RIGHT]`
+  - [x] **Then** the car rotates smoothly through 360 degrees
 
 - **Scenario: Engine rev sampler and brake rotor heat glow**
-  - [ ] **Given** the player is in the Garage Showroom
-  - [ ] **When** the player holds `[SPACE]` (or Gamepad Right Trigger)
-  - [ ] **Then** the engine audio revs dynamically to its authentic redline
-  - [ ] **And** the tachometer animates, exhaust backfire sparks emit, and the brake rotors visually heat up to an emissive orange glow
+  - [x] **Given** the player is in the Garage Showroom
+  - [x] **When** the player holds `[SPACE]` (or Gamepad Right Trigger)
+  - [x] **Then** the engine audio revs dynamically to its authentic redline
+  - [x] **And** the tachometer animates, exhaust backfire sparks emit, and the brake rotors visually heat up to an emissive orange glow
 
 - **Scenario: Balance of Performance parity in same category**
-  - [ ] **Given** a 4-car simulation in any category (e.g. GT4, GT3, Late Model, WRC Supercar)
-  - [ ] **When** driven across standard benchmark circuits
-  - [ ] **Then** lap times remain within a $\pm 0.35\,\text{s}$ BoP parity window
-  - [ ] **And** telemetry confirms distinct mechanical handling personalities (F/R weight bias, turn-in vs exit traction)
+  - [x] **Given** a 4-car simulation in any category (e.g. GT4, GT3, Late Model, WRC Supercar)
+  - [x] **When** driven across standard benchmark circuits
+  - [x] **Then** lap times remain within a $\pm 0.35\,\text{s}$ BoP parity window
+  - [x] **And** telemetry confirms distinct mechanical handling personalities (F/R weight bias, turn-in vs exit traction)
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Crates & Files Affected
-- `[ ]` [`crates/wheelbase/src/config.rs`](../crates/wheelbase/src/config.rs) — Parameter definitions for real-world car models and BoP adjustments.
-- `[ ]` `crates/tdrace-app/src/catalog/` — Master vehicle catalog split by module (`gt.rs`, `nascar.rs`, `rally.rs`, `offroad.rs`, `kart.rs`).
-- `[ ]` `crates/tdrace-app/src/render/lateral.rs` — 2D lateral side-profile vector renderer.
-- `[ ]` `crates/tdrace-app/src/render/car.rs` — Model-specific top-down silhouette rendering.
-- `[ ]` `crates/tdrace-app/src/ui/garage.rs` — `GameState::Garage` interactive showroom screen.
-- `[ ]` [`docs/engineering/screens_and_navigation.md`](../docs/engineering/screens_and_navigation.md) — Screen navigation architecture and shortcuts.
-- `[ ]` [`BACKLOG.md`](../BACKLOG.md) — Product backlog item 2.5.
+- `[x]` [`crates/wheelbase/src/config.rs`](../crates/wheelbase/src/config.rs) — Parameter definitions for real-world car models and BoP adjustments.
+- `[x]` `crates/tdrace-app/src/catalog/` — Master vehicle catalog split by module (`gt.rs`, `nascar.rs`, `rally.rs`, `offroad.rs`, `kart.rs`).
+- `[x]` `crates/tdrace-app/src/render/lateral.rs` — 2D lateral side-profile vector renderer.
+- `[x]` `crates/tdrace-app/src/render/car.rs` — Model-specific top-down silhouette rendering.
+- `[x]` `crates/tdrace-app/src/ui/garage.rs` — `GameState::Garage` interactive showroom screen.
+- `[x]` [`docs/engineering/screens_and_navigation.md`](../docs/engineering/screens_and_navigation.md) — Screen navigation architecture and shortcuts.
+- `[x]` [`BACKLOG.md`](../BACKLOG.md) — Product backlog item 2.5.

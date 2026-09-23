@@ -22,7 +22,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Karting Career Mode](../004_karting_career_mode.md)**: 5-tier grassroots karting, shifter, racing mower, and superkart career progression.
 
 ### Phase 2: Vehicle Roster Expansion & Garage Showroom (Priority: Medium)
-- `[/]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
+- `[x]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
 - `[x]` **[Vehicle Telemetry Alignment and Physics Differentiation](../018_vehicle_telemetry_alignment_and_physics_differentiation.md)**: 6-metric telemetry standardization with custom vector iconography and intra-category physics parameter differentiation.
 
 ### Phase 3: Game Asset Catalogue & Reference Portals (Priority: High)
