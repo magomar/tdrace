@@ -8,7 +8,7 @@ use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, Track, TrackCategory, TrackKind};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
-use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
+use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats, DrivingStyle};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
@@ -1847,6 +1847,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Max Hunter",
                 alias: "The Dominator",
                 bio: "4-time World Champion renowned for relentless pace, surgical overtakes, and unwavering consistency in all conditions.",
+                style: DrivingStyle::Aggressive,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(6),
                 profile: BotProfile {
@@ -1872,6 +1873,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Charles Laurent",
                 alias: "The Qualifying King",
                 bio: "Scuderia prodigy with unbelievable single-lap hot-lap qualifying pace and unmatched precision on street circuits.",
+                style: DrivingStyle::Smooth,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(2),
                 profile: BotProfile {
@@ -1897,6 +1899,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Lewis Vance",
                 alias: "The Master",
                 bio: "7-time World Champion with legendary wet-weather mastery, flawless tire preservation, and icy composure.",
+                style: DrivingStyle::Smooth,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(7),
                 profile: BotProfile {
@@ -1922,6 +1925,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Fernando Toro",
                 alias: "El Matador",
                 bio: "Relentless Spanish gladiator who wrestles ill-handling cars to the podium through sheer grit and racecraft.",
+                style: DrivingStyle::Tenacious,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(3),
                 profile: BotProfile {
@@ -1947,6 +1951,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "George Speed",
                 alias: "The Silver Bullet",
                 bio: "Analytical young British ace who capitalizes on strategy and executes millimeter-perfect overtakes into hairpins.",
+                style: DrivingStyle::Balanced,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(1),
                 profile: BotProfile {
@@ -1972,6 +1977,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Lando Vance",
                 alias: "Papaya Prodigy",
                 bio: "Twitch-reflex specialist with lightning high-speed chicane flicks and formidable wet-weather bravery.",
+                style: DrivingStyle::Bold,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(4),
                 profile: BotProfile {
@@ -1997,6 +2003,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Oscar Rocket",
                 alias: "Melbourne Missile",
                 bio: "Ultra-composed Australian sensation known for ice-cold nerve and textbook race craft on high-speed circuits.",
+                style: DrivingStyle::Calculating,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(5),
                 profile: BotProfile {
@@ -2022,6 +2029,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Carlos Sainzfield",
                 alias: "Smooth Operator",
                 bio: "Methodical Iberian racer who reads tire degradation with micro-precision, making strategic overtakes look effortless.",
+                style: DrivingStyle::Calculating,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(8),
                 profile: BotProfile {
@@ -2047,6 +2055,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Pierre Gaslyfield",
                 alias: "The Underdog",
                 bio: "Fiery underdog specialist whose daring late-braking passes through the chicane catch favorites off guard.",
+                style: DrivingStyle::Bold,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::new(
                     macroquad::color::Color::new(0.35, 0.38, 0.42, 1.0),
@@ -2076,6 +2085,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Esteban Connor",
                 alias: "The Sentinel",
                 bio: "Resolute defender who plants his machine on the apex line and refuses to concede an inch on narrow circuits.",
+                style: DrivingStyle::Tenacious,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::new(
                     macroquad::color::Color::new(0.08, 0.15, 0.45, 1.0),
@@ -2105,6 +2115,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Alexander Albonfield",
                 alias: "Apex Hunter",
                 bio: "Dynamic overtaker specializing in aggressive switchback cut-backs and high-speed outside line sweeps.",
+                style: DrivingStyle::Aggressive,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::new(
                     macroquad::color::Color::new(0.10, 0.38, 0.22, 1.0),
@@ -2134,6 +2145,7 @@ impl GameModule for GtWorldChallengeModule {
                 name: "Nico Hulkenstorm",
                 alias: "The Hulk",
                 bio: "Iron-willed endurance veteran whose rock-solid pace and zero-mistake discipline make him a relentless podium threat.",
+                style: DrivingStyle::Balanced,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::new(
                     macroquad::color::Color::new(0.98, 0.98, 0.98, 1.0),

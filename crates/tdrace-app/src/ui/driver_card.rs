@@ -157,17 +157,15 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     // --- Right Column: Driving Style & Operationalized Parameters ---
     scaler.draw_glass_card(col2_x, content_y, col_w, col_h, Color::new(0.06, 0.08, 0.12, 0.85), Palette::UI_CARD_BORDER, 1.2);
 
-    let (style, tier) = driver.classify_style_and_tier();
+    let style = driver.style;
 
     let mut right_y = content_y + scaler.s(22.0);
-    fonts.draw_ui_bold("DRIVING STYLE & COMPETENCE TIER", col2_x + scaler.s(16.0), right_y, scaler.font_s(14.0), Palette::NEON_GREEN);
+    fonts.draw_ui_bold("DRIVING STYLE & RACECRAFT", col2_x + scaler.s(16.0), right_y, scaler.font_s(14.0), Palette::NEON_GREEN);
     right_y += scaler.s(20.0);
 
-    // Style & Tier Badges
+    // Driving Style Badge
     let style_str = format!("STYLE: {}", style.display_name().to_uppercase());
-    let tier_str = format!("TIER: {}", tier.short_name().to_uppercase());
     fonts.draw_ui_bold(&style_str, col2_x + scaler.s(16.0), right_y, scaler.font_s(12.0), Palette::NEON_CYAN);
-    fonts.draw_ui_bold(&tier_str, col2_x + col_w * 0.5, right_y, scaler.font_s(12.0), Palette::NEON_GOLD);
     right_y += scaler.s(22.0);
 
     // Skill Stat Bars

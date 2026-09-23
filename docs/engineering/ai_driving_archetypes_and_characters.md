@@ -148,119 +148,119 @@ Legacy TOML series with `ai_character = "..."` seamlessly map to the orthogonal 
 
 ## 4. Handcrafted Driver Characters & Archetype Mapping
 
-Every driver character across all 6 motorsport modules is hand-tuned to embody one of the core archetypes while introducing unique parameter deltas matching their personal identity.
+Every driver character across all 6 motorsport modules (72 competitors in total) is hand-tuned to embody one of the 6 pure driving styles (`Smooth`, `Aggressive`, `Tenacious`, `Calculating`, `Bold`, `Balanced`), exactly 2 drivers per style in each module. Predefined characters carry no level/experience tier (`DriverTier` is decoupled from characters), ensuring that casual races, quick races, and multiplayer roster fillings operate cleanly without legacy fallbacks or artificial handicap tiers. Minor differences in parameters ensure that every racer feels distinct.
 
 ### 4.1 Classic Heritage Module (12 Drivers)
 
-| Driver | Dominant Archetype | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
-| :--- | :--- | :--- | :---: | :--- |
-| **Silvia Tanaka** | **`smooth`** | `lookahead: 0.40`, `brake: 1.02`, `speed: 1.02` | $0.92$ / $0.70$ / $0.98$ / $0.85$ | Former open-wheel champion whose surgical precision carves through chicanes. |
-| **Marco Rossi** | **`aggressive`** | `lookahead: 0.32`, `brake: 0.88`, `aggression: 0.95` | $0.96$ / $0.98$ / $0.75$ / $0.88$ | Wheel-to-wheel brawler braking at the absolute last millisecond into hairpins. |
-| **Kenji Sato** | **`bold`** | `steering_kd: 0.04`, `brake: 0.92`, `speed: 1.03` | $0.90$ / $0.88$ / $0.84$ / $0.72$ | Touge drift maestro executing controlled sideways slides around apexes. |
-| **Elena Frost** | **`calculating`** | `lookahead: 0.40`, `avoidance: 7.0`, `brake: 1.05` | $0.92$ / $0.65$ / $0.97$ / $0.92$ | Ice-cold circuit calculator who waits for mistakes and executes clean passes. |
-| **Jax Reed** | **`aggressive`** | `speed: 1.04`, `aggression: 0.90`, `brake: 0.95` | $0.94$ / $0.92$ / $0.80$ / $0.82$ | High-energy street racer diving deep into chicanes with sharp steering. |
-| **Leo Bianchi** | **`balanced`** | `lookahead: 0.38`, `speed: 1.00`, `brake: 1.04` | $0.88$ / $0.75$ / $0.88$ / $0.85$ | Karting prodigy with smooth inputs and adaptable multi-surface balance. |
-| **Viktor Sterling** | **`tenacious`** | `defense: 0.98`, `lookahead: 0.42`, `damping: 0.08` | $0.88$ / $0.80$ / $0.90$ / $0.98$ | Defends inside lines with an iron fist; virtually unpassable on corner entry. |
-| **Maya Lin** | **`fast`** | `speed: 1.04`, `precision: 0.95`, `avoidance: 6.2` | $0.95$ / $0.80$ / $0.95$ / $0.85$ | High-downforce specialist finding extra grip where other drivers slip. |
-| **Damon Clark** | **`aggressive`** | `aggression: 0.92`, `brake: 0.94`, `steering_kp: 2.7` | $0.93$ / $0.94$ / $0.78$ / $0.84$ | Muscle-car heavy footer relying on horsepower and fearless corner charges. |
-| **Chloe Laurent** | **`smooth`** | `precision: 0.96`, `speed: 1.02`, `lookahead: 0.40` | $0.91$ / $0.72$ / $0.96$ / $0.88$ | Endurance racer maintaining rhythmic, momentum-preserving racing lines. |
-| **Hiroshi Takahashi** | **`fast`** | `speed: 1.05`, `brake: 0.98`, `steering_kp: 2.8` | $0.97$ / $0.88$ / $0.94$ / $0.86$ | Time-attack record setter pushing optimal tire traction on high-speed sweeps. |
-| **Zane Holland** | **`bold`** | `steering_kd: 0.04`, `brake: 0.89`, `aggression: 0.92` | $0.91$ / $0.90$ / $0.76$ / $0.74$ | Renegade stunt driver sliding sideways through transitions and hairpins. |
+| Driver | Driving Style | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
+| :--- | :---: | :--- | :---: | :--- |
+| **Silvia Tanaka** | **`Smooth`** | `lookahead: 0.40`, `brake: 1.02`, `speed: 1.02` | $0.96$ / $0.72$ / $0.98$ / $0.88$ | Former open-wheel champion whose surgical precision carves through chicanes. |
+| **Marco Rossi** | **`Aggressive`** | `lookahead: 0.32`, `brake: 0.88`, `aggression: 0.95` | $0.98$ / $0.98$ / $0.92$ / $0.88$ | Wheel-to-wheel brawler braking at the absolute last millisecond into hairpins. |
+| **Kenji Sato** | **`Bold`** | `steering_kd: 0.04`, `brake: 0.92`, `speed: 1.03` | $0.95$ / $0.92$ / $0.94$ / $0.82$ | Touge drift maestro executing controlled sideways slides around apexes. |
+| **Elena Frost** | **`Calculating`** | `lookahead: 0.40`, `avoidance: 7.0`, `brake: 1.05` | $0.96$ / $0.76$ / $0.98$ / $0.92$ | Ice-cold circuit calculator who waits for mistakes and executes clean passes. |
+| **Jax Reed** | **`Aggressive`** | `speed: 1.04`, `aggression: 0.92`, `brake: 0.95` | $0.97$ / $0.95$ / $0.90$ / $0.86$ | High-energy street racer diving deep into chicanes with sharp steering. |
+| **Leo Bianchi** | **`Balanced`** | `lookahead: 0.38`, `speed: 1.00`, `brake: 1.04` | $0.94$ / $0.85$ / $0.94$ / $0.90$ | Karting prodigy with smooth inputs and adaptable multi-surface balance. |
+| **Viktor Sterling** | **`Tenacious`** | `defense: 0.98`, `lookahead: 0.42`, `damping: 0.08` | $0.94$ / $0.88$ / $0.94$ / $0.98$ | Defends inside lines with an iron fist; virtually unpassable on corner entry. |
+| **Maya Lin** | **`Smooth`** | `speed: 1.04`, `precision: 0.98`, `avoidance: 6.2` | $0.97$ / $0.80$ / $0.98$ / $0.88$ | High-downforce specialist finding extra grip where other drivers slip. |
+| **Damon Clark** | **`Tenacious`** | `aggression: 0.92`, `brake: 0.98`, `steering_kp: 2.7` | $0.95$ / $0.92$ / $0.92$ / $0.95$ | Muscle-car heavy footer relying on horsepower and stubborn defense. |
+| **Chloe Laurent** | **`Calculating`** | `precision: 0.98`, `speed: 1.02`, `lookahead: 0.40` | $0.95$ / $0.80$ / $0.97$ / $0.92$ | Endurance racer maintaining rhythmic, calculated pacing and race strategy. |
+| **Hiroshi Takahashi** | **`Balanced`** | `speed: 1.03`, `brake: 1.00`, `steering_kp: 2.8` | $0.96$ / $0.88$ / $0.95$ / $0.90$ | Time-attack record setter balancing optimal tire traction on high-speed sweeps. |
+| **Zane Holland** | **`Bold`** | `steering_kd: 0.04`, `brake: 0.89`, `aggression: 0.94` | $0.95$ / $0.94$ / $0.88$ / $0.82$ | Renegade stunt driver sliding sideways through transitions and hairpins. |
 
 ---
 
 ### 4.2 GT World Challenge & Endurance (12 Drivers)
 
-| Driver | Dominant Archetype | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
-| :--- | :--- | :--- | :---: | :--- |
-| **Max Hunter** | **`aggressive`** | `speed: 1.05`, `aggression: 0.88`, `avoidance: 6.0` | $0.99$ / $0.92$ / $0.98$ / $0.95$ | 4-time champion renowned for relentless pace and surgical late-braking overtakes. |
-| **Charles Laurent** | **`fast`** | `speed: 1.06`, `lookahead: 0.38`, `brake: 0.98` | $0.98$ / $0.86$ / $0.97$ / $0.90$ | Scuderia virtuoso with unmatched single-lap hot-lap qualifying pace. |
-| **Fernando Toro** | **`tenacious`** | `defense: 0.97`, `lookahead: 0.40`, `aggression: 0.90` | $0.96$ / $0.90$ / $0.96$ / $0.97$ | Relentless defending veteran who places his car to make passing impossible. |
-| **Sophia Becker** | **`calculating`** | `precision: 0.99`, `lookahead: 0.41`, `brake: 1.02` | $0.97$ / $0.82$ / $0.99$ / $0.94$ | German endurance master calculating tire degradation and executing textbook lines. |
-| **Liam Vance** | **`strategic`** | `speed: 1.03`, `aggression: 0.85`, `avoidance: 5.8` | $0.96$ / $0.88$ / $0.95$ / $0.92$ | Master of slipstream pack racing, fuel management, and late-race charges. |
-| **George Speed** | **`balanced`** | `speed: 1.02`, `brake: 1.01`, `precision: 0.95` | $0.95$ / $0.86$ / $0.95$ / $0.93$ | Methodical British racer renowned for consistency across wet and dry tracks. |
-| **Takumi Sato** | **`fast`** | `speed: 1.05`, `steering_kp: 2.8`, `brake: 0.97` | $0.98$ / $0.90$ / $0.96$ / $0.90$ | Super GT champion with sensational corner entry speed and tire management. |
-| **Lewis Vance** | **`smooth`** | `speed: 1.05`, `precision: 0.99`, `avoidance: 6.2` | $0.98$ / $0.86$ / $0.99$ / $0.94$ | Multi-title legend whose silky smooth lines reduce tire scrub to zero. |
-| **Lando Vance** | **`calculating`** | `lookahead: 0.39`, `speed: 1.04`, `precision: 0.97` | $0.97$ / $0.85$ / $0.97$ / $0.92$ | Tactical simulator specialist using predictive lines to maintain momentum. |
-| **Oscar Rocket** | **`bold`** | `speed: 1.04`, `steering_kp: 2.7`, `brake: 0.95` | $0.96$ / $0.89$ / $0.95$ / $0.90$ | Ice-calm young star fearless in high-speed sweeps like Eau Rouge and 130R. |
-| **Carlos Wolf** | **`aggressive`** | `speed: 1.04`, `aggression: 0.92`, `brake: 0.96` | $0.96$ / $0.92$ / $0.94$ / $0.93$ | Hard-charging fighter who forces rivals onto dirty track lines. |
-| **Pierre Gascon** | **`strategic`** | `speed: 1.03`, `avoidance: 5.9`, `precision: 0.94` | $0.95$ / $0.88$ / $0.94$ / $0.91$ | Opportunistic racer capitalizing on midfield skirmishes and safety car restarts. |
+| Driver | Driving Style | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
+| :--- | :---: | :--- | :---: | :--- |
+| **Max Hunter** | **`Aggressive`** | `speed: 1.05`, `aggression: 0.88`, `avoidance: 6.0` | $0.99$ / $0.92$ / $0.98$ / $0.95$ | 4-time champion renowned for relentless pace and surgical late-braking overtakes. |
+| **Charles Laurent** | **`Smooth`** | `speed: 1.06`, `lookahead: 0.38`, `brake: 0.98` | $0.98$ / $0.86$ / $0.97$ / $0.90$ | Scuderia virtuoso with unmatched single-lap hot-lap qualifying pace. |
+| **Fernando Toro** | **`Tenacious`** | `defense: 0.97`, `lookahead: 0.40`, `aggression: 0.90` | $0.96$ / $0.90$ / $0.96$ / $0.97$ | Relentless defending veteran who places his car to make passing impossible. |
+| **Sophia Becker** | **`Calculating`** | `precision: 0.99`, `lookahead: 0.41`, `brake: 1.02` | $0.97$ / $0.82$ / $0.99$ / $0.94$ | German endurance master calculating tire degradation and executing textbook lines. |
+| **Liam Vance** | **`Calculating`** | `speed: 1.03`, `aggression: 0.85`, `avoidance: 5.8` | $0.96$ / $0.88$ / $0.95$ / $0.92$ | Master of slipstream pack racing, fuel management, and late-race charges. |
+| **George Speed** | **`Balanced`** | `speed: 1.02`, `brake: 1.01`, `precision: 0.95` | $0.95$ / $0.86$ / $0.95$ / $0.93$ | Methodical British racer renowned for consistency across wet and dry tracks. |
+| **Takumi Sato** | **`Smooth`** | `speed: 1.05`, `steering_kp: 2.8`, `brake: 0.97` | $0.98$ / $0.90$ / $0.96$ / $0.90$ | Super GT champion with sensational corner entry speed and tire management. |
+| **Lewis Vance** | **`Tenacious`** | `speed: 1.05`, `precision: 0.99`, `avoidance: 6.2` | $0.98$ / $0.86$ / $0.99$ / $0.94$ | Multi-title legend whose unyielding positioning and racecraft fend off all rivals. |
+| **Lando Vance** | **`Balanced`** | `lookahead: 0.39`, `speed: 1.04`, `precision: 0.97` | $0.97$ / $0.85$ / $0.97$ / $0.92$ | Versatile all-round simulator specialist using adaptive lines to maintain momentum. |
+| **Oscar Rocket** | **`Bold`** | `speed: 1.04`, `steering_kp: 2.7`, `brake: 0.95` | $0.96$ / $0.89$ / $0.95$ / $0.90$ | Ice-calm young star fearless in high-speed sweeps like Eau Rouge and 130R. |
+| **Carlos Wolf** | **`Aggressive`** | `speed: 1.04`, `aggression: 0.92`, `brake: 0.96` | $0.96$ / $0.92$ / $0.94$ / $0.93$ | Hard-charging fighter who forces rivals onto dirty track lines. |
+| **Pierre Gascon** | **`Bold`** | `speed: 1.03`, `avoidance: 5.9`, `precision: 0.94` | $0.95$ / $0.88$ / $0.94$ / $0.91$ | Audacious overtaker making daring lunges during restarts. |
 
 ---
 
 ### 4.3 NASCAR Stock Car & Oval (12 Drivers)
 
-| Driver | Dominant Archetype | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
-| :--- | :--- | :--- | :---: | :--- |
-| **Dale Vance** | **`aggressive`** | `aggression: 0.98`, `avoidance: 4.8`, `brake: 0.95` | $0.98$ / $0.98$ / $0.93$ / $0.96$ | Feared black #3 legend. Master of bumper taps, draft locks, and intimidation. |
-| **Chase Gordon** | **`strategic`** | `lookahead: 0.38`, `precision: 0.97`, `brake: 0.99` | $0.98$ / $0.88$ / $0.97$ / $0.91$ | Aerodynamic drafting master executing lethal slingshot overtakes. |
-| **Richard Pettyfield** | **`smooth`** | `defense: 0.98`, `precision: 0.96`, `lookahead: 0.39`| $0.96$ / $0.89$ / $0.96$ / $0.98$ | 200-win patriarch running the high line with unmatched pack defense. |
-| **Rowdy Busch** | **`aggressive`** | `avoidance: 4.6`, `aggression: 0.97`, `brake: 0.94` | $0.97$ / $0.97$ / $0.90$ / $0.92$ | Raw aggression and divebombs into turn 1 in superspeedway shootouts. |
-| **Jimmie Johnson** | **`calculating`** | `precision: 0.99`, `lookahead: 0.40`, `brake: 1.01` | $0.96$ / $0.86$ / $0.99$ / $0.95$ | Seven-time champion renowned for surgical consistency and tire preservation. |
-| **Tony Stewart** | **`bold`** | `avoidance: 4.9`, `steering_kp: 2.8`, `brake: 0.96` | $0.96$ / $0.95$ / $0.94$ / $0.93$ | Dirt track and short-track brawler sliding the high line at Bristol. |
-| **Bobby Allison** | **`tenacious`** | `defense: 0.98`, `precision: 0.95`, `lookahead: 0.41`| $0.95$ / $0.90$ / $0.95$ / $0.98$ | Alabama Gang leader with nerves of steel in 3-wide door-to-door packs. |
-| **Cale Yarborough** | **`aggressive`** | `aggression: 0.96`, `avoidance: 4.8`, `speed: 1.04` | $0.97$ / $0.96$ / $0.92$ / $0.93$ | Relentless superspeedway bulldog who never lifts on high-bank entries. |
-| **Darrell Waltrip** | **`strategic`** | `speed: 1.03`, `precision: 0.95`, `lookahead: 0.38` | $0.96$ / $0.92$ / $0.95$ / $0.94$ | Master tactician executing the "vortex" draft move on short tracks. |
-| **Bill Elliott** | **`fast`** | `speed: 1.06`, `lookahead: 0.36`, `brake: 0.98` | $0.99$ / $0.88$ / $0.96$ / $0.91$ | Record-holder for fastest qualifying laps ever turned at Talladega. |
-| **Rusty Wallace** | **`tenacious`** | `aggression: 0.94`, `defense: 0.96`, `steering: 2.8` | $0.95$ / $0.94$ / $0.93$ / $0.96$ | Short-track master muscling through traffic on tight bullrings. |
-| **Mark Martin** | **`smooth`** | `precision: 0.99`, `brake: 1.02`, `lookahead: 0.41` | $0.95$ / $0.82$ / $0.99$ / $0.95$ | Cleanest racer in stock car history with textbook corner transitions. |
+| Driver | Driving Style | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
+| :--- | :---: | :--- | :---: | :--- |
+| **Dale Vance** | **`Aggressive`** | `aggression: 0.98`, `avoidance: 4.8`, `brake: 0.95` | $0.98$ / $0.98$ / $0.93$ / $0.96$ | Feared black #3 legend. Master of bumper taps, draft locks, and intimidation. |
+| **Chase Gordon** | **`Calculating`** | `lookahead: 0.38`, `precision: 0.97`, `brake: 0.99` | $0.98$ / $0.88$ / $0.97$ / $0.91$ | Precision road course virtuoso and aerodynamic drafting master. |
+| **Richard Pettyfield** | **`Smooth`** | `defense: 0.98`, `precision: 0.96`, `lookahead: 0.39` | $0.96$ / $0.89$ / $0.96$ / $0.98$ | 200-win patriarch running the high line with unmatched pack defense. |
+| **Rowdy Busch** | **`Aggressive`** | `avoidance: 4.6`, `aggression: 0.97`, `brake: 0.94` | $0.97$ / $0.97$ / $0.90$ / $0.92$ | Raw aggression and divebombs into turn 1 in superspeedway shootouts. |
+| **Jimmie Johnson** | **`Calculating`** | `precision: 0.99`, `lookahead: 0.40`, `brake: 1.01` | $0.96$ / $0.86$ / $0.99$ / $0.95$ | Seven-time champion renowned for surgical consistency and tire preservation. |
+| **Tony Stewart** | **`Bold`** | `avoidance: 4.9`, `steering_kp: 2.8`, `brake: 0.96` | $0.96$ / $0.95$ / $0.94$ / $0.93$ | Dirt track and short-track brawler sliding the high line at Bristol. |
+| **Bobby Allison** | **`Tenacious`** | `defense: 0.94`, `precision: 0.95`, `lookahead: 0.37` | $0.95$ / $0.91$ / $0.95$ / $0.94$ | Alabama Gang leader with nerves of steel in 3-wide door-to-door packs. |
+| **Bubba Wallace** | **`Balanced`** | `lookahead: 0.36`, `speed: 1.02`, `brake: 0.98` | $0.95$ / $0.93$ / $0.93$ / $0.92$ | Electrifying superspeedway ace using draft pushes to catapult into the lead. |
+| **Joey Logano** | **`Balanced`** | `lookahead: 0.35`, `speed: 1.03`, `defense: 0.97` | $0.96$ / $0.96$ / $0.94$ / $0.97$ | Two-time Cup champion famed for ruthless blocking maneuvers and restart mastery. |
+| **Bill Elliott** | **`Smooth`** | `speed: 1.04`, `precision: 0.97`, `brake: 1.02` | $0.98$ / $0.84$ / $0.97$ / $0.91$ | Record-holder for fastest qualifying speed ever at Talladega (212.809 mph). |
+| **Cale Yarborough** | **`Bold`** | `aggression: 0.96`, `avoidance: 5.0`, `speed: 1.03` | $0.96$ / $0.96$ / $0.92$ / $0.95$ | Tough-as-nails charger who battles wheel-to-wheel to the checkered flag. |
+| **Rusty Wallace** | **`Tenacious`** | `aggression: 0.93`, `defense: 0.94`, `steering: 2.7` | $0.95$ / $0.93$ / $0.95$ / $0.94$ | Aggressive short-track and road course warrior with high-downforce braking mastery. |
 
 ---
 
 ### 4.4 Rallycross & All-Terrain (12 Drivers)
 
-| Driver | Dominant Archetype | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
-| :--- | :--- | :--- | :---: | :--- |
-| **Johan Vance** | **`calculating`** | `speed: 1.05`, `precision: 0.98`, `lookahead: 0.38` | $0.99$ / $0.92$ / $0.98$ / $0.95$ | Multi-time champion dominating mixed surfaces with surgical joker lap timing. |
-| **Mattias Storm** | **`aggressive`** | `speed: 1.05`, `avoidance: 4.8`, `steering_kp: 2.9` | $0.98$ / $0.96$ / $0.94$ / $0.92$ | Thunderous launches and aggressive dirt slides on rallycross circuits. |
-| **Timmy Hansenfield** | **`strategic`** | `lookahead: 0.39`, `precision: 0.96`, `brake: 0.99` | $0.97$ / $0.91$ / $0.96$ / $0.94$ | Tactical family prodigy finding clean air and alternative traction lanes. |
-| **Kevin Hansenfield** | **`tenacious`** | `defense: 0.96`, `aggression: 0.94`, `avoidance: 5.0`| $0.96$ / $0.94$ / $0.93$ / $0.96$ | Gutsy fighter defending the inner apex on loose gravel and mud. |
-| **Niclas Grönholm** | **`fast`** | `speed: 1.06`, `lookahead: 0.36`, `brake: 0.97` | $0.98$ / $0.90$ / $0.95$ / $0.91$ | Pure Finnish speed and aggressive Scandinavian flick corner entries. |
-| **Anton Marklund** | **`balanced`** | `lookahead: 0.40`, `speed: 1.03`, `brake: 1.01` | $0.95$ / $0.88$ / $0.95$ / $0.92$ | Smooth transitions between asphalt curbing and deep dirt ruts. |
-| **Timo Scheider** | **`smooth`** | `precision: 0.97`, `lookahead: 0.41`, `brake: 1.02` | $0.95$ / $0.85$ / $0.97$ / $0.94$ | DTM touring car champion bringing precise tarmac racing lines to dirt tracks. |
-| **Andreas Bakkerud** | **`bold`** | `steering_kd: 0.05`, `aggression: 0.95`, `brake: 0.94`| $0.96$ / $0.95$ / $0.90$ / $0.88$ | Fan-favorite drift specialist executing massive sideways entries. |
-| **Petter Solberg** | **`bold`** | `speed: 1.05`, `aggression: 0.96`, `steering_kp: 2.9`| $0.98$ / $0.96$ / $0.92$ / $0.89$ | "Hollywood" entertainer driving flat-out with maximum commitment on gravel. |
-| **Sébastien Loeb** | **`smooth`** | `precision: 1.00`, `speed: 1.06`, `lookahead: 0.40` | $0.99$ / $0.88$ / $1.00$ / $0.96$ | 9-time world champion with peerless geometry and zero wasted slip. |
-| **Reinis Nitišs** | **`strategic`** | `speed: 1.03`, `avoidance: 5.4`, `brake: 0.99` | $0.94$ / $0.89$ / $0.93$ / $0.91$ | Super1600 wunderkind using clean passing lines to beat higher-spec cars. |
-| **Ken Block** | **`bold`** | `steering_kd: 0.04`, `speed: 1.05`, `aggression: 0.97`| $0.97$ / $0.97$ / $0.88$ / $0.82$ | Gymkhana pioneer converting every turn into a high-horsepower tire-smoke slide. |
+| Driver | Driving Style | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
+| :--- | :---: | :--- | :---: | :--- |
+| **Johan Vance** | **`Calculating`** | `speed: 1.05`, `precision: 0.98`, `lookahead: 0.38` | $0.99$ / $0.92$ / $0.98$ / $0.95$ | Multi-time champion dominating mixed surfaces with surgical joker lap timing. |
+| **Mattias Storm** | **`Aggressive`** | `speed: 1.04`, `avoidance: 5.0`, `steering_kp: 2.9` | $0.98$ / $0.94$ / $0.96$ / $0.92$ | Thunderous launches and aggressive dirt slides on rallycross circuits. |
+| **Timmy Hansenfield** | **`Calculating`** | `lookahead: 0.37`, `precision: 0.97`, `brake: 1.00` | $0.97$ / $0.90$ / $0.97$ / $0.93$ | World RX champion renowned for surgical overtaking and momentum conservation. |
+| **Kevin Hansenfield** | **`Tenacious`** | `defense: 0.89`, `aggression: 0.95`, `avoidance: 5.1` | $0.96$ / $0.95$ / $0.93$ / $0.89$ | Junior Euro RX prodigy with unyielding Scandinavian flicks and rapid reflexes. |
+| **Niclas Gron** | **`Balanced`** | `lookahead: 0.36`, `speed: 1.03`, `brake: 0.99` | $0.96$ / $0.91$ / $0.95$ / $0.91$ | Second-generation Finnish master unyielding on fast gravel sweeps and high jumps. |
+| **Anton Mark** | **`Tenacious`** | `defense: 0.96`, `speed: 1.02`, `brake: 0.98` | $0.95$ / $0.93$ / $0.92$ / $0.96$ | Euro RX champion celebrated for ruthless defensive lines and hairpin braking. |
+| **Timo Scheider** | **`Smooth`** | `precision: 0.96`, `lookahead: 0.39`, `brake: 1.01` | $0.94$ / $0.88$ / $0.96$ / $0.94$ | Two-time touring car champion bringing precise tarmac composure to dirt tracks. |
+| **Sebastien Loebfield** | **`Smooth`** | `precision: 0.98`, `speed: 1.05`, `lookahead: 0.38` | $0.98$ / $0.93$ / $0.98$ / $0.95$ | Nine-time rally champion with peerless geometry and car control on any surface. |
+| **Petter Solbergfield** | **`Bold`** | `speed: 1.04`, `aggression: 0.96`, `steering_kp: 2.8` | $0.97$ / $0.96$ / $0.94$ / $0.91$ | "Hollywood" showman whose blistering sideways slides ignite every stadium. |
+| **Ken Blaster** | **`Bold`** | `steering_kd: 0.07`, `speed: 1.04`, `aggression: 0.97` | $0.96$ / $0.97$ / $0.93$ / $0.90$ | Stunt drifting maestro famous for smoke-filled AWD slides and fearless jumps. |
+| **Andreas Bakkerud** | **`Aggressive`** | `speed: 1.03`, `aggression: 0.94`, `brake: 0.97` | $0.96$ / $0.94$ / $0.95$ / $0.92$ | Norwegian powerhouse with aggressive apex-hugging lines and explosive launches. |
+| **Reinis Nitissfield** | **`Balanced`** | `speed: 1.03`, `avoidance: 5.2`, `brake: 0.99` | $0.95$ / $0.91$ / $0.96$ / $0.93$ | Youngest Euro RX champion in history with cold-blooded calculated overtakes. |
 
 ---
 
 ### 4.5 Karting & Micro-Racers (12 Drivers)
 
-| Driver | Dominant Archetype | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
-| :--- | :--- | :--- | :---: | :--- |
-| **Marco Armani** | **`aggressive`** | `steering_kp: 3.2`, `avoidance: 4.4`, `speed: 1.05` | $0.98$ / $0.92$ / $0.96$ / $0.92$ | Factory prodigy whose aggressive turn-in dominates junior sprint karting. |
-| **Lucas Vance** | **`strategic`** | `lookahead: 0.32`, `precision: 0.98`, `brake: 0.99` | $0.97$ / $0.86$ / $0.98$ / $0.94$ | "The Professor" calculating slipstream drafts and tire scrub through chicanes. |
-| **Alex Rossi** | **`bold`** | `steering_kd: 0.05`, `avoidance: 4.2`, `brake: 0.96` | $0.96$ / $0.94$ / $0.92$ / $0.88$ | Birel ART ace leaping over apex curbs and fighting tooth-and-nail in hairpins. |
-| **Sofia Lind** | **`smooth`** | `precision: 0.99`, `lookahead: 0.33`, `brake: 1.00` | $0.96$ / $0.84$ / $0.99$ / $0.93$ | Swedish master with whisper-smooth steering inputs that keep minimum apex speed high. |
-| **Finn Korhonen** | **`tenacious`** | `defense: 0.97`, `aggression: 0.90`, `damping: 0.07`| $0.95$ / $0.90$ / $0.94$ / $0.97$ | Flying Finn who shuts down inside passes with ruthless defensive kart placement. |
-| **Leo Dupont** | **`calculating`** | `lookahead: 0.33`, `speed: 1.03`, `avoidance: 4.8` | $0.94$ / $0.82$ / $0.96$ / $0.91$ | European cadet champion calculating passing windows two turns in advance. |
-| **Mateo Silva** | **`bold`** | `avoidance: 4.3`, `steering_kp: 3.3`, `brake: 0.95` | $0.95$ / $0.93$ / $0.90$ / $0.86$ | South American shifter kart specialist lunging into hairpins with trail-braking. |
-| **Kimi Raikkonen Jr**| **`smooth`** | `precision: 0.98`, `speed: 1.06`, `lookahead: 0.32` | $0.98$ / $0.85$ / $0.98$ / $0.92$ | Ice-calm karting pilot who never speaks and never makes an unforced error. |
-| **Lewis Hamilton Jr**| **`fast`** | `speed: 1.07`, `brake: 0.97`, `steering_kp: 3.4` | $0.99$ / $0.90$ / $0.97$ / $0.91$ | SuperOne legend charging from the back of the grid in wet downpours. |
-| **Max Verstappen Jr**| **`aggressive`** | `aggression: 0.98`, `avoidance: 4.0`, `speed: 1.07` | $0.99$ / $0.98$ / $0.96$ / $0.95$ | World KZ champion with relentless wheel-banging overtakes into turn 1. |
-| **Lando Norris Jr** | **`calculating`** | `lookahead: 0.34`, `precision: 0.97`, `brake: 0.99` | $0.96$ / $0.84$ / $0.97$ / $0.92$ | World KF champion finding unorthodox high-grip outer lines on green tracks. |
-| **Charles Leclerc Jr**| **`fast`** | `speed: 1.06`, `precision: 0.98`, `brake: 0.98` | $0.98$ / $0.88$ / $0.98$ / $0.90$ | Monaco cadet maestro setting blistering qualifying laps around Lonato. |
+| Driver | Driving Style | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
+| :--- | :---: | :--- | :---: | :--- |
+| **Marco Armani** | **`Aggressive`** | `steering_kp: 3.2`, `avoidance: 4.4`, `speed: 1.05` | $0.98$ / $0.92$ / $0.96$ / $0.92$ | Tony Kart factory prodigy whose aggressive turn-in dominates cadet karting. |
+| **Lucas Vance** | **`Calculating`** | `lookahead: 0.32`, `precision: 0.98`, `brake: 1.00` | $0.97$ / $0.86$ / $0.98$ / $0.94$ | "The Professor" calculating slipstream drafts and tire scrub through chicanes. |
+| **Alex Rossi** | **`Bold`** | `steering_kp: 3.1`, `avoidance: 4.6`, `brake: 0.99` | $0.97$ / $0.94$ / $0.94$ / $0.90$ | Birel ART ace leaping over apex curbs and fighting tooth-and-nail in hairpins. |
+| **Sofia Lind** | **`Smooth`** | `precision: 0.99`, `lookahead: 0.33`, `brake: 1.01` | $0.96$ / $0.78$ / $0.99$ / $0.91$ | Kosmic Racing prodigy with unmatched qualifying consistency and apex clipping. |
+| **Finn Korhonen** | **`Tenacious`** | `defense: 0.89`, `aggression: 0.88`, `steering_kp: 3.0` | $0.96$ / $0.88$ / $0.95$ / $0.89$ | Sodi Kart talent who carries high corner speed and defends firmly in damp weather. |
+| **Leo Dupont** | **`Calculating`** | `lookahead: 0.32`, `speed: 1.02`, `avoidance: 4.8` | $0.95$ / $0.84$ / $0.96$ / $0.93$ | Energy Corse tactical racer stalking rivals and pouncing with instant acceleration. |
+| **Mateo Silva** | **`Bold`** | `avoidance: 4.6`, `steering_kp: 2.9`, `brake: 0.99` | $0.95$ / $0.90$ / $0.93$ / $0.90$ | Parolin Motorsport racer known for lightning reflexes and daring outside passes. |
+| **Dante Moretti** | **`Aggressive`** | `speed: 1.03`, `steering_kp: 3.1`, `aggression: 0.93` | $0.96$ / $0.93$ / $0.94$ / $0.91$ | Italian junior prodigy with aggressive curb-hopping lines and tire preservation. |
+| **Marta Santos** | **`Tenacious`** | `defense: 0.93`, `precision: 0.97`, `brake: 1.00` | $0.96$ / $0.89$ / $0.97$ / $0.93$ | Spanish kart champion known for razor-sharp late braking and defensive placement. |
+| **Kenzo Yamamoto** | **`Smooth`** | `precision: 0.98`, `speed: 1.03`, `lookahead: 0.33` | $0.95$ / $0.82$ / $0.98$ / $0.94$ | Suzuka kart specialist with silky smooth steering inputs and minimal scrub. |
+| **Liam Callaghan** | **`Balanced`** | `speed: 1.02`, `steering_kp: 3.1`, `aggression: 0.95` | $0.95$ / $0.95$ / $0.92$ / $0.92$ | Irish veteran who thrives in tight chicanes and high-contact hairpins. |
+| **Charlie Webb** | **`Balanced`** | `speed: 1.02`, `precision: 0.96`, `avoidance: 4.8` | $0.94$ / $0.87$ / $0.96$ / $0.92$ | British Superkart contender known for explosive acceleration out of slow corners. |
 
 ---
 
 ### 4.6 Extreme Off-Road & Stunt Arenas (12 Drivers)
 
-| Driver | Dominant Archetype | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
-| :--- | :--- | :--- | :---: | :--- |
-| **Wyatt Cole** | **`bold`** | `speed: 1.04`, `steering_kd: 0.05`, `brake: 0.96` | $0.97$ / $0.94$ / $0.90$ / $0.88$ | "Dust Devil" jumping sand dunes and riding berm walls with throttle wide open. |
-| **Jaxson Rivera** | **`fast`** | `speed: 1.05`, `precision: 0.96`, `avoidance: 5.5` | $0.98$ / $0.92$ / $0.96$ / $0.92$ | Baja 1000 champion reading whoops and rough washboards at high velocity. |
-| **Astrid Lindholm** | **`smooth`** | `precision: 0.99`, `lookahead: 0.40`, `brake: 1.02` | $0.95$ / $0.88$ / $0.99$ / $0.94$ | "Ice Queen" executing pinpoint drift transitions across frozen lakes and snowbanks. |
-| **Bubba Beauregard** | **`tenacious`** | `defense: 0.98`, `avoidance: 4.8`, `damping: 0.08` | $0.96$ / $0.96$ / $0.91$ / $0.98$ | Deep bayou mud racer who bullies rivals in ruts with heavy 4x4 torque. |
-| **Travis McGrath** | **`bold`** | `steering_kd: 0.04`, `avoidance: 4.6`, `brake: 0.94` | $0.96$ / $0.96$ / $0.88$ / $0.85$ | Freestyle motocross & monster truck star airing out jumps and doing donuts. |
-| **Roxie Vance** | **`calculating`** | `lookahead: 0.40`, `precision: 0.97`, `brake: 1.02` | $0.94$ / $0.86$ / $0.97$ / $0.93$ | Rock-crawling engineer picking smooth technical lines through boulders. |
-| **Sven Lindqvist** | **`tenacious`** | `defense: 0.97`, `damping: 0.09`, `speed: 1.02` | $0.94$ / $0.90$ / $0.95$ / $0.97$ | Arctic endurance veteran unbothered by blizzards and sub-zero whiteouts. |
-| **Colton Herta Offroad**| **`fast`** | `speed: 1.06`, `steering_kp: 3.0`, `brake: 0.97` | $0.98$ / $0.93$ / $0.94$ / $0.90$ | Stadium Super Truck ace flying over metal ramps with throttle pinned. |
-| **Robby Gordon** | **`aggressive`** | `aggression: 0.98`, `avoidance: 4.5`, `speed: 1.06` | $0.99$ / $0.98$ / $0.92$ / $0.94$ | Off-road royalty famous for 3-wheeling through stadium corners. |
-| **Bryce Menzies** | **`smooth`** | `precision: 0.98`, `speed: 1.05`, `lookahead: 0.39` | $0.98$ / $0.90$ / $0.98$ / $0.93$ | Trophy truck record-setter skimming across desert whoops with liquid poise. |
-| **Dennis Anderson** | **`bold`** | `speed: 1.05`, `avoidance: 4.2`, `steering_kd: 0.04` | $0.97$ / $0.98$ / $0.86$ / $0.88$ | Creator of the legendary Grave Digger, crushing cars and defying gravity. |
-| **Tom Meents** | **`aggressive`** | `aggression: 0.98`, `speed: 1.05`, `steering_kp: 3.1` | $0.98$ / $0.98$ / $0.88$ / $0.86$ | Maximum Destruction icon executing impossible backflips and wall rebounds. |
+| Driver | Driving Style | Hand-Tuned Profile Highlights | Hand-Tuned Stats (Spd / Agg / Prc / Def) | Tactical Lore & Driving Specialty |
+| :--- | :---: | :--- | :---: | :--- |
+| **Wyatt Cole** | **`Bold`** | `speed: 1.04`, `steering_kp: 2.8`, `brake: 0.98` | $0.97$ / $0.95$ / $0.92$ / $0.90$ | "Dust Devil" jumping sand dunes and riding berm walls with throttle wide open. |
+| **Jaxson Rivera** | **`Balanced`** | `speed: 1.05`, `precision: 0.96`, `avoidance: 5.5` | $0.98$ / $0.92$ / $0.96$ / $0.92$ | Baja King reading whoops, rhythm sections, and rough washboards at high velocity. |
+| **Astrid Lindholm** | **`Smooth`** | `precision: 0.99`, `lookahead: 0.40`, `brake: 1.02` | $0.95$ / $0.88$ / $0.99$ / $0.94$ | "Ice Queen" executing pinpoint drift transitions across frozen lakes and snowbanks. |
+| **Bubba Beauregard** | **`Tenacious`** | `defense: 0.96`, `avoidance: 4.8`, `aggression: 0.98` | $0.93$ / $0.98$ / $0.88$ / $0.96$ | Deep South swamp buggy veteran powering through bottomless clay ruts and mud pits. |
+| **Travis McGrath** | **`Bold`** | `steering_kp: 2.9`, `avoidance: 5.0`, `brake: 0.97` | $0.96$ / $0.96$ / $0.94$ / $0.88$ | Freestyle stunt icon and stadium supercross pioneer airing out jumps. |
+| **Roxie Vance** | **`Calculating`** | `lookahead: 0.37`, `precision: 0.97`, `brake: 1.01` | $0.94$ / $0.90$ / $0.97$ / $0.95$ | Red Rock canyon crawler picking surgical apex placement through broken bedrock. |
+| **Sven Lindqvist** | **`Tenacious`** | `defense: 0.93`, `lookahead: 0.38`, `speed: 1.03` | $0.95$ / $0.91$ / $0.95$ / $0.93$ | Rovaniemi ice ring champion with unmatched throttle feathering in blinding snow. |
+| **Cruz Morales** | **`Aggressive`** | `speed: 1.03`, `steering_kp: 2.8`, `aggression: 0.97` | $0.95$ / $0.97$ / $0.91$ / $0.89$ | Gravel quarry daredevil launching vertical drops and riding high gravel berms. |
+| **Dakota Black** | **`Aggressive`** | `speed: 1.03`, `steering_kp: 2.7`, `aggression: 0.95` | $0.95$ / $0.95$ / $0.93$ / $0.94$ | Appalachian rock-crawling daredevil whose brute-force line choices conquer granite shelves. |
+| **Colton Haze** | **`Balanced`** | `speed: 1.03`, `steering_kp: 2.8`, `precision: 0.94` | $0.95$ / $0.94$ / $0.94$ / $0.91$ | Nevada desert raider famous for wide-open jumps across dry lakebeds. |
+| **Elise Roux** | **`Smooth`** | `precision: 0.98`, `speed: 1.04`, `lookahead: 0.38` | $0.96$ / $0.89$ / $0.98$ / $0.93$ | French rally-raid pioneer with exceptional suspension feel on mountain ridges. |
+| **Diego Valdez** | **`Calculating`** | `speed: 1.04`, `avoidance: 5.2`, `brake: 0.99` | $0.96$ / $0.93$ / $0.95$ / $0.94$ | Mexican SCORE champion who masters high-speed whoops and riverbed boulder hops. |
 
 ---
 

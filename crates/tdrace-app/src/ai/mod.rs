@@ -20,6 +20,15 @@ pub enum DrivingStyle {
 }
 
 impl DrivingStyle {
+    pub const ALL: [Self; 6] = [
+        Self::Smooth,
+        Self::Aggressive,
+        Self::Tenacious,
+        Self::Calculating,
+        Self::Bold,
+        Self::Balanced,
+    ];
+
     pub fn from_str_lossy(s: &str) -> Self {
         match s.to_ascii_lowercase().as_str() {
             "smooth" => Self::Smooth,
@@ -213,32 +222,6 @@ impl BotProfile {
         }
     }
 
-    pub const fn aggressive() -> Self {
-        Self {
-            name: "Aggressive Bot",
-            lookahead_time: 0.32,
-            speed_factor: 1.06,
-            steering_kp: 2.5,
-            steering_kd: 0.05,
-            brake_margin: 0.90,
-            aggression: 0.95,
-            avoidance_distance: 5.5,
-        }
-    }
-
-    pub const fn balanced() -> Self {
-        Self {
-            name: "Club Bot",
-            lookahead_time: 0.42,
-            speed_factor: 0.94,
-            steering_kp: 2.0,
-            steering_kd: 0.07,
-            brake_margin: 1.15,
-            aggression: 0.60,
-            avoidance_distance: 8.0,
-        }
-    }
-
     pub const fn rookie() -> Self {
         Self {
             name: "Rookie Bot",
@@ -256,12 +239,25 @@ impl BotProfile {
         Self {
             name: "Smooth Archetype",
             lookahead_time: 0.40,
-            speed_factor: 1.02,
-            steering_kp: 2.3,
+            speed_factor: 1.01,
+            steering_kp: 2.30,
             steering_kd: 0.08,
             brake_margin: 1.02,
             aggression: 0.70,
-            avoidance_distance: 6.8,
+            avoidance_distance: 6.5,
+        }
+    }
+
+    pub const fn aggressive() -> Self {
+        Self {
+            name: "Aggressive Archetype",
+            lookahead_time: 0.32,
+            speed_factor: 1.02,
+            steering_kp: 2.50,
+            steering_kd: 0.05,
+            brake_margin: 0.90,
+            aggression: 0.95,
+            avoidance_distance: 5.0,
         }
     }
 
@@ -269,12 +265,12 @@ impl BotProfile {
         Self {
             name: "Tenacious Archetype",
             lookahead_time: 0.42,
-            speed_factor: 0.98,
-            steering_kp: 2.2,
+            speed_factor: 0.99,
+            steering_kp: 2.20,
             steering_kd: 0.08,
-            brake_margin: 1.06,
+            brake_margin: 1.05,
             aggression: 0.82,
-            avoidance_distance: 6.2,
+            avoidance_distance: 6.0,
         }
     }
 
@@ -282,38 +278,12 @@ impl BotProfile {
         Self {
             name: "Calculating Archetype",
             lookahead_time: 0.39,
-            speed_factor: 1.01,
-            steering_kp: 2.4,
-            steering_kd: 0.07,
-            brake_margin: 1.01,
-            aggression: 0.75,
-            avoidance_distance: 6.5,
-        }
-    }
-
-    pub const fn fast() -> Self {
-        Self {
-            name: "Fast Archetype",
-            lookahead_time: 0.35,
-            speed_factor: 1.06,
-            steering_kp: 2.7,
-            steering_kd: 0.06,
-            brake_margin: 0.96,
-            aggression: 0.88,
-            avoidance_distance: 5.6,
-        }
-    }
-
-    pub const fn strategic() -> Self {
-        Self {
-            name: "Strategic Archetype",
-            lookahead_time: 0.38,
-            speed_factor: 1.02,
-            steering_kp: 2.4,
+            speed_factor: 1.00,
+            steering_kp: 2.40,
             steering_kd: 0.07,
             brake_margin: 1.00,
-            aggression: 0.85,
-            avoidance_distance: 6.0,
+            aggression: 0.75,
+            avoidance_distance: 6.5,
         }
     }
 
@@ -321,12 +291,36 @@ impl BotProfile {
         Self {
             name: "Bold Archetype",
             lookahead_time: 0.31,
-            speed_factor: 1.04,
-            steering_kp: 2.7,
+            speed_factor: 1.01,
+            steering_kp: 2.70,
             steering_kd: 0.04,
             brake_margin: 0.88,
             aggression: 0.92,
             avoidance_distance: 5.2,
+        }
+    }
+
+    pub const fn balanced() -> Self {
+        Self {
+            name: "Balanced Archetype",
+            lookahead_time: 0.38,
+            speed_factor: 0.98,
+            steering_kp: 2.10,
+            steering_kd: 0.07,
+            brake_margin: 1.05,
+            aggression: 0.65,
+            avoidance_distance: 7.0,
+        }
+    }
+
+    pub fn from_style(style: DrivingStyle) -> Self {
+        match style {
+            DrivingStyle::Smooth => Self::smooth(),
+            DrivingStyle::Aggressive => Self::aggressive(),
+            DrivingStyle::Tenacious => Self::tenacious(),
+            DrivingStyle::Calculating => Self::calculating(),
+            DrivingStyle::Bold => Self::bold(),
+            DrivingStyle::Balanced => Self::balanced(),
         }
     }
 
@@ -360,31 +354,19 @@ impl BotProfile {
             return Self::from_style_and_quality(style, &DriverQuality::for_tier(tier));
         }
         match norm.as_str() {
-            "smooth" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Pro)),
-            "aggressive" | "brawler" => Self::from_style_and_quality(DrivingStyle::Aggressive, &DriverQuality::for_tier(DriverTier::Pro)),
-            "tenacious" | "defender" => Self::from_style_and_quality(DrivingStyle::Tenacious, &DriverQuality::for_tier(DriverTier::Pro)),
-            "calculating" | "tactical" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
-            "fast" | "pro" | "hotlap" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Legend)),
-            "balanced" | "club" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Contender)),
-            "strategic" | "draft" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
-            "bold" | "drift" | "renegade" => Self::from_style_and_quality(DrivingStyle::Bold, &DriverQuality::for_tier(DriverTier::Pro)),
             "rookie" | "cautious" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Rookie)),
-            _ => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Pro)),
+            "fast" | "pro" | "hotlap" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Legend)),
+            "strategic" | "draft" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
+            "brawler" => Self::from_style_and_quality(DrivingStyle::Aggressive, &DriverQuality::for_tier(DriverTier::Pro)),
+            "defender" => Self::from_style_and_quality(DrivingStyle::Tenacious, &DriverQuality::for_tier(DriverTier::Pro)),
+            "drift" => Self::from_style_and_quality(DrivingStyle::Bold, &DriverQuality::for_tier(DriverTier::Pro)),
+            "club" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Contender)),
+            _ => Self::from_style(DrivingStyle::from_str_lossy(&norm)),
         }
     }
 
     pub fn archetype_for_index(idx: usize) -> Self {
-        let (style, tier) = match idx % 8 {
-            0 => (DrivingStyle::Smooth, DriverTier::Pro),
-            1 => (DrivingStyle::Aggressive, DriverTier::Pro),
-            2 => (DrivingStyle::Tenacious, DriverTier::Pro),
-            3 => (DrivingStyle::Calculating, DriverTier::Pro),
-            4 => (DrivingStyle::Smooth, DriverTier::Legend),
-            5 => (DrivingStyle::Balanced, DriverTier::Contender),
-            6 => (DrivingStyle::Calculating, DriverTier::Legend),
-            _ => (DrivingStyle::Bold, DriverTier::Pro),
-        };
-        Self::from_style_and_quality(style, &DriverQuality::for_tier(tier))
+        Self::from_style(DrivingStyle::ALL[idx % DrivingStyle::ALL.len()])
     }
 }
 

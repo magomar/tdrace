@@ -9,7 +9,7 @@ use tdrace_core::track::presets::{
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
-use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
+use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats, DrivingStyle};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
@@ -301,6 +301,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.93,
                     defense: 0.96,
                 },
+                style: DrivingStyle::Aggressive,
                 favorite_cars: DALE_VANCE_FAVORITES,
             },
             DriverCharacter {
@@ -326,6 +327,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.97,
                     defense: 0.91,
                 },
+                style: DrivingStyle::Calculating,
                 favorite_cars: CHASE_GORDON_FAVORITES,
             },
             DriverCharacter {
@@ -351,6 +353,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.96,
                     defense: 0.98,
                 },
+                style: DrivingStyle::Smooth,
                 favorite_cars: RICHARD_PETTYFIELD_FAVORITES,
             },
             DriverCharacter {
@@ -376,6 +379,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.90,
                     defense: 0.92,
                 },
+                style: DrivingStyle::Aggressive,
                 favorite_cars: ROWDY_BUSCH_FAVORITES,
             },
             DriverCharacter {
@@ -401,6 +405,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.99,
                     defense: 0.95,
                 },
+                style: DrivingStyle::Calculating,
                 favorite_cars: JIMMIE_JOHNSON_FAVORITES,
             },
             DriverCharacter {
@@ -430,6 +435,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.94,
                     defense: 0.93,
                 },
+                style: DrivingStyle::Bold,
                 favorite_cars: TONY_STEWART_FAVORITES,
             },
             DriverCharacter {
@@ -459,6 +465,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.95,
                     defense: 0.94,
                 },
+                style: DrivingStyle::Tenacious,
                 favorite_cars: BOBBY_ALLISON_FAVORITES,
             },
             DriverCharacter {
@@ -488,6 +495,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.93,
                     defense: 0.92,
                 },
+                style: DrivingStyle::Balanced,
                 favorite_cars: BUBBA_WALLACE_FAVORITES,
             },
             DriverCharacter {
@@ -517,6 +525,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.94,
                     defense: 0.97,
                 },
+                style: DrivingStyle::Balanced,
                 favorite_cars: JOEY_LOGANO_FAVORITES,
             },
             DriverCharacter {
@@ -546,6 +555,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.97,
                     defense: 0.91,
                 },
+                style: DrivingStyle::Smooth,
                 favorite_cars: BILL_ELLIOTT_FAVORITES,
             },
             DriverCharacter {
@@ -575,6 +585,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.92,
                     defense: 0.95,
                 },
+                style: DrivingStyle::Bold,
                 favorite_cars: CALE_YARBOROUGH_FAVORITES,
             },
             DriverCharacter {
@@ -604,6 +615,7 @@ impl GameModule for NascarGameModule {
                     precision: 0.95,
                     defense: 0.94,
                 },
+                style: DrivingStyle::Tenacious,
                 favorite_cars: RUSTY_WALLACE_FAVORITES,
             },
         ]

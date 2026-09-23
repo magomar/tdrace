@@ -230,4 +230,56 @@ fn test_no_preset_character_uses_player_default_colors() {
     }
 }
 
+#[test]
+fn test_all_six_modules_driving_style_distribution() {
+    use tdrace_app::ai::DrivingStyle;
+    use tdrace_app::module::{
+        ClassicGameModule, ExtremeOffRoadModule, GameModule, GtWorldChallengeModule,
+        KartGameModule, NascarGameModule, RallyGameModule,
+    };
+
+    let modules: Vec<Box<dyn GameModule>> = vec![
+        Box::new(ClassicGameModule::new()),
+        Box::new(GtWorldChallengeModule::new()),
+        Box::new(NascarGameModule::new()),
+        Box::new(RallyGameModule::new()),
+        Box::new(KartGameModule::new()),
+        Box::new(ExtremeOffRoadModule::new()),
+    ];
+
+    let mut total_style_counts = std::collections::HashMap::new();
+
+    for m in &modules {
+        let drivers = m.drivers();
+        assert_eq!(drivers.len(), 12, "Module '{}' must have exactly 12 drivers", m.id());
+
+        let mut module_style_counts = std::collections::HashMap::new();
+        for d in &drivers {
+            *module_style_counts.entry(d.style).or_insert(0) += 1;
+            *total_style_counts.entry(d.style).or_insert(0) += 1;
+        }
+
+        // Each of the 6 styles must have exactly 2 drivers per module
+        for style in DrivingStyle::ALL {
+            assert_eq!(
+                module_style_counts.get(&style).copied().unwrap_or(0),
+                2,
+                "Module '{}' must have exactly 2 drivers with style {:?}",
+                m.id(),
+                style
+            );
+        }
+    }
+
+    // Total 72 drivers: exactly 12 of each style
+    for style in DrivingStyle::ALL {
+        assert_eq!(
+            total_style_counts.get(&style).copied().unwrap_or(0),
+            12,
+            "Overall roster must have exactly 12 drivers with style {:?}",
+            style
+        );
+    }
+}
+
 

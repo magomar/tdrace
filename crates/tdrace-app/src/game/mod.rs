@@ -2845,23 +2845,21 @@ impl RaceSession {
                         let static_id: &'static str = Box::leak(entry.driver_id.clone().into_boxed_str());
                         let static_name: &'static str = Box::leak(entry.driver_name.clone().into_boxed_str());
                         let scheme = CarColorScheme::from_index((idx + 1) % 9);
-                        let (mut profile, stats) = if let Some(style_str) = entry.ai_style.as_deref() {
+                        let (mut profile, stats, style) = if let Some(style_str) = entry.ai_style.as_deref().or(entry.ai_character.as_deref()) {
                             let style = DrivingStyle::from_str_lossy(style_str);
                             let tier = entry.ai_tier.map(DriverTier::from_u8).unwrap_or(DriverTier::Pro);
                             let quality = DriverQuality::for_tier(tier);
                             (
                                 BotProfile::from_style_and_quality(style, &quality),
                                 DriverStats::from_style_and_quality(style, &quality),
-                            )
-                        } else if let Some(arch) = entry.ai_character.as_deref() {
-                            (
-                                BotProfile::from_archetype(arch),
-                                DriverStats::from_archetype(arch),
+                                style,
                             )
                         } else {
+                            let style = DrivingStyle::ALL[idx % DrivingStyle::ALL.len()];
                             (
-                                BotProfile::archetype_for_index(idx),
-                                DriverStats::archetype_for_index(idx),
+                                BotProfile::from_style(style),
+                                DriverStats::from_style(style),
+                                style,
                             )
                         };
                         profile.name = static_name;
@@ -2874,6 +2872,7 @@ impl RaceSession {
                             color_scheme: scheme,
                             profile,
                             stats,
+                            style,
                             favorite_cars: &[],
                         });
                     }

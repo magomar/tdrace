@@ -47,6 +47,17 @@ impl DriverStats {
         }
     }
 
+    pub fn from_style(style: DrivingStyle) -> Self {
+        match style {
+            DrivingStyle::Smooth => Self::new(0.95, 0.70, 0.98, 0.88),
+            DrivingStyle::Aggressive => Self::new(0.96, 0.96, 0.80, 0.86),
+            DrivingStyle::Tenacious => Self::new(0.93, 0.80, 0.90, 0.98),
+            DrivingStyle::Calculating => Self::new(0.94, 0.72, 0.96, 0.92),
+            DrivingStyle::Bold => Self::new(0.95, 0.92, 0.82, 0.80),
+            DrivingStyle::Balanced => Self::new(0.93, 0.72, 0.90, 0.88),
+        }
+    }
+
     pub fn from_archetype(name: &str) -> Self {
         let norm = name.to_ascii_lowercase();
         if let Some((s_str, t_str)) = norm.split_once('_') {
@@ -55,31 +66,19 @@ impl DriverStats {
             return Self::from_style_and_quality(style, &DriverQuality::for_tier(tier));
         }
         match norm.as_str() {
-            "smooth" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Pro)),
-            "aggressive" | "brawler" => Self::from_style_and_quality(DrivingStyle::Aggressive, &DriverQuality::for_tier(DriverTier::Pro)),
-            "tenacious" | "defender" => Self::from_style_and_quality(DrivingStyle::Tenacious, &DriverQuality::for_tier(DriverTier::Pro)),
-            "calculating" | "tactical" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
-            "fast" | "pro" | "hotlap" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Legend)),
-            "balanced" | "club" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Contender)),
-            "strategic" | "draft" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
-            "bold" | "drift" | "renegade" => Self::from_style_and_quality(DrivingStyle::Bold, &DriverQuality::for_tier(DriverTier::Pro)),
             "rookie" | "cautious" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Rookie)),
-            _ => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Pro)),
+            "fast" | "pro" | "hotlap" => Self::from_style_and_quality(DrivingStyle::Smooth, &DriverQuality::for_tier(DriverTier::Legend)),
+            "strategic" | "draft" => Self::from_style_and_quality(DrivingStyle::Calculating, &DriverQuality::for_tier(DriverTier::Pro)),
+            "brawler" => Self::from_style_and_quality(DrivingStyle::Aggressive, &DriverQuality::for_tier(DriverTier::Pro)),
+            "defender" => Self::from_style_and_quality(DrivingStyle::Tenacious, &DriverQuality::for_tier(DriverTier::Pro)),
+            "drift" => Self::from_style_and_quality(DrivingStyle::Bold, &DriverQuality::for_tier(DriverTier::Pro)),
+            "club" => Self::from_style_and_quality(DrivingStyle::Balanced, &DriverQuality::for_tier(DriverTier::Contender)),
+            _ => Self::from_style(DrivingStyle::from_str_lossy(&norm)),
         }
     }
 
     pub fn archetype_for_index(idx: usize) -> Self {
-        let (style, tier) = match idx % 8 {
-            0 => (DrivingStyle::Smooth, DriverTier::Pro),
-            1 => (DrivingStyle::Aggressive, DriverTier::Pro),
-            2 => (DrivingStyle::Tenacious, DriverTier::Pro),
-            3 => (DrivingStyle::Calculating, DriverTier::Pro),
-            4 => (DrivingStyle::Smooth, DriverTier::Legend),
-            5 => (DrivingStyle::Balanced, DriverTier::Contender),
-            6 => (DrivingStyle::Calculating, DriverTier::Legend),
-            _ => (DrivingStyle::Bold, DriverTier::Pro),
-        };
-        Self::from_style_and_quality(style, &DriverQuality::for_tier(tier))
+        Self::from_style(DrivingStyle::ALL[idx % DrivingStyle::ALL.len()])
     }
 }
 
@@ -458,6 +457,7 @@ pub struct DriverCharacter {
     pub name: &'static str,
     pub alias: &'static str,
     pub bio: &'static str,
+    pub style: DrivingStyle,
     pub preferred_car: CarChoice,
     pub color_scheme: CarColorScheme,
     pub profile: BotProfile,
@@ -466,12 +466,13 @@ pub struct DriverCharacter {
 }
 
 impl DriverCharacter {
-    /// 1. Silvia "Apex" Tanaka — The Precision Master
+    /// 1. Silvia "Apex" Tanaka — The Precision Master (Smooth)
     pub const SILVIA_TANAKA: Self = Self {
         id: "silvia_tanaka",
         name: "Silvia Tanaka",
         alias: "Apex Tanaka",
         bio: "Former open-wheel champion whose surgical precision and textbook racing lines carve through chicanes like a scalpel.",
+        style: DrivingStyle::Smooth,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::from_index(1), // Electric Blue
         profile: BotProfile {
@@ -485,20 +486,21 @@ impl DriverCharacter {
             avoidance_distance: 6.5,
         },
         stats: DriverStats {
-            speed: 0.92,
+            speed: 0.95,
             aggression: 0.70,
             precision: 0.98,
-            defense: 0.85,
+            defense: 0.88,
         },
         favorite_cars: SILVIA_FAVORITE_CARS,
     };
 
-    /// 2. Marco "Thunder" Rossi — High-Speed Brawler
+    /// 2. Marco "Thunder" Rossi — High-Speed Brawler (Aggressive)
     pub const MARCO_ROSSI: Self = Self {
         id: "marco_rossi",
         name: "Marco Rossi",
         alias: "Thunder Rossi",
         bio: "Fearless and aggressive, Marco thrives in wheel-to-wheel combat, braking at the absolute last millisecond into hairpins.",
+        style: DrivingStyle::Aggressive,
         preferred_car: CarChoice::RallyCar,
         color_scheme: CarColorScheme::from_index(4), // Sunset Orange
         profile: BotProfile {
@@ -513,19 +515,20 @@ impl DriverCharacter {
         },
         stats: DriverStats {
             speed: 0.96,
-            aggression: 0.98,
-            precision: 0.75,
-            defense: 0.88,
+            aggression: 0.96,
+            precision: 0.80,
+            defense: 0.86,
         },
         favorite_cars: MARCO_FAVORITE_CARS,
     };
 
-    /// 3. Kenji "Drift King" Sato — Touge Slide Maestro
+    /// 3. Kenji "Drift King" Sato — Touge Slide Maestro (Bold)
     pub const KENJI_SATO: Self = Self {
         id: "kenji_sato",
         name: "Kenji Sato",
         alias: "Drift King Kenji",
         bio: "Honed on mountain passes under neon city lights, Kenji turns every apex into a controlled, high-speed sideways drift.",
+        style: DrivingStyle::Bold,
         preferred_car: CarChoice::DriftCar,
         color_scheme: CarColorScheme::from_index(5), // Synthwave Purple
         profile: BotProfile {
@@ -539,20 +542,21 @@ impl DriverCharacter {
             avoidance_distance: 5.8,
         },
         stats: DriverStats {
-            speed: 0.90,
-            aggression: 0.88,
-            precision: 0.84,
-            defense: 0.72,
+            speed: 0.94,
+            aggression: 0.90,
+            precision: 0.85,
+            defense: 0.80,
         },
         favorite_cars: KENJI_FAVORITE_CARS,
     };
 
-    /// 4. Elena "Viper" Frost — The Iceman of the Circuit
+    /// 4. Elena "Viper" Frost — The Iceman of the Circuit (Calculating)
     pub const ELENA_FROST: Self = Self {
         id: "elena_frost",
         name: "Elena Frost",
         alias: "Viper Frost",
         bio: "Unflappable under pressure, Elena never misses a braking mark and capitalizes ruthlessly on opponents' mistakes.",
+        style: DrivingStyle::Calculating,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::from_index(7), // Glacier White & Cyan
         profile: BotProfile {
@@ -566,20 +570,21 @@ impl DriverCharacter {
             avoidance_distance: 7.2,
         },
         stats: DriverStats {
-            speed: 0.88,
-            aggression: 0.65,
-            precision: 0.95,
-            defense: 0.96,
+            speed: 0.94,
+            aggression: 0.68,
+            precision: 0.97,
+            defense: 0.94,
         },
         favorite_cars: ELENA_FAVORITE_CARS,
     };
 
-    /// 5. Jax "Oversteer" Reed — The Wildcard Renegade
+    /// 5. Jax "Oversteer" Reed — The Wildcard Renegade (Aggressive)
     pub const JAX_REED: Self = Self {
         id: "jax_reed",
         name: "Jax Reed",
         alias: "Oversteer Reed",
         bio: "A rallycross veteran with lightning reflexes who uses curbs and sand transitions to slingshot past opponents.",
+        style: DrivingStyle::Aggressive,
         preferred_car: CarChoice::RallyCar,
         color_scheme: CarColorScheme::from_index(3), // Sunburst Yellow & Crimson
         profile: BotProfile {
@@ -593,20 +598,21 @@ impl DriverCharacter {
             avoidance_distance: 5.2,
         },
         stats: DriverStats {
-            speed: 0.94,
+            speed: 0.95,
             aggression: 0.94,
-            precision: 0.78,
-            defense: 0.76,
+            precision: 0.80,
+            defense: 0.82,
         },
         favorite_cars: JAX_FAVORITE_CARS,
     };
 
-    /// 6. Leo "Pocket Rocket" Bianchi — Agile Shifter Prodigy
+    /// 6. Leo "Pocket Rocket" Bianchi — Agile Shifter Prodigy (Balanced)
     pub const LEO_BIANCHI: Self = Self {
         id: "leo_bianchi",
         name: "Leo Bianchi",
         alias: "Pocket Rocket Leo",
         bio: "A prodigy straight from shifter kart leagues, Leo carries ridiculous corner speed through tight 90-degree switchbacks.",
+        style: DrivingStyle::Balanced,
         preferred_car: CarChoice::Kart,
         color_scheme: CarColorScheme::from_index(2), // Viper Green
         profile: BotProfile {
@@ -620,20 +626,21 @@ impl DriverCharacter {
             avoidance_distance: 6.8,
         },
         stats: DriverStats {
-            speed: 0.86,
-            aggression: 0.68,
+            speed: 0.93,
+            aggression: 0.72,
             precision: 0.92,
-            defense: 0.80,
+            defense: 0.86,
         },
         favorite_cars: LEO_FAVORITE_CARS,
     };
 
-    /// 7. Viktor "The Wall" Sterling — Ironclad Veteran
+    /// 7. Viktor "The Wall" Sterling — Ironclad Veteran (Tenacious)
     pub const VIKTOR_STERLING: Self = Self {
         id: "viktor_sterling",
         name: "Viktor Sterling",
         alias: "The Wall Sterling",
         bio: "With three decades of motorsport experience, Viktor makes his car as wide as the track, frustrating any pass attempt.",
+        style: DrivingStyle::Tenacious,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::from_index(6), // Stealth Carbon Black
         profile: BotProfile {
@@ -647,20 +654,21 @@ impl DriverCharacter {
             avoidance_distance: 7.8,
         },
         stats: DriverStats {
-            speed: 0.84,
+            speed: 0.92,
             aggression: 0.80,
-            precision: 0.88,
-            defense: 0.99,
+            precision: 0.90,
+            defense: 0.98,
         },
         favorite_cars: VIKTOR_FAVORITE_CARS,
     };
 
-    /// 8. Maya "Phoenix" Lin — Telemetry Prodigy
+    /// 8. Maya "Phoenix" Lin — Telemetry Prodigy (Calculating)
     pub const MAYA_LIN: Self = Self {
         id: "maya_lin",
         name: "Maya Lin",
         alias: "Phoenix Lin",
         bio: "An engineering-minded racer who calculates optimal slip angles in real time, delivering blistering straight-line exits.",
+        style: DrivingStyle::Calculating,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::from_index(8), // Cyber Magenta & Neon Cyan
         profile: BotProfile {
@@ -674,20 +682,21 @@ impl DriverCharacter {
             avoidance_distance: 6.2,
         },
         stats: DriverStats {
-            speed: 0.93,
-            aggression: 0.82,
-            precision: 0.94,
-            defense: 0.86,
+            speed: 0.95,
+            aggression: 0.78,
+            precision: 0.96,
+            defense: 0.88,
         },
         favorite_cars: MAYA_FAVORITE_CARS,
     };
 
-    /// 9. Damon "The Ghost" Clark — Tactical Endurance Master
+    /// 9. Damon "The Ghost" Clark — Tactical Endurance Master (Balanced)
     pub const DAMON_CLARK: Self = Self {
         id: "damon_clark",
         name: "Damon Clark",
         alias: "The Ghost",
         bio: "Quiet and hyper-calculating endurance specialist who runs relentless, identical lap times until his opponents crack.",
+        style: DrivingStyle::Balanced,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::new(
             Color::new(0.50, 0.55, 0.60, 1.0),
@@ -705,20 +714,21 @@ impl DriverCharacter {
             avoidance_distance: 6.6,
         },
         stats: DriverStats {
-            speed: 0.91,
-            aggression: 0.72,
-            precision: 0.96,
-            defense: 0.90,
+            speed: 0.94,
+            aggression: 0.74,
+            precision: 0.93,
+            defense: 0.89,
         },
         favorite_cars: DAMON_FAVORITE_CARS,
     };
 
-    /// 10. Chloe "The Dynamo" Laurent — Hillclimb Phenom
+    /// 10. Chloe "The Dynamo" Laurent — Hillclimb Phenom (Smooth)
     pub const CHLOE_LAURENT: Self = Self {
         id: "chloe_laurent",
         name: "Chloe Laurent",
         alias: "The Dynamo",
         bio: "A fearless hybrid-era racer blending European hillclimb reflexes with blistering apex aggression in all conditions.",
+        style: DrivingStyle::Smooth,
         preferred_car: CarChoice::RallyCar,
         color_scheme: CarColorScheme::new(
             Color::new(0.12, 0.78, 0.70, 1.0),
@@ -737,19 +747,20 @@ impl DriverCharacter {
         },
         stats: DriverStats {
             speed: 0.94,
-            aggression: 0.90,
-            precision: 0.86,
-            defense: 0.82,
+            aggression: 0.72,
+            precision: 0.97,
+            defense: 0.88,
         },
         favorite_cars: CHLOE_FAVORITE_CARS,
     };
 
-    /// 11. Hiroshi "Tarmac Samurai" Takahashi — Tire Conservation Virtuoso
+    /// 11. Hiroshi "Tarmac Samurai" Takahashi — Tire Conservation Virtuoso (Tenacious)
     pub const HIROSHI_TAKAHASHI: Self = Self {
         id: "hiroshi_takahashi",
         name: "Hiroshi Takahashi",
         alias: "Tarmac Samurai",
         bio: "Super GT veteran whose millimeter-perfect tire preservation and late-braking maneuvers dominate high-grip circuits.",
+        style: DrivingStyle::Tenacious,
         preferred_car: CarChoice::SportsCar,
         color_scheme: CarColorScheme::new(
             Color::new(0.55, 0.08, 0.12, 1.0),
@@ -768,19 +779,20 @@ impl DriverCharacter {
         },
         stats: DriverStats {
             speed: 0.93,
-            aggression: 0.78,
+            aggression: 0.82,
             precision: 0.95,
-            defense: 0.88,
+            defense: 0.94,
         },
         favorite_cars: HIROSHI_FAVORITE_CARS,
     };
 
-    /// 12. Zane "Thunderbolt" Holland — Low-Traction Acrobat
+    /// 12. Zane "Thunderbolt" Holland — Low-Traction Acrobat (Bold)
     pub const ZANE_HOLLAND: Self = Self {
         id: "zane_holland",
         name: "Zane Holland",
         alias: "Thunderbolt",
         bio: "Cross-discipline daredevil known for audacious divebombs and supernatural recovery saves in low-traction ruts.",
+        style: DrivingStyle::Bold,
         preferred_car: CarChoice::SandRail,
         color_scheme: CarColorScheme::new(
             Color::new(0.10, 0.35, 0.85, 1.0),
@@ -799,9 +811,9 @@ impl DriverCharacter {
         },
         stats: DriverStats {
             speed: 0.95,
-            aggression: 0.95,
-            precision: 0.80,
-            defense: 0.84,
+            aggression: 0.93,
+            precision: 0.82,
+            defense: 0.82,
         },
         favorite_cars: ZANE_FAVORITE_CARS,
     };
@@ -943,38 +955,5 @@ impl DriverCharacter {
                 _ => self.preferred_car,
             }
         }
-    }
-
-    /// Classifies or infers the driving style and experience tier for this character based on their tuned parameters.
-    pub fn classify_style_and_tier(&self) -> (DrivingStyle, DriverTier) {
-        let style = if self.profile.aggression >= 0.90 {
-            if self.profile.steering_kd <= 0.05 {
-                DrivingStyle::Bold
-            } else {
-                DrivingStyle::Aggressive
-            }
-        } else if self.stats.defense >= 0.95 {
-            DrivingStyle::Tenacious
-        } else if self.stats.precision >= 0.96 && self.profile.brake_margin >= 1.01 {
-            DrivingStyle::Smooth
-        } else if self.profile.lookahead_time >= 0.38 && self.stats.precision >= 0.94 {
-            DrivingStyle::Calculating
-        } else {
-            DrivingStyle::Balanced
-        };
-
-        let tier = if self.stats.speed >= 0.98 && self.profile.speed_factor >= 1.05 {
-            DriverTier::Legend
-        } else if self.stats.speed >= 0.94 {
-            DriverTier::Pro
-        } else if self.stats.speed >= 0.88 {
-            DriverTier::Contender
-        } else if self.stats.speed >= 0.80 {
-            DriverTier::Amateur
-        } else {
-            DriverTier::Rookie
-        };
-
-        (style, tier)
     }
 }

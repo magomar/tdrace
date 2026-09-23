@@ -268,12 +268,8 @@ ai_tier = 4
 #[test]
 fn test_driver_character_classification() {
     let silvia = DriverCharacter::find_global("silvia_tanaka").expect("Silvia Tanaka");
-    let (style, tier) = silvia.classify_style_and_tier();
-    assert_eq!(style, DrivingStyle::Smooth);
-    assert!(tier >= DriverTier::Contender);
+    assert_eq!(silvia.style, DrivingStyle::Smooth);
 
     let marco = DriverCharacter::find_global("marco_rossi").expect("Marco Rossi");
-    let (m_style, m_tier) = marco.classify_style_and_tier();
-    assert!(m_style == DrivingStyle::Aggressive || m_style == DrivingStyle::Bold);
-    assert!(m_tier >= DriverTier::Contender);
+    assert_eq!(marco.style, DrivingStyle::Aggressive);
 }

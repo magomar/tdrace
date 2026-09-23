@@ -8,7 +8,7 @@ use tdrace_core::track::presets::{
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
-use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
+use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats, DrivingStyle};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
@@ -335,6 +335,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.98,
                     defense: 0.95,
                 },
+                style: DrivingStyle::Calculating,
                 favorite_cars: JOHAN_VANCE_FAVORITES,
             },
             DriverCharacter {
@@ -360,6 +361,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
+                style: DrivingStyle::Aggressive,
                 favorite_cars: MATTIAS_STORM_FAVORITES,
             },
             DriverCharacter {
@@ -385,6 +387,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.97,
                     defense: 0.93,
                 },
+                style: DrivingStyle::Calculating,
                 favorite_cars: TIMMY_HANSENFIELD_FAVORITES,
             },
             DriverCharacter {
@@ -410,6 +413,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.93,
                     defense: 0.89,
                 },
+                style: DrivingStyle::Tenacious,
                 favorite_cars: KEVIN_HANSENFIELD_FAVORITES,
             },
             DriverCharacter {
@@ -435,6 +439,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.95,
                     defense: 0.91,
                 },
+                style: DrivingStyle::Balanced,
                 favorite_cars: NICLAS_GRON_FAVORITES,
             },
             DriverCharacter {
@@ -460,6 +465,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.92,
                     defense: 0.96,
                 },
+                style: DrivingStyle::Tenacious,
                 favorite_cars: ANTON_MARK_FAVORITES,
             },
             DriverCharacter {
@@ -485,6 +491,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.96,
                     defense: 0.94,
                 },
+                style: DrivingStyle::Smooth,
                 favorite_cars: TIMO_SCHEIDER_FAVORITES,
             },
             DriverCharacter {
@@ -510,6 +517,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.98,
                     defense: 0.95,
                 },
+                style: DrivingStyle::Smooth,
                 favorite_cars: SEBASTIEN_LOEBFIELD_FAVORITES,
             },
             DriverCharacter {
@@ -539,6 +547,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.94,
                     defense: 0.91,
                 },
+                style: DrivingStyle::Bold,
                 favorite_cars: PETTER_SOLBERGFIELD_FAVORITES,
             },
             DriverCharacter {
@@ -568,6 +577,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.93,
                     defense: 0.90,
                 },
+                style: DrivingStyle::Bold,
                 favorite_cars: KEN_BLASTER_FAVORITES,
             },
             DriverCharacter {
@@ -597,6 +607,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.95,
                     defense: 0.92,
                 },
+                style: DrivingStyle::Aggressive,
                 favorite_cars: ANDREAS_BAKKERUD_FAVORITES,
             },
             DriverCharacter {
@@ -626,6 +637,7 @@ impl GameModule for RallyGameModule {
                     precision: 0.96,
                     defense: 0.93,
                 },
+                style: DrivingStyle::Balanced,
                 favorite_cars: REINIS_NITISSFIELD_FAVORITES,
             },
         ]

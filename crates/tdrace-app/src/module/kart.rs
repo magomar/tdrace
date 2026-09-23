@@ -11,7 +11,7 @@ use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, Track, TrackCategory, TrackKind};
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
-use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats};
+use crate::ai::{BotProfile, DriverCharacter, DriverFavoriteCar, DriverStats, DrivingStyle};
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
@@ -1422,6 +1422,7 @@ impl GameModule for KartGameModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
+                style: DrivingStyle::Aggressive,
                 favorite_cars: MARCO_ARMANI_FAVORITES,
             },
             DriverCharacter {
@@ -1447,6 +1448,7 @@ impl GameModule for KartGameModule {
                     precision: 0.98,
                     defense: 0.94,
                 },
+                style: DrivingStyle::Calculating,
                 favorite_cars: LUCAS_VANCE_FAVORITES,
             },
             DriverCharacter {
@@ -1472,6 +1474,7 @@ impl GameModule for KartGameModule {
                     precision: 0.94,
                     defense: 0.90,
                 },
+                style: DrivingStyle::Bold,
                 favorite_cars: ALEX_ROSSI_FAVORITES,
             },
             DriverCharacter {
@@ -1497,6 +1500,7 @@ impl GameModule for KartGameModule {
                     precision: 0.99,
                     defense: 0.91,
                 },
+                style: DrivingStyle::Smooth,
                 favorite_cars: SOFIA_LIND_FAVORITES,
             },
             DriverCharacter {
@@ -1522,6 +1526,7 @@ impl GameModule for KartGameModule {
                     precision: 0.95,
                     defense: 0.89,
                 },
+                style: DrivingStyle::Tenacious,
                 favorite_cars: FINN_KORHONEN_FAVORITES,
             },
             DriverCharacter {
@@ -1547,6 +1552,7 @@ impl GameModule for KartGameModule {
                     precision: 0.96,
                     defense: 0.93,
                 },
+                style: DrivingStyle::Calculating,
                 favorite_cars: LEO_DUPONT_FAVORITES,
             },
             DriverCharacter {
@@ -1572,6 +1578,7 @@ impl GameModule for KartGameModule {
                     precision: 0.93,
                     defense: 0.90,
                 },
+                style: DrivingStyle::Bold,
                 favorite_cars: MATEO_SILVA_FAVORITES,
             },
             DriverCharacter {
@@ -1597,6 +1604,7 @@ impl GameModule for KartGameModule {
                     precision: 0.94,
                     defense: 0.91,
                 },
+                style: DrivingStyle::Aggressive,
                 favorite_cars: DANTE_MORETTI_FAVORITES,
             },
             DriverCharacter {
@@ -1626,6 +1634,7 @@ impl GameModule for KartGameModule {
                     precision: 0.97,
                     defense: 0.93,
                 },
+                style: DrivingStyle::Tenacious,
                 favorite_cars: MARTA_SANTOS_FAVORITES,
             },
             DriverCharacter {
@@ -1655,6 +1664,7 @@ impl GameModule for KartGameModule {
                     precision: 0.98,
                     defense: 0.94,
                 },
+                style: DrivingStyle::Smooth,
                 favorite_cars: KENZO_YAMAMOTO_FAVORITES,
             },
             DriverCharacter {
@@ -1684,6 +1694,7 @@ impl GameModule for KartGameModule {
                     precision: 0.92,
                     defense: 0.92,
                 },
+                style: DrivingStyle::Balanced,
                 favorite_cars: LIAM_CALLAGHAN_FAVORITES,
             },
             DriverCharacter {
@@ -1713,6 +1724,7 @@ impl GameModule for KartGameModule {
                     precision: 0.96,
                     defense: 0.92,
                 },
+                style: DrivingStyle::Balanced,
                 favorite_cars: CHARLIE_WEBB_FAVORITES,
             },
         ]
