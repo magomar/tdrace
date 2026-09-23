@@ -36,6 +36,7 @@ Comprehensive mathematical modeling of planar and 2.5D motorsport physics implem
 | Document | Type | Status | Description |
 | :--- | :--- | :---: | :--- |
 | [Vehicle Catalog Overview](vehicles/index.md) | Asset Catalog | `active` | Master overview of 5 motorsport modules, 25 progression categories, and Balance of Performance calibration. |
+| [Vehicle Specs & Handling Dynamics](vehicles/specs.md) | Reference Guide | `active` | 6-stat telemetry standard, category vs model differentiation, and dynamic engine parameter derivations. |
 | [Gran Turismo & Endurance](vehicles/gt_endurance.md) | Asset Catalog | `active` | GT4, GT3 EVO, GT2, GT1 Legends, and Le Mans LMH/LMDh Hypercars. |
 | [NASCAR Stock Car & Trans-Am](vehicles/stock_car.md) | Asset Catalog | `active` | Street Stock, Late Model, ARCA Menards, Craftsman Super Truck, and Trans-Am TA1 / Cup. |
 | [Rallycross & All-Terrain](vehicles/rally_allterrain.md) | Asset Catalog | `active` | Rally Jr FWD, World RX Supercars, Group B Legends, Dakar Raid T1+, and Stadium Super Trucks. |
