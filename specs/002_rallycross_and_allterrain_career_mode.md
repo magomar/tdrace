@@ -4,9 +4,9 @@ template: feature
 title: "Rallycross & All-Terrain World Cup Career Mode"
 description: "5-tier Rallycross and All-Terrain career ladder covering 17 global mixed-surface circuits, World RX tournament format, mandatory Joker lap rules, and declarative series presets."
 status: implemented
-verified: { by: "human:mario", at: "2026-09-22T17:45:00Z" }
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
+verified: { by: "human:mario", at: "2026-09-22T17:45:00Z" }
 ---
 # Feature Spec: Rallycross & All-Terrain World Cup Career Mode 🏆
 

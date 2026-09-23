@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-22
 generated: { by: agent/antigravity, at: 2026-09-22T20:05:00Z }
 ---
-
 # Feature Spec: Surface Tire Marks and Runoff Terrain Dynamics 🏎️🪨🌿
 
 A comprehensive architectural, physics, and visual effects specification resolving the surface query precedence inversion between segment runoff corridors and below-track terrain zones. Furthermore, introduces an authentic multi-surface tire marking pipeline, deformable terrain rutting/furrowing dynamics, expanded stone/mud/snow particle roost systems, and dynamic tire dirt contamination transfer across all 12 motorsport surface archetypes in **TdRace**.

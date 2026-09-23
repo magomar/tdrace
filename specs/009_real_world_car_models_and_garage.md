@@ -4,9 +4,9 @@ template: feature
 title: "Real-World Vehicle Rosters, Physics Balance & Interactive Garage"
 description: "Migration from prototypical archetypes to authentic real-world motorsport models across 5 modules and 25 categories, with BoP parity, dual-view 2D rendering, and interactive garage showroom."
 status: implemented
-verified: { by: "human:mario", at: "2026-09-23T11:04:00Z" }
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T14:15:00Z }
+verified: { by: "human:mario", at: "2026-09-23T11:04:00Z" }
 ---
 # Feature Spec: Real-World Vehicle Rosters, Physics Balance & Interactive Garage 🏎️🏛️
 

@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-22
 generated: { by: agent/antigravity, at: 2026-09-22T17:45:00Z }
 ---
-
 # Feature Spec: Vehicle Telemetry Alignment and Physics Differentiation 🏎️📊
 
 A comprehensive unification and physics differentiation initiative that harmonizes the **6-dimensional performance telemetry system** (`Speed`, `Acceleration`, `Lateral Grip`, `Drift Agility`, `Braking Force`, `Aerodynamics`) across both the **in-game HUD / garage (`crates/tdrace-app/src/ui/garage.rs`)** and the **Web Showroom portal (`portals/option-b-showroom`)**. In parallel, it transitions the game engine from relying solely on category archetype defaults to dynamically deriving individual vehicle physical characteristics (`max_brake_force`, `tire.peak_d`, `steer_speed`, `inertia`, and `downforce_coefficient`) directly from each car's homologated real-world specifications.

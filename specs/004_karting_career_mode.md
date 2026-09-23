@@ -4,9 +4,9 @@ template: feature
 title: "Karting World Cup Career Mode"
 description: "5-tier grassroots karting career ladder from 60cc Cadet karts to 240 km/h 250cc Superkarts and novelty racing lawnmowers across a 17-venue calendar."
 status: implemented
-verified: { by: "human:mario", at: "2026-09-22T17:15:00Z" }
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
+verified: { by: "human:mario", at: "2026-09-22T17:15:00Z" }
 ---
 # Feature Spec: Karting World Cup Career Mode 🏎️
 

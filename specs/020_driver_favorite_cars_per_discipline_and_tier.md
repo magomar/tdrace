@@ -3,11 +3,10 @@ type: Feature Spec
 template: feature
 title: "Per-Discipline and Per-Tier Driver Favorite Cars & 12-Pilot Rosters"
 description: "Expands motorsport rosters to 12 unique pilots per discipline (72 total) and establishes authentic signature vehicle mappings per discipline and tier across DriverCharacter, modules, and race sessions."
-status: draft
+status: implemented
 created: 2026-09-23
 generated: { by: agent/antigravity, at: 2026-09-23T13:30:00Z }
 ---
-
 # Feature Spec 020: Per-Discipline and Per-Tier Driver Favorite Cars & 12-Pilot Rosters 🏎️🏆
 
 A comprehensive architectural and gameplay specification establishing authentic signature vehicle mappings for every AI driver across motorsport disciplines and performance tiers in **TdRace**. Replaces legacy uniform spec grid assignments and round-robin modulo vehicle allocation with driver-personality-driven vehicle selection. Furthermore, expands the active driver roster across all 6 motorsport disciplines to **12 unique pilots per discipline (72 drivers total)** without cross-module name collisions.
