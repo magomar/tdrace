@@ -266,12 +266,12 @@ pub fn render_starting_grid_screen(
         &locked_header_str
     } else if is_garage_highlighted {
         if game_mode.allows_car_change() {
-            "GARAGE [ACTIVE • CLICK / ENTER to open • [ / ] to switch]"
+            "GARAGE [ACTIVE • CLICK / ENTER / G to open • [ / ] to switch]"
         } else {
             "GARAGE [ACTIVE • CLICK / ENTER / G to open]"
         }
     } else {
-        "GARAGE [ACTIVE CAR • Click to open Garage]"
+        "GARAGE [ACTIVE CAR • CLICK / ENTER / G to open]"
     };
     let garage_header_col = if !is_car_unlocked {
         Palette::RED
@@ -288,15 +288,6 @@ pub fn render_starting_grid_screen(
         garage_header_col,
     );
 
-    // "OPEN GARAGE [G]" badge / button hint
-    fonts.draw_ui_bold(
-        "OPEN GARAGE [G]",
-        col1_x + col_w - scaler.s(130.0),
-        curr_y + scaler.s(16.0),
-        scaler.font_s(10.0),
-        Palette::NEON_CYAN,
-    );
-
     let car_title = model_opt.map(|m| m.name).unwrap_or_else(|| active_car.title());
     let car_desc = model_opt.map(|m| m.history_bio).unwrap_or_else(|| active_car.description());
 
@@ -309,18 +300,21 @@ pub fn render_starting_grid_screen(
     );
 
     let car_tag_str = if !is_car_unlocked {
-        "🔒 LOCKED"
+        "🔒 LOCKED".to_string()
+    } else if let Some(m) = model_opt {
+        m.category_name.to_uppercase()
     } else {
-        active_car.tag()
+        active_car.tag().to_string()
     };
     let car_tag_col = if !is_car_unlocked {
         Palette::RED
     } else {
         Palette::NEON_GOLD
     };
+    let tag_w = fonts.measure_ui_bold(&car_tag_str, scaler.font_s(10.0)).width;
     fonts.draw_ui_bold(
-        car_tag_str,
-        col1_x + col_w - scaler.s(160.0),
+        &car_tag_str,
+        col1_x + col_w - scaler.s(12.0) - tag_w,
         curr_y + scaler.s(34.0),
         scaler.font_s(10.0),
         car_tag_col,
@@ -329,16 +323,16 @@ pub fn render_starting_grid_screen(
     fonts.draw_ui_regular(
         car_desc,
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(50.0),
-        scaler.font_s(11.0),
+        curr_y + scaler.s(49.0),
+        scaler.font_s(10.5),
         Palette::UI_TEXT_MUTED,
     );
 
     // 2D Lateral View Blueprint Showcase Box (Enlarged and aspect-ratio preserved)
     let stat_base_x = col1_x + scaler.s(12.0);
     let stat_bar_w = col_w - scaler.s(24.0);
-    let lateral_box_y = curr_y + scaler.s(66.0);
-    let lateral_box_h = scaler.s(160.0);
+    let lateral_box_y = curr_y + scaler.s(63.0);
+    let lateral_box_h = scaler.s(135.0);
     scaler.draw_glass_card(
         stat_base_x,
         lateral_box_y,
@@ -362,8 +356,8 @@ pub fn render_starting_grid_screen(
             m.id,
             &preview_scheme,
             stat_base_x + stat_bar_w * 0.50,
-            lateral_box_y + lateral_box_h * 0.54,
-            scaler.s(1.55),
+            lateral_box_y + lateral_box_h * 0.53,
+            scaler.s(1.50),
             0.0,
             true,
         );
@@ -372,68 +366,82 @@ pub fn render_starting_grid_screen(
             active_car,
             &player_scheme,
             stat_base_x + stat_bar_w * 0.50,
-            lateral_box_y + lateral_box_h * 0.54,
-            scaler.s(1.55),
+            lateral_box_y + lateral_box_h * 0.53,
+            scaler.s(1.50),
             0.0,
             true,
         );
     }
 
-    // 4 Performance Stat Bars
-    let (spd, acc, grip, drift) = if let Some(m) = model_opt {
-        (m.stats.0, m.stats.1, m.stats.2, m.stats.3)
+    // 6 Performance Stat Bars matching Garage showroom
+    let (spd, acc, grip, drift, brk, aero) = if let Some(m) = model_opt {
+        m.stats
     } else {
-        active_car.stats()
+        let (s, a, g, d) = active_car.stats();
+        (s, a, g, d, 0.75, (d * 0.5).clamp(0.2, 0.9))
     };
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(236.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(254.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(272.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
-    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(290.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(208.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(225.0), stat_bar_w, "ACCELERATION", acc, Palette::NEON_GOLD);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(242.0), stat_bar_w, "LATERAL GRIP", grip, Palette::NEON_GREEN);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(259.0), stat_bar_w, "DRIFT AGILITY", drift, Palette::NEON_MAGENTA);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(276.0), stat_bar_w, "BRAKING FORCE", brk, Palette::NEON_ORANGE);
+    render_grid_stat_bar(&scaler, fonts, stat_base_x, curr_y + scaler.s(293.0), stat_bar_w, "AERODYNAMICS", aero, Palette::WHITE);
 
-    // 4 Engineering / Dynamic Specs Chips
-    let (spec1, spec2, spec3, spec4) = if let Some(m) = model_opt {
+    // Vehicle Specification Telemetry Card matching Garage showroom
+    let (t_spec, t_perf, t_aero) = if let Some(m) = model_opt {
         (
-            format!("{} BHP", m.bhp),
-            format!("{} kg", m.weight_kg),
-            format!("{} km/h", m.top_speed_kmh),
-            m.aero_downforce.to_string(),
+            format!("Engine: {}  •  Power: {} BHP @ {} Nm", m.engine_desc, m.bhp, m.torque_nm),
+            format!("Mass: {} kg ({})  •  Top Speed: {} km/h  •  0-100: {:.1}s", m.weight_kg, m.drivetrain, m.top_speed_kmh, m.accel_0_100),
+            format!("Aero: {}  •  Brakes: {}", m.aero_downforce, m.brakes_desc),
         )
     } else {
         let (s1, s2, s3, s4) = active_car.specs();
-        (s1.to_string(), s2.to_string(), s3.to_string(), s4.to_string())
+        (
+            format!("Drivetrain: {}  •  Specs: Standard Spec", s1),
+            format!("Mass: {}  •  Top Speed: {}", s2, s3),
+            format!("Aero / Dynamics: {}", s4),
+        )
     };
-    let spec_chip_w = (col_w - scaler.s(32.0)) * 0.5;
-    let spec_chip_h = scaler.s(24.0);
-    let chip_y1 = curr_y + scaler.s(314.0);
-    let chip_y2 = curr_y + scaler.s(344.0);
 
-    scaler.draw_glass_card(stat_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(&spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(16.0), scaler.font_s(10.5), Palette::NEON_CYAN);
-
-    scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(&spec2, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(16.0), scaler.font_s(10.5), Palette::WHITE);
-
-    scaler.draw_glass_card(stat_base_x, chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(&spec3, stat_base_x + scaler.s(8.0), chip_y2 + scaler.s(16.0), scaler.font_s(10.5), Palette::NEON_GOLD);
-
-    scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-    fonts.draw_ui_bold(&spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(16.0), scaler.font_s(10.5), Palette::NEON_GREEN);
-
-    // Prompt hint at bottom of card
-    if is_garage_highlighted {
-        let hint_text = if game_mode.allows_car_change() {
-            "Press [ENTER], [G] or CLICK to open Garage showroom & switch vehicle"
-        } else {
-            "Press [ENTER], [G] or CLICK to open Garage showroom"
-        };
-        fonts.draw_ui_regular(
-            hint_text,
-            col1_x + scaler.s(12.0),
-            curr_y + scaler.s(396.0),
-            scaler.font_s(10.0),
-            Palette::NEON_GOLD,
-        );
-    }
+    let telemetry_y = curr_y + scaler.s(315.0);
+    let telemetry_h = scaler.s(76.0);
+    scaler.draw_glass_card(
+        stat_base_x,
+        telemetry_y,
+        stat_bar_w,
+        telemetry_h,
+        Color::new(0.04, 0.06, 0.10, 0.75),
+        Palette::UI_CARD_BORDER,
+        1.0,
+    );
+    fonts.draw_ui_bold(
+        "VEHICLE SPECIFICATION TELEMETRY",
+        stat_base_x + scaler.s(10.0),
+        telemetry_y + scaler.s(15.0),
+        scaler.font_s(9.0),
+        Palette::NEON_CYAN,
+    );
+    fonts.draw_ui_regular(
+        &t_spec,
+        stat_base_x + scaler.s(10.0),
+        telemetry_y + scaler.s(32.0),
+        scaler.font_s(9.5),
+        Palette::UI_TEXT_MUTED,
+    );
+    fonts.draw_ui_regular(
+        &t_perf,
+        stat_base_x + scaler.s(10.0),
+        telemetry_y + scaler.s(48.0),
+        scaler.font_s(9.5),
+        Palette::UI_TEXT_MUTED,
+    );
+    fonts.draw_ui_regular(
+        &t_aero,
+        stat_base_x + scaler.s(10.0),
+        telemetry_y + scaler.s(64.0),
+        scaler.font_s(9.5),
+        Palette::UI_TEXT_MUTED,
+    );
 
     curr_y += garage_card_h + scaler.s(10.0);
 
@@ -876,21 +884,33 @@ fn render_grid_stat_bar(
     pct: f32,
     fill_col: Color,
 ) {
-    let bar_h = scaler.s(10.0);
-    let label_w = scaler.s(55.0);
+    let lbl_w = scaler.s(92.0);
+    let bar_h = scaler.s(7.0);
+    let actual_bar_w = w - lbl_w - scaler.s(45.0);
 
-    fonts.draw_ui_bold(label, x, y + scaler.s(9.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_bold(
+        label,
+        x,
+        y + scaler.s(7.0),
+        scaler.font_s(9.5),
+        Palette::UI_TEXT_MUTED,
+    );
 
-    let bar_x = x + label_w;
-    let actual_bar_w = w - label_w - scaler.s(45.0);
-    draw_rectangle(bar_x, y, actual_bar_w, bar_h, Color::new(0.08, 0.10, 0.15, 0.90));
-    draw_rectangle_lines(bar_x, y, actual_bar_w, bar_h, 1.0, Palette::UI_CARD_BORDER);
+    let bar_x = x + lbl_w;
+    draw_rectangle(bar_x, y, actual_bar_w, bar_h, Color::new(0.08, 0.10, 0.14, 0.90));
+    draw_rectangle_lines(bar_x, y, actual_bar_w, bar_h, 1.0, Color::new(0.20, 0.25, 0.35, 0.80));
 
-    let filled_w = actual_bar_w * pct.clamp(0.0, 1.0);
-    draw_rectangle(bar_x, y, filled_w, bar_h, fill_col);
+    let fill_w = actual_bar_w * pct.clamp(0.0, 1.0);
+    draw_rectangle(bar_x, y, fill_w, bar_h, fill_col);
 
     let pct_str = format!("{:.0}%", pct * 100.0);
-    fonts.draw_ui_bold(&pct_str, x + w - scaler.s(38.0), y + scaler.s(9.0), scaler.font_s(10.0), Palette::WHITE);
+    fonts.draw_ui_bold(
+        &pct_str,
+        bar_x + actual_bar_w + scaler.s(8.0),
+        y + scaler.s(7.0),
+        scaler.font_s(9.5),
+        Palette::WHITE,
+    );
 }
 
 fn render_ghost_participant_row(
