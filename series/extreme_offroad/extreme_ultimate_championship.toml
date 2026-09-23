@@ -30,7 +30,7 @@ laps = 3
 order = 2
 track_id = "glacier_crest_pass"
 name = "Glacier Crest Pass"
-laps = 3
+laps = 4
 
 [[rounds]]
 order = 3
@@ -42,43 +42,43 @@ laps = 3
 order = 4
 track_id = "supercross_stadium_arena"
 name = "Supercross Stadium Arena"
-laps = 3
+laps = 5
 
 [[rounds]]
 order = 5
 track_id = "gravel_quarry_chasm"
 name = "Gravel Quarry Chasm"
-laps = 3
+laps = 4
 
 [[rounds]]
 order = 6
 track_id = "arctic_frozen_lake"
 name = "Arctic Frozen Lake"
-laps = 3
+laps = 5
 
 [[rounds]]
 order = 7
 track_id = "alpine_snow_ridge"
 name = "Alpine Snow Ridge"
-laps = 3
+laps = 4
 
 [[rounds]]
 order = 8
 track_id = "louisiana_mud_swampland"
 name = "Louisiana Mud Swampland"
-laps = 3
+laps = 4
 
 [[rounds]]
 order = 9
 track_id = "red_rock_canyon"
 name = "Red Rock Canyon Pass"
-laps = 3
+laps = 4
 
 [[rounds]]
 order = 10
 track_id = "rovaniemi_ice_ring"
 name = "Rovaniemi Ice Ring"
-laps = 3
+laps = 4
 
 [[rounds]]
 order = 11

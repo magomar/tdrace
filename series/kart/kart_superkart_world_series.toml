@@ -9,7 +9,7 @@ name = "Superkart 250cc World Series"
 description = "The pinnacle of karting: 100 BHP aerodynamic twin-cylinder 250cc Superkarts exceeding 245 km/h across 12 world kart circuits."
 module_id = "kart"
 tier = 5
-laps_per_round = 4
+laps_per_round = 5
 bot_count = 7
 ai_difficulty = "legend"
 icon = "kart"
@@ -24,73 +24,73 @@ clean_race_bonus = false
 order = 1
 track_id = "portimao_kart"
 name = "Kartódromo Internacional do Algarve"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 2
 track_id = "valencia_kart"
 name = "Kartódromo Lucas Guerrero Valencia"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 3
 track_id = "campillos"
 name = "KartCenter Campillos"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 4
 track_id = "zuera"
 name = "Circuito Internacional de Zuera"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 5
 track_id = "le_mans_kart"
 name = "Le Mans Karting International"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 6
 track_id = "silverstone_national_kart"
 name = "Silverstone National Kart Circuit"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 7
 track_id = "pfi"
 name = "PF International Kart Circuit"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 8
 track_id = "sarno"
 name = "Circuito Internazionale Napoli Sarno"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 9
 track_id = "franciacorta"
 name = "Franciacorta Karting Track"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 10
 track_id = "kristianstad"
 name = "Åsum Ring Kristianstad"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 11
 track_id = "seven_laghi"
 name = "Circuito 7 Laghi Castelletto"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 12
 track_id = "lonato"
 name = "South Garda Karting Lonato"
-laps = 4
+laps = 5
 
 [[drivers]]
 id = "player"

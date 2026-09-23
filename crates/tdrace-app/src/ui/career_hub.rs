@@ -647,18 +647,20 @@ pub fn render_career_hub_screen(
     let is_unlocked = selected_tier <= career.level;
     let season_in_progress = champ.is_some() && !champ.unwrap().is_completed;
 
+    let can_rerun = champ.as_ref().map(|c| c.current_round > 0).unwrap_or(false);
+
     if !is_unlocked {
-        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, "TIER LOCKED — COMPLETE LOWER TIERS TO UNLOCK", Palette::UI_TEXT_MUTED, Palette::UI_CARD_BORDER, is_gamepad);
+        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, "TIER LOCKED — COMPLETE LOWER TIERS TO UNLOCK", Palette::UI_TEXT_MUTED, Palette::UI_CARD_BORDER, is_gamepad, false);
     } else if season_in_progress {
         let cur_rnd = champ.unwrap().current_round + 1;
         let tot_rnd = champ.unwrap().total_rounds();
         let track_name = champ.unwrap().current_track_id().map(track_title).unwrap_or("Next Round");
         let txt = format!("CONTINUE CHAMPIONSHIP — ROUND {}/{} ({})", cur_rnd, tot_rnd, track_name);
-        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, &txt, Palette::NEON_GREEN, Palette::NEON_GREEN, is_gamepad);
+        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, &txt, Palette::NEON_GREEN, Palette::NEON_GREEN, is_gamepad, can_rerun);
     } else {
         let first_track = calendar.first().map(|s| track_title(s)).unwrap_or("Round 1");
         let txt = format!("ENTER CHAMPIONSHIP CUP — ROUND 1 ({})", first_track);
-        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, &txt, Palette::NEON_CYAN, Palette::NEON_CYAN, is_gamepad);
+        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, &txt, Palette::NEON_CYAN, Palette::NEON_CYAN, is_gamepad, can_rerun);
     }
 }
 
@@ -672,6 +674,7 @@ fn draw_bottom_bar(
     text_col: Color,
     border_col: Color,
     is_gamepad: bool,
+    can_rerun: bool,
 ) {
     let bar_h = scaler.s(36.0);
     scaler.draw_glass_card(x, y, w, bar_h, Color::new(0.06, 0.08, 0.13, 0.95), border_col, 1.2);
@@ -681,9 +684,17 @@ fn draw_bottom_bar(
     fonts.draw_ui_bold(&full_action, x + scaler.s(16.0), y + scaler.s(23.0), scaler.font_s(12.5), text_col);
 
     let shortcuts = if is_gamepad {
-        "[D-Pad / Sticks] Tier/Slot  •  [LB/RB] Tier  •  [Y] Standings  •  [X] Reset  •  [B] Back"
+        if can_rerun {
+            "[D-Pad / Sticks] Tier/Slot  •  [LB/RB] Tier  •  [Y] Standings  •  [X] Re-run Round  •  [B] Back"
+        } else {
+            "[D-Pad / Sticks] Tier/Slot  •  [LB/RB] Tier  •  [Y] Standings  •  [B] Back"
+        }
     } else {
-        "[◄/►] Tier  •  [▲/▼] Slot  •  [< / >] Swap  •  [TAB] Standings  •  [X] Reset  •  [ESC] Back"
+        if can_rerun {
+            "[◄/►] Tier  •  [▲/▼] Slot  •  [< / >] Swap  •  [TAB] Standings  •  [R] Re-run Round  •  [ESC] Back"
+        } else {
+            "[◄/►] Tier  •  [▲/▼] Slot  •  [< / >] Swap  •  [TAB] Standings  •  [ESC] Back"
+        }
     };
     draw_ui_regular_right(fonts, shortcuts, x + w - scaler.s(16.0), y + scaler.s(23.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
 }

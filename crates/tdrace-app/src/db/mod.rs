@@ -1063,6 +1063,18 @@ impl HallOfFameDb {
         Ok(())
     }
 
+    pub fn delete_latest_race_history_entry_for_championship(&self, championship_name: &str) -> Result<()> {
+        let mut guard = self.history.lock().unwrap();
+        if let Some(pos) = guard.iter().rposition(|r| {
+            r.championship_name
+                .as_deref()
+                .is_some_and(|n| n.eq_ignore_ascii_case(championship_name))
+        }) {
+            guard.remove(pos);
+        }
+        Ok(())
+    }
+
     pub fn clear_track_history(&self, track_id: &str) -> Result<()> {
         self.clear_hall_of_fame_for_track(track_id)?;
         self.clear_race_history_for_track(track_id)?;

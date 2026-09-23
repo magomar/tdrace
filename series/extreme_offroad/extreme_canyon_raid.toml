@@ -24,7 +24,7 @@ clean_race_bonus = false
 order = 1
 track_id = "red_rock_canyon"
 name = "Red Rock Canyon Pass"
-laps = 3
+laps = 4
 
 [[rounds]]
 order = 2
@@ -48,7 +48,7 @@ laps = 3
 order = 5
 track_id = "dirt_figure_eight"
 name = "Dirt Figure-8 Arena"
-laps = 3
+laps = 5
 
 [[rounds]]
 order = 6

@@ -9,7 +9,7 @@ name = "Continental Rotax Trophy"
 description = "Brutal 125cc 6-speed KZ2 shifter karts pulling 3.5G lateral cornering grip and 0-100 km/h in 2.8s across 9 international kart circuits."
 module_id = "kart"
 tier = 3
-laps_per_round = 4
+laps_per_round = 5
 bot_count = 7
 ai_difficulty = "pro"
 icon = "kart"
@@ -24,55 +24,55 @@ clean_race_bonus = false
 order = 1
 track_id = "pfi"
 name = "PF International Kart Circuit"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 2
 track_id = "franciacorta"
 name = "Franciacorta Karting Track"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 3
 track_id = "ampfing"
 name = "Kartshop Ampfing"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 4
 track_id = "sarno"
 name = "Circuito Internazionale Napoli Sarno"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 5
 track_id = "kristianstad"
 name = "Åsum Ring Kristianstad"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 6
 track_id = "seven_laghi"
 name = "Circuito 7 Laghi Castelletto"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 7
 track_id = "lonato"
 name = "South Garda Karting Lonato"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 8
 track_id = "wackersdorf"
 name = "Prokart Raceland Wackersdorf"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 9
 track_id = "whilton_mill"
 name = "Whilton Mill Kart Circuit"
-laps = 4
+laps = 5
 
 [[drivers]]
 id = "player"

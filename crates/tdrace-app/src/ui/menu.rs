@@ -859,6 +859,8 @@ pub struct RaceResultEntry {
     pub delta_to_leader: f32,
     #[serde(default)]
     pub car_idx: usize,
+    #[serde(default)]
+    pub points_awarded: u32,
 }
 
 use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats};
@@ -1863,12 +1865,18 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     }
 }
 
+fn draw_ui_bold_right(fonts: &Fonts, text: &str, right_x: f32, y: f32, size: f32, color: Color) {
+    let dim = fonts.measure_ui_bold(text, size);
+    fonts.draw_ui_bold(text, right_x - dim.width, y, size, color);
+}
+
 /// Renders the Race Results / Podium Standings screen with modern leaderboard cards.
 pub fn render_results_screen(
     fonts: &Fonts,
     track_name: &str,
     results: &[RaceResultEntry],
     is_time_attack: bool,
+    is_championship: bool,
     xp_receipt: Option<&XpAwardReceipt>,
 ) {
     let sw = screen_width();
@@ -1886,6 +1894,8 @@ pub fn render_results_screen(
 
     let title = if is_time_attack {
         "TIME ATTACK SESSION COMPLETE"
+    } else if is_championship {
+        "CHAMPIONSHIP ROUND RESULTS & POINTS"
     } else {
         "RACE RESULTS & STANDINGS"
     };
@@ -1914,9 +1924,16 @@ pub fn render_results_screen(
     draw_rectangle(x + scaler.s(20.0), row_y - scaler.s(20.0), box_w - scaler.s(40.0), hdr_h, Color::new(0.12, 0.16, 0.25, 0.9));
     fonts.draw_ui_bold("POS", x + scaler.s(32.0), row_y, scaler.font_s(14.0), Palette::WHITE);
     fonts.draw_ui_bold("DRIVER / VEHICLE", x + scaler.s(85.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-    fonts.draw_ui_bold("TOTAL TIME", x + box_w - scaler.s(320.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-    fonts.draw_ui_bold("BEST LAP", x + box_w - scaler.s(190.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-    fonts.draw_ui_bold("GAP", x + box_w - scaler.s(75.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+    if is_championship {
+        fonts.draw_ui_bold("TOTAL TIME", x + box_w - scaler.s(360.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+        fonts.draw_ui_bold("BEST LAP", x + box_w - scaler.s(240.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+        fonts.draw_ui_bold("GAP", x + box_w - scaler.s(135.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+        draw_ui_bold_right(fonts, "POINTS", x + box_w - scaler.s(30.0), row_y, scaler.font_s(14.0), Palette::NEON_GOLD);
+    } else {
+        fonts.draw_ui_bold("TOTAL TIME", x + box_w - scaler.s(320.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+        fonts.draw_ui_bold("BEST LAP", x + box_w - scaler.s(190.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+        fonts.draw_ui_bold("GAP", x + box_w - scaler.s(75.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+    }
 
     row_y += scaler.s(24.0);
 
@@ -1939,18 +1956,36 @@ pub fn render_results_screen(
         fonts.draw_ui_bold(&pos_str, x + scaler.s(28.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
         fonts.draw_ui_bold(&res.car_name, x + scaler.s(85.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
-        let total_str = format_lap_time(res.total_time);
-        fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(320.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+        if is_championship {
+            let total_str = format_lap_time(res.total_time);
+            fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(360.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
-        let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
-        fonts.draw_ui_bold(&best_str, x + box_w - scaler.s(190.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+            let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
+            fonts.draw_ui_bold(&best_str, x + box_w - scaler.s(240.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
-        let gap_str = if res.position == 1 {
-            "-".to_string()
+            let gap_str = if res.position == 1 {
+                "-".to_string()
+            } else {
+                format!("+{:.2}s", res.delta_to_leader)
+            };
+            fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(135.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+
+            let pts_str = format!("+{} PTS", res.points_awarded);
+            draw_ui_bold_right(fonts, &pts_str, x + box_w - scaler.s(30.0), row_y + scaler.s(4.0), scaler.font_s(14.0), Palette::NEON_GOLD);
         } else {
-            format!("+{:.2}s", res.delta_to_leader)
-        };
-        fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(75.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+            let total_str = format_lap_time(res.total_time);
+            fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(320.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+
+            let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
+            fonts.draw_ui_bold(&best_str, x + box_w - scaler.s(190.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+
+            let gap_str = if res.position == 1 {
+                "-".to_string()
+            } else {
+                format!("+{:.2}s", res.delta_to_leader)
+            };
+            fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(75.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+        }
 
         row_y += scaler.s(32.0);
     }
@@ -1987,7 +2022,11 @@ pub fn render_results_screen(
     }
 
     // Bottom action prompt
-    let prompt = "Press [SPACE / ENTER] Hall of Fame | [TAB] Detailed Stats | [R] Restart Race | [ESC] Main Menu";
+    let prompt = if is_championship {
+        "Press [SPACE / ENTER] Championship Standings | [TAB] Detailed Stats | [R] Re-run Round | [ESC] Exit"
+    } else {
+        "Press [SPACE / ENTER] Hall of Fame | [TAB] Detailed Stats | [R] Restart Race | [ESC] Main Menu"
+    };
     fonts.draw_ui_bold_centered(
         prompt,
         sw * 0.5,
@@ -2495,9 +2534,11 @@ pub fn render_championship_standings_screen(
     }
 
     let next_prompt = if champ.is_completed {
-        "SEASON COMPLETE! PRESS [ENTER/SPACE] OR GAMEPAD [A] TO RETURN TO MENU"
+        "SEASON COMPLETE! PRESS [ENTER/SPACE] OR GAMEPAD [A] TO RETURN TO MENU | [R] RE-RUN FINAL ROUND"
+    } else if champ.current_round > 0 {
+        "PRESS [ENTER/SPACE] TO ADVANCE ROUND | [R] RE-RUN LATEST ROUND | [ESC] EXIT"
     } else {
-        "PRESS [ENTER/SPACE] TO ADVANCE ROUND | [R] RESET CHAMPIONSHIP | [ESC] EXIT"
+        "PRESS [ENTER/SPACE] TO START ROUND 1 | [ESC] EXIT"
     };
 
     fonts.draw_ui_bold_centered(

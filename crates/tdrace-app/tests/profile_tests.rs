@@ -862,10 +862,16 @@ fn test_championship_completion_podium_trophy_awarded() {
     session.trackers[0].best_lap_time = Some(20.5);
     session.session_time = 62.0;
     session.check_race_finish();
+    assert_eq!(session.state, GameState::Finished);
+
+    // Press Confirm to commit final round results and advance to Career Hub standings
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_finished_screen();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
 
     // Verify championship completed and Gold trophy awarded
     assert_eq!(session.active_career_progress.trophies_gold, 1);
-    assert_eq!(session.state, GameState::ChampionshipStandings);
+    assert!(matches!(session.state, GameState::CareerHub { showing_standings: true, .. }));
 }
 
 #[test]

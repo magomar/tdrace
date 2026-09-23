@@ -2,7 +2,7 @@ use std::fs;
 use tdrace_app::series::manager::EMBEDDED_PRESETS;
 use tdrace_app::ui::menu::{ModalityCategory, ModalityItem};
 use tdrace_app::{
-    ChampionshipDefinition, ChampionshipManager, GameState, PointSystem, RaceSession,
+    ChampionshipDefinition, ChampionshipManager, FinishedScreenView, GameState, PointSystem, RaceSession,
     SeriesDefinition, SeriesManager, SeriesSession,
 };
 
@@ -654,6 +654,16 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     session.trackers[1].best_lap_time = Some(38.5);
 
     session.check_race_finish();
+    assert_eq!(session.state, GameState::Finished);
+    assert_eq!(session.finished_view, FinishedScreenView::Results);
+
+    // Verify results entries have points assigned
+    assert!(session.results.iter().any(|r| r.points_awarded > 0), "Round results must have points awarded");
+
+    // Press Enter to commit round results and advance to Championship Standings
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_finished_screen();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
     assert_eq!(session.state, GameState::ChampionshipStandings);
 
     // 4. Verify Round 1 standings
@@ -710,6 +720,13 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     session.trackers[0].best_lap_time = Some(39.0);
 
     session.check_race_finish();
+    assert_eq!(session.state, GameState::Finished);
+    assert_eq!(session.finished_view, FinishedScreenView::Results);
+
+    // Press Enter to commit round 2 results and advance to Championship Standings
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_finished_screen();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
     assert_eq!(session.state, GameState::ChampionshipStandings);
 
     // 7. Verify accumulated points after Round 2
@@ -770,6 +787,11 @@ fn test_reset_championship_clears_session_and_database_history() {
     // Complete round 1
     session.trackers[0].current_lap = session.total_laps + 1;
     session.check_race_finish();
+    assert_eq!(session.state, GameState::Finished);
+
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_finished_screen();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
     assert_eq!(session.state, GameState::ChampionshipStandings);
 
     // Verify race history has logged this championship round
@@ -993,6 +1015,294 @@ fn test_all_25_preset_championships_launch_with_eligible_and_unlocked_cars() {
         );
     }
 }
+
+#[test]
+fn test_championship_cancel_latest_round_rolls_back_points_and_history() {
+    let mut session = RaceSession::new();
+    session.start_rally_career_tier(1);
+    let champ = session.championship_session.as_mut().unwrap();
+    let initial_track = champ.current_track_id().unwrap().to_string();
+    assert_eq!(champ.current_round, 0);
+
+    // Simulate submitting round 1 results
+    let round_results = vec![
+        tdrace_app::RoundDriverResult {
+            driver_id: "player".to_string(),
+            driver_name: "Player".to_string(),
+            team_name: "Independent".to_string(),
+            finish_position: 1,
+            total_time: 120.0,
+            best_lap: Some(25.0),
+            has_fastest_lap: true,
+            points_awarded: 26,
+        },
+        tdrace_app::RoundDriverResult {
+            driver_id: "bot_1".to_string(),
+            driver_name: "Bot 1".to_string(),
+            team_name: "Rival Team".to_string(),
+            finish_position: 2,
+            total_time: 122.5,
+            best_lap: Some(26.0),
+            has_fastest_lap: false,
+            points_awarded: 18,
+        },
+    ];
+
+    champ.submit_round_results("Round 1 Track", round_results);
+    assert_eq!(champ.current_round, 1);
+    assert_eq!(champ.history.len(), 1);
+
+    let player = champ.standings.iter().find(|s| s.driver_id == "player").unwrap();
+    assert_eq!(player.points, 26);
+    assert_eq!(player.wins, 1);
+    assert_eq!(player.podiums, 1);
+
+    // Cancel latest round
+    let rerun_track = champ.cancel_latest_round();
+    assert_eq!(rerun_track.as_deref(), Some(initial_track.as_str()));
+    assert_eq!(champ.current_round, 0);
+    assert_eq!(champ.history.len(), 0);
+
+    let player_after = champ.standings.iter().find(|s| s.driver_id == "player").unwrap();
+    assert_eq!(player_after.points, 0);
+    assert_eq!(player_after.wins, 0);
+    assert_eq!(player_after.podiums, 0);
+    assert_eq!(player_after.total_race_time, 0.0);
+    assert_eq!(player_after.best_finish, usize::MAX);
+}
+
+#[test]
+fn test_post_race_rerun_cancels_uncommitted_results_and_restarts_round() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    session.start_rally_career_tier(1);
+    session.init_race();
+    assert_eq!(session.championship_session.as_ref().unwrap().current_round, 0);
+
+    // Simulate finishing race
+    session.trackers[0].current_lap = session.total_laps + 1;
+    session.trackers[0].best_lap_time = Some(24.0);
+    session.session_time = 75.0;
+    session.check_race_finish();
+
+    assert_eq!(session.state, GameState::Finished);
+    assert_eq!(session.finished_view, FinishedScreenView::Results);
+    assert!(session.pending_championship_results.is_some());
+
+    // Results screen has points awarded
+    let player_res = session.results.iter().find(|r| r.is_player).unwrap();
+    assert!(player_res.points_awarded > 0, "Player results must display points awarded");
+
+    // Press R to re-run round
+    session.input.gamepad.snapshot.btn_y_pressed = true;
+    session.update_finished_screen();
+    session.input.gamepad.snapshot.btn_y_pressed = false;
+
+    // Must clear pending results and restart race without advancing round
+    assert!(session.pending_championship_results.is_none());
+    assert_eq!(session.championship_session.as_ref().unwrap().current_round, 0);
+    assert_eq!(session.championship_session.as_ref().unwrap().history.len(), 0);
+    assert!(session.transition.is_some() || matches!(session.state, GameState::Countdown(_)));
+}
+
+#[test]
+fn test_championship_standings_screen_rerun_rolls_back_and_restarts_round() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    session.start_rally_career_tier(1);
+    session.init_race();
+
+    // Complete round 1 and confirm
+    session.trackers[0].current_lap = session.total_laps + 1;
+    session.check_race_finish();
+    assert_eq!(session.state, GameState::Finished);
+
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_finished_screen();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert_eq!(session.state, GameState::ChampionshipStandings);
+    assert_eq!(session.championship_session.as_ref().unwrap().current_round, 1);
+
+    // Verify DB history logged
+    let pid = session.active_profile.id.unwrap();
+    let history_before = session.hof_db.as_ref().unwrap().get_history_for_profile(pid, 10).unwrap();
+    assert_eq!(history_before.len(), 1);
+
+    // Now on ChampionshipStandings screen, press R (gamepad Y) to re-run round
+    session.input.gamepad.snapshot.btn_y_pressed = true;
+    session.update_championship_standings();
+    session.input.gamepad.snapshot.btn_y_pressed = false;
+
+    // Verify session rolled back
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.current_round, 0, "Current round must roll back to 0");
+    assert_eq!(champ.history.len(), 0, "History entry must be removed");
+    for s in &champ.standings {
+        assert_eq!(s.points, 0, "Standings points must be rolled back to 0");
+    }
+
+    // Verify DB history entry deleted
+    let history_after = session.hof_db.as_ref().unwrap().get_history_for_profile(pid, 10).unwrap();
+    assert_eq!(history_after.len(), 0, "DB history entry for cancelled round must be deleted");
+
+    // Race restarted
+    assert!(session.transition.is_some() || matches!(session.state, GameState::Countdown(_)));
+}
+
+#[test]
+fn test_championship_lap_calibration_across_all_modules() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    let mgr = ChampionshipManager::new();
+
+    // 1. GT Championships: 3 laps uniformly
+    for tier in 1..=5 {
+        session.start_gt_career_tier(tier);
+        assert_eq!(session.total_laps, 3, "GT Tier {} must run 3 laps", tier);
+    }
+    for slug in &[
+        "gt4_clubman_sprint",
+        "gt3_european_challenge",
+        "gt2_power_masters",
+        "gt1_heritage_trophy",
+        "hypercar_world_gp",
+    ] {
+        let def = mgr.get(slug).expect("GT preset must exist");
+        assert_eq!(def.series.laps_per_round, 3);
+        for round in &def.rounds {
+            assert_eq!(round.laps, Some(3), "GT {} round {} laps", slug, round.order);
+        }
+        session.launch_or_resume_championship(def);
+        assert_eq!(session.total_laps, 3, "GT preset {} must run 3 laps", slug);
+    }
+
+    // 2. Karting Championships: 5 laps uniformly
+    for tier in 1..=5 {
+        session.start_kart_career_tier(tier);
+        assert_eq!(session.total_laps, 5, "Karting Tier {} must run 5 laps", tier);
+    }
+    for slug in &[
+        "kart_world_cup",
+        "kart_national_championship",
+        "kart_continental_trophy",
+        "kart_european_championship",
+        "kart_superkart_world_series",
+    ] {
+        let def = mgr.get(slug).expect("Karting preset must exist");
+        assert_eq!(def.series.laps_per_round, 5);
+        for round in &def.rounds {
+            assert_eq!(round.laps, Some(5), "Karting {} round {} laps", slug, round.order);
+        }
+        session.launch_or_resume_championship(def);
+        assert_eq!(session.total_laps, 5, "Karting preset {} must run 5 laps", slug);
+    }
+
+    // 3. Rallycross Championships: 5 laps uniformly
+    for tier in 1..=5 {
+        session.start_rally_career_tier(tier);
+        assert_eq!(session.total_laps, 5, "Rallycross Tier {} must run 5 laps", tier);
+    }
+    for slug in &[
+        "rally_grassroots_cup",
+        "rally_world_cup",
+        "rally_group_b_masters",
+        "rally_dakar_raid_trophy",
+        "rally_super_trucks_series",
+    ] {
+        let def = mgr.get(slug).expect("Rallycross preset must exist");
+        assert_eq!(def.series.laps_per_round, 5);
+        for round in &def.rounds {
+            assert_eq!(round.laps, Some(5), "Rallycross {} round {} laps", slug, round.order);
+        }
+        session.launch_or_resume_championship(def);
+        assert_eq!(session.total_laps, 5, "Rallycross preset {} must run 5 laps", slug);
+    }
+
+    // 4. NASCAR Championships: Preserved (4 laps)
+    for tier in 1..=5 {
+        session.start_nascar_career_tier(tier);
+        assert_eq!(session.total_laps, 4, "NASCAR Tier {} must run 4 laps", tier);
+    }
+
+    // 5. Extreme OffRoad: Balanced 3-5 laps based on lap distance
+    // Short tracks (<1000m): 5 laps
+    // Mid-distance tracks (1000-2000m): 4 laps
+    // Long tracks (>2000m) & arenas: 3 laps
+    let offroad_slugs = &[
+        "extreme_desert_sand_sprint",
+        "extreme_canyon_raid",
+        "extreme_offroad_cup",
+        "extreme_mud_masters",
+        "extreme_ultimate_championship",
+    ];
+
+    for slug in offroad_slugs {
+        let def = mgr.get(slug).expect("Extreme Offroad preset must exist");
+        for round in &def.rounds {
+            let expected_laps = match round.track_id.as_str() {
+                "supercross_stadium_arena" | "arctic_frozen_lake" | "dirt_figure_eight" => 5,
+                "rovaniemi_ice_ring"
+                | "louisiana_mud_swampland"
+                | "red_rock_canyon"
+                | "gravel_quarry_chasm"
+                | "alpine_snow_ridge"
+                | "glacier_crest_pass" => 4,
+                _ => 3,
+            };
+            assert_eq!(
+                round.laps,
+                Some(expected_laps),
+                "Extreme offroad preset '{}' round '{}' ({}) expected {} laps, got {:?}",
+                slug,
+                round.order,
+                round.track_id,
+                expected_laps,
+                round.laps
+            );
+        }
+
+        // Test running through rounds and verifying session.total_laps
+        session.launch_or_resume_championship(def);
+        for round_idx in 0..def.rounds.len() {
+            let round = &def.rounds[round_idx];
+            let expected_laps = match round.track_id.as_str() {
+                "supercross_stadium_arena" | "arctic_frozen_lake" | "dirt_figure_eight" => 5,
+                "rovaniemi_ice_ring"
+                | "louisiana_mud_swampland"
+                | "red_rock_canyon"
+                | "gravel_quarry_chasm"
+                | "alpine_snow_ridge"
+                | "glacier_crest_pass" => 4,
+                _ => 3,
+            };
+            assert_eq!(
+                session.total_laps, expected_laps,
+                "Championship {} round {} ({}) must have {} total_laps",
+                slug, round_idx, round.track_id, expected_laps
+            );
+
+            // Advance to next round if not last
+            if round_idx + 1 < def.rounds.len() {
+                let champ = session.championship_session.as_mut().unwrap();
+                champ.current_round += 1;
+                session.init_race();
+            }
+        }
+    }
+}
+
 
 
 

@@ -2301,7 +2301,7 @@ impl RaceSession {
             cup_name,
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             track_ids,
-            4,
+            5,
             &[
                 ("player", "Player", "Apex Rally Team"),
                 ("johan_vance", "Johan Vance", "KMS Motorsport"),
@@ -2424,7 +2424,7 @@ impl RaceSession {
             cup_name,
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             track_ids,
-            4,
+            5,
             &[
                 ("player", "Player", "Apex Kart Racing"),
                 ("marco_armani", "Marco Armani", "Tony Kart Racing"),
@@ -2543,6 +2543,22 @@ impl RaceSession {
             ),
         };
 
+        let round_laps: Vec<Option<u32>> = track_ids
+            .iter()
+            .map(|id| {
+                Some(match id.as_str() {
+                    "supercross_stadium_arena" | "arctic_frozen_lake" | "dirt_figure_eight" => 5,
+                    "rovaniemi_ice_ring"
+                    | "louisiana_mud_swampland"
+                    | "red_rock_canyon"
+                    | "gravel_quarry_chasm"
+                    | "alpine_snow_ridge"
+                    | "glacier_crest_pass" => 4,
+                    _ => 3,
+                })
+            })
+            .collect();
+
         let champ = ChampionshipSession::new(
             cup_name,
             PointSystem::FiaStandard { fastest_lap_bonus: false },
@@ -2559,7 +2575,8 @@ impl RaceSession {
                 ("sven_lindqvist", "Sven 'Blizzard' Lindqvist", "Arctic Circle Rally"),
                 ("cruz_morales", "Cruz 'Chasm Jumper' Morales", "Quarry Stunt Squad"),
             ],
-        );
+        )
+        .with_round_laps(round_laps);
         let prev_selected = self.selected_car_model_id;
         self.switch_to_extreme_offroad();
         self.game_mode = GameMode::Career;
@@ -2642,26 +2659,43 @@ impl RaceSession {
 
     /// Starts a full Extreme Off-Road & Stunt Arenas Championship Season.
     pub fn start_extreme_offroad_championship(&mut self) {
+        let track_ids = vec![
+            "sahara_dune_crossing".to_string(),
+            "dirt_figure_eight".to_string(),
+            "atacama_sand_basin".to_string(),
+            "red_rock_canyon".to_string(),
+            "mud_slough_arena".to_string(),
+            "baja_500_desert_scrub".to_string(),
+            "arctic_frozen_lake".to_string(),
+            "alpine_snow_ridge".to_string(),
+            "rovaniemi_ice_ring".to_string(),
+            "supercross_stadium_arena".to_string(),
+            "gravel_quarry_chasm".to_string(),
+            "louisiana_mud_swampland".to_string(),
+            "monster_colosseum".to_string(),
+            "glacier_crest_pass".to_string(),
+            "stunt_city_megastructure".to_string(),
+        ];
+        let round_laps: Vec<Option<u32>> = track_ids
+            .iter()
+            .map(|id| {
+                Some(match id.as_str() {
+                    "supercross_stadium_arena" | "arctic_frozen_lake" | "dirt_figure_eight" => 5,
+                    "rovaniemi_ice_ring"
+                    | "louisiana_mud_swampland"
+                    | "red_rock_canyon"
+                    | "gravel_quarry_chasm"
+                    | "alpine_snow_ridge"
+                    | "glacier_crest_pass" => 4,
+                    _ => 3,
+                })
+            })
+            .collect();
+
         let champ = ChampionshipSession::new(
             "Extreme Off-Road World Series 2026",
             PointSystem::FiaStandard { fastest_lap_bonus: false },
-            vec![
-                "sahara_dune_crossing".to_string(),
-                "dirt_figure_eight".to_string(),
-                "atacama_sand_basin".to_string(),
-                "red_rock_canyon".to_string(),
-                "mud_slough_arena".to_string(),
-                "baja_500_desert_scrub".to_string(),
-                "arctic_frozen_lake".to_string(),
-                "alpine_snow_ridge".to_string(),
-                "rovaniemi_ice_ring".to_string(),
-                "supercross_stadium_arena".to_string(),
-                "gravel_quarry_chasm".to_string(),
-                "louisiana_mud_swampland".to_string(),
-                "monster_colosseum".to_string(),
-                "glacier_crest_pass".to_string(),
-                "stunt_city_megastructure".to_string(),
-            ],
+            track_ids,
             3,
             &[
                 ("player", "Player", "Sand Rail Dynamics"),
@@ -2674,7 +2708,8 @@ impl RaceSession {
                 ("sven_lindqvist", "Sven 'Blizzard' Lindqvist", "Arctic Circle Rally"),
                 ("cruz_morales", "Cruz 'Chasm Jumper' Morales", "Quarry Stunt Squad"),
             ],
-        );
+        )
+        .with_round_laps(round_laps);
         self.switch_to_extreme_offroad();
         self.championship_session = Some(champ.with_tier(1));
         self.init_race();
@@ -3301,7 +3336,9 @@ impl RaceSession {
 
         // Predefined balanced lap count from track (or championship override)
         self.total_laps = if let Some(champ) = &self.championship_session {
-            if champ.laps_per_round > 0 {
+            if let Some(round_laps) = champ.current_round_laps() {
+                round_laps
+            } else if champ.laps_per_round > 0 {
                 champ.laps_per_round
             } else {
                 self.track.default_laps
@@ -3962,8 +3999,10 @@ impl RaceSession {
             }
         }
 
-        // Global restart shortcut (R key)
-        if is_key_pressed(KeyCode::R) {
+        // Global restart shortcut (R key) during active racing / paused sessions
+        if matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_))
+            && is_key_pressed(KeyCode::R)
+        {
             self.init_race();
             return;
         }
@@ -3988,48 +4027,7 @@ impl RaceSession {
                 self.update_module_select();
             }
             GameState::ChampionshipStandings => {
-                if is_key_pressed(KeyCode::Enter)
-                    || is_key_pressed(KeyCode::Space)
-                    || is_key_pressed(KeyCode::KpEnter)
-                    || self.input.gamepad.snapshot.btn_confirm_pressed
-                    || self.input.gamepad.snapshot.btn_a_pressed
-                {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    self.advance_championship_round();
-                }
-                if is_key_pressed(KeyCode::R) || is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    if let Some(champ) = &self.championship_session {
-                        let name = champ.name.clone();
-                        if let Some(db) = &self.hof_db {
-                            let _ = db.clear_race_history_for_championship(&name);
-                        }
-                    }
-                    self.championship_session = None;
-                    self.state = GameState::Menu;
-                    self.spawn_hud_alert("CHAMPIONSHIP RESET".to_string(), Palette::NEON_CYAN);
-                }
-                if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
-                        let tier = self.active_career_progress.level.clamp(1, 5);
-                        let calendar = if let Some(c) = &self.championship_session {
-                            c.track_ids.clone()
-                        } else {
-                            crate::ui::gt_default_calendar(tier)
-                        };
-                        self.career_hub_focus = CareerHubFocus::Tabs;
-                        self.state = GameState::CareerHub {
-                            selected_tier: tier,
-                            selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
-                            calendar_tracks: calendar,
-                            showing_standings: false,
-                        };
-                    } else {
-                        self.championship_session = None;
-                        self.state = GameState::Menu;
-                    }
-                }
+                self.update_championship_standings();
             }
             GameState::StartingGrid => {
                 self.update_starting_grid();
@@ -4891,9 +4889,10 @@ impl RaceSession {
             FinishedScreenView::Results
         };
 
-        // 1. [R] Key / Gamepad Y: Restart Race
+        // 1. [R] Key / Gamepad Y: Restart Race / Re-run Round
         if is_key_pressed(KeyCode::R) || self.input.gamepad.snapshot.btn_y_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
+            self.pending_championship_results = None;
             self.init_race();
             self.transition_iris_to(GameState::Countdown(3.5), 0.45);
             return;
@@ -4915,7 +4914,8 @@ impl RaceSession {
         }
 
         // 3. [SPACE] / [ENTER] / Gamepad Confirm / A: Sequential forward progression
-        // Order: Race Results -> Hall of Fame -> Main Menu
+        // In Championships: Race Results -> Championship Standings / Career Hub
+        // In Quick Race: Race Results -> Hall of Fame -> Main Menu
         if is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
@@ -4924,6 +4924,47 @@ impl RaceSession {
         {
             match current_view {
                 FinishedScreenView::Results => {
+                    if self.championship_session.is_some() {
+                        if let Some(round_results) = self.pending_championship_results.take() {
+                            if let Some(champ) = &mut self.championship_session {
+                                champ.submit_round_results(&self.track.name, round_results);
+                                if champ.is_completed {
+                                    if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
+                                        match pos {
+                                            0 => self.active_career_progress.trophies_gold += 1,
+                                            1 => self.active_career_progress.trophies_silver += 1,
+                                            2 => self.active_career_progress.trophies_bronze += 1,
+                                            _ => {}
+                                        }
+                                    }
+                                    if let Some(db) = &self.hof_db {
+                                        let _ = db.save_module_progress(&self.active_career_progress);
+                                    }
+                                }
+                            }
+                        }
+
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+                            let tier = self.active_career_progress.level.clamp(1, 5);
+                            let calendar = if let Some(c) = &self.championship_session {
+                                c.track_ids.clone()
+                            } else {
+                                crate::ui::gt_default_calendar(tier)
+                            };
+                            self.career_hub_focus = CareerHubFocus::Tabs;
+                            self.state = GameState::CareerHub {
+                                selected_tier: tier,
+                                selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                                calendar_tracks: calendar,
+                                showing_standings: true,
+                            };
+                        } else {
+                            self.state = GameState::ChampionshipStandings;
+                        }
+                        return;
+                    }
+
                     self.audio.play_sfx(SfxType::UiMove);
                     self.finished_view = FinishedScreenView::HallOfFame;
                     self.show_hall_of_fame = true;
@@ -4948,7 +4989,6 @@ impl RaceSession {
         }
 
         // 4. [ESC] / Gamepad Cancel / Back / B: Step backward one screen
-        // Order: Hall of Fame -> Race Results -> Main Menu / Editor
         if is_key_pressed(KeyCode::Escape)
             || self.input.gamepad.snapshot.btn_cancel_pressed
             || self.input.gamepad.snapshot.btn_back_pressed
@@ -4967,9 +5007,24 @@ impl RaceSession {
                 }
                 FinishedScreenView::Results => {
                     self.audio.play_sfx(SfxType::UiSelect);
+                    self.pending_championship_results = None;
                     if self.return_to_editor_on_exit {
                         self.return_to_editor_on_exit = false;
                         self.transition_fade_to(GameState::TrackEditor, 0.35);
+                    } else if self.championship_session.is_some() && self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+                        let tier = self.active_career_progress.level.clamp(1, 5);
+                        let calendar = if let Some(c) = &self.championship_session {
+                            c.track_ids.clone()
+                        } else {
+                            crate::ui::gt_default_calendar(tier)
+                        };
+                        self.career_hub_focus = CareerHubFocus::Tabs;
+                        self.state = GameState::CareerHub {
+                            selected_tier: tier,
+                            selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                            calendar_tracks: calendar,
+                            showing_standings: false,
+                        };
                     } else {
                         self.transition_fade_to(GameState::Menu, 0.35);
                     }
@@ -4977,6 +5032,59 @@ impl RaceSession {
                 }
             }
             return;
+        }
+    }
+
+    /// Updates input and state progression when viewing the Championship Standings screen.
+    pub fn update_championship_standings(&mut self) {
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.advance_championship_round();
+        }
+        // Re-run latest round (R key or Gamepad Y)
+        if is_key_pressed(KeyCode::R) || self.input.gamepad.snapshot.btn_y_pressed {
+            if let Some(champ) = &mut self.championship_session {
+                if let Some(track_id) = champ.cancel_latest_round() {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.delete_latest_race_history_entry_for_championship(&champ.name);
+                    }
+                    self.spawn_hud_alert("LATEST ROUND RESULTS CANCELLED — RE-RUNNING".to_string(), Palette::NEON_GOLD);
+                    self.track = self
+                        .track_manager
+                        .load_track_by_slug(&track_id)
+                        .unwrap_or_else(|_| tdrace_core::track::presets::classic_grand_prix());
+                    self.init_race();
+                    self.transition_iris_to(GameState::Countdown(3.5), 0.45);
+                    return;
+                }
+            }
+        }
+        if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
+            self.audio.play_sfx(SfxType::UiSelect);
+            if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+                let tier = self.active_career_progress.level.clamp(1, 5);
+                let calendar = if let Some(c) = &self.championship_session {
+                    c.track_ids.clone()
+                } else {
+                    crate::ui::gt_default_calendar(tier)
+                };
+                self.career_hub_focus = CareerHubFocus::Tabs;
+                self.state = GameState::CareerHub {
+                    selected_tier: tier,
+                    selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                    calendar_tracks: calendar,
+                    showing_standings: false,
+                };
+            } else {
+                self.championship_session = None;
+                self.state = GameState::Menu;
+            }
         }
     }
 
@@ -6971,21 +7079,23 @@ impl RaceSession {
             }
         }
 
-        // 8. Reset / Abandon Season (X key / Gamepad X)
-        if is_key_pressed(KeyCode::X) || self.input.gamepad.snapshot.btn_x_pressed {
-            if self.championship_session.is_some() {
-                self.championship_session = None;
-                calendar_tracks = crate::ui::gt_default_calendar(selected_tier);
-                selected_slot = 0;
-                self.audio.play_sfx(SfxType::UiSelect);
-                self.spawn_hud_alert("CHAMPIONSHIP SEASON RESET".to_string(), Palette::NEON_CYAN);
-                self.state = GameState::CareerHub {
-                    selected_tier,
-                    selected_slot,
-                    calendar_tracks,
-                    showing_standings,
-                };
-                return;
+        // 8. Re-run Latest Round (R key / Gamepad X)
+        if is_key_pressed(KeyCode::R) || self.input.gamepad.snapshot.btn_x_pressed {
+            if let Some(champ) = &mut self.championship_session {
+                if let Some(track_id) = champ.cancel_latest_round() {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.delete_latest_race_history_entry_for_championship(&champ.name);
+                    }
+                    self.spawn_hud_alert("ROUND RE-RUN: LATEST RESULTS CANCELLED".to_string(), Palette::NEON_GOLD);
+                    self.track = self
+                        .track_manager
+                        .load_track_by_slug(&track_id)
+                        .unwrap_or_else(|_| tdrace_core::track::presets::classic_grand_prix());
+                    self.init_race();
+                    self.transition_iris_to(GameState::Countdown(3.5), 0.45);
+                    return;
+                }
             }
         }
 
@@ -9731,8 +9841,8 @@ impl RaceSession {
             }
 
             let bot_offset = if self.is_split_screen() { 2 } else { 1 };
-            // If an active championship season is underway, submit round results and show standings
-            if let Some(champ) = &mut self.championship_session {
+            // If an active championship season is underway, prepare round results with points for the Results screen
+            if let Some(champ) = &self.championship_session {
                 let mut round_results = Vec::new();
                 for (pos, res) in self.results.iter().enumerate() {
                     let (driver_id, driver_name, team_name) = if res.is_player {
@@ -9797,25 +9907,16 @@ impl RaceSession {
                     }
                 }
 
-                champ.submit_round_results(&self.track.name, round_results);
-
-                // If championship concluded, check if player scored a podium finish in final standings
-                if champ.is_completed {
-                    if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
-                        match pos {
-                            0 => self.active_career_progress.trophies_gold += 1,
-                            1 => self.active_career_progress.trophies_silver += 1,
-                            2 => self.active_career_progress.trophies_bronze += 1,
-                            _ => {}
-                        }
-                    }
-                    if let Some(db) = &self.hof_db {
-                        let _ = db.save_module_progress(&self.active_career_progress);
+                // Calculate points awarded for each driver and populate self.results
+                for (pos, res) in round_results.iter_mut().enumerate() {
+                    let pts = champ.point_system.points_for_position(res.finish_position, res.has_fastest_lap);
+                    res.points_awarded = pts;
+                    if let Some(ui_res) = self.results.get_mut(pos) {
+                        ui_res.points_awarded = pts;
                     }
                 }
 
-                self.state = GameState::ChampionshipStandings;
-                return;
+                self.pending_championship_results = Some(round_results);
             }
 
             // Populate fallback telemetry if synthetic test or laps empty
@@ -10208,7 +10309,7 @@ impl RaceSession {
 
                 match current_view {
                     FinishedScreenView::Results => {
-                        render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack, self.last_xp_receipt.as_ref());
+                        render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack, self.championship_session.is_some(), self.last_xp_receipt.as_ref());
                     }
                     FinishedScreenView::HallOfFame => {
                         render_hall_of_fame_screen(

@@ -9,7 +9,7 @@ name = "Group B Masters Series"
 description = "Legendary 550 BHP twin-charged Group B monsters competing across 9 demanding European rallycross and stadium circuits."
 module_id = "rally"
 tier = 3
-laps_per_round = 4
+laps_per_round = 5
 bot_count = 7
 ai_difficulty = "pro"
 icon = "dirt"
@@ -24,55 +24,55 @@ clean_race_bonus = false
 order = 1
 track_id = "estering_rx"
 name = "Estering Buxtehude"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 2
 track_id = "montalegre_rx"
 name = "Pista Automóvel de Montalegre"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 3
 track_id = "riga_rx"
 name = "Biķernieki Track Riga"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 4
 track_id = "hell_rx"
 name = "Lånkebanen Hell RX"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 5
 track_id = "loheac_rx"
 name = "Circuit de Lohéac"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 6
 track_id = "silverstone_rx"
 name = "Silverstone RX Circuit"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 7
 track_id = "holjes_rx"
 name = "Höljes Motorstadion"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 8
 track_id = "lydden_hill"
 name = "Lydden Hill Race Circuit"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 9
 track_id = "blyton_rx"
 name = "Blyton Park Driving Centre"
-laps = 4
+laps = 5
 
 [[drivers]]
 id = "player"

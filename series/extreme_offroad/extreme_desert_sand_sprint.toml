@@ -30,7 +30,7 @@ laps = 3
 order = 2
 track_id = "dirt_figure_eight"
 name = "Dirt Figure-8 Arena"
-laps = 3
+laps = 5
 
 [[rounds]]
 order = 3

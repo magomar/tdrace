@@ -1220,13 +1220,23 @@ fn render_championships_tab(
         };
         fonts.draw_ui_bold(&champ.series.name, info_x, cy + scaler.s(19.0), scaler.font_s(13.0), title_col);
 
+        let has_varying_laps = champ
+            .rounds
+            .iter()
+            .any(|r| r.laps.is_some_and(|l| l != champ.series.laps_per_round));
+        let laps_label = if has_varying_laps {
+            "3–5 LAPS".to_string()
+        } else {
+            format!("{} LAPS", champ.series.laps_per_round)
+        };
+
         // Row 2: Tag
         let disc_tag = format!(
-            "{} • TIER {} • {} ROUNDS ({} LAPS) • {} PTS",
+            "{} • TIER {} • {} ROUNDS ({}) • {} PTS",
             champ.series.module_id.to_uppercase(),
             champ.series.tier,
             total_rounds,
-            champ.series.laps_per_round,
+            laps_label,
             champ.scoring.system.to_uppercase()
         );
         let tag_col = if !is_unlocked {

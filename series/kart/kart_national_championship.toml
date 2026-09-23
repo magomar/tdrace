@@ -9,7 +9,7 @@ name = "National Kart Championship"
 description = "Pure 100cc direct-drive karts screaming to 16,000 RPM with no gearbox or clutch across 7 fast technical circuits."
 module_id = "kart"
 tier = 2
-laps_per_round = 4
+laps_per_round = 5
 bot_count = 7
 ai_difficulty = "standard"
 icon = "kart"
@@ -24,43 +24,43 @@ clean_race_bonus = false
 order = 1
 track_id = "sarno"
 name = "Circuito Internazionale Napoli Sarno"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 2
 track_id = "kristianstad"
 name = "Åsum Ring Kristianstad"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 3
 track_id = "seven_laghi"
 name = "Circuito 7 Laghi Castelletto"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 4
 track_id = "lonato"
 name = "South Garda Karting Lonato"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 5
 track_id = "genk"
 name = "Karting Genk Home of Champions"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 6
 track_id = "wackersdorf"
 name = "Prokart Raceland Wackersdorf"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 7
 track_id = "laval_kart"
 name = "Circuit Beausoleil Laval"
-laps = 4
+laps = 5
 
 [[drivers]]
 id = "player"

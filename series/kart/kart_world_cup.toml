@@ -9,7 +9,7 @@ name = "Rotax Junior Karting Academy"
 description = "Tight, technical grassroots karting championship testing racecraft and momentum preservation across 5 European circuits."
 module_id = "kart"
 tier = 1
-laps_per_round = 4
+laps_per_round = 5
 bot_count = 7
 ai_difficulty = "standard"
 icon = "kart"
@@ -24,31 +24,31 @@ clean_race_bonus = false
 order = 1
 track_id = "lonato"
 name = "South Garda Karting Lonato"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 2
 track_id = "genk"
 name = "Karting Genk Home of Champions"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 3
 track_id = "wackersdorf"
 name = "Prokart Raceland Wackersdorf"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 4
 track_id = "laval_kart"
 name = "Circuit Beausoleil Laval"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 5
 track_id = "whilton_mill"
 name = "Whilton Mill Kart Circuit"
-laps = 4
+laps = 5
 
 [[drivers]]
 id = "player"

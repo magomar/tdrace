@@ -308,6 +308,7 @@ impl SeriesDefinition {
     pub fn to_session(&self) -> SeriesSession {
         let point_system = self.scoring.to_point_system();
         let track_ids: Vec<String> = self.rounds.iter().map(|r| r.track_id.clone()).collect();
+        let round_laps: Vec<Option<u32>> = self.rounds.iter().map(|r| r.laps).collect();
         let initial_drivers: Vec<(&str, &str, &str)> = self
             .drivers
             .iter()
@@ -322,6 +323,7 @@ impl SeriesDefinition {
             &initial_drivers,
         )
         .with_tier(self.series.tier)
+        .with_round_laps(round_laps)
     }
 
     /// Recovers a declarative series definition from an active runtime `SeriesSession`.
@@ -356,7 +358,7 @@ impl SeriesDefinition {
                 order: idx + 1,
                 track_id: tid.clone(),
                 name: None,
-                laps: None,
+                laps: session.round_laps.get(idx).copied().flatten(),
                 weather: None,
             })
             .collect();

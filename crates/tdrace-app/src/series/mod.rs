@@ -162,6 +162,8 @@ pub struct SeriesSession {
     pub is_completed: bool,
     #[serde(default = "default_session_tier")]
     pub tier: u32,
+    #[serde(default)]
+    pub round_laps: Vec<Option<u32>>,
 }
 
 pub type ChampionshipSession = SeriesSession;
@@ -189,6 +191,7 @@ impl SeriesSession {
             history: Vec::new(),
             is_completed: false,
             tier: 1,
+            round_laps: Vec::new(),
         }
     }
 
@@ -196,6 +199,17 @@ impl SeriesSession {
     pub fn with_tier(mut self, tier: u32) -> Self {
         self.tier = tier;
         self
+    }
+
+    /// Sets per-round lap counts for the championship schedule.
+    pub fn with_round_laps(mut self, round_laps: Vec<Option<u32>>) -> Self {
+        self.round_laps = round_laps;
+        self
+    }
+
+    /// Returns the configured lap count for the current round, if specified.
+    pub fn current_round_laps(&self) -> Option<u32> {
+        self.round_laps.get(self.current_round).copied().flatten()
     }
 
     pub fn current_track_id(&self) -> Option<&str> {
@@ -245,6 +259,41 @@ impl SeriesSession {
         if self.current_round >= self.track_ids.len() {
             self.is_completed = true;
         }
+    }
+
+    /// Cancels and rolls back the results of the latest completed round,
+    /// returning the track ID of that round so it can be re-run.
+    pub fn cancel_latest_round(&mut self) -> Option<String> {
+        let latest = self.history.pop()?;
+        self.current_round = latest.round_index;
+        self.is_completed = false;
+
+        // Deduct points, time, wins, and podiums awarded in this round
+        for res in &latest.results {
+            if let Some(entry) = self.standings.iter_mut().find(|s| s.driver_id == res.driver_id) {
+                entry.points = entry.points.saturating_sub(res.points_awarded);
+                entry.total_race_time = (entry.total_race_time - res.total_time).max(0.0);
+                if res.finish_position == 1 {
+                    entry.wins = entry.wins.saturating_sub(1);
+                }
+                if res.finish_position <= 3 {
+                    entry.podiums = entry.podiums.saturating_sub(1);
+                }
+            }
+        }
+
+        // Recompute best_finish for each driver from remaining history
+        for entry in &mut self.standings {
+            entry.best_finish = usize::MAX;
+            for round in &self.history {
+                if let Some(res) = round.results.iter().find(|r| r.driver_id == entry.driver_id) {
+                    entry.best_finish = entry.best_finish.min(res.finish_position);
+                }
+            }
+        }
+
+        self.sort_standings();
+        Some(latest.track_id)
     }
 
     pub fn sort_standings(&mut self) {

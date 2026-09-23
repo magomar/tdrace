@@ -9,7 +9,7 @@ name = "FIA World Rallycross Championship"
 description = "Premier 600 BHP supercar mixed-surface sprint racing featuring explosive all-wheel-drive launches and joker lap tactics across 7 historic venues."
 module_id = "rally"
 tier = 2
-laps_per_round = 4
+laps_per_round = 5
 bot_count = 7
 ai_difficulty = "standard"
 icon = "dirt"
@@ -24,43 +24,43 @@ clean_race_bonus = false
 order = 1
 track_id = "hell_rx"
 name = "Lånkebanen Hell RX"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 2
 track_id = "loheac_rx"
 name = "Circuit de Lohéac"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 3
 track_id = "silverstone_rx"
 name = "Silverstone RX Circuit"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 4
 track_id = "holjes_rx"
 name = "Höljes Motorstadion"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 5
 track_id = "lydden_hill"
 name = "Lydden Hill Race Circuit"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 6
 track_id = "mettet_rx"
 name = "Circuit Jules Tacheny Mettet"
-laps = 4
+laps = 5
 
 [[rounds]]
 order = 7
 track_id = "dreux_rx"
 name = "Circuit de Dreux"
-laps = 4
+laps = 5
 
 [[drivers]]
 id = "player"
