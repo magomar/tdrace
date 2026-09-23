@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Cross-Module AI Character Rosters and Dynamic Tier Assignment"
 description: "Decouples experience tiers from character definitions, aligns 72 drivers to 6 styles, introduces uniform style sampling from the global pool, normal-distribution difficulty tiering, and persistent career rosters with 90% retention and probabilistic tier advancement."
-status: draft
+status: implemented
 created: 2026-09-23
 generated: { by: agent/antigravity, at: 2026-09-23T23:25:00Z }
 ---
@@ -90,8 +90,8 @@ In single-player Career Mode:
 - **Tier Unlock Transition Screen**:
   - Upon earning a championship podium and advancing to tier $T+1$:
     - The Career Hub displays the **Season Roster Transition** summary.
-    - **Retained Rivals (90%)**: A list of returning competitors showing development results (e.g., *"Marco Rossi stepped up to Tier 2"*, *"Elena Frost held steady at Tier 1"*).
-    - **Renewed Rivals (10%)**: A showcase card introducing the incoming rival who was drafted from the global pool to replace a departing driver, matching the departed driver's style.
+    - **Retained Rivals (90%)**: A list of returning competitors showing development results (e.g., *"Marco Rossi stepped up to Tier 2"*, *"Elena Frost held steady at Tier 1"*), with progression probabilities modulated by championship ranking.
+    - **Renewed Rivals (10%)**: A showcase card introducing the incoming rival drafted from the global pool using a uniform driving style distribution ($P(S_i) = 1/6$) and selecting an unused character fitting that style.
 
 ```mermaid
 sequenceDiagram
@@ -107,12 +107,12 @@ sequenceDiagram
     Champ->>Evolution: evolve_roster(current_roster, new_tier, seed)
     
     loop Each Retained Rival (90% of field)
-        Evolution->>Evolution: evaluate_skill_progression(old_tier, new_tier, seed)
-        Note over Evolution: 65% jump to new tier, 25% hold current tier, 10% standout jump +2
+        Evolution->>Evolution: evaluate_skill_progression(old_tier, new_tier, rank_index, seed)
+        Note over Evolution: Rank-weighted progression (max 80% advance for 1st place, down to 70% for last place; field mean 65% step, 25% hold, 10% standout)
     end
 
     loop Churn Allocation (10% of field, min 1)
-        Evolution->>Registry: draw_replacement_character(pool, churned_style)
+        Evolution->>Registry: draw_replacement_character(pool, uniform_random_style)
         Evolution->>Evolution: assign_bell_curve_tier(new_tier)
     end
 
@@ -237,15 +237,29 @@ $$P(T = t \mid T_{\text{target}}) = \frac{\exp\left(-\frac{(t - T_{\text{target}
 
 ### 5. Career Mode Persistence & Roster Evolution Engine
 When the player advances to a newly unlocked career tier ($T \to T+1$):
-- **Step 1: Probabilistic Rival Skill Advancement**:
-  - Regular progression ($65\%$): $T_{\text{rival}} \to T_{\text{new}}$
-  - Plateau retention ($25\%$): $T_{\text{rival}} \to T_{\text{current}}$
-  - Breakout standout ($10\%$): $T_{\text{rival}} \to \min(5, T_{\text{new}} + 1)$
+- **Step 1: Rank-Dependent Probabilistic Rival Skill Advancement**:
+  Skill progression is modulated by the participant's championship ranking while remaining predominantly stochastic.
+  For a rival at finish order index $r_i \in [0, N-1]$ ($0$ is 1st place / champion, $N-1$ is last place):
+  - Normalized performance score: $x_i = 1.0 - \frac{r_i}{N - 1}$ (for $N > 1$, or $0.5$ if $N \le 1$).
+  - Performance delta: $d_i = x_i - 0.5 \in [-0.5, +0.5]$.
+  - Outcome probabilities:
+    - Breakout standout: $P_{\text{leap}}(d_i) = 0.10 + 0.05 \times d_i \quad (7.5\% \dots 12.5\%)$
+    - Plateau retention: $P_{\text{hold}}(d_i) = 0.25 - 0.10 \times d_i \quad (20.0\% \dots 30.0\%)$
+    - Regular progression: $P_{\text{step}}(d_i) = 1.0 - P_{\text{leap}}(d_i) - P_{\text{hold}}(d_i) = 0.65 + 0.05 \times d_i \quad (62.5\% \dots 67.5\%)$
+  - Total advancement rate ($P_{\text{adv}} = P_{\text{step}} + P_{\text{leap}} = 1.0 - P_{\text{hold}}$):
+    - **1st Place ($d_i = +0.5$)**: $80.0\%$ advance (capped at max 80%), $20.0\%$ hold steady ($67.5\%$ StepUp, $12.5\%$ StandoutLeap).
+    - **Median ($d_i = 0.0$)**: $75.0\%$ advance, $25.0\%$ hold steady ($65.0\%$ StepUp, $10.0\%$ StandoutLeap).
+    - **Last Place ($d_i = -0.5$)**: $70.0\%$ advance, $30.0\%$ hold steady ($62.5\%$ StepUp, $7.5\%$ StandoutLeap).
+    - **Field Average**: Across symmetric ranks, exactly matches the macro baseline ($65\%$ StepUp, $25\%$ HoldSteady, $10\%$ StandoutLeap).
+  - Tier assignments:
+    - Regular progression: $T_{\text{rival}} \to T_{\text{new}}$
+    - Plateau retention: $T_{\text{rival}} \to T_{\text{current}}$
+    - Breakout standout: $T_{\text{rival}} \to \min(5, T_{\text{new}} + 1)$
 - **Step 2: Roster Churn / Renewal ($90\%$ Retention, $10\%$ Turnover)**:
   - $\text{retained\_count} = \lfloor 0.90 \times N \rfloor$
   - $\text{churn\_count} = \max(1, N - \text{retained\_count})$
-  - Churned rivals are chosen uniformly at random among non-podium finishers.
-  - For each departing rival, a replacement character is drawn from the unused global characters pool who **shares the same `DrivingStyle`** as the departing rival, preserving the uniform $1/6$ style distribution.
+  - Churned rivals are chosen uniformly at random among non-podium finishers (podium finishers $0..2$ are protected).
+  - For each departing rival, a replacement driving style is selected uniformly at random across all 6 driving styles ($P(S_i) = 1/6$), and an unused character fitting that style is drafted from the global 72-driver pool (falling back to any unused character if that style's pool is exhausted).
   - The incoming rival is assigned a tier sampled from the normal distribution of $T_{\text{new}}$.
 
 ### 6. Elimination of Legacy Fallback Paths
@@ -282,62 +296,62 @@ When the player advances to a newly unlocked career tier ($T \to T+1$):
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: 72 characters properly aligned across 6 styles without baked-in tiers**
-  - [ ] **Given** the global roster of 72 predefined driver characters across all 6 motorsport modules
-  - [ ] **When** counting characters assigned to each of the 6 `DrivingStyle` variants
-  - [ ] **Then** exactly 12 characters are assigned to each style globally
-  - [ ] **And** each individual module contains exactly 2 characters for each style
-  - [ ] **And** no `DriverCharacter` struct contains a hardcoded `DriverTier` or `DriverQuality`
+  - [x] **Given** the global roster of 72 predefined driver characters across all 6 motorsport modules
+  - [x] **When** counting characters assigned to each of the 6 `DrivingStyle` variants
+  - [x] **Then** exactly 12 characters are assigned to each style globally
+  - [x] **And** each individual module contains exactly 2 characters for each style
+  - [x] **And** no `DriverCharacter` struct contains a hardcoded `DriverTier` or `DriverQuality`
 
 - **Scenario: Uniform driving style distribution in casual race sampling**
-  - [ ] **Given** the global 72-driver pool across all registered modules
-  - [ ] **When** sampling 12-driver casual race rosters over 1,000 distinct seeds
-  - [ ] **Then** the mean count of each driving style across all generated rosters is $2.0 \pm 0.1$
-  - [ ] **And** no style deviates from equal probability ($P = 1/6$) beyond statistical tolerance
+  - [x] **Given** the global 72-driver pool across all registered modules
+  - [x] **When** sampling 12-driver casual race rosters over 1,000 distinct seeds
+  - [x] **Then** the mean count of each driving style across all generated rosters is $2.0 \pm 0.1$
+  - [x] **And** no style deviates from equal probability ($P = 1/6$) beyond statistical tolerance
 
 - **Scenario: Normal bell-curve tier distribution centered on user-selected difficulty**
-  - [ ] **Given** a user-specified difficulty setting of Tier 3 (Contender)
-  - [ ] **When** generating 100 casual race grids of 12 opponents
-  - [ ] **Then** approximately 55–60% of opponents are Tier 3
-  - [ ] **And** approximately 18–22% are Tier 2, and 18–22% are Tier 4
-  - [ ] **And** Tier 1 and Tier 5 represent rare boundary outliers (< 3% each)
+  - [x] **Given** a user-specified difficulty setting of Tier 3 (Contender)
+  - [x] **When** generating 100 casual race grids of 12 opponents
+  - [x] **Then** approximately 55–60% of opponents are Tier 3
+  - [x] **And** approximately 18–22% are Tier 2, and 18–22% are Tier 4
+  - [x] **And** Tier 1 and Tier 5 represent rare boundary outliers (< 3% each)
 
 - **Scenario: Boundary tier distributions for Tier 1 Rookie and Tier 5 Legend**
-  - [ ] **Given** a user-specified difficulty setting of Tier 1 (Rookie)
-  - [ ] **When** generating casual race grids
-  - [ ] **Then** no opponent is assigned a tier below Tier 1
-  - [ ] **And** at least 70% of opponents are Tier 1, with the remainder at Tier 2
-  - [ ] **Given** a user-specified difficulty setting of Tier 5 (Legend)
-  - [ ] **When** generating casual race grids
-  - [ ] **Then** no opponent is assigned a tier above Tier 5
-  - [ ] **And** at least 70% of opponents are Tier 5, with the remainder at Tier 4
+  - [x] **Given** a user-specified difficulty setting of Tier 1 (Rookie)
+  - [x] **When** generating casual race grids
+  - [x] **Then** no opponent is assigned a tier below Tier 1
+  - [x] **And** at least 70% of opponents are Tier 1, with the remainder at Tier 2
+  - [x] **Given** a user-specified difficulty setting of Tier 5 (Legend)
+  - [x] **When** generating casual race grids
+  - [x] **Then** no opponent is assigned a tier above Tier 5
+  - [x] **And** at least 70% of opponents are Tier 5, with the remainder at Tier 4
 
 - **Scenario: Career mode 90% retention and 10% churn on tier unlock**
-  - [ ] **Given** an active 10-car career championship grid at Tier 1
-  - [ ] **When** the player advances career progress to Tier 2
-  - [ ] **Then** exactly 9 rivals are retained from the previous tier and 1 rival is renewed
-  - [ ] **And** the incoming rival possesses the same driving style as the departed rival
-  - [ ] **And** the retained rivals pass the probabilistic skill check (majority advancing to Tier 2)
+  - [x] **Given** an active 10-car career championship grid at Tier 1
+  - [x] **When** the player advances career progress to Tier 2
+  - [x] **Then** exactly 9 rivals are retained from the previous tier and 1 rival is renewed
+  - [x] **And** the incoming rival is selected via uniform driving style distribution from the global pool
+  - [x] **And** the retained rivals evaluate rank-weighted probabilistic skill checks where higher-ranking rivals have a higher advancement probability (up to 80%) than lower-ranking rivals
 
 - **Scenario: Total elimination of legacy single-string ai_character fallbacks**
-  - [ ] **Given** race initialization code paths for quick race, custom race, and multiplayer
-  - [ ] **When** verifying driver configuration and bot instantiation
-  - [ ] **Then** no code path falls back to legacy string parsing (`"pro"`, `"fast"`, `"club"`, `"brawler"`)
-  - [ ] **And** all AI opponents are configured strictly through `DrivingStyle` and `DriverTier`
+  - [x] **Given** race initialization code paths for quick race, custom race, and multiplayer
+  - [x] **When** verifying driver configuration and bot instantiation
+  - [x] **Then** no code path falls back to legacy string parsing (`"pro"`, `"fast"`, `"club"`, `"brawler"`)
+  - [x] **And** all AI opponents are configured strictly through `DrivingStyle` and `DriverTier`
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Target Files to Modify / Create
-- `[ ]` `crates/tdrace-app/src/ai/driver.rs` -> Decouple `DriverCharacter`, add `DriverPersonalityOffsets`, implement `resolve_profile` / `resolve_stats`, correct Classic module styles, and implement global uniform style roster sampler.
-- `[ ]` `crates/tdrace-app/src/module/gt.rs` -> Decouple GT driver definitions and align offsets.
-- `[ ]` `crates/tdrace-app/src/module/nascar.rs` -> Decouple NASCAR driver definitions and align offsets.
-- `[ ]` `crates/tdrace-app/src/module/rally.rs` -> Decouple Rally driver definitions and align offsets.
-- `[ ]` `crates/tdrace-app/src/module/kart.rs` -> Decouple Kart driver definitions and align offsets.
-- `[ ]` `crates/tdrace-app/src/module/extreme_offroad.rs` -> Decouple Extreme Off-Road driver definitions and align offsets.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Refactor casual race (quick race, custom race, multiplayer) bot generation to use dynamic difficulty tier and global style-uniform sampling; remove legacy fallbacks.
-- `[ ]` `crates/tdrace-app/src/series/session.rs` / `manager.rs` -> Implement career roster persistence, 90% retention / 10% turnover, and probabilistic skill progression on tier advancement.
-- `[ ]` `crates/tdrace-app/src/ui/menu.rs` -> Add difficulty tier selector (Rookie..Legend) to casual race configuration options.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Register Spec 024 in living roadmap.
-- `[ ]` `specs/index.md` -> Register Spec 024 in OKF Progressive Disclosure Index.
-- `[ ]` `crates/tdrace-app/tests/dynamic_roster_and_tier_tests.rs` -> Test suite covering 72-driver style alignment, uniform sampling, bell curve distribution, and career churn.
+- `[x]` `crates/tdrace-app/src/ai/driver.rs` -> Decouple `DriverCharacter`, add `DriverPersonalityOffsets`, implement `resolve_profile` / `resolve_stats`, correct Classic module styles, and implement global uniform style roster sampler.
+- `[x]` `crates/tdrace-app/src/module/gt.rs` -> Decouple GT driver definitions and align offsets.
+- `[x]` `crates/tdrace-app/src/module/nascar.rs` -> Decouple NASCAR driver definitions and align offsets.
+- `[x]` `crates/tdrace-app/src/module/rally.rs` -> Decouple Rally driver definitions and align offsets.
+- `[x]` `crates/tdrace-app/src/module/kart.rs` -> Decouple Kart driver definitions and align offsets.
+- `[x]` `crates/tdrace-app/src/module/extreme_offroad.rs` -> Decouple Extreme Off-Road driver definitions and align offsets.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Refactor casual race (quick race, custom race, multiplayer) bot generation to use dynamic difficulty tier and global style-uniform sampling; remove legacy fallbacks.
+- `[x]` `crates/tdrace-app/src/series/session.rs` / `manager.rs` -> Implement career roster persistence, 90% retention / 10% turnover, and probabilistic skill progression on tier advancement.
+- `[x]` `crates/tdrace-app/src/ui/menu.rs` -> Add difficulty tier selector (Rookie..Legend) to casual race configuration options.
+- `[x]` `specs/constitution/ROADMAP.md` -> Register Spec 024 in living roadmap.
+- `[x]` `specs/index.md` -> Register Spec 024 in OKF Progressive Disclosure Index.
+- `[x]` `crates/tdrace-app/tests/dynamic_roster_and_tier_tests.rs` -> Test suite covering 72-driver style alignment, uniform sampling, bell curve distribution, and career churn.

@@ -214,7 +214,7 @@ fn test_career_roster_initialization_and_tier1_centering() {
 }
 
 #[test]
-fn test_career_roster_evolution_90_10_churn_and_style_matching() {
+fn test_career_roster_evolution_90_10_churn_and_replacements() {
     let initial = RosterEvolutionEngine::initialize_career_roster(7, DriverTier::Rookie, 42);
     assert_eq!(initial.len(), 7);
 
@@ -233,24 +233,126 @@ fn test_career_roster_evolution_90_10_churn_and_style_matching() {
     let churned_id = &report.churned_out[0].driver_id;
     assert!(!top_3_ids.contains(churned_id), "Podium finisher '{}' must be protected from churn", churned_id);
 
-    // 3. Style preservation check:
-    // The replacement driver must have the exact same style as the churned out driver
-    let departed_style = report.churned_out[0].style;
-    let incoming_style = report.churned_in[0].style;
-    assert_eq!(incoming_style, departed_style, "Incoming rival style must match departed rival style");
+    // 3. Replacement driver validation:
+    // The replacement driver must be a valid character from the global registry,
+    // not present in the initial top 3, and have a unique ID in the evolved roster
+    let incoming = &report.churned_in[0];
+    assert!(incoming.resolve_character().is_some(), "Replacement driver must resolve to global character");
+    assert!(!initial.iter().take(3).any(|r| r.driver_id == incoming.driver_id));
 
-    // 4. Overall roster style distribution must be preserved
-    let mut initial_styles: Vec<DrivingStyle> = initial.iter().map(|r| r.style).collect();
-    let mut evolved_styles: Vec<DrivingStyle> = evolved.iter().map(|r| r.style).collect();
-    initial_styles.sort();
-    evolved_styles.sort();
-    assert_eq!(initial_styles, evolved_styles, "Overall style distribution must be perfectly preserved");
-
-    // 5. Uniqueness in evolved roster
+    // 4. Uniqueness in evolved roster
     let mut ids = HashSet::new();
     for rival in &evolved {
         assert!(ids.insert(&rival.driver_id), "Duplicate driver ID in evolved roster: {}", rival.driver_id);
     }
+}
+
+#[test]
+fn test_career_roster_uniform_replacement_style_distribution() {
+    let initial = RosterEvolutionEngine::initialize_career_roster(7, DriverTier::Rookie, 42);
+    let mut style_counts = HashMap::new();
+    let trials = 1200;
+
+    for seed in 0..trials {
+        let (_evolved, report) = RosterEvolutionEngine::evolve_roster(&initial, DriverTier::Amateur, seed as u64);
+        for incoming in &report.churned_in {
+            *style_counts.entry(incoming.style).or_insert(0) += 1;
+        }
+    }
+
+    // All 6 styles must be represented
+    assert_eq!(style_counts.len(), 6, "All 6 driving styles must be sampled for replacements");
+    for &style in &DrivingStyle::ALL {
+        let count = *style_counts.get(&style).unwrap_or(&0);
+        let ratio = count as f64 / trials as f64;
+        // Expected ~1/6 = 0.1667, with 1200 trials tolerance +/- 0.05
+        assert!(
+            (ratio - 1.0 / 6.0).abs() < 0.05,
+            "Style {:?} replacement frequency should be ~0.167, got {:.3} (count {})",
+            style,
+            ratio,
+            count
+        );
+    }
+}
+
+#[test]
+fn test_career_roster_rank_dependent_skill_advancement() {
+    let initial = RosterEvolutionEngine::initialize_career_roster(7, DriverTier::Rookie, 77);
+    let top_driver_id = initial[0].driver_id.clone();
+    let bottom_driver_id = initial[6].driver_id.clone();
+
+    let mut top_advance_count = 0;
+    let mut top_hold_count = 0;
+    let mut bottom_advance_count = 0;
+    let mut bottom_hold_count = 0;
+
+    let trials = 3000;
+    for seed in 0..trials {
+        let (_evolved, report) = RosterEvolutionEngine::evolve_roster(&initial, DriverTier::Amateur, seed as u64);
+
+        if let Some(top_report) = report.retained_rivals.iter().find(|r| r.rival.driver_id == top_driver_id) {
+            match top_report.outcome {
+                SkillProgressionOutcome::StepUp | SkillProgressionOutcome::StandoutLeap => {
+                    top_advance_count += 1;
+                }
+                SkillProgressionOutcome::HoldSteady => {
+                    top_hold_count += 1;
+                }
+            }
+        }
+
+        if let Some(bottom_report) = report.retained_rivals.iter().find(|r| r.rival.driver_id == bottom_driver_id) {
+            match bottom_report.outcome {
+                SkillProgressionOutcome::StepUp | SkillProgressionOutcome::StandoutLeap => {
+                    bottom_advance_count += 1;
+                }
+                SkillProgressionOutcome::HoldSteady => {
+                    bottom_hold_count += 1;
+                }
+            }
+        }
+    }
+
+    let top_total = (top_advance_count + top_hold_count) as f64;
+    let top_adv_rate = top_advance_count as f64 / top_total;
+    let top_hold_rate = top_hold_count as f64 / top_total;
+
+    let bottom_total = (bottom_advance_count + bottom_hold_count) as f64;
+    let bottom_adv_rate = bottom_advance_count as f64 / bottom_total;
+    let bottom_hold_rate = bottom_hold_count as f64 / bottom_total;
+
+    // 1st place (top) is configured for max 80% advance (67.5% StepUp + 12.5% StandoutLeap) and 20% HoldSteady
+    assert!(
+        (top_adv_rate - 0.80).abs() < 0.04,
+        "Top finisher advance rate should be ~0.80 (max 80%), got {:.3}",
+        top_adv_rate
+    );
+    assert!(
+        (top_hold_rate - 0.20).abs() < 0.04,
+        "Top finisher hold rate should be ~0.20, got {:.3}",
+        top_hold_rate
+    );
+
+    // Last place (bottom) is configured for 70% advance (62.5% StepUp + 7.5% StandoutLeap) and 30% HoldSteady
+    assert!(
+        (bottom_adv_rate - 0.70).abs() < 0.04,
+        "Bottom finisher advance rate should be ~0.70, got {:.3}",
+        bottom_adv_rate
+    );
+    assert!(
+        (bottom_hold_rate - 0.30).abs() < 0.04,
+        "Bottom finisher hold rate should be ~0.30, got {:.3}",
+        bottom_hold_rate
+    );
+
+    // Higher ranking must strictly yield higher advancement probability
+    assert!(
+        top_adv_rate > bottom_adv_rate,
+        "Top finisher advance rate ({:.3}) must exceed bottom finisher advance rate ({:.3})",
+        top_adv_rate,
+        bottom_adv_rate
+    );
 }
 
 #[test]
@@ -604,8 +706,10 @@ fn test_spec024_scenario_career_10_car_grid_90_10_churn() {
     let churned_out_id = &report.churned_out[0].driver_id;
     assert!(!top_3_ids.contains(churned_out_id));
 
-    // Style preserved
-    assert_eq!(report.churned_in[0].style, report.churned_out[0].style);
+    // Replacement driver drafted from global pool with valid style
+    let incoming = &report.churned_in[0];
+    assert!(incoming.resolve_character().is_some(), "Replacement must be valid global character");
+    assert!(!initial.iter().take(3).any(|r| r.driver_id == incoming.driver_id));
 
     // Probabilistic skill check: majority advance to Tier 2 (Amateur)
     let advanced_to_tier2 = report.retained_rivals.iter().filter(|r| r.new_tier >= DriverTier::Amateur).count();
@@ -638,8 +742,9 @@ fn test_career_roster_evolution_end_to_end_multitier_progression() {
         assert_eq!(report.churned_out.len(), 1);
         assert_eq!(report.churned_in.len(), 1);
 
-        // Retained styles match
-        assert_eq!(report.churned_in[0].style, report.churned_out[0].style);
+        // Replacement driver is valid and unique
+        assert!(report.churned_in[0].resolve_character().is_some());
+        assert!(!report.retained_rivals.iter().any(|r| r.rival.driver_id == report.churned_in[0].driver_id));
     }
 
     // At tier 5, several original rivals should still be in the roster (continuity)

@@ -85,9 +85,12 @@ impl RosterEvolutionEngine {
     }
 
     /// Advances the career roster to a newly unlocked tier `new_tier`:
-    /// 1. Evaluates probabilistic skill progression on retained rivals (65% step up, 25% hold steady, 10% standout leap).
+    /// 1. Evaluates rank-dependent probabilistic skill progression on retained rivals
+    ///    (higher rank = higher probability of advancement up to 80%, down to 70% for last place;
+    ///    macro field average across symmetric ranks is 65% step up, 25% hold steady, 10% standout leap).
     /// 2. Retains 90% of rivals and churns 10% (min 1).
-    /// 3. Departing rivals are replaced with fresh characters matching their driving style from the global 72 pool.
+    /// 3. Departing rivals are replaced with fresh characters selected by sampling a driving style
+    ///    uniformly across all 6 styles (P = 1/6) and picking an unused character fitting that style from the global 72 pool.
     /// 4. Incoming rivals are assigned tiers from the discrete bell curve of `new_tier`.
     pub fn evolve_roster(
         current_roster: &[CareerRivalEntry],
@@ -126,17 +129,32 @@ impl RosterEvolutionEngine {
         let mut churned_out = Vec::new();
         let mut new_roster = Vec::new();
 
-        // Step 1: Retain 90% and evaluate probabilistic skill progression
+        // Step 1: Retain 90% and evaluate rank-dependent probabilistic skill progression
         for (idx, rival) in current_roster.iter().enumerate() {
             if churn_indices.contains(&idx) {
                 churned_out.push(rival.clone());
             } else {
                 let previous_tier = rival.tier;
-                // Skill progression roll: 65% step up, 25% hold steady, 10% standout leap
-                let roll = (rng.next_f32() * 100.0) as u32;
-                let (assigned_tier, outcome) = if roll < 65 {
+                // Performance score: index 0 (1st place) -> 1.0, index n-1 (last place) -> 0.0
+                let perf_score = if n > 1 {
+                    1.0 - (idx as f32) / ((n - 1) as f32)
+                } else {
+                    0.5
+                };
+                let d = perf_score - 0.5; // [-0.5, +0.5]
+
+                // Rank-modulated probabilities:
+                // 1st place (d = +0.5): 67.5% StepUp, 20.0% HoldSteady, 12.5% StandoutLeap (80% advance)
+                // Median (d = 0.0):    65.0% StepUp, 25.0% HoldSteady, 10.0% StandoutLeap (75% advance)
+                // Last place (d = -0.5): 62.5% StepUp, 30.0% HoldSteady, 7.5% StandoutLeap (70% advance)
+                let p_leap = 0.10 + 0.05 * d;
+                let p_hold = 0.25 - 0.10 * d;
+                let p_step = 1.0 - p_leap - p_hold;
+
+                let roll = rng.next_f32();
+                let (assigned_tier, outcome) = if roll < p_step {
                     (new_tier, SkillProgressionOutcome::StepUp)
-                } else if roll < 90 {
+                } else if roll < p_step + p_hold {
                     (previous_tier, SkillProgressionOutcome::HoldSteady)
                 } else {
                     let leap_tier = DriverTier::from_u8((new_tier.to_u8() + 1).min(5));
@@ -155,16 +173,19 @@ impl RosterEvolutionEngine {
             }
         }
 
-        // Step 2: Churn 10% - Replace departed rivals with new characters matching the departed style
+        // Step 2: Churn 10% - Replace departed rivals with fresh characters drawn by sampling
+        // a driving style uniformly at random (P = 1/6) and selecting an unused character fitting that style.
         let all_characters = DriverCharacter::all_across_modules();
         let mut churned_in = Vec::new();
 
         for departed in &churned_out {
-            let departing_style = departed.style;
-            // Candidates: global characters with same style who are NOT currently in the new roster
+            let style_idx = (rng.next_u32() as usize) % DrivingStyle::ALL.len();
+            let target_style = DrivingStyle::ALL[style_idx];
+
+            // Candidates: global characters with target_style who are NOT currently in the new roster
             let mut candidates: Vec<DriverCharacter> = all_characters
                 .iter()
-                .filter(|c| c.style == departing_style && !new_roster.iter().any(|r| r.driver_id == c.id))
+                .filter(|c| c.style == target_style && !new_roster.iter().any(|r| r.driver_id == c.id))
                 .cloned()
                 .collect();
 
