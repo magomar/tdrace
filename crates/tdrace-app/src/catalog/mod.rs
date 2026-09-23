@@ -62,6 +62,9 @@ impl RealCarModel {
     /// Derives the customized `CarConfig` matching the physical attributes of this real-world car model.
     pub fn to_car_config(&self) -> tdrace_core::physics::config::CarConfig {
         let mut cfg = self.base_car_choice.config();
+        let base_mass = cfg.mass.max(1.0);
+        let mass_ratio = (self.weight_kg as f32) / base_mass;
+
         cfg.mass = self.weight_kg as f32;
         cfg.top_speed_mps = (self.top_speed_kmh as f32) / 3.6;
 
@@ -78,6 +81,27 @@ impl RealCarModel {
             "AWD" | "4WD" => cfg.drive_bias = 0.5,
             _ => cfg.drive_bias = 0.0,
         }
+
+        // 1. Braking Deceleration: F_brake = F_base_brake * (m_car / m_base) * (0.80 + 0.40 * stats.4)
+        let brake_mult = (0.80 + 0.40 * self.stats.4).clamp(0.5, 1.5);
+        cfg.max_brake_force = (cfg.max_brake_force * mass_ratio * brake_mult).max(100.0);
+
+        // 2. Pacejka Lateral Tire Grip: D_lateral = D_base * (0.85 + 0.30 * stats.2) clamped to [0.5, 1.8]
+        let grip_mult = 0.85 + 0.30 * self.stats.2;
+        cfg.tire.peak_d = (cfg.tire.peak_d * grip_mult).clamp(0.5, 1.8);
+
+        // 3. Directional Agility & Steering Rack Speed: omega_steer = omega_base_steer * (0.80 + 0.40 * stats.3) clamped to [2.0, 15.0]
+        let steer_mult = 0.80 + 0.40 * self.stats.3;
+        cfg.steer_speed = (cfg.steer_speed * steer_mult).clamp(2.0, 15.0);
+
+        // 4. Yaw Moment of Inertia: Iz = I_base * (m_car / m_base) * (1.15 - 0.30 * stats.3)
+        let inertia_mult = (1.15 - 0.30 * self.stats.3).max(0.1);
+        cfg.inertia = (cfg.inertia * mass_ratio * inertia_mult).max(10.0);
+
+        // 5. Aerodynamic Downforce & Drag Coefficients
+        let (parsed_cl, parsed_cd) = parse_aero_downforce(self.aero_downforce);
+        cfg.downforce_coefficient = parsed_cl * 0.76;
+        cfg.air_drag_coefficient = parsed_cd;
 
         cfg
     }
@@ -104,6 +128,25 @@ impl RealCarModel {
             }
         }
     }
+}
+
+/// Helper to extract aerodynamic coefficients (Cl, Cd) from aero string (e.g. "Cl 0.85 / Cd 0.42").
+fn parse_aero_downforce(s: &str) -> (f32, f32) {
+    let mut cl = 0.5;
+    let mut cd = 0.45;
+    for part in s.split('/') {
+        let part = part.trim();
+        if let Some(val_str) = part.strip_prefix("Cl") {
+            if let Ok(v) = val_str.trim().parse::<f32>() {
+                cl = v;
+            }
+        } else if let Some(val_str) = part.strip_prefix("Cd") {
+            if let Ok(v) = val_str.trim().parse::<f32>() {
+                cd = v;
+            }
+        }
+    }
+    (cl, cd)
 }
 
 /// Master catalog of all authentic motorsport vehicles in TdRace.
