@@ -298,32 +298,65 @@ pub struct ModuleCareerProgress {
 }
 
 impl ModuleCareerProgress {
-    /// Returns the authentic starter car model IDs for a given motorsport module.
-    pub fn starter_cars_for_module(module_id: &str) -> Vec<String> {
-        match module_id {
-            "gt" | "gt_challenge" => vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
-            "rally" => vec![
-                "rally_peugeot_208_rally4".to_string(),
-                "rally_fiesta_rally4".to_string(),
-                "rally_clio_rally4".to_string(),
-            ],
-            "nascar" => vec![
+    /// Returns the authentic starter car model IDs for a given motorsport module and tier (1..=5).
+    pub fn starter_cars_for_module_and_tier(module_id: &str, tier: u32) -> Vec<String> {
+        match (module_id, tier) {
+            ("gt" | "gt_challenge", 1) => vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
+            ("gt" | "gt_challenge", _) => Vec::new(),
+
+            ("nascar", 1) => vec![
                 "nascar_monte_carlo_ss".to_string(),
                 "nascar_mustang_street_stock".to_string(),
                 "nascar_dodge_dart_street_stock".to_string(),
             ],
-            "kart" => vec![
+            ("nascar", 2) => vec!["nascar_super_late_model".to_string()],
+            ("nascar", 3) => vec!["nascar_arca_chevy_ss".to_string()],
+            ("nascar", 4) => vec!["nascar_silverado_truck".to_string()],
+            ("nascar", 5) => vec!["nascar_corvette_ta1".to_string()],
+
+            ("rally", 1) => vec![
+                "rally_peugeot_208_rally4".to_string(),
+                "rally_fiesta_rally4".to_string(),
+                "rally_clio_rally4".to_string(),
+            ],
+            ("rally", 2) => vec!["rally_audi_s1_wrx".to_string()],
+            ("rally", 3) => vec!["rally_audi_sport_quattro_s1".to_string()],
+            ("rally", 4) => vec!["rally_toyota_hilux_dakar".to_string()],
+            ("rally", 5) => vec!["rally_robby_gordon_sst".to_string()],
+
+            ("kart", 1) => vec![
                 "kart_crg_hero_60".to_string(),
                 "kart_birel_c28".to_string(),
                 "kart_tony_kart_neos".to_string(),
             ],
-            "extreme_offroad" | "offroad" => vec![
+            ("kart", 2) => vec!["kart_tony_kart_racer_ok".to_string()],
+            ("kart", 3) => vec!["kart_birel_art_kz2".to_string()],
+            ("kart", 4) => vec!["kart_honda_mean_mower".to_string()],
+            ("kart", 5) => vec!["kart_anderson_cs250".to_string()],
+
+            ("extreme_offroad" | "offroad", 1) => vec![
                 "offroad_sand_rail_buggy".to_string(),
                 "offroad_polaris_rzr_pro_r".to_string(),
                 "offroad_vw_sand_rail".to_string(),
             ],
-            _ => vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
+            ("extreme_offroad" | "offroad", 2) => vec!["offroad_ford_bronco_dr".to_string()],
+            ("extreme_offroad" | "offroad", 3) => vec!["offroad_arctic_hilux_at44".to_string()],
+            ("extreme_offroad" | "offroad", 4) => vec!["offroad_pro4_unlimited_chevy".to_string()],
+            ("extreme_offroad" | "offroad", 5) => vec!["offroad_bigfoot_monster_truck".to_string()],
+
+            _ => {
+                if tier == 1 {
+                    vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()]
+                } else {
+                    Vec::new()
+                }
+            }
         }
+    }
+
+    /// Returns the authentic starter car model IDs for a given motorsport module (Tier 1).
+    pub fn starter_cars_for_module(module_id: &str) -> Vec<String> {
+        Self::starter_cars_for_module_and_tier(module_id, 1)
     }
 
     /// Initial starter career record for a specific motorsport module.
@@ -451,8 +484,11 @@ impl ModuleCareerProgress {
 
     /// Ensures unlocked tracks and starter cars match or exceed current level.
     pub fn sync_unlocks_for_level(&mut self) {
-        for car in Self::starter_cars_for_module(&self.module_id) {
-            self.ensure_car(&car);
+        let max_tier = self.level.clamp(1, 5);
+        for t in 1..=max_tier {
+            for car in Self::starter_cars_for_module_and_tier(&self.module_id, t) {
+                self.ensure_car(&car);
+            }
         }
         match self.module_id.as_str() {
             "gt" | "gt_challenge" => {
@@ -639,7 +675,7 @@ impl ModuleCareerProgress {
         }
     }
 
-    fn ensure_car(&mut self, id: &str) {
+    pub fn ensure_car(&mut self, id: &str) {
         if !self.unlocked_cars.iter().any(|c| c == id) {
             self.unlocked_cars.push(id.to_string());
         }

@@ -667,6 +667,15 @@ impl HallOfFameDb {
         Ok(())
     }
 
+    /// Deletes the latest race history entry for a specific championship.
+    pub fn delete_latest_race_history_entry_for_championship(&self, championship_name: &str) -> Result<()> {
+        self.conn.execute(
+            "DELETE FROM race_history WHERE id IN (SELECT id FROM race_history WHERE championship_name = ?1 COLLATE NOCASE ORDER BY id DESC LIMIT 1)",
+            params![championship_name],
+        )?;
+        Ok(())
+    }
+
     /// Clears all Hall of Fame records and race history logs for a specific track.
     pub fn clear_track_history(&self, track_id: &str) -> Result<()> {
         self.clear_hall_of_fame_for_track(track_id)?;
@@ -818,7 +827,8 @@ impl HallOfFameDb {
 
     /// Returns existing career progress for profile and module, or creates and persists default starter progress.
     pub fn get_or_create_module_progress(&self, profile_id: i64, module_id: &str) -> Result<ModuleCareerProgress> {
-        if let Some(p) = self.get_module_progress(profile_id, module_id)? {
+        if let Some(mut p) = self.get_module_progress(profile_id, module_id)? {
+            p.sync_unlocks_for_level();
             Ok(p)
         } else {
             let def = ModuleCareerProgress::default_for_module(profile_id, module_id);
@@ -1118,7 +1128,8 @@ impl HallOfFameDb {
     }
 
     pub fn get_or_create_module_progress(&self, profile_id: i64, module_id: &str) -> Result<ModuleCareerProgress> {
-        if let Some(p) = self.get_module_progress(profile_id, module_id)? {
+        if let Some(mut p) = self.get_module_progress(profile_id, module_id)? {
+            p.sync_unlocks_for_level();
             Ok(p)
         } else {
             let def = ModuleCareerProgress::default_for_module(profile_id, module_id);

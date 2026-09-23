@@ -876,5 +876,123 @@ fn test_all_modules_tier_1_championship_starters_are_eligible_and_unlocked() {
     }
 }
 
+#[test]
+fn test_nascar_and_kart_module_switch_defaults_to_tier_1_starter() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    // 1. Switch to NASCAR
+    session.switch_to_nascar();
+    assert_eq!(session.active_player_car_tier(), 1, "NASCAR default car must be Tier 1");
+    assert!(session.is_active_player_car_eligible(1), "NASCAR default car must be eligible for Tier 1");
+    assert!(session.is_active_player_car_unlocked(), "NASCAR default car must be unlocked");
+
+    // 2. Switch to Karting
+    session.switch_to_kart();
+    assert_eq!(session.active_player_car_tier(), 1, "Karting default car must be Tier 1");
+    assert!(session.is_active_player_car_eligible(1), "Karting default car must be eligible for Tier 1");
+    assert!(session.is_active_player_car_unlocked(), "Karting default car must be unlocked");
+}
+
+#[test]
+fn test_nascar_career_tiers_1_to_5_launch_eligibility() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    for tier in 1..=5 {
+        session.start_nascar_career_tier(tier);
+        assert_eq!(session.state, GameState::StartingGrid);
+        let req_tier = session.current_race_required_tier();
+        assert_eq!(req_tier, tier as u8);
+        let car_tier = session.active_player_car_tier();
+        assert_eq!(car_tier, tier as u8, "NASCAR Tier {} car tier mismatch", tier);
+        assert!(
+            session.is_active_player_car_eligible(req_tier),
+            "NASCAR Tier {} must be eligible (car tier: {}, req: {})",
+            tier,
+            car_tier,
+            req_tier
+        );
+        assert!(
+            session.is_active_player_car_unlocked(),
+            "NASCAR Tier {} selected car must be unlocked to race",
+            tier
+        );
+    }
+}
+
+#[test]
+fn test_kart_career_tiers_1_to_5_launch_eligibility() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    for tier in 1..=5 {
+        session.start_kart_career_tier(tier);
+        assert_eq!(session.state, GameState::StartingGrid);
+        let req_tier = session.current_race_required_tier();
+        assert_eq!(req_tier, tier as u8);
+        let car_tier = session.active_player_car_tier();
+        assert_eq!(car_tier, tier as u8, "Karting Tier {} car tier mismatch", tier);
+        assert!(
+            session.is_active_player_car_eligible(req_tier),
+            "Karting Tier {} must be eligible (car tier: {}, req: {})",
+            tier,
+            car_tier,
+            req_tier
+        );
+        assert!(
+            session.is_active_player_car_unlocked(),
+            "Karting Tier {} selected car must be unlocked to race",
+            tier
+        );
+    }
+}
+
+#[test]
+fn test_all_25_preset_championships_launch_with_eligible_and_unlocked_cars() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    let mgr = ChampionshipManager::new();
+    let presets = mgr.all_sorted();
+    assert_eq!(presets.len(), 25, "There should be 25 presets (5 modules x 5 tiers)");
+
+    for def in &presets {
+        session.launch_or_resume_championship(def);
+        assert_eq!(session.state, GameState::StartingGrid);
+        let req_tier = session.current_race_required_tier();
+        assert_eq!(
+            req_tier, def.series.tier as u8,
+            "Championship '{}' required tier mismatch",
+            def.series.id
+        );
+        let car_tier = session.active_player_car_tier();
+        assert!(
+            session.is_active_player_car_eligible(req_tier),
+            "Championship '{}' player car tier {} ineligible for required tier {}",
+            def.series.id,
+            car_tier,
+            req_tier
+        );
+        assert!(
+            session.is_active_player_car_unlocked(),
+            "Championship '{}' selected car must be unlocked",
+            def.series.id
+        );
+    }
+}
+
 
 

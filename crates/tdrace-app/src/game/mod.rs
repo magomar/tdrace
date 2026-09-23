@@ -1164,6 +1164,11 @@ impl RaceSession {
                 return model.tier;
             }
         }
+        if self.active_module_id != "classic" {
+            if let Some(model) = crate::catalog::get_models_for_module(self.active_module_id).first() {
+                return model.tier;
+            }
+        }
         self.active_player_car_choice().tier()
     }
 
@@ -1171,6 +1176,11 @@ impl RaceSession {
     pub fn active_player_car_unlock_level(&self) -> u32 {
         if let Some(model_id) = self.selected_car_model_id {
             if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+                return model.tier as u32;
+            }
+        }
+        if self.active_module_id != "classic" {
+            if let Some(model) = crate::catalog::get_models_for_module(self.active_module_id).first() {
                 return model.tier as u32;
             }
         }
@@ -1186,6 +1196,11 @@ impl RaceSession {
     pub fn is_active_player_car_unlocked(&self) -> bool {
         if self.is_dev_mode() || self.active_module_id == "classic" {
             return true;
+        }
+        if let Some(champ) = &self.championship_session {
+            if self.active_player_car_tier() <= champ.tier as u8 {
+                return true;
+            }
         }
         if let Some(model_id) = self.selected_car_model_id {
             return self.active_career_progress.is_car_unlocked(model_id, self.is_dev_mode());
@@ -1571,6 +1586,7 @@ impl RaceSession {
     pub fn switch_to_nascar(&mut self) {
         self.apply_module_config("nascar");
         self.active_module_id = "nascar";
+        self.sync_career_progress_for_active_module();
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::StockCar {
@@ -1578,7 +1594,7 @@ impl RaceSession {
             roof_fins: true,
             window_net: true,
         };
-        self.selected_car_model_id = None;
+        self.selected_car_model_id = Some("nascar_craftsman_truck");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1603,7 +1619,6 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
-        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -1611,6 +1626,7 @@ impl RaceSession {
     pub fn switch_to_extreme_offroad(&mut self) {
         self.apply_module_config("extreme_offroad");
         self.active_module_id = "extreme_offroad";
+        self.sync_career_progress_for_active_module();
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::SandRail {
@@ -1618,7 +1634,7 @@ impl RaceSession {
             whip_antenna: true,
             paddle_tires: true,
         };
-        self.selected_car_model_id = None;
+        self.selected_car_model_id = Some("offroad_sand_rail_buggy");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1643,7 +1659,6 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
-        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -1825,6 +1840,7 @@ impl RaceSession {
     pub fn switch_to_gt(&mut self) {
         self.apply_module_config("gt");
         self.active_module_id = "gt";
+        self.sync_career_progress_for_active_module();
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::TouringGT {
@@ -1832,7 +1848,7 @@ impl RaceSession {
             gt_wing: true,
             diffuser: true,
         };
-        self.selected_car_model_id = None;
+        self.selected_car_model_id = Some("gt_toyota_supra_gt4");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1857,13 +1873,14 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
-        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
     /// Activates the Rallycross World Cup module.
     pub fn switch_to_rally(&mut self) {
         self.apply_module_config("rally");
+        self.active_module_id = "rally";
+        self.sync_career_progress_for_active_module();
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::RallyHatch {
@@ -1871,7 +1888,7 @@ impl RaceSession {
             mudflaps: true,
             large_wing: true,
         };
-        self.selected_car_model_id = None;
+        self.selected_car_model_id = Some("rally_peugeot_208_rally4");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1891,20 +1908,21 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
-        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
     /// Activates the Karting World Cup module.
     pub fn switch_to_kart(&mut self) {
         self.apply_module_config("kart");
+        self.active_module_id = "kart";
+        self.sync_career_progress_for_active_module();
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::GoKart {
             exposed_driver: true,
             side_bumpers: true,
         };
-        self.selected_car_model_id = None;
+        self.selected_car_model_id = Some("kart_crg_hero_60");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -1929,13 +1947,14 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
-        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
     /// Activates the Classic Arcade Motorsport module.
     pub fn switch_to_classic(&mut self) {
         self.apply_module_config("classic");
+        self.active_module_id = "classic";
+        self.sync_career_progress_for_active_module();
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
         self.current_visual_type = VehicleVisualType::TouringGT {
@@ -1963,7 +1982,6 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
-        self.sync_career_progress_for_active_module();
         self.state = GameState::Menu;
     }
 
@@ -2055,6 +2073,10 @@ impl RaceSession {
             });
 
         if let Some(model) = selected_model {
+            self.active_career_progress.ensure_car(model.id);
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_module_progress(&self.active_career_progress);
+            }
             self.selected_car_model_id = Some(model.id);
             self.car_choice = model.base_car_choice;
             self.current_visual_type = model.visual_type;
@@ -2183,6 +2205,10 @@ impl RaceSession {
             });
 
         if let Some(model) = selected_model {
+            self.active_career_progress.ensure_car(model.id);
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_module_progress(&self.active_career_progress);
+            }
             self.selected_car_model_id = Some(model.id);
             self.car_choice = model.base_car_choice;
             self.current_visual_type = model.visual_type;
@@ -2302,6 +2328,10 @@ impl RaceSession {
             });
 
         if let Some(model) = selected_model {
+            self.active_career_progress.ensure_car(model.id);
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_module_progress(&self.active_career_progress);
+            }
             self.selected_car_model_id = Some(model.id);
             self.car_choice = model.base_car_choice;
             self.current_visual_type = model.visual_type;
@@ -2421,6 +2451,10 @@ impl RaceSession {
             });
 
         if let Some(model) = selected_model {
+            self.active_career_progress.ensure_car(model.id);
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_module_progress(&self.active_career_progress);
+            }
             self.selected_car_model_id = Some(model.id);
             self.car_choice = model.base_car_choice;
             self.current_visual_type = model.visual_type;
@@ -2541,6 +2575,10 @@ impl RaceSession {
             });
 
         if let Some(model) = selected_model {
+            self.active_career_progress.ensure_car(model.id);
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_module_progress(&self.active_career_progress);
+            }
             self.selected_car_model_id = Some(model.id);
             self.car_choice = model.base_car_choice;
             self.current_visual_type = model.visual_type;
@@ -2589,6 +2627,12 @@ impl RaceSession {
         );
         self.switch_to_nascar();
         self.championship_session = Some(champ.with_tier(5));
+        self.selected_car_model_id = Some("nascar_corvette_ta1");
+        self.active_career_progress.ensure_car("nascar_corvette_ta1");
+        if let Some(db) = &self.hof_db {
+            let _ = db.save_module_progress(&self.active_career_progress);
+        }
+        self.free_car_selection = true;
         self.init_race();
     }
 
@@ -10356,6 +10400,10 @@ impl RaceSession {
             });
 
         if let Some(m) = chosen_model {
+            self.active_career_progress.ensure_car(m.id);
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_module_progress(&self.active_career_progress);
+            }
             self.selected_car_model_id = Some(m.id);
             self.car_choice = m.base_car_choice;
             self.current_visual_type = m.visual_type;
