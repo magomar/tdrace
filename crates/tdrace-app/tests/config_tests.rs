@@ -106,7 +106,8 @@ fn test_session_initialization_with_custom_config() {
 
     let session = RaceSession::new_with_config(config);
     assert_eq!(session.total_laps, 5);
-    assert_eq!(session.num_bots, 7);
+    assert_eq!(session.config.gameplay.default_num_bots, 7);
+    assert_eq!(session.num_bots, session.max_bots());
     assert!((session.audio.settings.master_volume - 0.42).abs() < 1e-4);
     assert_eq!(session.input.filter.config.steer_rise_rate, 8.5);
 }
@@ -145,18 +146,19 @@ fn test_config_load_invalid_toml_fallback() {
 
 #[test]
 fn test_default_gameplay_pilot_count_and_toml_override() {
-    // 1. Default config must specify 7 bots (yielding an 8-pilot race grid with 1 player)
+    // 1. Default config specifies 7 bots in TOML
     let default_cfg = GameConfig::default();
     assert_eq!(
         default_cfg.gameplay.default_num_bots, 7,
-        "Default config must configure 7 bots for 8 pilots total"
+        "Default config must configure 7 bots"
     );
 
     let mut session = RaceSession::new_with_config(default_cfg);
-    assert_eq!(session.num_bots, 7);
+    // Casual races initialize with full track grid capacity per tdrace-xwey
+    let grid_slots = session.max_grid_participants();
     session.init_race();
-    assert_eq!(session.cars.len(), 8, "Must spawn 8 cars (1 player + 7 AI opponents)");
-    assert_eq!(session.opponent_drivers.len(), 7);
+    assert_eq!(session.cars.len(), grid_slots, "Initial casual race spawns full grid slots");
+    assert_eq!(session.opponent_drivers.len(), grid_slots - 1);
 
     // 2. Custom TOML configuring bot count
     let custom_toml = r#"
@@ -171,7 +173,8 @@ default_assist_profile = "sport"
     assert_eq!(loaded.gameplay.default_num_bots, 3);
 
     let mut custom_session = RaceSession::new_with_config(loaded);
-    assert_eq!(custom_session.num_bots, 3);
+    assert_eq!(custom_session.config.gameplay.default_num_bots, 3);
+    custom_session.set_num_bots(3);
     custom_session.init_race();
     assert_eq!(custom_session.cars.len(), 4, "Must spawn 4 cars (1 player + 3 AI opponents)");
 }
