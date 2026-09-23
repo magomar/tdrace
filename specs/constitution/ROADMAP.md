@@ -24,6 +24,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 ### Phase 2: Vehicle Roster Expansion & Garage Showroom (Priority: Medium)
 - `[x]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
 - `[x]` **[Vehicle Telemetry Alignment and Physics Differentiation](../018_vehicle_telemetry_alignment_and_physics_differentiation.md)**: 6-metric telemetry standardization with custom vector iconography and intra-category physics parameter differentiation.
+- `[/]` **[Per-Discipline and Per-Tier Driver Favorite Cars & 12-Pilot Rosters](../020_driver_favorite_cars_per_discipline_and_tier.md)**: Expands motorsport rosters to 12 unique pilots per discipline (72 total) and establishes authentic signature vehicle mappings per discipline and tier.
 
 ### Phase 3: Game Asset Catalogue & Reference Portals (Priority: High)
 - `[x]` **[Game Asset Catalogue & Technical Reference Portals](../011_game_asset_catalogue_and_physics_reference_portals.md)**: Dual-site Astro architecture cataloguing 25 car categories, 90 circuits, and simulation physics under a unified Google OKF v0.2 knowledge graph.
