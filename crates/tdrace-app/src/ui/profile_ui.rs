@@ -7,11 +7,36 @@ use macroquad::texture::{draw_texture_ex, DrawTextureParams};
 use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
-use crate::profile::{draw_country_banner, AssistProfile, CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+use crate::profile::{
+    draw_country_banner, AssistProfile, ChampionshipAward, CountryRegistry, ModuleCareerProgress,
+    PlayerProfile, ProfileCareerStats, RaceHistoryEntry, TrophyMetal,
+};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::render::lateral::render_real_car_lateral_by_id;
+use crate::render::trophy_textures::draw_trophy_badge;
 use crate::render::vehicle_assets::get_vehicle_lateral_texture;
 use crate::series::{ChampionshipManager, ChampionshipSession, SeriesDefinition};
+
+/// Official motorsport disciplines displayed in the 5x5 Player Profile Trophy Cabinet.
+pub const CABINET_DISCIPLINES: &[(&str, &str)] = &[
+    ("gt", "GT Challenge"),
+    ("kart", "Karting Cup"),
+    ("rally", "Rallycross"),
+    ("nascar", "NASCAR Series"),
+    ("extreme_offroad", "Extreme Off-Road"),
+];
+
+/// Helper to lookup an earned award for a specific discipline and tier from an awards slice.
+pub fn find_award_for_slot<'a>(
+    awards: &'a [ChampionshipAward],
+    discipline: &str,
+    tier: u32,
+) -> Option<&'a ChampionshipAward> {
+    let norm = crate::render::trophy_textures::normalize_discipline(discipline);
+    awards.iter().find(|a| {
+        crate::render::trophy_textures::normalize_discipline(&a.module_id) == norm && a.tier == tier
+    })
+}
 
 /// Renders the Player Profile Badge for menus, supporting both compact mode and enlarged navigable card mode.
 pub fn render_profile_badge(
@@ -152,6 +177,9 @@ pub fn render_profile_manager_screen(
     is_dev_mode: bool,
     career_level: u32,
     module_progress_map: &std::collections::HashMap<String, ModuleCareerProgress>,
+    awards: &[ChampionshipAward],
+    cabinet_disc_idx: usize,
+    cabinet_tier_idx: usize,
 ) {
     let focus_card = focus_area == ProfileFocusArea::HeroCard;
     let is_filter_focused = focus_area == ProfileFocusArea::Filters;
@@ -306,18 +334,19 @@ pub fn render_profile_manager_screen(
     cur_y += hero_h + scaler.s(8.0);
 
     // =========================================================================
-    // 2. WIDESCREEN TAB BAR [1] OVERVIEW | [2] CAREERS | [3] CHAMPS | [4] LOGS
+    // 2. WIDESCREEN TAB BAR [1] OVERVIEW | [2] CAREERS | [3] CABINET | [4] CHAMPS | [5] LOGS
     // =========================================================================
     let tab_bar_h = scaler.s(34.0);
     let tab_names = [
         "[1] GLOBAL OVERVIEW",
         "[2] CAREER DISCIPLINES",
-        "[3] CHAMPIONSHIPS",
-        "[4] RACE TELEMETRY & LOGS",
+        "[3] TROPHY CABINET",
+        "[4] CHAMPIONSHIPS",
+        "[5] RACE TELEMETRY & LOGS",
     ];
     let tab_gap = scaler.s(8.0);
     let total_gaps = tab_gap * (tab_names.len() as f32 - 1.0);
-    let tab_w = ((full_w - scaler.s(220.0) - total_gaps) / tab_names.len() as f32).max(scaler.s(110.0));
+    let tab_w = ((full_w - scaler.s(220.0) - total_gaps) / tab_names.len() as f32).max(scaler.s(96.0));
 
     for (i, name) in tab_names.iter().enumerate() {
         let t_x = x + i as f32 * (tab_w + tab_gap);
@@ -347,18 +376,20 @@ pub fn render_profile_manager_screen(
             draw_rectangle(t_x, cur_y + tab_bar_h - scaler.s(3.0), tab_w, scaler.s(3.0), Palette::NEON_CYAN);
         }
 
-        fonts.draw_ui_bold_centered(name, t_x + tab_w * 0.5, cur_y + scaler.s(22.0), scaler.font_s(11.5), text_col);
+        fonts.draw_ui_bold_centered(name, t_x + tab_w * 0.5, cur_y + scaler.s(22.0), scaler.font_s(11.0), text_col);
     }
 
     // Tab switch prompt on the far right
     let tab_hint = if focus_area == ProfileFocusArea::Tabs {
-        if active_tab == 2 || active_tab == 3 {
+        if active_tab == 3 || active_tab == 4 {
             "[◄ / ►] TABS  •  [▼] FILTERS"
+        } else if active_tab == 2 {
+            "[◄ / ►] TABS  •  [▼] CABINET"
         } else {
-            "[◄ / ►] [1-4] TABS"
+            "[◄ / ►] [1-5] TABS"
         }
     } else {
-        "[◄ / ►] [1-4] TABS"
+        "[◄ / ►] [1-5] TABS"
     };
     fonts.draw_ui_bold(
         tab_hint,
@@ -378,9 +409,21 @@ pub fn render_profile_manager_screen(
     scaler.draw_glass_card(x, cur_y, full_w, content_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
     match active_tab {
-        0 => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
+        0 => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats, awards),
         1 => render_disciplines_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats, module_progress_map),
-        2 => render_championships_tab(
+        2 => render_trophy_cabinet_tab(
+            &scaler,
+            fonts,
+            x,
+            cur_y,
+            full_w,
+            content_h,
+            awards,
+            cabinet_disc_idx,
+            cabinet_tier_idx,
+            focus_area == ProfileFocusArea::Content,
+        ),
+        3 => render_championships_tab(
             &scaler,
             fonts,
             x,
@@ -400,9 +443,10 @@ pub fn render_profile_manager_screen(
             is_dev_mode,
             career_level,
             module_progress_map,
+            awards,
         ),
-        3 => render_telemetry_tab(&scaler, fonts, x, cur_y, full_w, content_h, history, filter_category_idx, is_filter_focused),
-        _ => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
+        4 => render_telemetry_tab(&scaler, fonts, x, cur_y, full_w, content_h, history, filter_category_idx, is_filter_focused),
+        _ => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats, awards),
     }
 
     // =========================================================================
@@ -414,14 +458,16 @@ pub fn render_profile_manager_screen(
             "[ENTER / E] Open Driver Manager  |  [▼] Focus Tabs  |  [◄ / ►] [Q] Cycle Driver  |  [ESC] Exit"
         }
         ProfileFocusArea::Tabs => {
-            if active_tab == 2 || active_tab == 3 {
-                "[▲] Driver Card  |  [◄ / ►] [1-4] Tabs  |  [▼] Module Filters  |  [ESC] Exit"
+            if active_tab == 3 || active_tab == 4 {
+                "[▲] Driver Card  |  [◄ / ►] [1-5] Tabs  |  [▼] Module Filters  |  [ESC] Exit"
+            } else if active_tab == 2 {
+                "[▲] Driver Card  |  [◄ / ►] [1-5] Tabs  |  [▼] Cabinet Grid  |  [ESC] Exit"
             } else {
-                "[▲] Driver Card  |  [◄ / ►] [1-4] Tabs  |  [E] Manage Roster  |  [ESC] Exit"
+                "[▲] Driver Card  |  [◄ / ►] [1-5] Tabs  |  [E] Manage Roster  |  [ESC] Exit"
             }
         }
         ProfileFocusArea::Filters => {
-            if active_tab == 2 {
+            if active_tab == 3 {
                 "[▲] Focus Tabs  |  [◄ / ►] Select Module Filter  |  [▼] Browse Championships  |  [ESC] Exit"
             } else {
                 "[▲] Focus Tabs  |  [◄ / ►] Select Module Filter  |  [▼] Browse Telemetry Logs  |  [ESC] Exit"
@@ -429,7 +475,11 @@ pub fn render_profile_manager_screen(
         }
         ProfileFocusArea::Content => {
             if active_tab == 2 {
+                "[▲ / ▼] Discipline  |  [◄ / ►] Tier  |  [▲ at top] Tabs  |  [ESC] Exit"
+            } else if active_tab == 3 {
                 "[ENTER] Enter Cup  |  [R] Reset Cup  |  [▲ / ▼] Navigate  |  [▲ at top] Filters  |  [ESC] Exit"
+            } else if active_tab == 0 {
+                "[ENTER / 3] Open Trophy Cabinet  |  [▲] Tabs  |  [ESC] Exit"
             } else {
                 "[▲] Focus Filters  |  [▲ / ▼] Browse Telemetry  |  [F] Quick Filter  |  [ESC] Exit"
             }
@@ -455,6 +505,7 @@ fn render_overview_tab(
     w: f32,
     h: f32,
     stats: &ProfileCareerStats,
+    awards: &[ChampionshipAward],
 ) {
     let pad = scaler.s(16.0);
     let inner_w = w - pad * 2.0;
@@ -540,16 +591,90 @@ fn render_overview_tab(
         ("GRADE C (Rookie)", Color::new(0.95, 0.45, 0.35, 1.0))
     };
     render_data_row(scaler, fonts, right_x + scaler.s(14.0), i_y, col_w - scaler.s(28.0), "Driver Safety License Grade", rating_str, rating_col);
-    i_y += row_h + scaler.s(10.0);
+    i_y += row_h + scaler.s(8.0);
 
-    // Mini Trophy Showcase Bar inside Right Box
-    draw_rectangle(right_x + scaler.s(14.0), i_y, col_w - scaler.s(28.0), scaler.s(48.0), Color::new(0.10, 0.14, 0.20, 0.90));
-    draw_rectangle_lines(right_x + scaler.s(14.0), i_y, col_w - scaler.s(28.0), scaler.s(48.0), 1.0, Palette::UI_CARD_BORDER);
+    // Top Honors Showcase Shelf inside Right Box
+    let shelf_x = right_x + scaler.s(14.0);
+    let shelf_w = col_w - scaler.s(28.0);
+    let shelf_h = (col_h - (i_y - cy) - scaler.s(12.0)).max(scaler.s(68.0));
 
-    let trophy_item_w = (col_w - scaler.s(28.0)) / 3.0;
-    fonts.draw_ui_bold_centered(&format!("🏆 GOLD: {}", stats.wins), right_x + scaler.s(14.0) + trophy_item_w * 0.5, i_y + scaler.s(29.0), scaler.font_s(13.0), Palette::NEON_GOLD);
-    fonts.draw_ui_bold_centered(&format!("🥈 SILVER: {}", stats.p2_count), right_x + scaler.s(14.0) + trophy_item_w * 1.5, i_y + scaler.s(29.0), scaler.font_s(13.0), Color::new(0.85, 0.88, 0.95, 1.0));
-    fonts.draw_ui_bold_centered(&format!("🥉 BRONZE: {}", stats.p3_count), right_x + scaler.s(14.0) + trophy_item_w * 2.5, i_y + scaler.s(29.0), scaler.font_s(13.0), Color::new(0.88, 0.55, 0.25, 1.0));
+    scaler.draw_glass_card(shelf_x, i_y, shelf_w, shelf_h, Color::new(0.08, 0.11, 0.17, 0.95), Palette::NEON_CYAN, 1.0);
+
+    // Header inside shelf
+    fonts.draw_ui_bold("🏆 TOP HONORS SHOWCASE", shelf_x + scaler.s(10.0), i_y + scaler.s(15.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+    let cab_prompt = "[3] or [ENTER] CABINET ▶";
+    let cab_dim = fonts.measure_ui_bold(cab_prompt, scaler.font_s(10.0));
+    fonts.draw_ui_bold(cab_prompt, shelf_x + shelf_w - cab_dim.width - scaler.s(10.0), i_y + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+
+    // Find top 3 awards:
+    // Sort awards by: Gold first (position == 1), then tier descending (5..1), then Silver, then Bronze.
+    let mut top_awards: Vec<&ChampionshipAward> = awards.iter().collect();
+    top_awards.sort_by(|a, b| {
+        a.position.cmp(&b.position)
+            .then_with(|| b.tier.cmp(&a.tier))
+            .then_with(|| b.points.cmp(&a.points))
+    });
+    top_awards.truncate(3);
+
+    // Stepped pedestal arrangement: [Rank 2 (Left), Rank 1 (Center), Rank 3 (Right)]
+    let slot_indices: [Option<usize>; 3] = match top_awards.len() {
+        0 => [None, None, None],
+        1 => [None, Some(0), None],
+        2 => [Some(1), Some(0), None],
+        _ => [Some(1), Some(0), Some(2)],
+    };
+
+    let ped_col_w = shelf_w / 3.0;
+    let ped_base_y = i_y + shelf_h - scaler.s(6.0);
+
+    for (idx, opt_award_idx) in slot_indices.iter().enumerate() {
+        let ped_cx = shelf_x + ped_col_w * (idx as f32 + 0.5);
+        let is_center = idx == 1;
+        let ped_h = if is_center { scaler.s(14.0) } else if idx == 0 { scaler.s(10.0) } else { scaler.s(7.0) };
+        let ped_w = ped_col_w - scaler.s(16.0);
+        let ped_x = ped_cx - ped_w * 0.5;
+        let ped_y = ped_base_y - ped_h;
+
+        let ped_col = if is_center { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
+        draw_rectangle(ped_x, ped_y, ped_w, ped_h, Color::new(0.12, 0.16, 0.22, 0.90));
+        draw_rectangle_lines(ped_x, ped_y, ped_w, ped_h, if is_center { 1.5 } else { 1.0 }, ped_col);
+
+        if let Some(award_idx) = opt_award_idx {
+            let award = top_awards[*award_idx];
+            let badge_sz = if is_center { scaler.s(36.0) } else { scaler.s(30.0) };
+            let badge_x = ped_cx - badge_sz * 0.5;
+            let badge_y = ped_y - badge_sz - scaler.s(2.0);
+
+            draw_trophy_badge(
+                badge_x,
+                badge_y,
+                badge_sz,
+                badge_sz,
+                award.discipline(),
+                award.tier,
+                Some(award.metallic_tier()),
+                false,
+            );
+
+            let rank_str = format!("T{} {}", award.tier, award.discipline().to_uppercase());
+            fonts.draw_ui_bold_centered(
+                &rank_str,
+                ped_cx,
+                ped_y + ped_h * 0.5 + scaler.s(3.5),
+                scaler.font_s(8.0),
+                if is_center { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+            );
+        } else {
+            let empty_lbl = if is_center { "PINNACLE" } else { "EMPTY" };
+            fonts.draw_ui_regular_centered(
+                empty_lbl,
+                ped_cx,
+                ped_y + ped_h * 0.5 + scaler.s(3.0),
+                scaler.font_s(7.5),
+                Color::new(0.40, 0.45, 0.55, 0.7),
+            );
+        }
+    }
 }
 
 // =============================================================================
@@ -799,6 +924,280 @@ pub fn championship_visible_count(scaler: &UiScaler, content_h: f32) -> usize {
     ((available_h + item_gap) / (item_h + item_gap)).floor().max(1.0) as usize
 }
 
+// =============================================================================
+// TAB 2: TROPHY CABINET (5x5 DISCIPLINE-BY-TIER GRID + INSPECTION PANEL)
+// =============================================================================
+fn render_trophy_cabinet_tab(
+    scaler: &UiScaler,
+    fonts: &Fonts,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    awards: &[ChampionshipAward],
+    focused_disc_idx: usize,
+    focused_tier_idx: usize,
+    is_content_focused: bool,
+) {
+    let pad = scaler.s(16.0);
+    let inner_w = w - pad * 2.0;
+    let mut cy = y + pad;
+
+    // 1. TOP HEADER SUMMARY BANNER
+    let banner_h = scaler.s(34.0);
+    scaler.draw_glass_card(x + pad, cy, inner_w, banner_h, Color::new(0.08, 0.12, 0.18, 0.90), Palette::NEON_GOLD, 1.2);
+
+    let mut earned_slots = 0;
+    for (disc, _) in CABINET_DISCIPLINES {
+        for t in 1..=5 {
+            if find_award_for_slot(awards, disc, t).is_some() {
+                earned_slots += 1;
+            }
+        }
+    }
+    let pct = (earned_slots as f32 / 25.0 * 100.0).round() as u32;
+    let gold_count = awards.iter().filter(|a| a.metallic_tier() == TrophyMetal::Gold).count();
+    let silver_count = awards.iter().filter(|a| a.metallic_tier() == TrophyMetal::Silver).count();
+    let bronze_count = awards.iter().filter(|a| a.metallic_tier() == TrophyMetal::Bronze).count();
+
+    let banner_text = format!(
+        "CABINET COLLECTION: {}/25 EARNED ({}%)  •  🏆 {} GOLD  •  🥈 {} SILVER  •  🥉 {} BRONZE",
+        earned_slots, pct, gold_count, silver_count, bronze_count
+    );
+    fonts.draw_ui_bold_centered(
+        &banner_text,
+        x + pad + inner_w * 0.5,
+        cy + scaler.s(22.0),
+        scaler.font_s(13.0),
+        Palette::WHITE,
+    );
+
+    cy += banner_h + scaler.s(10.0);
+
+    // 2. MAIN LAYOUT: LEFT GRID (58%) vs RIGHT INSPECTION PANEL (42%)
+    let col_gap = scaler.s(14.0);
+    let grid_w = (inner_w - col_gap) * 0.58;
+    let panel_w = inner_w - grid_w - col_gap;
+    let body_h = (h - (cy - y) - scaler.s(14.0)).max(scaler.s(280.0));
+
+    // Left Grid Glass Card
+    let left_x = x + pad;
+    scaler.draw_glass_card(left_x, cy, grid_w, body_h, Color::new(0.05, 0.07, 0.11, 0.90), Palette::UI_CARD_BORDER, 1.0);
+
+    // Grid Header row
+    let disc_label_w = scaler.s(108.0);
+    let tier_col_w = (grid_w - disc_label_w - scaler.s(16.0)) / 5.0;
+    let grid_top_pad = scaler.s(12.0);
+    let header_y = cy + grid_top_pad;
+
+    fonts.draw_ui_bold("DISCIPLINE", left_x + scaler.s(12.0), header_y + scaler.s(14.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
+
+    let star_headers = ["T1 (★)", "T2 (★★)", "T3 (★★★)", "T4 (★★★★)", "T5 (★★★★★)"];
+    for (t_idx, header) in star_headers.iter().enumerate() {
+        let th_x = left_x + disc_label_w + t_idx as f32 * tier_col_w;
+        fonts.draw_ui_bold_centered(header, th_x + tier_col_w * 0.5, header_y + scaler.s(14.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+    }
+
+    // Grid Rows (5 disciplines)
+    let grid_rows_y = header_y + scaler.s(20.0);
+    let row_h = (body_h - grid_top_pad - scaler.s(20.0) - scaler.s(22.0)) / 5.0;
+
+    for (row_idx, (disc_id, disc_title)) in CABINET_DISCIPLINES.iter().enumerate() {
+        let r_y = grid_rows_y + row_idx as f32 * row_h;
+
+        // Discipline Label on left
+        fonts.draw_ui_bold(
+            disc_title,
+            left_x + scaler.s(12.0),
+            r_y + row_h * 0.5 + scaler.s(4.0),
+            scaler.font_s(11.0),
+            Color::new(0.88, 0.92, 0.98, 1.0),
+        );
+
+        // 5 Tier Cells
+        for col_idx in 0..5 {
+            let tier = (col_idx + 1) as u32;
+            let c_x = left_x + disc_label_w + col_idx as f32 * tier_col_w;
+            let cell_pad = scaler.s(3.0);
+            let cell_w = tier_col_w - cell_pad * 2.0;
+            let cell_h = row_h - cell_pad * 2.0;
+            let cell_x = c_x + cell_pad;
+            let cell_y = r_y + cell_pad;
+
+            let is_focused = row_idx == focused_disc_idx && col_idx == focused_tier_idx;
+            let opt_award = find_award_for_slot(awards, disc_id, tier);
+
+            let (bg_col, border_col, border_thickness) = if is_focused {
+                if is_content_focused {
+                    (Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, 2.4)
+                } else {
+                    (Color::new(0.10, 0.14, 0.22, 0.85), Palette::NEON_CYAN, 1.5)
+                }
+            } else {
+                (Color::new(0.06, 0.08, 0.12, 0.70), Palette::UI_CARD_BORDER, 1.0)
+            };
+
+            draw_rectangle(cell_x, cell_y, cell_w, cell_h, bg_col);
+            draw_rectangle_lines(cell_x, cell_y, cell_w, cell_h, border_thickness, border_col);
+
+            let badge_sz = (cell_h - scaler.s(12.0)).min(scaler.s(44.0)).max(scaler.s(22.0));
+            let badge_x = cell_x + (cell_w - badge_sz) * 0.5;
+            let badge_y = cell_y + scaler.s(2.0);
+
+            if let Some(award) = opt_award {
+                draw_trophy_badge(
+                    badge_x,
+                    badge_y,
+                    badge_sz,
+                    badge_sz,
+                    disc_id,
+                    tier,
+                    Some(award.metallic_tier()),
+                    false,
+                );
+                // Label under badge
+                let (lbl, col) = match award.metallic_tier() {
+                    TrophyMetal::Gold => ("GOLD", Palette::NEON_GOLD),
+                    TrophyMetal::Silver => ("SILVER", Color::new(0.85, 0.90, 0.98, 1.0)),
+                    TrophyMetal::Bronze => ("BRONZE", Color::new(0.88, 0.55, 0.35, 1.0)),
+                };
+                fonts.draw_ui_bold_centered(
+                    lbl,
+                    cell_x + cell_w * 0.5,
+                    cell_y + cell_h - scaler.s(3.0),
+                    scaler.font_s(8.5),
+                    col,
+                );
+            } else {
+                draw_trophy_badge(
+                    badge_x,
+                    badge_y,
+                    badge_sz,
+                    badge_sz,
+                    disc_id,
+                    tier,
+                    None,
+                    false,
+                );
+                fonts.draw_ui_bold_centered(
+                    "LOCKED",
+                    cell_x + cell_w * 0.5,
+                    cell_y + cell_h - scaler.s(3.0),
+                    scaler.font_s(8.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+            }
+        }
+    }
+
+    // Grid Navigation footer
+    let grid_foot_y = cy + body_h - scaler.s(10.0);
+    fonts.draw_ui_regular(
+        "[▲ / ▼] Discipline  •  [◄ / ►] Tier Slot  •  Legend: [GOLD]=1st [SILV]=2nd [BRNZ]=3rd [LOCK]=Locked",
+        left_x + scaler.s(12.0),
+        grid_foot_y,
+        scaler.font_s(9.5),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    // 3. RIGHT INSPECTION & PROVENANCE PANEL
+    let right_x = left_x + grid_w + col_gap;
+    scaler.draw_glass_card(right_x, cy, panel_w, body_h, Color::new(0.06, 0.08, 0.13, 0.95), Palette::NEON_CYAN, 1.2);
+
+    fonts.draw_ui_bold(
+        "TROPHY INSPECTION & PROVENANCE",
+        right_x + scaler.s(16.0),
+        cy + scaler.s(24.0),
+        scaler.font_s(13.5),
+        Palette::NEON_CYAN,
+    );
+
+    let (focused_disc_id, focused_disc_title) = CABINET_DISCIPLINES[focused_disc_idx.min(4)];
+    let focused_tier = (focused_tier_idx + 1).clamp(1, 5) as u32;
+    let focused_award = find_award_for_slot(awards, focused_disc_id, focused_tier);
+
+    // Illuminated preview box in inspection panel
+    let preview_box_w = (panel_w - scaler.s(32.0)).min(scaler.s(210.0));
+    let preview_box_h = preview_box_w;
+    let preview_box_x = right_x + (panel_w - preview_box_w) * 0.5;
+    let preview_box_y = cy + scaler.s(34.0);
+
+    draw_rectangle(preview_box_x, preview_box_y, preview_box_w, preview_box_h, Color::new(0.03, 0.04, 0.07, 0.95));
+    draw_rectangle_lines(preview_box_x, preview_box_y, preview_box_w, preview_box_h, 1.0, Palette::UI_CARD_BORDER);
+
+    let sprite_sz = preview_box_w - scaler.s(16.0);
+    let sprite_x = preview_box_x + (preview_box_w - sprite_sz) * 0.5;
+    let sprite_y = preview_box_y + (preview_box_h - sprite_sz) * 0.5;
+
+    if let Some(award) = focused_award {
+        draw_trophy_badge(
+            sprite_x,
+            sprite_y,
+            sprite_sz,
+            sprite_sz,
+            focused_disc_id,
+            focused_tier,
+            Some(award.metallic_tier()),
+            true,
+        );
+    } else {
+        draw_trophy_badge(
+            sprite_x,
+            sprite_y,
+            sprite_sz,
+            sprite_sz,
+            focused_disc_id,
+            focused_tier,
+            None,
+            true,
+        );
+    }
+
+    // Detail rows below preview box
+    let mut det_y = preview_box_y + preview_box_h + scaler.s(16.0);
+    let det_row_h = scaler.s(21.0);
+    let det_w = panel_w - scaler.s(32.0);
+
+    if let Some(award) = focused_award {
+        let (honor_str, honor_col) = match award.metallic_tier() {
+            TrophyMetal::Gold => ("🏆 1ST PLACE [GOLD CHAMPION]", Palette::NEON_GOLD),
+            TrophyMetal::Silver => ("🥈 2ND PLACE [SILVER RUNNER-UP]", Color::new(0.85, 0.90, 0.98, 1.0)),
+            TrophyMetal::Bronze => ("🥉 3RD PLACE [BRONZE PODIUM]", Color::new(0.88, 0.55, 0.35, 1.0)),
+        };
+        let champ_title = format!("{} (Tier {})", award.championship_id.replace('_', " ").to_uppercase(), award.tier);
+
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Championship", &champ_title, Palette::WHITE);
+        det_y += det_row_h;
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Discipline", focused_disc_title, Palette::NEON_CYAN);
+        det_y += det_row_h;
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Podium Honor", honor_str, honor_col);
+        det_y += det_row_h;
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Points Scored", &format!("{} PTS", award.points), Palette::WHITE);
+        det_y += det_row_h;
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Winning Car", &award.car_model_id, Palette::NEON_GREEN);
+        det_y += det_row_h;
+        let date_str = award.achieved_at.split('T').next().unwrap_or(&award.achieved_at);
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Achieved At", date_str, Palette::UI_TEXT_MUTED);
+    } else {
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Status", "🔒 LOCKED TROPHY", Palette::UI_TEXT_MUTED);
+        det_y += det_row_h;
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Discipline", focused_disc_title, Palette::NEON_CYAN);
+        det_y += det_row_h;
+        let stars_str = "★".repeat(focused_tier as usize);
+        render_data_row(scaler, fonts, right_x + scaler.s(16.0), det_y, det_w, "Performance Tier", &format!("Tier {} ({})", focused_tier, stars_str), Palette::WHITE);
+        det_y += det_row_h + scaler.s(6.0);
+
+        let hint = format!("Compete in and podium at Tier {} of {} to claim this honor.", focused_tier, focused_disc_title);
+        fonts.draw_ui_regular(
+            &hint,
+            right_x + scaler.s(16.0),
+            det_y + scaler.s(12.0),
+            scaler.font_s(11.0),
+            Palette::NEON_GOLD,
+        );
+    }
+}
+
 fn render_championships_tab(
     scaler: &UiScaler,
     fonts: &Fonts,
@@ -819,6 +1218,7 @@ fn render_championships_tab(
     is_dev_mode: bool,
     career_level: u32,
     module_progress_map: &std::collections::HashMap<String, ModuleCareerProgress>,
+    awards: &[ChampionshipAward],
 ) {
     let pad = scaler.s(16.0);
     let inner_w = w - pad * 2.0;
@@ -992,6 +1392,11 @@ fn render_championships_tab(
             })
             .collect();
 
+        let champ_award = awards.iter().find(|a| {
+            (a.championship_id == champ.series.id || a.championship_id == champ.series.name.to_lowercase().replace(' ', "_"))
+            || (crate::render::trophy_textures::normalize_discipline(&a.module_id) == crate::render::trophy_textures::normalize_discipline(&champ.series.module_id) && a.tier == champ.series.tier)
+        });
+
         let races_count = champ_entries.len();
         let wins = champ_entries.iter().filter(|e| e.position == 1).count();
         let podiums = champ_entries.iter().filter(|e| e.position >= 1 && e.position <= 3).count();
@@ -1092,6 +1497,13 @@ fn render_championships_tab(
                     Palette::NEON_CYAN,
                 )
             }
+        } else if let Some(award) = champ_award {
+            let (col, bg) = match award.metallic_tier() {
+                TrophyMetal::Gold => (Palette::NEON_GOLD, Color::new(0.25, 0.20, 0.05, 0.90)),
+                TrophyMetal::Silver => (Color::new(0.85, 0.88, 0.95, 1.0), Color::new(0.12, 0.16, 0.24, 0.90)),
+                TrophyMetal::Bronze => (Color::new(0.88, 0.55, 0.25, 1.0), Color::new(0.18, 0.10, 0.06, 0.90)),
+            };
+            (format!("{} [TIER {}]", award.metallic_tier().as_str().to_uppercase(), award.tier), col, bg, col)
         } else if wins > 0 && is_completed {
             ("CHAMPION [GOLD 🏆]".to_string(), Palette::NEON_GOLD, Color::new(0.25, 0.20, 0.05, 0.90), Palette::NEON_GOLD)
         } else if podiums > 0 && is_completed {
@@ -1193,10 +1605,29 @@ fn render_championships_tab(
         }
 
         // ---------------------------------------------------------------------
-        // 2. RIGHT SIDE: STATUS BADGE & STATS COUNTER
+        // 2. RIGHT SIDE: TROPHY BADGE (IF WON) & STATUS BADGE & STATS COUNTER
         // ---------------------------------------------------------------------
-        let badge_w = scaler.s(if is_card_selected { 172.0 } else { 150.0 });
-        let badge_x = x + pad + inner_w - badge_w - scaler.s(10.0);
+        let trophy_sz = scaler.s(48.0);
+        let has_trophy = champ_award.is_some();
+        let trophy_pad = if has_trophy { trophy_sz + scaler.s(8.0) } else { 0.0 };
+
+        if let Some(award) = champ_award {
+            let trophy_x = x + pad + inner_w - trophy_sz - scaler.s(8.0);
+            let trophy_y = cy + (item_h - trophy_sz) * 0.5;
+            draw_trophy_badge(
+                trophy_x,
+                trophy_y,
+                trophy_sz,
+                trophy_sz,
+                award.discipline(),
+                award.tier,
+                Some(award.metallic_tier()),
+                false,
+            );
+        }
+
+        let badge_w = scaler.s(if is_card_selected { 165.0 } else { 145.0 });
+        let badge_x = x + pad + inner_w - badge_w - scaler.s(10.0) - trophy_pad;
         let badge_y = cy + scaler.s(10.0);
         let badge_h = scaler.s(22.0);
 

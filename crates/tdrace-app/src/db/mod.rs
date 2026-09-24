@@ -6,7 +6,9 @@ use rusqlite::{params, Connection, Result};
 pub type Result<T> = std::result::Result<T, String>;
 use serde::{Deserialize, Serialize};
 
-use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+use crate::profile::{
+    ChampionshipAward, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry,
+};
 use crate::render::color::CarColorScheme;
 use tdrace_core::physics::config::AssistProfile;
 
@@ -140,7 +142,21 @@ impl HallOfFameDb {
                 PRIMARY KEY (profile_id, module_id),
                 FOREIGN KEY(profile_id) REFERENCES player_profiles(id) ON DELETE CASCADE
             );
-            CREATE INDEX IF NOT EXISTS idx_module_progress_profile ON profile_module_progress(profile_id, module_id);",
+            CREATE INDEX IF NOT EXISTS idx_module_progress_profile ON profile_module_progress(profile_id, module_id);
+
+            CREATE TABLE IF NOT EXISTS profile_championship_awards (
+                profile_id INTEGER NOT NULL,
+                championship_id TEXT NOT NULL,
+                module_id TEXT NOT NULL,
+                tier INTEGER NOT NULL,
+                position INTEGER NOT NULL,
+                points INTEGER NOT NULL,
+                car_model_id TEXT NOT NULL,
+                achieved_at TEXT NOT NULL,
+                PRIMARY KEY (profile_id, championship_id),
+                FOREIGN KEY(profile_id) REFERENCES player_profiles(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_champ_awards_profile ON profile_championship_awards(profile_id, module_id, tier);",
         )?;
 
         // Ensure backward-compatibility migration for pre-existing player_profiles tables
@@ -377,6 +393,8 @@ impl HallOfFameDb {
 
         self.conn.execute("DELETE FROM player_profiles WHERE id = ?1", params![profile_id])?;
         self.conn.execute("DELETE FROM race_history WHERE profile_id = ?1", params![profile_id])?;
+        self.conn.execute("DELETE FROM profile_championship_awards WHERE profile_id = ?1", params![profile_id])?;
+        self.conn.execute("DELETE FROM profile_module_progress WHERE profile_id = ?1", params![profile_id])?;
 
         if is_active {
             // Activate the first remaining profile
@@ -713,6 +731,7 @@ impl HallOfFameDb {
     pub fn clear_profile_historical_data(&self, profile_id: i64, driver_alias: &str) -> Result<()> {
         self.clear_history_for_profile(profile_id)?;
         self.clear_hall_of_fame_for_driver(driver_alias)?;
+        self.clear_championship_awards_for_profile(profile_id)?;
         Ok(())
     }
 
@@ -937,6 +956,171 @@ impl HallOfFameDb {
             Ok(def)
         }
     }
+
+    // =========================================================================
+    // Championship Awards & Trophy Management
+    // =========================================================================
+
+    /// Saves or upgrades a championship podium award for a profile.
+    /// Upgrades the award if the player finished in a higher podium position (1 < 2 < 3)
+    /// or tied the position with a higher point total. Returns true if inserted or upgraded.
+    pub fn save_championship_award(&self, award: &ChampionshipAward) -> Result<bool> {
+        let existing: Option<(u32, u32)> = self.conn.query_row(
+            "SELECT position, points FROM profile_championship_awards WHERE profile_id = ?1 AND championship_id = ?2",
+            params![award.profile_id, award.championship_id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        ).ok();
+
+        match existing {
+            Some((pos, pts)) => {
+                if award.position < pos || (award.position == pos && award.points > pts) {
+                    self.conn.execute(
+                        "UPDATE profile_championship_awards
+                         SET module_id = ?1, tier = ?2, position = ?3, points = ?4, car_model_id = ?5, achieved_at = ?6
+                         WHERE profile_id = ?7 AND championship_id = ?8",
+                        params![
+                            award.module_id,
+                            award.tier,
+                            award.position,
+                            award.points,
+                            award.car_model_id,
+                            award.achieved_at,
+                            award.profile_id,
+                            award.championship_id,
+                        ],
+                    )?;
+                    Ok(true)
+                } else {
+                    Ok(false)
+                }
+            }
+            None => {
+                self.conn.execute(
+                    "INSERT INTO profile_championship_awards
+                     (profile_id, championship_id, module_id, tier, position, points, car_model_id, achieved_at)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                    params![
+                        award.profile_id,
+                        award.championship_id,
+                        award.module_id,
+                        award.tier,
+                        award.position,
+                        award.points,
+                        award.car_model_id,
+                        award.achieved_at,
+                    ],
+                )?;
+                Ok(true)
+            }
+        }
+    }
+
+    /// Retrieves all championship awards earned by a profile.
+    pub fn get_championship_awards(&self, profile_id: i64) -> Result<Vec<ChampionshipAward>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT profile_id, championship_id, module_id, tier, position, points, car_model_id, achieved_at
+             FROM profile_championship_awards
+             WHERE profile_id = ?1
+             ORDER BY tier ASC, position ASC, achieved_at DESC",
+        )?;
+        let rows = stmt.query_map(params![profile_id], |row| {
+            Ok(ChampionshipAward {
+                profile_id: row.get(0)?,
+                championship_id: row.get(1)?,
+                module_id: row.get(2)?,
+                tier: row.get(3)?,
+                position: row.get(4)?,
+                points: row.get(5)?,
+                car_model_id: row.get(6)?,
+                achieved_at: row.get(7)?,
+            })
+        })?;
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    /// Retrieves a specific championship award by profile ID and championship ID.
+    pub fn get_championship_award(&self, profile_id: i64, championship_id: &str) -> Result<Option<ChampionshipAward>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT profile_id, championship_id, module_id, tier, position, points, car_model_id, achieved_at
+             FROM profile_championship_awards
+             WHERE profile_id = ?1 AND championship_id = ?2",
+        )?;
+        let mut rows = stmt.query_map(params![profile_id, championship_id], |row| {
+            Ok(ChampionshipAward {
+                profile_id: row.get(0)?,
+                championship_id: row.get(1)?,
+                module_id: row.get(2)?,
+                tier: row.get(3)?,
+                position: row.get(4)?,
+                points: row.get(5)?,
+                car_model_id: row.get(6)?,
+                achieved_at: row.get(7)?,
+            })
+        })?;
+        if let Some(res) = rows.next() {
+            Ok(Some(res?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Retrieves the highest championship award for a given module/discipline and tier.
+    pub fn get_championship_award_for_slot(
+        &self,
+        profile_id: i64,
+        module_id: &str,
+        tier: u32,
+    ) -> Result<Option<ChampionshipAward>> {
+        let normalized = match module_id {
+            "gt_challenge" => "gt",
+            "karting" => "kart",
+            "rallycross" => "rally",
+            "offroad" => "extreme_offroad",
+            m => m,
+        };
+        let mut stmt = self.conn.prepare(
+            "SELECT profile_id, championship_id, module_id, tier, position, points, car_model_id, achieved_at
+             FROM profile_championship_awards
+             WHERE profile_id = ?1 AND tier = ?2
+             ORDER BY position ASC, points DESC, achieved_at DESC",
+        )?;
+        let rows = stmt.query_map(params![profile_id, tier], |row| {
+            Ok(ChampionshipAward {
+                profile_id: row.get(0)?,
+                championship_id: row.get(1)?,
+                module_id: row.get(2)?,
+                tier: row.get(3)?,
+                position: row.get(4)?,
+                points: row.get(5)?,
+                car_model_id: row.get(6)?,
+                achieved_at: row.get(7)?,
+            })
+        })?;
+        for r in rows {
+            let award = r?;
+            let award_norm = match award.module_id.as_str() {
+                "gt_challenge" => "gt",
+                "karting" => "kart",
+                "rallycross" => "rally",
+                "offroad" => "extreme_offroad",
+                m => m,
+            };
+            if award_norm == normalized {
+                return Ok(Some(award));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Clears all championship awards for a specific profile.
+    pub fn clear_championship_awards_for_profile(&self, profile_id: i64) -> Result<()> {
+        self.conn.execute("DELETE FROM profile_championship_awards WHERE profile_id = ?1", params![profile_id])?;
+        Ok(())
+    }
 }
 
 /// In-memory fallback persistence manager for WebAssembly targets.
@@ -946,6 +1130,7 @@ pub struct HallOfFameDb {
     history: std::sync::Mutex<Vec<RaceHistoryEntry>>,
     hof: std::sync::Mutex<Vec<HallOfFameEntry>>,
     progress: std::sync::Mutex<Vec<ModuleCareerProgress>>,
+    awards: std::sync::Mutex<Vec<ChampionshipAward>>,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -970,6 +1155,7 @@ impl HallOfFameDb {
             history: std::sync::Mutex::new(Vec::new()),
             hof: std::sync::Mutex::new(Vec::new()),
             progress: std::sync::Mutex::new(Vec::new()),
+            awards: std::sync::Mutex::new(Vec::new()),
         }
     }
 
@@ -1036,6 +1222,9 @@ impl HallOfFameDb {
         let mut guard = self.profiles.lock().unwrap();
         let was_active = guard.iter().find(|p| p.id == Some(profile_id)).map(|p| p.is_active).unwrap_or(false);
         guard.retain(|p| p.id != Some(profile_id));
+        self.awards.lock().unwrap().retain(|a| a.profile_id != profile_id);
+        self.progress.lock().unwrap().retain(|p| p.profile_id != profile_id);
+        self.history.lock().unwrap().retain(|r| r.profile_id != profile_id);
         if was_active {
             if let Some(first) = guard.first_mut() {
                 first.is_active = true;
@@ -1198,6 +1387,7 @@ impl HallOfFameDb {
     pub fn clear_profile_historical_data(&self, profile_id: i64, driver_alias: &str) -> Result<()> {
         self.clear_history_for_profile(profile_id)?;
         self.clear_hall_of_fame_for_driver(driver_alias)?;
+        self.clear_championship_awards_for_profile(profile_id)?;
         Ok(())
     }
 
@@ -1279,6 +1469,63 @@ impl HallOfFameDb {
             self.save_module_progress(&def)?;
             Ok(def)
         }
+    }
+
+    pub fn save_championship_award(&self, award: &ChampionshipAward) -> Result<bool> {
+        let mut guard = self.awards.lock().unwrap();
+        if let Some(pos) = guard.iter().position(|a| a.profile_id == award.profile_id && a.championship_id == award.championship_id) {
+            let existing = &guard[pos];
+            if award.position < existing.position || (award.position == existing.position && award.points > existing.points) {
+                guard[pos] = award.clone();
+                Ok(true)
+            } else {
+                Ok(false)
+            }
+        } else {
+            guard.push(award.clone());
+            Ok(true)
+        }
+    }
+
+    pub fn get_championship_awards(&self, profile_id: i64) -> Result<Vec<ChampionshipAward>> {
+        let guard = self.awards.lock().unwrap();
+        let mut list: Vec<ChampionshipAward> = guard.iter().filter(|a| a.profile_id == profile_id).cloned().collect();
+        list.sort_by(|a, b| a.tier.cmp(&b.tier).then_with(|| a.position.cmp(&b.position)));
+        Ok(list)
+    }
+
+    pub fn get_championship_award(&self, profile_id: i64, championship_id: &str) -> Result<Option<ChampionshipAward>> {
+        let guard = self.awards.lock().unwrap();
+        Ok(guard.iter().find(|a| a.profile_id == profile_id && a.championship_id == championship_id).cloned())
+    }
+
+    pub fn get_championship_award_for_slot(&self, profile_id: i64, module_id: &str, tier: u32) -> Result<Option<ChampionshipAward>> {
+        let normalized = match module_id {
+            "gt_challenge" => "gt",
+            "karting" => "kart",
+            "rallycross" => "rally",
+            "offroad" => "extreme_offroad",
+            m => m,
+        };
+        let guard = self.awards.lock().unwrap();
+        let mut matching: Vec<ChampionshipAward> = guard.iter().filter(|a| {
+            let a_norm = match a.module_id.as_str() {
+                "gt_challenge" => "gt",
+                "karting" => "kart",
+                "rallycross" => "rally",
+                "offroad" => "extreme_offroad",
+                m => m,
+            };
+            a.profile_id == profile_id && a_norm == normalized && a.tier == tier
+        }).cloned().collect();
+        matching.sort_by(|a, b| a.position.cmp(&b.position).then_with(|| b.points.cmp(&a.points)));
+        Ok(matching.into_iter().next())
+    }
+
+    pub fn clear_championship_awards_for_profile(&self, profile_id: i64) -> Result<()> {
+        let mut guard = self.awards.lock().unwrap();
+        guard.retain(|a| a.profile_id != profile_id);
+        Ok(())
     }
 }
 

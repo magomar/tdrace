@@ -56,10 +56,14 @@ pub use track_manager::{CustomTrackInfo, TrackManager};
 
 pub use input::touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 pub use input::{DebugOverlays, InputController};
-pub use profile::{draw_country_banner, CountryInfo, CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+pub use profile::{
+    draw_country_banner, ChampionshipAward, CountryInfo, CountryRegistry, PlayerProfile,
+    ProfileCareerStats, RaceHistoryEntry, TrophyMetal,
+};
 pub use render::color::{CarColorScheme, Palette};
 pub use render::lateral::{render_car_lateral, render_real_car_lateral_by_id};
 pub use render::ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
+pub use render::trophy_textures::{draw_trophy_badge, get_trophy_texture, normalize_discipline, trophy_filename};
 pub use render::{compute_adaptive_alpha, PlayerVisibilityOptions};
 pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer, ReplayRecorder};
 pub use ui::curve_indicator::CurveColorScheme;

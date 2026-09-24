@@ -81,7 +81,10 @@ use crate::module::{
     ClassicGameModule, ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule,
     NascarGameModule, RallyGameModule,
 };
-use crate::profile::{CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+use crate::profile::{
+    ChampionshipAward, CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats,
+    RaceHistoryEntry,
+};
 use crate::render::car::render_car_with_visual_type_model_and_shadows;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
@@ -447,6 +450,9 @@ pub struct RaceSession {
     pub profile_champ_selected_idx: usize,
     pub profile_focus_area: ProfileFocusArea,
     pub career_hub_focus: CareerHubFocus,
+    pub profile_awards: Vec<ChampionshipAward>,
+    pub profile_cabinet_disc_idx: usize,
+    pub profile_cabinet_tier_idx: usize,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -742,6 +748,9 @@ impl RaceSession {
             profile_champ_selected_idx: 0,
             profile_focus_area: ProfileFocusArea::Tabs,
             career_hub_focus: CareerHubFocus::Tabs,
+            profile_awards: Vec::new(),
+            profile_cabinet_disc_idx: 0,
+            profile_cabinet_tier_idx: 0,
 
             fx: EffectsManager::new_persistent(1500),
             camera,
@@ -922,6 +931,20 @@ impl RaceSession {
                 }
                 if let Ok(all_prog) = db.get_all_module_progress(pid) {
                     self.profile_module_progress = all_prog;
+                }
+                if let Ok(awards) = db.get_championship_awards(pid) {
+                    self.profile_awards = awards;
+                }
+            }
+        }
+    }
+
+    /// Refreshes championship podium awards for the active profile from persistent storage.
+    pub fn refresh_profile_awards(&mut self) {
+        if let Some(db) = &self.hof_db {
+            if let Some(pid) = self.active_profile.id {
+                if let Ok(awards) = db.get_championship_awards(pid) {
+                    self.profile_awards = awards;
                 }
             }
         }
@@ -5592,16 +5615,36 @@ impl RaceSession {
             match current_view {
                 FinishedScreenView::Results => {
                     if self.championship_session.is_some() {
+                        let mut awarded_trophy: Option<ChampionshipAward> = None;
                         if let Some(round_results) = self.pending_championship_results.take() {
+                            let car_model_id = self.selected_car_model_id
+                                .map(|s| s.to_string())
+                                .unwrap_or_else(|| self.active_player_car_choice().title().to_string());
+                            let profile_id = self.active_profile.id.unwrap_or(1);
+                            let module_id = self.active_module_id.to_string();
+
                             if let Some(champ) = &mut self.championship_session {
                                 champ.submit_round_results(&self.track.name, round_results);
                                 if champ.is_completed {
                                     if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
+                                        let finish_pos = (pos + 1) as u32;
                                         match pos {
                                             0 => self.active_career_progress.trophies_gold += 1,
                                             1 => self.active_career_progress.trophies_silver += 1,
                                             2 => self.active_career_progress.trophies_bronze += 1,
                                             _ => {}
+                                        }
+                                        if finish_pos <= 3 {
+                                            awarded_trophy = Some(ChampionshipAward {
+                                                profile_id,
+                                                championship_id: champ.name.to_lowercase().replace(' ', "_"),
+                                                module_id,
+                                                tier: champ.tier,
+                                                position: finish_pos,
+                                                points: champ.standings[pos].points,
+                                                car_model_id,
+                                                achieved_at: chrono::Utc::now().to_rfc3339(),
+                                            });
                                         }
                                     }
                                     self.active_career_progress.active_championship = None;
@@ -5613,6 +5656,12 @@ impl RaceSession {
                                 }
                                 self.profile_module_progress.insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
                             }
+                        }
+                        if let Some(award) = awarded_trophy {
+                            if let Some(db) = &self.hof_db {
+                                let _ = db.save_championship_award(&award);
+                            }
+                            self.refresh_profile_awards();
                         }
 
                         self.audio.play_sfx(SfxType::UiSelect);
@@ -5845,14 +5894,14 @@ impl RaceSession {
                 // Focus module filters (or content) when pressing Down
                 if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
                     self.audio.play_sfx(SfxType::UiMove);
-                    if self.profile_manager_tab == 2 || self.profile_manager_tab == 3 {
+                    if self.profile_manager_tab == 3 || self.profile_manager_tab == 4 {
                         self.profile_focus_area = ProfileFocusArea::Filters;
                     } else {
                         self.profile_focus_area = ProfileFocusArea::Content;
                     }
                 }
 
-                // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-4)
+                // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-5)
                 let tab_prev = is_key_pressed(KeyCode::Left) || self.input.gamepad.snapshot.nav_left;
                 let tab_next = is_key_pressed(KeyCode::Right)
                     || is_key_pressed(KeyCode::Tab)
@@ -5861,7 +5910,7 @@ impl RaceSession {
                 if tab_prev {
                     self.audio.play_sfx(SfxType::UiMove);
                     if self.profile_manager_tab == 0 {
-                        self.profile_manager_tab = 3;
+                        self.profile_manager_tab = 4;
                     } else {
                         self.profile_manager_tab -= 1;
                     }
@@ -5870,7 +5919,7 @@ impl RaceSession {
                 }
                 if tab_next {
                     self.audio.play_sfx(SfxType::UiMove);
-                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 5;
                     self.profile_champ_scroll = 0;
                     self.profile_champ_selected_idx = 0;
                 }
@@ -5911,7 +5960,7 @@ impl RaceSession {
                 // Tab key cycles tabs
                 if is_key_pressed(KeyCode::Tab) {
                     self.audio.play_sfx(SfxType::UiMove);
-                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 5;
                     self.profile_focus_area = ProfileFocusArea::Tabs;
                     self.profile_champ_scroll = 0;
                     self.profile_champ_selected_idx = 0;
@@ -5919,6 +5968,35 @@ impl RaceSession {
             }
             ProfileFocusArea::Content => {
                 if self.profile_manager_tab == 2 {
+                    // Trophy Cabinet grid navigation
+                    if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                        if self.profile_cabinet_disc_idx + 1 < 5 {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.profile_cabinet_disc_idx += 1;
+                        }
+                    }
+                    if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                        if self.profile_cabinet_disc_idx > 0 {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.profile_cabinet_disc_idx -= 1;
+                        } else {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.profile_focus_area = ProfileFocusArea::Tabs;
+                        }
+                    }
+                    if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left {
+                        if self.profile_cabinet_tier_idx > 0 {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.profile_cabinet_tier_idx -= 1;
+                        }
+                    }
+                    if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right {
+                        if self.profile_cabinet_tier_idx + 1 < 5 {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.profile_cabinet_tier_idx += 1;
+                        }
+                    }
+                } else if self.profile_manager_tab == 3 {
                     let active_filter = crate::ui::profile_ui::TELEMETRY_CATEGORY_FILTERS
                         .get(self.profile_telemetry_filter_idx)
                         .copied()
@@ -5993,14 +6071,29 @@ impl RaceSession {
                             self.reset_championship(&name, &id);
                         }
                     }
-                } else if self.profile_manager_tab == 3 {
+                } else if self.profile_manager_tab == 4 {
                     // Telemetry tab: Up returns focus to Filters
                     if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
                         self.audio.play_sfx(SfxType::UiMove);
                         self.profile_focus_area = ProfileFocusArea::Filters;
                     }
+                } else if self.profile_manager_tab == 0 {
+                    // Overview tab: Enter or Space jumps to Trophy Cabinet
+                    if is_key_pressed(KeyCode::Enter)
+                        || is_key_pressed(KeyCode::KpEnter)
+                        || is_key_pressed(KeyCode::Space)
+                        || self.input.gamepad.snapshot.btn_confirm_pressed
+                        || self.input.gamepad.snapshot.btn_a_pressed
+                    {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.profile_manager_tab = 2;
+                        self.profile_focus_area = ProfileFocusArea::Content;
+                    } else if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.profile_focus_area = ProfileFocusArea::Tabs;
+                    }
                 } else {
-                    // Tab 0/1: Up returns focus to Tabs
+                    // Tab 1: Up returns focus to Tabs
                     if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
                         self.audio.play_sfx(SfxType::UiMove);
                         self.profile_focus_area = ProfileFocusArea::Tabs;
@@ -6010,14 +6103,14 @@ impl RaceSession {
                 // Tab key cycles tabs
                 if is_key_pressed(KeyCode::Tab) {
                     self.audio.play_sfx(SfxType::UiMove);
-                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 4;
+                    self.profile_manager_tab = (self.profile_manager_tab + 1) % 5;
                     self.profile_focus_area = ProfileFocusArea::Tabs;
                     self.profile_champ_scroll = 0;
                 }
             }
         }
 
-        // Direct tab jump hotkeys 1-4
+        // Direct tab jump hotkeys 1-5
         if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::Kp1) {
             self.audio.play_sfx(SfxType::UiMove);
             self.profile_manager_tab = 0;
@@ -6042,6 +6135,13 @@ impl RaceSession {
         if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::Kp4) {
             self.audio.play_sfx(SfxType::UiMove);
             self.profile_manager_tab = 3;
+            self.profile_focus_area = ProfileFocusArea::Tabs;
+            self.profile_champ_scroll = 0;
+            self.profile_champ_selected_idx = 0;
+        }
+        if is_key_pressed(KeyCode::Key5) || is_key_pressed(KeyCode::Kp5) {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.profile_manager_tab = 4;
             self.profile_focus_area = ProfileFocusArea::Tabs;
             self.profile_champ_scroll = 0;
             self.profile_champ_selected_idx = 0;
@@ -6071,9 +6171,9 @@ impl RaceSession {
             let tab_bar_h = scaler.s(34.0);
             if my >= tab_y && my <= tab_y + tab_bar_h {
                 let tab_gap = scaler.s(8.0);
-                let total_gaps = tab_gap * 3.0;
-                let tab_w = ((full_w - scaler.s(220.0) - total_gaps) / 4.0).max(scaler.s(110.0));
-                for i in 0..4 {
+                let total_gaps = tab_gap * 4.0;
+                let tab_w = ((full_w - scaler.s(220.0) - total_gaps) / 5.0).max(scaler.s(96.0));
+                for i in 0..5 {
                     let tx = px + i as f32 * (tab_w + tab_gap);
                     if mx >= tx && mx <= tx + tab_w {
                         if self.profile_manager_tab != i {
@@ -6089,11 +6189,57 @@ impl RaceSession {
                 }
             }
 
-            // Clicked Module Filter Pills (Tab 2 or Tab 3)
-            if self.profile_manager_tab == 2 || self.profile_manager_tab == 3 {
+            // Clicked Top Honors Shelf (Tab 0)
+            if self.profile_manager_tab == 0 {
                 let content_y = tab_y + tab_bar_h + scaler.s(8.0);
-                let pad = if self.profile_manager_tab == 2 { scaler.s(16.0) } else { scaler.s(14.0) };
-                let filter_y = if self.profile_manager_tab == 2 {
+                let pad = scaler.s(16.0);
+                let inner_w = full_w - pad * 2.0;
+                let col_gap = scaler.s(16.0);
+                let col_w = (inner_w - col_gap) * 0.5;
+                let right_x = px + pad + col_w + col_gap;
+                let shelf_x = right_x + scaler.s(14.0);
+                let shelf_w = col_w - scaler.s(28.0);
+                let shelf_y = content_y + pad + scaler.s(54.0) + scaler.s(14.0) + scaler.s(44.0) + scaler.s(24.0) * 4.0 + scaler.s(8.0);
+                if mx >= shelf_x && mx <= shelf_x + shelf_w && my >= shelf_y {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.profile_manager_tab = 2;
+                    self.profile_focus_area = ProfileFocusArea::Content;
+                }
+            }
+
+            // Clicked Trophy Cabinet Grid (Tab 2)
+            if self.profile_manager_tab == 2 {
+                let content_y = tab_y + tab_bar_h + scaler.s(8.0);
+                let pad = scaler.s(16.0);
+                let inner_w = full_w - pad * 2.0;
+                let cy = content_y + pad + scaler.s(34.0) + scaler.s(10.0);
+                let col_gap = scaler.s(14.0);
+                let grid_w = (inner_w - col_gap) * 0.58;
+                let body_h = (sh - cy - scaler.s(36.0) - scaler.s(24.0)).max(scaler.s(280.0));
+                let left_x = px + pad;
+                let disc_label_w = scaler.s(108.0);
+                let tier_col_w = (grid_w - disc_label_w - scaler.s(16.0)) / 5.0;
+                let grid_top_pad = scaler.s(12.0);
+                let grid_rows_y = cy + grid_top_pad + scaler.s(20.0);
+                let row_h = (body_h - grid_top_pad - scaler.s(20.0) - scaler.s(22.0)) / 5.0;
+
+                if mx >= left_x + disc_label_w && mx <= left_x + grid_w && my >= grid_rows_y && my <= grid_rows_y + row_h * 5.0 {
+                    let col = ((mx - (left_x + disc_label_w)) / tier_col_w).floor() as usize;
+                    let row = ((my - grid_rows_y) / row_h).floor() as usize;
+                    if col < 5 && row < 5 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.profile_cabinet_disc_idx = row;
+                        self.profile_cabinet_tier_idx = col;
+                        self.profile_focus_area = ProfileFocusArea::Content;
+                    }
+                }
+            }
+
+            // Clicked Module Filter Pills (Tab 3 or Tab 4)
+            if self.profile_manager_tab == 3 || self.profile_manager_tab == 4 {
+                let content_y = tab_y + tab_bar_h + scaler.s(8.0);
+                let pad = if self.profile_manager_tab == 3 { scaler.s(16.0) } else { scaler.s(14.0) };
+                let filter_y = if self.profile_manager_tab == 3 {
                     content_y + pad + scaler.s(40.0)
                 } else {
                     content_y + pad
@@ -6121,8 +6267,8 @@ impl RaceSession {
                 }
             }
 
-            // Clicked Championship Cards (Tab 2)
-            if self.profile_manager_tab == 2 {
+            // Clicked Championship Cards (Tab 3)
+            if self.profile_manager_tab == 3 {
                 let content_y = tab_y + tab_bar_h + scaler.s(8.0);
                 let pad = scaler.s(16.0);
                 let inner_w = full_w - pad * 2.0;
@@ -11159,6 +11305,9 @@ impl RaceSession {
                     self.is_dev_mode(),
                     self.active_career_progress.level,
                     &self.profile_module_progress,
+                    &self.profile_awards,
+                    self.profile_cabinet_disc_idx,
+                    self.profile_cabinet_tier_idx,
                 );
             }
             GameState::PlayerRosterManager {

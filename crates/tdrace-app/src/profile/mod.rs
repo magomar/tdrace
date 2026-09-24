@@ -280,6 +280,78 @@ impl Default for RaceHistoryEntry {
     }
 }
 
+/// Metallic standing for championship podium finishes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum TrophyMetal {
+    Gold,
+    Silver,
+    Bronze,
+}
+
+impl TrophyMetal {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Gold => "gold",
+            Self::Silver => "silver",
+            Self::Bronze => "bronze",
+        }
+    }
+
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::Gold => "Gold Champion",
+            Self::Silver => "Silver Finalist",
+            Self::Bronze => "Bronze Podium",
+        }
+    }
+
+    pub fn emoji(&self) -> &'static str {
+        match self {
+            Self::Gold => "🏆",
+            Self::Silver => "🥈",
+            Self::Bronze => "🥉",
+        }
+    }
+
+    pub fn badge_color(&self) -> macroquad::color::Color {
+        match self {
+            Self::Gold => macroquad::color::Color::new(1.0, 0.85, 0.2, 1.0),
+            Self::Silver => macroquad::color::Color::new(0.85, 0.9, 0.95, 1.0),
+            Self::Bronze => macroquad::color::Color::new(0.85, 0.55, 0.35, 1.0),
+        }
+    }
+}
+
+/// Represents an authentic championship trophy won by a player profile.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ChampionshipAward {
+    pub profile_id: i64,
+    pub championship_id: String,
+    pub module_id: String,
+    pub tier: u32,
+    pub position: u32, // 1 = Gold, 2 = Silver, 3 = Bronze
+    pub points: u32,
+    pub car_model_id: String,
+    pub achieved_at: String,
+}
+
+impl ChampionshipAward {
+    /// Returns the trophy metallic tier enum (Gold, Silver, Bronze).
+    pub fn metallic_tier(&self) -> TrophyMetal {
+        match self.position {
+            1 => TrophyMetal::Gold,
+            2 => TrophyMetal::Silver,
+            3 => TrophyMetal::Bronze,
+            _ => TrophyMetal::Bronze,
+        }
+    }
+
+    /// Returns the motorsport discipline identifier.
+    pub fn discipline(&self) -> &str {
+        &self.module_id
+    }
+}
+
 /// Persistent career progression record for a specific motorsport module (e.g. "gt", "rally", etc.).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ModuleCareerProgress {

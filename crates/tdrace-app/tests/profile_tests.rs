@@ -1,6 +1,9 @@
 use tdrace_app::db::HallOfFameDb;
 use tdrace_app::game::{GameState, RaceSession};
-use tdrace_app::profile::{CountryRegistry, ModuleCareerProgress, PlayerProfile, RaceHistoryEntry};
+use tdrace_app::profile::{
+    ChampionshipAward, CountryRegistry, ModuleCareerProgress, PlayerProfile, RaceHistoryEntry,
+    TrophyMetal,
+};
 use tdrace_app::render::color::CarColorScheme;
 use tdrace_app::ui::menu::TrackChoice;
 use tdrace_core::physics::config::AssistProfile;
@@ -871,6 +874,10 @@ fn test_championship_completion_podium_trophy_awarded() {
 
     // Verify championship completed and Gold trophy awarded
     assert_eq!(session.active_career_progress.trophies_gold, 1);
+    assert_eq!(session.profile_awards.len(), 1);
+    assert_eq!(session.profile_awards[0].position, 1);
+    assert_eq!(session.profile_awards[0].metallic_tier(), TrophyMetal::Gold);
+    assert_eq!(session.profile_awards[0].tier, 1);
     assert!(matches!(session.state, GameState::CareerHub { showing_standings: true, .. }));
 }
 
@@ -980,16 +987,16 @@ fn test_option_a_tabbed_dashboard_navigation_and_filters() {
     assert_eq!(session.profile_manager_tab, 0);
     assert_eq!(session.profile_telemetry_filter_idx, 0);
 
-    // Verify Tab cycling right (Overview -> Careers -> Championships -> Telemetry -> Overview)
-    for expected_tab in [1, 2, 3, 0] {
-        session.profile_manager_tab = (session.profile_manager_tab + 1) % 4;
+    // Verify Tab cycling right (Overview -> Careers -> Trophy Cabinet -> Championships -> Telemetry -> Overview)
+    for expected_tab in [1, 2, 3, 4, 0] {
+        session.profile_manager_tab = (session.profile_manager_tab + 1) % 5;
         assert_eq!(session.profile_manager_tab, expected_tab);
     }
 
-    // Verify Tab cycling left with wrap-around (Overview -> Telemetry -> Championships -> Careers -> Overview)
-    for expected_tab in [3, 2, 1, 0] {
+    // Verify Tab cycling left with wrap-around (Overview -> Telemetry -> Championships -> Trophy Cabinet -> Careers -> Overview)
+    for expected_tab in [4, 3, 2, 1, 0] {
         if session.profile_manager_tab == 0 {
-            session.profile_manager_tab = 3;
+            session.profile_manager_tab = 4;
         } else {
             session.profile_manager_tab -= 1;
         }
@@ -1674,10 +1681,15 @@ fn test_profile_focus_hierarchy_and_filter_selection() {
     session.profile_focus_card = session.profile_focus_area == ProfileFocusArea::HeroCard;
     assert!(!session.profile_focus_card);
 
-    // 3. On Tab 2 (Championships) or Tab 3 (Telemetry), moving Down from Tabs focuses Filters
-    session.profile_manager_tab = 2;
+    // 3. On Tab 3 (Championships) or Tab 4 (Telemetry), moving Down from Tabs focuses Filters
+    session.profile_manager_tab = 3;
     session.profile_focus_area = ProfileFocusArea::Filters;
     assert_eq!(session.profile_focus_area, ProfileFocusArea::Filters);
+
+    // On Tab 2 (Trophy Cabinet), moving Down from Tabs focuses Content directly
+    session.profile_manager_tab = 2;
+    session.profile_focus_area = ProfileFocusArea::Content;
+    assert_eq!(session.profile_focus_area, ProfileFocusArea::Content);
 
     // 4. Moving Left/Right while on Filters selects module filters
     assert_eq!(session.profile_telemetry_filter_idx, 0); // "ALL"
@@ -1997,6 +2009,316 @@ fn test_module_career_progress_isolation_and_xp_crediting() {
         assert_eq!(rally_prog.visited_tracks, vec!["holjes_rx"]);
     }
 }
+
+#[test]
+fn test_championship_award_persistence_and_upgrade() {
+    let db = HallOfFameDb::open_in_memory().expect("In-memory database should initialize");
+    let prof = db.seed_default_profile_if_empty().expect("Seed default profile");
+    let pid = prof.id.expect("Profile ID");
+
+    // Initially no awards
+    let initial_awards = db.get_championship_awards(pid).expect("Fetch awards");
+    assert!(initial_awards.is_empty());
+
+    // 1. Save 2nd Place Silver award in Tier 1 GT Sprint
+    let silver_award = ChampionshipAward {
+        profile_id: pid,
+        championship_id: "gt4_clubman_sprint".to_string(),
+        module_id: "gt".to_string(),
+        tier: 1,
+        position: 2,
+        points: 90,
+        car_model_id: "gt_toyota_supra_gt4".to_string(),
+        achieved_at: "2026-09-24 12:00:00".to_string(),
+    };
+    let saved = db.save_championship_award(&silver_award).expect("Save silver award");
+    assert!(saved);
+
+    let fetched = db.get_championship_award(pid, "gt4_clubman_sprint").expect("Query award").expect("Must exist");
+    assert_eq!(fetched.position, 2);
+    assert_eq!(fetched.metallic_tier(), TrophyMetal::Silver);
+    assert_eq!(fetched.points, 90);
+    assert_eq!(fetched.car_model_id, "gt_toyota_supra_gt4");
+
+    // Verify slot query works with "gt" and alias "gt_challenge"
+    let slot_award = db.get_championship_award_for_slot(pid, "gt", 1).expect("Query slot").expect("Must exist");
+    assert_eq!(slot_award.position, 2);
+    let slot_alias = db.get_championship_award_for_slot(pid, "gt_challenge", 1).expect("Query slot").expect("Must exist");
+    assert_eq!(slot_alias.position, 2);
+
+    // 2. Re-entering and finishing 3rd (Bronze) should NOT downgrade the Silver award
+    let bronze_award = ChampionshipAward {
+        profile_id: pid,
+        championship_id: "gt4_clubman_sprint".to_string(),
+        module_id: "gt".to_string(),
+        tier: 1,
+        position: 3,
+        points: 75,
+        car_model_id: "gt4_clubsport".to_string(),
+        achieved_at: "2026-09-24 13:00:00".to_string(),
+    };
+    let downgraded = db.save_championship_award(&bronze_award).expect("Save bronze award");
+    assert!(!downgraded, "Award should not be downgraded");
+
+    let still_silver = db.get_championship_award(pid, "gt4_clubman_sprint").expect("Query award").expect("Must exist");
+    assert_eq!(still_silver.position, 2);
+    assert_eq!(still_silver.metallic_tier(), TrophyMetal::Silver);
+    assert_eq!(still_silver.points, 90);
+
+    // 3. Re-entering and finishing 1st (Gold) MUST upgrade the award
+    let gold_award = ChampionshipAward {
+        profile_id: pid,
+        championship_id: "gt4_clubman_sprint".to_string(),
+        module_id: "gt".to_string(),
+        tier: 1,
+        position: 1,
+        points: 115,
+        car_model_id: "gt_toyota_supra_gt4".to_string(),
+        achieved_at: "2026-09-24 14:00:00".to_string(),
+    };
+    let upgraded = db.save_championship_award(&gold_award).expect("Save gold award");
+    assert!(upgraded, "Award should be upgraded to gold");
+
+    let now_gold = db.get_championship_award(pid, "gt4_clubman_sprint").expect("Query award").expect("Must exist");
+    assert_eq!(now_gold.position, 1);
+    assert_eq!(now_gold.metallic_tier(), TrophyMetal::Gold);
+    assert_eq!(now_gold.points, 115);
+    assert_eq!(now_gold.achieved_at, "2026-09-24 14:00:00");
+
+    // 4. Save Tier 3 Rallycross award
+    let rally_award = ChampionshipAward {
+        profile_id: pid,
+        championship_id: "rally_group_b_masters".to_string(),
+        module_id: "rally".to_string(),
+        tier: 3,
+        position: 1,
+        points: 120,
+        car_model_id: "rally_audi_sport_quattro_s1".to_string(),
+        achieved_at: "2026-09-24 15:00:00".to_string(),
+    };
+    db.save_championship_award(&rally_award).expect("Save rally award");
+
+    let all_awards = db.get_championship_awards(pid).expect("Fetch all awards");
+    assert_eq!(all_awards.len(), 2);
+
+    // 5. Test cascading deletion on profile delete
+    db.delete_profile(pid).expect("Delete profile");
+    let after_delete = db.get_championship_awards(pid).expect("Fetch awards");
+    assert!(after_delete.is_empty(), "Awards must be deleted when profile is deleted");
+}
+
+#[test]
+fn test_trophy_filename_and_asset_resolution() {
+    use tdrace_app::render::{normalize_discipline, trophy_filename};
+
+    // 1. Normalization of disciplines
+    assert_eq!(normalize_discipline("gt"), "gt");
+    assert_eq!(normalize_discipline("gt_challenge"), "gt");
+    assert_eq!(normalize_discipline("kart"), "kart");
+    assert_eq!(normalize_discipline("karting"), "kart");
+    assert_eq!(normalize_discipline("rally"), "rally");
+    assert_eq!(normalize_discipline("rallycross"), "rally");
+    assert_eq!(normalize_discipline("nascar"), "nascar");
+    assert_eq!(normalize_discipline("extreme_offroad"), "extreme_offroad");
+    assert_eq!(normalize_discipline("offroad"), "extreme_offroad");
+
+    // 2. Trophy asset filenames
+    assert_eq!(
+        trophy_filename("gt", 1, Some(TrophyMetal::Gold), false),
+        "gt_t1_gold-128.png"
+    );
+    assert_eq!(
+        trophy_filename("gt_challenge", 3, Some(TrophyMetal::Silver), true),
+        "gt_t3_silver-256.png"
+    );
+    assert_eq!(
+        trophy_filename("offroad", 5, Some(TrophyMetal::Bronze), false),
+        "extreme_offroad_t5_bronze-128.png"
+    );
+    assert_eq!(
+        trophy_filename("rally", 2, None, false),
+        "trophy_locked-128.png"
+    );
+    assert_eq!(
+        trophy_filename("nascar", 4, None, true),
+        "trophy_locked-256.png"
+    );
+
+    // 3. Verify asset files actually exist on disk for each generated filename
+    let candidates = ["assets/icons/trophies", "../../assets/icons/trophies"];
+    let base_dir = candidates.iter().map(std::path::Path::new).find(|p| p.exists()).expect("Trophy directory exists");
+
+    for disc in &["gt", "kart", "rally", "nascar", "extreme_offroad"] {
+        for tier in 1..=5 {
+            for metal in &[TrophyMetal::Gold, TrophyMetal::Silver, TrophyMetal::Bronze] {
+                let name128 = trophy_filename(disc, tier, Some(*metal), false);
+                let name256 = trophy_filename(disc, tier, Some(*metal), true);
+                let p128 = base_dir.join(&name128);
+                let p256 = base_dir.join(&name256);
+                assert!(p128.exists(), "Asset missing: {:?}", p128);
+                assert!(p256.exists(), "Asset missing: {:?}", p256);
+            }
+        }
+    }
+
+    let locked128 = base_dir.join("trophy_locked-128.png");
+    let locked256 = base_dir.join("trophy_locked-256.png");
+    assert!(locked128.exists(), "Locked 128 asset missing");
+    assert!(locked256.exists(), "Locked 256 asset missing");
+}
+
+#[test]
+fn test_trophy_cabinet_grid_navigation_and_provenance_display() {
+    use tdrace_app::profile::{ChampionshipAward, TrophyMetal};
+    use tdrace_app::ui::profile_ui::{find_award_for_slot, ProfileFocusArea, CABINET_DISCIPLINES};
+
+    let mut session = RaceSession::new();
+    assert_eq!(session.profile_cabinet_disc_idx, 0);
+    assert_eq!(session.profile_cabinet_tier_idx, 0);
+
+    // 1. Verify CABINET_DISCIPLINES contains 5 official disciplines
+    assert_eq!(CABINET_DISCIPLINES.len(), 5);
+    assert_eq!(CABINET_DISCIPLINES[0].0, "gt");
+    assert_eq!(CABINET_DISCIPLINES[1].0, "kart");
+    assert_eq!(CABINET_DISCIPLINES[2].0, "rally");
+    assert_eq!(CABINET_DISCIPLINES[3].0, "nascar");
+    assert_eq!(CABINET_DISCIPLINES[4].0, "extreme_offroad");
+
+    // 2. Prepare sample awards
+    let awards = vec![
+        ChampionshipAward {
+            profile_id: 1,
+            championship_id: "gt_clubman".to_string(),
+            module_id: "gt".to_string(),
+            tier: 1,
+            position: 1,
+            points: 100,
+            car_model_id: "gt4_clubsport".to_string(),
+            achieved_at: "2026-09-24T12:00:00Z".to_string(),
+        },
+        ChampionshipAward {
+            profile_id: 1,
+            championship_id: "rallycross_pro".to_string(),
+            module_id: "rallycross".to_string(), // normalizes to rally
+            tier: 3,
+            position: 2,
+            points: 85,
+            car_model_id: "rally_subaru".to_string(),
+            achieved_at: "2026-09-24T13:00:00Z".to_string(),
+        },
+        ChampionshipAward {
+            profile_id: 1,
+            championship_id: "nascar_cup".to_string(),
+            module_id: "nascar".to_string(),
+            tier: 5,
+            position: 3,
+            points: 70,
+            car_model_id: "nascar_stock".to_string(),
+            achieved_at: "2026-09-24T14:00:00Z".to_string(),
+        },
+    ];
+
+    // 3. Test find_award_for_slot
+    // Match GT Tier 1
+    let gt_award = find_award_for_slot(&awards, "gt", 1).expect("GT Tier 1 award should be found");
+    assert_eq!(gt_award.metallic_tier(), TrophyMetal::Gold);
+    assert_eq!(gt_award.points, 100);
+
+    // Match Rallycross Tier 3 (via discipline normalization)
+    let rally_award = find_award_for_slot(&awards, "rally", 3).expect("Rally Tier 3 award should be found");
+    assert_eq!(rally_award.metallic_tier(), TrophyMetal::Silver);
+    assert_eq!(rally_award.points, 85);
+
+    // Match NASCAR Tier 5
+    let nascar_award = find_award_for_slot(&awards, "nascar", 5).expect("NASCAR Tier 5 award should be found");
+    assert_eq!(nascar_award.metallic_tier(), TrophyMetal::Bronze);
+    assert_eq!(nascar_award.points, 70);
+
+    // Locked slots return None
+    assert!(find_award_for_slot(&awards, "kart", 1).is_none());
+    assert!(find_award_for_slot(&awards, "gt", 2).is_none());
+    assert!(find_award_for_slot(&awards, "extreme_offroad", 5).is_none());
+
+    // 4. Test Trophy Cabinet collection stats computation
+    let total_slots = 25usize;
+    let earned_count = awards.len();
+    let collection_pct = (earned_count as f32 / total_slots as f32) * 100.0;
+    assert_eq!(earned_count, 3);
+    assert_eq!(collection_pct, 12.0); // 3 / 25 = 12%
+
+    let gold_count = awards.iter().filter(|a| a.metallic_tier() == TrophyMetal::Gold).count();
+    let silver_count = awards.iter().filter(|a| a.metallic_tier() == TrophyMetal::Silver).count();
+    let bronze_count = awards.iter().filter(|a| a.metallic_tier() == TrophyMetal::Bronze).count();
+    assert_eq!(gold_count, 1);
+    assert_eq!(silver_count, 1);
+    assert_eq!(bronze_count, 1);
+
+    // 5. Test Cabinet navigation bounds: disc_idx (0..4), tier_idx (0..4)
+    // Moving Down increases disc_idx up to 4
+    for i in 1..=4 {
+        if session.profile_cabinet_disc_idx + 1 < 5 {
+            session.profile_cabinet_disc_idx += 1;
+        }
+        assert_eq!(session.profile_cabinet_disc_idx, i);
+    }
+    // Attempting to move Down beyond 4 stays at 4
+    if session.profile_cabinet_disc_idx + 1 < 5 {
+        session.profile_cabinet_disc_idx += 1;
+    }
+    assert_eq!(session.profile_cabinet_disc_idx, 4);
+
+    // Moving Right increases tier_idx up to 4
+    for j in 1..=4 {
+        if session.profile_cabinet_tier_idx + 1 < 5 {
+            session.profile_cabinet_tier_idx += 1;
+        }
+        assert_eq!(session.profile_cabinet_tier_idx, j);
+    }
+    // Attempting to move Right beyond 4 stays at 4
+    if session.profile_cabinet_tier_idx + 1 < 5 {
+        session.profile_cabinet_tier_idx += 1;
+    }
+    assert_eq!(session.profile_cabinet_tier_idx, 4);
+
+    // Moving Left decreases tier_idx down to 0
+    for j in (0..=3).rev() {
+        if session.profile_cabinet_tier_idx > 0 {
+            session.profile_cabinet_tier_idx -= 1;
+        }
+        assert_eq!(session.profile_cabinet_tier_idx, j);
+    }
+
+    // Moving Up decreases disc_idx down to 0, and from 0 returns focus to Tabs
+    session.profile_focus_area = ProfileFocusArea::Content;
+    for i in (0..=3).rev() {
+        if session.profile_cabinet_disc_idx > 0 {
+            session.profile_cabinet_disc_idx -= 1;
+        }
+        assert_eq!(session.profile_cabinet_disc_idx, i);
+    }
+    assert_eq!(session.profile_cabinet_disc_idx, 0);
+
+    // Moving Up from row 0 shifts focus to Tabs
+    if session.profile_cabinet_disc_idx > 0 {
+        session.profile_cabinet_disc_idx -= 1;
+    } else {
+        session.profile_focus_area = ProfileFocusArea::Tabs;
+    }
+    assert_eq!(session.profile_focus_area, ProfileFocusArea::Tabs);
+
+    // 6. Test shortcut from Overview shelf to Cabinet
+    session.profile_manager_tab = 0; // Overview tab
+    // Simulate Enter on top honors shelf
+    session.profile_manager_tab = 2; // Jump to Cabinet
+    session.profile_focus_area = ProfileFocusArea::Content;
+    session.profile_cabinet_disc_idx = 2; // rally
+    session.profile_cabinet_tier_idx = 2; // tier 3 (0-indexed 2)
+    assert_eq!(session.profile_manager_tab, 2);
+    assert_eq!(session.profile_focus_area, ProfileFocusArea::Content);
+    assert_eq!(session.profile_cabinet_disc_idx, 2);
+    assert_eq!(session.profile_cabinet_tier_idx, 2);
+}
+
 
 
 

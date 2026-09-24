@@ -7,7 +7,10 @@ pub mod marker;
 pub mod scenery;
 pub mod surface_material;
 pub mod track;
+pub mod trophy_textures;
 pub mod vehicle_assets;
+
+pub use trophy_textures::{draw_trophy_badge, get_trophy_texture, normalize_discipline, trophy_filename};
 
 pub use barrier::{
     render_barriers_and_obstacles, render_elevated_barriers_and_obstacles,
