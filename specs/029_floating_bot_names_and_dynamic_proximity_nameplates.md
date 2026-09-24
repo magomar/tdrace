@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Floating Bot Names and Dynamic Proximity Nameplates"
 description: "In-race dynamic overhead floating bot nameplates with proximity culling, distance-based alpha fading, anti-crowding deconfliction, and Alt key toggle."
-status: draft
+status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T17:42:00Z }
 ---
@@ -230,49 +230,49 @@ pub struct DisplayConfig {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Nameplate proximity culling outside outer radius**
-  - [ ] **Given** a race active with opponent bot cars on track
-  - [ ] **When** an opponent bot is situated at a distance $d = 65\,\text{m} > R_{\text{outer}}$ from the player car
-  - [ ] **Then** the bot's floating nameplate must not be rendered ($\alpha_{\text{prox}} = 0.0$)
-  - [ ] **And** zero text draw calls must be issued for that vehicle
+  - [x] **Given** a race active with opponent bot cars on track
+  - [x] **When** an opponent bot is situated at a distance $d = 65\,\text{m} > R_{\text{outer}}$ from the player car
+  - [x] **Then** the bot's floating nameplate must not be rendered ($\alpha_{\text{prox}} = 0.0$)
+  - [x] **And** zero text draw calls must be issued for that vehicle
 
 - **Scenario: Full opacity within inner proximity zone**
-  - [ ] **Given** a race active with opponent bot cars on track
-  - [ ] **When** an opponent bot is within close drafting distance $d = 15\,\text{m} \le R_{\text{inner}}$
-  - [ ] **Then** the bot's nameplate must be rendered at full configured opacity ($\alpha_{\text{prox}} = 1.0$)
-  - [ ] **And** the text must match the driver's character alias
+  - [x] **Given** a race active with opponent bot cars on track
+  - [x] **When** an opponent bot is within close drafting distance $d = 15\,\text{m} \le R_{\text{inner}}$
+  - [x] **Then** the bot's nameplate must be rendered at full configured opacity ($\alpha_{\text{prox}} = 1.0$)
+  - [x] **And** the text must match the driver's character alias
 
 - **Scenario: Continuous linear alpha falloff in transition zone**
-  - [ ] **Given** an opponent bot at distance $d = 40\,\text{m}$ between $R_{\text{inner}} = 25\,\text{m}$ and $R_{\text{outer}} = 55\,\text{m}$
-  - [ ] **When** `compute_proximity_alpha` is evaluated
-  - [ ] **Then** the resulting alpha multiplier must be exactly $\frac{55 - 40}{55 - 25} = 0.50 \pm 0.01$
-  - [ ] **And** the badge backdrop and text opacity must scale proportionally
+  - [x] **Given** an opponent bot at distance $d = 40\,\text{m}$ between $R_{\text{inner}} = 25\,\text{m}$ and $R_{\text{outer}} = 55\,\text{m}$
+  - [x] **When** `compute_proximity_alpha` is evaluated
+  - [x] **Then** the resulting alpha multiplier must be exactly $\frac{55 - 40}{55 - 25} = 0.50 \pm 0.01$
+  - [x] **And** the badge backdrop and text opacity must scale proportionally
 
 - **Scenario: Alt key toggles nameplate visibility on and off**
-  - [ ] **Given** the race session is actively running with `bot_nameplates` enabled (`true`)
-  - [ ] **When** the user presses `KeyCode::LeftAlt` or `KeyCode::RightAlt`
-  - [ ] **Then** `visibility_options.bot_nameplates` must toggle to `false`
-  - [ ] **And** an audio SFX (`SfxType::UiMove`) must play
-  - [ ] **And** a HUD toast notification `[ALT] BOT NAMEPLATES: OFF` must be registered
-  - [ ] **When** the user presses Alt a second time
-  - [ ] **Then** `visibility_options.bot_nameplates` must toggle back to `true`
-  - [ ] **And** a HUD toast notification `[ALT] BOT NAMEPLATES: ON` must be registered
+  - [x] **Given** the race session is actively running with `bot_nameplates` enabled (`true`)
+  - [x] **When** the user presses `KeyCode::LeftAlt` or `KeyCode::RightAlt`
+  - [x] **Then** `visibility_options.bot_nameplates` must toggle to `false`
+  - [x] **And** an audio SFX (`SfxType::UiMove`) must play
+  - [x] **And** a HUD toast notification `[ALT] BOT NAMEPLATES: OFF` must be registered
+  - [x] **When** the user presses Alt a second time
+  - [x] **Then** `visibility_options.bot_nameplates` must toggle back to `true`
+  - [x] **And** a HUD toast notification `[ALT] BOT NAMEPLATES: ON` must be registered
 
 - **Scenario: Anti-crowding vertical stacking deconfliction**
-  - [ ] **Given** two opponent bot cars traveling side-by-side whose projected screen badge anchors are within $30\,\text{px}$ horizontally
-  - [ ] **When** the nameplate rendering pipeline processes the candidates
-  - [ ] **Then** the car further from the player must have its nameplate vertically nudged upward by $H_{\text{stack}} = 20\,\text{px}$
-  - [ ] **And** both driver names must remain completely unobstructed without text collision
+  - [x] **Given** two opponent bot cars traveling side-by-side whose projected screen badge anchors are within $30\,\text{px}$ horizontally
+  - [x] **When** the nameplate rendering pipeline processes the candidates
+  - [x] **Then** the car further from the player must have its nameplate vertically nudged upward by $H_{\text{stack}} = 20\,\text{px}$
+  - [x] **And** both driver names must remain completely unobstructed without text collision
 
 - **Scenario: Frustum culling for off-screen opponent cars**
-  - [ ] **Given** an opponent bot within $20\,\text{m}$ of the player but positioned behind the camera outside the visible screen viewport
-  - [ ] **When** nameplate screen culling runs
-  - [ ] **Then** the off-screen bot must be culled before rasterization
+  - [x] **Given** an opponent bot within $20\,\text{m}$ of the player but positioned behind the camera outside the visible screen viewport
+  - [x] **When** nameplate screen culling runs
+  - [x] **Then** the off-screen bot must be culled before rasterization
 
 - **Scenario: Split-screen independent player reference**
-  - [ ] **Given** a 2-player split screen match
-  - [ ] **When** nameplates are evaluated for Player 1's viewport
-  - [ ] **Then** proximity distances must be measured relative to Player 1's car position
-  - [ ] **And** when evaluated for Player 2's viewport, proximity must be measured relative to Player 2's car position
+  - [x] **Given** a 2-player split screen match
+  - [x] **When** nameplates are evaluated for Player 1's viewport
+  - [x] **Then** proximity distances must be measured relative to Player 1's car position
+  - [x] **And** when evaluated for Player 2's viewport, proximity must be measured relative to Player 2's car position
 
 ---
 
