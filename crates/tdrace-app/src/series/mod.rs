@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::ai::{CareerRivalEntry, DriverTier, DrivingStyle, RosterEvolutionEngine, RosterEvolutionReport};
+use crate::ai::{CareerRivalEntry, DriverCharacter, DriverTier, DrivingStyle, RosterEvolutionEngine, RosterEvolutionReport};
 
 pub mod format;
 pub use format::*;
@@ -306,6 +306,104 @@ impl SeriesSession {
     /// Returns the configured lap count for the current round, if specified.
     pub fn current_round_laps(&self) -> Option<u32> {
         self.round_laps.get(self.current_round).copied().flatten()
+    }
+
+    /// Returns true if this championship session is brand new (at round 0 with no finished rounds).
+    pub fn is_new(&self) -> bool {
+        self.current_round == 0 && self.history.is_empty()
+    }
+
+    /// Returns the drivers from `self.standings` who qualify to participate in a round with `max_slots` grid capacity.
+    ///
+    /// - The human player (`player`) always qualifies and takes 1 slot.
+    /// - The remaining `max_slots - 1` slots are awarded to the highest-ranked non-player drivers in current standings.
+    /// - Drivers who do not qualify are not permanently discarded from championship standings;
+    ///   they simply do not participate in the round with fewer slots.
+    pub fn qualified_drivers_for_round(&self, max_slots: usize) -> Vec<SeriesStandingEntry> {
+        if max_slots == 0 {
+            return Vec::new();
+        }
+        if self.standings.len() <= max_slots {
+            return self.standings.clone();
+        }
+
+        let player = self.standings.iter().find(|s| s.driver_id == "player").cloned();
+        let target_bots = if player.is_some() { max_slots.saturating_sub(1) } else { max_slots };
+
+        let mut qualified: Vec<SeriesStandingEntry> = self
+            .standings
+            .iter()
+            .filter(|s| s.driver_id != "player")
+            .take(target_bots)
+            .cloned()
+            .collect();
+
+        if let Some(p) = player {
+            qualified.insert(0, p);
+        }
+
+        qualified
+    }
+
+    /// For a brand new championship (round 0 with no history), synchronizes the roster size
+    /// to exactly match the starting grid slots of the circuit.
+    ///
+    /// If additional racers are needed, they are drawn from `fallback_drivers`.
+    /// If fewer racers are needed, the roster is trimmed while always retaining the human player.
+    pub fn sync_initial_grid_slots(
+        &mut self,
+        circuit_slots: usize,
+        fallback_drivers: &[DriverCharacter],
+    ) {
+        if circuit_slots == 0 || !self.is_new() {
+            return;
+        }
+
+        if self.standings.len() < circuit_slots {
+            let needed = circuit_slots - self.standings.len();
+            let mut added = 0;
+            for character in fallback_drivers {
+                if added >= needed {
+                    break;
+                }
+                if character.id == "player" || self.standings.iter().any(|s| s.driver_id == character.id) {
+                    continue;
+                }
+                let team = format!("{} Racing", character.name.split_whitespace().last().unwrap_or("Motorsport"));
+                let mut entry = SeriesStandingEntry::new(character.id, character.name, team);
+                entry = entry.with_ai_style_and_tier(
+                    Some(character.style.as_str().to_string()),
+                    Some(self.tier as u8),
+                );
+                self.standings.push(entry);
+                added += 1;
+            }
+            if added < needed {
+                for _ in added..needed {
+                    let id = format!("driver_{}", self.standings.len() + 1);
+                    let name = format!("Driver {}", self.standings.len() + 1);
+                    let team = "Independent Racing".to_string();
+                    let mut entry = SeriesStandingEntry::new(id, name, team);
+                    entry = entry.with_ai_style_and_tier(None, Some(self.tier as u8));
+                    self.standings.push(entry);
+                }
+            }
+        } else if self.standings.len() > circuit_slots {
+            let player_idx = self.standings.iter().position(|s| s.driver_id == "player");
+            match player_idx {
+                Some(p_idx) if p_idx < circuit_slots => {
+                    self.standings.truncate(circuit_slots);
+                }
+                Some(p_idx) => {
+                    let player_entry = self.standings.remove(p_idx);
+                    self.standings.truncate(circuit_slots - 1);
+                    self.standings.insert(0, player_entry);
+                }
+                None => {
+                    self.standings.truncate(circuit_slots);
+                }
+            }
+        }
     }
 
     pub fn current_track_id(&self) -> Option<&str> {

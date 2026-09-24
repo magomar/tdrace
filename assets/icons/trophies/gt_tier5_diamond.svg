@@ -1,0 +1,218 @@
+<svg id="trophy-gt-tier5" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Radiant Cosmic / Apex Aura Glow -->
+    <filter id="shadow-gt-t5" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.95" />
+      <feDropShadow dx="0" dy="0" stdDeviation="18" flood-color="#38BDF8" flood-opacity="0.5" />
+      <feDropShadow dx="0" dy="0" stdDeviation="24" flood-color="#FBBF24" flood-opacity="0.35" />
+    </filter>
+
+    <!-- Diamond & Celestial Crystal Gradients -->
+    <linearGradient id="diamond-body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="20%" stop-color="#F0FDFA" />
+      <stop offset="45%" stop-color="#7DD3FC" />
+      <stop offset="70%" stop-color="#38BDF8" />
+      <stop offset="90%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#0C4A6E" />
+    </linearGradient>
+
+    <!-- 24K Imperial Crown Gold -->
+    <linearGradient id="crown-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF0" />
+      <stop offset="30%" stop-color="#FDE047" />
+      <stop offset="70%" stop-color="#EAB308" />
+      <stop offset="100%" stop-color="#854D0E" />
+    </linearGradient>
+
+    <!-- Obsidian Carbon Mirror -->
+    <linearGradient id="obsidian-pedestal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="50%" stop-color="#050811" />
+      <stop offset="100%" stop-color="#010307" />
+    </linearGradient>
+
+    <linearGradient id="apex-plate" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#B45309" />
+      <stop offset="35%" stop-color="#FDE047" />
+      <stop offset="65%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+
+    <clipPath id="shield-clip-t5">
+      <path d="M 256,22 L 448,72 C 485,200 470,350 256,490 C 42,350 27,200 64,72 Z" />
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow-gt-t5)">
+    <!-- Base Shield -->
+    <path d="M 256,20 L 450,70 C 490,200 475,352 256,494 C 37,352 22,200 62,70 Z"
+          fill="#030712" stroke="#F59E0B" stroke-width="5" />
+
+    <!-- Inner Shield Clip Area -->
+    <g clip-path="url(#shield-clip-t5)">
+      <rect x="20" y="10" width="472" height="490" fill="#020408" />
+
+      <!-- Radiant Sunburst / Halo Lines radiating from center -->
+      <g opacity="0.16" stroke="#FBBF24" stroke-width="1.8">
+        <line x1="256" y1="240" x2="40" y2="40" />
+        <line x1="256" y1="240" x2="100" y2="20" />
+        <line x1="256" y1="240" x2="180" y2="10" />
+        <line x1="256" y1="240" x2="256" y2="5" />
+        <line x1="256" y1="240" x2="332" y2="10" />
+        <line x1="256" y1="240" x2="412" y2="20" />
+        <line x1="256" y1="240" x2="472" y2="40" />
+        <line x1="256" y1="240" x2="500" y2="120" />
+        <line x1="256" y1="240" x2="500" y2="200" />
+        <line x1="256" y1="240" x2="480" y2="300" />
+        <line x1="256" y1="240" x2="12" y2="120" />
+        <line x1="256" y1="240" x2="12" y2="200" />
+        <line x1="256" y1="240" x2="32" y2="300" />
+      </g>
+
+      <!-- Carbon Weave Layers -->
+      <g opacity="0.10" stroke="#38BDF8" stroke-width="1.8">
+        <line x1="20" y1="50" x2="492" y2="50" />
+        <line x1="20" y1="90" x2="492" y2="90" />
+        <line x1="20" y1="130" x2="492" y2="130" />
+        <line x1="20" y1="170" x2="492" y2="170" />
+        <line x1="20" y1="210" x2="492" y2="210" />
+        <line x1="20" y1="250" x2="492" y2="250" />
+        <line x1="20" y1="290" x2="492" y2="290" />
+        <line x1="20" y1="330" x2="492" y2="330" />
+        <line x1="20" y1="370" x2="492" y2="370" />
+      </g>
+    </g>
+
+    <!-- Beveled Double Gilded Rim Stroke -->
+    <path d="M 256,30 L 436,76 C 468,195 456,335 256,478 C 56,335 44,195 76,76 Z"
+          fill="none" stroke="url(#crown-gold)" stroke-width="4.5" opacity="0.98" />
+    <path d="M 256,40 L 426,82 C 454,190 442,322 256,462 C 70,322 58,190 86,82 Z"
+          fill="none" stroke="#38BDF8" stroke-width="2" stroke-dasharray="14 8" opacity="0.85" />
+
+    <!-- Modality Hypercar Apex Crown Wing -->
+    <path d="M 140,50 L 256,28 L 372,50" stroke="#00F0FF" stroke-width="6" stroke-linecap="round" fill="none" opacity="1" />
+    <path d="M 170,62 L 256,46 L 342,62" stroke="#FDE047" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.9" />
+
+    <!-- FULL IMPERIAL LAUREL GARLAND (Gilded 24K Gold with Diamond Dew Highlights) -->
+    <!-- Left Laurel Wreath -->
+    <g stroke="url(#crown-gold)" stroke-width="4" fill="#0C1B2A" stroke-linecap="round">
+      <path d="M 140,370 C 82,325 76,192 134,128" fill="none" stroke-width="5.5" />
+      <path d="M 126,345 C 96,345 90,314 118,322 Z" />
+      <path d="M 110,294 C 82,284 82,255 108,268 Z" />
+      <path d="M 100,240 C 74,222 84,195 106,215 Z" />
+      <path d="M 106,186 C 84,165 104,138 122,165 Z" />
+      <path d="M 126,142 C 114,118 140,102 150,130 Z" />
+    </g>
+    <!-- Right Laurel Wreath -->
+    <g stroke="url(#crown-gold)" stroke-width="4" fill="#0C1B2A" stroke-linecap="round">
+      <path d="M 372,370 C 430,325 436,192 378,128" fill="none" stroke-width="5.5" />
+      <path d="M 386,345 C 416,345 422,314 394,322 Z" />
+      <path d="M 402,294 C 430,284 430,255 404,268 Z" />
+      <path d="M 412,240 C 438,222 428,195 406,215 Z" />
+      <path d="M 406,186 C 428,165 408,138 390,165 Z" />
+      <path d="M 386,142 C 398,118 372,102 362,130 Z" />
+    </g>
+
+    <!-- ==================== TIER 5 DIAMOND/OBSIDIAN MASTERPIECE CUP ==================== -->
+
+    <!-- Sweeping Hypercar Aerodynamic Wings (Handles with Dual-Layer Splitters) -->
+    <path d="M 172,170 C 80,152 70,280 182,300"
+          stroke="url(#crown-gold)" stroke-width="18" stroke-linecap="round" fill="none" />
+    <path d="M 172,170 C 92,152 84,270 182,288"
+          stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.95" />
+
+    <path d="M 340,170 C 432,152 442,280 330,300"
+          stroke="url(#crown-gold)" stroke-width="18" stroke-linecap="round" fill="none" />
+    <path d="M 340,170 C 420,152 428,270 330,288"
+          stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.95" />
+
+    <!-- Main Cup Body: Diamond Crystal & Gilded Rim -->
+    <path d="M 168,135 L 344,135 C 344,250 304,316 256,328 C 208,316 168,250 168,135 Z"
+          fill="url(#diamond-body)" stroke="url(#crown-gold)" stroke-width="5" stroke-linejoin="round" />
+
+    <!-- Faceted Diamond Specular Highlight Facets -->
+    <polygon points="256,136 210,136 232,250 256,326" fill="#FFFFFF" opacity="0.32" />
+    <polygon points="256,136 302,136 280,250 256,326" fill="#E0F2FE" opacity="0.22" />
+    <line x1="256" y1="135" x2="256" y2="326" stroke="#FFFFFF" stroke-width="4" opacity="0.95" />
+
+    <!-- Cup Rim Lip (Gilded Gold Double Rim) -->
+    <ellipse cx="256" cy="135" rx="88" ry="20" fill="url(#crown-gold)" stroke="#FFFFFF" stroke-width="4" />
+    <ellipse cx="256" cy="135" rx="72" ry="14" fill="#050C17" />
+
+    <!-- Embossed Medallion: HYPERCAR / #1 APEX -->
+    <circle cx="256" cy="226" r="34" fill="#030712" stroke="url(#apex-plate)" stroke-width="5" />
+    <text x="256" y="235" fill="#FDE047" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="20" text-anchor="middle" letter-spacing="1">HYPER</text>
+
+    <!-- Trophy Stem with Sculpted Vortex Diffusers -->
+    <path d="M 234,328 L 278,328 L 274,368 L 238,368 Z"
+          fill="url(#crown-gold)" stroke="#FFFFFF" stroke-width="3.5" />
+    <ellipse cx="256" cy="344" rx="26" ry="8" fill="#FFFFFF" opacity="0.95" />
+    <ellipse cx="256" cy="360" rx="28" ry="8" fill="url(#crown-gold)" />
+
+    <!-- Pedestal Base (Obsidian Carbon Block with Golden Bevels) -->
+    <polygon points="208,368 304,368 316,384 196,384"
+             fill="url(#crown-gold)" stroke="#FFFFFF" stroke-width="3" />
+    <rect x="164" y="384" width="184" height="52" rx="6"
+          fill="url(#obsidian-pedestal)" stroke="url(#crown-gold)" stroke-width="4.5" />
+
+    <!-- Nameplate: WORLD GRAND PRIX -->
+    <rect x="178" y="392" width="156" height="36" rx="4"
+          fill="url(#apex-plate)" stroke="#FFFFFF" stroke-width="2.2" />
+    <text x="256" y="407" fill="#1C1002" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="11" text-anchor="middle" letter-spacing="0.8">WORLD GRAND PRIX</text>
+    <text x="256" y="420" fill="#451A03" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="800" font-size="9" text-anchor="middle" letter-spacing="1.5">TIER V • HYPERCAR APEX</text>
+
+    <!-- Bottom Footing Step -->
+    <rect x="136" y="436" width="240" height="16" rx="4"
+          fill="#020408" stroke="#F59E0B" stroke-width="3.5" />
+
+    <!-- ==================== TIER INDICATOR: 5 STARS CROWN ARCH ==================== -->
+    <g transform="translate(256, 88)">
+      <!-- Star 1 (Far Left) -->
+      <g transform="translate(-64, 14) scale(0.95)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#crown-gold)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFDF0" opacity="0.9" />
+      </g>
+      <!-- Star 2 (Mid Left) -->
+      <g transform="translate(-32, 4) scale(1.08)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#crown-gold)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFDF0" opacity="0.95" />
+      </g>
+      <!-- Star 3 (Apex Center Crown Star - Largest with Lens Flare) -->
+      <g transform="translate(0, -8) scale(1.35)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="#FFFFFF" filter="drop-shadow(0 0 10px #FDE047)" stroke="url(#crown-gold)" stroke-width="1.8" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFDF0" />
+      </g>
+      <!-- Star 4 (Mid Right) -->
+      <g transform="translate(32, 4) scale(1.08)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#crown-gold)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFDF0" opacity="0.95" />
+      </g>
+      <!-- Star 5 (Far Right) -->
+      <g transform="translate(64, 14) scale(0.95)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#crown-gold)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFDF0" opacity="0.9" />
+      </g>
+    </g>
+
+    <!-- Roman Numeral 'V' Badge at Lower Crest -->
+    <g transform="translate(256, 460)">
+      <rect x="-24" y="-11" width="48" height="22" rx="3" fill="#1C1002" stroke="#FDE047" stroke-width="2.5" />
+      <text x="256" y="471" fill="#FFFDF0" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+            font-weight="900" font-size="12" text-anchor="middle">TIER V</text>
+    </g>
+  </g>
+</svg>

@@ -218,8 +218,29 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
         livery_idx: Some(0),
     });
 
-    // 2. Bots from the authentic module drivers
-    for (idx, character) in module_drivers.into_iter().take(7).enumerate() {
+    let starting_slots = def
+        .rounds
+        .first()
+        .and_then(|r| crate::track_manager::TrackManager::default().load_track_by_slug(&r.track_id).ok())
+        .map(|t| if t.grid_positions.is_empty() { t.default_grid_count() } else { t.grid_positions.len() })
+        .unwrap_or_else(|| match module.as_str() {
+            "nascar" => 16,
+            "gt" | "gt_challenge" => 18,
+            "kart" => 12,
+            "rally" | "extreme_offroad" => 8,
+            _ => 8,
+        });
+    let target_bots = starting_slots.saturating_sub(1);
+
+    let mut pool = module_drivers;
+    for c in crate::ai::DriverCharacter::all_across_modules() {
+        if !pool.iter().any(|d| d.id == c.id) {
+            pool.push(c);
+        }
+    }
+
+    // 2. Bots from the authentic driver pool
+    for (idx, character) in pool.into_iter().take(target_bots).enumerate() {
         let model = character
             .favorite_car_for_discipline_and_tier(&module, tier)
             .map(|s| s.to_string())

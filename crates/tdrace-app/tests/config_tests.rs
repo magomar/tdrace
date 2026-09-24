@@ -302,6 +302,7 @@ default_num_bots = 7
     let base_cfg: GameConfig = toml::from_str(toml_str).unwrap();
     let mut session = RaceSession::new_with_config(base_cfg);
     session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
+    session.refresh_profiles_and_stats();
 
     // Initial state (classic)
     assert_eq!(session.active_module_id, "classic");

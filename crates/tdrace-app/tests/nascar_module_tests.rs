@@ -285,8 +285,8 @@ fn test_nascar_phase2_championship_lifecycle() {
         assert_eq!(champ.current_track_id(), Some("daytona_superspeedway"));
         assert!(matches!(champ.point_system, PointSystem::NascarCup { stage_win_bonus: true }));
 
-        // Drivers in championship should match 12-driver roster + player
-        assert_eq!(champ.standings.len(), 12);
+        // Drivers in championship should match circuit grid capacity (16 slots on Daytona)
+        assert_eq!(champ.standings.len(), session.max_grid_participants());
         assert!(champ.standings.iter().any(|s| s.driver_name.contains("Intimidator")));
         assert!(champ.standings.iter().any(|s| s.driver_name.contains("The King")));
     }

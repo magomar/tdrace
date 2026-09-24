@@ -1,0 +1,169 @@
+<svg id="trophy-rally-tier3" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Drop Shadow and Rally Dust Glow -->
+    <filter id="shadow-rally-t3" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.9" />
+      <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#FF6B00" flood-opacity="0.45" />
+    </filter>
+
+    <!-- 24K Gold Gradients -->
+    <linearGradient id="rally-gold-body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF0" />
+      <stop offset="25%" stop-color="#FDE047" />
+      <stop offset="60%" stop-color="#EAB308" />
+      <stop offset="90%" stop-color="#A16207" />
+      <stop offset="100%" stop-color="#543003" />
+    </linearGradient>
+
+    <!-- Rally Dirt / High Energy Orange -->
+    <linearGradient id="rally-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9E40" />
+      <stop offset="50%" stop-color="#FF6B00" />
+      <stop offset="100%" stop-color="#B83A00" />
+    </linearGradient>
+
+    <linearGradient id="rally-shock-spring" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#EF4444" />
+      <stop offset="50%" stop-color="#DC2626" />
+      <stop offset="100%" stop-color="#991B1B" />
+    </linearGradient>
+
+    <linearGradient id="tread-rubber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="50%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+
+    <clipPath id="shield-clip-rally">
+      <path d="M 256,36 L 430,84 C 458,190 448,326 256,478 C 64,326 54,190 82,84 Z" />
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow-rally-t3)">
+    <!-- Base Armor Shield Frame -->
+    <path d="M 256,34 L 432,82 C 462,190 452,328 256,482 C 60,328 50,190 80,82 Z"
+          fill="#110B07" stroke="#833604" stroke-width="6" />
+
+    <!-- Inner Shield Clip Area -->
+    <g clip-path="url(#shield-clip-rally)">
+      <rect x="40" y="20" width="432" height="470" fill="#0C0805" />
+
+      <!-- Gravel & Mud Roost Splatter Texture -->
+      <g opacity="0.15" fill="#FF8800">
+        <circle cx="90" cy="180" r="14" />
+        <circle cx="110" cy="220" r="8" />
+        <circle cx="80" cy="260" r="18" />
+        <circle cx="100" cy="310" r="12" />
+        <circle cx="420" cy="180" r="14" />
+        <circle cx="400" cy="220" r="8" />
+        <circle cx="430" cy="260" r="18" />
+        <circle cx="410" cy="310" r="12" />
+      </g>
+
+      <!-- Twin Asymmetric Rally Stripes -->
+      <g opacity="0.25">
+        <polygon points="140,20 180,20 320,490 280,490" fill="#FF6B00" />
+        <polygon points="195,20 215,20 355,490 335,490" fill="#FFFFFF" />
+      </g>
+    </g>
+
+    <!-- Outer Rim with Knobby Tread Teeth -->
+    <path d="M 256,44 L 418,88 C 444,185 436,312 256,464 C 76,312 68,185 94,88 Z"
+          fill="none" stroke="url(#rally-orange)" stroke-width="4.5" opacity="0.95" />
+    <path d="M 256,54 L 408,94 C 430,180 422,300 256,448 C 90,300 82,180 104,94 Z"
+          fill="none" stroke="#FFD700" stroke-width="1.8" stroke-dasharray="10 8" opacity="0.75" />
+
+    <!-- Top Crown: Twin Chevron Rally Apex Indicator -->
+    <path d="M 180,64 L 256,44 L 332,64" stroke="#FF6B00" stroke-width="5" stroke-linecap="round" fill="none" />
+    <path d="M 200,76 L 256,60 L 312,76" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.9" />
+
+    <!-- ==================== RALLYCROSS TROPHY CUP ==================== -->
+
+    <!-- KNOBBY ALL-TERRAIN TIRE TREAD HANDLES -->
+    <!-- Left Tire Tread Handle -->
+    <g>
+      <path d="M 180,180 C 95,170 88,272 186,290"
+            stroke="url(#tread-rubber)" stroke-width="20" stroke-linecap="round" fill="none" />
+      <path d="M 180,180 C 95,170 88,272 186,290"
+            stroke="url(#rally-orange)" stroke-width="4" stroke-dasharray="8 10" stroke-linecap="round" fill="none" />
+    </g>
+    <!-- Right Tire Tread Handle -->
+    <g>
+      <path d="M 332,180 C 417,170 424,272 326,290"
+            stroke="url(#tread-rubber)" stroke-width="20" stroke-linecap="round" fill="none" />
+      <path d="M 332,180 C 417,170 424,272 326,290"
+            stroke="url(#rally-orange)" stroke-width="4" stroke-dasharray="8 10" stroke-linecap="round" fill="none" />
+    </g>
+
+    <!-- Main Cup Body: Heavy Chiseled 24K Gold Chalice -->
+    <path d="M 176,145 L 336,145 C 336,245 300,305 256,318 C 212,305 176,245 176,145 Z"
+          fill="url(#rally-gold-body)" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" />
+
+    <!-- Polish Highlight -->
+    <path d="M 216,147 C 216,228 238,295 256,316 C 274,295 296,228 296,147 Z"
+          fill="#FFFDF0" opacity="0.3" />
+    <line x1="256" y1="146" x2="256" y2="316" stroke="#FFFFFF" stroke-width="3" opacity="0.75" />
+
+    <!-- Cup Rim Lip with Hex Studs -->
+    <ellipse cx="256" cy="145" rx="80" ry="18" fill="url(#rally-orange)" stroke="#FFFFFF" stroke-width="3" />
+    <ellipse cx="256" cy="145" rx="66" ry="12" fill="#241408" />
+
+    <!-- Embossed Medallion: GROUP B / RALLY EMBLEM -->
+    <circle cx="256" cy="226" r="30" fill="#1C0E04" stroke="url(#rally-orange)" stroke-width="4" />
+    <text x="256" y="234" fill="#FF9E40" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="18" text-anchor="middle" letter-spacing="0.5">GRP B</text>
+
+    <!-- STEM: High-Performance Coilover Shock Absorber with Red Spring -->
+    <g transform="translate(256, 336)">
+      <!-- Damper Shaft (Chrome) -->
+      <rect x="-8" y="-18" width="16" height="38" fill="#E2E8F0" stroke="#FFFFFF" stroke-width="1.5" />
+      <!-- Coiled Racing Spring (Red Shock) -->
+      <path d="M -16,-12 C 16,-10 16,-2 -16,0 C 16,2 16,10 -16,12 C 16,14 16,22 -16,24"
+            fill="none" stroke="url(#rally-shock-spring)" stroke-width="6" stroke-linecap="round" />
+    </g>
+
+    <!-- Pedestal Base: Heavy Skid Plate with Mud Flaps -->
+    <polygon points="214,358 298,358 308,374 204,374"
+             fill="url(#rally-orange)" stroke="#FFFFFF" stroke-width="2.5" />
+    <rect x="174" y="374" width="164" height="46" rx="5"
+          fill="#1C1005" stroke="#FF6B00" stroke-width="3.5" />
+
+    <!-- Nameplate: GROUP B MASTERS -->
+    <rect x="188" y="382" width="136" height="30" rx="3"
+          fill="url(#rally-orange)" stroke="#FFFFFF" stroke-width="1.8" />
+    <text x="256" y="395" fill="#FFFFFF" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="9.5" text-anchor="middle" letter-spacing="0.5">GROUP B MASTERS</text>
+    <text x="256" y="407" fill="#FFFDF0" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="800" font-size="8" text-anchor="middle" letter-spacing="1.2">TIER III • RALLYCROSS</text>
+
+    <!-- Skid Plate Steel Bottom -->
+    <rect x="150" y="420" width="212" height="14" rx="4"
+          fill="#334155" stroke="#FF8800" stroke-width="2.5" />
+
+    <!-- ==================== TIER INDICATOR: 3 STARS ==================== -->
+    <g transform="translate(256, 104)">
+      <!-- Left Star -->
+      <g transform="translate(-32, 4)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#rally-orange)" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+      <!-- Center Star -->
+      <g transform="translate(0, -4) scale(1.15)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#rally-orange)" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+      <!-- Right Star -->
+      <g transform="translate(32, 4)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#rally-orange)" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+    </g>
+
+    <!-- Roman Numeral 'III' Badge at Lower Crest -->
+    <g transform="translate(256, 444)">
+      <rect x="-26" y="-11" width="52" height="22" rx="3" fill="#241408" stroke="#FF6B00" stroke-width="2" />
+      <text x="256" y="455" fill="#FF9E40" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+            font-weight="900" font-size="11.5" text-anchor="middle">TIER III</text>
+    </g>
+  </g>
+</svg>

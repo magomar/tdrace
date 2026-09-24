@@ -790,6 +790,57 @@ impl HallOfFameDb {
         }
     }
 
+    /// Retrieves all module career progress records for a given player profile.
+    pub fn get_all_module_progress(&self, profile_id: i64) -> Result<std::collections::HashMap<String, ModuleCareerProgress>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
+                    trophies_gold, trophies_silver, trophies_bronze, updated_at,
+                    COALESCE(lifetime_xp, xp), COALESCE(visited_tracks, '[]'),
+                    COALESCE(career_rivals, '[]')
+             FROM profile_module_progress
+             WHERE profile_id = ?1",
+        )?;
+
+        let rows = stmt.query_map(params![profile_id], |row| {
+            let cars_json: String = row.get(4)?;
+            let tracks_json: String = row.get(5)?;
+            let events_json: String = row.get(6)?;
+            let lifetime_xp: i64 = row.get(11)?;
+            let visited_json: String = row.get(12)?;
+            let rivals_json: String = row.get(13)?;
+
+            let unlocked_cars: Vec<String> = serde_json::from_str(&cars_json).unwrap_or_default();
+            let unlocked_tracks: Vec<String> = serde_json::from_str(&tracks_json).unwrap_or_default();
+            let visited_tracks: Vec<String> = serde_json::from_str(&visited_json).unwrap_or_default();
+            let completed_events: Vec<String> = serde_json::from_str(&events_json).unwrap_or_default();
+            let career_rivals: Vec<crate::ai::CareerRivalEntry> = serde_json::from_str(&rivals_json).unwrap_or_default();
+
+            Ok(ModuleCareerProgress {
+                profile_id: row.get(0)?,
+                module_id: row.get(1)?,
+                xp: row.get::<_, i64>(2)? as u64,
+                lifetime_xp: lifetime_xp as u64,
+                level: row.get::<_, i64>(3)? as u32,
+                unlocked_cars,
+                unlocked_tracks,
+                visited_tracks,
+                completed_events,
+                trophies_gold: row.get::<_, i64>(7)? as u32,
+                trophies_silver: row.get::<_, i64>(8)? as u32,
+                trophies_bronze: row.get::<_, i64>(9)? as u32,
+                updated_at: row.get(10)?,
+                career_rivals,
+            })
+        })?;
+
+        let mut map = std::collections::HashMap::new();
+        for r in rows {
+            let p = r?;
+            map.insert(p.module_id.clone(), p);
+        }
+        Ok(map)
+    }
+
     /// Saves or updates module career progress for a player profile.
     pub fn save_module_progress(&self, progress: &ModuleCareerProgress) -> Result<()> {
         let now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
@@ -1139,6 +1190,16 @@ impl HallOfFameDb {
             .find(|p| p.profile_id == profile_id && p.module_id == module_id)
             .cloned();
         Ok(res)
+    }
+
+    pub fn get_all_module_progress(&self, profile_id: i64) -> Result<std::collections::HashMap<String, ModuleCareerProgress>> {
+        let guard = self.progress.lock().unwrap();
+        let map = guard
+            .iter()
+            .filter(|p| p.profile_id == profile_id)
+            .map(|p| (p.module_id.clone(), p.clone()))
+            .collect();
+        Ok(map)
     }
 
     pub fn save_module_progress(&self, progress: &ModuleCareerProgress) -> Result<()> {

@@ -1791,10 +1791,9 @@ impl TrackManager {
         Ok((cloned_track, path.to_string_lossy().to_string()))
     }
 
-    /// Clones an existing circuit identified by its slug into the drafts group.
-    pub fn clone_track_by_slug(&mut self, slug: &str) -> Result<(Track, String), String> {
-        let track = self.load_track_by_slug(slug)?;
-        let choice = if let Some(custom) = self.custom_tracks.iter().find(|t| t.id == slug) {
+    /// Resolves the corresponding TrackChoice for any track slug (preset or custom).
+    pub fn track_choice_for_slug(&self, slug: &str) -> TrackChoice {
+        if let Some(custom) = self.custom_tracks.iter().find(|t| t.id == slug) {
             TrackChoice::Custom {
                 id: custom.id.clone(),
                 title: custom.title.clone(),
@@ -1812,15 +1811,25 @@ impl TrackManager {
                 "oasis_rally" => TrackChoice::OasisRally,
                 custom_id => {
                     let path = self.track_path_for_slug(custom_id).to_string_lossy().to_string();
+                    let (title, description) = self
+                        .load_track_by_slug(custom_id)
+                        .map(|t| (t.name, t.description))
+                        .unwrap_or_else(|_| (custom_id.replace('_', " ").to_uppercase(), String::new()));
                     TrackChoice::Custom {
                         id: custom_id.to_string(),
-                        title: track.name.clone(),
-                        description: track.description.clone(),
+                        title,
+                        description,
                         path,
                     }
                 }
             }
-        };
+        }
+    }
+
+    /// Clones an existing circuit identified by its slug into the drafts group.
+    pub fn clone_track_by_slug(&mut self, slug: &str) -> Result<(Track, String), String> {
+        let _ = self.load_track_by_slug(slug)?;
+        let choice = self.track_choice_for_slug(slug);
         self.clone_track(&choice)
     }
 

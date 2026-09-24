@@ -1,0 +1,160 @@
+<svg id="trophy-nascar-tier5" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Drop Shadow and Speedway Gold Glow -->
+    <filter id="shadow-nascar-t5" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.95" />
+      <feDropShadow dx="0" dy="0" stdDeviation="18" flood-color="#FFD700" flood-opacity="0.45" />
+      <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#1E3A8A" flood-opacity="0.5" />
+    </filter>
+
+    <!-- Speedway 24K Gold -->
+    <linearGradient id="nascar-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF0" />
+      <stop offset="30%" stop-color="#FDE047" />
+      <stop offset="70%" stop-color="#EAB308" />
+      <stop offset="100%" stop-color="#854D0E" />
+    </linearGradient>
+
+    <!-- Deep American Speedway Blue -->
+    <linearGradient id="nascar-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="50%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#172554" />
+    </linearGradient>
+
+    <!-- Speedway Pedestal -->
+    <linearGradient id="nascar-pedestal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#172554" />
+      <stop offset="50%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <clipPath id="shield-clip-nascar">
+      <path d="M 256,22 L 448,72 C 485,200 470,350 256,490 C 42,350 27,200 64,72 Z" />
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow-nascar-t5)">
+    <!-- Base Shield -->
+    <path d="M 256,20 L 450,70 C 490,200 475,352 256,494 C 37,352 22,200 62,70 Z"
+          fill="#030712" stroke="#FFD700" stroke-width="5" />
+
+    <!-- Inner Shield Clip Area -->
+    <g clip-path="url(#shield-clip-nascar)">
+      <rect x="20" y="10" width="472" height="490" fill="#030712" />
+
+      <!-- HIGH-BANKED TRI-OVAL TRACK STRIPES (Oval Sweeping Curves in Background) -->
+      <path d="M 256,60 C 420,60 460,200 460,260 C 460,340 400,430 256,460 C 112,430 52,340 52,260 C 52,200 92,60 256,60 Z"
+            fill="none" stroke="#1E293B" stroke-width="28" opacity="0.6" />
+      <path d="M 256,60 C 420,60 460,200 460,260 C 460,340 400,430 256,460 C 112,430 52,340 52,260 C 52,200 92,60 256,60 Z"
+            fill="none" stroke="#FFD700" stroke-width="2.5" stroke-dasharray="14 10" opacity="0.4" />
+
+      <!-- Red/White/Blue Patriotic Speed Bands -->
+      <g opacity="0.25">
+        <polygon points="120,20 150,20 290,490 260,490" fill="#DC2626" />
+        <polygon points="155,20 185,20 325,490 295,490" fill="#FFFFFF" />
+        <polygon points="190,20 220,20 360,490 330,490" fill="#2563EB" />
+      </g>
+    </g>
+
+    <!-- Beveled Double Gilded Rim Stroke -->
+    <path d="M 256,30 L 436,76 C 468,195 456,335 256,478 C 56,335 44,195 76,76 Z"
+          fill="none" stroke="url(#nascar-gold)" stroke-width="4.5" opacity="0.98" />
+    <path d="M 256,40 L 426,82 C 454,190 442,322 256,462 C 70,322 58,190 86,82 Z"
+          fill="none" stroke="#3B82F6" stroke-width="2" stroke-dasharray="12 8" opacity="0.85" />
+
+    <!-- Modality Speedway Crown Wing -->
+    <path d="M 140,50 L 256,28 L 372,50" stroke="#FFD700" stroke-width="6" stroke-linecap="round" fill="none" opacity="1" />
+    <path d="M 170,62 L 256,46 L 342,62" stroke="#EF4444" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.95" />
+
+    <!-- ==================== NASCAR CUP TROPHY ==================== -->
+
+    <!-- SWEEPING EAGLE-WING PILLARS (Handles Inspired by Harley J. Earl / Winston Cup) -->
+    <g>
+      <!-- Left Swept Eagle Wing Handle -->
+      <path d="M 170,165 C 75,150 68,275 180,298"
+            stroke="url(#nascar-gold)" stroke-width="19" stroke-linecap="round" fill="none" />
+      <path d="M 170,165 C 88,150 82,265 180,286"
+            stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.95" />
+
+      <!-- Right Swept Eagle Wing Handle -->
+      <path d="M 342,165 C 437,150 444,275 332,298"
+            stroke="url(#nascar-gold)" stroke-width="19" stroke-linecap="round" fill="none" />
+      <path d="M 342,165 C 424,150 430,265 332,286"
+            stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.95" />
+    </g>
+
+    <!-- Main Cup Body: Towering 24K Gold Cup -->
+    <path d="M 166,135 L 346,135 C 346,250 306,316 256,328 C 206,316 166,250 166,135 Z"
+          fill="url(#nascar-gold)" stroke="#FFFFFF" stroke-width="4.5" stroke-linejoin="round" />
+
+    <!-- Specular Highlight -->
+    <path d="M 214,137 C 214,230 236,300 256,322 C 276,300 298,230 298,137 Z"
+          fill="#FFFDF0" opacity="0.35" />
+    <line x1="256" y1="136" x2="256" y2="322" stroke="#FFFFFF" stroke-width="3.5" opacity="0.85" />
+
+    <!-- Cup Rim Lip with Banked Oval Rim -->
+    <ellipse cx="256" cy="135" rx="90" ry="20" fill="url(#nascar-gold)" stroke="#FFFFFF" stroke-width="4" />
+    <ellipse cx="256" cy="135" rx="74" ry="14" fill="#0C1E3A" />
+
+    <!-- Embossed Medallion: SPEEDWAY V8 / NASCAR #1 -->
+    <circle cx="256" cy="226" r="34" fill="#172554" stroke="url(#nascar-gold)" stroke-width="5" />
+    <text x="256" y="235" fill="#FFD700" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="20" text-anchor="middle" letter-spacing="1">CUP</text>
+
+    <!-- Trophy Stem with Sculpted Speedway Pedestal Rings -->
+    <path d="M 234,328 L 278,328 L 274,368 L 238,368 Z"
+          fill="url(#nascar-gold)" stroke="#FFFFFF" stroke-width="3.5" />
+    <ellipse cx="256" cy="344" rx="26" ry="8" fill="#FFFFFF" opacity="0.95" />
+    <ellipse cx="256" cy="360" rx="28" ry="8" fill="url(#nascar-gold)" />
+
+    <!-- Pedestal Base: Monumental Dark Blue & Gold Speedway Pedestal -->
+    <polygon points="208,368 304,368 316,384 196,384"
+             fill="url(#nascar-gold)" stroke="#FFFFFF" stroke-width="3" />
+    <rect x="164" y="384" width="184" height="52" rx="6"
+          fill="url(#nascar-pedestal)" stroke="url(#nascar-gold)" stroke-width="4.5" />
+
+    <!-- Nameplate: NASCAR CUP SERIES -->
+    <rect x="178" y="392" width="156" height="36" rx="4"
+          fill="url(#nascar-blue)" stroke="#FFD700" stroke-width="2.2" />
+    <text x="256" y="407" fill="#FFFFFF" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="11" text-anchor="middle" letter-spacing="0.8">NASCAR CUP SERIES</text>
+    <text x="256" y="420" fill="#FFD700" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="800" font-size="9" text-anchor="middle" letter-spacing="1.5">TIER V • PREMIER CUP</text>
+
+    <!-- Bottom Footing Step -->
+    <rect x="136" y="436" width="240" height="16" rx="4"
+          fill="#020617" stroke="#DC2626" stroke-width="3.5" />
+
+    <!-- ==================== TIER INDICATOR: 5 STARS ARCH ==================== -->
+    <g transform="translate(256, 88)">
+      <g transform="translate(-64, 14) scale(0.95)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#nascar-gold)" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+      <g transform="translate(-32, 4) scale(1.08)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#nascar-gold)" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+      <g transform="translate(0, -8) scale(1.35)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="#FFFFFF" filter="drop-shadow(0 0 10px #FFD700)" stroke="url(#nascar-gold)" stroke-width="1.8" />
+      </g>
+      <g transform="translate(32, 4) scale(1.08)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#nascar-gold)" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+      <g transform="translate(64, 14) scale(0.95)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#nascar-gold)" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+    </g>
+
+    <!-- Roman Numeral 'V' Badge at Lower Crest -->
+    <g transform="translate(256, 460)">
+      <rect x="-24" y="-11" width="48" height="22" rx="3" fill="#172554" stroke="#FFD700" stroke-width="2.5" />
+      <text x="256" y="471" fill="#FFD700" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+            font-weight="900" font-size="12" text-anchor="middle">TIER V</text>
+    </g>
+  </g>
+</svg>

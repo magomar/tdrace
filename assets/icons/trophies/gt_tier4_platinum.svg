@@ -1,0 +1,194 @@
+<svg id="trophy-gt-tier4" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Drop Shadow and Platinum Neon Glow -->
+    <filter id="shadow-gt-t4" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000000" flood-opacity="0.9" />
+      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#38BDF8" flood-opacity="0.45" />
+    </filter>
+
+    <!-- Platinum & Titanium Gradients -->
+    <linearGradient id="plat-body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="20%" stop-color="#E0F2FE" />
+      <stop offset="50%" stop-color="#BAE6FD" />
+      <stop offset="80%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0369A1" />
+    </linearGradient>
+
+    <linearGradient id="plat-rim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#7DD3FC" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <linearGradient id="plat-pedestal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#082F49" />
+      <stop offset="50%" stop-color="#041826" />
+      <stop offset="100%" stop-color="#020B12" />
+    </linearGradient>
+
+    <linearGradient id="plat-plate" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="50%" stop-color="#E0F2FE" />
+      <stop offset="100%" stop-color="#0369A1" />
+    </linearGradient>
+
+    <clipPath id="shield-clip-t4">
+      <path d="M 256,28 L 440,76 C 474,195 460,340 256,484 C 52,340 38,195 72,76 Z" />
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow-gt-t4)">
+    <!-- Base Shield -->
+    <path d="M 256,26 L 442,74 C 478,195 464,342 256,488 C 48,342 34,195 70,74 Z"
+          fill="#050B14" stroke="#0C4A6E" stroke-width="6" />
+
+    <!-- Inner Shield Clip Area -->
+    <g clip-path="url(#shield-clip-t4)">
+      <rect x="30" y="15" width="452" height="480" fill="#040810" />
+
+      <!-- High-Frequency Carbon Weave Pattern -->
+      <g opacity="0.10" stroke="#38BDF8" stroke-width="1.8">
+        <line x1="30" y1="50" x2="482" y2="50" />
+        <line x1="30" y1="90" x2="482" y2="90" />
+        <line x1="30" y1="130" x2="482" y2="130" />
+        <line x1="30" y1="170" x2="482" y2="170" />
+        <line x1="30" y1="210" x2="482" y2="210" />
+        <line x1="30" y1="250" x2="482" y2="250" />
+        <line x1="30" y1="290" x2="482" y2="290" />
+        <line x1="30" y1="330" x2="482" y2="330" />
+        <line x1="30" y1="370" x2="482" y2="370" />
+      </g>
+
+      <!-- Swept Carbon Aero Diffuser Fins -->
+      <g opacity="0.22">
+        <polygon points="150,20 185,20 325,490 290,490" fill="#0284C7" />
+        <polygon points="195,20 230,20 370,490 335,490" fill="#38BDF8" />
+        <polygon points="240,20 260,20 400,490 380,490" fill="#E0F2FE" />
+      </g>
+    </g>
+
+    <!-- Beveled Platinum Rim Stroke -->
+    <path d="M 256,36 L 428,80 C 458,190 446,325 256,470 C 66,325 54,190 84,80 Z"
+          fill="none" stroke="url(#plat-rim)" stroke-width="4.5" opacity="0.95" />
+    <path d="M 256,46 L 418,86 C 444,185 432,312 256,454 C 80,312 68,185 94,86 Z"
+          fill="none" stroke="#00F0FF" stroke-width="1.8" stroke-dasharray="12 8" opacity="0.75" />
+
+    <!-- Modality GT Cyan Swept Crown Wing -->
+    <path d="M 160,54 L 256,36 L 352,54" stroke="#00F0FF" stroke-width="5.5" stroke-linecap="round" fill="none" opacity="0.98" />
+
+    <!-- FULL DOUBLE LAUREL GARLAND (Titanium Leaves with Polished Platinum Ribs) -->
+    <!-- Left Laurel Wreath -->
+    <g stroke="url(#plat-rim)" stroke-width="3.8" fill="#082F49" stroke-linecap="round">
+      <path d="M 146,366 C 94,320 86,198 140,135" fill="none" stroke-width="5" />
+      <path d="M 132,340 C 104,340 98,312 124,320 Z" />
+      <path d="M 116,292 C 90,282 90,255 114,268 Z" />
+      <path d="M 108,240 C 84,224 92,198 114,216 Z" />
+      <path d="M 114,188 C 94,168 112,142 128,168 Z" />
+      <path d="M 132,146 C 122,124 146,108 156,134 Z" />
+    </g>
+    <!-- Right Laurel Wreath -->
+    <g stroke="url(#plat-rim)" stroke-width="3.8" fill="#082F49" stroke-linecap="round">
+      <path d="M 366,366 C 418,320 426,198 372,135" fill="none" stroke-width="5" />
+      <path d="M 380,340 C 408,340 414,312 388,320 Z" />
+      <path d="M 396,292 C 422,282 422,255 398,268 Z" />
+      <path d="M 404,240 C 428,224 420,198 398,216 Z" />
+      <path d="M 398,188 C 418,168 400,142 384,168 Z" />
+      <path d="M 380,146 C 390,124 366,108 356,134 Z" />
+    </g>
+
+    <!-- ==================== TIER 4 PLATINUM TROPHY ==================== -->
+
+    <!-- Multi-Stage Swept Aerodynamic Wing Blades (Handles) -->
+    <path d="M 176,175 C 92,162 84,275 186,295"
+          stroke="url(#plat-rim)" stroke-width="17" stroke-linecap="round" fill="none" />
+    <path d="M 176,175 C 104,162 98,265 186,284"
+          stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.95" />
+
+    <path d="M 336,175 C 420,162 428,275 326,295"
+          stroke="url(#plat-rim)" stroke-width="17" stroke-linecap="round" fill="none" />
+    <path d="M 336,175 C 408,162 414,265 326,284"
+          stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.95" />
+
+    <!-- Main Cup Body (Faceted Aerodynamic Platinum Goblet) -->
+    <path d="M 172,140 L 340,140 C 340,248 302,310 256,322 C 210,310 172,248 172,140 Z"
+          fill="url(#plat-body)" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" />
+
+    <!-- Specular Platinum Mirror Core -->
+    <path d="M 214,142 C 214,230 236,300 256,320 C 276,300 298,230 298,142 Z"
+          fill="#FFFFFF" opacity="0.35" />
+    <line x1="256" y1="141" x2="256" y2="320" stroke="#FFFFFF" stroke-width="3.5" opacity="0.85" />
+
+    <!-- Cup Rim Lip -->
+    <ellipse cx="256" cy="140" rx="84" ry="19" fill="url(#plat-rim)" stroke="#FFFFFF" stroke-width="4" />
+    <ellipse cx="256" cy="140" rx="68" ry="13" fill="#041826" />
+
+    <!-- Embossed Medallion: GT1 -->
+    <circle cx="256" cy="226" r="32" fill="#031E33" stroke="url(#plat-plate)" stroke-width="4.5" />
+    <text x="256" y="235" fill="#E0F2FE" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="21" text-anchor="middle" letter-spacing="1">GT1</text>
+
+    <!-- Trophy Stem with Sculpted Diffuser Rings -->
+    <path d="M 236,322 L 276,322 L 272,362 L 240,362 Z"
+          fill="url(#plat-body)" stroke="#FFFFFF" stroke-width="3" />
+    <ellipse cx="256" cy="338" rx="24" ry="7" fill="#FFFFFF" opacity="0.9" />
+    <ellipse cx="256" cy="354" rx="26" ry="7" fill="url(#plat-rim)" />
+
+    <!-- Pedestal Base (Deep Obsidian Carbon with Titanium Ribs) -->
+    <polygon points="212,362 300,362 310,378 202,378"
+             fill="url(#plat-rim)" stroke="#FFFFFF" stroke-width="3" />
+    <rect x="170" y="378" width="172" height="48" rx="5"
+          fill="url(#plat-pedestal)" stroke="#38BDF8" stroke-width="4" />
+
+    <!-- Nameplate: HERITAGE TROPHY -->
+    <rect x="184" y="386" width="144" height="32" rx="3"
+          fill="url(#plat-plate)" stroke="#FFFFFF" stroke-width="2" />
+    <text x="256" y="400" fill="#020E18" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="10" text-anchor="middle" letter-spacing="0.5">HERITAGE TROPHY</text>
+    <text x="256" y="412" fill="#082F49" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="800" font-size="8.5" text-anchor="middle" letter-spacing="1.2">TIER IV • GT1</text>
+
+    <!-- Bottom Footing Step -->
+    <rect x="144" y="426" width="224" height="15" rx="4"
+          fill="#050C17" stroke="#0284C7" stroke-width="3" />
+
+    <!-- ==================== TIER INDICATOR: 4 STARS ==================== -->
+    <g transform="translate(256, 96)">
+      <!-- Star 1 -->
+      <g transform="translate(-45, 6)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#plat-rim)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFFFF" opacity="0.85" />
+      </g>
+      <!-- Star 2 -->
+      <g transform="translate(-15, 0) scale(1.08)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#plat-rim)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFFFF" opacity="0.9" />
+      </g>
+      <!-- Star 3 -->
+      <g transform="translate(15, 0) scale(1.08)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#plat-rim)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFFFF" opacity="0.9" />
+      </g>
+      <!-- Star 4 -->
+      <g transform="translate(45, 6)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#plat-rim)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFFFF" opacity="0.85" />
+      </g>
+    </g>
+
+    <!-- Roman Numeral 'IV' Badge at Lower Crest -->
+    <g transform="translate(256, 452)">
+      <rect x="-28" y="-11" width="56" height="22" rx="3" fill="#031E33" stroke="#38BDF8" stroke-width="2" />
+      <text x="256" y="463" fill="#E0F2FE" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+            font-weight="900" font-size="11" text-anchor="middle">TIER IV</text>
+    </g>
+  </g>
+</svg>

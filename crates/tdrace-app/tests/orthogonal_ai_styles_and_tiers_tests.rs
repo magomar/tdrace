@@ -256,7 +256,7 @@ ai_tier = 4
     session.launch_or_resume_championship(&def);
 
     // Verify opponents were initialized with their orthogonal profiles
-    assert_eq!(session.ai_drivers.len(), 2);
+    assert_eq!(session.ai_drivers.len(), session.max_grid_participants() - 1);
     let opp1 = &session.ai_drivers[0];
     let opp2 = &session.ai_drivers[1];
 

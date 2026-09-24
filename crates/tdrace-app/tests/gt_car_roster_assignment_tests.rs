@@ -156,8 +156,8 @@ fn test_gt_championship_roster_and_car_assignment() {
 
     assert!(session.championship_session.is_some());
     assert_eq!(session.active_module_id, "gt");
-    assert_eq!(session.cars.len(), 8);
-    assert_eq!(session.grid_participants.len(), 8);
+    assert_eq!(session.cars.len(), session.max_grid_participants());
+    assert_eq!(session.grid_participants.len(), session.max_grid_participants());
 
     let gt4_models = tdrace_app::catalog::get_models_for_category("gt", "GT4 Clubsport");
     let gt4_names: Vec<&'static str> = gt4_models.iter().map(|m| m.name).collect();
@@ -404,7 +404,7 @@ fn test_gt_career_tier_initializes_unlocked_real_car_and_diverse_roster() {
     assert_eq!(session.game_mode, GameMode::Career);
     assert_eq!(session.selected_car_model_id, Some("gt_toyota_supra_gt4"));
     assert_eq!(session.car_choice, CarChoice::GT4Clubsport);
-    assert_eq!(session.grid_participants.len(), 8);
+    assert_eq!(session.grid_participants.len(), session.max_grid_participants());
 
     let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
     assert_eq!(player.car_title, "Toyota GR Supra GT4 EVO");

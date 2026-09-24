@@ -1,0 +1,182 @@
+<svg id="trophy-extreme-tier4" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Drop Shadow and Toxic Neon Green Glow -->
+    <filter id="shadow-extreme-t4" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000000" flood-opacity="0.95" />
+      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#00FF66" flood-opacity="0.45" />
+    </filter>
+
+    <!-- Titanium & Steel Gradients -->
+    <linearGradient id="offroad-steel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="25%" stop-color="#E2E8F0" />
+      <stop offset="60%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+
+    <!-- Toxic Green / Safety Yellow -->
+    <linearGradient id="toxic-lime" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EAFFEF" />
+      <stop offset="40%" stop-color="#00FF66" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <!-- Coiled Suspension Spring (Toxic Green) -->
+    <linearGradient id="toxic-spring" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6EE7B7" />
+      <stop offset="50%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+
+    <clipPath id="shield-clip-extreme">
+      <path d="M 256,28 L 440,76 C 474,195 460,340 256,484 C 52,340 38,195 72,76 Z" />
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow-extreme-t4)">
+    <!-- Base Armor Shield Frame -->
+    <path d="M 256,26 L 442,74 C 478,195 464,342 256,488 C 48,342 34,195 70,74 Z"
+          fill="#060C08" stroke="#10B981" stroke-width="5" />
+
+    <!-- Inner Shield Clip Area -->
+    <g clip-path="url(#shield-clip-extreme)">
+      <rect x="30" y="15" width="452" height="480" fill="#040906" />
+
+      <!-- HAZARD CAUTION CHEVRONS (Diagonal Safety Stripes) -->
+      <g opacity="0.16">
+        <polygon points="60,20 100,20 240,490 200,490" fill="#00FF66" />
+        <polygon points="120,20 160,20 300,490 260,490" fill="#F59E0B" />
+        <polygon points="180,20 220,20 360,490 320,490" fill="#00FF66" />
+        <polygon points="240,20 280,20 420,490 380,490" fill="#F59E0B" />
+      </g>
+
+      <!-- Industrial Steel Diamond Plate Grid Dots -->
+      <g opacity="0.12" fill="#FFFFFF">
+        <circle cx="90" cy="140" r="2.5" /><circle cx="130" cy="140" r="2.5" /><circle cx="170" cy="140" r="2.5" />
+        <circle cx="110" cy="170" r="2.5" /><circle cx="150" cy="170" r="2.5" /><circle cx="190" cy="170" r="2.5" />
+        <circle cx="90" cy="200" r="2.5" /><circle cx="130" cy="200" r="2.5" /><circle cx="170" cy="200" r="2.5" />
+        <circle cx="330" cy="140" r="2.5" /><circle cx="370" cy="140" r="2.5" /><circle cx="410" cy="140" r="2.5" />
+        <circle cx="350" cy="170" r="2.5" /><circle cx="390" cy="170" r="2.5" /><circle cx="430" cy="170" r="2.5" />
+        <circle cx="330" cy="200" r="2.5" /><circle cx="370" cy="200" r="2.5" /><circle cx="410" cy="200" r="2.5" />
+      </g>
+    </g>
+
+    <!-- Beveled Titanium Rim Stroke -->
+    <path d="M 256,36 L 428,80 C 458,190 446,325 256,470 C 66,325 54,190 84,80 Z"
+          fill="none" stroke="url(#offroad-steel)" stroke-width="4.5" opacity="0.95" />
+    <path d="M 256,46 L 418,86 C 444,185 432,312 256,454 C 80,312 68,185 94,86 Z"
+          fill="none" stroke="#00FF66" stroke-width="1.8" stroke-dasharray="12 8" opacity="0.75" />
+
+    <!-- Top Crown: Stunt Mega-Ramp Chevron -->
+    <path d="M 160,54 L 256,36 L 352,54" stroke="#00FF66" stroke-width="5.5" stroke-linecap="round" fill="none" opacity="0.98" />
+    <path d="M 185,68 L 256,52 L 327,68" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.9" />
+
+    <!-- ==================== EXTREME OFFROAD TROPHY CUP ==================== -->
+
+    <!-- TUBULAR CHROMOLY ROLL CAGE TRUSS HANDLES -->
+    <!-- Left Roll Cage Truss -->
+    <g stroke="url(#offroad-steel)" stroke-width="8" stroke-linecap="round" fill="none">
+      <path d="M 174,175 C 90,165 80,275 180,296" />
+      <!-- Internal Truss Braces -->
+      <line x1="120" y1="180" x2="160" y2="230" stroke-width="4" stroke="#00FF66" />
+      <line x1="105" y1="230" x2="168" y2="275" stroke-width="4" stroke="#00FF66" />
+    </g>
+
+    <!-- Right Roll Cage Truss -->
+    <g stroke="url(#offroad-steel)" stroke-width="8" stroke-linecap="round" fill="none">
+      <path d="M 338,175 C 422,165 432,275 332,296" />
+      <!-- Internal Truss Braces -->
+      <line x1="392" y1="180" x2="352" y2="230" stroke-width="4" stroke="#00FF66" />
+      <line x1="407" y1="230" x2="344" y2="275" stroke-width="4" stroke="#00FF66" />
+    </g>
+
+    <!-- Main Cup Body: Heavy Chiseled Steel & Titanium Goblet -->
+    <path d="M 172,140 L 340,140 C 340,248 302,310 256,322 C 210,310 172,248 172,140 Z"
+          fill="url(#offroad-steel)" stroke="#00FF66" stroke-width="4" stroke-linejoin="round" />
+
+    <!-- Specular Highlight -->
+    <path d="M 214,142 C 214,230 236,300 256,320 C 276,300 298,230 298,142 Z"
+          fill="#FFFFFF" opacity="0.32" />
+    <line x1="256" y1="141" x2="256" y2="320" stroke="#FFFFFF" stroke-width="3" opacity="0.8" />
+
+    <!-- Cup Rim Lip with Industrial Hex Studs -->
+    <ellipse cx="256" cy="140" rx="84" ry="19" fill="#1E293B" stroke="#00FF66" stroke-width="3.5" />
+    <ellipse cx="256" cy="140" rx="68" ry="13" fill="#061209" />
+
+    <!-- Hex Studs around Rim -->
+    <circle cx="186" cy="140" r="3" fill="#00FF66" /><circle cx="214" cy="147" r="3" fill="#00FF66" />
+    <circle cx="256" cy="150" r="3.5" fill="#FFFFFF" /><circle cx="298" cy="147" r="3" fill="#00FF66" />
+    <circle cx="326" cy="140" r="3" fill="#00FF66" />
+
+    <!-- Central Beadlock Wheel Rim Medallion with Ventilated Brake Rotor -->
+    <circle cx="256" cy="226" r="34" fill="#040A06" stroke="url(#toxic-lime)" stroke-width="4.5" />
+    <!-- Beadlock Bolts around ring -->
+    <g fill="#FFFFFF" opacity="0.8">
+      <circle cx="256" cy="196" r="2" /><circle cx="277" cy="202" r="2" /><circle cx="286" cy="226" r="2" />
+      <circle cx="277" cy="250" r="2" /><circle cx="256" cy="256" r="2" /><circle cx="235" cy="250" r="2" />
+      <circle cx="226" cy="226" r="2" /><circle cx="235" cy="202" r="2" />
+    </g>
+    <!-- Core Hub Monogram: 4x4 / RAID -->
+    <text x="256" y="234" fill="#00FF66" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="18" text-anchor="middle" letter-spacing="1">4x4</text>
+
+    <!-- DUAL REMOTE-RESERVOIR COILOVER SUSPENSION PILLARS (Stem) -->
+    <!-- Left Coilover -->
+    <g transform="translate(244, 342)">
+      <rect x="-4" y="-20" width="8" height="40" fill="#E2E8F0" stroke="#FFFFFF" stroke-width="1" />
+      <path d="M -8,-14 C 8,-12 8,-6 -8,-4 C 8,-2 8,4 -8,6 C 8,8 8,14 -8,16"
+            fill="none" stroke="url(#toxic-spring)" stroke-width="4.5" stroke-linecap="round" />
+    </g>
+    <!-- Right Coilover -->
+    <g transform="translate(268, 342)">
+      <rect x="-4" y="-20" width="8" height="40" fill="#E2E8F0" stroke="#FFFFFF" stroke-width="1" />
+      <path d="M -8,-14 C 8,-12 8,-6 -8,-4 C 8,-2 8,4 -8,6 C 8,8 8,14 -8,16"
+            fill="none" stroke="url(#toxic-spring)" stroke-width="4.5" stroke-linecap="round" />
+    </g>
+
+    <!-- Pedestal Base: Armored Diamond Plate Steel Box -->
+    <polygon points="212,362 300,362 310,378 202,378"
+             fill="url(#offroad-steel)" stroke="#00FF66" stroke-width="2.5" />
+    <rect x="170" y="378" width="172" height="48" rx="5"
+          fill="#08140B" stroke="#00FF66" stroke-width="3.5" />
+
+    <!-- Nameplate: EXTREME OFFROAD CUP -->
+    <rect x="184" y="386" width="144" height="32" rx="3"
+          fill="#112415" stroke="url(#toxic-lime)" stroke-width="2" />
+    <text x="256" y="400" fill="#00FF66" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="9.5" text-anchor="middle" letter-spacing="0.5">EXTREME OFFROAD CUP</text>
+    <text x="256" y="412" fill="#A7F3D0" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="800" font-size="8.5" text-anchor="middle" letter-spacing="1.2">TIER IV • BAJA &amp; STUNT</text>
+
+    <!-- Bottom Heavy Skid Plate -->
+    <rect x="144" y="426" width="224" height="15" rx="4"
+          fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+
+    <!-- ==================== TIER INDICATOR: 4 STARS ==================== -->
+    <g transform="translate(256, 96)">
+      <g transform="translate(-45, 6)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="#00FF66" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+      <g transform="translate(-15, 0) scale(1.08)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="#00FF66" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+      <g transform="translate(15, 0) scale(1.08)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="#00FF66" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+      <g transform="translate(45, 6)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="#00FF66" stroke="#FFFFFF" stroke-width="1.5" />
+      </g>
+    </g>
+
+    <!-- Roman Numeral 'IV' Badge at Lower Crest -->
+    <g transform="translate(256, 452)">
+      <rect x="-28" y="-11" width="56" height="22" rx="3" fill="#081A0E" stroke="#00FF66" stroke-width="2" />
+      <text x="256" y="463" fill="#00FF66" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+            font-weight="900" font-size="11" text-anchor="middle">TIER IV</text>
+    </g>
+  </g>
+</svg>

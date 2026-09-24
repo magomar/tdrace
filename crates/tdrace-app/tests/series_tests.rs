@@ -613,7 +613,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     // 1. Verify championship session initialization
     assert!(session.championship_session.is_some());
     let champ = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ.standings.len(), 8);
+    assert_eq!(champ.standings.len(), session.max_grid_participants());
     let standing_ids: Vec<String> = champ.standings.iter().map(|s| s.driver_id.clone()).collect();
     assert!(standing_ids.contains(&"player".to_string()));
     assert!(standing_ids.contains(&"johan_vance".to_string()));
@@ -621,8 +621,8 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
 
     // 2. Init race for Round 1
     session.init_race();
-    assert_eq!(session.cars.len(), 8);
-    assert_eq!(session.opponent_drivers.len(), 7);
+    assert_eq!(session.cars.len(), session.max_grid_participants());
+    assert_eq!(session.opponent_drivers.len(), session.max_grid_participants() - 1);
     for opp in &session.opponent_drivers {
         assert!(
             standing_ids.contains(&opp.id.to_string()),
@@ -675,11 +675,11 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     assert_eq!(player_standing.points, 15, "Player finishing 3rd must receive 15 FIA points");
     assert_eq!(player_standing.podiums, 1);
 
-    // Other AI drivers MUST have points awarded, not 0!
-    for standing in &champ.standings {
+    // Top-10 drivers in FIA points scoring positions receive points
+    for standing in champ.standings.iter().take(10.min(champ.standings.len())) {
         assert!(
             standing.points > 0,
-            "Driver '{}' finished the race and must receive points (got 0)",
+            "Driver '{}' finished the race in points scoring positions and must receive points (got 0)",
             standing.driver_name
         );
     }
@@ -692,7 +692,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
 
     // 5. Advance to Round 2
     session.advance_championship_round();
-    assert_eq!(session.opponent_drivers.len(), 7);
+    assert_eq!(session.opponent_drivers.len(), session.max_grid_participants() - 1);
     for opp in &session.opponent_drivers {
         assert!(
             standing_ids.contains(&opp.id.to_string()),
@@ -749,7 +749,7 @@ fn test_kart_and_gt_championship_rosters_match_modules() {
     let mut session = RaceSession::new();
     session.start_kart_career_tier(1);
     session.init_race();
-    assert_eq!(session.opponent_drivers.len(), 7);
+    assert_eq!(session.opponent_drivers.len(), session.max_grid_participants() - 1);
     let kart_champ = session.championship_session.as_ref().unwrap();
     for opp in &session.opponent_drivers {
         assert!(
@@ -761,7 +761,7 @@ fn test_kart_and_gt_championship_rosters_match_modules() {
 
     session.start_gt_championship();
     session.init_race();
-    assert_eq!(session.opponent_drivers.len(), 7);
+    assert_eq!(session.opponent_drivers.len(), session.max_grid_participants() - 1);
     let gt_champ = session.championship_session.as_ref().unwrap();
     for opp in &session.opponent_drivers {
         assert!(

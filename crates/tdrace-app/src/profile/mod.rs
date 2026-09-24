@@ -307,41 +307,25 @@ impl ModuleCareerProgress {
             ("gt" | "gt_challenge", 1) => vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
             ("gt" | "gt_challenge", _) => Vec::new(),
 
-            ("nascar", 1) => vec![
-                "nascar_monte_carlo_ss".to_string(),
-                "nascar_mustang_street_stock".to_string(),
-                "nascar_dodge_dart_street_stock".to_string(),
-            ],
+            ("nascar", 1) => vec!["nascar_monte_carlo_ss".to_string()],
             ("nascar", 2) => vec!["nascar_super_late_model".to_string()],
             ("nascar", 3) => vec!["nascar_arca_chevy_ss".to_string()],
             ("nascar", 4) => vec!["nascar_silverado_truck".to_string()],
             ("nascar", 5) => vec!["nascar_corvette_ta1".to_string()],
 
-            ("rally", 1) => vec![
-                "rally_peugeot_208_rally4".to_string(),
-                "rally_fiesta_rally4".to_string(),
-                "rally_clio_rally4".to_string(),
-            ],
+            ("rally", 1) => vec!["rally_peugeot_208_rally4".to_string()],
             ("rally", 2) => vec!["rally_audi_s1_wrx".to_string()],
             ("rally", 3) => vec!["rally_audi_sport_quattro_s1".to_string()],
             ("rally", 4) => vec!["rally_toyota_hilux_dakar".to_string()],
             ("rally", 5) => vec!["rally_robby_gordon_sst".to_string()],
 
-            ("kart", 1) => vec![
-                "kart_crg_hero_60".to_string(),
-                "kart_birel_c28".to_string(),
-                "kart_tony_kart_neos".to_string(),
-            ],
+            ("kart", 1) => vec!["kart_crg_hero_60".to_string()],
             ("kart", 2) => vec!["kart_tony_kart_racer_ok".to_string()],
             ("kart", 3) => vec!["kart_birel_art_kz2".to_string()],
             ("kart", 4) => vec!["kart_honda_mean_mower".to_string()],
             ("kart", 5) => vec!["kart_anderson_cs250".to_string()],
 
-            ("extreme_offroad" | "offroad", 1) => vec![
-                "offroad_sand_rail_buggy".to_string(),
-                "offroad_polaris_rzr_pro_r".to_string(),
-                "offroad_vw_sand_rail".to_string(),
-            ],
+            ("extreme_offroad" | "offroad", 1) => vec!["offroad_sand_rail_buggy".to_string()],
             ("extreme_offroad" | "offroad", 2) => vec!["offroad_ford_bronco_dr".to_string()],
             ("extreme_offroad" | "offroad", 3) => vec!["offroad_arctic_hilux_at44".to_string()],
             ("extreme_offroad" | "offroad", 4) => vec!["offroad_pro4_unlimited_chevy".to_string()],

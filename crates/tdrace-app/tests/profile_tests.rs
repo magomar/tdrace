@@ -678,7 +678,7 @@ fn test_gt_career_session_gating_and_cup_launch() {
     if let Some(db) = &session.hof_db {
         let saved = db.get_module_progress(pid, "gt").unwrap().unwrap();
         assert_eq!(saved.xp, session.active_career_progress.xp);
-        assert!(saved.visited_tracks.contains(&"monza".to_string()));
+        assert!(saved.visited_tracks.contains(&"red_bull_ring".to_string()));
     }
 }
 
@@ -1781,6 +1781,10 @@ fn test_championship_navigation_selection_and_launch() {
     use tdrace_app::ui::profile_ui::get_sorted_championships;
 
     let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+    session.switch_to_gt();
     assert_eq!(session.profile_champ_selected_idx, 0);
 
     let manager = ChampionshipManager::new();
@@ -1892,6 +1896,108 @@ fn test_career_hub_focus_and_navigation() {
     }
     assert_eq!(session.career_hub_focus, CareerHubFocus::Tabs);
 }
+
+#[test]
+fn test_tier_1_starter_cars_single_entry_vehicle() {
+    use tdrace_app::profile::ModuleCareerProgress;
+
+    // Each discipline in Tier 1 must provide only 1 starter car
+    let rally_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("rally", 1);
+    assert_eq!(rally_starters, vec!["rally_peugeot_208_rally4"]);
+
+    let nascar_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("nascar", 1);
+    assert_eq!(nascar_starters, vec!["nascar_monte_carlo_ss"]);
+
+    let kart_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("kart", 1);
+    assert_eq!(kart_starters, vec!["kart_crg_hero_60"]);
+
+    let offroad_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("extreme_offroad", 1);
+    assert_eq!(offroad_starters, vec!["offroad_sand_rail_buggy"]);
+
+    let gt_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("gt", 1);
+    assert_eq!(gt_starters, vec!["gt_toyota_supra_gt4", "gt4_clubsport"]);
+}
+
+#[test]
+fn test_rally_championship_track_choice_sync_across_rounds() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    session.start_rally_career_tier(1);
+    assert_eq!(session.track_choice_id(), "holjes_rx");
+
+    if let Some(champ) = &mut session.championship_session {
+        champ.current_round += 1;
+    }
+    session.advance_championship_round();
+    assert_eq!(session.track_choice_id(), "lydden_hill");
+
+    if let Some(champ) = &mut session.championship_session {
+        champ.current_round += 1;
+    }
+    session.advance_championship_round();
+    assert_eq!(session.track_choice_id(), "mettet_rx");
+}
+
+#[test]
+fn test_race_finish_records_authentic_model_title_in_history() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    session.start_rally_career_tier(1);
+    session.selected_car_model_id = Some("rally_fiesta_rally4");
+
+    session.total_laps = 1;
+    session.trackers[0].current_lap = 2; // finished 1 lap
+    session.trackers[0].best_lap_time = Some(35.0);
+    session.session_time = 40.0;
+    session.check_race_finish();
+
+    assert!(!session.profile_history.is_empty());
+    let entry = &session.profile_history[0];
+    assert_eq!(entry.car_name, "Ford Fiesta Rally4");
+    assert_eq!(entry.track_id, "holjes_rx");
+}
+
+#[test]
+fn test_module_career_progress_isolation_and_xp_crediting() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    let pid = session.active_profile.id.unwrap();
+
+    // Start rally championship and complete round 1
+    session.start_rally_career_tier(1);
+    assert_eq!(session.active_module_id, "rally");
+
+    session.total_laps = 1;
+    session.trackers[0].current_lap = 2;
+    session.trackers[0].best_lap_time = Some(35.0);
+    session.session_time = 40.0;
+    session.check_race_finish();
+
+    // Rally module has earned XP and visited holjes_rx
+    assert!(session.active_career_progress.xp > 0);
+    assert!(session.active_career_progress.visited_tracks.contains(&"holjes_rx".to_string()));
+
+    // GT module remains untouched at 0 XP
+    if let Some(db) = &session.hof_db {
+        let gt_prog = db.get_module_progress(pid, "gt").unwrap();
+        let gt_xp = gt_prog.map(|p| p.xp).unwrap_or(0);
+        assert_eq!(gt_xp, 0);
+
+        let rally_prog = db.get_module_progress(pid, "rally").unwrap().expect("Rally progress exists");
+        assert_eq!(rally_prog.xp, session.active_career_progress.xp);
+        assert_eq!(rally_prog.visited_tracks, vec!["holjes_rx"]);
+    }
+}
+
 
 
 

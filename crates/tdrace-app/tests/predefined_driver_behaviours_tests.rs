@@ -220,7 +220,7 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
     assert_eq!(entry_d2.ai_character.as_deref(), Some("smooth"));
 
     // Verify opponent drivers have distinct profiles based on archetypes
-    assert_eq!(session.opponent_drivers.len(), 4);
+    assert_eq!(session.opponent_drivers.len(), session.max_grid_participants() - 1);
     let d1_driver = session.opponent_drivers.iter().find(|d| d.id == "custom_d1").expect("custom_d1 driver");
     let d2_driver = session.opponent_drivers.iter().find(|d| d.id == "custom_d2").expect("custom_d2 driver");
 
@@ -229,7 +229,7 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
     assert_ne!(d1_driver.default_profile().brake_margin, d2_driver.default_profile().brake_margin);
 
     // Verify ai_drivers instantiated in the race session match the profile parameters
-    assert_eq!(session.ai_drivers.len(), 4);
+    assert_eq!(session.ai_drivers.len(), session.max_grid_participants() - 1);
     assert_eq!(session.ai_drivers[0].profile.aggression, d1_driver.default_profile().aggression);
     assert_eq!(session.ai_drivers[1].profile.aggression, d2_driver.default_profile().aggression);
 }

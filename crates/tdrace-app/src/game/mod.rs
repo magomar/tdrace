@@ -427,6 +427,7 @@ pub struct RaceSession {
     pub active_career_progress: ModuleCareerProgress,
     pub profile_list: Vec<PlayerProfile>,
     pub profile_history: Vec<RaceHistoryEntry>,
+    pub profile_module_progress: std::collections::HashMap<String, ModuleCareerProgress>,
     pub profile_manager_tab: usize,
     pub profile_telemetry_filter_idx: usize,
     pub profile_focus_card: bool,
@@ -719,6 +720,7 @@ impl RaceSession {
             active_career_progress: ModuleCareerProgress::default_for_gt(1),
             profile_list: Vec::new(),
             profile_history: Vec::new(),
+            profile_module_progress: std::collections::HashMap::new(),
             profile_manager_tab: 0,
             profile_telemetry_filter_idx: 0,
             profile_focus_card: false,
@@ -899,8 +901,11 @@ impl RaceSession {
                 if let Ok(hist) = db.get_history_for_profile(pid, 20) {
                     self.profile_history = hist;
                 }
-                if let Ok(progress) = db.get_or_create_module_progress(pid, "gt") {
+                if let Ok(progress) = db.get_or_create_module_progress(pid, self.active_module_id) {
                     self.active_career_progress = progress;
+                }
+                if let Ok(all_prog) = db.get_all_module_progress(pid) {
+                    self.profile_module_progress = all_prog;
                 }
             }
         }
@@ -1220,11 +1225,6 @@ impl RaceSession {
     pub fn is_active_player_car_unlocked(&self) -> bool {
         if self.is_dev_mode() || self.active_module_id == "classic" {
             return true;
-        }
-        if let Some(champ) = &self.championship_session {
-            if self.active_player_car_tier() <= champ.tier as u8 {
-                return true;
-            }
         }
         if let Some(model_id) = self.selected_car_model_id {
             return self.active_career_progress.is_car_unlocked(model_id, self.is_dev_mode());
@@ -2130,6 +2130,7 @@ impl RaceSession {
         }
         self.championship_session = Some(champ.with_tier(tier));
         if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+            self.track_choice = self.track_manager.track_choice_for_slug(track_id);
             if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
                 self.track = t;
             }
@@ -2281,6 +2282,12 @@ impl RaceSession {
             self.car_choice = CarChoice::StockCar;
         }
         self.championship_session = Some(champ.with_tier(tier));
+        if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+            self.track_choice = self.track_manager.track_choice_for_slug(track_id);
+            if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                self.track = t;
+            }
+        }
         self.init_race();
     }
 
@@ -2424,6 +2431,12 @@ impl RaceSession {
             self.car_choice = CarChoice::RallyCar;
         }
         self.championship_session = Some(champ.with_tier(tier));
+        if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+            self.track_choice = self.track_manager.track_choice_for_slug(track_id);
+            if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                self.track = t;
+            }
+        }
         self.init_race();
     }
 
@@ -2567,6 +2580,12 @@ impl RaceSession {
             self.car_choice = CarChoice::Kart;
         }
         self.championship_session = Some(champ.with_tier(tier));
+        if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+            self.track_choice = self.track_manager.track_choice_for_slug(track_id);
+            if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                self.track = t;
+            }
+        }
         self.init_race();
     }
 
@@ -2728,6 +2747,12 @@ impl RaceSession {
             self.car_choice = CarChoice::SandRail;
         }
         self.championship_session = Some(champ.with_tier(tier));
+        if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+            self.track_choice = self.track_manager.track_choice_for_slug(track_id);
+            if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                self.track = t;
+            }
+        }
         self.init_race();
     }
 
@@ -2844,6 +2869,7 @@ impl RaceSession {
 
         if has_session {
             if let Some(track_id) = next_track_id {
+                self.track_choice = self.track_manager.track_choice_for_slug(&track_id);
                 self.track = self
                     .track_manager
                     .load_track_by_slug(&track_id)
@@ -2989,7 +3015,10 @@ impl RaceSession {
     /// Reconstructs participant cars, trackers, and AI drivers for the active roster.
     pub fn rebuild_roster_participants(&mut self) {
         if let Some(champ) = &self.championship_session {
-            self.num_bots = champ.standings.iter().filter(|s| s.driver_id != "player").count();
+            let max_grid = self.max_grid_participants();
+            let human_count = if self.is_split_screen() { 2 } else { 1 };
+            let bot_count = champ.standings.iter().filter(|s| s.driver_id != "player").count();
+            self.num_bots = bot_count.min(max_grid.saturating_sub(human_count));
         }
 
         let total_cars = if self.is_time_attack {
@@ -3469,7 +3498,47 @@ impl RaceSession {
 
         if !self.is_time_attack && total_cars > 1 {
             if !self.is_split_screen() {
-                participants.sort_by(|a, b| a.cmp_grid_priority(b));
+                let is_successive_championship_round = self
+                    .championship_session
+                    .as_ref()
+                    .map(|champ| !champ.is_new())
+                    .unwrap_or(false);
+
+                if is_successive_championship_round {
+                    let champ = self.championship_session.as_ref().unwrap();
+                    participants.sort_by(|a, b| {
+                        let id_a = if a.is_player {
+                            "player"
+                        } else {
+                            a.bot_index
+                                .and_then(|idx| self.opponent_drivers.get(idx))
+                                .map(|d| d.id)
+                                .unwrap_or("")
+                        };
+                        let id_b = if b.is_player {
+                            "player"
+                        } else {
+                            b.bot_index
+                                .and_then(|idx| self.opponent_drivers.get(idx))
+                                .map(|d| d.id)
+                                .unwrap_or("")
+                        };
+                        let rank_a = champ
+                            .standings
+                            .iter()
+                            .position(|s| s.driver_id == id_a)
+                            .unwrap_or(usize::MAX);
+                        let rank_b = champ
+                            .standings
+                            .iter()
+                            .position(|s| s.driver_id == id_b)
+                            .unwrap_or(usize::MAX);
+
+                        rank_a.cmp(&rank_b).then_with(|| a.cmp_grid_priority(b))
+                    });
+                } else {
+                    participants.sort_by(|a, b| a.cmp_grid_priority(b));
+                }
             }
         }
         self.grid_participants = participants;
@@ -3643,6 +3712,55 @@ impl RaceSession {
                 }
             } else {
                 self.track = self.load_track_for_session(&self.track_choice);
+            }
+        }
+
+        // If starting a brand new championship, synchronize the starting roster size to the circuit grid slots
+        let is_new_championship = self.championship_session.as_ref().map(|c| c.is_new()).unwrap_or(false);
+        if is_new_championship {
+            let circuit_slots = self.max_grid_participants();
+            let effective_module = if self.active_module_id != "classic" {
+                self.active_module_id
+            } else {
+                self.track.module_id.as_deref().unwrap_or(self.active_module_id)
+            };
+            let mut fallback_pool = match effective_module {
+                "classic" => ClassicGameModule::new().drivers(),
+                "gt" | "gt_challenge" => GtWorldChallengeModule::new().drivers(),
+                "rally" => RallyGameModule::new().drivers(),
+                "kart" => KartGameModule::new().drivers(),
+                "nascar" => NascarGameModule::new().drivers(),
+                "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
+                _ => Vec::new(),
+            };
+            let global_all = DriverCharacter::all_across_modules();
+            for d in global_all {
+                if !fallback_pool.iter().any(|existing| existing.id == d.id) {
+                    fallback_pool.push(d);
+                }
+            }
+            if let Some(champ) = &mut self.championship_session {
+                champ.sync_initial_grid_slots(circuit_slots, &fallback_pool);
+            }
+            if self.game_mode == GameMode::Career {
+                if let Some(champ) = &self.championship_session {
+                    let rivals = champ
+                        .standings
+                        .iter()
+                        .filter(|s| s.driver_id != "player")
+                        .map(|s| {
+                            let char_def = DriverCharacter::find_global(&s.driver_id);
+                            let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
+                            CareerRivalEntry {
+                                driver_id: s.driver_id.clone(),
+                                driver_name: s.driver_name.clone(),
+                                style,
+                                tier: s.ai_tier.map(DriverTier::from_u8).unwrap_or(DriverTier::Rookie),
+                            }
+                        })
+                        .collect();
+                    self.active_career_progress.career_rivals = rivals;
+                }
             }
         }
 
@@ -5423,6 +5541,7 @@ impl RaceSession {
                         let _ = db.delete_latest_race_history_entry_for_championship(&champ.name);
                     }
                     self.spawn_hud_alert("LATEST ROUND RESULTS CANCELLED — RE-RUNNING".to_string(), Palette::NEON_GOLD);
+                    self.track_choice = self.track_manager.track_choice_for_slug(&track_id);
                     self.track = self
                         .track_manager
                         .load_track_by_slug(&track_id)
@@ -10054,12 +10173,17 @@ impl RaceSession {
             // 2. Log player race result to persistent history
             let player_pos = self.results.iter().position(|r| r.is_player).map(|p| p + 1).unwrap_or(1);
             let active_player_car = self.active_player_car_choice();
+            let player_car_title = self
+                .selected_car_model_id
+                .and_then(crate::catalog::find_model_by_id)
+                .map(|m| m.name.to_string())
+                .unwrap_or_else(|| active_player_car.title().to_string());
             if let Some(pid) = self.active_profile.id {
                 let history_record = RaceHistoryEntry {
                     id: None,
                     profile_id: pid,
                     track_id: track_id.clone(),
-                    car_name: active_player_car.title().to_string(),
+                    car_name: player_car_title.clone(),
                     position: player_pos,
                     total_cars: self.cars.len(),
                     total_time: player_time,
@@ -10087,23 +10211,25 @@ impl RaceSession {
                     let is_p2 = self.is_split_screen() && car_idx == 1;
                     let (driver_name, vehicle_name) = if is_p1 {
                         if self.is_split_screen() {
-                            (format!("{} (P1)", self.active_profile.alias), active_player_car.title().to_string())
+                            (format!("{} (P1)", self.active_profile.alias), player_car_title.clone())
                         } else {
-                            (self.active_profile.alias.clone(), active_player_car.title().to_string())
+                            (self.active_profile.alias.clone(), player_car_title.clone())
                         }
                     } else if is_p2 {
-                        ("Player 2 (P2)".to_string(), active_player_car.title().to_string())
+                        ("Player 2 (P2)".to_string(), player_car_title.clone())
                     } else {
                         let bot_offset = if self.is_split_screen() { 2 } else { 1 };
                         if let Some(character) = self.opponent_drivers.get(car_idx.saturating_sub(bot_offset)) {
-                            let bot_car = if self.free_car_selection {
+                            let bot_car = if let Some(fav) = character.favorite_cars.iter().find(|f| f.discipline == self.active_module_id) {
+                                crate::catalog::find_model_by_id(fav.model_id).map(|m| m.name.to_string()).unwrap_or_else(|| character.preferred_car.title().to_string())
+                            } else if self.free_car_selection {
                                 character.preferred_car.title().to_string()
                             } else {
-                                active_player_car.title().to_string()
+                                player_car_title.clone()
                             };
                             (character.alias.to_string(), bot_car)
                         } else {
-                            (format!("Driver {}", car_idx), active_player_car.title().to_string())
+                            (format!("Driver {}", car_idx), player_car_title.clone())
                         }
                     };
 
@@ -10741,6 +10867,7 @@ impl RaceSession {
                     self.profile_champ_selected_idx,
                     self.is_dev_mode(),
                     self.active_career_progress.level,
+                    &self.profile_module_progress,
                 );
             }
             GameState::PlayerRosterManager {
@@ -11054,6 +11181,13 @@ impl RaceSession {
             self.car_choice = m.base_car_choice;
             self.current_visual_type = m.visual_type;
             self.free_car_selection = true;
+        }
+
+        if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+            self.track_choice = self.track_manager.track_choice_for_slug(track_id);
+            if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                self.track = t;
+            }
         }
 
         self.init_race();

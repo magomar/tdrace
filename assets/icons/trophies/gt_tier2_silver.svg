@@ -1,0 +1,173 @@
+<svg id="trophy-gt-tier2" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Drop Shadow and Ambient Glow -->
+    <filter id="shadow-gt-t2" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.85" />
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#94A3B8" flood-opacity="0.35" />
+    </filter>
+
+    <!-- Silver / Chrome Gradients -->
+    <linearGradient id="silver-body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="25%" stop-color="#E2E8F0" />
+      <stop offset="60%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+
+    <linearGradient id="silver-rim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="45%" stop-color="#CBD5E1" />
+      <stop offset="100%" stop-color="#64748B" />
+    </linearGradient>
+
+    <linearGradient id="silver-pedestal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="50%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <linearGradient id="silver-plate" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#94A3B8" />
+      <stop offset="50%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#64748B" />
+    </linearGradient>
+
+    <clipPath id="shield-clip-t2">
+      <path d="M 256,36 L 424,84 C 452,185 442,320 256,476 C 70,320 60,185 88,84 Z" />
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow-gt-t2)">
+    <!-- Base Shield -->
+    <path d="M 256,34 L 426,82 C 456,185 446,322 256,480 C 66,322 56,185 86,82 Z"
+          fill="#0B111A" stroke="#1E293B" stroke-width="6" />
+
+    <!-- Inner Shield Clip Area -->
+    <g clip-path="url(#shield-clip-t2)">
+      <rect x="50" y="25" width="412" height="460" fill="#080D14" />
+
+      <!-- High-Tech Honeycomb / Carbon Grid -->
+      <g opacity="0.08" stroke="#FFFFFF" stroke-width="1.8">
+        <line x1="50" y1="70" x2="462" y2="70" />
+        <line x1="50" y1="110" x2="462" y2="110" />
+        <line x1="50" y1="150" x2="462" y2="150" />
+        <line x1="50" y1="190" x2="462" y2="190" />
+        <line x1="50" y1="230" x2="462" y2="230" />
+        <line x1="50" y1="270" x2="462" y2="270" />
+        <line x1="50" y1="310" x2="462" y2="310" />
+        <line x1="50" y1="350" x2="462" y2="350" />
+        <line x1="50" y1="390" x2="462" y2="390" />
+      </g>
+
+      <!-- Twin Silver Speed Stripes -->
+      <g opacity="0.18">
+        <polygon points="175,30 205,30 335,480 305,480" fill="#94A3B8" />
+        <polygon points="215,30 245,30 375,480 345,480" fill="#CBD5E1" />
+      </g>
+    </g>
+
+    <!-- Beveled Silver Rim Stroke -->
+    <path d="M 256,44 L 414,88 C 440,180 432,306 256,460 C 80,306 72,180 98,88 Z"
+          fill="none" stroke="url(#silver-rim)" stroke-width="3.5" opacity="0.9" />
+    <path d="M 256,54 L 404,94 C 426,176 418,294 256,444 C 94,294 86,176 108,94 Z"
+          fill="none" stroke="#38BDF8" stroke-width="1.2" stroke-dasharray="8 8" opacity="0.5" />
+
+    <!-- Modality GT Cyan Crown Wing -->
+    <path d="M 200,64 L 256,48 L 312,64" stroke="#00E5FF" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.95" />
+
+    <!-- Silver Laurel Hints on Lower Left and Right -->
+    <g stroke="url(#silver-rim)" stroke-width="3" fill="#1E293B" opacity="0.85">
+      <!-- Left Laurel Branch -->
+      <path d="M 148,340 C 130,300 134,240 162,190" fill="none" />
+      <path d="M 140,315 C 120,310 120,290 138,298 Z" />
+      <path d="M 132,275 C 114,265 116,245 134,256 Z" />
+      <path d="M 138,235 C 122,220 128,202 144,216 Z" />
+
+      <!-- Right Laurel Branch -->
+      <path d="M 364,340 C 382,300 378,240 350,190" fill="none" />
+      <path d="M 372,315 C 392,310 392,290 374,298 Z" />
+      <path d="M 380,275 C 398,265 396,245 378,256 Z" />
+      <path d="M 374,235 C 390,220 384,202 368,216 Z" />
+    </g>
+
+    <!-- ==================== TIER 2 SILVER TROPHY ==================== -->
+
+    <!-- Sculptural Swept Handles (Double Arch GT Aerodynamic Fins) -->
+    <path d="M 184,180 C 116,175 110,265 190,285"
+          stroke="url(#silver-rim)" stroke-width="13" stroke-linecap="round" fill="none" />
+    <path d="M 184,180 C 124,175 120,258 190,276"
+          stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.9" />
+
+    <path d="M 328,180 C 396,175 402,265 322,285"
+          stroke="url(#silver-rim)" stroke-width="13" stroke-linecap="round" fill="none" />
+    <path d="M 328,180 C 388,175 392,258 322,276"
+          stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.9" />
+
+    <!-- Main Cup Goblet Body -->
+    <path d="M 180,150 L 332,150 C 332,242 298,300 256,312 C 214,300 180,242 180,150 Z"
+          fill="url(#silver-body)" stroke="#FFFFFF" stroke-width="3.5" stroke-linejoin="round" />
+
+    <!-- Center Polish Highlight -->
+    <path d="M 218,152 C 218,225 240,290 256,310 C 272,290 294,225 294,152 Z"
+          fill="#FFFFFF" opacity="0.25" />
+    <line x1="256" y1="151" x2="256" y2="310" stroke="#FFFFFF" stroke-width="2.5" opacity="0.6" />
+
+    <!-- Rim Lip -->
+    <ellipse cx="256" cy="150" rx="76" ry="17" fill="url(#silver-rim)" stroke="#FFFFFF" stroke-width="3" />
+    <ellipse cx="256" cy="150" rx="60" ry="11" fill="#141C26" />
+
+    <!-- Medallion Insignia: GT3 -->
+    <circle cx="256" cy="226" r="28" fill="#0F172A" stroke="url(#silver-plate)" stroke-width="3.5" />
+    <text x="256" y="233" fill="#FFFFFF" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="18" text-anchor="middle" letter-spacing="1">GT3</text>
+
+    <!-- Trophy Stem with Dual Rings -->
+    <path d="M 240,312 L 272,312 L 268,350 L 244,350 Z"
+          fill="url(#silver-body)" stroke="#FFFFFF" stroke-width="2.5" />
+    <ellipse cx="256" cy="328" rx="20" ry="5.5" fill="#FFFFFF" opacity="0.8" />
+    <ellipse cx="256" cy="342" rx="22" ry="5.5" fill="url(#silver-rim)" />
+
+    <!-- Pedestal Base (Multi-Tiered Jet Slate & Brushed Silver) -->
+    <polygon points="220,350 292,350 300,366 212,366"
+             fill="url(#silver-rim)" stroke="#FFFFFF" stroke-width="2" />
+    <rect x="180" y="366" width="152" height="44" rx="4"
+          fill="url(#silver-pedestal)" stroke="#94A3B8" stroke-width="3" />
+
+    <!-- Nameplate: EUROPEAN CHALLENGE -->
+    <rect x="194" y="374" width="124" height="28" rx="3"
+          fill="url(#silver-plate)" stroke="#FFFFFF" stroke-width="1.5" />
+    <text x="256" y="386" fill="#0A0F1D" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="8.5" text-anchor="middle" letter-spacing="0.5">EUROPEAN CHALLENGE</text>
+    <text x="256" y="397" fill="#1E293B" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+          font-weight="800" font-size="7.5" text-anchor="middle" letter-spacing="1.2">TIER II • GT3</text>
+
+    <!-- Bottom Footing -->
+    <rect x="160" y="410" width="192" height="12" rx="3"
+          fill="#0B111A" stroke="#334155" stroke-width="2" />
+
+    <!-- ==================== TIER INDICATOR: 2 STARS ==================== -->
+    <g transform="translate(256, 110)">
+      <!-- Star 1 (Left Silver Star) -->
+      <g transform="translate(-20, 0)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#silver-rim)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFFFF" opacity="0.75" />
+      </g>
+      <!-- Star 2 (Right Silver Star) -->
+      <g transform="translate(20, 0)">
+        <polygon points="0,-16 4.7,-4.8 16,-4.8 7.3,1.8 10.6,12.8 0,6 -10.6,12.8 -7.3,1.8 -16,-4.8 -4.7,-4.8"
+                 fill="url(#silver-rim)" stroke="#FFFFFF" stroke-width="1.5" />
+        <polygon points="0,-11 3.2,-3.2 11,-3.2 5,1.2 7,8.6 0,4.2 -7,8.6 -5,1.2 -11,-3.2 -3.2,-3.2"
+                 fill="#FFFFFF" opacity="0.75" />
+      </g>
+    </g>
+
+    <!-- Roman Numeral 'II' Badge at Lower Crest -->
+    <g transform="translate(256, 436)">
+      <rect x="-22" y="-10" width="44" height="20" rx="3" fill="#0F172A" stroke="#94A3B8" stroke-width="2" />
+      <text x="256" y="447" fill="#FFFFFF" font-family="'Inter', 'Outfit', 'Segoe UI', sans-serif"
+            font-weight="900" font-size="11.5" text-anchor="middle">TIER II</text>
+    </g>
+  </g>
+</svg>

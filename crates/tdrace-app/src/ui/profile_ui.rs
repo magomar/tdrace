@@ -7,7 +7,7 @@ use macroquad::texture::{draw_texture_ex, DrawTextureParams};
 use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
-use crate::profile::{draw_country_banner, AssistProfile, CountryRegistry, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
+use crate::profile::{draw_country_banner, AssistProfile, CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::render::lateral::render_real_car_lateral_by_id;
 use crate::render::vehicle_assets::get_vehicle_lateral_texture;
@@ -151,6 +151,7 @@ pub fn render_profile_manager_screen(
     champ_selected_idx: usize,
     is_dev_mode: bool,
     career_level: u32,
+    module_progress_map: &std::collections::HashMap<String, ModuleCareerProgress>,
 ) {
     let focus_card = focus_area == ProfileFocusArea::HeroCard;
     let is_filter_focused = focus_area == ProfileFocusArea::Filters;
@@ -378,7 +379,7 @@ pub fn render_profile_manager_screen(
 
     match active_tab {
         0 => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
-        1 => render_disciplines_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
+        1 => render_disciplines_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats, module_progress_map),
         2 => render_championships_tab(
             &scaler,
             fonts,
@@ -398,6 +399,7 @@ pub fn render_profile_manager_screen(
             is_filter_focused,
             is_dev_mode,
             career_level,
+            module_progress_map,
         ),
         3 => render_telemetry_tab(&scaler, fonts, x, cur_y, full_w, content_h, history, filter_category_idx, is_filter_focused),
         _ => render_overview_tab(&scaler, fonts, x, cur_y, full_w, content_h, stats),
@@ -561,6 +563,7 @@ fn render_disciplines_tab(
     w: f32,
     h: f32,
     stats: &ProfileCareerStats,
+    module_progress_map: &std::collections::HashMap<String, ModuleCareerProgress>,
 ) {
     let pad = scaler.s(16.0);
     let inner_w = w - pad * 2.0;
@@ -605,12 +608,13 @@ fn render_disciplines_tab(
         let clean_pct = cat_stat.map(|s| s.clean_rate).unwrap_or(0.0);
 
         // Tier Level & Progress
-        let tier = (races / 3 + wins).clamp(1, 5);
+        let mod_prog = module_progress_map.get(*cat_key);
+        let tier = mod_prog.map(|p| p.level.clamp(1, 5)).unwrap_or(1);
         let tier_str = format!("TIER {}", tier);
         fonts.draw_ui_bold(&tier_str, cx + card_w - scaler.s(60.0), cy + scaler.s(22.0), scaler.font_s(11.5), *accent_col);
 
         // Mini XP Bar towards next tier car
-        let xp_progress = ((races * 150 + wins * 300) % 1000) as f32 / 1000.0;
+        let xp_progress = mod_prog.map(|p| p.level_progress_ratio()).unwrap_or(0.0);
         let bar_x = cx + scaler.s(12.0);
         let bar_y = cy + scaler.s(48.0);
         let bar_w = card_w - scaler.s(24.0);
@@ -633,8 +637,15 @@ fn render_disciplines_tab(
         fonts.draw_ui_regular(&row2_right, bar_x + bar_w * 0.5, sy, scaler.font_s(10.5), Palette::NEON_GREEN);
 
         sy += row_spacing;
-        let unlocked = (tier as usize).min(*max_cars);
-        let garage_str = format!("Garage: {}/{} Cars Unlocked", unlocked, max_cars);
+        let catalog_count = crate::catalog::get_models_for_module(cat_key).len();
+        let total_cars = if catalog_count > 0 { catalog_count } else { *max_cars };
+        let unlocked = mod_prog.map(|p| {
+            let count = p.unlocked_cars.iter().filter(|c| {
+                crate::catalog::find_model_by_id(c).is_some_and(|m| m.module_id == *cat_key)
+            }).count();
+            if count == 0 { 1 } else { count }
+        }).unwrap_or(1).min(total_cars);
+        let garage_str = format!("Garage: {}/{} Cars Unlocked", unlocked, total_cars);
         fonts.draw_ui_regular(&garage_str, bar_x, sy, scaler.font_s(10.5), *accent_col);
     }
 }
@@ -807,6 +818,7 @@ fn render_championships_tab(
     is_filter_focused: bool,
     is_dev_mode: bool,
     career_level: u32,
+    module_progress_map: &std::collections::HashMap<String, ModuleCareerProgress>,
 ) {
     let pad = scaler.s(16.0);
     let inner_w = w - pad * 2.0;
@@ -964,7 +976,8 @@ fn render_championships_tab(
     for (rel_i, champ) in filtered_champs.iter().skip(scroll).take(visible_count).enumerate() {
         let abs_champ_idx = scroll + rel_i;
         let is_card_selected = is_content_focused && abs_champ_idx == champ_selected_idx;
-        let is_unlocked = is_dev_mode || champ.series.tier <= 1 || champ.series.tier <= career_level;
+        let module_tier = module_progress_map.get(&champ.series.module_id).map(|p| p.level).unwrap_or(career_level);
+        let is_unlocked = is_dev_mode || champ.series.tier <= 1 || champ.series.tier <= module_tier;
 
         // Query history for this specific championship
         let champ_entries: Vec<&RaceHistoryEntry> = history
@@ -988,27 +1001,27 @@ fn render_championships_tab(
         let best_lap_str = best_lap_val.map(format_lap_time).unwrap_or_else(|| "--:--.---".to_string());
 
         let total_rounds = champ.rounds.len().max(1);
-        let is_active_session = active_championship.is_some_and(|s| {
+        let is_matching_session = |s: &ChampionshipSession| {
             s.name.eq_ignore_ascii_case(&champ.series.name)
                 || s.name.eq_ignore_ascii_case(&champ.series.id)
-        });
+                || s.name.to_lowercase().contains(&champ.series.name.to_lowercase())
+                || champ.series.name.to_lowercase().contains(&s.name.to_lowercase())
+                || champ.series.id.to_lowercase().contains(&s.name.to_lowercase())
+                || s.name.to_lowercase().contains(&champ.series.id.to_lowercase())
+        };
 
-        let completed_rounds = if let Some(active) = active_championship.filter(|s| {
-            s.name.eq_ignore_ascii_case(&champ.series.name)
-                || s.name.eq_ignore_ascii_case(&champ.series.id)
-        }) {
+        let is_active_session = active_championship.is_some_and(is_matching_session);
+
+        let completed_rounds = if let Some(active) = active_championship.filter(|s| is_matching_session(s)) {
             active.current_round.min(total_rounds)
         } else {
             races_count.min(total_rounds)
         };
 
-        let is_completed = if let Some(active) = active_championship.filter(|s| {
-            s.name.eq_ignore_ascii_case(&champ.series.name)
-                || s.name.eq_ignore_ascii_case(&champ.series.id)
-        }) {
+        let is_completed = if let Some(active) = active_championship.filter(|s| is_matching_session(s)) {
             active.is_completed
         } else {
-            races_count >= total_rounds || (wins > 0 && races_count > 0)
+            races_count >= total_rounds
         };
 
         let progress_ratio = if is_completed {
