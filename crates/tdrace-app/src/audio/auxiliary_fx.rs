@@ -170,12 +170,23 @@ impl AuxiliaryAudioLayer {
     ) -> f32 {
         let has_turbo = matches!(
             engine_type,
-            EngineSoundType::RallyTurbo | EngineSoundType::SandRailBoxer
+            EngineSoundType::Gt2Biturbo
+                | EngineSoundType::HypercarV6Hybrid
+                | EngineSoundType::Rally2Turbo
+                | EngineSoundType::SupercarRx1
+                | EngineSoundType::GroupBInline5
+                | EngineSoundType::SandRailBoxer
+                | EngineSoundType::RallyTurbo
         );
         let tween_dur = Duration::from_millis(10);
 
         // 1. Straight-Cut Transmission Gear Whine
-        let has_whine = !matches!(engine_type, EngineSoundType::Kart125cc);
+        let has_whine = !matches!(
+            engine_type,
+            EngineSoundType::KartCadet60
+                | EngineSoundType::RacingMowerV2
+                | EngineSoundType::Kart125cc
+        );
         if has_whine && speed_abs > 1.0 && gear > 0 {
             // Whine frequency scales with vehicle speed: 400 Hz base -> 2,200 Hz top speed
             let target_freq = (400.0 + speed_abs * 35.0).clamp(400.0, 2600.0);
@@ -224,10 +235,25 @@ impl AuxiliaryAudioLayer {
         // 3. High-RPM Overrun Pops & Crackles
         let allows_crackle = matches!(
             engine_type,
-            EngineSoundType::NascarV8
-                | EngineSoundType::RallyTurbo
-                | EngineSoundType::SportGT
+            EngineSoundType::Gt3HighRev
+                | EngineSoundType::Gt2Biturbo
+                | EngineSoundType::Gt1V12Analogue
+                | EngineSoundType::LateModelV8
+                | EngineSoundType::ArcaSpecV8
+                | EngineSoundType::SuperTruckV8
+                | EngineSoundType::XfinityV8
+                | EngineSoundType::NascarV8
+                | EngineSoundType::Rally2Turbo
+                | EngineSoundType::SupercarRx1
+                | EngineSoundType::GroupBInline5
+                | EngineSoundType::KartShifterKZ
+                | EngineSoundType::Superkart250Twin
                 | EngineSoundType::SandRailBoxer
+                | EngineSoundType::Ultra4V8
+                | EngineSoundType::Pro4UnlimitedV8
+                | EngineSoundType::MonsterTruckBlower
+                | EngineSoundType::SportGT
+                | EngineSoundType::RallyTurbo
         );
         if allows_crackle && throttle < 0.08 && rpm > 5600.0 {
             self.overrun_timer += dt;

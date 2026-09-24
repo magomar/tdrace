@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Per-Tier Engine Sound Banks and Physical Synthesis"
 description: "Expands the motor audio architecture to 25 distinct physical sound archetypes across all 5 tiers of the 5 motorsport disciplines, featuring custom acoustic wave shaping, forced induction, and hybrid whine."
-status: draft
+status: implemented
 created: 2026-09-23
 generated: { by: agent/antigravity, at: 2026-09-23T19:55:00Z }
 ---
@@ -213,51 +213,51 @@ impl VehicleModelDefinition {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 ### Scenario: All 25 motorsport tiers resolve unique, tier-appropriate engine sound archetypes
-- [ ] **Given** the 5 motorsport disciplines (`"gt"`, `"nascar"`, `"rally"`, `"kart"`, `"extreme_offroad"`)
-- [ ] **When** querying `sound_type()` on all 25 categories and vehicles across Tiers 1 through 5
-- [ ] **Then** each tier within a discipline returns its dedicated `EngineSoundType`
-- [ ] **And** no two tiers within the same discipline share the exact same sound archetype
+- [x] **Given** the 5 motorsport disciplines (`"gt"`, `"nascar"`, `"rally"`, `"kart"`, `"extreme_offroad"`)
+- [x] **When** querying `sound_type()` on all 25 categories and vehicles across Tiers 1 through 5
+- [x] **Then** each tier within a discipline returns its dedicated `EngineSoundType`
+- [x] **And** no two tiers within the same discipline share the exact same sound archetype
 
 ### Scenario: Classic arcade vehicles preserve Stage 1 Tier 1 discipline mapping
-- [ ] **Given** the Classic Arcade module vehicles (`"classic_gt"`, `"classic_nascar"`, `"classic_offroad"`, `"classic_kart"`, `"classic_rally"`)
-- [ ] **When** querying their audio profiles or `sound_type()`
-- [ ] **Then** `classic_gt` maps to `EngineSoundType::Gt4Clubsport`
-- [ ] **And** `classic_nascar` maps to `EngineSoundType::LateModelV8`
-- [ ] **And** `classic_offroad` maps to `EngineSoundType::SandRailBoxer`
-- [ ] **And** `classic_kart` maps to `EngineSoundType::KartCadet60`
-- [ ] **And** `classic_rally` maps to `EngineSoundType::CrossCarMotorcycle`
+- [x] **Given** the Classic Arcade module vehicles (`"classic_gt"`, `"classic_nascar"`, `"classic_offroad"`, `"classic_kart"`, `"classic_rally"`)
+- [x] **When** querying their audio profiles or `sound_type()`
+- [x] **Then** `classic_gt` maps to `EngineSoundType::Gt4Clubsport`
+- [x] **And** `classic_nascar` maps to `EngineSoundType::LateModelV8`
+- [x] **And** `classic_offroad` maps to `EngineSoundType::SandRailBoxer`
+- [x] **And** `classic_kart` maps to `EngineSoundType::KartCadet60`
+- [x] **And** `classic_rally` maps to `EngineSoundType::CrossCarMotorcycle`
 
 ### Scenario: DSP synthesis produces valid, click-free audio buffers for all 25 archetypes
-- [ ] **Given** all 25 variants of `EngineSoundType`
-- [ ] **When** generating the `ArchetypeSampleBank` for each archetype at standard sample rate (44,100 Hz)
-- [ ] **Then** all 5 sample points (Idle, Mid-On, Mid-Off, High-On, High-Off) contain valid non-empty WAV buffers
-- [ ] **And** no samples contain NaN, infinity, or DC bias $> 0.05$
-- [ ] **And** peak amplitude remains safely bounded within $[-1.0, 1.0]$ without hard clipping distortion
+- [x] **Given** all 25 variants of `EngineSoundType`
+- [x] **When** generating the `ArchetypeSampleBank` for each archetype at standard sample rate (44,100 Hz)
+- [x] **Then** all 5 sample points (Idle, Mid-On, Mid-Off, High-On, High-Off) contain valid non-empty WAV buffers
+- [x] **And** no samples contain NaN, infinity, or DC bias $> 0.05$
+- [x] **And** peak amplitude remains safely bounded within $[-1.0, 1.0]$ without hard clipping distortion
 
 ### Scenario: Dynamic vehicle switching in garage showroom crossfades sound banks smoothly
-- [ ] **Given** the player is in the Garage Showroom
-- [ ] **When** the player cycles vehicles across different tiers or disciplines
-- [ ] **Then** `resolve_active_sound_type()` resolves the specific vehicle's sound archetype
-- [ ] **And** the audio engine crossfades to the new archetype sample bank without audio thread stalls or clicks
+- [x] **Given** the player is in the Garage Showroom
+- [x] **When** the player cycles vehicles across different tiers or disciplines
+- [x] **Then** `resolve_active_sound_type()` resolves the specific vehicle's sound archetype
+- [x] **And** the audio engine crossfades to the new archetype sample bank without audio thread stalls or clicks
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` `crates/tdrace-app/src/audio/manager.rs` -> Expand `EngineSoundType` enum to 25 variants, update archetype mappings.
-- `[ ]` `crates/tdrace-app/src/audio/sfx.rs` -> Add 25 customized `EngineSoundConfig` presets with tuned harmonics and envelopes.
-- `[ ]` `crates/tdrace-app/src/audio/samples.rs` -> Expand `ArchetypeSampleBank::generate` to support all 25 sound archetypes with turbo, blower, and hybrid modulation.
-- `[ ]` `crates/tdrace-app/src/module/mod.rs` -> Add profile constructors for all 25 tier profiles on `EngineAudioProfile`.
-- `[ ]` `crates/tdrace-app/src/module/gt.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
-- `[ ]` `crates/tdrace-app/src/module/nascar.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
-- `[ ]` `crates/tdrace-app/src/module/rally.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
-- `[ ]` `crates/tdrace-app/src/module/kart.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
-- `[ ]` `crates/tdrace-app/src/module/extreme_offroad.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
-- `[ ]` `crates/tdrace-app/src/module/classic.rs` -> Update classic fantasy car audio profiles to map to discipline Tier 1 archetypes.
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs` -> Update `RealCarModel::sound_type()` to dispatch per module and tier.
-- `[ ]` `crates/tdrace-app/src/ui/menu.rs` -> Update `CarChoice::sound_type()` to map archetype choices accurately.
-- `[ ]` `crates/tdrace-app/tests/audio_tests.rs` -> Update and expand audio test assertions.
-- `[ ]` `crates/tdrace-app/tests/audio_tier_tests.rs` -> New dedicated regression suite verifying 25-tier audio matrix synthesis and dispatch.
-- `[ ]` `specs/index.md` -> Register Spec 022 in the specifications index.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Link Spec 022 under Phase 2 in the product roadmap.
+- `[x]` `crates/tdrace-app/src/audio/manager.rs` -> Expand `EngineSoundType` enum to 25 variants, update archetype mappings.
+- `[x]` `crates/tdrace-app/src/audio/sfx.rs` -> Add 25 customized `EngineSoundConfig` presets with tuned harmonics and envelopes.
+- `[x]` `crates/tdrace-app/src/audio/samples.rs` -> Expand `ArchetypeSampleBank::generate` to support all 25 sound archetypes with turbo, blower, and hybrid modulation.
+- `[x]` `crates/tdrace-app/src/module/mod.rs` -> Add profile constructors for all 25 tier profiles on `EngineAudioProfile`.
+- `[x]` `crates/tdrace-app/src/module/gt.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
+- `[x]` `crates/tdrace-app/src/module/nascar.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
+- `[x]` `crates/tdrace-app/src/module/rally.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
+- `[x]` `crates/tdrace-app/src/module/kart.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
+- `[x]` `crates/tdrace-app/src/module/extreme_offroad.rs` -> Assign tier-specific `EngineAudioProfile` across Tiers 1–5.
+- `[x]` `crates/tdrace-app/src/module/classic.rs` -> Update classic fantasy car audio profiles to map to discipline Tier 1 archetypes.
+- `[x]` `crates/tdrace-app/src/catalog/mod.rs` -> Update `RealCarModel::sound_type()` to dispatch per module and tier.
+- `[x]` `crates/tdrace-app/src/ui/menu.rs` -> Update `CarChoice::sound_type()` to map archetype choices accurately.
+- `[x]` `crates/tdrace-app/tests/audio_tests.rs` -> Update and expand audio test assertions.
+- `[x]` `crates/tdrace-app/tests/audio_tier_tests.rs` -> New dedicated regression suite verifying 25-tier audio matrix synthesis and dispatch.
+- `[x]` `specs/index.md` -> Register Spec 022 in the specifications index.
+- `[x]` `specs/constitution/ROADMAP.md` -> Link Spec 022 under Phase 2 in the product roadmap.

@@ -171,7 +171,7 @@ impl GameModule for ClassicGameModule {
                     CarColorScheme::from_index(2),
                     CarColorScheme::from_index(3),
                 ],
-                audio_profile: Some(EngineAudioProfile::gt_v8()),
+                audio_profile: Some(EngineAudioProfile::gt4_clubsport()),
             },
             VehicleModelDefinition {
                 id: "classic_nascar",
@@ -190,7 +190,7 @@ impl GameModule for ClassicGameModule {
                     CarColorScheme::from_index(0),
                     CarColorScheme::from_index(5),
                 ],
-                audio_profile: Some(EngineAudioProfile::nascar_v8_pushrod()),
+                audio_profile: Some(EngineAudioProfile::late_model_v8()),
             },
             VehicleModelDefinition {
                 id: "classic_offroad",
@@ -226,7 +226,7 @@ impl GameModule for ClassicGameModule {
                     CarColorScheme::from_index(5),
                     CarColorScheme::from_index(2),
                 ],
-                audio_profile: Some(EngineAudioProfile::kart_2stroke()),
+                audio_profile: Some(EngineAudioProfile::kart_cadet_60()),
             },
             VehicleModelDefinition {
                 id: "classic_rally",
@@ -245,7 +245,7 @@ impl GameModule for ClassicGameModule {
                     CarColorScheme::from_index(0),
                     CarColorScheme::from_index(1),
                 ],
-                audio_profile: Some(EngineAudioProfile::rally_turbo_antilag()),
+                audio_profile: Some(EngineAudioProfile::cross_car_motorcycle()),
             },
         ]
     }
@@ -383,6 +383,6 @@ impl GameModule for ClassicGameModule {
     }
 
     fn audio_profile(&self) -> EngineAudioProfile {
-        EngineAudioProfile::gt_v8()
+        EngineAudioProfile::gt4_clubsport()
     }
 }

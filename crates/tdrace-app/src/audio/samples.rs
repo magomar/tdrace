@@ -47,11 +47,39 @@ impl ArchetypeSampleBank {
     pub fn generate(engine_type: EngineSoundType, sample_rate: u32) -> Self {
         let config = match engine_type {
             EngineSoundType::Generic => EngineSoundConfig::generic(),
-            EngineSoundType::SportGT => EngineSoundConfig::sport_gt(),
-            EngineSoundType::Kart125cc => EngineSoundConfig::kart_125cc(),
-            EngineSoundType::RallyTurbo => EngineSoundConfig::rally_turbo(),
+            // Gran Turismo & Endurance GT (T1–T5)
+            EngineSoundType::Gt4Clubsport => EngineSoundConfig::gt4_clubsport(),
+            EngineSoundType::Gt3HighRev => EngineSoundConfig::gt3_high_rev(),
+            EngineSoundType::Gt2Biturbo => EngineSoundConfig::gt2_biturbo(),
+            EngineSoundType::Gt1V12Analogue => EngineSoundConfig::gt1_v12_analogue(),
+            EngineSoundType::HypercarV6Hybrid => EngineSoundConfig::hypercar_v6_hybrid(),
+            // NASCAR & Stock Car Racing (T1–T5)
+            EngineSoundType::LateModelV8 => EngineSoundConfig::late_model_v8(),
+            EngineSoundType::ArcaSpecV8 => EngineSoundConfig::arca_spec_v8(),
+            EngineSoundType::SuperTruckV8 => EngineSoundConfig::super_truck_v8(),
+            EngineSoundType::XfinityV8 => EngineSoundConfig::xfinity_v8(),
             EngineSoundType::NascarV8 => EngineSoundConfig::nascar_v8(),
+            // Rallycross & All-Terrain (T1–T5)
+            EngineSoundType::CrossCarMotorcycle => EngineSoundConfig::cross_car_motorcycle(),
+            EngineSoundType::Super1600Atmo => EngineSoundConfig::super1600_atmo(),
+            EngineSoundType::Rally2Turbo => EngineSoundConfig::rally2_turbo(),
+            EngineSoundType::SupercarRx1 => EngineSoundConfig::supercar_rx1(),
+            EngineSoundType::GroupBInline5 => EngineSoundConfig::group_b_inline5(),
+            // Grassroots Karting (T1–T5)
+            EngineSoundType::KartCadet60 => EngineSoundConfig::kart_cadet_60(),
+            EngineSoundType::RacingMowerV2 => EngineSoundConfig::racing_mower_v2(),
+            EngineSoundType::Kart125cc => EngineSoundConfig::kart_125cc(),
+            EngineSoundType::KartShifterKZ => EngineSoundConfig::kart_shifter_kz(),
+            EngineSoundType::Superkart250Twin => EngineSoundConfig::superkart_250_twin(),
+            // Extreme Off-Road (T1–T5)
             EngineSoundType::SandRailBoxer => EngineSoundConfig::sand_rail_boxer(),
+            EngineSoundType::ProLiteV6 => EngineSoundConfig::pro_lite_v6(),
+            EngineSoundType::Ultra4V8 => EngineSoundConfig::ultra4_v8(),
+            EngineSoundType::Pro4UnlimitedV8 => EngineSoundConfig::pro4_unlimited_v8(),
+            EngineSoundType::MonsterTruckBlower => EngineSoundConfig::monster_truck_blower(),
+            // Legacy Aliases
+            EngineSoundType::SportGT => EngineSoundConfig::sport_gt(),
+            EngineSoundType::RallyTurbo => EngineSoundConfig::rally_turbo(),
         };
 
         let idle_wav = generate_steady_engine_loop(sample_rate, IDLE_RPM, false, &config);
@@ -105,11 +133,39 @@ impl ArchetypeSampleBank {
     pub fn slug(engine_type: EngineSoundType) -> &'static str {
         match engine_type {
             EngineSoundType::Generic => "generic",
-            EngineSoundType::SportGT => "sport_gt",
-            EngineSoundType::Kart125cc => "kart_125cc",
-            EngineSoundType::RallyTurbo => "rally_turbo",
+            // Gran Turismo & Endurance GT (T1–T5)
+            EngineSoundType::Gt4Clubsport => "gt4_clubsport",
+            EngineSoundType::Gt3HighRev => "gt3_high_rev",
+            EngineSoundType::Gt2Biturbo => "gt2_biturbo",
+            EngineSoundType::Gt1V12Analogue => "gt1_v12_analogue",
+            EngineSoundType::HypercarV6Hybrid => "hypercar_v6_hybrid",
+            // NASCAR & Stock Car Racing (T1–T5)
+            EngineSoundType::LateModelV8 => "late_model_v8",
+            EngineSoundType::ArcaSpecV8 => "arca_spec_v8",
+            EngineSoundType::SuperTruckV8 => "super_truck_v8",
+            EngineSoundType::XfinityV8 => "xfinity_v8",
             EngineSoundType::NascarV8 => "nascar_v8",
+            // Rallycross & All-Terrain (T1–T5)
+            EngineSoundType::CrossCarMotorcycle => "cross_car_motorcycle",
+            EngineSoundType::Super1600Atmo => "super1600_atmo",
+            EngineSoundType::Rally2Turbo => "rally2_turbo",
+            EngineSoundType::SupercarRx1 => "supercar_rx1",
+            EngineSoundType::GroupBInline5 => "group_b_inline5",
+            // Grassroots Karting (T1–T5)
+            EngineSoundType::KartCadet60 => "kart_cadet_60",
+            EngineSoundType::RacingMowerV2 => "racing_mower_v2",
+            EngineSoundType::Kart125cc => "kart_125cc",
+            EngineSoundType::KartShifterKZ => "kart_shifter_kz",
+            EngineSoundType::Superkart250Twin => "superkart_250_twin",
+            // Extreme Off-Road (T1–T5)
             EngineSoundType::SandRailBoxer => "sand_rail",
+            EngineSoundType::ProLiteV6 => "pro_lite_v6",
+            EngineSoundType::Ultra4V8 => "ultra4_v8",
+            EngineSoundType::Pro4UnlimitedV8 => "pro4_unlimited_v8",
+            EngineSoundType::MonsterTruckBlower => "monster_truck_blower",
+            // Legacy Aliases
+            EngineSoundType::SportGT => "sport_gt",
+            EngineSoundType::RallyTurbo => "rally_turbo",
         }
     }
 
@@ -272,8 +328,26 @@ pub fn generate_steady_engine_loop(
             0.0
         };
 
+        // 5b. Roots Supercharger Blower Whine (proportional to crank speed)
+        let blower = if config.has_blower_whine {
+            let blower_freq = (crank_hz * 12.0).clamp(600.0, 5200.0);
+            let blower_gain = if on_throttle { 0.18 } else { 0.07 };
+            (Oscillator::sine(t * blower_freq) * 0.70 + Oscillator::triangle(t * (blower_freq * 2.0)) * 0.30) * blower_gain
+        } else {
+            0.0
+        };
+
+        // 5c. Electric MGU-K Hybrid Motor Inverter Whine
+        let hybrid = if config.has_hybrid_whine {
+            let inverter_freq = (1800.0 + crank_hz * 25.0).clamp(1800.0, 7500.0);
+            let hybrid_gain = if on_throttle { 0.15 } else { 0.08 };
+            Oscillator::sine(t * inverter_freq) * hybrid_gain
+        } else {
+            0.0
+        };
+
         // Raw acoustic mixture
-        let raw = combustion + sub + intake_mod + turbo + valvetrain;
+        let raw = combustion + sub + intake_mod + turbo + valvetrain + blower + hybrid;
 
         // 6. Dual-Stage Exhaust Formant Acoustic Resonators
         let form1 = bp_formant1.process(raw);

@@ -91,7 +91,7 @@ impl GameModule for ExtremeOffRoadModule {
                 CarColorScheme::from_index(6), // Matte Black Stealth
                 CarColorScheme::from_index(2), // Racing Red
             ],
-            audio_profile: None,
+            audio_profile: Some(EngineAudioProfile::sand_rail_boxer()),
         }]
     }
 

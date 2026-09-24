@@ -1226,7 +1226,7 @@ impl GameModule for KartGameModule {
                     CarColorScheme::from_index(1), // Cyan / Black
                     CarColorScheme::from_index(2), // Red / White
                 ],
-                audio_profile: None,
+                audio_profile: Some(EngineAudioProfile::kart_shifter_kz()),
             },
         ]
     }
@@ -1586,7 +1586,7 @@ impl GameModule for KartGameModule {
     }
 
     fn audio_profile(&self) -> EngineAudioProfile {
-        EngineAudioProfile::kart_2stroke()
+        EngineAudioProfile::kart_cadet_60()
     }
 }
 

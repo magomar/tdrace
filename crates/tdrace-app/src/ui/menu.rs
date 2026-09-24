@@ -627,17 +627,15 @@ impl CarChoice {
     /// Returns the engine sound archetype for this vehicle choice.
     pub fn sound_type(&self) -> EngineSoundType {
         match self {
-            Self::StockCar => EngineSoundType::NascarV8,
+            Self::StockCar => EngineSoundType::LateModelV8,
             Self::SandRail => EngineSoundType::SandRailBoxer,
-            Self::Kart => EngineSoundType::Kart125cc,
-            Self::RallyCar => EngineSoundType::RallyTurbo,
-            Self::SportsCar
-            | Self::DriftCar
-            | Self::GT4Clubsport
-            | Self::GT3Car
-            | Self::GT2Biturbo
-            | Self::GT1Legend
-            | Self::HypercarPrototype => EngineSoundType::SportGT,
+            Self::Kart => EngineSoundType::KartCadet60,
+            Self::RallyCar => EngineSoundType::CrossCarMotorcycle,
+            Self::SportsCar | Self::DriftCar | Self::GT4Clubsport => EngineSoundType::Gt4Clubsport,
+            Self::GT3Car => EngineSoundType::Gt3HighRev,
+            Self::GT2Biturbo => EngineSoundType::Gt2Biturbo,
+            Self::GT1Legend => EngineSoundType::Gt1V12Analogue,
+            Self::HypercarPrototype => EngineSoundType::HypercarV6Hybrid,
         }
     }
 

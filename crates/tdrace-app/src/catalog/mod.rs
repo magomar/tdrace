@@ -262,21 +262,58 @@ impl RealCarModel {
     pub fn sound_type(&self) -> EngineSoundType {
         if self.module_id == "classic" {
             match self.id {
-                "classic_gt" => EngineSoundType::SportGT,
-                "classic_nascar" => EngineSoundType::NascarV8,
+                "classic_gt" => EngineSoundType::Gt4Clubsport,
+                "classic_nascar" => EngineSoundType::LateModelV8,
                 "classic_offroad" => EngineSoundType::SandRailBoxer,
-                "classic_kart" => EngineSoundType::Kart125cc,
-                "classic_rally" => EngineSoundType::RallyTurbo,
+                "classic_kart" => EngineSoundType::KartCadet60,
+                "classic_rally" => EngineSoundType::CrossCarMotorcycle,
                 _ => self.base_car_choice.sound_type(),
             }
         } else {
-            match self.module_id {
-                "nascar" => EngineSoundType::NascarV8,
-                "rally" => EngineSoundType::RallyTurbo,
-                "kart" => EngineSoundType::Kart125cc,
-                "extreme_offroad" => EngineSoundType::SandRailBoxer,
-                "gt" | "gt_challenge" => EngineSoundType::SportGT,
-                _ => self.base_car_choice.sound_type(),
+            match (self.module_id, self.tier) {
+                // 1. Gran Turismo & Endurance GT (T1–T5)
+                ("gt" | "gt_challenge", 1) => EngineSoundType::Gt4Clubsport,
+                ("gt" | "gt_challenge", 2) => EngineSoundType::Gt3HighRev,
+                ("gt" | "gt_challenge", 3) => EngineSoundType::Gt2Biturbo,
+                ("gt" | "gt_challenge", 4) => EngineSoundType::Gt1V12Analogue,
+                ("gt" | "gt_challenge", 5) => EngineSoundType::HypercarV6Hybrid,
+
+                // 2. NASCAR & Stock Car Racing (T1–T5)
+                ("nascar", 1) => EngineSoundType::LateModelV8,
+                ("nascar", 2) => EngineSoundType::ArcaSpecV8,
+                ("nascar", 3) => EngineSoundType::SuperTruckV8,
+                ("nascar", 4) => EngineSoundType::XfinityV8,
+                ("nascar", 5) => EngineSoundType::NascarV8,
+
+                // 3. Rallycross & All-Terrain (T1–T5)
+                ("rally", 1) => EngineSoundType::CrossCarMotorcycle,
+                ("rally", 2) => EngineSoundType::Super1600Atmo,
+                ("rally", 3) => EngineSoundType::Rally2Turbo,
+                ("rally", 4) => EngineSoundType::SupercarRx1,
+                ("rally", 5) => EngineSoundType::GroupBInline5,
+
+                // 4. Grassroots Karting (T1–T5)
+                ("kart", 1) => EngineSoundType::KartCadet60,
+                ("kart", 2) => EngineSoundType::RacingMowerV2,
+                ("kart", 3) => EngineSoundType::Kart125cc,
+                ("kart", 4) => EngineSoundType::KartShifterKZ,
+                ("kart", 5) => EngineSoundType::Superkart250Twin,
+
+                // 5. Extreme Off-Road (T1–T5)
+                ("extreme_offroad", 1) => EngineSoundType::SandRailBoxer,
+                ("extreme_offroad", 2) => EngineSoundType::ProLiteV6,
+                ("extreme_offroad", 3) => EngineSoundType::Ultra4V8,
+                ("extreme_offroad", 4) => EngineSoundType::Pro4UnlimitedV8,
+                ("extreme_offroad", 5) => EngineSoundType::MonsterTruckBlower,
+
+                _ => match self.module_id {
+                    "nascar" => EngineSoundType::LateModelV8,
+                    "rally" => EngineSoundType::CrossCarMotorcycle,
+                    "kart" => EngineSoundType::KartCadet60,
+                    "extreme_offroad" => EngineSoundType::SandRailBoxer,
+                    "gt" | "gt_challenge" => EngineSoundType::Gt4Clubsport,
+                    _ => self.base_car_choice.sound_type(),
+                },
             }
         }
     }

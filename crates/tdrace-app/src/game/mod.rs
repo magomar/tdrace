@@ -1448,10 +1448,10 @@ impl RaceSession {
 
         // 4. Specialized modules default to their primary sound bank, falling back to car choice
         match effective_module {
-            "gt" | "gt_challenge" => EngineSoundType::SportGT,
-            "nascar" => EngineSoundType::NascarV8,
-            "rally" => EngineSoundType::RallyTurbo,
-            "kart" => EngineSoundType::Kart125cc,
+            "gt" | "gt_challenge" => EngineSoundType::Gt4Clubsport,
+            "nascar" => EngineSoundType::LateModelV8,
+            "rally" => EngineSoundType::CrossCarMotorcycle,
+            "kart" => EngineSoundType::KartCadet60,
             "extreme_offroad" => EngineSoundType::SandRailBoxer,
             _ => self.active_player_car_choice().sound_type(),
         }

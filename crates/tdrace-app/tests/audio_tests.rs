@@ -393,27 +393,27 @@ fn test_classic_cars_audio_profile_and_tier_one_sound_bank_mapping() {
 
     // 1. Verify VehicleModelDefinition audio_profile on ClassicGameModule
     let gt = vehicles.iter().find(|v| v.id == "classic_gt").expect("classic_gt missing");
-    assert_eq!(gt.audio_profile.expect("profile missing").sound_type, EngineSoundType::SportGT);
+    assert_eq!(gt.audio_profile.expect("profile missing").sound_type, EngineSoundType::Gt4Clubsport);
 
     let nascar = vehicles.iter().find(|v| v.id == "classic_nascar").expect("classic_nascar missing");
-    assert_eq!(nascar.audio_profile.expect("profile missing").sound_type, EngineSoundType::NascarV8);
+    assert_eq!(nascar.audio_profile.expect("profile missing").sound_type, EngineSoundType::LateModelV8);
 
     let offroad = vehicles.iter().find(|v| v.id == "classic_offroad").expect("classic_offroad missing");
     assert_eq!(offroad.audio_profile.expect("profile missing").sound_type, EngineSoundType::SandRailBoxer);
 
     let kart = vehicles.iter().find(|v| v.id == "classic_kart").expect("classic_kart missing");
-    assert_eq!(kart.audio_profile.expect("profile missing").sound_type, EngineSoundType::Kart125cc);
+    assert_eq!(kart.audio_profile.expect("profile missing").sound_type, EngineSoundType::KartCadet60);
 
     let rally = vehicles.iter().find(|v| v.id == "classic_rally").expect("classic_rally missing");
-    assert_eq!(rally.audio_profile.expect("profile missing").sound_type, EngineSoundType::RallyTurbo);
+    assert_eq!(rally.audio_profile.expect("profile missing").sound_type, EngineSoundType::CrossCarMotorcycle);
 
     // 2. Verify CLASSIC_ARCADE_CARS RealCarModel sound_type dispatch
     let expected = [
-        ("classic_gt", EngineSoundType::SportGT),
-        ("classic_nascar", EngineSoundType::NascarV8),
+        ("classic_gt", EngineSoundType::Gt4Clubsport),
+        ("classic_nascar", EngineSoundType::LateModelV8),
         ("classic_offroad", EngineSoundType::SandRailBoxer),
-        ("classic_kart", EngineSoundType::Kart125cc),
-        ("classic_rally", EngineSoundType::RallyTurbo),
+        ("classic_kart", EngineSoundType::KartCadet60),
+        ("classic_rally", EngineSoundType::CrossCarMotorcycle),
     ];
 
     for (id, expected_sound) in expected {
@@ -427,17 +427,17 @@ fn test_car_choice_sound_type_mapping() {
     use tdrace_app::audio::EngineSoundType;
     use tdrace_app::ui::menu::CarChoice;
 
-    assert_eq!(CarChoice::StockCar.sound_type(), EngineSoundType::NascarV8);
+    assert_eq!(CarChoice::StockCar.sound_type(), EngineSoundType::LateModelV8);
     assert_eq!(CarChoice::SandRail.sound_type(), EngineSoundType::SandRailBoxer);
-    assert_eq!(CarChoice::Kart.sound_type(), EngineSoundType::Kart125cc);
-    assert_eq!(CarChoice::RallyCar.sound_type(), EngineSoundType::RallyTurbo);
-    assert_eq!(CarChoice::SportsCar.sound_type(), EngineSoundType::SportGT);
-    assert_eq!(CarChoice::DriftCar.sound_type(), EngineSoundType::SportGT);
-    assert_eq!(CarChoice::GT4Clubsport.sound_type(), EngineSoundType::SportGT);
-    assert_eq!(CarChoice::GT3Car.sound_type(), EngineSoundType::SportGT);
-    assert_eq!(CarChoice::GT2Biturbo.sound_type(), EngineSoundType::SportGT);
-    assert_eq!(CarChoice::GT1Legend.sound_type(), EngineSoundType::SportGT);
-    assert_eq!(CarChoice::HypercarPrototype.sound_type(), EngineSoundType::SportGT);
+    assert_eq!(CarChoice::Kart.sound_type(), EngineSoundType::KartCadet60);
+    assert_eq!(CarChoice::RallyCar.sound_type(), EngineSoundType::CrossCarMotorcycle);
+    assert_eq!(CarChoice::SportsCar.sound_type(), EngineSoundType::Gt4Clubsport);
+    assert_eq!(CarChoice::DriftCar.sound_type(), EngineSoundType::Gt4Clubsport);
+    assert_eq!(CarChoice::GT4Clubsport.sound_type(), EngineSoundType::Gt4Clubsport);
+    assert_eq!(CarChoice::GT3Car.sound_type(), EngineSoundType::Gt3HighRev);
+    assert_eq!(CarChoice::GT2Biturbo.sound_type(), EngineSoundType::Gt2Biturbo);
+    assert_eq!(CarChoice::GT1Legend.sound_type(), EngineSoundType::Gt1V12Analogue);
+    assert_eq!(CarChoice::HypercarPrototype.sound_type(), EngineSoundType::HypercarV6Hybrid);
 }
 
 #[test]
@@ -450,30 +450,30 @@ fn test_session_resolve_active_sound_type_for_classic_vehicles() {
 
     // A. Race context with selected_car_model_id
     session.selected_car_model_id = Some("classic_kart");
-    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::Kart125cc);
+    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::KartCadet60);
 
     session.selected_car_model_id = Some("classic_rally");
-    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::RallyTurbo);
+    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::CrossCarMotorcycle);
 
     session.selected_car_model_id = Some("classic_nascar");
-    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::NascarV8);
+    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::LateModelV8);
 
     session.selected_car_model_id = Some("classic_offroad");
     assert_eq!(session.resolve_active_sound_type(), EngineSoundType::SandRailBoxer);
 
     session.selected_car_model_id = Some("classic_gt");
-    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::SportGT);
+    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::Gt4Clubsport);
 
     // B. Garage showroom context: active car matches garage_car_idx
     session.state = GameState::Garage(GarageOrigin::Menu);
     session.garage_tier = 1;
 
     let garage_expected = [
-        (0, EngineSoundType::SportGT),        // classic_gt
-        (1, EngineSoundType::NascarV8),       // classic_nascar
-        (2, EngineSoundType::SandRailBoxer),  // classic_offroad
-        (3, EngineSoundType::Kart125cc),      // classic_kart
-        (4, EngineSoundType::RallyTurbo),     // classic_rally
+        (0, EngineSoundType::Gt4Clubsport),      // classic_gt
+        (1, EngineSoundType::LateModelV8),       // classic_nascar
+        (2, EngineSoundType::SandRailBoxer),     // classic_offroad
+        (3, EngineSoundType::KartCadet60),       // classic_kart
+        (4, EngineSoundType::CrossCarMotorcycle), // classic_rally
     ];
 
     for (idx, sound) in garage_expected {

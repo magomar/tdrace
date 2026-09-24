@@ -117,7 +117,7 @@ impl GameModule for RallyGameModule {
                     CarColorScheme::from_index(1), // Subie Blue / Gold Rims
                     CarColorScheme::from_index(6), // Matte Black Stealth
                 ],
-                audio_profile: None,
+                audio_profile: Some(EngineAudioProfile::rally2_turbo()),
             },
             VehicleModelDefinition {
                 id: "group_b_beast",
@@ -135,7 +135,7 @@ impl GameModule for RallyGameModule {
                     CarColorScheme::from_index(2), // Historic Racing Red
                     CarColorScheme::from_index(5), // Rally Yellow / White
                 ],
-                audio_profile: None,
+                audio_profile: Some(EngineAudioProfile::group_b_inline5()),
             },
         ]
     }
@@ -516,7 +516,7 @@ impl GameModule for RallyGameModule {
     }
 
     fn audio_profile(&self) -> EngineAudioProfile {
-        EngineAudioProfile::rally_turbo_antilag()
+        EngineAudioProfile::cross_car_motorcycle()
     }
 }
 

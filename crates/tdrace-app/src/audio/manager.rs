@@ -39,21 +39,113 @@ use crate::audio::samples::ArchetypeSampleBank;
 use cabinet::audio::{CabinetAudioSink, SoundCue};
 
 
-/// Vehicle engine audio synthesis archetype.
+/// Vehicle engine audio synthesis archetype across all 25 motorsport tiers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EngineSoundType {
     /// Generic / Standard Sport engine sound (fallback default, 4-stroke 6-cyl balanced sport)
     Generic,
-    /// High-displacement V8 / Touring GT (deep crossplane rumble, low-end torque growl, heavy block)
-    SportGT,
-    /// 125cc 2-Stroke Single-Cylinder Kart (screaming 2-stroke ring-a-ding buzz, expansion chamber resonance)
-    Kart125cc,
-    /// 4-Cylinder Rally Turbo (anti-lag pops, wastegate flutter, gravel-chewing mid-range rasp)
-    RallyTurbo,
-    /// Roaring 5.9L (358 cu in) Pushrod V8 Stock Car / Trans-Am TA1 (open boom-tube side pipes, thunderous roar)
+
+    // Gran Turismo & Endurance GT (T1–T5)
+    /// GT4 Clubsport (production-based 6-cyl / flat-6 & V8, crisp sport exhaust)
+    Gt4Clubsport,
+    /// GT3 Evo (screaming flat-plane V8 / 9,000 RPM flat-6 howl, straight-cut transaxle gear whine)
+    Gt3HighRev,
+    /// GT2 Biturbo (700+ BHP heavy forced induction twin-turbo V6/V8 roar, wastegate chuff)
+    Gt2Biturbo,
+    /// GT1 Legend (raw 90s screaming 6.0L V12 / analog monster, deafening high-pitched wail)
+    Gt1V12Analogue,
+    /// LMH Hypercar (high-strung twin-turbo V6 + electric MGU-K motor inverter whine)
+    HypercarV6Hybrid,
+
+    // NASCAR & Stock Car Racing (T1–T5)
+    /// Street Stock (small-block 350 cu in V8, deep low-end idle cam lope, iron-block rumble)
+    LateModelV8,
+    /// ARCA Spec Racer (spec 396 cu in V8, raspy side-exit collector bark, mechanical pushrod clatter)
+    ArcaSpecV8,
+    /// Craftsman Trucks (pushrod 358 cu in V8, booming pickup bed acoustic resonance)
+    SuperTruckV8,
+    /// Xfinity Series (high-compression 358 cu in V8, screaming crossover X-pipe exhaust howl)
+    XfinityV8,
+    /// Cup Next-Gen / TA1 (850 BHP pushrod V8, open boom-tube split side pipes, thunderous roar)
     NascarV8,
-    /// 300 BHP 2.5L Turbo Flat-4 Boxer Sand Rail Buggy (raspy off-beat boxer thrum, overrun pops, blow-off hiss)
+
+    // Rallycross & All-Terrain (T1–T5)
+    /// CrossCar Junior (750cc 4-cyl motorcycle superbike engine, ultra-fast rev acceleration)
+    CrossCarMotorcycle,
+    /// Super1600 FWD (screaming high-compression 1.6L intake bark, carbon airbox roar)
+    Super1600Atmo,
+    /// Rally2 / R5 AWD (1.6L turbo + 32mm restrictor chuff, responsive anti-lag system pops)
+    Rally2Turbo,
+    /// Supercar RX1 (600 BHP 2.0L turbo, violent machine-gun 2-step anti-lag firecrackers)
+    SupercarRx1,
+    /// Group B Beast (2.1L turbo inline-5, off-beat syncopated warble, aggressive external wastegate)
+    GroupBInline5,
+
+    // Grassroots Karting (T1–T5)
+    /// 60cc Cadet (60cc 2-stroke single, gentle ring-a-ding centrifugal clutch buzz)
+    KartCadet60,
+    /// Racing Mower (4-stroke V-Twin thumper, straight-pipe unbaffled mower raspy chug)
+    RacingMowerV2,
+    /// 125cc Rotax MAX (125cc 2-stroke single, crisp expansion chamber bite)
+    Kart125cc,
+    /// 125cc KZ Shifter (125cc 6-speed shifter, metallic 2-stroke sting, ignition-cut upshift bangs)
+    KartShifterKZ,
+    /// 250cc Superkart (250cc twin-cylinder 2-stroke, banshee wail at 240 km/h)
+    Superkart250Twin,
+
+    // Extreme Off-Road (T1–T5)
+    /// Pro Buggy (2.5L turbo flat-4 boxer, raspy off-beat boxer thrum, turbo flutter, blow-off hiss)
     SandRailBoxer,
+    /// Pro Lite (4.0L race V6, naturally aspirated desert rasp, sharp throttle response)
+    ProLiteV6,
+    /// Ultra4 Bouncer (7.0L big block LS V8, uncorked tubular zoomie headers, low-end torque chop)
+    Ultra4V8,
+    /// Pro4 Stadium Truck (900 BHP 4WD race V8, extreme short-course screamer)
+    Pro4UnlimitedV8,
+    /// Monster Truck (1,500 BHP methanol V8, screaming Roots supercharger blower whine)
+    MonsterTruckBlower,
+
+    // Legacy Aliases
+    /// High-displacement V8 / Touring GT (legacy alias for Gt4Clubsport / GT baseline)
+    SportGT,
+    /// 4-Cylinder Rally Turbo (legacy alias for Rally2Turbo)
+    RallyTurbo,
+}
+
+impl EngineSoundType {
+    /// Ordered list of all 25 authentic physical motorsport archetypes (5 disciplines × 5 tiers).
+    pub const ALL_ARCHETYPES: [Self; 25] = [
+        Self::Gt4Clubsport,
+        Self::Gt3HighRev,
+        Self::Gt2Biturbo,
+        Self::Gt1V12Analogue,
+        Self::HypercarV6Hybrid,
+        Self::LateModelV8,
+        Self::ArcaSpecV8,
+        Self::SuperTruckV8,
+        Self::XfinityV8,
+        Self::NascarV8,
+        Self::CrossCarMotorcycle,
+        Self::Super1600Atmo,
+        Self::Rally2Turbo,
+        Self::SupercarRx1,
+        Self::GroupBInline5,
+        Self::KartCadet60,
+        Self::RacingMowerV2,
+        Self::Kart125cc,
+        Self::KartShifterKZ,
+        Self::Superkart250Twin,
+        Self::SandRailBoxer,
+        Self::ProLiteV6,
+        Self::Ultra4V8,
+        Self::Pro4UnlimitedV8,
+        Self::MonsterTruckBlower,
+    ];
+
+    /// Returns a slice of all 25 authentic physical motorsport archetypes.
+    pub fn all_archetypes() -> &'static [Self] {
+        &Self::ALL_ARCHETYPES
+    }
 }
 
 impl Default for EngineSoundType {
@@ -311,11 +403,37 @@ impl SoundBank {
 
         let specific = match engine_type {
             EngineSoundType::Generic => self.engine_generic[idx].as_ref(),
-            EngineSoundType::SportGT => self.engine_sport_gt[idx].as_ref(),
-            EngineSoundType::Kart125cc => self.engine_kart[idx].as_ref(),
-            EngineSoundType::RallyTurbo => self.engine_rally[idx].as_ref(),
-            EngineSoundType::NascarV8 => self.engine_nascar[idx].as_ref(),
-            EngineSoundType::SandRailBoxer => self.engine_sand_rail[idx].as_ref(),
+            EngineSoundType::SportGT
+            | EngineSoundType::Gt4Clubsport
+            | EngineSoundType::Gt3HighRev
+            | EngineSoundType::Gt2Biturbo
+            | EngineSoundType::Gt1V12Analogue
+            | EngineSoundType::HypercarV6Hybrid => self.engine_sport_gt[idx].as_ref(),
+
+            EngineSoundType::LateModelV8
+            | EngineSoundType::ArcaSpecV8
+            | EngineSoundType::SuperTruckV8
+            | EngineSoundType::XfinityV8
+            | EngineSoundType::NascarV8 => self.engine_nascar[idx].as_ref(),
+
+            EngineSoundType::CrossCarMotorcycle
+            | EngineSoundType::Super1600Atmo
+            | EngineSoundType::Rally2Turbo
+            | EngineSoundType::SupercarRx1
+            | EngineSoundType::GroupBInline5
+            | EngineSoundType::RallyTurbo => self.engine_rally[idx].as_ref(),
+
+            EngineSoundType::KartCadet60
+            | EngineSoundType::RacingMowerV2
+            | EngineSoundType::Kart125cc
+            | EngineSoundType::KartShifterKZ
+            | EngineSoundType::Superkart250Twin => self.engine_kart[idx].as_ref(),
+
+            EngineSoundType::SandRailBoxer
+            | EngineSoundType::ProLiteV6
+            | EngineSoundType::Ultra4V8
+            | EngineSoundType::Pro4UnlimitedV8
+            | EngineSoundType::MonsterTruckBlower => self.engine_sand_rail[idx].as_ref(),
         };
 
         specific

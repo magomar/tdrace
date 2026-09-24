@@ -81,7 +81,7 @@ impl GameModule for NascarGameModule {
                     CarColorScheme::stock_car_intimidator_black(),
                     CarColorScheme::stock_car_carolina_blue(),
                 ],
-                audio_profile: None,
+                audio_profile: Some(EngineAudioProfile::nascar_v8_pushrod()),
             },
             VehicleModelDefinition {
                 id: "trans_am_ta1",
@@ -101,7 +101,7 @@ impl GameModule for NascarGameModule {
                     CarColorScheme::stock_car_racing_red(),
                     CarColorScheme::stock_car_daytona_blue(),
                 ],
-                audio_profile: None,
+                audio_profile: Some(EngineAudioProfile::nascar_v8_pushrod()),
             },
         ]
     }
@@ -491,7 +491,7 @@ impl GameModule for NascarGameModule {
     }
 
     fn audio_profile(&self) -> EngineAudioProfile {
-        EngineAudioProfile::nascar_v8_pushrod()
+        EngineAudioProfile::late_model_v8()
     }
 }
 

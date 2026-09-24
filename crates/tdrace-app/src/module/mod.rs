@@ -150,7 +150,244 @@ impl Default for EngineAudioProfile {
 }
 
 impl EngineAudioProfile {
-    pub fn kart_2stroke() -> Self {
+    // -------------------------------------------------------------------------
+    // 1. Gran Turismo & Endurance GT (T1–T5)
+    // -------------------------------------------------------------------------
+
+    pub fn gt4_clubsport() -> Self {
+        Self {
+            sound_type: EngineSoundType::Gt4Clubsport,
+            idle_rpm: 900.0,
+            max_rpm: 7800.0,
+            base_pitch: 60.0,
+            pitch_scale: 0.038,
+            harmonic_ratio: 3.0,
+            turbo_flutter: false,
+            anti_lag_pops: false,
+        }
+    }
+
+    pub fn gt3_high_rev() -> Self {
+        Self {
+            sound_type: EngineSoundType::Gt3HighRev,
+            idle_rpm: 1000.0,
+            max_rpm: 9000.0,
+            base_pitch: 75.0,
+            pitch_scale: 0.045,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn gt2_biturbo() -> Self {
+        Self {
+            sound_type: EngineSoundType::Gt2Biturbo,
+            idle_rpm: 900.0,
+            max_rpm: 7500.0,
+            base_pitch: 58.0,
+            pitch_scale: 0.036,
+            harmonic_ratio: 3.0,
+            turbo_flutter: true,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn gt1_v12_analogue() -> Self {
+        Self {
+            sound_type: EngineSoundType::Gt1V12Analogue,
+            idle_rpm: 1100.0,
+            max_rpm: 10200.0,
+            base_pitch: 85.0,
+            pitch_scale: 0.048,
+            harmonic_ratio: 6.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn hypercar_v6_hybrid() -> Self {
+        Self {
+            sound_type: EngineSoundType::HypercarV6Hybrid,
+            idle_rpm: 1200.0,
+            max_rpm: 9200.0,
+            base_pitch: 70.0,
+            pitch_scale: 0.042,
+            harmonic_ratio: 3.0,
+            turbo_flutter: true,
+            anti_lag_pops: false,
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 2. NASCAR & Stock Car Racing (T1–T5)
+    // -------------------------------------------------------------------------
+
+    pub fn late_model_v8() -> Self {
+        Self {
+            sound_type: EngineSoundType::LateModelV8,
+            idle_rpm: 800.0,
+            max_rpm: 6500.0,
+            base_pitch: 45.0,
+            pitch_scale: 0.030,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn arca_spec_v8() -> Self {
+        Self {
+            sound_type: EngineSoundType::ArcaSpecV8,
+            idle_rpm: 850.0,
+            max_rpm: 7500.0,
+            base_pitch: 48.0,
+            pitch_scale: 0.032,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn super_truck_v8() -> Self {
+        Self {
+            sound_type: EngineSoundType::SuperTruckV8,
+            idle_rpm: 900.0,
+            max_rpm: 8000.0,
+            base_pitch: 50.0,
+            pitch_scale: 0.033,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn xfinity_v8() -> Self {
+        Self {
+            sound_type: EngineSoundType::XfinityV8,
+            idle_rpm: 950.0,
+            max_rpm: 8600.0,
+            base_pitch: 52.0,
+            pitch_scale: 0.034,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn nascar_v8_pushrod() -> Self {
+        Self {
+            sound_type: EngineSoundType::NascarV8,
+            idle_rpm: 900.0,
+            max_rpm: 9300.0,
+            base_pitch: 50.0,
+            pitch_scale: 0.032,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. Rallycross & All-Terrain (T1–T5)
+    // -------------------------------------------------------------------------
+
+    pub fn cross_car_motorcycle() -> Self {
+        Self {
+            sound_type: EngineSoundType::CrossCarMotorcycle,
+            idle_rpm: 2200.0,
+            max_rpm: 13000.0,
+            base_pitch: 120.0,
+            pitch_scale: 0.052,
+            harmonic_ratio: 2.0,
+            turbo_flutter: false,
+            anti_lag_pops: false,
+        }
+    }
+
+    pub fn super1600_atmo() -> Self {
+        Self {
+            sound_type: EngineSoundType::Super1600Atmo,
+            idle_rpm: 1100.0,
+            max_rpm: 9200.0,
+            base_pitch: 70.0,
+            pitch_scale: 0.040,
+            harmonic_ratio: 2.0,
+            turbo_flutter: false,
+            anti_lag_pops: false,
+        }
+    }
+
+    pub fn rally2_turbo() -> Self {
+        Self {
+            sound_type: EngineSoundType::Rally2Turbo,
+            idle_rpm: 1200.0,
+            max_rpm: 8000.0,
+            base_pitch: 68.0,
+            pitch_scale: 0.038,
+            harmonic_ratio: 2.0,
+            turbo_flutter: true,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn supercar_rx1() -> Self {
+        Self {
+            sound_type: EngineSoundType::SupercarRx1,
+            idle_rpm: 1300.0,
+            max_rpm: 8500.0,
+            base_pitch: 72.0,
+            pitch_scale: 0.040,
+            harmonic_ratio: 2.0,
+            turbo_flutter: true,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn group_b_inline5() -> Self {
+        Self {
+            sound_type: EngineSoundType::GroupBInline5,
+            idle_rpm: 1100.0,
+            max_rpm: 8800.0,
+            base_pitch: 65.0,
+            pitch_scale: 0.039,
+            harmonic_ratio: 2.5,
+            turbo_flutter: true,
+            anti_lag_pops: true,
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. Grassroots Karting (T1–T5)
+    // -------------------------------------------------------------------------
+
+    pub fn kart_cadet_60() -> Self {
+        Self {
+            sound_type: EngineSoundType::KartCadet60,
+            idle_rpm: 2000.0,
+            max_rpm: 9800.0,
+            base_pitch: 140.0,
+            pitch_scale: 0.050,
+            harmonic_ratio: 1.0,
+            turbo_flutter: false,
+            anti_lag_pops: false,
+        }
+    }
+
+    pub fn racing_mower_v2() -> Self {
+        Self {
+            sound_type: EngineSoundType::RacingMowerV2,
+            idle_rpm: 1000.0,
+            max_rpm: 7200.0,
+            base_pitch: 55.0,
+            pitch_scale: 0.035,
+            harmonic_ratio: 1.0,
+            turbo_flutter: false,
+            anti_lag_pops: false,
+        }
+    }
+
+    pub fn kart_125cc() -> Self {
         Self {
             sound_type: EngineSoundType::Kart125cc,
             idle_rpm: 2500.0,
@@ -163,56 +400,115 @@ impl EngineAudioProfile {
         }
     }
 
-    pub fn rally_turbo_antilag() -> Self {
+    pub fn kart_shifter_kz() -> Self {
         Self {
-            sound_type: EngineSoundType::RallyTurbo,
-            idle_rpm: 1200.0,
-            max_rpm: 8500.0,
-            base_pitch: 75.0,
-            pitch_scale: 0.042,
-            harmonic_ratio: 2.5,
-            turbo_flutter: true,
+            sound_type: EngineSoundType::KartShifterKZ,
+            idle_rpm: 2800.0,
+            max_rpm: 15200.0,
+            base_pitch: 175.0,
+            pitch_scale: 0.062,
+            harmonic_ratio: 1.0,
+            turbo_flutter: false,
             anti_lag_pops: true,
         }
     }
 
-    pub fn gt_v8() -> Self {
+    pub fn superkart_250_twin() -> Self {
         Self {
-            sound_type: EngineSoundType::SportGT,
-            idle_rpm: 950.0,
-            max_rpm: 8200.0,
-            base_pitch: 55.0,
-            pitch_scale: 0.035,
-            harmonic_ratio: 4.0,
+            sound_type: EngineSoundType::Superkart250Twin,
+            idle_rpm: 3000.0,
+            max_rpm: 16000.0,
+            base_pitch: 190.0,
+            pitch_scale: 0.065,
+            harmonic_ratio: 2.0,
             turbo_flutter: false,
-            anti_lag_pops: false,
+            anti_lag_pops: true,
         }
     }
 
-    pub fn nascar_v8_pushrod() -> Self {
-        Self {
-            sound_type: EngineSoundType::NascarV8,
-            idle_rpm: 900.0,
-            max_rpm: 9200.0,
-            base_pitch: 50.0,
-            pitch_scale: 0.032,
-            harmonic_ratio: 4.0,
-            turbo_flutter: false,
-            anti_lag_pops: false,
-        }
-    }
+    // -------------------------------------------------------------------------
+    // 5. Extreme Off-Road (T1–T5)
+    // -------------------------------------------------------------------------
 
     pub fn sand_rail_boxer() -> Self {
         Self {
             sound_type: EngineSoundType::SandRailBoxer,
-            idle_rpm: 1250.0,
-            max_rpm: 8800.0,
-            base_pitch: 70.0,
-            pitch_scale: 0.044,
-            harmonic_ratio: 2.5,
+            idle_rpm: 950.0,
+            max_rpm: 7400.0,
+            base_pitch: 62.0,
+            pitch_scale: 0.040,
+            harmonic_ratio: 2.0,
             turbo_flutter: true,
             anti_lag_pops: true,
         }
+    }
+
+    pub fn pro_lite_v6() -> Self {
+        Self {
+            sound_type: EngineSoundType::ProLiteV6,
+            idle_rpm: 1000.0,
+            max_rpm: 8000.0,
+            base_pitch: 65.0,
+            pitch_scale: 0.038,
+            harmonic_ratio: 3.0,
+            turbo_flutter: false,
+            anti_lag_pops: false,
+        }
+    }
+
+    pub fn ultra4_v8() -> Self {
+        Self {
+            sound_type: EngineSoundType::Ultra4V8,
+            idle_rpm: 850.0,
+            max_rpm: 7200.0,
+            base_pitch: 48.0,
+            pitch_scale: 0.032,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn pro4_unlimited_v8() -> Self {
+        Self {
+            sound_type: EngineSoundType::Pro4UnlimitedV8,
+            idle_rpm: 1100.0,
+            max_rpm: 9000.0,
+            base_pitch: 54.0,
+            pitch_scale: 0.035,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    pub fn monster_truck_blower() -> Self {
+        Self {
+            sound_type: EngineSoundType::MonsterTruckBlower,
+            idle_rpm: 1200.0,
+            max_rpm: 8200.0,
+            base_pitch: 56.0,
+            pitch_scale: 0.036,
+            harmonic_ratio: 4.0,
+            turbo_flutter: false,
+            anti_lag_pops: true,
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Legacy Aliases
+    // -------------------------------------------------------------------------
+
+    pub fn kart_2stroke() -> Self {
+        Self::kart_125cc()
+    }
+
+    pub fn rally_turbo_antilag() -> Self {
+        Self::rally2_turbo()
+    }
+
+    pub fn gt_v8() -> Self {
+        Self::gt4_clubsport()
     }
 }
 
@@ -421,10 +717,10 @@ mod tests {
         let profile = EngineAudioProfile::nascar_v8_pushrod();
         assert_eq!(profile.sound_type, EngineSoundType::NascarV8);
         assert_eq!(profile.idle_rpm, 900.0);
-        assert_eq!(profile.max_rpm, 9200.0);
+        assert_eq!(profile.max_rpm, 9300.0);
         assert_eq!(profile.harmonic_ratio, 4.0);
         assert!(!profile.turbo_flutter);
-        assert!(!profile.anti_lag_pops);
+        assert!(profile.anti_lag_pops);
     }
 
     #[test]

@@ -403,7 +403,7 @@ fn test_garage_stops_music_and_plays_engine() {
 
     // 2. Engine sound should be active and configured for the active car
     assert!(session.audio.is_engine_active, "Engine sound must be active in the garage");
-    assert_eq!(session.audio.active_engine_type, tdrace_app::audio::EngineSoundType::NascarV8);
+    assert_eq!(session.audio.active_engine_type, tdrace_app::audio::EngineSoundType::LateModelV8);
 
     // 3. Revving engine via gamepad input increases rev RPM and keeps engine active
     session.input.gamepad.snapshot.btn_a_pressed = true;
