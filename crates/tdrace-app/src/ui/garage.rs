@@ -180,6 +180,24 @@ pub fn render_garage_screen(
 
     // Render Vehicle in Hero Stage
     if let Some(model) = active_model {
+        fonts.draw_ui_bold(
+            model.name,
+            stage_x + scaler.s(16.0),
+            stage_y + scaler.s(38.0),
+            scaler.font_s(15.0),
+            Palette::WHITE,
+        );
+        let hero_bio_w = stage_w - scaler.s(32.0);
+        fonts.draw_ui_regular_multiline(
+            model.history_bio,
+            stage_x + scaler.s(16.0),
+            stage_y + scaler.s(55.0),
+            scaler.font_s(10.0),
+            scaler.s(13.5),
+            hero_bio_w,
+            Palette::UI_TEXT_MUTED,
+        );
+
         let scheme = CarColorScheme {
             primary: model.primary_color,
             secondary: model.secondary_color,
@@ -388,8 +406,17 @@ pub fn render_garage_screen(
         // Historical dossier paragraph
         fonts.draw_ui_bold("HISTORICAL DOSSIER & RACING PEDIGREE", right_x + scaler.s(14.0), cur_ry, scaler.font_s(10.0), Palette::NEON_GOLD);
         cur_ry += scaler.s(14.0);
-        fonts.draw_ui_regular(model.history_bio, right_x + scaler.s(14.0), cur_ry, scaler.font_s(9.0), Palette::UI_TEXT_MUTED);
-        cur_ry += scaler.s(32.0);
+        let bio_w = right_w - scaler.s(28.0);
+        let lines = fonts.draw_ui_regular_multiline(
+            model.history_bio,
+            right_x + scaler.s(14.0),
+            cur_ry,
+            scaler.font_s(9.0),
+            scaler.s(12.5),
+            bio_w,
+            Palette::UI_TEXT_MUTED,
+        );
+        cur_ry += (lines as f32) * scaler.s(12.5) + scaler.s(12.0);
 
         // 6 Performance Stat Bars
         let (spd, acc, grip, drift, brk, aero) = model.stats;

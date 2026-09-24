@@ -365,7 +365,6 @@ pub fn render_starting_grid_screen(
     );
 
     let car_title = model_opt.map(|m| m.name).unwrap_or_else(|| active_car.title());
-    let car_desc = model_opt.map(|m| m.history_bio).unwrap_or_else(|| active_car.description());
 
     fonts.draw_ui_bold(
         car_title,
@@ -396,14 +395,6 @@ pub fn render_starting_grid_screen(
         car_tag_col,
     );
 
-    fonts.draw_ui_regular(
-        car_desc,
-        col1_x + scaler.s(12.0),
-        curr_y + scaler.s(49.0),
-        scaler.font_s(10.5),
-        Palette::UI_TEXT_MUTED,
-    );
-
     // 2D Lateral View Blueprint Showcase Box (Enlarged and aspect-ratio preserved)
     let stat_base_x = col1_x + scaler.s(12.0);
     let stat_bar_w = col_w - scaler.s(24.0);
@@ -432,7 +423,7 @@ pub fn render_starting_grid_screen(
             m.id,
             &preview_scheme,
             stat_base_x + stat_bar_w * 0.50,
-            lateral_box_y + lateral_box_h * 0.53,
+            lateral_box_y + lateral_box_h * 0.58,
             scaler.s(1.50),
             0.0,
             true,
@@ -442,7 +433,7 @@ pub fn render_starting_grid_screen(
             active_car,
             &player_scheme,
             stat_base_x + stat_bar_w * 0.50,
-            lateral_box_y + lateral_box_h * 0.53,
+            lateral_box_y + lateral_box_h * 0.58,
             scaler.s(1.50),
             0.0,
             true,

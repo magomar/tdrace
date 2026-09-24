@@ -142,11 +142,6 @@ pub fn render_real_car_lateral_by_id(
     // Determine model-specific wheelbase, wheel radius, and wheel style
     let (wf_x, wr_x, r_wheel, wheel_style) = get_wheel_geometry(model_id, center_x, ground_y, half_len, s);
 
-    // Ground contact shadow
-    let shadow_len = if wheel_style == WheelStyle::MonsterJam66 { half_len * 1.15 } else { half_len * 0.85 };
-    draw_circle(center_x, ground_y + 1.0 * s, shadow_len, Color::new(0.0, 0.0, 0.0, 0.42));
-    draw_circle(center_x, ground_y + 1.5 * s, shadow_len * 0.75, Color::new(0.0, 0.0, 0.0, 0.28));
-
     // Optional Showroom Mirror Floor Reflection
     if draw_reflection {
         let refl_fade = Color::new(primary.r * 0.6, primary.g * 0.6, primary.b * 0.6, 0.15);
