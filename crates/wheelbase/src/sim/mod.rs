@@ -7,6 +7,7 @@
 pub mod circuit;
 pub mod harness;
 pub mod matrix;
+pub mod playground;
 pub mod protocols;
 pub mod report;
 pub mod telemetry;
@@ -16,6 +17,11 @@ pub use circuit::{
 };
 pub use harness::{SimulationRunner, DEFAULT_SIMULATION_DT};
 pub use matrix::{ExperimentDataset, VehicleBenchmarkResult};
+pub use playground::{
+    run_playground_simulation, run_wall_contact_protocol_g, PlaygroundSimulationResult,
+    SimBarrierType, SimObstacleType, SimPlayground, SimSceneryObstacle, SimSector, SimWallBarrier,
+    WallContactEvent, WallContactProtocolGResult,
+};
 pub use protocols::{
     run_braking_cadence, run_braking_in_turn, run_braking_split_mu, run_braking_straight_line,
     run_braking_surface_battery, run_protocol_a, run_protocol_b, run_protocol_c, run_protocol_d,
