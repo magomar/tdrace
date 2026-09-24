@@ -1177,10 +1177,10 @@ fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
     // 1. Proof-of-concept classic_kart must return explicit SteeredWheelConfig
     let cfg = get_steered_wheel_config("classic_kart").expect("classic_kart must have SteeredWheelConfig");
     assert_eq!(cfg.wheel_texture_id, "kart_slick_front");
-    assert!((cfg.front_axle_offset - 0.62).abs() < 1e-4);
-    assert!((cfg.half_track_width - 0.52).abs() < 1e-4);
-    assert!((cfg.wheel_size.x - 0.24).abs() < 1e-4);
-    assert!((cfg.wheel_size.y - 0.44).abs() < 1e-4);
+    assert!((cfg.front_axle_offset - 0.41).abs() < 1e-4);
+    assert!((cfg.half_track_width - 0.39).abs() < 1e-4);
+    assert!((cfg.wheel_size.x - 0.20).abs() < 1e-4);
+    assert!((cfg.wheel_size.y - 0.28).abs() < 1e-4);
     assert_eq!(cfg.layering, WheelLayerMode::OverChassis);
 
     // 2. Legacy fallback guarantee: all other models return None
@@ -1200,6 +1200,43 @@ fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
             model_id
         );
     }
+}
+
+#[test]
+fn test_classic_kart_topdown_sprite_orientation() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_kart.png");
+    let bytes = std::fs::read(&path).expect("Failed to read classic_kart topdown sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse classic_kart image");
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut right_pixels = 0;
+    let mut left_pixels = 0;
+
+    for y in 0..height {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let a = img.bytes[idx + 3];
+            if a > 100 {
+                if x < width / 2 {
+                    left_pixels += 1;
+                } else {
+                    right_pixels += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        right_pixels > 20000,
+        "classic_kart front must face forward (+X, right side). Found right: {}, left: {}",
+        right_pixels,
+        left_pixels
+    );
 }
 
 #[test]

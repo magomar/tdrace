@@ -53,6 +53,11 @@ async fn main() {
             session.switch_to_kart();
         } else if clean_arg == "extreme-offroad" || clean_arg == "offroad" || clean_arg == "buggy" {
             session.switch_to_extreme_offroad();
+        } else if clean_arg == "classic-kart" {
+            session.switch_to_classic();
+            session.track_choice = tdrace_app::ui::menu::TrackChoice::KartArena;
+            session.car_choice = tdrace_app::ui::menu::CarChoice::Kart;
+            session.selected_car_model_id = Some("classic_kart");
         } else if clean_arg == "classic" {
             session.switch_to_classic();
         } else if clean_arg == "nascar-championship" {

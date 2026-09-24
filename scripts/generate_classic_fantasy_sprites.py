@@ -720,8 +720,12 @@ def generate_classic_kart():
     # Engine (Right rear)
     draw_td.rectangle([cx + int(28 * ss), cy + int(45 * ss), cx + int(65 * ss), cy + int(98 * ss)], fill=(110, 115, 125), outline=(40, 42, 48), width=int(2 * ss))
 
-    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
-    td_img.save(TOPDOWN_DIR / "classic_kart.png")
+    target_path = TOPDOWN_DIR / "classic_kart.png"
+    if not target_path.exists() or target_path.stat().st_size < 50_000:
+        td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+        # Rotate 90 degrees clockwise (ROTATE_270) so vehicle nose points to the RIGHT (+X, forward heading)
+        td_img = td_img.transpose(Image.Transpose.ROTATE_270)
+        td_img.save(target_path)
     print("✓ Generated classic_kart assets")
 
 

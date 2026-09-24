@@ -162,9 +162,9 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
     match model_id {
         "classic_kart" => Some(SteeredWheelConfig {
             wheel_texture_id: "kart_slick_front",
-            front_axle_offset: 0.62,
-            half_track_width: 0.52,
-            wheel_size: glam::Vec2::new(0.24, 0.44),
+            front_axle_offset: 0.41,
+            half_track_width: 0.39,
+            wheel_size: glam::Vec2::new(0.20, 0.28),
             layering: WheelLayerMode::OverChassis,
         }),
         _ => None, // 84 legacy vehicles continue using monolithic sprite rendering
