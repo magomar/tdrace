@@ -4,12 +4,16 @@
 //! Provides high-frequency telemetry recording, standardized dynamic test protocols
 //! (Protocols A through E), and cross-surface multi-vehicle benchmark matrices.
 
+pub mod circuit;
 pub mod harness;
 pub mod matrix;
 pub mod protocols;
 pub mod report;
 pub mod telemetry;
 
+pub use circuit::{
+    run_path_simulation, PathSimulationResult, PathSimulationStatus, SimPath, SimPathPoint,
+};
 pub use harness::{SimulationRunner, DEFAULT_SIMULATION_DT};
 pub use matrix::{ExperimentDataset, VehicleBenchmarkResult};
 pub use protocols::{
@@ -165,5 +169,72 @@ mod tests {
         assert!(report.contains("Drift Machine"));
         assert!(report.contains("✅ Pass"));
         assert!(report.contains("✅ Stable"));
+    }
+
+    #[test]
+    fn test_path_simulation_straight_with_turns_surfaces() {
+        let config = CarConfig::sports_car();
+        let path = SimPath::straight_with_turns();
+
+        // 1. Asphalt: should complete smoothly with high speed and low tracking error
+        let res_asphalt = run_path_simulation(&config, SurfaceType::Asphalt, &path, 30.0, DEFAULT_SIMULATION_DT);
+        println!("\n=== ASPHALT STRAIGHT-WITH-TURNS SIMULATION ===");
+        println!("Status: {:?}", res_asphalt.status);
+        println!("Completed: {:.1}% ({:.1}m / {:.1}m) in {:.2}s", res_asphalt.completion_pct, res_asphalt.distance_traveled_m, res_asphalt.path_length_m, res_asphalt.elapsed_time_s);
+        println!("Speed: Avg {:.1} km/h, Peak {:.1} km/h", res_asphalt.avg_speed_kmh, res_asphalt.peak_speed_kmh);
+        println!("Tracking: Max cross-track {:.2}m, RMS {:.2}m", res_asphalt.max_cross_track_error_m, res_asphalt.rms_cross_track_error_m);
+        println!("Lateral: Peak {:.2}g, Avg {:.2}g", res_asphalt.peak_lateral_accel_g, res_asphalt.avg_lateral_accel_g);
+
+        assert_eq!(res_asphalt.status, PathSimulationStatus::Completed);
+        assert!(res_asphalt.peak_speed_kmh > 80.0);
+        assert!(res_asphalt.max_cross_track_error_m < 5.0);
+
+        // 2. Dirt: should complete with slight drift / slide
+        let res_dirt = run_path_simulation(&config, SurfaceType::Dirt, &path, 35.0, DEFAULT_SIMULATION_DT);
+        println!("\n=== DIRT STRAIGHT-WITH-TURNS SIMULATION ===");
+        println!("Status: {:?}", res_dirt.status);
+        println!("Completed: {:.1}% ({:.1}m / {:.1}m) in {:.2}s", res_dirt.completion_pct, res_dirt.distance_traveled_m, res_dirt.path_length_m, res_dirt.elapsed_time_s);
+        println!("Speed: Avg {:.1} km/h, Peak {:.1} km/h", res_dirt.avg_speed_kmh, res_dirt.peak_speed_kmh);
+        println!("Tracking: Max cross-track {:.2}m, RMS {:.2}m", res_dirt.max_cross_track_error_m, res_dirt.rms_cross_track_error_m);
+
+        assert_eq!(res_dirt.status, PathSimulationStatus::Completed);
+        assert!(res_dirt.peak_speed_kmh > 60.0);
+
+        // 3. Sand: evaluate why it is unplayable!
+        let res_sand = run_path_simulation(&config, SurfaceType::Sand, &path, 30.0, DEFAULT_SIMULATION_DT);
+        println!("\n=== SAND STRAIGHT-WITH-TURNS SIMULATION ===");
+        println!("Status: {:?}", res_sand.status);
+        println!("Completed: {:.1}% ({:.1}m / {:.1}m) in {:.2}s", res_sand.completion_pct, res_sand.distance_traveled_m, res_sand.path_length_m, res_sand.elapsed_time_s);
+        println!("Speed: Avg {:.1} km/h, Peak {:.1} km/h", res_sand.avg_speed_kmh, res_sand.peak_speed_kmh);
+        println!("Tracking: Max cross-track {:.2}m, RMS {:.2}m", res_sand.max_cross_track_error_m, res_sand.rms_cross_track_error_m);
+        println!("Forces: Peak RR {:.0} N, Avg RR {:.0} N, Peak Traction {:.0} N, Avg Traction {:.0} N",
+            res_sand.peak_rolling_resistance_n, res_sand.avg_rolling_resistance_n,
+            res_sand.peak_traction_force_n, res_sand.avg_traction_force_n);
+        println!("Failure Reason: {:?}", res_sand.failure_reason);
+
+        // On Sand, the car either gets stuck or severely fails to gain speed
+        assert!(res_sand.peak_speed_kmh < 15.0, "Car on Sand should have severe speed handicap, got {:.1} km/h", res_sand.peak_speed_kmh);
+        assert!(res_sand.avg_rolling_resistance_n > res_sand.avg_traction_force_n * 0.9, "Rolling resistance dominates traction on Sand");
+    }
+
+    #[test]
+    fn test_path_simulation_hypothetical_circuit_surfaces() {
+        let config = CarConfig::sports_car();
+        let circuit = SimPath::hypothetical_circuit();
+
+        let res_asphalt = run_path_simulation(&config, SurfaceType::Asphalt, &circuit, 45.0, DEFAULT_SIMULATION_DT);
+        println!("\n=== ASPHALT HYPOTHETICAL CIRCUIT SIMULATION ===");
+        println!("Status: {:?}", res_asphalt.status);
+        println!("Completed: {:.1}% ({:.1}m / {:.1}m) in {:.2}s", res_asphalt.completion_pct, res_asphalt.distance_traveled_m, res_asphalt.path_length_m, res_asphalt.elapsed_time_s);
+        println!("Speed: Avg {:.1} km/h, Peak {:.1} km/h", res_asphalt.avg_speed_kmh, res_asphalt.peak_speed_kmh);
+        assert_eq!(res_asphalt.status, PathSimulationStatus::Completed);
+
+        let res_sand = run_path_simulation(&config, SurfaceType::Sand, &circuit, 30.0, DEFAULT_SIMULATION_DT);
+        println!("\n=== SAND HYPOTHETICAL CIRCUIT SIMULATION ===");
+        println!("Status: {:?}", res_sand.status);
+        println!("Completed: {:.1}% ({:.1}m / {:.1}m) in {:.2}s", res_sand.completion_pct, res_sand.distance_traveled_m, res_sand.path_length_m, res_sand.elapsed_time_s);
+        println!("Speed: Avg {:.1} km/h, Peak {:.1} km/h", res_sand.avg_speed_kmh, res_sand.peak_speed_kmh);
+        println!("Failure: {:?}", res_sand.failure_reason);
+        assert_ne!(res_sand.status, PathSimulationStatus::Completed);
     }
 }
