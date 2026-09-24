@@ -201,19 +201,37 @@ pub fn build_career_select_cards(
     (active_cards, active_count)
 }
 
-/// Computes the bounding rect for a career select card given its index.
-pub fn career_select_card_rect(index: usize, sw: f32, sh: f32) -> Rect {
-    let top_margin = sh * 0.16;
-    let card_height = (sh * 0.13).clamp(70.0, 105.0);
-    let card_gap = (sh * 0.02).clamp(8.0, 16.0);
-    let card_width = (sw * 0.88).clamp(600.0, 1150.0);
+/// Computes the bounding rect for a career select card given its index and current selected index in the accordion.
+pub fn career_select_card_rect(index: usize, selected_idx: usize, sw: f32, sh: f32) -> Rect {
+    let scaler = UiScaler::new(sw, sh);
+    let top_margin = scaler.s(80.0);
+    let card_width = (sw * 0.90).clamp(scaler.s(640.0), scaler.s(1180.0));
     let card_x = (sw - card_width) * 0.5;
-    let card_y = top_margin + (index as f32) * (card_height + card_gap);
 
-    Rect::new(card_x, card_y, card_width, card_height)
+    let collapsed_h = scaler.s(52.0);
+    let expanded_h = scaler.s(148.0);
+    let card_gap = scaler.s(8.0);
+
+    let card_y = if index < selected_idx {
+        top_margin + (index as f32) * (collapsed_h + card_gap)
+    } else if index == selected_idx {
+        top_margin + (selected_idx as f32) * (collapsed_h + card_gap)
+    } else {
+        top_margin + (selected_idx as f32) * (collapsed_h + card_gap)
+            + expanded_h + card_gap
+            + ((index - selected_idx - 1) as f32) * (collapsed_h + card_gap)
+    };
+
+    let height = if index == selected_idx {
+        expanded_h
+    } else {
+        collapsed_h
+    };
+
+    Rect::new(card_x, card_y, card_width, height)
 }
 
-/// Renders the multi-career selection screen.
+/// Renders the multi-career selection screen using an Expandable Accordion layout.
 pub fn render_career_select_screen(
     fonts: &Fonts,
     cards: &[CareerSelectCard],
@@ -230,13 +248,13 @@ pub fn render_career_select_screen(
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
 
     // Top Header Banner
-    let header_y = scaler.s(32.0);
+    let header_y = scaler.s(28.0);
     let title_fs = scaler.font_s(26.0);
-    let sub_fs = scaler.font_s(13.0);
+    let sub_fs = scaler.font_s(12.5);
 
     fonts.draw_display(
         "CAREER SELECTION",
-        scaler.s(50.0),
+        scaler.s(48.0),
         header_y,
         title_fs,
         Palette::WHITE,
@@ -244,17 +262,17 @@ pub fn render_career_select_screen(
 
     fonts.draw_ui_regular(
         "PARALLEL DISCIPLINES — RESUME ONGOING SEASONS OR COMMENCE NEW CAMPAIGNS",
-        scaler.s(50.0),
-        header_y + scaler.s(20.0),
+        scaler.s(48.0),
+        header_y + scaler.s(18.0),
         sub_fs,
         Palette::UI_TEXT_MUTED,
     );
 
     // Active Careers Pill Badge
-    let pill_x = scaler.s(380.0);
-    let pill_w = scaler.s(170.0);
-    let pill_h = scaler.s(26.0);
-    let pill_y = header_y - scaler.s(20.0);
+    let pill_x = scaler.s(370.0);
+    let pill_w = scaler.s(165.0);
+    let pill_h = scaler.s(24.0);
+    let pill_y = header_y - scaler.s(18.0);
 
     let (pill_bg, pill_fg) = if active_count > 0 {
         (Color::new(0.95, 0.70, 0.05, 0.20), Palette::NEON_GOLD)
@@ -262,226 +280,265 @@ pub fn render_career_select_screen(
         (Color::new(0.3, 0.35, 0.4, 0.3), Palette::UI_TEXT_MUTED)
     };
     draw_rectangle(pill_x, pill_y, pill_w, pill_h, pill_bg);
-    draw_rectangle_lines(pill_x, pill_y, pill_w, pill_h, 1.5, pill_fg);
+    draw_rectangle_lines(pill_x, pill_y, pill_w, pill_h, 1.2, pill_fg);
     let pill_text = format!("ACTIVE CAREERS: {}/5", active_count);
     fonts.draw_ui_bold(
         &pill_text,
-        pill_x + scaler.s(14.0),
-        pill_y + scaler.s(17.0),
-        scaler.font_s(12.0),
+        pill_x + scaler.s(12.0),
+        pill_y + scaler.s(16.0),
+        scaler.font_s(11.0),
         pill_fg,
     );
 
     // Profile Identity Badge (Top Right)
-    let badge_w = scaler.s(260.0);
-    let badge_h = scaler.s(44.0);
-    let badge_x = sw - scaler.s(50.0) - badge_w;
+    let badge_w = scaler.s(250.0);
+    let badge_h = scaler.s(42.0);
+    let badge_x = sw - scaler.s(48.0) - badge_w;
     let badge_y = header_y - scaler.s(18.0);
     scaler.draw_glass_card(badge_x, badge_y, badge_w, badge_h, Color::new(0.08, 0.10, 0.15, 0.85), Palette::NEON_CYAN, 1.0);
 
     fonts.draw_ui_bold(
         &active_profile.alias.to_uppercase(),
         badge_x + scaler.s(14.0),
-        badge_y + scaler.s(20.0),
-        scaler.font_s(14.0),
+        badge_y + scaler.s(19.0),
+        scaler.font_s(13.5),
         Palette::WHITE,
     );
     let profile_name_text = format!("PROFILE: {}", active_profile.name);
     fonts.draw_ui_regular(
         &profile_name_text,
         badge_x + scaler.s(14.0),
-        badge_y + scaler.s(36.0),
-        scaler.font_s(11.0),
+        badge_y + scaler.s(34.0),
+        scaler.font_s(10.5),
         Palette::UI_TEXT_MUTED,
     );
 
-    // Cards list
+    // =========================================================================
+    // ACCORDION ROWS LIST: Collapsed rows by default, Expanded selected row
+    // =========================================================================
     for (idx, card) in cards.iter().enumerate() {
-        let rect = career_select_card_rect(idx, sw, sh);
+        let rect = career_select_card_rect(idx, selected_idx, sw, sh);
         let is_selected = idx == selected_idx;
 
-        let bg_color = if is_selected {
-            Color::new(0.12, 0.15, 0.22, 0.95)
-        } else if card.is_active {
-            Color::new(0.08, 0.10, 0.16, 0.85)
-        } else {
-            Color::new(0.06, 0.07, 0.10, 0.70)
-        };
+        if is_selected {
+            // -----------------------------------------------------------------
+            // EXPANDED SELECTED ROW (Height ~148px)
+            // -----------------------------------------------------------------
+            let bg_color = Color::new(0.10, 0.13, 0.21, 0.97);
+            draw_rectangle(rect.x, rect.y, rect.w, rect.h, bg_color);
+            draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 2.2, card.accent_color);
 
-        let border_color = if is_selected {
-            card.accent_color
-        } else if card.is_active {
-            Color::new(card.accent_color.r, card.accent_color.g, card.accent_color.b, 0.45)
-        } else {
-            Color::new(0.20, 0.22, 0.28, 0.50)
-        };
+            // Left Modality Accent Strip
+            let strip_w = scaler.s(5.0);
+            draw_rectangle(rect.x, rect.y, strip_w, rect.h, card.accent_color);
 
-        draw_rectangle(rect.x, rect.y, rect.w, rect.h, bg_color);
-        let border_thickness = if is_selected { 2.5 } else { 1.0 };
-        draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, border_thickness, border_color);
-
-        // Modality Left Accent Strip
-        let strip_w = scaler.s(6.0);
-        draw_rectangle(rect.x, rect.y, strip_w, rect.h, card.accent_color);
-
-        // Modality Tag Badge
-        let tag_x = rect.x + scaler.s(18.0);
-        let tag_y = rect.y + scaler.s(14.0);
-        let tag_w = scaler.s(80.0);
-        let tag_h = scaler.s(22.0);
-        draw_rectangle(tag_x, tag_y, tag_w, tag_h, Color::new(card.accent_color.r, card.accent_color.g, card.accent_color.b, 0.18));
-        draw_rectangle_lines(tag_x, tag_y, tag_w, tag_h, 1.0, card.accent_color);
-
-        let tag_text = card.module_id.to_uppercase();
-        let tag_fs = scaler.font_s(11.0);
-        fonts.draw_ui_bold_centered(
-            &tag_text,
-            tag_x + tag_w * 0.5,
-            tag_y + scaler.s(15.0),
-            tag_fs,
-            card.accent_color,
-        );
-
-        // Title and Subtitle
-        let title_x = tag_x + tag_w + scaler.s(16.0);
-        let title_y = rect.y + scaler.s(30.0);
-        fonts.draw_ui_bold(
-            &card.title,
-            title_x,
-            title_y,
-            scaler.font_s(18.0),
-            if is_selected { Palette::WHITE } else { Color::new(0.85, 0.88, 0.92, 1.0) },
-        );
-
-        fonts.draw_ui_regular(
-            &card.subtitle,
-            title_x,
-            title_y + scaler.s(20.0),
-            scaler.font_s(12.0),
-            Palette::UI_TEXT_MUTED,
-        );
-
-        // Status Box / Progress section (Middle-Right)
-        let status_x = rect.x + rect.w * 0.50;
-        if card.is_active {
-            // Live Status Tag
-            let live_pill_w = scaler.s(130.0);
-            let live_pill_h = scaler.s(22.0);
-            let live_pill_y = rect.y + scaler.s(14.0);
-            draw_rectangle(status_x, live_pill_y, live_pill_w, live_pill_h, Color::new(0.95, 0.70, 0.05, 0.20));
-            draw_rectangle_lines(status_x, live_pill_y, live_pill_w, live_pill_h, 1.2, Palette::NEON_GOLD);
-
-            let live_text = format!("ROUND {} / {}", card.current_round + 1, card.total_rounds);
-            fonts.draw_ui_bold(
-                &live_text,
-                status_x + scaler.s(12.0),
-                live_pill_y + scaler.s(15.0),
-                scaler.font_s(12.0),
-                Palette::NEON_GOLD,
+            // Top Header: Tag + Title + Status Pill
+            let tag_x = rect.x + scaler.s(16.0);
+            let tag_y = rect.y + scaler.s(14.0);
+            let tag_w = scaler.s(68.0);
+            let tag_h = scaler.s(22.0);
+            draw_rectangle(tag_x, tag_y, tag_w, tag_h, Color::new(card.accent_color.r, card.accent_color.g, card.accent_color.b, 0.20));
+            draw_rectangle_lines(tag_x, tag_y, tag_w, tag_h, 1.0, card.accent_color);
+            fonts.draw_ui_bold_centered(
+                &card.module_id.to_uppercase(),
+                tag_x + tag_w * 0.5,
+                tag_y + scaler.s(15.0),
+                scaler.font_s(11.0),
+                card.accent_color,
             );
 
-            // Standings details
-            let rank_text = format!("RANK: P{} / {} • {} PTS", card.player_rank, card.total_drivers, card.player_points);
-            fonts.draw_ui_bold(
-                &rank_text,
-                status_x,
-                rect.y + scaler.s(54.0),
-                scaler.font_s(13.0),
+            let title_x = tag_x + tag_w + scaler.s(14.0);
+            fonts.draw_display(
+                &card.title,
+                title_x,
+                tag_y + scaler.s(18.0),
+                scaler.font_s(18.0),
                 Palette::WHITE,
             );
 
-            // Next Circuit
-            let circuit_text = format!("NEXT: {}", card.next_track_name);
-            fonts.draw_ui_regular(
-                &circuit_text,
-                status_x,
-                rect.y + scaler.s(72.0),
-                scaler.font_s(11.0),
-                Palette::UI_TEXT_MUTED,
-            );
-        } else {
-            // Available / Unstarted
-            let unstarted_pill_w = scaler.s(160.0);
-            let unstarted_pill_h = scaler.s(22.0);
-            let unstarted_pill_y = rect.y + scaler.s(14.0);
-            draw_rectangle(status_x, unstarted_pill_y, unstarted_pill_w, unstarted_pill_h, Color::new(0.15, 0.20, 0.25, 0.40));
-            draw_rectangle_lines(status_x, unstarted_pill_y, unstarted_pill_w, unstarted_pill_h, 1.0, Palette::UI_TEXT_MUTED);
-
-            fonts.draw_ui_bold(
-                "READY TO COMMENCE",
-                status_x + scaler.s(12.0),
-                unstarted_pill_y + scaler.s(15.0),
-                scaler.font_s(11.0),
-                Palette::UI_TEXT_MUTED,
+            // Top Right Status Badge Pill
+            let pill_w = scaler.s(160.0);
+            let pill_h = scaler.s(22.0);
+            let pill_x = rect.x + rect.w - scaler.s(16.0) - pill_w;
+            let (p_bg, p_border, p_fg, p_text) = if card.is_active {
+                (Color::new(0.95, 0.70, 0.05, 0.20), Palette::NEON_GOLD, Palette::NEON_GOLD, format!("ROUND {} / {} ACTIVE", card.current_round + 1, card.total_rounds))
+            } else {
+                (Color::new(0.15, 0.22, 0.32, 0.35), Palette::NEON_CYAN, Palette::NEON_CYAN, "READY TO COMMENCE".to_string())
+            };
+            draw_rectangle(pill_x, tag_y, pill_w, pill_h, p_bg);
+            draw_rectangle_lines(pill_x, tag_y, pill_w, pill_h, 1.0, p_border);
+            fonts.draw_ui_bold_centered(
+                &p_text,
+                pill_x + pill_w * 0.5,
+                tag_y + scaler.s(15.0),
+                scaler.font_s(10.5),
+                p_fg,
             );
 
-            let tier_text = format!("{} • {} ROUNDS", card.tier_name, card.total_rounds);
+            // Divider Line
+            let div_y = tag_y + tag_h + scaler.s(10.0);
+            draw_line(tag_x, div_y, rect.x + rect.w - scaler.s(16.0), div_y, 1.0, Color::new(0.20, 0.24, 0.32, 0.50));
+
+            // Middle Section: Left Details & Right Telemetry
+            let body_y = div_y + scaler.s(16.0);
+
+            // Left side: Subtitle lore and tier info
             fonts.draw_ui_regular(
-                &tier_text,
-                status_x,
-                rect.y + scaler.s(54.0),
+                &card.subtitle,
+                tag_x,
+                body_y,
                 scaler.font_s(12.0),
                 Palette::UI_TEXT_MUTED,
             );
-        }
+            let spec_line = format!("{}  •  {} Total Rounds", card.tier_name, card.total_rounds);
+            fonts.draw_ui_bold(
+                &spec_line,
+                tag_x,
+                body_y + scaler.s(18.0),
+                scaler.font_s(11.5),
+                if card.is_active { Palette::NEON_GOLD } else { Palette::NEON_CYAN },
+            );
 
-        // Action Prompts (Far Right)
-        let action_x = rect.x + rect.w - scaler.s(220.0);
-        let btn_w = scaler.s(190.0);
-        let btn_h = scaler.s(32.0);
-        let btn_y = rect.y + (rect.h - btn_h) * 0.5;
-
-        if is_selected {
-            let (btn_bg, btn_fg, btn_text) = if card.is_active {
-                (card.accent_color, Palette::BLACK, "RESUME CAREER")
+            // Right side: Standings & Next Venue
+            let mid_x = rect.x + rect.w * 0.52;
+            if card.is_active {
+                let rank_str = format!("CURRENT STANDING: P{} / {}  •  {} PTS", card.player_rank, card.total_drivers, card.player_points);
+                fonts.draw_ui_bold(
+                    &rank_str,
+                    mid_x,
+                    body_y,
+                    scaler.font_s(12.0),
+                    Palette::WHITE,
+                );
+                let next_str = format!("NEXT EVENT: {}", card.next_track_name);
+                fonts.draw_ui_regular(
+                    &next_str,
+                    mid_x,
+                    body_y + scaler.s(18.0),
+                    scaler.font_s(11.0),
+                    Palette::UI_TEXT_MUTED,
+                );
             } else {
-                (Palette::NEON_CYAN, Palette::BLACK, "START CAREER")
+                let opener_str = format!("OPENING VENUE: {}", card.next_track_name);
+                fonts.draw_ui_bold(
+                    &opener_str,
+                    mid_x,
+                    body_y,
+                    scaler.font_s(12.0),
+                    Palette::WHITE,
+                );
+                fonts.draw_ui_regular(
+                    "ROUND 1 SEASON INAUGURAL RACE",
+                    mid_x,
+                    body_y + scaler.s(18.0),
+                    scaler.font_s(11.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+            }
+
+            // Bottom Action Area
+            let btn_w = scaler.s(210.0);
+            let btn_h = scaler.s(32.0);
+            let btn_x = rect.x + rect.w - scaler.s(16.0) - btn_w;
+            let btn_y = rect.y + rect.h - btn_h - scaler.s(12.0);
+
+            let (btn_bg, btn_fg, btn_text) = if card.is_active {
+                (card.accent_color, Palette::BLACK, "▶  RESUME CAREER")
+            } else {
+                (Palette::NEON_CYAN, Palette::BLACK, "▶  START CAREER")
             };
-            draw_rectangle(action_x, btn_y, btn_w, btn_h, btn_bg);
-            let btn_fs = scaler.font_s(13.0);
+            draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
             fonts.draw_ui_bold_centered(
                 btn_text,
-                action_x + btn_w * 0.5,
+                btn_x + btn_w * 0.5,
                 btn_y + scaler.s(21.0),
-                btn_fs,
+                scaler.font_s(13.0),
                 btn_fg,
             );
 
             if card.is_active {
-                let reset_prompt = "[R] RESET SEASON";
-                let reset_fs = scaler.font_s(10.0);
-                fonts.draw_ui_regular_centered(
-                    reset_prompt,
-                    action_x + btn_w * 0.5,
-                    rect.y + rect.h - scaler.s(8.0),
+                let reset_fs = scaler.font_s(10.5);
+                fonts.draw_ui_regular(
+                    "[R] RESET SEASON PROGRESS",
+                    tag_x,
+                    btn_y + scaler.s(21.0),
                     reset_fs,
                     Palette::RED,
                 );
             }
         } else {
-            let label = if card.is_active { "ACTIVE" } else { "START" };
-            draw_rectangle_lines(action_x, btn_y, btn_w, btn_h, 1.0, Color::new(0.3, 0.35, 0.4, 0.4));
-            let fs = scaler.font_s(12.0);
-            fonts.draw_ui_regular_centered(
-                label,
-                action_x + btn_w * 0.5,
-                btn_y + scaler.s(20.0),
-                fs,
-                Palette::UI_TEXT_MUTED,
+            // -----------------------------------------------------------------
+            // COLLAPSED UNSELECTED ROW (Height ~52px)
+            // -----------------------------------------------------------------
+            let bg_color = if card.is_active {
+                Color::new(0.06, 0.08, 0.13, 0.80)
+            } else {
+                Color::new(0.05, 0.06, 0.09, 0.70)
+            };
+            draw_rectangle(rect.x, rect.y, rect.w, rect.h, bg_color);
+            draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 1.0, Color::new(0.18, 0.22, 0.28, 0.45));
+
+            // Left Modality Accent Strip
+            let strip_w = scaler.s(5.0);
+            draw_rectangle(rect.x, rect.y, strip_w, rect.h, card.accent_color);
+
+            // Modality Tag Badge
+            let tag_x = rect.x + scaler.s(16.0);
+            let tag_h = scaler.s(22.0);
+            let tag_y = rect.y + (rect.h - tag_h) * 0.5;
+            let tag_w = scaler.s(64.0);
+            draw_rectangle(tag_x, tag_y, tag_w, tag_h, Color::new(card.accent_color.r, card.accent_color.g, card.accent_color.b, 0.16));
+            draw_rectangle_lines(tag_x, tag_y, tag_w, tag_h, 1.0, card.accent_color);
+
+            let tag_text = card.module_id.to_uppercase();
+            fonts.draw_ui_bold_centered(
+                &tag_text,
+                tag_x + tag_w * 0.5,
+                tag_y + scaler.s(15.0),
+                scaler.font_s(10.5),
+                card.accent_color,
+            );
+
+            // Title
+            let title_x = tag_x + tag_w + scaler.s(14.0);
+            fonts.draw_ui_bold(
+                &card.title,
+                title_x,
+                rect.y + scaler.s(32.0),
+                scaler.font_s(15.0),
+                Color::new(0.85, 0.88, 0.92, 1.0),
+            );
+
+            // Right side status pill & expand indicator
+            let right_x = rect.x + rect.w - scaler.s(16.0);
+            let (status_text, status_col) = if card.is_active {
+                (format!("ROUND {}/{}  •  P{} ({} PTS)", card.current_round + 1, card.total_rounds, card.player_rank, card.player_points), Palette::NEON_GOLD)
+            } else {
+                (format!("{}  •  {} ROUNDS", card.tier_name, card.total_rounds), Palette::UI_TEXT_MUTED)
+            };
+
+            let chip_w = scaler.s(190.0);
+            let chip_x = right_x - chip_w;
+            fonts.draw_ui_regular(
+                &status_text,
+                chip_x,
+                rect.y + scaler.s(32.0),
+                scaler.font_s(11.5),
+                status_col,
             );
         }
     }
 
     // Bottom Navigation Bar
-    let nav_y = sh - scaler.s(28.0);
-    let nav_fs = scaler.font_s(12.0);
-    draw_rectangle(0.0, sh - scaler.s(44.0), sw, scaler.s(44.0), Color::new(0.03, 0.04, 0.06, 0.95));
-    draw_line(0.0, sh - scaler.s(44.0), sw, sh - scaler.s(44.0), 1.0, Color::new(0.15, 0.18, 0.25, 0.70));
+    let nav_y = sh - scaler.s(26.0);
+    let nav_fs = scaler.font_s(11.5);
+    draw_rectangle(0.0, sh - scaler.s(42.0), sw, scaler.s(42.0), Color::new(0.03, 0.04, 0.06, 0.95));
+    draw_line(0.0, sh - scaler.s(42.0), sw, sh - scaler.s(42.0), 1.0, Color::new(0.15, 0.18, 0.25, 0.70));
 
-    let nav_str = "[W/S / UP/DOWN] SELECT DISCIPLINE     [ENTER / SPACE] LAUNCH/RESUME     [R] RESET SEASON     [ESC] BACK";
+    let nav_str = "[W/S / UP/DOWN] SELECT / EXPAND DISCIPLINE     [ENTER / SPACE] LAUNCH/RESUME     [R] RESET SEASON     [ESC] BACK";
     fonts.draw_ui_regular(
         nav_str,
-        scaler.s(50.0),
+        scaler.s(48.0),
         nav_y,
         nav_fs,
         Color::new(0.85, 0.88, 0.92, 1.0),

@@ -11609,7 +11609,7 @@ impl RaceSession {
         let mut clicked_card = false;
 
         for (i, _) in cards.iter().enumerate() {
-            let rect = crate::ui::career_select::career_select_card_rect(i, sw, sh);
+            let rect = crate::ui::career_select::career_select_card_rect(i, selected_idx, sw, sh);
             if rect.contains(mouse_vec) {
                 if selected_idx != i {
                     selected_idx = i;
