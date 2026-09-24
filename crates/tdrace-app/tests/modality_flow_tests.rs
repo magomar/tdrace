@@ -344,9 +344,8 @@ fn test_in_development_lan_cloud_modals() {
 }
 
 #[test]
-fn test_career_mode_coming_soon_for_unsupported_modules() {
+fn test_career_mode_opens_career_select() {
     let mut session = RaceSession::new();
-    session.active_module_id = "classic";
 
     session.state = GameState::ModalitySelect {
         category: ModalityCategory::SinglePlayer,
@@ -358,48 +357,13 @@ fn test_career_mode_coming_soon_for_unsupported_modules() {
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_a_pressed = false;
 
-    // Must show CareerComingSoon modal for classic
+    // Must open CareerSelect screen rather than auto-jumping into active module
     assert_eq!(
         session.state,
-        GameState::ModalitySelect {
-            category: ModalityCategory::SinglePlayer,
-            selected_idx: 2,
-            modal: Some(ModalityModal::CareerComingSoon),
+        GameState::CareerSelect {
+            selected_idx: 0,
         }
     );
-    assert_eq!(session.active_module_id, "classic");
-
-    // Dismiss modal with B button
-    session.input.gamepad.snapshot.btn_b_pressed = true;
-    session.update_modality_select();
-    session.input.gamepad.snapshot.btn_b_pressed = false;
-
-    assert_eq!(
-        session.state,
-        GameState::ModalitySelect {
-            category: ModalityCategory::SinglePlayer,
-            selected_idx: 2,
-            modal: None,
-        }
-    );
-    assert_eq!(session.active_module_id, "classic");
-
-    // Now switch to Rally module and verify that Career Mode launches Rally career tier
-    session.switch_to_rally();
-    assert_eq!(session.active_module_id, "rally");
-    session.state = GameState::ModalitySelect {
-        category: ModalityCategory::SinglePlayer,
-        selected_idx: 2, // Career Mode
-        modal: None,
-    };
-
-    session.input.gamepad.snapshot.btn_a_pressed = true;
-    session.update_modality_select();
-    session.input.gamepad.snapshot.btn_a_pressed = false;
-
-    assert_eq!(session.game_mode, GameMode::Career);
-    assert!(session.championship_session.is_some());
-    assert_eq!(session.state, GameState::StartingGrid);
 }
 
 #[test]

@@ -135,6 +135,7 @@ impl HallOfFameDb {
                 trophies_silver INTEGER NOT NULL DEFAULT 0,
                 trophies_bronze INTEGER NOT NULL DEFAULT 0,
                 career_rivals TEXT NOT NULL DEFAULT '[]',
+                active_championship TEXT,
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (profile_id, module_id),
                 FOREIGN KEY(profile_id) REFERENCES player_profiles(id) ON DELETE CASCADE
@@ -157,6 +158,10 @@ impl HallOfFameDb {
         );
         let _ = self.conn.execute(
             "ALTER TABLE profile_module_progress ADD COLUMN career_rivals TEXT NOT NULL DEFAULT '[]'",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE profile_module_progress ADD COLUMN active_championship TEXT",
             [],
         );
         let _ = self.conn.execute(
@@ -740,13 +745,35 @@ impl HallOfFameDb {
     // Module Career Progress Management
     // =========================================================================
 
+    /// Clears an active championship for a specific profile by series name or module id.
+    pub fn clear_active_championship_for_profile(&self, profile_id: i64, series_name: &str, series_id: &str) -> Result<()> {
+        let _ = self.conn.execute(
+            "UPDATE profile_module_progress SET active_championship = NULL WHERE profile_id = ?1 AND module_id = ?2",
+            params![profile_id, series_id],
+        );
+        let all = self.get_all_module_progress(profile_id)?;
+        for (_, mut prog) in all {
+            if let Some(s) = &prog.active_championship {
+                if s.name.eq_ignore_ascii_case(series_name)
+                    || s.name.eq_ignore_ascii_case(series_id)
+                    || s.name.to_lowercase().contains(&series_name.to_lowercase())
+                    || series_name.to_lowercase().contains(&s.name.to_lowercase())
+                {
+                    prog.active_championship = None;
+                    let _ = self.save_module_progress(&prog);
+                }
+            }
+        }
+        Ok(())
+    }
+
     /// Retrieves module career progress for a given player profile and module ID.
     pub fn get_module_progress(&self, profile_id: i64, module_id: &str) -> Result<Option<ModuleCareerProgress>> {
         let mut stmt = self.conn.prepare(
             "SELECT profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
                     trophies_gold, trophies_silver, trophies_bronze, updated_at,
                     COALESCE(lifetime_xp, xp), COALESCE(visited_tracks, '[]'),
-                    COALESCE(career_rivals, '[]')
+                    COALESCE(career_rivals, '[]'), active_championship
              FROM profile_module_progress
              WHERE profile_id = ?1 AND module_id = ?2",
         )?;
@@ -758,12 +785,15 @@ impl HallOfFameDb {
             let lifetime_xp: i64 = row.get(11)?;
             let visited_json: String = row.get(12)?;
             let rivals_json: String = row.get(13)?;
+            let active_champ_json: Option<String> = row.get(14)?;
 
             let unlocked_cars: Vec<String> = serde_json::from_str(&cars_json).unwrap_or_default();
             let unlocked_tracks: Vec<String> = serde_json::from_str(&tracks_json).unwrap_or_default();
             let visited_tracks: Vec<String> = serde_json::from_str(&visited_json).unwrap_or_default();
             let completed_events: Vec<String> = serde_json::from_str(&events_json).unwrap_or_default();
             let career_rivals: Vec<crate::ai::CareerRivalEntry> = serde_json::from_str(&rivals_json).unwrap_or_default();
+            let active_championship: Option<crate::series::ChampionshipSession> =
+                active_champ_json.and_then(|s| serde_json::from_str(&s).ok());
 
             Ok(ModuleCareerProgress {
                 profile_id: row.get(0)?,
@@ -780,6 +810,7 @@ impl HallOfFameDb {
                 trophies_bronze: row.get::<_, i64>(9)? as u32,
                 updated_at: row.get(10)?,
                 career_rivals,
+                active_championship,
             })
         })?;
 
@@ -796,7 +827,7 @@ impl HallOfFameDb {
             "SELECT profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
                     trophies_gold, trophies_silver, trophies_bronze, updated_at,
                     COALESCE(lifetime_xp, xp), COALESCE(visited_tracks, '[]'),
-                    COALESCE(career_rivals, '[]')
+                    COALESCE(career_rivals, '[]'), active_championship
              FROM profile_module_progress
              WHERE profile_id = ?1",
         )?;
@@ -808,12 +839,15 @@ impl HallOfFameDb {
             let lifetime_xp: i64 = row.get(11)?;
             let visited_json: String = row.get(12)?;
             let rivals_json: String = row.get(13)?;
+            let active_champ_json: Option<String> = row.get(14)?;
 
             let unlocked_cars: Vec<String> = serde_json::from_str(&cars_json).unwrap_or_default();
             let unlocked_tracks: Vec<String> = serde_json::from_str(&tracks_json).unwrap_or_default();
             let visited_tracks: Vec<String> = serde_json::from_str(&visited_json).unwrap_or_default();
             let completed_events: Vec<String> = serde_json::from_str(&events_json).unwrap_or_default();
             let career_rivals: Vec<crate::ai::CareerRivalEntry> = serde_json::from_str(&rivals_json).unwrap_or_default();
+            let active_championship: Option<crate::series::ChampionshipSession> =
+                active_champ_json.and_then(|s| serde_json::from_str(&s).ok());
 
             Ok(ModuleCareerProgress {
                 profile_id: row.get(0)?,
@@ -830,6 +864,7 @@ impl HallOfFameDb {
                 trophies_bronze: row.get::<_, i64>(9)? as u32,
                 updated_at: row.get(10)?,
                 career_rivals,
+                active_championship,
             })
         })?;
 
@@ -849,12 +884,13 @@ impl HallOfFameDb {
         let visited_json = serde_json::to_string(&progress.visited_tracks).unwrap_or_else(|_| "[]".to_string());
         let events_json = serde_json::to_string(&progress.completed_events).unwrap_or_else(|_| "[]".to_string());
         let rivals_json = serde_json::to_string(&progress.career_rivals).unwrap_or_else(|_| "[]".to_string());
+        let champ_json = progress.active_championship.as_ref().and_then(|c| serde_json::to_string(c).ok());
 
         self.conn.execute(
             "INSERT INTO profile_module_progress (
                 profile_id, module_id, xp, lifetime_xp, level, unlocked_cars, unlocked_tracks, visited_tracks, completed_events,
-                trophies_gold, trophies_silver, trophies_bronze, career_rivals, updated_at
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+                trophies_gold, trophies_silver, trophies_bronze, career_rivals, updated_at, active_championship
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
             ON CONFLICT(profile_id, module_id) DO UPDATE SET
                 xp = excluded.xp,
                 lifetime_xp = excluded.lifetime_xp,
@@ -867,7 +903,8 @@ impl HallOfFameDb {
                 trophies_silver = excluded.trophies_silver,
                 trophies_bronze = excluded.trophies_bronze,
                 career_rivals = excluded.career_rivals,
-                updated_at = excluded.updated_at",
+                updated_at = excluded.updated_at,
+                active_championship = excluded.active_championship",
             params![
                 progress.profile_id,
                 progress.module_id,
@@ -882,7 +919,8 @@ impl HallOfFameDb {
                 progress.trophies_silver as i64,
                 progress.trophies_bronze as i64,
                 rivals_json,
-                now
+                now,
+                champ_json
             ],
         )?;
         Ok(())
@@ -1208,6 +1246,26 @@ impl HallOfFameDb {
             guard[pos] = progress.clone();
         } else {
             guard.push(progress.clone());
+        }
+        Ok(())
+    }
+
+    pub fn clear_active_championship_for_profile(&self, profile_id: i64, series_name: &str, series_id: &str) -> Result<()> {
+        let mut guard = self.progress.lock().unwrap();
+        for prog in guard.iter_mut() {
+            if prog.profile_id == profile_id {
+                if prog.module_id == series_id {
+                    prog.active_championship = None;
+                } else if let Some(s) = &prog.active_championship {
+                    if s.name.eq_ignore_ascii_case(series_name)
+                        || s.name.eq_ignore_ascii_case(series_id)
+                        || s.name.to_lowercase().contains(&series_name.to_lowercase())
+                        || series_name.to_lowercase().contains(&s.name.to_lowercase())
+                    {
+                        prog.active_championship = None;
+                    }
+                }
+            }
         }
         Ok(())
     }

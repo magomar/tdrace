@@ -298,6 +298,8 @@ pub struct ModuleCareerProgress {
     pub updated_at: String,
     #[serde(default)]
     pub career_rivals: Vec<CareerRivalEntry>,
+    #[serde(default)]
+    pub active_championship: Option<crate::series::ChampionshipSession>,
 }
 
 impl ModuleCareerProgress {
@@ -363,6 +365,7 @@ impl ModuleCareerProgress {
             trophies_bronze: 0,
             updated_at: String::new(),
             career_rivals: Vec::new(),
+            active_championship: None,
         };
         progress.sync_unlocks_for_level();
         progress

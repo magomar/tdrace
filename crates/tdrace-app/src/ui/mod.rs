@@ -15,8 +15,13 @@ pub mod settings;
 pub mod starting_grid;
 pub mod track_manager_ui;
 pub mod track_preview;
+pub mod career_select;
 
 pub use settings::{cycle_surface_texture_quality, SurfaceTextureSettings};
+pub use career_select::{
+    build_career_select_cards, career_select_card_rect, render_career_select_screen,
+    CareerSelectCard,
+};
 
 pub use career_hub::{
     cycle_calendar_slot, gt_default_calendar, gt_eligible_previous_tracks,

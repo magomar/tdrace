@@ -1010,15 +1010,21 @@ fn render_championships_tab(
                 || s.name.to_lowercase().contains(&champ.series.id.to_lowercase())
         };
 
-        let is_active_session = active_championship.is_some_and(is_matching_session);
+        let module_active = module_progress_map
+            .get(&champ.series.module_id)
+            .and_then(|p| p.active_championship.as_ref())
+            .filter(|s| is_matching_session(s));
 
-        let completed_rounds = if let Some(active) = active_championship.filter(|s| is_matching_session(s)) {
+        let effective_active = active_championship.filter(|s| is_matching_session(s)).or(module_active);
+        let is_active_session = effective_active.is_some();
+
+        let completed_rounds = if let Some(active) = effective_active {
             active.current_round.min(total_rounds)
         } else {
             races_count.min(total_rounds)
         };
 
-        let is_completed = if let Some(active) = active_championship.filter(|s| is_matching_session(s)) {
+        let is_completed = if let Some(active) = effective_active {
             active.is_completed
         } else {
             races_count >= total_rounds
