@@ -127,6 +127,17 @@ impl DriverTier {
         }
     }
 
+    /// Compact badge tag (e.g. "T1" .. "T5") for in-game floating nameplates.
+    pub const fn tag(self) -> &'static str {
+        match self {
+            Self::Rookie => "T1",
+            Self::Amateur => "T2",
+            Self::Contender => "T3",
+            Self::Pro => "T4",
+            Self::Legend => "T5",
+        }
+    }
+
     /// Returns the discrete probability distribution [P(T1), P(T2), P(T3), P(T4), P(T5)]
     /// (summing to 100%) for opponent tiers centered on this target difficulty tier.
     pub const fn bell_curve_weights(self) -> [u8; 5] {

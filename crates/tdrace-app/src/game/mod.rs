@@ -96,12 +96,13 @@ use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
     compute_adaptive_alpha, render_elevated_barriers_and_obstacles,
     render_elevated_barriers_and_obstacles_culled, render_elevated_track,
-    render_elevated_track_culled, render_grandstand_shadows_culled,
-    render_grandstands_culled, render_ground_barriers_and_obstacles,
-    render_ground_barriers_and_obstacles_culled, render_ground_track,
-    render_ground_track_culled, render_player_ground_aura, render_player_overhead_chevron,
-    render_player_roof_beacon, render_tree_canopies_culled, render_tree_shadows_culled,
-    render_tree_trunks_culled, PlayerVisibilityOptions,
+    render_elevated_track_culled, render_floating_bot_nameplates,
+    render_grandstand_shadows_culled, render_grandstands_culled,
+    render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
+    render_ground_track, render_ground_track_culled, render_player_ground_aura,
+    render_player_overhead_chevron, render_player_roof_beacon, render_tree_canopies_culled,
+    render_tree_shadows_culled, render_tree_trunks_culled, NAMEPLATE_OUTER_RADIUS,
+    PlayerVisibilityOptions, VehicleNameplateItem,
 };
 use crate::replay::{ReplayPlayer, ReplayRecorder};
 use crate::series::format::{ChampionshipDefinition, SeriesDefinition};
@@ -674,6 +675,7 @@ impl RaceSession {
         let editor_camera = EditorCamera::from_config_with_viewport(&config.camera, sw, sh);
         let crt_overlay = config.display.to_crt_overlay();
         let default_num_bots = config.gameplay.default_num_bots;
+        let bot_nameplates_pref = config.display.bot_nameplates;
         crate::render::track::set_surface_texture_quality(config.display.surface_texture_quality);
 
         let mut session = Self {
@@ -760,7 +762,11 @@ impl RaceSession {
             input,
             touch: TouchController::new(),
             fonts: Fonts::load_embedded(),
-            visibility_options: PlayerVisibilityOptions::default(),
+            visibility_options: {
+                let mut opts = PlayerVisibilityOptions::default();
+                opts.bot_nameplates = bot_nameplates_pref;
+                opts
+            },
             visibility_toast: None,
 
             ghost_recorder: GhostRecorder::new(),
@@ -4498,6 +4504,24 @@ impl RaceSession {
                 self.visibility_toast = Some(VisibilityToast {
                     text: format!("[7] CRT SCANLINES: {}", mode.label().to_uppercase()),
                     is_on,
+                    timer: 1.8,
+                    duration: 1.8,
+                });
+            }
+
+            // [ALT] Toggle In-Race Floating Bot Nameplates (Spec 029)
+            if is_key_pressed(KeyCode::LeftAlt) || is_key_pressed(KeyCode::RightAlt) {
+                self.visibility_options.bot_nameplates = !self.visibility_options.bot_nameplates;
+                self.config.display.bot_nameplates = self.visibility_options.bot_nameplates;
+                self.audio.play_sfx(SfxType::UiMove);
+                let state_str = if self.visibility_options.bot_nameplates { "ON" } else { "OFF" };
+                let col = if self.visibility_options.bot_nameplates { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                if let Some(pos) = self.cars.first().map(|c| c.state.position) {
+                    self.fx.drift_popups.spawn_text(pos, &format!("[ALT] NAMES: {}", state_str), col);
+                }
+                self.visibility_toast = Some(VisibilityToast {
+                    text: format!("[ALT] BOT NAMEPLATES: {}", state_str),
+                    is_on: self.visibility_options.bot_nameplates,
                     timer: 1.8,
                     duration: 1.8,
                 });
@@ -12874,6 +12898,78 @@ impl RaceSession {
         camera.reset_to_screen();
     }
 
+    /// Collects candidate nameplate items for a given focus player car.
+    fn collect_bot_nameplates<'a>(&'a self, focus_car_idx: usize) -> Vec<VehicleNameplateItem<'a>> {
+        let focus_pos = match self.cars.get(focus_car_idx) {
+            Some(c) => c.state.position,
+            None => return Vec::new(),
+        };
+
+        let bot_offset = if self.is_split_screen() { 2 } else { 1 };
+        let mut items = Vec::new();
+
+        for (i, car) in self.cars.iter().enumerate() {
+            if i == focus_car_idx {
+                continue;
+            }
+
+            let dist = car.state.position.distance(focus_pos);
+            if dist > NAMEPLATE_OUTER_RADIUS {
+                continue;
+            }
+
+            let scheme = self.color_schemes.get(i).unwrap_or(&self.active_profile.color_scheme);
+            let accent_color = scheme.secondary;
+
+            if self.is_split_screen() && i == 0 {
+                items.push(VehicleNameplateItem {
+                    car_idx: i,
+                    name: self.active_profile.alias.as_str(),
+                    tier_label: None,
+                    accent_color,
+                    position: car.state.position,
+                    elevation: car.total_elevation(),
+                    distance_to_player: dist,
+                });
+            } else if self.is_split_screen() && i == 1 {
+                items.push(VehicleNameplateItem {
+                    car_idx: i,
+                    name: "PLAYER 2",
+                    tier_label: None,
+                    accent_color,
+                    position: car.state.position,
+                    elevation: car.total_elevation(),
+                    distance_to_player: dist,
+                });
+            } else {
+                let bot_idx = i.saturating_sub(bot_offset);
+                let (name, tier_label) = if let Some(character) = self.opponent_drivers.get(bot_idx) {
+                    let name = if self.championship_session.is_some() {
+                        character.name
+                    } else {
+                        character.alias
+                    };
+                    let tier = self.opponent_tiers.get(bot_idx).map(|t| t.tag());
+                    (name, tier)
+                } else {
+                    ("Opponent", None)
+                };
+
+                items.push(VehicleNameplateItem {
+                    car_idx: i,
+                    name,
+                    tier_label,
+                    accent_color,
+                    position: car.state.position,
+                    elevation: car.total_elevation(),
+                    distance_to_player: dist,
+                });
+            }
+        }
+
+        items
+    }
+
     /// Renders world-space entities under active camera with strict elevation occlusion layering.
     fn render_world(&self) {
         if self.is_split_screen() && self.cars.len() >= 2 {
@@ -12882,8 +12978,23 @@ impl RaceSession {
             let [vp1, vp2] = self.split_layout.viewports(sw, sh);
             self.render_world_viewport(&self.camera, 0, Some(vp1));
             self.render_world_viewport(&self.camera_p2, 1, Some(vp2));
+
+            // Floating Bot Nameplates (Spec 029)
+            if self.visibility_options.bot_nameplates {
+                let [s_rect1, s_rect2] = self.split_layout.screen_rects(sw, sh);
+                let p1_nameplates = self.collect_bot_nameplates(0);
+                render_floating_bot_nameplates(&self.fonts, &self.camera, Some(s_rect1), &p1_nameplates, 1.0);
+                let p2_nameplates = self.collect_bot_nameplates(1);
+                render_floating_bot_nameplates(&self.fonts, &self.camera_p2, Some(s_rect2), &p2_nameplates, 1.0);
+            }
         } else {
             self.render_world_viewport(&self.camera, 0, None);
+
+            // Floating Bot Nameplates (Spec 029)
+            if self.visibility_options.bot_nameplates {
+                let nameplates = self.collect_bot_nameplates(0);
+                render_floating_bot_nameplates(&self.fonts, &self.camera, None, &nameplates, 1.0);
+            }
         }
     }
 
