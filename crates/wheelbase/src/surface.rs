@@ -178,10 +178,7 @@ impl SurfaceType {
     /// that sits on top of the road ribbon and overrides the underlying surface.
     #[inline]
     pub const fn is_on_track_hazard(self) -> bool {
-        matches!(
-            self,
-            Self::Water | Self::Oil | Self::SheetIce | Self::DeepMud | Self::DeepSand | Self::DeepSnow
-        )
+        matches!(self, Self::Water | Self::Oil | Self::SheetIce)
     }
 
     /// Returns true if this surface is any form of sand (packed ribbon or deep trap).

@@ -1169,7 +1169,7 @@ mod tests {
             TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0)
                 .with_runoff_surface(SurfaceType::Gravel),
             TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0)
-                .with_runoff_surfaces(Some(SurfaceType::Sand), Some(SurfaceType::Asphalt)),
+                .with_runoff_surfaces(Some(SurfaceType::DeepSand), Some(SurfaceType::Asphalt)),
             TrackWaypoint::new(Vec2::new(100.0, 100.0), 10.0),
             TrackWaypoint::new(Vec2::new(0.0, 100.0), 10.0),
         ];
@@ -1180,9 +1180,9 @@ mod tests {
         assert_eq!(s0.left_runoff_surface, Some(SurfaceType::Gravel));
         assert_eq!(s0.right_runoff_surface, Some(SurfaceType::Gravel));
 
-        // Near WP 1, left should be Sand, right should be Asphalt
+        // Near WP 1, left should be DeepSand, right should be Asphalt
         let s1 = spline.sample_at_distance(100.0);
-        assert_eq!(s1.left_runoff_surface, Some(SurfaceType::Sand));
+        assert_eq!(s1.left_runoff_surface, Some(SurfaceType::DeepSand));
         assert_eq!(s1.right_runoff_surface, Some(SurfaceType::Asphalt));
 
         // Near WP 2, both should be None

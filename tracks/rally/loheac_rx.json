@@ -43643,7 +43643,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "Turn 1 Sand Trap",
         "layer": "below_track"
       },
@@ -43660,7 +43660,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "Western Hairpin Sand Trap",
         "layer": "below_track"
       }

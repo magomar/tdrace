@@ -43694,7 +43694,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "Turn 1 Asphalt Runoff",
         "layer": "below_track"
       },
@@ -43711,7 +43711,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "West Hairpin Sand Trap",
         "layer": "below_track"
       }

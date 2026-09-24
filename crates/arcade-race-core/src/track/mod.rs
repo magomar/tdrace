@@ -313,7 +313,7 @@ impl Track {
     /// Samples the exact surface type at any arbitrary 2D world coordinate.
     ///
     /// Surface resolution hierarchy:
-    /// 1. On-track hazard overlays (`SurfaceType::Water`, `SurfaceType::Oil`, `SurfaceType::Ice`):
+    /// 1. On-track hazard overlays (`SurfaceType::Water`, `SurfaceType::Oil`, `SurfaceType::SheetIce`):
     ///    Sitting on top of the road, these affect the vehicle both on and off track.
     /// 2. Track spline projection:
     ///    - Main drivable track ribbon (`SurfaceType::Dirt`, `SurfaceType::Asphalt`).
@@ -322,10 +322,10 @@ impl Track {
     ///    - Off-track corridor between track/curb edge and segment wall boundary (`left_runoff_surface` / `right_runoff_surface`).
     /// 4. Arena / Hybrid open floor surface:
     ///    - Full-floor drivable ground inside perimeter boundary hull.
-    /// 5. Off-track surface zones (e.g. `SurfaceType::Sand` traps, runoff areas):
+    /// 5. Off-track surface zones (e.g. `SurfaceType::DeepSand` traps, runoff areas):
     ///    Located underneath the track ribbon, only affecting the vehicle when running off track.
     /// 6. Grandstand concrete aprons.
-    /// 7. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::Sand`).
+    /// 7. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::DeepSand`).
     pub fn sample_surface(&self, point: Vec2) -> SurfaceType {
         // 1. Check jump ramps (elevated platforms)
         for ramp in &self.geometry.jump_ramps {
@@ -540,8 +540,8 @@ impl Track {
     }
 
     /// Resolves the default runoff corridor surface type for the track based on discipline and environment:
-    /// - Snow or icy circuits -> `SurfaceType::Snow`
-    /// - Sandy circuits -> `SurfaceType::Sand`
+    /// - Snow or icy circuits -> `SurfaceType::DeepSnow`
+    /// - Sandy circuits -> `SurfaceType::DeepSand`
     /// - Pure dirt or mud circuits -> `SurfaceType::Dirt`
     /// - Kart circuits -> `SurfaceType::Concrete`
     /// - GT and Rallycross circuits -> `SurfaceType::Gravel`
@@ -549,11 +549,11 @@ impl Track {
         let name_lower = self.name.to_lowercase();
 
         // 1. Snow or icy circuits
-        if self.default_surface == SurfaceType::Snow
-            || self.default_surface == SurfaceType::Ice
+        if self.default_surface.is_snow()
+            || self.default_surface.is_ice()
             || (!self.spline.waypoints.is_empty()
                 && self.spline.waypoints.iter().all(|wp| {
-                    wp.surface == Some(SurfaceType::Snow) || wp.surface == Some(SurfaceType::Ice)
+                    wp.surface.map_or(false, |s| s.is_snow() || s.is_ice())
                 }))
             || name_lower.contains("snow")
             || name_lower.contains("ice")
@@ -561,27 +561,27 @@ impl Track {
             || name_lower.contains("glacier")
             || name_lower.contains("frozen")
         {
-            return Some(SurfaceType::Snow);
+            return Some(SurfaceType::DeepSnow);
         }
 
         // 2. Sandy circuits
-        if self.default_surface == SurfaceType::Sand
+        if self.default_surface.is_sand()
             || (!self.spline.waypoints.is_empty()
-                && self.spline.waypoints.iter().all(|wp| wp.surface == Some(SurfaceType::Sand)))
+                && self.spline.waypoints.iter().all(|wp| wp.surface.map_or(false, |s| s.is_sand())))
             || name_lower.contains("sand")
             || name_lower.contains("dune")
             || name_lower.contains("sahara")
             || name_lower.contains("atacama")
         {
-            return Some(SurfaceType::Sand);
+            return Some(SurfaceType::DeepSand);
         }
 
         // 3. Pure dirt or mud circuits
         if self.default_surface == SurfaceType::Dirt
-            || self.default_surface == SurfaceType::Mud
+            || self.default_surface.is_mud()
             || (!self.spline.waypoints.is_empty()
                 && self.spline.waypoints.iter().all(|wp| {
-                    wp.surface == Some(SurfaceType::Dirt) || wp.surface == Some(SurfaceType::Mud)
+                    wp.surface.map_or(false, |s| s == SurfaceType::Dirt || s.is_mud())
                 }))
             || name_lower.contains("mud")
             || name_lower.contains("dirt")
@@ -999,7 +999,7 @@ mod tests {
 
         // Sample inside sand trap beyond wall barrier
         let surf_sand = track.sample_surface(Vec2::new(180.0, 235.0));
-        assert_eq!(surf_sand, SurfaceType::Sand);
+        assert_eq!(surf_sand, SurfaceType::DeepSand);
 
         let p = Vec2::new(180.0, 225.0);
         let proj = track.spline.project_point(p);
@@ -1060,19 +1060,19 @@ mod tests {
             max: Vec2::new(20.0, 20.0),
         };
         track.geometry.surface_zones.push(
-            SurfaceZone::new(sand_shape, SurfaceType::Sand, "Sand Under Road")
+            SurfaceZone::new(sand_shape, SurfaceType::DeepSand, "Sand Under Road")
                 .with_layer(SurfaceLayer::BelowTrack),
         );
 
         // Point on track (0, 0) should remain Asphalt because track ribbon sits above BelowTrack sand
         assert_eq!(track.sample_surface(Vec2::new(0.0, 0.0)), SurfaceType::Asphalt);
         // Off-track point (0, 15) is outside the 14m wide track ribbon (half-width 7m) but inside the [-20..20, -20..20] sand zone
-        assert_eq!(track.sample_surface(Vec2::new(0.0, 15.0)), SurfaceType::Sand);
+        assert_eq!(track.sample_surface(Vec2::new(0.0, 15.0)), SurfaceType::DeepSand);
 
         // 2. AboveTrack Sand Zone overlapping the start line (0,0)
         track.geometry.surface_zones[0].layer = SurfaceLayer::AboveTrack;
-        // Point on track (0, 0) should now be Sand because AboveTrack sits on top of asphalt!
-        assert_eq!(track.sample_surface(Vec2::new(0.0, 0.0)), SurfaceType::Sand);
+        // Point on track (0, 0) should now be DeepSand because AboveTrack sits on top of asphalt!
+        assert_eq!(track.sample_surface(Vec2::new(0.0, 0.0)), SurfaceType::DeepSand);
 
         // 3. Triangle Surface Shape test
         let tri_shape = SurfaceShape::triangle(
@@ -1236,34 +1236,34 @@ mod tests {
         dirt_track.apply_default_runoff_surfaces();
         assert_eq!(dirt_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Dirt));
 
-        let mut mud_track = make_track("Louisiana Mud Slough", CarCategory::OffRoad, SurfaceType::Mud, "extreme_offroad");
+        let mut mud_track = make_track("Louisiana Mud Slough", CarCategory::OffRoad, SurfaceType::MudTrack, "extreme_offroad");
         assert_eq!(mud_track.default_runoff_surface(), Some(SurfaceType::Dirt));
         mud_track.apply_default_runoff_surfaces();
         assert_eq!(mud_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Dirt));
 
-        // 5. Sandy Circuit -> Sand
-        let mut sand_track = make_track("Sahara Dunes", CarCategory::OffRoad, SurfaceType::Sand, "extreme_offroad");
-        assert_eq!(sand_track.default_runoff_surface(), Some(SurfaceType::Sand));
+        // 5. Sandy Circuit -> DeepSand
+        let mut sand_track = make_track("Sahara Dunes", CarCategory::OffRoad, SurfaceType::PackedSand, "extreme_offroad");
+        assert_eq!(sand_track.default_runoff_surface(), Some(SurfaceType::DeepSand));
         sand_track.apply_default_runoff_surfaces();
-        assert_eq!(sand_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Sand));
+        assert_eq!(sand_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepSand));
 
-        // 6. Snow or Icy Circuit -> Snow
-        let mut snow_track = make_track("Alpine Snow Ridge", CarCategory::OffRoad, SurfaceType::Snow, "extreme_offroad");
-        assert_eq!(snow_track.default_runoff_surface(), Some(SurfaceType::Snow));
+        // 6. Snow or Icy Circuit -> DeepSnow
+        let mut snow_track = make_track("Alpine Snow Ridge", CarCategory::OffRoad, SurfaceType::PackedSnow, "extreme_offroad");
+        assert_eq!(snow_track.default_runoff_surface(), Some(SurfaceType::DeepSnow));
         snow_track.apply_default_runoff_surfaces();
-        assert_eq!(snow_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Snow));
+        assert_eq!(snow_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepSnow));
 
-        let mut ice_track = make_track("Arctic Ice Lake", CarCategory::OffRoad, SurfaceType::Ice, "extreme_offroad");
-        assert_eq!(ice_track.default_runoff_surface(), Some(SurfaceType::Snow));
+        let mut ice_track = make_track("Arctic Ice Lake", CarCategory::OffRoad, SurfaceType::SheetIce, "extreme_offroad");
+        assert_eq!(ice_track.default_runoff_surface(), Some(SurfaceType::DeepSnow));
         ice_track.apply_default_runoff_surfaces();
-        assert_eq!(ice_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Snow));
+        assert_eq!(ice_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepSnow));
 
         // Custom override preservation:
         let mut custom_track = make_track("Nurburgring GP", CarCategory::Gt, SurfaceType::Grass, "gt");
-        custom_track.spline.waypoints[1].left_runoff_surface = Some(SurfaceType::Sand);
+        custom_track.spline.waypoints[1].left_runoff_surface = Some(SurfaceType::DeepSand);
         custom_track.apply_default_runoff_surfaces();
         assert_eq!(custom_track.spline.waypoints[0].left_runoff_surface, Some(SurfaceType::Gravel));
-        assert_eq!(custom_track.spline.waypoints[1].left_runoff_surface, Some(SurfaceType::Sand));
+        assert_eq!(custom_track.spline.waypoints[1].left_runoff_surface, Some(SurfaceType::DeepSand));
         assert_eq!(custom_track.spline.waypoints[2].left_runoff_surface, Some(SurfaceType::Gravel));
     }
 }

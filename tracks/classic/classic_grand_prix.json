@@ -23437,7 +23437,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "Hairpin Sand Trap",
         "layer": "below_track"
       },

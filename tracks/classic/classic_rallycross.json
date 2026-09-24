@@ -25007,7 +25007,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "Jump Runoff Sand Trap",
         "layer": "below_track"
       }

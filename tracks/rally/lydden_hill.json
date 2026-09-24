@@ -43426,7 +43426,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "Chessons Drift Runoff",
         "layer": "below_track"
       },
@@ -43443,7 +43443,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "North Bend Sand Trap",
         "layer": "below_track"
       }

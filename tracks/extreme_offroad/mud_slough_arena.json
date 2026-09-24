@@ -86,7 +86,7 @@
         -16.223389
       ]
     ],
-    "floor_surface": "Mud",
+    "floor_surface": "DeepMud",
     "perimeter_barrier": "TireWall"
   },
   "spline": {
@@ -529,7 +529,7 @@
             ]
           }
         },
-        "surface": "Mud",
+        "surface": "DeepMud",
         "name": "Mud Slough Arena Floor",
         "layer": "below_track"
       },
@@ -572,7 +572,7 @@
         "ramp_angle_deg": 16.0,
         "height": 2.2,
         "name": "Central Clay Mound East",
-        "surface": "Mud"
+        "surface": "MudTrack"
       },
       {
         "id": 2,
@@ -597,7 +597,7 @@
         "ramp_angle_deg": 16.0,
         "height": 2.2,
         "name": "Central Clay Mound West",
-        "surface": "Mud"
+        "surface": "MudTrack"
       }
     ],
     "left_boundary_polyline": [
@@ -890,7 +890,7 @@
       "grid_slot": 11
     }
   ],
-  "default_surface": "Mud",
+  "default_surface": "DeepMud",
   "pit_box_area": null,
   "default_laps": 3,
   "car_category": "off_road",

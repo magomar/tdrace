@@ -46731,7 +46731,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "Turn 1 Sand Trap",
         "layer": "below_track"
       },
@@ -46748,7 +46748,7 @@
             ]
           }
         },
-        "surface": "Sand",
+        "surface": "DeepSand",
         "name": "Velodrome Outer Runoff",
         "layer": "below_track"
       }

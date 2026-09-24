@@ -55,17 +55,6 @@
     "description": "Loose stone rally stage / runoff; moderate grip with heavy stone roost."
   },
   {
-    "name": "Mud",
-    "friction": 0.52,
-    "rolling_resistance": 6.5,
-    "surface_drag": 3.2,
-    "smoke": false,
-    "roost": true,
-    "splash": false,
-    "layer": "AboveTrack",
-    "description": "Viscous mud bog; heavy deceleration drag, low lateral bite, brown roost plumes."
-  },
-  {
     "name": "Grass",
     "friction": 0.45,
     "rolling_resistance": 18.0,
@@ -77,18 +66,18 @@
     "description": "Standard off-track runoff; heavy rolling resistance penalizing corner cuts."
   },
   {
-    "name": "Snow",
-    "friction": 0.34,
-    "rolling_resistance": 3.0,
-    "surface_drag": 1.6,
+    "name": "PackedSand",
+    "friction": 0.62,
+    "rolling_resistance": 5.2,
+    "surface_drag": 2.1,
     "smoke": false,
     "roost": true,
     "splash": false,
-    "layer": "AboveTrack",
-    "description": "Packed/powder snow; slippery winter rallying, white roost plumes."
+    "layer": "BelowTrack",
+    "description": "Packed sand desert ribbon; moderate flotation grip with sandy roost."
   },
   {
-    "name": "Sand",
+    "name": "DeepSand",
     "friction": 0.3,
     "rolling_resistance": 30.0,
     "surface_drag": 4.5,
@@ -96,7 +85,51 @@
     "roost": true,
     "splash": false,
     "layer": "BelowTrack",
-    "description": "Deep gravel / sand trap; severe vehicle deceleration trap, sand rooster tails."
+    "description": "Deep desert dunes and arrestor beds; severe deceleration trap."
+  },
+  {
+    "name": "MudTrack",
+    "friction": 0.58,
+    "rolling_resistance": 5.0,
+    "surface_drag": 2.5,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Compacted mud ribbon; drivable off-road course with brown roost plumes."
+  },
+  {
+    "name": "DeepMud",
+    "friction": 0.4,
+    "rolling_resistance": 14.0,
+    "surface_drag": 5.0,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Viscous mud bog; heavy deceleration trap and deep ruts."
+  },
+  {
+    "name": "PackedSnow",
+    "friction": 0.48,
+    "rolling_resistance": 2.2,
+    "surface_drag": 1.4,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Packed snow ribbon; winter rallying with white roost plumes."
+  },
+  {
+    "name": "DeepSnow",
+    "friction": 0.28,
+    "rolling_resistance": 12.0,
+    "surface_drag": 3.8,
+    "smoke": false,
+    "roost": true,
+    "splash": false,
+    "layer": "BelowTrack",
+    "description": "Deep snowbanks and drifts; severe rolling resistance barrier."
   },
   {
     "name": "Water",
@@ -121,7 +154,7 @@
     "description": "Oil slick hazard; extreme spin hazard, breaks rear traction instantly."
   },
   {
-    "name": "Ice",
+    "name": "SheetIce",
     "friction": 0.08,
     "rolling_resistance": 0.4,
     "surface_drag": 0.9,
@@ -129,6 +162,6 @@
     "roost": false,
     "splash": false,
     "layer": "AboveTrack",
-    "description": "Frozen lake; near-zero traction, near-frictionless gliding with no braking."
+    "description": "Glacial sheet ice; near-zero friction requiring studded tires."
   }
 ]

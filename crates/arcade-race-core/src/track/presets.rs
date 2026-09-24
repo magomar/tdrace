@@ -642,7 +642,7 @@ pub fn classic_grand_prix() -> Track {
             min: Vec2::new(140.0, 215.0),
             max: Vec2::new(230.0, 260.0),
         },
-        SurfaceType::Sand,
+        SurfaceType::DeepSand,
         "Hairpin Sand Trap",
     ));
 
@@ -1151,7 +1151,7 @@ pub fn oasis_rally() -> Track {
                 min: Vec2::new(230.0, 130.0),
                 max: Vec2::new(290.0, 210.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Canyon Sand Trap 1",
         ),
         SurfaceZone::new(
@@ -1159,7 +1159,7 @@ pub fn oasis_rally() -> Track {
                 min: Vec2::new(-160.0, 30.0),
                 max: Vec2::new(-95.0, 110.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Western Sand Trap 2",
         ),
         // Oasis Water Pond: Northern Oasis Lagoon (circular hazard in chicane infield)
@@ -1195,7 +1195,7 @@ pub fn oasis_rally() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Sand,
+        default_surface: SurfaceType::DeepSand,
         pit_box_area: None,
         default_laps: 5,
         car_category: CarCategory::OffRoad,
@@ -1300,7 +1300,7 @@ pub fn dirt_figure_eight() -> Track {
                 center: Vec2::new(155.0, 0.0),
                 radius: 14.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "East Carousel Sand Runoff",
         ),
         SurfaceZone::new(
@@ -1308,7 +1308,7 @@ pub fn dirt_figure_eight() -> Track {
                 center: Vec2::new(-155.0, 0.0),
                 radius: 14.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "West Carousel Sand Runoff",
         ),
     ];
@@ -1335,7 +1335,7 @@ pub fn dirt_figure_eight() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Sand,
+        default_surface: SurfaceType::DeepSand,
         pit_box_area: None,
         default_laps: 5,
         car_category: CarCategory::OffRoad,
@@ -1430,7 +1430,7 @@ pub fn classic_rallycross() -> Track {
                 min: Vec2::new(20.0, 195.0),
                 max: Vec2::new(60.0, 220.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Jump Runoff Sand Trap",
         ),
     ];
@@ -1539,7 +1539,7 @@ pub fn holjes_rx() -> Track {
                 min: Vec2::new(120.0, -25.0),
                 max: Vec2::new(180.0, 15.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Turn 1 Sand Trap",
         ),
         SurfaceZone::new(
@@ -1547,7 +1547,7 @@ pub fn holjes_rx() -> Track {
                 min: Vec2::new(260.0, 210.0),
                 max: Vec2::new(320.0, 280.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Velodrome Outer Runoff",
         ),
     ];
@@ -1637,7 +1637,7 @@ pub fn lydden_hill() -> Track {
                 min: Vec2::new(140.0, -425.0),
                 max: Vec2::new(210.0, -320.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Chessons Drift Runoff",
         ),
         SurfaceZone::new(
@@ -1645,7 +1645,7 @@ pub fn lydden_hill() -> Track {
                 min: Vec2::new(10.0, -420.0),
                 max: Vec2::new(80.0, -350.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "North Bend Sand Trap",
         ),
     ];
@@ -1751,7 +1751,7 @@ pub fn hell_rx() -> Track {
                 min: Vec2::new(100.0, -45.0),
                 max: Vec2::new(140.0, 15.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Turn 1 Asphalt Runoff",
         ),
         SurfaceZone::new(
@@ -1759,7 +1759,7 @@ pub fn hell_rx() -> Track {
                 min: Vec2::new(-145.0, -75.0),
                 max: Vec2::new(-95.0, -20.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "West Hairpin Sand Trap",
         ),
     ];
@@ -1865,7 +1865,7 @@ pub fn loheac_rx() -> Track {
                 min: Vec2::new(100.0, -60.0),
                 max: Vec2::new(150.0, 5.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Turn 1 Sand Trap",
         ),
         SurfaceZone::new(
@@ -1873,7 +1873,7 @@ pub fn loheac_rx() -> Track {
                 min: Vec2::new(280.0, -280.0),
                 max: Vec2::new(350.0, -220.0),
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Western Hairpin Sand Trap",
         ),
     ];
@@ -4268,21 +4268,21 @@ pub fn cota() -> Track {
 /// High-speed desert sprint circuit across rolling sand dunes with three progressive crest tabletop jump ramps.
 pub fn sahara_dune_crossing() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-350.0, -180.0), 16.0).with_surface(SurfaceType::Sand),
-        TrackWaypoint::new(Vec2::new(-150.0, -180.0), 16.0).with_surface(SurfaceType::Sand),
-        TrackWaypoint::new(Vec2::new(100.0, -180.0), 16.0).with_surface(SurfaceType::Sand),
-        TrackWaypoint::new(Vec2::new(300.0, -170.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(450.0, -90.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(480.0, 50.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(410.0, 180.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(260.0, 240.0), 16.0).with_surface(SurfaceType::Sand),
-        TrackWaypoint::new(Vec2::new(110.0, 210.0), 16.0).with_surface(SurfaceType::Sand),
-        TrackWaypoint::new(Vec2::new(-20.0, 260.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-160.0, 270.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-330.0, 220.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-450.0, 110.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-440.0, -40.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-380.0, -140.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-350.0, -180.0), 16.0).with_surface(SurfaceType::PackedSand),
+        TrackWaypoint::new(Vec2::new(-150.0, -180.0), 16.0).with_surface(SurfaceType::PackedSand),
+        TrackWaypoint::new(Vec2::new(100.0, -180.0), 16.0).with_surface(SurfaceType::PackedSand),
+        TrackWaypoint::new(Vec2::new(300.0, -170.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(450.0, -90.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(480.0, 50.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(410.0, 180.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(260.0, 240.0), 16.0).with_surface(SurfaceType::PackedSand),
+        TrackWaypoint::new(Vec2::new(110.0, 210.0), 16.0).with_surface(SurfaceType::PackedSand),
+        TrackWaypoint::new(Vec2::new(-20.0, 260.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-160.0, 270.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-330.0, 220.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-450.0, 110.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-440.0, -40.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-380.0, -140.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -4302,7 +4302,7 @@ pub fn sahara_dune_crossing() -> Track {
             16.0,
             2.2,
             "Dune Ridge Leap",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
         JumpRamp::new(
             2,
             SurfaceShape::OrientedBox {
@@ -4315,7 +4315,7 @@ pub fn sahara_dune_crossing() -> Track {
             18.0,
             2.6,
             "Camelback Double",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
         JumpRamp::new(
             3,
             SurfaceShape::OrientedBox {
@@ -4328,7 +4328,7 @@ pub fn sahara_dune_crossing() -> Track {
             15.0,
             2.0,
             "Erg Chebbi Big Air",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
     ];
 
     let surface_zones = vec![
@@ -4337,7 +4337,7 @@ pub fn sahara_dune_crossing() -> Track {
                 center: Vec2::new(450.0, -90.0),
                 radius: 20.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Turn 1 Deep Sand Runoff",
         ),
         SurfaceZone::new(
@@ -4345,7 +4345,7 @@ pub fn sahara_dune_crossing() -> Track {
                 center: Vec2::new(-450.0, 110.0),
                 radius: 22.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "West Hairpin Sand Trap",
         ),
     ];
@@ -4372,7 +4372,7 @@ pub fn sahara_dune_crossing() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Sand,
+        default_surface: SurfaceType::DeepSand,
         pit_box_area: None,
         default_laps: 3,
         car_category: CarCategory::OffRoad,
@@ -4393,20 +4393,20 @@ pub fn sahara_dune_crossing() -> Track {
 /// Hyper-speed Chilean desert basin with parabolic high-speed sweepers across dried salt flats and powdery fesh-fesh dunes.
 pub fn atacama_sand_basin() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-420.0, -220.0), 18.0).with_surface(SurfaceType::Sand),
+        TrackWaypoint::new(Vec2::new(-420.0, -220.0), 18.0).with_surface(SurfaceType::PackedSand),
         TrackWaypoint::new(Vec2::new(-150.0, -220.0), 18.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(150.0, -220.0), 18.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(420.0, -210.0), 18.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(600.0, -110.0), 18.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(420.0, -210.0), 18.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(600.0, -110.0), 18.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(660.0, 60.0), 18.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(560.0, 200.0), 18.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(560.0, 200.0), 18.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
         TrackWaypoint::new(Vec2::new(380.0, 250.0), 18.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(120.0, 210.0), 18.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(-120.0, 260.0), 18.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(-350.0, 230.0), 18.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-540.0, 160.0), 18.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-630.0, 20.0), 18.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-560.0, -130.0), 18.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-350.0, 230.0), 18.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-540.0, 160.0), 18.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-630.0, 20.0), 18.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-560.0, -130.0), 18.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -4426,7 +4426,7 @@ pub fn atacama_sand_basin() -> Track {
             15.0,
             2.0,
             "Salt Basin High-Speed Crest",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
         JumpRamp::new(
             2,
             SurfaceShape::OrientedBox {
@@ -4439,7 +4439,7 @@ pub fn atacama_sand_basin() -> Track {
             16.0,
             2.2,
             "Fesh-Fesh Dune Leap",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
     ];
 
     let surface_zones = vec![
@@ -4448,7 +4448,7 @@ pub fn atacama_sand_basin() -> Track {
                 center: Vec2::new(600.0, -110.0),
                 radius: 26.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Turn 1 Fesh-Fesh Runoff",
         ),
         SurfaceZone::new(
@@ -4456,7 +4456,7 @@ pub fn atacama_sand_basin() -> Track {
                 center: Vec2::new(-630.0, 20.0),
                 radius: 28.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "West Carousel Sand Trap",
         ),
     ];
@@ -4483,7 +4483,7 @@ pub fn atacama_sand_basin() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Sand,
+        default_surface: SurfaceType::DeepSand,
         pit_box_area: None,
         default_laps: 3,
         car_category: CarCategory::OffRoad,
@@ -4601,23 +4601,23 @@ pub fn red_rock_canyon() -> Track {
 /// Grueling 3,100m open desert endurance layout with rhythm whoops sections, dry sandy wash riverbeds, and cactus hazard zones.
 pub fn baja_500_desert_scrub() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-520.0, -280.0), 14.0).with_surface(SurfaceType::Sand),
+        TrackWaypoint::new(Vec2::new(-520.0, -280.0), 14.0).with_surface(SurfaceType::PackedSand),
         TrackWaypoint::new(Vec2::new(-320.0, -280.0), 14.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(-120.0, -280.0), 14.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(80.0, -275.0), 14.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(280.0, -260.0), 14.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(480.0, -210.0), 14.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(660.0, -90.0), 14.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(480.0, -210.0), 14.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(660.0, -90.0), 14.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(720.0, 70.0), 14.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(630.0, 230.0), 14.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(630.0, 230.0), 14.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
         TrackWaypoint::new(Vec2::new(440.0, 300.0), 14.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(220.0, 260.0), 14.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(0.0, 300.0), 14.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(-220.0, 290.0), 14.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(-440.0, 250.0), 14.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-620.0, 150.0), 14.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-700.0, 0.0), 14.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-640.0, -160.0), 14.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-440.0, 250.0), 14.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-620.0, 150.0), 14.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-700.0, 0.0), 14.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-640.0, -160.0), 14.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -4648,7 +4648,7 @@ pub fn baja_500_desert_scrub() -> Track {
             18.0,
             2.5,
             "Baja Dry Wash Launch",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
     );
     jump_ramps.push(
         JumpRamp::new(
@@ -4663,7 +4663,7 @@ pub fn baja_500_desert_scrub() -> Track {
             16.0,
             2.2,
             "North Scrub Tabletop",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
     );
 
     let surface_zones = vec![
@@ -4672,7 +4672,7 @@ pub fn baja_500_desert_scrub() -> Track {
                 center: Vec2::new(720.0, 70.0),
                 radius: 28.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Turn 1 Scrub Sand Trap",
         ),
         SurfaceZone::new(
@@ -4680,7 +4680,7 @@ pub fn baja_500_desert_scrub() -> Track {
                 center: Vec2::new(-700.0, 0.0),
                 radius: 28.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "West Wash Sand Hazard",
         ),
     ];
@@ -4707,7 +4707,7 @@ pub fn baja_500_desert_scrub() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Sand,
+        default_surface: SurfaceType::DeepSand,
         pit_box_area: None,
         default_laps: 3,
         car_category: CarCategory::OffRoad,
@@ -4732,7 +4732,7 @@ pub fn mud_slough_arena() -> Track {
 
     let floor_zone = SurfaceZone::new(
         SurfaceShape::Polygon { vertices: hull.clone() },
-        SurfaceType::Mud,
+        SurfaceType::DeepMud,
         "Mud Slough Arena Floor",
     ).with_layer(SurfaceLayer::BelowTrack);
 
@@ -4758,7 +4758,7 @@ pub fn mud_slough_arena() -> Track {
             16.0,
             2.2,
             "Central Clay Mound East",
-        ).with_surface(SurfaceType::Mud),
+        ).with_surface(SurfaceType::MudTrack),
         JumpRamp::new(
             2,
             SurfaceShape::OrientedBox {
@@ -4771,7 +4771,7 @@ pub fn mud_slough_arena() -> Track {
             16.0,
             2.2,
             "Central Clay Mound West",
-        ).with_surface(SurfaceType::Mud),
+        ).with_surface(SurfaceType::MudTrack),
     ];
 
     let grid_positions = generate_arena_grid(Vec2::new(-20.0, 0.0), 0.0, 12, 8.0, 3.0);
@@ -4789,7 +4789,7 @@ pub fn mud_slough_arena() -> Track {
         category: TrackCategory::Main,
         kind: TrackKind::Arena {
             boundary_hull: hull.clone(),
-            floor_surface: SurfaceType::Mud,
+            floor_surface: SurfaceType::DeepMud,
             perimeter_barrier: Some(BarrierType::TireWall),
         },
         spline: TrackSpline::empty(),
@@ -4806,7 +4806,7 @@ pub fn mud_slough_arena() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Mud,
+        default_surface: SurfaceType::DeepMud,
         pit_box_area: None,
         default_laps: 3,
         car_category: CarCategory::OffRoad,
@@ -4915,18 +4915,18 @@ pub fn gravel_quarry_chasm() -> Track {
 /// Deep bayou swamp course weaving between cypress trees, treacherous mud bogs, murky water hazards, and slippery wooden boardwalks.
 pub fn louisiana_mud_swampland() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-220.0, -110.0), 11.0).with_surface(SurfaceType::Mud),
-        TrackWaypoint::new(Vec2::new(-100.0, -110.0), 11.0).with_surface(SurfaceType::Mud),
-        TrackWaypoint::new(Vec2::new(30.0, -100.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(150.0, -60.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(220.0, 20.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(190.0, 110.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(90.0, 150.0), 11.0).with_surface(SurfaceType::Mud),
-        TrackWaypoint::new(Vec2::new(-20.0, 120.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-120.0, 160.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-210.0, 120.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-270.0, 30.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-250.0, -60.0), 11.0).with_surface(SurfaceType::Mud).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-220.0, -110.0), 11.0).with_surface(SurfaceType::MudTrack),
+        TrackWaypoint::new(Vec2::new(-100.0, -110.0), 11.0).with_surface(SurfaceType::MudTrack),
+        TrackWaypoint::new(Vec2::new(30.0, -100.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(150.0, -60.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(220.0, 20.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(190.0, 110.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(90.0, 150.0), 11.0).with_surface(SurfaceType::MudTrack),
+        TrackWaypoint::new(Vec2::new(-20.0, 120.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-120.0, 160.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-210.0, 120.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-270.0, 30.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-250.0, -60.0), 11.0).with_surface(SurfaceType::MudTrack).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -4946,7 +4946,7 @@ pub fn louisiana_mud_swampland() -> Track {
             16.0,
             2.0,
             "Bayou Creek Leap",
-        ).with_surface(SurfaceType::Mud),
+        ).with_surface(SurfaceType::MudTrack),
     ];
 
     let surface_zones = vec![
@@ -4990,7 +4990,7 @@ pub fn louisiana_mud_swampland() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Mud,
+        default_surface: SurfaceType::DeepMud,
         pit_box_area: None,
         default_laps: 4,
         car_category: CarCategory::OffRoad,
@@ -5014,15 +5014,15 @@ pub fn arctic_frozen_lake() -> Track {
     let perimeter_walls = generate_walls_from_hull(&lake_hull, BarrierType::TireWall);
 
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-70.0, -40.0), 14.0).with_surface(SurfaceType::Ice),
-        TrackWaypoint::new(Vec2::new(0.0, -40.0), 14.0).with_surface(SurfaceType::Ice),
-        TrackWaypoint::new(Vec2::new(60.0, -35.0), 14.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(85.0, 0.0), 14.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(60.0, 35.0), 14.0).with_surface(SurfaceType::Ice).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(10.0, 25.0), 14.0).with_surface(SurfaceType::Ice),
-        TrackWaypoint::new(Vec2::new(-30.0, 40.0), 14.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-80.0, 20.0), 14.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-85.0, -15.0), 14.0).with_surface(SurfaceType::Ice).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-70.0, -40.0), 14.0).with_surface(SurfaceType::SheetIce),
+        TrackWaypoint::new(Vec2::new(0.0, -40.0), 14.0).with_surface(SurfaceType::SheetIce),
+        TrackWaypoint::new(Vec2::new(60.0, -35.0), 14.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(85.0, 0.0), 14.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(60.0, 35.0), 14.0).with_surface(SurfaceType::SheetIce).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(10.0, 25.0), 14.0).with_surface(SurfaceType::SheetIce),
+        TrackWaypoint::new(Vec2::new(-30.0, 40.0), 14.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-80.0, 20.0), 14.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-85.0, -15.0), 14.0).with_surface(SurfaceType::SheetIce).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -5031,7 +5031,7 @@ pub fn arctic_frozen_lake() -> Track {
 
     let floor_zone = SurfaceZone::new(
         SurfaceShape::Polygon { vertices: lake_hull.clone() },
-        SurfaceType::Ice,
+        SurfaceType::SheetIce,
         "Frozen Lake Sheet",
     ).with_layer(SurfaceLayer::BelowTrack);
 
@@ -5040,7 +5040,7 @@ pub fn arctic_frozen_lake() -> Track {
             center: Vec2::new(85.0, 0.0),
             radius: 14.0,
         },
-        SurfaceType::Snow,
+        SurfaceType::DeepSnow,
         "Turn 1 Snowbank Berm",
     );
     let snowbank_2 = SurfaceZone::new(
@@ -5048,7 +5048,7 @@ pub fn arctic_frozen_lake() -> Track {
             center: Vec2::new(-80.0, 20.0),
             radius: 14.0,
         },
-        SurfaceType::Snow,
+        SurfaceType::DeepSnow,
         "West Chicane Snowbank",
     );
 
@@ -5058,7 +5058,7 @@ pub fn arctic_frozen_lake() -> Track {
         category: TrackCategory::Main,
         kind: TrackKind::Hybrid {
             boundary_hull: lake_hull.clone(),
-            floor_surface: SurfaceType::Ice,
+            floor_surface: SurfaceType::SheetIce,
             perimeter_barrier: Some(BarrierType::TireWall),
         },
         spline,
@@ -5075,7 +5075,7 @@ pub fn arctic_frozen_lake() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Snow,
+        default_surface: SurfaceType::DeepSnow,
         pit_box_area: None,
         default_laps: 5,
         car_category: CarCategory::OffRoad,
@@ -5096,18 +5096,18 @@ pub fn arctic_frozen_lake() -> Track {
 /// Point-to-point alpine snow hillclimb climbing 18 vertical meters with knife-edge cliff edges, packed snow berms, and black ice patches.
 pub fn alpine_snow_ridge() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-280.0, -150.0), 10.0).with_surface(SurfaceType::Snow),
-        TrackWaypoint::new(Vec2::new(-140.0, -150.0), 10.0).with_surface(SurfaceType::Snow).with_elevation(2.0),
-        TrackWaypoint::new(Vec2::new(10.0, -140.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(true, false).with_elevation(5.0),
-        TrackWaypoint::new(Vec2::new(160.0, -100.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(true, false).with_elevation(8.5),
-        TrackWaypoint::new(Vec2::new(260.0, -20.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(true, false).with_elevation(12.0),
-        TrackWaypoint::new(Vec2::new(250.0, 80.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(false, true).with_elevation(15.5),
-        TrackWaypoint::new(Vec2::new(160.0, 160.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(true, false).with_elevation(16.0),
-        TrackWaypoint::new(Vec2::new(20.0, 130.0), 10.0).with_surface(SurfaceType::Snow).with_elevation(12.5),
-        TrackWaypoint::new(Vec2::new(-100.0, 170.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(true, false).with_elevation(9.0),
-        TrackWaypoint::new(Vec2::new(-220.0, 140.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(true, false).with_elevation(5.5),
-        TrackWaypoint::new(Vec2::new(-300.0, 50.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(true, false).with_elevation(2.5),
-        TrackWaypoint::new(Vec2::new(-310.0, -60.0), 10.0).with_surface(SurfaceType::Snow).with_curbs(false, true).with_elevation(0.5),
+        TrackWaypoint::new(Vec2::new(-280.0, -150.0), 10.0).with_surface(SurfaceType::PackedSnow),
+        TrackWaypoint::new(Vec2::new(-140.0, -150.0), 10.0).with_surface(SurfaceType::PackedSnow).with_elevation(2.0),
+        TrackWaypoint::new(Vec2::new(10.0, -140.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(true, false).with_elevation(5.0),
+        TrackWaypoint::new(Vec2::new(160.0, -100.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(true, false).with_elevation(8.5),
+        TrackWaypoint::new(Vec2::new(260.0, -20.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(true, false).with_elevation(12.0),
+        TrackWaypoint::new(Vec2::new(250.0, 80.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(false, true).with_elevation(15.5),
+        TrackWaypoint::new(Vec2::new(160.0, 160.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(true, false).with_elevation(16.0),
+        TrackWaypoint::new(Vec2::new(20.0, 130.0), 10.0).with_surface(SurfaceType::PackedSnow).with_elevation(12.5),
+        TrackWaypoint::new(Vec2::new(-100.0, 170.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(true, false).with_elevation(9.0),
+        TrackWaypoint::new(Vec2::new(-220.0, 140.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(true, false).with_elevation(5.5),
+        TrackWaypoint::new(Vec2::new(-300.0, 50.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(true, false).with_elevation(2.5),
+        TrackWaypoint::new(Vec2::new(-310.0, -60.0), 10.0).with_surface(SurfaceType::PackedSnow).with_curbs(false, true).with_elevation(0.5),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -5127,7 +5127,7 @@ pub fn alpine_snow_ridge() -> Track {
             16.0,
             2.2,
             "Alpine Peak Crest Launch",
-        ).with_surface(SurfaceType::Snow),
+        ).with_surface(SurfaceType::PackedSnow),
     ];
 
     let surface_zones = vec![
@@ -5136,7 +5136,7 @@ pub fn alpine_snow_ridge() -> Track {
                 center: Vec2::new(250.0, 80.0),
                 radius: 14.0,
             },
-            SurfaceType::Ice,
+            SurfaceType::SheetIce,
             "Summit Switchback Black Ice",
         ),
         SurfaceZone::new(
@@ -5144,7 +5144,7 @@ pub fn alpine_snow_ridge() -> Track {
                 center: Vec2::new(-220.0, 140.0),
                 radius: 14.0,
             },
-            SurfaceType::Ice,
+            SurfaceType::SheetIce,
             "Descent Hairpin Black Ice",
         ),
     ];
@@ -5171,7 +5171,7 @@ pub fn alpine_snow_ridge() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Snow,
+        default_surface: SurfaceType::DeepSnow,
         pit_box_area: None,
         default_laps: 4,
         car_category: CarCategory::OffRoad,
@@ -5192,17 +5192,17 @@ pub fn alpine_snow_ridge() -> Track {
 /// Finnish frozen lake circuit featuring high-speed ice sweepers, packed snow berms, and rhythmic pendulum chicane complexes.
 pub fn rovaniemi_ice_ring() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-190.0, -90.0), 13.0).with_surface(SurfaceType::Ice),
-        TrackWaypoint::new(Vec2::new(-70.0, -90.0), 13.0).with_surface(SurfaceType::Ice),
-        TrackWaypoint::new(Vec2::new(60.0, -85.0), 13.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(170.0, -40.0), 13.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(210.0, 30.0), 13.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(150.0, 110.0), 13.0).with_surface(SurfaceType::Ice).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(50.0, 100.0), 13.0).with_surface(SurfaceType::Ice),
-        TrackWaypoint::new(Vec2::new(-50.0, 120.0), 13.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-150.0, 105.0), 13.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-210.0, 35.0), 13.0).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-220.0, -40.0), 13.0).with_surface(SurfaceType::Ice).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-190.0, -90.0), 13.0).with_surface(SurfaceType::SheetIce),
+        TrackWaypoint::new(Vec2::new(-70.0, -90.0), 13.0).with_surface(SurfaceType::SheetIce),
+        TrackWaypoint::new(Vec2::new(60.0, -85.0), 13.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(170.0, -40.0), 13.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(210.0, 30.0), 13.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(150.0, 110.0), 13.0).with_surface(SurfaceType::SheetIce).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(50.0, 100.0), 13.0).with_surface(SurfaceType::SheetIce),
+        TrackWaypoint::new(Vec2::new(-50.0, 120.0), 13.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-150.0, 105.0), 13.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-210.0, 35.0), 13.0).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-220.0, -40.0), 13.0).with_surface(SurfaceType::SheetIce).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -5215,7 +5215,7 @@ pub fn rovaniemi_ice_ring() -> Track {
                 center: Vec2::new(210.0, 30.0),
                 radius: 16.0,
             },
-            SurfaceType::Snow,
+            SurfaceType::DeepSnow,
             "East Sweeper Snowbank",
         ),
         SurfaceZone::new(
@@ -5223,7 +5223,7 @@ pub fn rovaniemi_ice_ring() -> Track {
                 center: Vec2::new(-210.0, 35.0),
                 radius: 16.0,
             },
-            SurfaceType::Snow,
+            SurfaceType::DeepSnow,
             "West Chicane Snowbank",
         ),
     ];
@@ -5250,7 +5250,7 @@ pub fn rovaniemi_ice_ring() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Snow,
+        default_surface: SurfaceType::DeepSnow,
         pit_box_area: None,
         default_laps: 4,
         car_category: CarCategory::OffRoad,
@@ -5271,18 +5271,18 @@ pub fn rovaniemi_ice_ring() -> Track {
 /// Treacherous glacial ridge carved between bottomless ice chasms with crevasse gap jumps and zero barrier protection.
 pub fn glacier_crest_pass() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-300.0, -160.0), 11.5).with_surface(SurfaceType::Ice),
-        TrackWaypoint::new(Vec2::new(-140.0, -160.0), 11.5).with_surface(SurfaceType::Ice),
-        TrackWaypoint::new(Vec2::new(30.0, -150.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(190.0, -110.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(true, false).with_elevation(2.0),
-        TrackWaypoint::new(Vec2::new(290.0, -20.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(true, false).with_elevation(5.0),
-        TrackWaypoint::new(Vec2::new(270.0, 90.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(false, true).with_elevation(8.0),
-        TrackWaypoint::new(Vec2::new(160.0, 170.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(true, false).with_elevation(10.0),
-        TrackWaypoint::new(Vec2::new(10.0, 140.0), 11.5).with_surface(SurfaceType::Ice).with_elevation(7.0),
-        TrackWaypoint::new(Vec2::new(-120.0, 180.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(true, false).with_elevation(4.5),
-        TrackWaypoint::new(Vec2::new(-240.0, 140.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(true, false).with_elevation(2.0),
-        TrackWaypoint::new(Vec2::new(-330.0, 50.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-340.0, -70.0), 11.5).with_surface(SurfaceType::Ice).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-300.0, -160.0), 11.5).with_surface(SurfaceType::SheetIce),
+        TrackWaypoint::new(Vec2::new(-140.0, -160.0), 11.5).with_surface(SurfaceType::SheetIce),
+        TrackWaypoint::new(Vec2::new(30.0, -150.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(190.0, -110.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(true, false).with_elevation(2.0),
+        TrackWaypoint::new(Vec2::new(290.0, -20.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(true, false).with_elevation(5.0),
+        TrackWaypoint::new(Vec2::new(270.0, 90.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(false, true).with_elevation(8.0),
+        TrackWaypoint::new(Vec2::new(160.0, 170.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(true, false).with_elevation(10.0),
+        TrackWaypoint::new(Vec2::new(10.0, 140.0), 11.5).with_surface(SurfaceType::SheetIce).with_elevation(7.0),
+        TrackWaypoint::new(Vec2::new(-120.0, 180.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(true, false).with_elevation(4.5),
+        TrackWaypoint::new(Vec2::new(-240.0, 140.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(true, false).with_elevation(2.0),
+        TrackWaypoint::new(Vec2::new(-330.0, 50.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-340.0, -70.0), 11.5).with_surface(SurfaceType::SheetIce).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -5302,7 +5302,7 @@ pub fn glacier_crest_pass() -> Track {
             18.0,
             2.8,
             "Glacial Crevasse Leap East",
-        ).with_surface(SurfaceType::Ice),
+        ).with_surface(SurfaceType::SheetIce),
         JumpRamp::new(
             2,
             SurfaceShape::OrientedBox {
@@ -5315,7 +5315,7 @@ pub fn glacier_crest_pass() -> Track {
             16.0,
             2.4,
             "North Ridge Abyss Jump",
-        ).with_surface(SurfaceType::Ice),
+        ).with_surface(SurfaceType::SheetIce),
     ];
 
     let surface_zones = vec![
@@ -5324,7 +5324,7 @@ pub fn glacier_crest_pass() -> Track {
                 center: Vec2::new(290.0, -20.0),
                 radius: 16.0,
             },
-            SurfaceType::Snow,
+            SurfaceType::DeepSnow,
             "Glacial Firn Drift East",
         ),
         SurfaceZone::new(
@@ -5332,7 +5332,7 @@ pub fn glacier_crest_pass() -> Track {
                 center: Vec2::new(-330.0, 50.0),
                 radius: 16.0,
             },
-            SurfaceType::Snow,
+            SurfaceType::DeepSnow,
             "West Firn Snow Hazard",
         ),
     ];
@@ -5359,7 +5359,7 @@ pub fn glacier_crest_pass() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Ice,
+        default_surface: SurfaceType::SheetIce,
         pit_box_area: None,
         default_laps: 4,
         car_category: CarCategory::OffRoad,
@@ -6469,21 +6469,21 @@ pub fn whilton_mill_kart() -> Track {
 /// Open California sand bowl raid venue across rolling razorback dunes with 3 high-launch tabletop jumps and deep sand traps.
 pub fn glamis_sand_dunes() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(-380.0, -200.0), 16.0).with_surface(SurfaceType::Sand),
-        TrackWaypoint::new(Vec2::new(-180.0, -200.0), 16.0).with_surface(SurfaceType::Sand),
-        TrackWaypoint::new(Vec2::new(60.0, -200.0), 16.0).with_surface(SurfaceType::Sand),
-        TrackWaypoint::new(Vec2::new(260.0, -180.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(420.0, -100.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-380.0, -200.0), 16.0).with_surface(SurfaceType::PackedSand),
+        TrackWaypoint::new(Vec2::new(-180.0, -200.0), 16.0).with_surface(SurfaceType::PackedSand),
+        TrackWaypoint::new(Vec2::new(60.0, -200.0), 16.0).with_surface(SurfaceType::PackedSand),
+        TrackWaypoint::new(Vec2::new(260.0, -180.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(420.0, -100.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(460.0, 40.0), 16.0).with_surface(SurfaceType::Dirt).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(390.0, 180.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(390.0, 180.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
         TrackWaypoint::new(Vec2::new(240.0, 250.0), 16.0).with_surface(SurfaceType::Dirt),
         TrackWaypoint::new(Vec2::new(90.0, 220.0), 16.0).with_surface(SurfaceType::Dirt),
-        TrackWaypoint::new(Vec2::new(-40.0, 270.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-180.0, 280.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-40.0, 270.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-180.0, 280.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
         TrackWaypoint::new(Vec2::new(-350.0, 230.0), 16.0).with_surface(SurfaceType::Dirt).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-460.0, 120.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-450.0, -30.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-400.0, -150.0), 16.0).with_surface(SurfaceType::Sand).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-460.0, 120.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-450.0, -30.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-400.0, -150.0), 16.0).with_surface(SurfaceType::PackedSand).with_curbs(false, true),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -6503,7 +6503,7 @@ pub fn glamis_sand_dunes() -> Track {
             16.0,
             2.2,
             "Oldsmobile Hill Leap",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
         JumpRamp::new(
             2,
             SurfaceShape::OrientedBox {
@@ -6516,7 +6516,7 @@ pub fn glamis_sand_dunes() -> Track {
             18.0,
             2.6,
             "Glamis Razorback Crest",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
         JumpRamp::new(
             3,
             SurfaceShape::OrientedBox {
@@ -6529,7 +6529,7 @@ pub fn glamis_sand_dunes() -> Track {
             15.0,
             2.0,
             "Dune Bowl Launch",
-        ).with_surface(SurfaceType::Sand),
+        ).with_surface(SurfaceType::PackedSand),
     ];
 
     let surface_zones = vec![
@@ -6538,7 +6538,7 @@ pub fn glamis_sand_dunes() -> Track {
                 center: Vec2::new(430.0, -100.0),
                 radius: 22.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Turn 1 Deep Sand Trap",
         ),
         SurfaceZone::new(
@@ -6546,7 +6546,7 @@ pub fn glamis_sand_dunes() -> Track {
                 center: Vec2::new(-460.0, 120.0),
                 radius: 24.0,
             },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "West Ridge Sand Bowl",
         ),
     ];
@@ -6573,7 +6573,7 @@ pub fn glamis_sand_dunes() -> Track {
         },
         checkpoints,
         grid_positions,
-        default_surface: SurfaceType::Sand,
+        default_surface: SurfaceType::DeepSand,
         pit_box_area: None,
         default_laps: 3,
         car_category: CarCategory::OffRoad,

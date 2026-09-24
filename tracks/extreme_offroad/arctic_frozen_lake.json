@@ -102,7 +102,7 @@
         -20.705507
       ]
     ],
-    "floor_surface": "Ice",
+    "floor_surface": "SheetIce",
     "perimeter_barrier": "TireWall"
   },
   "spline": {
@@ -115,15 +115,15 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -133,15 +133,15 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -151,15 +151,15 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -169,15 +169,15 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -187,15 +187,15 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -205,15 +205,15 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -223,15 +223,15 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -241,15 +241,15 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -259,15 +259,15 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "left_wall": true,
         "right_wall": true,
         "left_wall_distance": null,
         "right_wall_distance": null,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       }
     ],
     "closed": true,
@@ -289,7 +289,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -299,8 +299,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -319,7 +319,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -329,8 +329,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -349,7 +349,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -359,8 +359,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -379,7 +379,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -389,8 +389,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -409,7 +409,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -419,8 +419,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -439,7 +439,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -449,8 +449,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -469,7 +469,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -479,8 +479,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -499,7 +499,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -509,8 +509,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -529,7 +529,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -539,8 +539,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -559,7 +559,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -569,8 +569,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -589,7 +589,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -599,8 +599,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -619,7 +619,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -629,8 +629,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -649,7 +649,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -659,8 +659,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -679,7 +679,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -689,8 +689,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -709,7 +709,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -719,8 +719,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -739,7 +739,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -749,8 +749,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -769,7 +769,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -779,8 +779,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -799,7 +799,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -809,8 +809,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -829,7 +829,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -839,8 +839,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -859,7 +859,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -869,8 +869,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -889,7 +889,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -899,8 +899,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -919,7 +919,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -929,8 +929,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -949,7 +949,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -959,8 +959,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -979,7 +979,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -989,8 +989,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1009,7 +1009,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1019,8 +1019,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1039,7 +1039,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1049,8 +1049,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1069,7 +1069,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1079,8 +1079,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1099,7 +1099,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1109,8 +1109,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1129,7 +1129,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1139,8 +1139,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1159,7 +1159,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1169,8 +1169,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1189,7 +1189,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1199,8 +1199,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1219,7 +1219,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1229,8 +1229,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1249,7 +1249,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1259,8 +1259,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1279,7 +1279,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1289,8 +1289,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1309,7 +1309,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1319,8 +1319,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1339,7 +1339,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1349,8 +1349,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1369,7 +1369,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1379,8 +1379,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1399,7 +1399,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1409,8 +1409,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1429,7 +1429,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1439,8 +1439,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1459,7 +1459,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1469,8 +1469,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1489,7 +1489,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1499,8 +1499,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1519,7 +1519,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1529,8 +1529,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1549,7 +1549,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1559,8 +1559,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1579,7 +1579,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1589,8 +1589,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1609,7 +1609,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1619,8 +1619,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1639,7 +1639,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1649,8 +1649,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1669,7 +1669,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1679,8 +1679,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1699,7 +1699,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1709,8 +1709,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1729,7 +1729,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1739,8 +1739,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1759,7 +1759,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1769,8 +1769,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1789,7 +1789,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1799,8 +1799,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1819,7 +1819,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1829,8 +1829,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1849,7 +1849,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1859,8 +1859,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1879,7 +1879,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1889,8 +1889,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1909,7 +1909,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1919,8 +1919,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1939,7 +1939,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1949,8 +1949,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1969,7 +1969,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -1979,8 +1979,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -1999,7 +1999,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2009,8 +2009,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2029,7 +2029,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2039,8 +2039,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2059,7 +2059,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2069,8 +2069,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2089,7 +2089,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2099,8 +2099,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2119,7 +2119,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2129,8 +2129,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2149,7 +2149,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2159,8 +2159,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2179,7 +2179,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2189,8 +2189,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2209,7 +2209,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2219,8 +2219,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2239,7 +2239,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2249,8 +2249,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2269,7 +2269,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2279,8 +2279,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2299,7 +2299,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2309,8 +2309,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2329,7 +2329,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2339,8 +2339,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2359,7 +2359,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2369,8 +2369,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2389,7 +2389,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2399,8 +2399,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2419,7 +2419,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2429,8 +2429,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2449,7 +2449,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2459,8 +2459,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2479,7 +2479,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2489,8 +2489,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2509,7 +2509,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2519,8 +2519,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2539,7 +2539,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2549,8 +2549,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2569,7 +2569,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2579,8 +2579,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2599,7 +2599,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2609,8 +2609,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2629,7 +2629,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2639,8 +2639,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2659,7 +2659,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2669,8 +2669,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2689,7 +2689,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2699,8 +2699,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2719,7 +2719,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2729,8 +2729,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2749,7 +2749,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2759,8 +2759,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2779,7 +2779,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2789,8 +2789,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2809,7 +2809,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2819,8 +2819,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2839,7 +2839,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2849,8 +2849,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2869,7 +2869,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2879,8 +2879,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2899,7 +2899,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2909,8 +2909,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2929,7 +2929,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2939,8 +2939,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2959,7 +2959,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2969,8 +2969,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -2989,7 +2989,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -2999,8 +2999,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3019,7 +3019,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3029,8 +3029,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3049,7 +3049,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3059,8 +3059,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3079,7 +3079,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3089,8 +3089,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3109,7 +3109,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3119,8 +3119,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3139,7 +3139,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3149,8 +3149,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3169,7 +3169,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3179,8 +3179,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3199,7 +3199,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3209,8 +3209,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3229,7 +3229,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3239,8 +3239,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3259,7 +3259,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3269,8 +3269,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3289,7 +3289,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3299,8 +3299,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3319,7 +3319,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3329,8 +3329,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3349,7 +3349,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3359,8 +3359,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3379,7 +3379,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3389,8 +3389,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3409,7 +3409,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3419,8 +3419,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3439,7 +3439,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3449,8 +3449,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3469,7 +3469,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3479,8 +3479,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3499,7 +3499,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3509,8 +3509,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3529,7 +3529,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3539,8 +3539,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3559,7 +3559,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3569,8 +3569,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3589,7 +3589,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3599,8 +3599,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3619,7 +3619,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3629,8 +3629,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3649,7 +3649,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3659,8 +3659,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3679,7 +3679,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3689,8 +3689,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3709,7 +3709,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3719,8 +3719,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3739,7 +3739,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3749,8 +3749,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3769,7 +3769,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3779,8 +3779,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3799,7 +3799,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3809,8 +3809,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3829,7 +3829,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3839,8 +3839,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3859,7 +3859,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3869,8 +3869,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3889,7 +3889,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3899,8 +3899,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3919,7 +3919,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3929,8 +3929,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3949,7 +3949,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3959,8 +3959,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -3979,7 +3979,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -3989,8 +3989,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4009,7 +4009,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4019,8 +4019,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4039,7 +4039,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4049,8 +4049,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4069,7 +4069,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4079,8 +4079,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4099,7 +4099,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4109,8 +4109,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4129,7 +4129,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4139,8 +4139,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4159,7 +4159,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4169,8 +4169,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4189,7 +4189,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4199,8 +4199,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4219,7 +4219,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4229,8 +4229,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4249,7 +4249,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4259,8 +4259,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4279,7 +4279,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4289,8 +4289,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4309,7 +4309,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4319,8 +4319,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4339,7 +4339,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4349,8 +4349,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4369,7 +4369,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4379,8 +4379,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4399,7 +4399,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4409,8 +4409,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4429,7 +4429,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4439,8 +4439,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4459,7 +4459,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4469,8 +4469,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4489,7 +4489,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4499,8 +4499,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4519,7 +4519,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4529,8 +4529,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4549,7 +4549,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4559,8 +4559,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4579,7 +4579,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4589,8 +4589,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4609,7 +4609,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4619,8 +4619,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4639,7 +4639,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4649,8 +4649,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4669,7 +4669,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4679,8 +4679,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4699,7 +4699,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4709,8 +4709,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4729,7 +4729,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4739,8 +4739,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4759,7 +4759,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4769,8 +4769,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4789,7 +4789,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4799,8 +4799,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4819,7 +4819,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4829,8 +4829,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4849,7 +4849,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4859,8 +4859,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4879,7 +4879,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4889,8 +4889,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4909,7 +4909,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4919,8 +4919,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4939,7 +4939,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4949,8 +4949,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4969,7 +4969,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -4979,8 +4979,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -4999,7 +4999,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5009,8 +5009,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5029,7 +5029,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5039,8 +5039,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5059,7 +5059,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5069,8 +5069,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5089,7 +5089,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5099,8 +5099,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5119,7 +5119,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5129,8 +5129,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5149,7 +5149,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5159,8 +5159,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5179,7 +5179,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5189,8 +5189,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5209,7 +5209,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5219,8 +5219,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5239,7 +5239,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5249,8 +5249,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5269,7 +5269,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5279,8 +5279,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5299,7 +5299,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5309,8 +5309,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5329,7 +5329,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5339,8 +5339,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5359,7 +5359,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5369,8 +5369,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5389,7 +5389,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5399,8 +5399,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5419,7 +5419,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5429,8 +5429,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5449,7 +5449,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5459,8 +5459,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5479,7 +5479,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5489,8 +5489,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5509,7 +5509,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5519,8 +5519,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5539,7 +5539,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5549,8 +5549,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5569,7 +5569,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5579,8 +5579,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5599,7 +5599,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5609,8 +5609,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5629,7 +5629,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5639,8 +5639,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5659,7 +5659,7 @@
         "width": 14.0,
         "left_curb": true,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5669,8 +5669,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5689,7 +5689,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5699,8 +5699,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5719,7 +5719,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5729,8 +5729,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5749,7 +5749,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5759,8 +5759,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5779,7 +5779,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5789,8 +5789,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5809,7 +5809,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5819,8 +5819,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5839,7 +5839,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5849,8 +5849,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5869,7 +5869,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5879,8 +5879,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5899,7 +5899,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5909,8 +5909,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5929,7 +5929,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5939,8 +5939,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5959,7 +5959,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5969,8 +5969,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -5989,7 +5989,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -5999,8 +5999,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6019,7 +6019,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6029,8 +6029,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6049,7 +6049,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6059,8 +6059,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6079,7 +6079,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6089,8 +6089,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6109,7 +6109,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6119,8 +6119,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6139,7 +6139,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6149,8 +6149,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6169,7 +6169,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6179,8 +6179,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6199,7 +6199,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6209,8 +6209,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6229,7 +6229,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6239,8 +6239,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6259,7 +6259,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6269,8 +6269,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6289,7 +6289,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6299,8 +6299,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6319,7 +6319,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6329,8 +6329,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6349,7 +6349,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6359,8 +6359,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6379,7 +6379,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": true,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6389,8 +6389,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6409,7 +6409,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6419,8 +6419,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6439,7 +6439,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6449,8 +6449,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6469,7 +6469,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6479,8 +6479,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6499,7 +6499,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6509,8 +6509,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6529,7 +6529,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6539,8 +6539,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6559,7 +6559,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6569,8 +6569,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6589,7 +6589,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6599,8 +6599,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6619,7 +6619,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6629,8 +6629,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6649,7 +6649,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6659,8 +6659,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6679,7 +6679,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6689,8 +6689,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6709,7 +6709,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6719,8 +6719,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6739,7 +6739,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6749,8 +6749,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       },
       {
         "point": [
@@ -6769,7 +6769,7 @@
         "width": 14.0,
         "left_curb": false,
         "right_curb": false,
-        "surface": "Ice",
+        "surface": "SheetIce",
         "elevation": 0.0,
         "bank_angle": 0.0,
         "is_bridge": false,
@@ -6779,8 +6779,8 @@
         "right_wall": true,
         "left_wall_distance": 29.200539,
         "right_wall_distance": 29.200539,
-        "left_runoff_surface": "Snow",
-        "right_runoff_surface": "Snow"
+        "left_runoff_surface": "DeepSnow",
+        "right_runoff_surface": "DeepSnow"
       }
     ],
     "total_length": 438.56152,
@@ -7356,7 +7356,7 @@
             ]
           }
         },
-        "surface": "Ice",
+        "surface": "SheetIce",
         "name": "Frozen Lake Sheet",
         "layer": "below_track"
       },
@@ -7370,9 +7370,9 @@
             "radius": 14.0
           }
         },
-        "surface": "Snow",
+        "surface": "DeepSnow",
         "name": "Turn 1 Snowbank Berm",
-        "layer": "above_track"
+        "layer": "below_track"
       },
       {
         "shape": {
@@ -7384,9 +7384,9 @@
             "radius": 14.0
           }
         },
-        "surface": "Snow",
+        "surface": "DeepSnow",
         "name": "West Chicane Snowbank",
-        "layer": "above_track"
+        "layer": "below_track"
       }
     ],
     "jump_ramps": [],
@@ -7965,7 +7965,7 @@
       "grid_slot": 11
     }
   ],
-  "default_surface": "Snow",
+  "default_surface": "DeepSnow",
   "pit_box_area": null,
   "default_laps": 5,
   "car_category": "off_road",

@@ -258,7 +258,7 @@
     "length_meters": 1513.7,
     "turns_count": 9,
     "surfaces": [
-      "Snow"
+      "PackedSnow"
     ],
     "has_jumps": true,
     "image_url": "/textures/circuits/extreme_offroad/alpine_snow_ridge.svg",
@@ -282,7 +282,7 @@
     "length_meters": 428.3,
     "turns_count": 6,
     "surfaces": [
-      "Ice"
+      "SheetIce"
     ],
     "has_jumps": false,
     "image_url": "/textures/circuits/extreme_offroad/arctic_frozen_lake.svg",
@@ -307,7 +307,7 @@
     "turns_count": 8,
     "surfaces": [
       "Dirt",
-      "Sand"
+      "PackedSand"
     ],
     "has_jumps": false,
     "image_url": "/textures/circuits/extreme_offroad/atacama_sand_basin.svg",
@@ -332,7 +332,7 @@
     "turns_count": 8,
     "surfaces": [
       "Dirt",
-      "Sand"
+      "PackedSand"
     ],
     "has_jumps": false,
     "image_url": "/textures/circuits/extreme_offroad/baja_500_desert_scrub.svg",
@@ -404,7 +404,7 @@
     "length_meters": 1639.2,
     "turns_count": 9,
     "surfaces": [
-      "Ice"
+      "SheetIce"
     ],
     "has_jumps": true,
     "image_url": "/textures/circuits/extreme_offroad/glacier_crest_pass.svg",
@@ -429,7 +429,7 @@
     "turns_count": 10,
     "surfaces": [
       "Dirt",
-      "Sand"
+      "PackedSand"
     ],
     "has_jumps": false,
     "image_url": "/textures/circuits/extreme_offroad/glamis_dunes.svg",
@@ -477,7 +477,7 @@
     "length_meters": 1264.6,
     "turns_count": 9,
     "surfaces": [
-      "Mud"
+      "MudTrack"
     ],
     "has_jumps": false,
     "image_url": "/textures/circuits/extreme_offroad/louisiana_mud_swampland.svg",
@@ -573,7 +573,7 @@
     "length_meters": 1079.3,
     "turns_count": 8,
     "surfaces": [
-      "Ice"
+      "SheetIce"
     ],
     "has_jumps": false,
     "image_url": "/textures/circuits/extreme_offroad/rovaniemi_ice_ring.svg",
@@ -597,7 +597,7 @@
     "length_meters": 2362.2,
     "turns_count": 10,
     "surfaces": [
-      "Sand"
+      "PackedSand"
     ],
     "has_jumps": false,
     "image_url": "/textures/circuits/extreme_offroad/sahara_dune_crossing.svg",
