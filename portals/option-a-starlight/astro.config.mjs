@@ -30,6 +30,10 @@ export default defineConfig({
           autogenerate: { directory: 'circuits' },
         },
         {
+          label: 'Career & Progression',
+          autogenerate: { directory: 'career' },
+        },
+        {
           label: 'Engineering Specs',
           autogenerate: { directory: 'engineering' },
         },

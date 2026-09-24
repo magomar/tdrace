@@ -61,6 +61,16 @@ Meticulously mapped vector geometry circuits and procedural arenas catalogued ac
 
 ---
 
+## 🏆 Career Progression & Economy Reference
+
+Comprehensive specifications covering 5-tier motorsport careers, tournament scoring, experience points (XP), tier promotion gates, and vehicle acquisition.
+
+| Document | Type | Status | Description |
+| :--- | :--- | :---: | :--- |
+| [Career Progression & Points Systems](career/index.md) | Reference Guide | `active` | 5-tier career architecture, tournament scoring matrices (FIA, MotoGP, Classic, NASCAR), distance-based XP formulas, tier promotion criteria, and vehicle acquisition economy. |
+
+---
+
 ## 🛠️ Architecture & Engineering Reference
 
 Technical design documents, audio engine architectures, and performance profiles.
