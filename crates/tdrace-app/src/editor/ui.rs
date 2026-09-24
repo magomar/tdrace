@@ -432,12 +432,16 @@ pub fn render_editor_ui(
         let surfaces = [
             (SurfaceType::Dirt, "Dirt"),
             (SurfaceType::Gravel, "Gravel"),
-            (SurfaceType::Mud, "Mud"),
-            (SurfaceType::Sand, "Sand"),
-            (SurfaceType::Snow, "Snow"),
-            (SurfaceType::Ice, "Ice"),
+            (SurfaceType::MudTrack, "Mud Track"),
+            (SurfaceType::DeepMud, "Deep Mud"),
+            (SurfaceType::PackedSand, "Packed Sand"),
+            (SurfaceType::DeepSand, "Deep Sand"),
+            (SurfaceType::PackedSnow, "Packed Snow"),
+            (SurfaceType::DeepSnow, "Deep Snow"),
+            (SurfaceType::SheetIce, "Sheet Ice"),
             (SurfaceType::Asphalt, "Asphalt"),
             (SurfaceType::Concrete, "Concrete"),
+            (SurfaceType::Grass, "Grass"),
         ];
         let half_w = (tool_w - scaler.s(22.0)) * 0.5;
         let mut btn_y = sub_y + scaler.s(22.0);
@@ -1157,10 +1161,16 @@ fn render_inspector(
                     (SurfaceType::Concrete, "Concrete"),
                     (SurfaceType::Dirt, "Dirt"),
                     (SurfaceType::Gravel, "Gravel"),
-                    (SurfaceType::Sand, "Sand"),
+                    (SurfaceType::PackedSand, "Packed Sand"),
+                    (SurfaceType::DeepSand, "Deep Sand"),
+                    (SurfaceType::MudTrack, "Mud Track"),
+                    (SurfaceType::DeepMud, "Deep Mud"),
+                    (SurfaceType::PackedSnow, "Packed Snow"),
+                    (SurfaceType::DeepSnow, "Deep Snow"),
+                    (SurfaceType::SheetIce, "Sheet Ice"),
                     (SurfaceType::Grass, "Grass"),
-                    (SurfaceType::Ice, "Ice"),
                     (SurfaceType::Water, "Water"),
+                    (SurfaceType::Oil, "Oil"),
                 ];
 
                 for chunk in surfaces.chunks(2) {
@@ -1349,9 +1359,14 @@ fn render_inspector(
                 (SurfaceType::Concrete, "Concrete"),
                 (SurfaceType::Dirt, "Dirt"),
                 (SurfaceType::Gravel, "Gravel"),
-                (SurfaceType::Sand, "Sand"),
+                (SurfaceType::PackedSand, "Packed Sand"),
+                (SurfaceType::DeepSand, "Deep Sand"),
+                (SurfaceType::MudTrack, "Mud Track"),
+                (SurfaceType::DeepMud, "Deep Mud"),
+                (SurfaceType::PackedSnow, "Packed Snow"),
+                (SurfaceType::DeepSnow, "Deep Snow"),
+                (SurfaceType::SheetIce, "Sheet Ice"),
                 (SurfaceType::Grass, "Grass"),
-                (SurfaceType::Ice, "Ice"),
             ];
 
             for (st, label) in surfaces {
@@ -1442,10 +1457,16 @@ fn render_inspector(
                 let surfaces = [
                     (SurfaceType::Dirt, "Dirt"),
                     (SurfaceType::Gravel, "Gravel Runoff"),
-                    (SurfaceType::Sand, "Deep Sand Trap"),
+                    (SurfaceType::DeepSand, "Deep Sand Trap"),
+                    (SurfaceType::PackedSand, "Packed Sand"),
                     (SurfaceType::Grass, "Grass Field"),
                     (SurfaceType::Water, "Water Puddle Hazard"),
-                    (SurfaceType::Ice, "Ice Patch Slick"),
+                    (SurfaceType::SheetIce, "Ice Patch Slick"),
+                    (SurfaceType::Oil, "Oil Slick Hazard"),
+                    (SurfaceType::DeepMud, "Deep Mud Bog"),
+                    (SurfaceType::MudTrack, "Mud Track"),
+                    (SurfaceType::DeepSnow, "Deep Snowbank"),
+                    (SurfaceType::PackedSnow, "Packed Snow"),
                     (SurfaceType::Asphalt, "Tarmac Extension"),
                     (SurfaceType::Concrete, "Concrete Apron"),
                 ];
@@ -1672,10 +1693,16 @@ fn render_inspector(
                     (SurfaceType::Concrete, "Concrete"),
                     (SurfaceType::Dirt, "Dirt / Rally"),
                     (SurfaceType::Gravel, "Gravel"),
-                    (SurfaceType::Sand, "Sand"),
+                    (SurfaceType::PackedSand, "Packed Sand"),
+                    (SurfaceType::DeepSand, "Deep Sand"),
+                    (SurfaceType::MudTrack, "Mud Track"),
+                    (SurfaceType::DeepMud, "Deep Mud"),
+                    (SurfaceType::PackedSnow, "Packed Snow"),
+                    (SurfaceType::DeepSnow, "Deep Snow"),
                     (SurfaceType::Grass, "Grass"),
-                    (SurfaceType::Ice, "Ice"),
+                    (SurfaceType::SheetIce, "Sheet Ice"),
                     (SurfaceType::Water, "Water Hazard"),
+                    (SurfaceType::Oil, "Oil Hazard"),
                 ];
 
                 let half_btn_w = (row_w - scaler.s(6.0)) * 0.5;
@@ -1960,10 +1987,16 @@ fn render_inspector(
                     (SurfaceType::Concrete, "Concrete"),
                     (SurfaceType::Dirt, "Dirt"),
                     (SurfaceType::Gravel, "Gravel"),
-                    (SurfaceType::Sand, "Sand"),
+                    (SurfaceType::PackedSand, "Packed Sand"),
+                    (SurfaceType::DeepSand, "Deep Sand"),
+                    (SurfaceType::MudTrack, "Mud Track"),
+                    (SurfaceType::DeepMud, "Deep Mud"),
+                    (SurfaceType::PackedSnow, "Packed Snow"),
+                    (SurfaceType::DeepSnow, "Deep Snow"),
+                    (SurfaceType::SheetIce, "Sheet Ice"),
                     (SurfaceType::Grass, "Grass"),
-                    (SurfaceType::Ice, "Ice"),
                     (SurfaceType::Water, "Water"),
+                    (SurfaceType::Oil, "Oil"),
                 ];
 
                 for chunk in surfaces.chunks(2) {
@@ -2244,10 +2277,16 @@ fn render_inspector(
                     (SurfaceType::Concrete, "Concrete"),
                     (SurfaceType::Dirt, "Dirt"),
                     (SurfaceType::Gravel, "Gravel"),
-                    (SurfaceType::Sand, "Sand"),
+                    (SurfaceType::PackedSand, "Packed Sand"),
+                    (SurfaceType::DeepSand, "Deep Sand"),
+                    (SurfaceType::MudTrack, "Mud Track"),
+                    (SurfaceType::DeepMud, "Deep Mud"),
+                    (SurfaceType::PackedSnow, "Packed Snow"),
+                    (SurfaceType::DeepSnow, "Deep Snow"),
+                    (SurfaceType::SheetIce, "Sheet Ice"),
                     (SurfaceType::Grass, "Grass"),
-                    (SurfaceType::Ice, "Ice"),
                     (SurfaceType::Water, "Water"),
+                    (SurfaceType::Oil, "Oil"),
                 ];
 
                 for chunk in surfaces.chunks(2) {
@@ -2436,8 +2475,13 @@ fn render_inspector(
 
             let offtrack_surfaces = [
                 (SurfaceType::Grass, "Grass"),
-                (SurfaceType::Sand, "Sand"),
+                (SurfaceType::DeepSand, "Deep Sand"),
+                (SurfaceType::PackedSand, "Packed Sand"),
                 (SurfaceType::Dirt, "Dirt"),
+                (SurfaceType::DeepMud, "Deep Mud"),
+                (SurfaceType::MudTrack, "Mud Track"),
+                (SurfaceType::DeepSnow, "Deep Snow"),
+                (SurfaceType::PackedSnow, "Packed Snow"),
                 (SurfaceType::Asphalt, "Asphalt"),
                 (SurfaceType::Concrete, "Concrete"),
                 (SurfaceType::Gravel, "Gravel"),

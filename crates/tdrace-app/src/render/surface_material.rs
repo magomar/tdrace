@@ -46,10 +46,13 @@ impl SurfaceMaterial {
             SurfaceType::Dirt => (3.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.85, true),
             SurfaceType::Gravel => (3.5, Color::new(1.0, 1.0, 1.0, 1.0), 0.90, true),
             SurfaceType::Grass => (6.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.80, true),
-            SurfaceType::Sand => (6.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.85, true),
-            SurfaceType::Mud => (3.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.40, true),
-            SurfaceType::Snow => (5.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.75, true),
-            SurfaceType::Ice => (4.0, Color::new(1.0, 1.0, 1.0, 0.90), 0.15, false),
+            SurfaceType::PackedSand => (5.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.75, true),
+            SurfaceType::DeepSand => (6.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.85, true),
+            SurfaceType::MudTrack => (3.5, Color::new(1.0, 1.0, 1.0, 1.0), 0.50, true),
+            SurfaceType::DeepMud => (3.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.40, true),
+            SurfaceType::PackedSnow => (4.5, Color::new(1.0, 1.0, 1.0, 1.0), 0.65, true),
+            SurfaceType::DeepSnow => (5.5, Color::new(1.0, 1.0, 1.0, 1.0), 0.75, true),
+            SurfaceType::SheetIce => (4.0, Color::new(1.0, 1.0, 1.0, 0.90), 0.15, false),
             SurfaceType::Water => (4.0, Color::new(1.0, 1.0, 1.0, 0.85), 0.10, false),
             SurfaceType::Oil => (3.0, Color::new(1.0, 1.0, 1.0, 0.95), 0.05, false),
         };
@@ -171,12 +174,15 @@ impl SurfaceMaterialRegistry {
             SurfaceType::Dirt,
             SurfaceType::Curb,
             SurfaceType::Grass,
-            SurfaceType::Sand,
+            SurfaceType::PackedSand,
+            SurfaceType::DeepSand,
             SurfaceType::Water,
             SurfaceType::Oil,
-            SurfaceType::Ice,
-            SurfaceType::Mud,
-            SurfaceType::Snow,
+            SurfaceType::SheetIce,
+            SurfaceType::MudTrack,
+            SurfaceType::DeepMud,
+            SurfaceType::PackedSnow,
+            SurfaceType::DeepSnow,
             SurfaceType::Gravel,
             SurfaceType::Concrete,
         ];
@@ -259,12 +265,15 @@ impl SurfaceMaterialRegistry {
             SurfaceType::Dirt => "dirt_compacted.png",
             SurfaceType::Curb => "curb_teeth.png",
             SurfaceType::Grass => "grass_turf.png",
-            SurfaceType::Sand => "sand_dune.png",
+            SurfaceType::PackedSand => "sand_compacted.png",
+            SurfaceType::DeepSand => "sand_dune.png",
             SurfaceType::Water => "water_caustic.png",
             SurfaceType::Oil => "oil_iridescent.png",
-            SurfaceType::Ice => "ice_glazed.png",
-            SurfaceType::Mud => "mud_viscous.png",
-            SurfaceType::Snow => "snow_powder.png",
+            SurfaceType::SheetIce => "ice_glazed.png",
+            SurfaceType::MudTrack => "mud_compacted.png",
+            SurfaceType::DeepMud => "mud_viscous.png",
+            SurfaceType::PackedSnow => "snow_packed.png",
+            SurfaceType::DeepSnow => "snow_powder.png",
             SurfaceType::Gravel => "gravel_crushed.png",
             SurfaceType::Concrete => "concrete_brushed.png",
         };
@@ -547,7 +556,35 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                 }
             }
         }
-        SurfaceType::Sand => {
+        SurfaceType::PackedSand => {
+            // Firmly compacted desert sand with smooth rolling grain and subtle grading
+            for y in 0..height {
+                for x in 0..width {
+                    let idx = (y as usize * width as usize + x as usize) * 4;
+                    let n_firm = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        1200,
+                    );
+                    let n_fine = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        1250,
+                    );
+                    let base = 205.0 + (n_firm - 0.5) * 14.0 + (n_fine - 0.5) * 6.0;
+
+                    bytes[idx] = base.clamp(170.0, 235.0) as u8;
+                    bytes[idx + 1] = (base * 0.88).clamp(150.0, 210.0) as u8;
+                    bytes[idx + 2] = (base * 0.64).clamp(105.0, 155.0) as u8;
+                    bytes[idx + 3] = 255;
+                }
+            }
+        }
+        SurfaceType::DeepSand => {
             // Wind-rippled dune contours with loose fine grain
             for y in 0..height {
                 for x in 0..width {
@@ -576,7 +613,35 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                 }
             }
         }
-        SurfaceType::Mud => {
+        SurfaceType::MudTrack => {
+            // Graded, damp compacted mud with consistent earthy brown grain
+            for y in 0..height {
+                for x in 0..width {
+                    let idx = (y as usize * width as usize + x as usize) * 4;
+                    let n_earth = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        1400,
+                    );
+                    let n_grain = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        1450,
+                    );
+                    let base = 78.0 + (n_earth - 0.5) * 12.0 + (n_grain - 0.5) * 6.0;
+
+                    bytes[idx] = base.clamp(55.0, 105.0) as u8;
+                    bytes[idx + 1] = (base * 0.74).clamp(40.0, 80.0) as u8;
+                    bytes[idx + 2] = (base * 0.48).clamp(25.0, 55.0) as u8;
+                    bytes[idx + 3] = 255;
+                }
+            }
+        }
+        SurfaceType::DeepMud => {
             // Saturated chocolate churned earth with glossy wet specular sheen
             for y in 0..height {
                 for x in 0..width {
@@ -612,7 +677,35 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                 }
             }
         }
-        SurfaceType::Snow => {
+        SurfaceType::PackedSnow => {
+            // Groomed, hard-packed snow trail with light track striations and cold blue cast
+            for y in 0..height {
+                for x in 0..width {
+                    let idx = (y as usize * width as usize + x as usize) * 4;
+                    let n_pack = sample_periodic_noise(
+                        x as f32 * (32.0 / width as f32),
+                        y as f32 * (32.0 / height as f32),
+                        32,
+                        32,
+                        1600,
+                    );
+                    let n_fine = sample_periodic_noise(
+                        x as f32 * (64.0 / width as f32),
+                        y as f32 * (64.0 / height as f32),
+                        64,
+                        64,
+                        1650,
+                    );
+                    let v = 225.0 + (n_pack - 0.5) * 10.0 + (n_fine - 0.5) * 5.0;
+
+                    bytes[idx] = (v * 0.94).clamp(205.0, 245.0) as u8;
+                    bytes[idx + 1] = (v * 0.97).clamp(210.0, 250.0) as u8;
+                    bytes[idx + 2] = v.clamp(215.0, 255.0) as u8;
+                    bytes[idx + 3] = 255;
+                }
+            }
+        }
+        SurfaceType::DeepSnow => {
             // Crystalline powder snow with blue-sky ambient tint and subtle glints
             for y in 0..height {
                 for x in 0..width {
@@ -640,7 +733,7 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                 }
             }
         }
-        SurfaceType::Ice => {
+        SurfaceType::SheetIce => {
             // Glazed frozen surface with hairline fractures and translucent icy blue body
             for y in 0..height {
                 for x in 0..width {

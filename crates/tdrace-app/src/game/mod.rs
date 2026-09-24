@@ -1258,9 +1258,32 @@ impl RaceSession {
         self.active_player_car_choice().unlock_level()
     }
 
-    /// Checks whether the player's active vehicle is eligible for a race with `required_tier`.
+    /// Checks whether the player's active vehicle is eligible for a race with `required_tier` and the track surface.
     pub fn is_active_player_car_eligible(&self, required_tier: u8) -> bool {
-        self.is_dev_mode() || self.active_player_car_tier() <= required_tier
+        if self.is_dev_mode() {
+            return true;
+        }
+        if self.active_player_car_tier() > required_tier {
+            return false;
+        }
+        let track_surface = self.track.default_surface;
+        if let Some(model_id) = self.selected_car_model_id {
+            if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+                return model.is_eligible_for_surface(track_surface, self.is_dev_mode());
+            }
+        }
+        self.active_player_car_choice().is_eligible_for_surface(track_surface, self.is_dev_mode())
+    }
+
+    /// Returns a warning advisory if the player's active vehicle has a severe mismatch with the track surface.
+    pub fn active_player_surface_warning(&self) -> Option<&'static str> {
+        let track_surface = self.track.default_surface;
+        if let Some(model_id) = self.selected_car_model_id {
+            if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+                return model.surface_warning(track_surface);
+            }
+        }
+        self.active_player_car_choice().surface_warning(track_surface)
     }
 
     /// Checks whether the player's active vehicle is unlocked under career progression.

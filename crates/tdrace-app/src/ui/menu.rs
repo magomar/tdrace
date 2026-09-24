@@ -14,6 +14,7 @@ use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
+use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::CarCategory;
 
 /// Available track options in track selection menu.
@@ -645,6 +646,72 @@ impl CarChoice {
     #[inline]
     pub fn is_eligible_for_race_tier(&self, required_tier: u8, dev_mode: bool) -> bool {
         dev_mode || self.tier() <= required_tier
+    }
+
+    /// Checks whether this vehicle is eligible for racing on a specific dominant track surface.
+    /// Follows the Spec 025 Track Surface Gating Matrix.
+    pub fn is_eligible_for_surface(&self, surface: SurfaceType, dev_mode: bool) -> bool {
+        if dev_mode {
+            return true;
+        }
+        match surface {
+            SurfaceType::PackedSand => {
+                match self.category() {
+                    CarCategory::OffRoad => true,
+                    CarCategory::Rally => self.tier() >= 4,
+                    _ => false,
+                }
+            }
+            SurfaceType::DeepMud => {
+                match self.category() {
+                    CarCategory::OffRoad => self.tier() >= 4,
+                    _ => false,
+                }
+            }
+            SurfaceType::SheetIce => {
+                self.category() == CarCategory::OffRoad && self.tier() == 3
+            }
+            SurfaceType::PackedSnow => {
+                match self.category() {
+                    CarCategory::Rally => self.tier() >= 2,
+                    CarCategory::OffRoad => self.tier() >= 2,
+                    _ => false,
+                }
+            }
+            _ => true,
+        }
+    }
+
+    /// Returns a warning advisory if the vehicle has a major physical mismatch with the track surface.
+    pub fn surface_warning(&self, surface: SurfaceType) -> Option<&'static str> {
+        match surface {
+            SurfaceType::PackedSand | SurfaceType::DeepSand => {
+                if self.category() == CarCategory::Gt
+                    || self.category() == CarCategory::Nascar
+                    || self.category() == CarCategory::Kart
+                    || (self.category() == CarCategory::Rally && self.tier() < 4)
+                {
+                    Some("SURFACE WARNING: Vehicle has severe rolling drag handicap on Sand dunes.")
+                } else {
+                    None
+                }
+            }
+            SurfaceType::DeepMud => {
+                if self.category() != CarCategory::OffRoad || self.tier() < 4 {
+                    Some("SURFACE WARNING: Deep mud terrain requires heavy off-road flotation.")
+                } else {
+                    None
+                }
+            }
+            SurfaceType::SheetIce => {
+                if !(self.category() == CarCategory::OffRoad && self.tier() == 3) {
+                    Some("SURFACE WARNING: Sheet ice requires Arctic studded competition tires.")
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
     }
 
     /// Returns the vehicle physics specification for this vehicle choice.

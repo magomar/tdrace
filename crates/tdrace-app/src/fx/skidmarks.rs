@@ -130,9 +130,9 @@ impl SkidmarkBuffer {
                             let (base_col, alpha, width_mult, jitter_mult) = if is_transferring_dirt && !has_slip {
                                 let dirt_col = match telemetry.dirt_surface {
                                     SurfaceType::Gravel => Color::new(0.38, 0.36, 0.34, 1.0),
-                                    SurfaceType::Sand => Color::new(0.68, 0.58, 0.36, 1.0),
+                                    SurfaceType::PackedSand | SurfaceType::DeepSand => Color::new(0.68, 0.58, 0.36, 1.0),
                                     SurfaceType::Dirt => Color::new(0.35, 0.22, 0.12, 1.0),
-                                    SurfaceType::Mud => Color::new(0.24, 0.16, 0.08, 1.0),
+                                    SurfaceType::MudTrack | SurfaceType::DeepMud => Color::new(0.24, 0.16, 0.08, 1.0),
                                     SurfaceType::Grass => Color::new(0.22, 0.30, 0.16, 1.0),
                                     _ => Color::new(0.45, 0.45, 0.45, 1.0),
                                 };
@@ -162,7 +162,7 @@ impl SkidmarkBuffer {
                                         let w = if has_slip { 1.25 } else { 0.95 };
                                         (Color::new(0.28, 0.26, 0.24, 1.0), a, w, 0.45)
                                     }
-                                    SurfaceType::Sand => {
+                                    SurfaceType::PackedSand | SurfaceType::DeepSand => {
                                         // Warm shadowed dune furrow
                                         let a = if has_slip {
                                             (0.55 + telemetry.skid_intensity * 0.35).clamp(0.50, 0.88)
@@ -182,7 +182,7 @@ impl SkidmarkBuffer {
                                         let w = if has_slip { 1.15 } else { 0.92 };
                                         (Color::new(0.24, 0.14, 0.07, 1.0), a, w, 0.25)
                                     }
-                                    SurfaceType::Mud => {
+                                    SurfaceType::MudTrack | SurfaceType::DeepMud => {
                                         // Deep viscous muck furrow
                                         let a = if has_slip {
                                             (0.70 + telemetry.skid_intensity * 0.28).clamp(0.65, 0.96)
@@ -207,7 +207,7 @@ impl SkidmarkBuffer {
                                         };
                                         (col, a, w, 0.25)
                                     }
-                                    SurfaceType::Snow => {
+                                    SurfaceType::PackedSnow | SurfaceType::DeepSnow => {
                                         // Cool blue-shadowed powder rut
                                         let a = if has_slip {
                                             (0.55 + telemetry.skid_intensity * 0.32).clamp(0.50, 0.85)
@@ -217,7 +217,7 @@ impl SkidmarkBuffer {
                                         let w = if has_slip { 1.20 } else { 0.95 };
                                         (Color::new(0.65, 0.72, 0.82, 1.0), a, w, 0.20)
                                     }
-                                    SurfaceType::Ice => {
+                                    SurfaceType::SheetIce => {
                                         // Frosted white claw scratch
                                         let a = (0.20 + telemetry.skid_intensity * 0.35).clamp(0.20, 0.55);
                                         (Color::new(0.92, 0.96, 1.0, 1.0), a, 0.75, 0.12)

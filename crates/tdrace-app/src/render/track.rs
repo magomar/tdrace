@@ -320,16 +320,19 @@ pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Ve
 /// Helper returning fill and border colors for a given surface type.
 pub fn get_surface_zone_colors(surface: SurfaceType) -> (Color, Option<Color>) {
     match surface {
-        SurfaceType::Sand => (Palette::SAND, Some(Palette::SAND_DARK)),
+        SurfaceType::PackedSand => (Palette::SAND, Some(Palette::SAND_DARK)),
+        SurfaceType::DeepSand => (Palette::SAND_DARK, Some(Color::new(0.68, 0.54, 0.32, 1.0))),
         SurfaceType::Dirt => (Palette::DIRT, Some(Palette::DIRT_DARK)),
         SurfaceType::Water => (Palette::WATER, Some(Palette::WATER_BORDER)),
         SurfaceType::Asphalt => (Palette::RUNOFF_ASPHALT, Some(Palette::WHITE_LINE)),
         SurfaceType::Grass => (Palette::GRASS_DARK, None),
         SurfaceType::Curb => (Palette::CURB_RED, None),
-        SurfaceType::Ice => (Color::new(0.85, 0.92, 0.98, 0.8), None),
+        SurfaceType::SheetIce => (Color::new(0.85, 0.92, 0.98, 0.8), None),
         SurfaceType::Oil => (Color::new(0.12, 0.12, 0.15, 0.85), None),
-        SurfaceType::Mud => (Palette::MUD, Some(Palette::MUD_DARK)),
-        SurfaceType::Snow => (Palette::SNOW, Some(Palette::SNOW_EDGE)),
+        SurfaceType::MudTrack => (Palette::MUD, Some(Palette::MUD_DARK)),
+        SurfaceType::DeepMud => (Palette::MUD_DARK, Some(Color::new(0.25, 0.16, 0.08, 1.0))),
+        SurfaceType::PackedSnow => (Palette::SNOW, Some(Palette::SNOW_EDGE)),
+        SurfaceType::DeepSnow => (Color::new(0.92, 0.94, 0.98, 1.0), Some(Palette::SNOW_EDGE)),
         SurfaceType::Gravel => (Palette::GRAVEL, Some(Palette::GRAVEL_DARK)),
         SurfaceType::Concrete => (Palette::CONCRETE, Some(Palette::CONCRETE_DARK)),
     }
@@ -340,10 +343,10 @@ pub fn get_track_backdrop_color(surface: SurfaceType) -> Color {
     match surface {
         SurfaceType::Grass => Palette::BACKDROP_GRASS,
         SurfaceType::Dirt => Palette::BACKDROP_DIRT,
-        SurfaceType::Sand => Palette::BACKDROP_SAND,
+        SurfaceType::PackedSand | SurfaceType::DeepSand => Palette::BACKDROP_SAND,
         SurfaceType::Asphalt => Palette::BACKDROP_ASPHALT,
-        SurfaceType::Mud => Palette::BACKDROP_MUD,
-        SurfaceType::Snow => Palette::BACKDROP_SNOW,
+        SurfaceType::MudTrack | SurfaceType::DeepMud => Palette::BACKDROP_MUD,
+        SurfaceType::PackedSnow | SurfaceType::DeepSnow => Palette::BACKDROP_SNOW,
         SurfaceType::Gravel => Palette::BACKDROP_GRAVEL,
         SurfaceType::Concrete => Palette::BACKDROP_CONCRETE,
         _ => Palette::BACKDROP_GRASS,
@@ -380,17 +383,22 @@ pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, C
             Some(Palette::DIRT_EDGE),
             Color::new(0.68, 0.50, 0.32, 0.85),
         ),
-        SurfaceType::Sand => (
+        SurfaceType::PackedSand => (
             Palette::SAND,
             Some(Palette::SAND_DARK),
             Color::new(0.72, 0.58, 0.38, 0.85),
+        ),
+        SurfaceType::DeepSand => (
+            Palette::SAND_DARK,
+            Some(Color::new(0.68, 0.54, 0.32, 1.0)),
+            Color::new(0.65, 0.52, 0.34, 0.85),
         ),
         SurfaceType::Grass => (
             Palette::GRASS_DARK,
             Some(Palette::GRASS),
             Color::new(0.38, 0.65, 0.32, 0.85),
         ),
-        SurfaceType::Ice => (
+        SurfaceType::SheetIce => (
             Color::new(0.78, 0.88, 0.96, 1.0),
             Some(Color::new(0.92, 0.96, 1.0, 1.0)),
             Color::new(0.45, 0.68, 0.88, 0.85),
@@ -410,15 +418,25 @@ pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, C
             Some(Palette::CURB_WHITE),
             Palette::WHITE,
         ),
-        SurfaceType::Mud => (
+        SurfaceType::MudTrack => (
             Palette::MUD,
             Some(Palette::MUD_DARK),
             Color::new(0.42, 0.30, 0.18, 0.85),
         ),
-        SurfaceType::Snow => (
+        SurfaceType::DeepMud => (
+            Palette::MUD_DARK,
+            Some(Color::new(0.25, 0.16, 0.08, 1.0)),
+            Color::new(0.35, 0.22, 0.12, 0.85),
+        ),
+        SurfaceType::PackedSnow => (
             Palette::SNOW,
             Some(Palette::SNOW_EDGE),
             Color::new(0.80, 0.85, 0.92, 0.85),
+        ),
+        SurfaceType::DeepSnow => (
+            Color::new(0.92, 0.94, 0.98, 1.0),
+            Some(Palette::SNOW_EDGE),
+            Color::new(0.75, 0.80, 0.88, 0.85),
         ),
         SurfaceType::Gravel => (
             Palette::GRAVEL,
@@ -1214,7 +1232,7 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     lines_to_draw.push((groove_r0, groove_r1, 0.22, Palette::DIRT_DARK));
                 }
             }
-            SurfaceType::Sand => {
+            SurfaceType::PackedSand | SurfaceType::DeepSand => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
@@ -1229,6 +1247,8 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     } else {
                         (WHITE, WHITE, WHITE, WHITE)
                     }
+                } else if surf == SurfaceType::DeepSand {
+                    (Palette::SAND_DARK, Palette::SAND_DARK, Palette::SAND_DARK, Palette::SAND_DARK)
                 } else {
                     (Palette::SAND, Palette::SAND, Palette::SAND, Palette::SAND)
                 };
@@ -1258,7 +1278,7 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 lines_to_draw.push((left0, left1, 0.32, Palette::GRASS));
                 lines_to_draw.push((right0, right1, 0.32, Palette::GRASS));
             }
-            SurfaceType::Ice => {
+            SurfaceType::SheetIce => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
@@ -1296,7 +1316,7 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let col = if has_tex { WHITE } else { Palette::CURB_RED };
                 builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
             }
-            SurfaceType::Mud => {
+            SurfaceType::MudTrack | SurfaceType::DeepMud => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
@@ -1311,6 +1331,8 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     } else {
                         (WHITE, WHITE, WHITE, WHITE)
                     }
+                } else if surf == SurfaceType::DeepMud {
+                    (Palette::MUD_DARK, Palette::MUD_DARK, Palette::MUD_DARK, Palette::MUD_DARK)
                 } else {
                     (Palette::MUD, Palette::MUD, Palette::MUD, Palette::MUD)
                 };
@@ -1325,7 +1347,7 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 lines_to_draw.push((rut_l0, rut_l1, 0.26, Palette::MUD_DARK));
                 lines_to_draw.push((rut_r0, rut_r1, 0.26, Palette::MUD_DARK));
             }
-            SurfaceType::Snow => {
+            SurfaceType::PackedSnow | SurfaceType::DeepSnow => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
@@ -1691,7 +1713,7 @@ mod tests {
             right_wall_distance: None,
             wall_type: None,
             left_runoff_surface: Some(SurfaceType::Gravel),
-            right_runoff_surface: Some(SurfaceType::Sand),
+            right_runoff_surface: Some(SurfaceType::DeepSand),
         });
         render_runoff_pass(&single_spline, false, None);
         render_runoff_pass(&single_spline, true, None);
@@ -1784,7 +1806,8 @@ mod tests {
             SurfaceType::Dirt,
             SurfaceType::Grass,
             SurfaceType::Gravel,
-            SurfaceType::Sand,
+            SurfaceType::PackedSand,
+            SurfaceType::DeepSand,
         ];
 
         for &surf in &surfaces {

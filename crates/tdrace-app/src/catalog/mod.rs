@@ -1,4 +1,6 @@
 use macroquad::color::Color;
+use tdrace_core::physics::config::TerrainInteractionConfig;
+use tdrace_core::physics::surface::SurfaceType;
 use crate::audio::EngineSoundType;
 use crate::module::VehicleVisualType;
 use crate::ui::menu::CarChoice;
@@ -37,6 +39,72 @@ impl RealCarModel {
     #[inline]
     pub fn is_eligible_for_race(&self, race_required_tier: u8, dev_mode: bool) -> bool {
         dev_mode || self.tier <= race_required_tier
+    }
+
+    /// Checks whether this vehicle is eligible for racing on a specific dominant track surface.
+    /// Follows the Spec 025 Track Surface Gating Matrix.
+    pub fn is_eligible_for_surface(&self, surface: SurfaceType, dev_mode: bool) -> bool {
+        if dev_mode {
+            return true;
+        }
+        match surface {
+            SurfaceType::PackedSand => {
+                match self.category() {
+                    tdrace_core::CarCategory::OffRoad => true,
+                    tdrace_core::CarCategory::Rally => self.tier >= 4,
+                    _ => false,
+                }
+            }
+            SurfaceType::DeepMud => {
+                match self.category() {
+                    tdrace_core::CarCategory::OffRoad => self.tier >= 4,
+                    _ => false,
+                }
+            }
+            SurfaceType::SheetIce => {
+                self.category() == tdrace_core::CarCategory::OffRoad && self.tier == 3
+            }
+            SurfaceType::PackedSnow => {
+                match self.category() {
+                    tdrace_core::CarCategory::Rally => self.tier >= 2,
+                    tdrace_core::CarCategory::OffRoad => self.tier >= 2,
+                    _ => false,
+                }
+            }
+            _ => true,
+        }
+    }
+
+    /// Returns a warning advisory if the vehicle has a major physical mismatch with the track surface.
+    pub fn surface_warning(&self, surface: SurfaceType) -> Option<&'static str> {
+        match surface {
+            SurfaceType::PackedSand | SurfaceType::DeepSand => {
+                if self.category() == tdrace_core::CarCategory::Gt
+                    || self.category() == tdrace_core::CarCategory::Nascar
+                    || self.category() == tdrace_core::CarCategory::Kart
+                    || (self.category() == tdrace_core::CarCategory::Rally && self.tier < 4)
+                {
+                    Some("SURFACE WARNING: Vehicle has severe rolling drag handicap on Sand dunes.")
+                } else {
+                    None
+                }
+            }
+            SurfaceType::DeepMud => {
+                if self.category() != tdrace_core::CarCategory::OffRoad || self.tier < 4 {
+                    Some("SURFACE WARNING: Deep mud terrain requires heavy off-road flotation.")
+                } else {
+                    None
+                }
+            }
+            SurfaceType::SheetIce => {
+                if !(self.category() == tdrace_core::CarCategory::OffRoad && self.tier == 3) {
+                    Some("SURFACE WARNING: Sheet ice requires Arctic studded competition tires.")
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
     }
 
     /// Returns the high-level motorsport car category for this vehicle model.
@@ -102,6 +170,90 @@ impl RealCarModel {
         let (parsed_cl, parsed_cd) = parse_aero_downforce(self.aero_downforce);
         cfg.downforce_coefficient = parsed_cl * 0.76;
         cfg.air_drag_coefficient = parsed_cd;
+
+        // 6. Vehicle Category and Tier Terrain Flotation Matrix (Spec 025 Section 3.4)
+        cfg.terrain = match self.module_id {
+            "rally" => match self.tier {
+                1 => TerrainInteractionConfig {
+                    sand_flotation: 1.00,
+                    mud_flotation: 0.95,
+                    ice_grip_multiplier: 1.50,
+                },
+                2 => TerrainInteractionConfig {
+                    sand_flotation: 0.80,
+                    mud_flotation: 0.80,
+                    ice_grip_multiplier: 2.50,
+                },
+                3 => TerrainInteractionConfig {
+                    sand_flotation: 0.70,
+                    mud_flotation: 0.70,
+                    ice_grip_multiplier: 3.50,
+                },
+                4 => TerrainInteractionConfig {
+                    sand_flotation: 0.48,
+                    mud_flotation: 0.50,
+                    ice_grip_multiplier: 3.00,
+                },
+                5.. => TerrainInteractionConfig {
+                    sand_flotation: 0.42,
+                    mud_flotation: 0.45,
+                    ice_grip_multiplier: 4.00,
+                },
+                _ => TerrainInteractionConfig::default(),
+            },
+            "extreme_offroad" => match self.tier {
+                1 => TerrainInteractionConfig {
+                    sand_flotation: 0.30,
+                    mud_flotation: 0.65,
+                    ice_grip_multiplier: 1.50,
+                },
+                2 => TerrainInteractionConfig {
+                    sand_flotation: 0.38,
+                    mud_flotation: 0.48,
+                    ice_grip_multiplier: 2.50,
+                },
+                3 => TerrainInteractionConfig {
+                    sand_flotation: 0.85,
+                    mud_flotation: 0.85,
+                    ice_grip_multiplier: 8.125,
+                },
+                4 => TerrainInteractionConfig {
+                    sand_flotation: 0.50,
+                    mud_flotation: 0.25,
+                    ice_grip_multiplier: 2.00,
+                },
+                5.. => TerrainInteractionConfig {
+                    sand_flotation: 0.32,
+                    mud_flotation: 0.28,
+                    ice_grip_multiplier: 3.00,
+                },
+                _ => TerrainInteractionConfig::default(),
+            },
+            "kart" => TerrainInteractionConfig {
+                sand_flotation: 1.00,
+                mud_flotation: 1.00,
+                ice_grip_multiplier: 0.80,
+            },
+            "classic" => match self.id {
+                "classic_offroad" => TerrainInteractionConfig {
+                    sand_flotation: 0.30,
+                    mud_flotation: 0.65,
+                    ice_grip_multiplier: 1.50,
+                },
+                "classic_rally" => TerrainInteractionConfig {
+                    sand_flotation: 0.80,
+                    mud_flotation: 0.80,
+                    ice_grip_multiplier: 2.50,
+                },
+                "classic_kart" => TerrainInteractionConfig {
+                    sand_flotation: 1.00,
+                    mud_flotation: 1.00,
+                    ice_grip_multiplier: 0.80,
+                },
+                _ => TerrainInteractionConfig::default(),
+            },
+            _ => TerrainInteractionConfig::default(),
+        };
 
         cfg
     }
@@ -2468,5 +2620,34 @@ mod tests {
 
         // 5. Engine force differentiation (BMW has 450 BHP vs Toyota 430 BHP)
         assert!(bmw_cfg.max_engine_force > toyota_cfg.max_engine_force, "BMW should have higher engine tractive force");
+    }
+
+    #[test]
+    fn test_spec_025_terrain_flotation_and_gating() {
+        let sand_rail = find_model_by_id("offroad_sand_rail_buggy").expect("Sand Rail must exist");
+        let sand_rail_cfg = sand_rail.to_car_config();
+        assert_eq!(sand_rail_cfg.terrain.sand_flotation, 0.30);
+        assert_eq!(sand_rail_cfg.terrain.mud_flotation, 0.65);
+        assert_eq!(sand_rail_cfg.terrain.ice_grip_multiplier, 1.50);
+        assert!(sand_rail.is_eligible_for_surface(SurfaceType::PackedSand, false));
+
+        let ice_racer = find_model_by_id("offroad_subaru_ice_racer").expect("Arctic Ice Racer must exist");
+        let ice_racer_cfg = ice_racer.to_car_config();
+        assert_eq!(ice_racer_cfg.terrain.ice_grip_multiplier, 8.125);
+        assert!(ice_racer.is_eligible_for_surface(SurfaceType::SheetIce, false));
+
+        let mud_bogger = find_model_by_id("offroad_mega_mud_truck").expect("Mud Bogger must exist");
+        let mud_bogger_cfg = mud_bogger.to_car_config();
+        assert_eq!(mud_bogger_cfg.terrain.mud_flotation, 0.25);
+        assert!(mud_bogger.is_eligible_for_surface(SurfaceType::DeepMud, false));
+
+        let rally_junior = find_model_by_id("rally_peugeot_208_rally4").expect("Rally Junior must exist");
+        assert!(!rally_junior.is_eligible_for_surface(SurfaceType::PackedSand, false));
+        assert!(rally_junior.surface_warning(SurfaceType::PackedSand).is_some());
+
+        let gt_porsche = find_model_by_id("gt_porsche_718_gt4").expect("Porsche GT4 must exist");
+        assert!(!gt_porsche.is_eligible_for_surface(SurfaceType::PackedSand, false));
+        assert!(!gt_porsche.is_eligible_for_surface(SurfaceType::SheetIce, false));
+        assert!(gt_porsche.surface_warning(SurfaceType::PackedSand).is_some());
     }
 }

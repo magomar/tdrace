@@ -204,8 +204,8 @@ fn main() {
     println!("🔍 VERIFICATION OF CORE PHYSICAL INVARIANTS");
     println!("================================================================================");
 
-    let ice_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Ice).expect("Ice missing");
-    let sand_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Sand).expect("Sand missing");
+    let ice_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::SheetIce).expect("SheetIce missing");
+    let sand_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::DeepSand).expect("DeepSand missing");
     let conc_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Concrete).expect("Concrete missing");
 
     for v in &dataset.vehicles {

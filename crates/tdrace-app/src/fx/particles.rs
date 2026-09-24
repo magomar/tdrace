@@ -109,16 +109,21 @@ impl ParticleSystem {
             SurfaceType::Dirt => (Palette::DIRT, Palette::DIRT_DARK),
             SurfaceType::Gravel => (Palette::GRAVEL, Palette::GRAVEL_DARK),
             SurfaceType::Grass => (Palette::GRASS_DARK, Color::new(0.35, 0.25, 0.12, 0.9)),
-            SurfaceType::Sand => (Palette::SAND, Palette::SAND_DARK),
-            SurfaceType::Mud => (Palette::MUD, Palette::MUD_DARK),
-            SurfaceType::Snow => (Palette::SNOW, Palette::SNOW_EDGE),
+            SurfaceType::PackedSand => (Palette::SAND, Palette::SAND_DARK),
+            SurfaceType::DeepSand => (Palette::SAND_DARK, Color::new(0.65, 0.52, 0.30, 0.9)),
+            SurfaceType::MudTrack => (Palette::MUD, Palette::MUD_DARK),
+            SurfaceType::DeepMud => (Palette::MUD_DARK, Color::new(0.25, 0.16, 0.08, 0.95)),
+            SurfaceType::PackedSnow => (Palette::SNOW, Palette::SNOW_EDGE),
+            SurfaceType::DeepSnow => (Color::new(0.95, 0.98, 1.0, 0.9), Palette::SNOW_EDGE),
             _ => return,
         };
 
         let (drag, speed_base, size_base) = match surface {
             SurfaceType::Gravel => (3.2, 4.5, 0.09), // Fast angular stone pellets
-            SurfaceType::Mud => (4.5, 2.5, 0.11),    // Heavy viscous muck clods with high drag
-            SurfaceType::Snow => (2.2, 2.8, 0.08),   // Drifting powder crystals
+            SurfaceType::MudTrack => (3.8, 3.0, 0.10),
+            SurfaceType::DeepMud => (4.5, 2.5, 0.12),    // Heavy viscous muck clods with high drag
+            SurfaceType::PackedSnow => (2.5, 3.2, 0.07),
+            SurfaceType::DeepSnow => (2.2, 2.8, 0.08),   // Drifting powder crystals
             _ => (2.8, 3.0, 0.08),
         };
 
@@ -336,11 +341,14 @@ impl ParticleSystem {
         }
 
         let (base_col, col_var) = match surface {
-            SurfaceType::Sand => (Palette::SAND, Palette::SAND_DARK),
+            SurfaceType::PackedSand => (Palette::SAND, Palette::SAND_DARK),
+            SurfaceType::DeepSand => (Palette::SAND_DARK, Color::new(0.65, 0.52, 0.30, 0.9)),
             SurfaceType::Dirt => (Palette::DIRT, Palette::DIRT_DARK),
             SurfaceType::Gravel => (Palette::GRAVEL, Palette::GRAVEL_DARK),
-            SurfaceType::Mud => (Palette::MUD, Palette::MUD_DARK),
-            SurfaceType::Snow => (Palette::SNOW, Palette::SNOW_EDGE),
+            SurfaceType::MudTrack => (Palette::MUD, Palette::MUD_DARK),
+            SurfaceType::DeepMud => (Palette::MUD_DARK, Color::new(0.25, 0.16, 0.08, 0.95)),
+            SurfaceType::PackedSnow => (Palette::SNOW, Palette::SNOW_EDGE),
+            SurfaceType::DeepSnow => (Color::new(0.95, 0.98, 1.0, 0.9), Palette::SNOW_EDGE),
             SurfaceType::Water => (Palette::WATER_BORDER, Palette::WATER),
             SurfaceType::Grass => (Palette::GRASS_DARK, Palette::CURB_RED),
             SurfaceType::Asphalt => (Palette::TIRE_SMOKE, Color::new(0.70, 0.70, 0.75, 0.35)),

@@ -1,6 +1,6 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
+use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TerrainInteractionConfig, TireConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, TrackGeometry};
 use tdrace_core::track::presets::{generate_checkpoints, generate_grid_positions, generate_walls_from_spline};
@@ -1466,6 +1466,7 @@ impl GtWorldChallengeModule {
                 skid_full_threshold: 0.24,
             },
             assists: DriverAssistsConfig::sport(),
+            terrain: TerrainInteractionConfig::default(),
         }
     }
 

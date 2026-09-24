@@ -44,12 +44,17 @@ impl FastRasterizer {
         // 2. Tessellate surface zones (sand traps, oil slicks, water puddles, dirt areas)
         for zone in &track.geometry.surface_zones {
             let color = match zone.surface {
-                tdrace_core::physics::surface::SurfaceType::Sand => [218, 204, 150],
+                tdrace_core::physics::surface::SurfaceType::PackedSand
+                | tdrace_core::physics::surface::SurfaceType::DeepSand => [218, 204, 150],
                 tdrace_core::physics::surface::SurfaceType::Dirt => [122, 89, 56],
+                tdrace_core::physics::surface::SurfaceType::MudTrack
+                | tdrace_core::physics::surface::SurfaceType::DeepMud => [100, 70, 40],
+                tdrace_core::physics::surface::SurfaceType::PackedSnow
+                | tdrace_core::physics::surface::SurfaceType::DeepSnow => [240, 245, 255],
                 tdrace_core::physics::surface::SurfaceType::Water => [46, 148, 224],
                 tdrace_core::physics::surface::SurfaceType::Oil => [40, 35, 45],
                 tdrace_core::physics::surface::SurfaceType::Curb => [220, 50, 50],
-                tdrace_core::physics::surface::SurfaceType::Ice => [200, 220, 240],
+                tdrace_core::physics::surface::SurfaceType::SheetIce => [200, 220, 240],
                 tdrace_core::physics::surface::SurfaceType::Concrete => [180, 185, 190],
                 _ => [120, 120, 120],
             };

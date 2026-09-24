@@ -160,7 +160,7 @@ fn main() {
 
     let asp_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Asphalt).unwrap();
     let conc_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Concrete).unwrap();
-    let ice_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::Ice).unwrap();
+    let ice_idx = SurfaceType::ALL.iter().position(|&s| s == SurfaceType::SheetIce).unwrap();
 
     for r in &results {
         let asp_stop = r.straight_line_nominal[asp_idx].stopping_distance_m;

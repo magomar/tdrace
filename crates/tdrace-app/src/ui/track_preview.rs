@@ -18,12 +18,15 @@ pub fn surface_preview_color(surface: SurfaceType) -> Color {
         SurfaceType::Dirt => Color::new(0.94, 0.62, 0.22, 0.95),    // Vibrant Ochre / Rally Dirt
         SurfaceType::Curb => Palette::CURB_RED,
         SurfaceType::Grass => Color::new(0.30, 0.82, 0.40, 0.95),   // Lush Turf Green
-        SurfaceType::Sand => Color::new(0.96, 0.84, 0.42, 0.95),    // Desert Sand Gold
+        SurfaceType::PackedSand => Color::new(0.96, 0.84, 0.42, 0.95), // Desert Sand Gold
+        SurfaceType::DeepSand => Color::new(0.85, 0.72, 0.32, 0.95),   // Deep Sand Dune Gold
         SurfaceType::Water => Color::new(0.20, 0.60, 0.95, 0.95),   // Azure Water Blue
         SurfaceType::Oil => Color::new(0.40, 0.28, 0.50, 0.95),     // Deep Hazard Violet
-        SurfaceType::Ice => Color::new(0.85, 0.95, 1.00, 0.95),     // Glacial White / Pale Blue
-        SurfaceType::Mud => Color::new(0.55, 0.38, 0.20, 0.95),     // Deep Mud Brown
-        SurfaceType::Snow => Color::new(0.95, 0.98, 1.00, 0.95),    // Pure Snow White
+        SurfaceType::SheetIce => Color::new(0.85, 0.95, 1.00, 0.95), // Glacial White / Pale Blue
+        SurfaceType::MudTrack => Color::new(0.55, 0.38, 0.20, 0.95), // Deep Mud Brown
+        SurfaceType::DeepMud => Color::new(0.42, 0.28, 0.14, 0.95),  // Viscous Mud Brown
+        SurfaceType::PackedSnow => Color::new(0.90, 0.95, 0.98, 0.95), // Groomed Snow
+        SurfaceType::DeepSnow => Color::new(0.98, 0.99, 1.00, 0.95),   // Deep Powder White
         SurfaceType::Gravel => Palette::GRAVEL,
         SurfaceType::Concrete => Color::new(0.75, 0.78, 0.82, 0.95),
     }
@@ -226,9 +229,11 @@ pub fn render_track_detailed_preview(
             }
             let col = match zone.surface {
                 SurfaceType::Water => Color::new(0.18, 0.48, 0.85, 0.55),
-                SurfaceType::Sand => Color::new(0.85, 0.72, 0.32, 0.50),
+                SurfaceType::PackedSand | SurfaceType::DeepSand => Color::new(0.85, 0.72, 0.32, 0.50),
                 SurfaceType::Dirt => Color::new(0.70, 0.45, 0.18, 0.50),
-                SurfaceType::Ice => Color::new(0.85, 0.92, 0.98, 0.65),
+                SurfaceType::MudTrack | SurfaceType::DeepMud => Color::new(0.55, 0.38, 0.20, 0.50),
+                SurfaceType::PackedSnow | SurfaceType::DeepSnow => Color::new(0.92, 0.95, 0.98, 0.60),
+                SurfaceType::SheetIce => Color::new(0.85, 0.92, 0.98, 0.65),
                 SurfaceType::Oil => Color::new(0.12, 0.12, 0.15, 0.75),
                 _ => Color::new(0.30, 0.35, 0.45, 0.45),
             };

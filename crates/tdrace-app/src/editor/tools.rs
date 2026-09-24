@@ -3048,19 +3048,19 @@ mod tests {
         assert_eq!(state.track.spline.waypoints[3].surface, Some(SurfaceType::Dirt));
         assert_eq!(tools.active_surface, SurfaceType::Dirt);
 
-        // 2. Change waypoint 3 surface to Sand
-        state.track.spline.waypoints[3].surface = Some(SurfaceType::Sand);
-        tools.active_surface = SurfaceType::Sand;
+        // 2. Change waypoint 3 surface to PackedSand
+        state.track.spline.waypoints[3].surface = Some(SurfaceType::PackedSand);
+        tools.active_surface = SurfaceType::PackedSand;
         state.rebuild_geometry();
 
-        // 3. Click to add another waypoint -> should inherit Sand surface from waypoint 3
+        // 3. Click to add another waypoint -> should inherit PackedSand surface from waypoint 3
         let new_pos2 = Vec2::new(180.0, 40.0);
         tools.handle_mouse_down(&mut state, new_pos2);
         tools.handle_mouse_up(&mut state, new_pos2);
 
         assert_eq!(state.selection, Selection::Waypoint(4));
-        assert_eq!(state.track.spline.waypoints[4].surface, Some(SurfaceType::Sand));
-        assert_eq!(tools.active_surface, SurfaceType::Sand);
+        assert_eq!(state.track.spline.waypoints[4].surface, Some(SurfaceType::PackedSand));
+        assert_eq!(tools.active_surface, SurfaceType::PackedSand);
     }
 
     #[test]
@@ -3072,7 +3072,7 @@ mod tests {
 
         // 1. Square Surface Zone Creation via Drag
         tools.active_surface_shape = SurfaceShapeType::Square;
-        tools.active_surface = SurfaceType::Sand;
+        tools.active_surface = SurfaceType::DeepSand;
         tools.active_surface_layer = SurfaceLayer::BelowTrack;
         tools.handle_mouse_down(&mut state, Vec2::new(10.0, 10.0));
         tools.handle_mouse_drag(&mut state, Vec2::new(30.0, 30.0));
@@ -3080,7 +3080,7 @@ mod tests {
 
         let zone_idx = state.track.geometry.surface_zones.len() - 1;
         assert_eq!(state.selection, Selection::SurfaceZone(zone_idx));
-        assert_eq!(state.track.geometry.surface_zones[zone_idx].surface, SurfaceType::Sand);
+        assert_eq!(state.track.geometry.surface_zones[zone_idx].surface, SurfaceType::DeepSand);
         assert_eq!(state.track.geometry.surface_zones[zone_idx].layer, SurfaceLayer::BelowTrack);
         assert!(matches!(state.track.geometry.surface_zones[zone_idx].shape, SurfaceShape::Aabb { .. }));
 
@@ -3449,7 +3449,7 @@ mod tests {
 
         // 2. Secondary Right Drag in SurfaceZone tool adds a SurfaceZone
         tools.active_tool = EditorToolType::SurfaceZone;
-        tools.active_surface = SurfaceType::Sand;
+        tools.active_surface = SurfaceType::DeepSand;
         tools.active_surface_shape = SurfaceShapeType::Square;
         let initial_zones = state.track.geometry.surface_zones.len();
         tools.handle_secondary_down(&mut state, Vec2::new(820.0, 820.0));
