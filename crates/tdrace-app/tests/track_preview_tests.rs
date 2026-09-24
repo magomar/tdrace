@@ -5,18 +5,7 @@ use tdrace_core::track::presets::classic_grand_prix;
 
 #[test]
 fn test_surface_preview_colors_coverage() {
-    let surfaces = [
-        SurfaceType::Asphalt,
-        SurfaceType::Dirt,
-        SurfaceType::Curb,
-        SurfaceType::Grass,
-        SurfaceType::Sand,
-        SurfaceType::Water,
-        SurfaceType::Oil,
-        SurfaceType::Ice,
-    ];
-
-    for s in surfaces {
+    for &s in &SurfaceType::ALL {
         let col = surface_preview_color(s);
         assert!(col.a > 0.0, "Surface preview color alpha must be > 0");
     }

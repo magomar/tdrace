@@ -31,9 +31,9 @@ fn test_exact_bit_identical_determinism() {
         SurfaceType::Asphalt,
         SurfaceType::Curb,
         SurfaceType::Grass,
-        SurfaceType::Sand,
+        SurfaceType::PackedSand,
         SurfaceType::Oil,
-        SurfaceType::Ice,
+        SurfaceType::SheetIce,
     ];
 
     for _ in 0..total_steps {
@@ -166,7 +166,7 @@ fn test_save_restore_rewind_determinism() {
     }
     // Mutate state with garbage
     for _ in 0..200 {
-        test_car.step(&CarControls::new(1.0, 1.0, 1.0, true), SurfaceType::Sand, dt);
+        test_car.step(&CarControls::new(1.0, 1.0, 1.0, true), SurfaceType::DeepSand, dt);
     }
 
     // Restore checkpoint at 500

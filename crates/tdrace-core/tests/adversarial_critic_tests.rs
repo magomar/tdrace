@@ -128,9 +128,9 @@ fn test_high_angular_velocity_spin_damping_across_all_surfaces() {
         SurfaceType::Asphalt,
         SurfaceType::Curb,
         SurfaceType::Grass,
-        SurfaceType::Sand,
+        SurfaceType::DeepSand,
         SurfaceType::Oil,
-        SurfaceType::Ice,
+        SurfaceType::SheetIce,
     ];
 
     for &surf in &surfaces {
@@ -179,9 +179,9 @@ fn test_friction_circle_conservation_under_random_fuzz() {
         SurfaceType::Asphalt,
         SurfaceType::Curb,
         SurfaceType::Grass,
-        SurfaceType::Sand,
+        SurfaceType::DeepSand,
         SurfaceType::Oil,
-        SurfaceType::Ice,
+        SurfaceType::SheetIce,
     ];
 
     for step in 0..10_000 {

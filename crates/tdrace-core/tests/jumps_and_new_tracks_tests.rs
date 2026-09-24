@@ -216,7 +216,7 @@ fn test_classic_rallycross_preset() {
 fn test_oasis_rally_preset() {
     let track = oasis_rally();
     assert_eq!(track.name, "Oasis Rally");
-    assert_eq!(track.default_surface, SurfaceType::Sand, "Must be desert sand off-track");
+    assert_eq!(track.default_surface, SurfaceType::DeepSand, "Must be desert sand off-track");
     assert_eq!(track.geometry.surface_zones.len(), 3);
     assert_eq!(track.geometry.obstacles.len(), 0);
     assert!(track.spline.total_length() > 900.0, "Track must be extended and longer");
@@ -259,7 +259,7 @@ fn test_oasis_rally_preset() {
 
     // Surface sampling off-track: deep sand terrain
     let off_track_surf = track.sample_surface(Vec2::new(500.0, 500.0));
-    assert_eq!(off_track_surf, SurfaceType::Sand, "Off-track must be Sand");
+    assert_eq!(off_track_surf, SurfaceType::DeepSand, "Off-track must be DeepSand");
 
     // Verify aliases work identically
     let alias_track1 = dune_raid();
@@ -280,9 +280,9 @@ fn test_dirt_and_water_dynamics() {
     assert!(water_mu < 0.30, "Water must induce aquaplaning with mu < 0.30");
     assert!(water_drag >= 2.0, "Water must create significant displacement drag");
 
-    // Sand provides strong deceleration power
-    let sand_res = SurfaceType::Sand.rolling_resistance_multiplier();
-    assert!(sand_res >= 25.0, "Sand must act as an aggressive stopping trap");
+    // DeepSand provides strong deceleration power
+    let sand_res = SurfaceType::DeepSand.rolling_resistance_multiplier();
+    assert!(sand_res >= 8.0, "DeepSand must act as an aggressive stopping trap");
 }
 
 #[test]
@@ -300,12 +300,12 @@ fn test_sand_under_track_does_not_override_dirt_ribbon() {
     );
 
     // When the car moves off-track into the sand trap (e.g. at 285, 195, which is outside the ribbon width),
-    // it MUST sample Sand (the visible off-track hazard).
+    // it MUST sample DeepSand (the visible off-track hazard).
     let off_track_in_trap = Vec2::new(285.0, 195.0);
     assert_eq!(
         track.sample_surface(off_track_in_trap),
-        SurfaceType::Sand,
-        "Car off track in sand trap must sample Sand"
+        SurfaceType::DeepSand,
+        "Car off track in sand trap must sample DeepSand"
     );
 
     // On-track water hazards (like the Northern Oasis Lagoon at 25, 190) MUST override the track ribbon

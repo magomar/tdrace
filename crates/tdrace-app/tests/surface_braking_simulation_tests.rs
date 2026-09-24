@@ -21,9 +21,9 @@ fn test_multi_surface_panic_stopping_distances() {
         let res_concrete = run_braking_straight_line(&config, SurfaceType::Concrete, v0, false, DEFAULT_SIMULATION_DT);
         let res_gravel = run_braking_straight_line(&config, SurfaceType::Gravel, v0, false, DEFAULT_SIMULATION_DT);
         let res_grass = run_braking_straight_line(&config, SurfaceType::Grass, v0, false, DEFAULT_SIMULATION_DT);
-        let res_ice = run_braking_straight_line(&config, SurfaceType::Ice, v0, false, DEFAULT_SIMULATION_DT);
+        let res_ice = run_braking_straight_line(&config, SurfaceType::SheetIce, v0, false, DEFAULT_SIMULATION_DT);
 
-        // 1. Friction hierarchy: Asphalt < Concrete <= Gravel < Grass < Ice
+        // 1. Friction hierarchy: Asphalt < Concrete <= Gravel < Grass < SheetIce
         assert!(
             res_asphalt.stopping_distance_m <= res_concrete.stopping_distance_m + 1.0,
             "{}: Asphalt ({:.1}m) should stop equal or shorter than Concrete ({:.1}m)",
@@ -47,7 +47,7 @@ fn test_multi_surface_panic_stopping_distances() {
         );
         assert!(
             res_ice.stopping_distance_m > res_asphalt.stopping_distance_m * 3.0,
-            "{}: Ice ({:.1}m) should exceed 3x Asphalt ({:.1}m)",
+            "{}: SheetIce ({:.1}m) should exceed 3x Asphalt ({:.1}m)",
             id,
             res_ice.stopping_distance_m,
             res_asphalt.stopping_distance_m

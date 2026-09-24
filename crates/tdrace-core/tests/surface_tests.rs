@@ -11,8 +11,8 @@ fn test_surface_grip_and_acceleration_scaling() {
         SurfaceType::Concrete,
         SurfaceType::Curb,
         SurfaceType::Grass,
-        SurfaceType::Sand,
-        SurfaceType::Ice,
+        SurfaceType::DeepSand,
+        SurfaceType::SheetIce,
     ];
 
     let mut speeds = Vec::new();
@@ -109,7 +109,7 @@ fn test_sand_trap_stopping_power() {
     // Run into sand trap with zero throttle
     let mut steps_in_sand = 0;
     while car.state.speed > 0.1 && steps_in_sand < 300 {
-        car.step(&CarControls::default(), SurfaceType::Sand, dt);
+        car.step(&CarControls::default(), SurfaceType::DeepSand, dt);
         steps_in_sand += 1;
     }
 
@@ -141,10 +141,10 @@ fn test_per_wheel_surface_split_mu() {
     // Left: FL (0) Asphalt, RL (2) Asphalt
     // Right: FR (1) Ice, RR (3) Ice
     let split_surfaces = [
-        SurfaceType::Asphalt, // FL
-        SurfaceType::Ice,     // FR
-        SurfaceType::Asphalt, // RL
-        SurfaceType::Ice,     // RR
+        SurfaceType::Asphalt,  // FL
+        SurfaceType::SheetIce, // FR
+        SurfaceType::Asphalt,  // RL
+        SurfaceType::SheetIce, // RR
     ];
 
     let brake_ctrl = CarControls::new(0.0, 0.0, 1.0, false);
@@ -177,7 +177,6 @@ fn test_off_track_surface_types_and_track_sampling() {
     assert!(!SurfaceType::Curb.is_valid_off_track());
     assert!(!SurfaceType::Water.is_valid_off_track());
     assert!(!SurfaceType::Oil.is_valid_off_track());
-    assert!(!SurfaceType::Ice.is_valid_off_track());
 
     // 2. Verify Track::sample_surface returns the configured default_surface when far off-track
     let mut track = classic_grand_prix();

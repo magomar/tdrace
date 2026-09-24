@@ -41892,16 +41892,31 @@
       ],
       "angle": -1.4440584,
       "grid_slot": 9
+    },
+    {
+      "position": [
+        -157.49786,
+        1.2655343
+      ],
+      "angle": -1.575897,
+      "grid_slot": 10
+    },
+    {
+      "position": [
+        -161.6967,
+        9.80445
+      ],
+      "angle": -1.8044428,
+      "grid_slot": 11
     }
   ],
   "default_surface": "DeepSand",
   "pit_box_area": null,
   "default_laps": 5,
   "car_category": "off_road",
-  "module_id": "classic",
+  "module_id": "extreme_offroad",
   "modules": [
-    "extreme_offroad",
-    "classic"
+    "extreme_offroad"
   ],
   "scale": "1:1",
   "is_inspired": false

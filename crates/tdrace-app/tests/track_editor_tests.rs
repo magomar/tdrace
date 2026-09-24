@@ -173,7 +173,7 @@ fn test_track_editor_custom_circuit_lifecycle_and_io() {
             half_extents: Vec2::new(20.0, 10.0),
             angle: 0.0,
         },
-        SurfaceType::Sand,
+        SurfaceType::DeepSand,
         "Runoff Sand",
     ));
 
@@ -797,9 +797,9 @@ fn test_track_editor_spline_surface_inheritance_and_switching() {
     assert_eq!(state.selection, Selection::Waypoint(4));
     assert_eq!(state.track.spline.waypoints[4].surface, Some(SurfaceType::Dirt));
 
-    // 3. User switches surface of waypoint 4 to Sand
-    state.track.spline.waypoints[4].surface = Some(SurfaceType::Sand);
-    tools.active_surface = SurfaceType::Sand;
+    // 3. User switches surface of waypoint 4 to PackedSand
+    state.track.spline.waypoints[4].surface = Some(SurfaceType::PackedSand);
+    tools.active_surface = SurfaceType::PackedSand;
     state.rebuild_geometry();
 
     // 4. Add another point after waypoint 4
@@ -807,10 +807,10 @@ fn test_track_editor_spline_surface_inheritance_and_switching() {
     tools.handle_mouse_down(&mut state, new_pos2);
     tools.handle_mouse_up(&mut state, new_pos2);
 
-    // It should be inserted at index 5 and inherit SurfaceType::Sand
+    // It should be inserted at index 5 and inherit SurfaceType::PackedSand
     assert_eq!(state.track.spline.waypoints.len(), initial_count + 2);
     assert_eq!(state.selection, Selection::Waypoint(5));
-    assert_eq!(state.track.spline.waypoints[5].surface, Some(SurfaceType::Sand));
+    assert_eq!(state.track.spline.waypoints[5].surface, Some(SurfaceType::PackedSand));
 }
 
 #[test]
@@ -1105,7 +1105,7 @@ fn test_track_editor_surface_shapes_and_layering_e2e() {
     track.geometry.surface_zones.push(
         SurfaceZone::new(
             SurfaceShape::Circle { center: sample_road_pt, radius: 25.0 },
-            SurfaceType::Sand,
+            SurfaceType::DeepSand,
             "Under-Road Sand",
         )
         .with_layer(SurfaceLayer::BelowTrack),
@@ -1199,10 +1199,10 @@ fn test_track_editor_multi_segment_batch_operations_e2e() {
     assert!(state.track.spline.waypoints[0].left_curb && state.track.spline.waypoints[0].right_curb);
     assert!(state.track.spline.waypoints[1].left_curb && state.track.spline.waypoints[1].right_curb);
 
-    // 4. Batch set surface to Ice
-    assert!(tools.batch_set_surface(&mut state, Some(SurfaceType::Ice)));
-    assert_eq!(state.track.spline.waypoints[0].surface, Some(SurfaceType::Ice));
-    assert_eq!(state.track.spline.waypoints[1].surface, Some(SurfaceType::Ice));
+    // 4. Batch set surface to SheetIce
+    assert!(tools.batch_set_surface(&mut state, Some(SurfaceType::SheetIce)));
+    assert_eq!(state.track.spline.waypoints[0].surface, Some(SurfaceType::SheetIce));
+    assert_eq!(state.track.spline.waypoints[1].surface, Some(SurfaceType::SheetIce));
 
     // 5. Batch duplicate and undo
     let initial_count = state.track.spline.waypoints.len();
@@ -1227,38 +1227,33 @@ fn test_track_editor_default_offtrack_surface_mutation_and_cycling() {
     assert_eq!(state.track.default_surface, SurfaceType::Grass);
     assert!(!state.is_dirty);
 
-    // 1. Set to Sand
-    assert!(tools.set_track_default_surface(&mut state, SurfaceType::Sand));
-    assert_eq!(state.track.default_surface, SurfaceType::Sand);
+    // 1. Set to DeepSand
+    assert!(tools.set_track_default_surface(&mut state, SurfaceType::DeepSand));
+    assert_eq!(state.track.default_surface, SurfaceType::DeepSand);
     assert!(state.is_dirty);
 
     // Setting to same surface returns false
-    assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Sand));
+    assert!(!tools.set_track_default_surface(&mut state, SurfaceType::DeepSand));
 
-    // 2. Reject non-offtrack surface types (e.g. Ice, Water, Oil, Curb)
-    assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Ice));
+    // 2. Reject non-offtrack surface types (e.g. Water, Oil, Curb)
     assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Water));
     assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Oil));
     assert!(!tools.set_track_default_surface(&mut state, SurfaceType::Curb));
-    assert_eq!(state.track.default_surface, SurfaceType::Sand);
+    assert_eq!(state.track.default_surface, SurfaceType::DeepSand);
 
     // 3. Undo restores previous Grass surface
     assert!(state.undo());
     assert_eq!(state.track.default_surface, SurfaceType::Grass);
 
-    // 4. Redo restores Sand
+    // 4. Redo restores DeepSand
     assert!(state.redo());
-    assert_eq!(state.track.default_surface, SurfaceType::Sand);
+    assert_eq!(state.track.default_surface, SurfaceType::DeepSand);
 
-    // 5. Test cycling off-track types: Grass -> Sand -> Dirt -> Asphalt -> Concrete -> Mud -> Snow -> Gravel -> Grass
+    // 5. Test cycling off-track types across all valid OFF_TRACK_TYPES
     tools.set_track_default_surface(&mut state, SurfaceType::Grass);
-    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Sand);
-    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Dirt);
-    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Asphalt);
-    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Concrete);
-    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Mud);
-    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Snow);
-    assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Gravel);
+    for &expected in &SurfaceType::OFF_TRACK_TYPES[1..] {
+        assert_eq!(tools.cycle_track_default_surface(&mut state), expected);
+    }
     assert_eq!(tools.cycle_track_default_surface(&mut state), SurfaceType::Grass);
 
     // 6. JSON serialization roundtrip preserves default_surface
@@ -1569,9 +1564,9 @@ fn test_jump_ramp_surface_tools_and_surface_sampling() {
 
     // 3. Change surface type and launch speed via inspector tool
     state.selection = Selection::JumpRamp(0);
-    assert!(tools.set_selected_jump_ramp_surface(&mut state, SurfaceType::Ice));
-    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Ice);
-    assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::Ice);
+    assert!(tools.set_selected_jump_ramp_surface(&mut state, SurfaceType::SheetIce));
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::SheetIce);
+    assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::SheetIce);
     assert!(tools.set_selected_jump_ramp_launch_speed(&mut state, 4.5));
     assert_eq!(state.track.geometry.jump_ramps[0].launch_speed, 4.5);
 
@@ -1602,15 +1597,15 @@ fn test_jump_ramp_surface_tools_and_surface_sampling() {
     assert!(state.track.geometry.jump_ramps[0].flat_length() < 0.01);
 
     // 5. Batch surface set
-    assert!(tools.batch_set_surface(&mut state, Some(SurfaceType::Sand)));
-    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Sand);
-    assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::Sand);
+    assert!(tools.batch_set_surface(&mut state, Some(SurfaceType::DeepSand)));
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::DeepSand);
+    assert_eq!(state.track.sample_surface(ramp_center), SurfaceType::DeepSand);
 
     // 6. Undo/redo chain
     assert!(state.undo());
-    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Ice);
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::SheetIce);
     assert!(state.redo());
-    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::Sand);
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, SurfaceType::DeepSand);
 }
 
 #[test]
@@ -2388,7 +2383,7 @@ fn test_arena_floor_tool_hull_closure_and_wall_synthesis() {
     let mut tools = ToolSettings::default();
 
     tools.active_tool = EditorToolType::ArenaFloor;
-    tools.active_surface = SurfaceType::Mud;
+    tools.active_surface = SurfaceType::MudTrack;
     tools.active_arena_barrier = Some(BarrierType::Concrete);
 
     // 1. Place 4 vertices for an arena perimeter rectangle
@@ -2407,7 +2402,7 @@ fn test_arena_floor_tool_hull_closure_and_wall_synthesis() {
     match &state.track.kind {
         TrackKind::Arena { boundary_hull, floor_surface, perimeter_barrier } => {
             assert_eq!(boundary_hull.len(), 4);
-            assert_eq!(*floor_surface, SurfaceType::Mud);
+            assert_eq!(*floor_surface, SurfaceType::MudTrack);
             assert_eq!(*perimeter_barrier, Some(BarrierType::Concrete));
         }
         _ => panic!("Expected TrackKind::Arena, got {:?}", state.track.kind),
@@ -2415,7 +2410,7 @@ fn test_arena_floor_tool_hull_closure_and_wall_synthesis() {
 
     // 3. Four perimeter walls synthesized
     assert_eq!(state.track.geometry.outer_walls.len(), initial_walls + 4);
-    assert!(state.track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Mud));
+    assert!(state.track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::MudTrack));
 
     // 4. Test Undo / Redo
     assert!(state.undo());
@@ -2476,7 +2471,7 @@ fn test_stunt_ramp_tool_high_launch_and_multiplier() {
     let mut tools = ToolSettings::default();
 
     tools.active_tool = EditorToolType::StuntRamp;
-    tools.active_surface = SurfaceType::Sand;
+    tools.active_surface = SurfaceType::DeepSand;
     tools.stunt_ramp_height = 4.5;
     tools.stunt_ramp_multiplier = 1.8;
 
@@ -2490,7 +2485,7 @@ fn test_stunt_ramp_tool_high_launch_and_multiplier() {
     let ramp = &state.track.geometry.jump_ramps[initial_ramps];
     assert_eq!(ramp.height, 4.5);
     assert!((ramp.launch_speed - 28.0 * 1.8).abs() < 0.1);
-    assert_eq!(ramp.surface, SurfaceType::Sand);
+    assert_eq!(ramp.surface, SurfaceType::DeepSand);
     assert!(ramp.name.starts_with("Stunt Mega Ramp"));
 }
 

@@ -567,7 +567,7 @@ fn test_banking_incline_physics_and_centripetal_downhill_force() {
     let mut ice_car = Car::new(CarConfig::sports_car());
     ice_car.state.road_bank_angle = 20.0;
     ice_car.state.track_right = Vec2::new(0.0, 1.0);
-    let ice_surfaces = [SurfaceType::Ice; 4];
+    let ice_surfaces = [SurfaceType::SheetIce; 4];
     ice_car.step_per_wheel(&ctrl, ice_surfaces, 0.016);
     assert!(
         ice_car.state.velocity.y < 0.0,

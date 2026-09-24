@@ -412,10 +412,10 @@ fn test_dirt_contamination_deposit_on_pavement() {
 #[test]
 fn test_multi_surface_skidmark_distinct_palettes() {
     let test_cases = [
-        (SurfaceType::Sand, 0.65, 0.52, 0.28),
-        (SurfaceType::Mud, 0.18, 0.12, 0.06),
-        (SurfaceType::Snow, 0.65, 0.72, 0.82),
-        (SurfaceType::Ice, 0.92, 0.96, 1.0),
+        (SurfaceType::PackedSand, 0.65, 0.52, 0.28),
+        (SurfaceType::DeepMud, 0.18, 0.12, 0.06),
+        (SurfaceType::PackedSnow, 0.65, 0.72, 0.82),
+        (SurfaceType::SheetIce, 0.92, 0.96, 1.0),
     ];
 
     for (surf, exp_r, exp_g, exp_b) in test_cases {
@@ -449,12 +449,12 @@ fn test_debris_roost_particle_emission_by_surface() {
     assert!(count_after_gravel > 0, "Gravel should produce roost particles");
 
     // Mud roost
-    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Mud, Vec2::new(10.0, 0.0));
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::MudTrack, Vec2::new(10.0, 0.0));
     let count_after_mud = ps.count();
     assert!(count_after_mud > count_after_gravel, "Mud should produce roost particles");
 
     // Snow roost
-    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Snow, Vec2::new(10.0, 0.0));
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::PackedSnow, Vec2::new(10.0, 0.0));
     let count_after_snow = ps.count();
     assert!(count_after_snow > count_after_mud, "Snow should produce roost particles");
 

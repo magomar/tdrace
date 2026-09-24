@@ -17,7 +17,7 @@ fn main() {
         SurfaceType::Asphalt,
         SurfaceType::Curb,
         SurfaceType::Grass,
-        SurfaceType::Sand,
+        SurfaceType::PackedSand,
     ];
 
     let warmup_steps = 100_000;

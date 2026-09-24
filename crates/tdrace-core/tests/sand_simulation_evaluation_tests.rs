@@ -26,7 +26,7 @@ fn test_sand_vs_asphalt_dirt_acceleration_and_force_breakdown() {
         SurfaceType::Asphalt,
         SurfaceType::Dirt,
         SurfaceType::Grass,
-        SurfaceType::Sand,
+        SurfaceType::DeepSand,
     ];
 
     println!("\n==================================================================================");
@@ -89,17 +89,17 @@ fn test_sand_vs_asphalt_dirt_acceleration_and_force_breakdown() {
         );
         println!("----------------------------------------------------------------------------------");
 
-        if surf == SurfaceType::Sand {
+        if surf == SurfaceType::DeepSand {
             // Assert and document the physical failure condition:
-            // Rolling resistance exceeds maximum possible tire traction on Sand!
+            // Rolling resistance exceeds maximum possible tire traction on DeepSand!
             assert!(
                 static_rr_force > max_possible_traction_n,
-                "Physical defect: Rolling resistance ({:.0} N) must exceed RWD tire traction cap ({:.0} N) on Sand",
+                "Physical defect: Rolling resistance ({:.0} N) must exceed RWD tire traction cap ({:.0} N) on DeepSand",
                 static_rr_force, max_possible_traction_n
             );
             assert!(
                 speed_3s < 3.0,
-                "Sports car on Sand is paralyzed (speed after 3s was {:.2} km/h)",
+                "Sports car on DeepSand is paralyzed (speed after 3s was {:.2} km/h)",
                 speed_3s
             );
         } else if surf == SurfaceType::Asphalt {
@@ -120,7 +120,7 @@ fn test_sand_steering_authority_and_friction_ellipse_starvation() {
     let test_surfaces = [
         SurfaceType::Asphalt,
         SurfaceType::Dirt,
-        SurfaceType::Sand,
+        SurfaceType::DeepSand,
     ];
 
     let v_init_kmh = 40.0;
@@ -201,16 +201,16 @@ fn test_sand_steering_authority_and_friction_ellipse_starvation() {
         );
         println!("----------------------------------------------------------------------------------");
 
-        if surf == SurfaceType::Sand {
-            // On Sand, the car plows straight ahead because lateral grip is starved by longitudinal drag
+        if surf == SurfaceType::DeepSand {
+            // On DeepSand, the car plows straight ahead because lateral grip is starved by longitudinal drag
             assert!(
                 heading_change_1s < 5.0,
-                "Sand severely stunts yaw turn authority (got {:.1} deg in 1s vs Asphalt >30 deg)",
+                "DeepSand severely stunts yaw turn authority (got {:.1} deg in 1s vs Asphalt >30 deg)",
                 heading_change_1s
             );
             assert!(
                 peak_lat_accel < 0.15,
-                "Sand lateral acceleration severely compromised ({:.2}g)",
+                "DeepSand lateral acceleration severely compromised ({:.2}g)",
                 peak_lat_accel
             );
             assert!(
@@ -239,7 +239,7 @@ fn test_dynamically_built_tracks_end_to_end_simulation() {
 
     let res_asphalt_path = run_path_simulation(&config, SurfaceType::Asphalt, &straight_with_turns, 30.0, DEFAULT_SIMULATION_DT);
     let res_dirt_path = run_path_simulation(&config, SurfaceType::Dirt, &straight_with_turns, 35.0, DEFAULT_SIMULATION_DT);
-    let res_sand_path = run_path_simulation(&config, SurfaceType::Sand, &straight_with_turns, 20.0, DEFAULT_SIMULATION_DT);
+    let res_sand_path = run_path_simulation(&config, SurfaceType::DeepSand, &straight_with_turns, 20.0, DEFAULT_SIMULATION_DT);
 
     println!(
         "  Asphalt : Status={:<18} | Completed={:>5.1}% ({:>5.1}m in {:>4.1}s) | Avg Spd={:>4.1} km/h | Peak Spd={:>5.1} km/h | Max Lat Dev={:.2}m",
@@ -262,7 +262,7 @@ fn test_dynamically_built_tracks_end_to_end_simulation() {
         res_dirt_path.max_cross_track_error_m
     );
     println!(
-        "  Sand    : Status={:<18} | Completed={:>5.1}% ({:>5.1}m in {:>4.1}s) | Avg Spd={:>4.1} km/h | Peak Spd={:>5.1} km/h | Max Lat Dev={:.2}m",
+        "  DeepSand: Status={:<18} | Completed={:>5.1}% ({:>5.1}m in {:>4.1}s) | Avg Spd={:>4.1} km/h | Peak Spd={:>5.1} km/h | Max Lat Dev={:.2}m",
         res_sand_path.status.as_str(),
         res_sand_path.completion_pct,
         res_sand_path.distance_traveled_m,
@@ -286,7 +286,7 @@ fn test_dynamically_built_tracks_end_to_end_simulation() {
 
     let res_asphalt_circ = run_path_simulation(&config, SurfaceType::Asphalt, &circuit, 40.0, DEFAULT_SIMULATION_DT);
     let res_dirt_circ = run_path_simulation(&config, SurfaceType::Dirt, &circuit, 45.0, DEFAULT_SIMULATION_DT);
-    let res_sand_circ = run_path_simulation(&config, SurfaceType::Sand, &circuit, 20.0, DEFAULT_SIMULATION_DT);
+    let res_sand_circ = run_path_simulation(&config, SurfaceType::DeepSand, &circuit, 20.0, DEFAULT_SIMULATION_DT);
 
     println!(
         "  Asphalt : Status={:<18} | Completed={:>5.1}% ({:>5.1}m in {:>4.1}s) | Avg Spd={:>4.1} km/h | Peak Spd={:>5.1} km/h",
@@ -307,7 +307,7 @@ fn test_dynamically_built_tracks_end_to_end_simulation() {
         res_dirt_circ.peak_speed_kmh
     );
     println!(
-        "  Sand    : Status={:<18} | Completed={:>5.1}% ({:>5.1}m in {:>4.1}s) | Avg Spd={:>4.1} km/h | Peak Spd={:>5.1} km/h",
+        "  DeepSand: Status={:<18} | Completed={:>5.1}% ({:>5.1}m in {:>4.1}s) | Avg Spd={:>4.1} km/h | Peak Spd={:>5.1} km/h",
         res_sand_circ.status.as_str(),
         res_sand_circ.completion_pct,
         res_sand_circ.distance_traveled_m,
@@ -343,12 +343,12 @@ fn test_real_game_sand_circuits_end_to_end_behavior() {
         let spline = &track.spline;
         let total_len = spline.total_length();
 
-        // Count how many waypoints are Sand vs other surfaces
+        // Count how many waypoints are PackedSand vs other surfaces
         let sand_wp_count = track
             .spline
             .waypoints
             .iter()
-            .filter(|w| w.surface == Some(SurfaceType::Sand))
+            .filter(|w| w.surface == Some(SurfaceType::PackedSand))
             .count();
         let total_wps = track.spline.waypoints.len();
 
@@ -404,7 +404,7 @@ fn test_real_game_sand_circuits_end_to_end_behavior() {
 
         let completion_pct = (progress_dist / total_len * 100.0).clamp(0.0, 100.0);
         println!(
-            "Track: {:<28} | Total Length: {:>6.1}m | Sand Waypoints: {}/{}",
+            "Track: {:<28} | Total Length: {:>6.1}m | PackedSand Waypoints: {}/{}",
             name, total_len, sand_wp_count, total_wps
         );
         println!(
@@ -412,15 +412,15 @@ fn test_real_game_sand_circuits_end_to_end_behavior() {
             track.default_surface, sim_time, progress_dist, completion_pct, peak_speed_kmh
         );
 
-        // Assert and prove unplayability of current Sand presets
+        // Under Spec 025 PackedSand bifurcation, tracks are fully drivable
         assert!(
-            progress_dist < 20.0,
-            "Track {} should be completely blocked/unplayable under current sand physics (traveled {:.1}m)",
+            progress_dist > 30.0,
+            "Track {} should be playable on PackedSand (traveled {:.1}m)",
             name, progress_dist
         );
         assert!(
-            peak_speed_kmh < 15.0,
-            "Track {} cars cannot get speed (peak {:.1} km/h)",
+            peak_speed_kmh > 20.0,
+            "Track {} cars should reach racing speeds on PackedSand (peak {:.1} km/h)",
             name, peak_speed_kmh
         );
         println!("----------------------------------------------------------------------------------");

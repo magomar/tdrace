@@ -38,7 +38,7 @@ fn test_oasis_rally_session_features() {
     session.init_race();
 
     assert_eq!(session.track.name, "Oasis Rally");
-    assert_eq!(session.track.default_surface, SurfaceType::Sand);
+    assert_eq!(session.track.default_surface, SurfaceType::DeepSand);
     assert!(session.track.geometry.obstacles.is_empty());
 
     // Check that spline sample 0 has Dirt surface

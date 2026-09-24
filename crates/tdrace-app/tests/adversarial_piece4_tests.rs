@@ -23,7 +23,7 @@ fn test_long_race_fx_memory_boundedness() {
     let surfaces = vec![
         [SurfaceType::Asphalt; 4],
         [SurfaceType::Grass; 4],
-        [SurfaceType::Sand; 4],
+        [SurfaceType::DeepSand; 4],
         [SurfaceType::Curb; 4],
     ];
 

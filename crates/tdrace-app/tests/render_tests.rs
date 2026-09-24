@@ -76,7 +76,7 @@ fn test_track_backdrop_colors() {
     use tdrace_core::physics::surface::SurfaceType;
 
     let col_grass = get_track_backdrop_color(SurfaceType::Grass);
-    let col_sand = get_track_backdrop_color(SurfaceType::Sand);
+    let col_sand = get_track_backdrop_color(SurfaceType::DeepSand);
     let col_dirt = get_track_backdrop_color(SurfaceType::Dirt);
     let col_asphalt = get_track_backdrop_color(SurfaceType::Asphalt);
 
@@ -794,22 +794,7 @@ fn test_surface_material_quality_and_properties() {
     assert_eq!(SurfaceTextureQuality::High.name(), "High");
     assert_eq!(SurfaceTextureQuality::default(), SurfaceTextureQuality::High);
 
-    let surfaces = [
-        SurfaceType::Asphalt,
-        SurfaceType::Dirt,
-        SurfaceType::Curb,
-        SurfaceType::Grass,
-        SurfaceType::Sand,
-        SurfaceType::Water,
-        SurfaceType::Oil,
-        SurfaceType::Ice,
-        SurfaceType::Mud,
-        SurfaceType::Snow,
-        SurfaceType::Gravel,
-        SurfaceType::Concrete,
-    ];
-
-    for &surf in &surfaces {
+    for &surf in &SurfaceType::ALL {
         let mat = SurfaceMaterial::new(surf, None);
         assert_eq!(mat.surface_type, surf);
         assert!(mat.tile_scale_meters > 0.0, "Tile scale must be positive for {:?}", surf);
@@ -818,27 +803,13 @@ fn test_surface_material_quality_and_properties() {
 }
 
 #[test]
-fn test_procedural_surface_image_generators_all_12_surfaces() {
+fn test_procedural_surface_image_generators_all_15_surfaces() {
     use tdrace_app::render::{generate_curb_image, generate_edge_fringe_mask, generate_macro_noise_image, generate_surface_image};
     use tdrace_core::physics::surface::SurfaceType;
 
-    let surfaces = [
-        SurfaceType::Asphalt,
-        SurfaceType::Dirt,
-        SurfaceType::Grass,
-        SurfaceType::Gravel,
-        SurfaceType::Sand,
-        SurfaceType::Mud,
-        SurfaceType::Snow,
-        SurfaceType::Ice,
-        SurfaceType::Water,
-        SurfaceType::Oil,
-        SurfaceType::Concrete,
-    ];
-
     let dim = 64u16;
 
-    for &surf in &surfaces {
+    for &surf in &SurfaceType::ALL {
         let img = generate_surface_image(surf, dim, dim);
         assert_eq!(img.width, dim);
         assert_eq!(img.height, dim);
